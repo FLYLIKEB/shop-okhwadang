@@ -198,6 +198,6 @@ GET /api/health                  # 서버 및 DB 상태 확인
 
 ```
 클라이언트 → Vercel CDN (Static Files)
-          → Vercel Functions (api/proxy.ts) → AWS EC2 (NestJS :3000)
-                                            → Lightsail Docker MySQL :3306
+          → Vercel Functions (api/proxy.ts) → AWS EC2 t3.small (NestJS :3000)
+                                            → AWS Lightsail MySQL :3306
 ```

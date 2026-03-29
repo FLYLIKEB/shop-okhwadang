@@ -6,14 +6,20 @@ on:
 
 jobs:
   deploy-backend:
-    name: Deploy Backend to Railway
+    name: Deploy Backend to EC2
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-      - name: Deploy to Railway
-        working-directory: backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service commerce-demo --detach
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /app/commerce-demo/backend
+            git pull origin main
+            npm ci --omit=dev
+            npm run build
+            npm run migration:run:prod
+            pm2 reload commerce --update-env
