@@ -1,0 +1,287 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { adminProductsApi } from '@/lib/api';
+import type { ProductDetail } from '@/lib/api';
+import ProductImageUploader from './ProductImageUploader';
+import ProductOptionsEditor, { type ProductOptionDraft } from './ProductOptionsEditor';
+
+interface ProductFormData {
+  name: string;
+  slug: string;
+  description: string;
+  shortDescription: string;
+  price: string;
+  salePrice: string;
+  stock: string;
+  sku: string;
+  status: 'draft' | 'active' | 'soldout' | 'hidden';
+  isFeatured: boolean;
+  imageUrl: string;
+  options: ProductOptionDraft[];
+}
+
+interface ProductFormPageProps {
+  mode: 'create' | 'edit';
+  product?: ProductDetail;
+}
+
+const STATUS_OPTIONS = [
+  { value: 'draft', label: '임시저장' },
+  { value: 'active', label: '판매중' },
+  { value: 'soldout', label: '품절' },
+  { value: 'hidden', label: '숨김' },
+] as const;
+
+export default function ProductFormPage({ mode, product }: ProductFormPageProps) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState<ProductFormData>({
+    name: product?.name ?? '',
+    slug: product?.slug ?? '',
+    description: product?.description ?? '',
+    shortDescription: product?.shortDescription ?? '',
+    price: product ? String(product.price) : '',
+    salePrice: product?.salePrice != null ? String(product.salePrice) : '',
+    stock: product ? String(product.stock) : '0',
+    sku: product?.sku ?? '',
+    status: (product?.status as ProductFormData['status']) ?? 'draft',
+    isFeatured: product?.isFeatured ?? false,
+    imageUrl: product?.images?.[0]?.url ?? '',
+    options: product?.options?.map((o) => ({
+      name: o.name,
+      value: o.value,
+      priceAdjustment: o.priceAdjustment,
+      stock: o.stock,
+    })) ?? [],
+  });
+
+  const set = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!form.name.trim()) {
+      toast.error('상품명을 입력해주세요.');
+      return;
+    }
+    if (!form.slug.trim()) {
+      toast.error('슬러그를 입력해주세요.');
+      return;
+    }
+    if (!form.price || Number(form.price) < 1) {
+      toast.error('가격을 올바르게 입력해주세요.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        name: form.name.trim(),
+        slug: form.slug.trim(),
+        description: form.description || undefined,
+        shortDescription: form.shortDescription || undefined,
+        price: Number(form.price),
+        salePrice: form.salePrice ? Number(form.salePrice) : undefined,
+        stock: Number(form.stock),
+        sku: form.sku || undefined,
+        status: form.status,
+        isFeatured: form.isFeatured,
+      };
+
+      if (mode === 'create') {
+        await adminProductsApi.create(payload);
+        toast.success('상품이 등록되었습니다.');
+      } else if (product) {
+        await adminProductsApi.update(product.id, payload);
+        toast.success('상품이 수정되었습니다.');
+      }
+      router.push('/admin/products');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '저장에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-8">
+      <h1 className="mb-6 text-2xl font-bold">
+        {mode === 'create' ? '상품 등록' : '상품 수정'}
+      </h1>
+
+      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
+        {/* 이미지 */}
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold">상품 이미지</h2>
+          <ProductImageUploader
+            imageUrl={form.imageUrl}
+            onChange={(url) => set('imageUrl', url)}
+          />
+        </section>
+
+        {/* 기본 정보 */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold">기본 정보</h2>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">상품명 *</label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder="상품명을 입력하세요"
+              required
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">슬러그 *</label>
+            <input
+              type="text"
+              value={form.slug}
+              onChange={(e) => set('slug', e.target.value)}
+              placeholder="url-friendly-slug"
+              required
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">짧은 설명</label>
+            <input
+              type="text"
+              value={form.shortDescription}
+              onChange={(e) => set('shortDescription', e.target.value)}
+              placeholder="상품 요약 설명"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">상세 설명</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => set('description', e.target.value)}
+              rows={5}
+              placeholder="상품 상세 설명"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </section>
+
+        {/* 가격/재고 */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold">가격 / 재고</h2>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">판매가 (원) *</label>
+              <input
+                type="number"
+                value={form.price}
+                onChange={(e) => set('price', e.target.value)}
+                min={1}
+                required
+                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">할인가 (원)</label>
+              <input
+                type="number"
+                value={form.salePrice}
+                onChange={(e) => set('salePrice', e.target.value)}
+                min={0}
+                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">재고</label>
+              <input
+                type="number"
+                value={form.stock}
+                onChange={(e) => set('stock', e.target.value)}
+                min={0}
+                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">SKU</label>
+              <input
+                type="text"
+                value={form.sku}
+                onChange={(e) => set('sku', e.target.value)}
+                placeholder="재고 관리 코드"
+                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* 노출 설정 */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold">노출 설정</h2>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">상태</label>
+            <select
+              value={form.status}
+              onChange={(e) => set('status', e.target.value as ProductFormData['status'])}
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.isFeatured}
+              onChange={(e) => set('isFeatured', e.target.checked)}
+              className="h-4 w-4"
+            />
+            추천 상품으로 표시
+          </label>
+        </section>
+
+        {/* 옵션 */}
+        <section>
+          <ProductOptionsEditor
+            options={form.options}
+            onChange={(opts) => set('options', opts)}
+          />
+        </section>
+
+        {/* 버튼 */}
+        <div className="flex justify-end gap-3 border-t pt-4">
+          <button
+            type="button"
+            onClick={() => router.push('/admin/products')}
+            className="rounded-lg border px-6 py-2 text-sm hover:bg-secondary"
+          >
+            취소
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="rounded-lg bg-primary px-6 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {submitting ? '저장 중...' : mode === 'create' ? '등록하기' : '수정하기'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

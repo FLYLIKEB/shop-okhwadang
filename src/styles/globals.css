@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: var(--db-color-primary, #2563eb);
+  --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
+  --color-secondary: var(--db-color-secondary, #f1f5f9);
+  --color-secondary-foreground: var(--db-color-secondary-foreground, #0f172a);
+  --color-destructive: var(--db-color-destructive, #ef4444);
+  --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
+  --color-muted: var(--db-color-muted, #f1f5f9);
+  --color-muted-foreground: var(--db-color-muted-foreground, #64748b);
+  --color-accent: var(--db-color-accent, #f1f5f9);
+  --color-accent-foreground: var(--db-color-accent-foreground, #0f172a);
+  --color-background: var(--db-color-background, #ffffff);
+  --color-foreground: var(--db-color-foreground, #0f172a);
+  --color-card: var(--db-color-card, #ffffff);
+  --color-card-foreground: var(--db-color-card-foreground, #0f172a);
+  --color-border: var(--db-color-border, #e2e8f0);
+  --color-input: var(--db-color-input, #e2e8f0);
+  --color-ring: var(--db-color-ring, #2563eb);
+  --radius-sm: var(--db-radius-sm, 0.25rem);
+  --radius-md: var(--db-radius-md, 0.375rem);
+  --radius-lg: var(--db-radius-lg, 0.5rem);
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--color-foreground);
+  background-color: var(--color-background);
+}
