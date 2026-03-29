@@ -32,7 +32,7 @@ Keep CLAUDE.md, `.claude/rules/*.md`, and memory files accurate and up-to-date a
 
 ## Project Overview
 
-**Commerce Demo** — E-commerce Boilerplate for D2C Shopping Mall (Next.js SSR / NestJS + TypeORM + MySQL)
+**옥화당 자사몰** — 자사호·보이차·다구 전문 D2C 쇼핑몰 (Next.js SSR / NestJS + TypeORM + MySQL)
 
 * **Frontend**: Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 + Radix UI → Deployed on Vercel
 * **Backend**: NestJS + TypeORM + MySQL → Deployed on AWS EC2 (DB: AWS Lightsail)
@@ -117,20 +117,21 @@ cd backend && docker compose down -v # Reset DB (volume cleanup)
 * **Routes**: `src/App.tsx`
 * **Auth Context**: `src/contexts/AuthContext.tsx`
 * **Cart Context**: `src/contexts/CartContext.tsx`
-* **Environment Variables**: `docs/configuration/ENVIRONMENT_VARIABLES.md`
-* **DB Schema**: `docs/infrastructure/DATABASE.md`
-* **Docker Setup**: `docs/infrastructure/DOCKER.md`
-* **Security Guide**: `docs/security/SECURITY.md`
-* **Deployment Guide**: `docs/deployment/DEPLOYMENT.md`
+* **Product Overview**: `docs/project/PRODUCT_OVERVIEW.md`
+* **Roadmap**: `docs/project/ROADMAP.md`
+* **Security Guide**: `docs/project/SECURITY.md`
+* **Git Workflow**: `docs/project/GIT_WORKFLOW.md`
 * **Architecture**: `docs/architecture/ARCHITECTURE.md`
 * **Backend Design**: `docs/architecture/BACKEND.md` (PG/Shipping adapter patterns)
 * **Frontend Design**: `docs/architecture/FRONTEND.md` (template system, CMS)
-* **Product Overview**: `docs/product/PRODUCT_OVERVIEW.md`
-* **Git Workflow**: `docs/workflow/GIT_WORKFLOW.md`
+* **Deployment Guide**: `docs/infrastructure/DEPLOYMENT.md`
+* **DB Schema**: `docs/infrastructure/DATABASE.md`
+* **Docker Setup**: `docs/infrastructure/DOCKER.md`
+* **Environment Variables**: `docs/infrastructure/ENVIRONMENT_VARIABLES.md`
 
 ## Deploy Structure
 
 ```
-Client → Vercel CDN (Static) + Vercel Functions (api/proxy.ts) → AWS EC2 (NestJS :3000) → Lightsail Docker MySQL :3306
+Client → Vercel CDN (Static) + Vercel Functions (api/proxy.ts) → AWS EC2 t3.small (NestJS :3000) → AWS Lightsail MySQL :3306
 ```
 

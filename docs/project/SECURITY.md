@@ -72,7 +72,7 @@ NestJS `ThrottlerModule` 사용.
 
 - `.env` 파일 `.gitignore`에 포함 — **절대 커밋 금지**
 - `.env.example`에 키 목록만 기록 (값 없이)
-- 프로덕션 시크릿은 배포 환경(Vercel, EC2)에서 직접 설정
+- 프로덕션 시크릿은 배포 환경에서 직접 설정 (Vercel 환경변수, EC2 `.env` 또는 GitHub Secrets)
 
 ---
 

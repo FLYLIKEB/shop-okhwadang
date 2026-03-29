@@ -90,8 +90,8 @@ docker compose logs mysql
 |------|-----|------|
 | dev | Docker MySQL (로컬) | `LOCAL_DATABASE_URL` |
 | test | Docker MySQL (로컬) | `TEST_DATABASE_URL`, DB명에 `test` 필수 |
-| staging | Lightsail Docker MySQL | SSH 터널 경유 |
-| prod | Lightsail Docker MySQL | `DATABASE_URL` |
+| staging | AWS Lightsail MySQL | SSH 터널 경유 |
+| prod | AWS Lightsail MySQL | `DATABASE_URL` (EC2 → Lightsail 내부 IP) |
 
 ---
 
