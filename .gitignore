@@ -1,0 +1,30 @@
+node_modules/
+dist/
+build/
+.next/
+.omc/
+next-env.d.ts
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+.idea/
+.vscode/
+*.swp
+*.swo
+coverage/
+.nyc_output/
+
+# Duplicate files (macOS " 2." copies)
+* 2.*
+* 2/
+
+# Build artifacts & editor outputs
+*.tsbuildinfo
+.obsidian/
+marketing.md

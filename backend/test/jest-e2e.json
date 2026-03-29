@@ -1,0 +1,12 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": "^(?!.*suites/).*\\.e2e-spec\\.ts$",
+  "transform": {
+    "^.+\\.ts$": "ts-jest"
+  },
+  "transformIgnorePatterns": ["/node_modules/(?!(mysql2)/)"],
+  "setupFiles": ["<rootDir>/setup-env.js"],
+  "testTimeout": 30000
+}

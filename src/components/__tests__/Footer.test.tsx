@@ -1,0 +1,18 @@
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import Footer from '@/components/Footer';
+
+describe('Footer', () => {
+  it('renders 이용약관, 개인정보처리방침, 고객센터 links', () => {
+    render(<Footer />);
+    expect(screen.getByRole('link', { name: '이용약관' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '개인정보처리방침' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '고객센터' })).toBeInTheDocument();
+  });
+
+  it('renders copyright text containing current year', () => {
+    render(<Footer />);
+    const year = new Date().getFullYear().toString();
+    expect(screen.getByText(new RegExp(year))).toBeInTheDocument();
+  });
+});

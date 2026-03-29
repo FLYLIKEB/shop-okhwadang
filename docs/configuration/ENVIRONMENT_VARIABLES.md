@@ -1,0 +1,108 @@
+# Environment Variables
+
+## 프론트엔드 (Next.js)
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `BACKEND_URL` | `http://localhost:3000` | NestJS 백엔드 URL (next.config.ts 리라이트에서 사용) |
+
+---
+
+## Vercel Functions (프록시)
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `BACKEND_URL` | `http://<EC2_IP>:3000` | 백엔드 서버 URL |
+| `BACKEND_TIMEOUT_MS` | `10000` | 프록시 타임아웃 (ms) |
+| `LOG_PROXY_REQUESTS` | `true` | 프록시 요청 로깅 여부 |
+
+---
+
+## 백엔드 (NestJS)
+
+### 서버
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `NODE_ENV` | `development` | 환경 (development/production) |
+| `PORT` | `3000` | 서버 포트 |
+
+### 데이터베이스
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `DATABASE_URL` | — | 프로덕션 DB 연결 URL |
+| `LOCAL_DATABASE_URL` | — | 로컬 개발 DB 연결 URL |
+| `TEST_DATABASE_URL` | — | 테스트 DB 연결 URL (DB명에 `test` 필수) |
+| `DB_SYNCHRONIZE` | `false` | TypeORM 동기화 (개발만 `true`) |
+| `DB_SSL_ENABLED` | `false` | SSL 활성화 여부 |
+
+### 인증
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `JWT_SECRET` | — | JWT 시크릿 키 |
+| `JWT_EXPIRES_IN` | `1h` | Access Token 만료 시간 |
+| `JWT_REFRESH_EXPIRES_IN` | `7d` | Refresh Token 만료 시간 |
+
+### OAuth
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `KAKAO_CLIENT_ID` | — | 카카오 앱 키 |
+| `KAKAO_CLIENT_SECRET` | — | 카카오 시크릿 |
+| `GOOGLE_CLIENT_ID` | — | 구글 클라이언트 ID |
+| `GOOGLE_CLIENT_SECRET` | — | 구글 시크릿 |
+
+### CORS
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `FRONTEND_URL` | — | 프론트엔드 URL (CORS) |
+| `FRONTEND_URLS` | — | 여러 프론트엔드 URL (쉼표 구분) |
+
+### 결제
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `PAYMENT_GATEWAY` | `mock` | PG 어댑터 선택 (`mock`/`toss`/`inicis`) |
+| `TOSS_SECRET_KEY` | — | 토스페이먼츠 시크릿 키 |
+| `TOSS_CLIENT_KEY` | — | 토스페이먼츠 클라이언트 키 |
+
+### 스토리지
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `STORAGE_PROVIDER` | `local` | 스토리지 (`local`/`s3`/`r2`) |
+| `S3_BUCKET` | — | S3 버킷명 |
+| `S3_REGION` | — | S3 리전 |
+| `S3_ACCESS_KEY` | — | S3 액세스 키 |
+| `S3_SECRET_KEY` | — | S3 시크릿 키 |
+
+### Redis
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `REDIS_URL` | `redis://localhost:6379` | Redis 연결 URL |
+
+### SSH 터널 (로컬 → 원격 DB)
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `SSH_KEY_PATH` | `~/.ssh/your-key.pem` | SSH 키 경로 |
+| `EC2_HOST` | — | EC2 IP |
+| `EC2_USER` | `ubuntu` | EC2 사용자 |
+| `SSH_TUNNEL_LOCAL_PORT` | `3307` | 로컬 터널 포트 |
+| `SSH_TUNNEL_REMOTE_PORT` | `3306` | 원격 MySQL 포트 |
+
+---
+
+## 파일 구조
+
+```
+backend/.env              # 로컬 개발 (gitignore)
+backend/.env.test         # 테스트 환경 (gitignore)
+backend/.env.example      # 키 목록 (커밋 O, 값 없음)
+```
+
+> **`.env` 파일은 절대 커밋하지 않습니다.** `.env.example`에 키 목록만 기록합니다.
