@@ -11,7 +11,7 @@ import ProductErrorState from '@/components/products/ProductErrorState';
 import type { ProductSort } from '@/lib/api';
 
 export const metadata: Metadata = {
-  title: 'Products | Commerce Demo',
+  title: 'Products | 옥화당',
   description: '상품 목록',
 };
 

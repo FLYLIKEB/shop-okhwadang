@@ -18,7 +18,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">Commerce Demo</p>
+            <p className="font-medium text-foreground">옥화당</p>
             <p>사업자번호: 000-00-00000</p>
             <p>대표자: 홍길동</p>
             <p>주소: 서울특별시 강남구</p>
@@ -38,7 +38,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-6 border-t pt-6 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Commerce Demo. All rights reserved.
+          &copy; {new Date().getFullYear()} 옥화당. All rights reserved.
         </div>
       </div>
     </footer>

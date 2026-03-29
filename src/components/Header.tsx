@@ -246,7 +246,7 @@ export default function Header() {
 
         {/* Logo — hidden on mobile sub-pages */}
         <Link href="/" className={cn('text-xl font-bold text-foreground shrink-0', isSubPage && 'hidden md:block')}>
-          Commerce Demo
+          옥화당
         </Link>
 
         {/* Desktop nav */}

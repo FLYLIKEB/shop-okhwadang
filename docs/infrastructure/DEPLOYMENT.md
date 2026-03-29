@@ -76,7 +76,7 @@ pm2 save && pm2 startup
     username: ${{ secrets.EC2_USER }}
     key: ${{ secrets.SSH_PRIVATE_KEY }}
     script: |
-      cd /app/commerce-demo/backend
+      cd /app/shop-okhwadang/backend
       git pull origin main
       npm ci --omit=dev
       npm run build
