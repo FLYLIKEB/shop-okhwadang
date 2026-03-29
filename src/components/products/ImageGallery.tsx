@@ -22,6 +22,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxZoomed, setLightboxZoomed] = useState(false)
   const mainImageRef = useRef<HTMLDivElement>(null)
 
   // 터치 스와이프
@@ -191,87 +192,101 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
 
       {/* 라이트박스 */}
       {lightboxOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
-          onClick={() => setLightboxOpen(false)}
-        >
-          {/* 닫기 */}
-          <button
-            type="button"
-            onClick={() => setLightboxOpen(false)}
-            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
-            aria-label="닫기"
-          >
-            <X className="size-5" />
-          </button>
-
-          {/* 줌 토글 */}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setIsZoomed((z) => !z) }}
-            className="absolute right-14 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
-            aria-label={isZoomed ? '축소' : '확대'}
-          >
-            {isZoomed ? <ZoomOut className="size-5" /> : <ZoomIn className="size-5" />}
-          </button>
-
-          {/* 이미지 */}
+        <>
+          {/* 배경 — 클릭하면 닫힘 */}
           <div
-            className="relative max-h-[90vh] max-w-[90vw] aspect-square w-full overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            <Image
-              src={selectedImage.url}
-              alt={selectedImage.alt ?? '상품 이미지'}
-              fill
-              sizes="90vw"
-              className="object-contain"
-              priority
-            />
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm"
+            onClick={() => { setLightboxOpen(false); setLightboxZoomed(false) }}
+            aria-hidden="true"
+          />
+
+          {/* 컨트롤 레이어 — 배경 위, 이미지 위 */}
+          <div className="fixed inset-0 z-50 pointer-events-none">
+            {/* 닫기 */}
+            <button
+              type="button"
+              onClick={() => { setLightboxOpen(false); setLightboxZoomed(false) }}
+              className="pointer-events-auto absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+              aria-label="닫기"
+            >
+              <X className="size-5" />
+            </button>
+
+            {/* 줌 토글 */}
+            <button
+              type="button"
+              onClick={() => setLightboxZoomed((z) => !z)}
+              className="pointer-events-auto absolute right-14 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+              aria-label={lightboxZoomed ? '축소' : '확대'}
+            >
+              {lightboxZoomed ? <ZoomOut className="size-5" /> : <ZoomIn className="size-5" />}
+            </button>
+
+            {/* 화살표 */}
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  className="pointer-events-auto absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 transition-colors"
+                  aria-label="이전 이미지"
+                >
+                  <ChevronLeft className="size-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="pointer-events-auto absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 transition-colors"
+                  aria-label="다음 이미지"
+                >
+                  <ChevronRight className="size-6" />
+                </button>
+              </>
+            )}
+
+            {/* dot 인디케이터 */}
+            {images.length > 1 && (
+              <div className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedIndex(i)}
+                    className={cn(
+                      'size-1.5 rounded-full transition-all',
+                      i === selectedIndex ? 'bg-white scale-125' : 'bg-white/40',
+                    )}
+                    aria-label={`이미지 ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* 화살표 */}
-          {images.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); goPrev() }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 transition-colors"
-                aria-label="이전 이미지"
-              >
-                <ChevronLeft className="size-6" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); goNext() }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 transition-colors"
-                aria-label="다음 이미지"
-              >
-                <ChevronRight className="size-6" />
-              </button>
-            </>
-          )}
-
-          {/* 인덱스 표시 */}
-          {images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-              {images.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setSelectedIndex(i) }}
-                  className={cn(
-                    'size-1.5 rounded-full transition-all',
-                    i === selectedIndex ? 'bg-white scale-125' : 'bg-white/40',
-                  )}
-                  aria-label={`이미지 ${i + 1}`}
-                />
-              ))}
+          {/* 이미지 — 배경 위, 컨트롤 아래 */}
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          >
+            <div
+              className={cn(
+                'relative max-h-[80vh] max-w-[80vw] aspect-square overflow-hidden pointer-events-auto transition-transform duration-200',
+                lightboxZoomed ? 'cursor-zoom-out scale-150' : 'cursor-zoom-in scale-100',
+              )}
+              onClick={() => setLightboxZoomed((z) => !z)}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <Image
+                src={selectedImage.url}
+                alt={selectedImage.alt ?? '상품 이미지'}
+                fill
+                sizes="80vw"
+                className="object-contain"
+                priority
+              />
             </div>
-          )}
-        </div>
+          </div>
+        </>
       )}
     </>
   )
