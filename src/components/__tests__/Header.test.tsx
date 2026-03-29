@@ -35,7 +35,7 @@ beforeEach(() => {
 describe('Header', () => {
   it('renders logo, nav link, cart icon link, and login link', () => {
     render(<Header />);
-    expect(screen.getByText('Commerce Demo')).toBeInTheDocument();
+    expect(screen.getByText('옥화당')).toBeInTheDocument();
     expect(screen.getByText('상품목록')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: '장바구니' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: '로그인' })).toBeInTheDocument();

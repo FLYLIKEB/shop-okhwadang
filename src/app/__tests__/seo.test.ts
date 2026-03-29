@@ -45,8 +45,8 @@ describe('SEO', () => {
       mockFetchProducts.mockResolvedValue({ items: [], total: 0, page: 1, limit: 1000 });
       const result = await sitemap();
       const urls = result.map((r) => r.url);
-      expect(urls).toContain('https://commerce-demo.vercel.app');
-      expect(urls).toContain('https://commerce-demo.vercel.app/products');
+      expect(urls).toContain('https://shop-okhwadang.com');
+      expect(urls).toContain('https://shop-okhwadang.com/products');
     });
 
     it('includes product routes', async () => {
@@ -60,14 +60,14 @@ describe('SEO', () => {
       });
       const result = await sitemap();
       const urls = result.map((r) => r.url);
-      expect(urls).toContain('https://commerce-demo.vercel.app/products/1');
+      expect(urls).toContain('https://shop-okhwadang.com/products/1');
     });
 
     it('returns only static routes when fetchProducts fails', async () => {
       mockFetchProducts.mockRejectedValue(new Error('Network error'));
       const result = await sitemap();
       const urls = result.map((r) => r.url);
-      expect(urls).toContain('https://commerce-demo.vercel.app');
+      expect(urls).toContain('https://shop-okhwadang.com');
       expect(urls).not.toContain(expect.stringContaining('/products/'));
     });
   });
@@ -104,7 +104,7 @@ describe('SEO', () => {
           priceCurrency: 'KRW',
           price: product.salePrice ?? product.price,
           availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-          seller: { '@type': 'Organization', name: 'Commerce Demo' },
+          seller: { '@type': 'Organization', name: '옥화당' },
         },
       };
 

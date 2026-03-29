@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { fetchProduct } from '@/lib/api-server'
 import ProductDetailClient from '@/components/products/ProductDetailClient'
 
-const SITE_URL = process.env.SITE_URL ?? 'https://commerce-demo.vercel.app';
+const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
 
 interface ProductDetailProps {
   params: Promise<{ id: string }>
@@ -55,7 +55,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
       priceCurrency: 'KRW',
       price: product.salePrice ?? product.price,
       availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      seller: { '@type': 'Organization', name: 'Commerce Demo' },
+      seller: { '@type': 'Organization', name: '옥화당' },
     },
   };
 
