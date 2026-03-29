@@ -1,3 +1,6 @@
+---
+globs: ["**/Dockerfile", "**/docker-compose*.yml", ".github/workflows/**", "scripts/**"]
+---
 # Deployment Rules
 
 ## Infrastructure

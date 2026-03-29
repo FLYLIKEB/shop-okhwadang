@@ -1,3 +1,7 @@
+---
+description: Git branch, commit, PR workflow rules — always active
+alwaysApply: true
+---
 # Git Workflow Rules
 
 ## Branch

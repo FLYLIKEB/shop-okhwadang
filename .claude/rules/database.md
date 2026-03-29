@@ -1,3 +1,6 @@
+---
+globs: ["backend/src/database/**", "backend/src/modules/**/*.entity.ts", "backend/src/modules/**/*.migration.ts"]
+---
 # Database Rules
 
 ## Stack
