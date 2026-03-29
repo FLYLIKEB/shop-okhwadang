@@ -1,3 +1,6 @@
+---
+globs: ["backend/src/**/*.ts", "src/**/*.ts"]
+---
 # Security Rules
 
 ## Security Stack (request pipeline)

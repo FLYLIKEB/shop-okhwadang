@@ -1,3 +1,6 @@
+---
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
+---
 # Code Style Rules
 
 ## Frontend

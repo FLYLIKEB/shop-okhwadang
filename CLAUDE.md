@@ -19,15 +19,22 @@ Keep CLAUDE.md, `.claude/rules/*.md`, and memory files accurate and up-to-date a
 - Project-wide commands, constraints, architecture facts → `CLAUDE.md`
 - Then remove the duplicate from memory (memory is for context, not rules)
 
+**Nesting strategy**: Rules are split across CLAUDE.md files per directory scope.
+- Root `CLAUDE.md` — project-wide overview, commands, git/PR workflow
+- `backend/CLAUDE.md` — NestJS, DB, security, backend testing rules
+- `src/CLAUDE.md` — Next.js, React, Tailwind, frontend testing rules
+- `.claude/rules/*.md` — shared reference rules (loaded by glob front matter)
+
 **What belongs where:**
 | Content type | Destination |
 |---|---|
-| How to run commands, ports, env vars | `CLAUDE.md` or `.claude/rules/database.md` |
-| Code patterns, architecture decisions | `.claude/rules/architecture.md` or `code-style.md` |
-| Test patterns, mock conventions | `.claude/rules/testing.md` |
+| Project-wide commands, deploy structure | Root `CLAUDE.md` |
+| Backend patterns, DB, security | `backend/CLAUDE.md` |
+| Frontend patterns, UI, accessibility | `src/CLAUDE.md` |
+| Code patterns, architecture decisions | `.claude/rules/architecture.md` |
 | Git/PR workflow steps | `.claude/rules/git-workflow.md` |
 | Who the user is, work preferences | `memory/user_*.md` |
-| Transient project state (current branch, next issue) | `memory/project_*.md` |
+| Transient project state | `memory/project_*.md` |
 | One-time incident notes | Do not save |
 
 ## Project Overview
@@ -56,78 +63,17 @@ cd backend && docker compose down -v # Reset DB (volume cleanup)
 * 44 issues (#2~#45) organized in Phase 0-7
 * Phase 0: Setup → 1: MVP → 2: Core → 3: Payment → 4: Admin → 5: CMS → 6: Polish → 7: Ops
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Merged so far: #2–#16 (PRs #46–#60), current branch: `feature/issue-69-70-71-frontend-refactor`
+* Merged so far: #2–#16 (PRs #46–#60)
 
 ## GitHub CLI
 
 * `gh issue view` fails with classic projects error — use `--json` flag: `gh issue view N --json title,body,labels,state`
 
-## Rules Reference
+## Git Rules (summary — full detail in `.claude/rules/git-workflow.md`)
 
-| Subject | File |
-| --- | --- |
-| Code Style | `.claude/rules/code-style.md` |
-| Testing | `.claude/rules/testing.md` |
-| Git/PR/Issue Workflow | `.claude/rules/git-workflow.md` |
-| DB Migration | `.claude/rules/database.md` |
-| Architecture | `.claude/rules/architecture.md` |
-
-## Critical Rules (from docs)
-
-### Frontend
-* Functional components + hooks only. `@/` import alias. `cn()` for Tailwind class merging.
-* TypeScript strict — **`any` is forbidden**. shadcn/ui patterns.
-* Tailwind arbitrary values (`h-[123px]`) forbidden — use theme tokens.
-* **All mutations must show sonner/toast** feedback (success/failure).
-* `console.log` in committed code is forbidden.
-
-### Backend
-* **Controller → Service → Entity** (DI pattern). **DTO-based** input validation.
-* NestJS built-in exceptions only (`NotFoundException`, `BadRequestException`).
-* Module structure: `backend/src/modules/{module}/`.
-* Global prefix: `/api`. NestJS Logger only (no console.log).
-
-### DB/Migration
-* **TypeORM Migration CLI only** — manual SQL files forbidden.
-* `synchronize: true` **forbidden in production**.
-* Entity changes must **always be committed with Migration file**.
-* Migration CLI requires SSH tunnel on port 3307: `LOCAL_DATABASE_URL=mysql://root:changeme_root_password@127.0.0.1:3307/commerce npm run migration:run`
-* MySQL does NOT support `DROP FOREIGN KEY IF EXISTS` — use INFORMATION_SCHEMA check helper pattern (see `AddOrdersTables` migration for reference).
-* Migrations that partially ran on live DB: use `CREATE TABLE IF NOT EXISTS` + existence-check helpers to make `up()` idempotent.
-
-### Security
-* Rate limiting: global 10/min, auth 5/min. CORS allowed origins only.
-* JWT Guard + ValidationPipe globally applied. bcrypt for passwords.
-* PG payments: **server-side amount verification required**.
-* `.env`, `*.pem`, `*.key` must be in `.gitignore`.
-
-### Git
-* Branch: `feature/issue-{번호}-{설명}` from main only.
-* Commit: Korean, `feat: #번호 설명` / `fix: #번호 설명`.
-* PR: `Closes #번호` required. Merge: `gh pr merge --merge --delete-branch` (no squash).
-
-### Adapter Pattern
-* **PG Payments**: `PaymentGateway` interface → `MockAdapter` / `TossAdapter` / `InicisAdapter`. Selected by `PAYMENT_GATEWAY` env var.
-* **Shipping**: `ShippingProvider` interface → `MockAdapter` / `CjAdapter` / `HanjinAdapter`.
-* **Storage**: `local` / `s3` / `r2`. Selected by `STORAGE_PROVIDER` env var.
-
-## Key Files
-
-* **API Client**: `src/lib/api.ts`
-* **Routes**: `src/App.tsx`
-* **Auth Context**: `src/contexts/AuthContext.tsx`
-* **Cart Context**: `src/contexts/CartContext.tsx`
-* **Product Overview**: `docs/project/PRODUCT_OVERVIEW.md`
-* **Roadmap**: `docs/project/ROADMAP.md`
-* **Security Guide**: `docs/project/SECURITY.md`
-* **Git Workflow**: `docs/project/GIT_WORKFLOW.md`
-* **Architecture**: `docs/architecture/ARCHITECTURE.md`
-* **Backend Design**: `docs/architecture/BACKEND.md` (PG/Shipping adapter patterns)
-* **Frontend Design**: `docs/architecture/FRONTEND.md` (template system, CMS)
-* **Deployment Guide**: `docs/infrastructure/DEPLOYMENT.md`
-* **DB Schema**: `docs/infrastructure/DATABASE.md`
-* **Docker Setup**: `docs/infrastructure/DOCKER.md`
-* **Environment Variables**: `docs/infrastructure/ENVIRONMENT_VARIABLES.md`
+* Branch: `feature/issue-{번호}-{설명}` from main only
+* Commit: Korean, `feat: #번호 설명` / `fix: #번호 설명`
+* PR: `Closes #번호` required. Merge: `gh pr merge --merge --delete-branch` (no squash)
 
 ## Deploy Structure
 
@@ -135,3 +81,28 @@ cd backend && docker compose down -v # Reset DB (volume cleanup)
 Client → Vercel CDN (Static) + Vercel Functions (api/proxy.ts) → AWS EC2 t3.small (NestJS :3000) → AWS Lightsail MySQL :3306
 ```
 
+## Rules Reference
+
+| Subject | File |
+| --- | --- |
+| Architecture | `.claude/rules/architecture.md` |
+| Code Style | `.claude/rules/code-style.md` |
+| Testing | `.claude/rules/testing.md` |
+| Git/PR/Issue Workflow | `.claude/rules/git-workflow.md` |
+| DB Migration | `.claude/rules/database.md` |
+| Security | `.claude/rules/security.md` |
+| Deployment | `.claude/rules/deployment.md` |
+
+## Key Files
+
+* **API Client**: `src/lib/api.ts`
+* **Auth Context**: `src/contexts/AuthContext.tsx`
+* **Cart Context**: `src/contexts/CartContext.tsx`
+* **Product Overview**: `docs/project/PRODUCT_OVERVIEW.md`
+* **Roadmap**: `docs/project/ROADMAP.md`
+* **Architecture**: `docs/architecture/ARCHITECTURE.md`
+* **Backend Design**: `docs/architecture/BACKEND.md`
+* **Frontend Design**: `docs/architecture/FRONTEND.md`
+* **Deployment Guide**: `docs/infrastructure/DEPLOYMENT.md`
+* **DB Schema**: `docs/infrastructure/DATABASE.md`
+* **Environment Variables**: `docs/infrastructure/ENVIRONMENT_VARIABLES.md`

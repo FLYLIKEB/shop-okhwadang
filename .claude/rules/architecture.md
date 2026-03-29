@@ -1,3 +1,6 @@
+---
+globs: ["**/*.ts", "**/*.tsx"]
+---
 # Architecture Rules
 
 ## Tech Stack

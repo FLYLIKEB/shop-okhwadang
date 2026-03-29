@@ -1,3 +1,6 @@
+---
+globs: ["**/*.spec.ts", "**/*.test.ts", "**/*.e2e-spec.ts", "**/*.test.tsx"]
+---
 # Testing Rules
 
 ## Frontend
