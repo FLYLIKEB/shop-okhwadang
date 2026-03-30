@@ -9,7 +9,9 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   async save(filename: string, buffer: Buffer, _mimetype: string): Promise<UploadedFile> {
     await fs.mkdir(this.uploadDir, { recursive: true });
-    const filePath = path.join(this.uploadDir, filename);
+    const safeName = path.basename(filename);
+    const filePath = path.join(this.uploadDir, safeName);
+    if (!filePath.startsWith(this.uploadDir)) throw new Error('Invalid filename');
     await fs.writeFile(filePath, buffer);
     return {
       url: `/uploads/${filename}`,
