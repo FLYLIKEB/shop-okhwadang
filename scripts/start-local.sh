@@ -50,7 +50,8 @@ if echo "${LOCAL_DATABASE_URL:-}" | grep -qE "localhost:330[67]|127\.0\.0\.1:330
         # MySQL 준비 대기
         echo -e "${YELLOW}⏳ MySQL 준비 대기 중...${NC}"
         for i in {1..30}; do
-            if docker exec commerce-mysql mysqladmin ping -h localhost --silent > /dev/null 2>&1; then
+            MYSQL_CONTAINER=$(docker compose -f "$BACKEND_DIR/docker-compose.yml" ps -q mysql 2>/dev/null)
+            if [ -n "$MYSQL_CONTAINER" ] && docker exec "$MYSQL_CONTAINER" mysqladmin ping -h localhost --silent > /dev/null 2>&1; then
                 echo -e "${GREEN}✅ MySQL 준비 완료${NC}"
                 break
             fi

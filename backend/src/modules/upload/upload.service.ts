@@ -7,7 +7,6 @@ import {
 import { randomUUID } from 'crypto';
 import * as path from 'path';
 import sharp from 'sharp';
-import { fromBuffer as fileTypeFromBuffer } from 'file-type';
 import { StorageAdapter, UploadedFile } from './interfaces/storage.interface';
 import { LocalStorageAdapter } from './adapters/local.adapter';
 import { MockStorageAdapter } from './adapters/mock.adapter';
@@ -53,8 +52,8 @@ export class UploadService {
       throw new PayloadTooLargeException('파일 크기는 5MB를 초과할 수 없습니다.');
     }
 
-    const detected = await fileTypeFromBuffer(file.buffer);
-    if (!detected || !ALLOWED_MIME_TYPES.includes(detected.mime)) {
+    const detectedMime = detectMimeFromMagicBytes(file.buffer);
+    if (!detectedMime || !ALLOWED_MIME_TYPES.includes(detectedMime)) {
       throw new BadRequestException('허용되지 않는 이미지 형식입니다.');
     }
 
@@ -67,4 +66,29 @@ export class UploadService {
 
     return this.adapter.save(filename, resized, file.mimetype);
   }
+}
+
+function detectMimeFromMagicBytes(buffer: Buffer): string | null {
+  if (buffer.length < 4) return null;
+
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return 'image/jpeg';
+  }
+
+  // PNG: 89 50 4E 47
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+    return 'image/png';
+  }
+
+  // WebP: RIFF....WEBP
+  if (
+    buffer.length >= 12 &&
+    buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+    buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
+  ) {
+    return 'image/webp';
+  }
+
+  return null;
 }
