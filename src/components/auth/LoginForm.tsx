@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,8 @@ import { cn } from '@/components/ui/utils';
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
   const { login, loginWithKakao, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -21,7 +23,7 @@ export default function LoginForm() {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      router.push('/');
+      router.push(redirectTo);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '로그인에 실패했습니다.');
     } finally {
