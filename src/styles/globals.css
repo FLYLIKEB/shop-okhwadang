@@ -8,14 +8,14 @@
 
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
-  /* Color: 미니멀 화이트 팔레트 */
-  --color-bg: #FFFFFF;
+  /* Color: Wedgwood-inspired Elegant Palette */
+  --color-bg: #FAFAFA;
   --color-text: #1a1a1a;
-  --color-accent-zuni: #8B4513;
+  --color-accent-zuni: #1B3A4B;
   --color-accent-tea: #4A6741;
-  --color-secondary: #C4A882;
-  --color-surface: #F5F5F5;
-  --color-accent-danni: #C4A882;
+  --color-secondary: #D4C5B0;
+  --color-surface: #F5F3EF;
+  --color-accent-danni: #C9B8A3;
 
   /* Typography */
   --font-display-ko: 'Noto Serif KR', 'Georgia', serif;
@@ -26,32 +26,32 @@
 
 @theme inline {
   /* ── shadcn/ui 호환 토큰 (DB override 지원) ── */
-  --color-primary: var(--db-color-primary, #8B4513);
+  --color-primary: var(--db-color-primary, #1B3A4B);
   --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
-  --color-secondary: var(--db-color-secondary, #C4A882);
+  --color-secondary: var(--db-color-secondary, #F5F3EF);
   --color-secondary-foreground: var(--db-color-secondary-foreground, #1a1a1a);
-  --color-destructive: var(--db-color-destructive, #ef4444);
+  --color-destructive: var(--db-color-destructive, #b91c1c);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #f5f5f5);
+  --color-muted: var(--db-color-muted, #F5F3EF);
   --color-muted-foreground: var(--db-color-muted-foreground, #6b6b6b);
-  --color-accent: var(--db-color-accent, #f5f5f5);
+  --color-accent: var(--db-color-accent, #F5F3EF);
   --color-accent-foreground: var(--db-color-accent-foreground, #1a1a1a);
   --color-background: var(--db-color-background, #ffffff);
   --color-foreground: var(--db-color-foreground, #1a1a1a);
   --color-card: var(--db-color-card, #ffffff);
   --color-card-foreground: var(--db-color-card-foreground, #1a1a1a);
-  --color-border: var(--db-color-border, #e5e5e5);
-  --color-input: var(--db-color-input, #e5e5e5);
-  --color-ring: var(--db-color-ring, #8B4513);
+  --color-border: var(--db-color-border, #e8e4de);
+  --color-input: var(--db-color-input, #e8e4de);
+  --color-ring: var(--db-color-ring, #1B3A4B);
   --radius-sm: var(--db-radius-sm, 0.125rem);
   --radius-md: var(--db-radius-md, 0.25rem);
   --radius-lg: var(--db-radius-lg, 0.5rem);
 
   /* ── 브랜드 확장 토큰 ── */
-  --color-zuni: #8B4513;
+  --color-zuni: #1B3A4B;
   --color-tea: #4A6741;
-  --color-danni: #C4A882;
-  --color-surface: #f5f5f5;
+  --color-danni: #C9B8A3;
+  --color-surface: #F5F3EF;
 
   /* ── 타이포그래피 토큰 ── */
   --font-display-ko: 'Noto Serif KR', 'Georgia', serif;
