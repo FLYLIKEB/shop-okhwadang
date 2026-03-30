@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const page = await fetchPage(slug);
   if (!page) return { title: '페이지를 찾을 수 없습니다' };
   return {
-    title: `${page.title} | Commerce Demo`,
+    title: `${page.title} | 옥화당`,
   };
 }
 

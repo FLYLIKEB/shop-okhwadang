@@ -11,10 +11,10 @@ import type { Product, Category } from '@/lib/api';
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'Commerce Demo — 공식 쇼핑몰',
+  title: '옥화당 — 공식 쇼핑몰',
   description: '다양한 상품을 만나보세요.',
   openGraph: {
-    title: 'Commerce Demo — 공식 쇼핑몰',
+    title: '옥화당 — 공식 쇼핑몰',
     description: '다양한 상품을 만나보세요.',
     type: 'website',
   },
