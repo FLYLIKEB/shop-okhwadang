@@ -34,6 +34,9 @@ export class Category {
   @Column({ name: 'image_url', type: 'varchar', length: 500, nullable: true })
   imageUrl!: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  description!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
