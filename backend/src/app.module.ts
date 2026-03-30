@@ -34,7 +34,7 @@ import { RolesGuard } from './common/guards/roles.guard';
       type: 'mysql',
       url: process.env.DATABASE_URL || process.env.LOCAL_DATABASE_URL,
       charset: 'utf8mb4',
-      synchronize: process.env.DB_SYNCHRONIZE === 'true',
+      synchronize: process.env.NODE_ENV !== 'production' && process.env.DB_SYNCHRONIZE === 'true',
       ssl: process.env.DB_SSL_ENABLED === 'true'
         ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH!) }
         : false,
