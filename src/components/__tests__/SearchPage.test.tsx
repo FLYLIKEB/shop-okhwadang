@@ -13,6 +13,10 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ isAuthenticated: false, isLoading: false, user: null, logout: vi.fn() }),
 }));
 
+vi.mock('@/contexts/CartContext', () => ({
+  useCart: () => ({ addItem: vi.fn(), items: [], itemCount: 0, totalAmount: 0, isLoading: false }),
+}));
+
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
