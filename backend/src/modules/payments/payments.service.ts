@@ -157,6 +157,7 @@ export class PaymentsService {
     if (!this.gateway.verifyWebhook(payload, signature)) {
       throw new UnauthorizedException('웹훅 서명 검증 실패');
     }
-    this.logger.log(`Webhook received: ${JSON.stringify(payload)}`);
+    const safe = { orderId: (payload as Record<string, unknown>)?.orderId, status: (payload as Record<string, unknown>)?.status, type: (payload as Record<string, unknown>)?.type };
+    this.logger.log(`Webhook received: ${JSON.stringify(safe)}`);
   }
 }
