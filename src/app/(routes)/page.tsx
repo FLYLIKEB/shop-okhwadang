@@ -3,6 +3,7 @@ import HeroBannerSlider from '@/components/home/HeroBannerSlider';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
 import CategoryNav from '@/components/home/CategoryNav';
 import PromotionBanner from '@/components/home/PromotionBanner';
+import LifestyleGrid from '@/components/home/LifestyleGrid';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
 import { homeApi, categoriesApi } from '@/lib/api';
 import { fetchPage } from '@/lib/api-server';
@@ -77,6 +78,8 @@ export default async function Home() {
       <HeroBannerSlider />
 
       <CategoryNav categories={categories} />
+
+      <LifestyleGrid />
 
       <FeaturedProducts
         title="추천 상품"
