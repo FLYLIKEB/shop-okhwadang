@@ -120,7 +120,9 @@ describe('AdminPagesPage', () => {
     fireEvent.click(addTextBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('텍스트 (신규)')).toBeInTheDocument();
+      expect(screen.getByText((content, el) =>
+        el?.tagName === 'SPAN' && content === '(신규)' && el.previousSibling?.textContent === '텍스트'
+      )).toBeInTheDocument();
     });
   });
 
@@ -163,7 +165,9 @@ describe('AdminPagesPage', () => {
     fireEvent.click(addTextBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('텍스트 (신규)')).toBeInTheDocument();
+      expect(screen.getByText((content, el) =>
+        el?.tagName === 'SPAN' && content === '(신규)' && el.previousSibling?.textContent === '텍스트'
+      )).toBeInTheDocument();
     });
 
     // Save button should be enabled

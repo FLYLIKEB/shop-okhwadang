@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
 import type { PageBlock } from '@/lib/api';
@@ -30,6 +30,13 @@ vi.mock('next/image', () => ({
 
 // ---- isomorphic-dompurify mock ----
 vi.mock('isomorphic-dompurify', () => ({
+  default: {
+    sanitize: (html: string) => html,
+  },
+}));
+
+// ---- dompurify mock (used by TextContentBlock via dynamic import) ----
+vi.mock('dompurify', () => ({
   default: {
     sanitize: (html: string) => html,
   },
@@ -94,7 +101,7 @@ describe('BlockRenderer', () => {
     expect(screen.getByText('테스트 배너')).toBeInTheDocument();
   });
 
-  it('renders TextContentBlock for text_content type', () => {
+  it('renders TextContentBlock for text_content type', async () => {
     const blocks: PageBlock[] = [
       makeBlock({
         type: 'text_content',
@@ -102,7 +109,9 @@ describe('BlockRenderer', () => {
       }),
     ];
     render(<BlockRenderer blocks={blocks} />);
-    expect(screen.getByText('안녕하세요')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('안녕하세요')).toBeInTheDocument();
+    });
   });
 
   it('renders PromotionBannerBlock for promotion_banner type', () => {
@@ -131,7 +140,7 @@ describe('BlockRenderer', () => {
     expect(screen.getByText('nonexistent_type')).toBeInTheDocument();
   });
 
-  it('sorts blocks by sort_order', () => {
+  it('sorts blocks by sort_order', async () => {
     const blocks: PageBlock[] = [
       makeBlock({
         id: 1,
@@ -147,12 +156,14 @@ describe('BlockRenderer', () => {
       }),
     ];
     render(<BlockRenderer blocks={blocks} />);
-    const sections = screen.getAllByText(/번째/);
-    expect(sections[0].textContent).toBe('첫번째');
-    expect(sections[1].textContent).toBe('두번째');
+    await waitFor(() => {
+      const sections = screen.getAllByText(/번째/);
+      expect(sections[0].textContent).toBe('첫번째');
+      expect(sections[1].textContent).toBe('두번째');
+    });
   });
 
-  it('filters out invisible blocks', () => {
+  it('filters out invisible blocks', async () => {
     const blocks: PageBlock[] = [
       makeBlock({
         type: 'text_content',
@@ -166,7 +177,9 @@ describe('BlockRenderer', () => {
       }),
     ];
     render(<BlockRenderer blocks={blocks} />);
-    expect(screen.getByText('보이는 블록')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('보이는 블록')).toBeInTheDocument();
+    });
     expect(screen.queryByText('숨겨진 블록')).not.toBeInTheDocument();
   });
 

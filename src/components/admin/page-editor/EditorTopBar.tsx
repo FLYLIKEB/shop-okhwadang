@@ -112,6 +112,7 @@ export default function EditorTopBar({
         <button
           type="button"
           onClick={onPreview}
+          aria-label="미리보기"
           title="저장하기 전에 페이지가 어떻게 보일지 미리 확인합니다"
           className="flex shrink-0 items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
         >
@@ -123,6 +124,7 @@ export default function EditorTopBar({
           type="button"
           onClick={onSave}
           disabled={!hasChanges || saving}
+          aria-label="저장"
           title={hasChanges ? '변경사항을 저장합니다' : '저장할 변경사항이 없습니다'}
           className="flex shrink-0 items-center gap-1 rounded-md bg-foreground px-3 py-1.5 text-sm text-background hover:opacity-90 disabled:opacity-50"
         >
