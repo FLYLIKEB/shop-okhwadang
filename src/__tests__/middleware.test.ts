@@ -45,6 +45,24 @@ describe('middleware', () => {
     expect(location).toContain('redirect=%2Fcheckout');
   });
 
+  it('redirects sub-paths like /admin/products and /my/orders', () => {
+    for (const path of ['/admin/products', '/admin/settings', '/my/orders', '/checkout/success']) {
+      const req = makeRequest(path);
+      const res = middleware(req);
+      expect(res.status).toBe(307);
+      const location = res.headers.get('location');
+      expect(location).toContain('/login');
+    }
+  });
+
+  it('preserves query string in redirect param', () => {
+    const req = makeRequest('/checkout?coupon=ABC');
+    const res = middleware(req);
+    expect(res.status).toBe(307);
+    const location = res.headers.get('location');
+    expect(location).toContain('redirect=%2Fcheckout%3Fcoupon%3DABC');
+  });
+
   it('passes through public routes without cookie', () => {
     for (const path of ['/', '/products', '/login']) {
       const req = makeRequest(path);
