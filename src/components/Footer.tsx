@@ -16,9 +16,9 @@ const FALLBACK_LINKS = {
   ],
   shop: [
     { id: -7, label: '전체 상품', url: '/products' },
-    { id: -8, label: '신상품', url: '/products?sort=new' },
-    { id: -9, label: '인기 상품', url: '/products?sort=popular' },
-    { id: -10, label: '세일', url: '/products?sale=true' },
+    { id: -8, label: '컬렉션', url: '/collection' },
+    { id: -9, label: 'Archive', url: '/archive' },
+    { id: -10, label: 'Journal', url: '/journal' },
   ],
 };
 
@@ -26,7 +26,7 @@ export default function Footer() {
   const { items: footerItems } = useNavigation('footer');
 
   return (
-    <footer className="bg-white border-t mt-auto">
+    <footer className="bg-background border-t mt-auto">
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
