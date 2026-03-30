@@ -77,6 +77,9 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
       return { title: '', subtitle: '', image_url: '', cta_text: '', cta_url: '', template: 'full-width' };
     case 'text_content':
       return { html: '', template: 'default' };
+    case 'split_content':
+    case 'brand_story':
+      return { title: '', subtitle: '', description: '', image_url: '', image_position: 'left', cta_text: '', cta_url: '', template: 'default' };
   }
 }
 

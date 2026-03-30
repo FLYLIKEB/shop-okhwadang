@@ -13,6 +13,8 @@ const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   category_nav: '카테고리 내비',
   promotion_banner: '프로모션 배너',
   text_content: '텍스트',
+  split_content: '분할 콘텐츠',
+  brand_story: '브랜드 이야기',
 };
 
 interface DraftBlock {
@@ -51,6 +53,9 @@ function getContentSummary(block: DraftBlock): string {
       const plain = ((c.html as string) ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
       return plain ? plain.slice(0, 30) + (plain.length > 30 ? '…' : '') : '(내용 없음)';
     }
+    case 'split_content':
+    case 'brand_story':
+      return (c.title as string) || (c.description as string) || '(내용 없음)';
   }
 }
 

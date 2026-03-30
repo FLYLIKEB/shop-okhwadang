@@ -626,7 +626,7 @@ export interface UploadedFile {
 
 export interface PageBlock {
   id: number;
-  type: 'hero_banner' | 'product_grid' | 'product_carousel' | 'category_nav' | 'promotion_banner' | 'text_content';
+  type: 'hero_banner' | 'product_grid' | 'product_carousel' | 'category_nav' | 'promotion_banner' | 'text_content' | 'split_content' | 'brand_story';
   content: Record<string, unknown>;
   sort_order: number;
   is_visible: boolean;
