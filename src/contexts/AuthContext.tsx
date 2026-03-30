@@ -14,7 +14,6 @@ interface User {
 
 export interface AuthContextValue {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -33,45 +32,16 @@ function generateState(): string {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      setIsLoading(false);
-      return;
-    }
-
-    setToken(accessToken);
-
     authApi
-      .profile()
+      .me()
       .then((profile) => {
         setUser(profile);
       })
-      .catch(async () => {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          setToken(null);
-          return;
-        }
-        try {
-          const res = await authApi.refresh(refreshToken);
-          localStorage.setItem('accessToken', res.accessToken);
-          if (res.refreshToken) {
-            localStorage.setItem('refreshToken', res.refreshToken);
-          }
-          setToken(res.accessToken);
-          const profile = await authApi.profile();
-          setUser(profile);
-        } catch {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          setToken(null);
-        }
+      .catch(() => {
+        setUser(null);
       })
       .finally(() => {
         setIsLoading(false);
@@ -80,9 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login(email, password);
-    localStorage.setItem('accessToken', res.accessToken);
-    localStorage.setItem('refreshToken', res.refreshToken);
-    setToken(res.accessToken);
     setUser(res.user);
     toast.success('로그인되었습니다.');
   }, []);
@@ -93,9 +60,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore server errors on logout
     }
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    setToken(null);
     setUser(null);
     toast.success('로그아웃되었습니다.');
   }, []);
@@ -129,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isAuthenticated: !!token, isLoading, login, logout, register, loginWithKakao, loginWithGoogle, updateUser }}
+      value={{ user, isAuthenticated: !!user, isLoading, login, logout, register, loginWithKakao, loginWithGoogle, updateUser }}
     >
       {children}
     </AuthContext.Provider>
