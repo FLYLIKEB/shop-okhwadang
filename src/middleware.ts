@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/admin')) {
     if (!token) {
       const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
       return NextResponse.redirect(loginUrl);
     }
     // Note: We can't fully verify JWT or role at the edge without the secret,
@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/my') || pathname.startsWith('/checkout')) {
     if (!token) {
       const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
       return NextResponse.redirect(loginUrl);
     }
   }
