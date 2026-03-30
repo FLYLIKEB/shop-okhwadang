@@ -6,6 +6,6 @@ export class SearchController {
   @Get('popular')
   @Public()
   popular(): { keywords: string[] } {
-    return { keywords: ['나이키', '아디다스', '반팔', '청바지', '운동화'] };
+    return { keywords: [] };
   }
 }

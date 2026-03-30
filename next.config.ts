@@ -27,7 +27,9 @@ const nextConfig: NextConfig = {
         { key: 'X-Content-Type-Options', value: 'nosniff' },
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-        { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.tosspayments.com https://js.sandbox.tosspayments.com; object-src 'none'; base-uri 'self';" },
+        { key: 'Content-Security-Policy', value: process.env.NODE_ENV === 'production'
+          ? "default-src 'self'; style-src 'self'; script-src 'self' https://js.tosspayments.com https://js.sandbox.tosspayments.com; object-src 'none'; base-uri 'self';"
+          : "default-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://js.tosspayments.com https://js.sandbox.tosspayments.com; object-src 'none'; base-uri 'self';" },
         { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
       ],
     }];
