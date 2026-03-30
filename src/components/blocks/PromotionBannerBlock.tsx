@@ -14,14 +14,15 @@ export default function PromotionBannerBlock({ content }: Props) {
 
   if (template === 'timer') {
     return (
-      <section className="rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">{title}</h2>
-        {subtitle && <p className="mt-1 text-purple-100">{subtitle}</p>}
+      <section className="py-12 border-y border-border text-center">
+        <p className="text-sm tracking-widest text-muted-foreground uppercase mb-3">Limited Time</p>
+        <h2 className="text-2xl font-medium">{title}</h2>
+        {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
         {end_date && <CountdownTimer endDate={end_date} />}
         {cta_text && cta_url && (
           <Link
             href={cta_url}
-            className="mt-4 inline-block rounded-lg bg-white px-6 py-3 text-sm font-medium text-purple-600 hover:bg-purple-50"
+            className="mt-6 inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
           >
             {cta_text}
           </Link>
@@ -32,19 +33,19 @@ export default function PromotionBannerBlock({ content }: Props) {
 
   if (template === 'card') {
     return (
-      <section className="flex overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <section className="flex overflow-hidden border border-border">
         {image_url && (
-          <div className="relative hidden w-48 md:block">
+          <div className="relative hidden w-48 md:block bg-muted">
             <Image src={image_url} alt={title} fill className="object-cover" />
           </div>
         )}
         <div className="flex flex-1 flex-col justify-center p-6">
-          <h2 className="text-lg font-bold">{title}</h2>
-          {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
+          <h2 className="text-lg font-medium">{title}</h2>
+          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           {cta_text && cta_url && (
             <Link
               href={cta_url}
-              className="mt-3 inline-block w-fit rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+              className="mt-4 inline-block border border-foreground px-6 py-2 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
             >
               {cta_text}
             </Link>
@@ -54,19 +55,18 @@ export default function PromotionBannerBlock({ content }: Props) {
     );
   }
 
-  // Default: full-width
   return (
-    <section className="relative overflow-hidden rounded-xl bg-gray-900 p-8 text-white md:p-12">
+    <section className="relative overflow-hidden py-16 border-y border-border">
       {image_url && (
-        <Image src={image_url} alt={title} fill className="object-cover opacity-40" />
+        <Image src={image_url} alt={title} fill className="object-cover opacity-20" />
       )}
-      <div className="relative z-10 text-center">
-        <h2 className="text-2xl font-bold md:text-3xl">{title}</h2>
-        {subtitle && <p className="mt-2 text-gray-300">{subtitle}</p>}
+      <div className="relative z-10 text-center px-8">
+        <h2 className="text-2xl font-medium md:text-3xl">{title}</h2>
+        {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
         {cta_text && cta_url && (
           <Link
             href={cta_url}
-            className="mt-4 inline-block rounded-lg bg-white px-6 py-3 text-sm font-medium text-black hover:bg-gray-100"
+            className="mt-6 inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
           >
             {cta_text}
           </Link>
@@ -87,11 +87,11 @@ function CountdownTimer({ endDate }: { endDate: string }) {
   }, [endDate]);
 
   if (remaining.total <= 0) {
-    return <p className="mt-2 text-sm text-purple-200">이벤트가 종료되었습니다</p>;
+    return <p className="mt-4 text-sm text-muted-foreground">이벤트가 종료되었습니다</p>;
   }
 
   return (
-    <div className="mt-3 flex justify-center gap-3" role="timer">
+    <div className="mt-4 flex justify-center gap-6" role="timer">
       <TimeUnit value={remaining.days} label="일" />
       <TimeUnit value={remaining.hours} label="시간" />
       <TimeUnit value={remaining.minutes} label="분" />
@@ -103,8 +103,8 @@ function CountdownTimer({ endDate }: { endDate: string }) {
 function TimeUnit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <span className="text-2xl font-bold tabular-nums">{String(value).padStart(2, '0')}</span>
-      <span className="text-xs text-purple-200">{label}</span>
+      <span className="text-2xl font-medium tabular-nums">{String(value).padStart(2, '0')}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }
