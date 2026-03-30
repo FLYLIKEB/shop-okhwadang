@@ -20,27 +20,30 @@ export interface BannerSlide {
 const defaultSlides: BannerSlide[] = [
   {
     id: 1,
-    title: '신상품 출시',
-    subtitle: '새로운 컬렉션을 만나보세요',
-    ctaLabel: '쇼핑하기',
+    title: '옥화당 컬렉션',
+    subtitle: '정성으로 빚은 자사호와 보이차를 만나보세요',
+    ctaLabel: '컬렉션 보기',
     ctaUrl: '/products',
-    bgColor: 'bg-white',
+    bgColor: 'bg-[#1B3A4B]',
+    imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80',
   },
   {
     id: 2,
     title: '특별 할인 이벤트',
     subtitle: '최대 50% 할인 혜택을 누리세요',
-    ctaLabel: '할인 상품 보기',
+    ctaLabel: '컬렉션 보기',
     ctaUrl: '/products?sort=popular',
-    bgColor: 'bg-white',
+    bgColor: 'bg-[#4A6741]',
+    imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1920&q=80',
   },
   {
     id: 3,
     title: '추천 상품 모음',
     subtitle: '큐레이터가 엄선한 베스트 아이템',
-    ctaLabel: '추천 상품 보기',
+    ctaLabel: '컬렉션 보기',
     ctaUrl: '/products?isFeatured=true',
-    bgColor: 'bg-white',
+    bgColor: 'bg-[#2A2520]',
+    imageUrl: 'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=1920&q=80',
   },
 ];
 
@@ -66,35 +69,73 @@ export default function HeroBannerSlider({ slides = defaultSlides }: HeroBannerS
   if (slides.length === 0) return null;
 
   return (
-    <section role="region" aria-label="메인 배너" className="relative overflow-hidden">
+    <section
+      role="region"
+      aria-label="메인 배너"
+      className="relative overflow-hidden"
+    >
       <div ref={emblaRef} className="overflow-hidden">
         <div className="flex">
-          {slides.map((slide) => (
+          {slides.map((slide, slideIndex) => (
             <div
               key={slide.id}
-              className={`relative min-w-full flex items-center justify-center ${slide.bgColor} py-24 px-8`}
+              className={cn(
+                'relative min-w-full flex items-center justify-center overflow-hidden',
+                'h-[60vh] min-h-[400px] md:h-[80vh] md:min-h-[560px]',
+                slide.bgColor,
+              )}
             >
               {slide.imageUrl && (
                 <Image
                   src={slide.imageUrl}
                   alt={slide.title}
                   fill
-                  className="object-cover"
-                  priority
+                  className={cn(
+                    'object-cover object-center',
+                    slideIndex === selectedIndex && 'animate-kenburns',
+                  )}
+                  priority={slideIndex === 0}
+                  sizes="100vw"
                 />
               )}
-              <div className="relative text-center space-y-6 max-w-xl">
-                <h2 className="text-4xl font-medium tracking-tight text-foreground">{slide.title}</h2>
+
+              {/* dark overlay */}
+              <div className="absolute inset-0 bg-black/45" />
+
+              {/* text content */}
+              <div className="relative z-10 text-center px-6 max-w-2xl mx-auto">
+                <p
+                  className="animate-fade-in-up text-xs uppercase tracking-[0.25em] text-white/70 mb-4 font-body"
+                  style={{ animationDelay: '0s' }}
+                >
+                  옥화당 공식 쇼핑몰
+                </p>
+                <h2
+                  className="animate-fade-in-up text-4xl md:text-6xl font-display-ko font-semibold tracking-tight text-white leading-tight"
+                  style={{ animationDelay: '0.2s' }}
+                >
+                  {slide.title}
+                </h2>
                 {slide.subtitle && (
-                  <p className="text-muted-foreground text-base">{slide.subtitle}</p>
+                  <p
+                    className="animate-fade-in-up mt-4 text-base md:text-lg text-white/80"
+                    style={{ animationDelay: '0.4s' }}
+                  >
+                    {slide.subtitle}
+                  </p>
                 )}
                 {slide.ctaLabel && slide.ctaUrl && (
-                  <Link
-                    href={slide.ctaUrl}
-                    className="inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
+                  <div
+                    className="animate-fade-in-up mt-8"
+                    style={{ animationDelay: '0.6s' }}
                   >
-                    {slide.ctaLabel}
-                  </Link>
+                    <Link
+                      href={slide.ctaUrl}
+                      className="inline-block border border-white px-8 py-3 text-sm font-medium text-white tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+                    >
+                      {slide.ctaLabel}
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
@@ -105,14 +146,14 @@ export default function HeroBannerSlider({ slides = defaultSlides }: HeroBannerS
       <button
         onClick={scrollPrev}
         aria-label="이전 배너"
-        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-foreground hover:opacity-60 transition-opacity"
+        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
       <button
         onClick={scrollNext}
         aria-label="다음 배너"
-        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-foreground hover:opacity-60 transition-opacity"
+        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity"
       >
         <ChevronRight className="h-6 w-6" />
       </button>
@@ -125,7 +166,7 @@ export default function HeroBannerSlider({ slides = defaultSlides }: HeroBannerS
             aria-label={`${i + 1}번 배너로 이동`}
             className={cn(
               'h-0.5 transition-all',
-              i === selectedIndex ? 'w-8 bg-foreground' : 'w-4 bg-foreground/30',
+              i === selectedIndex ? 'w-8 bg-white' : 'w-4 bg-white/40',
             )}
           />
         ))}

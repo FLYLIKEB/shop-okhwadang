@@ -136,6 +136,32 @@ h3 {
   letter-spacing: 0.025em;
 }
 
+/* ── Hero animations ────────────────────────────────────────────── */
+@keyframes kenburns {
+  from { transform: scale(1) translate(0, 0); }
+  to   { transform: scale(1.08) translate(-1%, -1%); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-kenburns {
+  animation: kenburns 8s ease-in-out infinite alternate;
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.7s ease-out forwards;
+}
+
 /* ── Scrollbar utilities ────────────────────────────────────────── */
 @utility scrollbar-hide {
   scrollbar-width: none;
