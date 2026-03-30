@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/components/ui/utils';
+import { TEAPOT_IMAGES } from '@/lib/teapot-images';
 import {
   JOURNAL_ENTRIES,
   JOURNAL_CATEGORIES,
@@ -50,16 +52,21 @@ function CategoryFilter({
   );
 }
 
-function JournalCard({ entry }: { entry: JournalEntry }) {
+function JournalCard({ entry, index }: { entry: JournalEntry; index: number }) {
+  const img = TEAPOT_IMAGES[index % TEAPOT_IMAGES.length];
   return (
     <Link
       href={`/journal/${entry.slug}`}
       className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg"
     >
-      <div className="h-48 bg-muted flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-        <span className="text-5xl text-muted-foreground/30" aria-hidden="true">
-          茶
-        </span>
+      <div className="relative h-48 bg-muted overflow-hidden">
+        <Image
+          src={img.src}
+          alt={entry.title}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
       </div>
       <div className="p-5">
         <div className="flex items-center gap-2 mb-2">
@@ -101,8 +108,8 @@ export default function JournalListClient() {
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((entry) => (
-            <JournalCard key={entry.slug} entry={entry} />
+          {filtered.map((entry, i) => (
+            <JournalCard key={entry.slug} entry={entry} index={i} />
           ))}
         </div>
       )}

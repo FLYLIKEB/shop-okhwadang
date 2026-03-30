@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/components/ui/utils';
+import { TEAPOT_IMAGES } from '@/lib/teapot-images';
 
 export const metadata: Metadata = {
   title: 'Archive — 니로 산지 기록 & 공정 스토리',
@@ -249,10 +251,12 @@ function ProcessCard({ step: s }: { step: ProcessStep }) {
 
 interface ArtistCardProps {
   artist: ArtistEntry;
+  index: number;
   reversed?: boolean;
 }
 
-function ArtistCard({ artist, reversed }: ArtistCardProps) {
+function ArtistCard({ artist, index, reversed }: ArtistCardProps) {
+  const img = TEAPOT_IMAGES[index % TEAPOT_IMAGES.length];
   return (
     <article
       className={cn(
@@ -260,13 +264,15 @@ function ArtistCard({ artist, reversed }: ArtistCardProps) {
         reversed ? 'md:flex-row-reverse' : 'md:flex-row',
       )}
     >
-      {/* 플레이스홀더 이미지 */}
-      <div
-        className="w-full md:w-2/5 aspect-square rounded-lg bg-muted shrink-0 flex items-center justify-center"
-        role="img"
-        aria-label={`${artist.name} 작가 사진`}
-      >
-        <span className="text-4xl text-muted-foreground" aria-hidden="true">匠</span>
+      {/* 작가 이미지 */}
+      <div className="relative w-full md:w-2/5 aspect-square rounded-lg bg-muted shrink-0 overflow-hidden">
+        <Image
+          src={img.src}
+          alt={`${artist.name} 작가 작품`}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 40vw"
+        />
       </div>
 
       {/* 텍스트 */}
@@ -346,7 +352,7 @@ export default function ArchivePage() {
         />
         <div className="space-y-20" id="artist-heading">
           {ARTISTS.map((artist, i) => (
-            <ArtistCard key={artist.id} artist={artist} reversed={i % 2 === 1} />
+            <ArtistCard key={artist.id} artist={artist} index={i} reversed={i % 2 === 1} />
           ))}
         </div>
       </section>
