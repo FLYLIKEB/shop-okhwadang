@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { Request } from 'express';
@@ -34,7 +34,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtPayload) {
+  validate(payload: JwtPayload & { tokenType?: string }) {
+    if (payload.tokenType === 'refresh') {
+      throw new UnauthorizedException('Refresh tokens cannot be used for API access');
+    }
     return { id: payload.sub, email: payload.email, role: payload.role };
   }
 }

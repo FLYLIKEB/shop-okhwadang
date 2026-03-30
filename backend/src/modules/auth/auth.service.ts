@@ -139,14 +139,20 @@ export class AuthService {
 
   private generateTokens(user: User): TokenPair {
     const payload = { sub: user.id, email: user.email, role: user.role };
-    // accessToken uses the module-level signOptions (JWT_EXPIRES_IN default via JwtModule)
-    const accessToken = this.jwtService.sign(payload);
+    // accessToken includes tokenType: 'access' to prevent refresh tokens from being used as access tokens
+    const accessToken = this.jwtService.sign({ ...payload, tokenType: 'access' });
     // refreshToken uses longer expiry; cast to ms.StringValue required by jsonwebtoken types
     const refreshExpiresIn = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as ms.StringValue;
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+    if (!refreshSecret) {
+      this.logger.warn(
+        'JWT_REFRESH_SECRET is not set. Using JWT_SECRET as fallback. Set a separate secret in production.',
+      );
+    }
     const refreshToken = this.jwtService.sign(
       { ...payload, tokenType: 'refresh' },
       {
-        secret: process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET,
+        secret: refreshSecret ?? process.env.JWT_SECRET,
         expiresIn: refreshExpiresIn,
       },
     );
