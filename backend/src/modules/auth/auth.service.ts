@@ -7,13 +7,16 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import type ms from 'ms';
 import { User } from '../users/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
 
 export interface TokenPair {
   accessToken: string;
@@ -82,13 +85,45 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
     }
 
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const remainingMs = user.lockedUntil.getTime() - Date.now();
+      const remainingSec = Math.ceil(remainingMs / 1000);
+      throw new ForbiddenException(
+        `계정이 잠겼습니다. ${remainingSec}초 후 다시 시도하세요.`,
+      );
+    }
+
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) {
+      const attempts = user.failedLoginAttempts + 1;
+      if (attempts >= MAX_LOGIN_ATTEMPTS) {
+        const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
+        await this.userRepository.update(user.id, {
+          failedLoginAttempts: attempts,
+          lockedUntil,
+        });
+        this.logger.warn(`Account locked due to failed login attempts: ${dto.email}`);
+        throw new ForbiddenException(
+          `연속 로그인 실패로 계정이 잠겼습니다. ${Math.ceil(LOCKOUT_DURATION_MS / 1000)}초 후 다시 시도하세요.`,
+        );
+      }
+      await this.userRepository.update(user.id, {
+        failedLoginAttempts: attempts,
+      });
+      const delaySec = Math.pow(2, attempts);
+      await this.delay(delaySec * 1000);
       throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
     }
 
     if (!user.isActive) {
       throw new ForbiddenException('비활성화된 계정입니다.');
+    }
+
+    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      await this.userRepository.update(user.id, {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      });
     }
 
     const tokens = this.generateTokens(user);
@@ -165,5 +200,9 @@ export class AuthService implements OnModuleInit {
       },
     );
     return { accessToken, refreshToken };
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

@@ -37,6 +37,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.7",
+    "file-type": "^22.0.0",
     "helmet": "^8.0.0",
     "ioredis": "^5.10.1",
     "multer": "^2.1.1",

@@ -24,10 +24,13 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (!frontendUrl) {
+    throw new Error('FRONTEND_URL environment variable is required');
+  }
+  
   app.enableCors({
-    origin: process.env.FRONTEND_URL
-      ? [process.env.FRONTEND_URL, ...(process.env.FRONTEND_URLS?.split(',') || [])]
-      : ['http://localhost:5173'],
+    origin: [frontendUrl, ...(process.env.FRONTEND_URLS?.split(',') || [])],
     credentials: true,
   });
 

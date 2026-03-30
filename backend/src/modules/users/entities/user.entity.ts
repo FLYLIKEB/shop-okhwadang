@@ -40,6 +40,12 @@ export class User {
   @Column({ name: 'refresh_token', type: 'varchar', length: 500, nullable: true })
   refreshToken!: string | null;
 
+  @Column({ name: 'failed_login_attempts', type: 'int', default: 0 })
+  failedLoginAttempts!: number;
+
+  @Column({ name: 'locked_until', type: 'datetime', nullable: true })
+  lockedUntil!: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

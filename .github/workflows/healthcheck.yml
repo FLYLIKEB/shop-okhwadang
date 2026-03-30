@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Check API Health
         run: |
-          RESPONSE=$(curl -sf ${{ secrets.HEALTHCHECK_URL }} || echo '{"status":"error"}')
+          RESPONSE=$(curl -sf "${{ secrets.HEALTHCHECK_URL }}" 2>/dev/null || echo '{"status":"error"}')
           STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','error'))")
           echo "Health status: $STATUS"
           if [ "$STATUS" != "ok" ] && [ "$STATUS" != "degraded" ]; then
