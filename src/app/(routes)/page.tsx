@@ -3,7 +3,6 @@ import HeroBannerSlider from '@/components/home/HeroBannerSlider';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
 import CategoryNav from '@/components/home/CategoryNav';
 import PromotionBanner from '@/components/home/PromotionBanner';
-import LifestyleGrid from '@/components/home/LifestyleGrid';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
 import { homeApi, categoriesApi } from '@/lib/api';
 import { fetchPage } from '@/lib/api-server';
@@ -61,25 +60,21 @@ export default async function Home() {
     fetchHomeData(),
   ]);
 
-  // If template system has blocks, use them
   if (homePage) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4">
         <BlockRenderer blocks={homePage.blocks} />
       </div>
     );
   }
 
-  // Fallback to static layout
   const { featured, popular, categories } = homeData;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-12">
+    <div className="mx-auto max-w-7xl px-4">
       <HeroBannerSlider />
 
       <CategoryNav categories={categories} />
-
-      <LifestyleGrid />
 
       <FeaturedProducts
         title="추천 상품"

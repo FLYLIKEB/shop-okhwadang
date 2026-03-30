@@ -62,11 +62,11 @@ export default function ProductGridBlock({ content }: Props) {
 
   if (loading) {
     return (
-      <section className="space-y-4">
-        {title && <h2 className="text-xl font-bold">{title}</h2>}
-        <div className={cn('grid gap-4', gridCols)}>
+      <section className="py-12">
+        {title && <h2 className="text-2xl font-medium mb-8">{title}</h2>}
+        <div className={cn('grid gap-6', gridCols)}>
           {Array.from({ length: limit || 4 }).map((_, i) => (
-            <div key={i} className="h-64 animate-pulse rounded-lg bg-gray-200" />
+            <div key={i} className="h-64 animate-pulse rounded bg-muted" />
           ))}
         </div>
       </section>
@@ -76,9 +76,9 @@ export default function ProductGridBlock({ content }: Props) {
   if (products.length === 0) return null;
 
   return (
-    <section className="space-y-4">
-      {title && <h2 className="text-xl font-bold">{title}</h2>}
-      <div className={cn('grid gap-4', gridCols)}>
+    <section className="py-12">
+      {title && <h2 className="text-2xl font-medium mb-8">{title}</h2>}
+      <div className={cn('grid gap-6', gridCols)}>
         {products.map((product) => (
           <ProductCard key={product.id} {...product} />
         ))}

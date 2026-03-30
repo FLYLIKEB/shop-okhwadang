@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import Autoplay from 'embla-carousel-autoplay';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -25,7 +24,7 @@ const defaultSlides: BannerSlide[] = [
     subtitle: '새로운 컬렉션을 만나보세요',
     ctaLabel: '쇼핑하기',
     ctaUrl: '/products',
-    bgColor: 'bg-slate-100',
+    bgColor: 'bg-white',
   },
   {
     id: 2,
@@ -33,7 +32,7 @@ const defaultSlides: BannerSlide[] = [
     subtitle: '최대 50% 할인 혜택을 누리세요',
     ctaLabel: '할인 상품 보기',
     ctaUrl: '/products?sort=popular',
-    bgColor: 'bg-stone-100',
+    bgColor: 'bg-white',
   },
   {
     id: 3,
@@ -41,7 +40,7 @@ const defaultSlides: BannerSlide[] = [
     subtitle: '큐레이터가 엄선한 베스트 아이템',
     ctaLabel: '추천 상품 보기',
     ctaUrl: '/products?isFeatured=true',
-    bgColor: 'bg-zinc-100',
+    bgColor: 'bg-white',
   },
 ];
 
@@ -51,9 +50,7 @@ interface HeroBannerSliderProps {
 
 export default function HeroBannerSlider({ slides = defaultSlides }: HeroBannerSliderProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
-    Autoplay({ delay: 3000, stopOnInteraction: false }),
-  ]);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
@@ -69,13 +66,13 @@ export default function HeroBannerSlider({ slides = defaultSlides }: HeroBannerS
   if (slides.length === 0) return null;
 
   return (
-    <section role="region" aria-label="메인 배너" className="relative overflow-hidden rounded-xl">
+    <section role="region" aria-label="메인 배너" className="relative overflow-hidden">
       <div ref={emblaRef} className="overflow-hidden">
         <div className="flex">
           {slides.map((slide) => (
             <div
               key={slide.id}
-              className={`relative min-w-full flex items-center justify-center ${slide.bgColor} py-20 px-8`}
+              className={`relative min-w-full flex items-center justify-center ${slide.bgColor} py-24 px-8`}
             >
               {slide.imageUrl && (
                 <Image
@@ -86,15 +83,15 @@ export default function HeroBannerSlider({ slides = defaultSlides }: HeroBannerS
                   priority
                 />
               )}
-              <div className="relative text-center space-y-4 max-w-xl">
-                <h2 className="text-3xl font-bold tracking-tight">{slide.title}</h2>
+              <div className="relative text-center space-y-6 max-w-xl">
+                <h2 className="text-4xl font-medium tracking-tight text-foreground">{slide.title}</h2>
                 {slide.subtitle && (
-                  <p className="text-muted-foreground text-lg">{slide.subtitle}</p>
+                  <p className="text-muted-foreground text-base">{slide.subtitle}</p>
                 )}
                 {slide.ctaLabel && slide.ctaUrl && (
                   <Link
                     href={slide.ctaUrl}
-                    className="inline-block rounded-md bg-foreground px-6 py-2.5 text-sm font-semibold text-background hover:opacity-90 transition-opacity"
+                    className="inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
                   >
                     {slide.ctaLabel}
                   </Link>
@@ -108,28 +105,27 @@ export default function HeroBannerSlider({ slides = defaultSlides }: HeroBannerS
       <button
         onClick={scrollPrev}
         aria-label="이전 배너"
-        className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background transition-colors"
+        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-foreground hover:opacity-60 transition-opacity"
       >
-        <ChevronLeft className="h-5 w-5" />
+        <ChevronLeft className="h-6 w-6" />
       </button>
       <button
         onClick={scrollNext}
         aria-label="다음 배너"
-        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background transition-colors"
+        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-foreground hover:opacity-60 transition-opacity"
       >
-        <ChevronRight className="h-5 w-5" />
+        <ChevronRight className="h-6 w-6" />
       </button>
 
-      {/* Dot indicator */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
         {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => scrollTo(i)}
             aria-label={`${i + 1}번 배너로 이동`}
             className={cn(
-              'h-2 rounded-full transition-all',
-              i === selectedIndex ? 'w-6 bg-foreground' : 'w-2 bg-foreground/30',
+              'h-0.5 transition-all',
+              i === selectedIndex ? 'w-8 bg-foreground' : 'w-4 bg-foreground/30',
             )}
           />
         ))}

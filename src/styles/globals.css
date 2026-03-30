@@ -8,13 +8,13 @@
 
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
-  /* Color: 옥화당 팔레트 */
-  --color-bg: #F8F5F0;
-  --color-text: #1C1710;
+  /* Color: 미니멀 화이트 팔레트 */
+  --color-bg: #FFFFFF;
+  --color-text: #1a1a1a;
   --color-accent-zuni: #8B4513;
   --color-accent-tea: #4A6741;
   --color-secondary: #C4A882;
-  --color-surface: #EEEBE4;
+  --color-surface: #F5F5F5;
   --color-accent-danni: #C4A882;
 
   /* Typography */
@@ -29,29 +29,29 @@
   --color-primary: var(--db-color-primary, #8B4513);
   --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
   --color-secondary: var(--db-color-secondary, #C4A882);
-  --color-secondary-foreground: var(--db-color-secondary-foreground, #1C1710);
+  --color-secondary-foreground: var(--db-color-secondary-foreground, #1a1a1a);
   --color-destructive: var(--db-color-destructive, #ef4444);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #EEEBE4);
-  --color-muted-foreground: var(--db-color-muted-foreground, #6b6254);
-  --color-accent: var(--db-color-accent, #EEEBE4);
-  --color-accent-foreground: var(--db-color-accent-foreground, #1C1710);
-  --color-background: var(--db-color-background, #F8F5F0);
-  --color-foreground: var(--db-color-foreground, #1C1710);
-  --color-card: var(--db-color-card, #EEEBE4);
-  --color-card-foreground: var(--db-color-card-foreground, #1C1710);
-  --color-border: var(--db-color-border, #D8D4CC);
-  --color-input: var(--db-color-input, #D8D4CC);
+  --color-muted: var(--db-color-muted, #f5f5f5);
+  --color-muted-foreground: var(--db-color-muted-foreground, #6b6b6b);
+  --color-accent: var(--db-color-accent, #f5f5f5);
+  --color-accent-foreground: var(--db-color-accent-foreground, #1a1a1a);
+  --color-background: var(--db-color-background, #ffffff);
+  --color-foreground: var(--db-color-foreground, #1a1a1a);
+  --color-card: var(--db-color-card, #ffffff);
+  --color-card-foreground: var(--db-color-card-foreground, #1a1a1a);
+  --color-border: var(--db-color-border, #e5e5e5);
+  --color-input: var(--db-color-input, #e5e5e5);
   --color-ring: var(--db-color-ring, #8B4513);
-  --radius-sm: var(--db-radius-sm, 0.25rem);
-  --radius-md: var(--db-radius-md, 0.375rem);
+  --radius-sm: var(--db-radius-sm, 0.125rem);
+  --radius-md: var(--db-radius-md, 0.25rem);
   --radius-lg: var(--db-radius-lg, 0.5rem);
 
   /* ── 브랜드 확장 토큰 ── */
   --color-zuni: #8B4513;
   --color-tea: #4A6741;
   --color-danni: #C4A882;
-  --color-surface: #EEEBE4;
+  --color-surface: #f5f5f5;
 
   /* ── 타이포그래피 토큰 ── */
   --font-display-ko: 'Noto Serif KR', 'Georgia', serif;
@@ -65,21 +65,25 @@ body {
   font-family: var(--font-body);
   color: var(--color-foreground);
   background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1 {
   font-family: var(--font-display-ko);
-  font-weight: 900;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 h2 {
   font-family: var(--font-display-ko);
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 h3 {
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* ── 니로(泥料)별 태그 컬러 시스템 ────────────────────────────── */

@@ -40,7 +40,7 @@ export default function CategoryNavBlock({ content }: Props) {
     return (
       <div className="flex gap-4 overflow-x-auto">
         {Array.from({ length: category_ids.length || 4 }).map((_, i) => (
-          <div key={i} className="h-16 w-24 shrink-0 animate-pulse rounded-lg bg-gray-200" />
+          <div key={i} className="h-10 w-20 shrink-0 animate-pulse rounded-full bg-muted" />
         ))}
       </div>
     );
@@ -55,13 +55,13 @@ export default function CategoryNavBlock({ content }: Props) {
           <Link
             key={cat.id}
             href={`/products?categoryId=${cat.id}`}
-            className="group relative h-32 w-32 overflow-hidden rounded-xl bg-gray-100"
+            className="group relative h-32 w-32 overflow-hidden bg-muted"
           >
             <Image
               src={`/images/categories/${cat.slug}.jpg`}
               alt={cat.name}
               fill
-              className="object-cover transition-transform group-hover:scale-105"
+              className="object-cover transition-opacity group-hover:opacity-80"
             />
             <span className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent p-2 text-sm font-medium text-white">
               {cat.name}
@@ -72,48 +72,18 @@ export default function CategoryNavBlock({ content }: Props) {
     );
   }
 
-  if (template === 'icon') {
-    return (
-      <nav className="flex flex-wrap gap-3">
-        {categories.map((cat) => (
-          <Link
-            key={cat.id}
-            href={`/products?categoryId=${cat.id}`}
-            className="flex flex-col items-center gap-1 rounded-lg bg-gray-50 px-4 py-3 text-sm hover:bg-gray-100"
-          >
-            <span className="text-2xl" role="img" aria-label={cat.name}>
-              {getCategoryIcon(cat.slug)}
-            </span>
-            <span>{cat.name}</span>
-          </Link>
-        ))}
-      </nav>
-    );
-  }
-
-  // Default: text template
+  // Default: text template - clean and minimal
   return (
-    <nav className="flex flex-wrap gap-2">
+    <nav className="flex flex-wrap gap-3">
       {categories.map((cat) => (
         <Link
           key={cat.id}
           href={`/products?categoryId=${cat.id}`}
-          className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium hover:border-gray-400 hover:bg-gray-50"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
         >
           {cat.name}
         </Link>
       ))}
     </nav>
   );
-}
-
-function getCategoryIcon(slug: string): string {
-  const iconMap: Record<string, string> = {
-    top: '\uD83D\uDC55',
-    bottom: '\uD83D\uDC56',
-    outer: '\uD83E\uDDE5',
-    shoes: '\uD83D\uDC5F',
-    accessories: '\uD83D\uDC5C',
-  };
-  return iconMap[slug] ?? '\uD83D\uDCE6';
 }

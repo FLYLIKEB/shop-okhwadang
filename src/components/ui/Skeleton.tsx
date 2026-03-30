@@ -6,7 +6,7 @@ interface SkeletonLineProps {
 }
 
 export function SkeletonLine({ width = 'w-full', className }: SkeletonLineProps) {
-  return <div className={cn('h-4 animate-pulse rounded bg-muted', width, className)} />;
+  return <div className={cn('h-3 animate-pulse rounded bg-muted', width, className)} />;
 }
 
 interface SkeletonBoxProps {
@@ -21,9 +21,9 @@ export function SkeletonBox({ width = 'w-full', height = 'h-24', className }: Sk
 
 export function CardSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card">
+    <div className="block">
       <div className="aspect-square animate-pulse bg-muted" />
-      <div className="flex flex-col gap-2 p-3">
+      <div className="mt-3 space-y-2">
         <SkeletonLine width="w-3/4" />
         <SkeletonLine width="w-1/2" />
       </div>
