@@ -58,11 +58,19 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     categories = [];
   }
 
+  const selectedCategory = categoryId
+    ? categories.find((c) => c.id === categoryId || c.children?.some((child) => child.id === categoryId))
+    : null;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <h1 className="text-xl font-bold text-foreground md:text-2xl">
-        {q ? `"${q}" 검색 결과` : isFeatured ? '추천 상품' : '상품 목록'}
+        {q ? `"${q}" 검색 결과` : isFeatured ? '추천 상품' : categoryId && selectedCategory ? selectedCategory.name : '상품 목록'}
       </h1>
+
+      {selectedCategory?.description && (
+        <p className="mt-2 text-sm text-muted-foreground">{selectedCategory.description}</p>
+      )}
 
       {/* 모바일 필터 바 */}
       <div className="mt-4 md:hidden">
