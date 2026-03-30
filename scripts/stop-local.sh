@@ -16,7 +16,7 @@ NC='\033[0m'
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 
-echo -e "${BLUE}🛑 Commerce Demo — 로컬 서버 종료 중...${NC}"
+echo -e "${BLUE}🛑 옥화당 — 로컬 서버 종료 중...${NC}"
 echo ""
 
 # 백엔드 종료 (포트 3000)

@@ -22,7 +22,7 @@
 ## 프로젝트 구조
 
 ```
-commerce-demo/
+shop-okhwadang/
 ├── src/                        # 프론트엔드 (Next.js 15 App Router)
 │   ├── app/                    # Next.js App Router
 │   │   ├── layout.tsx          # 루트 레이아웃

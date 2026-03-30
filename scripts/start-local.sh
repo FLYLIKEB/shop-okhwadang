@@ -28,7 +28,7 @@ if [ -z "$LOCAL_DATABASE_URL" ] && [ -n "$DATABASE_URL" ]; then
     export LOCAL_DATABASE_URL
 fi
 
-echo -e "${BLUE}🚀 Commerce Demo — 로컬 개발 환경 시작 중...${NC}"
+echo -e "${BLUE}🚀 옥화당 — 로컬 개발 환경 시작 중...${NC}"
 echo ""
 
 # ──────────────────────────────────────────────
@@ -159,7 +159,7 @@ done
 # 6. 최종 상태 출력
 # ──────────────────────────────────────────────
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${GREEN}✅ Commerce Demo — 모든 서버가 실행되었습니다!${NC}"
+echo -e "${GREEN}✅ 옥화당 — 모든 서버가 실행되었습니다!${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "${BLUE}📍 접속 정보:${NC}"

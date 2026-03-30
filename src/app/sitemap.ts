@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { fetchProducts } from '@/lib/api-server';
 
-const SITE_URL = process.env.SITE_URL ?? 'https://commerce-demo.vercel.app';
+const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [

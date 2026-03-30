@@ -9,13 +9,13 @@ import '@/styles/globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Commerce Demo',
-    template: '%s | Commerce Demo',
+    default: '옥화당',
+    template: '%s | 옥화당',
   },
-  description: 'D2C 쇼핑몰 보일러플레이트',
-  metadataBase: new URL(process.env.SITE_URL ?? 'https://commerce-demo.vercel.app'),
+  description: '자사호·보이차·다구 전문 쇼핑몰',
+  metadataBase: new URL(process.env.SITE_URL ?? 'https://shop-okhwadang.com'),
   openGraph: {
-    siteName: 'Commerce Demo',
+    siteName: '옥화당',
     locale: 'ko_KR',
     type: 'website',
   },

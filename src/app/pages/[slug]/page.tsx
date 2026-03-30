@@ -13,11 +13,11 @@ export async function generateMetadata({ params }: Props) {
   try {
     const page = await pagesApi.getBySlug(slug);
     return {
-      title: `${page.title} — Commerce Demo`,
+      title: `${page.title} — 옥화당`,
       description: page.title,
     };
   } catch {
-    return { title: 'Commerce Demo' };
+    return { title: '옥화당' };
   }
 }
 
