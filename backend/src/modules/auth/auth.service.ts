@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   ForbiddenException,
+  BadRequestException,
   Logger,
   OnModuleInit,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import { LoginDto } from './dto/login.dto';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};'":\|,.<>\/?]).{8,}$/;
 
 export interface TokenPair {
   accessToken: string;
@@ -51,6 +53,10 @@ export class AuthService implements OnModuleInit {
   }
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
+    if (!PASSWORD_REGEX.test(dto.password)) {
+      throw new BadRequestException('비밀번호는 문자, 숫자, 특수문자를 포함해야 합니다.');
+    }
+
     const existing = await this.userRepository.findOne({
       where: { email: dto.email },
     });
