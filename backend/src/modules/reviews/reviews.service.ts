@@ -84,13 +84,13 @@ export class ReviewsService {
 
     switch (sort) {
       case 'rating_high':
-        qb.orderBy('review.rating', 'DESC').addOrderBy('review.created_at', 'DESC');
+        qb.orderBy('review.rating', 'DESC').addOrderBy('review.createdAt', 'DESC');
         break;
       case 'rating_low':
-        qb.orderBy('review.rating', 'ASC').addOrderBy('review.created_at', 'DESC');
+        qb.orderBy('review.rating', 'ASC').addOrderBy('review.createdAt', 'DESC');
         break;
       default:
-        qb.orderBy('review.created_at', 'DESC');
+        qb.orderBy('review.createdAt', 'DESC');
     }
 
     const [reviews, total] = await qb
