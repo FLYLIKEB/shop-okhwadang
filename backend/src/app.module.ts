@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import * as fs from 'fs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -34,7 +35,9 @@ import { RolesGuard } from './common/guards/roles.guard';
       url: process.env.DATABASE_URL || process.env.LOCAL_DATABASE_URL,
       charset: 'utf8mb4',
       synchronize: process.env.DB_SYNCHRONIZE === 'true',
-      ssl: process.env.DB_SSL_ENABLED === 'true' ? { rejectUnauthorized: false } : false,
+      ssl: process.env.DB_SSL_ENABLED === 'true'
+        ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH!) }
+        : false,
       autoLoadEntities: true,
       migrations: ['dist/database/migrations/*.js'],
     }),
