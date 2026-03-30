@@ -24,6 +24,8 @@ interface ProductsPageProps {
     price_min?: string;
     price_max?: string;
     isFeatured?: string;
+    clayType?: string;
+    shape?: string;
   }>;
 }
 

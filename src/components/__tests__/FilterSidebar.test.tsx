@@ -32,7 +32,7 @@ describe('FilterSidebar', () => {
   it('renders 전체 and category names', async () => {
     const { default: FilterSidebar } = await import('@/components/filters/FilterSidebar');
     render(<FilterSidebar categories={mockCategories} />);
-    expect(screen.getByText('전체')).toBeInTheDocument();
+    expect(screen.getAllByText('전체').length).toBeGreaterThan(0);
     expect(screen.getByText('의류')).toBeInTheDocument();
     expect(screen.getByText('신발')).toBeInTheDocument();
   });
