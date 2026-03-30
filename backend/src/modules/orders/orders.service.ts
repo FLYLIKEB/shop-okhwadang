@@ -3,11 +3,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
+import { randomBytes } from 'crypto';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
+import { PointHistory } from '../coupons/entities/point-history.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 @Injectable()
@@ -25,14 +27,29 @@ export class OrdersService {
 
   private generateOrderNumber(): string {
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const random = Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    const random = randomBytes(6).toString('base64url').slice(0, 8).toUpperCase();
     return `ORD-${date}-${random}`;
+  }
+
+  private async getUserPointBalance(userId: number): Promise<number> {
+    const latest = await this.pointHistoryRepo.findOne({
+      where: { userId },
+      order: { createdAt: 'DESC', id: 'DESC' },
+    });
+    return latest ? latest.balance : 0;
   }
 
   async create(userId: number, dto: CreateOrderDto): Promise<Order> {
     if (!dto.items || dto.items.length === 0) {
       throw new BadRequestException('주문 항목이 없습니다.');
+    }
+
+    const pointsToUse = dto.pointsUsed ?? 0;
+    if (pointsToUse > 0) {
+      const balance = await this.getUserPointBalance(userId);
+      if (pointsToUse > balance) {
+        throw new BadRequestException('적립금이 부족합니다.');
+      }
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -119,9 +136,23 @@ export class OrdersService {
         address: dto.address,
         addressDetail: dto.addressDetail ?? null,
         memo: dto.memo ?? null,
-        pointsUsed: dto.pointsUsed ?? 0,
+        pointsUsed: pointsToUse,
       });
       const savedOrder = await queryRunner.manager.save(Order, order);
+
+      if (pointsToUse > 0) {
+        const currentBalance = await this.getUserPointBalance(userId);
+        const newBalance = currentBalance - pointsToUse;
+        const pointHistory = queryRunner.manager.create(PointHistory, {
+          userId,
+          type: 'spend',
+          amount: -pointsToUse,
+          balance: newBalance,
+          orderId: Number(savedOrder.id),
+          description: `주문 사용 (${savedOrder.orderNumber})`,
+        });
+        await queryRunner.manager.save(PointHistory, pointHistory);
+      }
 
       const itemEntities = orderItems.map((item) =>
         queryRunner.manager.create(OrderItem, { ...item, orderId: Number(savedOrder.id) }),
