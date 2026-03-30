@@ -684,6 +684,38 @@ export interface TextContentContent {
   html: string;
 }
 
+export interface SplitContentContent {
+  title: string;
+  subtitle?: string;
+  description?: string;
+  image_url: string;
+  image_position?: 'left' | 'right';
+  cta_text?: string;
+  cta_url?: string;
+  template?: 'default' | 'large' | 'compact';
+}
+
+export interface NewsletterSignupContent {
+  title: string;
+  description?: string;
+  placeholder?: string;
+  button_text?: string;
+  template?: 'default' | 'minimal' | 'with_image';
+  background_image?: string;
+}
+
+export interface ImageGalleryContent {
+  title?: string;
+  images: Array<{
+    url: string;
+    alt?: string;
+    caption?: string;
+    link_url?: string;
+  }>;
+  template?: 'grid' | 'masonry' | 'carousel';
+  columns?: 2 | 3 | 4;
+}
+
 export const pagesApi = {
   getBySlug: (slug: string) => apiClient.get<Page>(`/pages/${slug}`),
   getAll: () => apiClient.get<Page[]>('/pages'),

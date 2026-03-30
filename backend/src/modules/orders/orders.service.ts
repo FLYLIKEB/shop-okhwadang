@@ -17,6 +17,8 @@ export class OrdersService {
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
+    @InjectRepository(PointHistory)
+    private readonly pointHistoryRepo: Repository<PointHistory>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
