@@ -61,9 +61,15 @@ export default async function Home() {
   ]);
 
   if (homePage) {
+    const blocks = homePage.blocks ?? [];
+    const heroBlocks = blocks.filter((b) => b.type === 'hero_banner');
+    const restBlocks = blocks.filter((b) => b.type !== 'hero_banner');
     return (
-      <div className="mx-auto max-w-7xl px-4">
-        <BlockRenderer blocks={homePage.blocks} />
+      <div>
+        {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
+        <div className="mx-auto max-w-7xl px-4">
+          <BlockRenderer blocks={restBlocks} />
+        </div>
       </div>
     );
   }

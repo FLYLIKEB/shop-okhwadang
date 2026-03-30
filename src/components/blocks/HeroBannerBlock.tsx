@@ -37,18 +37,30 @@ export default function HeroBannerBlock({ content }: Props) {
 
   if (template === 'fullscreen') {
     return (
-      <section className="relative flex min-h-96 items-center justify-center overflow-hidden bg-white">
-        {image_url && <Image src={image_url} alt={title} fill className="object-cover" />}
-        <div className="relative z-10 text-center px-8">
-          <h2 className="text-3xl font-medium md:text-5xl">{title}</h2>
-          {subtitle && <p className="mt-4 text-lg text-muted-foreground">{subtitle}</p>}
+      <section className="relative flex h-[60vh] min-h-[400px] md:h-[80vh] items-center justify-center overflow-hidden bg-neutral-900">
+        {image_url && (
+          <Image
+            src={image_url}
+            alt={title}
+            fill
+            className="object-cover object-center animate-kenburns"
+            priority
+            sizes="100vw"
+          />
+        )}
+        {image_url && <div className="absolute inset-0 bg-black/45" />}
+        <div className={`relative z-10 text-center px-8 ${image_url ? 'text-white' : ''}`}>
+          <h2 className="animate-fade-in-up text-3xl font-medium md:text-5xl" style={{ animationDelay: '0.2s' }}>{title}</h2>
+          {subtitle && <p className="animate-fade-in-up mt-4 text-lg opacity-80" style={{ animationDelay: '0.4s' }}>{subtitle}</p>}
           {cta_text && cta_url && (
-            <Link
-              href={cta_url}
-              className="mt-6 inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
-            >
-              {cta_text}
-            </Link>
+            <div className="animate-fade-in-up mt-8" style={{ animationDelay: '0.6s' }}>
+              <Link
+                href={cta_url}
+                className="inline-block border border-current px-8 py-3 text-sm font-medium tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+              >
+                {cta_text}
+              </Link>
+            </div>
           )}
         </div>
       </section>
