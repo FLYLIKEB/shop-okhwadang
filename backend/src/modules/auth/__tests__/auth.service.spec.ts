@@ -167,4 +167,43 @@ describe('AuthService', () => {
       expect(mockUserRepository.update).toHaveBeenCalledWith(1, { refreshToken: null });
     });
   });
+
+  describe('generateTokens (JWT_REFRESH_SECRET)', () => {
+    it('JWT_REFRESH_SECRET 미설정 시 경고 로그 출력', async () => {
+      const originalRefreshSecret = process.env.JWT_REFRESH_SECRET;
+      delete process.env.JWT_REFRESH_SECRET;
+
+      const hashed = await bcrypt.hash('Test1234!', 10);
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed }));
+      mockUserRepository.update.mockResolvedValue(undefined);
+
+      const warnSpy = jest.spyOn(service['logger'], 'warn');
+
+      await service.login({ email: 'test@example.com', password: 'Test1234!' });
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('JWT_REFRESH_SECRET is not set'),
+      );
+
+      process.env.JWT_REFRESH_SECRET = originalRefreshSecret;
+    });
+
+    it('JWT_REFRESH_SECRET 설정 시 경고 로그 미출력', async () => {
+      process.env.JWT_REFRESH_SECRET = 'separate-refresh-secret';
+
+      const hashed = await bcrypt.hash('Test1234!', 10);
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed }));
+      mockUserRepository.update.mockResolvedValue(undefined);
+
+      const warnSpy = jest.spyOn(service['logger'], 'warn');
+
+      await service.login({ email: 'test@example.com', password: 'Test1234!' });
+
+      expect(warnSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('JWT_REFRESH_SECRET is not set'),
+      );
+
+      delete process.env.JWT_REFRESH_SECRET;
+    });
+  });
 });
