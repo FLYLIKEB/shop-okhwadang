@@ -30,7 +30,7 @@ describe('MobileBottomNav', () => {
   it('바텀 네비 렌더링 - 5개 탭 표시', () => {
     render(<MobileBottomNav />);
     expect(screen.getByRole('link', { name: '홈' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '검색' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '컬렉션' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Archive' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '장바구니' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '마이' })).toBeInTheDocument();
