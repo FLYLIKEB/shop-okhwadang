@@ -39,7 +39,7 @@ describe('useNavigation', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.items).toHaveLength(2);
+    expect(result.current.items).toHaveLength(3);
     expect(result.current.items[0].label).toBe('상품목록');
   });
 
@@ -52,7 +52,7 @@ describe('useNavigation', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.items).toHaveLength(2);
+    expect(result.current.items).toHaveLength(3);
     expect(result.current.items[0].label).toBe('상품목록');
   });
 
