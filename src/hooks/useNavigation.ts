@@ -15,6 +15,16 @@ const STATIC_GNB: NavigationItem[] = [
     parent_id: null,
     children: [],
   },
+  {
+    id: -1,
+    group: 'gnb',
+    label: '장인',
+    url: '/artist',
+    sort_order: 1,
+    is_active: true,
+    parent_id: null,
+    children: [],
+  },
 ];
 
 const STATIC_FOOTER: NavigationItem[] = [];
