@@ -3,7 +3,6 @@ import Image from 'next/image';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/common/PriceDisplay';
-import WishlistButton from '@/components/WishlistButton';
 
 interface ProductCardProps {
   id: number;
@@ -30,8 +29,8 @@ export default function ProductCard({
     <Link
       href={`/products/${id}`}
       className={cn(
-        'group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-shadow hover:shadow-md',
-        isSoldout && 'opacity-75',
+        'group block',
+        isSoldout && 'opacity-60',
       )}
     >
       <div className="relative aspect-square overflow-hidden bg-muted">
@@ -41,7 +40,7 @@ export default function ProductCard({
             alt={name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-cover transition-transform group-hover:scale-105"
+            className="object-cover"
             loading="lazy"
           />
         ) : (
@@ -50,20 +49,15 @@ export default function ProductCard({
           </div>
         )}
         {isSoldout && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <span className="rounded-md bg-black/70 px-3 py-1 text-sm font-semibold text-white">
-              품절
-            </span>
+          <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+            <span className="text-sm font-medium text-foreground">품절</span>
           </div>
         )}
-        <div className="absolute right-1 top-1">
-          <WishlistButton productId={id} className="bg-white/80 hover:bg-white" />
-        </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <h3 className="line-clamp-2 text-sm font-medium text-card-foreground">{name}</h3>
-        <div className="mt-auto">
+      <div className="mt-3">
+        <h3 className="text-sm font-medium text-foreground line-clamp-2">{name}</h3>
+        <div className="mt-1">
           <PriceDisplay price={price} salePrice={salePrice} />
         </div>
       </div>

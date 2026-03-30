@@ -27,7 +27,9 @@ export interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
 function generateState(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
