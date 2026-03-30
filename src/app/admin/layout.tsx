@@ -11,6 +11,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Server-side auth check is handled by middleware.ts
+  // This client-side check is defense-in-depth for role verification
   useEffect(() => {
     if (isLoading) return;
     if (!user) {
