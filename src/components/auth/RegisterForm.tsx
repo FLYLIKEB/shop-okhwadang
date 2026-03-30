@@ -19,6 +19,8 @@ function validatePassword(password: string): string | null {
   if (password.length < 8) return '비밀번호는 8자 이상이어야 합니다.';
   if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password))
     return '비밀번호는 영문과 숫자를 모두 포함해야 합니다.';
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password))
+    return '비밀번호는 특수문자를 포함해야 합니다.';
   return null;
 }
 
@@ -129,7 +131,7 @@ export default function RegisterForm() {
               'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               errors.password ? 'border-destructive' : 'border-input',
             )}
-            placeholder="영문+숫자 8자 이상"
+            placeholder="영문+숫자+특수문자 8자 이상"
           />
           {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
         </div>
