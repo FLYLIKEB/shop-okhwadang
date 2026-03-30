@@ -47,6 +47,7 @@ const DUMMY_PRODUCT: ProductDetail = {
     id: 1,
     name: '자사호',
     slug: 'yixing-teapot',
+    description: null,
     parentId: null,
   },
   options: [

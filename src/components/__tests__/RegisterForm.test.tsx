@@ -103,12 +103,12 @@ describe('RegisterForm', () => {
 
     await user.type(screen.getByLabelText('이름'), '홍길동');
     await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-    await user.type(screen.getByLabelText('비밀번호'), 'password1');
-    await user.type(screen.getByLabelText('비밀번호 확인'), 'password1');
+    await user.type(screen.getByLabelText('비밀번호'), 'password1!');
+    await user.type(screen.getByLabelText('비밀번호 확인'), 'password1!');
     await user.click(screen.getByRole('button', { name: '회원가입' }));
 
     await waitFor(() => {
-      expect(mockRegister).toHaveBeenCalledWith('test@example.com', 'password1', '홍길동');
+      expect(mockRegister).toHaveBeenCalledWith('test@example.com', 'password1!', '홍길동');
     });
   });
 });
