@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import type { Category } from '@/lib/api';
 
 interface CategoryNavProps {
@@ -14,18 +17,23 @@ function SkeletonCard() {
 }
 
 export default function CategoryNav({ categories, isLoading = false }: CategoryNavProps) {
+  const { ref, visible } = useScrollAnimation<HTMLElement>();
+
   if (!isLoading && categories.length === 0) return null;
 
   return (
-    <section className="py-10">
+    <section ref={ref} className="py-10">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-          : categories.map((cat) => (
+          : categories.map((cat, i) => (
               <Link
                 key={cat.id}
                 href={`/products?categoryId=${cat.id}`}
-                className="group relative block aspect-[4/3] overflow-hidden rounded-sm bg-muted"
+                className={`group relative block aspect-[4/3] overflow-hidden rounded-sm bg-muted transition-all duration-600 ease-out ${
+                  visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+                }`}
+                style={{ transitionDelay: visible ? `${i * 100}ms` : undefined }}
               >
                 <Image
                   src={`/images/categories/${cat.slug}.jpg`}
