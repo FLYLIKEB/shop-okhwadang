@@ -135,3 +135,11 @@ h3 {
   font-weight: 400;
   letter-spacing: 0.025em;
 }
+
+/* ── Scrollbar utilities ────────────────────────────────────────── */
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
