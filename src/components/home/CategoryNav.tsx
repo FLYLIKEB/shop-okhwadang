@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Category } from '@/lib/api';
 
 interface CategoryNavProps {
@@ -6,12 +7,9 @@ interface CategoryNavProps {
   isLoading?: boolean;
 }
 
-function SkeletonItem() {
+function SkeletonCard() {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
-      <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-    </div>
+    <div className="relative aspect-[4/3] w-full animate-pulse overflow-hidden rounded-sm bg-muted" />
   );
 }
 
@@ -19,17 +17,31 @@ export default function CategoryNav({ categories, isLoading = false }: CategoryN
   if (!isLoading && categories.length === 0) return null;
 
   return (
-    <section className="border-y border-border py-6">
-      <div className="flex gap-8 overflow-x-auto pb-2 justify-center">
+    <section className="py-10">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {isLoading
-          ? Array.from({ length: 6 }).map((_, i) => <SkeletonItem key={i} />)
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
           : categories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/products?categoryId=${cat.id}`}
-                className="shrink-0 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+                className="group relative block aspect-[4/3] overflow-hidden rounded-sm bg-muted"
               >
-                {cat.name}
+                <Image
+                  src={`/images/categories/${cat.slug}.jpg`}
+                  alt={cat.name}
+                  fill
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                  sizes="(max-width: 640px) 50vw, 25vw"
+                />
+                {/* dark overlay on hover */}
+                <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/30" />
+                {/* title */}
+                <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 via-black/10 to-transparent p-4">
+                  <span className="text-sm font-medium tracking-wide text-white sm:text-base">
+                    {cat.name}
+                  </span>
+                </div>
               </Link>
             ))}
       </div>
