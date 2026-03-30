@@ -7,6 +7,7 @@ vi.mock('@/lib/api', () => ({
   authApi: {
     login: vi.fn(),
     register: vi.fn(),
+    me: vi.fn(),
     profile: vi.fn(),
     refresh: vi.fn(),
     logout: vi.fn(),
@@ -23,8 +24,6 @@ import { authApi } from '@/lib/api';
 
 const mockUser: AuthUser = { id: 1, email: 'test@example.com', name: '홍길동', role: 'user' };
 const mockTokenResponse: AuthTokenResponse = {
-  accessToken: 'access-token',
-  refreshToken: 'refresh-token',
   user: mockUser,
 };
 
@@ -61,61 +60,52 @@ function renderWithProvider(ui: React.ReactNode) {
 describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
     sessionStorage.clear();
   });
 
   it('isLoading starts true then becomes false after init', async () => {
-    vi.mocked(authApi.profile).mockResolvedValue(mockUser);
-    // No token in localStorage — skips profile call
+    vi.mocked(authApi.me).mockResolvedValue(mockUser);
     renderWithProvider(<AuthDisplay />);
-    // After async init completes
     await waitFor(() => {
       expect(screen.getByTestId('loading').textContent).toBe('idle');
     });
   });
 
-  it('loads user from profile on mount when accessToken exists', async () => {
-    localStorage.setItem('accessToken', 'existing-token');
-    vi.mocked(authApi.profile).mockResolvedValue(mockUser);
+  it('loads user from /auth/me on mount (cookie-based)', async () => {
+    vi.mocked(authApi.me).mockResolvedValue(mockUser);
     renderWithProvider(<AuthDisplay />);
     await waitFor(() => {
       expect(screen.getByTestId('user').textContent).toBe('test@example.com');
     });
-    expect(authApi.profile).toHaveBeenCalledTimes(1);
+    expect(authApi.me).toHaveBeenCalledTimes(1);
   });
 
-  it('refreshes token when profile returns 401', async () => {
-    localStorage.setItem('accessToken', 'expired-token');
-    localStorage.setItem('refreshToken', 'refresh-token');
-    vi.mocked(authApi.profile)
+  it('refreshes token when me() fails, then retries', async () => {
+    vi.mocked(authApi.me)
       .mockRejectedValueOnce(new Error('Unauthorized'))
       .mockResolvedValueOnce(mockUser);
-    vi.mocked(authApi.refresh).mockResolvedValue({
-      accessToken: 'new-access-token',
-      refreshToken: 'new-refresh-token',
-    });
+    vi.mocked(authApi.refresh).mockResolvedValue({});
     renderWithProvider(<AuthDisplay />);
     await waitFor(() => {
       expect(screen.getByTestId('user').textContent).toBe('test@example.com');
     });
-    expect(localStorage.getItem('accessToken')).toBe('new-access-token');
+    expect(authApi.refresh).toHaveBeenCalledTimes(1);
+    expect(authApi.me).toHaveBeenCalledTimes(2);
   });
 
-  it('clears tokens when refresh also fails', async () => {
-    localStorage.setItem('accessToken', 'expired-token');
-    localStorage.setItem('refreshToken', 'bad-refresh-token');
-    vi.mocked(authApi.profile).mockRejectedValue(new Error('Unauthorized'));
+  it('sets user to null when both me() and refresh fail', async () => {
+    vi.mocked(authApi.me).mockRejectedValue(new Error('Unauthorized'));
     vi.mocked(authApi.refresh).mockRejectedValue(new Error('Refresh failed'));
     renderWithProvider(<AuthDisplay />);
     await waitFor(() => {
       expect(screen.getByTestId('loading').textContent).toBe('idle');
     });
-    expect(localStorage.getItem('accessToken')).toBeNull();
     expect(screen.getByTestId('authenticated').textContent).toBe('no');
   });
 
-  it('login success sets user and stores tokens', async () => {
+  it('login success sets user', async () => {
+    vi.mocked(authApi.me).mockRejectedValue(new Error('Unauthorized'));
+    vi.mocked(authApi.refresh).mockRejectedValue(new Error('Refresh failed'));
     vi.mocked(authApi.login).mockResolvedValue(mockTokenResponse);
     const { getByRole } = renderWithProvider(
       <>
@@ -132,11 +122,11 @@ describe('AuthContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('user').textContent).toBe('test@example.com');
     });
-    expect(localStorage.getItem('accessToken')).toBe('access-token');
-    expect(localStorage.getItem('refreshToken')).toBe('refresh-token');
   });
 
-  it('login failure throws error', async () => {
+  it('login failure does not set user', async () => {
+    vi.mocked(authApi.me).mockRejectedValue(new Error('Unauthorized'));
+    vi.mocked(authApi.refresh).mockRejectedValue(new Error('Refresh failed'));
     vi.mocked(authApi.login).mockRejectedValue(new Error('이메일 또는 비밀번호가 올바르지 않습니다.'));
     const { getByRole } = renderWithProvider(
       <>
@@ -155,9 +145,8 @@ describe('AuthContext', () => {
     });
   });
 
-  it('logout clears user and tokens', async () => {
-    localStorage.setItem('accessToken', 'token');
-    vi.mocked(authApi.profile).mockResolvedValue(mockUser);
+  it('logout clears user', async () => {
+    vi.mocked(authApi.me).mockResolvedValue(mockUser);
     vi.mocked(authApi.logout).mockResolvedValue({ message: 'ok' });
 
     const { getByRole } = renderWithProvider(
@@ -175,10 +164,11 @@ describe('AuthContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('user').textContent).toBe('none');
     });
-    expect(localStorage.getItem('accessToken')).toBeNull();
   });
 
-  it('register success does not auto-login (redirects to login page)', async () => {
+  it('register does not auto-login', async () => {
+    vi.mocked(authApi.me).mockRejectedValue(new Error('Unauthorized'));
+    vi.mocked(authApi.refresh).mockRejectedValue(new Error('Refresh failed'));
     vi.mocked(authApi.register).mockResolvedValue(mockTokenResponse);
     const { getByRole } = renderWithProvider(
       <>
@@ -195,8 +185,6 @@ describe('AuthContext', () => {
     await waitFor(() => {
       expect(authApi.register).toHaveBeenCalledWith('test@example.com', 'password1', '홍길동');
     });
-    // user should NOT be set after register (no auto-login)
     expect(screen.getByTestId('user').textContent).toBe('none');
-    expect(localStorage.getItem('accessToken')).toBeNull();
   });
 });
