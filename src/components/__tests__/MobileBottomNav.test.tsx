@@ -31,7 +31,7 @@ describe('MobileBottomNav', () => {
     render(<MobileBottomNav />);
     expect(screen.getByRole('link', { name: '홈' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '검색' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '카테고리' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Archive' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '장바구니' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '마이' })).toBeInTheDocument();
   });

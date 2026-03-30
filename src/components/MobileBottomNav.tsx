@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, Grid3X3, ShoppingCart, User } from 'lucide-react';
+import { Home, Search, BookOpen, ShoppingCart, User } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { useCart } from '@/contexts/CartContext';
 
@@ -16,7 +16,7 @@ interface NavTab {
 const NAV_TABS: NavTab[] = [
   { href: '/', label: '홈', icon: Home, matchExact: true },
   { href: '/search', label: '검색', icon: Search },
-  { href: '/products', label: '카테고리', icon: Grid3X3 },
+  { href: '/archive', label: 'Archive', icon: BookOpen },
   { href: '/cart', label: '장바구니', icon: ShoppingCart },
   { href: '/my', label: '마이', icon: User },
 ];

@@ -25,6 +25,16 @@ const STATIC_GNB: NavigationItem[] = [
     parent_id: null,
     children: [],
   },
+  {
+    id: -2,
+    group: 'gnb',
+    label: 'Archive',
+    url: '/archive',
+    sort_order: 2,
+    is_active: true,
+    parent_id: null,
+    children: [],
+  },
 ];
 
 const STATIC_FOOTER: NavigationItem[] = [];
