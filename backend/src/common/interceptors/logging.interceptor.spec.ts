@@ -122,4 +122,66 @@ describe('LoggingInterceptor', () => {
       complete: () => done(),
     });
   });
+
+  it('should redact cardnumber field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      cardnumber: '4111111111111111',
+      amount: 30000,
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('4111111111111111'));
+        done();
+      },
+    });
+  });
+
+  it('should redact accountnumber field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      accountnumber: '987654321',
+      bank: 'KB',
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('987654321'));
+        done();
+      },
+    });
+  });
+
+  it('should redact bankaccount field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      bankaccount: '111-222-333',
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('111-222-333'));
+        done();
+      },
+    });
+  });
+
+  it('should redact cardno field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      cardno: '5500005555555559',
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('5500005555555559'));
+        done();
+      },
+    });
+  });
 });

@@ -14,6 +14,10 @@ const SENSITIVE_FIELDS = [
   'authorization',
   'credit_card',
   'cvv',
+  'cardnumber',
+  'accountnumber',
+  'bankaccount',
+  'cardno',
 ];
 
 @Injectable()
