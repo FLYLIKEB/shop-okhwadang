@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'cdn.okhwadang.com' },
       { protocol: 'https', hostname: 'shop-okhwadang.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'm.cbw.co.kr' },
+      { protocol: 'https', hostname: 'gdimg.gmarket.co.kr' },
+      { protocol: 'https', hostname: 'cdn-optimized.imweb.me' },
     ],
   },
   async rewrites() {
