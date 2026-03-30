@@ -71,9 +71,10 @@ export default async function Home() {
   const { featured, popular, categories } = homeData;
 
   return (
-    <div className="mx-auto max-w-7xl px-4">
+    <div>
       <HeroBannerSlider />
 
+      <div className="mx-auto max-w-7xl px-4">
       <CategoryNav categories={categories} />
 
       <FeaturedProducts
@@ -89,6 +90,7 @@ export default async function Home() {
       />
 
       <PromotionBanner />
+      </div>
     </div>
   );
 }
