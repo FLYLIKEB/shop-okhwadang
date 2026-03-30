@@ -8,12 +8,27 @@ import { S3StorageAdapter } from '../adapters/s3.adapter';
 // Use mock adapter in tests
 process.env.STORAGE_PROVIDER = 'mock';
 
+// Real JPEG magic bytes: FF D8 FF
+const JPEG_MAGIC = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00]);
+// Real PNG magic bytes: 89 50 4E 47 0D 0A 1A 0A + IHDR chunk (25 bytes minimum)
+const PNG_MAGIC = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, // PNG signature
+  0x00, 0x00, 0x00, 0x0d,                           // IHDR chunk length
+  0x49, 0x48, 0x44, 0x52,                           // "IHDR"
+  0x00, 0x00, 0x00, 0x01,                           // width: 1
+  0x00, 0x00, 0x00, 0x01,                           // height: 1
+  0x08, 0x02, 0x00, 0x00, 0x00,                     // bit depth, color type, etc.
+  0x90, 0x77, 0x53, 0xde,                           // CRC
+]);
+// HTML content disguised as image
+const HTML_BUFFER = Buffer.from('<html><body>XSS</body></html>');
+
 const makeFile = (overrides: Partial<Express.Multer.File> = {}): Express.Multer.File => ({
   fieldname: 'file',
   originalname: 'test.jpg',
   encoding: '7bit',
   mimetype: 'image/jpeg',
-  buffer: Buffer.alloc(100),
+  buffer: JPEG_MAGIC,
   size: 100,
   stream: null as never,
   destination: '',
@@ -76,5 +91,37 @@ describe('UploadService', () => {
     expect(result.filename).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg$/,
     );
+  });
+
+  describe('magic byte 검증', () => {
+    it('실제 JPEG magic byte — 허용', async () => {
+      const file = makeFile({ buffer: JPEG_MAGIC, mimetype: 'image/jpeg' });
+      const result = await service.uploadImage(file);
+      expect(result.url).toBeDefined();
+    });
+
+    it('실제 PNG magic byte — 허용', async () => {
+      const file = makeFile({
+        buffer: PNG_MAGIC,
+        mimetype: 'image/png',
+        originalname: 'img.png',
+      });
+      const result = await service.uploadImage(file);
+      expect(result.url).toBeDefined();
+    });
+
+    it('Content-Type 위조 — HTML 버퍼를 image/jpeg로 업로드 시 거부', async () => {
+      const file = makeFile({ buffer: HTML_BUFFER, mimetype: 'image/jpeg' });
+      await expect(service.uploadImage(file)).rejects.toThrow(BadRequestException);
+    });
+
+    it('Content-Type 위조 — HTML 버퍼를 image/png로 업로드 시 거부', async () => {
+      const file = makeFile({
+        buffer: HTML_BUFFER,
+        mimetype: 'image/png',
+        originalname: 'evil.png',
+      });
+      await expect(service.uploadImage(file)).rejects.toThrow(BadRequestException);
+    });
   });
 });
