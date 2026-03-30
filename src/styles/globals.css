@@ -1,30 +1,133 @@
 @import "tailwindcss";
 
+/* ── Google Fonts ──────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap');
+
+/* ── Pretendard (CDN) ──────────────────────────────────────────── */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
+/* ── Brand CSS variables ───────────────────────────────────────── */
+:root {
+  /* Color: 옥화당 팔레트 */
+  --color-bg: #F8F5F0;
+  --color-text: #1C1710;
+  --color-accent-zuni: #8B4513;
+  --color-accent-tea: #4A6741;
+  --color-secondary: #C4A882;
+  --color-surface: #EEEBE4;
+  --color-accent-danni: #C4A882;
+
+  /* Typography */
+  --font-display-ko: 'Noto Serif KR', 'Georgia', serif;
+  --font-display-en: 'Cormorant Garamond', 'Georgia', serif;
+  --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-mono: 'DM Mono', 'Courier New', monospace;
+}
+
 @theme inline {
-  --color-primary: var(--db-color-primary, #2563eb);
+  /* ── shadcn/ui 호환 토큰 (DB override 지원) ── */
+  --color-primary: var(--db-color-primary, #8B4513);
   --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
-  --color-secondary: var(--db-color-secondary, #f1f5f9);
-  --color-secondary-foreground: var(--db-color-secondary-foreground, #0f172a);
+  --color-secondary: var(--db-color-secondary, #C4A882);
+  --color-secondary-foreground: var(--db-color-secondary-foreground, #1C1710);
   --color-destructive: var(--db-color-destructive, #ef4444);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #f1f5f9);
-  --color-muted-foreground: var(--db-color-muted-foreground, #64748b);
-  --color-accent: var(--db-color-accent, #f1f5f9);
-  --color-accent-foreground: var(--db-color-accent-foreground, #0f172a);
-  --color-background: var(--db-color-background, #ffffff);
-  --color-foreground: var(--db-color-foreground, #0f172a);
-  --color-card: var(--db-color-card, #ffffff);
-  --color-card-foreground: var(--db-color-card-foreground, #0f172a);
-  --color-border: var(--db-color-border, #e2e8f0);
-  --color-input: var(--db-color-input, #e2e8f0);
-  --color-ring: var(--db-color-ring, #2563eb);
+  --color-muted: var(--db-color-muted, #EEEBE4);
+  --color-muted-foreground: var(--db-color-muted-foreground, #6b6254);
+  --color-accent: var(--db-color-accent, #EEEBE4);
+  --color-accent-foreground: var(--db-color-accent-foreground, #1C1710);
+  --color-background: var(--db-color-background, #F8F5F0);
+  --color-foreground: var(--db-color-foreground, #1C1710);
+  --color-card: var(--db-color-card, #EEEBE4);
+  --color-card-foreground: var(--db-color-card-foreground, #1C1710);
+  --color-border: var(--db-color-border, #D8D4CC);
+  --color-input: var(--db-color-input, #D8D4CC);
+  --color-ring: var(--db-color-ring, #8B4513);
   --radius-sm: var(--db-radius-sm, 0.25rem);
   --radius-md: var(--db-radius-md, 0.375rem);
   --radius-lg: var(--db-radius-lg, 0.5rem);
+
+  /* ── 브랜드 확장 토큰 ── */
+  --color-zuni: #8B4513;
+  --color-tea: #4A6741;
+  --color-danni: #C4A882;
+  --color-surface: #EEEBE4;
+
+  /* ── 타이포그래피 토큰 ── */
+  --font-display-ko: 'Noto Serif KR', 'Georgia', serif;
+  --font-display-en: 'Cormorant Garamond', 'Georgia', serif;
+  --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-mono: 'DM Mono', 'Courier New', monospace;
 }
 
+/* ── Base styles ───────────────────────────────────────────────── */
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   color: var(--color-foreground);
   background-color: var(--color-background);
+}
+
+h1 {
+  font-family: var(--font-display-ko);
+  font-weight: 900;
+}
+
+h2 {
+  font-family: var(--font-display-ko);
+  font-weight: 700;
+}
+
+h3 {
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+/* ── 니로(泥料)별 태그 컬러 시스템 ────────────────────────────── */
+/* 주니(朱泥) — 브랜드 시그니처 레드 */
+.tag-zuni {
+  background-color: #8B4513;
+  color: #ffffff;
+}
+
+/* 단니(段泥) — 황토 베이지 */
+.tag-danni {
+  background-color: #C4A882;
+  color: #1C1710;
+}
+
+/* 자니(紫泥) — 자주빛 */
+.tag-zini {
+  background-color: #6B3A5C;
+  color: #ffffff;
+}
+
+/* 흑니(黑泥) — 짙은 차콜 */
+.tag-heukni {
+  background-color: #2A2520;
+  color: #F8F5F0;
+}
+
+/* 청수니(靑水泥) — 청록 */
+.tag-chunsuni {
+  background-color: #3D6B6B;
+  color: #ffffff;
+}
+
+/* 녹니(綠泥) — 차엽 녹색 */
+.tag-nokni {
+  background-color: #4A6741;
+  color: #ffffff;
+}
+
+/* ── 영문 디스플레이 타이틀 ─────────────────────────────────────── */
+.font-display-en {
+  font-family: var(--font-display-en);
+}
+
+/* ── 산지·중량·용량 스펙 데이터 ─────────────────────────────────── */
+.spec-data {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0.025em;
 }
