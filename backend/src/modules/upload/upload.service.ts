@@ -7,7 +7,6 @@ import {
 import { randomUUID } from 'crypto';
 import * as path from 'path';
 import sharp from 'sharp';
-import { fileTypeFromBuffer } from 'file-type';
 import { StorageAdapter, UploadedFile } from './interfaces/storage.interface';
 import { LocalStorageAdapter } from './adapters/local.adapter';
 import { MockStorageAdapter } from './adapters/mock.adapter';
@@ -43,9 +42,10 @@ export class UploadService {
   }
 
   async uploadImage(file: Express.Multer.File): Promise<UploadedFile> {
-    const detected = await fileTypeFromBuffer(file.buffer);
-    if (!detected || !ALLOWED_MIME_TYPES.includes(detected.mime)) {
-      throw new BadRequestException('허용되지 않는 이미지 형식입니다.');
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)`,
+      );
     }
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
