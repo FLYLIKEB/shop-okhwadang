@@ -43,15 +43,9 @@ function CheckoutSuccessContent() {
       return;
     }
 
-    const token = localStorage.getItem('accessToken');
-    const authHeader: Record<string, string> = token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
-
     paymentsApi
       .confirm(
         { orderId: ctx.orderId, paymentKey, amount },
-        { headers: authHeader },
       )
       .then(async () => {
         toast.success('결제가 완료되었습니다.');

@@ -85,17 +85,12 @@ class ApiClient {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { params: _extractedParams, ...fetchOptions } = options ?? {};
 
-    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    const authHeader: Record<string, string> = accessToken
-      ? { Authorization: `Bearer ${accessToken}` }
-      : {};
-
     const { headers: optionHeaders, ...restFetchOptions } = fetchOptions ?? {};
     const response = await fetch(url, {
       ...restFetchOptions,
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...authHeader,
         ...(optionHeaders as Record<string, string> | undefined),
       },
     });
@@ -327,14 +322,11 @@ export interface CreateAddressData {
 }
 
 export interface AuthTokenResponse {
-  accessToken: string;
-  refreshToken: string;
   user: AuthUser;
 }
 
 export interface RefreshResponse {
-  accessToken: string;
-  refreshToken?: string;
+  message: string;
 }
 
 export const usersApi = {
@@ -434,9 +426,10 @@ export const authApi = {
     apiClient.post<AuthTokenResponse>('/auth/login', { email, password }),
   register: (email: string, password: string, name: string) =>
     apiClient.post<AuthTokenResponse>('/auth/register', { email, password, name }),
+  me: () => apiClient.get<AuthUser>('/auth/me'),
   profile: () => apiClient.get<AuthUser>('/auth/profile'),
-  refresh: (refreshToken: string) =>
-    apiClient.post<RefreshResponse>('/auth/refresh', { refreshToken }),
+  refresh: () =>
+    apiClient.post<RefreshResponse>('/auth/refresh'),
   logout: () => apiClient.post<{ message: string }>('/auth/logout'),
   kakaoCallback: (code: string) =>
     apiClient.post<AuthTokenResponse>('/auth/kakao', { code }),
@@ -814,12 +807,11 @@ export const reviewsApi = {
     apiClient.delete<void>(`/reviews/${id}`),
   uploadImage: async (file: File): Promise<UploadedFile> => {
     const url = `${API_BASE}/reviews/upload-image`;
-    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     const formData = new FormData();
     formData.append('file', file);
     const response = await fetch(url, {
       method: 'POST',
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      credentials: 'include',
       body: formData,
     });
     if (!response.ok) {
@@ -833,12 +825,11 @@ export const reviewsApi = {
 export const uploadApi = {
   uploadImage: async (file: File): Promise<UploadedFile> => {
     const url = `${API_BASE}/upload/image`;
-    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     const formData = new FormData();
     formData.append('file', file);
     const response = await fetch(url, {
       method: 'POST',
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      credentials: 'include',
       body: formData,
     });
     if (!response.ok) {
