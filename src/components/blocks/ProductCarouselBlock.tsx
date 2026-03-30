@@ -52,14 +52,14 @@ export default function ProductCarouselBlock({ content }: Props) {
 
   if (loading) {
     return (
-      <section className="space-y-4">
-        {title && <h2 className="text-xl font-bold">{title}</h2>}
-        <div className="flex gap-4 overflow-hidden">
+      <section className="py-12">
+        {title && <h2 className="text-2xl font-medium mb-8">{title}</h2>}
+        <div className="flex gap-6 overflow-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
               className={cn(
-                'shrink-0 animate-pulse rounded-lg bg-gray-200',
+                'shrink-0 animate-pulse rounded bg-muted',
                 isLarge ? 'h-80 w-72' : 'h-64 w-56',
               )}
             />
@@ -72,9 +72,9 @@ export default function ProductCarouselBlock({ content }: Props) {
   if (products.length === 0) return null;
 
   return (
-    <section className="space-y-4">
-      {title && <h2 className="text-xl font-bold">{title}</h2>}
-      <div className="flex gap-4 overflow-x-auto pb-2">
+    <section className="py-12">
+      {title && <h2 className="text-2xl font-medium mb-8">{title}</h2>}
+      <div className="flex gap-6 overflow-x-auto pb-4">
         {products.map((product) => (
           <div
             key={product.id}

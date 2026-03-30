@@ -31,29 +31,25 @@ const GRID_ITEMS = [
 export default function LifestyleGrid() {
   return (
     <section aria-label="찻자리 라이프스타일">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {GRID_ITEMS.map((item) => (
           <Link
             key={item.id}
             href={item.href}
-            className="group relative block overflow-hidden rounded-xl aspect-video"
+            className="group block"
           >
-            <Image
-              src={item.src}
-              alt={item.alt}
-              fill
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-            />
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/40 transition-colors duration-300 group-hover:bg-black/30" />
-            {/* Text */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4">
-              <h3 className="text-xl font-bold mb-1 drop-shadow">{item.title}</h3>
-              <p className="text-sm text-white/80 mb-4 drop-shadow">{item.subtitle}</p>
-              <span className="inline-block rounded-full border border-white/70 px-5 py-1.5 text-sm font-medium transition-colors duration-300 group-hover:bg-white group-hover:text-slate-900">
-                찻자리 보기
-              </span>
+            <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+              <Image
+                src={item.src}
+                alt={item.alt}
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                className="object-cover transition-opacity duration-500 group-hover:opacity-90"
+              />
+            </div>
+            <div className="mt-4">
+              <h3 className="text-lg font-medium text-foreground">{item.title}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{item.subtitle}</p>
             </div>
           </Link>
         ))}
