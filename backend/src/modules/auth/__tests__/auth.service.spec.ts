@@ -133,7 +133,7 @@ describe('AuthService', () => {
     it('유효한 refreshToken으로 새 토큰 쌍 발급', async () => {
       const rawRefresh = 'mock-token';
       const hashedRefresh = await bcrypt.hash(rawRefresh, 10);
-      mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user' });
+      mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user', tokenType: 'refresh' });
       mockUserRepository.findOne.mockResolvedValue(makeUser({ refreshToken: hashedRefresh }));
       mockUserRepository.update.mockResolvedValue(undefined);
 
@@ -145,7 +145,7 @@ describe('AuthService', () => {
 
     it('DB의 refresh_token과 불일치 시 UnauthorizedException', async () => {
       const hashedRefresh = await bcrypt.hash('correct-token', 10);
-      mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user' });
+      mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user', tokenType: 'refresh' });
       mockUserRepository.findOne.mockResolvedValue(makeUser({ refreshToken: hashedRefresh }));
 
       await expect(service.refresh('wrong-token')).rejects.toThrow(UnauthorizedException);
@@ -168,18 +168,14 @@ describe('AuthService', () => {
     });
   });
 
-  describe('generateTokens (JWT_REFRESH_SECRET)', () => {
-    it('JWT_REFRESH_SECRET 미설정 시 경고 로그 출력', async () => {
+  describe('onModuleInit (JWT_REFRESH_SECRET warning)', () => {
+    it('JWT_REFRESH_SECRET 미설정 시 시작 경고 로그 출력', () => {
       const originalRefreshSecret = process.env.JWT_REFRESH_SECRET;
       delete process.env.JWT_REFRESH_SECRET;
 
-      const hashed = await bcrypt.hash('Test1234!', 10);
-      mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed }));
-      mockUserRepository.update.mockResolvedValue(undefined);
-
       const warnSpy = jest.spyOn(service['logger'], 'warn');
 
-      await service.login({ email: 'test@example.com', password: 'Test1234!' });
+      service.onModuleInit();
 
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining('JWT_REFRESH_SECRET is not set'),
@@ -188,16 +184,12 @@ describe('AuthService', () => {
       process.env.JWT_REFRESH_SECRET = originalRefreshSecret;
     });
 
-    it('JWT_REFRESH_SECRET 설정 시 경고 로그 미출력', async () => {
+    it('JWT_REFRESH_SECRET 설정 시 경고 로그 미출력', () => {
       process.env.JWT_REFRESH_SECRET = 'separate-refresh-secret';
-
-      const hashed = await bcrypt.hash('Test1234!', 10);
-      mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed }));
-      mockUserRepository.update.mockResolvedValue(undefined);
 
       const warnSpy = jest.spyOn(service['logger'], 'warn');
 
-      await service.login({ email: 'test@example.com', password: 'Test1234!' });
+      service.onModuleInit();
 
       expect(warnSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('JWT_REFRESH_SECRET is not set'),

@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   ForbiddenException,
   Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -29,7 +30,7 @@ export interface AuthResponse extends TokenPair {
 }
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
@@ -37,6 +38,14 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
+
+  onModuleInit() {
+    if (!process.env.JWT_REFRESH_SECRET) {
+      this.logger.warn(
+        'JWT_REFRESH_SECRET is not set. Using JWT_SECRET as fallback. Set a separate secret in production.',
+      );
+    }
+  }
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
     const existing = await this.userRepository.findOne({
@@ -105,12 +114,16 @@ export class AuthService {
   }
 
   async refresh(rawRefreshToken: string): Promise<TokenPair> {
-    let payload: { sub: number; email: string; role: string };
+    let payload: { sub: number; email: string; role: string; tokenType?: string };
     try {
       payload = this.jwtService.verify(rawRefreshToken, {
         secret: process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET,
       });
     } catch {
+      throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
+    }
+
+    if (payload.tokenType !== 'refresh') {
       throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
     }
 
@@ -144,11 +157,6 @@ export class AuthService {
     // refreshToken uses longer expiry; cast to ms.StringValue required by jsonwebtoken types
     const refreshExpiresIn = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as ms.StringValue;
     const refreshSecret = process.env.JWT_REFRESH_SECRET;
-    if (!refreshSecret) {
-      this.logger.warn(
-        'JWT_REFRESH_SECRET is not set. Using JWT_SECRET as fallback. Set a separate secret in production.',
-      );
-    }
     const refreshToken = this.jwtService.sign(
       { ...payload, tokenType: 'refresh' },
       {
