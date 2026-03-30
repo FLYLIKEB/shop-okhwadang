@@ -60,8 +60,8 @@ describe('MockPaymentAdapter', () => {
     expect(result.rawResponse).toMatchObject({ mock: true });
   });
 
-  it('verifyWebhook → true', () => {
-    expect(adapter.verifyWebhook({}, 'sig')).toBe(true);
+  it('verifyWebhook → 올바른 테스트 시그니처로 true', () => {
+    expect(adapter.verifyWebhook({}, 'mock-test-signature')).toBe(true);
   });
 });
 
