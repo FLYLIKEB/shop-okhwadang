@@ -18,6 +18,12 @@ const SENSITIVE_FIELDS = [
   'accountnumber',
   'bankaccount',
   'cardno',
+  'refreshtoken',
+  'secret',
+  'ssn',
+  'phone',
+  'address',
+  'email',
 ];
 
 @Injectable()
