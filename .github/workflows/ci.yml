@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   frontend:
     name: Frontend (lint + test)
@@ -46,7 +49,7 @@ jobs:
     env:
       NODE_ENV: test
       TEST_DATABASE_URL: mysql://root:testpassword@127.0.0.1:3306/commerce_test
-      JWT_SECRET: test-secret-key-for-ci
+      JWT_SECRET: ${{ secrets.TEST_JWT_SECRET || 'test-secret-key-for-ci' }}
       FRONTEND_URL: http://localhost:5173
       REDIS_URL: redis://localhost:6379
       PAYMENT_GATEWAY: mock
