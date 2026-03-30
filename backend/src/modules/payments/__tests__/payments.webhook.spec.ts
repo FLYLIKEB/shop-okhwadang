@@ -51,4 +51,35 @@ describe('PaymentsService — webhook', () => {
       UnauthorizedException,
     );
   });
+
+  it('웹훅 로그에 민감 필드(cardNumber 등) 포함 안 됨', async () => {
+    mockGateway.verifyWebhook.mockReturnValue(true);
+    const logSpy = jest.spyOn(service['logger'], 'log');
+    const payload = {
+      orderId: 42,
+      status: 'DONE',
+      type: 'PAYMENT',
+      cardNumber: '4111111111111111',
+      accountNumber: '123456789',
+    };
+    await service.handleWebhook(payload, 'valid_sig');
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('42'));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('DONE'));
+    expect(logSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('4111111111111111'),
+    );
+    expect(logSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('123456789'),
+    );
+  });
+
+  it('웹훅 로그에 orderId, status, type 필드만 포함', async () => {
+    mockGateway.verifyWebhook.mockReturnValue(true);
+    const logSpy = jest.spyOn(service['logger'], 'log');
+    const payload = { orderId: 7, status: 'CANCELLED', type: 'CANCEL' };
+    await service.handleWebhook(payload, 'valid_sig');
+    const logArg: string = logSpy.mock.calls[0][0] as string;
+    const logged = JSON.parse(logArg.replace('Webhook received: ', '')) as Record<string, unknown>;
+    expect(Object.keys(logged)).toEqual(['orderId', 'status', 'type']);
+  });
 });
