@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PaymentGateway, PrepareResult, ConfirmResult, CancelResult } from '../interfaces/payment-gateway.interface';
 
+export const MOCK_TEST_SIGNATURE = 'mock-test-signature';
+
 @Injectable()
 export class MockPaymentAdapter implements PaymentGateway {
   constructor() {
@@ -30,6 +32,6 @@ export class MockPaymentAdapter implements PaymentGateway {
 
   verifyWebhook(_payload: unknown, signature: string): boolean {
     // In mock mode, require a specific test signature to prevent accidental acceptance
-    return signature === 'mock-test-signature';
+    return signature === MOCK_TEST_SIGNATURE;
   }
 }
