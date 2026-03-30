@@ -13,6 +13,9 @@ const gatewayProviders = [
     provide: 'PaymentGateway',
     useFactory: () => {
       const gateway = process.env.PAYMENT_GATEWAY ?? 'mock';
+      if (process.env.NODE_ENV === 'production' && (gateway === 'mock' || !process.env.PAYMENT_GATEWAY)) {
+        throw new Error('Mock payment gateway는 프로덕션에서 사용할 수 없습니다. PAYMENT_GATEWAY 환경변수를 설정하세요.');
+      }
       return gateway === 'toss'
         ? new TossPaymentAdapter()
         : new MockPaymentAdapter();
