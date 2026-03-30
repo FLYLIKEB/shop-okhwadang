@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { cn } from '@/components/ui/utils'
 import { ZoomIn, ZoomOut, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { TEAPOT_IMAGES } from '@/lib/teapot-images'
 
 interface ProductImage {
   id: number
@@ -13,11 +14,20 @@ interface ProductImage {
   isThumbnail: boolean
 }
 
+const FALLBACK_IMAGES: ProductImage[] = TEAPOT_IMAGES.map((img, i) => ({
+  id: -(i + 1),
+  url: img.src,
+  alt: img.alt,
+  sortOrder: i,
+  isThumbnail: i === 0,
+}))
+
 interface ImageGalleryProps {
   images: ProductImage[]
 }
 
-export default function ImageGallery({ images }: ImageGalleryProps) {
+export default function ImageGallery({ images: rawImages }: ImageGalleryProps) {
+  const images = rawImages.length > 0 ? rawImages : FALLBACK_IMAGES
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })

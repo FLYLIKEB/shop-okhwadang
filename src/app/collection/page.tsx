@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { CLAY_COLLECTIONS, SHAPE_COLLECTIONS } from '@/lib/collections';
+import { TEAPOT_IMAGES } from '@/lib/teapot-images';
 
 export const metadata: Metadata = {
   title: 'Collection — 니로별·모양별 큐레이션',
@@ -128,24 +130,21 @@ export default function CollectionPage() {
         <div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {SHAPE_COLLECTIONS.map((shape) => (
+          {SHAPE_COLLECTIONS.map((shape, i) => (
             <Link
               key={shape.id}
               href={shape.productUrl}
               className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg"
             >
-              {/* 형태 플레이스홀더 */}
-              <div
-                className="h-40 bg-muted flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
-                role="img"
-                aria-label={`${shape.name} 형태`}
-              >
-                <span
-                  className="text-4xl text-muted-foreground/40"
-                  aria-hidden="true"
-                >
-                  壺
-                </span>
+              {/* 형태 이미지 */}
+              <div className="relative h-40 bg-muted overflow-hidden">
+                <Image
+                  src={TEAPOT_IMAGES[i % TEAPOT_IMAGES.length].src}
+                  alt={`${shape.name} 형태 자사호`}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
               </div>
               {/* 텍스트 */}
               <div className="p-5">
