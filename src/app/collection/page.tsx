@@ -13,10 +13,12 @@ export const metadata: Metadata = {
 };
 
 function SectionHeading({
+  id,
   label,
   title,
   description,
 }: {
+  id?: string;
   label: string;
   title: string;
   description?: string;
@@ -26,7 +28,7 @@ function SectionHeading({
       <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
         {label}
       </span>
-      <h2 className="mt-2 font-display-ko text-3xl font-bold tracking-tight text-foreground">
+      <h2 id={id} className="mt-2 font-display-ko text-3xl font-bold tracking-tight text-foreground">
         {title}
       </h2>
       {description && (
@@ -61,12 +63,12 @@ export default function CollectionPage() {
         aria-labelledby="clay-collection-heading"
       >
         <SectionHeading
+          id="clay-collection-heading"
           label="니로별"
           title="흙의 색으로 찾기"
           description="6종의 니로는 각기 다른 색상, 질감, 차 궁합을 지닙니다. 관심 있는 니로를 선택해보세요."
         />
         <div
-          id="clay-collection-heading"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {CLAY_COLLECTIONS.map((clay) => (
@@ -118,12 +120,12 @@ export default function CollectionPage() {
         aria-labelledby="shape-collection-heading"
       >
         <SectionHeading
+          id="shape-collection-heading"
           label="모양별"
           title="형태의 선으로 찾기"
           description="자사호의 대표적인 5가지 형태. 각 형태가 지닌 미학과 기능을 탐색해보세요."
         />
         <div
-          id="shape-collection-heading"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {SHAPE_COLLECTIONS.map((shape) => (
