@@ -30,9 +30,7 @@ function GoogleCallbackInner() {
 
     authApi
       .googleCallback(code)
-      .then((res) => {
-        localStorage.setItem('accessToken', res.accessToken);
-        localStorage.setItem('refreshToken', res.refreshToken);
+      .then(() => {
         toast.success('Google 로그인되었습니다.');
         window.location.href = '/';
       })

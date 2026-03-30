@@ -30,9 +30,7 @@ function KakaoCallbackInner() {
 
     authApi
       .kakaoCallback(code)
-      .then((res) => {
-        localStorage.setItem('accessToken', res.accessToken);
-        localStorage.setItem('refreshToken', res.refreshToken);
+      .then(() => {
         toast.success('카카오 로그인되었습니다.');
         window.location.href = '/';
       })

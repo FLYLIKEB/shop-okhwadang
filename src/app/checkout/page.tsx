@@ -54,7 +54,7 @@ function validateForm(form: ShippingForm): FormErrors {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { isAuthenticated, token, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const { refetch } = useCart();
 
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
@@ -185,8 +185,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    const authHeader = { Authorization: `Bearer ${token}` };
-
     try {
       setStep('creating_order');
       const order = await ordersApi.create(
@@ -203,13 +201,11 @@ export default function CheckoutPage() {
           addressDetail: form.addressDetail.trim() || null,
           memo: form.memo.trim() || null,
         },
-        { headers: authHeader },
       );
 
       setStep('preparing_payment');
       const prepareResult: PreparePaymentResponse = await paymentsApi.prepare(
         { orderId: order.id },
-        { headers: authHeader },
       );
 
       if (prepareResult.clientKey && prepareResult.clientKey !== 'mock_client_key') {
@@ -220,7 +216,6 @@ export default function CheckoutPage() {
       setStep('confirming_payment');
       await paymentsApi.confirm(
         { orderId: order.id, paymentKey: `mock-${order.orderNumber}`, amount: grandTotal },
-        { headers: authHeader },
       );
 
       setStep('success');
