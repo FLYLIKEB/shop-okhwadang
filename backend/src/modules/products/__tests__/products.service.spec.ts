@@ -6,6 +6,7 @@ import { ProductsService } from '../products.service';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
 import { ProductSort } from '../dto/query-products.dto';
+import { CacheService } from '../../cache/cache.service';
 
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockAndWhere = jest.fn().mockReturnThis();
@@ -50,6 +51,10 @@ describe('ProductsService', () => {
         {
           provide: getRepositoryToken(Category),
           useValue: { find: jest.fn().mockResolvedValue([]) },
+        },
+        {
+          provide: CacheService,
+          useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();
