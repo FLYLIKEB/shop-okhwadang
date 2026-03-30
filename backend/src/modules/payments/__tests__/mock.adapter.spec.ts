@@ -1,4 +1,4 @@
-import { MockPaymentAdapter } from '../adapters/mock.adapter';
+import { MockPaymentAdapter, MOCK_TEST_SIGNATURE } from '../adapters/mock.adapter';
 
 describe('MockPaymentAdapter', () => {
   let adapter: MockPaymentAdapter;
@@ -9,7 +9,7 @@ describe('MockPaymentAdapter', () => {
 
   describe('verifyWebhook', () => {
     it('올바른 테스트 시그니처 → true', () => {
-      expect(adapter.verifyWebhook({}, 'mock-test-signature')).toBe(true);
+      expect(adapter.verifyWebhook({}, MOCK_TEST_SIGNATURE)).toBe(true);
     });
 
     it('잘못된 시그니처 → false', () => {

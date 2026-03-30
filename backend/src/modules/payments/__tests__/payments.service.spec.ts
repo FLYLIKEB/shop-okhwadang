@@ -5,7 +5,7 @@ import { PaymentsService } from '../payments.service';
 import { Payment, PaymentStatus, PaymentMethod, PaymentGatewayType } from '../entities/payment.entity';
 import { Shipping, ShippingStatus } from '../entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
-import { MockPaymentAdapter } from '../adapters/mock.adapter';
+import { MockPaymentAdapter, MOCK_TEST_SIGNATURE } from '../adapters/mock.adapter';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({
@@ -61,7 +61,7 @@ describe('MockPaymentAdapter', () => {
   });
 
   it('verifyWebhook → 올바른 테스트 시그니처로 true', () => {
-    expect(adapter.verifyWebhook({}, 'mock-test-signature')).toBe(true);
+    expect(adapter.verifyWebhook({}, MOCK_TEST_SIGNATURE)).toBe(true);
   });
 });
 
