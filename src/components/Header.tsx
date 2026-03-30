@@ -193,6 +193,7 @@ export default function Header() {
   const { items: sidebarItems } = useNavigation('sidebar');
   const [query, setQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const isSubPage = pathname !== '/';
 
@@ -209,6 +210,15 @@ export default function Header() {
     return () => { document.body.classList.remove('overflow-hidden'); };
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = query.trim();
@@ -217,7 +227,12 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
+    <header className={cn(
+      'sticky top-0 z-50 bg-white/95 transition-[border-color,box-shadow,backdrop-filter] duration-300 ease-in-out',
+      isScrolled
+        ? 'border-b border-border backdrop-blur-[8px] shadow-sm'
+        : 'border-b border-transparent backdrop-blur-none',
+    )}>
       {/* Top row */}
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4">
         {/* Mobile: hamburger always leftmost */}
