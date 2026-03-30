@@ -286,6 +286,8 @@ const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   category_nav: '카테고리 내비',
   promotion_banner: '프로모션 배너',
   text_content: '텍스트',
+  split_content: '분할 콘텐츠',
+  brand_story: '브랜드 이야기',
 };
 
 const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
@@ -295,6 +297,8 @@ const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
   category_nav: 'ℹ️ 카테고리 바로가기 버튼 모음입니다. 카테고리 ID를 콤마로 구분해 입력하거나, 비워두면 전체 카테고리를 표시합니다.',
   promotion_banner: 'ℹ️ 할인·이벤트를 강조하는 띠 배너입니다. 종료일을 설정하면 기간 표시가 가능합니다. 히어로 배너보다 작고 콤팩트합니다.',
   text_content: 'ℹ️ HTML 형식의 자유 텍스트 영역입니다. 공지사항·브랜드 소개 등에 사용하세요. <b>볼드</b>, <a href="">링크</a> 등 기본 HTML 태그 사용 가능합니다.',
+  split_content: 'ℹ️ 이미지와 텍스트를 2열로 나란히 표시합니다. 이미지 위치(좌/우), 제목·설명·버튼을 설정할 수 있습니다.',
+  brand_story: 'ℹ️ 브랜드 이야기 섹션입니다. 장인 이미지와 브랜드 소개 텍스트를 2열 레이아웃으로 표시합니다.',
 };
 
 export default function BlockPropertyPanel({ block, onUpdateContent }: BlockPropertyPanelProps) {
