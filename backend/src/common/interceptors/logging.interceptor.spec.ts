@@ -100,14 +100,14 @@ describe('LoggingInterceptor', () => {
   it('should pass through normal fields unchanged', (done) => {
     const logSpy = jest.spyOn(interceptor['logger'], 'log');
     const context = createMockContext({
-      email: 'test@test.com',
       name: 'John',
+      quantity: 2,
     });
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('test@test.com'));
         expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('John'));
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('2'));
         done();
       },
     });
@@ -180,6 +180,102 @@ describe('LoggingInterceptor', () => {
       complete: () => {
         expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
         expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('5500005555555559'));
+        done();
+      },
+    });
+  });
+
+  it('should redact refreshtoken field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'),
+        );
+        done();
+      },
+    });
+  });
+
+  it('should redact secret field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      clientSecret: 'my-client-secret-value',
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('my-client-secret-value'),
+        );
+        done();
+      },
+    });
+  });
+
+  it('should redact ssn field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      ssn: '900101-1234567',
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('900101-1234567'));
+        done();
+      },
+    });
+  });
+
+  it('should redact phone field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      phone: '010-1234-5678',
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('010-1234-5678'));
+        done();
+      },
+    });
+  });
+
+  it('should redact address field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      address: '서울특별시 강남구 테헤란로 123',
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('서울특별시 강남구 테헤란로 123'),
+        );
+        done();
+      },
+    });
+  });
+
+  it('should redact email field', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext({
+      email: 'user@example.com',
+    });
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
+        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('user@example.com'));
         done();
       },
     });
