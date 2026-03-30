@@ -7,6 +7,7 @@ import type { AuthContextValue } from '@/contexts/AuthContext';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock('sonner', () => ({
