@@ -53,7 +53,6 @@ const mockCartResponse: CartResponse = {
 function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue {
   return {
     user: null,
-    token: null,
     isAuthenticated: false,
     isLoading: false,
     login: vi.fn(),
@@ -61,6 +60,7 @@ function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue 
     register: vi.fn(),
     loginWithKakao: vi.fn(),
     loginWithGoogle: vi.fn(),
+    updateUser: vi.fn(),
     ...overrides,
   };
 }
@@ -106,7 +106,7 @@ describe('CartContext', () => {
 
   it('fetches cart on mount when authenticated', async () => {
     vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
-    renderWithAuth(<CartDisplay />, makeAuthValue({ token: 'tok', isAuthenticated: true }));
+    renderWithAuth(<CartDisplay />, makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }));
 
     await waitFor(() => {
       expect(screen.getByTestId('count').textContent).toBe('2');
@@ -116,8 +116,7 @@ describe('CartContext', () => {
   });
 
   it('does NOT call getList when not authenticated', async () => {
-    renderWithAuth(<CartDisplay />, makeAuthValue({ token: null, isAuthenticated: false }));
-    // give time for any accidental async calls
+    renderWithAuth(<CartDisplay />, makeAuthValue({ isAuthenticated: false }));
     await act(async () => {});
     expect(cartApi.getList).not.toHaveBeenCalled();
     expect(screen.getByTestId('count').textContent).toBe('0');
@@ -133,7 +132,7 @@ describe('CartContext', () => {
         <CartDisplay />
         <AddItemButton params={{ productId: 10, productOptionId: null, quantity: 2 }} />
       </>,
-      makeAuthValue({ token: 'tok', isAuthenticated: true }),
+      makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }),
     );
 
     await waitFor(() => expect(cartApi.getList).toHaveBeenCalled());
@@ -145,7 +144,6 @@ describe('CartContext', () => {
     });
     expect(cartApi.add).toHaveBeenCalledWith(
       { productId: 10, productOptionId: null, quantity: 2 },
-      { headers: { Authorization: 'Bearer tok' } },
     );
   });
 
@@ -159,7 +157,7 @@ describe('CartContext', () => {
         <CartDisplay />
         <RemoveItemButton id={1} />
       </>,
-      makeAuthValue({ token: 'tok', isAuthenticated: true }),
+      makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }),
     );
 
     await waitFor(() => expect(screen.getByText('테스트 상품')).toBeInTheDocument());
@@ -169,7 +167,7 @@ describe('CartContext', () => {
     await waitFor(() => {
       expect(screen.queryByText('테스트 상품')).not.toBeInTheDocument();
     });
-    expect(cartApi.remove).toHaveBeenCalledWith(1, { headers: { Authorization: 'Bearer tok' } });
+    expect(cartApi.remove).toHaveBeenCalledWith(1);
   });
 
   it('updateQuantity applies optimistic update', async () => {
@@ -187,7 +185,7 @@ describe('CartContext', () => {
         <CartDisplay />
         <UpdateQtyButton />
       </>,
-      makeAuthValue({ token: 'tok', isAuthenticated: true }),
+      makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }),
     );
 
     await waitFor(() => expect(cartApi.getList).toHaveBeenCalled());
@@ -198,7 +196,6 @@ describe('CartContext', () => {
       expect(cartApi.updateQuantity).toHaveBeenCalledWith(
         1,
         { quantity: 5 },
-        { headers: { Authorization: 'Bearer tok' } },
       );
     });
   });

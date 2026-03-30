@@ -426,9 +426,10 @@ export const authApi = {
     apiClient.post<AuthTokenResponse>('/auth/login', { email, password }),
   register: (email: string, password: string, name: string) =>
     apiClient.post<AuthTokenResponse>('/auth/register', { email, password, name }),
+  me: () => apiClient.get<AuthUser>('/auth/me'),
   profile: () => apiClient.get<AuthUser>('/auth/profile'),
-  refresh: (refreshToken: string) =>
-    apiClient.post<RefreshResponse>('/auth/refresh', { refreshToken }),
+  refresh: () =>
+    apiClient.post<RefreshResponse>('/auth/refresh'),
   logout: () => apiClient.post<{ message: string }>('/auth/logout'),
   kakaoCallback: (code: string) =>
     apiClient.post<AuthTokenResponse>('/auth/kakao', { code }),

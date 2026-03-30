@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { formatPrice } from '@/utils/price';
@@ -13,8 +12,6 @@ import { formatPrice } from '@/utils/price';
 function OrderCompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { token } = useAuth();
-
   const orderId = searchParams.get('orderId');
   const orderNumber = searchParams.get('orderNumber');
 
@@ -33,13 +30,13 @@ function OrderCompleteContent() {
     }
 
     ordersApi
-      .getById(id, { headers: { Authorization: `Bearer ${token}` } })
+      .getById(id)
       .then((data) => setOrder(data))
       .catch(() => {
         router.replace('/');
       })
       .finally(() => setIsLoading(false));
-  }, [orderId, orderNumber, token, router]);
+  }, [orderId, orderNumber, router]);
 
   if (isLoading) {
     return (

@@ -39,12 +39,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .me()
       .then((profile) => {
         setUser(profile);
+        setIsLoading(false);
       })
       .catch(() => {
-        setUser(null);
-      })
-      .finally(() => {
-        setIsLoading(false);
+        // Access token expired — try refresh
+        authApi
+          .refresh()
+          .then(() => authApi.me())
+          .then((profile) => setUser(profile))
+          .catch(() => setUser(null))
+          .finally(() => setIsLoading(false));
       });
   }, []);
 
