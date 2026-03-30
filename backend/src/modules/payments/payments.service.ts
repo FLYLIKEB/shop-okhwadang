@@ -75,7 +75,7 @@ export class PaymentsService {
       throw new BadRequestException('결제 승인이 불가능한 상태입니다.');
     }
 
-    if (Number(dto.amount) !== Number(payment.amount)) {
+    if (Number(payment.order.totalAmount) !== Number(dto.amount)) {
       throw new BadRequestException('결제 금액이 일치하지 않습니다.');
     }
 
