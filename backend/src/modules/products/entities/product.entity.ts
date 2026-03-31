@@ -34,13 +34,13 @@ export class Product {
   @Column({ length: 255 })
   name!: string;
 
-  @Column({ name: 'name_en', length: 255, nullable: true })
+  @Column({ name: 'name_en', type: 'varchar', length: 255, nullable: true })
   nameEn!: string | null;
 
-  @Column({ name: 'name_ja', length: 255, nullable: true })
+  @Column({ name: 'name_ja', type: 'varchar', length: 255, nullable: true })
   nameJa!: string | null;
 
-  @Column({ name: 'name_zh', length: 255, nullable: true })
+  @Column({ name: 'name_zh', type: 'varchar', length: 255, nullable: true })
   nameZh!: string | null;
 
   @Column({ length: 255, unique: true })
