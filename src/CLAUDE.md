@@ -39,8 +39,9 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 ## Key Files
 
 ```
-app/                # Pages & layouts (App Router)
-components/         # Reusable UI + shadcn/ui wrappers
-lib/api.ts          # API client
-contexts/           # AuthContext, CartContext
+app/                            # Pages & layouts (App Router)
+components/                     # Reusable UI + shadcn/ui wrappers
+lib/api.ts                      # API client
+contexts/                       # AuthContext, CartContext
+hooks/useWishlistToggle.ts      # Wishlist toggle with optimistic update
 ```
