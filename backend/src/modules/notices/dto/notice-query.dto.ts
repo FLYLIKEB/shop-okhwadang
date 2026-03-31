@@ -1,10 +1,6 @@
 import { IsString, IsOptional } from 'class-validator';
 
-export class FaqQueryDto {
-  @IsString()
-  @IsOptional()
-  category?: string;
-
+export class NoticeQueryDto {
   @IsString()
   @IsOptional()
   locale?: string;

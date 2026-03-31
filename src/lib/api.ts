@@ -1007,7 +1007,13 @@ export const couponsApi = {
 export interface Notice {
   id: number;
   title: string;
+  titleEn: string | null;
+  titleJa: string | null;
+  titleZh: string | null;
   content: string;
+  contentEn: string | null;
+  contentJa: string | null;
+  contentZh: string | null;
   isPinned: boolean;
   isPublished: boolean;
   viewCount: number;
@@ -1021,8 +1027,10 @@ export interface NoticeListResponse {
 }
 
 export const noticesApi = {
-  getList: () => apiClient.get<NoticeListResponse>('/notices'),
-  getOne: (id: number) => apiClient.get<Notice>(`/notices/${id}`),
+  getList: (locale?: string) =>
+    apiClient.get<NoticeListResponse>(`/notices${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`),
+  getOne: (id: number, locale?: string) =>
+    apiClient.get<Notice>(`/notices/${id}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`),
 };
 
 // ===== FAQs =====
@@ -1030,7 +1038,13 @@ export interface Faq {
   id: number;
   category: string;
   question: string;
+  questionEn: string | null;
+  questionJa: string | null;
+  questionZh: string | null;
   answer: string;
+  answerEn: string | null;
+  answerJa: string | null;
+  answerZh: string | null;
   sortOrder: number;
   createdAt: string;
 }
@@ -1041,8 +1055,13 @@ export interface FaqListResponse {
 }
 
 export const faqsApi = {
-  getList: (category?: string) =>
-    apiClient.get<FaqListResponse>(`/faqs${category ? `?category=${encodeURIComponent(category)}` : ''}`),
+  getList: (category?: string, locale?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.set('category', category);
+    if (locale) params.set('locale', locale);
+    const qs = params.toString();
+    return apiClient.get<FaqListResponse>(`/faqs${qs ? `?${qs}` : ''}`);
+  },
 };
 
 // ===== Inquiries =====

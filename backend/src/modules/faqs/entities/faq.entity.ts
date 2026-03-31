@@ -17,8 +17,26 @@ export class Faq {
   @Column({ type: 'varchar', length: 500 })
   question!: string;
 
+  @Column({ name: 'question_en', type: 'varchar', length: 500, nullable: true })
+  questionEn!: string | null;
+
+  @Column({ name: 'question_ja', type: 'varchar', length: 500, nullable: true })
+  questionJa!: string | null;
+
+  @Column({ name: 'question_zh', type: 'varchar', length: 500, nullable: true })
+  questionZh!: string | null;
+
   @Column({ type: 'longtext' })
   answer!: string;
+
+  @Column({ name: 'answer_en', type: 'longtext', nullable: true })
+  answerEn!: string | null;
+
+  @Column({ name: 'answer_ja', type: 'longtext', nullable: true })
+  answerJa!: string | null;
+
+  @Column({ name: 'answer_zh', type: 'longtext', nullable: true })
+  answerZh!: string | null;
 
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder!: number;
