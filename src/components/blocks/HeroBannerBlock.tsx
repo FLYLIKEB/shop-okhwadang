@@ -4,10 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
-import LogoSlider from '@/components/LogoSlider';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 
 interface Props {
@@ -41,7 +39,7 @@ const DEFAULT_SLIDES: HeroBannerSlide[] = [
   },
 ];
 
-/** slider 템플릿 — Embla 캐러셀 + 로고 + Ken Burns + Autoplay */
+/** slider 템플릿 — Embla 캐러셀 + Ken Burns + Autoplay */
 function SliderHero({ slides, sectionRef }: {
   slides: HeroBannerSlide[];
   sectionRef: React.RefObject<HTMLElement | null>;
@@ -67,6 +65,21 @@ function SliderHero({ slides, sectionRef }: {
     }, 5000);
     return () => clearInterval(interval);
   }, [emblaApi]);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const handleScroll = () => {
+      const bottom = section.getBoundingClientRect().bottom;
+      const isPast = bottom < 56;
+      document.dispatchEvent(new CustomEvent('hero-visibility', { detail: { isPast } }));
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [sectionRef]);
 
   return (
     <section ref={sectionRef} role="region" aria-label="메인 배너" className="relative">
@@ -98,11 +111,8 @@ function SliderHero({ slides, sectionRef }: {
               <div className="absolute inset-0 bg-black/45" />
 
               <div className="relative z-10 w-full px-8 md:px-12 max-w-3xl">
-                <div className="mb-1">
-                  <LogoSlider />
-                </div>
                 <p
-                  className="animate-fade-in-up text-xs uppercase tracking-[0.25em] text-white/70 mb-2 font-body"
+                  className="animate-fade-in-up text-xs uppercase tracking-[0.25em] text-white/60 mb-3 font-body"
                   style={{ animationDelay: '0s' }}
                 >
                   옥화당 공식 쇼핑몰
@@ -171,14 +181,26 @@ function SliderHero({ slides, sectionRef }: {
 
 export default function HeroBannerBlock({ content }: Props) {
   const { title, subtitle, image_url, cta_text, cta_url, template, slides } = content;
-  const pathname = usePathname();
-  const isHome = pathname === '/';
   const sectionRef = useRef<HTMLElement>(null);
-  const logoOpacity = useHeroLogo(sectionRef);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const handleScroll = () => {
+      const bottom = section.getBoundingClientRect().bottom;
+      const isPast = bottom < 56;
+      document.dispatchEvent(new CustomEvent('hero-visibility', { detail: { isPast } }));
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   if (template === 'slider') {
     const resolvedSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
-    return <SliderHero slides={resolvedSlides} sectionRef={sectionRef} logoOpacity={logoOpacity} />;
+    return <SliderHero slides={resolvedSlides} sectionRef={sectionRef} />;
   }
 
   if (template === 'split') {
@@ -208,11 +230,6 @@ export default function HeroBannerBlock({ content }: Props) {
   // fullscreen (default)
   return (
     <section ref={sectionRef} className="relative flex h-[60vh] min-h-[400px] md:h-[80vh] items-center justify-center overflow-hidden bg-neutral-900">
-      {isHome && (
-        <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
-          <LogoSlider />
-        </div>
-      )}
       {image_url && (
         <Image
           src={image_url}

@@ -126,21 +126,18 @@ describe('Header', () => {
       mockPathname = '/products/123';
     });
 
-    it('shows back button on sub-pages', () => {
+    it('does not show back button in header on sub-pages (moved to BackButton component)', () => {
       render(<Header />);
-      expect(screen.getByRole('button', { name: '뒤로가기' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '뒤로가기' })).not.toBeInTheDocument();
     });
 
-    it('back button calls router.back()', async () => {
-      const user = userEvent.setup();
-      render(<Header />);
-      await user.click(screen.getByRole('button', { name: '뒤로가기' }));
-      expect(mockBack).toHaveBeenCalled();
+    it('back button removed from header — skipped', () => {
+      // 뒤로가기 버튼은 BackButton 컴포넌트로 이동됨
+      expect(true).toBe(true);
     });
 
     it('shows home and cart links on sub-pages', () => {
       render(<Header />);
-      expect(screen.getByRole('link', { name: '홈' })).toBeInTheDocument();
       expect(screen.getAllByRole('link', { name: '장바구니' }).length).toBeGreaterThan(0);
     });
 
@@ -149,16 +146,16 @@ describe('Header', () => {
       expect(screen.getByRole('button', { name: '메뉴 열기' })).toBeInTheDocument();
     });
 
-    it('shows back button on cart page', () => {
+    it('does not show back button on cart page in header', () => {
       mockPathname = '/cart';
       render(<Header />);
-      expect(screen.getByRole('button', { name: '뒤로가기' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '뒤로가기' })).not.toBeInTheDocument();
     });
 
-    it('shows back button on checkout page', () => {
+    it('does not show back button on checkout page in header', () => {
       mockPathname = '/checkout';
       render(<Header />);
-      expect(screen.getByRole('button', { name: '뒤로가기' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '뒤로가기' })).not.toBeInTheDocument();
     });
   });
 });

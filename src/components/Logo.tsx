@@ -10,11 +10,7 @@ export default function Logo({ variant = 'header', className }: LogoProps) {
   if (variant === 'hero') {
     return (
       <span
-        className={`font-display-ko font-bold text-white ${className ?? ''}`}
-        style={{
-          fontSize: 'clamp(2rem, 5vw, 4rem)',
-          textShadow: '0 1px 16px rgba(0,0,0,0.25)',
-        }}
+        className={`font-display-ko text-xl font-bold tracking-tight text-white ${className ?? ''}`}
       >
         {BRAND_NAME}
       </span>

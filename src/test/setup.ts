@@ -14,6 +14,24 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+
+// jsdom does not implement ResizeObserver — provide a class stub
+class ResizeObserverStub {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  constructor(_callback: ResizeObserverCallback) {}
+}
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  configurable: true,
+  value: ResizeObserverStub,
+});
+Object.defineProperty(global, 'ResizeObserver', {
+  writable: true,
+  configurable: true,
+  value: ResizeObserverStub,
+});
 // jsdom does not implement IntersectionObserver — provide a class stub
 class IntersectionObserverStub {
   observe = vi.fn();

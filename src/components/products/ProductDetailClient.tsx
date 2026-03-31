@@ -43,6 +43,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   )
   const maxQuantity = selectedOption?.stock ?? product.stock
   const isSoldout = product.status === 'soldout'
+  const descriptionImages = product.images.filter((img) => img.isDescriptionImage)
 
 
   function handleIncrease() {
@@ -158,7 +159,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
       </div>
 
       {/* Tabs */}
-      <ProductTabs description={product.description} productId={Number(product.id)} />
+      <ProductTabs description={product.description} descriptionImages={descriptionImages} productId={Number(product.id)} />
 
       {/* Mobile fixed bottom action bar — sits above MobileBottomNav (z-50, ~56px tall) */}
       <div className="md:hidden fixed bottom-14 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3">
