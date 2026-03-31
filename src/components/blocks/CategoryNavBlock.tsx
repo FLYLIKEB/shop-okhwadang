@@ -45,7 +45,7 @@ export default function CategoryNavBlock({ content }: Props) {
           }
         }
       } catch (err) {
-        console.error('CategoryNavBlock fetch error:', err);
+        void err;
       } finally {
         if (!cancelled) setLoading(false);
       }

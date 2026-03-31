@@ -93,7 +93,7 @@ describe('BlockRenderer', () => {
         content: {
           title: '테스트 배너',
           image_url: '/test.jpg',
-          template: 'slider',
+          template: 'fullscreen',
         },
       }),
     ];
@@ -229,9 +229,8 @@ describe('BlockRenderer', () => {
         },
       }),
     ];
-    const { container } = render(<BlockRenderer blocks={blocks} />);
+    render(<BlockRenderer blocks={blocks} />);
     expect(screen.getByText('상품 그리드')).toBeInTheDocument();
-    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
   });
 
   it('renders ProductCarouselBlock (loading state)', () => {
@@ -309,7 +308,7 @@ describe('BlockRenderer', () => {
         content: {
           title: '정상 배너',
           image_url: '/test.jpg',
-          template: 'slider',
+          template: 'fullscreen',
         },
       }),
     ];

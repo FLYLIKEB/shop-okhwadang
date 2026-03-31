@@ -6,6 +6,7 @@ export interface ProductImage {
   alt: string | null;
   sortOrder: number;
   isThumbnail: boolean;
+  isDescriptionImage: boolean;
 }
 
 export interface Category {

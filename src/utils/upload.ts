@@ -1,4 +1,4 @@
-import { API_BASE } from '@/lib/api';
+
 
 export interface UploadedFile {
   id: number;
@@ -9,7 +9,7 @@ export interface UploadedFile {
 }
 
 async function uploadToEndpoint(endpoint: string, file: File): Promise<UploadedFile> {
-  const url = `${API_BASE}${endpoint}`;
+  const url = `/api${endpoint}`;
   const formData = new FormData();
   formData.append('file', file);
   const response = await fetch(url, {
