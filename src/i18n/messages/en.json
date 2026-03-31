@@ -613,5 +613,14 @@
   },
   "teapotShapes": {
     "all": "All"
+  },
+  "promotion": {
+    "limitedTime": "Limited Time",
+    "specialOffer": "Special Offer",
+    "eventEnded": "This event has ended.",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds"
   }
 }
