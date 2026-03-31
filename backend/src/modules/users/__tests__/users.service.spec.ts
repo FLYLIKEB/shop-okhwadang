@@ -58,6 +58,8 @@ describe('UsersService', () => {
         isActive: true,
         password: 'hashed',
         refreshToken: 'token',
+        failedLoginAttempts: 0,
+        lockedUntil: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
