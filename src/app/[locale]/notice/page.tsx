@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { noticesApi } from '@/lib/api';
 import type { Notice } from '@/lib/api';
 import { SkeletonBox } from '@/components/ui/Skeleton';
@@ -9,16 +10,18 @@ import EmptyState from '@/components/EmptyState';
 import { cn } from '@/components/ui/utils';
 
 export default function NoticePage() {
+  const params = useParams<{ locale: string }>();
+  const locale = params.locale;
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     noticesApi
-      .getList()
+      .getList(locale)
       .then((res) => setNotices(res.data))
       .catch(() => setNotices([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [locale]);
 
   if (loading) {
     return (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import * as Accordion from '@radix-ui/react-accordion';
 import { faqsApi } from '@/lib/api';
 import type { Faq } from '@/lib/api';
@@ -11,6 +12,8 @@ import { cn } from '@/components/ui/utils';
 const CATEGORIES = ['전체', '배송', '결제', '교환/반품', '회원', '기타'];
 
 export default function FaqPage() {
+  const params = useParams<{ locale: string }>();
+  const locale = params.locale;
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('전체');
@@ -19,11 +22,11 @@ export default function FaqPage() {
     const cat = activeCategory === '전체' ? undefined : activeCategory;
     setLoading(true);
     faqsApi
-      .getList(cat)
+      .getList(cat, locale)
       .then((res) => setFaqs(res.data))
       .catch(() => setFaqs([]))
       .finally(() => setLoading(false));
-  }, [activeCategory]);
+  }, [activeCategory, locale]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
