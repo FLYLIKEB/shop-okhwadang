@@ -42,10 +42,11 @@ export class ProductsController {
   @Public()
   findOne(
     @Param('id', ParseIntPipe) id: number,
+    @Query('locale') locale: string | undefined,
     @Request() req: RequestWithUser,
   ) {
     const isAdmin = req.user?.role === 'admin';
-    return this.productsService.findOne(id, isAdmin);
+    return this.productsService.findOne(id, isAdmin, locale);
   }
 
   @Post()
