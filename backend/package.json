@@ -52,8 +52,9 @@
     "@nestjs/cli": "^11.0.16",
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/testing": "^11.1.17",
-    "@swc/cli": "^0.4.0",
+    "@swc/cli": "^0.8.0",
     "@swc/core": "^1.15.21",
+    "chokidar": "^5.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
@@ -69,6 +70,11 @@
     "ts-jest": "^29.2.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.7.0"
+  },
+  "overrides": {
+    "path-to-regexp": "^8.4.1",
+    "picomatch": "^4.0.4",
+    "file-type": "^21.3.4"
   },
   "jest": {
     "moduleFileExtensions": [
