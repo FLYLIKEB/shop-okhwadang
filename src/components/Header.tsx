@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { ShoppingCart, Menu, X, ArrowLeft, Home, Search } from 'lucide-react';
+import { ShoppingCart, Menu, X, Search } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigation } from '@/hooks/useNavigation';
+import { useLogoScroll } from '@/components/contexts/LogoScrollContext';
 import type { NavigationItem } from '@/lib/api';
 import LanguageSelector from '@/components/LanguageSelector';
 
@@ -202,11 +203,11 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
         onClick={onClose}
         aria-hidden="true"
       />
-      {/* 검색 패널 — 헤더 바로 아래 슬라이드다운 */}
+      {/* 검색 패널 — 헤더 바로 아래 페이드인 */}
       <div
         className={cn(
-          'md:hidden fixed left-0 right-0 z-[46] bg-white/95 backdrop-blur-md shadow-md transition-transform duration-300 ease-in-out',
-          isOpen ? 'translate-y-0' : '-translate-y-full',
+          'md:hidden fixed left-0 right-0 z-[46] bg-white/95 backdrop-blur-md shadow-md transition-[opacity,transform] duration-200 ease-in-out',
+          isOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-2',
         )}
         style={{ top: '56px' }}
         role="search"
@@ -246,15 +247,13 @@ export default function Header() {
   const { itemCount } = useCart();
   const { items: navItems } = useNavigation('gnb');
   const { items: sidebarItems } = useNavigation('sidebar');
+  const { progress } = useLogoScroll();
   const [query, setQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isPastHero, setIsPastHero] = useState(false);
 
-  const isHomePage = pathname === '/';
-  const isSubPage = !isHomePage;
-
+  const isHomePage = pathname === '/' || /^\/(ko|en)\/?$/.test(pathname);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { setIsMenuOpen(false); setIsSearchOpen(false); }
@@ -276,36 +275,6 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    if (!isHomePage) { setIsPastHero(true); return; }
-    setIsPastHero(false);
-
-    // hero-visibility 커스텀 이벤트 수신 (HeroBannerBlock/Slider에서 발생)
-    const handleHeroVisibility = (e: Event) => {
-      const { isPast } = (e as CustomEvent<{ isPast: boolean }>).detail;
-      setIsPastHero(isPast);
-    };
-    document.addEventListener('hero-visibility', handleHeroVisibility);
-
-    // 폴백: 스크롤 기반으로 히어로 섹션 직접 감지
-    const handleScroll = () => {
-      const hero = document.querySelector('[aria-label="메인 배너"]') as HTMLElement | null;
-      if (hero) {
-        setIsPastHero(hero.getBoundingClientRect().bottom < 56);
-      } else {
-        // 히어로 없으면 로고 항상 표시
-        setIsPastHero(true);
-      }
-    };
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      document.removeEventListener('hero-visibility', handleHeroVisibility);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isHomePage]);
-
   const handleDesktopSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = query.trim();
@@ -313,13 +282,19 @@ export default function Header() {
     router.push('/search?q=' + encodeURIComponent(trimmed));
   };
 
-  const showHeaderLogo = !isHomePage || isPastHero;
+  const showHeaderLogo = true;
+  // 홈 히어로 위에 있을 때 헤더 투명 + 흰색 텍스트
+  const isOverHero = isHomePage && progress === 0;
 
   return (
     <>
       <header className={cn(
-        'sticky top-0 z-50 bg-white/95 backdrop-blur-[8px] transition-[border-color,box-shadow] duration-300 ease-in-out',
-        isScrolled ? 'border-b border-border shadow-sm' : 'border-b border-transparent',
+        'sticky top-0 z-50 transition-[background-color,border-color,box-shadow] duration-300 ease-in-out',
+        isOverHero
+          ? 'bg-transparent border-b border-transparent'
+          : isScrolled
+            ? 'bg-white/95 backdrop-blur-[8px] border-b border-border shadow-sm'
+            : 'bg-white/95 backdrop-blur-[8px] border-b border-transparent',
       )}>
         {/* Top row */}
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4">
@@ -331,37 +306,25 @@ export default function Header() {
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-            className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            className={cn("p-2 -ml-2 transition-colors shrink-0", isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-
-          {/* 서브페이지 뒤로가기 (모바일) */}
-          {isSubPage && (
-            <button
-              type="button"
-              onClick={() => router.back()}
-              aria-label="뒤로가기"
-              className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-          )}
 
           {/* 로고 */}
           <Link
             href="/"
             className={cn(
-              'shrink-0 transition-[opacity,transform] duration-500 ease-in-out',
-              isSubPage && 'hidden md:block',
-              showHeaderLogo
+              'shrink-0 transition-[opacity,transform,color] duration-300 ease-in-out',
+
+              (showHeaderLogo || isOverHero)
                 ? 'opacity-100 pointer-events-auto translate-x-0'
                 : 'opacity-0 pointer-events-none -translate-x-2',
             )}
-            aria-hidden={!showHeaderLogo}
-            tabIndex={!showHeaderLogo ? -1 : undefined}
+            aria-hidden={!showHeaderLogo && !isOverHero}
+            tabIndex={!showHeaderLogo && !isOverHero ? -1 : undefined}
           >
-            <Logo />
+            <Logo variant={isOverHero ? 'hero' : 'header'} />
           </Link>
 
           {/* 데스크탑 네비 */}
@@ -406,7 +369,7 @@ export default function Header() {
           />
 
           {/* 모바일 우측: 검색 + 홈 + 카트 */}
-          <div className="md:hidden flex items-center gap-1 ml-auto">
+          <div className={cn("md:hidden flex items-center gap-1 ml-auto", isOverHero && "[&_svg]:text-white/80 [&_a]:text-white/80")}>
             <button
               type="button"
               onClick={() => { setIsSearchOpen((p) => !p); setIsMenuOpen(false); }}
@@ -416,11 +379,6 @@ export default function Header() {
             >
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </button>
-            {isSubPage && (
-              <Link href="/" aria-label="홈" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                <Home className="h-5 w-5" />
-              </Link>
-            )}
             <div className="p-2">
               <CartBadge itemCount={itemCount} />
             </div>
