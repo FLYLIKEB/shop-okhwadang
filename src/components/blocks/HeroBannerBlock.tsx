@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
+import Logo from '@/components/Logo';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 
 interface Props {
@@ -39,10 +41,35 @@ const DEFAULT_SLIDES: HeroBannerSlide[] = [
   },
 ];
 
-/** slider 템플릿 — Embla 캐러셀 + Ken Burns + Autoplay */
-function SliderHero({ slides, sectionRef }: {
+function useHeroLogo(sectionRef: React.RefObject<HTMLElement | null>) {
+  const [opacity, setOpacity] = useState(1);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const el = sectionRef.current;
+      if (!el) return;
+      const bottom = el.getBoundingClientRect().bottom;
+      const fadeStart = window.innerHeight * 0.5;
+      const fadeEnd = window.innerHeight * 0.15;
+      if (bottom >= fadeStart) setOpacity(1);
+      else if (bottom <= fadeEnd) setOpacity(0);
+      else setOpacity((bottom - fadeEnd) / (fadeStart - fadeEnd));
+
+      const isPast = bottom < 56;
+      document.dispatchEvent(new CustomEvent('hero-visibility', { detail: { isPast } }));
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [sectionRef]);
+
+  return opacity;
+}
+
+function SliderHero({ slides, sectionRef, logoOpacity }: {
   slides: HeroBannerSlide[];
   sectionRef: React.RefObject<HTMLElement | null>;
+  logoOpacity: number;
 }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
@@ -65,21 +92,6 @@ function SliderHero({ slides, sectionRef }: {
     }, 5000);
     return () => clearInterval(interval);
   }, [emblaApi]);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const handleScroll = () => {
-      const bottom = section.getBoundingClientRect().bottom;
-      const isPast = bottom < 56;
-      document.dispatchEvent(new CustomEvent('hero-visibility', { detail: { isPast } }));
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [sectionRef]);
 
   return (
     <section ref={sectionRef} role="region" aria-label="메인 배너" className="relative">
@@ -110,29 +122,26 @@ function SliderHero({ slides, sectionRef }: {
 
               <div className="absolute inset-0 bg-black/45" />
 
+              <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
+                <div style={{ opacity: logoOpacity, transition: 'opacity 0.1s linear' }}>
+                  <Logo variant="hero" />
+                </div>
+              </div>
+
               <div className="relative z-10 w-full px-8 md:px-12 max-w-3xl">
-                <p
-                  className="animate-fade-in-up text-xs uppercase tracking-[0.25em] text-white/60 mb-3 font-body"
-                  style={{ animationDelay: '0s' }}
-                >
+                <p className="text-xs uppercase tracking-[0.25em] text-white/60 mb-3 font-body">
                   옥화당 공식 쇼핑몰
                 </p>
-                <h2
-                  className="animate-fade-in-up text-4xl md:text-6xl font-display-ko tracking-tight text-white leading-tight"
-                  style={{ animationDelay: '0.2s' }}
-                >
+                <h2 className="text-4xl md:text-6xl font-display-ko tracking-tight text-white leading-tight">
                   {slide.title}
                 </h2>
                 {slide.subtitle && (
-                  <p
-                    className="animate-fade-in-up mt-4 text-base md:text-lg text-white/80"
-                    style={{ animationDelay: '0.4s' }}
-                  >
+                  <p className="mt-4 text-base md:text-lg text-white/80">
                     {slide.subtitle}
                   </p>
                 )}
                 {slide.cta_text && slide.cta_url && (
-                  <div className="animate-fade-in-up mt-8" style={{ animationDelay: '0.6s' }}>
+                  <div className="mt-8">
                     <Link
                       href={slide.cta_url}
                       className="inline-block rounded-full border border-white px-8 py-3 text-sm font-medium text-white tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
@@ -181,11 +190,14 @@ function SliderHero({ slides, sectionRef }: {
 
 export default function HeroBannerBlock({ content }: Props) {
   const { title, subtitle, image_url, cta_text, cta_url, template, slides } = content;
+  const pathname = usePathname();
+  const isHome = pathname === '/';
   const sectionRef = useRef<HTMLElement>(null);
+  const logoOpacity = useHeroLogo(sectionRef);
 
   if (template === 'slider') {
     const resolvedSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
-    return <SliderHero slides={resolvedSlides} sectionRef={sectionRef} />;
+    return <SliderHero slides={resolvedSlides} sectionRef={sectionRef} logoOpacity={logoOpacity} />;
   }
 
   if (template === 'split') {
@@ -215,6 +227,14 @@ export default function HeroBannerBlock({ content }: Props) {
   // fullscreen (default)
   return (
     <section ref={sectionRef} className="relative flex h-[60vh] min-h-[400px] md:h-[80vh] items-center justify-center overflow-hidden bg-neutral-900">
+      {isHome && (
+        <div
+          className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20"
+          style={{ opacity: logoOpacity, transition: 'opacity 0.1s linear' }}
+        >
+          <Logo variant="hero" />
+        </div>
+      )}
       {image_url && (
         <Image
           src={image_url}
@@ -227,10 +247,10 @@ export default function HeroBannerBlock({ content }: Props) {
       )}
       {image_url && <div className="absolute inset-0 bg-black/45" />}
       <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : ''}`}>
-        <h2 className="animate-fade-in-up text-3xl md:text-5xl" style={{ animationDelay: '0.2s' }}>{title}</h2>
-        {subtitle && <p className="animate-fade-in-up mt-4 text-lg opacity-80" style={{ animationDelay: '0.4s' }}>{subtitle}</p>}
+        <h2 className="text-3xl md:text-5xl">{title}</h2>
+        {subtitle && <p className="mt-4 text-lg opacity-80">{subtitle}</p>}
         {cta_text && cta_url && (
-          <div className="animate-fade-in-up mt-8" style={{ animationDelay: '0.6s' }}>
+          <div className="mt-8">
             <Link
               href={cta_url}
               className="inline-block rounded-full border border-current px-8 py-3 text-sm font-medium tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
