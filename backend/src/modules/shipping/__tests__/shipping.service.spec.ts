@@ -69,10 +69,10 @@ describe('ShippingService', () => {
       ).not.toThrow();
     });
 
-    it('DELIVERED → PREPARING 역방향 전이 → BadRequestException(INVALID_STATUS_TRANSITION)', () => {
+    it('DELIVERED → PREPARING 역방향 전이 → BadRequestException(유효하지 않은 배송 상태 변경입니다.)', () => {
       expect(() =>
         service.validateTransition(ShippingStatus.DELIVERED, ShippingStatus.PREPARING),
-      ).toThrow(BadRequestException);
+      ).toThrow(new BadRequestException('유효하지 않은 배송 상태 변경입니다.'));
     });
 
     it('shipped → preparing 역방향 전이 → BadRequestException', () => {
@@ -83,20 +83,26 @@ describe('ShippingService', () => {
   });
 
   describe('getByOrderId', () => {
-    it('orderId 없음 → 404 SHIPPING_NOT_FOUND', async () => {
+    it('orderId 없음 → 404 배송 정보를 찾을 수 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(null);
-      await expect(service.getByOrderId(999, 10)).rejects.toThrow(NotFoundException);
+      await expect(service.getByOrderId(999, 10)).rejects.toThrow(
+        new NotFoundException('배송 정보를 찾을 수 없습니다.'),
+      );
     });
 
-    it('타인 주문 접근 → 403 FORBIDDEN', async () => {
+    it('타인 주문 접근 → 403 접근 권한이 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(makeOrder({ userId: 99 }));
-      await expect(service.getByOrderId(1, 10)).rejects.toThrow(ForbiddenException);
+      await expect(service.getByOrderId(1, 10)).rejects.toThrow(
+        new ForbiddenException('접근 권한이 없습니다.'),
+      );
     });
 
-    it('shipping 없음 → 404 SHIPPING_NOT_FOUND', async () => {
+    it('shipping 없음 → 404 배송 정보를 찾을 수 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(makeOrder());
       mockShippingRepo.findOne.mockResolvedValue(null);
-      await expect(service.getByOrderId(1, 10)).rejects.toThrow(NotFoundException);
+      await expect(service.getByOrderId(1, 10)).rejects.toThrow(
+        new NotFoundException('배송 정보를 찾을 수 없습니다.'),
+      );
     });
 
     it('tracking_number 없음 → tracking null 반환', async () => {
@@ -121,23 +127,29 @@ describe('ShippingService', () => {
   describe('registerTracking', () => {
     const dto = { carrier: 'mock' as const, trackingNumber: '9999999' };
 
-    it('주문 없음 → 404 ORDER_NOT_FOUND', async () => {
+    it('주문 없음 → 404 주문 정보를 찾을 수 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(null);
-      await expect(service.registerTracking(999, dto)).rejects.toThrow(NotFoundException);
+      await expect(service.registerTracking(999, dto)).rejects.toThrow(
+        new NotFoundException('주문 정보를 찾을 수 없습니다.'),
+      );
     });
 
-    it('shipping 없음 → 404 SHIPPING_NOT_FOUND', async () => {
+    it('shipping 없음 → 404 배송 정보를 찾을 수 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(makeOrder());
       mockShippingRepo.findOne.mockResolvedValueOnce(null);
-      await expect(service.registerTracking(1, dto)).rejects.toThrow(NotFoundException);
+      await expect(service.registerTracking(1, dto)).rejects.toThrow(
+        new NotFoundException('배송 정보를 찾을 수 없습니다.'),
+      );
     });
 
-    it('이미 preparing 상태에서 preparing 전이 시도 → BadRequestException', async () => {
+    it('이미 preparing 상태에서 preparing 전이 시도 → BadRequestException(유효하지 않은 배송 상태 변경입니다.)', async () => {
       mockOrderRepo.findOne.mockResolvedValue(makeOrder());
       mockShippingRepo.findOne.mockResolvedValueOnce(
         makeShipping({ status: ShippingStatus.PREPARING }),
       );
-      await expect(service.registerTracking(1, dto)).rejects.toThrow(BadRequestException);
+      await expect(service.registerTracking(1, dto)).rejects.toThrow(
+        new BadRequestException('유효하지 않은 배송 상태 변경입니다.'),
+      );
     });
 
     it('payment_confirmed 상태에서 운송장 등록 성공', async () => {
