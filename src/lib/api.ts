@@ -640,6 +640,15 @@ export interface Page {
   is_published: boolean;
 }
 
+export interface HeroBannerSlide {
+  title: string;
+  subtitle?: string;
+  image_url?: string;
+  bg_color?: string;
+  cta_text?: string;
+  cta_url?: string;
+}
+
 export interface HeroBannerContent {
   title: string;
   subtitle?: string;
@@ -647,6 +656,7 @@ export interface HeroBannerContent {
   cta_text?: string;
   cta_url?: string;
   template: 'slider' | 'fullscreen' | 'split';
+  slides?: HeroBannerSlide[];
 }
 
 export interface ProductGridContent {
@@ -655,6 +665,9 @@ export interface ProductGridContent {
   limit: number;
   template: '2col' | '3col' | '4col';
   title?: string;
+  more_href?: string;
+  /** 서버에서 미리 가져온 상품 데이터 (fallback용) */
+  prefetched_products?: Product[];
 }
 
 export interface ProductCarouselContent {
@@ -668,6 +681,8 @@ export interface ProductCarouselContent {
 export interface CategoryNavContent {
   category_ids: number[];
   template: 'icon' | 'image' | 'text';
+  /** 서버에서 미리 가져온 카테고리 데이터 (fallback용) */
+  prefetched_categories?: Category[];
 }
 
 export interface PromotionBannerContent {

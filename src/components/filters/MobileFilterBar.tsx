@@ -132,7 +132,7 @@ export default function MobileFilterBar({ categories }: MobileFilterBarProps) {
         </button>
       </div>
 
-      {/* 니로 칩 행 */}
+      {/* 니료 칩 행 */}
       <div className="mt-2 flex gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button
           type="button"

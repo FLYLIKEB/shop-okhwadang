@@ -5,12 +5,12 @@ import { CLAY_COLLECTIONS, SHAPE_COLLECTIONS } from '@/lib/collections';
 import { TEAPOT_IMAGES } from '@/lib/teapot-images';
 
 export const metadata: Metadata = {
-  title: 'Collection — 니로별·모양별 큐레이션',
+  title: 'Collection — 니료별·모양별 큐레이션',
   description:
-    '자사호를 니로(泥料)별, 모양별로 탐색하세요. 주니·단니·자니·흑니·청수니·녹니 컬렉션과 서시·석표·인왕·덕종·수평 형태별 큐레이션.',
+    '자사호를 니료(泥料)별, 모양별로 탐색하세요. 주니·단니·자니·흑니·청수니·녹니 컬렉션과 서시·석표·인왕·덕종·수평 형태별 큐레이션.',
   openGraph: {
     title: 'Collection — 옥화당',
-    description: '니로별·모양별 자사호 큐레이션 컬렉션',
+    description: '니료별·모양별 자사호 큐레이션 컬렉션',
   },
 };
 
@@ -51,24 +51,24 @@ export default function CollectionPage() {
           Collection
         </p>
         <h1 className="font-display-ko text-4xl font-bold tracking-tight mb-4">
-          니로별 · 모양별 큐레이션
+          니료별 · 모양별 큐레이션
         </h1>
         <p className="max-w-xl mx-auto text-sm text-background/70 leading-relaxed">
-          자사호의 개성은 흙과 형태에서 비롯됩니다. 니로의 색과 질감, 형태의 선과
+          자사호의 개성은 흙과 형태에서 비롯됩니다. 니료의 색과 질감, 형태의 선과
           비례로 나만의 자사호를 찾아보세요.
         </p>
       </section>
 
-      {/* 니로별 컬렉션 */}
+      {/* 니료별 컬렉션 */}
       <section
         className="py-20 px-4 max-w-6xl mx-auto"
         aria-labelledby="clay-collection-heading"
       >
         <SectionHeading
           id="clay-collection-heading"
-          label="니로별"
+          label="니료별"
           title="흙의 색으로 찾기"
-          description="6종의 니로는 각기 다른 색상, 질감, 차 궁합을 지닙니다. 관심 있는 니로를 선택해보세요."
+          description="6종의 니료는 각기 다른 색상, 질감, 차 궁합을 지닙니다. 관심 있는 니료를 선택해보세요."
         />
         <div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"

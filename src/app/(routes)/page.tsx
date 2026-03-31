@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
-import HeroBannerSlider from '@/components/home/HeroBannerSlider';
-import FeaturedProducts from '@/components/home/FeaturedProducts';
-import CategoryNav from '@/components/home/CategoryNav';
-import PromotionBanner from '@/components/home/PromotionBanner';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
 import { homeApi, categoriesApi } from '@/lib/api';
 import { fetchPage } from '@/lib/api-server';
-import type { Product, Category } from '@/lib/api';
+import type { Product, Category, PageBlock } from '@/lib/api';
 
 export const revalidate = 60;
 
@@ -48,54 +44,91 @@ async function fetchHomeData(): Promise<{
   };
 }
 
-async function fetchHomePage() {
-  const page = await fetchPage('home');
-  if (page && page.blocks && page.blocks.length > 0) return page;
-  return null;
+/** DB에 홈페이지가 없을 때 사용하는 기본 블록 배열 */
+function buildDefaultBlocks(data: {
+  featured: Product[];
+  popular: Product[];
+  categories: Category[];
+}): PageBlock[] {
+  return [
+    {
+      id: -1,
+      type: 'hero_banner',
+      content: { template: 'slider' },
+      sort_order: 0,
+      is_visible: true,
+    },
+    {
+      id: -2,
+      type: 'category_nav',
+      content: {
+        category_ids: [],
+        template: 'text',
+        prefetched_categories: data.categories,
+      },
+      sort_order: 1,
+      is_visible: true,
+    },
+    {
+      id: -3,
+      type: 'product_grid',
+      content: {
+        title: '추천 상품',
+        template: '4col',
+        limit: 8,
+        more_href: '/products?isFeatured=true',
+        prefetched_products: data.featured,
+      },
+      sort_order: 2,
+      is_visible: true,
+    },
+    {
+      id: -4,
+      type: 'product_grid',
+      content: {
+        title: '인기 상품',
+        template: '4col',
+        limit: 8,
+        more_href: '/products?sort=popular',
+        prefetched_products: data.popular,
+      },
+      sort_order: 3,
+      is_visible: true,
+    },
+    {
+      id: -5,
+      type: 'promotion_banner',
+      content: {
+        title: '지금 바로 쇼핑하세요',
+        subtitle: '다양한 상품을 둘러보세요',
+        cta_text: '쇼핑하기',
+        cta_url: '/products',
+        template: 'full-width',
+      },
+      sort_order: 4,
+      is_visible: true,
+    },
+  ];
 }
 
 export default async function Home() {
   const [homePage, homeData] = await Promise.all([
-    fetchHomePage(),
+    fetchPage('home'),
     fetchHomeData(),
   ]);
 
-  if (homePage) {
-    const blocks = homePage.blocks ?? [];
-    const heroBlocks = blocks.filter((b) => b.type === 'hero_banner');
-    const restBlocks = blocks.filter((b) => b.type !== 'hero_banner');
-    return (
-      <div>
-        {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
-        <div className="mx-auto max-w-7xl px-4">
-          <BlockRenderer blocks={restBlocks} />
-        </div>
-      </div>
-    );
-  }
+  const blocks = homePage?.blocks?.length
+    ? homePage.blocks
+    : buildDefaultBlocks(homeData);
 
-  const { featured, popular, categories } = homeData;
+  const heroBlocks = blocks.filter((b) => b.type === 'hero_banner');
+  const restBlocks = blocks.filter((b) => b.type !== 'hero_banner');
 
   return (
     <div>
-      <HeroBannerSlider />
-
+      {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
       <div className="mx-auto max-w-7xl px-4">
-      <CategoryNav categories={categories} />
-
-      <FeaturedProducts
-        title="추천 상품"
-        products={featured}
-        moreHref="/products?isFeatured=true"
-      />
-
-      <FeaturedProducts
-        title="인기 상품"
-        products={popular}
-        moreHref="/products?sort=popular"
-      />
-
-      <PromotionBanner />
+        <BlockRenderer blocks={restBlocks} />
       </div>
     </div>
   );

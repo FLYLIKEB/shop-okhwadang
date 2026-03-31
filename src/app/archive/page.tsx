@@ -5,8 +5,8 @@ import { cn } from '@/components/ui/utils';
 import { TEAPOT_IMAGES } from '@/lib/teapot-images';
 
 export const metadata: Metadata = {
-  title: 'Archive — 니로 산지 기록 & 공정 스토리',
-  description: '자사호의 원료인 니로(泥料) 산지 기록과 채토·연토·성형·소성 공정 스토리, 그리고 장인 인터뷰를 담은 아카이브입니다.',
+  title: 'Archive — 니료 산지 기록 & 공정 스토리',
+  description: '자사호의 원료인 니료(泥料) 산지 기록과 채토·연토·성형·소성 공정 스토리, 그리고 장인 인터뷰를 담은 아카이브입니다.',
 };
 
 // ─── 데이터 ───────────────────────────────────────────────────────
@@ -30,7 +30,7 @@ const NILO_DATA: NiloEntry[] = [
     color: '#8B4513',
     region: '장쑤성 이싱 황룡산',
     description:
-      '철분 함량이 높아 소성 후 선명한 붉은색을 띠는 니로입니다. 황룡산 산록에서 채취한 원토를 정제하여 사용하며, 밀도가 높고 기공이 미세해 차 맛을 부드럽게 변화시킵니다.',
+      '철분 함량이 높아 소성 후 선명한 붉은색을 띠는 니료입니다. 황룡산 산록에서 채취한 원토를 정제하여 사용하며, 밀도가 높고 기공이 미세해 차 맛을 부드럽게 변화시킵니다.',
     characteristics: ['소성 온도 1080–1120°C', '수축률 약 30%', '철분 함량 14–16%', '고급 홍차·우롱에 최적'],
     productUrl: '/products?clay=zuni',
   },
@@ -52,7 +52,7 @@ const NILO_DATA: NiloEntry[] = [
     color: '#6B4226',
     region: '장쑤성 이싱 정산',
     description:
-      '자사호의 가장 대표적인 니로로, 철과 망간 산화물이 조화롭게 함유되어 있습니다. 소성 후 자주빛 갈색을 띠며, 뛰어난 보온성과 투기성으로 중국차 전반에 두루 어울립니다.',
+      '자사호의 가장 대표적인 니료로, 철과 망간 산화물이 조화롭게 함유되어 있습니다. 소성 후 자주빛 갈색을 띠며, 뛰어난 보온성과 투기성으로 중국차 전반에 두루 어울립니다.',
     characteristics: ['소성 온도 1150–1200°C', '수축률 약 10%', '내구성 최상', '보이차·암차에 최적'],
     productUrl: '/products?clay=zani',
   },
@@ -63,7 +63,7 @@ const NILO_DATA: NiloEntry[] = [
     color: '#2C2C2C',
     region: '장쑤성 이싱 용왕산',
     description:
-      '산화망간과 철 성분이 풍부하여 소성 후 짙은 흑갈색을 띠는 희귀 니로입니다. 채취량이 적어 고가에 거래되며, 강한 흡착력으로 숙성 보이차의 향을 깊게 살려줍니다.',
+      '산화망간과 철 성분이 풍부하여 소성 후 짙은 흑갈색을 띠는 희귀 니료입니다. 채취량이 적어 고가에 거래되며, 강한 흡착력으로 숙성 보이차의 향을 깊게 살려줍니다.',
     characteristics: ['소성 온도 1160–1220°C', '수축률 약 11%', '망간 함량 3–5%', '숙보이·흑차에 최적'],
     productUrl: '/products?clay=heini',
   },
@@ -122,7 +122,7 @@ const PROCESS_STEPS: ProcessStep[] = [
     title: '성형 (成形)',
     description: '타니·발피·접합으로 기형 완성',
     detail:
-      '숙성된 니로를 알맞은 두께의 니편(泥片)으로 두드린 뒤, 대패로 밀어 균일한 두께를 만들고 형판에 맞게 성형합니다. 뚜껑·주구·손잡이 등 각 부위를 별도로 제작한 후 니장(泥漿)으로 접합하여 하나의 기형을 완성합니다.',
+      '숙성된 니료를 알맞은 두께의 니편(泥片)으로 두드린 뒤, 대패로 밀어 균일한 두께를 만들고 형판에 맞게 성형합니다. 뚜껑·주구·손잡이 등 각 부위를 별도로 제작한 후 니장(泥漿)으로 접합하여 하나의 기형을 완성합니다.',
   },
   {
     id: 'soseong',
@@ -130,7 +130,7 @@ const PROCESS_STEPS: ProcessStep[] = [
     title: '소성 (燒成)',
     description: '1100°C 이상 가마 소성',
     detail:
-      '성형한 호를 음건(陰乾)으로 서서히 건조한 후, 전통 용가마 혹은 현대 전기가마에서 니로에 따라 1060–1220°C로 소성합니다. 온도 곡선과 산화·환원 분위기를 정밀하게 조절하여 최종 색상과 질감을 결정합니다.',
+      '성형한 호를 음건(陰乾)으로 서서히 건조한 후, 전통 용가마 혹은 현대 전기가마에서 니료에 따라 1060–1220°C로 소성합니다. 온도 곡선과 산화·환원 분위기를 정밀하게 조절하여 최종 색상과 질감을 결정합니다.',
   },
 ];
 
@@ -224,7 +224,7 @@ function NiloCard({ entry, reversed }: NiloCardProps) {
           href={entry.productUrl}
           className="inline-flex items-center gap-1 text-sm font-medium text-foreground border border-foreground rounded px-4 py-2 hover:bg-foreground hover:text-background transition-colors"
         >
-          이 니로의 작품 보기 →
+          이 니료의 작품 보기 →
         </Link>
       </div>
     </article>
@@ -302,19 +302,19 @@ export default function ArchivePage() {
       {/* Hero */}
       <section className="bg-foreground text-background py-20 px-4 text-center">
         <p className="text-xs font-semibold tracking-widest uppercase text-background/60 mb-3">Archive</p>
-        <h1 className="text-4xl font-bold tracking-tight mb-4">니로 산지 기록 & 공정 스토리</h1>
+        <h1 className="text-4xl font-bold tracking-tight mb-4">니료 산지 기록 & 공정 스토리</h1>
         <p className="max-w-xl mx-auto text-sm text-background/70 leading-relaxed">
-          자사호의 생명은 흙에서 시작됩니다. 산지별 니로의 특성, 채토부터 소성까지의 공정,
+          자사호의 생명은 흙에서 시작됩니다. 산지별 니료의 특성, 채토부터 소성까지의 공정,
           그리고 흙과 함께 살아온 장인들의 이야기를 기록합니다.
         </p>
       </section>
 
-      {/* 니로 사전 */}
+      {/* 니료 사전 */}
       <section className="py-20 px-4 max-w-5xl mx-auto" aria-labelledby="nilo-heading">
         <SectionHeading
-          label="니로 사전"
+          label="니료 사전"
           title="흙의 종류와 산지"
-          description="자사호에 사용되는 대표 니로 6종의 산지, 특성, 적합한 차종을 소개합니다."
+          description="자사호에 사용되는 대표 니료 6종의 산지, 특성, 적합한 차종을 소개합니다."
         />
         <div className="space-y-20" id="nilo-heading">
           {NILO_DATA.map((entry, i) => (
@@ -360,7 +360,7 @@ export default function ArchivePage() {
       {/* CTA 푸터 */}
       <section className="bg-muted py-16 px-4 text-center">
         <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-3">Shop</p>
-        <h2 className="text-2xl font-bold text-foreground mb-4">마음에 드는 니로의 작품을 만나보세요</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-4">마음에 드는 니료의 작품을 만나보세요</h2>
         <Link
           href="/products"
           className="inline-flex items-center gap-2 text-sm font-medium bg-foreground text-background rounded px-6 py-3 hover:opacity-80 transition-opacity"
