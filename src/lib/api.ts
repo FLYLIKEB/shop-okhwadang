@@ -98,8 +98,11 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
+      const message = Array.isArray(error.message)
+        ? error.message.join(', ')
+        : (error.message || `HTTP ${response.status}`);
+      throw new Error(message);
     }
 
     if (response.status === 204 || response.headers.get('content-length') === '0') {
