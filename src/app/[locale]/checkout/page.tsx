@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +8,8 @@ import { useCart } from '@/contexts/CartContext';
 import type { CartItem, PreparePaymentResponse, UserAddress } from '@/lib/api';
 import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
+import type { Locale } from '@/i18n/routing';
+import PaymentGateway from '@/components/checkout/PaymentGateway';
 
 type PaymentStep = 'idle' | 'creating_order' | 'preparing_payment' | 'confirming_payment' | 'success';
 
@@ -52,13 +54,21 @@ function validateForm(form: ShippingForm): FormErrors {
   return errors;
 }
 
-export default function CheckoutPage() {
+export default function CheckoutPage({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}) {
+  const { locale } = use(params);
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const { refetch } = useCart();
 
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
   const [step, setStep] = useState<PaymentStep>('idle');
+  const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
+  const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
+  const [currentOrderNumber, setCurrentOrderNumber] = useState<string>('');
   const [form, setForm] = useState<ShippingForm>({
     recipientName: '',
     recipientPhone: '',
@@ -86,23 +96,23 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) {
-      router.replace('/login');
+      router.replace(`/${locale}/login`);
       return;
     }
     const raw = sessionStorage.getItem('checkoutItems');
     if (!raw) {
-      router.replace('/cart');
+      router.replace(`/${locale}/cart`);
       return;
     }
     try {
       const parsed = JSON.parse(raw) as CartItem[];
       if (!Array.isArray(parsed) || parsed.length === 0) {
-        router.replace('/cart');
+        router.replace(`/${locale}/cart`);
         return;
       }
       setCheckoutItems(parsed);
     } catch {
-      router.replace('/cart');
+      router.replace(`/${locale}/cart`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isLoading]);
@@ -153,32 +163,30 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleTossPayment = async (
-    prepareResult: PreparePaymentResponse,
-    orderId: number,
-    orderNumber: string,
-  ) => {
-    const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
-    const tossPayments = await loadTossPayments(prepareResult.clientKey);
-    const payment = tossPayments.payment({ customerKey: `user_${orderId}` });
-
-    sessionStorage.setItem(
-      'tossPaymentContext',
-      JSON.stringify({ orderId, orderNumber, amount: grandTotal }),
-    );
-
-    await payment.requestPayment({
-      method: 'CARD',
-      amount: { currency: 'KRW', value: grandTotal },
-      orderId: orderNumber,
-      orderName: `주문 ${orderNumber}`,
-      successUrl: `${window.location.origin}/checkout/success`,
-      failUrl: `${window.location.origin}/checkout/fail`,
-    });
+  const handlePaymentError = (message: string) => {
+    toast.error(message);
+    setStep('idle');
+    setPrepareResult(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // If already prepared (Stripe), trigger stripe confirm
+    if (prepareResult && prepareResult.gateway === 'stripe') {
+      const stripeConfirm = (window as Window & { __stripeConfirm?: () => Promise<void> }).__stripeConfirm;
+      if (stripeConfirm) {
+        setStep('confirming_payment');
+        try {
+          await stripeConfirm();
+          // Stripe redirects on success — if we reach here it means redirect pending
+        } catch (err) {
+          handlePaymentError(err instanceof Error ? err.message : '결제에 실패했습니다.');
+        }
+        return;
+      }
+    }
+
     const validationErrors = validateForm(form);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -204,15 +212,47 @@ export default function CheckoutPage() {
       );
 
       setStep('preparing_payment');
-      const prepareResult: PreparePaymentResponse = await paymentsApi.prepare(
-        { orderId: order.id },
+      const result: PreparePaymentResponse = await paymentsApi.prepare(
+        { orderId: order.id, locale },
       );
 
-      if (prepareResult.clientKey && prepareResult.clientKey !== 'mock_client_key') {
-        await handleTossPayment(prepareResult, order.id, order.orderNumber);
+      // Toss flow: invoke __tossPayHandler
+      const isToss =
+        locale === 'ko' &&
+        result.clientKey &&
+        result.clientKey !== 'mock_client_key';
+
+      if (isToss) {
+        setCurrentOrderId(order.id);
+        setCurrentOrderNumber(order.orderNumber);
+        setPrepareResult(result);
+        // PaymentGateway component registers __tossPayHandler in useEffect
+        // Give it a tick to register, then call it
+        setTimeout(async () => {
+          const tossHandler = (window as Window & { __tossPayHandler?: () => Promise<void> }).__tossPayHandler;
+          if (tossHandler) {
+            await tossHandler();
+          }
+        }, 100);
         return;
       }
 
+      // Stripe flow: render Payment Element
+      const isStripe =
+        result.gateway === 'stripe' &&
+        result.clientKey &&
+        result.clientKey !== 'mock_client_key';
+
+      if (isStripe) {
+        setCurrentOrderId(order.id);
+        setCurrentOrderNumber(order.orderNumber);
+        setPrepareResult(result);
+        setStep('idle');
+        toast.info('카드 정보를 입력하고 결제하기를 눌러주세요.');
+        return;
+      }
+
+      // Mock flow
       setStep('confirming_payment');
       await paymentsApi.confirm(
         { orderId: order.id, paymentKey: `mock-${order.orderNumber}`, amount: grandTotal },
@@ -222,7 +262,7 @@ export default function CheckoutPage() {
       toast.success('결제가 완료되었습니다.');
       sessionStorage.removeItem('checkoutItems');
       await refetch();
-      router.replace(`/order/complete?orderId=${order.id}&orderNumber=${order.orderNumber}`);
+      router.replace(`/${locale}/order/complete?orderId=${order.id}&orderNumber=${order.orderNumber}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : '결제 중 오류가 발생했습니다.';
       toast.error(message);
@@ -254,7 +294,7 @@ export default function CheckoutPage() {
                   <p className="text-sm text-muted-foreground">저장된 배송지가 없습니다.</p>
                   <button
                     type="button"
-                    onClick={() => router.push('/my/address')}
+                    onClick={() => router.push(`/${locale}/my/address`)}
                     className="text-sm font-medium underline underline-offset-2 hover:opacity-70 transition-opacity"
                   >
                     배송지 추가
@@ -402,14 +442,20 @@ export default function CheckoutPage() {
             {/* Payment method */}
             <section className="rounded-lg border p-6 space-y-4">
               <h2 className="text-lg font-semibold">결제 수단</h2>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="radio" name="paymentMethod" value="mock" defaultChecked readOnly className="accent-foreground" />
-                <span className="text-sm">
-                  {process.env.NEXT_PUBLIC_PAYMENT_GATEWAY === 'toss'
-                    ? '토스페이먼츠 (카드)'
-                    : '테스트 결제 (Mock)'}
-                </span>
-              </label>
+              {prepareResult ? (
+                <PaymentGateway
+                  prepareResult={prepareResult}
+                  orderId={currentOrderId!}
+                  orderNumber={currentOrderNumber}
+                  amount={grandTotal}
+                  locale={locale}
+                  onError={handlePaymentError}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  주문 정보 입력 후 결제 수단이 표시됩니다.
+                </p>
+              )}
             </section>
 
             {/* Coupon / points placeholder */}
@@ -434,8 +480,8 @@ export default function CheckoutPage() {
                       </p>
                     )}
                     <p className="text-muted-foreground">
-                      {formatCurrency(item.unitPrice)} × {item.quantity}개 ={' '}
-                      {formatCurrency(item.subtotal)}
+                      {formatCurrency(item.unitPrice, locale)} × {item.quantity}개 ={' '}
+                      {formatCurrency(item.subtotal, locale)}
                     </p>
                   </li>
                 ))}
@@ -444,18 +490,18 @@ export default function CheckoutPage() {
               <div className="border-t pt-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">상품 금액</span>
-                  <span>{formatCurrency(totalAmount)}</span>
+                  <span>{formatCurrency(totalAmount, locale)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">배송비</span>
-                  <span>{shippingFee === 0 ? '무료' : formatCurrency(shippingFee)}</span>
+                  <span>{shippingFee === 0 ? '무료' : formatCurrency(shippingFee, locale)}</span>
                 </div>
               </div>
 
               <div className="border-t pt-4">
                 <div className="flex justify-between font-bold">
                   <span>합계</span>
-                  <span>{formatCurrency(grandTotal)}</span>
+                  <span>{formatCurrency(grandTotal, locale)}</span>
                 </div>
               </div>
 
