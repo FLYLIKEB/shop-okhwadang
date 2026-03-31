@@ -1,7 +1,7 @@
 'use client';
 
 import type { AdminOrder } from '@/lib/api';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 import { OrderStatusSelect } from './OrderStatusSelect';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -66,7 +66,7 @@ export function AdminOrdersTable({ orders, onStatusChange, onShippingRegister }:
                     : `${order.items[0].productName} 외 ${order.items.length - 1}건`
                   : '-'}
               </td>
-              <td className="px-4 py-3 text-right">{formatPrice(order.totalAmount)}</td>
+              <td className="px-4 py-3 text-right">{formatCurrency(order.totalAmount)}</td>
               <td className="px-4 py-3">
                 <span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_COLORS[order.status] ?? 'bg-secondary'}`}>
                   {STATUS_LABELS[order.status] ?? order.status}

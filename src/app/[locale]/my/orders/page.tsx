@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import StatusBadge from '@/components/common/StatusBadge';
 import { SkeletonBox } from '@/components/ui/Skeleton';
@@ -95,7 +95,7 @@ export default function OrdersPage() {
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-semibold">{formatPrice(order.totalAmount)}</p>
+                      <p className="font-semibold">{formatCurrency(order.totalAmount)}</p>
                     </div>
                   </div>
                 </Link>

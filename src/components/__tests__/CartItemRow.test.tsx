@@ -45,9 +45,9 @@ describe('CartItemRow', () => {
       />,
     );
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
-    expect(screen.getByText('15,000원')).toBeInTheDocument();
+    expect(screen.getByText('₩15,000')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('30,000원')).toBeInTheDocument();
+    expect(screen.getByText('₩30,000')).toBeInTheDocument();
   });
 
   it('renders option text when option is provided', () => {

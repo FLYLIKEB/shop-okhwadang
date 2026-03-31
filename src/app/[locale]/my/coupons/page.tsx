@@ -6,7 +6,7 @@ import type { CouponItem } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 
 type TabStatus = 'available' | 'used' | 'expired';
 
@@ -19,8 +19,8 @@ const TAB_LABELS: Record<TabStatus, string> = {
 function CouponCard({ coupon }: { coupon: CouponItem }) {
   const discountText =
     coupon.type === 'percentage'
-      ? `${coupon.value}% 할인${coupon.maxDiscount ? ` (최대 ${formatPrice(coupon.maxDiscount)}원)` : ''}`
-      : `${formatPrice(coupon.value)}원 할인`;
+      ? `${coupon.value}% 할인${coupon.maxDiscount ? ` (최대 ${formatCurrency(coupon.maxDiscount)}원)` : ''}`
+      : `${formatCurrency(coupon.value)}원 할인`;
 
   return (
     <div
@@ -45,7 +45,7 @@ function CouponCard({ coupon }: { coupon: CouponItem }) {
       <p className="text-sm font-medium text-primary">{discountText}</p>
       {coupon.minOrderAmount > 0 && (
         <p className="text-xs text-muted-foreground">
-          {formatPrice(coupon.minOrderAmount)}원 이상 구매 시 사용 가능
+          {formatCurrency(coupon.minOrderAmount)}원 이상 구매 시 사용 가능
         </p>
       )}
       <p className="text-xs text-muted-foreground">
@@ -90,7 +90,7 @@ export default function MyCouponsPage() {
       {/* 적립금 잔액 */}
       <div className="mb-6 rounded-lg border p-4 flex items-center justify-between">
         <span className="text-sm font-medium">보유 적립금</span>
-        <span className="text-lg font-bold">{formatPrice(pointBalance)}원</span>
+        <span className="text-lg font-bold">{formatCurrency(pointBalance)}원</span>
       </div>
 
       {/* 탭 */}

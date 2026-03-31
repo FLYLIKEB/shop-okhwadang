@@ -71,14 +71,14 @@ describe('ProductCard', () => {
 
   it('shows price only when no sale price', () => {
     render(<ProductCard {...baseProps} />);
-    expect(screen.getByText('29,000원')).toBeInTheDocument();
+    expect(screen.getByText('₩29,000')).toBeInTheDocument();
     expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
 
   it('shows sale price, original price strikethrough, and discount percentage', () => {
     render(<ProductCard {...baseProps} salePrice={24000} />);
-    expect(screen.getByText('24,000원')).toBeInTheDocument();
-    expect(screen.getByText('29,000원')).toBeInTheDocument();
+    expect(screen.getByText('₩24,000')).toBeInTheDocument();
+    expect(screen.getByText('₩29,000')).toBeInTheDocument();
     expect(screen.getByText('17%')).toBeInTheDocument();
   });
 
