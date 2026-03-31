@@ -120,7 +120,8 @@ function SliderHero({ slides, sectionRef, logoOpacity }: {
                 />
               )}
 
-              <div className="absolute inset-0 bg-black/45" />
+<div className="absolute inset-0 bg-black/45" />
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
 
               <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
                 <div style={{ opacity: logoOpacity, transition: 'opacity 0.1s linear' }}>
@@ -246,6 +247,7 @@ export default function HeroBannerBlock({ content }: Props) {
         />
       )}
       {image_url && <div className="absolute inset-0 bg-black/45" />}
+      {image_url && <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />}
       <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : ''}`}>
         <h2 className="text-3xl md:text-5xl">{title}</h2>
         {subtitle && <p className="mt-4 text-lg opacity-80">{subtitle}</p>}
