@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { adminCategoriesApi } from '@/lib/api';
 import type { AdminCategory, CreateCategoryData } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -94,8 +95,7 @@ export default function AdminCategoriesPage() {
       toast.success('카테고리가 삭제되었습니다.');
       await loadCategories();
     } catch (err) {
-      const message = err instanceof Error ? err.message : '삭제에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
     }
   };
 

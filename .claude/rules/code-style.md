@@ -11,6 +11,8 @@ globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 - shadcn/ui component patterns
 - Tailwind arbitrary values (`h-[123px]`) forbidden — use theme tokens
 - **All mutations must show sonner/toast feedback** (success/failure)
+- Error extraction: always use `handleApiError(err)` from `@/utils/error` — never inline `err instanceof Error ? err.message : ...`
+- Toast errors: use `toast.error(handleApiError(err))` pattern
 - `console.log` in committed code is forbidden
 - Responsive: flex/grid based, component-level mobile branching
 - Accessibility: semantic HTML, ARIA labels, keyboard navigation

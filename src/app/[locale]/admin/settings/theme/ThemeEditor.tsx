@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { settingsApi, adminSettingsApi } from '@/lib/api';
+import { handleApiError } from '@/utils/error';
 import type { SiteSetting } from '@/lib/api';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { cn } from '@/components/ui/utils';
@@ -176,9 +177,7 @@ export default function ThemeEditor({ initialSettings }: Props) {
       toast.success('테마 설정이 저장되었습니다.');
       router.refresh();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : '저장에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '저장에 실패했습니다.'));
     } finally {
       setSaving(false);
     }
@@ -204,9 +203,7 @@ export default function ThemeEditor({ initialSettings }: Props) {
       toast.success('기본값으로 초기화되었습니다.');
       router.refresh();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : '초기화에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '초기화에 실패했습니다.'));
     } finally {
       setResetting(false);
     }

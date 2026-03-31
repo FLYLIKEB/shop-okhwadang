@@ -4,6 +4,7 @@ import { Suspense, use } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { useCart } from '@/contexts/CartContext';
 import { paymentsApi } from '@/lib/api';
 import type { Locale } from '@/i18n/routing';
@@ -57,9 +58,7 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
         );
       })
       .catch((err: unknown) => {
-        const message =
-          err instanceof Error ? err.message : '결제 확인 중 오류가 발생했습니다.';
-        toast.error(message);
+        toast.error(handleApiError(err, '결제 확인 중 오류가 발생했습니다.'));
         setProcessing(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps

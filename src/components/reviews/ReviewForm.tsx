@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
+import { handleApiError } from '@/utils/error'
 import { Button } from '@/components/ui/button'
 import { reviewsApi } from '@/lib/api'
 import StarRating from './StarRating'
@@ -46,7 +47,7 @@ export default function ReviewForm({
       setImageUrls((prev) => [...prev, ...uploaded])
       toast.success('이미지 업로드 완료')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '이미지 업로드에 실패했습니다.')
+      toast.error(handleApiError(err, '이미지 업로드에 실패했습니다.'))
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -77,7 +78,7 @@ export default function ReviewForm({
       toast.success('리뷰가 등록되었습니다.')
       onSuccess()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '리뷰 작성에 실패했습니다.')
+      toast.error(handleApiError(err, '리뷰 작성에 실패했습니다.'))
     } finally {
       setIsSubmitting(false)
     }
