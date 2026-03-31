@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { adminNavigationApi } from '@/lib/api';
+import { handleApiError } from '@/utils/error';
 import type { NavigationItem } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -62,8 +63,7 @@ export default function AdminNavigationPage() {
       await adminNavigationApi.create(data);
       toast.success('메뉴가 추가되었습니다.');
     } catch (err) {
-      const message = err instanceof Error ? err.message : '추가에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '추가에 실패했습니다.'));
       throw err;
     }
   };
@@ -78,8 +78,7 @@ export default function AdminNavigationPage() {
       await adminNavigationApi.update(id, data);
       toast.success('메뉴가 수정되었습니다.');
     } catch (err) {
-      const message = err instanceof Error ? err.message : '수정에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '수정에 실패했습니다.'));
       throw err;
     }
   };
@@ -89,8 +88,7 @@ export default function AdminNavigationPage() {
       await adminNavigationApi.remove(id);
       toast.success('메뉴가 삭제되었습니다.');
     } catch (err) {
-      const message = err instanceof Error ? err.message : '삭제에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
       throw err;
     }
   };
@@ -99,8 +97,7 @@ export default function AdminNavigationPage() {
     try {
       await adminNavigationApi.reorder(orders);
     } catch (err) {
-      const message = err instanceof Error ? err.message : '순서 변경에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '순서 변경에 실패했습니다.'));
       throw err;
     }
   };

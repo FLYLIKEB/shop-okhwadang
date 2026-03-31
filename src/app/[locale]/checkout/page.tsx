@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import type { CartItem, PreparePaymentResponse, UserAddress } from '@/lib/api';
@@ -181,7 +182,7 @@ export default function CheckoutPage({
           await stripeConfirm();
           // Stripe redirects on success — if we reach here it means redirect pending
         } catch (err) {
-          handlePaymentError(err instanceof Error ? err.message : '결제에 실패했습니다.');
+          handlePaymentError(handleApiError(err, '결제에 실패했습니다.'));
         }
         return;
       }
@@ -264,8 +265,7 @@ export default function CheckoutPage({
       await refetch();
       router.replace(`/${locale}/order/complete?orderId=${order.id}&orderNumber=${order.orderNumber}`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : '결제 중 오류가 발생했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '결제 중 오류가 발생했습니다.'));
       setStep('idle');
     }
   };

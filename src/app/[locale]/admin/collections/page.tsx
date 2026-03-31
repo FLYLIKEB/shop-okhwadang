@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { adminCollectionsApi, type Collection, type CreateCollectionData, CollectionType } from '@/lib/api';
@@ -302,8 +303,7 @@ export default function AdminCollectionsPage() {
       toast.success('컬렉션이 삭제되었습니다.');
       await loadCollections();
     } catch (err) {
-      const message = err instanceof Error ? err.message : '삭제에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
     }
   };
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { adminMembersApi } from '@/lib/api';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -30,9 +31,7 @@ export function MemberRoleSelect({ memberId, currentRole, onRoleChange }: Member
       toast.success(`역할이 ${ROLE_LABELS[nextRole]}(으)로 변경되었습니다.`);
       onRoleChange();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : '역할 변경에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '역할 변경에 실패했습니다.'));
     } finally {
       setUpdating(false);
     }

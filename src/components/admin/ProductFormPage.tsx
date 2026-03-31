@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { adminProductsApi } from '@/lib/api';
 import type { ProductDetail } from '@/lib/api';
 import ProductImageUploader from './ProductImageUploader';
@@ -119,7 +120,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       }
       router.push('/admin/products');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '저장에 실패했습니다.');
+      toast.error(handleApiError(err, '저장에 실패했습니다.'));
     } finally {
       setSubmitting(false);
     }
