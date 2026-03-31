@@ -159,27 +159,27 @@ function SliderHero({ slides, sectionRef, logoOpacity }: {
       <button
         onClick={scrollPrev}
         aria-label="이전 배너"
-        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity"
+        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity hidden md:block"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
       <button
         onClick={scrollNext}
         aria-label="다음 배너"
-        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity"
+        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity hidden md:block"
       >
         <ChevronRight className="h-6 w-6" />
       </button>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+      <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
         {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => scrollTo(i)}
             aria-label={`${i + 1}번 배너로 이동`}
             className={cn(
-              'min-h-[44px] min-w-[44px] flex-1 max-w-8 h-1.5 rounded-full transition-all flex items-center justify-center',
-              i === selectedIndex ? 'bg-white' : 'bg-white/40',
+              'w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300',
+              i === selectedIndex ? 'bg-white w-4 md:w-6' : 'bg-white/50',
             )}
           />
         ))}

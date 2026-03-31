@@ -330,6 +330,16 @@ function TextContentFields({
   const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
   return (
     <>
+      <SelectField
+        label="텍스트 정렬"
+        value={(content.textAlign as string) ?? 'center'}
+        options={[
+          { value: 'left', label: '왼쪽 정렬' },
+          { value: 'center', label: '가운데 정렬' },
+          { value: 'right', label: '오른쪽 정렬' },
+        ]}
+        onChange={(v) => update('textAlign', v)}
+      />
       <StringField label="HTML 내용" value={(content.html as string) ?? ''} onChange={(v) => update('html', v)} multiline />
       <SelectField
         label="템플릿"
