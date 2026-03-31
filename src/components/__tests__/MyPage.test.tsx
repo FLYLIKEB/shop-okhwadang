@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import MyPage from '@/app/my/page';
+import MyPage from '@/app/[locale]/my/page';
 import { AuthContext } from '@/contexts/AuthContext';
 import type { AuthContextValue } from '@/contexts/AuthContext';
 
