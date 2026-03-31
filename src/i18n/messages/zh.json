@@ -613,5 +613,14 @@
   },
   "teapotShapes": {
     "all": "全部"
+  },
+  "promotion": {
+    "limitedTime": "Limited Time",
+    "specialOffer": "Special Offer",
+    "eventEnded": "活动已结束。",
+    "days": "天",
+    "hours": "小时",
+    "minutes": "分",
+    "seconds": "秒"
   }
 }
