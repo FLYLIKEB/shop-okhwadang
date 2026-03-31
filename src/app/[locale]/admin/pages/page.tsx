@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useReducer, useCallback } from 'react';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { arrayMove } from '@dnd-kit/sortable';
 import { adminPagesApi, pagesApi } from '@/lib/api';
 import type { Page, PageBlock } from '@/lib/api';
@@ -361,8 +362,7 @@ export default function AdminPagesPage() {
       setSelectedPage(newPage);
       dispatch({ type: 'INIT', blocks: [], title: newPage.title, slug: newPage.slug });
     } catch (err) {
-      const message = err instanceof Error ? err.message : '생성에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '생성에 실패했습니다.'));
     }
   };
 
@@ -378,8 +378,7 @@ export default function AdminPagesPage() {
       dispatch({ type: 'INIT', blocks: [], title: '', slug: '' });
       await loadPages();
     } catch (err) {
-      const message = err instanceof Error ? err.message : '삭제에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
     }
   };
 
@@ -397,8 +396,7 @@ export default function AdminPagesPage() {
       await loadPages();
       toast.success(updated.is_published ? '페이지가 공개되었습니다.' : '페이지가 비공개로 전환되었습니다.');
     } catch (err) {
-      const message = err instanceof Error ? err.message : '상태 변경에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '상태 변경에 실패했습니다.'));
     }
   };
 
@@ -470,8 +468,7 @@ export default function AdminPagesPage() {
       }
       await loadPages();
     } catch (err) {
-      const message = err instanceof Error ? err.message : '저장에 실패했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '저장에 실패했습니다.'));
     } finally {
       setSaving(false);
     }

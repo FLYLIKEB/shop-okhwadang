@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
@@ -25,7 +26,7 @@ export default function LoginForm() {
       await login(email, password);
       router.push(redirectTo);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '로그인에 실패했습니다.');
+      toast.error(handleApiError(err, '로그인에 실패했습니다.'));
     } finally {
       setIsSubmitting(false);
     }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import {
@@ -577,7 +578,7 @@ export default function AdminArchivesPage() {
       toast.success('삭제되었습니다.');
       await loadData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '삭제 실패');
+      toast.error(handleApiError(err, '삭제 실패'));
     }
   };
 
@@ -588,7 +589,7 @@ export default function AdminArchivesPage() {
       toast.success('삭제되었습니다.');
       await loadData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '삭제 실패');
+      toast.error(handleApiError(err, '삭제 실패'));
     }
   };
 
@@ -599,7 +600,7 @@ export default function AdminArchivesPage() {
       toast.success('삭제되었습니다.');
       await loadData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '삭제 실패');
+      toast.error(handleApiError(err, '삭제 실패'));
     }
   };
 

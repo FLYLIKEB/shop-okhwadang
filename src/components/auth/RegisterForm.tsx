@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
@@ -62,7 +63,7 @@ export default function RegisterForm() {
       await register(email, password, name);
       router.push('/login');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '회원가입에 실패했습니다.');
+      toast.error(handleApiError(err, '회원가입에 실패했습니다.'));
     } finally {
       setIsSubmitting(false);
     }

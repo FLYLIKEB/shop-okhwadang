@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -67,8 +68,7 @@ export default function ProfilePage() {
       updateUser({ name: updated.name, phone: updated.phone });
       toast.success('회원정보가 수정되었습니다.');
     } catch (err) {
-      const message = err instanceof Error ? err.message : '수정 중 오류가 발생했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '수정 중 오류가 발생했습니다.'));
     } finally {
       setSubmitting(false);
     }
