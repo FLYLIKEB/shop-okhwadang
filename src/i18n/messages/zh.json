@@ -1,0 +1,42 @@
+{
+  "common": {
+    "home": "首页",
+    "products": "商品",
+    "cart": "购物车",
+    "login": "登录",
+    "logout": "退出登录",
+    "register": "注册",
+    "search": "搜索",
+    "loading": "加载中...",
+    "error": "发生错误",
+    "back": "返回",
+    "confirm": "确认",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑"
+  },
+  "navigation": {
+    "skipToContent": "跳转到主要内容"
+  },
+  "product": {
+    "addToCart": "加入购物车",
+    "buyNow": "立即购买",
+    "outOfStock": "缺货",
+    "price": "价格",
+    "quantity": "数量"
+  },
+  "order": {
+    "orderHistory": "订单历史",
+    "orderNumber": "订单号",
+    "orderDate": "下单日期",
+    "orderStatus": "订单状态"
+  },
+  "auth": {
+    "email": "邮箱",
+    "password": "密码",
+    "loginTitle": "登录",
+    "registerTitle": "注册",
+    "forgotPassword": "忘记密码"
+  }
+}

@@ -1,4 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// next-intl/middleware imports next/server without .js extension which fails in Vitest ESM.
+// Mock it to return a passthrough so auth-guard tests can run in isolation.
+vi.mock('next-intl/middleware', () => ({
+  default: () => (req: { url: string }) => new Response(null, { status: 200, headers: { location: req.url } }),
+}));
+vi.mock('@/i18n/routing', () => ({
+  routing: { locales: ['ko', 'en', 'ja', 'zh'], defaultLocale: 'ko' },
+}));
+
 import { middleware } from '@/middleware';
 import { NextRequest } from 'next/server';
 
