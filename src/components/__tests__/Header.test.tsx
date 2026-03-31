@@ -20,6 +20,10 @@ vi.mock('@/i18n/navigation', () => ({
   usePathname: () => mockPathname,
 }));
 
+vi.mock('next-intl', () => ({
+  useLocale: () => 'ko',
+}));
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     isAuthenticated: false,
