@@ -285,7 +285,7 @@ export default function Header() {
   };
 
   const showHeaderLogo = true;
-  const isOverHero = isHomePage && progress === 0;
+  const isOverHero = isHomePage && progress === 1;
 
   return (
     <>

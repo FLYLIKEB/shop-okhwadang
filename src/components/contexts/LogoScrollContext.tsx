@@ -21,9 +21,18 @@ export function LogoScrollProvider({ children }: ProviderProps) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    let enteredHero = false;
+
     const handleHeroVisibility = (e: Event) => {
       const { isPast } = (e as CustomEvent<{ isPast: boolean }>).detail;
-      setProgress(isPast ? 1 : 0);
+      
+      if (!isPast) {
+        enteredHero = true;
+        setProgress(1);
+      } else {
+        enteredHero = false;
+        setProgress(2);
+      }
     };
     document.addEventListener('hero-visibility', handleHeroVisibility);
     return () => document.removeEventListener('hero-visibility', handleHeroVisibility);
