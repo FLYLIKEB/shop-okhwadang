@@ -111,6 +111,34 @@ function HeroBannerFields({
   onChange: (c: Record<string, unknown>) => void;
 }) {
   const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
+
+  interface Slide {
+    title: string;
+    subtitle?: string;
+    image_url?: string;
+    bg_color?: string;
+    cta_text?: string;
+    cta_url?: string;
+  }
+
+  const slides = (content.slides as Slide[]) ?? [];
+
+  const addSlide = () => {
+    update('slides', [
+      ...slides,
+      { title: '', subtitle: '', image_url: '', bg_color: '#1B3A4B', cta_text: '', cta_url: '' },
+    ]);
+  };
+
+  const removeSlide = (index: number) => {
+    update('slides', slides.filter((_, i) => i !== index));
+  };
+
+  const updateSlide = (index: number, key: keyof Slide, value: string) => {
+    const newSlides = slides.map((s, i) => (i === index ? { ...s, [key]: value } : s));
+    update('slides', newSlides);
+  };
+
   return (
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
@@ -123,11 +151,48 @@ function HeroBannerFields({
         value={(content.template as string) ?? 'fullscreen'}
         options={[
           { value: 'fullscreen', label: '풀스크린', hint: '이미지가 화면 전체를 꽉 채우는 형태입니다. 제목·버튼이 이미지 위에 겹쳐서 표시됩니다.' },
-          { value: 'slider', label: '슬라이더', hint: '여러 배너를 좌우로 넘기는 슬라이드 형태입니다. 이미지 URL을 콤마로 구분해 여러 장 입력할 수 있습니다.' },
+          { value: 'slider', label: '슬라이더', hint: '여러 배너를 좌우로 넘기는 슬라이드 형태입니다. 슬라이드 목록을 아래에서 편집할 수 있습니다.' },
           { value: 'split', label: '분할', hint: '화면을 좌우로 나눠 왼쪽에 텍스트·버튼, 오른쪽에 이미지를 배치합니다.' },
         ]}
         onChange={(v) => update('template', v)}
       />
+      {(content.template as string) === 'slider' && (
+        <div className="space-y-3 rounded-md border border-input p-3">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground">슬라이드 목록</label>
+            <button
+              type="button"
+              onClick={addSlide}
+              className="text-xs text-primary hover:underline"
+            >
+              + 슬라이드 추가
+            </button>
+          </div>
+          {slides.length === 0 && (
+            <p className="text-xs text-muted-foreground">슬라이드가 없습니다. 추가 버튼을 눌러 추가하세요.</p>
+          )}
+          {slides.map((slide, index) => (
+            <div key={index} className="space-y-2 rounded-md bg-muted/50 p-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">슬라이드 {index + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => removeSlide(index)}
+                  className="text-xs text-destructive hover:underline"
+                >
+                  삭제
+                </button>
+              </div>
+              <StringField label="제목" value={slide.title} onChange={(v) => updateSlide(index, 'title', v)} />
+              <StringField label="부제목" value={slide.subtitle ?? ''} onChange={(v) => updateSlide(index, 'subtitle', v)} />
+              <StringField label="이미지 URL" value={slide.image_url ?? ''} onChange={(v) => updateSlide(index, 'image_url', v)} />
+              <StringField label="배경색" value={slide.bg_color ?? '#1B3A4B'} onChange={(v) => updateSlide(index, 'bg_color', v)} />
+              <StringField label="CTA 텍스트" value={slide.cta_text ?? ''} onChange={(v) => updateSlide(index, 'cta_text', v)} />
+              <StringField label="CTA URL" value={slide.cta_url ?? ''} onChange={(v) => updateSlide(index, 'cta_url', v)} />
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 }
