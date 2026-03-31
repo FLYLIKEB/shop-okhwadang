@@ -11,6 +11,8 @@ CORS validation → Rate Limiting → JWT Guard → ValidationPipe → Controlle
 - RBAC: `user` / `admin` / `super_admin` with `@Roles()` decorator
 - OAuth: Kakao, Google
 - bcrypt hashing (salt rounds 10+)
+- Frontend 401 handling: global interceptor in ApiClient — no per-component 401 checks
+- Token refresh: silent refresh via refresh token before redirect
 
 ## Rate Limiting
 - Global: 200 requests/minute (ThrottlerModule, name: `global`)
