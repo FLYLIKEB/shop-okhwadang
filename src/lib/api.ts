@@ -1142,3 +1142,163 @@ export const adminSettingsApi = {
   reset: () =>
     apiClient.post<{ message: string }>('/admin/settings/reset'),
 };
+
+// ===== Collections =====
+export enum CollectionType {
+  CLAY = 'clay',
+  SHAPE = 'shape',
+}
+
+export interface Collection {
+  id: number;
+  type: CollectionType;
+  name: string;
+  nameKo: string | null;
+  color: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  productUrl: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface CollectionsResponse {
+  clay: Collection[];
+  shape: Collection[];
+}
+
+export const collectionsApi = {
+  getAll: () => apiClient.get<CollectionsResponse>('/collections'),
+};
+
+// ===== Archives =====
+export interface NiloType {
+  id: number;
+  name: string;
+  nameKo: string;
+  color: string;
+  region: string;
+  description: string;
+  characteristics: string[];
+  productUrl: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface ProcessStep {
+  id: number;
+  step: number;
+  title: string;
+  description: string;
+  detail: string;
+}
+
+export interface Artist {
+  id: number;
+  name: string;
+  title: string;
+  region: string;
+  story: string;
+  specialty: string;
+  imageUrl: string | null;
+  productUrl: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface ArchivesResponse {
+  niloTypes: NiloType[];
+  processSteps: ProcessStep[];
+  artists: Artist[];
+}
+
+export const archivesApi = {
+  getAll: () => apiClient.get<ArchivesResponse>('/archives'),
+};
+
+// ===== Admin Collections =====
+export interface CreateCollectionData {
+  type: 'clay' | 'shape';
+  name: string;
+  nameKo?: string;
+  color?: string;
+  description?: string;
+  imageUrl?: string;
+  productUrl: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export const adminCollectionsApi = {
+  getAll: () => apiClient.get<Collection[]>('/admin/collections'),
+  create: (data: CreateCollectionData) =>
+    apiClient.post<Collection>('/admin/collections', data),
+  update: (id: number, data: Partial<CreateCollectionData>) =>
+    apiClient.patch<Collection>(`/admin/collections/${id}`, data),
+  remove: (id: number) =>
+    apiClient.delete<void>(`/admin/collections/${id}`),
+  reorder: (orders: Array<{ id: number; sortOrder: number }>) =>
+    apiClient.patch<void>('/admin/collections/reorder', orders),
+};
+
+// ===== Admin Archives =====
+export interface CreateNiloTypeData {
+  name: string;
+  nameKo: string;
+  color: string;
+  region: string;
+  description: string;
+  characteristics: string[];
+  productUrl: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export interface CreateProcessStepData {
+  step: number;
+  title: string;
+  description: string;
+  detail: string;
+}
+
+export interface CreateArtistData {
+  name: string;
+  title: string;
+  region: string;
+  story: string;
+  specialty: string;
+  imageUrl?: string;
+  productUrl: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export const adminArchivesApi = {
+  getNiloTypes: () => apiClient.get<NiloType[]>('/admin/archives/nilo-types'),
+  createNiloType: (data: CreateNiloTypeData) =>
+    apiClient.post<NiloType>('/admin/archives/nilo-types', data),
+  updateNiloType: (id: number, data: Partial<CreateNiloTypeData>) =>
+    apiClient.patch<NiloType>(`/admin/archives/nilo-types/${id}`, data),
+  deleteNiloType: (id: number) =>
+    apiClient.delete<void>(`/admin/archives/nilo-types/${id}`),
+  reorderNiloTypes: (orders: Array<{ id: number; sortOrder: number }>) =>
+    apiClient.patch<void>('/admin/archives/nilo-types/reorder', orders),
+
+  getProcessSteps: () => apiClient.get<ProcessStep[]>('/admin/archives/process-steps'),
+  createProcessStep: (data: CreateProcessStepData) =>
+    apiClient.post<ProcessStep>('/admin/archives/process-steps', data),
+  updateProcessStep: (id: number, data: Partial<CreateProcessStepData>) =>
+    apiClient.patch<ProcessStep>(`/admin/archives/process-steps/${id}`, data),
+  deleteProcessStep: (id: number) =>
+    apiClient.delete<void>(`/admin/archives/process-steps/${id}`),
+
+  getArtists: () => apiClient.get<Artist[]>('/admin/archives/artists'),
+  createArtist: (data: CreateArtistData) =>
+    apiClient.post<Artist>('/admin/archives/artists', data),
+  updateArtist: (id: number, data: Partial<CreateArtistData>) =>
+    apiClient.patch<Artist>(`/admin/archives/artists/${id}`, data),
+  deleteArtist: (id: number) =>
+    apiClient.delete<void>(`/admin/archives/artists/${id}`),
+  reorderArtists: (orders: Array<{ id: number; sortOrder: number }>) =>
+    apiClient.patch<void>('/admin/archives/artists/reorder', orders),
+};
