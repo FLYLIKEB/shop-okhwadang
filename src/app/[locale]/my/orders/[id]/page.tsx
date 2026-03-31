@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { ORDER_STATUS_LABELS } from '@/constants/orderStatus';
 import { SkeletonBox } from '@/components/ui/Skeleton';
@@ -123,11 +123,11 @@ export default function OrderDetailPage() {
                       <p className="text-xs text-muted-foreground">{item.optionName}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      {formatPrice(item.price)} × {item.quantity}개
+                      {formatCurrency(item.price)} × {item.quantity}개
                     </p>
                   </div>
                   <p className="font-medium shrink-0">
-                    {formatPrice(Number(item.price) * item.quantity)}
+                    {formatCurrency(Number(item.price) * item.quantity)}
                   </p>
                 </div>
               </li>
@@ -141,24 +141,24 @@ export default function OrderDetailPage() {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">상품 금액</dt>
-              <dd>{formatPrice(order.totalAmount)}</dd>
+              <dd>{formatCurrency(order.totalAmount)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">할인 금액</dt>
-              <dd>-{formatPrice(order.discountAmount)}</dd>
+              <dd>-{formatCurrency(order.discountAmount)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">배송비</dt>
               <dd>
                 {Number(order.shippingFee) === 0
                   ? '무료'
-                  : formatPrice(order.shippingFee)}
+                  : formatCurrency(order.shippingFee)}
               </dd>
             </div>
             <div className="flex justify-between border-t pt-2 font-bold">
               <dt>합계</dt>
               <dd>
-                {formatPrice(
+                {formatCurrency(
                   Number(order.totalAmount) -
                   Number(order.discountAmount) +
                   Number(order.shippingFee)
