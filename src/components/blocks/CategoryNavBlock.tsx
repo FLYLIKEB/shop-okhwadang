@@ -44,8 +44,8 @@ export default function CategoryNavBlock({ content }: Props) {
             setCategories(all.filter((c) => c.parentId === null));
           }
         }
-      } catch {
-        // Silently fail
+      } catch (err) {
+        console.error('CategoryNavBlock fetch error:', err);
       } finally {
         if (!cancelled) setLoading(false);
       }
