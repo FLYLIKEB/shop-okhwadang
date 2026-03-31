@@ -12,12 +12,14 @@ import ImageGallery from './ImageGallery'
 import OptionSelector from './OptionSelector'
 import QuantitySelector from './QuantitySelector'
 import ProductTabs from './ProductTabs'
+import type { Locale } from '@/utils/currency'
 
 interface ProductDetailClientProps {
   product: ProductDetail
+  locale?: Locale
 }
 
-export default function ProductDetailClient({ product }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, locale = 'ko' }: ProductDetailClientProps) {
   const router = useRouter()
   const { addItem } = useCart()
   const { addItem: addRecentlyViewed } = useRecentlyViewed()
@@ -108,7 +110,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           )}
 
           {/* Price */}
-          <PriceDisplay price={product.price} salePrice={product.salePrice} size="lg" />
+          <PriceDisplay price={product.price} salePrice={product.salePrice} size="lg" locale={locale} />
 
           {/* Options */}
           {product.options.length > 0 && (
