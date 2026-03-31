@@ -37,8 +37,21 @@ export function LogoScrollProvider({ children }: ProviderProps) {
         }
       }
     };
+
+    const handleScroll = () => {
+      if (window.scrollY === 0) {
+        hasEnteredHero = false;
+        setProgress(0);
+      }
+    };
+
     document.addEventListener('hero-visibility', handleHeroVisibility);
-    return () => document.removeEventListener('hero-visibility', handleHeroVisibility);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      document.removeEventListener('hero-visibility', handleHeroVisibility);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   return (
