@@ -1,11 +1,12 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, use } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import type { Locale } from '@/i18n/routing';
 
-function CheckoutFailContent() {
+function CheckoutFailContent({ locale }: { locale: Locale }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -25,7 +26,7 @@ function CheckoutFailContent() {
       )}
       <p className="mb-6 text-sm text-muted-foreground">{message}</p>
       <button
-        onClick={() => router.back()}
+        onClick={() => router.replace(`/${locale}/checkout`)}
         className="rounded-md bg-foreground px-6 py-2 text-sm font-semibold text-background hover:opacity-90 transition-opacity"
       >
         돌아가기
@@ -34,7 +35,13 @@ function CheckoutFailContent() {
   );
 }
 
-export default function CheckoutFailPage() {
+export default function CheckoutFailPage({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}) {
+  const { locale } = use(params);
+
   return (
     <Suspense
       fallback={
@@ -43,7 +50,7 @@ export default function CheckoutFailPage() {
         </div>
       }
     >
-      <CheckoutFailContent />
+      <CheckoutFailContent locale={locale} />
     </Suspense>
   );
 }

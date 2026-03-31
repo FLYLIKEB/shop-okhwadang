@@ -6,6 +6,8 @@ import { Payment, PaymentStatus, PaymentMethod, PaymentGatewayType } from '../en
 import { Shipping, ShippingStatus } from '../entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { MockPaymentAdapter, MOCK_TEST_SIGNATURE } from '../adapters/mock.adapter';
+import { TossPaymentAdapter } from '../adapters/toss.adapter';
+import { StripePaymentAdapter } from '../adapters/stripe.adapter';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({
@@ -103,6 +105,8 @@ describe('PaymentsService', () => {
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
         { provide: getRepositoryToken(Shipping), useValue: mockShippingRepo },
         { provide: 'PaymentGateway', useValue: mockGateway },
+        { provide: TossPaymentAdapter, useValue: mockGateway },
+        { provide: StripePaymentAdapter, useValue: mockGateway },
       ],
     }).compile();
 
