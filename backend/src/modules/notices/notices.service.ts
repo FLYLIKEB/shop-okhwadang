@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { Notice } from './entities/notice.entity';
 import { CreateNoticeDto } from './dto/create-notice.dto';
 import { UpdateNoticeDto } from './dto/update-notice.dto';
+import { NoticeQueryDto } from './dto/notice-query.dto';
 
 @Injectable()
 export class NoticesService {
@@ -18,21 +19,38 @@ export class NoticesService {
     private readonly noticeRepo: Repository<Notice>,
   ) {}
 
-  async findAll(): Promise<Notice[]> {
-    return this.noticeRepo.find({
+  private applyLocale(notice: Notice, locale?: string): Notice {
+    if (!locale || locale === 'ko') return notice;
+    const localeMap: Record<string, 'En' | 'Ja' | 'Zh'> = { en: 'En', ja: 'Ja', zh: 'Zh' };
+    const suffix = localeMap[locale];
+    if (!suffix) return notice;
+
+    const titleKey = `title${suffix}` as keyof Notice;
+    const contentKey = `content${suffix}` as keyof Notice;
+
+    return {
+      ...notice,
+      title: (notice[titleKey] as string | null) ?? notice.title,
+      content: (notice[contentKey] as string | null) ?? notice.content,
+    };
+  }
+
+  async findAll(query: NoticeQueryDto = {}): Promise<Notice[]> {
+    const notices = await this.noticeRepo.find({
       where: { isPublished: true },
       order: { isPinned: 'DESC', createdAt: 'DESC' },
     });
+    return notices.map((n) => this.applyLocale(n, query.locale));
   }
 
-  async findOne(id: number): Promise<Notice> {
+  async findOne(id: number, locale?: string): Promise<Notice> {
     const notice = await this.noticeRepo.findOne({ where: { id } });
     if (!notice) {
       throw new NotFoundException('공지사항을 찾을 수 없습니다.');
     }
     await this.noticeRepo.update(id, { viewCount: () => 'view_count + 1' });
     notice.viewCount += 1;
-    return notice;
+    return this.applyLocale(notice, locale);
   }
 
   async create(dto: CreateNoticeDto): Promise<Notice> {
