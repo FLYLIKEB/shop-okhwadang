@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, BadRequestException } from '@nestjs/common';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
@@ -28,7 +28,7 @@ async function bootstrap() {
   if (!frontendUrl) {
     throw new Error('FRONTEND_URL environment variable is required');
   }
-  
+
   app.enableCors({
     origin: [frontendUrl, ...(process.env.FRONTEND_URLS?.split(',') || [])],
     credentials: true,
@@ -39,6 +39,12 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      exceptionFactory: (errors) => {
+        const messages = errors.flatMap((e) =>
+          Object.values(e.constraints ?? {}),
+        );
+        return new BadRequestException(messages.join(', '));
+      },
     }),
   );
 
