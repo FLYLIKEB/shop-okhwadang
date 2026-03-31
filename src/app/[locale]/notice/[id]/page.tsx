@@ -14,7 +14,7 @@ const DOMPurifyContent = dynamic(
 );
 
 export default function NoticeDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id, locale } = useParams<{ id: string; locale: string }>();
   const router = useRouter();
   const [notice, setNotice] = useState<Notice | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,11 +22,11 @@ export default function NoticeDetailPage() {
 
   useEffect(() => {
     noticesApi
-      .getOne(Number(id))
+      .getOne(Number(id), locale)
       .then(setNotice)
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, locale]);
 
   if (loading) {
     return (
