@@ -44,26 +44,35 @@ interface DesktopActionsProps {
   onLogout: () => void;
 }
 
-function DesktopActions({ isAuthenticated, userName, itemCount, onLogout }: DesktopActionsProps) {
+interface DesktopActionsProps {
+  isAuthenticated: boolean;
+  userName?: string;
+  itemCount: number;
+  onLogout: () => void;
+  isOverHero?: boolean;
+}
+
+function DesktopActions({ isAuthenticated, userName, itemCount, onLogout, isOverHero }: DesktopActionsProps) {
+  const textClass = isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground";
   return (
     <div className="hidden md:flex items-center gap-4">
       <LanguageSelector />
       <CartBadge itemCount={itemCount} />
       {isAuthenticated ? (
         <>
-          <Link href="/my" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/my" className={cn("text-sm transition-colors", textClass)}>
             {userName ?? '마이페이지'}
           </Link>
           <button
             type="button"
             onClick={onLogout}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className={cn("text-sm transition-colors", textClass)}
           >
             로그아웃
           </button>
         </>
       ) : (
-        <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/login" className={cn("text-sm transition-colors", textClass)}>
           로그인
         </Link>
       )}
@@ -86,7 +95,7 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, onClose
     <nav
       id="mobile-menu"
       aria-label="모바일 메뉴"
-      className="absolute w-full bg-white border-b shadow-sm"
+      className="absolute w-full bg-background border-b shadow-sm"
     >
       <div className="mx-auto max-w-7xl px-4 py-4 flex flex-col gap-2">
         {menuItems.map((item) => (
@@ -206,7 +215,7 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
       {/* 검색 패널 — 헤더 바로 아래 페이드인 */}
       <div
         className={cn(
-          'md:hidden fixed left-0 right-0 z-[46] bg-white/95 backdrop-blur-md shadow-md transition-[opacity,transform] duration-200 ease-in-out',
+          'md:hidden fixed left-0 right-0 z-[46] bg-background/95 backdrop-blur-md shadow-md transition-[opacity,transform] duration-200 ease-in-out',
           isOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-2',
         )}
         style={{ top: '56px' }}
@@ -333,7 +342,7 @@ export default function Header() {
               <Link
                 key={item.id}
                 href={item.url}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className={cn("text-sm transition-colors", isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}
               >
                 {item.label}
               </Link>
@@ -355,7 +364,7 @@ export default function Header() {
               aria-label="상품 검색"
               className="w-full rounded-md border border-input bg-background pl-3 pr-10 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <button type="submit" aria-label="검색" className="absolute right-2 text-muted-foreground hover:text-foreground transition-colors">
+            <button type="submit" aria-label="검색" className={cn("absolute right-2 transition-colors", isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}>
               <Search className="h-4 w-4" />
             </button>
           </form>
@@ -366,6 +375,7 @@ export default function Header() {
             userName={user?.name}
             itemCount={itemCount}
             onLogout={() => void logout()}
+            isOverHero={isOverHero}
           />
 
           {/* 모바일 우측: 검색 + 홈 + 카트 */}

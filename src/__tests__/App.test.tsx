@@ -19,6 +19,18 @@ vi.mock('@/i18n/navigation', () => ({
 
 vi.mock('next-intl', () => ({
   useLocale: () => 'ko',
+  useTranslations: () => (key: string) => {
+    const translations: Record<string, string> = {
+      'promotion.limitedTime': 'Limited Time',
+      'promotion.specialOffer': 'Special Offer',
+      'promotion.eventEnded': '이벤트가 종료되었습니다',
+      'promotion.days': '일',
+      'promotion.hours': '시간',
+      'promotion.minutes': '분',
+      'promotion.seconds': '초',
+    };
+    return translations[key] || key;
+  },
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({

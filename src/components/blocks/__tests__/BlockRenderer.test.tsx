@@ -42,6 +42,22 @@ vi.mock('dompurify', () => ({
   },
 }));
 
+// ---- next-intl useTranslations mock ----
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => {
+    const translations: Record<string, string> = {
+      'promotion.limitedTime': 'Limited Time',
+      'promotion.specialOffer': 'Special Offer',
+      'promotion.eventEnded': '이벤트가 종료되었습니다',
+      'promotion.days': '일',
+      'promotion.hours': '시간',
+      'promotion.minutes': '분',
+      'promotion.seconds': '초',
+    };
+    return translations[key] || key;
+  },
+}));
+
 // ---- API mocks ----
 vi.mock('@/lib/api', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('@/lib/api');

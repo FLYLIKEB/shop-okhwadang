@@ -97,7 +97,7 @@ export default function SearchInput({ className, placeholder = '상품 검색...
       </form>
 
       {showDropdown && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-border bg-white shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-border bg-background shadow-lg">
           {showAutocomplete && (
             <div>
               {isLoading ? (

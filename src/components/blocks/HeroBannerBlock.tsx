@@ -118,7 +118,7 @@ function SliderHero({ slides, sectionRef }: {
                   옥화당 공식 쇼핑몰
                 </p>
                 <h2
-                  className="animate-fade-in-up text-4xl md:text-6xl font-display-ko font-semibold tracking-tight text-white leading-tight"
+                  className="animate-fade-in-up text-4xl md:text-6xl font-display-ko tracking-tight text-white leading-tight"
                   style={{ animationDelay: '0.2s' }}
                 >
                   {slide.title}
@@ -169,8 +169,8 @@ function SliderHero({ slides, sectionRef }: {
             onClick={() => scrollTo(i)}
             aria-label={`${i + 1}번 배너로 이동`}
             className={cn(
-              'h-0.5 transition-all',
-              i === selectedIndex ? 'w-8 bg-white' : 'w-4 bg-white/40',
+              'min-h-[44px] min-w-[44px] flex-1 max-w-8 h-1.5 rounded-full transition-all flex items-center justify-center',
+              i === selectedIndex ? 'bg-white' : 'bg-white/40',
             )}
           />
         ))}
@@ -183,21 +183,6 @@ export default function HeroBannerBlock({ content }: Props) {
   const { title, subtitle, image_url, cta_text, cta_url, template, slides } = content;
   const sectionRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const handleScroll = () => {
-      const bottom = section.getBoundingClientRect().bottom;
-      const isPast = bottom < 56;
-      document.dispatchEvent(new CustomEvent('hero-visibility', { detail: { isPast } }));
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   if (template === 'slider') {
     const resolvedSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
     return <SliderHero slides={resolvedSlides} sectionRef={sectionRef} />;
@@ -207,7 +192,7 @@ export default function HeroBannerBlock({ content }: Props) {
     return (
       <section className="flex flex-col overflow-hidden md:flex-row bg-white">
         <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
-          <h2 className="text-2xl font-medium md:text-3xl">{title}</h2>
+          <h2 className="text-2xl md:text-3xl">{title}</h2>
           {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
           {cta_text && cta_url && (
             <Link
@@ -242,7 +227,7 @@ export default function HeroBannerBlock({ content }: Props) {
       )}
       {image_url && <div className="absolute inset-0 bg-black/45" />}
       <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : ''}`}>
-        <h2 className="animate-fade-in-up text-3xl font-medium md:text-5xl" style={{ animationDelay: '0.2s' }}>{title}</h2>
+        <h2 className="animate-fade-in-up text-3xl md:text-5xl" style={{ animationDelay: '0.2s' }}>{title}</h2>
         {subtitle && <p className="animate-fade-in-up mt-4 text-lg opacity-80" style={{ animationDelay: '0.4s' }}>{subtitle}</p>}
         {cta_text && cta_url && (
           <div className="animate-fade-in-up mt-8" style={{ animationDelay: '0.6s' }}>

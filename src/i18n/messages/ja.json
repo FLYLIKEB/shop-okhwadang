@@ -613,5 +613,14 @@
   },
   "teapotShapes": {
     "all": "すべて"
+  },
+  "promotion": {
+    "limitedTime": "Limited Time",
+    "specialOffer": "Special Offer",
+    "eventEnded": "イベントが終了しました。",
+    "days": "日",
+    "hours": "時間",
+    "minutes": "分",
+    "seconds": "秒"
   }
 }

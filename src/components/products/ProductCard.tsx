@@ -94,7 +94,7 @@ export default function ProductCard({
           onClick={handleToggleWishlist}
           disabled={isWishlistLoading}
           className={cn(
-            'absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm transition-opacity duration-200 disabled:cursor-not-allowed',
+            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm transition-opacity duration-200 disabled:cursor-not-allowed',
             'opacity-100 md:opacity-0 md:group-hover:opacity-100',
           )}
         >
@@ -114,7 +114,7 @@ export default function ProductCard({
             onClick={handleAddToCart}
             disabled={isCartLoading}
             className={cn(
-              'absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-foreground/90 py-2 text-sm font-medium text-background transition-transform duration-300 disabled:cursor-not-allowed',
+              'absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-foreground/90 py-2 text-sm font-medium text-background transition-transform duration-300 disabled:cursor-not-allowed',
               'translate-y-0 md:translate-y-full md:group-hover:translate-y-0',
             )}
           >
