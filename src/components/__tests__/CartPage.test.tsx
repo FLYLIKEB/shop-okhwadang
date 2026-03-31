@@ -134,7 +134,7 @@ describe('CartPage', () => {
     const item1Checkbox = checkboxes[1];
     await user.click(item1Checkbox);
 
-    expect(screen.getByText('20,000원', { selector: 'span' })).toBeInTheDocument();
+    expect(screen.getByText('₩20,000', { selector: 'span' })).toBeInTheDocument();
   });
 
   it('shows toast warning when order button clicked with no selection', async () => {

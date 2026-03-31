@@ -1,4 +1,5 @@
-import { formatPrice, calcDiscount } from '@/utils/price';
+import { calcDiscount } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 
 interface PriceDisplayProps {
   price: number;
@@ -17,15 +18,15 @@ export default function PriceDisplay({ price, salePrice, size = 'sm' }: PriceDis
         <span className={`${discountClass} text-destructive`}>
           {calcDiscount(price, salePrice)}%
         </span>
-        <span className={`${priceClass} text-foreground`}>{formatPrice(salePrice)}</span>
+        <span className={`${priceClass} text-foreground`}>{formatCurrency(salePrice)}</span>
         <span className={`${originalClass} text-muted-foreground line-through`}>
-          {formatPrice(price)}
+          {formatCurrency(price)}
         </span>
       </div>
     );
   }
 
   return (
-    <span className={`${priceClass} text-foreground`}>{formatPrice(price)}</span>
+    <span className={`${priceClass} text-foreground`}>{formatCurrency(price)}</span>
   );
 }

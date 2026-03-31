@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
 import { CartItem } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 import QuantitySelector from '@/components/products/QuantitySelector';
 
 interface CartItemRowProps {
@@ -57,7 +57,7 @@ export default function CartItemRow({
             {item.option.name}: {item.option.value}
           </p>
         )}
-        <p className="text-sm font-semibold">{formatPrice(item.unitPrice)}</p>
+        <p className="text-sm font-semibold">{formatCurrency(item.unitPrice)}</p>
       </div>
 
       <div className="flex flex-col items-end gap-2 shrink-0">
@@ -68,7 +68,7 @@ export default function CartItemRow({
           onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
         />
 
-        <p className="text-sm font-bold">{formatPrice(item.subtotal)}</p>
+        <p className="text-sm font-bold">{formatCurrency(item.subtotal)}</p>
 
         <button
           type="button"
