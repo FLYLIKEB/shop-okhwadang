@@ -300,7 +300,7 @@ export default function Header() {
       <header className={cn(
         'sticky top-0 z-50 transition-[background-color,border-color,box-shadow] duration-300 ease-in-out',
         isOverHero
-          ? 'bg-transparent border-b border-transparent'
+          ? 'bg-black/40 backdrop-blur-[8px] border-b border-transparent'
           : isScrolled
             ? 'bg-white/95 backdrop-blur-[8px] border-b border-border shadow-sm'
             : 'bg-white/95 backdrop-blur-[8px] border-b border-transparent',
