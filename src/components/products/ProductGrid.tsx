@@ -7,6 +7,7 @@ import ViewToggle from '@/components/products/ViewToggle';
 import SortDropdown from '@/components/products/SortDropdown';
 import { cn } from '@/components/ui/utils';
 import type { Product } from '@/lib/api';
+import type { Locale } from '@/utils/currency';
 
 type ViewMode = 'grid' | 'list';
 
@@ -15,9 +16,10 @@ const STORAGE_KEY = 'products-view-mode';
 interface ProductGridProps {
   products: Product[];
   total: number;
+  locale?: Locale;
 }
 
-export default function ProductGrid({ products, total }: ProductGridProps) {
+export default function ProductGrid({ products, total, locale = 'ko' }: ProductGridProps) {
   const [view, setView] = useState<ViewMode>('grid');
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export default function ProductGrid({ products, total }: ProductGridProps) {
               status={product.status}
               images={product.images}
               isFeatured={product.isFeatured}
+              locale={locale}
             />
           ))}
         </div>
@@ -66,6 +69,7 @@ export default function ProductGrid({ products, total }: ProductGridProps) {
               status={product.status}
               images={product.images}
               isFeatured={product.isFeatured}
+              locale={locale}
             />
           ))}
         </div>

@@ -51,8 +51,9 @@ export async function generateMetadata({ params }: ProductDetailProps): Promise<
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailProps) {
-  const { id } = await params
-  const product = await fetchProduct(Number(id))
+  const { id, locale } = await params
+  const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale
+  const product = await fetchProduct(Number(id), safeLocale)
   if (!product) notFound()
 
   const jsonLd = {
@@ -71,13 +72,17 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
     },
   };
 
+  const jsonLdString = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+
   return (
     <>
+      {/* JSON-LD structured data — server-generated, safe */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: jsonLdString }}
       />
-      <ProductDetailClient product={product} />
+      <ProductDetailClient product={product} locale={safeLocale} />
     </>
   )
 }
