@@ -1,0 +1,42 @@
+{
+  "common": {
+    "home": "홈",
+    "products": "상품",
+    "cart": "장바구니",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "register": "회원가입",
+    "search": "검색",
+    "loading": "로딩 중...",
+    "error": "오류가 발생했습니다",
+    "back": "뒤로가기",
+    "confirm": "확인",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "수정"
+  },
+  "navigation": {
+    "skipToContent": "본문으로 바로가기"
+  },
+  "product": {
+    "addToCart": "장바구니 담기",
+    "buyNow": "바로 구매",
+    "outOfStock": "품절",
+    "price": "가격",
+    "quantity": "수량"
+  },
+  "order": {
+    "orderHistory": "주문 내역",
+    "orderNumber": "주문 번호",
+    "orderDate": "주문일",
+    "orderStatus": "주문 상태"
+  },
+  "auth": {
+    "email": "이메일",
+    "password": "비밀번호",
+    "loginTitle": "로그인",
+    "registerTitle": "회원가입",
+    "forgotPassword": "비밀번호 찾기"
+  }
+}
