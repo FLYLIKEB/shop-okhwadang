@@ -286,7 +286,7 @@ export interface ConfirmPaymentResponse {
 }
 
 export const paymentsApi = {
-  prepare: (body: { orderId: number }, options?: RequestOptions) =>
+  prepare: (body: { orderId: number; locale?: string }, options?: RequestOptions) =>
     apiClient.post<PreparePaymentResponse>('/payments/prepare', body, options),
   confirm: (body: { orderId: number; paymentKey: string; amount: number }, options?: RequestOptions) =>
     apiClient.post<ConfirmPaymentResponse>('/payments/confirm', body, options),

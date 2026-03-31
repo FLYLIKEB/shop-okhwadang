@@ -12,6 +12,9 @@ import { PaymentGateway } from './interfaces/payment-gateway.interface';
 import { PreparePaymentDto } from './dto/prepare-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import { CancelPaymentDto } from './dto/cancel-payment.dto';
+import { TossPaymentAdapter } from './adapters/toss.adapter';
+import { StripePaymentAdapter } from './adapters/stripe.adapter';
+import { resolveGatewayByLocale } from './payments.module';
 
 @Injectable()
 export class PaymentsService {
@@ -26,7 +29,17 @@ export class PaymentsService {
     private readonly shippingRepository: Repository<Shipping>,
     @Inject('PaymentGateway')
     private readonly gateway: PaymentGateway,
+    private readonly tossAdapter: TossPaymentAdapter,
+    private readonly stripeAdapter: StripePaymentAdapter,
   ) {}
+
+  private resolveGateway(locale?: string): PaymentGateway {
+    if (!locale) return this.gateway;
+    const name = resolveGatewayByLocale(locale);
+    if (name === 'toss') return this.tossAdapter;
+    if (name === 'stripe') return this.stripeAdapter;
+    return this.gateway;
+  }
 
   async prepare(dto: PreparePaymentDto, userId: number) {
     const order = await this.orderRepository.findOne({ where: { id: dto.orderId } });
@@ -35,6 +48,9 @@ export class PaymentsService {
     if (order.status !== OrderStatus.PENDING) {
       throw new ConflictException('이미 처리된 주문입니다.');
     }
+
+    const selectedGateway = this.resolveGateway(dto.locale);
+    const gatewayName = dto.locale ? resolveGatewayByLocale(dto.locale) : 'mock';
 
     let payment = await this.paymentRepository.findOne({ where: { orderId: dto.orderId } });
     if (!payment) {
@@ -48,14 +64,14 @@ export class PaymentsService {
       payment = await this.paymentRepository.save(payment);
     }
 
-    const result = await this.gateway.prepare(String(dto.orderId), Number(order.totalAmount));
+    const result = await selectedGateway.prepare(String(dto.orderId), Number(order.totalAmount));
 
     return {
       paymentId: Number(payment.id),
       orderId: dto.orderId,
       orderNumber: order.orderNumber,
       amount: Number(order.totalAmount),
-      gateway: 'mock',
+      gateway: gatewayName,
       clientKey: result.clientKey,
     };
   }
