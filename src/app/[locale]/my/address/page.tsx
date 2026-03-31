@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { usersApi } from '@/lib/api';
 import type { UserAddress, CreateAddressData } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -143,8 +144,7 @@ export default function AddressPage() {
       }
       handleCancel();
     } catch (err) {
-      const message = err instanceof Error ? err.message : '오류가 발생했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '오류가 발생했습니다.'));
     } finally {
       setSubmitting(false);
     }
@@ -157,8 +157,7 @@ export default function AddressPage() {
       setAddresses((prev) => prev.filter((a) => a.id !== id));
       toast.success('배송지가 삭제되었습니다.');
     } catch (err) {
-      const message = err instanceof Error ? err.message : '삭제 중 오류가 발생했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '삭제 중 오류가 발생했습니다.'));
     }
   };
 
@@ -170,8 +169,7 @@ export default function AddressPage() {
       );
       toast.success('기본 배송지로 설정되었습니다.');
     } catch (err) {
-      const message = err instanceof Error ? err.message : '오류가 발생했습니다.';
-      toast.error(message);
+      toast.error(handleApiError(err, '오류가 발생했습니다.'));
     }
   };
 

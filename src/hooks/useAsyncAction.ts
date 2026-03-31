@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 
 interface UseAsyncActionOptions {
   onSuccess?: () => void;
@@ -29,9 +30,7 @@ export function useAsyncAction<T>(
       optRef.current.onSuccess?.();
       return result;
     } catch (err) {
-      const message =
-        optRef.current.errorMessage ??
-        (err instanceof Error ? err.message : '오류가 발생했습니다.');
+      const message = optRef.current.errorMessage ?? handleApiError(err, '오류가 발생했습니다.');
       toast.error(message);
       throw err;
     } finally {

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Locale } from '@/i18n/routing';
 import type { PreparePaymentResponse } from '@/lib/api';
+import { handleApiError } from '@/utils/error';
 
 interface PaymentGatewayProps {
   prepareResult: PreparePaymentResponse;
@@ -46,7 +47,7 @@ function TossPaymentGateway({
           failUrl: `${origin}/${locale}/checkout/fail`,
         });
       } catch (err) {
-        onError(err instanceof Error ? err.message : '결제 초기화 오류');
+        onError(handleApiError(err, '결제 초기화 오류'));
       }
     };
 

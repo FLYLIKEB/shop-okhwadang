@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { handleApiError } from '@/utils/error';
 import {
   adminDashboardApi,
   type DashboardResponse,
@@ -108,9 +109,7 @@ export default function DashboardPage() {
       const result = await adminDashboardApi.get(params);
       setData(result);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : '대시보드 데이터를 불러올 수 없습니다';
-      setError(message);
+      setError(handleApiError(err, '대시보드 데이터를 불러올 수 없습니다'));
     } finally {
       setLoading(false);
     }
