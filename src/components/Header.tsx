@@ -42,18 +42,11 @@ interface DesktopActionsProps {
   userName?: string;
   itemCount: number;
   onLogout: () => void;
+  isHomePage?: boolean;
 }
 
-interface DesktopActionsProps {
-  isAuthenticated: boolean;
-  userName?: string;
-  itemCount: number;
-  onLogout: () => void;
-  isOverHero?: boolean;
-}
-
-function DesktopActions({ isAuthenticated, userName, itemCount, onLogout, isOverHero }: DesktopActionsProps) {
-  const textClass = isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground";
+function DesktopActions({ isAuthenticated, userName, itemCount, onLogout, isHomePage }: DesktopActionsProps) {
+  const textClass = isHomePage ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground";
   return (
     <div className="hidden md:flex items-center gap-4">
       <LanguageSelector />
@@ -292,7 +285,6 @@ export default function Header() {
   };
 
   const showHeaderLogo = true;
-  // 홈 히어로 위에 있을 때 헤더 투명 + 흰색 텍스트
   const isOverHero = isHomePage && progress === 0;
 
   return (
@@ -315,7 +307,7 @@ export default function Header() {
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-            className={cn("p-2 -ml-2 transition-colors shrink-0", isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}
+            className={cn("p-2 -ml-2 transition-colors shrink-0", isHomePage ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -326,14 +318,14 @@ export default function Header() {
             className={cn(
               'shrink-0 transition-[opacity,transform,color] duration-300 ease-in-out',
 
-              (showHeaderLogo || isOverHero)
+              (showHeaderLogo || isHomePage)
                 ? 'opacity-100 pointer-events-auto translate-x-0'
                 : 'opacity-0 pointer-events-none -translate-x-2',
             )}
-            aria-hidden={!showHeaderLogo && !isOverHero}
-            tabIndex={!showHeaderLogo && !isOverHero ? -1 : undefined}
+            aria-hidden={!showHeaderLogo && !isHomePage}
+            tabIndex={!showHeaderLogo && !isHomePage ? -1 : undefined}
           >
-            <Logo variant={isOverHero ? 'hero' : 'header'} />
+            <Logo variant={isHomePage ? 'hero' : 'header'} />
           </Link>
 
           {/* 데스크탑 네비 */}
@@ -342,7 +334,7 @@ export default function Header() {
               <Link
                 key={item.id}
                 href={item.url}
-                className={cn("text-sm transition-colors", isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}
+                className={cn("text-sm transition-colors", isHomePage ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}
               >
                 {item.label}
               </Link>
@@ -364,7 +356,7 @@ export default function Header() {
               aria-label="상품 검색"
               className="w-full rounded-md border border-input bg-background pl-3 pr-10 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <button type="submit" aria-label="검색" className={cn("absolute right-2 transition-colors", isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}>
+            <button type="submit" aria-label="검색" className={cn("absolute right-2 transition-colors", isHomePage ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}>
               <Search className="h-4 w-4" />
             </button>
           </form>
@@ -375,11 +367,11 @@ export default function Header() {
             userName={user?.name}
             itemCount={itemCount}
             onLogout={() => void logout()}
-            isOverHero={isOverHero}
+            isHomePage={isHomePage}
           />
 
           {/* 모바일 우측: 검색 + 홈 + 카트 */}
-          <div className={cn("md:hidden flex items-center gap-1 ml-auto", isOverHero && "[&_svg]:text-white/80 [&_a]:text-white/80")}>
+          <div className={cn("md:hidden flex items-center gap-1 ml-auto", isHomePage && "[&_svg]:text-white/80 [&_a]:text-white/80")}>
             <button
               type="button"
               onClick={() => { setIsSearchOpen((p) => !p); setIsMenuOpen(false); }}
