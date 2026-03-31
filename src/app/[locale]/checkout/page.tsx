@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import type { CartItem, PreparePaymentResponse, UserAddress } from '@/lib/api';
 import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 
 type PaymentStep = 'idle' | 'creating_order' | 'preparing_payment' | 'confirming_payment' | 'success';
 
@@ -434,8 +434,8 @@ export default function CheckoutPage() {
                       </p>
                     )}
                     <p className="text-muted-foreground">
-                      {formatPrice(item.unitPrice)} × {item.quantity}개 ={' '}
-                      {formatPrice(item.subtotal)}
+                      {formatCurrency(item.unitPrice)} × {item.quantity}개 ={' '}
+                      {formatCurrency(item.subtotal)}
                     </p>
                   </li>
                 ))}
@@ -444,18 +444,18 @@ export default function CheckoutPage() {
               <div className="border-t pt-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">상품 금액</span>
-                  <span>{formatPrice(totalAmount)}</span>
+                  <span>{formatCurrency(totalAmount)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">배송비</span>
-                  <span>{shippingFee === 0 ? '무료' : formatPrice(shippingFee)}</span>
+                  <span>{shippingFee === 0 ? '무료' : formatCurrency(shippingFee)}</span>
                 </div>
               </div>
 
               <div className="border-t pt-4">
                 <div className="flex justify-between font-bold">
                   <span>합계</span>
-                  <span>{formatPrice(grandTotal)}</span>
+                  <span>{formatCurrency(grandTotal)}</span>
                 </div>
               </div>
 

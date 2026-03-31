@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigation } from '@/hooks/useNavigation';
 import type { NavigationItem } from '@/lib/api';
+import LanguageSelector from '@/components/LanguageSelector';
 
 // ─── Sub-components ──────────────────────────────────────────────
 
@@ -45,6 +46,7 @@ interface DesktopActionsProps {
 function DesktopActions({ isAuthenticated, userName, itemCount, onLogout }: DesktopActionsProps) {
   return (
     <div className="hidden md:flex items-center gap-4">
+      <LanguageSelector />
       <CartBadge itemCount={itemCount} />
       {isAuthenticated ? (
         <>
@@ -145,6 +147,9 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, onClose
             로그인
           </Link>
         )}
+        <div className="py-2">
+          <LanguageSelector />
+        </div>
       </div>
     </nav>
   );

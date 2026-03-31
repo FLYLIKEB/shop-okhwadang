@@ -7,7 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import EmptyState from '@/components/EmptyState';
 import CartItemRow from '@/components/cart/CartItemRow';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 export default function CartPage() {
@@ -142,7 +142,7 @@ export default function CartPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">상품 금액</span>
-              <span>{formatPrice(selectedTotal)}</span>
+              <span>{formatCurrency(selectedTotal)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">배송비</span>
@@ -154,7 +154,7 @@ export default function CartPage() {
             <div className="flex justify-between font-bold">
               <span>합계</span>
               <span>
-                {formatPrice(
+                {formatCurrency(
                   selectedTotal +
                   (selectedTotal >= 30000 || selectedTotal === 0 ? 0 : 3000)
                 )}

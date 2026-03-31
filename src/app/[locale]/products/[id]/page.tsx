@@ -2,21 +2,30 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { fetchProduct } from '@/lib/api-server'
 import ProductDetailClient from '@/components/products/ProductDetailClient'
+import { routing } from '@/i18n/routing'
+import type { Locale } from '@/i18n/routing'
 
 const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
 
 interface ProductDetailProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string; locale: string }>
 }
 
 export async function generateMetadata({ params }: ProductDetailProps): Promise<Metadata> {
-  const { id } = await params
+  const { id, locale } = await params
+  const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale;
   const product = await fetchProduct(Number(id))
   if (!product) return { title: '상품을 찾을 수 없습니다' }
 
   const imageUrl = product.images?.[0]?.url ?? '';
   const absoluteImageUrl = imageUrl.startsWith('http') ? imageUrl : `${SITE_URL}${imageUrl}`;
   const description = product.shortDescription ?? product.description?.slice(0, 160) ?? `${product.name} 상세 페이지`;
+
+  const languages: Record<string, string> = {};
+  for (const loc of routing.locales) {
+    languages[loc] = `${SITE_URL}/${loc}/products/${id}`;
+  }
+  languages['x-default'] = `${SITE_URL}/${routing.defaultLocale}/products/${id}`;
 
   return {
     title: product.name,
@@ -26,6 +35,8 @@ export async function generateMetadata({ params }: ProductDetailProps): Promise<
       description,
       images: imageUrl ? [{ url: absoluteImageUrl, width: 1200, height: 630, alt: product.name }] : [],
       type: 'website',
+      locale: safeLocale,
+      alternateLocale: routing.locales.filter((loc) => loc !== safeLocale),
     },
     twitter: {
       card: 'summary_large_image',
@@ -33,14 +44,16 @@ export async function generateMetadata({ params }: ProductDetailProps): Promise<
       images: imageUrl ? [absoluteImageUrl] : [],
     },
     alternates: {
-      canonical: `/products/${id}`,
+      canonical: `${SITE_URL}/${safeLocale}/products/${id}`,
+      languages,
     },
   }
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailProps) {
-  const { id } = await params
-  const product = await fetchProduct(Number(id))
+  const { id, locale } = await params
+  const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale
+  const product = await fetchProduct(Number(id), safeLocale)
   if (!product) notFound()
 
   const jsonLd = {
@@ -59,13 +72,17 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
     },
   };
 
+  const jsonLdString = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+
   return (
     <>
+      {/* JSON-LD structured data — server-generated, safe */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: jsonLdString }}
       />
-      <ProductDetailClient product={product} />
+      <ProductDetailClient product={product} locale={safeLocale} />
     </>
   )
 }

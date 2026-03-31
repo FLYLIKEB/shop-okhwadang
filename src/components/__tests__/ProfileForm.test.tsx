@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import ProfilePage from '@/app/my/profile/page';
+import ProfilePage from '@/app/[locale]/my/profile/page';
 import { AuthContext } from '@/contexts/AuthContext';
 import type { AuthContextValue } from '@/contexts/AuthContext';
 

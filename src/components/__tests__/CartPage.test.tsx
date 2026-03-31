@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import CartPage from '@/app/cart/page';
+import CartPage from '@/app/[locale]/cart/page';
 import type { CartItem } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -134,7 +134,7 @@ describe('CartPage', () => {
     const item1Checkbox = checkboxes[1];
     await user.click(item1Checkbox);
 
-    expect(screen.getByText('20,000원', { selector: 'span' })).toBeInTheDocument();
+    expect(screen.getByText('₩20,000', { selector: 'span' })).toBeInTheDocument();
   });
 
   it('shows toast warning when order button clicked with no selection', async () => {

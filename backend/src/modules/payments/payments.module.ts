@@ -7,6 +7,7 @@ import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { MockPaymentAdapter } from './adapters/mock.adapter';
 import { TossPaymentAdapter } from './adapters/toss.adapter';
+import { StripePaymentAdapter } from './adapters/stripe.adapter';
 
 export function resolvePaymentGateway(): string {
   const gateway = process.env.PAYMENT_GATEWAY ?? 'mock';
@@ -21,6 +22,15 @@ export function resolvePaymentGateway(): string {
   return gateway;
 }
 
+/**
+ * 로케일 기반 결제 게이트웨이 선택
+ * - 한국(ko): Toss Payments
+ * - 그 외: Stripe (글로벌)
+ */
+export function resolveGatewayByLocale(locale: string): string {
+  return locale === 'ko' ? 'toss' : 'stripe';
+}
+
 const gatewayProviders = [
   {
     provide: 'PaymentGateway',
@@ -29,6 +39,8 @@ const gatewayProviders = [
       switch (gateway) {
         case 'toss':
           return new TossPaymentAdapter();
+        case 'stripe':
+          return new StripePaymentAdapter();
         case 'mock':
           return new MockPaymentAdapter();
         default:
@@ -38,6 +50,7 @@ const gatewayProviders = [
   },
   MockPaymentAdapter,
   TossPaymentAdapter,
+  StripePaymentAdapter,
 ];
 
 @Module({

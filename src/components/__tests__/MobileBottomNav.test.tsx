@@ -8,12 +8,11 @@ vi.mock('next/navigation', () => ({
   usePathname: () => mockPathname,
 }));
 
-vi.mock('next/link', () => ({
-  default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
   ),
+  usePathname: () => mockPathname,
 }));
 
 const mockUseCart = vi.fn();
