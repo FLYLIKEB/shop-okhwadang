@@ -20,7 +20,7 @@ export const CLAY_COLLECTIONS: ClayCollection[] = [
     name: '朱泥',
     nameKo: '주니',
     color: '#8B4513',
-    description: '철분 함량이 높아 소성 후 선명한 붉은색을 띠는 니로. 홍차·우롱에 최적.',
+    description: '철분 함량이 높아 소성 후 선명한 붉은색을 띠는 니료. 홍차·우롱에 최적.',
     productUrl: '/products?clayType=주니',
   },
   {
@@ -36,7 +36,7 @@ export const CLAY_COLLECTIONS: ClayCollection[] = [
     name: '紫泥',
     nameKo: '자니',
     color: '#6B3A5C',
-    description: '자사호의 대표 니로. 보라빛 갈색으로 보이차·암차에 최적.',
+    description: '자사호의 대표 니료. 보라빛 갈색으로 보이차·암차에 최적.',
     productUrl: '/products?clayType=자니',
   },
   {
@@ -44,7 +44,7 @@ export const CLAY_COLLECTIONS: ClayCollection[] = [
     name: '黑泥',
     nameKo: '흑니',
     color: '#2A2520',
-    description: '희귀한 짙은 흑갈색 니로. 강한 흡착력으로 숙성 보이차에 최적.',
+    description: '희귀한 짙은 흑갈색 니료. 강한 흡착력으로 숙성 보이차에 최적.',
     productUrl: '/products?clayType=흑니',
   },
   {
@@ -60,7 +60,7 @@ export const CLAY_COLLECTIONS: ClayCollection[] = [
     name: '綠泥',
     nameKo: '녹니',
     color: '#4A6741',
-    description: '극히 희귀한 담록색 니로. 낮은 수축률로 정밀 조형에 적합.',
+    description: '극히 희귀한 담록색 니료. 낮은 수축률로 정밀 조형에 적합.',
     productUrl: '/products?clayType=녹니',
   },
 ];
