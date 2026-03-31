@@ -34,14 +34,41 @@ export class Product {
   @Column({ length: 255 })
   name!: string;
 
+  @Column({ name: 'name_en', length: 255, nullable: true })
+  nameEn!: string | null;
+
+  @Column({ name: 'name_ja', length: 255, nullable: true })
+  nameJa!: string | null;
+
+  @Column({ name: 'name_zh', length: 255, nullable: true })
+  nameZh!: string | null;
+
   @Column({ length: 255, unique: true })
   slug!: string;
 
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
+  @Column({ name: 'description_en', type: 'text', nullable: true })
+  descriptionEn!: string | null;
+
+  @Column({ name: 'description_ja', type: 'text', nullable: true })
+  descriptionJa!: string | null;
+
+  @Column({ name: 'description_zh', type: 'text', nullable: true })
+  descriptionZh!: string | null;
+
   @Column({ name: 'short_description', type: 'varchar', length: 500, nullable: true })
   shortDescription!: string | null;
+
+  @Column({ name: 'short_description_en', type: 'varchar', length: 500, nullable: true })
+  shortDescriptionEn!: string | null;
+
+  @Column({ name: 'short_description_ja', type: 'varchar', length: 500, nullable: true })
+  shortDescriptionJa!: string | null;
+
+  @Column({ name: 'short_description_zh', type: 'varchar', length: 500, nullable: true })
+  shortDescriptionZh!: string | null;
 
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   price!: number;
