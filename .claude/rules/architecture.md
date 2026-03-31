@@ -33,6 +33,7 @@ globs: ["**/*.ts", "**/*.tsx"]
 - Sonner for toast notifications — **all mutations must show toast feedback**
 - Template system: pages as blocks (hero-banner, product-grid, carousel, category-nav, etc.)
 - CMS: navigation and categories managed in DB
+- Auth: ApiClient must intercept 401 responses globally — auto-refresh token or redirect to login
 
 ## SEO
 - SSR via React Server Components
