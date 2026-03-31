@@ -11,6 +11,7 @@ import { wishlistApi } from '@/lib/api';
 import PriceDisplay from '@/components/common/PriceDisplay';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import type { Locale } from '@/utils/currency';
 
 interface ProductCardProps {
   id: number;
@@ -20,6 +21,7 @@ interface ProductCardProps {
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
   isFeatured?: boolean;
+  locale?: Locale;
 }
 
 export default function ProductCard({
@@ -29,6 +31,7 @@ export default function ProductCard({
   salePrice,
   status,
   images,
+  locale = 'ko',
 }: ProductCardProps) {
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
@@ -160,7 +163,7 @@ export default function ProductCard({
       <div className="mt-3">
         <h3 className="text-sm font-medium text-foreground line-clamp-2">{name}</h3>
         <div className="mt-1">
-          <PriceDisplay price={price} salePrice={salePrice} />
+          <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         </div>
       </div>
     </Link>

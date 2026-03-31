@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/common/PriceDisplay';
+import type { Locale } from '@/utils/currency';
 
 interface ProductListItemProps {
   id: number;
@@ -12,6 +13,7 @@ interface ProductListItemProps {
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
   isFeatured?: boolean;
+  locale?: Locale;
 }
 
 export default function ProductListItem({
@@ -21,6 +23,7 @@ export default function ProductListItem({
   salePrice,
   status,
   images,
+  locale = 'ko',
 }: ProductListItemProps) {
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
@@ -57,7 +60,7 @@ export default function ProductListItem({
 
       <div className="flex flex-1 flex-col justify-center gap-1">
         <h3 className="line-clamp-1 text-sm font-medium text-card-foreground">{name}</h3>
-        <PriceDisplay price={price} salePrice={salePrice} />
+        <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
       </div>
     </Link>
   );

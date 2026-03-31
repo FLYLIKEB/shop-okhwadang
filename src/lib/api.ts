@@ -141,9 +141,10 @@ export interface AutocompleteItem {
 }
 
 export const productsApi = {
-  getList: (params?: { page?: number; limit?: number; sort?: ProductSort; categoryId?: number; q?: string; price_min?: number; price_max?: number }) =>
+  getList: (params?: { page?: number; limit?: number; sort?: ProductSort; categoryId?: number; q?: string; price_min?: number; price_max?: number; locale?: string }) =>
     apiClient.get<ProductListResponse>('/products', { params: params as Record<string, string | number | undefined> }),
-  getById: (id: number) => apiClient.get<ProductDetail>(`/products/${id}`),
+  getById: (id: number, locale?: string) =>
+    apiClient.get<ProductDetail>(`/products/${id}`, { params: locale ? { locale } : undefined }),
   autocomplete: (q: string) =>
     apiClient.get<AutocompleteItem[]>('/products/autocomplete', { params: { q } }),
 };
@@ -455,6 +456,12 @@ export interface CreateProductData {
   sku?: string;
   status?: string;
   isFeatured?: boolean;
+  name_en?: string;
+  name_ja?: string;
+  name_zh?: string;
+  description_en?: string;
+  description_ja?: string;
+  description_zh?: string;
 }
 
 export type UpdateProductData = Partial<CreateProductData>;

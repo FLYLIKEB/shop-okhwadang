@@ -41,6 +41,7 @@ export function fetchProducts(params?: {
   price_min?: number;
   price_max?: number;
   isFeatured?: boolean;
+  locale?: string;
 }) {
   return fetchFromBackend<ProductListResponse>(
     '/products',
@@ -52,9 +53,9 @@ export function fetchCategories() {
   return fetchFromBackend<Category[]>('/categories');
 }
 
-export const fetchProduct = cache(async (id: number): Promise<ProductDetail | null> => {
+export const fetchProduct = cache(async (id: number, locale?: string): Promise<ProductDetail | null> => {
   try {
-    return await fetchFromBackend<ProductDetail>(`/products/${id}`);
+    return await fetchFromBackend<ProductDetail>(`/products/${id}`, locale ? { locale } : undefined);
   } catch {
     return null;
   }
