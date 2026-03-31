@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import OrderCompletePage from '@/app/order/complete/page';
+import OrderCompletePage from '@/app/[locale]/order/complete/page';
 import { ordersApi } from '@/lib/api';
 
 // ---- next/navigation ----

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import CartPage from '@/app/cart/page';
+import CartPage from '@/app/[locale]/cart/page';
 import type { CartItem } from '@/lib/api';
 import { toast } from 'sonner';
 

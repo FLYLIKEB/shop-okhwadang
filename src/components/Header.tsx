@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { Link, useRouter, usePathname } from '@/i18n/navigation';
 import { ShoppingCart, Menu, X, ArrowLeft, Home, Search } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { useAuth } from '@/contexts/AuthContext';
