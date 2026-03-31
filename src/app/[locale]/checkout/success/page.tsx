@@ -1,12 +1,14 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, use } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import { paymentsApi } from '@/lib/api';
+import type { Locale } from '@/i18n/routing';
 
-function CheckoutSuccessContent() {
+function CheckoutSuccessContent({ locale }: { locale: Locale }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refetch } = useCart();
@@ -19,14 +21,14 @@ function CheckoutSuccessContent() {
 
     if (!paymentKey || !tossOrderId || !amountParam) {
       toast.error('결제 정보가 올바르지 않습니다.');
-      router.replace('/cart');
+      router.replace(`/${locale}/cart`);
       return;
     }
 
     const raw = sessionStorage.getItem('tossPaymentContext');
     if (!raw) {
       toast.error('결제 컨텍스트를 찾을 수 없습니다.');
-      router.replace('/cart');
+      router.replace(`/${locale}/cart`);
       return;
     }
 
@@ -39,21 +41,19 @@ function CheckoutSuccessContent() {
     const amount = Number(amountParam);
     if (amount !== ctx.amount) {
       toast.error('결제 금액이 일치하지 않습니다.');
-      router.replace('/cart');
+      router.replace(`/${locale}/cart`);
       return;
     }
 
     paymentsApi
-      .confirm(
-        { orderId: ctx.orderId, paymentKey, amount },
-      )
+      .confirm({ orderId: ctx.orderId, paymentKey, amount })
       .then(async () => {
         toast.success('결제가 완료되었습니다.');
         sessionStorage.removeItem('checkoutItems');
         sessionStorage.removeItem('tossPaymentContext');
         await refetch();
         router.replace(
-          `/order/complete?orderId=${ctx.orderId}&orderNumber=${ctx.orderNumber}`,
+          `/${locale}/order/complete?orderId=${ctx.orderId}&orderNumber=${ctx.orderNumber}`,
         );
       })
       .catch((err: unknown) => {
@@ -73,7 +73,7 @@ function CheckoutSuccessContent() {
           결제 확인 중 문제가 발생했습니다. 고객센터에 문의해주세요.
         </p>
         <button
-          onClick={() => router.replace('/cart')}
+          onClick={() => router.replace(`/${locale}/cart`)}
           className="rounded-md bg-foreground px-6 py-2 text-sm font-semibold text-background hover:opacity-90 transition-opacity"
         >
           장바구니로 돌아가기
@@ -90,7 +90,13 @@ function CheckoutSuccessContent() {
   );
 }
 
-export default function CheckoutSuccessPage() {
+export default function CheckoutSuccessPage({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}) {
+  const { locale } = use(params);
+
   return (
     <Suspense
       fallback={
@@ -100,7 +106,7 @@ export default function CheckoutSuccessPage() {
         </div>
       }
     >
-      <CheckoutSuccessContent />
+      <CheckoutSuccessContent locale={locale} />
     </Suspense>
   );
 }
