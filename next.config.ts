@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'm.cbw.co.kr' },
       { protocol: 'https', hostname: 'gdimg.gmarket.co.kr' },
       { protocol: 'https', hostname: 'cdn-optimized.imweb.me' },
+      { protocol: 'https', hostname: 'i.pinimg.com' },
     ],
   },
   async rewrites() {

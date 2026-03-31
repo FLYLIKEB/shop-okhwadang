@@ -2,6 +2,7 @@
 
 import { Link } from '@/i18n/navigation';
 import { useNavigation } from '@/hooks/useNavigation';
+import type { NavigationItem } from '@/lib/api';
 
 const FALLBACK_LINKS = {
   customerService: [
@@ -22,8 +23,21 @@ const FALLBACK_LINKS = {
   ],
 };
 
+function renderNavLinks(items: NavigationItem[]) {
+  return items.map((item) => (
+    <Link
+      key={item.id}
+      href={item.url}
+      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+    >
+      {item.label}
+    </Link>
+  ));
+}
+
 export default function Footer() {
   const { items: footerItems } = useNavigation('footer');
+  const hasCmsData = footerItems.length > 0;
 
   return (
     <footer className="bg-background border-t mt-auto">
@@ -32,45 +46,51 @@ export default function Footer() {
           <div>
             <p className="text-sm font-medium text-foreground mb-4">고객센터</p>
             <nav className="flex flex-col gap-2">
-              {FALLBACK_LINKS.customerService.map((link) => (
-                <Link
-                  key={link.id}
-                  href={link.url}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {hasCmsData
+                ? renderNavLinks(footerItems.filter((item) => item.parent_id === null).slice(0, 4))
+                : FALLBACK_LINKS.customerService.map((link) => (
+                  <Link
+                    key={link.id}
+                    href={link.url}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
             </nav>
           </div>
 
           <div>
             <p className="text-sm font-medium text-foreground mb-4">회사</p>
             <nav className="flex flex-col gap-2">
-              {FALLBACK_LINKS.company.map((link) => (
-                <Link
-                  key={link.id}
-                  href={link.url}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {hasCmsData
+                ? renderNavLinks(footerItems.filter((item) => item.parent_id === null).slice(4, 6))
+                : FALLBACK_LINKS.company.map((link) => (
+                  <Link
+                    key={link.id}
+                    href={link.url}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
             </nav>
           </div>
 
           <div>
             <p className="text-sm font-medium text-foreground mb-4">쇼핑</p>
             <nav className="flex flex-col gap-2">
-              {FALLBACK_LINKS.shop.map((link) => (
-                <Link
-                  key={link.id}
-                  href={link.url}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {hasCmsData
+                ? renderNavLinks(footerItems.filter((item) => item.parent_id === null).slice(6, 10))
+                : FALLBACK_LINKS.shop.map((link) => (
+                  <Link
+                    key={link.id}
+                    href={link.url}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
             </nav>
           </div>
 

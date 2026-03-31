@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import type { PromotionBannerContent } from '@/lib/api';
 
@@ -13,11 +14,12 @@ interface Props {
 export default function PromotionBannerBlock({ content }: Props) {
   const { title, subtitle, image_url, cta_text, cta_url, template, end_date } = content;
   const { ref, visible } = useScrollAnimation<HTMLElement>();
+  const t = useTranslations('promotion');
 
   if (template === 'timer') {
     return (
       <section className="py-12 border-y border-border text-center">
-        <p className="text-sm tracking-widest text-muted-foreground uppercase mb-3">Limited Time</p>
+        <p className="text-sm tracking-widest text-muted-foreground uppercase mb-3">{t('limitedTime')}</p>
         <h2 className="text-2xl font-medium">{title}</h2>
         {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
         {end_date && <CountdownTimer endDate={end_date} />}
@@ -57,7 +59,6 @@ export default function PromotionBannerBlock({ content }: Props) {
     );
   }
 
-  // full-width (default) — scroll animation 적용
   return (
     <section ref={ref} className="relative overflow-hidden py-12 border-t border-b border-border">
       {image_url && (
@@ -69,7 +70,7 @@ export default function PromotionBannerBlock({ content }: Props) {
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
           }`}
         >
-          Special Offer
+          {t('specialOffer')}
         </p>
         <h2
           className={`text-2xl font-medium mb-2 transition-all duration-600 ease-out ${
@@ -106,6 +107,7 @@ export default function PromotionBannerBlock({ content }: Props) {
 }
 
 function CountdownTimer({ endDate }: { endDate: string }) {
+  const t = useTranslations('promotion');
   const [remaining, setRemaining] = useState(calcRemaining(endDate));
 
   useEffect(() => {
@@ -116,15 +118,15 @@ function CountdownTimer({ endDate }: { endDate: string }) {
   }, [endDate]);
 
   if (remaining.total <= 0) {
-    return <p className="mt-4 text-sm text-muted-foreground">이벤트가 종료되었습니다</p>;
+    return <p className="mt-4 text-sm text-muted-foreground">{t('eventEnded')}</p>;
   }
 
   return (
     <div className="mt-4 flex justify-center gap-6" role="timer">
-      <TimeUnit value={remaining.days} label="일" />
-      <TimeUnit value={remaining.hours} label="시간" />
-      <TimeUnit value={remaining.minutes} label="분" />
-      <TimeUnit value={remaining.seconds} label="초" />
+      <TimeUnit value={remaining.days} label={t('days')} />
+      <TimeUnit value={remaining.hours} label={t('hours')} />
+      <TimeUnit value={remaining.minutes} label={t('minutes')} />
+      <TimeUnit value={remaining.seconds} label={t('seconds')} />
     </div>
   );
 }
