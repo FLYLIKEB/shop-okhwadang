@@ -2,30 +2,14 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { shippingApi, type ShippingResponse, type CarrierCode } from '@/lib/api';
-
-const SHIPPING_STATUS_LABELS: Record<string, string> = {
-  payment_confirmed: '결제 완료',
-  preparing: '상품 준비중',
-  shipped: '배송 시작',
-  in_transit: '배송 중',
-  delivered: '배송 완료',
-};
+import { shippingApi, type ShippingResponse } from '@/lib/api';
+import {
+  SHIPPING_STATUS_LABELS,
+  CARRIER_NAMES,
+  CARRIER_TRACKING_URLS,
+} from '@/constants/status';
 
 const SHIPPING_STEPS = ['payment_confirmed', 'preparing', 'shipped', 'in_transit', 'delivered'];
-
-const CARRIER_NAMES: Record<CarrierCode, string> = {
-  mock: '테스트 택배',
-  cj: 'CJ대한통운',
-  hanjin: '한진택배',
-  lotte: '롯데택배',
-};
-
-const CARRIER_TRACKING_URLS: Partial<Record<CarrierCode, string>> = {
-  cj: 'https://www.doortodoor.co.kr/parcel/doortodoor.do?fsp_action=PARC_ACT_002&invc_no=',
-  hanjin: 'https://www.hanjin.com/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wbl_num=',
-  lotte: 'https://www.lotteglogis.com/home/reservation/tracking/index?InvNo=',
-};
 
 interface Props {
   orderId: number;
