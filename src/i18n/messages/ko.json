@@ -14,29 +14,604 @@
     "cancel": "취소",
     "save": "저장",
     "delete": "삭제",
-    "edit": "수정"
+    "edit": "수정",
+    "add": "추가",
+    "close": "닫기",
+    "all": "전체",
+    "apply": "적용",
+    "reset": "초기화",
+    "previous": "이전",
+    "next": "다음",
+    "submit": "제출",
+    "saving": "저장 중...",
+    "deleting": "삭제 중...",
+    "loading2": "불러오는 중...",
+    "noResults": "결과가 없습니다",
+    "required": "필수",
+    "optional": "선택",
+    "or": "또는",
+    "free": "무료",
+    "won": "원",
+    "items": "개",
+    "cases": "건",
+    "persons": "명",
+    "viewAll": "전체 보기",
+    "continueShopping": "쇼핑 계속하기"
   },
   "navigation": {
-    "skipToContent": "본문으로 바로가기"
+    "skipToContent": "본문으로 바로가기",
+    "mainMenu": "메인 메뉴",
+    "mobileMenu": "모바일 메뉴",
+    "mobileBottomNav": "모바일 하단 네비게이션",
+    "openMenu": "메뉴 열기",
+    "closeMenu": "메뉴 닫기",
+    "collection": "컬렉션",
+    "archive": "Archive",
+    "journal": "Journal",
+    "myPage": "마이",
+    "home": "홈"
+  },
+  "header": {
+    "searchPlaceholder": "상품 검색...",
+    "searchLabel": "상품 검색",
+    "searchButton": "검색",
+    "cartLabel": "장바구니",
+    "myPage": "마이페이지",
+    "logout": "로그아웃",
+    "login": "로그인",
+    "goBack": "뒤로가기",
+    "goHome": "홈"
+  },
+  "footer": {
+    "customerService": "고객센터",
+    "company": "회사",
+    "shop": "쇼핑",
+    "okhwadang": "옥화당",
+    "tagline": "자사호 · 보이차 · 다구",
+    "specialty": "전문 쇼핑몰",
+    "support": "고객센터",
+    "faq": "자주 묻는 질문",
+    "shipping": "배송 안내",
+    "returns": "반품 및 교환",
+    "terms": "이용약관",
+    "privacy": "개인정보처리방침",
+    "allProducts": "전체 상품",
+    "collection": "컬렉션",
+    "archive": "Archive",
+    "journal": "Journal",
+    "copyright": "© {year} 옥화당. All rights reserved."
+  },
+  "auth": {
+    "email": "이메일",
+    "emailPlaceholder": "you@example.com",
+    "password": "비밀번호",
+    "passwordPlaceholder": "••••••••",
+    "passwordHint": "영문+숫자+특수문자 8자 이상",
+    "passwordConfirm": "비밀번호 확인",
+    "passwordConfirmPlaceholder": "비밀번호 재입력",
+    "name": "이름",
+    "namePlaceholder": "홍길동",
+    "forgotPassword": "비밀번호 찾기",
+    "loginTitle": "로그인",
+    "registerTitle": "회원가입",
+    "loginSubmit": "로그인",
+    "loginSubmitting": "로그인 중...",
+    "registerSubmit": "회원가입",
+    "registerSubmitting": "가입 중...",
+    "kakaoLogin": "카카오로 로그인",
+    "googleLogin": "Google로 로그인",
+    "noAccount": "계정이 없으신가요?",
+    "hasAccount": "이미 계정이 있으신가요?",
+    "loginError": "로그인에 실패했습니다.",
+    "registerError": "회원가입에 실패했습니다.",
+    "dividerOr": "또는",
+    "validation": {
+      "emailInvalid": "올바른 이메일 형식이 아닙니다.",
+      "passwordTooShort": "비밀번호는 8자 이상이어야 합니다.",
+      "passwordRequirements": "비밀번호는 영문과 숫자를 모두 포함해야 합니다.",
+      "passwordNeedsSpecial": "비밀번호는 특수문자를 포함해야 합니다.",
+      "nameTooShort": "이름은 1~100자 사이여야 합니다.",
+      "passwordMismatch": "비밀번호가 일치하지 않습니다."
+    }
   },
   "product": {
     "addToCart": "장바구니 담기",
     "buyNow": "바로 구매",
     "outOfStock": "품절",
+    "outOfStockMessage": "현재 품절된 상품입니다.",
     "price": "가격",
-    "quantity": "수량"
+    "salePrice": "할인가",
+    "quantity": "수량",
+    "option": "옵션",
+    "selectOption": "옵션을 선택해 주세요.",
+    "addToCartSuccess": "장바구니에 담았습니다.",
+    "addToCartError": "장바구니 담기에 실패했습니다.",
+    "buyNowError": "구매 처리 중 오류가 발생했습니다.",
+    "productList": "상품 목록",
+    "featuredProducts": "추천 상품",
+    "searchResults": "\"{query}\" 검색 결과",
+    "noProducts": "상품이 없습니다",
+    "noProductsDescription": "등록된 상품이 없습니다.",
+    "noSearchResults": "\"{query}\"에 대한 검색 결과가 없습니다.",
+    "tabs": {
+      "details": "상세정보",
+      "reviews": "리뷰",
+      "inquiry": "문의",
+      "comingSoon": "준비 중입니다."
+    },
+    "sort": {
+      "label": "정렬 기준",
+      "latest": "최신순",
+      "priceAsc": "가격낮은순",
+      "priceDesc": "가격높은순",
+      "popular": "인기순"
+    },
+    "filter": {
+      "label": "필터",
+      "openFilter": "필터 열기",
+      "closeFilter": "필터 닫기",
+      "resetFilter": "필터 초기화",
+      "filterLabel": "상품 필터",
+      "priceRange": "가격 범위",
+      "priceMin": "최소",
+      "priceMax": "최대",
+      "clayType": "니로(泥料)",
+      "teapotShape": "형태",
+      "category": "카테고리"
+    },
+    "status": {
+      "draft": "임시저장",
+      "active": "판매중",
+      "soldout": "품절",
+      "hidden": "숨김"
+    }
+  },
+  "cart": {
+    "title": "장바구니",
+    "empty": "장바구니가 비었습니다",
+    "emptyDescription": "마음에 드는 상품을 장바구니에 담아보세요.",
+    "requireLogin": "로그인이 필요합니다",
+    "requireLoginDescription": "장바구니를 이용하려면 로그인해주세요.",
+    "selectAll": "전체 선택",
+    "orderSummary": "주문 요약",
+    "selectedItems": "선택 상품",
+    "productAmount": "상품 금액",
+    "shippingFee": "배송비",
+    "total": "합계",
+    "orderSelected": "선택 상품 주문하기",
+    "selectItemsToOrder": "주문할 상품을 선택해주세요.",
+    "noImage": "No image",
+    "removeItem": "{name} 삭제"
+  },
+  "checkout": {
+    "title": "주문 / 결제",
+    "shippingInfo": "배송 정보",
+    "loadingAddresses": "주소 불러오는 중...",
+    "noSavedAddress": "저장된 배송지가 없습니다.",
+    "addAddress": "배송지 추가",
+    "manualEntry": "직접 입력",
+    "recipientName": "받는 분 이름",
+    "phone": "연락처",
+    "zipcode": "우편번호",
+    "address": "주소",
+    "addressDetail": "상세 주소",
+    "addressDetailPlaceholder": "동/호수 등",
+    "shippingMemo": "배송 메모",
+    "shippingMemoPlaceholder": "배송 시 요청사항을 입력해주세요.",
+    "paymentMethod": "결제 수단",
+    "tossPayment": "토스페이먼츠 (카드)",
+    "mockPayment": "테스트 결제 (Mock)",
+    "couponPoints": "쿠폰 / 적립금",
+    "couponPointsComingSoon": "쿠폰/적립금 적용은 추후 지원 예정입니다.",
+    "orderItems": "주문 상품",
+    "productAmount": "상품 금액",
+    "shippingFee": "배송비",
+    "total": "합계",
+    "pay": "결제하기",
+    "paymentSuccess": "결제가 완료되었습니다.",
+    "paymentError": "결제 중 오류가 발생했습니다.",
+    "loadAddressError": "저장된 주소를 불러오는데 실패했습니다.",
+    "orderName": "주문 {orderNumber}",
+    "steps": {
+      "idle": "결제하기",
+      "creating_order": "주문 생성 중...",
+      "preparing_payment": "결제 준비 중...",
+      "confirming_payment": "결제 확인 중...",
+      "success": "완료"
+    },
+    "validation": {
+      "recipientNameTooShort": "이름은 2자 이상 입력해주세요.",
+      "phoneInvalid": "올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)",
+      "zipcodeInvalid": "우편번호는 5자리 숫자로 입력해주세요.",
+      "addressRequired": "주소를 입력해주세요."
+    }
   },
   "order": {
     "orderHistory": "주문 내역",
     "orderNumber": "주문 번호",
     "orderDate": "주문일",
-    "orderStatus": "주문 상태"
+    "orderStatus": "주문 상태",
+    "noOrders": "주문 내역이 없습니다.",
+    "noOrdersAction": "쇼핑 계속하기",
+    "recentOrders": "최근 주문",
+    "recentOrdersCount": "최근 주문 5건",
+    "orderStatusSummary": "주문 상태별 현황",
+    "compareYesterday": "전일 대비",
+    "status": {
+      "pending": "결제대기",
+      "paid": "결제완료",
+      "preparing": "상품준비중",
+      "shipped": "배송중",
+      "delivered": "배송완료",
+      "cancelled": "주문취소",
+      "refunded": "환불완료",
+      "refund_requested": "환불요청"
+    }
   },
-  "auth": {
+  "orderComplete": {
+    "loading": "주문 완료 처리 중..."
+  },
+  "myPage": {
+    "title": "마이페이지",
+    "editProfile": "회원정보 수정",
+    "orderHistory": "주문 내역",
+    "wishlist": "위시리스트",
+    "addressManagement": "배송지 관리",
+    "coupons": "쿠폰함",
+    "recentlyViewed": "최근 본 상품",
+    "noRecentOrders": "주문 내역이 없습니다.",
+    "myOrders": "주문 내역",
+    "previousPage": "이전",
+    "nextPage": "다음"
+  },
+  "profile": {
+    "title": "회원정보 수정",
     "email": "이메일",
-    "password": "비밀번호",
-    "loginTitle": "로그인",
-    "registerTitle": "회원가입",
-    "forgotPassword": "비밀번호 찾기"
+    "emailReadOnly": "이메일은 변경할 수 없습니다.",
+    "name": "이름",
+    "phone": "전화번호",
+    "save": "저장하기",
+    "saving": "저장 중...",
+    "updateSuccess": "회원정보가 수정되었습니다.",
+    "updateError": "수정 중 오류가 발생했습니다.",
+    "validation": {
+      "nameRequired": "이름을 입력해주세요.",
+      "phoneInvalid": "올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)"
+    }
+  },
+  "address": {
+    "title": "배송지 관리",
+    "noSavedAddresses": "저장된 배송지가 없습니다.",
+    "addAddress": "+ 배송지 추가",
+    "defaultBadge": "기본",
+    "setDefault": "기본 설정",
+    "edit": "수정",
+    "delete": "삭제",
+    "newAddress": "새 배송지",
+    "editAddress": "배송지 수정",
+    "recipientName": "받는 분",
+    "phone": "전화번호",
+    "zipcode": "우편번호",
+    "address": "주소",
+    "addressDetail": "상세 주소",
+    "label": "라벨",
+    "labelPlaceholder": "집, 회사 등",
+    "setAsDefault": "기본 배송지로 설정",
+    "save": "저장",
+    "saving": "저장 중...",
+    "cancel": "취소",
+    "addSuccess": "배송지가 추가되었습니다.",
+    "updateSuccess": "배송지가 수정되었습니다.",
+    "deleteSuccess": "배송지가 삭제되었습니다.",
+    "setDefaultSuccess": "기본 배송지로 설정되었습니다.",
+    "deleteConfirm": "배송지를 삭제하시겠습니까?",
+    "validation": {
+      "recipientNameRequired": "받는 분 이름을 입력해주세요.",
+      "phoneInvalid": "올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)",
+      "zipcodeInvalid": "우편번호는 5자리 숫자로 입력해주세요.",
+      "addressRequired": "주소를 입력해주세요."
+    }
+  },
+  "review": {
+    "title": "리뷰 작성",
+    "rating": "별점",
+    "contentPlaceholder": "상품에 대한 리뷰를 작성해 주세요.",
+    "attachPhoto": "사진 첨부",
+    "uploading": "업로드 중...",
+    "deleteImage": "이미지 삭제",
+    "attachedImage": "첨부 이미지 {index}",
+    "submit": "리뷰 등록",
+    "submitting": "등록 중...",
+    "cancel": "취소",
+    "noReviews": "아직 리뷰가 없습니다.",
+    "sortRecent": "최신순",
+    "sortRatingHigh": "별점 높은순",
+    "sortRatingLow": "별점 낮은순",
+    "uploadSuccess": "이미지 업로드 완료",
+    "uploadError": "이미지 업로드에 실패했습니다.",
+    "maxImagesError": "이미지는 최대 5장까지 업로드 가능합니다.",
+    "ratingRequired": "별점을 선택해 주세요.",
+    "submitSuccess": "리뷰가 등록되었습니다.",
+    "submitError": "리뷰 작성에 실패했습니다."
+  },
+  "shipping": {
+    "title": "운송장 등록",
+    "orderNumber": "주문번호: {orderNumber}",
+    "carrier": "택배사",
+    "trackingNumber": "운송장 번호",
+    "trackingNumberPlaceholder": "운송장 번호 입력",
+    "cancel": "취소",
+    "submit": "등록",
+    "submitting": "등록 중...",
+    "submitSuccess": "운송장이 등록되었습니다.",
+    "submitError": "운송장 등록에 실패했습니다.",
+    "trackingNumberRequired": "운송장 번호를 입력해주세요.",
+    "carriers": {
+      "cj": "CJ대한통운",
+      "hanjin": "한진택배",
+      "lotte": "롯데택배",
+      "mock": "테스트(Mock)"
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "대시보드",
+      "todayRevenue": "오늘 매출",
+      "todayOrders": "오늘 주문수",
+      "newMembers": "신규 회원수",
+      "productViews": "상품 조회수",
+      "compareYesterday": "전일 대비",
+      "orderStatusSummary": "주문 상태별 현황",
+      "recentOrders": "최근 주문 5건",
+      "noOrders": "주문 내역이 없습니다",
+      "chartLoading": "차트 로딩 중...",
+      "period": {
+        "today": "오늘",
+        "7d": "7일",
+        "30d": "30일",
+        "90d": "90일",
+        "custom": "직접입력"
+      },
+      "columns": {
+        "orderNumber": "주문번호",
+        "customerName": "고객명",
+        "paymentAmount": "결제금액",
+        "status": "상태",
+        "orderDate": "주문일시"
+      },
+      "orderStatus": {
+        "pending": "대기",
+        "paid": "결제완료",
+        "preparing": "준비중",
+        "shipped": "배송중",
+        "delivered": "배송완료",
+        "cancelled": "취소",
+        "refunded": "환불"
+      }
+    },
+    "orders": {
+      "title": "주문 관리",
+      "searchPlaceholder": "주문번호, 수령인, 이메일 검색",
+      "search": "검색",
+      "loading": "불러오는 중...",
+      "noOrders": "주문이 없습니다.",
+      "loadError": "주문 목록을 불러오지 못했습니다.",
+      "columns": {
+        "orderNumber": "주문번호",
+        "orderer": "주문자",
+        "product": "상품",
+        "amount": "금액",
+        "status": "상태",
+        "orderDate": "주문일",
+        "action": "액션"
+      },
+      "trackingSlip": "운송장",
+      "statusFilter": {
+        "all": "전체",
+        "pending": "결제대기",
+        "paid": "결제완료",
+        "preparing": "상품준비중",
+        "shipped": "배송중",
+        "delivered": "배송완료",
+        "cancelled": "주문취소",
+        "refunded": "환불완료"
+      },
+      "status": {
+        "pending": "결제대기",
+        "paid": "결제완료",
+        "preparing": "상품준비중",
+        "shipped": "배송중",
+        "delivered": "배송완료",
+        "cancelled": "주문취소",
+        "refunded": "환불완료"
+      }
+    },
+    "products": {
+      "title": "상품 관리",
+      "addProduct": "+ 상품 등록",
+      "loading": "불러오는 중...",
+      "noProducts": "상품이 없습니다.",
+      "loadError": "상품 목록을 불러오지 못했습니다.",
+      "statusChangeError": "상태 변경에 실패했습니다.",
+      "deleteError": "삭제에 실패했습니다.",
+      "deleteConfirm": "\"{name}\"을(를) 삭제하시겠습니까?",
+      "deleteSuccess": "상품이 삭제되었습니다.",
+      "columns": {
+        "id": "ID",
+        "name": "상품명",
+        "price": "가격",
+        "status": "상태",
+        "featured": "추천",
+        "action": "액션"
+      },
+      "actions": {
+        "hide": "숨기기",
+        "show": "노출",
+        "edit": "수정",
+        "delete": "삭제"
+      },
+      "statusFilter": {
+        "all": "전체",
+        "active": "판매중",
+        "draft": "임시저장",
+        "soldout": "품절",
+        "hidden": "숨김"
+      },
+      "status": {
+        "draft": "임시저장",
+        "active": "판매중",
+        "soldout": "품절",
+        "hidden": "숨김"
+      }
+    },
+    "productForm": {
+      "createTitle": "상품 등록",
+      "editTitle": "상품 수정",
+      "imageSection": "상품 이미지",
+      "basicInfoSection": "기본 정보",
+      "pricingSection": "가격 / 재고",
+      "displaySection": "노출 설정",
+      "optionsSection": "옵션",
+      "productName": "상품명 *",
+      "productNamePlaceholder": "상품명을 입력하세요",
+      "slug": "슬러그 *",
+      "shortDescription": "짧은 설명",
+      "shortDescriptionPlaceholder": "상품 요약 설명",
+      "description": "상세 설명",
+      "descriptionPlaceholder": "상품 상세 설명",
+      "salePrice": "판매가 (원) *",
+      "discountPrice": "할인가 (원)",
+      "stock": "재고",
+      "sku": "SKU",
+      "skuPlaceholder": "재고 관리 코드",
+      "status": "상태",
+      "featuredProduct": "추천 상품으로 표시",
+      "cancel": "취소",
+      "create": "등록하기",
+      "update": "수정하기",
+      "saving": "저장 중...",
+      "createSuccess": "상품이 등록되었습니다.",
+      "updateSuccess": "상품이 수정되었습니다.",
+      "saveError": "저장에 실패했습니다.",
+      "validation": {
+        "nameRequired": "상품명을 입력해주세요.",
+        "slugRequired": "슬러그를 입력해주세요.",
+        "priceRequired": "가격을 올바르게 입력해주세요."
+      }
+    },
+    "members": {
+      "title": "회원 관리",
+      "searchPlaceholder": "이메일, 이름 검색",
+      "search": "검색",
+      "loading": "불러오는 중...",
+      "noMembers": "회원이 없습니다.",
+      "loadError": "회원 목록을 불러오지 못했습니다.",
+      "statusLabel": "상태:",
+      "cannotChange": "변경 불가",
+      "columns": {
+        "id": "ID",
+        "email": "이메일",
+        "name": "이름",
+        "role": "역할",
+        "status": "상태",
+        "joinDate": "가입일",
+        "changeRole": "역할 변경"
+      },
+      "roles": {
+        "user": "일반회원",
+        "admin": "관리자",
+        "super_admin": "최고관리자"
+      },
+      "memberStatus": {
+        "active": "활성",
+        "inactive": "비활성"
+      },
+      "roleFilter": {
+        "all": "전체",
+        "user": "일반회원",
+        "admin": "관리자",
+        "super_admin": "최고관리자"
+      },
+      "statusFilter": {
+        "all": "전체",
+        "active": "활성",
+        "inactive": "비활성"
+      }
+    },
+    "sidebar": {
+      "dashboard": "대시보드",
+      "orders": "주문 관리",
+      "products": "상품 관리",
+      "categories": "카테고리",
+      "members": "회원 관리",
+      "navigation": "네비게이션",
+      "pages": "페이지 관리",
+      "theme": "테마 설정",
+      "settings": "설정",
+      "shopName": "옥화당",
+      "adminPanel": "관리자 패널",
+      "backToShop": "쇼핑몰로 돌아가기"
+    },
+    "navigation": {
+      "title": "네비게이션 관리"
+    },
+    "categories": {
+      "title": "카테고리 관리"
+    }
+  },
+  "search": {
+    "title": "검색",
+    "placeholder": "상품을 검색해보세요...",
+    "recentSearches": "최근 검색어",
+    "clearAll": "전체 삭제",
+    "noResults": "검색 결과가 없습니다",
+    "noResultsDescription": "\"{query}\"에 대한 검색 결과를 찾을 수 없습니다.",
+    "results": "\"{query}\" 검색 결과"
+  },
+  "wishlist": {
+    "add": "위시리스트에 추가",
+    "remove": "위시리스트에서 제거",
+    "addSuccess": "위시리스트에 추가되었습니다.",
+    "removeSuccess": "위시리스트에서 제거되었습니다.",
+    "loginRequired": "로그인이 필요합니다.",
+    "noItems": "위시리스트가 비었습니다.",
+    "noItemsDescription": "마음에 드는 상품을 위시리스트에 담아보세요."
+  },
+  "recentlyViewed": {
+    "title": "최근 본 상품",
+    "noItems": "최근 본 상품이 없습니다."
+  },
+  "payment": {
+    "successTitle": "결제 완료",
+    "failTitle": "결제 실패",
+    "backToHome": "홈으로 돌아가기",
+    "tryAgain": "다시 시도하기"
+  },
+  "pages": {
+    "adminPages": "페이지 관리"
+  },
+  "errors": {
+    "generic": "오류가 발생했습니다.",
+    "notFound": "페이지를 찾을 수 없습니다.",
+    "loadFailed": "데이터를 불러오는데 실패했습니다.",
+    "saveFailed": "저장에 실패했습니다.",
+    "deleteFailed": "삭제에 실패했습니다.",
+    "networkError": "네트워크 오류가 발생했습니다.",
+    "serverError": "서버 오류가 발생했습니다.",
+    "unauthorized": "로그인이 필요합니다.",
+    "forbidden": "접근 권한이 없습니다.",
+    "dashboardLoadError": "대시보드 데이터를 불러올 수 없습니다"
+  },
+  "clayTypes": {
+    "all": "전체",
+    "zhuni": "주니(朱泥)",
+    "duanni": "단니(段泥)",
+    "zini": "자니(紫泥)",
+    "heini": "흑니(黑泥)",
+    "qingshuini": "청수니(靑水泥)",
+    "luni": "녹니(綠泥)"
+  },
+  "teapotShapes": {
+    "all": "전체"
   }
 }

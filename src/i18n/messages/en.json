@@ -3,9 +3,9 @@
     "home": "Home",
     "products": "Products",
     "cart": "Cart",
-    "login": "Login",
-    "logout": "Logout",
-    "register": "Register",
+    "login": "Log In",
+    "logout": "Log Out",
+    "register": "Sign Up",
     "search": "Search",
     "loading": "Loading...",
     "error": "An error occurred",
@@ -14,29 +14,604 @@
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
-    "edit": "Edit"
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close",
+    "all": "All",
+    "apply": "Apply",
+    "reset": "Reset",
+    "previous": "Previous",
+    "next": "Next",
+    "submit": "Submit",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "loading2": "Loading...",
+    "noResults": "No results found",
+    "required": "Required",
+    "optional": "Optional",
+    "or": "or",
+    "free": "Free",
+    "won": "KRW",
+    "items": "item(s)",
+    "cases": "case(s)",
+    "persons": "person(s)",
+    "viewAll": "View All",
+    "continueShopping": "Continue Shopping"
   },
   "navigation": {
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "mainMenu": "Main Menu",
+    "mobileMenu": "Mobile Menu",
+    "mobileBottomNav": "Mobile Bottom Navigation",
+    "openMenu": "Open Menu",
+    "closeMenu": "Close Menu",
+    "collection": "Collection",
+    "archive": "Archive",
+    "journal": "Journal",
+    "myPage": "My Page",
+    "home": "Home"
+  },
+  "header": {
+    "searchPlaceholder": "Search products...",
+    "searchLabel": "Search products",
+    "searchButton": "Search",
+    "cartLabel": "Cart",
+    "myPage": "My Page",
+    "logout": "Log Out",
+    "login": "Log In",
+    "goBack": "Back",
+    "goHome": "Home"
+  },
+  "footer": {
+    "customerService": "Customer Service",
+    "company": "Company",
+    "shop": "Shop",
+    "okhwadang": "Okhwadang",
+    "tagline": "Yixing Teapots · Pu-erh Tea · Tea Ware",
+    "specialty": "Specialty Store",
+    "support": "Customer Support",
+    "faq": "FAQ",
+    "shipping": "Shipping Info",
+    "returns": "Returns & Exchanges",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "allProducts": "All Products",
+    "collection": "Collection",
+    "archive": "Archive",
+    "journal": "Journal",
+    "copyright": "© {year} Okhwadang. All rights reserved."
+  },
+  "auth": {
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "passwordHint": "8+ characters including letters, numbers, and symbols",
+    "passwordConfirm": "Confirm Password",
+    "passwordConfirmPlaceholder": "Re-enter your password",
+    "name": "Name",
+    "namePlaceholder": "Your Name",
+    "forgotPassword": "Forgot Password",
+    "loginTitle": "Log In",
+    "registerTitle": "Sign Up",
+    "loginSubmit": "Log In",
+    "loginSubmitting": "Logging in...",
+    "registerSubmit": "Sign Up",
+    "registerSubmitting": "Creating account...",
+    "kakaoLogin": "Continue with Kakao",
+    "googleLogin": "Continue with Google",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginError": "Login failed.",
+    "registerError": "Sign up failed.",
+    "dividerOr": "or",
+    "validation": {
+      "emailInvalid": "Please enter a valid email address.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordRequirements": "Password must contain both letters and numbers.",
+      "passwordNeedsSpecial": "Password must contain at least one special character.",
+      "nameTooShort": "Name must be between 1 and 100 characters.",
+      "passwordMismatch": "Passwords do not match."
+    }
   },
   "product": {
     "addToCart": "Add to Cart",
     "buyNow": "Buy Now",
     "outOfStock": "Out of Stock",
+    "outOfStockMessage": "This item is currently out of stock.",
     "price": "Price",
-    "quantity": "Quantity"
+    "salePrice": "Sale Price",
+    "quantity": "Quantity",
+    "option": "Option",
+    "selectOption": "Please select an option.",
+    "addToCartSuccess": "Added to cart.",
+    "addToCartError": "Failed to add to cart.",
+    "buyNowError": "An error occurred during checkout.",
+    "productList": "Product List",
+    "featuredProducts": "Featured Products",
+    "searchResults": "Results for \"{query}\"",
+    "noProducts": "No products found",
+    "noProductsDescription": "No products are listed yet.",
+    "noSearchResults": "No results found for \"{query}\".",
+    "tabs": {
+      "details": "Details",
+      "reviews": "Reviews",
+      "inquiry": "Inquiry",
+      "comingSoon": "Coming soon."
+    },
+    "sort": {
+      "label": "Sort by",
+      "latest": "Newest",
+      "priceAsc": "Price: Low to High",
+      "priceDesc": "Price: High to Low",
+      "popular": "Most Popular"
+    },
+    "filter": {
+      "label": "Filter",
+      "openFilter": "Open Filter",
+      "closeFilter": "Close Filter",
+      "resetFilter": "Reset Filter",
+      "filterLabel": "Product Filter",
+      "priceRange": "Price Range",
+      "priceMin": "Min",
+      "priceMax": "Max",
+      "clayType": "Clay Type (泥料)",
+      "teapotShape": "Shape",
+      "category": "Category"
+    },
+    "status": {
+      "draft": "Draft",
+      "active": "On Sale",
+      "soldout": "Sold Out",
+      "hidden": "Hidden"
+    }
+  },
+  "cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty",
+    "emptyDescription": "Add items you love to your cart.",
+    "requireLogin": "Login required",
+    "requireLoginDescription": "Please log in to use the cart.",
+    "selectAll": "Select All",
+    "orderSummary": "Order Summary",
+    "selectedItems": "Selected Items",
+    "productAmount": "Subtotal",
+    "shippingFee": "Shipping",
+    "total": "Total",
+    "orderSelected": "Order Selected Items",
+    "selectItemsToOrder": "Please select items to order.",
+    "noImage": "No image",
+    "removeItem": "Remove {name}"
+  },
+  "checkout": {
+    "title": "Order / Payment",
+    "shippingInfo": "Shipping Information",
+    "loadingAddresses": "Loading addresses...",
+    "noSavedAddress": "No saved addresses.",
+    "addAddress": "Add Address",
+    "manualEntry": "Enter Manually",
+    "recipientName": "Recipient Name",
+    "phone": "Phone Number",
+    "zipcode": "ZIP Code",
+    "address": "Address",
+    "addressDetail": "Address Detail",
+    "addressDetailPlaceholder": "Apartment, suite, etc.",
+    "shippingMemo": "Delivery Notes",
+    "shippingMemoPlaceholder": "Any special delivery instructions?",
+    "paymentMethod": "Payment Method",
+    "tossPayment": "Toss Payments (Card)",
+    "mockPayment": "Test Payment (Mock)",
+    "couponPoints": "Coupons / Points",
+    "couponPointsComingSoon": "Coupon and points support coming soon.",
+    "orderItems": "Order Items",
+    "productAmount": "Subtotal",
+    "shippingFee": "Shipping",
+    "total": "Total",
+    "pay": "Pay Now",
+    "paymentSuccess": "Payment completed successfully.",
+    "paymentError": "An error occurred during payment.",
+    "loadAddressError": "Failed to load saved addresses.",
+    "orderName": "Order {orderNumber}",
+    "steps": {
+      "idle": "Pay Now",
+      "creating_order": "Creating order...",
+      "preparing_payment": "Preparing payment...",
+      "confirming_payment": "Confirming payment...",
+      "success": "Done"
+    },
+    "validation": {
+      "recipientNameTooShort": "Please enter at least 2 characters for the name.",
+      "phoneInvalid": "Please enter a valid phone number. (e.g. 010-1234-5678)",
+      "zipcodeInvalid": "ZIP code must be 5 digits.",
+      "addressRequired": "Please enter your address."
+    }
   },
   "order": {
     "orderHistory": "Order History",
     "orderNumber": "Order Number",
     "orderDate": "Order Date",
-    "orderStatus": "Order Status"
+    "orderStatus": "Order Status",
+    "noOrders": "No orders yet.",
+    "noOrdersAction": "Continue Shopping",
+    "recentOrders": "Recent Orders",
+    "recentOrdersCount": "Last 5 Orders",
+    "orderStatusSummary": "Order Status Overview",
+    "compareYesterday": "vs. Yesterday",
+    "status": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "preparing": "Preparing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded",
+      "refund_requested": "Refund Requested"
+    }
   },
-  "auth": {
+  "orderComplete": {
+    "loading": "Processing your order..."
+  },
+  "myPage": {
+    "title": "My Page",
+    "editProfile": "Edit Profile",
+    "orderHistory": "Order History",
+    "wishlist": "Wishlist",
+    "addressManagement": "Address Book",
+    "coupons": "Coupons",
+    "recentlyViewed": "Recently Viewed",
+    "noRecentOrders": "No orders yet.",
+    "myOrders": "My Orders",
+    "previousPage": "Previous",
+    "nextPage": "Next"
+  },
+  "profile": {
+    "title": "Edit Profile",
     "email": "Email",
-    "password": "Password",
-    "loginTitle": "Login",
-    "registerTitle": "Register",
-    "forgotPassword": "Forgot Password"
+    "emailReadOnly": "Email cannot be changed.",
+    "name": "Name",
+    "phone": "Phone Number",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "updateSuccess": "Profile updated successfully.",
+    "updateError": "An error occurred while updating.",
+    "validation": {
+      "nameRequired": "Please enter your name.",
+      "phoneInvalid": "Please enter a valid phone number. (e.g. 010-1234-5678)"
+    }
+  },
+  "address": {
+    "title": "Address Book",
+    "noSavedAddresses": "No saved addresses.",
+    "addAddress": "+ Add Address",
+    "defaultBadge": "Default",
+    "setDefault": "Set as Default",
+    "edit": "Edit",
+    "delete": "Delete",
+    "newAddress": "New Address",
+    "editAddress": "Edit Address",
+    "recipientName": "Recipient",
+    "phone": "Phone Number",
+    "zipcode": "ZIP Code",
+    "address": "Address",
+    "addressDetail": "Address Detail",
+    "label": "Label",
+    "labelPlaceholder": "Home, Office, etc.",
+    "setAsDefault": "Set as default address",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "addSuccess": "Address added successfully.",
+    "updateSuccess": "Address updated successfully.",
+    "deleteSuccess": "Address deleted successfully.",
+    "setDefaultSuccess": "Default address updated.",
+    "deleteConfirm": "Are you sure you want to delete this address?",
+    "validation": {
+      "recipientNameRequired": "Please enter the recipient's name.",
+      "phoneInvalid": "Please enter a valid phone number. (e.g. 010-1234-5678)",
+      "zipcodeInvalid": "ZIP code must be 5 digits.",
+      "addressRequired": "Please enter your address."
+    }
+  },
+  "review": {
+    "title": "Write a Review",
+    "rating": "Rating",
+    "contentPlaceholder": "Share your thoughts about this product.",
+    "attachPhoto": "Attach Photo",
+    "uploading": "Uploading...",
+    "deleteImage": "Delete Image",
+    "attachedImage": "Attached image {index}",
+    "submit": "Submit Review",
+    "submitting": "Submitting...",
+    "cancel": "Cancel",
+    "noReviews": "No reviews yet.",
+    "sortRecent": "Newest",
+    "sortRatingHigh": "Highest Rated",
+    "sortRatingLow": "Lowest Rated",
+    "uploadSuccess": "Image uploaded successfully",
+    "uploadError": "Failed to upload image.",
+    "maxImagesError": "You can upload up to 5 images.",
+    "ratingRequired": "Please select a rating.",
+    "submitSuccess": "Review submitted successfully.",
+    "submitError": "Failed to submit review."
+  },
+  "shipping": {
+    "title": "Register Tracking Number",
+    "orderNumber": "Order: {orderNumber}",
+    "carrier": "Carrier",
+    "trackingNumber": "Tracking Number",
+    "trackingNumberPlaceholder": "Enter tracking number",
+    "cancel": "Cancel",
+    "submit": "Register",
+    "submitting": "Registering...",
+    "submitSuccess": "Tracking number registered successfully.",
+    "submitError": "Failed to register tracking number.",
+    "trackingNumberRequired": "Please enter a tracking number.",
+    "carriers": {
+      "cj": "CJ Logistics",
+      "hanjin": "Hanjin Express",
+      "lotte": "Lotte Logistics",
+      "mock": "Test (Mock)"
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Dashboard",
+      "todayRevenue": "Today's Revenue",
+      "todayOrders": "Today's Orders",
+      "newMembers": "New Members",
+      "productViews": "Product Views",
+      "compareYesterday": "vs. Yesterday",
+      "orderStatusSummary": "Order Status Overview",
+      "recentOrders": "Last 5 Orders",
+      "noOrders": "No orders",
+      "chartLoading": "Loading chart...",
+      "period": {
+        "today": "Today",
+        "7d": "7 Days",
+        "30d": "30 Days",
+        "90d": "90 Days",
+        "custom": "Custom"
+      },
+      "columns": {
+        "orderNumber": "Order #",
+        "customerName": "Customer",
+        "paymentAmount": "Amount",
+        "status": "Status",
+        "orderDate": "Order Date"
+      },
+      "orderStatus": {
+        "pending": "Pending",
+        "paid": "Paid",
+        "preparing": "Preparing",
+        "shipped": "Shipped",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled",
+        "refunded": "Refunded"
+      }
+    },
+    "orders": {
+      "title": "Order Management",
+      "searchPlaceholder": "Search by order #, recipient, or email",
+      "search": "Search",
+      "loading": "Loading...",
+      "noOrders": "No orders found.",
+      "loadError": "Failed to load orders.",
+      "columns": {
+        "orderNumber": "Order #",
+        "orderer": "Customer",
+        "product": "Product",
+        "amount": "Amount",
+        "status": "Status",
+        "orderDate": "Order Date",
+        "action": "Action"
+      },
+      "trackingSlip": "Tracking",
+      "statusFilter": {
+        "all": "All",
+        "pending": "Pending",
+        "paid": "Paid",
+        "preparing": "Preparing",
+        "shipped": "Shipped",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled",
+        "refunded": "Refunded"
+      },
+      "status": {
+        "pending": "Pending",
+        "paid": "Paid",
+        "preparing": "Preparing",
+        "shipped": "Shipped",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled",
+        "refunded": "Refunded"
+      }
+    },
+    "products": {
+      "title": "Product Management",
+      "addProduct": "+ Add Product",
+      "loading": "Loading...",
+      "noProducts": "No products found.",
+      "loadError": "Failed to load products.",
+      "statusChangeError": "Failed to change status.",
+      "deleteError": "Failed to delete.",
+      "deleteConfirm": "Are you sure you want to delete \"{name}\"?",
+      "deleteSuccess": "Product deleted successfully.",
+      "columns": {
+        "id": "ID",
+        "name": "Product Name",
+        "price": "Price",
+        "status": "Status",
+        "featured": "Featured",
+        "action": "Action"
+      },
+      "actions": {
+        "hide": "Hide",
+        "show": "Show",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "statusFilter": {
+        "all": "All",
+        "active": "On Sale",
+        "draft": "Draft",
+        "soldout": "Sold Out",
+        "hidden": "Hidden"
+      },
+      "status": {
+        "draft": "Draft",
+        "active": "On Sale",
+        "soldout": "Sold Out",
+        "hidden": "Hidden"
+      }
+    },
+    "productForm": {
+      "createTitle": "Add Product",
+      "editTitle": "Edit Product",
+      "imageSection": "Product Images",
+      "basicInfoSection": "Basic Information",
+      "pricingSection": "Pricing / Stock",
+      "displaySection": "Display Settings",
+      "optionsSection": "Options",
+      "productName": "Product Name *",
+      "productNamePlaceholder": "Enter product name",
+      "slug": "Slug *",
+      "shortDescription": "Short Description",
+      "shortDescriptionPlaceholder": "Brief product summary",
+      "description": "Description",
+      "descriptionPlaceholder": "Full product description",
+      "salePrice": "Sale Price (KRW) *",
+      "discountPrice": "Discount Price (KRW)",
+      "stock": "Stock",
+      "sku": "SKU",
+      "skuPlaceholder": "Inventory management code",
+      "status": "Status",
+      "featuredProduct": "Mark as featured product",
+      "cancel": "Cancel",
+      "create": "Add Product",
+      "update": "Save Changes",
+      "saving": "Saving...",
+      "createSuccess": "Product added successfully.",
+      "updateSuccess": "Product updated successfully.",
+      "saveError": "Failed to save.",
+      "validation": {
+        "nameRequired": "Please enter a product name.",
+        "slugRequired": "Please enter a slug.",
+        "priceRequired": "Please enter a valid price."
+      }
+    },
+    "members": {
+      "title": "Member Management",
+      "searchPlaceholder": "Search by email or name",
+      "search": "Search",
+      "loading": "Loading...",
+      "noMembers": "No members found.",
+      "loadError": "Failed to load members.",
+      "statusLabel": "Status:",
+      "cannotChange": "Cannot change",
+      "columns": {
+        "id": "ID",
+        "email": "Email",
+        "name": "Name",
+        "role": "Role",
+        "status": "Status",
+        "joinDate": "Joined",
+        "changeRole": "Change Role"
+      },
+      "roles": {
+        "user": "Member",
+        "admin": "Admin",
+        "super_admin": "Super Admin"
+      },
+      "memberStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "roleFilter": {
+        "all": "All",
+        "user": "Member",
+        "admin": "Admin",
+        "super_admin": "Super Admin"
+      },
+      "statusFilter": {
+        "all": "All",
+        "active": "Active",
+        "inactive": "Inactive"
+      }
+    },
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "products": "Products",
+      "categories": "Categories",
+      "members": "Members",
+      "navigation": "Navigation",
+      "pages": "Pages",
+      "theme": "Theme",
+      "settings": "Settings",
+      "shopName": "Okhwadang",
+      "adminPanel": "Admin Panel",
+      "backToShop": "Back to Shop"
+    },
+    "navigation": {
+      "title": "Navigation Management"
+    },
+    "categories": {
+      "title": "Category Management"
+    }
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search for products...",
+    "recentSearches": "Recent Searches",
+    "clearAll": "Clear All",
+    "noResults": "No results found",
+    "noResultsDescription": "No results found for \"{query}\".",
+    "results": "Results for \"{query}\""
+  },
+  "wishlist": {
+    "add": "Add to Wishlist",
+    "remove": "Remove from Wishlist",
+    "addSuccess": "Added to wishlist.",
+    "removeSuccess": "Removed from wishlist.",
+    "loginRequired": "Please log in.",
+    "noItems": "Your wishlist is empty.",
+    "noItemsDescription": "Add items you love to your wishlist."
+  },
+  "recentlyViewed": {
+    "title": "Recently Viewed",
+    "noItems": "No recently viewed items."
+  },
+  "payment": {
+    "successTitle": "Payment Complete",
+    "failTitle": "Payment Failed",
+    "backToHome": "Back to Home",
+    "tryAgain": "Try Again"
+  },
+  "pages": {
+    "adminPages": "Page Management"
+  },
+  "errors": {
+    "generic": "An error occurred.",
+    "notFound": "Page not found.",
+    "loadFailed": "Failed to load data.",
+    "saveFailed": "Failed to save.",
+    "deleteFailed": "Failed to delete.",
+    "networkError": "A network error occurred.",
+    "serverError": "A server error occurred.",
+    "unauthorized": "Please log in.",
+    "forbidden": "You do not have permission to access this.",
+    "dashboardLoadError": "Failed to load dashboard data"
+  },
+  "clayTypes": {
+    "all": "All",
+    "zhuni": "Zhuni (朱泥)",
+    "duanni": "Duanni (段泥)",
+    "zini": "Zini (紫泥)",
+    "heini": "Heini (黑泥)",
+    "qingshuini": "Qingshuini (靑水泥)",
+    "luni": "Luni (綠泥)"
+  },
+  "teapotShapes": {
+    "all": "All"
   }
 }
