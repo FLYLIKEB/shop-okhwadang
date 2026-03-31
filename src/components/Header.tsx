@@ -252,7 +252,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isPastHero, setIsPastHero] = useState(false);
 
-  const isHomePage = pathname === '/';
+  const isHomePage = pathname === '/' || /^\/(ko|en)\/?$/.test(pathname);
   const isSubPage = !isHomePage;
 
   useEffect(() => {
