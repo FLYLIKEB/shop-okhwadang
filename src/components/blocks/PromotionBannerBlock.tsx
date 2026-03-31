@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import type { PromotionBannerContent } from '@/lib/api';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 
 export default function PromotionBannerBlock({ content }: Props) {
   const { title, subtitle, image_url, cta_text, cta_url, template, end_date } = content;
+  const { ref, visible } = useScrollAnimation<HTMLElement>();
 
   if (template === 'timer') {
     return (
@@ -55,18 +57,45 @@ export default function PromotionBannerBlock({ content }: Props) {
     );
   }
 
+  // full-width (default) — scroll animation 적용
   return (
-    <section className="relative overflow-hidden py-16 border-y border-border">
+    <section ref={ref} className="relative overflow-hidden py-12 border-t border-b border-border">
       {image_url && (
         <Image src={image_url} alt={title} fill className="object-cover opacity-20" />
       )}
       <div className="relative z-10 text-center px-8">
-        <h2 className="text-2xl font-medium md:text-3xl">{title}</h2>
-        {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
+        <p
+          className={`text-sm tracking-widest text-muted-foreground uppercase mb-3 transition-all duration-600 ease-out ${
+            visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
+          Special Offer
+        </p>
+        <h2
+          className={`text-2xl font-medium mb-2 transition-all duration-600 ease-out ${
+            visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+          style={{ transitionDelay: visible ? '100ms' : undefined }}
+        >
+          {title}
+        </h2>
+        {subtitle && (
+          <p
+            className={`text-muted-foreground text-sm mb-6 transition-all duration-600 ease-out ${
+              visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+            }`}
+            style={{ transitionDelay: visible ? '200ms' : undefined }}
+          >
+            {subtitle}
+          </p>
+        )}
         {cta_text && cta_url && (
           <Link
             href={cta_url}
-            className="mt-6 inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
+            className={`inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors duration-600 ease-out ${
+              visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+            }`}
+            style={{ transitionDelay: visible ? '300ms' : undefined }}
           >
             {cta_text}
           </Link>

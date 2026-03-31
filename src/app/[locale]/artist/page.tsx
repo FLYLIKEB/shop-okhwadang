@@ -29,8 +29,8 @@ export default async function ArtistPage({ searchParams }: ArtistPageProps) {
         </p>
       </header>
 
-      {/* 니로 필터 */}
-      <nav aria-label="니로 필터" className="mb-8 flex flex-wrap gap-2">
+      {/* 니료 필터 */}
+      <nav aria-label="니료 필터" className="mb-8 flex flex-wrap gap-2">
         {CLAY_FILTERS.map((filter) => {
           const isActive = clay === filter;
           const href = filter === '전체' ? '/artist' : `/artist?clay=${encodeURIComponent(filter)}`;
@@ -85,7 +85,7 @@ export default async function ArtistPage({ searchParams }: ArtistPageProps) {
 
       {filtered.length === 0 && (
         <p className="mt-12 text-center text-sm text-muted-foreground">
-          해당 니로의 장인이 없습니다.
+          해당 니료의 장인이 없습니다.
         </p>
       )}
     </div>

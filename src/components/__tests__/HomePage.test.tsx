@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import HeroBannerSlider from '@/components/home/HeroBannerSlider';
-import FeaturedProducts from '@/components/home/FeaturedProducts';
-import CategoryNav from '@/components/home/CategoryNav';
-import type { BannerSlide } from '@/components/home/HeroBannerSlider';
-import type { Product, Category } from '@/lib/api';
+import HeroBannerBlock from '@/components/blocks/HeroBannerBlock';
+import ProductGridBlock from '@/components/blocks/ProductGridBlock';
+import CategoryNavBlock from '@/components/blocks/CategoryNavBlock';
+import type { HeroBannerContent, ProductGridContent, CategoryNavContent, Product, Category } from '@/lib/api';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/',
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
@@ -22,14 +22,25 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@/lib/api', () => ({
-  wishlistApi: {
-    add: vi.fn(),
-    remove: vi.fn(),
-    getList: vi.fn(),
-    check: vi.fn(),
-  },
-}));
+vi.mock('@/lib/api', async () => {
+  const actual = await vi.importActual('@/lib/api');
+  return {
+    ...actual,
+    wishlistApi: {
+      add: vi.fn(),
+      remove: vi.fn(),
+      getList: vi.fn(),
+      check: vi.fn(),
+    },
+    productsApi: {
+      getList: vi.fn().mockResolvedValue({ items: [] }),
+      getById: vi.fn(),
+    },
+    categoriesApi: {
+      getTree: vi.fn().mockResolvedValue([]),
+    },
+  };
+});
 
 // ---- embla-carousel-react mock ----
 vi.mock('embla-carousel-react', () => ({
@@ -76,12 +87,6 @@ vi.mock('next/image', () => ({
   ),
 }));
 
-const sampleSlides: BannerSlide[] = [
-  { id: 1, title: '슬라이드 1', subtitle: '부제목 1', ctaLabel: '보기', ctaUrl: '/products', bgColor: 'bg-slate-100' },
-  { id: 2, title: '슬라이드 2', bgColor: 'bg-stone-100' },
-  { id: 3, title: '슬라이드 3', bgColor: 'bg-zinc-100' },
-];
-
 const sampleProducts: Product[] = [
   {
     id: 1, name: '테스트 상품 1', slug: 'test-1', price: 20000, salePrice: null,
@@ -94,103 +99,124 @@ const sampleProducts: Product[] = [
 ];
 
 const sampleCategories: Category[] = [
-  { id: 1, name: '상의', slug: 'top', parentId: null },
-  { id: 2, name: '하의', slug: 'bottom', parentId: null },
-  { id: 3, name: '아우터', slug: 'outer', parentId: null },
+  { id: 1, name: '상의', slug: 'top', parentId: null, description: '' },
+  { id: 2, name: '하의', slug: 'bottom', parentId: null, description: '' },
+  { id: 3, name: '아우터', slug: 'outer', parentId: null, description: '' },
 ];
 
-describe('HeroBannerSlider', () => {
+describe('HeroBannerBlock (slider)', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders first slide title', () => {
-    render(<HeroBannerSlider slides={sampleSlides} />);
-    expect(screen.getByText('슬라이드 1')).toBeInTheDocument();
+  it('renders default slides when no slides provided', () => {
+    const content: HeroBannerContent = {
+      title: '', image_url: '', template: 'slider',
+    };
+    render(<HeroBannerBlock content={content} />);
+    expect(screen.getByText('의흥 장인의 손끝에서')).toBeInTheDocument();
   });
 
-  it('renders all slide titles', () => {
-    render(<HeroBannerSlider slides={sampleSlides} />);
+  it('renders custom slides', () => {
+    const content: HeroBannerContent = {
+      title: '', image_url: '', template: 'slider',
+      slides: [
+        { title: '슬라이드 1', subtitle: '부제목 1', cta_text: '보기', cta_url: '/products' },
+        { title: '슬라이드 2' },
+        { title: '슬라이드 3' },
+      ],
+    };
+    render(<HeroBannerBlock content={content} />);
     expect(screen.getByText('슬라이드 1')).toBeInTheDocument();
     expect(screen.getByText('슬라이드 2')).toBeInTheDocument();
     expect(screen.getByText('슬라이드 3')).toBeInTheDocument();
   });
 
   it('renders prev/next buttons', () => {
-    render(<HeroBannerSlider slides={sampleSlides} />);
+    const content: HeroBannerContent = {
+      title: '', image_url: '', template: 'slider',
+    };
+    render(<HeroBannerBlock content={content} />);
     expect(screen.getByLabelText('이전 배너')).toBeInTheDocument();
     expect(screen.getByLabelText('다음 배너')).toBeInTheDocument();
   });
 
-  it('renders nothing when slides is empty', () => {
-    const { container } = render(<HeroBannerSlider slides={[]} />);
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('renders CTA link when ctaLabel and ctaUrl provided', () => {
-    render(<HeroBannerSlider slides={sampleSlides} />);
-    const link = screen.getAllByRole('link', { name: '보기' })[0];
+  it('renders CTA link when provided', () => {
+    const content: HeroBannerContent = {
+      title: '', image_url: '', template: 'slider',
+      slides: [
+        { title: '슬라이드', cta_text: '보기', cta_url: '/products' },
+      ],
+    };
+    render(<HeroBannerBlock content={content} />);
+    const link = screen.getByRole('link', { name: '보기' });
     expect(link).toHaveAttribute('href', '/products');
   });
 });
 
-describe('FeaturedProducts', () => {
+describe('ProductGridBlock', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders product cards', () => {
-    render(
-      <FeaturedProducts title="추천 상품" products={sampleProducts} moreHref="/products?isFeatured=true" />,
-    );
+  it('renders prefetched product cards', () => {
+    const content: ProductGridContent = {
+      title: '추천 상품', template: '4col', limit: 8,
+      more_href: '/products?isFeatured=true',
+      prefetched_products: sampleProducts,
+    };
+    render(<ProductGridBlock content={content} />);
     expect(screen.getByText('테스트 상품 1')).toBeInTheDocument();
     expect(screen.getByText('테스트 상품 2')).toBeInTheDocument();
   });
 
-  it('renders skeleton cards when loading', () => {
-    const { container } = render(
-      <FeaturedProducts title="추천 상품" products={[]} moreHref="/products" isLoading />,
-    );
-    const skeletons = container.querySelectorAll('.animate-pulse');
-    expect(skeletons.length).toBeGreaterThan(0);
-  });
-
-  it('renders nothing when products empty and not loading', () => {
-    const { container } = render(
-      <FeaturedProducts title="추천 상품" products={[]} moreHref="/products" />,
-    );
-    expect(container.firstChild).toBeNull();
-  });
-
   it('renders "더 보기" link', () => {
-    render(
-      <FeaturedProducts title="추천 상품" products={sampleProducts} moreHref="/products?isFeatured=true" />,
-    );
+    const content: ProductGridContent = {
+      title: '추천 상품', template: '4col', limit: 8,
+      more_href: '/products?isFeatured=true',
+      prefetched_products: sampleProducts,
+    };
+    render(<ProductGridBlock content={content} />);
     const link = screen.getByRole('link', { name: /더 보기/ });
     expect(link).toHaveAttribute('href', '/products?isFeatured=true');
   });
+
+  it('renders nothing when no products and not loading', () => {
+    const content: ProductGridContent = {
+      title: '추천 상품', template: '4col', limit: 8,
+      prefetched_products: [],
+    };
+    const { container } = render(<ProductGridBlock content={content} />);
+    expect(container.firstChild).toBeNull();
+  });
 });
 
-describe('CategoryNav', () => {
+describe('CategoryNavBlock', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders category links', () => {
-    render(<CategoryNav categories={sampleCategories} />);
+  it('renders prefetched category links', () => {
+    const content: CategoryNavContent = {
+      category_ids: [], template: 'text',
+      prefetched_categories: sampleCategories,
+    };
+    render(<CategoryNavBlock content={content} />);
     expect(screen.getByText('상의')).toBeInTheDocument();
     expect(screen.getByText('하의')).toBeInTheDocument();
     expect(screen.getByText('아우터')).toBeInTheDocument();
   });
 
   it('category link points to correct href', () => {
-    render(<CategoryNav categories={sampleCategories} />);
+    const content: CategoryNavContent = {
+      category_ids: [], template: 'text',
+      prefetched_categories: sampleCategories,
+    };
+    render(<CategoryNavBlock content={content} />);
     const topLink = screen.getByRole('link', { name: /상의/ });
     expect(topLink).toHaveAttribute('href', '/products?categoryId=1');
   });
 
-  it('renders nothing when categories empty', () => {
-    const { container } = render(<CategoryNav categories={[]} />);
+  it('renders nothing when categories empty and not loading', () => {
+    const content: CategoryNavContent = {
+      category_ids: [], template: 'text',
+      prefetched_categories: [],
+    };
+    const { container } = render(<CategoryNavBlock content={content} />);
     expect(container.firstChild).toBeNull();
-  });
-
-  it('renders skeleton when loading', () => {
-    const { container } = render(<CategoryNav categories={[]} isLoading />);
-    const skeletons = container.querySelectorAll('.animate-pulse');
-    expect(skeletons.length).toBeGreaterThan(0);
   });
 });

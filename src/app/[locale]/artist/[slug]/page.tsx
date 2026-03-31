@@ -58,7 +58,7 @@ export default async function ArtistDetailPage({ params }: ArtistDetailProps) {
 
           <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-6">
             <div>
-              <dt className="text-xs text-muted-foreground">대표 니로</dt>
+              <dt className="text-xs text-muted-foreground">대표 니료</dt>
               <dd className="mt-0.5 text-sm font-medium text-foreground">{artist.clay}</dd>
             </div>
             <div>
