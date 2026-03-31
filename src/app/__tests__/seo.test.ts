@@ -145,7 +145,7 @@ describe('SEO', () => {
         options: [],
       });
 
-      const { generateMetadata } = await import('@/app/products/[id]/page');
+      const { generateMetadata } = await import('@/app/[locale]/products/[id]/page');
       const metadata = await generateMetadata({ params: Promise.resolve({ id: '1' }) });
 
       expect(metadata.title).toBe('Test Product');
@@ -158,7 +158,7 @@ describe('SEO', () => {
     it('returns fallback when product not found', async () => {
       mockFetchProduct.mockResolvedValue(null);
 
-      const { generateMetadata } = await import('@/app/products/[id]/page');
+      const { generateMetadata } = await import('@/app/[locale]/products/[id]/page');
       const metadata = await generateMetadata({ params: Promise.resolve({ id: '999' }) });
 
       expect(metadata.title).toBe('상품을 찾을 수 없습니다');
