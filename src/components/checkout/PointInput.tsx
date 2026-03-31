@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { couponsApi } from '@/lib/api';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
 
 interface PointInputProps {
@@ -45,7 +45,7 @@ export default function PointInput({ onPointsChange }: PointInputProps) {
           적립금 사용
         </label>
         <span className="text-xs text-muted-foreground">
-          보유 적립금: <strong>{formatPrice(balance)}원</strong>
+          보유 적립금: <strong>{formatCurrency(balance)}원</strong>
         </span>
       </div>
       <div className="flex gap-2">

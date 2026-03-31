@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 
 function OrderCompleteContent() {
   const router = useRouter();
@@ -85,7 +85,7 @@ function OrderCompleteContent() {
                 <p className="text-muted-foreground">수량 {item.quantity}개</p>
               </div>
               <p className="font-medium shrink-0">
-                {formatPrice(item.price * item.quantity)}
+                {formatCurrency(item.price * item.quantity)}
               </p>
             </li>
           ))}
@@ -94,19 +94,19 @@ function OrderCompleteContent() {
         <div className="border-t pt-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">배송비</span>
-            <span>{order.shippingFee === 0 ? '무료' : formatPrice(order.shippingFee)}</span>
+            <span>{order.shippingFee === 0 ? '무료' : formatCurrency(order.shippingFee)}</span>
           </div>
           {order.discountAmount > 0 && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">할인</span>
-              <span className="text-destructive">-{formatPrice(order.discountAmount)}</span>
+              <span className="text-destructive">-{formatCurrency(order.discountAmount)}</span>
             </div>
           )}
         </div>
 
         <div className="border-t pt-4 flex justify-between font-bold">
           <span>결제 금액</span>
-          <span>{formatPrice(order.totalAmount)}</span>
+          <span>{formatCurrency(order.totalAmount)}</span>
         </div>
       </section>
 
