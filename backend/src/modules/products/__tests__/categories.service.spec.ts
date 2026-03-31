@@ -23,6 +23,7 @@ const makeCategory = (overrides: Partial<Category> = {}): Category => ({
   sortOrder: 0,
   isActive: true,
   imageUrl: null,
+  description: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   parent: null,
