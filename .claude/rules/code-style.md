@@ -25,6 +25,8 @@ globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 - Cursor-based pagination for lists
 - Redis caching for hot data
 - N+1 prevention with TypeORM relations
+- Error response format: consistent structure `{ statusCode, message, error }` across all services — shipping included
+- ValidationPipe error messages: must be Korean — configure exceptionFactory to translate class-validator messages
 
 ## Backend Decorator Order
 컨트롤러 메서드 데코레이터 순서: Route → Modifier → Status → Guard → Param

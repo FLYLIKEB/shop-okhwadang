@@ -36,11 +36,11 @@ export class ShippingService {
 
   async getByOrderId(orderId: number, userId: number) {
     const order = await this.orderRepository.findOne({ where: { id: orderId } });
-    if (!order) throw new NotFoundException({ code: 'SHIPPING_NOT_FOUND' });
-    if (Number(order.userId) !== Number(userId)) throw new ForbiddenException({ code: 'FORBIDDEN' });
+    if (!order) throw new NotFoundException('배송 정보를 찾을 수 없습니다.');
+    if (Number(order.userId) !== Number(userId)) throw new ForbiddenException('접근 권한이 없습니다.');
 
     const shipping = await this.shippingRepository.findOne({ where: { orderId } });
-    if (!shipping) throw new NotFoundException({ code: 'SHIPPING_NOT_FOUND' });
+    if (!shipping) throw new NotFoundException('배송 정보를 찾을 수 없습니다.');
 
     let tracking: TrackingResult | null = null;
     if (shipping.trackingNumber) {
@@ -76,16 +76,16 @@ export class ShippingService {
         steps: result.steps,
       };
     } catch {
-      throw new BadRequestException({ code: 'CARRIER_API_ERROR' });
+      throw new BadRequestException('배송 추적 중 오류가 발생했습니다.');
     }
   }
 
   async registerTracking(orderId: number, dto: RegisterTrackingDto) {
     const order = await this.orderRepository.findOne({ where: { id: orderId } });
-    if (!order) throw new NotFoundException({ code: 'ORDER_NOT_FOUND' });
+    if (!order) throw new NotFoundException('주문 정보를 찾을 수 없습니다.');
 
     const shipping = await this.shippingRepository.findOne({ where: { orderId } });
-    if (!shipping) throw new NotFoundException({ code: 'SHIPPING_NOT_FOUND' });
+    if (!shipping) throw new NotFoundException('배송 정보를 찾을 수 없습니다.');
 
     this.validateTransition(shipping.status, ShippingStatus.PREPARING);
 
@@ -105,7 +105,7 @@ export class ShippingService {
   validateTransition(current: ShippingStatus, next: ShippingStatus): void {
     const allowed = ALLOWED_TRANSITIONS[current] ?? [];
     if (!allowed.includes(next)) {
-      throw new BadRequestException({ code: 'INVALID_STATUS_TRANSITION' });
+      throw new BadRequestException('유효하지 않은 배송 상태 변경입니다.');
     }
   }
 }
