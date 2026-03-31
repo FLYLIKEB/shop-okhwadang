@@ -123,7 +123,11 @@ h3 {
   color: #ffffff;
 }
 
-/* ── 영문 디스플레이 타이틀 ─────────────────────────────────────── */
+/* ── 디스플레이 타이틀 ──────────────────────────────────────────── */
+.font-display-ko {
+  font-family: var(--font-display-ko);
+}
+
 .font-display-en {
   font-family: var(--font-display-en);
 }

@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import type { ProductListResponse, ProductSort, Category, ProductDetail, Page } from '@/lib/api';
+import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, CollectionsResponse, ArchivesResponse } from '@/lib/api';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
@@ -67,4 +67,12 @@ export async function fetchPage(slug: string): Promise<Page | null> {
   } catch {
     return null;
   }
+}
+
+export function fetchCollections() {
+  return fetchFromBackend<CollectionsResponse>('/collections');
+}
+
+export function fetchArchives() {
+  return fetchFromBackend<ArchivesResponse>('/archives');
 }

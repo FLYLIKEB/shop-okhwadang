@@ -1,20 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { cn } from '@/components/ui/utils'
 import ReviewsTab from '@/components/reviews/ReviewsTab'
+import type { ProductImage } from '@/lib/api'
 
 interface ProductTabsProps {
   description: string | null
+  descriptionImages: ProductImage[]
   productId?: number
 }
 
 const TABS = ['상세정보', '리뷰', '문의'] as const
 type Tab = (typeof TABS)[number]
 
-export default function ProductTabs({ description, productId }: ProductTabsProps) {
+export default function ProductTabs({ description, descriptionImages, productId }: ProductTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('상세정보')
   const [sanitized, setSanitized] = useState('')
+
   useEffect(() => {
     import('dompurify').then((mod) => {
       setSanitized(mod.default.sanitize(description ?? ''))
@@ -42,10 +46,32 @@ export default function ProductTabs({ description, productId }: ProductTabsProps
       </div>
       <div className="py-6">
         {activeTab === '상세정보' && (
-          <div
-            className="prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: sanitized }}
-          />
+          <div className="flex flex-col gap-6">
+            {descriptionImages.length > 0 && (
+              <div className="flex flex-col gap-0">
+                {descriptionImages.map((image, index) => (
+                  <div
+                    key={image.id}
+                    className="relative w-full overflow-hidden bg-muted"
+                    style={{ aspectRatio: '3/2' }}
+                  >
+                    <Image
+                      src={image.url}
+                      alt={image.alt ?? `상세정보 이미지 ${index + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 600px"
+                      className="object-cover"
+                      priority={index === 0}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div
+              className="prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: sanitized }}
+            />
+          </div>
         )}
         {activeTab === '리뷰' && productId && (
           <ReviewsTab productId={productId} />
