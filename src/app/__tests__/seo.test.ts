@@ -45,8 +45,10 @@ describe('SEO', () => {
       mockFetchProducts.mockResolvedValue({ items: [], total: 0, page: 1, limit: 1000 });
       const result = await sitemap();
       const urls = result.map((r) => r.url);
-      expect(urls).toContain('https://shop-okhwadang.com');
-      expect(urls).toContain('https://shop-okhwadang.com/products');
+      expect(urls).toContain('https://shop-okhwadang.com/ko');
+      expect(urls).toContain('https://shop-okhwadang.com/en');
+      expect(urls).toContain('https://shop-okhwadang.com/ko/products');
+      expect(urls).toContain('https://shop-okhwadang.com/en/products');
     });
 
     it('includes product routes', async () => {
@@ -60,14 +62,15 @@ describe('SEO', () => {
       });
       const result = await sitemap();
       const urls = result.map((r) => r.url);
-      expect(urls).toContain('https://shop-okhwadang.com/products/1');
+      expect(urls).toContain('https://shop-okhwadang.com/ko/products/1');
+      expect(urls).toContain('https://shop-okhwadang.com/en/products/1');
     });
 
     it('returns only static routes when fetchProducts fails', async () => {
       mockFetchProducts.mockRejectedValue(new Error('Network error'));
       const result = await sitemap();
       const urls = result.map((r) => r.url);
-      expect(urls).toContain('https://shop-okhwadang.com');
+      expect(urls).toContain('https://shop-okhwadang.com/ko');
       expect(urls).not.toContain(expect.stringContaining('/products/'));
     });
   });
@@ -145,20 +148,20 @@ describe('SEO', () => {
         options: [],
       });
 
-      const { generateMetadata } = await import('@/app/products/[id]/page');
-      const metadata = await generateMetadata({ params: Promise.resolve({ id: '1' }) });
+      const { generateMetadata } = await import('@/app/[locale]/products/[id]/page');
+      const metadata = await generateMetadata({ params: Promise.resolve({ id: '1', locale: 'ko' }) });
 
       expect(metadata.title).toBe('Test Product');
       expect(metadata.description).toBe('Short desc');
       expect(metadata.openGraph).toBeDefined();
       expect(metadata.twitter).toBeDefined();
-      expect(metadata.alternates?.canonical).toBe('/products/1');
+      expect(metadata.alternates?.canonical).toBe('https://shop-okhwadang.com/ko/products/1');
     });
 
     it('returns fallback when product not found', async () => {
       mockFetchProduct.mockResolvedValue(null);
 
-      const { generateMetadata } = await import('@/app/products/[id]/page');
+      const { generateMetadata } = await import('@/app/[locale]/products/[id]/page');
       const metadata = await generateMetadata({ params: Promise.resolve({ id: '999' }) });
 
       expect(metadata.title).toBe('상품을 찾을 수 없습니다');

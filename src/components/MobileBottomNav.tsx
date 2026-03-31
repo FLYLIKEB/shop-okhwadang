@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, usePathname } from '@/i18n/navigation';
 import { Home, LayoutGrid, BookOpen, ShoppingCart, User } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { useCart } from '@/contexts/CartContext';

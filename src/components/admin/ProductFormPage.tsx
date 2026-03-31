@@ -21,6 +21,12 @@ interface ProductFormData {
   isFeatured: boolean;
   imageUrl: string;
   options: ProductOptionDraft[];
+  name_en: string;
+  name_ja: string;
+  name_zh: string;
+  description_en: string;
+  description_ja: string;
+  description_zh: string;
 }
 
 interface ProductFormPageProps {
@@ -56,6 +62,12 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       priceAdjustment: o.priceAdjustment,
       stock: o.stock,
     })) ?? [],
+    name_en: '',
+    name_ja: '',
+    name_zh: '',
+    description_en: '',
+    description_ja: '',
+    description_zh: '',
   });
 
   const set = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) =>
@@ -90,6 +102,12 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         sku: form.sku || undefined,
         status: form.status,
         isFeatured: form.isFeatured,
+        name_en: form.name_en.trim() || undefined,
+        name_ja: form.name_ja.trim() || undefined,
+        name_zh: form.name_zh.trim() || undefined,
+        description_en: form.description_en.trim() || undefined,
+        description_ja: form.description_ja.trim() || undefined,
+        description_zh: form.description_zh.trim() || undefined,
       };
 
       if (mode === 'create') {
@@ -169,6 +187,77 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
               onChange={(e) => set('description', e.target.value)}
               rows={5}
               placeholder="상품 상세 설명"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </section>
+
+        {/* 다국어 정보 */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold">다국어 정보</h2>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium">상품명 (영어)</label>
+              <input
+                type="text"
+                value={form.name_en}
+                onChange={(e) => set('name_en', e.target.value)}
+                placeholder="Product name in English"
+                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">상품명 (일본어)</label>
+              <input
+                type="text"
+                value={form.name_ja}
+                onChange={(e) => set('name_ja', e.target.value)}
+                placeholder="日本語の商品名"
+                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">상품명 (중국어)</label>
+              <input
+                type="text"
+                value={form.name_zh}
+                onChange={(e) => set('name_zh', e.target.value)}
+                placeholder="中文商品名称"
+                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">상세 설명 (영어)</label>
+            <textarea
+              value={form.description_en}
+              onChange={(e) => set('description_en', e.target.value)}
+              rows={3}
+              placeholder="Product description in English"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">상세 설명 (일본어)</label>
+            <textarea
+              value={form.description_ja}
+              onChange={(e) => set('description_ja', e.target.value)}
+              rows={3}
+              placeholder="日本語の商品説明"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">상세 설명 (중국어)</label>
+            <textarea
+              value={form.description_zh}
+              onChange={(e) => set('description_zh', e.target.value)}
+              rows={3}
+              placeholder="中文商品描述"
               className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>

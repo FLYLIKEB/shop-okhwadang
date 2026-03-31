@@ -1,12 +1,14 @@
-import { formatPrice, calcDiscount } from '@/utils/price';
+import { calcDiscount } from '@/utils/price';
+import { formatCurrency, type Locale } from '@/utils/currency';
 
 interface PriceDisplayProps {
   price: number;
   salePrice: number | null;
   size?: 'sm' | 'md' | 'lg';
+  locale?: Locale;
 }
 
-export default function PriceDisplay({ price, salePrice, size = 'sm' }: PriceDisplayProps) {
+export default function PriceDisplay({ price, salePrice, size = 'sm', locale = 'ko' }: PriceDisplayProps) {
   const discountClass = size === 'lg' ? 'text-xl font-bold' : 'text-sm font-bold';
   const priceClass = size === 'lg' ? 'text-2xl font-bold' : 'text-sm font-bold';
   const originalClass = size === 'lg' ? 'text-sm' : 'text-xs';
@@ -17,15 +19,15 @@ export default function PriceDisplay({ price, salePrice, size = 'sm' }: PriceDis
         <span className={`${discountClass} text-destructive`}>
           {calcDiscount(price, salePrice)}%
         </span>
-        <span className={`${priceClass} text-foreground`}>{formatPrice(salePrice)}</span>
+        <span className={`${priceClass} text-foreground`}>{formatCurrency(salePrice, locale)}</span>
         <span className={`${originalClass} text-muted-foreground line-through`}>
-          {formatPrice(price)}
+          {formatCurrency(price, locale)}
         </span>
       </div>
     );
   }
 
   return (
-    <span className={`${priceClass} text-foreground`}>{formatPrice(price)}</span>
+    <span className={`${priceClass} text-foreground`}>{formatCurrency(price, locale)}</span>
   );
 }

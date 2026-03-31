@@ -9,6 +9,7 @@ import ProductSkeleton from '@/components/products/ProductSkeleton';
 import { fetchProducts, fetchCategories } from '@/lib/api-server';
 import ProductErrorState from '@/components/products/ProductErrorState';
 import type { ProductSort } from '@/lib/api';
+import type { Locale } from '@/utils/currency';
 
 export const metadata: Metadata = {
   title: 'Products | 옥화당',
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 };
 
 interface ProductsPageProps {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{
     page?: string;
     sort?: string;
@@ -29,19 +31,21 @@ interface ProductsPageProps {
   }>;
 }
 
-export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  const params = await searchParams;
+export default async function ProductsPage({ params, searchParams }: ProductsPageProps) {
+  const { locale } = await params;
+  const safeLocale = (['ko', 'en', 'ja', 'zh'].includes(locale) ? locale : 'ko') as Locale;
+  const sp = await searchParams;
 
-  const page = Number(params.page) || 1;
+  const page = Number(sp.page) || 1;
   const VALID_SORTS: ProductSort[] = ['latest', 'price_asc', 'price_desc', 'popular'];
-  const sort: ProductSort = VALID_SORTS.includes(params.sort as ProductSort)
-    ? (params.sort as ProductSort)
+  const sort: ProductSort = VALID_SORTS.includes(sp.sort as ProductSort)
+    ? (sp.sort as ProductSort)
     : 'latest';
-  const categoryId = params.categoryId ? Number(params.categoryId) : undefined;
-  const q = params.q ?? undefined;
-  const priceMin = params.price_min ? Number(params.price_min) : undefined;
-  const priceMax = params.price_max ? Number(params.price_max) : undefined;
-  const isFeatured = params.isFeatured === 'true' ? true : undefined;
+  const categoryId = sp.categoryId ? Number(sp.categoryId) : undefined;
+  const q = sp.q ?? undefined;
+  const priceMin = sp.price_min ? Number(sp.price_min) : undefined;
+  const priceMax = sp.price_max ? Number(sp.price_max) : undefined;
+  const isFeatured = sp.isFeatured === 'true' ? true : undefined;
 
   let productsData: Awaited<ReturnType<typeof fetchProducts>> | null = null;
   let categories: Awaited<ReturnType<typeof fetchCategories>> = [];
@@ -49,7 +53,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   try {
     [productsData, categories] = await Promise.all([
-      fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured }),
+      fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured, locale: safeLocale }),
       fetchCategories(),
     ]);
   } catch {
@@ -98,7 +102,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           ) : (
             <>
               <Suspense fallback={<ProductSkeleton />}>
-                <ProductGrid products={productsData.items} total={productsData.total} />
+                <ProductGrid products={productsData.items} total={productsData.total} locale={safeLocale} />
               </Suspense>
 
               <div className="mt-8">

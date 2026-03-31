@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AdminLayout from '@/app/admin/layout';
+import AdminLayout from '@/app/[locale]/admin/layout';
 
 const mockReplace = vi.fn();
 

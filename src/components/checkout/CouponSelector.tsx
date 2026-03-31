@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { couponsApi } from '@/lib/api';
 import type { CouponItem, CalculateDiscountResponse } from '@/lib/api';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
 
 interface CouponSelectorProps {
@@ -74,8 +74,8 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
           <option key={c.id} value={c.id}>
             {c.name} (
             {c.type === 'percentage'
-              ? `${c.value}% 할인${c.maxDiscount ? ` / 최대 ${formatPrice(c.maxDiscount)}원` : ''}`
-              : `${formatPrice(c.value)}원 할인`}
+              ? `${c.value}% 할인${c.maxDiscount ? ` / 최대 ${formatCurrency(c.maxDiscount)}원` : ''}`
+              : `${formatCurrency(c.value)}원 할인`}
             )
           </option>
         ))}
@@ -83,7 +83,7 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
 
       {selected && (
         <p className="text-xs text-muted-foreground">
-          최소 주문금액: {formatPrice(selected.minOrderAmount)}원 &middot; 만료:{' '}
+          최소 주문금액: {formatCurrency(selected.minOrderAmount)}원 &middot; 만료:{' '}
           {new Date(selected.expiresAt).toLocaleDateString('ko-KR')}
         </p>
       )}

@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNumber, IsEnum, IsBoolean, Min, Max, MaxLength } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsEnum, IsBoolean, Min, Max, MaxLength, IsIn } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export enum ProductSort {
@@ -56,4 +56,9 @@ export class QueryProductsDto {
   @IsNumber()
   @Min(0)
   price_max?: number;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['ko', 'en', 'ja', 'zh'])
+  locale?: string;
 }

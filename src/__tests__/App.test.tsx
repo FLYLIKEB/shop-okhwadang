@@ -2,11 +2,23 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Home from '@/app/(routes)/page';
+import Home from '@/app/[locale]/(routes)/page';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/',
+}));
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
+  ),
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/',
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => 'ko',
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({

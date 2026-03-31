@@ -40,6 +40,24 @@ export class ProductsService {
     return `products:list:${hash}`;
   }
 
+  private applyLocale(product: Product, locale?: string): Product {
+    if (!locale || locale === 'ko') return product;
+    const localeMap: Record<string, 'En' | 'Ja' | 'Zh'> = { en: 'En', ja: 'Ja', zh: 'Zh' };
+    const suffix = localeMap[locale];
+    if (!suffix) return product;
+
+    const nameKey = `name${suffix}` as keyof Product;
+    const descKey = `description${suffix}` as keyof Product;
+    const shortDescKey = `shortDescription${suffix}` as keyof Product;
+
+    return {
+      ...product,
+      name: (product[nameKey] as string | null) ?? product.name,
+      description: (product[descKey] as string | null) ?? product.description,
+      shortDescription: (product[shortDescKey] as string | null) ?? product.shortDescription,
+    };
+  }
+
   async findAll(
     query: QueryProductsDto,
     isAdmin = false,
@@ -58,6 +76,7 @@ export class ProductsService {
       isFeatured,
       price_min,
       price_max,
+      locale,
     } = query;
 
     if (price_min !== undefined && price_max !== undefined && price_min > price_max) {
@@ -125,7 +144,7 @@ export class ProductsService {
 
     try {
       const [items, total] = await qb.getManyAndCount();
-      const result = { items, total, page, limit };
+      const result = { items: items.map((p) => this.applyLocale(p, locale)), total, page, limit };
       await this.cacheService.set(cacheKey, result, CACHE_TTL_LIST);
       return result;
     } catch (err) {
@@ -170,7 +189,7 @@ export class ProductsService {
         likeQb.skip((page - 1) * limit).take(limit);
 
         const [items, total] = await likeQb.getManyAndCount();
-        const result = { items, total, page, limit };
+        const result = { items: items.map((p) => this.applyLocale(p, locale)), total, page, limit };
         await this.cacheService.set(cacheKey, result, CACHE_TTL_LIST);
         return result;
       }
@@ -178,7 +197,7 @@ export class ProductsService {
     }
   }
 
-  async findOne(id: number, isAdmin = false): Promise<Product> {
+  async findOne(id: number, isAdmin = false, locale?: string): Promise<Product> {
     const cacheKey = `products:detail:${id}`;
     const cached = await this.cacheService.get<Product>(cacheKey);
     if (cached) {
@@ -188,7 +207,7 @@ export class ProductsService {
       ) {
         throw new NotFoundException('상품을 찾을 수 없습니다.');
       }
-      return cached;
+      return this.applyLocale(cached, locale);
     }
 
     const product = await this.productRepository
@@ -220,7 +239,7 @@ export class ProductsService {
         this.logger.warn(`view_count increment failed: ${err.message}`),
       );
 
-    return product;
+    return this.applyLocale(product, locale);
   }
 
   private async findById(id: number): Promise<Product> {

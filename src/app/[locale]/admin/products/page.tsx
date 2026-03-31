@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { adminProductsApi } from '@/lib/api';
 import type { Product } from '@/lib/api';
-import { formatPrice } from '@/utils/price';
+import { formatCurrency } from '@/utils/currency';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '임시저장',
@@ -130,7 +130,7 @@ export default function AdminProductsPage() {
                 <tr key={p.id} className="hover:bg-secondary/30">
                   <td className="px-4 py-3 text-muted-foreground">{p.id}</td>
                   <td className="px-4 py-3 font-medium">{p.name}</td>
-                  <td className="px-4 py-3">{formatPrice(p.price)}</td>
+                  <td className="px-4 py-3">{formatCurrency(p.price)}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
