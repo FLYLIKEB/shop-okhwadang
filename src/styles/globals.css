@@ -169,3 +169,29 @@ h3 {
     display: none;
   }
 }
+
+/* ── Skeleton shimmer ───────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@theme inline {
+  /* 스켈레톤 전역 설정 */
+  --skeleton-color: var(--color-muted);
+  --skeleton-highlight: color-mix(in srgb, var(--color-muted) 70%, white);
+  --skeleton-duration: 1.4s;
+  --skeleton-timing: ease-in-out;
+}
+
+/* skeleton-shimmer utility — gradient uses theme tokens */
+@utility animate-skeleton-shimmer {
+  animation: skeleton-shimmer var(--skeleton-duration) var(--skeleton-timing) infinite;
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-color) 0%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-color) 100%
+  );
+  background-size: 200% 100%;
+}
