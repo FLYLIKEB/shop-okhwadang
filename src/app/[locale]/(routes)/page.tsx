@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
-import { homeApi, categoriesApi } from '@/lib/api';
-import { fetchPage } from '@/lib/api-server';
+import { fetchPage, fetchCategories, fetchProducts } from '@/lib/api-server';
 import type { Product, Category, PageBlock } from '@/lib/api';
 
 export const revalidate = 60;
@@ -29,9 +28,9 @@ async function fetchHomeData(): Promise<{
   };
 
   const [featuredResult, popularResult, categoriesResult] = await Promise.allSettled([
-    withTimeout(homeApi.getFeaturedProducts()),
-    withTimeout(homeApi.getPopularProducts()),
-    withTimeout(categoriesApi.getTree()),
+    withTimeout(fetchProducts({ isFeatured: true, limit: 8 })),
+    withTimeout(fetchProducts({ sort: 'popular', limit: 8 })),
+    withTimeout(fetchCategories()),
   ]);
 
   return {

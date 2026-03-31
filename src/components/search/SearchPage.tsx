@@ -7,6 +7,7 @@ import { cn } from '@/components/ui/utils';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/EmptyState';
 import ProductCard from '@/components/products/ProductCard';
+import { SkeletonBox } from '@/components/ui/Skeleton';
 import { productsApi, type Product, type ProductSort } from '@/lib/api';
 
 const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
@@ -163,7 +164,7 @@ export default function SearchPage() {
       {isLoading ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="aspect-square animate-pulse rounded-lg bg-muted" />
+            <SkeletonBox key={i} height="aspect-square" />
           ))}
         </div>
       ) : products.length === 0 ? (
