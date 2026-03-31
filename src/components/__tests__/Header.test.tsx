@@ -12,6 +12,14 @@ vi.mock('next/navigation', () => ({
   usePathname: () => mockPathname,
 }));
 
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
+  ),
+  useRouter: () => ({ push: mockPush, back: mockBack }),
+  usePathname: () => mockPathname,
+}));
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     isAuthenticated: false,

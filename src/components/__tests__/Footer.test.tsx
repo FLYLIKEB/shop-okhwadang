@@ -1,6 +1,14 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import Footer from '@/components/Footer';
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
+  ),
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/',
+}));
 
 describe('Footer', () => {
   it('renders 이용약관, 개인정보처리방침, 고객센터 links', () => {
