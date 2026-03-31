@@ -778,6 +778,8 @@ export interface PromotionBannerContent {
 
 export interface TextContentContent {
   html: string;
+  textAlign?: 'left' | 'center' | 'right';
+  template?: 'default' | 'highlight';
 }
 
 export interface SplitContentContent {

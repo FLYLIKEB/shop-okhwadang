@@ -87,7 +87,6 @@ export default function ProductCard({
           </div>
         )}
 
-        {/* 찜하기 버튼 — 데스크탑: hover 시 표시, 모바일: 항상 표시 */}
         <button
           type="button"
           aria-label={isWishlisted ? '찜하기 취소' : '찜하기'}
@@ -106,7 +105,6 @@ export default function ProductCard({
           />
         </button>
 
-        {/* 장바구니 버튼 — 데스크탑: hover 시 slide-up, 모바일: 항상 표시 */}
         {!isSoldout && (
           <button
             type="button"

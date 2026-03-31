@@ -8,12 +8,11 @@ interface Props {
 }
 
 export default function TextContentBlock({ content }: Props) {
-  const { html } = content;
-  const ref = useRef<HTMLElement>(null);
+  const { html, textAlign = 'center' } = content;
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!ref.current) return;
-    // DOMPurify is browser-only — dynamic import avoids SSR/jsdom conflicts
     import('dompurify').then(({ default: DOMPurify }) => {
       if (ref.current) {
         ref.current.innerHTML = DOMPurify.sanitize(html);
@@ -21,5 +20,11 @@ export default function TextContentBlock({ content }: Props) {
     });
   }, [html]);
 
-  return <section ref={ref} className="prose max-w-none" />;
+  return (
+    <section className="my-8">
+      <hr className="border-border" />
+      <div ref={ref} className="prose max-w-none py-6" style={{ textAlign }} />
+      <hr className="border-border" />
+    </section>
+  );
 }

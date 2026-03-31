@@ -228,10 +228,10 @@ function PreviewPromotionBanner({ content }: { content: Record<string, unknown> 
 
 function PreviewTextContent({ content }: { content: Record<string, unknown> }) {
   const html = content.html as string;
+  const textAlign = (content.textAlign as 'left' | 'center' | 'right') ?? 'center';
   if (!html) return <p className="text-sm text-muted-foreground">텍스트 블록 (내용 없음)</p>;
-  // Strip tags for safe plain-text preview; full HTML rendering requires DOMPurify (SSR-incompatible without dynamic import)
   const plainText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  return <p className="whitespace-pre-wrap text-sm">{plainText}</p>;
+  return <p className="whitespace-pre-wrap text-sm" style={{ textAlign }}>{plainText}</p>;
 }
 
 function PreviewBlock({ block }: { block: DraftBlock }) {
