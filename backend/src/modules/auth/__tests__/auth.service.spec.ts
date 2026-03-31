@@ -28,6 +28,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     role: UserRole.USER,
     isActive: true,
     refreshToken: null,
+    failedLoginAttempts: 0,
+    lockedUntil: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

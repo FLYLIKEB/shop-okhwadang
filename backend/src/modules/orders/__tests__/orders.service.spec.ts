@@ -7,6 +7,7 @@ import { OrdersService } from '../orders.service';
 import { Order, OrderStatus } from '../entities/order.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { CreateOrderDto } from '../dto/create-order.dto';
+import { PointHistory } from '../../coupons/entities/point-history.entity';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -30,6 +31,8 @@ const mockOrderRepository = {
   createQueryBuilder: jest.fn(),
 };
 
+const mockPointHistoryRepository = {};
+
 describe('OrdersService', () => {
   let service: OrdersService;
 
@@ -41,6 +44,7 @@ describe('OrdersService', () => {
       providers: [
         OrdersService,
         { provide: getRepositoryToken(Order), useValue: mockOrderRepository },
+        { provide: getRepositoryToken(PointHistory), useValue: mockPointHistoryRepository },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
