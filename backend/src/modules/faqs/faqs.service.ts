@@ -4,7 +4,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { Faq } from './entities/faq.entity';
 import { CreateFaqDto } from './dto/create-faq.dto';
 import { UpdateFaqDto } from './dto/update-faq.dto';
@@ -19,15 +19,32 @@ export class FaqsService {
     private readonly faqRepo: Repository<Faq>,
   ) {}
 
+  private applyLocale(faq: Faq, locale?: string): Faq {
+    if (!locale || locale === 'ko') return faq;
+    const localeMap: Record<string, 'En' | 'Ja' | 'Zh'> = { en: 'En', ja: 'Ja', zh: 'Zh' };
+    const suffix = localeMap[locale];
+    if (!suffix) return faq;
+
+    const questionKey = `question${suffix}` as keyof Faq;
+    const answerKey = `answer${suffix}` as keyof Faq;
+
+    return {
+      ...faq,
+      question: (faq[questionKey] as string | null) ?? faq.question,
+      answer: (faq[answerKey] as string | null) ?? faq.answer,
+    };
+  }
+
   async findAll(query: FaqQueryDto): Promise<Faq[]> {
-    const where: Partial<Faq> = { isPublished: true };
+    const where: FindOptionsWhere<Faq> = { isPublished: true };
     if (query.category) {
       where.category = query.category;
     }
-    return this.faqRepo.find({
+    const faqs = await this.faqRepo.find({
       where,
       order: { sortOrder: 'ASC', createdAt: 'ASC' },
     });
+    return faqs.map((f) => this.applyLocale(f, query.locale));
   }
 
   async create(dto: CreateFaqDto): Promise<Faq> {
