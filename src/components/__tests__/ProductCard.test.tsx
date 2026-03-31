@@ -17,8 +17,9 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+const mockRouterPush = vi.fn();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: mockRouterPush }),
 }));
 
 const mockAddItem = vi.fn();
@@ -61,6 +62,7 @@ describe('ProductCard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRouterPush.mockReset();
     mockUseAuth.mockReturnValue({
       isAuthenticated: false,
       isLoading: false,
@@ -132,12 +134,13 @@ describe('ProductCard', () => {
     });
   });
 
-  it('shows login error toast when unauthenticated user clicks wishlist', async () => {
+  it('redirects to login when unauthenticated user clicks wishlist', async () => {
     render(<ProductCard {...baseProps} />);
     fireEvent.click(screen.getByRole('button', { name: '찜하기' }));
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('로그인이 필요합니다.');
+      expect(mockRouterPush).toHaveBeenCalledWith('/login');
     });
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('calls wishlistApi.add and shows toast on wishlist click when authenticated', async () => {
@@ -152,7 +155,7 @@ describe('ProductCard', () => {
     fireEvent.click(screen.getByRole('button', { name: '찜하기' }));
     await waitFor(() => {
       expect(wishlistApi.add).toHaveBeenCalledWith(1);
-      expect(toast.success).toHaveBeenCalledWith('찜 목록에 추가했습니다.');
+      expect(toast.success).toHaveBeenCalledWith('위시리스트에 추가되었습니다.');
     });
   });
 });

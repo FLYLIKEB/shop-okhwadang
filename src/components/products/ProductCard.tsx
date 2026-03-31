@@ -7,10 +7,9 @@ import { Heart, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
-import { wishlistApi } from '@/lib/api';
 import PriceDisplay from '@/components/common/PriceDisplay';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useWishlistToggle } from '@/hooks/useWishlistToggle';
 import type { Locale } from '@/utils/currency';
 
 interface ProductCardProps {
@@ -37,11 +36,8 @@ export default function ProductCard({
   const isSoldout = status === 'soldout';
 
   const { addItem } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
 
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [wishlistId, setWishlistId] = useState<number | null>(null);
-  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [isCartLoading, setIsCartLoading] = useState(false);
 
   const handleAddToCart = useCallback(
@@ -59,38 +55,6 @@ export default function ProductCard({
       }
     },
     [id, isSoldout, isCartLoading, addItem],
-  );
-
-  const handleToggleWishlist = useCallback(
-    async (e: React.MouseEvent) => {
-      e.preventDefault();
-      if (isWishlistLoading) return;
-
-      if (!isAuthenticated) {
-        toast.error('로그인이 필요합니다.');
-        return;
-      }
-
-      setIsWishlistLoading(true);
-      try {
-        if (isWishlisted && wishlistId !== null) {
-          await wishlistApi.remove(wishlistId);
-          setIsWishlisted(false);
-          setWishlistId(null);
-          toast.success('찜 목록에서 제거했습니다.');
-        } else {
-          const res = await wishlistApi.add(id);
-          setIsWishlisted(true);
-          setWishlistId(res.id);
-          toast.success('찜 목록에 추가했습니다.');
-        }
-      } catch {
-        toast.error('찜하기 처리에 실패했습니다.');
-      } finally {
-        setIsWishlistLoading(false);
-      }
-    },
-    [id, isAuthenticated, isWishlisted, wishlistId, isWishlistLoading],
   );
 
   return (
