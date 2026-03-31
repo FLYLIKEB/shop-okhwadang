@@ -6,11 +6,13 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   ParseIntPipe,
 } from '@nestjs/common';
 import { NoticesService } from './notices.service';
 import { CreateNoticeDto } from './dto/create-notice.dto';
 import { UpdateNoticeDto } from './dto/update-notice.dto';
+import { NoticeQueryDto } from './dto/notice-query.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 
@@ -20,14 +22,14 @@ export class NoticesController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.noticesService.findAll();
+  findAll(@Query() query: NoticeQueryDto) {
+    return this.noticesService.findAll(query);
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.noticesService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Query() query: NoticeQueryDto) {
+    return this.noticesService.findOne(id, query.locale);
   }
 }
 
