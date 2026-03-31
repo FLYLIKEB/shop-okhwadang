@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
@@ -9,8 +10,36 @@ import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
 
+const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale;
+
+  const languages: Record<string, string> = {};
+  for (const loc of routing.locales) {
+    languages[loc] = `${SITE_URL}/${loc}`;
+  }
+  languages['x-default'] = `${SITE_URL}/${routing.defaultLocale}`;
+
+  return {
+    alternates: {
+      canonical: `${SITE_URL}/${safeLocale}`,
+      languages,
+    },
+    openGraph: {
+      locale: safeLocale,
+      alternateLocale: routing.locales.filter((loc) => loc !== safeLocale),
+    },
+  };
 }
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
