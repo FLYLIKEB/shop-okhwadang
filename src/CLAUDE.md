@@ -10,6 +10,7 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 - TypeScript strict — **`any` is forbidden**
 - shadcn/ui component patterns
 - **All mutations must show sonner/toast feedback** (success/failure)
+- OAuth callbacks: use shared OAuthCallbackHandler component — do not create per-provider page copies
 - `console.log` in committed code is forbidden
 - Tailwind arbitrary values (`h-[123px]`) forbidden — use theme tokens
 
