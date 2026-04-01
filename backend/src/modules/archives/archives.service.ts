@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NiloType, ProcessStep, Artist } from './entities/archive.entity';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { reorderEntities } from '../../common/utils/reorder.util';
 import {
   CreateNiloTypeDto,
   UpdateNiloTypeDto,
@@ -64,9 +65,7 @@ export class ArchivesService {
   }
 
   async reorderNiloTypes(items: { id: number; sortOrder: number }[]): Promise<void> {
-    for (const item of items) {
-      await this.niloTypeRepository.update({ id: item.id }, { sortOrder: item.sortOrder });
-    }
+    await reorderEntities(this.niloTypeRepository, items);
   }
 
   async findProcessStepById(id: number): Promise<ProcessStep> {
@@ -110,8 +109,6 @@ export class ArchivesService {
   }
 
   async reorderArtists(items: { id: number; sortOrder: number }[]): Promise<void> {
-    for (const item of items) {
-      await this.artistRepository.update({ id: item.id }, { sortOrder: item.sortOrder });
-    }
+    await reorderEntities(this.artistRepository, items);
   }
 }

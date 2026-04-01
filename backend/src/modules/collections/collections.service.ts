@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Collection, CollectionType } from './entities/collection.entity';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { reorderEntities } from '../../common/utils/reorder.util';
 import { CreateCollectionDto, UpdateCollectionDto } from './dto/collection.dto';
 
 @Injectable()
@@ -46,8 +47,6 @@ export class CollectionsService {
   }
 
   async reorder(items: { id: number; sortOrder: number }[]): Promise<void> {
-    for (const item of items) {
-      await this.collectionRepository.update({ id: item.id }, { sortOrder: item.sortOrder });
-    }
+    await reorderEntities(this.collectionRepository, items);
   }
 }
