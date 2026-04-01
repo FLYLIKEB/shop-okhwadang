@@ -9,6 +9,7 @@ import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigation } from '@/hooks/useNavigation';
+import { useSlidePanel } from '@/hooks/useSlidePanel';
 import { useScrollLogoContext } from '@/contexts/ScrollLogoContext';
 import type { NavigationItem } from '@/lib/api';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -77,83 +78,186 @@ interface MobileMenuProps {
   userName?: string;
   navItems: NavigationItem[];
   sidebarItems: NavigationItem[];
+  visible: boolean;
   onClose: () => void;
   onLogout: () => void;
 }
 
-function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, onClose, onLogout }: MobileMenuProps) {
+interface PanelState {
+  title: string;
+  items: NavigationItem[];
+}
+
+function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible, onClose, onLogout }: MobileMenuProps) {
   const menuItems = sidebarItems.length > 0 ? sidebarItems : navItems;
-  return (
-    <nav
-      id="mobile-menu"
-      aria-label="모바일 메뉴"
-      className="absolute w-full bg-background border-b shadow-sm"
-    >
-      <div className="mx-auto max-w-7xl px-4 py-4 flex flex-col gap-2">
-        {menuItems.map((item) => (
-          <div key={item.id}>
-            <Link
-              href={item.url}
-              onClick={onClose}
-              className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors block"
-            >
-              {item.label}
-            </Link>
-            {item.children.length > 0 && (
-              <div className="pl-4">
-                {item.children.map((child) => (
-                  <Link
-                    key={child.id}
-                    href={child.url}
-                    onClick={onClose}
-                    className="py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors block"
-                  >
-                    {child.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-        <Link
-          href="/cart"
-          onClick={onClose}
-          className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
-        >
-          <ShoppingCart className="h-4 w-4" />
-          장바구니
-        </Link>
-        {isAuthenticated ? (
-          <>
-            <Link
-              href="/my"
-              onClick={onClose}
-              className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {userName ?? '마이페이지'}
-            </Link>
+  const [panelStack, setPanelStack] = useState<PanelState[]>([]);
+  const [animDir, setAnimDir] = useState<'forward' | 'backward'>('forward');
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleItemClick = (item: NavigationItem) => {
+    if (item.children.length > 0) {
+      setAnimDir('forward');
+      setIsAnimating(true);
+      setPanelStack((prev) => [...prev, { title: item.label, items: item.children }]);
+      setTimeout(() => setIsAnimating(false), 300);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleBack = () => {
+    setAnimDir('backward');
+    setIsAnimating(true);
+    setPanelStack((prev) => prev.slice(0, -1));
+    setTimeout(() => setIsAnimating(false), 300);
+  };
+
+  const closeAndReset = () => {
+    setPanelStack([]);
+    onClose();
+  };
+
+  const renderPanel = (items: NavigationItem[], panelIndex: number) => {
+    const isBase = panelIndex === -1;
+    const translateX = isBase
+      ? 0
+      : animDir === 'forward'
+        ? panelIndex === panelStack.length - 1 ? 0 : '100%'
+        : panelIndex === panelStack.length - 1 ? 0 : '-100%';
+
+    return (
+      <div
+        className="absolute inset-0 bg-background transition-transform duration-300 ease-in-out flex flex-col"
+        style={{
+          transform: typeof translateX === 'number' ? `translateX(${translateX}%)` : translateX,
+        }}
+      >
+        {panelIndex === panelStack.length - 1 && (
+          <div className="flex items-center px-4 h-14 border-b border-border shrink-0">
             <button
               type="button"
-              onClick={() => { onClose(); onLogout(); }}
-              className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+              onClick={handleBack}
+              className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="뒤로"
             >
-              로그아웃
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 5l-5 5 5 5" />
+              </svg>
             </button>
-          </>
-        ) : (
-          <Link
-            href="/login"
-            onClick={onClose}
-            className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            로그인
-          </Link>
+            <span className="ml-3 text-sm font-medium">{panelStack[panelStack.length - 1]?.title}</span>
+          </div>
         )}
-        <div className="py-2">
-          <LanguageSelector />
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="flex flex-col gap-1">
+            {items.map((item) => (
+              <div key={item.id}>
+                {item.children.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => handleItemClick(item)}
+                    className="w-full py-3 text-left text-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
+                  >
+                    {item.label}
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
+                      <path d="M6 4l4 4-4 4" />
+                    </svg>
+                  </button>
+                ) : (
+                  <Link
+                    href={item.url}
+                    onClick={closeAndReset}
+                    className="block py-3 text-sm text-foreground hover:text-muted-foreground transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+        {panelIndex === panelStack.length - 1 && (
+          <div className="px-4 py-4 border-t border-border shrink-0">
+            <div className="flex flex-col gap-1">
+              {isAuthenticated ? (
+                <>
+                  <Link href="/my" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    {userName ?? '마이페이지'}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => { closeAndReset(); onLogout(); }}
+                    className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+                  >
+                    로그아웃
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    로그인
+                  </Link>
+                  <Link href="/signup" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    계정 만들기
+                  </Link>
+                </>
+              )}
+              <Link href="/contact" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                문의하기
+              </Link>
+              <Link href="/order-tracking" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                주문조회
+              </Link>
+            </div>
+            <div className="mt-4">
+              <LanguageSelector />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-40 lg:hidden">
+      {/* 오버레이 배경 */}
+      <div
+        className={cn(
+          'absolute inset-0 bg-black/40 transition-opacity duration-300',
+          visible ? 'opacity-100' : 'opacity-0',
+        )}
+        onClick={closeAndReset}
+        aria-hidden="true"
+      />
+      {/* 왼쪽 슬라이드 패널 */}
+      <div
+        className={cn(
+          'absolute left-0 top-0 h-full w-72 bg-background shadow-xl overflow-hidden transition-transform duration-300 ease-in-out',
+          visible ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
+        {/* 헤더 */}
+        <div className="flex items-center justify-between px-4 h-14 border-b border-border shrink-0">
+          {panelStack.length > 0 ? (
+            <button type="button" onClick={handleBack} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="뒤로">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 5l-5 5 5 5" /></svg>
+            </button>
+          ) : (
+            <button type="button" onClick={closeAndReset} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="닫기">
+              <X className="h-5 w-5" />
+            </button>
+          )}
+          <span className="text-sm font-medium">
+            {panelStack.length > 0 ? panelStack[panelStack.length - 1]?.title : '메뉴'}
+          </span>
+          <div className="w-9" />
+        </div>
+        {/* 패널 내용 */}
+        <div className="relative flex-1 h-[calc(100%-56px)] overflow-hidden">
+          {renderPanel(menuItems, -1)}
+          {panelStack.map((_, index) => renderPanel(panelStack[index].items, index))}
         </div>
       </div>
-    </nav>
+    </div>
   );
 }
 
@@ -253,6 +357,7 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollLogo = useScrollLogoContext();
+  const menuPanel = useSlidePanel(isMenuOpen);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -370,18 +475,20 @@ export default function Header() {
           </div>
         </div>
 
-        {/* 모바일 메뉴 */}
-        {isMenuOpen && (
-          <MobileMenu
-            isAuthenticated={isAuthenticated}
-            userName={user?.name}
-            navItems={navItems}
-            sidebarItems={sidebarItems}
-            onClose={() => setIsMenuOpen(false)}
-            onLogout={() => void logout()}
-          />
-        )}
       </header>
+
+      {/* 모바일 메뉴 오버레이 */}
+      {menuPanel.mounted && (
+        <MobileMenu
+          isAuthenticated={isAuthenticated}
+          userName={user?.name}
+          navItems={navItems}
+          sidebarItems={sidebarItems}
+          visible={menuPanel.visible}
+          onClose={() => setIsMenuOpen(false)}
+          onLogout={() => void logout()}
+        />
+      )}
 
       {/* 모바일 검색 오버레이 (헤더 바깥 — sticky 헤더 아래에 fixed로 위치) */}
       <MobileSearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
