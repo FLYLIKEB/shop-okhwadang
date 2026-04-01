@@ -4,13 +4,13 @@ import { DataSource } from 'typeorm';
 import { SettingsService } from './settings.service';
 import { SiteSetting } from './entities/site-setting.entity';
 import { CacheService } from '../cache/cache.service';
+import { BadRequestException } from '@nestjs/common';
 
 describe('SettingsService', () => {
   let service: SettingsService;
   let mockRepo: Record<string, jest.Mock>;
   let mockCache: Record<string, jest.Mock>;
   let mockDataSource: Record<string, jest.Mock>;
-  let mockQueryRunner: Record<string, unknown>;
 
   const mockSettings: Partial<SiteSetting>[] = [
     { id: 1, key: 'color_primary', value: '#2563eb', group: 'color', defaultValue: '#2563eb', sortOrder: 1 },
@@ -19,23 +19,6 @@ describe('SettingsService', () => {
   ];
 
   beforeEach(async () => {
-    mockQueryRunner = {
-      connect: jest.fn(),
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      rollbackTransaction: jest.fn(),
-      release: jest.fn(),
-      query: jest.fn(),
-      manager: {
-        createQueryBuilder: jest.fn().mockReturnValue({
-          update: jest.fn().mockReturnThis(),
-          set: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          execute: jest.fn().mockResolvedValue({ affected: 1 }),
-        }),
-      },
-    };
-
     mockRepo = {
       find: jest.fn().mockResolvedValue(mockSettings),
     };
@@ -48,7 +31,7 @@ describe('SettingsService', () => {
     };
 
     mockDataSource = {
-      createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      transaction: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -107,49 +90,63 @@ describe('SettingsService', () => {
 
   describe('bulkUpdate', () => {
     it('should update settings in a transaction and invalidate cache', async () => {
+      const mockManager = {
+        createQueryBuilder: jest.fn().mockReturnValue({
+          update: jest.fn().mockReturnThis(),
+          set: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          execute: jest.fn().mockResolvedValue({ affected: 1 }),
+        }),
+      };
+      mockDataSource.transaction.mockImplementation(async (cb: (m: unknown) => Promise<void>) => cb(mockManager));
+
       const items = [
         { key: 'color_primary', value: '#ff0000' },
         { key: 'color_background', value: '#000000' },
       ];
       await service.bulkUpdate(items);
-      expect(mockQueryRunner.connect).toHaveBeenCalled();
-      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(mockDataSource.transaction).toHaveBeenCalled();
       expect(mockCache.delPattern).toHaveBeenCalledWith('settings:*');
     });
 
-    it('should rollback on error', async () => {
-      (mockQueryRunner.manager as Record<string, jest.Mock>).createQueryBuilder.mockReturnValue({
-        update: jest.fn().mockReturnThis(),
-        set: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        execute: jest.fn().mockRejectedValue(new Error('DB error')),
-      });
+    it('should throw BadRequestException for invalid keys', async () => {
+      const mockManager = {
+        createQueryBuilder: jest.fn().mockReturnValue({
+          update: jest.fn().mockReturnThis(),
+          set: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          execute: jest.fn().mockResolvedValue({ affected: 0 }),
+        }),
+      };
+      mockDataSource.transaction.mockImplementation(async (cb: (m: unknown) => Promise<void>) => cb(mockManager));
+
+      await expect(service.bulkUpdate([{ key: 'invalid_key', value: 'y' }])).rejects.toThrow(BadRequestException);
+    });
+
+    it('should propagate DB errors', async () => {
+      mockDataSource.transaction.mockRejectedValue(new Error('DB error'));
       await expect(service.bulkUpdate([{ key: 'x', value: 'y' }])).rejects.toThrow('DB error');
-      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.release).toHaveBeenCalled();
     });
   });
 
   describe('resetToDefaults', () => {
     it('should reset all values and invalidate cache', async () => {
+      const mockManager = {
+        query: jest.fn(),
+      };
+      mockDataSource.transaction.mockImplementation(async (cb: (m: unknown) => Promise<void>) => cb(mockManager));
+
       await service.resetToDefaults();
-      expect(mockQueryRunner.connect).toHaveBeenCalled();
-      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.query).toHaveBeenCalledWith(
+      expect(mockDataSource.transaction).toHaveBeenCalled();
+      expect(mockManager.query).toHaveBeenCalledWith(
         'UPDATE site_settings SET value = default_value',
       );
-      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.release).toHaveBeenCalled();
       expect(mockCache.delPattern).toHaveBeenCalledWith('settings:*');
     });
 
-    it('should rollback on error', async () => {
-      (mockQueryRunner.query as jest.Mock).mockRejectedValue(new Error('DB error'));
+    it('should propagate DB errors', async () => {
+      mockDataSource.transaction.mockRejectedValue(new Error('DB error'));
       await expect(service.resetToDefaults()).rejects.toThrow('DB error');
-      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.release).toHaveBeenCalled();
     });
   });
 });

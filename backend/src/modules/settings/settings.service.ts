@@ -43,13 +43,10 @@ export class SettingsService {
   }
 
   async bulkUpdate(items: SettingItemDto[]): Promise<void> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
+    await this.dataSource.transaction(async (manager) => {
       const invalidKeys: string[] = [];
       for (const item of items) {
-        const result = await queryRunner.manager
+        const result = await manager
           .createQueryBuilder()
           .update(SiteSetting)
           .set({ value: item.value })
@@ -62,33 +59,18 @@ export class SettingsService {
       if (invalidKeys.length > 0) {
         throw new BadRequestException(`존재하지 않는 설정 키: ${invalidKeys.join(', ')}`);
       }
-      await queryRunner.commitTransaction();
       this.logger.log(`Settings bulk updated: ${items.length} items`);
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
-    }
+    });
     await this.cacheService.delPattern('settings:*');
   }
 
   async resetToDefaults(): Promise<void> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      await queryRunner.query(
+    await this.dataSource.transaction(async (manager) => {
+      await manager.query(
         `UPDATE site_settings SET value = default_value`,
       );
-      await queryRunner.commitTransaction();
       this.logger.log('Settings reset to defaults');
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
-    }
+    });
     await this.cacheService.delPattern('settings:*');
   }
 }
