@@ -25,7 +25,7 @@ async function fetchFromBackend<T>(
   const response = await fetch(url, { cache: 'no-store' });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+    const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
     throw new Error(error.message || `HTTP ${response.status}`);
   }
 
