@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { handleApiError } from '@/utils/error';
+import { formatCurrency } from '@/utils/currency';
 import {
   adminDashboardApi,
   type DashboardResponse,
@@ -256,7 +257,7 @@ export default function DashboardPage() {
                         </td>
                         <td className="px-3 py-2">{order.user_name}</td>
                         <td className="px-3 py-2 text-right">
-                          {order.total_amount.toLocaleString()}원
+                          {formatCurrency(order.total_amount)}
                         </td>
                         <td className="px-3 py-2">
                           <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
