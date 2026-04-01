@@ -118,6 +118,7 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
 
     return (
       <div
+        key={panelIndex}
         className="absolute inset-0 bg-background transition-transform duration-300 ease-in-out flex flex-col"
         style={{
           transform: typeof translateX === 'number' ? `translateX(${translateX}%)` : translateX,
