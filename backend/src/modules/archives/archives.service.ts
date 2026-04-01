@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NiloType, ProcessStep, Artist } from './entities/archive.entity';
+import { findOrThrow } from '../../common/utils/repository.util';
 import {
   CreateNiloTypeDto,
   UpdateNiloTypeDto,
@@ -43,11 +44,7 @@ export class ArchivesService {
   }
 
   async findNiloTypeById(id: number): Promise<NiloType> {
-    const niloType = await this.niloTypeRepository.findOne({ where: { id } });
-    if (!niloType) {
-      throw new NotFoundException('니로타입을 찾을 수 없습니다.');
-    }
-    return niloType;
+    return findOrThrow(this.niloTypeRepository, { id }, '니로타입을 찾을 수 없습니다.');
   }
 
   async createNiloType(dto: CreateNiloTypeDto): Promise<NiloType> {
@@ -73,11 +70,7 @@ export class ArchivesService {
   }
 
   async findProcessStepById(id: number): Promise<ProcessStep> {
-    const processStep = await this.processStepRepository.findOne({ where: { id } });
-    if (!processStep) {
-      throw new NotFoundException('공정 단계를 찾을 수 없습니다.');
-    }
-    return processStep;
+    return findOrThrow(this.processStepRepository, { id }, '공정 단계를 찾을 수 없습니다.');
   }
 
   async createProcessStep(dto: CreateProcessStepDto): Promise<ProcessStep> {
@@ -97,11 +90,7 @@ export class ArchivesService {
   }
 
   async findArtistById(id: number): Promise<Artist> {
-    const artist = await this.artistRepository.findOne({ where: { id } });
-    if (!artist) {
-      throw new NotFoundException('아티스트를 찾을 수 없습니다.');
-    }
-    return artist;
+    return findOrThrow(this.artistRepository, { id }, '아티스트를 찾을 수 없습니다.');
   }
 
   async createArtist(dto: CreateArtistDto): Promise<Artist> {

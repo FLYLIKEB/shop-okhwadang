@@ -12,6 +12,7 @@ import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartQuantityDto } from './dto/update-cart-quantity.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 export interface CartItemWithPrice {
   id: number;
@@ -150,10 +151,7 @@ export class CartService {
     userId: number,
     dto: UpdateCartQuantityDto,
   ): Promise<CartItem> {
-    const item = await this.cartItemRepository.findOne({ where: { id } });
-    if (!item) {
-      throw new NotFoundException('장바구니 항목을 찾을 수 없습니다.');
-    }
+    const item = await findOrThrow(this.cartItemRepository, { id }, '장바구니 항목을 찾을 수 없습니다.');
     if (Number(item.userId) !== Number(userId)) {
       throw new ForbiddenException('접근 권한이 없습니다.');
     }
@@ -163,10 +161,7 @@ export class CartService {
   }
 
   async remove(id: number, userId: number): Promise<{ message: string }> {
-    const item = await this.cartItemRepository.findOne({ where: { id } });
-    if (!item) {
-      throw new NotFoundException('장바구니 항목을 찾을 수 없습니다.');
-    }
+    const item = await findOrThrow(this.cartItemRepository, { id }, '장바구니 항목을 찾을 수 없습니다.');
     if (Number(item.userId) !== Number(userId)) {
       throw new ForbiddenException('접근 권한이 없습니다.');
     }
