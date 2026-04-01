@@ -7,6 +7,7 @@ import {
   Logger,
   OnModuleInit,
 } from '@nestjs/common';
+import { findOrThrow } from '../../common/utils/repository.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -144,10 +145,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async getProfile(userId: number): Promise<Omit<User, 'password' | 'refreshToken'>> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
-    }
+    const user = await findOrThrow(this.userRepository, { id: userId } as any, '사용자를 찾을 수 없습니다.');
     const { password, refreshToken, ...profile } = user;
     void password;
     void refreshToken;

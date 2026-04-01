@@ -12,6 +12,7 @@ import { PointHistory } from './entities/point-history.entity';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { CalculateDiscountDto } from './dto/calculate-discount.dto';
 import { IssueCouponDto } from './dto/issue-coupon.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 export interface CouponResponse {
   id: number;
@@ -226,10 +227,7 @@ export class CouponsService {
   }
 
   async issueCoupon(dto: IssueCouponDto): Promise<UserCoupon> {
-    const coupon = await this.couponRepo.findOne({ where: { id: dto.couponId } });
-    if (!coupon) {
-      throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
-    }
+    const coupon = await findOrThrow(this.couponRepo, { id: dto.couponId } as any, '쿠폰을 찾을 수 없습니다.');
     if (!coupon.isActive) {
       throw new BadRequestException('비활성화된 쿠폰입니다.');
     }
