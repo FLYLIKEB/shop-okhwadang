@@ -9,6 +9,8 @@ import { CreateNavigationItemDto } from './dto/create-navigation-item.dto';
 import { UpdateNavigationItemDto } from './dto/update-navigation-item.dto';
 import { ReorderNavigationDto } from './dto/reorder-navigation.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { reorderEntities } from '../../common/utils/reorder.util';
+import { buildTree } from '../../common/utils/tree.util';
 
 const MAX_DEPTH = 3;
 
@@ -66,37 +68,12 @@ export class NavigationService {
   }
 
   async reorder(dto: ReorderNavigationDto): Promise<void> {
-    for (const orderItem of dto.orders) {
-      await this.navigationRepository.update(
-        { id: orderItem.id },
-        { sort_order: orderItem.sort_order },
-      );
-    }
+    const items = dto.orders.map((o) => ({ id: o.id, sortOrder: o.sort_order }));
+    await reorderEntities(this.navigationRepository, items, 'sort_order');
   }
 
   private buildTree(items: NavigationItem[]): NavigationItem[] {
-    const map = new Map<number, NavigationItem>();
-    const roots: NavigationItem[] = [];
-
-    for (const item of items) {
-      map.set(Number(item.id), { ...item, children: [] });
-    }
-
-    for (const item of items) {
-      const node = map.get(Number(item.id))!;
-      if (item.parent_id === null) {
-        roots.push(node);
-      } else {
-        const parent = map.get(Number(item.parent_id));
-        if (parent) {
-          parent.children.push(node);
-        } else {
-          roots.push(node);
-        }
-      }
-    }
-
-    return roots;
+    return buildTree(items, 'id', 'parent_id');
   }
 
   private async validateDepth(parentId: number, currentItemId?: number): Promise<void> {

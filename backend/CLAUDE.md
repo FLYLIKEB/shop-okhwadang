@@ -104,6 +104,21 @@ Security pipeline: CORS → Rate Limiting → JWT Guard → ValidationPipe → C
   import { assertOwnership } from '../common/utils/ownership.util';
   assertOwnership(order.userId, userId);
   ```
+- **`applyLocale(entity, locale, fields[])`** — 다국어 필드 매핑. 서비스 내 private applyLocale에서 위임. 로케일 맵 하드코딩 금지.
+  ```typescript
+  import { applyLocale } from '../common/utils/locale.util';
+  return applyLocale(product, locale, ['name', 'description', 'shortDescription']);
+  ```
+- **`reorderEntities(repo, items, sortField?)`** — 정렬순서 일괄 업데이트 (Promise.all 병렬). 순차 for-of await 금지.
+  ```typescript
+  import { reorderEntities } from '../common/utils/reorder.util';
+  await reorderEntities(this.repo, items);
+  ```
+- **`buildTree(items, idKey?, parentKey?)`** — 플랫 목록을 parent-child 트리로 변환. 인라인 Map 기반 트리 빌드 금지.
+  ```typescript
+  import { buildTree } from '../common/utils/tree.util';
+  return buildTree(categories, 'id', 'parentId');
+  ```
 
 ## Key Directories
 
