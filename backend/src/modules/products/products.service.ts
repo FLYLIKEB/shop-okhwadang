@@ -244,7 +244,7 @@ export class ProductsService {
   }
 
   private async findById(id: number): Promise<Product> {
-    return findOrThrow(this.productRepository, { id } as any, '상품을 찾을 수 없습니다.');
+    return findOrThrow(this.productRepository, { id }, '상품을 찾을 수 없습니다.');
   }
 
   async create(dto: CreateProductDto): Promise<Product> {

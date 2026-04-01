@@ -88,7 +88,7 @@ export class AdminMembersService {
       throw new BadRequestException('자기 자신의 역할은 변경할 수 없습니다.');
     }
 
-    const target = await findOrThrow(this.userRepository, { id: targetId } as any, '회원을 찾을 수 없습니다.');
+    const target = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
 
     if (!target.isActive) {
       throw new BadRequestException('비활성 회원의 역할은 변경할 수 없습니다.');

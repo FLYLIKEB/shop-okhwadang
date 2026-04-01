@@ -61,13 +61,13 @@ export class FaqsService {
   }
 
   async update(id: number, dto: UpdateFaqDto): Promise<Faq> {
-    const faq = await findOrThrow(this.faqRepo, { id } as any, 'FAQ를 찾을 수 없습니다.');
+    const faq = await findOrThrow(this.faqRepo, { id }, 'FAQ를 찾을 수 없습니다.');
     Object.assign(faq, dto);
     return this.faqRepo.save(faq);
   }
 
   async remove(id: number): Promise<void> {
-    const faq = await findOrThrow(this.faqRepo, { id } as any, 'FAQ를 찾을 수 없습니다.');
+    const faq = await findOrThrow(this.faqRepo, { id }, 'FAQ를 찾을 수 없습니다.');
     await this.faqRepo.remove(faq);
     this.logger.log(`FAQ deleted: id=${id}`);
   }

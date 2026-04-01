@@ -26,7 +26,7 @@ export class CollectionsService {
   }
 
   async findById(id: number): Promise<Collection> {
-    return findOrThrow(this.collectionRepository, { id } as any, '컬렉션을 찾을 수 없습니다.');
+    return findOrThrow(this.collectionRepository, { id }, '컬렉션을 찾을 수 없습니다.');
   }
 
   async create(dto: CreateCollectionDto): Promise<Collection> {

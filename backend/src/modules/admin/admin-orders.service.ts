@@ -71,7 +71,7 @@ export class AdminOrdersService {
   }
 
   async updateStatus(orderId: number, nextStatus: OrderStatus) {
-    const order = await findOrThrow(this.orderRepository, { id: orderId } as any, '주문을 찾을 수 없습니다.');
+    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
 
     const currentStatus = order.status;
     const allowed = ALLOWED_ORDER_TRANSITIONS[currentStatus] ?? [];
@@ -111,7 +111,7 @@ export class AdminOrdersService {
   }
 
   async registerShipping(orderId: number, dto: RegisterShippingDto) {
-    const order = await findOrThrow(this.orderRepository, { id: orderId } as any, '주문을 찾을 수 없습니다.');
+    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
 
     const existing = await this.shippingRepository.findOne({ where: { orderId } });
     if (existing && existing.trackingNumber) {

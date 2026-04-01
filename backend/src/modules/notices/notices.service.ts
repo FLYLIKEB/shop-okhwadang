@@ -44,7 +44,7 @@ export class NoticesService {
   }
 
   async findOne(id: number, locale?: string): Promise<Notice> {
-    const notice = await findOrThrow(this.noticeRepo, { id } as any, '공지사항을 찾을 수 없습니다.');
+    const notice = await findOrThrow(this.noticeRepo, { id }, '공지사항을 찾을 수 없습니다.');
     await this.noticeRepo.update(id, { viewCount: () => 'view_count + 1' });
     notice.viewCount += 1;
     return this.applyLocale(notice, locale);
@@ -63,13 +63,13 @@ export class NoticesService {
   }
 
   async update(id: number, dto: UpdateNoticeDto): Promise<Notice> {
-    const notice = await findOrThrow(this.noticeRepo, { id } as any, '공지사항을 찾을 수 없습니다.');
+    const notice = await findOrThrow(this.noticeRepo, { id }, '공지사항을 찾을 수 없습니다.');
     Object.assign(notice, dto);
     return this.noticeRepo.save(notice);
   }
 
   async remove(id: number): Promise<void> {
-    const notice = await findOrThrow(this.noticeRepo, { id } as any, '공지사항을 찾을 수 없습니다.');
+    const notice = await findOrThrow(this.noticeRepo, { id }, '공지사항을 찾을 수 없습니다.');
     await this.noticeRepo.remove(notice);
     this.logger.log(`Notice deleted: id=${id}`);
   }

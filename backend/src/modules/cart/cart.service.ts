@@ -151,7 +151,7 @@ export class CartService {
     userId: number,
     dto: UpdateCartQuantityDto,
   ): Promise<CartItem> {
-    const item = await findOrThrow(this.cartItemRepository, { id } as any, '장바구니 항목을 찾을 수 없습니다.');
+    const item = await findOrThrow(this.cartItemRepository, { id }, '장바구니 항목을 찾을 수 없습니다.');
     if (Number(item.userId) !== Number(userId)) {
       throw new ForbiddenException('접근 권한이 없습니다.');
     }
@@ -161,7 +161,7 @@ export class CartService {
   }
 
   async remove(id: number, userId: number): Promise<{ message: string }> {
-    const item = await findOrThrow(this.cartItemRepository, { id } as any, '장바구니 항목을 찾을 수 없습니다.');
+    const item = await findOrThrow(this.cartItemRepository, { id }, '장바구니 항목을 찾을 수 없습니다.');
     if (Number(item.userId) !== Number(userId)) {
       throw new ForbiddenException('접근 권한이 없습니다.');
     }
