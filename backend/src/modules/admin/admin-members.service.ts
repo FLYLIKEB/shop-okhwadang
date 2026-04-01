@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
 import { AdminMembersQueryDto } from './dto/admin-members-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { paginate } from '../../common/utils/pagination.util';
 
 export interface SafeUser {
   id: number;
@@ -66,15 +67,11 @@ export class AdminMembersService {
       qb.andWhere('user.isActive = :isActive', { isActive: query.is_active });
     }
 
-    qb.skip((page - 1) * limit).take(limit);
-
-    const [users, total] = await qb.getManyAndCount();
+    const result = await paginate(qb, { page, limit });
 
     return {
-      items: users.map(toSafeUser),
-      total,
-      page,
-      limit,
+      ...result,
+      items: result.items.map(toSafeUser),
     };
   }
 
