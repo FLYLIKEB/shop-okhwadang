@@ -90,12 +90,19 @@ export interface ProductDetail extends Product {
   options: ProductOption[];
 }
 
-export interface ProductListResponse {
-  items: Product[];
+export interface PaginatedResponse<T> {
+  items: T[];
   total: number;
   page: number;
   limit: number;
 }
+
+export interface ListResponse<T> {
+  data: T[];
+  total: number;
+}
+
+export type ProductListResponse = PaginatedResponse<Product>;
 
 export type ProductSort = 'latest' | 'price_asc' | 'price_desc' | 'popular';
 
@@ -342,7 +349,7 @@ export const ordersApi = {
   getById: (id: number, options?: RequestOptions) =>
     apiClient.get<OrderResponse>(`/orders/${id}`, options),
   getList: (params?: { page?: number; limit?: number }, options?: RequestOptions) =>
-    apiClient.get<{ items: OrderResponse[]; total: number; page: number; limit: number }>('/orders', { ...options, params }),
+    apiClient.get<PaginatedResponse<OrderResponse>>('/orders', { ...options, params }),
 };
 
 export interface PreparePaymentResponse {
@@ -584,12 +591,7 @@ export interface AdminOrder {
   }[];
 }
 
-export interface AdminOrderListResponse {
-  items: AdminOrder[];
-  total: number;
-  page: number;
-  limit: number;
-}
+export type AdminOrderListResponse = PaginatedResponse<AdminOrder>;
 
 export interface AdminOrderQueryParams {
   status?: string;
@@ -630,12 +632,7 @@ export interface AdminMember {
   updatedAt: string;
 }
 
-export interface AdminMemberListResponse {
-  items: AdminMember[];
-  total: number;
-  page: number;
-  limit: number;
-}
+export type AdminMemberListResponse = PaginatedResponse<AdminMember>;
 
 export interface AdminMemberQueryParams {
   q?: string;
@@ -968,10 +965,7 @@ export interface WishlistItem {
   product?: WishlistProduct;
 }
 
-export interface WishlistListResponse {
-  data: WishlistItem[];
-  total: number;
-}
+export type WishlistListResponse = ListResponse<WishlistItem>;
 
 export interface WishlistCheckResponse {
   isWishlisted: boolean;
@@ -1077,10 +1071,7 @@ export interface Notice {
   updatedAt: string;
 }
 
-export interface NoticeListResponse {
-  data: Notice[];
-  total: number;
-}
+export type NoticeListResponse = ListResponse<Notice>;
 
 export const noticesApi = {
   getList: (locale?: string) =>
@@ -1105,10 +1096,7 @@ export interface Faq {
   createdAt: string;
 }
 
-export interface FaqListResponse {
-  data: Faq[];
-  total: number;
-}
+export type FaqListResponse = ListResponse<Faq>;
 
 export const faqsApi = {
   getList: (category?: string, locale?: string) => {
@@ -1132,10 +1120,7 @@ export interface Inquiry {
   createdAt: string;
 }
 
-export interface InquiryListResponse {
-  data: Inquiry[];
-  total: number;
-}
+export type InquiryListResponse = ListResponse<Inquiry>;
 
 export interface CreateInquiryBody {
   type: string;
@@ -1163,10 +1148,7 @@ export interface Promotion {
   createdAt: string;
 }
 
-export interface PromotionListResponse {
-  data: Promotion[];
-  total: number;
-}
+export type PromotionListResponse = ListResponse<Promotion>;
 
 export const promotionsApi = {
   getList: () => apiClient.get<Promotion[]>('/promotions'),
