@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/components/ui/utils';
 import FormInput from '@/components/ui/FormInput';
 import type { AdminCategory, CreateCategoryData } from '@/lib/api';
+import { useFormModal } from '@/hooks/useFormModal';
 
 interface CategoryFormModalProps {
   open: boolean;
@@ -22,6 +23,26 @@ function slugify(value: string): string {
     .replace(/^-|-$/g, '');
 }
 
+const CATEGORY_DEFAULTS: CreateCategoryData = {
+  name: '',
+  slug: '',
+  parentId: null,
+  sortOrder: 0,
+  isActive: true,
+  imageUrl: null,
+};
+
+function toFormData(initial: AdminCategory): CreateCategoryData {
+  return {
+    name: initial.name,
+    slug: initial.slug,
+    parentId: initial.parentId,
+    sortOrder: initial.sortOrder,
+    isActive: initial.isActive,
+    imageUrl: initial.imageUrl ?? null,
+  };
+}
+
 export default function CategoryFormModal({
   open,
   onClose,
@@ -29,77 +50,51 @@ export default function CategoryFormModal({
   categories,
   initial,
 }: CategoryFormModalProps) {
-  const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
-  const [parentId, setParentId] = useState<number | null>(null);
-  const [sortOrder, setSortOrder] = useState(0);
-  const [isActive, setIsActive] = useState(true);
-  const [imageUrl, setImageUrl] = useState('');
+  const initialFormData = initial ? toFormData(initial) : null;
+  const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateCategoryData>(
+    CATEGORY_DEFAULTS,
+    initialFormData,
+    open,
+  );
+
   const [slugTouched, setSlugTouched] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
-
-  const isEdit = !!initial;
 
   useEffect(() => {
     if (open) {
-      if (initial) {
-        setName(initial.name);
-        setSlug(initial.slug);
-        setParentId(initial.parentId);
-        setSortOrder(initial.sortOrder);
-        setIsActive(initial.isActive);
-        setImageUrl(initial.imageUrl ?? '');
-        setSlugTouched(true);
-      } else {
-        setName('');
-        setSlug('');
-        setParentId(null);
-        setSortOrder(0);
-        setIsActive(true);
-        setImageUrl('');
-        setSlugTouched(false);
-      }
+      setSlugTouched(!!initial);
       setErrors({});
-      setSubmitting(false);
     }
   }, [open, initial]);
 
   const handleNameChange = (value: string) => {
-    setName(value);
+    setForm({ ...form, name: value });
     if (!slugTouched) {
-      setSlug(slugify(value));
+      setForm((prev) => ({ ...prev, name: value, slug: slugify(value) }));
     }
   };
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!name.trim()) newErrors.name = '카테고리명을 입력하세요.';
-    if (!slug.trim()) newErrors.slug = 'slug를 입력하세요.';
-    else if (!/^[a-z0-9-]+$/.test(slug)) newErrors.slug = 'slug는 영문 소문자, 숫자, 하이픈만 허용됩니다.';
+    if (!form.name.trim()) newErrors.name = '카테고리명을 입력하세요.';
+    if (!form.slug.trim()) newErrors.slug = 'slug를 입력하세요.';
+    else if (!/^[a-z0-9-]+$/.test(form.slug)) newErrors.slug = 'slug는 영문 소문자, 숫자, 하이픈만 허용됩니다.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    setSubmitting(true);
-    try {
-      await onSubmit({
-        name: name.trim(),
-        slug: slug.trim(),
-        parentId: parentId,
-        sortOrder,
-        isActive,
-        imageUrl: imageUrl.trim() || null,
-      });
-      onClose();
-    } finally {
-      setSubmitting(false);
-    }
+  const handleFormSubmit = async (data: CreateCategoryData) => {
+    await onSubmit({
+      name: data.name.trim(),
+      slug: data.slug.trim(),
+      parentId: data.parentId,
+      sortOrder: data.sortOrder,
+      isActive: data.isActive,
+      imageUrl: data.imageUrl ? (data.imageUrl as string).trim() || null : null,
+    });
   };
+
+  const isEdit = !!initial;
 
   const rootCategories = categories.filter(
     (c) => c.parentId === null && (!initial || c.id !== initial.id),
@@ -119,12 +114,18 @@ export default function CategoryFormModal({
           {isEdit ? '카테고리 수정' : '카테고리 추가'}
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            if (!validate()) { e.preventDefault(); return; }
+            handleSubmit(e, handleFormSubmit, onClose);
+          }}
+          className="space-y-4"
+        >
           <FormInput
             id="category-name"
             label="카테고리명"
             required
-            value={name}
+            value={form.name}
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder="패션"
             error={errors.name}
@@ -134,9 +135,9 @@ export default function CategoryFormModal({
             id="category-slug"
             label="slug"
             required
-            value={slug}
+            value={form.slug}
             onChange={(e) => {
-              setSlug(e.target.value);
+              setForm({ ...form, slug: e.target.value });
               setSlugTouched(true);
             }}
             placeholder="fashion"
@@ -149,8 +150,8 @@ export default function CategoryFormModal({
             </label>
             <select
               id="category-parent"
-              value={parentId ?? ''}
-              onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : null)}
+              value={form.parentId ?? ''}
+              onChange={(e) => setForm({ ...form, parentId: e.target.value ? Number(e.target.value) : null })}
               className={cn(
                 'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none',
                 'focus:ring-2 focus:ring-foreground/20',
@@ -170,15 +171,15 @@ export default function CategoryFormModal({
             label="정렬 순서"
             type="number"
             min={0}
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value))}
+            value={form.sortOrder}
+            onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
           />
 
           <FormInput
             id="category-image-url"
             label="이미지 URL"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
+            value={form.imageUrl ?? ''}
+            onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
             placeholder="https://example.com/image.jpg"
           />
 
@@ -186,8 +187,8 @@ export default function CategoryFormModal({
             <input
               id="category-is-active"
               type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
+              checked={form.isActive}
+              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
               className="size-4"
             />
             <label htmlFor="category-is-active" className="text-sm">
@@ -199,7 +200,7 @@ export default function CategoryFormModal({
             <button
               type="button"
               onClick={onClose}
-              disabled={submitting}
+              disabled={loading}
               className={cn(
                 'rounded-md border px-4 py-2 text-sm',
                 'hover:bg-muted disabled:opacity-50',
@@ -209,13 +210,13 @@ export default function CategoryFormModal({
             </button>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={loading}
               className={cn(
                 'rounded-md bg-foreground px-4 py-2 text-sm text-background',
                 'hover:opacity-90 disabled:opacity-50',
               )}
             >
-              {submitting ? '저장 중...' : isEdit ? '수정' : '추가'}
+              {loading ? '저장 중...' : isEdit ? '수정' : '추가'}
             </button>
           </div>
         </form>
