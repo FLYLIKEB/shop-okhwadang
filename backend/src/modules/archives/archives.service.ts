@@ -44,7 +44,7 @@ export class ArchivesService {
   }
 
   async findNiloTypeById(id: number): Promise<NiloType> {
-    return findOrThrow(this.niloTypeRepository, { id } as any, '니로타입을 찾을 수 없습니다.');
+    return findOrThrow(this.niloTypeRepository, { id }, '니로타입을 찾을 수 없습니다.');
   }
 
   async createNiloType(dto: CreateNiloTypeDto): Promise<NiloType> {
@@ -70,7 +70,7 @@ export class ArchivesService {
   }
 
   async findProcessStepById(id: number): Promise<ProcessStep> {
-    return findOrThrow(this.processStepRepository, { id } as any, '공정 단계를 찾을 수 없습니다.');
+    return findOrThrow(this.processStepRepository, { id }, '공정 단계를 찾을 수 없습니다.');
   }
 
   async createProcessStep(dto: CreateProcessStepDto): Promise<ProcessStep> {
@@ -90,7 +90,7 @@ export class ArchivesService {
   }
 
   async findArtistById(id: number): Promise<Artist> {
-    return findOrThrow(this.artistRepository, { id } as any, '아티스트를 찾을 수 없습니다.');
+    return findOrThrow(this.artistRepository, { id }, '아티스트를 찾을 수 없습니다.');
   }
 
   async createArtist(dto: CreateArtistDto): Promise<Artist> {

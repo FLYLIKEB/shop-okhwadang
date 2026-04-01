@@ -27,7 +27,7 @@ export class InquiriesService {
   }
 
   async findOne(id: number, userId: number): Promise<Inquiry> {
-    const inquiry = await findOrThrow(this.inquiryRepo, { id } as any, '문의를 찾을 수 없습니다.');
+    const inquiry = await findOrThrow(this.inquiryRepo, { id }, '문의를 찾을 수 없습니다.');
     if (Number(inquiry.userId) !== Number(userId)) {
       throw new ForbiddenException('권한이 없습니다.');
     }
@@ -53,7 +53,7 @@ export class InquiriesService {
   }
 
   async answerInquiry(id: number, dto: AnswerInquiryDto): Promise<Inquiry> {
-    const inquiry = await findOrThrow(this.inquiryRepo, { id } as any, '문의를 찾을 수 없습니다.');
+    const inquiry = await findOrThrow(this.inquiryRepo, { id }, '문의를 찾을 수 없습니다.');
     inquiry.answer = dto.answer;
     inquiry.status = 'answered';
     inquiry.answeredAt = new Date();

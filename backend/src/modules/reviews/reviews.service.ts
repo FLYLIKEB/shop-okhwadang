@@ -187,7 +187,7 @@ export class ReviewsService {
   }
 
   async update(id: number, userId: number, dto: UpdateReviewDto): Promise<ReviewResponse> {
-    const review = await findOrThrow(this.reviewRepo, { id } as any, '리뷰를 찾을 수 없습니다.', ['user']);
+    const review = await findOrThrow(this.reviewRepo, { id }, '리뷰를 찾을 수 없습니다.', ['user']);
 
     if (Number(review.userId) !== Number(userId)) {
       throw new ForbiddenException('권한이 없습니다.');
@@ -202,7 +202,7 @@ export class ReviewsService {
   }
 
   async remove(id: number, userId: number, userRole: string): Promise<void> {
-    const review = await findOrThrow(this.reviewRepo, { id } as any, '리뷰를 찾을 수 없습니다.');
+    const review = await findOrThrow(this.reviewRepo, { id }, '리뷰를 찾을 수 없습니다.');
 
     if (Number(review.userId) !== Number(userId) && userRole !== 'admin' && userRole !== 'super_admin') {
       throw new ForbiddenException('권한이 없습니다.');

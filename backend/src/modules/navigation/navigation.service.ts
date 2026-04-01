@@ -44,7 +44,7 @@ export class NavigationService {
   }
 
   async update(id: number, dto: UpdateNavigationItemDto): Promise<NavigationItem> {
-    const item = await findOrThrow(this.navigationRepository, { id } as any, '존재하지 않는 네비게이션 항목입니다.');
+    const item = await findOrThrow(this.navigationRepository, { id }, '존재하지 않는 네비게이션 항목입니다.');
 
     if (dto.parent_id !== undefined) {
       if (dto.parent_id !== null) {
@@ -61,7 +61,7 @@ export class NavigationService {
   }
 
   async remove(id: number): Promise<void> {
-    const item = await findOrThrow(this.navigationRepository, { id } as any, '존재하지 않는 네비게이션 항목입니다.');
+    const item = await findOrThrow(this.navigationRepository, { id }, '존재하지 않는 네비게이션 항목입니다.');
     await this.navigationRepository.remove(item);
   }
 

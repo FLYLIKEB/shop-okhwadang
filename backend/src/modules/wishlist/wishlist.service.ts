@@ -119,7 +119,7 @@ export class WishlistService {
   }
 
   async remove(id: number, userId: number): Promise<void> {
-    const item = await findOrThrow(this.wishlistRepo, { id } as any, '위시리스트 항목을 찾을 수 없습니다.');
+    const item = await findOrThrow(this.wishlistRepo, { id }, '위시리스트 항목을 찾을 수 없습니다.');
 
     if (Number(item.userId) !== Number(userId)) {
       throw new ForbiddenException('권한이 없습니다.');

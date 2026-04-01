@@ -97,7 +97,7 @@ Security pipeline: CORS → Rate Limiting → JWT Guard → ValidationPipe → C
 - **`findOrThrow(repo, where, message, relations?)`** — 엔티티 조회 + NotFoundException. 인라인 `findOne → if (!x) throw` 패턴 금지, 반드시 이 유틸리티 사용.
   ```typescript
   import { findOrThrow } from '../common/utils/repository.util';
-  const product = await findOrThrow(this.productRepo, { id } as any, '상품을 찾을 수 없습니다.');
+  const product = await findOrThrow(this.productRepo, { id }, '상품을 찾을 수 없습니다.');
   ```
 
 ## Key Directories

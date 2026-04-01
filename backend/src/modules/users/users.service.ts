@@ -24,7 +24,7 @@ export class UsersService {
   ) {}
 
   async updateProfile(userId: number, dto: UpdateProfileDto): Promise<Omit<User, 'password' | 'refreshToken'>> {
-    const user = await findOrThrow(this.userRepository, { id: userId } as any, '사용자를 찾을 수 없습니다.');
+    const user = await findOrThrow(this.userRepository, { id: userId }, '사용자를 찾을 수 없습니다.');
 
     if (dto.name !== undefined) user.name = dto.name;
     if (dto.phone !== undefined) user.phone = dto.phone ?? null;
@@ -71,7 +71,7 @@ export class UsersService {
   }
 
   async updateAddress(userId: number, addressId: number, dto: UpdateAddressDto): Promise<UserAddress> {
-    const address = await findOrThrow(this.addressRepository, { id: addressId } as any, '배송지를 찾을 수 없습니다.');
+    const address = await findOrThrow(this.addressRepository, { id: addressId }, '배송지를 찾을 수 없습니다.');
     if (Number(address.userId) !== Number(userId)) {
       throw new ForbiddenException('접근 권한이 없습니다.');
     }
@@ -96,7 +96,7 @@ export class UsersService {
   }
 
   async deleteAddress(userId: number, addressId: number): Promise<{ message: string }> {
-    const address = await findOrThrow(this.addressRepository, { id: addressId } as any, '배송지를 찾을 수 없습니다.');
+    const address = await findOrThrow(this.addressRepository, { id: addressId }, '배송지를 찾을 수 없습니다.');
     if (Number(address.userId) !== Number(userId)) {
       throw new ForbiddenException('접근 권한이 없습니다.');
     }

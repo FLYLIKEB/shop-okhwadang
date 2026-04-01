@@ -90,7 +90,7 @@ export class CategoriesService {
     }
 
     if (dto.parentId) {
-      await findOrThrow(this.categoryRepository, { id: dto.parentId } as any, `부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
+      await findOrThrow(this.categoryRepository, { id: dto.parentId }, `부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
     }
 
     const existing = await this.categoryRepository.findOne({ where: { slug: dto.slug } });
@@ -111,7 +111,7 @@ export class CategoriesService {
   }
 
   async update(id: number, dto: UpdateCategoryDto): Promise<Category> {
-    const category = await findOrThrow(this.categoryRepository, { id } as any, `카테고리(id: ${id})를 찾을 수 없습니다.`);
+    const category = await findOrThrow(this.categoryRepository, { id }, `카테고리(id: ${id})를 찾을 수 없습니다.`);
 
     if (dto.parentId !== undefined) {
       if (dto.parentId === id) {
@@ -119,7 +119,7 @@ export class CategoriesService {
       }
 
       if (dto.parentId) {
-        await findOrThrow(this.categoryRepository, { id: dto.parentId } as any, `부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
+        await findOrThrow(this.categoryRepository, { id: dto.parentId }, `부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
 
         const depth = await this.getDepth(dto.parentId);
         if (depth >= 3) {
@@ -148,7 +148,7 @@ export class CategoriesService {
   }
 
   async remove(id: number): Promise<void> {
-    const category = await findOrThrow(this.categoryRepository, { id } as any, `카테고리(id: ${id})를 찾을 수 없습니다.`);
+    const category = await findOrThrow(this.categoryRepository, { id }, `카테고리(id: ${id})를 찾을 수 없습니다.`);
 
     const childCount = await this.categoryRepository.count({ where: { parentId: id } });
     if (childCount > 0) {
