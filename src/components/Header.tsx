@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { ShoppingCart, Menu, X, Search } from 'lucide-react';
+import { ShoppingCart, Menu, X, Search, User } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,21 +52,12 @@ function DesktopActions({ isAuthenticated, userName, itemCount, onLogout }: Desk
       <LanguageSelector />
       <CartBadge itemCount={itemCount} />
       {isAuthenticated ? (
-        <>
-          <Link href="/my" className={cn("text-sm transition-colors", textClass)}>
-            {userName ?? '마이페이지'}
-          </Link>
-          <button
-            type="button"
-            onClick={onLogout}
-            className={cn("text-sm transition-colors", textClass)}
-          >
-            로그아웃
-          </button>
-        </>
+        <Link href="/my" aria-label="마이페이지" className={cn("transition-colors", textClass)}>
+          <User className="h-5 w-5" />
+        </Link>
       ) : (
-        <Link href="/login" className={cn("text-sm transition-colors", textClass)}>
-          로그인
+        <Link href="/login" aria-label="로그인" className={cn("transition-colors", textClass)}>
+          <User className="h-5 w-5" />
         </Link>
       )}
     </div>
