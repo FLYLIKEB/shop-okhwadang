@@ -8,6 +8,7 @@ import type { OrderResponse } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { ORDER_STATUS_LABELS } from '@/constants/orderStatus';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { formatCurrency } from '@/utils/currency';
 
 export default function MyPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
@@ -135,7 +136,7 @@ export default function MyPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{Number(order.totalAmount).toLocaleString()}원</p>
+                    <p className="font-medium">{formatCurrency(Number(order.totalAmount))}</p>
                     <p className="text-xs text-muted-foreground">
                       {ORDER_STATUS_LABELS[order.status] ?? order.status}
                     </p>

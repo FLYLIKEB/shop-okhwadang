@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { formatCurrency } from '@/utils/currency';
 
 export default function RecentlyViewedWidget() {
   const { items } = useRecentlyViewed();
@@ -43,7 +44,7 @@ export default function RecentlyViewedWidget() {
               <div className="max-w-32 text-xs">
                 <p className="line-clamp-1 font-medium">{item.name}</p>
                 <p className="text-muted-foreground">
-                  {(item.salePrice ?? item.price).toLocaleString()}원
+                  {formatCurrency(item.salePrice ?? item.price)}
                 </p>
               </div>
             </Link>
