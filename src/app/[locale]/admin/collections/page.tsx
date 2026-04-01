@@ -3,18 +3,46 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useFormModal } from '@/hooks/useFormModal';
 import { adminCollectionsApi, type Collection, type CreateCollectionData, CollectionType } from '@/lib/api';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
+import { AdminTable, AdminTableRowActions } from '@/components/admin/AdminTable';
+import { StatusBadge } from '@/components/admin/StatusBadge';
 
 const TYPE_LABELS: Record<CollectionType, string> = {
   [CollectionType.CLAY]: '니료',
   [CollectionType.SHAPE]: '형태',
 };
+
+const COLLECTION_DEFAULTS: CreateCollectionData = {
+  type: CollectionType.CLAY,
+  name: '',
+  nameKo: '',
+  color: '',
+  description: '',
+  imageUrl: '',
+  productUrl: '',
+  sortOrder: 0,
+  isActive: true,
+};
+
+function toFormData(c: Collection): CreateCollectionData {
+  return {
+    type: c.type,
+    name: c.name,
+    nameKo: c.nameKo ?? '',
+    color: c.color ?? '',
+    description: c.description ?? '',
+    imageUrl: c.imageUrl ?? '',
+    productUrl: c.productUrl,
+    sortOrder: c.sortOrder,
+    isActive: c.isActive,
+  };
+}
 
 function CollectionRow({
   collection,
@@ -48,25 +76,10 @@ function CollectionRow({
         {collection.description}
       </td>
       <td className="py-3 px-4 text-sm">
-        <span className={collection.isActive ? 'text-green-600' : 'text-muted-foreground'}>
-          {collection.isActive ? '활성' : '비활성'}
-        </span>
+        <StatusBadge isActive={collection.isActive} />
       </td>
       <td className="py-3 px-4">
-        <div className="flex gap-2">
-          <button
-            onClick={() => onEdit(collection)}
-            className="text-sm text-foreground hover:underline"
-          >
-            수정
-          </button>
-          <button
-            onClick={() => onDelete(collection)}
-            className="text-sm text-destructive hover:underline"
-          >
-            삭제
-          </button>
-        </div>
+        <AdminTableRowActions onEdit={() => onEdit(collection)} onDelete={() => onDelete(collection)} />
       </td>
     </tr>
   );
@@ -83,62 +96,17 @@ function CollectionFormModal({
   onSubmit: (data: CreateCollectionData) => Promise<void>;
   initial?: Collection | null;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<CreateCollectionData>({
-    type: CollectionType.CLAY,
-    name: '',
-    nameKo: '',
-    color: '',
-    description: '',
-    imageUrl: '',
-    productUrl: '',
-    sortOrder: 0,
-    isActive: true,
-  });
-
-  useEffect(() => {
-    if (initial) {
-      setForm({
-        type: initial.type,
-        name: initial.name,
-        nameKo: initial.nameKo ?? '',
-        color: initial.color ?? '',
-        description: initial.description ?? '',
-        imageUrl: initial.imageUrl ?? '',
-        productUrl: initial.productUrl,
-        sortOrder: initial.sortOrder,
-        isActive: initial.isActive,
-      });
-    } else {
-      setForm({
-        type: CollectionType.CLAY,
-        name: '',
-        nameKo: '',
-        color: '',
-        description: '',
-        imageUrl: '',
-        productUrl: '',
-        sortOrder: 0,
-        isActive: true,
-      });
-    }
-  }, [initial, open]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await onSubmit(form);
-      onClose();
-    } finally {
-      setLoading(false);
-    }
-  };
+  const initialFormData = initial ? toFormData(initial) : null;
+  const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateCollectionData>(
+    COLLECTION_DEFAULTS,
+    initialFormData,
+    open,
+  );
 
   return (
     <Modal isOpen={open} onClose={onClose} maxWidth="md">
       <h2 className="text-lg font-semibold mb-4">{initial ? '컬렉션 수정' : '컬렉션 추가'}</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={(e) => handleSubmit(e, onSubmit, onClose)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium block mb-1">타입</label>
@@ -243,9 +211,17 @@ function CollectionFormModal({
   );
 }
 
+const CLAY_COLUMNS = [
+  { label: '색상', width: 'w-16' },
+  { label: '타입', width: 'w-24' },
+  { label: '이름' },
+  { label: '설명' },
+  { label: '상태', width: 'w-20' },
+  { label: '작업', width: 'w-28' },
+];
+
 export default function AdminCollectionsPage() {
-  const { user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
+  const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -264,16 +240,10 @@ export default function AdminCollectionsPage() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && (!user || (user.role !== 'admin' && user.role !== 'super_admin'))) {
-      router.replace('/');
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    if (isAdmin) {
       loadCollections();
     }
-  }, [user, loadCollections]);
+  }, [isAdmin, loadCollections]);
 
   const handleOpenCreate = () => {
     setEditTarget(null);
@@ -335,64 +305,28 @@ export default function AdminCollectionsPage() {
       <div className="space-y-8">
         <section>
           <h2 className="text-lg font-semibold mb-3">니료 컬렉션</h2>
-          <div className="rounded-lg border border-border overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr className="text-left text-xs text-muted-foreground uppercase">
-                  <th className="py-3 px-4 w-16">색상</th>
-                  <th className="py-3 px-4 w-24">타입</th>
-                  <th className="py-3 px-4">이름</th>
-                  <th className="py-3 px-4">설명</th>
-                  <th className="py-3 px-4 w-20">상태</th>
-                  <th className="py-3 px-4 w-28">작업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {clayCollections.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
-                      등록된 니료 컬렉션이 없습니다.
-                    </td>
-                  </tr>
-                ) : (
-                  clayCollections.map((c) => (
-                    <CollectionRow key={c.id} collection={c} onEdit={handleOpenEdit} onDelete={handleDelete} />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable
+            columns={CLAY_COLUMNS}
+            isEmpty={clayCollections.length === 0}
+            emptyMessage="등록된 니료 컬렉션이 없습니다."
+          >
+            {clayCollections.map((c) => (
+              <CollectionRow key={c.id} collection={c} onEdit={handleOpenEdit} onDelete={handleDelete} />
+            ))}
+          </AdminTable>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold mb-3">형태 컬렉션</h2>
-          <div className="rounded-lg border border-border overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr className="text-left text-xs text-muted-foreground uppercase">
-                  <th className="py-3 px-4 w-16">색상</th>
-                  <th className="py-3 px-4 w-24">타입</th>
-                  <th className="py-3 px-4">이름</th>
-                  <th className="py-3 px-4">설명</th>
-                  <th className="py-3 px-4 w-20">상태</th>
-                  <th className="py-3 px-4 w-28">작업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shapeCollections.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
-                      등록된 형태 컬렉션이 없습니다.
-                    </td>
-                  </tr>
-                ) : (
-                  shapeCollections.map((c) => (
-                    <CollectionRow key={c.id} collection={c} onEdit={handleOpenEdit} onDelete={handleDelete} />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable
+            columns={CLAY_COLUMNS}
+            isEmpty={shapeCollections.length === 0}
+            emptyMessage="등록된 형태 컬렉션이 없습니다."
+          >
+            {shapeCollections.map((c) => (
+              <CollectionRow key={c.id} collection={c} onEdit={handleOpenEdit} onDelete={handleDelete} />
+            ))}
+          </AdminTable>
         </section>
       </div>
 
