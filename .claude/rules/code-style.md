@@ -15,6 +15,7 @@ globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 - Toast errors: use `toast.error(handleApiError(err))` pattern
 - `console.log` in committed code is forbidden
 - Silent `.catch(() => {})` is forbidden — all catch blocks must handle errors (log, toast, or set error state)
+- API calls must go through `ApiClient` methods — no raw `fetch()` in feature code
 - Responsive: flex/grid based, component-level mobile branching
 - Accessibility: semantic HTML, ARIA labels, keyboard navigation
 
