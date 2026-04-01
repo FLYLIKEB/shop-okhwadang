@@ -10,6 +10,7 @@ import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { paginate } from '../../common/utils/pagination.util';
 
 const ALLOWED_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID],
@@ -63,11 +64,7 @@ export class AdminOrdersService {
       qb.andWhere('order.createdAt <= :endDate', { endDate: `${query.endDate} 23:59:59` });
     }
 
-    qb.skip((page - 1) * limit).take(limit);
-
-    const [items, total] = await qb.getManyAndCount();
-
-    return { items, total, page, limit };
+    return paginate(qb, { page, limit });
   }
 
   async updateStatus(orderId: number, nextStatus: OrderStatus) {

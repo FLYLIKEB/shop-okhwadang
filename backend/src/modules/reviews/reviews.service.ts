@@ -12,6 +12,7 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { paginate } from '../../common/utils/pagination.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 
 export interface ReviewResponse {
@@ -70,8 +71,6 @@ export class ReviewsService {
   }
 
   async findAll(query: ReviewQueryDto): Promise<ReviewListResult> {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
     const sort = query.sort ?? 'recent';
 
     const qb = this.reviewRepo
@@ -94,10 +93,7 @@ export class ReviewsService {
         qb.orderBy('review.createdAt', 'DESC');
     }
 
-    const [reviews, total] = await qb
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
+    const { items: reviews, total, page, limit } = await paginate(qb, query);
 
     const stats = await this.getStats(query.productId);
 

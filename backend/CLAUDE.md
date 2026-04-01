@@ -119,6 +119,11 @@ Security pipeline: CORS → Rate Limiting → JWT Guard → ValidationPipe → C
   import { buildTree } from '../common/utils/tree.util';
   return buildTree(categories, 'id', 'parentId');
   ```
+- **`paginate(qb, { page?, limit? })`** — QueryBuilder 페이지네이션. 인라인 `skip/take/getManyAndCount` 금지. 기본 limit=20.
+  ```typescript
+  import { paginate, PaginatedResult } from '../common/utils/pagination.util';
+  return paginate(qb, { page, limit });
+  ```
 
 ## Key Directories
 
