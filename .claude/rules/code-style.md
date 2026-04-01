@@ -14,12 +14,15 @@ globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 - Error extraction: always use `handleApiError(err)` from `@/utils/error` — never inline `err instanceof Error ? err.message : ...`
 - Toast errors: use `toast.error(handleApiError(err))` pattern
 - `console.log` in committed code is forbidden
-- API error messages: all user-facing fallback messages must be Korean — no English fallbacks in catch blocks
-- Price formatting: always use `formatCurrency()` from `@/utils/currency` — no inline `.toLocaleString() + '원'`, no local format functions
 - Silent `.catch(() => {})` is forbidden — all catch blocks must handle errors (log, toast, or set error state)
 - API calls must go through `ApiClient` methods — no raw `fetch()` in feature code
+- File uploads: use `ApiClient.uploadFile()` — never bypass ApiClient with raw fetch + FormData
+- API error messages: all user-facing fallback messages must be Korean — no English fallbacks in catch blocks
+- Price formatting: always use `formatCurrency()` from `@/utils/currency` — no inline `.toLocaleString() + '원'`, no local format functions
+- Data fetching: use `useAsyncAction` hook from `@/hooks` — no manual useState(loading) + try/catch/finally patterns
 - Responsive: flex/grid based, component-level mobile branching
 - Accessibility: semantic HTML, ARIA labels, keyboard navigation
+- Wishlist toggle: use `useWishlistToggle(productId)` hook with optimistic update — no inline wishlist state management
 
 ## Backend
 - Controller → Service → Entity (DI pattern)

@@ -58,4 +58,5 @@ hooks/useAsyncAction.ts         # Async loading/error state management hook
 components/admin/AdminTable.tsx # Common admin table shell
 components/admin/StatusBadge.tsx # Active/inactive status badge
 utils/currency.ts               # Price formatting utility (formatCurrency) — single source of truth
+utils/error.ts                  # Error extraction utility (handleApiError)
 ```
