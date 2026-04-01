@@ -1,5 +1,4 @@
-import { calcDiscount } from '@/utils/price';
-import { formatCurrency, type Locale } from '@/utils/currency';
+import { calcDiscount, formatCurrency, type Locale } from '@/utils/currency';
 
 interface PriceDisplayProps {
   price: number;

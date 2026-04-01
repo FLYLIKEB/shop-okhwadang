@@ -2,6 +2,7 @@
 
 import { cn } from '@/components/ui/utils'
 import type { ProductOption } from '@/lib/api'
+import { formatCurrency } from '@/utils/currency'
 
 interface OptionSelectorProps {
   options: ProductOption[]
@@ -46,7 +47,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                   {option.priceAdjustment !== 0 && (
                     <span className="ml-1 text-xs">
                       ({option.priceAdjustment > 0 ? '+' : ''}
-                      {option.priceAdjustment.toLocaleString('ko-KR')}원)
+                      {formatCurrency(option.priceAdjustment)})
                     </span>
                   )}
                 </button>

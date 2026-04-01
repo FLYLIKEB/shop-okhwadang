@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import EmptyState from '@/components/EmptyState';
+import { formatCurrency } from '@/utils/currency';
 
 export default function RecentlyViewedPage() {
   const { items, clear } = useRecentlyViewed();
@@ -56,7 +57,7 @@ export default function RecentlyViewedPage() {
               <div className="p-3">
                 <p className="line-clamp-2 text-sm font-medium">{item.name}</p>
                 <p className="mt-1 text-sm font-semibold">
-                  {(item.salePrice ?? item.price).toLocaleString()}원
+                  {formatCurrency(item.salePrice ?? item.price)}
                 </p>
               </div>
             </Link>

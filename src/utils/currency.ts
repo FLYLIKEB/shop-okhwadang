@@ -47,21 +47,48 @@ const CURRENCY_FORMAT: Record<Currency, { locale: string; currency: string }> = 
  * @param amount KRW 기준 금액
  * @param to 대상 통화
  */
+/**
+ * 할인율을 계산합니다 (0~100 정수).
+ * @param price 원가
+ * @param salePrice 판매가
+ */
+export function calcDiscount(price: number, salePrice: number): number {
+  if (price <= 0) return 0;
+  return Math.round((1 - salePrice / price) * 100);
+}
+
 export function convertPrice(amount: number, to: Currency): number {
   if (to === 'KRW') return amount;
   const rates = getExchangeRates();
   return amount / rates[to];
 }
 
+export interface FormatCurrencyOptions {
+  /** abbreviated: true이면 만 단위 축약 표기 (예: 150000 → '15만'). KRW 전용. */
+  abbreviated?: boolean;
+}
+
 /**
  * KRW 금액을 로케일에 맞는 통화 형식으로 포맷합니다.
  * @param amount KRW 기준 금액
  * @param locale 표시 로케일
+ * @param options 포맷 옵션
  */
-export function formatCurrency(amount: number, locale: Locale = 'ko'): string {
+export function formatCurrency(
+  amount: number,
+  locale: Locale = 'ko',
+  options: FormatCurrencyOptions = {},
+): string {
   const currency = LOCALE_TO_CURRENCY[locale];
   const converted = convertPrice(amount, currency);
   const { locale: intlLocale, currency: intlCurrency } = CURRENCY_FORMAT[currency];
+
+  if (options.abbreviated && currency === 'KRW') {
+    if (converted >= 10000) {
+      return `${(converted / 10000).toFixed(0)}만`;
+    }
+    return converted.toLocaleString();
+  }
 
   return new Intl.NumberFormat(intlLocale, {
     style: 'currency',
