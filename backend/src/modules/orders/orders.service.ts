@@ -12,6 +12,7 @@ import { CartItem } from '../cart/entities/cart-item.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { assertOwnership } from '../../common/utils/ownership.util';
+import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 
 @Injectable()
 export class OrdersService {
@@ -182,17 +183,14 @@ export class OrdersService {
     }
   }
 
-  async findAll(userId: number, page = 1, limit = 10): Promise<{ items: Order[]; total: number; page: number; limit: number }> {
-    const [items, total] = await this.orderRepository
+  async findAll(userId: number, page = 1, limit = 10): Promise<PaginatedResult<Order>> {
+    const qb = this.orderRepository
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.items', 'item')
       .where('order.userId = :userId', { userId })
-      .orderBy('order.createdAt', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
+      .orderBy('order.createdAt', 'DESC');
 
-    return { items, total, page, limit };
+    return paginate(qb, { page, limit });
   }
 
   async findOne(id: number, userId: number): Promise<Order> {
