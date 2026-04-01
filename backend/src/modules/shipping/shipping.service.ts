@@ -1,6 +1,6 @@
 import {
   Injectable, BadRequestException,
-  ForbiddenException, Logger,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,6 +11,7 @@ import { CarrierCode, TrackingResult } from './interfaces/shipping-provider.inte
 import { RegisterTrackingDto } from './dto/register-tracking.dto';
 import { TrackShipmentDto } from './dto/track-shipment.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 const ALLOWED_TRANSITIONS: Record<ShippingStatus, ShippingStatus[]> = {
   [ShippingStatus.PAYMENT_CONFIRMED]: [ShippingStatus.PREPARING],
@@ -37,7 +38,7 @@ export class ShippingService {
 
   async getByOrderId(orderId: number, userId: number) {
     const order = await findOrThrow(this.orderRepository, { id: orderId }, '배송 정보를 찾을 수 없습니다.');
-    if (Number(order.userId) !== Number(userId)) throw new ForbiddenException('접근 권한이 없습니다.');
+    assertOwnership(order.userId, userId);
 
     const shipping = await findOrThrow(this.shippingRepository, { orderId }, '배송 정보를 찾을 수 없습니다.');
 
