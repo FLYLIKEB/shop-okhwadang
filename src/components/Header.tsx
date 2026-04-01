@@ -235,24 +235,17 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
           visible ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        {/* 헤더 */}
-        <div className="flex items-center justify-between px-4 h-14 border-b border-border shrink-0">
-          {panelStack.length > 0 ? (
+        {/* 헤더 — 서브패널일 때만 표시 */}
+        {panelStack.length > 0 && (
+          <div className="flex items-center px-4 h-14 border-b border-border shrink-0">
             <button type="button" onClick={handleBack} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="뒤로">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 5l-5 5 5 5" /></svg>
             </button>
-          ) : (
-            <button type="button" onClick={closeAndReset} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="닫기">
-              <X className="h-5 w-5" />
-            </button>
-          )}
-          <span className="text-sm font-medium">
-            {panelStack.length > 0 ? panelStack[panelStack.length - 1]?.title : '메뉴'}
-          </span>
-          <div className="w-9" />
-        </div>
+            <span className="ml-3 text-sm font-medium">{panelStack[panelStack.length - 1]?.title}</span>
+          </div>
+        )}
         {/* 패널 내용 */}
-        <div className="relative flex-1 h-[calc(100%-56px)] overflow-hidden">
+        <div className={cn('relative overflow-hidden', panelStack.length > 0 ? 'h-[calc(100%-56px)]' : 'h-full')}>
           {renderPanel(menuItems, -1)}
           {panelStack.map((_, index) => renderPanel(panelStack[index].items, index))}
         </div>
