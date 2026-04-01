@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { handleApiError } from '@/utils/error';
 import { adminCategoriesApi } from '@/lib/api';
 import type { AdminCategory, CreateCategoryData } from '@/lib/api';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import CategoryTreeView from '@/components/admin/CategoryTreeView';
 import CategoryFormModal from '@/components/admin/CategoryFormModal';
 
@@ -13,26 +13,21 @@ export default function AdminCategoriesPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [flatList, setFlatList] = useState<AdminCategory[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AdminCategory | null>(null);
 
-  const loadCategories = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { execute: loadCategories, isLoading: loading } = useAsyncAction(
+    async () => {
       const data = await adminCategoriesApi.getAll();
       setFlatList(data);
       setCategories(buildTree(data));
-    } catch {
-      toast.error('카테고리 목록을 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    { errorMessage: '카테고리 목록을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     if (isAdmin) {
-      loadCategories();
+      void loadCategories();
     }
   }, [isAdmin, loadCategories]);
 
@@ -80,15 +75,17 @@ export default function AdminCategoriesPage() {
     await loadCategories();
   };
 
-  const handleDelete = async (category: AdminCategory) => {
-    if (!window.confirm(`"${category.name}" 카테고리를 삭제하시겠습니까?`)) return;
-    try {
+  const { execute: deleteCategory } = useAsyncAction(
+    async (category: AdminCategory) => {
       await adminCategoriesApi.remove(category.id);
-      toast.success('카테고리가 삭제되었습니다.');
       await loadCategories();
-    } catch (err) {
-      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
-    }
+    },
+    { successMessage: '카테고리가 삭제되었습니다.', errorMessage: '삭제에 실패했습니다.' },
+  );
+
+  const handleDelete = (category: AdminCategory) => {
+    if (!window.confirm(`"${category.name}" 카테고리를 삭제하시겠습니까?`)) return;
+    void deleteCategory(category);
   };
 
   const getSiblings = (category: AdminCategory): AdminCategory[] => {
@@ -110,43 +107,42 @@ export default function AdminCategoriesPage() {
     return null;
   };
 
-  const handleMoveUp = async (category: AdminCategory) => {
-    const siblings = getSiblings(category);
-    const index = siblings.findIndex((s) => s.id === category.id);
-    if (index <= 0) return;
+  const { execute: moveUp } = useAsyncAction(
+    async (category: AdminCategory) => {
+      const siblings = getSiblings(category);
+      const index = siblings.findIndex((s) => s.id === category.id);
+      if (index <= 0) return;
 
-    const prev = siblings[index - 1];
-    const newOrders = [
-      { id: category.id, sortOrder: prev.sortOrder },
-      { id: prev.id, sortOrder: category.sortOrder },
-    ];
-
-    try {
+      const prev = siblings[index - 1];
+      const newOrders = [
+        { id: category.id, sortOrder: prev.sortOrder },
+        { id: prev.id, sortOrder: category.sortOrder },
+      ];
       await adminCategoriesApi.reorder(newOrders);
       await loadCategories();
-    } catch {
-      toast.error('순서 변경에 실패했습니다.');
-    }
-  };
+    },
+    { errorMessage: '순서 변경에 실패했습니다.' },
+  );
 
-  const handleMoveDown = async (category: AdminCategory) => {
-    const siblings = getSiblings(category);
-    const index = siblings.findIndex((s) => s.id === category.id);
-    if (index >= siblings.length - 1) return;
+  const { execute: moveDown } = useAsyncAction(
+    async (category: AdminCategory) => {
+      const siblings = getSiblings(category);
+      const index = siblings.findIndex((s) => s.id === category.id);
+      if (index >= siblings.length - 1) return;
 
-    const next = siblings[index + 1];
-    const newOrders = [
-      { id: category.id, sortOrder: next.sortOrder },
-      { id: next.id, sortOrder: category.sortOrder },
-    ];
-
-    try {
+      const next = siblings[index + 1];
+      const newOrders = [
+        { id: category.id, sortOrder: next.sortOrder },
+        { id: next.id, sortOrder: category.sortOrder },
+      ];
       await adminCategoriesApi.reorder(newOrders);
       await loadCategories();
-    } catch {
-      toast.error('순서 변경에 실패했습니다.');
-    }
-  };
+    },
+    { errorMessage: '순서 변경에 실패했습니다.' },
+  );
+
+  const handleMoveUp = (category: AdminCategory) => void moveUp(category);
+  const handleMoveDown = (category: AdminCategory) => void moveDown(category);
 
   if (authLoading || loading) {
     return (

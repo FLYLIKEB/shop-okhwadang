@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { handleApiError } from '@/utils/error';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useFormModal } from '@/hooks/useFormModal';
 import { adminCollectionsApi, type Collection, type CreateCollectionData, CollectionType } from '@/lib/api';
 import { SkeletonBox } from '@/components/ui/Skeleton';
@@ -223,25 +223,20 @@ const CLAY_COLUMNS = [
 export default function AdminCollectionsPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [collections, setCollections] = useState<Collection[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Collection | null>(null);
 
-  const loadCollections = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { execute: loadCollections, isLoading: loading } = useAsyncAction(
+    async () => {
       const data = await adminCollectionsApi.getAll();
       setCollections(data);
-    } catch {
-      toast.error('컬렉션 목록을 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    { errorMessage: '컬렉션 목록을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     if (isAdmin) {
-      loadCollections();
+      void loadCollections();
     }
   }, [isAdmin, loadCollections]);
 
@@ -266,15 +261,17 @@ export default function AdminCollectionsPage() {
     await loadCollections();
   };
 
-  const handleDelete = async (collection: Collection) => {
-    if (!window.confirm(`"${collection.name}" 컬렉션을 삭제하시겠습니까?`)) return;
-    try {
+  const { execute: deleteCollection } = useAsyncAction(
+    async (collection: Collection) => {
       await adminCollectionsApi.remove(collection.id);
-      toast.success('컬렉션이 삭제되었습니다.');
       await loadCollections();
-    } catch (err) {
-      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
-    }
+    },
+    { successMessage: '컬렉션이 삭제되었습니다.', errorMessage: '삭제에 실패했습니다.' },
+  );
+
+  const handleDelete = (collection: Collection) => {
+    if (!window.confirm(`"${collection.name}" 컬렉션을 삭제하시겠습니까?`)) return;
+    void deleteCollection(collection);
   };
 
   const clayCollections = collections.filter((c) => c.type === CollectionType.CLAY);

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { inquiriesApi } from '@/lib/api';
 import type { Inquiry } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import { cn } from '@/components/ui/utils';
@@ -12,16 +13,20 @@ import { cn } from '@/components/ui/utils';
 export default function InquiriesPage() {
   const { isAuthenticated } = useRequireAuth();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<number | null>(null);
+
+  const { execute: loadInquiries, isLoading: loading } = useAsyncAction(
+    async () => {
+      const res = await inquiriesApi.getList();
+      setInquiries(res.data);
+    },
+    { errorMessage: '문의 내역을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    inquiriesApi
-      .getList()
-      .then((res) => setInquiries(res.data))
-      .catch(() => setInquiries([]))
-      .finally(() => setLoading(false));
+    void loadInquiries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   if (loading) {

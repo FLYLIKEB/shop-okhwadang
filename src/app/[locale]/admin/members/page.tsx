@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { adminMembersApi } from '@/lib/api';
 import type { AdminMember } from '@/lib/api';
 import { AdminMembersTable } from '@/components/admin/AdminMembersTable';
@@ -25,15 +25,13 @@ export default function AdminMembersPage() {
   const [members, setMembers] = useState<AdminMember[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
-  const fetchMembers = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { execute: fetchMembers, isLoading: loading } = useAsyncAction(
+    async () => {
       const params: Record<string, string | number | undefined> = {
         page,
         limit: PAGE_SIZE,
@@ -45,16 +43,14 @@ export default function AdminMembersPage() {
       const res = await adminMembersApi.getList(params);
       setMembers(res.items);
       setTotal(res.total);
-    } catch {
-      toast.error('회원 목록을 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [page, roleFilter, statusFilter, keyword]);
+    },
+    { errorMessage: '회원 목록을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     void fetchMembers();
-  }, [fetchMembers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, roleFilter, statusFilter, keyword]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
