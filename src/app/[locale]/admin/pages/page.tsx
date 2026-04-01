@@ -3,6 +3,7 @@
 import { useEffect, useState, useReducer, useCallback } from 'react';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { arrayMove } from '@dnd-kit/sortable';
 import { adminPagesApi, pagesApi } from '@/lib/api';
 import type { Page, PageBlock } from '@/lib/api';
@@ -307,7 +308,6 @@ export default function AdminPagesPage() {
   const [pages, setPages] = useState<Page[]>([]);
   const [selectedPage, setSelectedPage] = useState<Page | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -321,19 +321,16 @@ export default function AdminPagesPage() {
 
   useUnsavedChanges(draft.hasChanges);
 
-  const loadPages = useCallback(async () => {
-    try {
+  const { execute: loadPages, isLoading: loading } = useAsyncAction(
+    async () => {
       const data = await adminPagesApi.getAll();
       setPages(data);
-    } catch {
-      toast.error('페이지 목록을 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    { errorMessage: '페이지 목록을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
-    loadPages();
+    void loadPages();
   }, [loadPages]);
 
   const handleSelectPage = useCallback(

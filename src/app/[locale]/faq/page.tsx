@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import * as Accordion from '@radix-ui/react-accordion';
 import { faqsApi } from '@/lib/api';
 import type { Faq } from '@/lib/api';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import { cn } from '@/components/ui/utils';
@@ -15,17 +16,20 @@ export default function FaqPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const [faqs, setFaqs] = useState<Faq[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('전체');
 
+  const { execute: loadFaqs, isLoading: loading } = useAsyncAction(
+    async () => {
+      const cat = activeCategory === '전체' ? undefined : activeCategory;
+      const res = await faqsApi.getList(cat, locale);
+      setFaqs(res.data);
+    },
+    { errorMessage: 'FAQ를 불러오지 못했습니다.' },
+  );
+
   useEffect(() => {
-    const cat = activeCategory === '전체' ? undefined : activeCategory;
-    setLoading(true);
-    faqsApi
-      .getList(cat, locale)
-      .then((res) => setFaqs(res.data))
-      .catch(() => setFaqs([]))
-      .finally(() => setLoading(false));
+    void loadFaqs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory, locale]);
 
   return (
