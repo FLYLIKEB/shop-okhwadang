@@ -14,6 +14,7 @@ globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 - Error extraction: always use `handleApiError(err)` from `@/utils/error` — never inline `err instanceof Error ? err.message : ...`
 - Toast errors: use `toast.error(handleApiError(err))` pattern
 - `console.log` in committed code is forbidden
+- Silent `.catch(() => {})` is forbidden — all catch blocks must handle errors (log, toast, or set error state)
 - Responsive: flex/grid based, component-level mobile branching
 - Accessibility: semantic HTML, ARIA labels, keyboard navigation
 

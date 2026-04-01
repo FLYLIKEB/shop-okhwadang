@@ -51,19 +51,33 @@ export default function AddressPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<AddressForm>(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
+  const fetchAddresses = () => {
     if (!isAuthenticated) return;
+    setLoading(true);
+    setError(null);
     usersApi
       .getAddresses()
-      .then(setAddresses)
-      .catch(() => {})
+      .then((data) => {
+        setAddresses(data);
+      })
+      .catch((err: unknown) => {
+        const message = handleApiError(err, '배송지를 불러오지 못했습니다.');
+        setError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchAddresses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,6 +210,16 @@ export default function AddressPage() {
           {[1, 2].map((i) => (
             <SkeletonBox key={i} height="h-24" />
           ))}
+        </div>
+      ) : error !== null ? (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-12 text-center">
+          <p className="text-destructive">{error}</p>
+          <button
+            onClick={fetchAddresses}
+            className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 transition-opacity"
+          >
+            다시 시도
+          </button>
         </div>
       ) : (
         <>
