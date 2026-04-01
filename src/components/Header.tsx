@@ -398,7 +398,7 @@ export default function Header() {
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-            className="p-2 -ml-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground"
+            className="p-2 -ml-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground lg:hidden"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
