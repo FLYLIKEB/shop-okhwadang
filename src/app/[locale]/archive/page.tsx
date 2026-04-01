@@ -5,22 +5,13 @@ import { cn } from '@/components/ui/utils';
 import { fetchArchives } from '@/lib/api-server';
 import { TEAPOT_IMAGES } from '@/lib/teapot-images';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { SectionHeading } from '@/components/common/SectionHeading';
 import type { NiloType, ProcessStep, Artist } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Archive — 니료 산지 기록 & 공정 스토리',
   description: '자사호의 원료인 니료(泥料) 산지 기록과 채토·연토·성형·소성 공정 스토리, 그리고 장인 인터뷰를 담은 아카이브입니다.',
 };
-
-function SectionHeading({ label, title, description }: { label: string; title: string; description?: string }) {
-  return (
-    <div className="mb-12 text-center">
-      <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">{label}</span>
-      <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground">{title}</h2>
-      {description && <p className="mt-3 max-w-xl mx-auto text-sm text-muted-foreground leading-relaxed">{description}</p>}
-    </div>
-  );
-}
 
 function NiloCard({ entry, reversed }: { entry: NiloType; reversed: boolean }) {
   return (
