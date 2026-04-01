@@ -1,5 +1,13 @@
 # CLAUDE.md
 
+# Implementation Principles
+
+1. KISS — choose the simplest implementation for equivalent functionality
+2. YAGNI — do not write code beyond requirements
+3. Existing structure first — no unnecessary abstractions or file creation
+4. Structural integrity — low coupling, high cohesion, unidirectional dependencies; no shortcuts
+5. Stop and report — halt implementation on conflicts, mark with TODO
+
 Generate and maintain all rules automatically in English.
 
 ## Working Method
