@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { fetchCollections } from '@/lib/api-server';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { SectionHeading } from '@/components/common/SectionHeading';
 import type { Collection } from '@/lib/api';
 
 export const metadata: Metadata = {
@@ -14,34 +15,6 @@ export const metadata: Metadata = {
     description: '니료별·모양별 자사호 큐레이션 컬렉션',
   },
 };
-
-function SectionHeading({
-  id,
-  label,
-  title,
-  description,
-}: {
-  id?: string;
-  label: string;
-  title: string;
-  description?: string;
-}) {
-  return (
-    <div className="mb-12 text-center">
-      <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-        {label}
-      </span>
-      <h2 id={id} className="mt-2 font-display-ko text-3xl font-bold tracking-tight text-foreground">
-        {title}
-      </h2>
-      {description && (
-        <p className="mt-3 max-w-xl mx-auto text-sm text-muted-foreground leading-relaxed">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
 
 function ClayCard({ collection }: { collection: Collection }) {
   return (
