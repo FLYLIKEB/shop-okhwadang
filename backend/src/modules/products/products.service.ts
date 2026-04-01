@@ -14,6 +14,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CacheService } from '../cache/cache.service';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { applyLocale } from '../../common/utils/locale.util';
 
 const CACHE_TTL_LIST = 300;
 const CACHE_TTL_DETAIL = 600;
@@ -42,21 +43,7 @@ export class ProductsService {
   }
 
   private applyLocale(product: Product, locale?: string): Product {
-    if (!locale || locale === 'ko') return product;
-    const localeMap: Record<string, 'En' | 'Ja' | 'Zh'> = { en: 'En', ja: 'Ja', zh: 'Zh' };
-    const suffix = localeMap[locale];
-    if (!suffix) return product;
-
-    const nameKey = `name${suffix}` as keyof Product;
-    const descKey = `description${suffix}` as keyof Product;
-    const shortDescKey = `shortDescription${suffix}` as keyof Product;
-
-    return {
-      ...product,
-      name: (product[nameKey] as string | null) ?? product.name,
-      description: (product[descKey] as string | null) ?? product.description,
-      shortDescription: (product[shortDescKey] as string | null) ?? product.shortDescription,
-    };
+    return applyLocale(product, locale, ['name', 'description', 'shortDescription']);
   }
 
   async findAll(

@@ -9,6 +9,7 @@ import { CreateNoticeDto } from './dto/create-notice.dto';
 import { UpdateNoticeDto } from './dto/update-notice.dto';
 import { NoticeQueryDto } from './dto/notice-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { applyLocale } from '../../common/utils/locale.util';
 
 @Injectable()
 export class NoticesService {
@@ -20,19 +21,7 @@ export class NoticesService {
   ) {}
 
   private applyLocale(notice: Notice, locale?: string): Notice {
-    if (!locale || locale === 'ko') return notice;
-    const localeMap: Record<string, 'En' | 'Ja' | 'Zh'> = { en: 'En', ja: 'Ja', zh: 'Zh' };
-    const suffix = localeMap[locale];
-    if (!suffix) return notice;
-
-    const titleKey = `title${suffix}` as keyof Notice;
-    const contentKey = `content${suffix}` as keyof Notice;
-
-    return {
-      ...notice,
-      title: (notice[titleKey] as string | null) ?? notice.title,
-      content: (notice[contentKey] as string | null) ?? notice.content,
-    };
+    return applyLocale(notice, locale, ['title', 'content']);
   }
 
   async findAll(query: NoticeQueryDto = {}): Promise<Notice[]> {
