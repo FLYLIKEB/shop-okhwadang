@@ -57,6 +57,7 @@ const req = context.switchToHttp().getRequest<{ user?: { id: number; role: strin
   ```
 - MySQL does NOT support `DROP FOREIGN KEY IF EXISTS` — use INFORMATION_SCHEMA check helper
 - Partially-ran migrations: use `CREATE TABLE IF NOT EXISTS` + existence-check helpers for idempotent `up()`
+- **트랜잭션**: `dataSource.transaction(async (manager) => { ... })` 사용 필수 — `queryRunner` 수동 관리(`connect/startTransaction/commit/rollback/release`) 금지. 단, pessimistic lock이 필요한 경우는 `queryRunner` 허용.
 
 ### Data Types
 - `DECIMAL(12,2)` for prices
