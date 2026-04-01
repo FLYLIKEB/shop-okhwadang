@@ -130,11 +130,13 @@ class ApiClient {
     const { params: _extractedParams, ...fetchOptions } = options ?? {};
 
     const { headers: optionHeaders, ...restFetchOptions } = fetchOptions ?? {};
+    const isFormData = restFetchOptions.body instanceof FormData;
+    const defaultHeaders: Record<string, string> = isFormData ? {} : { 'Content-Type': 'application/json' };
     const response = await fetch(url, {
       ...restFetchOptions,
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
+        ...defaultHeaders,
         ...(optionHeaders as Record<string, string> | undefined),
       },
     });
@@ -146,7 +148,7 @@ class ApiClient {
         ...restFetchOptions,
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
+          ...defaultHeaders,
           ...(optionHeaders as Record<string, string> | undefined),
         },
       });
@@ -196,6 +198,12 @@ class ApiClient {
 
   delete<T>(endpoint: string, options?: RequestOptions) {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+  }
+
+  uploadFile<T>(endpoint: string, file: File, fieldName = 'file'): Promise<T> {
+    const formData = new FormData();
+    formData.append(fieldName, file);
+    return this.request<T>(endpoint, { method: 'POST', body: formData });
   }
 }
 
@@ -936,39 +944,11 @@ export const reviewsApi = {
     apiClient.patch<ReviewItem>(`/reviews/${id}`, data),
   delete: (id: number) =>
     apiClient.delete<void>(`/reviews/${id}`),
-  uploadImage: async (file: File): Promise<UploadedFile> => {
-    const url = `${API_BASE}/reviews/upload-image`;
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-      throw new Error((error as { message?: string }).message || `HTTP ${response.status}`);
-    }
-    return response.json() as Promise<UploadedFile>;
-  },
+  uploadImage: (file: File) => apiClient.uploadFile<UploadedFile>('/reviews/upload-image', file),
 };
 
 export const uploadApi = {
-  uploadImage: async (file: File): Promise<UploadedFile> => {
-    const url = `${API_BASE}/upload/image`;
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-      throw new Error((error as { message?: string }).message || `HTTP ${response.status}`);
-    }
-    return response.json() as Promise<UploadedFile>;
-  },
+  uploadImage: (file: File) => apiClient.uploadFile<UploadedFile>('/upload/image', file),
 };
 
 export interface WishlistProduct {
