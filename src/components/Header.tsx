@@ -9,7 +9,6 @@ import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigation } from '@/hooks/useNavigation';
-import { useLogoScroll } from '@/components/contexts/LogoScrollContext';
 import type { NavigationItem } from '@/lib/api';
 import LanguageSelector from '@/components/LanguageSelector';
 
@@ -42,11 +41,10 @@ interface DesktopActionsProps {
   userName?: string;
   itemCount: number;
   onLogout: () => void;
-  isOverHero?: boolean;
 }
 
-function DesktopActions({ isAuthenticated, userName, itemCount, onLogout, isOverHero }: DesktopActionsProps) {
-  const textClass = isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground";
+function DesktopActions({ isAuthenticated, userName, itemCount, onLogout }: DesktopActionsProps) {
+  const textClass = "text-muted-foreground hover:text-foreground";
   return (
     <div className="hidden md:flex items-center gap-4">
       <LanguageSelector />
@@ -249,13 +247,11 @@ export default function Header() {
   const { itemCount } = useCart();
   const { items: navItems } = useNavigation('gnb');
   const { items: sidebarItems } = useNavigation('sidebar');
-  const { progress } = useLogoScroll();
   const [query, setQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const isHomePage = pathname === '/' || /^\/(ko|en)\/?$/.test(pathname);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { setIsMenuOpen(false); setIsSearchOpen(false); }
@@ -284,18 +280,13 @@ export default function Header() {
     router.push('/search?q=' + encodeURIComponent(trimmed));
   };
 
-  const showHeaderLogo = true;
-  const isOverHero = isHomePage && progress === 1;
-
   return (
     <>
       <header className={cn(
         'sticky top-0 z-50 transition-[background-color,border-color,box-shadow] duration-300 ease-in-out',
-        isOverHero
-          ? 'bg-transparent border-b border-transparent'
-          : isScrolled
-            ? 'bg-white/95 backdrop-blur-[8px] border-b border-border shadow-sm'
-            : 'bg-white/95 backdrop-blur-[8px] border-b border-transparent',
+        isScrolled
+          ? 'bg-white/95 backdrop-blur-[8px] border-b border-border shadow-sm'
+          : 'bg-white/95 backdrop-blur-[8px] border-b border-transparent',
       )}>
         {/* Top row */}
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4">
@@ -307,25 +298,14 @@ export default function Header() {
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-            className={cn("p-2 -ml-2 transition-colors shrink-0", isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}
+            className="p-2 -ml-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
           {/* 로고 */}
-          <Link
-            href="/"
-            className={cn(
-              'shrink-0 transition-[opacity,transform,color] duration-300 ease-in-out',
-
-              (showHeaderLogo || isHomePage)
-                ? 'opacity-100 pointer-events-auto translate-x-0'
-                : 'opacity-0 pointer-events-none -translate-x-2',
-            )}
-            aria-hidden={!showHeaderLogo && !isHomePage}
-            tabIndex={!showHeaderLogo && !isHomePage ? -1 : undefined}
-          >
-            <Logo variant={isOverHero ? 'hero' : 'header'} />
+          <Link href="/" className="shrink-0">
+            <Logo variant="header" />
           </Link>
 
           {/* 데스크탑 네비 */}
@@ -334,7 +314,7 @@ export default function Header() {
               <Link
                 key={item.id}
                 href={item.url}
-                className={cn("text-sm transition-colors", isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}
+                className="text-sm transition-colors text-muted-foreground hover:text-foreground"
               >
                 {item.label}
               </Link>
@@ -356,7 +336,7 @@ export default function Header() {
               aria-label="상품 검색"
               className="w-full rounded-md border border-input bg-background pl-3 pr-10 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <button type="submit" aria-label="검색" className={cn("absolute right-2 transition-colors", isOverHero ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground")}>
+            <button type="submit" aria-label="검색" className="absolute right-2 transition-colors text-muted-foreground hover:text-foreground">
               <Search className="h-4 w-4" />
             </button>
           </form>
@@ -367,11 +347,10 @@ export default function Header() {
             userName={user?.name}
             itemCount={itemCount}
             onLogout={() => void logout()}
-            isOverHero={isOverHero}
           />
 
           {/* 모바일 우측: 검색 + 홈 + 카트 */}
-          <div className={cn("md:hidden flex items-center gap-1 ml-auto", isOverHero && "[&_svg]:text-white/80 [&_a]:text-white/80")}>
+          <div className="md:hidden flex items-center gap-1 ml-auto">
             <button
               type="button"
               onClick={() => { setIsSearchOpen((p) => !p); setIsMenuOpen(false); }}

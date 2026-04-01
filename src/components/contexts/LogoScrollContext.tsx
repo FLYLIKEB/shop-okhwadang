@@ -40,15 +40,21 @@ export function LogoScrollProvider({ children }: ProviderProps) {
 
     const handleScroll = () => {
       if (window.scrollY === 0) {
-        hasEnteredHero = false;
-        setProgress(0);
+        hasEnteredHero = true;
+        setProgress(1);
       }
     };
 
     document.addEventListener('hero-visibility', handleHeroVisibility);
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
+
+    // Trigger a scroll event so HeroBannerBlock re-dispatches hero-visibility
+    // after this listener is registered (fixes race condition on back-navigation).
+    // setTimeout 0 ensures HeroBannerBlock's scroll listener is registered first.
+    const t = setTimeout(() => window.dispatchEvent(new Event('scroll')), 0);
+
     return () => {
+      clearTimeout(t);
       document.removeEventListener('hero-visibility', handleHeroVisibility);
       window.removeEventListener('scroll', handleScroll);
     };

@@ -6,12 +6,14 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const backendUrl = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
 const nextConfig: NextConfig = {
+  productionBrowserSourceMaps: false,
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.amazonaws.com' },
       { protocol: 'https', hostname: 'cdn.okhwadang.com' },
       { protocol: 'https', hostname: 'shop-okhwadang.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'i.pinimg.com' },
       { protocol: 'https', hostname: 'm.cbw.co.kr' },
       { protocol: 'https', hostname: 'gdimg.gmarket.co.kr' },
       { protocol: 'https', hostname: 'cdn-optimized.imweb.me' },
