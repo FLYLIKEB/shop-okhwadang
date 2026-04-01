@@ -45,4 +45,5 @@ components/                     # Reusable UI + shadcn/ui wrappers
 lib/api.ts                      # API client
 contexts/                       # AuthContext, CartContext
 hooks/useWishlistToggle.ts      # Wishlist toggle with optimistic update
+utils/currency.ts               # Price formatting utility (formatCurrency) — single source of truth
 ```
