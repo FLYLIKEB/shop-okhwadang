@@ -99,6 +99,11 @@ Security pipeline: CORS → Rate Limiting → JWT Guard → ValidationPipe → C
   import { findOrThrow } from '../common/utils/repository.util';
   const product = await findOrThrow(this.productRepo, { id }, '상품을 찾을 수 없습니다.');
   ```
+- **`assertOwnership(entityUserId, currentUserId, message?)`** — 소유권 검증 + ForbiddenException. 인라인 `Number(x.userId) !== Number(userId)` 비교 금지, 반드시 이 유틸리티 사용. BigInt string 비교 버그를 중앙에서 처리.
+  ```typescript
+  import { assertOwnership } from '../common/utils/ownership.util';
+  assertOwnership(order.userId, userId);
+  ```
 
 ## Key Directories
 
