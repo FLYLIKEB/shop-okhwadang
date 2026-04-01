@@ -197,6 +197,25 @@ class ApiClient {
   delete<T>(endpoint: string, options?: RequestOptions) {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
+
+  async uploadFile<T>(endpoint: string, file: File, fieldName = 'file'): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const formData = new FormData();
+    formData.append(fieldName, file);
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
+      const message = Array.isArray(error.message)
+        ? error.message.join(', ')
+        : ((error as { message?: string }).message || `HTTP ${response.status}`);
+      throw new Error(message);
+    }
+    return response.json() as Promise<T>;
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE);
@@ -936,39 +955,11 @@ export const reviewsApi = {
     apiClient.patch<ReviewItem>(`/reviews/${id}`, data),
   delete: (id: number) =>
     apiClient.delete<void>(`/reviews/${id}`),
-  uploadImage: async (file: File): Promise<UploadedFile> => {
-    const url = `${API_BASE}/reviews/upload-image`;
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-      throw new Error((error as { message?: string }).message || `HTTP ${response.status}`);
-    }
-    return response.json() as Promise<UploadedFile>;
-  },
+  uploadImage: (file: File) => apiClient.uploadFile<UploadedFile>('/reviews/upload-image', file),
 };
 
 export const uploadApi = {
-  uploadImage: async (file: File): Promise<UploadedFile> => {
-    const url = `${API_BASE}/upload/image`;
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-      throw new Error((error as { message?: string }).message || `HTTP ${response.status}`);
-    }
-    return response.json() as Promise<UploadedFile>;
-  },
+  uploadImage: (file: File) => apiClient.uploadFile<UploadedFile>('/upload/image', file),
 };
 
 export interface WishlistProduct {

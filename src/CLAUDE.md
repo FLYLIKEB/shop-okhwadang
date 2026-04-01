@@ -13,6 +13,7 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 - OAuth callbacks: use shared OAuthCallbackHandler component — do not create per-provider page copies
 - `console.log` in committed code is forbidden
 - Tailwind arbitrary values (`h-[123px]`) forbidden — use theme tokens
+- File uploads: use `ApiClient.uploadFile()` — never bypass ApiClient with raw fetch + FormData
 
 ## Responsive & Accessibility
 
