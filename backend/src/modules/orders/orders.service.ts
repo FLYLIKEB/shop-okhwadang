@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger,
+  Injectable, NotFoundException, BadRequestException, Logger,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -11,6 +11,7 @@ import { ProductOption } from '../products/entities/product-option.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 @Injectable()
 export class OrdersService {
@@ -205,9 +206,7 @@ export class OrdersService {
       throw new NotFoundException('주문을 찾을 수 없습니다.');
     }
 
-    if (Number(order.userId) !== Number(userId)) {
-      throw new ForbiddenException('접근 권한이 없습니다.');
-    }
+    assertOwnership(order.userId, userId);
 
     return order;
   }

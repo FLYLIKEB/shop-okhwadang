@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +12,7 @@ import { ProductOption } from '../products/entities/product-option.entity';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartQuantityDto } from './dto/update-cart-quantity.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 export interface CartItemWithPrice {
   id: number;
@@ -152,9 +152,7 @@ export class CartService {
     dto: UpdateCartQuantityDto,
   ): Promise<CartItem> {
     const item = await findOrThrow(this.cartItemRepository, { id }, '장바구니 항목을 찾을 수 없습니다.');
-    if (Number(item.userId) !== Number(userId)) {
-      throw new ForbiddenException('접근 권한이 없습니다.');
-    }
+    assertOwnership(item.userId, userId);
 
     item.quantity = dto.quantity;
     return this.cartItemRepository.save(item);
@@ -162,9 +160,7 @@ export class CartService {
 
   async remove(id: number, userId: number): Promise<{ message: string }> {
     const item = await findOrThrow(this.cartItemRepository, { id }, '장바구니 항목을 찾을 수 없습니다.');
-    if (Number(item.userId) !== Number(userId)) {
-      throw new ForbiddenException('접근 권한이 없습니다.');
-    }
+    assertOwnership(item.userId, userId);
 
     await this.cartItemRepository.remove(item);
     return { message: '삭제되었습니다.' };

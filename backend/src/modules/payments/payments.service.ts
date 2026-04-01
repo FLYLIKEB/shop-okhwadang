@@ -1,6 +1,6 @@
 import {
   Injectable, NotFoundException, BadRequestException, ConflictException,
-  ForbiddenException, Logger, Inject, InternalServerErrorException,
+  Logger, Inject, InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,6 +15,7 @@ import { CancelPaymentDto } from './dto/cancel-payment.dto';
 import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { resolveGatewayByLocale } from './payments.module';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 @Injectable()
 export class PaymentsService {
@@ -44,7 +45,7 @@ export class PaymentsService {
   async prepare(dto: PreparePaymentDto, userId: number) {
     const order = await this.orderRepository.findOne({ where: { id: dto.orderId } });
     if (!order) throw new NotFoundException('주문을 찾을 수 없습니다.');
-    if (Number(order.userId) !== Number(userId)) throw new ForbiddenException('접근 권한이 없습니다.');
+    assertOwnership(order.userId, userId);
     if (order.status !== OrderStatus.PENDING) {
       throw new ConflictException('이미 처리된 주문입니다.');
     }
@@ -82,7 +83,7 @@ export class PaymentsService {
       relations: ['order'],
     });
     if (!payment) throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
-    if (Number(payment.order.userId) !== Number(userId)) throw new ForbiddenException('접근 권한이 없습니다.');
+    assertOwnership(payment.order.userId, userId);
 
     if (payment.status === PaymentStatus.CONFIRMED) {
       throw new ConflictException('이미 승인된 결제입니다.');
@@ -143,7 +144,7 @@ export class PaymentsService {
       relations: ['order'],
     });
     if (!payment) throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
-    if (Number(payment.order.userId) !== Number(userId)) throw new ForbiddenException('접근 권한이 없습니다.');
+    assertOwnership(payment.order.userId, userId);
 
     if (payment.status !== PaymentStatus.CONFIRMED) {
       throw new BadRequestException('취소 가능한 상태가 아닙니다.');
