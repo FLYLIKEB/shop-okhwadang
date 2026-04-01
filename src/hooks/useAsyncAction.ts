@@ -30,7 +30,7 @@ export function useAsyncAction<T>(
       optRef.current.onSuccess?.();
       return result;
     } catch (err) {
-      const message = optRef.current.errorMessage ?? handleApiError(err, '오류가 발생했습니다.');
+      const message = handleApiError(err, optRef.current.errorMessage ?? '오류가 발생했습니다.');
       toast.error(message);
       throw err;
     } finally {
