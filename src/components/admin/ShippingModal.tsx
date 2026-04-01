@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { adminOrdersApi } from '@/lib/api';
+import { handleApiError } from '@/utils/error';
 
 interface ShippingModalProps {
   orderId: number;
@@ -38,8 +39,8 @@ export function ShippingModal({ orderId, orderNumber, onClose, onSuccess }: Ship
       });
       toast.success('운송장이 등록되었습니다.');
       onSuccess();
-    } catch {
-      toast.error('운송장 등록에 실패했습니다.');
+    } catch (err) {
+      toast.error(handleApiError(err, '운송장 등록에 실패했습니다.'));
     } finally {
       setSubmitting(false);
     }
