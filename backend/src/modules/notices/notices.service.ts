@@ -1,6 +1,5 @@
 import {
   Injectable,
-  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +8,7 @@ import { Notice } from './entities/notice.entity';
 import { CreateNoticeDto } from './dto/create-notice.dto';
 import { UpdateNoticeDto } from './dto/update-notice.dto';
 import { NoticeQueryDto } from './dto/notice-query.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 @Injectable()
 export class NoticesService {
@@ -44,10 +44,7 @@ export class NoticesService {
   }
 
   async findOne(id: number, locale?: string): Promise<Notice> {
-    const notice = await this.noticeRepo.findOne({ where: { id } });
-    if (!notice) {
-      throw new NotFoundException('공지사항을 찾을 수 없습니다.');
-    }
+    const notice = await findOrThrow(this.noticeRepo, { id }, '공지사항을 찾을 수 없습니다.');
     await this.noticeRepo.update(id, { viewCount: () => 'view_count + 1' });
     notice.viewCount += 1;
     return this.applyLocale(notice, locale);
@@ -66,19 +63,13 @@ export class NoticesService {
   }
 
   async update(id: number, dto: UpdateNoticeDto): Promise<Notice> {
-    const notice = await this.noticeRepo.findOne({ where: { id } });
-    if (!notice) {
-      throw new NotFoundException('공지사항을 찾을 수 없습니다.');
-    }
+    const notice = await findOrThrow(this.noticeRepo, { id }, '공지사항을 찾을 수 없습니다.');
     Object.assign(notice, dto);
     return this.noticeRepo.save(notice);
   }
 
   async remove(id: number): Promise<void> {
-    const notice = await this.noticeRepo.findOne({ where: { id } });
-    if (!notice) {
-      throw new NotFoundException('공지사항을 찾을 수 없습니다.');
-    }
+    const notice = await findOrThrow(this.noticeRepo, { id }, '공지사항을 찾을 수 없습니다.');
     await this.noticeRepo.remove(notice);
     this.logger.log(`Notice deleted: id=${id}`);
   }

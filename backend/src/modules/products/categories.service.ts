@@ -1,7 +1,6 @@
 import {
   Injectable,
   BadRequestException,
-  NotFoundException,
   ConflictException,
   Logger,
 } from '@nestjs/common';
@@ -11,6 +10,7 @@ import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { ReorderCategoriesDto } from './dto/reorder-categories.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 export interface CategoryTree extends Omit<Category, 'children' | 'products'> {
   children: CategoryTree[];
@@ -90,10 +90,7 @@ export class CategoriesService {
     }
 
     if (dto.parentId) {
-      const parent = await this.categoryRepository.findOne({ where: { id: dto.parentId } });
-      if (!parent) {
-        throw new NotFoundException(`부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
-      }
+      await findOrThrow(this.categoryRepository, { id: dto.parentId }, `부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
     }
 
     const existing = await this.categoryRepository.findOne({ where: { slug: dto.slug } });
@@ -114,10 +111,7 @@ export class CategoriesService {
   }
 
   async update(id: number, dto: UpdateCategoryDto): Promise<Category> {
-    const category = await this.categoryRepository.findOne({ where: { id } });
-    if (!category) {
-      throw new NotFoundException(`카테고리(id: ${id})를 찾을 수 없습니다.`);
-    }
+    const category = await findOrThrow(this.categoryRepository, { id }, `카테고리(id: ${id})를 찾을 수 없습니다.`);
 
     if (dto.parentId !== undefined) {
       if (dto.parentId === id) {
@@ -125,10 +119,7 @@ export class CategoriesService {
       }
 
       if (dto.parentId) {
-        const parent = await this.categoryRepository.findOne({ where: { id: dto.parentId } });
-        if (!parent) {
-          throw new NotFoundException(`부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
-        }
+        await findOrThrow(this.categoryRepository, { id: dto.parentId }, `부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
 
         const depth = await this.getDepth(dto.parentId);
         if (depth >= 3) {
@@ -157,10 +148,7 @@ export class CategoriesService {
   }
 
   async remove(id: number): Promise<void> {
-    const category = await this.categoryRepository.findOne({ where: { id } });
-    if (!category) {
-      throw new NotFoundException(`카테고리(id: ${id})를 찾을 수 없습니다.`);
-    }
+    const category = await findOrThrow(this.categoryRepository, { id }, `카테고리(id: ${id})를 찾을 수 없습니다.`);
 
     const childCount = await this.categoryRepository.count({ where: { parentId: id } });
     if (childCount > 0) {

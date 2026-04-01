@@ -1,11 +1,11 @@
 import {
   Injectable,
-  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { Faq } from './entities/faq.entity';
+import { findOrThrow } from '../../common/utils/repository.util';
 import { CreateFaqDto } from './dto/create-faq.dto';
 import { UpdateFaqDto } from './dto/update-faq.dto';
 import { FaqQueryDto } from './dto/faq-query.dto';
@@ -61,19 +61,13 @@ export class FaqsService {
   }
 
   async update(id: number, dto: UpdateFaqDto): Promise<Faq> {
-    const faq = await this.faqRepo.findOne({ where: { id } });
-    if (!faq) {
-      throw new NotFoundException('FAQ를 찾을 수 없습니다.');
-    }
+    const faq = await findOrThrow(this.faqRepo, { id }, 'FAQ를 찾을 수 없습니다.');
     Object.assign(faq, dto);
     return this.faqRepo.save(faq);
   }
 
   async remove(id: number): Promise<void> {
-    const faq = await this.faqRepo.findOne({ where: { id } });
-    if (!faq) {
-      throw new NotFoundException('FAQ를 찾을 수 없습니다.');
-    }
+    const faq = await findOrThrow(this.faqRepo, { id }, 'FAQ를 찾을 수 없습니다.');
     await this.faqRepo.remove(faq);
     this.logger.log(`FAQ deleted: id=${id}`);
   }

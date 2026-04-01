@@ -3,7 +3,6 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +11,7 @@ import { Review } from './entities/review.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 export interface ReviewResponse {
   id: number;
@@ -187,14 +187,7 @@ export class ReviewsService {
   }
 
   async update(id: number, userId: number, dto: UpdateReviewDto): Promise<ReviewResponse> {
-    const review = await this.reviewRepo.findOne({
-      where: { id },
-      relations: ['user'],
-    });
-
-    if (!review) {
-      throw new NotFoundException('리뷰를 찾을 수 없습니다.');
-    }
+    const review = await findOrThrow(this.reviewRepo, { id }, '리뷰를 찾을 수 없습니다.', ['user']);
 
     if (Number(review.userId) !== Number(userId)) {
       throw new ForbiddenException('권한이 없습니다.');
@@ -209,11 +202,7 @@ export class ReviewsService {
   }
 
   async remove(id: number, userId: number, userRole: string): Promise<void> {
-    const review = await this.reviewRepo.findOne({ where: { id } });
-
-    if (!review) {
-      throw new NotFoundException('리뷰를 찾을 수 없습니다.');
-    }
+    const review = await findOrThrow(this.reviewRepo, { id }, '리뷰를 찾을 수 없습니다.');
 
     if (Number(review.userId) !== Number(userId) && userRole !== 'admin' && userRole !== 'super_admin') {
       throw new ForbiddenException('권한이 없습니다.');

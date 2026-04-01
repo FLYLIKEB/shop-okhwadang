@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, BadRequestException,
+  Injectable, BadRequestException,
   ConflictException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +9,7 @@ import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 const ALLOWED_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID],
@@ -70,10 +71,7 @@ export class AdminOrdersService {
   }
 
   async updateStatus(orderId: number, nextStatus: OrderStatus) {
-    const order = await this.orderRepository.findOne({ where: { id: orderId } });
-    if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
-    }
+    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
 
     const currentStatus = order.status;
     const allowed = ALLOWED_ORDER_TRANSITIONS[currentStatus] ?? [];
@@ -113,10 +111,7 @@ export class AdminOrdersService {
   }
 
   async registerShipping(orderId: number, dto: RegisterShippingDto) {
-    const order = await this.orderRepository.findOne({ where: { id: orderId } });
-    if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
-    }
+    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
 
     const existing = await this.shippingRepository.findOne({ where: { orderId } });
     if (existing && existing.trackingNumber) {
