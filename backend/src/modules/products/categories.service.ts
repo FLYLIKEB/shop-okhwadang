@@ -11,6 +11,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { ReorderCategoriesDto } from './dto/reorder-categories.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { buildTree } from '../../common/utils/tree.util';
 
 export interface CategoryTree extends Omit<Category, 'children' | 'products'> {
   children: CategoryTree[];
@@ -43,28 +44,7 @@ export class CategoriesService {
   }
 
   private buildTree(categories: Category[]): CategoryTree[] {
-    const map = new Map<number, CategoryTree>();
-    const roots: CategoryTree[] = [];
-
-    for (const cat of categories) {
-      map.set(cat.id, { ...cat, children: [] });
-    }
-
-    for (const cat of categories) {
-      const node = map.get(cat.id)!;
-      if (cat.parentId === null) {
-        roots.push(node);
-      } else {
-        const parent = map.get(cat.parentId);
-        if (parent) {
-          parent.children.push(node);
-        } else {
-          roots.push(node);
-        }
-      }
-    }
-
-    return roots;
+    return buildTree(categories, 'id', 'parentId') as CategoryTree[];
   }
 
   private async getDepth(parentId: number | null | undefined): Promise<number> {

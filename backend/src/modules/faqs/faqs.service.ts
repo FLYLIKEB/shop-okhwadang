@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { Faq } from './entities/faq.entity';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { applyLocale } from '../../common/utils/locale.util';
 import { CreateFaqDto } from './dto/create-faq.dto';
 import { UpdateFaqDto } from './dto/update-faq.dto';
 import { FaqQueryDto } from './dto/faq-query.dto';
@@ -20,19 +21,7 @@ export class FaqsService {
   ) {}
 
   private applyLocale(faq: Faq, locale?: string): Faq {
-    if (!locale || locale === 'ko') return faq;
-    const localeMap: Record<string, 'En' | 'Ja' | 'Zh'> = { en: 'En', ja: 'Ja', zh: 'Zh' };
-    const suffix = localeMap[locale];
-    if (!suffix) return faq;
-
-    const questionKey = `question${suffix}` as keyof Faq;
-    const answerKey = `answer${suffix}` as keyof Faq;
-
-    return {
-      ...faq,
-      question: (faq[questionKey] as string | null) ?? faq.question,
-      answer: (faq[answerKey] as string | null) ?? faq.answer,
-    };
+    return applyLocale(faq, locale, ['question', 'answer']);
   }
 
   async findAll(query: FaqQueryDto): Promise<Faq[]> {
