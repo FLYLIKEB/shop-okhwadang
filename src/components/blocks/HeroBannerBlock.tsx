@@ -9,6 +9,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
+import { useScrollLogoTransition } from '@/hooks/useScrollLogoTransition';
+import { ScrollLogoProvider } from '@/contexts/ScrollLogoContext';
 
 interface Props {
   content: HeroBannerContent;
@@ -41,36 +43,13 @@ const DEFAULT_SLIDES: HeroBannerSlide[] = [
   },
 ];
 
-function useHeroLogo(sectionRef: React.RefObject<HTMLElement | null>) {
-  const [opacity, setOpacity] = useState(1);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const el = sectionRef.current;
-      if (!el) return;
-      const bottom = el.getBoundingClientRect().bottom;
-      const fadeStart = window.innerHeight * 0.5;
-      const fadeEnd = window.innerHeight * 0.15;
-      if (bottom >= fadeStart) setOpacity(1);
-      else if (bottom <= fadeEnd) setOpacity(0);
-      else setOpacity((bottom - fadeEnd) / (fadeStart - fadeEnd));
-
-      const isPast = bottom < 56;
-      document.dispatchEvent(new CustomEvent('hero-visibility', { detail: { isPast } }));
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [sectionRef]);
-
-  return opacity;
-}
-
-function SliderHero({ slides, sectionRef, logoOpacity }: {
+interface SliderHeroProps {
   slides: HeroBannerSlide[];
   sectionRef: React.RefObject<HTMLElement | null>;
-  logoOpacity: number;
-}) {
+  heroLogoStyle: React.CSSProperties;
+}
+
+function SliderHero({ slides, sectionRef, heroLogoStyle }: SliderHeroProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
 
@@ -120,11 +99,11 @@ function SliderHero({ slides, sectionRef, logoOpacity }: {
                 />
               )}
 
-<div className="absolute inset-0 bg-black/45" />
+              <div className="absolute inset-0 bg-black/45" />
               <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
 
               <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
-                <div style={{ opacity: logoOpacity, transition: 'opacity 0.1s linear' }}>
+                <div style={heroLogoStyle}>
                   <Logo variant="hero" />
                 </div>
               </div>
@@ -194,11 +173,25 @@ export default function HeroBannerBlock({ content }: Props) {
   const pathname = usePathname();
   const isHome = pathname === '/';
   const sectionRef = useRef<HTMLElement>(null);
-  const logoOpacity = useHeroLogo(sectionRef);
+
+  const { heroLogoStyle, headerLogoStyle, progress, isHeroVisible } = useScrollLogoTransition({
+    heroRef: sectionRef,
+  });
+
+  const scrollLogoContextValue = {
+    progress,
+    isHeroVisible,
+    heroLogoStyle,
+    headerLogoStyle,
+  };
 
   if (template === 'slider') {
     const resolvedSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
-    return <SliderHero slides={resolvedSlides} sectionRef={sectionRef} logoOpacity={logoOpacity} />;
+    return (
+      <ScrollLogoProvider value={scrollLogoContextValue}>
+        <SliderHero slides={resolvedSlides} sectionRef={sectionRef} heroLogoStyle={heroLogoStyle} />
+      </ScrollLogoProvider>
+    );
   }
 
   if (template === 'split') {
@@ -225,43 +218,43 @@ export default function HeroBannerBlock({ content }: Props) {
     );
   }
 
-  // fullscreen (default)
   return (
-    <section ref={sectionRef} className="relative flex h-[60vh] min-h-[400px] md:h-[80vh] items-center justify-center overflow-hidden bg-neutral-900">
-      {isHome && (
-        <div
-          className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20"
-          style={{ opacity: logoOpacity, transition: 'opacity 0.1s linear' }}
-        >
-          <Logo variant="hero" />
-        </div>
-      )}
-      {image_url && (
-        <Image
-          src={image_url}
-          alt={title}
-          fill
-          className="object-cover object-center animate-kenburns"
-          priority
-          sizes="100vw"
-        />
-      )}
-      {image_url && <div className="absolute inset-0 bg-black/45" />}
-      {image_url && <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />}
-      <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : ''}`}>
-        <h2 className="text-3xl md:text-5xl">{title}</h2>
-        {subtitle && <p className="mt-4 text-lg opacity-80">{subtitle}</p>}
-        {cta_text && cta_url && (
-          <div className="mt-8">
-            <Link
-              href={cta_url}
-              className="inline-block rounded-full border border-current px-8 py-3 text-sm font-medium tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
-            >
-              {cta_text}
-            </Link>
+    <ScrollLogoProvider value={scrollLogoContextValue}>
+      <section ref={sectionRef} className="relative flex h-[60vh] min-h-[400px] md:h-[80vh] items-center justify-center overflow-hidden bg-neutral-900">
+        {isHome && (
+          <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
+            <div style={heroLogoStyle}>
+              <Logo variant="hero" />
+            </div>
           </div>
         )}
-      </div>
-    </section>
+        {image_url && (
+          <Image
+            src={image_url}
+            alt={title}
+            fill
+            className="object-cover object-center animate-kenburns"
+            priority
+            sizes="100vw"
+          />
+        )}
+        {image_url && <div className="absolute inset-0 bg-black/45" />}
+        {image_url && <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />}
+        <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : ''}`}>
+          <h2 className="text-3xl md:text-5xl">{title}</h2>
+          {subtitle && <p className="mt-4 text-lg opacity-80">{subtitle}</p>}
+          {cta_text && cta_url && (
+            <div className="mt-8">
+              <Link
+                href={cta_url}
+                className="inline-block rounded-full border border-current px-8 py-3 text-sm font-medium tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+              >
+                {cta_text}
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+    </ScrollLogoProvider>
   );
 }

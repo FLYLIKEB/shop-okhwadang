@@ -9,6 +9,7 @@ import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigation } from '@/hooks/useNavigation';
+import { useScrollLogoContext } from '@/contexts/ScrollLogoContext';
 import type { NavigationItem } from '@/lib/api';
 import LanguageSelector from '@/components/LanguageSelector';
 
@@ -251,6 +252,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const scrollLogo = useScrollLogoContext();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -305,7 +307,9 @@ export default function Header() {
 
           {/* 로고 */}
           <Link href="/" className="shrink-0">
-            <Logo variant="header" />
+            <div style={scrollLogo?.headerLogoStyle}>
+              <Logo variant="header" />
+            </div>
           </Link>
 
           {/* 데스크탑 네비 */}
