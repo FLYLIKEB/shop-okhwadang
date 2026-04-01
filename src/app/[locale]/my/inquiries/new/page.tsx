@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { inquiriesApi } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { handleApiError } from '@/utils/error';
 
 const INQUIRY_TYPES = ['상품', '배송', '결제', '교환/반품', '기타'];
 
@@ -28,8 +29,8 @@ export default function NewInquiryPage() {
       await inquiriesApi.create({ type, title: title.trim(), content: content.trim() });
       toast.success('문의가 접수되었습니다.');
       router.push('/my/inquiries');
-    } catch {
-      toast.error('문의 접수에 실패했습니다.');
+    } catch (err) {
+      toast.error(handleApiError(err, '문의 접수에 실패했습니다.'));
     } finally {
       setSubmitting(false);
     }

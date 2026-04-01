@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { wishlistApi, cartApi } from '@/lib/api';
 import type { WishlistItem } from '@/lib/api';
+import { handleApiError } from '@/utils/error';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/EmptyState';
@@ -33,8 +34,8 @@ export default function WishlistPage() {
       await wishlistApi.remove(wishlistId);
       setItems((prev) => prev.filter((item) => item.id !== wishlistId));
       toast.success('위시리스트에서 삭제되었습니다.');
-    } catch {
-      toast.error('삭제에 실패했습니다.');
+    } catch (err) {
+      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
     }
   };
 
@@ -42,8 +43,8 @@ export default function WishlistPage() {
     try {
       await cartApi.add({ productId, productOptionId: null, quantity: 1 });
       toast.success('장바구니에 추가되었습니다.');
-    } catch {
-      toast.error('장바구니 추가에 실패했습니다.');
+    } catch (err) {
+      toast.error(handleApiError(err, '장바구니 추가에 실패했습니다.'));
     }
   };
 
