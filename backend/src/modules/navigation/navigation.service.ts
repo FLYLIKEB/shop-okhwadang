@@ -1,6 +1,5 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +8,7 @@ import { NavigationItem } from './entities/navigation-item.entity';
 import { CreateNavigationItemDto } from './dto/create-navigation-item.dto';
 import { UpdateNavigationItemDto } from './dto/update-navigation-item.dto';
 import { ReorderNavigationDto } from './dto/reorder-navigation.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 const MAX_DEPTH = 3;
 
@@ -44,10 +44,7 @@ export class NavigationService {
   }
 
   async update(id: number, dto: UpdateNavigationItemDto): Promise<NavigationItem> {
-    const item = await this.navigationRepository.findOne({ where: { id } });
-    if (!item) {
-      throw new NotFoundException('존재하지 않는 네비게이션 항목입니다.');
-    }
+    const item = await findOrThrow(this.navigationRepository, { id } as any, '존재하지 않는 네비게이션 항목입니다.');
 
     if (dto.parent_id !== undefined) {
       if (dto.parent_id !== null) {
@@ -64,10 +61,7 @@ export class NavigationService {
   }
 
   async remove(id: number): Promise<void> {
-    const item = await this.navigationRepository.findOne({ where: { id } });
-    if (!item) {
-      throw new NotFoundException('존재하지 않는 네비게이션 항목입니다.');
-    }
+    const item = await findOrThrow(this.navigationRepository, { id } as any, '존재하지 않는 네비게이션 항목입니다.');
     await this.navigationRepository.remove(item);
   }
 

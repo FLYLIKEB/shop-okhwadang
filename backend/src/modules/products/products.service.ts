@@ -13,6 +13,7 @@ import { QueryProductsDto, ProductSort } from './dto/query-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CacheService } from '../cache/cache.service';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 const CACHE_TTL_LIST = 300;
 const CACHE_TTL_DETAIL = 600;
@@ -243,11 +244,7 @@ export class ProductsService {
   }
 
   private async findById(id: number): Promise<Product> {
-    const product = await this.productRepository.findOne({ where: { id } });
-    if (!product) {
-      throw new NotFoundException('상품을 찾을 수 없습니다.');
-    }
-    return product;
+    return findOrThrow(this.productRepository, { id } as any, '상품을 찾을 수 없습니다.');
   }
 
   async create(dto: CreateProductDto): Promise<Product> {

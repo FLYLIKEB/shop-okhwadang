@@ -92,6 +92,14 @@ Security pipeline: CORS → Rate Limiting → JWT Guard → ValidationPipe → C
 - Unit tests: `npm run build && npm run test`
 - E2E tests: `npm run test:e2e` — **required for any entity/migration/DB change**
 
+## Common Utilities (`src/common/utils/`)
+
+- **`findOrThrow(repo, where, message, relations?)`** — 엔티티 조회 + NotFoundException. 인라인 `findOne → if (!x) throw` 패턴 금지, 반드시 이 유틸리티 사용.
+  ```typescript
+  import { findOrThrow } from '../common/utils/repository.util';
+  const product = await findOrThrow(this.productRepo, { id } as any, '상품을 찾을 수 없습니다.');
+  ```
+
 ## Key Directories
 
 ```

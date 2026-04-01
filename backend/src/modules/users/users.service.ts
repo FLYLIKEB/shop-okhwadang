@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger,
+  Injectable, BadRequestException, ForbiddenException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,6 +8,7 @@ import { UserAddress } from './entities/user-address.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 const MAX_ADDRESSES = 10;
 
@@ -23,10 +24,7 @@ export class UsersService {
   ) {}
 
   async updateProfile(userId: number, dto: UpdateProfileDto): Promise<Omit<User, 'password' | 'refreshToken'>> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
-    }
+    const user = await findOrThrow(this.userRepository, { id: userId } as any, '사용자를 찾을 수 없습니다.');
 
     if (dto.name !== undefined) user.name = dto.name;
     if (dto.phone !== undefined) user.phone = dto.phone ?? null;
@@ -73,10 +71,7 @@ export class UsersService {
   }
 
   async updateAddress(userId: number, addressId: number, dto: UpdateAddressDto): Promise<UserAddress> {
-    const address = await this.addressRepository.findOne({ where: { id: addressId } });
-    if (!address) {
-      throw new NotFoundException('배송지를 찾을 수 없습니다.');
-    }
+    const address = await findOrThrow(this.addressRepository, { id: addressId } as any, '배송지를 찾을 수 없습니다.');
     if (Number(address.userId) !== Number(userId)) {
       throw new ForbiddenException('접근 권한이 없습니다.');
     }
@@ -101,10 +96,7 @@ export class UsersService {
   }
 
   async deleteAddress(userId: number, addressId: number): Promise<{ message: string }> {
-    const address = await this.addressRepository.findOne({ where: { id: addressId } });
-    if (!address) {
-      throw new NotFoundException('배송지를 찾을 수 없습니다.');
-    }
+    const address = await findOrThrow(this.addressRepository, { id: addressId } as any, '배송지를 찾을 수 없습니다.');
     if (Number(address.userId) !== Number(userId)) {
       throw new ForbiddenException('접근 권한이 없습니다.');
     }

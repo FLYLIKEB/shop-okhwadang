@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, BadRequestException,
+  Injectable, BadRequestException,
   ForbiddenException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +10,7 @@ import { MockShippingAdapter } from './adapters/mock-shipping.adapter';
 import { CarrierCode, TrackingResult } from './interfaces/shipping-provider.interface';
 import { RegisterTrackingDto } from './dto/register-tracking.dto';
 import { TrackShipmentDto } from './dto/track-shipment.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 const ALLOWED_TRANSITIONS: Record<ShippingStatus, ShippingStatus[]> = {
   [ShippingStatus.PAYMENT_CONFIRMED]: [ShippingStatus.PREPARING],
@@ -35,12 +36,10 @@ export class ShippingService {
   }
 
   async getByOrderId(orderId: number, userId: number) {
-    const order = await this.orderRepository.findOne({ where: { id: orderId } });
-    if (!order) throw new NotFoundException('배송 정보를 찾을 수 없습니다.');
+    const order = await findOrThrow(this.orderRepository, { id: orderId } as any, '배송 정보를 찾을 수 없습니다.');
     if (Number(order.userId) !== Number(userId)) throw new ForbiddenException('접근 권한이 없습니다.');
 
-    const shipping = await this.shippingRepository.findOne({ where: { orderId } });
-    if (!shipping) throw new NotFoundException('배송 정보를 찾을 수 없습니다.');
+    const shipping = await findOrThrow(this.shippingRepository, { orderId } as any, '배송 정보를 찾을 수 없습니다.');
 
     let tracking: TrackingResult | null = null;
     if (shipping.trackingNumber) {
@@ -81,11 +80,9 @@ export class ShippingService {
   }
 
   async registerTracking(orderId: number, dto: RegisterTrackingDto) {
-    const order = await this.orderRepository.findOne({ where: { id: orderId } });
-    if (!order) throw new NotFoundException('주문 정보를 찾을 수 없습니다.');
+    const order = await findOrThrow(this.orderRepository, { id: orderId } as any, '주문 정보를 찾을 수 없습니다.');
 
-    const shipping = await this.shippingRepository.findOne({ where: { orderId } });
-    if (!shipping) throw new NotFoundException('배송 정보를 찾을 수 없습니다.');
+    const shipping = await findOrThrow(this.shippingRepository, { orderId } as any, '배송 정보를 찾을 수 없습니다.');
 
     this.validateTransition(shipping.status, ShippingStatus.PREPARING);
 

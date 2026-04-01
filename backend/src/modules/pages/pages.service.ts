@@ -13,6 +13,7 @@ import { UpdatePageDto } from './dto/update-page.dto';
 import { CreatePageBlockDto } from './dto/create-page-block.dto';
 import { UpdatePageBlockDto } from './dto/update-page-block.dto';
 import { ReorderBlocksDto } from './dto/reorder-blocks.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 const SUPPORTED_BLOCK_TYPES = [
   'hero_banner',
@@ -72,10 +73,7 @@ export class PagesService {
   }
 
   async update(id: number, dto: UpdatePageDto): Promise<Page> {
-    const page = await this.pageRepository.findOne({ where: { id } });
-    if (!page) {
-      throw new NotFoundException('존재하지 않는 페이지입니다.');
-    }
+    const page = await findOrThrow(this.pageRepository, { id } as any, '존재하지 않는 페이지입니다.');
     if (dto.slug && dto.slug !== page.slug) {
       const existing = await this.pageRepository.findOne({
         where: { slug: dto.slug },
@@ -89,10 +87,7 @@ export class PagesService {
   }
 
   async remove(id: number): Promise<void> {
-    const page = await this.pageRepository.findOne({ where: { id } });
-    if (!page) {
-      throw new NotFoundException('존재하지 않는 페이지입니다.');
-    }
+    const page = await findOrThrow(this.pageRepository, { id } as any, '존재하지 않는 페이지입니다.');
     if (page.is_published) {
       throw new BadRequestException(
         '공개 중인 페이지는 삭제할 수 없습니다. 먼저 비공개 처리하세요.',
@@ -105,10 +100,7 @@ export class PagesService {
     pageId: number,
     dto: CreatePageBlockDto,
   ): Promise<PageBlock> {
-    const page = await this.pageRepository.findOne({ where: { id: pageId } });
-    if (!page) {
-      throw new NotFoundException('존재하지 않는 페이지입니다.');
-    }
+    const page = await findOrThrow(this.pageRepository, { id: pageId } as any, '존재하지 않는 페이지입니다.');
     if (!SUPPORTED_BLOCK_TYPES.includes(dto.type)) {
       throw new BadRequestException('지원하지 않는 블록 타입입니다.');
     }
@@ -151,10 +143,7 @@ export class PagesService {
     pageId: number,
     dto: ReorderBlocksDto,
   ): Promise<void> {
-    const page = await this.pageRepository.findOne({ where: { id: pageId } });
-    if (!page) {
-      throw new NotFoundException('존재하지 않는 페이지입니다.');
-    }
+    const page = await findOrThrow(this.pageRepository, { id: pageId } as any, '존재하지 않는 페이지입니다.');
     for (const item of dto.orders) {
       await this.blockRepository.update(
         { id: item.id, page_id: pageId },

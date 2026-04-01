@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Collection, CollectionType } from './entities/collection.entity';
+import { findOrThrow } from '../../common/utils/repository.util';
 import { CreateCollectionDto, UpdateCollectionDto } from './dto/collection.dto';
 
 @Injectable()
@@ -25,11 +26,7 @@ export class CollectionsService {
   }
 
   async findById(id: number): Promise<Collection> {
-    const collection = await this.collectionRepository.findOne({ where: { id } });
-    if (!collection) {
-      throw new NotFoundException('컬렉션을 찾을 수 없습니다.');
-    }
-    return collection;
+    return findOrThrow(this.collectionRepository, { id } as any, '컬렉션을 찾을 수 없습니다.');
   }
 
   async create(dto: CreateCollectionDto): Promise<Collection> {

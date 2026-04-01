@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { Promotion } from './entities/promotion.entity';
 import { Banner } from './entities/banner.entity';
 import { CreatePromotionDto, UpdatePromotionDto } from './dto/create-promotion.dto';
 import { CreateBannerDto, UpdateBannerDto } from './dto/create-banner.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 @Injectable()
 export class PromotionsService {
@@ -30,11 +31,7 @@ export class PromotionsService {
   }
 
   async findOne(id: number): Promise<Promotion> {
-    const promotion = await this.promotionRepo.findOne({ where: { id } });
-    if (!promotion) {
-      throw new NotFoundException('프로모션을 찾을 수 없습니다.');
-    }
-    return promotion;
+    return findOrThrow(this.promotionRepo, { id } as any, '프로모션을 찾을 수 없습니다.');
   }
 
   async create(dto: CreatePromotionDto): Promise<Promotion> {
@@ -54,10 +51,7 @@ export class PromotionsService {
   }
 
   async update(id: number, dto: UpdatePromotionDto): Promise<Promotion> {
-    const promotion = await this.promotionRepo.findOne({ where: { id } });
-    if (!promotion) {
-      throw new NotFoundException('프로모션을 찾을 수 없습니다.');
-    }
+    const promotion = await findOrThrow(this.promotionRepo, { id } as any, '프로모션을 찾을 수 없습니다.');
     if (dto.title !== undefined) promotion.title = dto.title;
     if (dto.description !== undefined) promotion.description = dto.description;
     if (dto.type !== undefined) promotion.type = dto.type;
@@ -70,10 +64,7 @@ export class PromotionsService {
   }
 
   async remove(id: number): Promise<void> {
-    const promotion = await this.promotionRepo.findOne({ where: { id } });
-    if (!promotion) {
-      throw new NotFoundException('프로모션을 찾을 수 없습니다.');
-    }
+    const promotion = await findOrThrow(this.promotionRepo, { id } as any, '프로모션을 찾을 수 없습니다.');
     await this.promotionRepo.remove(promotion);
     this.logger.log(`Promotion deleted: id=${id}`);
   }
@@ -107,10 +98,7 @@ export class PromotionsService {
   }
 
   async updateBanner(id: number, dto: UpdateBannerDto): Promise<Banner> {
-    const banner = await this.bannerRepo.findOne({ where: { id } });
-    if (!banner) {
-      throw new NotFoundException('배너를 찾을 수 없습니다.');
-    }
+    const banner = await findOrThrow(this.bannerRepo, { id } as any, '배너를 찾을 수 없습니다.');
     if (dto.title !== undefined) banner.title = dto.title;
     if (dto.imageUrl !== undefined) banner.imageUrl = dto.imageUrl;
     if (dto.linkUrl !== undefined) banner.linkUrl = dto.linkUrl;
@@ -122,10 +110,7 @@ export class PromotionsService {
   }
 
   async removeBanner(id: number): Promise<void> {
-    const banner = await this.bannerRepo.findOne({ where: { id } });
-    if (!banner) {
-      throw new NotFoundException('배너를 찾을 수 없습니다.');
-    }
+    const banner = await findOrThrow(this.bannerRepo, { id } as any, '배너를 찾을 수 없습니다.');
     await this.bannerRepo.remove(banner);
     this.logger.log(`Banner deleted: id=${id}`);
   }
