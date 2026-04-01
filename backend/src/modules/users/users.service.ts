@@ -1,5 +1,5 @@
 import {
-  Injectable, BadRequestException, ForbiddenException, Logger,
+  Injectable, BadRequestException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,6 +9,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 const MAX_ADDRESSES = 10;
 
@@ -72,9 +73,7 @@ export class UsersService {
 
   async updateAddress(userId: number, addressId: number, dto: UpdateAddressDto): Promise<UserAddress> {
     const address = await findOrThrow(this.addressRepository, { id: addressId }, '배송지를 찾을 수 없습니다.');
-    if (Number(address.userId) !== Number(userId)) {
-      throw new ForbiddenException('접근 권한이 없습니다.');
-    }
+    assertOwnership(address.userId, userId);
 
     if (dto.isDefault) {
       await this.addressRepository.update({ userId }, { isDefault: false });
@@ -97,9 +96,7 @@ export class UsersService {
 
   async deleteAddress(userId: number, addressId: number): Promise<{ message: string }> {
     const address = await findOrThrow(this.addressRepository, { id: addressId }, '배송지를 찾을 수 없습니다.');
-    if (Number(address.userId) !== Number(userId)) {
-      throw new ForbiddenException('접근 권한이 없습니다.');
-    }
+    assertOwnership(address.userId, userId);
 
     await this.addressRepository.remove(address);
     this.logger.log(`Address deleted: userId=${userId} addressId=${addressId}`);

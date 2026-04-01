@@ -1,6 +1,5 @@
 import {
   Injectable,
-  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +8,7 @@ import { Inquiry } from './entities/inquiry.entity';
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AnswerInquiryDto } from './dto/answer-inquiry.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 @Injectable()
 export class InquiriesService {
@@ -28,9 +28,7 @@ export class InquiriesService {
 
   async findOne(id: number, userId: number): Promise<Inquiry> {
     const inquiry = await findOrThrow(this.inquiryRepo, { id }, '문의를 찾을 수 없습니다.');
-    if (Number(inquiry.userId) !== Number(userId)) {
-      throw new ForbiddenException('권한이 없습니다.');
-    }
+    assertOwnership(inquiry.userId, userId, '권한이 없습니다.');
     return inquiry;
   }
 

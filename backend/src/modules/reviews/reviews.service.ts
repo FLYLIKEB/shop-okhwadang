@@ -12,6 +12,7 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 export interface ReviewResponse {
   id: number;
@@ -189,9 +190,7 @@ export class ReviewsService {
   async update(id: number, userId: number, dto: UpdateReviewDto): Promise<ReviewResponse> {
     const review = await findOrThrow(this.reviewRepo, { id }, '리뷰를 찾을 수 없습니다.', ['user']);
 
-    if (Number(review.userId) !== Number(userId)) {
-      throw new ForbiddenException('권한이 없습니다.');
-    }
+    assertOwnership(review.userId, userId, '권한이 없습니다.');
 
     if (dto.rating !== undefined) review.rating = dto.rating;
     if (dto.content !== undefined) review.content = dto.content ?? null;
