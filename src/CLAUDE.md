@@ -37,6 +37,13 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 - `npm run build && npm run test:run` before any push
 - Test runner: Vitest
 
+## Admin Patterns
+
+- `useAdminGuard()` (`hooks/useAdminGuard.ts`) — admin role check + redirect to `/`. Returns `{ user, isLoading, isAdmin }`. Always use `isAdmin` to gate data loading; never inline `user.role === 'admin'` checks.
+- `useFormModal<T>(defaults, initial, open)` (`hooks/useFormModal.ts`) — shared form modal state. Returns `{ formData, setFormData, loading, handleSubmit }`. Use a `toFormData()` mapper when the initial entity type differs from the create DTO.
+- `AdminTable` + `AdminTableRowActions` (`components/admin/AdminTable.tsx`) — standard table wrapper with column headers, empty state, and edit/delete buttons.
+- `StatusBadge` (`components/admin/StatusBadge.tsx`) — renders `활성` / `비활성` from `isActive: boolean`.
+
 ## Key Files
 
 ```
@@ -45,5 +52,9 @@ components/                     # Reusable UI + shadcn/ui wrappers
 lib/api.ts                      # API client
 contexts/                       # AuthContext, CartContext
 hooks/useWishlistToggle.ts      # Wishlist toggle with optimistic update
+hooks/useAdminGuard.ts          # Admin role guard (redirect + isAdmin flag)
+hooks/useFormModal.ts           # Form modal state/submit boilerplate
+components/admin/AdminTable.tsx # Common admin table shell
+components/admin/StatusBadge.tsx # Active/inactive status badge
 utils/currency.ts               # Price formatting utility (formatCurrency) — single source of truth
 ```

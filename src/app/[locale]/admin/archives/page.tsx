@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useFormModal } from '@/hooks/useFormModal';
 import {
   adminArchivesApi,
   type NiloType,
@@ -18,6 +18,8 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
+import { AdminTable, AdminTableRowActions } from '@/components/admin/AdminTable';
+import { StatusBadge } from '@/components/admin/StatusBadge';
 
 type Tab = 'nilo' | 'process' | 'artist';
 
@@ -42,15 +44,10 @@ function NiloTypeRow({
       <td className="py-3 px-4 text-sm text-muted-foreground">{item.name}</td>
       <td className="py-3 px-4 text-sm text-muted-foreground max-w-xs truncate">{item.region}</td>
       <td className="py-3 px-4">
-        <span className={item.isActive ? 'text-green-600' : 'text-muted-foreground'}>
-          {item.isActive ? '활성' : '비활성'}
-        </span>
+        <StatusBadge isActive={item.isActive} />
       </td>
       <td className="py-3 px-4">
-        <div className="flex gap-2">
-          <button onClick={() => onEdit(item)} className="text-sm hover:underline">수정</button>
-          <button onClick={() => onDelete(item)} className="text-sm text-destructive hover:underline">삭제</button>
-        </div>
+        <AdminTableRowActions onEdit={() => onEdit(item)} onDelete={() => onDelete(item)} />
       </td>
     </tr>
   );
@@ -75,10 +72,7 @@ function ProcessStepRow({
       <td className="py-3 px-4 font-medium">{item.title}</td>
       <td className="py-3 px-4 text-sm text-muted-foreground">{item.description}</td>
       <td className="py-3 px-4">
-        <div className="flex gap-2">
-          <button onClick={() => onEdit(item)} className="text-sm hover:underline">수정</button>
-          <button onClick={() => onDelete(item)} className="text-sm text-destructive hover:underline">삭제</button>
-        </div>
+        <AdminTableRowActions onEdit={() => onEdit(item)} onDelete={() => onDelete(item)} />
       </td>
     </tr>
   );
@@ -108,18 +102,37 @@ function ArtistRow({
       <td className="py-3 px-4 text-sm text-muted-foreground">{item.title}</td>
       <td className="py-3 px-4 text-sm text-muted-foreground">{item.region}</td>
       <td className="py-3 px-4">
-        <span className={item.isActive ? 'text-green-600' : 'text-muted-foreground'}>
-          {item.isActive ? '활성' : '비활성'}
-        </span>
+        <StatusBadge isActive={item.isActive} />
       </td>
       <td className="py-3 px-4">
-        <div className="flex gap-2">
-          <button onClick={() => onEdit(item)} className="text-sm hover:underline">수정</button>
-          <button onClick={() => onDelete(item)} className="text-sm text-destructive hover:underline">삭제</button>
-        </div>
+        <AdminTableRowActions onEdit={() => onEdit(item)} onDelete={() => onDelete(item)} />
       </td>
     </tr>
   );
+}
+
+const NILO_DEFAULTS: CreateNiloTypeData = {
+  name: '',
+  nameKo: '',
+  color: '#8B4513',
+  region: '',
+  description: '',
+  characteristics: [],
+  productUrl: '',
+  isActive: true,
+};
+
+function toNiloFormData(n: NiloType): CreateNiloTypeData {
+  return {
+    name: n.name,
+    nameKo: n.nameKo,
+    color: n.color,
+    region: n.region,
+    description: n.description,
+    characteristics: n.characteristics,
+    productUrl: n.productUrl,
+    isActive: n.isActive,
+  };
 }
 
 function NiloTypeFormModal({
@@ -133,66 +146,34 @@ function NiloTypeFormModal({
   onSubmit: (data: CreateNiloTypeData) => Promise<void>;
   initial?: NiloType | null;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<CreateNiloTypeData>({
-    name: '',
-    nameKo: '',
-    color: '#8B4513',
-    region: '',
-    description: '',
-    characteristics: [],
-    productUrl: '',
-    isActive: true,
-  });
+  const initialFormData = initial ? toNiloFormData(initial) : null;
+  const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateNiloTypeData>(
+    NILO_DEFAULTS,
+    initialFormData,
+    open,
+  );
   const [characteristicsText, setCharacteristicsText] = useState('');
 
   useEffect(() => {
     if (initial) {
-      setForm({
-        name: initial.name,
-        nameKo: initial.nameKo,
-        color: initial.color,
-        region: initial.region,
-        description: initial.description,
-        characteristics: initial.characteristics,
-        productUrl: initial.productUrl,
-        isActive: initial.isActive,
-      });
       setCharacteristicsText(initial.characteristics.join(', '));
     } else {
-      setForm({
-        name: '',
-        nameKo: '',
-        color: '#8B4513',
-        region: '',
-        description: '',
-        characteristics: [],
-        productUrl: '',
-        isActive: true,
-      });
       setCharacteristicsText('');
     }
   }, [initial, open]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const data = {
-        ...form,
-        characteristics: characteristicsText.split(',').map((s) => s.trim()).filter(Boolean),
-      };
-      await onSubmit(data);
-      onClose();
-    } finally {
-      setLoading(false);
-    }
+  const handleFormSubmit = async (data: CreateNiloTypeData) => {
+    const merged = {
+      ...data,
+      characteristics: characteristicsText.split(',').map((s) => s.trim()).filter(Boolean),
+    };
+    await onSubmit(merged);
   };
 
   return (
     <Modal isOpen={open} onClose={onClose} maxWidth="md">
       <h2 className="text-lg font-semibold mb-4">{initial ? '니로타입 수정' : '니로타입 추가'}</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={(e) => handleSubmit(e, handleFormSubmit, onClose)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormInput
             label="이름 (中文)"
@@ -274,6 +255,22 @@ function NiloTypeFormModal({
   );
 }
 
+const PROCESS_DEFAULTS: CreateProcessStepData = {
+  step: 1,
+  title: '',
+  description: '',
+  detail: '',
+};
+
+function toProcessFormData(p: ProcessStep): CreateProcessStepData {
+  return {
+    step: p.step,
+    title: p.title,
+    description: p.description,
+    detail: p.detail,
+  };
+}
+
 function ProcessStepFormModal({
   open,
   onClose,
@@ -285,42 +282,17 @@ function ProcessStepFormModal({
   onSubmit: (data: CreateProcessStepData) => Promise<void>;
   initial?: ProcessStep | null;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<CreateProcessStepData>({
-    step: 1,
-    title: '',
-    description: '',
-    detail: '',
-  });
-
-  useEffect(() => {
-    if (initial) {
-      setForm({
-        step: initial.step,
-        title: initial.title,
-        description: initial.description,
-        detail: initial.detail,
-      });
-    } else {
-      setForm({ step: 1, title: '', description: '', detail: '' });
-    }
-  }, [initial, open]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await onSubmit(form);
-      onClose();
-    } finally {
-      setLoading(false);
-    }
-  };
+  const initialFormData = initial ? toProcessFormData(initial) : null;
+  const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateProcessStepData>(
+    PROCESS_DEFAULTS,
+    initialFormData,
+    open,
+  );
 
   return (
     <Modal isOpen={open} onClose={onClose} maxWidth="md">
       <h2 className="text-lg font-semibold mb-4">{initial ? '공정 수정' : '공정 추가'}</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={(e) => handleSubmit(e, onSubmit, onClose)} className="space-y-4">
         <FormInput
           label="단계"
           type="number"
@@ -362,6 +334,30 @@ function ProcessStepFormModal({
   );
 }
 
+const ARTIST_DEFAULTS: CreateArtistData = {
+  name: '',
+  title: '',
+  region: '',
+  story: '',
+  specialty: '',
+  imageUrl: '',
+  productUrl: '',
+  isActive: true,
+};
+
+function toArtistFormData(a: Artist): CreateArtistData {
+  return {
+    name: a.name,
+    title: a.title,
+    region: a.region,
+    story: a.story,
+    specialty: a.specialty,
+    imageUrl: a.imageUrl ?? '',
+    productUrl: a.productUrl,
+    isActive: a.isActive,
+  };
+}
+
 function ArtistFormModal({
   open,
   onClose,
@@ -373,50 +369,17 @@ function ArtistFormModal({
   onSubmit: (data: CreateArtistData) => Promise<void>;
   initial?: Artist | null;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<CreateArtistData>({
-    name: '',
-    title: '',
-    region: '',
-    story: '',
-    specialty: '',
-    imageUrl: '',
-    productUrl: '',
-    isActive: true,
-  });
-
-  useEffect(() => {
-    if (initial) {
-      setForm({
-        name: initial.name,
-        title: initial.title,
-        region: initial.region,
-        story: initial.story,
-        specialty: initial.specialty,
-        imageUrl: initial.imageUrl ?? '',
-        productUrl: initial.productUrl,
-        isActive: initial.isActive,
-      });
-    } else {
-      setForm({ name: '', title: '', region: '', story: '', specialty: '', imageUrl: '', productUrl: '', isActive: true });
-    }
-  }, [initial, open]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await onSubmit(form);
-      onClose();
-    } finally {
-      setLoading(false);
-    }
-  };
+  const initialFormData = initial ? toArtistFormData(initial) : null;
+  const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateArtistData>(
+    ARTIST_DEFAULTS,
+    initialFormData,
+    open,
+  );
 
   return (
     <Modal isOpen={open} onClose={onClose} maxWidth="md">
       <h2 className="text-lg font-semibold mb-4">{initial ? '아티스트 수정' : '아티스트 추가'}</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={(e) => handleSubmit(e, onSubmit, onClose)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormInput
             label="이름"
@@ -492,8 +455,7 @@ function ArtistFormModal({
 }
 
 export default function AdminArchivesPage() {
-  const { user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
+  const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [tab, setTab] = useState<Tab>('nilo');
   const [niloTypes, setNiloTypes] = useState<NiloType[]>([]);
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([]);
@@ -527,16 +489,10 @@ export default function AdminArchivesPage() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && (!user || (user.role !== 'admin' && user.role !== 'super_admin'))) {
-      router.replace('/');
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    if (isAdmin) {
       loadData();
     }
-  }, [user, loadData]);
+  }, [isAdmin, loadData]);
 
   const handleNiloSubmit = async (data: CreateNiloTypeData) => {
     if (editNilo) {
@@ -652,31 +608,22 @@ export default function AdminArchivesPage() {
               + 니로타입 추가
             </button>
           </div>
-          <div className="rounded-lg border border-border overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr className="text-left text-xs text-muted-foreground uppercase">
-                  <th className="py-3 px-4 w-16">색상</th>
-                  <th className="py-3 px-4">이름</th>
-                  <th className="py-3 px-4">원문</th>
-                  <th className="py-3 px-4">산지</th>
-                  <th className="py-3 px-4 w-20">상태</th>
-                  <th className="py-3 px-4 w-28">작업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {niloTypes.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">데이터가 없습니다.</td>
-                  </tr>
-                ) : (
-                  niloTypes.map((n) => (
-                    <NiloTypeRow key={n.id} item={n} onEdit={(n) => { setEditNilo(n); setNiloModalOpen(true); }} onDelete={handleDeleteNilo} />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable
+            columns={[
+              { label: '색상', width: 'w-16' },
+              { label: '이름' },
+              { label: '원문' },
+              { label: '산지' },
+              { label: '상태', width: 'w-20' },
+              { label: '작업', width: 'w-28' },
+            ]}
+            isEmpty={niloTypes.length === 0}
+            emptyMessage="데이터가 없습니다."
+          >
+            {niloTypes.map((n) => (
+              <NiloTypeRow key={n.id} item={n} onEdit={(n) => { setEditNilo(n); setNiloModalOpen(true); }} onDelete={handleDeleteNilo} />
+            ))}
+          </AdminTable>
         </div>
       )}
 
@@ -690,29 +637,20 @@ export default function AdminArchivesPage() {
               + 공정 추가
             </button>
           </div>
-          <div className="rounded-lg border border-border overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr className="text-left text-xs text-muted-foreground uppercase">
-                  <th className="py-3 px-4 w-16">단계</th>
-                  <th className="py-3 px-4">제목</th>
-                  <th className="py-3 px-4">설명</th>
-                  <th className="py-3 px-4 w-28">작업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {processSteps.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="py-8 text-center text-sm text-muted-foreground">데이터가 없습니다.</td>
-                  </tr>
-                ) : (
-                  processSteps.map((p) => (
-                    <ProcessStepRow key={p.id} item={p} onEdit={(p) => { setEditProcess(p); setProcessModalOpen(true); }} onDelete={handleDeleteProcess} />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable
+            columns={[
+              { label: '단계', width: 'w-16' },
+              { label: '제목' },
+              { label: '설명' },
+              { label: '작업', width: 'w-28' },
+            ]}
+            isEmpty={processSteps.length === 0}
+            emptyMessage="데이터가 없습니다."
+          >
+            {processSteps.map((p) => (
+              <ProcessStepRow key={p.id} item={p} onEdit={(p) => { setEditProcess(p); setProcessModalOpen(true); }} onDelete={handleDeleteProcess} />
+            ))}
+          </AdminTable>
         </div>
       )}
 
@@ -726,31 +664,22 @@ export default function AdminArchivesPage() {
               + 아티스트 추가
             </button>
           </div>
-          <div className="rounded-lg border border-border overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr className="text-left text-xs text-muted-foreground uppercase">
-                  <th className="py-3 px-4 w-16">이미지</th>
-                  <th className="py-3 px-4">이름</th>
-                  <th className="py-3 px-4">타이틀</th>
-                  <th className="py-3 px-4">지역</th>
-                  <th className="py-3 px-4 w-20">상태</th>
-                  <th className="py-3 px-4 w-28">작업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {artists.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">데이터가 없습니다.</td>
-                  </tr>
-                ) : (
-                  artists.map((a) => (
-                    <ArtistRow key={a.id} item={a} onEdit={(a) => { setEditArtist(a); setArtistModalOpen(true); }} onDelete={handleDeleteArtist} />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <AdminTable
+            columns={[
+              { label: '이미지', width: 'w-16' },
+              { label: '이름' },
+              { label: '타이틀' },
+              { label: '지역' },
+              { label: '상태', width: 'w-20' },
+              { label: '작업', width: 'w-28' },
+            ]}
+            isEmpty={artists.length === 0}
+            emptyMessage="데이터가 없습니다."
+          >
+            {artists.map((a) => (
+              <ArtistRow key={a.id} item={a} onEdit={(a) => { setEditArtist(a); setArtistModalOpen(true); }} onDelete={handleDeleteArtist} />
+            ))}
+          </AdminTable>
         </div>
       )}
 

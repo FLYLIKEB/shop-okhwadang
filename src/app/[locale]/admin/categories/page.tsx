@@ -5,25 +5,17 @@ import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { adminCategoriesApi } from '@/lib/api';
 import type { AdminCategory, CreateCategoryData } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useAdminGuard } from '@/hooks/useAdminGuard';
 import CategoryTreeView from '@/components/admin/CategoryTreeView';
 import CategoryFormModal from '@/components/admin/CategoryFormModal';
 
 export default function AdminCategoriesPage() {
-  const { user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
+  const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [flatList, setFlatList] = useState<AdminCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AdminCategory | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && (!user || (user.role !== 'admin' && user.role !== 'super_admin'))) {
-      router.replace('/');
-    }
-  }, [user, authLoading, router]);
 
   const loadCategories = useCallback(async () => {
     setLoading(true);
@@ -39,10 +31,10 @@ export default function AdminCategoriesPage() {
   }, []);
 
   useEffect(() => {
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    if (isAdmin) {
       loadCategories();
     }
-  }, [user, loadCategories]);
+  }, [isAdmin, loadCategories]);
 
   function buildTree(items: AdminCategory[]): AdminCategory[] {
     const map = new Map<number, AdminCategory>();

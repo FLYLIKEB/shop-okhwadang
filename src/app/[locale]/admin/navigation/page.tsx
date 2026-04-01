@@ -5,8 +5,7 @@ import { toast } from 'sonner';
 import { adminNavigationApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import type { NavigationItem } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useAdminGuard } from '@/hooks/useAdminGuard';
 import NavigationEditor from '@/components/admin/NavigationEditor';
 
 type NavGroup = 'gnb' | 'sidebar' | 'footer';
@@ -18,17 +17,10 @@ const TABS: { label: string; value: NavGroup; hint: string }[] = [
 ];
 
 export default function AdminNavigationPage() {
-  const { user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
+  const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [activeTab, setActiveTab] = useState<NavGroup>('gnb');
   const [items, setItems] = useState<NavigationItem[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!authLoading && (!user || (user.role !== 'admin' && user.role !== 'super_admin'))) {
-      router.replace('/');
-    }
-  }, [user, authLoading, router]);
 
   const loadItems = useCallback(async (group: NavGroup) => {
     setLoading(true);
@@ -43,10 +35,10 @@ export default function AdminNavigationPage() {
   }, []);
 
   useEffect(() => {
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    if (isAdmin) {
       loadItems(activeTab);
     }
-  }, [user, activeTab, loadItems]);
+  }, [isAdmin, activeTab, loadItems]);
 
   const handleReload = async () => {
     await loadItems(activeTab);
