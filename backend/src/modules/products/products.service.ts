@@ -15,6 +15,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { CacheService } from '../cache/cache.service';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { applyLocale } from '../../common/utils/locale.util';
+import { paginate } from '../../common/utils/pagination.util';
 
 const CACHE_TTL_LIST = 300;
 const CACHE_TTL_DETAIL = 600;
@@ -128,11 +129,9 @@ export class ProductsService {
         qb.orderBy('product.createdAt', 'DESC');
     }
 
-    qb.skip((page - 1) * limit).take(limit);
-
     try {
-      const [items, total] = await qb.getManyAndCount();
-      const result = { items: items.map((p) => this.applyLocale(p, locale)), total, page, limit };
+      const paged = await paginate(qb, { page, limit });
+      const result = { ...paged, items: paged.items.map((p) => this.applyLocale(p, locale)) };
       await this.cacheService.set(cacheKey, result, CACHE_TTL_LIST);
       return result;
     } catch (err) {
@@ -174,10 +173,8 @@ export class ProductsService {
           case ProductSort.POPULAR: likeQb.orderBy('product.viewCount', 'DESC'); break;
           default: likeQb.orderBy('product.createdAt', 'DESC');
         }
-        likeQb.skip((page - 1) * limit).take(limit);
-
-        const [items, total] = await likeQb.getManyAndCount();
-        const result = { items: items.map((p) => this.applyLocale(p, locale)), total, page, limit };
+        const paged = await paginate(likeQb, { page, limit });
+        const result = { ...paged, items: paged.items.map((p) => this.applyLocale(p, locale)) };
         await this.cacheService.set(cacheKey, result, CACHE_TTL_LIST);
         return result;
       }
