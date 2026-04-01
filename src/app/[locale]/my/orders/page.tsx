@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { toast } from 'sonner';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import StatusBadge from '@/components/common/StatusBadge';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
@@ -18,29 +18,24 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchOrders = () => {
-    if (!isAuthenticated) return;
-    setLoading(true);
-    setError(null);
-    ordersApi
-      .getList({ page, limit: PAGE_LIMIT })
-      .then((res) => {
-        setOrders(res.items);
-        setTotal(res.total);
-      })
-      .catch((err: unknown) => {
-        const message = handleApiError(err, '주문 내역을 불러오지 못했습니다.');
-        setError(message);
-        toast.error(message);
-      })
-      .finally(() => setLoading(false));
-  };
+  const { execute: fetchOrders, isLoading: loading } = useAsyncAction(
+    async () => {
+      setError(null);
+      const res = await ordersApi.getList({ page, limit: PAGE_LIMIT });
+      setOrders(res.items);
+      setTotal(res.total);
+    },
+    {
+      errorMessage: '주문 내역을 불러오지 못했습니다.',
+      onError: (err) => setError(handleApiError(err, '주문 내역을 불러오지 못했습니다.')),
+    },
+  );
 
   useEffect(() => {
-    fetchOrders();
+    if (!isAuthenticated) return;
+    void fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, page]);
 
@@ -74,7 +69,7 @@ export default function OrdersPage() {
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-12 text-center">
           <p className="text-destructive">{error}</p>
           <button
-            onClick={fetchOrders}
+            onClick={() => void fetchOrders()}
             className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 transition-opacity"
           >
             다시 시도

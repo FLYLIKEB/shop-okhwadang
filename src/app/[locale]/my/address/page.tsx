@@ -7,6 +7,7 @@ import { handleApiError } from '@/utils/error';
 import { usersApi } from '@/lib/api';
 import type { UserAddress, CreateAddressData } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 interface AddressForm {
@@ -50,7 +51,6 @@ function validateForm(form: AddressForm): FormErrors {
 export default function AddressPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -58,25 +58,21 @@ export default function AddressPage() {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchAddresses = () => {
-    if (!isAuthenticated) return;
-    setLoading(true);
-    setError(null);
-    usersApi
-      .getAddresses()
-      .then((data) => {
-        setAddresses(data);
-      })
-      .catch((err: unknown) => {
-        const message = handleApiError(err, '배송지를 불러오지 못했습니다.');
-        setError(message);
-        toast.error(message);
-      })
-      .finally(() => setLoading(false));
-  };
+  const { execute: fetchAddresses, isLoading: loading } = useAsyncAction(
+    async () => {
+      setError(null);
+      const data = await usersApi.getAddresses();
+      setAddresses(data);
+    },
+    {
+      errorMessage: '배송지를 불러오지 못했습니다.',
+      onError: (err) => setError(handleApiError(err, '배송지를 불러오지 못했습니다.')),
+    },
+  );
 
   useEffect(() => {
-    fetchAddresses();
+    if (!isAuthenticated) return;
+    void fetchAddresses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
@@ -215,7 +211,7 @@ export default function AddressPage() {
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-12 text-center">
           <p className="text-destructive">{error}</p>
           <button
-            onClick={fetchAddresses}
+            onClick={() => void fetchAddresses()}
             className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 transition-opacity"
           >
             다시 시도

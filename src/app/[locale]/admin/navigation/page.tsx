@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { adminNavigationApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import type { NavigationItem } from '@/lib/api';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
 import NavigationEditor from '@/components/admin/NavigationEditor';
@@ -20,29 +21,22 @@ export default function AdminNavigationPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [activeTab, setActiveTab] = useState<NavGroup>('gnb');
   const [items, setItems] = useState<NavigationItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const loadItems = useCallback(async (group: NavGroup) => {
-    setLoading(true);
-    try {
+  const { execute: loadItems, isLoading: loading } = useAsyncAction(
+    async (group: NavGroup) => {
       const data = await adminNavigationApi.getByGroup(group);
       setItems(data);
-    } catch {
-      toast.error('네비게이션 목록을 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    { errorMessage: '네비게이션 목록을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     if (isAdmin) {
-      loadItems(activeTab);
+      void loadItems(activeTab);
     }
   }, [isAdmin, activeTab, loadItems]);
 
-  const handleReload = async () => {
-    await loadItems(activeTab);
-  };
+  const handleReload = () => loadItems(activeTab);
 
   const handleCreate = async (data: {
     label: string;

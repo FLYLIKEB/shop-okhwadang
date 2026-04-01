@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { noticesApi } from '@/lib/api';
 import type { Notice } from '@/lib/api';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 // DOMPurify requires browser environment — load without SSR
@@ -17,15 +18,19 @@ export default function NoticeDetailPage() {
   const { id, locale } = useParams<{ id: string; locale: string }>();
   const router = useRouter();
   const [notice, setNotice] = useState<Notice | null>(null);
-  const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  const { execute: loadNotice, isLoading: loading } = useAsyncAction(
+    async () => {
+      const data = await noticesApi.getOne(Number(id), locale);
+      setNotice(data);
+    },
+    { onError: () => setNotFound(true) },
+  );
+
   useEffect(() => {
-    noticesApi
-      .getOne(Number(id), locale)
-      .then(setNotice)
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
+    void loadNotice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, locale]);
 
   if (loading) {

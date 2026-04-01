@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { adminOrdersApi } from '@/lib/api';
 import type { AdminOrder } from '@/lib/api';
 import { AdminOrdersTable } from '@/components/admin/AdminOrdersTable';
@@ -24,7 +24,6 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -32,9 +31,8 @@ export default function AdminOrdersPage() {
   const [endDate, setEndDate] = useState('');
   const [shippingOrder, setShippingOrder] = useState<AdminOrder | null>(null);
 
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { execute: fetchOrders, isLoading: loading } = useAsyncAction(
+    async () => {
       const params: Record<string, string | number | undefined> = {
         page,
         limit: PAGE_SIZE,
@@ -47,16 +45,14 @@ export default function AdminOrdersPage() {
       const res = await adminOrdersApi.getList(params);
       setOrders(res.items);
       setTotal(res.total);
-    } catch {
-      toast.error('주문 목록을 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [page, statusFilter, keyword, startDate, endDate]);
+    },
+    { errorMessage: '주문 목록을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     void fetchOrders();
-  }, [fetchOrders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, statusFilter, keyword, startDate, endDate]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

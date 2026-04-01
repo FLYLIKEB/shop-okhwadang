@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { noticesApi } from '@/lib/api';
 import type { Notice } from '@/lib/api';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import { cn } from '@/components/ui/utils';
@@ -13,14 +14,18 @@ export default function NoticePage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const { execute: loadNotices, isLoading: loading } = useAsyncAction(
+    async () => {
+      const res = await noticesApi.getList(locale);
+      setNotices(res.data);
+    },
+    { errorMessage: '공지사항을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
-    noticesApi
-      .getList(locale)
-      .then((res) => setNotices(res.data))
-      .catch(() => setNotices([]))
-      .finally(() => setLoading(false));
+    void loadNotices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
   if (loading) {

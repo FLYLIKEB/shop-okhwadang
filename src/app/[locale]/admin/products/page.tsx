@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { adminProductsApi } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
@@ -20,12 +21,10 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { execute: fetchProducts, isLoading: loading } = useAsyncAction(
+    async () => {
       const params: { page: number; limit: number; status?: string } = {
         page,
         limit: PAGE_SIZE,
@@ -34,37 +33,38 @@ export default function AdminProductsPage() {
       const res = await adminProductsApi.getList(params);
       setProducts(res.items);
       setTotal(res.total);
-    } catch {
-      toast.error('상품 목록을 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [page, statusFilter]);
+    },
+    { errorMessage: '상품 목록을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     void fetchProducts();
-  }, [fetchProducts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, statusFilter]);
 
-  const handleToggleStatus = async (product: Product) => {
-    const next = product.status === 'active' ? 'hidden' : 'active';
-    try {
+  const { execute: toggleStatus } = useAsyncAction(
+    async (product: Product) => {
+      const next = product.status === 'active' ? 'hidden' : 'active';
       await adminProductsApi.update(product.id, { status: next });
       toast.success(`상품이 ${STATUS_LABELS[next]}으로 변경되었습니다.`);
       void fetchProducts();
-    } catch {
-      toast.error('상태 변경에 실패했습니다.');
-    }
-  };
+    },
+    { errorMessage: '상태 변경에 실패했습니다.' },
+  );
 
-  const handleDelete = async (product: Product) => {
-    if (!window.confirm(`"${product.name}"을(를) 삭제하시겠습니까?`)) return;
-    try {
+  const { execute: deleteProduct } = useAsyncAction(
+    async (product: Product) => {
       await adminProductsApi.remove(product.id);
-      toast.success('상품이 삭제되었습니다.');
       void fetchProducts();
-    } catch {
-      toast.error('삭제에 실패했습니다.');
-    }
+    },
+    { successMessage: '상품이 삭제되었습니다.', errorMessage: '삭제에 실패했습니다.' },
+  );
+
+  const handleToggleStatus = (product: Product) => void toggleStatus(product);
+
+  const handleDelete = (product: Product) => {
+    if (!window.confirm(`"${product.name}"을(를) 삭제하시겠습니까?`)) return;
+    void deleteProduct(product);
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);

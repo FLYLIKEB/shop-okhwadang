@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { handleApiError } from '@/utils/error';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { formatCurrency } from '@/utils/currency';
 import {
   adminDashboardApi,
@@ -90,16 +91,14 @@ function KpiCard({ label, value, diffPct, unit }: KpiCardProps) {
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState('30d');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
 
-  const fetchDashboard = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { execute: fetchDashboard, isLoading: loading } = useAsyncAction(
+    async () => {
+      setError(null);
       const params: DashboardQueryParams = {};
       if (period === 'custom' && customStart && customEnd) {
         params.startDate = customStart;
@@ -109,17 +108,18 @@ export default function DashboardPage() {
       }
       const result = await adminDashboardApi.get(params);
       setData(result);
-    } catch (err) {
-      setError(handleApiError(err, '대시보드 데이터를 불러올 수 없습니다'));
-    } finally {
-      setLoading(false);
-    }
-  }, [period, customStart, customEnd]);
+    },
+    {
+      errorMessage: '대시보드 데이터를 불러올 수 없습니다',
+      onError: (err) => setError(handleApiError(err, '대시보드 데이터를 불러올 수 없습니다')),
+    },
+  );
 
   useEffect(() => {
     if (period === 'custom' && (!customStart || !customEnd)) return;
-    fetchDashboard();
-  }, [fetchDashboard, period, customStart, customEnd]);
+    void fetchDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period, customStart, customEnd]);
 
   return (
     <div>
