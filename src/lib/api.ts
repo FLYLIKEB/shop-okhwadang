@@ -130,11 +130,13 @@ class ApiClient {
     const { params: _extractedParams, ...fetchOptions } = options ?? {};
 
     const { headers: optionHeaders, ...restFetchOptions } = fetchOptions ?? {};
+    const isFormData = restFetchOptions.body instanceof FormData;
+    const defaultHeaders: Record<string, string> = isFormData ? {} : { 'Content-Type': 'application/json' };
     const response = await fetch(url, {
       ...restFetchOptions,
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
+        ...defaultHeaders,
         ...(optionHeaders as Record<string, string> | undefined),
       },
     });
@@ -146,7 +148,7 @@ class ApiClient {
         ...restFetchOptions,
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
+          ...defaultHeaders,
           ...(optionHeaders as Record<string, string> | undefined),
         },
       });
@@ -198,23 +200,10 @@ class ApiClient {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 
-  async uploadFile<T>(endpoint: string, file: File, fieldName = 'file'): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
+  uploadFile<T>(endpoint: string, file: File, fieldName = 'file'): Promise<T> {
     const formData = new FormData();
     formData.append(fieldName, file);
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
-      const message = Array.isArray(error.message)
-        ? error.message.join(', ')
-        : ((error as { message?: string }).message || `HTTP ${response.status}`);
-      throw new Error(message);
-    }
-    return response.json() as Promise<T>;
+    return this.request<T>(endpoint, { method: 'POST', body: formData });
   }
 }
 
