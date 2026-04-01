@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { promotionsApi } from '@/lib/api';
 import type { Promotion } from '@/lib/api';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import CountdownTimer from '@/components/home/CountdownTimer';
 
@@ -18,21 +19,24 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [promotion, setPromotion] = useState<Promotion | null>(null);
-  const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  const { execute: loadPromotion, isLoading: loading } = useAsyncAction(
+    async () => {
+      const numericId = parseInt(id, 10);
+      if (isNaN(numericId)) {
+        setNotFound(true);
+        return;
+      }
+      const data = await promotionsApi.getOne(numericId);
+      setPromotion(data);
+    },
+    { onError: () => setNotFound(true) },
+  );
+
   useEffect(() => {
-    const numericId = parseInt(id, 10);
-    if (isNaN(numericId)) {
-      setNotFound(true);
-      setLoading(false);
-      return;
-    }
-    promotionsApi
-      .getOne(numericId)
-      .then((data) => setPromotion(data))
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
+    void loadPromotion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (loading) {

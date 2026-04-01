@@ -7,6 +7,7 @@ import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { ORDER_STATUS_LABELS } from '@/constants/orderStatus';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import ShippingTimeline from '@/components/ShippingTimeline';
@@ -17,22 +18,25 @@ export default function OrderDetailPage() {
   const params = useParams();
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [order, setOrder] = useState<OrderResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  const { execute: loadOrder, isLoading: loading } = useAsyncAction(
+    async () => {
+      const id = Number(params.id);
+      if (isNaN(id)) {
+        setNotFound(true);
+        return;
+      }
+      const res = await ordersApi.getById(id);
+      setOrder(res);
+    },
+    { onError: () => setNotFound(true) },
+  );
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const id = Number(params.id);
-    if (isNaN(id)) {
-      setNotFound(true);
-      setLoading(false);
-      return;
-    }
-    ordersApi
-      .getById(id)
-      .then((res) => setOrder(res))
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
+    void loadOrder();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, params.id]);
 
   if (isLoading || loading) {

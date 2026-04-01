@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { handleApiError } from '@/utils/error';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useFormModal } from '@/hooks/useFormModal';
 import {
   adminArchivesApi,
@@ -460,7 +460,6 @@ export default function AdminArchivesPage() {
   const [niloTypes, setNiloTypes] = useState<NiloType[]>([]);
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [niloModalOpen, setNiloModalOpen] = useState(false);
   const [processModalOpen, setProcessModalOpen] = useState(false);
@@ -470,9 +469,8 @@ export default function AdminArchivesPage() {
   const [editProcess, setEditProcess] = useState<ProcessStep | null>(null);
   const [editArtist, setEditArtist] = useState<Artist | null>(null);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { execute: loadData, isLoading: loading } = useAsyncAction(
+    async () => {
       const [nilos, processes, artistsData] = await Promise.all([
         adminArchivesApi.getNiloTypes(),
         adminArchivesApi.getProcessSteps(),
@@ -481,16 +479,13 @@ export default function AdminArchivesPage() {
       setNiloTypes(nilos);
       setProcessSteps(processes);
       setArtists(artistsData);
-    } catch {
-      toast.error('데이터를 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    { errorMessage: '데이터를 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     if (isAdmin) {
-      loadData();
+      void loadData();
     }
   }, [isAdmin, loadData]);
 
@@ -527,37 +522,43 @@ export default function AdminArchivesPage() {
     await loadData();
   };
 
-  const handleDeleteNilo = async (item: NiloType) => {
-    if (!window.confirm(`"${item.nameKo}" 니로타입을 삭제하시겠습니까?`)) return;
-    try {
+  const { execute: deleteNilo } = useAsyncAction(
+    async (item: NiloType) => {
       await adminArchivesApi.deleteNiloType(item.id);
-      toast.success('삭제되었습니다.');
       await loadData();
-    } catch (err) {
-      toast.error(handleApiError(err, '삭제 실패'));
-    }
-  };
+    },
+    { successMessage: '삭제되었습니다.', errorMessage: '삭제 실패' },
+  );
 
-  const handleDeleteProcess = async (item: ProcessStep) => {
-    if (!window.confirm(`"${item.title}" 공정을 삭제하시겠습니까?`)) return;
-    try {
+  const { execute: deleteProcess } = useAsyncAction(
+    async (item: ProcessStep) => {
       await adminArchivesApi.deleteProcessStep(item.id);
-      toast.success('삭제되었습니다.');
       await loadData();
-    } catch (err) {
-      toast.error(handleApiError(err, '삭제 실패'));
-    }
+    },
+    { successMessage: '삭제되었습니다.', errorMessage: '삭제 실패' },
+  );
+
+  const { execute: deleteArtist } = useAsyncAction(
+    async (item: Artist) => {
+      await adminArchivesApi.deleteArtist(item.id);
+      await loadData();
+    },
+    { successMessage: '삭제되었습니다.', errorMessage: '삭제 실패' },
+  );
+
+  const handleDeleteNilo = (item: NiloType) => {
+    if (!window.confirm(`"${item.nameKo}" 니로타입을 삭제하시겠습니까?`)) return;
+    void deleteNilo(item);
   };
 
-  const handleDeleteArtist = async (item: Artist) => {
+  const handleDeleteProcess = (item: ProcessStep) => {
+    if (!window.confirm(`"${item.title}" 공정을 삭제하시겠습니까?`)) return;
+    void deleteProcess(item);
+  };
+
+  const handleDeleteArtist = (item: Artist) => {
     if (!window.confirm(`"${item.name}" 아티스트를 삭제하시겠습니까?`)) return;
-    try {
-      await adminArchivesApi.deleteArtist(item.id);
-      toast.success('삭제되었습니다.');
-      await loadData();
-    } catch (err) {
-      toast.error(handleApiError(err, '삭제 실패'));
-    }
+    void deleteArtist(item);
   };
 
   const tabs: { key: Tab; label: string }[] = [
