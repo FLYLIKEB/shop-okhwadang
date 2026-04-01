@@ -28,7 +28,7 @@ async function _ensureTokenRefreshed(): Promise<void> {
   _isRefreshing = true;
   try {
     if (!_refreshFn) {
-      throw new Error('Refresh function not registered');
+      throw new Error('토큰 갱신 함수가 등록되지 않았습니다.');
     }
     await _refreshFn();
     _refreshQueue.forEach((q) => q.resolve());
@@ -153,7 +153,7 @@ class ApiClient {
         },
       });
       if (!retryResponse.ok) {
-        const error = await retryResponse.json().catch(() => ({ message: 'An error occurred' }));
+        const error = await retryResponse.json().catch(() => ({ message: '오류가 발생했습니다.' }));
         throw new Error(error.message || `HTTP ${retryResponse.status}`);
       }
       if (retryResponse.status === 204 || retryResponse.headers.get('content-length') === '0') {
