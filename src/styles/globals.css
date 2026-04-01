@@ -17,11 +17,25 @@
   --color-surface: #F5F3EF;
   --color-accent-danni: #C9B8A3;
 
-  /* Typography */
+  /* Typography — font families */
   --font-display-ko: 'Noto Serif KR', 'Georgia', serif;
   --font-display-en: 'Cormorant Garamond', 'Georgia', serif;
   --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-mono: 'DM Mono', 'Courier New', monospace;
+
+  /* Typography — size scale */
+  --font-size-heading-1: 1.5rem;   /* 24px mobile */
+  --font-size-heading-2: 1.25rem;  /* 20px mobile */
+  --font-size-heading-3: 1.125rem; /* 18px mobile */
+  --font-size-body: 1rem;          /* 16px */
+  --font-size-body-sm: 0.875rem;   /* 14px */
+  --font-size-label: 0.75rem;      /* 12px */
+  --font-size-button: 0.875rem;    /* 14px */
+
+  /* Typography — line-height scale */
+  --line-height-heading: 1.25;
+  --line-height-body: 1.6;
+  --line-height-compact: 1.1;
 }
 
 @theme inline {
@@ -53,11 +67,63 @@
   --color-danni: #C9B8A3;
   --color-surface: #F5F3EF;
 
-  /* ── 타이포그래피 토큰 ── */
+  /* ── 타이포그래피 — 폰트 패밀리 ── */
   --font-display-ko: 'Noto Serif KR', 'Georgia', serif;
   --font-display-en: 'Cormorant Garamond', 'Georgia', serif;
   --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-mono: 'DM Mono', 'Courier New', monospace;
+
+}
+
+/* ── Responsive typography — desktop overrides ─────────────────── */
+@media (min-width: 768px) {
+  :root {
+    --font-size-heading-1: 2.25rem;  /* 36px desktop */
+    --font-size-heading-2: 1.5rem;   /* 24px desktop */
+    --font-size-heading-3: 1.25rem;  /* 20px desktop */
+  }
+}
+
+/* ── Typography utility classes ────────────────────────────────── */
+@utility typo-h1 {
+  font-size: var(--font-size-heading-1);
+  line-height: var(--line-height-heading);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+@utility typo-h2 {
+  font-size: var(--font-size-heading-2);
+  line-height: var(--line-height-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@utility typo-h3 {
+  font-size: var(--font-size-heading-3);
+  line-height: var(--line-height-heading);
+  font-weight: 500;
+}
+
+@utility typo-body {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+@utility typo-body-sm {
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body);
+}
+
+@utility typo-label {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-compact);
+}
+
+@utility typo-button {
+  font-size: var(--font-size-button);
+  line-height: var(--line-height-compact);
+  font-weight: 500;
 }
 
 /* ── Base styles ───────────────────────────────────────────────── */
@@ -71,18 +137,24 @@ body {
 
 h1 {
   font-family: var(--font-display-ko);
+  font-size: var(--font-size-heading-1);
+  line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
 h2 {
   font-family: var(--font-display-ko);
+  font-size: var(--font-size-heading-2);
+  line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 h3 {
   font-family: var(--font-body);
+  font-size: var(--font-size-heading-3);
+  line-height: var(--line-height-heading);
   font-weight: 500;
 }
 
