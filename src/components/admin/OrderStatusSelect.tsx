@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { adminOrdersApi } from '@/lib/api';
+import { handleApiError } from '@/utils/error';
 
 const STATUS_LABELS: Record<string, string> = {
   pending: '결제대기',
@@ -42,8 +43,8 @@ export function OrderStatusSelect({ orderId, currentStatus, onStatusChange }: Or
       await adminOrdersApi.updateStatus(orderId, nextStatus);
       toast.success(`주문 상태가 ${STATUS_LABELS[nextStatus]}(으)로 변경되었습니다.`);
       onStatusChange();
-    } catch {
-      toast.error('상태 변경에 실패했습니다.');
+    } catch (err) {
+      toast.error(handleApiError(err, '상태 변경에 실패했습니다.'));
     } finally {
       setUpdating(false);
     }

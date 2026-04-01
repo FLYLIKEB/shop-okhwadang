@@ -12,6 +12,7 @@ import {
 import { toast } from 'sonner';
 import { cartApi, CartItem, CartResponse } from '@/lib/api';
 import { useAuth } from './AuthContext';
+import { handleApiError } from '@/utils/error';
 
 const GUEST_CART_KEY = 'guest_cart';
 
@@ -177,8 +178,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }));
       try {
         await cartApi.updateQuantity(id, { quantity });
-      } catch {
-        toast.error('수량 변경에 실패했습니다.');
+      } catch (err) {
+        toast.error(handleApiError(err, '수량 변경에 실패했습니다.'));
         await fetchCart();
       }
     },
