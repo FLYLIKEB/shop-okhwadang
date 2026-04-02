@@ -23,6 +23,7 @@
   --font-size-body: 1rem;          /* 16px */
   --font-size-body-sm: 0.875rem;   /* 14px */
   --font-size-label: 0.625rem;      /* 10px */
+  --font-size-label-sm: 0.5625rem;  /* 9px */
   --font-size-button: 0.875rem;    /* 14px */
 
   /* Typography — line-height scale */
@@ -94,7 +95,7 @@
 @utility typo-h3 {
   font-size: var(--font-size-heading-3);
   line-height: var(--line-height-heading);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 @utility typo-body {
@@ -105,17 +106,26 @@
 @utility typo-body-sm {
   font-size: var(--font-size-body-sm);
   line-height: var(--line-height-body);
+  font-weight: 500;
 }
 
 @utility typo-label {
   font-size: var(--font-size-label);
   line-height: var(--line-height-compact);
+  font-weight: 600;
+}
+
+@utility typo-label-sm {
+  font-size: var(--font-size-label-sm);
+  line-height: var(--line-height-compact);
+  font-family: var(--font-body);
+  font-weight: 500;
 }
 
 @utility typo-button {
   font-size: var(--font-size-button);
   line-height: var(--line-height-compact);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ── Base styles ───────────────────────────────────────────────── */

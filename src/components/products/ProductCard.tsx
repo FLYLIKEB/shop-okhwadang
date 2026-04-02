@@ -85,7 +85,7 @@ export default function ProductCard({
 
         {isSoldout && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60">
-            <span className="typo-label font-medium text-foreground">품절</span>
+            <span className="typo-label text-foreground">품절</span>
           </div>
         )}
 
@@ -114,7 +114,7 @@ export default function ProductCard({
             onClick={handleAddToCart}
             disabled={isCartLoading}
             className={cn(
-              'absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-foreground/90 py-2 typo-body-sm font-medium text-background transition-transform duration-300 disabled:cursor-not-allowed',
+              'absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-foreground/90 py-2 typo-body-sm text-background transition-transform duration-300 disabled:cursor-not-allowed',
               'translate-y-0 md:translate-y-full md:group-hover:translate-y-0',
             )}
           >
@@ -125,7 +125,7 @@ export default function ProductCard({
       </div>
 
       <div className="mt-3">
-        <h3 className="typo-label font-medium line-clamp-2">{name}</h3>
+        <h3 className="typo-label-sm line-clamp-2">{name}</h3>
         <div className="mt-1">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         </div>

@@ -76,7 +76,7 @@ function JournalCard({ entry, index }: { entry: JournalEntry; index: number }) {
           <span className="text-xs text-muted-foreground">·</span>
           <span className="text-xs text-muted-foreground">{entry.readTime}</span>
         </div>
-        <h3 className="font-display typo-h3 font-bold text-foreground mb-1 group-hover:underline">
+        <h3 className="font-display typo-h3 text-foreground mb-1 group-hover:underline">
           {entry.title}
         </h3>
         <p className="text-xs text-muted-foreground mb-3">{entry.subtitle}</p>

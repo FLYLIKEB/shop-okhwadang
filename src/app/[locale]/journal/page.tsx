@@ -5,10 +5,10 @@ export default function JournalPage() {
     <div className="min-h-screen">
       {/* Hero */}
       <section className="bg-foreground text-background py-20 px-4 text-center">
-        <p className="typo-label font-semibold tracking-widest uppercase text-background/60 mb-3">
+        <p className="typo-label tracking-widest uppercase text-background/60 mb-3">
           Journal
         </p>
-        <h1 className="font-display typo-h1 font-bold tracking-tight mb-4">
+        <h1 className="font-display typo-h1 tracking-tight mb-4">
           차와 흙, 그리고 사람의 이야기
         </h1>
         <p className="max-w-xl mx-auto typo-body text-background/80">

@@ -276,14 +276,14 @@ export default function CheckoutPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-6 typo-h1 font-bold">주문 / 결제</h1>
+      <h1 className="mb-6 typo-h1">주문 / 결제</h1>
 
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Shipping form */}
           <div className="lg:col-span-2 space-y-6">
             <section className="rounded-lg border p-6 space-y-4">
-              <h2 className="typo-h3 font-semibold">배송 정보</h2>
+              <h2 className="typo-h3">배송 정보</h2>
 
               {addressLoading && (
                 <p className="text-sm text-muted-foreground">주소 불러오는 중...</p>
@@ -336,7 +336,7 @@ export default function CheckoutPage({
               )}
 
               <div className="space-y-1">
-                <label htmlFor="recipientName" className="typo-label font-medium">
+                <label htmlFor="recipientName" className="typo-label">
                   받는 분 이름 <span className="text-destructive">*</span>
                 </label>
                 <input
@@ -354,7 +354,7 @@ export default function CheckoutPage({
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="recipientPhone" className="typo-label font-medium">
+                <label htmlFor="recipientPhone" className="typo-label">
                   연락처 <span className="text-destructive">*</span>
                 </label>
                 <input
@@ -372,7 +372,7 @@ export default function CheckoutPage({
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="zipcode" className="typo-label font-medium">
+                <label htmlFor="zipcode" className="typo-label">
                   우편번호 <span className="text-destructive">*</span>
                 </label>
                 <input
@@ -391,7 +391,7 @@ export default function CheckoutPage({
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="address" className="typo-label font-medium">
+                <label htmlFor="address" className="typo-label">
                   주소 <span className="text-destructive">*</span>
                 </label>
                 <input
@@ -409,7 +409,7 @@ export default function CheckoutPage({
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="addressDetail" className="typo-label font-medium">
+                <label htmlFor="addressDetail" className="typo-label">
                   상세 주소
                 </label>
                 <input
@@ -424,7 +424,7 @@ export default function CheckoutPage({
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="memo" className="typo-label font-medium">
+                <label htmlFor="memo" className="typo-label">
                   배송 메모
                 </label>
                 <textarea
@@ -441,7 +441,7 @@ export default function CheckoutPage({
 
             {/* Payment method */}
             <section className="rounded-lg border p-6 space-y-4">
-              <h2 className="typo-h3 font-semibold">결제 수단</h2>
+              <h2 className="typo-h3">결제 수단</h2>
               {prepareResult ? (
                 <PaymentGateway
                   prepareResult={prepareResult}
@@ -460,7 +460,7 @@ export default function CheckoutPage({
 
             {/* Coupon / points placeholder */}
             <section className="rounded-lg border p-6 space-y-2 opacity-50">
-              <h2 className="typo-h3 font-semibold">쿠폰 / 적립금</h2>
+              <h2 className="typo-h3">쿠폰 / 적립금</h2>
               <p className="text-sm text-muted-foreground">쿠폰/적립금 적용은 추후 지원 예정입니다.</p>
             </section>
           </div>
@@ -468,7 +468,7 @@ export default function CheckoutPage({
           {/* Order summary */}
           <div className="space-y-4">
             <section className="rounded-lg border p-6 space-y-4 lg:sticky lg:top-24">
-              <h2 className="typo-h3 font-semibold">주문 상품</h2>
+              <h2 className="typo-h3">주문 상품</h2>
 
               <ul className="divide-y text-sm">
                 {checkoutItems.map((item) => (
@@ -499,7 +499,7 @@ export default function CheckoutPage({
               </div>
 
               <div className="border-t pt-4">
-                <div className="flex justify-between typo-h3 font-semibold">
+                <div className="flex justify-between typo-h3">
                   <span>합계</span>
                   <span>{formatCurrency(grandTotal, locale)}</span>
                 </div>
@@ -508,7 +508,7 @@ export default function CheckoutPage({
               <button
                 type="submit"
                 disabled={step !== 'idle'}
-                className="w-full rounded-md bg-foreground py-3 typo-button font-semibold text-background hover:opacity-90 transition-opacity disabled:opacity-40"
+                className="w-full rounded-md bg-foreground py-3 typo-button text-background hover:opacity-90 transition-opacity disabled:opacity-40"
               >
                 {STEP_LABELS[step]}
               </button>
