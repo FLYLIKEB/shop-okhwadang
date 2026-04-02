@@ -34,7 +34,7 @@ export default function FaqPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">자주 묻는 질문</h1>
+      <h1 className="typo-h1 font-bold mb-6">자주 묻는 질문</h1>
 
       <div className="flex gap-2 flex-wrap mb-6">
         {CATEGORIES.map((cat) => (
@@ -42,7 +42,7 @@ export default function FaqPage() {
             key={cat}
             onClick={() => setActiveCategory(cat)}
             className={cn(
-              'px-4 py-1.5 rounded-full text-sm font-medium border transition-colors',
+              'px-4 py-1.5 rounded-full typo-button border transition-colors',
               activeCategory === cat
                 ? 'bg-black text-white border-black'
                 : 'border-gray-300 text-gray-600 hover:border-gray-500',
@@ -66,13 +66,13 @@ export default function FaqPage() {
           {faqs.map((faq) => (
             <Accordion.Item key={faq.id} value={String(faq.id)}>
               <Accordion.Header>
-                <Accordion.Trigger className="flex items-center justify-between w-full px-2 py-4 text-left text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors [&[data-state=open]>span]:rotate-180">
+                <Accordion.Trigger className="flex items-center justify-between w-full px-2 py-4 text-left typo-h3 text-gray-800 hover:bg-gray-50 transition-colors [&[data-state=open]>span]:rotate-180">
                   <span>{faq.question}</span>
                   <span className="ml-4 shrink-0 text-gray-400 transition-transform duration-200">▼</span>
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                <div className="px-2 pb-4 text-sm text-gray-600 bg-gray-50">
+                <div className="px-2 pb-4 typo-body text-gray-600 bg-gray-50">
                   {faq.answer}
                 </div>
               </Accordion.Content>
