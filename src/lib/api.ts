@@ -152,6 +152,10 @@ class ApiClient {
     });
 
     if (response.status === 401) {
+      if (endpoint === '/auth/login') {
+        const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
+        throw new Error(error.message || `HTTP ${response.status}`);
+      }
       await _ensureTokenRefreshed();
       // Retry original request after token refresh
       const retryResponse = await fetch(url, {
