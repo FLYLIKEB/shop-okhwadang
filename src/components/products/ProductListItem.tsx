@@ -4,6 +4,7 @@ import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/common/PriceDisplay';
 import type { Locale } from '@/utils/currency';
+import StarRating from '@/components/reviews/StarRating';
 
 interface ProductListItemProps {
   id: number;
@@ -68,8 +69,8 @@ export default function ProductListItem({
         <p className="typo-title-sm line-clamp-1 text-card-foreground">{name}</p>
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         {rating !== undefined && (
-          <div className="flex items-center gap-1">
-            <span className="text-[#4A6741]">★</span>
+          <div className="flex items-center gap-1.5">
+            <StarRating rating={rating} size="sm" interactive={false} />
             <span className="typo-body-sm font-medium">{rating.toFixed(1)}</span>
             {reviewCount !== undefined && reviewCount > 0 && (
               <span className="typo-body-sm text-muted-foreground">({reviewCount})</span>

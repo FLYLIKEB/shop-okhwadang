@@ -29,7 +29,7 @@ export default function StarRating({
   const displayRating = interactive && hoverRating > 0 ? hoverRating : rating
 
   return (
-    <div className="flex items-center gap-0.5" role="group" aria-label={`${rating}점`}>
+    <div className="flex items-center -space-x-px" role="group" aria-label={`${rating}점`}>
       {Array.from({ length: maxRating }, (_, i) => {
         const starValue = i + 1
         const isFilled = starValue <= displayRating
@@ -55,7 +55,7 @@ export default function StarRating({
               stroke="currentColor"
               strokeWidth={1.5}
               className={cn(
-                isFilled ? 'text-yellow-400' : 'text-gray-300',
+                isFilled ? 'text-foreground' : 'text-muted-foreground',
               )}
             >
               <path

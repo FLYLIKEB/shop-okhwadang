@@ -16,6 +16,8 @@ const DUMMY_PRODUCT: ProductDetail = {
   status: 'active',
   isFeatured: true,
   viewCount: 0,
+  rating: 4.5,
+  reviewCount: 12,
   stock: 3,
   sku: 'ZN-SS-HSS-120',
   shortDescription: '의흥 원광주니 단산 태토. 홍상설 선생 친제. 용량 120ml, 출수 8공.',

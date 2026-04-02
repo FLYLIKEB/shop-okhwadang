@@ -11,6 +11,7 @@ import PriceDisplay from '@/components/common/PriceDisplay';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlistToggle } from '@/hooks/useWishlistToggle';
 import type { Locale } from '@/utils/currency';
+import StarRating from '@/components/reviews/StarRating';
 
 interface ProductCardProps {
   id: number;
@@ -143,8 +144,8 @@ export default function ProductCard({
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         </div>
         {rating !== undefined && (
-          <div className="mt-1 flex items-center gap-1">
-            <span className="text-[#4A6741]">★</span>
+          <div className="mt-1 flex items-center gap-1.5">
+            <StarRating rating={rating} size="sm" interactive={false} />
             <span className="typo-body-sm font-medium">{rating.toFixed(1)}</span>
             {reviewCount !== undefined && reviewCount > 0 && (
               <span className="typo-body-sm text-muted-foreground">({reviewCount})</span>
