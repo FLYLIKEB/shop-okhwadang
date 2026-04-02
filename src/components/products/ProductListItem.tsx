@@ -70,9 +70,9 @@ export default function ProductListItem({
         {rating !== undefined && (
           <div className="flex items-center gap-1">
             <span className="text-[#4A6741]">★</span>
-            <span className="typo-label">{rating.toFixed(1)}</span>
+            <span className="typo-body-sm font-medium">{rating.toFixed(1)}</span>
             {reviewCount !== undefined && reviewCount > 0 && (
-              <span className="typo-label text-muted-foreground">({reviewCount})</span>
+              <span className="typo-body-sm text-muted-foreground">({reviewCount})</span>
             )}
           </div>
         )}
