@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -146,7 +146,10 @@ function NiloTypeFormModal({
   onSubmit: (data: CreateNiloTypeData) => Promise<void>;
   initial?: NiloType | null;
 }) {
-  const initialFormData = initial ? toNiloFormData(initial) : null;
+  const initialFormData = useMemo(
+    () => (initial ? toNiloFormData(initial) : null),
+    [initial],
+  );
   const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateNiloTypeData>(
     NILO_DEFAULTS,
     initialFormData,
@@ -282,7 +285,10 @@ function ProcessStepFormModal({
   onSubmit: (data: CreateProcessStepData) => Promise<void>;
   initial?: ProcessStep | null;
 }) {
-  const initialFormData = initial ? toProcessFormData(initial) : null;
+  const initialFormData = useMemo(
+    () => (initial ? toProcessFormData(initial) : null),
+    [initial],
+  );
   const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateProcessStepData>(
     PROCESS_DEFAULTS,
     initialFormData,
@@ -369,7 +375,10 @@ function ArtistFormModal({
   onSubmit: (data: CreateArtistData) => Promise<void>;
   initial?: Artist | null;
 }) {
-  const initialFormData = initial ? toArtistFormData(initial) : null;
+  const initialFormData = useMemo(
+    () => (initial ? toArtistFormData(initial) : null),
+    [initial],
+  );
   const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateArtistData>(
     ARTIST_DEFAULTS,
     initialFormData,

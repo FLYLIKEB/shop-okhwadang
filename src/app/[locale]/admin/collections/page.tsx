@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -96,7 +96,10 @@ function CollectionFormModal({
   onSubmit: (data: CreateCollectionData) => Promise<void>;
   initial?: Collection | null;
 }) {
-  const initialFormData = initial ? toFormData(initial) : null;
+  const initialFormData = useMemo(
+    () => (initial ? toFormData(initial) : null),
+    [initial],
+  );
   const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateCollectionData>(
     COLLECTION_DEFAULTS,
     initialFormData,
