@@ -4,6 +4,8 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 
 ## Patterns
 
+**Design System**: All frontend design must follow `DESIGN.md` (colors, typography, spacing, components, animations).
+
 - Functional components + hooks only
 - `@/` import alias
 - `cn()` for Tailwind class merging

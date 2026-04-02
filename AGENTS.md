@@ -88,6 +88,8 @@ cd backend && npm run test:e2e
 
 ### Frontend (React/Next.js)
 
+**Design System**: Follow `DESIGN.md` for all design decisions (colors, typography, spacing, components).
+
 #### Components
 - **Functional components + hooks only** — no class components
 - Use `forwardRef` for component refs that need DOM access
