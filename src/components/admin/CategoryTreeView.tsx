@@ -50,7 +50,7 @@ function TreeNode({
           </span>
           <div className="min-w-0">
             <span className="text-sm font-medium truncate">{category.name}</span>
-            <span className="ml-2 text-xs text-muted-foreground">{category.slug}</span>
+            <span className="ml-2 text-xs text-muted-foreground">#{category.id} · {category.slug}</span>
             {!category.isActive && (
               <span className="ml-2 text-xs text-destructive">(비활성)</span>
             )}
