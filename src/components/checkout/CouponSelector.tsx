@@ -5,6 +5,8 @@ import { couponsApi } from '@/lib/api';
 import type { CouponItem, CalculateDiscountResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
+import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 
 interface CouponSelectorProps {
   orderAmount: number;
@@ -21,7 +23,10 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
     couponsApi
       .getList('available')
       .then((res) => setCoupons(res.coupons))
-      .catch(() => setCoupons([]))
+      .catch((err) => {
+        setCoupons([]);
+        toast.error(handleApiError(err, '쿠폰 목록을 불러오지 못했습니다.'));
+      })
       .finally(() => setLoading(false));
   }, []);
 
