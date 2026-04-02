@@ -130,7 +130,17 @@ export default function ProductCarouselBlock({ content }: Props) {
               key={product.id}
               className={cn('shrink-0', isLarge ? 'w-72' : 'w-56')}
             >
-              <ProductCard {...product} priority={index === 0} />
+              <ProductCard
+                key={product.id}
+                id={product.id}
+                name={product.name}
+                price={product.price}
+                salePrice={product.salePrice}
+                shortDescription={product.shortDescription}
+                status={product.status}
+                images={product.images}
+                priority={index === 0}
+              />
             </div>
           ))}
         </div>

@@ -106,6 +106,7 @@ export default function ProductGridBlock({ content }: Props) {
               name={product.name}
               price={product.price}
               salePrice={product.salePrice}
+              shortDescription={product.shortDescription}
               status={product.status}
               images={product.images}
             />

@@ -10,6 +10,7 @@ interface ProductListItemProps {
   name: string;
   price: number;
   salePrice: number | null;
+  shortDescription?: string | null;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
   isFeatured?: boolean;
@@ -21,6 +22,7 @@ export default function ProductListItem({
   name,
   price,
   salePrice,
+  shortDescription,
   status,
   images,
   locale = 'ko',
@@ -61,6 +63,9 @@ export default function ProductListItem({
       <div className="flex flex-1 flex-col justify-center gap-1">
         <h3 className="line-clamp-1 text-sm font-medium text-card-foreground">{name}</h3>
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
+        {shortDescription && (
+          <p className="line-clamp-1 text-xs text-muted-foreground">{shortDescription}</p>
+        )}
       </div>
     </Link>
   );

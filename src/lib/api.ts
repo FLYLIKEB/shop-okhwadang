@@ -66,6 +66,7 @@ export interface Product {
   slug: string;
   price: number;
   salePrice: number | null;
+  shortDescription: string | null;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   isFeatured: boolean;
   viewCount: number;
