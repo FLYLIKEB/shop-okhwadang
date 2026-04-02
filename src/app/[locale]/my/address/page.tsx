@@ -198,7 +198,7 @@ export default function AddressPage() {
           마이페이지
         </Link>
         <span className="text-muted-foreground">/</span>
-        <h1 className="text-xl font-bold">배송지 관리</h1>
+        <h1 className="typo-h2">배송지 관리</h1>
       </div>
 
       {loading ? (

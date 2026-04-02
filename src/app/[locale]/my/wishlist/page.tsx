@@ -58,7 +58,7 @@ export default function WishlistPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">위시리스트</h1>
+      <h1 className="mb-6 typo-h1">위시리스트</h1>
 
       {dataLoading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">

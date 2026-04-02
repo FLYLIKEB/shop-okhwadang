@@ -38,7 +38,7 @@ export default function NewInquiryPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">문의하기</h1>
+      <h1 className="typo-h1 mb-6">문의하기</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">문의 유형</label>

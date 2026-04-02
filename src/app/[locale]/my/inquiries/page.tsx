@@ -42,7 +42,7 @@ export default function InquiriesPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">1:1 문의</h1>
+        <h1 className="typo-h1">1:1 문의</h1>
         <Link
           href="/my/inquiries/new"
           className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"

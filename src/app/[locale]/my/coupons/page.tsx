@@ -85,7 +85,7 @@ export default function MyCouponsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-4 text-2xl font-bold">쿠폰함</h1>
+      <h1 className="mb-4 typo-h1">쿠폰함</h1>
 
       {/* 적립금 잔액 */}
       <div className="mb-6 rounded-lg border p-4 flex items-center justify-between">
