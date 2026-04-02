@@ -46,37 +46,41 @@ export async function generateMetadata({
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
-async function getThemeStyle(): Promise<string> {
+async function getThemeStyle(map: Record<string, string> | null): Promise<string> {
+  if (!map) return '';
+  const COLOR_RE = /^#[0-9a-fA-F]{3,8}$|^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/;
+  const LENGTH_RE = /^\d+(\.\d+)?(px|rem|em)$/;
+  const FONT_RE = /^['"]?[\w\s,-]+['"]?(?:\s*,\s*[\w\s-]+)*$/;
+  const NUMBER_RE = /^\d+(\.\d+)?$/;
+
+  function isValidCssValue(key: string, value: string): boolean {
+    const trimmed = value.trim();
+    if (key.startsWith('color_')) return COLOR_RE.test(trimmed);
+    if (key.startsWith('font_size') || key.startsWith('spacing') || key.startsWith('radius')) return LENGTH_RE.test(trimmed);
+    if (key.startsWith('font_family')) return FONT_RE.test(trimmed);
+    if (key.startsWith('font_weight') || key.startsWith('line_height')) return NUMBER_RE.test(trimmed);
+    return false;
+  }
+
+  const vars = Object.entries(map)
+    .filter(([k, v]) => isValidCssValue(k, String(v)))
+    .map(([k, v]) => {
+      const safeKey = k.replace(/[^a-zA-Z0-9_-]/g, '');
+      return `--db-${safeKey.replace(/_/g, '-')}: ${String(v).trim()}`;
+    })
+    .join('; ');
+  return vars ? `:root { ${vars} }` : '';
+}
+
+async function getSettingsMap(): Promise<Record<string, string> | null> {
   try {
     const res = await fetch(`${BACKEND_URL}/api/settings/map`, {
       cache: 'no-store',
     });
-    if (!res.ok) return '';
-    const map: Record<string, string> = await res.json();
-    const COLOR_RE = /^#[0-9a-fA-F]{3,8}$|^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/;
-    const LENGTH_RE = /^\d+(\.\d+)?(px|rem|em)$/;
-    const FONT_RE = /^['"]?[\w\s,-]+['"]?(?:\s*,\s*[\w\s-]+)*$/;
-    const NUMBER_RE = /^\d+(\.\d+)?$/;
-
-    function isValidCssValue(key: string, value: string): boolean {
-      const trimmed = value.trim();
-      if (key.startsWith('color_')) return COLOR_RE.test(trimmed);
-      if (key.startsWith('font_size') || key.startsWith('spacing') || key.startsWith('radius')) return LENGTH_RE.test(trimmed);
-      if (key.startsWith('font_family')) return FONT_RE.test(trimmed);
-      if (key.startsWith('font_weight') || key.startsWith('line_height')) return NUMBER_RE.test(trimmed);
-      return false;
-    }
-
-    const vars = Object.entries(map)
-      .filter(([k, v]) => isValidCssValue(k, String(v)))
-      .map(([k, v]) => {
-        const safeKey = k.replace(/[^a-zA-Z0-9_-]/g, '');
-        return `--db-${safeKey.replace(/_/g, '-')}: ${String(v).trim()}`;
-      })
-      .join('; ');
-    return vars ? `:root { ${vars} }` : '';
+    if (!res.ok) return null;
+    return res.json();
   } catch {
-    return '';
+    return null;
   }
 }
 
@@ -92,10 +96,14 @@ export default async function LocaleLayout({
 
   setRequestLocale(safeLocale);
 
-  const [messages, themeStyle] = await Promise.all([
+  const [messages, settingsMap] = await Promise.all([
     getMessages(),
-    getThemeStyle(),
+    getSettingsMap(),
   ]);
+
+  const themeStyle = getThemeStyle(settingsMap);
+
+  const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible !== 'false';
 
   return (
     <html lang={safeLocale}>
@@ -114,7 +122,7 @@ export default async function LocaleLayout({
         </a>
         <NextIntlClientProvider messages={messages}>
           <Providers>
-            <MobileNavProvider>
+            <MobileNavProvider initialVisible={mobileBottomNavVisible}>
               <div className="flex min-h-screen flex-col">
               <Header />
               <BackButton />
