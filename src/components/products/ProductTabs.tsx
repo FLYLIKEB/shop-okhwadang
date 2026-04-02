@@ -34,7 +34,7 @@ export default function ProductTabs({ description, descriptionImages, productId 
             type="button"
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'px-6 py-3 text-sm transition-colors',
+              'px-6 py-3 typo-body-sm transition-colors',
               activeTab === tab
                 ? 'border-b-2 border-foreground font-medium text-foreground'
                 : 'text-muted-foreground hover:text-foreground',
