@@ -7,6 +7,8 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
 import { formatCurrency } from '@/utils/currency';
+import { handleApiError } from '@/utils/error';
+import { toast } from 'sonner';
 
 type TabStatus = 'available' | 'used' | 'expired';
 
@@ -71,7 +73,10 @@ export default function MyCouponsPage() {
         setCoupons(res.coupons);
         setPointBalance(res.points.balance);
       })
-      .catch(() => setCoupons([]))
+      .catch((err) => {
+        setCoupons([]);
+        toast.error(handleApiError(err, '쿠폰 목록을 불러오지 못했습니다.'));
+      })
       .finally(() => setDataLoading(false));
   }, [isAuthenticated, tab]);
 

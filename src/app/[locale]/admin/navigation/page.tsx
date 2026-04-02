@@ -51,7 +51,10 @@ export default function AdminNavigationPage() {
           const setting = settings.find((s) => s.key === 'mobile_bottom_nav_visible');
           setBottomNavVisible(setting ? setting.value === 'true' : true);
         })
-        .catch(() => setBottomNavVisible(true))
+        .catch((err) => {
+          setBottomNavVisible(true);
+          toast.error(handleApiError(err, '네비게이션 설정을 불러오지 못했습니다.'));
+        })
         .finally(() => setBottomNavLoading(false));
     }
   }, [isAdmin]);
