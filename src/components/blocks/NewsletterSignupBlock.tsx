@@ -89,6 +89,8 @@ export default function NewsletterSignupBlock({ content }: Props) {
           )}>
             <input
               type="email"
+              id="newsletter-email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={placeholder}

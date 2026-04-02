@@ -81,9 +81,11 @@ export default function SearchInput({ className, placeholder = '상품 검색...
     <div ref={containerRef} className={cn('relative', className)}>
       <form onSubmit={handleSubmit} className="relative flex items-center">
         <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" />
-        <input
+          <input
           ref={inputRef}
           type="search"
+          id="search-input"
+          name="search"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onFocus={() => setIsOpen(true)}
