@@ -8,6 +8,14 @@ import {
   ParseIntPipe,
   Request,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AdminMembersService } from './admin-members.service';
 import { AdminMembersQueryDto } from './dto/admin-members-query.dto';
@@ -18,17 +26,34 @@ interface RequestWithUser {
   user: { id: number; email: string; role: string };
 }
 
+@ApiTags('관리자 - 회원')
 @Controller('admin')
 @Roles('admin', 'super_admin')
 export class AdminMembersController {
   constructor(private readonly adminMembersService: AdminMembersService) {}
 
   @Get('members')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '회원 목록 조회', description: '모든 회원을 필터링하여 조회합니다.' })
+  @ApiResponse({ status: 200, description: '회원 목록 조회 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: '페이지 번호' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 개수' })
+  @ApiQuery({ name: 'role', required: false, type: String, description: '회원 역할 필터' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: '검색어 (이메일/이름)' })
   findAll(@Query() query: AdminMembersQueryDto) {
     return this.adminMembersService.findAll(query);
   }
 
   @Patch('members/:id')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '회원 역할 수정', description: '회원의 역할을 수정합니다.' })
+  @ApiResponse({ status: 200, description: '회원 역할 수정 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiResponse({ status: 404, description: '회원을 찾을 수 없음' })
+  @ApiParam({ name: 'id', type: Number, description: '회원 ID' })
   updateRole(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateMemberRoleDto,
