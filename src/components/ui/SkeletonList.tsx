@@ -1,3 +1,5 @@
+import { cn } from '@/components/ui/utils';
+
 interface SkeletonListProps {
   count?: number;
   height?: string;
@@ -14,7 +16,7 @@ export default function SkeletonList({
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className={`animate-pulse rounded bg-muted ${height}`}
+          className={cn('animate-skeleton-shimmer rounded', height)}
         />
       ))}
     </div>

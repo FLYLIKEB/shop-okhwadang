@@ -119,7 +119,22 @@ export default async function LocaleLayout({
               <main id="main-content" className="flex-1 pb-16 md:pb-0">{children}</main>
               <Footer />
               <MobileBottomNavWrapper />
-              <Toaster position="top-right" richColors />
+              <Toaster
+                position="top-right"
+                richColors
+                toastOptions={{
+                  style: {
+                    fontFamily: 'var(--font-body)',
+                    borderRadius: 'var(--radius-md)',
+                  },
+                  classNames: {
+                    toast: 'bg-card border-border shadow-md',
+                    success: 'border-l-4 border-l-[--color-tea]',
+                    error: 'border-l-4 border-l-destructive',
+                    info: 'border-l-4 border-l-[--color-primary]',
+                  },
+                }}
+              />
               <RecentlyViewedWidget />
             </div>
           </Providers>
