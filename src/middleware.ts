@@ -35,6 +35,11 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Skip intl middleware for API routes
+  if (pathnameWithoutLocale.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
   return intlMiddleware(request);
 }
 
