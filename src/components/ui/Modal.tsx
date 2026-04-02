@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { X } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 
 interface ModalProps {
@@ -57,12 +58,20 @@ export default function Modal({
     >
       <div
         className={cn(
-          'w-full rounded-lg bg-background p-6 shadow-xl',
+          'relative w-full rounded-lg bg-background p-6 shadow-xl',
           MAX_WIDTH_CLASSES[maxWidth],
           className,
         )}
         onClick={(e) => e.stopPropagation()}
       >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="닫기"
+          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
         {children}
       </div>
     </div>

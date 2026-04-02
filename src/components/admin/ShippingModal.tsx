@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminOrdersApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
@@ -48,7 +49,15 @@ export function ShippingModal({ orderId, orderNumber, onClose, onSuccess }: Ship
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+      <div className="relative w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="닫기"
+          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
         <h2 className="mb-4 text-lg font-bold">운송장 등록</h2>
         <p className="mb-4 text-sm text-muted-foreground">주문번호: {orderNumber}</p>
 

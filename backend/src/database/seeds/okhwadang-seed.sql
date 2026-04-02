@@ -428,6 +428,10 @@ INSERT INTO users (id, email, password, name, phone, role, is_active, created_at
 (3, 'reviewer3@okhwadang.com', '$2b$10$yICUqkVMdV.yu9IUVU7F7uc754wywBlXAGCgRC/ao3LQ7mOHM6uyS', '박다구', NULL, 'user', 1, NOW(), NOW()),
 (4, 'reviewer4@okhwadang.com', '$2b$10$4l/Mqok3lGJuc2/uWUiZS.5TXBGlysr0vzjJ2bmsVCGO3p7C/Xel.', '정자호', NULL, 'user', 1, NOW(), NOW());
 
+-- 어드민 계정
+INSERT INTO users (id, email, password, name, phone, role, is_active, created_at, updated_at) VALUES
+(99, 'admin@okhwadang.com', '$2b$10$l46hZJmq5F8DoKvHZrQ0geSQgIxVXjaDPn2oCv7fv5L2AHtMQPSlW', '관리자', NULL, 'admin', 1, NOW(), NOW());
+
 -- ============================================================
 -- 12. 주문 (리뷰 작성용으로 delivery 완료 상태)
 -- ============================================================
