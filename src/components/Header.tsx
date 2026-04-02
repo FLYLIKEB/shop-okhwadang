@@ -221,7 +221,8 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
         aria-hidden="true"
       />
       {/* 왼쪽 슬라이드 패널 */}
-      <div
+      <nav
+        aria-label="모바일 메뉴"
         className={cn(
           'absolute left-0 top-0 h-full w-72 bg-background shadow-xl overflow-hidden transition-transform duration-300 ease-in-out',
           visible ? 'translate-x-0' : '-translate-x-full',
@@ -241,7 +242,7 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
           {renderPanel(menuItems, -1)}
           {panelStack.map((_, index) => renderPanel(panelStack[index].items, index))}
         </div>
-      </div>
+      </nav>
     </div>
   );
 }
