@@ -109,14 +109,14 @@ function SliderHero({ slides, sectionRef, heroLogoStyle }: SliderHeroProps) {
               </div>
 
               <div className="relative z-10 w-full px-8 md:px-12 max-w-3xl">
-                <p className="text-xs uppercase tracking-[0.25em] text-white/60 mb-3 font-body">
+                <p className="typo-label uppercase tracking-[0.25em] text-white/70 mb-3 font-body">
                   옥화당 공식 쇼핑몰
                 </p>
-                <h2 className="text-4xl md:text-6xl font-display-ko tracking-tight text-white leading-tight">
+                <h2 className="typo-h1 text-4xl md:text-6xl font-display-ko text-white">
                   {slide.title}
                 </h2>
                 {slide.subtitle && (
-                  <p className="mt-4 text-base md:text-lg text-white/80">
+                  <p className="mt-4 typo-body text-white/90">
                     {slide.subtitle}
                   </p>
                 )}
@@ -124,7 +124,7 @@ function SliderHero({ slides, sectionRef, heroLogoStyle }: SliderHeroProps) {
                   <div className="mt-8">
                     <Link
                       href={slide.cta_url}
-                      className="inline-block rounded-full border border-white px-8 py-3 text-sm font-medium text-white tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+                      className="inline-block rounded-full border border-white px-8 py-3 typo-button text-white tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
                     >
                       {slide.cta_text}
                     </Link>
@@ -198,12 +198,12 @@ export default function HeroBannerBlock({ content }: Props) {
     return (
       <section className="flex flex-col overflow-hidden md:flex-row bg-white">
         <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
-          <h2 className="text-2xl md:text-3xl">{title}</h2>
-          {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
+          <h2 className="typo-h2 text-foreground">{title}</h2>
+          {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
           {cta_text && cta_url && (
             <Link
               href={cta_url}
-              className="mt-6 inline-block border border-foreground px-6 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
+              className="mt-6 inline-block border border-foreground px-6 py-3 typo-button text-foreground hover:bg-foreground hover:text-background transition-colors"
             >
               {cta_text}
             </Link>
@@ -240,14 +240,14 @@ export default function HeroBannerBlock({ content }: Props) {
         )}
         {image_url && <div className="absolute inset-0 bg-black/45" />}
         {image_url && <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />}
-        <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : ''}`}>
-          <h2 className="text-3xl md:text-5xl">{title}</h2>
-          {subtitle && <p className="mt-4 text-lg opacity-80">{subtitle}</p>}
+        <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : 'text-foreground'}`}>
+          <h2 className={cn('typo-h1 text-3xl md:text-5xl font-display-ko', image_url ? 'text-white' : 'text-foreground')}>{title}</h2>
+          {subtitle && <p className={cn('mt-4 typo-body', image_url ? 'text-white/90' : 'text-muted-foreground')}>{subtitle}</p>}
           {cta_text && cta_url && (
             <div className="mt-8">
               <Link
                 href={cta_url}
-                className="inline-block rounded-full border border-current px-8 py-3 text-sm font-medium tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+                className="inline-block rounded-full border border-current px-8 py-3 typo-button tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
               >
                 {cta_text}
               </Link>
