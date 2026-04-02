@@ -36,14 +36,15 @@ function flattenCategories(
   categories: AdminCategory[],
   parentId: number | null = null,
   depth = 0,
+  expandedIds: Set<number> = new Set(),
 ): FlattenedCategory[] {
   const result: FlattenedCategory[] = [];
   const roots = categories.filter((c) => c.parentId === parentId);
 
   for (const cat of roots) {
     result.push({ ...cat, depth });
-    if (cat.children && cat.children.length > 0) {
-      result.push(...flattenCategories(cat.children, cat.id, depth + 1));
+    if (cat.children && cat.children.length > 0 && expandedIds.has(cat.id)) {
+      result.push(...flattenCategories(cat.children, cat.id, depth + 1, expandedIds));
     }
   }
 
@@ -304,7 +305,7 @@ export default function AdminCategoriesPage() {
   );
 
   const rootCategories = categories.filter((c) => c.parentId === null);
-  const flattenedRootCategories = flattenCategories(rootCategories, null, 0);
+  const flattenedRootCategories = flattenCategories(rootCategories, null, 0, expandedIds);
   const rootCategoryIds = flattenedRootCategories.map((c) => c.id);
 
   const findCategoryById = (id: number): AdminCategory | undefined => {
@@ -436,6 +437,14 @@ export default function AdminCategoriesPage() {
           </div>
         )}
       </div>
+
+      <CategoryFormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        initial={editTarget}
+        onSubmit={handleSubmit}
+        categories={categories}
+      />
 
       <DragOverlay>
         {activeCategory ? (

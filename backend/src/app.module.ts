@@ -83,10 +83,14 @@ import { RolesGuard } from './common/guards/roles.guard';
   providers: [
     // Guard execution order: ThrottlerGuard → JwtAuthGuard → RolesGuard
     // DO NOT reorder — RolesGuard requires request.user populated by JwtAuthGuard
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    ...(process.env.NODE_ENV !== 'development'
+      ? [
+          {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+          },
+        ]
+      : []),
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

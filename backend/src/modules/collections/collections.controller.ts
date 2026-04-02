@@ -2,9 +2,11 @@ import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CollectionsService } from './collections.service';
 import { CollectionType } from './entities/collection.entity';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('컬렉션')
 @Controller('collections')
+@Public()
 export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
