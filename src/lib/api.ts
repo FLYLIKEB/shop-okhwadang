@@ -51,6 +51,14 @@ export interface ProductImage {
   isDescriptionImage: boolean;
 }
 
+export interface ProductDetailImage {
+  id: number;
+  url: string;
+  alt: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -91,6 +99,7 @@ export interface ProductDetail extends Product {
   stock: number;
   sku: string | null;
   options: ProductOption[];
+  detailImages: ProductDetailImage[];
 }
 
 export interface PaginatedResponse<T> {

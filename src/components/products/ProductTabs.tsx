@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { cn } from '@/components/ui/utils'
 import ReviewsTab from '@/components/reviews/ReviewsTab'
-import type { ProductImage } from '@/lib/api'
+import type { ProductDetailImage } from '@/lib/api'
 
 interface ProductTabsProps {
   description: string | null
-  descriptionImages: ProductImage[]
+  descriptionImages: ProductDetailImage[]
   productId?: number
 }
 

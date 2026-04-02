@@ -93,6 +93,22 @@ const DUMMY_PRODUCT: ProductDetail = {
       isThumbnail: false, isDescriptionImage: false,
     },
   ],
+  detailImages: [
+    {
+      id: 1,
+      url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80',
+      alt: '주니 서시호 상세정보 1',
+      sortOrder: 1,
+      isActive: true,
+    },
+    {
+      id: 2,
+      url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=1200&q=80',
+      alt: '주니 서시호 상세정보 2',
+      sortOrder: 2,
+      isActive: true,
+    },
+  ],
 }
 
 export default function ProductPreviewPage() {
