@@ -670,18 +670,18 @@ INSERT INTO reviews (user_id, product_id, order_item_id, rating, content, image_
 -- ============================================================
 -- 15. 사이트 설정 업데이트 (옥화당 브랜드 색상/정보)
 -- ============================================================
-UPDATE site_settings SET value = '#8B4513' WHERE setting_key = 'color_primary';
-UPDATE site_settings SET value = '#FFFDF7' WHERE setting_key = 'color_primary_foreground';
-UPDATE site_settings SET value = '#F5F0E8' WHERE setting_key = 'color_background';
-UPDATE site_settings SET value = '#2C1810' WHERE setting_key = 'color_foreground';
-UPDATE site_settings SET value = '#F9F5EE' WHERE setting_key = 'color_card';
-UPDATE site_settings SET value = '#2C1810' WHERE setting_key = 'color_card_foreground';
-UPDATE site_settings SET value = '#E8DFD0' WHERE setting_key = 'color_border';
-UPDATE site_settings SET value = '#F2EDE4' WHERE setting_key = 'color_muted';
-UPDATE site_settings SET value = '#8B7355' WHERE setting_key = 'color_muted_foreground';
-UPDATE site_settings SET value = '#A0522D' WHERE setting_key = 'color_accent';
-UPDATE site_settings SET value = '#FFFDF7' WHERE setting_key = 'color_accent_foreground';
-UPDATE site_settings SET value = '#8B4513' WHERE setting_key = 'color_ring';
+UPDATE site_settings SET value = '#1a1a1a' WHERE setting_key = 'color_primary';
+UPDATE site_settings SET value = '#fafafa' WHERE setting_key = 'color_primary_foreground';
+UPDATE site_settings SET value = '#fafafa' WHERE setting_key = 'color_background';
+UPDATE site_settings SET value = '#1a1a1a' WHERE setting_key = 'color_foreground';
+UPDATE site_settings SET value = '#ffffff' WHERE setting_key = 'color_card';
+UPDATE site_settings SET value = '#1a1a1a' WHERE setting_key = 'color_card_foreground';
+UPDATE site_settings SET value = '#e5e5e5' WHERE setting_key = 'color_border';
+UPDATE site_settings SET value = '#f5f5f5' WHERE setting_key = 'color_muted';
+UPDATE site_settings SET value = '#737373' WHERE setting_key = 'color_muted_foreground';
+UPDATE site_settings SET value = '#404040' WHERE setting_key = 'color_accent';
+UPDATE site_settings SET value = '#fafafa' WHERE setting_key = 'color_accent_foreground';
+UPDATE site_settings SET value = '#1a1a1a' WHERE setting_key = 'color_ring';
 
 INSERT IGNORE INTO site_settings (setting_key, value, `group`, label, input_type, options, default_value, sort_order)
 VALUES ('mobile_bottom_nav_visible', 'false', 'general', '하단 네비게이션 표시', 'boolean', NULL, 'false', 999);

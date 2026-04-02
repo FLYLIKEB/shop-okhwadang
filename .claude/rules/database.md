@@ -54,3 +54,15 @@ app.getHttpAdapter().getInstance().set('json replacer', (_key: string, value: un
 - Test: local Docker (separate DB with "test" in name)
 - Staging: Lightsail via SSH tunnel
 - Prod: Lightsail direct
+
+## Redis Cache Rules
+
+**Cache invalidation:**
+- When modifying via API (`bulkUpdate`, `resetToDefaults`), the `settings:*` cache key is automatically deleted
+- **When directly modifying DB via SQL**, Redis cache persists and returns stale data
+  - In this case: run `docker exec okhwadang-redis redis-cli -a 'changeme_redis_password' FLUSHALL`, then restart the backend
+- Cache TTL: `settings:*` = 3600 seconds (1 hour)
+
+**Redis connection:**
+- Dev: `docker exec okhwadang-redis redis-cli -a 'changeme_redis_password' ...`
+- Prod: `redis-cli -a $REDIS_PASSWORD` or AWS ElastiCache console

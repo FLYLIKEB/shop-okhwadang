@@ -165,16 +165,8 @@ export class ProductsService {
         qb.orderBy('product.viewCount', 'DESC');
         break;
       case ProductSort.REVIEW_COUNT:
-        qb.orderBy(
-          `(SELECT COUNT(*) FROM \`review\` r WHERE r.product_id = product.id AND r.is_visible = true)`,
-          'DESC',
-        );
-        break;
       case ProductSort.RATING:
-        qb.orderBy(
-          `(SELECT AVG(r.rating) FROM \`review\` r WHERE r.product_id = product.id AND r.is_visible = true)`,
-          'DESC',
-        );
+        qb.orderBy('product.createdAt', 'DESC');
         break;
       default:
         qb.orderBy('product.createdAt', 'DESC');
@@ -184,7 +176,12 @@ export class ProductsService {
       const paged = await paginate(qb, { page, limit });
       const localizedItems = paged.items.map((p) => this.applyLocale(p, locale));
       const statsMap = await this.getReviewStats(localizedItems.map((p) => Number(p.id)));
-      const itemsWithStats = this.applyReviewStats(localizedItems, statsMap);
+      let itemsWithStats = this.applyReviewStats(localizedItems, statsMap);
+      if (sort === ProductSort.REVIEW_COUNT) {
+        itemsWithStats = itemsWithStats.sort((a, b) => b.reviewCount - a.reviewCount);
+      } else if (sort === ProductSort.RATING) {
+        itemsWithStats = itemsWithStats.sort((a, b) => b.rating - a.rating);
+      }
       const result = { ...paged, items: itemsWithStats };
       await this.cacheService.set(cacheKey, result, CACHE_TTL_LIST);
       return result;
@@ -226,23 +223,20 @@ export class ProductsService {
           case ProductSort.PRICE_DESC: likeQb.orderBy('product.price', 'DESC'); break;
           case ProductSort.POPULAR: likeQb.orderBy('product.viewCount', 'DESC'); break;
           case ProductSort.REVIEW_COUNT:
-            likeQb.orderBy(
-              `(SELECT COUNT(*) FROM \`review\` r WHERE r.product_id = product.id AND r.is_visible = true)`,
-              'DESC',
-            );
-            break;
           case ProductSort.RATING:
-            likeQb.orderBy(
-              `(SELECT AVG(r.rating) FROM \`review\` r WHERE r.product_id = product.id AND r.is_visible = true)`,
-              'DESC',
-            );
+            likeQb.orderBy('product.createdAt', 'DESC');
             break;
           default: likeQb.orderBy('product.createdAt', 'DESC');
         }
         const paged = await paginate(likeQb, { page, limit });
         const localizedItems = paged.items.map((p) => this.applyLocale(p, locale));
         const statsMap = await this.getReviewStats(localizedItems.map((p) => Number(p.id)));
-        const itemsWithStats = this.applyReviewStats(localizedItems, statsMap);
+        let itemsWithStats = this.applyReviewStats(localizedItems, statsMap);
+        if (sort === ProductSort.REVIEW_COUNT) {
+          itemsWithStats = itemsWithStats.sort((a, b) => b.reviewCount - a.reviewCount);
+        } else if (sort === ProductSort.RATING) {
+          itemsWithStats = itemsWithStats.sort((a, b) => b.rating - a.rating);
+        }
         const result = { ...paged, items: itemsWithStats };
         await this.cacheService.set(cacheKey, result, CACHE_TTL_LIST);
         return result;

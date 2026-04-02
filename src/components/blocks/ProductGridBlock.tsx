@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { productsApi } from '@/lib/api';
 import type { Product, ProductGridContent } from '@/lib/api';
 import ProductCard from '@/components/products/ProductCard';
@@ -20,7 +21,9 @@ const gridColsMap: Record<string, string> = {
 };
 
 export default function ProductGridBlock({ content }: Props) {
-  const { product_ids, category_id, limit, template, title, more_href, prefetched_products } = content;
+  const params = useParams();
+  const locale = params.locale as string;
+  const { product_ids, category_id, auto, limit, template, title, more_href, prefetched_products } = content;
   const [products, setProducts] = useState<Product[]>(prefetched_products ?? []);
   const [loading, setLoading] = useState(!prefetched_products);
   const { ref, visible } = useScrollAnimation<HTMLElement>();
@@ -37,7 +40,7 @@ export default function ProductGridBlock({ content }: Props) {
           if (!cancelled) {
             setProducts(results);
           }
-        } else if (category_id) {
+        } else if (category_id && auto) {
           const res = await productsApi.getList({ categoryId: category_id, limit });
           if (!cancelled) setProducts(res.items);
         } else {
@@ -53,7 +56,7 @@ export default function ProductGridBlock({ content }: Props) {
 
     fetchProducts();
     return () => { cancelled = true; };
-  }, [product_ids, category_id, limit, prefetched_products]);
+  }, [product_ids, category_id, auto, limit, prefetched_products]);
 
   const gridCols = gridColsMap[template] ?? gridColsMap['4col'];
 
@@ -87,7 +90,15 @@ export default function ProductGridBlock({ content }: Props) {
             href={more_href}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            더 보기
+            전체 보기
+          </Link>
+        )}
+        {!more_href && auto && category_id && (
+          <Link
+            href={`/${locale}/products?category=${category_id}`}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            전체 보기
           </Link>
         )}
       </div>

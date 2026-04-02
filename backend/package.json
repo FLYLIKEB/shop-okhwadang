@@ -21,6 +21,8 @@
     "migration:run:prod": "typeorm migration:run -d dist/database/typeorm.config.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1023.0",
+    "@aws-sdk/s3-request-presigner": "^3.1023.0",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.1.17",
     "@nestjs/core": "^11.1.17",

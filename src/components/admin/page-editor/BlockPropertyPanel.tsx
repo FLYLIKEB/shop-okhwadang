@@ -1,37 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import type { PageBlock } from '@/lib/api';
+import { useState } from 'react';
+import type { PageBlock, ProductSort } from '@/lib/api';
+import { cn } from '@/components/ui/utils';
+import EntitySelector from './EntitySelector';
 import type { DraftBlock } from './SortableBlockItem';
 
 interface BlockPropertyPanelProps {
   block: DraftBlock | null;
   onUpdateContent: (blockId: number, content: Record<string, unknown>) => void;
-}
-
-function useIdListField(value: number[], onChange: (ids: number[]) => void) {
-  const [inputValue, setInputValue] = useState(value.join(','));
-  const isInternalChange = useRef(false);
-
-  useEffect(() => {
-    if (!isInternalChange.current) {
-      setInputValue(value.join(','));
-    }
-    isInternalChange.current = false;
-  }, [value]);
-
-  const handleChange = (newInput: string) => {
-    setInputValue(newInput);
-  };
-
-  const handleBlur = () => {
-    const ids = inputValue.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
-    isInternalChange.current = true;
-    onChange(ids);
-    setInputValue(ids.join(','));
-  };
-
-  return { inputValue, handleChange, handleBlur };
 }
 
 function StringField({
@@ -128,6 +105,49 @@ function SelectField({
       {selectedHint && (
         <p className="mt-1 text-xs text-muted-foreground">{selectedHint}</p>
       )}
+    </div>
+  );
+}
+
+function RadioField({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <div className="mb-1.5 typo-label text-muted-foreground">상품 선택 방식</div>
+      <div className="flex gap-3">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={(e) => { e.preventDefault(); onChange(opt.value); }}
+            className={cn(
+              'flex items-center gap-2 typo-label cursor-pointer rounded px-3 py-1.5 transition-colors border',
+              value === opt.value
+                ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 font-medium text-[var(--color-primary)]'
+                : 'border-border hover:border-[var(--color-primary)]/50 hover:bg-muted/50',
+            )}
+          >
+            <span
+              className={cn(
+                'h-3.5 w-3.5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0',
+                value === opt.value ? 'border-[var(--color-primary)]' : 'border-muted-foreground',
+              )}
+            >
+              {value === opt.value && (
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
+              )}
+            </span>
+            <span>{opt.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -235,7 +255,28 @@ function ProductGridFields({
 }) {
   const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
   const productIds = (content.product_ids as number[]) ?? [];
-  const { inputValue, handleChange, handleBlur } = useIdListField(productIds, (ids) => update('product_ids', ids));
+  const selectedCategoryId = content.category_id as number | undefined;
+  const isAuto = content.auto === true;
+  const hasCategory = selectedCategoryId !== undefined;
+
+  function handleCategoryChange(ids: number[]) {
+    const catId = ids[0] ?? undefined;
+    const updates: Record<string, unknown> = { ...content, category_id: catId };
+    if (catId === undefined) {
+      updates.auto = undefined;
+    }
+    onChange(updates);
+  }
+
+  function handleAutoChange(val: string) {
+    const newAuto = val === 'auto';
+    const updates: Record<string, unknown> = { ...content, auto: newAuto };
+    if (newAuto) {
+      updates.product_ids = [];
+    }
+    onChange(updates);
+  }
+
   return (
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
@@ -250,14 +291,31 @@ function ProductGridFields({
         ]}
         onChange={(v) => update('template', v)}
       />
-      <StringField
-        label="상품 ID 목록 (콤마 구분)"
-        value={inputValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        placeholder="예: 1, 2, 3 (비워두면 최신 상품 자동 표시)"
-        multiline
+      <EntitySelector
+        type="category"
+        selectedIds={selectedCategoryId ? [selectedCategoryId] : []}
+        onChange={handleCategoryChange}
+        placeholder="카테고리 선택..."
       />
+      {hasCategory && (
+        <RadioField
+          value={isAuto ? 'auto' : 'manual'}
+          options={[
+            { value: 'manual', label: '직접 선택' },
+            { value: 'auto', label: '자동 불러오기' },
+          ]}
+          onChange={handleAutoChange}
+        />
+      )}
+      {(!hasCategory || !isAuto) && (
+        <EntitySelector
+          type="product"
+          selectedIds={productIds}
+          onChange={(ids) => update('product_ids', ids)}
+          placeholder={hasCategory ? '해당 카테고리 상품 검색...' : '상품 검색...'}
+          categoryId={hasCategory ? selectedCategoryId : undefined}
+        />
+      )}
     </>
   );
 }
@@ -271,7 +329,28 @@ function ProductCarouselFields({
 }) {
   const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
   const productIds = (content.product_ids as number[]) ?? [];
-  const { inputValue, handleChange, handleBlur } = useIdListField(productIds, (ids) => update('product_ids', ids));
+  const selectedCategoryId = content.category_id as number | undefined;
+  const isAuto = content.auto === true;
+  const hasCategory = selectedCategoryId !== undefined;
+
+  function handleCategoryChange(ids: number[]) {
+    const catId = ids[0] ?? undefined;
+    const updates: Record<string, unknown> = { ...content, category_id: catId };
+    if (catId === undefined) {
+      updates.auto = undefined;
+    }
+    onChange(updates);
+  }
+
+  function handleAutoChange(val: string) {
+    const newAuto = val === 'auto';
+    const updates: Record<string, unknown> = { ...content, auto: newAuto };
+    if (newAuto) {
+      updates.product_ids = [];
+    }
+    onChange(updates);
+  }
+
   return (
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
@@ -285,14 +364,44 @@ function ProductCarouselFields({
         ]}
         onChange={(v) => update('template', v)}
       />
-      <StringField
-        label="상품 ID 목록 (콤마 구분)"
-        value={inputValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        placeholder="예: 1, 2, 3 (비워두면 최신 상품 자동 표시)"
-        multiline
+      <SelectField
+        label="정렬"
+        value={(content.sort as string) ?? 'latest'}
+        options={[
+          { value: 'latest', label: '최신순' },
+          { value: 'popular', label: '판매량순' },
+          { value: 'review_count', label: '리뷰 많은순' },
+          { value: 'rating', label: '별점순' },
+          { value: 'price_asc', label: '가격 낮은순' },
+          { value: 'price_desc', label: '가격 높은순' },
+        ]}
+        onChange={(v) => update('sort', v as ProductSort)}
       />
+      <EntitySelector
+        type="category"
+        selectedIds={selectedCategoryId ? [selectedCategoryId] : []}
+        onChange={handleCategoryChange}
+        placeholder="카테고리 선택..."
+      />
+      {hasCategory && (
+        <RadioField
+          value={isAuto ? 'auto' : 'manual'}
+          options={[
+            { value: 'manual', label: '직접 선택' },
+            { value: 'auto', label: '자동 불러오기' },
+          ]}
+          onChange={handleAutoChange}
+        />
+      )}
+      {(!hasCategory || !isAuto) && (
+        <EntitySelector
+          type="product"
+          selectedIds={productIds}
+          onChange={(ids) => update('product_ids', ids)}
+          placeholder={hasCategory ? '해당 카테고리 상품 검색...' : '상품 검색...'}
+          categoryId={hasCategory ? selectedCategoryId : undefined}
+        />
+      )}
     </>
   );
 }
@@ -306,7 +415,6 @@ function CategoryNavFields({
 }) {
   const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
   const categoryIds = (content.category_ids as number[]) ?? [];
-  const { inputValue, handleChange, handleBlur } = useIdListField(categoryIds, (ids) => update('category_ids', ids));
   return (
     <>
       <SelectField
@@ -319,13 +427,11 @@ function CategoryNavFields({
         ]}
         onChange={(v) => update('template', v)}
       />
-      <StringField
-        label="카테고리 ID 목록 (콤마 구분)"
-        value={inputValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        placeholder="예: 1, 2, 3 (비워두면 전체 카테고리 표시)"
-        multiline
+      <EntitySelector
+        type="category"
+        selectedIds={categoryIds}
+        onChange={(ids) => update('category_ids', ids)}
+        placeholder="카테고리 검색..."
       />
     </>
   );
@@ -408,9 +514,9 @@ const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
 
 const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
   hero_banner: 'ℹ️ 페이지 최상단에 크게 표시되는 배너입니다. 제목·이미지·버튼을 설정하세요. 이미지 URL을 비우면 배경색만 표시됩니다.',
-  product_grid: 'ℹ️ 상품을 격자(바둑판) 형태로 나열합니다. 상품 ID를 콤마로 구분해 입력하거나, 비워두면 최신 상품을 자동으로 가져옵니다.',
-  product_carousel: 'ℹ️ 상품을 좌우 슬라이드로 표시합니다. 상품 ID를 콤마로 구분해 입력하거나, 비워두면 최신 상품을 자동으로 가져옵니다.',
-  category_nav: 'ℹ️ 카테고리 바로가기 버튼 모음입니다. 카테고리 ID를 콤마로 구분해 입력하거나, 비워두면 전체 카테고리를 표시합니다.',
+  product_grid: 'ℹ️ 상품을 격자(바둑판) 형태로 나열합니다. 카테고리를 선택하면 해당 카테고리 상품이 표시됩니다. [직접 선택]模式下可自由挑选商品，[자동 불러오기]模式下则自动从该分类获取商品。',
+  product_carousel: 'ℹ️ 상품을 좌우 슬라이드로 표시합니다. 카테고리 선택 후 [직접 선택]模式下可自由挑选商品，[자동 불러오기]模式下则自动从该分类获取商品。',
+  category_nav: 'ℹ️ 카테고리 바로가기 버튼 모음입니다. 카테고리를 선택하면 순서대로 표시됩니다.',
   promotion_banner: 'ℹ️ 할인·이벤트를 강조하는 띠 배너입니다. 종료일을 설정하면 기간 표시가 가능합니다. 히어로 배너보다 작고 콤팩트합니다.',
   text_content: 'ℹ️ HTML 형식의 자유 텍스트 영역입니다. 공지사항·브랜드 소개 등에 사용하세요. <b>볼드</b>, <a href="">링크</a> 등 기본 HTML 태그 사용 가능합니다.',
   split_content: 'ℹ️ 이미지와 텍스트를 2열로 나란히 표시합니다. 이미지 위치(좌/우), 제목·설명·버튼을 설정할 수 있습니다.',
