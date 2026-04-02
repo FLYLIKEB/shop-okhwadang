@@ -70,7 +70,7 @@ export default function ProductListItem({
         {shortDescription && (
           <p className="line-clamp-1 text-xs text-muted-foreground">{shortDescription}</p>
         )}
-        {rating !== undefined && rating > 0 && (
+        {rating !== undefined && (
           <div className="flex items-center gap-1">
             <span className="text-[#4A6741]">★</span>
             <span className="text-xs">{rating.toFixed(1)}</span>

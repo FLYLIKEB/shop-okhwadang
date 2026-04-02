@@ -120,7 +120,7 @@ export default function ProductCard({
             onClick={handleAddToCart}
             disabled={isCartLoading}
             className={cn(
-              'absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-foreground/90 py-2 typo-body-sm text-background transition-transform duration-300 disabled:cursor-not-allowed',
+              'absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-white/70 backdrop-blur-sm py-3 typo-body-sm text-foreground border-t border-foreground/10 transition-transform duration-300 disabled:cursor-not-allowed',
               'translate-y-0 md:translate-y-full md:group-hover:translate-y-0',
             )}
           >
@@ -138,7 +138,7 @@ export default function ProductCard({
         {shortDescription && (
           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{shortDescription}</p>
         )}
-        {rating !== undefined && rating > 0 && (
+        {rating !== undefined && (
           <div className="mt-1 flex items-center gap-1">
             <span className="text-[#4A6741]">★</span>
             <span className="typo-label">{rating.toFixed(1)}</span>
