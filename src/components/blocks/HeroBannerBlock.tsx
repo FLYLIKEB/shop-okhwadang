@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -178,12 +178,15 @@ export default function HeroBannerBlock({ content }: Props) {
     heroRef: sectionRef,
   });
 
-  const scrollLogoContextValue = {
-    progress,
-    isHeroVisible,
-    heroLogoStyle,
-    headerLogoStyle,
-  };
+  const scrollLogoContextValue = useMemo(
+    () => ({
+      progress,
+      isHeroVisible,
+      heroLogoStyle,
+      headerLogoStyle,
+    }),
+    [progress, isHeroVisible, heroLogoStyle, headerLogoStyle]
+  );
 
   if (template === 'slider') {
     const resolvedSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
