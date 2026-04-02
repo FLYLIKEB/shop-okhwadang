@@ -23,7 +23,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
     <div className="flex flex-col gap-4">
       {Object.entries(groups).map(([groupName, groupOptions]) => (
         <div key={groupName} className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-foreground">{groupName}</span>
+          <span className="typo-label text-foreground">{groupName}</span>
           <div className="flex flex-wrap gap-2">
             {groupOptions.map((option) => {
               const isSoldout = option.stock === 0
