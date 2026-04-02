@@ -68,10 +68,10 @@ cd backend && docker compose down -v # Reset DB (volume cleanup)
 
 ## Issue Tracker
 
-* 44 issues (#2~#45) organized in Phase 0-7
+* Issues organized in Phase 0-7
 * Phase 0: Setup → 1: MVP → 2: Core → 3: Payment → 4: Admin → 5: CMS → 6: Polish → 7: Ops
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Merged so far: #2–#16 (PRs #46–#60)
+* Latest merged PR: #179
 
 ## GitHub CLI
 
