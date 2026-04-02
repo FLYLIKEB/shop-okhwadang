@@ -12,7 +12,7 @@ export function useScrollAnimation<T extends HTMLElement = HTMLElement>({
   once = true,
 }: UseScrollAnimationOptions = {}) {
   const ref = useRef<T>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
