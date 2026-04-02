@@ -13,7 +13,10 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get('redirect');
-  const redirectTo = rawRedirect?.startsWith('/') ? rawRedirect : '/';
+  const redirectTo =
+    rawRedirect?.startsWith('/') && !rawRedirect.startsWith('//')
+      ? rawRedirect
+      : '/';
   const { login, loginWithKakao, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('');
