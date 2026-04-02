@@ -151,7 +151,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">
+      <h1 className="mb-6 typo-h1">
         {mode === 'create' ? '상품 등록' : '상품 수정'}
       </h1>
 

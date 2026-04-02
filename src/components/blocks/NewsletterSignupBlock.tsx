@@ -70,7 +70,7 @@ export default function NewsletterSignupBlock({ content }: Props) {
       )}>
         <h2 className={cn(
           'font-medium text-foreground',
-          template === 'minimal' ? 'text-xl' : 'text-2xl md:text-3xl'
+          template === 'minimal' ? 'typo-h2' : 'typo-h1 md:typo-display'
         )}>
           {title}
         </h2>
