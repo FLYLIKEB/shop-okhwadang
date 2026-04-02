@@ -25,7 +25,10 @@ export default function WishlistPage() {
     wishlistApi
       .getList()
       .then((res) => setItems(res.data))
-      .catch(() => setItems([]))
+      .catch((err) => {
+        setItems([]);
+        toast.error(handleApiError(err, '위시리스트를 불러오지 못했습니다.'));
+      })
       .finally(() => setDataLoading(false));
   }, [isAuthenticated]);
 
