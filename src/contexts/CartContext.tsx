@@ -103,11 +103,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated]);
 
   useEffect(() => {
+    let mounted = true;
     const wasAuthenticated = prevAuthRef.current;
     prevAuthRef.current = isAuthenticated;
 
     if (!isAuthenticated) {
-      setCartData(guestCartToCartResponse(loadGuestCart()));
+      if (mounted) setCartData(guestCartToCartResponse(loadGuestCart()));
       return;
     }
 
@@ -123,13 +124,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const data = await cartApi.getList();
-        setCartData(data);
+        if (mounted) setCartData(data);
       } catch {
         // silent
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     })();
+
+    return () => {
+      mounted = false;
+    };
   }, [isAuthenticated]);
 
   const addItem = useCallback(
