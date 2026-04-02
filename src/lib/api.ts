@@ -67,6 +67,8 @@ export interface Product {
   price: number;
   salePrice: number | null;
   shortDescription: string | null;
+  rating: number;
+  reviewCount: number;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   isFeatured: boolean;
   viewCount: number;

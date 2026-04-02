@@ -11,6 +11,8 @@ interface ProductListItemProps {
   price: number;
   salePrice: number | null;
   shortDescription?: string | null;
+  rating?: number;
+  reviewCount?: number;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
   isFeatured?: boolean;
@@ -23,6 +25,8 @@ export default function ProductListItem({
   price,
   salePrice,
   shortDescription,
+  rating,
+  reviewCount,
   status,
   images,
   locale = 'ko',
@@ -65,6 +69,15 @@ export default function ProductListItem({
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         {shortDescription && (
           <p className="line-clamp-1 text-xs text-muted-foreground">{shortDescription}</p>
+        )}
+        {rating !== undefined && rating > 0 && (
+          <div className="flex items-center gap-1">
+            <span className="text-[#4A6741]">★</span>
+            <span className="text-xs">{rating.toFixed(1)}</span>
+            {reviewCount !== undefined && reviewCount > 0 && (
+              <span className="text-xs text-muted-foreground">({reviewCount})</span>
+            )}
+          </div>
         )}
       </div>
     </Link>

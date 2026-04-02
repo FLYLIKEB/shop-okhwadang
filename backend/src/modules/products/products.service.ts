@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, QueryFailedError } from 'typeorm';
 import { Product, ProductStatus } from './entities/product.entity';
 import { Category } from './entities/category.entity';
+import { Review } from '../reviews/entities/review.entity';
 import { QueryProductsDto, ProductSort } from './dto/query-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -29,8 +30,40 @@ export class ProductsService {
     private readonly productRepository: Repository<Product>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Review)
+    private readonly reviewRepository: Repository<Review>,
     private readonly cacheService: CacheService,
   ) {}
+
+  private async getReviewStats(productIds: number[]): Promise<Map<number, { rating: number; reviewCount: number }>> {
+    if (!productIds.length) return new Map();
+
+    const stats = await this.reviewRepository
+      .createQueryBuilder('review')
+      .select('review.product_id', 'productId')
+      .addSelect('AVG(review.rating)', 'avgRating')
+      .addSelect('COUNT(review.id)', 'reviewCount')
+      .where('review.product_id IN (:...productIds)', { productIds })
+      .andWhere('review.is_visible = :visible', { visible: true })
+      .groupBy('review.product_id')
+      .getRawMany<{ productId: string; avgRating: string; reviewCount: string }>();
+
+    const map = new Map<number, { rating: number; reviewCount: number }>();
+    for (const row of stats) {
+      map.set(parseInt(row.productId, 10), {
+        rating: row.avgRating ? parseFloat(parseFloat(row.avgRating).toFixed(1)) : 0,
+        reviewCount: parseInt(row.reviewCount, 10),
+      });
+    }
+    return map;
+  }
+
+  private applyReviewStats<T extends { id: number }>(items: T[], statsMap: Map<number, { rating: number; reviewCount: number }>): (T & { rating: number; reviewCount: number })[] {
+    return items.map((item) => {
+      const stats = statsMap.get(Number(item.id)) ?? { rating: 0, reviewCount: 0 };
+      return { ...item, rating: stats.rating, reviewCount: stats.reviewCount };
+    });
+  }
 
   private async resolveCategoryIds(categoryId: number): Promise<number[]> {
     const children = await this.categoryRepository.find({ where: { parentId: categoryId } });
@@ -50,9 +83,9 @@ export class ProductsService {
   async findAll(
     query: QueryProductsDto,
     isAdmin = false,
-  ): Promise<{ items: Product[]; total: number; page: number; limit: number }> {
+  ): Promise<{ items: (Product & { rating: number; reviewCount: number })[]; total: number; page: number; limit: number }> {
     const cacheKey = this.buildListCacheKey(query, isAdmin);
-    const cached = await this.cacheService.get<{ items: Product[]; total: number; page: number; limit: number }>(cacheKey);
+    const cached = await this.cacheService.get<{ items: (Product & { rating: number; reviewCount: number })[]; total: number; page: number; limit: number }>(cacheKey);
     if (cached) return cached;
 
     const {
@@ -131,7 +164,10 @@ export class ProductsService {
 
     try {
       const paged = await paginate(qb, { page, limit });
-      const result = { ...paged, items: paged.items.map((p) => this.applyLocale(p, locale)) };
+      const localizedItems = paged.items.map((p) => this.applyLocale(p, locale));
+      const statsMap = await this.getReviewStats(localizedItems.map((p) => Number(p.id)));
+      const itemsWithStats = this.applyReviewStats(localizedItems, statsMap);
+      const result = { ...paged, items: itemsWithStats };
       await this.cacheService.set(cacheKey, result, CACHE_TTL_LIST);
       return result;
     } catch (err) {
@@ -174,7 +210,10 @@ export class ProductsService {
           default: likeQb.orderBy('product.createdAt', 'DESC');
         }
         const paged = await paginate(likeQb, { page, limit });
-        const result = { ...paged, items: paged.items.map((p) => this.applyLocale(p, locale)) };
+        const localizedItems = paged.items.map((p) => this.applyLocale(p, locale));
+        const statsMap = await this.getReviewStats(localizedItems.map((p) => Number(p.id)));
+        const itemsWithStats = this.applyReviewStats(localizedItems, statsMap);
+        const result = { ...paged, items: itemsWithStats };
         await this.cacheService.set(cacheKey, result, CACHE_TTL_LIST);
         return result;
       }
@@ -286,11 +325,11 @@ export class ProductsService {
     return { message: '삭제되었습니다.' };
   }
 
-  async findBulk(ids: number[], isAdmin = false, locale?: string): Promise<Product[]> {
+  async findBulk(ids: number[], isAdmin = false, locale?: string): Promise<(Product & { rating: number; reviewCount: number })[]> {
     if (!ids || ids.length === 0) return [];
 
     const cacheKey = `products:bulk:${ids.sort().join(',')}`;
-    const cached = await this.cacheService.get<Product[]>(cacheKey);
+    const cached = await this.cacheService.get<(Product & { rating: number; reviewCount: number })[]>(cacheKey);
     if (cached) return cached.map((p) => this.applyLocale(p, locale));
 
     const products = await this.productRepository
@@ -302,16 +341,17 @@ export class ProductsService {
       .where('product.id IN (:...ids)', { ids })
       .getMany();
 
+    let filtered = products;
     if (!isAdmin) {
-      const filtered = products.filter(
-        (p) => p.status === ProductStatus.ACTIVE,
-      );
-      await this.cacheService.set(cacheKey, filtered, CACHE_TTL_DETAIL);
-      return filtered.map((p) => this.applyLocale(p, locale));
+      filtered = products.filter((p) => p.status === ProductStatus.ACTIVE);
     }
 
-    await this.cacheService.set(cacheKey, products, CACHE_TTL_DETAIL);
-    return products.map((p) => this.applyLocale(p, locale));
+    const localizedItems = filtered.map((p) => this.applyLocale(p, locale));
+    const statsMap = await this.getReviewStats(localizedItems.map((p) => Number(p.id)));
+    const itemsWithStats = this.applyReviewStats(localizedItems, statsMap);
+
+    await this.cacheService.set(cacheKey, itemsWithStats, CACHE_TTL_DETAIL);
+    return itemsWithStats;
   }
 
   async autocomplete(q: string): Promise<{ id: number; name: string; slug: string }[]> {
