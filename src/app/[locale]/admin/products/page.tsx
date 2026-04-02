@@ -39,8 +39,7 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     void fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, statusFilter]);
+  }, [page, statusFilter, fetchProducts]);
 
   const { execute: toggleStatus } = useAsyncAction(
     async (product: Product) => {
