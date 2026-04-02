@@ -30,7 +30,7 @@ export default function CategoryNavBlock({ content }: Props) {
   const { ref, visible } = useScrollAnimation<HTMLElement>();
 
   useEffect(() => {
-    if (prefetched_categories) return;
+    if (prefetched_categories && prefetched_categories.length > 0) return;
 
     let cancelled = false;
 
