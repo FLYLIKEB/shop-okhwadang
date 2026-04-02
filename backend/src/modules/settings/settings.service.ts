@@ -46,12 +46,7 @@ export class SettingsService {
     await this.dataSource.transaction(async (manager) => {
       const invalidKeys: string[] = [];
       for (const item of items) {
-        const result = await manager
-          .createQueryBuilder()
-          .update(SiteSetting)
-          .set({ value: item.value })
-          .where('setting_key = :key', { key: item.key })
-          .execute();
+        const result = await manager.update(SiteSetting, { key: item.key }, { value: item.value });
         if (result.affected === 0) {
           invalidKeys.push(item.key);
         }
