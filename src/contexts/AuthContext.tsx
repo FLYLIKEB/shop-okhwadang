@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
 
@@ -97,10 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = url;
   }, []);
 
+  const value = useMemo(
+    () => ({ user, isAuthenticated: !!user, isLoading, login, logout, register, loginWithKakao, loginWithGoogle, updateUser }),
+    [user, isLoading, login, logout, register, loginWithKakao, loginWithGoogle, updateUser],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, isLoading, login, logout, register, loginWithKakao, loginWithGoogle, updateUser }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
