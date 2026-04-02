@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { AuthTokenResponse } from '@/lib/api';
+import { handleApiError } from '@/utils/error';
 
 interface OAuthCallbackHandlerProps {
   provider: 'kakao' | 'google';
@@ -39,7 +40,7 @@ export default function OAuthCallbackHandler({ provider, apiMethod }: OAuthCallb
         window.location.href = '/';
       })
       .catch((err: unknown) => {
-        toast.error(err instanceof Error ? err.message : `${provider} 로그인에 실패했습니다.`);
+        toast.error(handleApiError(err, `${provider} 로그인에 실패했습니다.`));
         router.replace('/login');
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
