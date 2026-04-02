@@ -146,7 +146,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
         <p className="text-xs font-semibold tracking-widest uppercase text-background/60 mb-3">
           Collection
         </p>
-        <h1 className="font-display-ko text-4xl font-bold tracking-tight mb-4">
+        <h1 className="font-display typo-h1 font-bold tracking-tight mb-4">
           니료별 · 모양별 큐레이션
         </h1>
         <p className="max-w-xl mx-auto text-sm text-background/70 leading-relaxed">
@@ -211,7 +211,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
         <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-3">
           Shop
         </p>
-        <h2 className="font-display-ko text-2xl font-bold text-foreground mb-4">
+        <h2 className="font-display typo-h2 font-bold text-foreground mb-4">
           전체 상품을 둘러보세요
         </h2>
         <Link

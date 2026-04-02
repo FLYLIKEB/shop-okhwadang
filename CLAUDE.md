@@ -71,7 +71,7 @@ cd backend && docker compose down -v # Reset DB (volume cleanup)
 * Issues organized in Phase 0-7
 * Phase 0: Setup → 1: MVP → 2: Core → 3: Payment → 4: Admin → 5: CMS → 6: Polish → 7: Ops
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Latest merged PR: #186
+* Latest merged PR: #199
 
 ## Rules Reference
 

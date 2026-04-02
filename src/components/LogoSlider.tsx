@@ -35,7 +35,7 @@ export default function LogoSlider() {
     >
       <span
         style={{
-          fontFamily: 'var(--font-display-ko, serif)',
+          fontFamily: 'var(--font-display, serif)',
           fontWeight: 700,
           fontSize: '1.25rem',
           color: 'white',

@@ -100,7 +100,7 @@ export default function CategoryNavBlock({ content }: Props) {
               transition: `opacity 0.6s ease ${i * 100}ms, transform 0.6s ease ${i * 100}ms, background-color 0.3s`,
             }}
           >
-            <span className="font-display-ko text-base font-medium text-foreground tracking-wide">
+            <span className="font-display text-base font-medium text-foreground tracking-wide">
               {cat.name}
             </span>
             <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-auto">

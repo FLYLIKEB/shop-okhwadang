@@ -22,7 +22,7 @@
   --font-size-heading-3: 1.125rem; /* 18px mobile */
   --font-size-body: 1rem;          /* 16px */
   --font-size-body-sm: 0.875rem;   /* 14px */
-  --font-size-label: 0.75rem;      /* 12px */
+  --font-size-label: 0.625rem;      /* 10px */
   --font-size-button: 0.875rem;    /* 14px */
 
   /* Typography — line-height scale */
@@ -60,9 +60,8 @@
   --color-danni: #C9B8A3;
   --color-surface: #F5F3EF;
 
-  /* ── 타이포그래피 — 폰트 패밀리 ── */
-  --font-display-ko: 'Noto Serif KR', 'Georgia', serif;
-  --font-display-en: 'Cormorant Garamond', 'Georgia', serif;
+  /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
+  --font-display: 'Noto Serif KR', 'Georgia', serif;
   --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-mono: 'DM Mono', 'Courier New', monospace;
 
@@ -129,7 +128,7 @@ body {
 }
 
 h1 {
-  font-family: var(--font-display-ko);
+  font-family: var(--font-display);
   font-size: var(--font-size-heading-1);
   line-height: var(--line-height-heading);
   font-weight: 600;
@@ -137,7 +136,7 @@ h1 {
 }
 
 h2 {
-  font-family: var(--font-display-ko);
+  font-family: var(--font-display);
   font-size: var(--font-size-heading-2);
   line-height: var(--line-height-heading);
   font-weight: 600;
@@ -145,7 +144,7 @@ h2 {
 }
 
 h3 {
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-size: var(--font-size-heading-3);
   line-height: var(--line-height-heading);
   font-weight: 500;
@@ -189,12 +188,8 @@ h3 {
 }
 
 /* ── 디스플레이 타이틀 ──────────────────────────────────────────── */
-.font-display-ko {
-  font-family: var(--font-display-ko);
-}
-
-.font-display-en {
-  font-family: var(--font-display-en);
+.font-display {
+  font-family: var(--font-display);
 }
 
 /* ── 산지·중량·용량 스펙 데이터 ─────────────────────────────────── */

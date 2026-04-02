@@ -112,7 +112,7 @@ function SliderHero({ slides, sectionRef, heroLogoStyle }: SliderHeroProps) {
                 <p className="typo-label uppercase tracking-[0.25em] text-white/70 mb-3 font-body">
                   옥화당 공식 쇼핑몰
                 </p>
-                <h2 className="typo-h1 text-4xl md:text-6xl font-display-ko text-white">
+                <h2 className="typo-h1 font-display text-white">
                   {slide.title}
                 </h2>
                 {slide.subtitle && (
@@ -241,7 +241,7 @@ export default function HeroBannerBlock({ content }: Props) {
         {image_url && <div className="absolute inset-0 bg-black/45" />}
         {image_url && <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />}
         <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : 'text-foreground'}`}>
-          <h2 className={cn('typo-h1 text-3xl md:text-5xl font-display-ko', image_url ? 'text-white' : 'text-foreground')}>{title}</h2>
+          <h2 className={cn('typo-h1 font-display', image_url ? 'text-white' : 'text-foreground')}>{title}</h2>
           {subtitle && <p className={cn('mt-4 typo-body', image_url ? 'text-white/90' : 'text-muted-foreground')}>{subtitle}</p>}
           {cta_text && cta_url && (
             <div className="mt-8">
