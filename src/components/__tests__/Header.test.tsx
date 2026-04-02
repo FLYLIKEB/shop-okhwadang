@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Header from '@/components/Header';
@@ -103,7 +103,9 @@ describe('Header', () => {
     const mobileNav = screen.getByRole('navigation', { name: '모바일 메뉴' });
     const productLink = mobileNav.querySelector('a[href="/products"]')!;
     await user.click(productLink);
-    expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
+    });
   });
 
   it('Escape key → mobile menu closes', async () => {
@@ -112,7 +114,9 @@ describe('Header', () => {
     await user.click(screen.getByRole('button', { name: '메뉴 열기' }));
     expect(screen.getByRole('navigation', { name: '모바일 메뉴' })).toBeInTheDocument();
     await user.keyboard('{Escape}');
-    expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
+    });
   });
 
   it('mobile search bar is always visible (not product detail)', () => {
