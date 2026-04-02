@@ -12,6 +12,7 @@ import ImageGallery from './ImageGallery'
 import OptionSelector from './OptionSelector'
 import QuantitySelector from './QuantitySelector'
 import ProductTabs from './ProductTabs'
+import StarRating from '@/components/reviews/StarRating'
 import type { Locale } from '@/utils/currency'
 
 interface ProductDetailClientProps {
@@ -108,6 +109,17 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Short description */}
           {product.shortDescription && (
             <p className="typo-body text-muted-foreground">{product.shortDescription}</p>
+          )}
+
+          {/* Rating */}
+          {product.rating !== undefined && (
+            <div className="flex items-center gap-2">
+              <StarRating rating={product.rating} size="md" interactive={false} />
+              <span className="typo-body font-medium">{product.rating.toFixed(1)}</span>
+              {product.reviewCount !== undefined && product.reviewCount > 0 && (
+                <span className="typo-body text-muted-foreground">({product.reviewCount}개의 후기)</span>
+              )}
+            </div>
           )}
 
           {/* Price */}

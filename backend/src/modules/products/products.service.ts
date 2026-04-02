@@ -263,7 +263,10 @@ export class ProductsService {
         this.logger.warn(`view_count increment failed: ${err.message}`),
       );
 
-    return this.applyLocale(product, locale);
+    const localized = this.applyLocale(product, locale);
+    const statsMap = await this.getReviewStats([id]);
+    const itemsWithStats = this.applyReviewStats([localized], statsMap);
+    return itemsWithStats[0];
   }
 
   private async findById(id: number): Promise<Product> {
