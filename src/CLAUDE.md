@@ -28,13 +28,6 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 - Responsive: flex/grid based, component-level mobile branching
 - Semantic HTML, ARIA labels, keyboard navigation
 
-## SEO
-
-- SSR via React Server Components
-- Next.js Metadata API for meta tags
-- JSON-LD structured data for products (price, rating, stock)
-- Sitemap generation
-
 ## Template / CMS System
 
 - Pages built as blocks: hero-banner, product-grid, carousel, category-nav, etc.
@@ -50,7 +43,7 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 ## Admin Patterns
 
 - `useAdminGuard()` (`hooks/useAdminGuard.ts`) — admin role check + redirect to `/`. Returns `{ user, isLoading, isAdmin }`. Always use `isAdmin` to gate data loading; never inline `user.role === 'admin'` checks.
-- `useFormModal<T>(defaults, initial, open)` (`hooks/useFormModal.ts`) — shared form modal state. Returns `{ formData, setFormData, loading, handleSubmit }`. Use a `toFormData()` mapper when the initial entity type differs from the create DTO.
+- `useFormModal<T>(defaults, initial, open)` (`hooks/useFormModal.ts`) — shared form modal state. Returns `{ formData, setFormData, loading, handleSubmit }`. Use a `toFormData()` mapper when the initial entity type differs from the create DTO. Always wrap `initialFormData` in `useMemo(() => initial ? toFormData(initial) : null, [initial])` — never compute it inline, or the hook re-runs on every render.
 - `AdminTable` + `AdminTableRowActions` (`components/admin/AdminTable.tsx`) — standard table wrapper with column headers, empty state, and edit/delete buttons.
 - `StatusBadge` (`components/admin/StatusBadge.tsx`) — renders `활성` / `비활성` from `isActive: boolean`.
 

@@ -71,23 +71,7 @@ cd backend && docker compose down -v # Reset DB (volume cleanup)
 * Issues organized in Phase 0-7
 * Phase 0: Setup → 1: MVP → 2: Core → 3: Payment → 4: Admin → 5: CMS → 6: Polish → 7: Ops
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Latest merged PR: #179
-
-## GitHub CLI
-
-* `gh issue view` fails with classic projects error — use `--json` flag: `gh issue view N --json title,body,labels,state`
-
-## Git Rules (summary — full detail in `.claude/rules/git-workflow.md`)
-
-* Branch: `feature/issue-{번호}-{설명}` from main only
-* Commit: Korean, `feat: #번호 설명` / `fix: #번호 설명`
-* PR: `Closes #번호` required. Merge: `gh pr merge --merge --delete-branch` (no squash)
-
-## Deploy Structure
-
-```
-Client → Vercel CDN (Static) + Vercel Functions (api/proxy.ts) → AWS EC2 t3.small (NestJS :3000) → AWS Lightsail MySQL :3306
-```
+* Latest merged PR: #186
 
 ## Rules Reference
 
