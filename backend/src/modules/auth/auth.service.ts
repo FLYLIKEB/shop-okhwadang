@@ -92,7 +92,7 @@ export class AuthService implements OnModuleInit {
     }
     if (!user.password) {
       throw new UnauthorizedException(
-        '소셜 로그인으로 가입된 계정입니다. 카카오 или Google 로그인을 이용해주세요.',
+        '소셜 로그인으로 가입된 계정입니다. 카카오 또는 Google 로그인을 이용해주세요.',
       );
     }
 
