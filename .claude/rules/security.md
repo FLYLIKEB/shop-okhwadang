@@ -3,7 +3,9 @@ globs: ["backend/src/**/*.ts", "src/**/*.ts"]
 ---
 # Security Rules
 
-## Security Stack (request pipeline)
+Shared security rules for both frontend and backend.
+
+## Security Pipeline
 CORS validation → Rate Limiting → JWT Guard → ValidationPipe → Controller
 
 ## Authentication
@@ -11,22 +13,20 @@ CORS validation → Rate Limiting → JWT Guard → ValidationPipe → Controlle
 - RBAC: `user` / `admin` / `super_admin` with `@Roles()` decorator
 - OAuth: Kakao, Google
 - bcrypt hashing (salt rounds 10+)
-- Frontend 401 handling: global interceptor in ApiClient — no per-component 401 checks
 - Token refresh: silent refresh via refresh token before redirect
+
+## Frontend 401 Handling
+- Global interceptor in ApiClient — no per-component 401 checks
+- Auto-refresh token or redirect to login
 
 ## Rate Limiting
 - Global: 200 requests/minute (ThrottlerModule, name: `global`)
 - Auth endpoints: 30 requests/minute (name: `auth`)
-- 엔드포인트별 오버라이드: `@Throttle({ auth: { limit: 30, ttl: 60000 } })` 데코레이터 사용
+- Override per endpoint: `@Throttle({ auth: { limit: 30, ttl: 60000 } })`
 
 ## Input Validation
 - DTO-based (class-validator), ValidationPipe globally applied
 - `whitelist: true`, `forbidNonWhitelisted: true`
-
-## Payment Security
-- Server-side amount validation mandatory
-- PG webhook signature verification
-- State transitions server-only
 
 ## Environment & Keys
 - `.env` in `.gitignore` — never commit
@@ -34,15 +34,12 @@ CORS validation → Rate Limiting → JWT Guard → ValidationPipe → Controlle
 - `.pem`, `.key` files must be in `.gitignore`
 - SSH keys in `~/.ssh/` only
 
-## Security Headers
-- `app.use(helmet())` in main.ts — CSP, X-Frame-Options, X-Content-Type-Options 등 자동 적용
-
 ## Log Redaction
-- LoggingInterceptor에서 민감 필드 자동 마스킹: `password`, `token`, `authorization`, `credit_card`, `cvv`
-- 해당 필드는 로그에 `[REDACTED]`로 출력. nested object에도 재귀 적용
+- Sensitive fields masked in logs: `password`, `token`, `authorization`, `credit_card`, `cvv` → `[REDACTED]`
+- Recursive for nested objects
 
 ## CORS
-- `FRONTEND_URL` — 메인 오리진. `FRONTEND_URLS` — 추가 오리진 (콤마 구분)
-- dev 환경 fallback: `http://localhost:5173`
-- `credentials: true` 필수 (쿠키/인증 헤더)
+- `FRONTEND_URL` — primary origin. `FRONTEND_URLS` — additional origins (comma-separated)
+- dev fallback: `http://localhost:5173`
+- `credentials: true` required
 - No wildcard `*` in production

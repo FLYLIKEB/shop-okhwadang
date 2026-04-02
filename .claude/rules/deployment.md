@@ -18,18 +18,7 @@ globs: ["**/Dockerfile", "**/docker-compose*.yml", ".github/workflows/**", "scri
 - `docker compose down -v` — reset DB (volume cleanup)
 - Volume deletion only with `-v` flag
 
-## Quick Commands
-```bash
-bash scripts/start-local.sh          # Full-stack start (SSH Tunnel + Backend :3000 + Frontend :5173)
-bash scripts/stop-local.sh           # Full-stack stop
-cd backend && docker compose up -d   # Start MySQL + Redis
-cd backend && docker compose down -v # Reset DB
-```
-
 ## Environment Variables
 - Frontend: `BACKEND_URL`
 - Backend: `NODE_ENV`, `PORT`, `DATABASE_URL`, `JWT_SECRET`, `PAYMENT_GATEWAY`, `STORAGE_PROVIDER`, `REDIS_URL`
 - Full reference: `docs/infrastructure/ENVIRONMENT_VARIABLES.md`
-
-## After Every Task
-Always restart dev server: `bash scripts/start-local.sh`

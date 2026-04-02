@@ -95,11 +95,12 @@ Client → Vercel CDN (Static) + Vercel Functions (api/proxy.ts) → AWS EC2 t3.
 | --- | --- |
 | Architecture | `.claude/rules/architecture.md` |
 | Code Style | `.claude/rules/code-style.md` |
-| Testing | `.claude/rules/testing.md` |
 | Git/PR/Issue Workflow | `.claude/rules/git-workflow.md` |
 | DB Migration | `.claude/rules/database.md` |
 | Security | `.claude/rules/security.md` |
 | Deployment | `.claude/rules/deployment.md` |
+
+Testing rules are in `backend/CLAUDE.md` and `src/CLAUDE.md`.
 
 ## Key Files
 
