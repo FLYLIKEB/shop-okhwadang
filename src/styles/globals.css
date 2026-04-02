@@ -13,15 +13,8 @@
   --color-text: #1a1a1a;
   --color-accent-zuni: #1B3A4B;
   --color-accent-tea: #4A6741;
-  --color-secondary: #D4C5B0;
-  --color-surface: #F5F3EF;
+  --color-brand-secondary: #D4C5B0;
   --color-accent-danni: #C9B8A3;
-
-  /* Typography — font families */
-  --font-display-ko: 'Noto Serif KR', 'Georgia', serif;
-  --font-display-en: 'Cormorant Garamond', 'Georgia', serif;
-  --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-  --font-mono: 'DM Mono', 'Courier New', monospace;
 
   /* Typography — size scale */
   --font-size-heading-1: 1.5rem;   /* 24px mobile */
