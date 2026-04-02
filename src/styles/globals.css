@@ -25,6 +25,7 @@
   --color-accent-danni: #C9B8A3;
 
   /* Typography — size scale */
+  --font-size-heading-0: 2rem;     /* 32px mobile - hero only */
   --font-size-heading-1: 1.5rem;   /* 24px mobile */
   --font-size-heading-2: 1.25rem;  /* 20px mobile */
   --font-size-heading-3: 1.125rem; /* 18px mobile */
@@ -82,10 +83,18 @@
     --font-size-heading-1: 2.25rem;  /* 36px desktop */
     --font-size-heading-2: 1.5rem;   /* 24px desktop */
     --font-size-heading-3: 1.25rem;  /* 20px desktop */
+    --font-size-heading-0: 3rem;     /* 48px desktop - hero only */
   }
 }
 
 /* ── Typography utility classes ────────────────────────────────── */
+@utility typo-h0 {
+  font-size: var(--font-size-heading-0, 2rem);
+  line-height: var(--line-height-heading);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
 @utility typo-h1 {
   font-size: var(--font-size-heading-1);
   line-height: var(--line-height-heading);
@@ -124,17 +133,17 @@
   font-weight: 600;
 }
 
-@utility typo-label-sm {
-  font-size: var(--font-size-label-sm);
-  line-height: var(--line-height-compact);
-  font-family: var(--font-body);
-  font-weight: 500;
-}
-
 @utility typo-button {
   font-size: var(--font-size-button);
   line-height: var(--line-height-compact);
   font-weight: 600;
+}
+
+@utility typo-title-sm {
+  font-size: var(--font-size-body-sm);
+  font-family: var(--font-body);
+  font-weight: 500;
+  line-height: var(--line-height-compact);
 }
 
 /* ── Base styles ───────────────────────────────────────────────── */

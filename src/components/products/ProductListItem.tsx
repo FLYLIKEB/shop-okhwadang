@@ -61,7 +61,7 @@ export default function ProductListItem({
       </div>
 
       <div className="flex flex-1 flex-col justify-center gap-1">
-        <h3 className="line-clamp-1 text-sm font-medium text-card-foreground">{name}</h3>
+        <p className="typo-title-sm line-clamp-1 text-card-foreground">{name}</p>
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         {shortDescription && (
           <p className="line-clamp-1 text-xs text-muted-foreground">{shortDescription}</p>
