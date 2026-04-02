@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/components/ui/utils';
 import FormInput from '@/components/ui/FormInput';
 import type { AdminCategory, CreateCategoryData } from '@/lib/api';
@@ -50,7 +50,10 @@ export default function CategoryFormModal({
   categories,
   initial,
 }: CategoryFormModalProps) {
-  const initialFormData = initial ? toFormData(initial) : null;
+  const initialFormData = useMemo(
+    () => (initial ? toFormData(initial) : null),
+    [initial],
+  );
   const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateCategoryData>(
     CATEGORY_DEFAULTS,
     initialFormData,
