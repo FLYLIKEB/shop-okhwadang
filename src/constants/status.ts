@@ -44,5 +44,5 @@ export const CARRIER_TRACKING_URLS: Partial<Record<CarrierCode, string>> = {
 export const MEMBER_ROLE_LABELS: Record<string, string> = {
   user: '일반 회원',
   admin: '관리자',
-  super_admin: '超级管理员',
+  super_admin: '최고관리자',
 };

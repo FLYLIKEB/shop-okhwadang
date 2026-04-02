@@ -3,26 +3,7 @@
 import type { AdminOrder } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { OrderStatusSelect } from './OrderStatusSelect';
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  paid: 'bg-blue-100 text-blue-700',
-  preparing: 'bg-indigo-100 text-indigo-700',
-  shipped: 'bg-purple-100 text-purple-700',
-  delivered: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
-  refunded: 'bg-orange-100 text-orange-700',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: '결제대기',
-  paid: '결제완료',
-  preparing: '상품준비중',
-  shipped: '배송중',
-  delivered: '배송완료',
-  cancelled: '주문취소',
-  refunded: '환불완료',
-};
+import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/constants/status';
 
 interface AdminOrdersTableProps {
   orders: AdminOrder[];
@@ -68,8 +49,8 @@ export function AdminOrdersTable({ orders, onStatusChange, onShippingRegister }:
               </td>
               <td className="px-4 py-3 text-right">{formatCurrency(order.totalAmount)}</td>
               <td className="px-4 py-3">
-                <span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_COLORS[order.status] ?? 'bg-secondary'}`}>
-                  {STATUS_LABELS[order.status] ?? order.status}
+                <span className={`rounded-full px-2 py-0.5 text-xs ${ORDER_STATUS_COLORS[order.status] ?? 'bg-secondary'}`}>
+                  {ORDER_STATUS_LABELS[order.status] ?? order.status}
                 </span>
               </td>
               <td className="px-4 py-3 text-xs text-muted-foreground">

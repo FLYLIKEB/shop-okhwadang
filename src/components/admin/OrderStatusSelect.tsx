@@ -4,16 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { adminOrdersApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: '결제대기',
-  paid: '결제완료',
-  preparing: '상품준비중',
-  shipped: '배송중',
-  delivered: '배송완료',
-  cancelled: '주문취소',
-  refunded: '환불완료',
-};
+import { ORDER_STATUS_LABELS } from '@/constants/status';
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ['paid'],
@@ -41,7 +32,7 @@ export function OrderStatusSelect({ orderId, currentStatus, onStatusChange }: Or
     setUpdating(true);
     try {
       await adminOrdersApi.updateStatus(orderId, nextStatus);
-      toast.success(`주문 상태가 ${STATUS_LABELS[nextStatus]}(으)로 변경되었습니다.`);
+      toast.success(`주문 상태가 ${ORDER_STATUS_LABELS[nextStatus]}(으)로 변경되었습니다.`);
       onStatusChange();
     } catch (err) {
       toast.error(handleApiError(err, '상태 변경에 실패했습니다.'));
@@ -53,7 +44,7 @@ export function OrderStatusSelect({ orderId, currentStatus, onStatusChange }: Or
   if (allowedNext.length === 0) {
     return (
       <span className="text-xs text-muted-foreground">
-        {STATUS_LABELS[currentStatus] ?? currentStatus}
+        {ORDER_STATUS_LABELS[currentStatus] ?? currentStatus}
       </span>
     );
   }
@@ -65,10 +56,10 @@ export function OrderStatusSelect({ orderId, currentStatus, onStatusChange }: Or
       onChange={(e) => void handleChange(e.target.value)}
       className="rounded border bg-background px-2 py-1 text-xs disabled:opacity-50"
     >
-      <option value="">{STATUS_LABELS[currentStatus] ?? currentStatus}</option>
+      <option value="">{ORDER_STATUS_LABELS[currentStatus] ?? currentStatus}</option>
       {allowedNext.map((s) => (
         <option key={s} value={s}>
-          → {STATUS_LABELS[s]}
+          → {ORDER_STATUS_LABELS[s]}
         </option>
       ))}
     </select>

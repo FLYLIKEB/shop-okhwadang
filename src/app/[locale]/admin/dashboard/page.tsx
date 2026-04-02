@@ -10,6 +10,7 @@ import {
   type DashboardResponse,
   type DashboardQueryParams,
 } from '@/lib/api';
+import { ORDER_STATUS_LABELS } from '@/constants/status';
 
 const RevenueLineChart = dynamic(
   () =>
@@ -35,15 +36,7 @@ function ChartSkeleton() {
   );
 }
 
-const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending: '대기',
-  paid: '결제완료',
-  preparing: '준비중',
-  shipped: '배송중',
-  delivered: '배송완료',
-  cancelled: '취소',
-  refunded: '환불',
-};
+
 
 const PERIOD_OPTIONS = [
   { value: 'today', label: '오늘' },
