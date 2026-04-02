@@ -3,6 +3,7 @@
 import type { ComponentType } from 'react';
 import type { PageBlock } from '@/lib/api';
 import BlockErrorBoundary from './BlockErrorBoundary';
+import BlockReveal from './BlockReveal';
 import HeroBannerBlock from './HeroBannerBlock';
 import ProductGridBlock from './ProductGridBlock';
 import ProductCarouselBlock from './ProductCarouselBlock';
@@ -38,15 +39,23 @@ export default function BlockRenderer({ blocks }: Props) {
 
   return (
     <div className="space-y-8">
-      {visibleBlocks.map((block) => {
+      {visibleBlocks.map((block, index) => {
         const Component = blockComponentMap[block.type];
+        const isHero = block.type === 'hero_banner';
+        const staggerDelay = isHero ? 0 : index * 90;
 
         return (
           <BlockErrorBoundary key={block.id} blockType={block.type}>
-            {Component ? (
+            {isHero ? (
               <Component content={block.content} />
             ) : (
-              <UnknownBlock type={block.type} />
+              <BlockReveal delay={staggerDelay}>
+                {Component ? (
+                  <Component content={block.content} />
+                ) : (
+                  <UnknownBlock type={block.type} />
+                )}
+              </BlockReveal>
             )}
           </BlockErrorBoundary>
         );

@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ArchivesService } from './archives.service';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('아카이브')
 @Controller('archives')
+@Public()
 export class ArchivesController {
   constructor(private readonly archivesService: ArchivesService) {}
 
