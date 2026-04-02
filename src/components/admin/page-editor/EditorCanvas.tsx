@@ -3,7 +3,6 @@
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -11,7 +10,6 @@ import {
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import SortableBlockItem from './SortableBlockItem';
@@ -36,9 +34,6 @@ export default function EditorCanvas({
 }: EditorCanvasProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
