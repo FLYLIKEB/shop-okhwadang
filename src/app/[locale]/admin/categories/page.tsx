@@ -7,8 +7,188 @@ import type { AdminCategory, CreateCategoryData } from '@/lib/api';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import CategoryFormModal from '@/components/admin/CategoryFormModal';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface FlattenedCategory extends AdminCategory {
+  depth: number;
+}
+
+function flattenCategories(
+  categories: AdminCategory[],
+  parentId: number | null = null,
+  depth = 0,
+): FlattenedCategory[] {
+  const result: FlattenedCategory[] = [];
+  const roots = categories.filter((c) => c.parentId === parentId);
+
+  for (const cat of roots) {
+    result.push({ ...cat, depth });
+    if (cat.children && cat.children.length > 0) {
+      result.push(...flattenCategories(cat.children, cat.id, depth + 1));
+    }
+  }
+
+  return result;
+}
+
+function getSiblings(category: AdminCategory, list: AdminCategory[]): AdminCategory[] {
+  if (category.parentId === null) {
+    return list.filter((c) => c.parentId === null);
+  }
+  return list.filter((c) => c.parentId === category.parentId);
+}
+
+interface SortableCategoryRowProps {
+  category: AdminCategory;
+  categories: AdminCategory[];
+  expandedIds: Set<number>;
+  onToggleExpand: (id: number) => void;
+  onEdit: (category: AdminCategory) => void;
+  onDelete: (category: AdminCategory) => void;
+  onMoveUp: (category: AdminCategory) => void;
+  onMoveDown: (category: AdminCategory) => void;
+  getSiblings: (category: AdminCategory, list: AdminCategory[]) => AdminCategory[];
+  isDraggable: boolean;
+}
+
+function SortableCategoryRow({
+  category,
+  categories,
+  expandedIds,
+  onToggleExpand,
+  onEdit,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  getSiblings,
+  isDraggable,
+}: SortableCategoryRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id, disabled: !isDraggable });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const hasChildren = category.children && category.children.length > 0;
+  const isExpanded = expandedIds.has(category.id);
+  const siblings = getSiblings(category, categories);
+  const index = siblings.findIndex((s) => s.id === category.id);
+  const isFirst = index === 0;
+  const isLast = index === siblings.length - 1;
+
+  return (
+    <tr ref={setNodeRef} style={style} className="hover:bg-secondary/30">
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1">
+          {isDraggable && (
+            <button
+              {...attributes}
+              {...listeners}
+              className="cursor-grab touch-none rounded p-1 hover:bg-muted active:cursor-grabbing"
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
+          {hasChildren ? (
+            <button
+              onClick={() => onToggleExpand(category.id)}
+              className="rounded p-1 hover:bg-muted"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          ) : (
+            <span className="w-6" />
+          )}
+        </div>
+      </td>
+      <td className="px-4 py-3 text-muted-foreground">{category.id}</td>
+      <td className={cn('px-4 py-3 font-medium')}>
+        {category.name}
+      </td>
+      <td className="px-4 py-3 text-muted-foreground">{category.slug}</td>
+      <td className="px-4 py-3">
+        <span
+          className={`rounded-full px-2 py-0.5 text-xs ${
+            category.isActive
+              ? 'bg-green-100 text-green-700'
+              : 'bg-secondary text-muted-foreground'
+          }`}
+        >
+          {category.isActive ? '활성' : '비활성'}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center justify-center gap-1">
+          <button
+            onClick={() => void onMoveUp(category)}
+            disabled={isFirst}
+            aria-label="위로 이동"
+            className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            ↑
+          </button>
+          <span className="text-xs text-muted-foreground">{index + 1}</span>
+          <button
+            onClick={() => void onMoveDown(category)}
+            disabled={isLast}
+            aria-label="아래로 이동"
+            className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            ↓
+          </button>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={() => onEdit(category)}
+            className="rounded border px-2 py-1 text-xs hover:bg-secondary"
+          >
+            수정
+          </button>
+          <button
+            onClick={() => onDelete(category)}
+            className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+          >
+            삭제
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export default function AdminCategoriesPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
@@ -16,6 +196,7 @@ export default function AdminCategoriesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<AdminCategory | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [activeId, setActiveId] = useState<number | null>(null);
 
   const { execute: loadCategories, isLoading: loading } = useAsyncAction(
     async () => {
@@ -77,13 +258,6 @@ export default function AdminCategoriesPage() {
     });
   };
 
-  const getSiblings = (category: AdminCategory, list: AdminCategory[]): AdminCategory[] => {
-    if (category.parentId === null) {
-      return list.filter((c) => c.parentId === null);
-    }
-    return list.filter((c) => c.parentId === category.parentId);
-  };
-
   const { execute: moveUp } = useAsyncAction(
     async (category: AdminCategory) => {
       const siblings = getSiblings(category, categories);
@@ -118,6 +292,80 @@ export default function AdminCategoriesPage() {
     { errorMessage: '순서 변경에 실패했습니다.' },
   );
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const rootCategories = categories.filter((c) => c.parentId === null);
+  const flattenedRootCategories = flattenCategories(rootCategories, null, 0);
+  const rootCategoryIds = flattenedRootCategories.map((c) => c.id);
+
+  const findCategoryById = (id: number): AdminCategory | undefined => {
+    const findInTree = (cats: AdminCategory[]): AdminCategory | undefined => {
+      for (const cat of cats) {
+        if (cat.id === id) return cat;
+        if (cat.children) {
+          const found = findInTree(cat.children);
+          if (found) return found;
+        }
+      }
+      return undefined;
+    };
+    return findInTree(categories);
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as number);
+  };
+
+  const { execute: handleReorder } = useAsyncAction(
+    async ({ activeId, overId }: { activeId: number; overId: number }) => {
+      const activeCategory = findCategoryById(activeId);
+      const overCategory = findCategoryById(overId);
+
+      if (!activeCategory || !overCategory) return;
+      if (activeCategory.parentId !== overCategory.parentId) {
+        toast.error('같은 레벨에서만 순서를 변경할 수 있습니다.');
+        return;
+      }
+      if (activeId === overId) return;
+
+      const siblings = getSiblings(activeCategory, categories);
+      const activeIndex = siblings.findIndex((s) => s.id === activeId);
+      const overIndex = siblings.findIndex((s) => s.id === overId);
+
+      if (activeIndex === -1 || overIndex === -1) return;
+
+      const newOrders: { id: number; sortOrder: number }[] = [];
+      const [removed] = siblings.splice(activeIndex, 1);
+      siblings.splice(overIndex, 0, removed);
+
+      siblings.forEach((sibling, idx) => {
+        newOrders.push({ id: sibling.id, sortOrder: idx });
+      });
+
+      await adminCategoriesApi.reorder(newOrders);
+      await loadCategories();
+    },
+    { errorMessage: '순서 변경에 실패했습니다.' },
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (over && active.id !== over.id) {
+      void handleReorder({ activeId: active.id as number, overId: over.id as number });
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-8">
@@ -126,187 +374,98 @@ export default function AdminCategoriesPage() {
     );
   }
 
-  const rootCategories = categories.filter((c) => c.parentId === null);
+  const activeCategory = activeId ? findCategoryById(activeId) : null;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">카테고리 관리</h1>
-        <button
-          onClick={handleOpenCreate}
-          className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
-        >
-          + 카테고리 추가
-        </button>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">카테고리 관리</h1>
+          <button
+            onClick={handleOpenCreate}
+            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+          >
+            + 카테고리 추가
+          </button>
+        </div>
+
+        {categories.length === 0 ? (
+          <p className="py-8 text-center text-muted-foreground">카테고리가 없습니다.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-sm">
+              <thead className="bg-secondary">
+                <tr>
+                  <th className="px-4 py-3 text-left w-12"></th>
+                  <th className="px-4 py-3 text-left">ID</th>
+                  <th className="px-4 py-3 text-left">카테고리명</th>
+                  <th className="px-4 py-3 text-left">슬러그</th>
+                  <th className="px-4 py-3 text-left">상태</th>
+                  <th className="px-4 py-3 text-center">순서</th>
+                  <th className="px-4 py-3 text-right">액션</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                <SortableContext
+                  items={rootCategoryIds}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {flattenedRootCategories.map((cat) => (
+                    <SortableCategoryRow
+                      key={cat.id}
+                      category={cat}
+                      categories={categories}
+                      expandedIds={expandedIds}
+                      onToggleExpand={toggleExpand}
+                      onEdit={handleOpenEdit}
+                      onDelete={handleDelete}
+                      onMoveUp={moveUp}
+                      onMoveDown={moveDown}
+                      getSiblings={getSiblings}
+                      isDraggable={cat.depth === 0}
+                    />
+                  ))}
+                </SortableContext>
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {categories.length === 0 ? (
-        <p className="py-8 text-center text-muted-foreground">카테고리가 없습니다.</p>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border">
+      <DragOverlay>
+        {activeCategory ? (
           <table className="w-full text-sm">
-            <thead className="bg-secondary">
-              <tr>
-                <th className="px-4 py-3 text-left w-8"></th>
-                <th className="px-4 py-3 text-left">ID</th>
-                <th className="px-4 py-3 text-left">카테고리명</th>
-                <th className="px-4 py-3 text-left">슬러그</th>
-                <th className="px-4 py-3 text-left">상태</th>
-                <th className="px-4 py-3 text-center">순서</th>
-                <th className="px-4 py-3 text-right">액션</th>
+            <tbody>
+              <tr className="shadow-lg ring-2 ring-primary">
+                <td className="px-4 py-3">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">{activeCategory.id}</td>
+                <td className="px-4 py-3 font-medium">{activeCategory.name}</td>
+                <td className="px-4 py-3 text-muted-foreground">{activeCategory.slug}</td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs ${
+                      activeCategory.isActive
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-secondary text-muted-foreground'
+                    }`}
+                  >
+                    {activeCategory.isActive ? '활성' : '비활성'}
+                  </span>
+                </td>
+                <td className="px-4 py-3"></td>
+                <td className="px-4 py-3 text-right"></td>
               </tr>
-            </thead>
-            <tbody className="divide-y">
-              {rootCategories.map((cat) => (
-                <CategoryRow
-                  key={cat.id}
-                  category={cat}
-                  categories={categories}
-                  expandedIds={expandedIds}
-                  onToggleExpand={toggleExpand}
-                  onEdit={handleOpenEdit}
-                  onDelete={handleDelete}
-                  onMoveUp={moveUp}
-                  onMoveDown={moveDown}
-                  getSiblings={getSiblings}
-                />
-              ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      <CategoryFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleSubmit}
-        categories={categories}
-        initial={editTarget}
-      />
-    </div>
-  );
-}
-
-interface CategoryRowProps {
-  category: AdminCategory;
-  categories: AdminCategory[];
-  expandedIds: Set<number>;
-  onToggleExpand: (id: number) => void;
-  onEdit: (category: AdminCategory) => void;
-  onDelete: (category: AdminCategory) => void;
-  onMoveUp: (category: AdminCategory) => void;
-  onMoveDown: (category: AdminCategory) => void;
-  getSiblings: (category: AdminCategory, list: AdminCategory[]) => AdminCategory[];
-  depth?: number;
-}
-
-function CategoryRow({
-  category,
-  categories,
-  expandedIds,
-  onToggleExpand,
-  onEdit,
-  onDelete,
-  onMoveUp,
-  onMoveDown,
-  getSiblings,
-  depth = 0,
-}: CategoryRowProps) {
-  const hasChildren = category.children && category.children.length > 0;
-  const isExpanded = expandedIds.has(category.id);
-  const siblings = getSiblings(category, categories);
-  const index = siblings.findIndex((s) => s.id === category.id);
-  const isFirst = index === 0;
-  const isLast = index === siblings.length - 1;
-
-  return (
-    <>
-      <tr className="hover:bg-secondary/30">
-        <td className="px-4 py-3">
-          {hasChildren ? (
-            <button
-              onClick={() => onToggleExpand(category.id)}
-              className="rounded p-1 hover:bg-muted"
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </button>
-          ) : (
-            <span className="w-6" />
-          )}
-        </td>
-        <td className="px-4 py-3 text-muted-foreground">{category.id}</td>
-        <td className={cn('px-4 py-3 font-medium', depth > 0 && 'pl-8')}>
-          {category.name}
-        </td>
-        <td className="px-4 py-3 text-muted-foreground">{category.slug}</td>
-        <td className="px-4 py-3">
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs ${
-              category.isActive
-                ? 'bg-green-100 text-green-700'
-                : 'bg-secondary text-muted-foreground'
-            }`}
-          >
-            {category.isActive ? '활성' : '비활성'}
-          </span>
-        </td>
-        <td className="px-4 py-3">
-          <div className="flex items-center justify-center gap-1">
-            <button
-              onClick={() => void onMoveUp(category)}
-              disabled={isFirst}
-              aria-label="위로 이동"
-              className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              ↑
-            </button>
-            <span className="text-xs text-muted-foreground">{index + 1}</span>
-            <button
-              onClick={() => void onMoveDown(category)}
-              disabled={isLast}
-              aria-label="아래로 이동"
-              className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              ↓
-            </button>
-          </div>
-        </td>
-        <td className="px-4 py-3 text-right">
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => onEdit(category)}
-              className="rounded border px-2 py-1 text-xs hover:bg-secondary"
-            >
-              수정
-            </button>
-            <button
-              onClick={() => onDelete(category)}
-              className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
-            >
-              삭제
-            </button>
-          </div>
-        </td>
-      </tr>
-      {hasChildren && isExpanded && category.children!.map((child) => (
-        <CategoryRow
-          key={child.id}
-          category={child}
-          categories={categories}
-          expandedIds={expandedIds}
-          onToggleExpand={onToggleExpand}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onMoveUp={onMoveUp}
-          onMoveDown={onMoveDown}
-          getSiblings={getSiblings}
-          depth={depth + 1}
-        />
-      ))}
-    </>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }
