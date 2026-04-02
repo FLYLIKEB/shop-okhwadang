@@ -89,7 +89,7 @@ export default function ProfilePage() {
           마이페이지
         </Link>
         <span className="text-muted-foreground">/</span>
-        <h1 className="text-xl font-bold">회원정보 수정</h1>
+        <h1 className="typo-h2">회원정보 수정</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="rounded-lg border p-6 space-y-5">
