@@ -8,7 +8,7 @@ export default function JournalPage() {
         <p className="typo-label font-semibold tracking-widest uppercase text-background/60 mb-3">
           Journal
         </p>
-        <h1 className="font-display-ko typo-h1 font-bold tracking-tight mb-4">
+        <h1 className="font-display typo-h1 font-bold tracking-tight mb-4">
           차와 흙, 그리고 사람의 이야기
         </h1>
         <p className="max-w-xl mx-auto typo-body text-background/80">

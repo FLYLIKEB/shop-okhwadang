@@ -21,6 +21,7 @@ interface ProductCardProps {
   images: ProductImage[];
   isFeatured?: boolean;
   locale?: Locale;
+  priority?: boolean;
 }
 
 export default function ProductCard({
@@ -31,6 +32,7 @@ export default function ProductCard({
   status,
   images,
   locale = 'ko',
+  priority = false,
 }: ProductCardProps) {
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
@@ -73,17 +75,17 @@ export default function ProductCard({
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+            priority={priority}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <span className="text-sm">No Image</span>
+            <span className="typo-label">No Image</span>
           </div>
         )}
 
         {isSoldout && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60">
-            <span className="text-sm font-medium text-foreground">품절</span>
+            <span className="typo-label font-medium text-foreground">품절</span>
           </div>
         )}
 
@@ -112,7 +114,7 @@ export default function ProductCard({
             onClick={handleAddToCart}
             disabled={isCartLoading}
             className={cn(
-              'absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-foreground/90 py-2 text-sm font-medium text-background transition-transform duration-300 disabled:cursor-not-allowed',
+              'absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-foreground/90 py-2 typo-body-sm font-medium text-background transition-transform duration-300 disabled:cursor-not-allowed',
               'translate-y-0 md:translate-y-full md:group-hover:translate-y-0',
             )}
           >
@@ -123,7 +125,7 @@ export default function ProductCard({
       </div>
 
       <div className="mt-3">
-        <h3 className="text-sm font-medium text-foreground line-clamp-2">{name}</h3>
+        <h3 className="typo-label font-medium line-clamp-2">{name}</h3>
         <div className="mt-1">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         </div>

@@ -37,13 +37,28 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 | `typo-h3` | Pretendard | 18px | 20px | 500 |
 | `typo-body` | Pretendard | 16px | 16px | 400 |
 | `typo-body-sm` | Pretendard | 14px | 14px | 400 |
-| `typo-label` | Pretendard | 12px | 12px | — |
+| `typo-label` | Pretendard | 10px | 10px | — |
 | `typo-button` | Pretendard | 14px | 14px | 500 |
 
-### Font Families
-- Display: `--font-display-ko` = Noto Serif KR, Georgia, serif
-- Body: `--font-body` = Pretendard, Apple SD Gothic Neo, sans-serif
-- Mono: `--font-mono` = DM Mono, Courier New, monospace
+### Typography Rules
+
+** MUST use `typo-*` utilities instead of raw `text-*` Tailwind classes.**
+
+| Raw Tailwind | Utility Class |
+|--------------|---------------|
+| `text-xs` | `typo-label` |
+| `text-sm` | `typo-body-sm` |
+| `text-base` | `typo-body` |
+| `text-lg` | `typo-h3` |
+| `text-xl` | `typo-h2` |
+| `text-2xl` | `typo-h1` |
+
+**Exception**: Only use `text-*` when the exact size doesn't match any `typo-*` utility, or when you need to override a `typo-*` for a specific reason (with a comment explaining why).
+
+### Font Families (최대 3종)
+- Display: `--font-display` = Noto Serif KR, Georgia, serif (제목/헤드라인)
+- Body: `--font-body` = Pretendard, Apple SD Gothic Neo, sans-serif (본문)
+- Mono: `--font-mono` = DM Mono, Courier New, monospace (코드/숫자)
 
 ### Line Height
 | Context | Value |
@@ -154,8 +169,9 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 
 ## Implementation Checklist
 
-- [ ] All text uses `typo-*` utilities (no raw `text-*` overrides)
-- [ ] Headings use `font-display-ko` or `font-display-en`
+- [ ] All text uses `typo-*` utilities (no raw `text-*` overrides, except for valid exceptions)
+- [ ] Headings use `font-display` (Noto Serif KR)
+- [ ] Font families: max 3种 (display, body, mono)
 - [ ] Colors use `--color-*` tokens (no hardcoded hex)
 - [ ] Border radius uses `radius-*` tokens
 - [ ] Animations use `animate-*` utilities

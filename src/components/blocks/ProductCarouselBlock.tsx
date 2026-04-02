@@ -125,12 +125,12 @@ export default function ProductCarouselBlock({ content }: Props) {
           ref={scrollRef}
           className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide"
         >
-          {products.map((product) => (
+          {products.map((product, index) => (
             <div
               key={product.id}
               className={cn('shrink-0', isLarge ? 'w-72' : 'w-56')}
             >
-              <ProductCard {...product} />
+              <ProductCard {...product} priority={index === 0} />
             </div>
           ))}
         </div>

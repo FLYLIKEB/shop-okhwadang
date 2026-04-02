@@ -10,7 +10,7 @@ export default function Logo({ variant = 'header', className }: LogoProps) {
   if (variant === 'hero') {
     return (
       <span
-        className={`font-display-ko text-xl font-bold tracking-tight text-white ${className ?? ''}`}
+        className={`font-display typo-h3 font-bold tracking-tight text-white ${className ?? ''}`}
       >
         {BRAND_NAME}
       </span>
@@ -18,7 +18,7 @@ export default function Logo({ variant = 'header', className }: LogoProps) {
   }
 
   return (
-    <span className={`font-display-ko text-xl font-bold tracking-tight text-foreground ${className ?? ''}`}>
+    <span className={`font-display typo-h3 font-bold tracking-tight text-foreground ${className ?? ''}`}>
       {BRAND_NAME}
     </span>
   );

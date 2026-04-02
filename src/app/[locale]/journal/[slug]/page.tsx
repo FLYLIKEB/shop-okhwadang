@@ -67,10 +67,10 @@ export default async function JournalDetailPage({ params }: PageProps) {
             <span className="text-xs text-background/40">·</span>
             <span className="text-xs text-background/60">{entry.readTime} 읽기</span>
           </div>
-          <h1 className="font-display-ko text-4xl font-bold tracking-tight mb-3">
+          <h1 className="font-display typo-h1 font-bold tracking-tight mb-3">
             {entry.title}
           </h1>
-          <p className="text-lg text-background/70 font-display-ko">
+          <p className="typo-h3 text-background/70 font-display">
             {entry.subtitle}
           </p>
         </div>
