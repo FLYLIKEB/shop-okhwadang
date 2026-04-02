@@ -26,7 +26,7 @@ export default function ProductGridBlock({ content }: Props) {
   const { ref, visible } = useScrollAnimation<HTMLElement>();
 
   useEffect(() => {
-    if (prefetched_products) return;
+    if (prefetched_products && prefetched_products.length > 0) return;
 
     let cancelled = false;
 
