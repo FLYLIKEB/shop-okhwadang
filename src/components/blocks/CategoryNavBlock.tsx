@@ -7,18 +7,6 @@ import { categoriesApi } from '@/lib/api';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import type { Category, CategoryNavContent } from '@/lib/api';
 
-// 카테고리별 한자·부제 매핑
-const CATEGORY_META: Record<string, { hanja: string; sub: string }> = {
-  'teapot':    { hanja: '壺', sub: '자사호' },
-  'puerh-tea': { hanja: '茶', sub: '보이차' },
-  'tea-ware':  { hanja: '器', sub: '다구' },
-  'tea-leaf':  { hanja: '葉', sub: '다엽' },
-};
-
-function getMeta(slug: string) {
-  return CATEGORY_META[slug] ?? { hanja: '品', sub: slug.replace(/-/g, ' ') };
-}
-
 interface Props {
   content: CategoryNavContent;
 }
@@ -98,40 +86,28 @@ export default function CategoryNavBlock({ content }: Props) {
     );
   }
 
-  // Default: text template — 와비사비 미니멀
   return (
     <nav ref={ref} className="py-12 border-t border-border">
       <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
-        {categories.map((cat, i) => {
-          const { hanja, sub } = getMeta(cat.slug);
-          return (
-            <Link
-              key={cat.id}
-              href={`/products?categoryId=${cat.id}`}
-              className="group bg-background px-6 py-8 flex flex-col gap-3 hover:bg-muted/40 transition-colors duration-300"
-              style={{
-                opacity: visible ? 1 : 0,
-                transform: visible ? 'translateY(0)' : 'translateY(12px)',
-                transition: `opacity 0.6s ease ${i * 100}ms, transform 0.6s ease ${i * 100}ms, background-color 0.3s`,
-              }}
-            >
-              <span className="font-display-ko text-4xl font-light text-foreground/20 group-hover:text-foreground/35 transition-colors duration-300 leading-none select-none">
-                {hanja}
-              </span>
-              <div className="flex flex-col gap-0.5">
-                <span className="font-display-ko text-base font-medium text-foreground tracking-wide">
-                  {cat.name}
-                </span>
-                <span className="text-xs tracking-widest text-muted-foreground uppercase">
-                  {sub}
-                </span>
-              </div>
-              <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-auto">
-                →
-              </span>
-            </Link>
-          );
-        })}
+        {categories.map((cat, i) => (
+          <Link
+            key={cat.id}
+            href={`/products?categoryId=${cat.id}`}
+            className="group bg-background px-6 py-8 flex flex-col gap-3 hover:bg-muted/40 transition-colors duration-300"
+            style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(12px)',
+              transition: `opacity 0.6s ease ${i * 100}ms, transform 0.6s ease ${i * 100}ms, background-color 0.3s`,
+            }}
+          >
+            <span className="font-display-ko text-base font-medium text-foreground tracking-wide">
+              {cat.name}
+            </span>
+            <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-auto">
+              →
+            </span>
+          </Link>
+        ))}
       </div>
     </nav>
   );
