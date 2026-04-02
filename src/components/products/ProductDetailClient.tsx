@@ -95,7 +95,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
         <div className="flex flex-col gap-6">
           {/* Breadcrumb */}
           {product.category && (
-            <nav className="text-sm text-muted-foreground">
+            <nav className="typo-label text-muted-foreground">
               <span>{product.category.name}</span>
               <span className="mx-1">/</span>
               <span className="text-foreground">{product.name}</span>
@@ -103,15 +103,17 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Name */}
-          <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
+          <h1 className="typo-h1 text-foreground">{product.name}</h1>
 
           {/* Short description */}
           {product.shortDescription && (
-            <p className="text-sm text-muted-foreground">{product.shortDescription}</p>
+            <p className="typo-body text-muted-foreground">{product.shortDescription}</p>
           )}
 
           {/* Price */}
-          <PriceDisplay price={product.price} salePrice={product.salePrice} size="lg" locale={locale} />
+          <div className="typo-h2 font-semibold">
+            <PriceDisplay price={product.price} salePrice={product.salePrice} size="lg" locale={locale} />
+          </div>
 
           {/* Options */}
           {product.options.length > 0 && (
@@ -124,7 +126,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Quantity */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-foreground">수량</span>
+            <span className="typo-label text-foreground">수량</span>
             <QuantitySelector
               quantity={quantity}
               maxQuantity={Math.max(maxQuantity, 1)}
