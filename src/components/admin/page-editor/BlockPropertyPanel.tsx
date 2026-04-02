@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import type { PageBlock } from '@/lib/api';
 import type { DraftBlock } from './SortableBlockItem';
 
@@ -8,18 +9,45 @@ interface BlockPropertyPanelProps {
   onUpdateContent: (blockId: number, content: Record<string, unknown>) => void;
 }
 
+function useIdListField(value: number[], onChange: (ids: number[]) => void) {
+  const [inputValue, setInputValue] = useState(value.join(','));
+  const isInternalChange = useRef(false);
+
+  useEffect(() => {
+    if (!isInternalChange.current) {
+      setInputValue(value.join(','));
+    }
+    isInternalChange.current = false;
+  }, [value]);
+
+  const handleChange = (newInput: string) => {
+    setInputValue(newInput);
+  };
+
+  const handleBlur = () => {
+    const ids = inputValue.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
+    isInternalChange.current = true;
+    onChange(ids);
+    setInputValue(ids.join(','));
+  };
+
+  return { inputValue, handleChange, handleBlur };
+}
+
 function StringField({
   label,
   value,
   onChange,
   placeholder,
   multiline,
+  onBlur,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   multiline?: boolean;
+  onBlur?: () => void;
 }) {
   return (
     <div>
@@ -28,6 +56,7 @@ function StringField({
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={placeholder}
           rows={4}
           className="w-full rounded-md border border-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -205,6 +234,8 @@ function ProductGridFields({
   onChange: (c: Record<string, unknown>) => void;
 }) {
   const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
+  const productIds = (content.product_ids as number[]) ?? [];
+  const { inputValue, handleChange, handleBlur } = useIdListField(productIds, (ids) => update('product_ids', ids));
   return (
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
@@ -221,9 +252,11 @@ function ProductGridFields({
       />
       <StringField
         label="상품 ID 목록 (콤마 구분)"
-        value={((content.product_ids as number[]) ?? []).join(', ')}
-        onChange={(v) => update('product_ids', v.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0))}
+        value={inputValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
         placeholder="예: 1, 2, 3 (비워두면 최신 상품 자동 표시)"
+        multiline
       />
     </>
   );
@@ -237,6 +270,8 @@ function ProductCarouselFields({
   onChange: (c: Record<string, unknown>) => void;
 }) {
   const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
+  const productIds = (content.product_ids as number[]) ?? [];
+  const { inputValue, handleChange, handleBlur } = useIdListField(productIds, (ids) => update('product_ids', ids));
   return (
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
@@ -252,9 +287,11 @@ function ProductCarouselFields({
       />
       <StringField
         label="상품 ID 목록 (콤마 구분)"
-        value={((content.product_ids as number[]) ?? []).join(', ')}
-        onChange={(v) => update('product_ids', v.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0))}
+        value={inputValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
         placeholder="예: 1, 2, 3 (비워두면 최신 상품 자동 표시)"
+        multiline
       />
     </>
   );
@@ -268,6 +305,8 @@ function CategoryNavFields({
   onChange: (c: Record<string, unknown>) => void;
 }) {
   const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
+  const categoryIds = (content.category_ids as number[]) ?? [];
+  const { inputValue, handleChange, handleBlur } = useIdListField(categoryIds, (ids) => update('category_ids', ids));
   return (
     <>
       <SelectField
@@ -282,9 +321,11 @@ function CategoryNavFields({
       />
       <StringField
         label="카테고리 ID 목록 (콤마 구분)"
-        value={((content.category_ids as number[]) ?? []).join(', ')}
-        onChange={(v) => update('category_ids', v.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0))}
+        value={inputValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
         placeholder="예: 1, 2, 3 (비워두면 전체 카테고리 표시)"
+        multiline
       />
     </>
   );

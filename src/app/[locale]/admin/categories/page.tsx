@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { handleApiError } from '@/utils/error';
 import { adminCategoriesApi } from '@/lib/api';
 import type { AdminCategory, CreateCategoryData } from '@/lib/api';
 import { useAdminGuard } from '@/hooks/useAdminGuard';

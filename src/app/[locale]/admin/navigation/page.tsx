@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { adminNavigationApi } from '@/lib/api';
+import { adminNavigationApi, adminSettingsApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
 import type { NavigationItem } from '@/lib/api';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
 import NavigationEditor from '@/components/admin/NavigationEditor';
@@ -21,22 +20,45 @@ export default function AdminNavigationPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [activeTab, setActiveTab] = useState<NavGroup>('gnb');
   const [items, setItems] = useState<NavigationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [bottomNavVisible, setBottomNavVisible] = useState(true);
+  const [bottomNavLoading, setBottomNavLoading] = useState(true);
 
-  const { execute: loadItems, isLoading: loading } = useAsyncAction(
-    async (group: NavGroup) => {
+
+  const loadItems = useCallback(async (group: NavGroup) => {
+    setLoading(true);
+    try {
       const data = await adminNavigationApi.getByGroup(group);
       setItems(data);
-    },
-    { errorMessage: '네비게이션 목록을 불러오지 못했습니다.' },
-  );
+    } catch {
+      toast.error('네비게이션 목록을 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (isAdmin) {
-      void loadItems(activeTab);
+      loadItems(activeTab);
     }
   }, [isAdmin, activeTab, loadItems]);
 
-  const handleReload = () => loadItems(activeTab);
+  useEffect(() => {
+    if (isAdmin) {
+      setBottomNavLoading(true);
+      adminSettingsApi.getAll('general')
+        .then((settings) => {
+          const setting = settings.find((s) => s.key === 'mobile_bottom_nav_visible');
+          setBottomNavVisible(setting ? setting.value === 'true' : true);
+        })
+        .catch(() => setBottomNavVisible(true))
+        .finally(() => setBottomNavLoading(false));
+    }
+  }, [isAdmin]);
+
+  const handleReload = async () => {
+    await loadItems(activeTab);
+  };
 
   const handleCreate = async (data: {
     label: string;
@@ -88,6 +110,16 @@ export default function AdminNavigationPage() {
     }
   };
 
+  const handleBottomNavToggle = async (visible: boolean) => {
+    try {
+      await adminSettingsApi.bulkUpdate([{ key: 'mobile_bottom_nav_visible', value: String(visible) }]);
+      setBottomNavVisible(visible);
+      toast.success(`하단 네비게이션이 ${visible ? '표시' : '숨김'} 처리되었습니다.`);
+    } catch (err) {
+      toast.error(handleApiError(err, '설정 저장에 실패했습니다.'));
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
@@ -103,6 +135,31 @@ export default function AdminNavigationPage() {
       <p className="mb-4 text-sm text-muted-foreground">
         쇼핑몰의 메뉴 구조를 관리합니다. 탭을 선택해 각 영역의 메뉴를 추가·수정·삭제·순서 변경하세요.
       </p>
+
+      <div className="mb-6 flex items-center justify-between rounded-lg border bg-card p-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-medium">모바일 하단 네비게이션</span>
+          <span className="text-xs text-muted-foreground">
+            모바일 화면 하단에 고정된 탐색 메뉴를 표시합니다.
+          </span>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={bottomNavVisible}
+          disabled={bottomNavLoading}
+          onClick={() => handleBottomNavToggle(!bottomNavVisible)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+            bottomNavVisible ? 'bg-primary' : 'bg-muted'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              bottomNavVisible ? 'translate-x-6' : 'translate-x-1'
+            }`}
+          />
+        </button>
+      </div>
 
       <div className="mb-6 flex gap-2 border-b">
         {TABS.map((tab) => (
