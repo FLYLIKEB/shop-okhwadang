@@ -81,7 +81,18 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 |-------|-------------|
 | `animate-kenburns` | Hero images (8s infinite) |
 | `animate-fade-in-up` | Entrance animations (0.7s) |
-| `animate-skeleton-shimmer` | Loading skeleton (1.4s) |
+| `animate-skeleton-shimmer` | Loading skeleton (1.4s) — 모든 로딩 상태에 사용 |
+
+## Skeleton Loading Rules
+
+**로딩 상태는 `animate-skeleton-shimmer`를 사용.** `animate-pulse` 금지.
+
+| 파일 | 용도 |
+|------|------|
+| `src/components/ui/Skeleton.tsx` | 기본 스켈레톤 컴포넌트 (`SkeletonLine`, `SkeletonBox`, `CardSkeleton`) |
+| `src/components/ui/SkeletonList.tsx` | 리스트 스켈레톤 |
+| `src/components/products/ProductSkeleton.tsx` | 상품 목록/그리드 스켈레톤 |
+| `loading.tsx` | Next.js streaming 로더 — `animate-skeleton-shimmer` 직접 사용 |
 
 ## Clay Material Tags
 
@@ -170,6 +181,7 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 ## Implementation Checklist
 
 - [ ] All text uses `typo-*` utilities (no raw `text-*` overrides, except for valid exceptions)
+- [ ] Loading states use `animate-skeleton-shimmer` (no `animate-pulse`)
 - [ ] Headings use `font-display` (Noto Serif KR)
 - [ ] Font families: max 3种 (display, body, mono)
 - [ ] Colors use `--color-*` tokens (no hardcoded hex)
