@@ -127,12 +127,12 @@ export default function ProductCard({
       </div>
 
       <div className="mt-3">
-        <h3 className="typo-label-sm line-clamp-2">{name}</h3>
+        <p className="typo-title-sm line-clamp-2">{name}</p>
         <div className="mt-1">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         </div>
         {shortDescription && (
-          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{shortDescription}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{shortDescription}</p>
         )}
       </div>
     </Link>
