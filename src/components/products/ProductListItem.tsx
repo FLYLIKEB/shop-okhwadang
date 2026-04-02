@@ -1,3 +1,4 @@
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/components/ui/utils';
@@ -20,7 +21,7 @@ interface ProductListItemProps {
   locale?: Locale;
 }
 
-export default function ProductListItem({
+function ProductListItem({
   id,
   name,
   price,
@@ -84,3 +85,5 @@ export default function ProductListItem({
     </Link>
   );
 }
+
+export default React.memo(ProductListItem);
