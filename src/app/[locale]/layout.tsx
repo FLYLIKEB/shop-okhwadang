@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
+import { MobileNavProvider } from '@/contexts/MobileNavContext';
 import Providers from '@/components/Providers';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
 import BackButton from '@/components/BackButton';
@@ -113,7 +114,8 @@ export default async function LocaleLayout({
         </a>
         <NextIntlClientProvider messages={messages}>
           <Providers>
-            <div className="flex min-h-screen flex-col">
+            <MobileNavProvider>
+              <div className="flex min-h-screen flex-col">
               <Header />
               <BackButton />
               <main id="main-content" className="flex-1 pb-16 md:pb-0">{children}</main>
@@ -138,6 +140,7 @@ export default async function LocaleLayout({
               />
               <RecentlyViewedWidget />
             </div>
+            </MobileNavProvider>
           </Providers>
         </NextIntlClientProvider>
       </body>
