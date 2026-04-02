@@ -137,6 +137,8 @@ export default function ProductCarouselBlock({ content }: Props) {
                 price={product.price}
                 salePrice={product.salePrice}
                 shortDescription={product.shortDescription}
+                rating={product.rating}
+                reviewCount={product.reviewCount}
                 status={product.status}
                 images={product.images}
                 priority={index === 0}
