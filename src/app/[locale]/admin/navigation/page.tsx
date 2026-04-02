@@ -24,6 +24,7 @@ export default function AdminNavigationPage() {
   const [bottomNavVisible, setBottomNavVisible] = useState(true);
   const [bottomNavLoading, setBottomNavLoading] = useState(true);
 
+
   const loadItems = useCallback(async (group: NavGroup) => {
     setLoading(true);
     try {
