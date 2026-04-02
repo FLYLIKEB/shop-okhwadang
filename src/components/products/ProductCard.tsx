@@ -17,6 +17,7 @@ interface ProductCardProps {
   name: string;
   price: number;
   salePrice: number | null;
+  shortDescription?: string | null;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
   isFeatured?: boolean;
@@ -29,6 +30,7 @@ export default function ProductCard({
   name,
   price,
   salePrice,
+  shortDescription,
   status,
   images,
   locale = 'ko',
@@ -129,6 +131,9 @@ export default function ProductCard({
         <div className="mt-1">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         </div>
+        {shortDescription && (
+          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{shortDescription}</p>
+        )}
       </div>
     </Link>
   );
