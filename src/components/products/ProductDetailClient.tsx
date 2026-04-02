@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/common/PriceDisplay'
 import type { ProductDetail, ProductOption, ProductDetailImage } from '@/lib/api'
 import { useCart } from '@/contexts/CartContext'
+import { useMobileNav } from '@/contexts/MobileNavContext'
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
 import ImageGallery from './ImageGallery'
 import OptionSelector from './OptionSelector'
@@ -24,6 +25,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const router = useRouter()
   const { addItem } = useCart()
   const { addItem: addRecentlyViewed } = useRecentlyViewed()
+  const { isVisible: isNavVisible } = useMobileNav()
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [isAdding, setIsAdding] = useState(false)
@@ -176,7 +178,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
       <ProductTabs description={product.description} descriptionImages={descriptionImages} productId={Number(product.id)} />
 
       {/* Mobile fixed bottom action bar — sits above MobileBottomNav (z-50, ~56px tall) */}
-      <div className="md:hidden fixed bottom-14 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3">
+      <div className={isNavVisible ? 'md:hidden fixed bottom-14 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3' : 'md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3'}>
         <Button
           variant="outline"
           className="flex-1"
