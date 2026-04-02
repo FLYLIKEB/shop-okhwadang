@@ -131,7 +131,7 @@ export default function ProductCard({
       </div>
 
       <div className="mt-3">
-        <p className="typo-title-sm line-clamp-2">{name}</p>
+        <p className="typo-title line-clamp-2">{name}</p>
         <div className="mt-1">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         </div>
