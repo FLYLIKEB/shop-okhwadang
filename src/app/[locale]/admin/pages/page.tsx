@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useReducer, useCallback } from 'react';
+import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
@@ -276,9 +277,10 @@ function PreviewModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded border px-3 py-1 text-sm hover:bg-muted"
+          aria-label="닫기"
+          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
         >
-          닫기
+          <X className="h-5 w-5" />
         </button>
         <h2 className="mb-6 text-xl font-bold">미리보기</h2>
         {blocks.filter((b) => b.is_visible).length === 0 ? (

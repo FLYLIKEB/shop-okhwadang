@@ -18,7 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Pencil, Trash2, Plus, Eye, EyeOff, ExternalLink, ChevronRight } from 'lucide-react';
+import { GripVertical, Pencil, Trash2, Plus, Eye, EyeOff, ExternalLink, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import type { NavigationItem } from '@/lib/api';
 

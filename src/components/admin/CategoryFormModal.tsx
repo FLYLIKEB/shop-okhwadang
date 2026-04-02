@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { X } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import FormInput from '@/components/ui/FormInput';
 import type { AdminCategory, CreateCategoryData } from '@/lib/api';
@@ -112,7 +113,15 @@ export default function CategoryFormModal({
       aria-modal="true"
       aria-labelledby="category-modal-title"
     >
-      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+      <div className="relative w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="닫기"
+          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
         <h2 id="category-modal-title" className="mb-4 text-lg font-semibold">
           {isEdit ? '카테고리 수정' : '카테고리 추가'}
         </h2>
