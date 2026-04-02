@@ -116,7 +116,7 @@ export interface ListResponse<T> {
 
 export type ProductListResponse = PaginatedResponse<Product>;
 
-export type ProductSort = 'latest' | 'price_asc' | 'price_desc' | 'popular';
+export type ProductSort = 'latest' | 'price_asc' | 'price_desc' | 'popular' | 'review_count' | 'rating';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | undefined>;
@@ -569,6 +569,17 @@ export interface CreateProductData {
   description_en?: string;
   description_ja?: string;
   description_zh?: string;
+  images?: Array<{
+    url: string;
+    alt?: string;
+    sortOrder?: number;
+    isThumbnail?: boolean;
+  }>;
+  detailImages?: Array<{
+    url: string;
+    alt?: string;
+    sortOrder?: number;
+  }>;
 }
 
 export type UpdateProductData = Partial<CreateProductData>;
@@ -766,6 +777,7 @@ export interface HeroBannerContent {
 export interface ProductGridContent {
   product_ids?: number[];
   category_id?: number;
+  auto?: boolean;
   limit: number;
   template: '2col' | '3col' | '4col';
   title?: string;
@@ -777,6 +789,8 @@ export interface ProductGridContent {
 export interface ProductCarouselContent {
   product_ids?: number[];
   category_id?: number;
+  auto?: boolean;
+  sort?: ProductSort;
   limit: number;
   template: 'default' | 'large';
   title?: string;

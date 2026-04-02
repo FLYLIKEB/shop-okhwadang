@@ -9,6 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, QueryFailedError } from 'typeorm';
 import { Product, ProductStatus } from './entities/product.entity';
 import { Category } from './entities/category.entity';
+import { ProductImage } from './entities/product-image.entity';
+import { ProductDetailImage } from './entities/product-detail-image.entity';
 import { Review } from '../reviews/entities/review.entity';
 import { QueryProductsDto, ProductSort } from './dto/query-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -32,6 +34,10 @@ export class ProductsService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Review)
     private readonly reviewRepository: Repository<Review>,
+    @InjectRepository(ProductImage)
+    private readonly productImageRepository: Repository<ProductImage>,
+    @InjectRepository(ProductDetailImage)
+    private readonly productDetailImageRepository: Repository<ProductDetailImage>,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -158,6 +164,18 @@ export class ProductsService {
       case ProductSort.POPULAR:
         qb.orderBy('product.viewCount', 'DESC');
         break;
+      case ProductSort.REVIEW_COUNT:
+        qb.orderBy(
+          `(SELECT COUNT(*) FROM \`review\` r WHERE r.product_id = product.id AND r.is_visible = true)`,
+          'DESC',
+        );
+        break;
+      case ProductSort.RATING:
+        qb.orderBy(
+          `(SELECT AVG(r.rating) FROM \`review\` r WHERE r.product_id = product.id AND r.is_visible = true)`,
+          'DESC',
+        );
+        break;
       default:
         qb.orderBy('product.createdAt', 'DESC');
     }
@@ -207,6 +225,18 @@ export class ProductsService {
           case ProductSort.PRICE_ASC: likeQb.orderBy('product.price', 'ASC'); break;
           case ProductSort.PRICE_DESC: likeQb.orderBy('product.price', 'DESC'); break;
           case ProductSort.POPULAR: likeQb.orderBy('product.viewCount', 'DESC'); break;
+          case ProductSort.REVIEW_COUNT:
+            likeQb.orderBy(
+              `(SELECT COUNT(*) FROM \`review\` r WHERE r.product_id = product.id AND r.is_visible = true)`,
+              'DESC',
+            );
+            break;
+          case ProductSort.RATING:
+            likeQb.orderBy(
+              `(SELECT AVG(r.rating) FROM \`review\` r WHERE r.product_id = product.id AND r.is_visible = true)`,
+              'DESC',
+            );
+            break;
           default: likeQb.orderBy('product.createdAt', 'DESC');
         }
         const paged = await paginate(likeQb, { page, limit });
@@ -275,15 +305,44 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto): Promise<Product> {
+    const { images, detailImages, ...productData } = dto;
     const product = this.productRepository.create({
-      ...dto,
+      ...productData,
       categoryId: dto.categoryId ?? null,
       salePrice: dto.salePrice ?? null,
       sku: dto.sku ?? null,
     });
 
     try {
-      return await this.productRepository.save(product);
+      const saved = await this.productRepository.save(product);
+
+      if (images && images.length > 0) {
+        const imageEntities = images.map((img, index) =>
+          this.productImageRepository.create({
+            productId: saved.id,
+            url: img.url,
+            alt: img.alt ?? null,
+            sortOrder: img.sortOrder ?? index,
+            isThumbnail: img.isThumbnail ?? index === 0,
+          }),
+        );
+        await this.productImageRepository.save(imageEntities);
+      }
+
+      if (detailImages && detailImages.length > 0) {
+        const detailEntities = detailImages.map((img, index) =>
+          this.productDetailImageRepository.create({
+            productId: saved.id,
+            url: img.url,
+            alt: img.alt ?? null,
+            sortOrder: img.sortOrder ?? index,
+            isActive: true,
+          }),
+        );
+        await this.productDetailImageRepository.save(detailEntities);
+      }
+
+      return saved;
     } catch (err) {
       if (
         err instanceof Error &&
@@ -297,11 +356,45 @@ export class ProductsService {
   }
 
   async update(id: number, dto: UpdateProductDto): Promise<Product> {
+    const { images, detailImages, ...productData } = dto;
     const product = await this.findById(id);
-    Object.assign(product, dto);
+    Object.assign(product, productData);
 
     try {
       const saved = await this.productRepository.save(product);
+
+      if (images !== undefined) {
+        await this.productImageRepository.delete({ productId: id });
+        if (images && images.length > 0) {
+          const imageEntities = images.map((img, index) =>
+            this.productImageRepository.create({
+              productId: id,
+              url: img.url,
+              alt: img.alt ?? null,
+              sortOrder: img.sortOrder ?? index,
+              isThumbnail: img.isThumbnail ?? index === 0,
+            }),
+          );
+          await this.productImageRepository.save(imageEntities);
+        }
+      }
+
+      if (detailImages !== undefined) {
+        await this.productDetailImageRepository.delete({ productId: id });
+        if (detailImages && detailImages.length > 0) {
+          const detailEntities = detailImages.map((img, index) =>
+            this.productDetailImageRepository.create({
+              productId: id,
+              url: img.url,
+              alt: img.alt ?? null,
+              sortOrder: img.sortOrder ?? index,
+              isActive: true,
+            }),
+          );
+          await this.productDetailImageRepository.save(detailEntities);
+        }
+      }
+
       await Promise.all([
         this.cacheService.del(`products:detail:${id}`),
         this.cacheService.delPattern('products:list:*'),

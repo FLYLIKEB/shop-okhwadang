@@ -1,8 +1,46 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, MaxLength, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
 
 export { ProductStatus };
+
+export class ProductImageInputDto {
+  @ApiProperty({ example: 'https://cdn.example.com/image.jpg', description: '이미지 URL' })
+  @IsString()
+  url!: string;
+
+  @ApiPropertyOptional({ example: '상품 이미지 설명', description: 'ALT 텍스트' })
+  @IsOptional()
+  @IsString()
+  alt?: string;
+
+  @ApiPropertyOptional({ example: 0, description: '정렬 순서' })
+  @IsOptional()
+  @IsNumber()
+  sortOrder?: number;
+
+  @ApiPropertyOptional({ example: true, description: '썸네일 여부' })
+  @IsOptional()
+  @IsBoolean()
+  isThumbnail?: boolean;
+}
+
+export class ProductDetailImageInputDto {
+  @ApiProperty({ example: 'https://cdn.example.com/detail.jpg', description: '이미지 URL' })
+  @IsString()
+  url!: string;
+
+  @ApiPropertyOptional({ example: '상세 이미지 설명', description: 'ALT 텍스트' })
+  @IsOptional()
+  @IsString()
+  alt?: string;
+
+  @ApiPropertyOptional({ example: 0, description: '정렬 순서' })
+  @IsOptional()
+  @IsNumber()
+  sortOrder?: number;
+}
 
 export class CreateProductDto {
   @ApiProperty({ example: 1, description: '카테고리 ID', required: false })
@@ -63,4 +101,18 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean({ message: '추천 상품 여부는 불리언이어야 합니다.' })
   isFeatured?: boolean;
+
+  @ApiPropertyOptional({ type: [ProductImageInputDto], description: '갤러리 이미지 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductImageInputDto)
+  images?: ProductImageInputDto[];
+
+  @ApiPropertyOptional({ type: [ProductDetailImageInputDto], description: '상품 상세 이미지 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductDetailImageInputDto)
+  detailImages?: ProductDetailImageInputDto[];
 }

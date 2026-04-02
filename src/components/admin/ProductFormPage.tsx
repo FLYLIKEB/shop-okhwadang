@@ -6,8 +6,18 @@ import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { adminProductsApi } from '@/lib/api';
 import type { ProductDetail } from '@/lib/api';
-import ProductImageUploader from './ProductImageUploader';
+import MultiImageUploader from './MultiImageUploader';
 import ProductOptionsEditor, { type ProductOptionDraft } from './ProductOptionsEditor';
+
+interface GalleryImage {
+  url: string;
+  alt?: string;
+}
+
+interface DetailImage {
+  url: string;
+  alt?: string;
+}
 
 interface ProductFormData {
   name: string;
@@ -20,7 +30,8 @@ interface ProductFormData {
   sku: string;
   status: 'draft' | 'active' | 'soldout' | 'hidden';
   isFeatured: boolean;
-  imageUrl: string;
+  images: GalleryImage[];
+  detailImages: DetailImage[];
   options: ProductOptionDraft[];
   name_en: string;
   name_ja: string;
@@ -56,7 +67,8 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     sku: product?.sku ?? '',
     status: (product?.status as ProductFormData['status']) ?? 'draft',
     isFeatured: product?.isFeatured ?? false,
-    imageUrl: product?.images?.[0]?.url ?? '',
+    images: product?.images?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
+    detailImages: product?.detailImages?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
     options: product?.options?.map((o) => ({
       name: o.name,
       value: o.value,
@@ -109,6 +121,17 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         description_en: form.description_en.trim() || undefined,
         description_ja: form.description_ja.trim() || undefined,
         description_zh: form.description_zh.trim() || undefined,
+        images: form.images.map((img, index) => ({
+          url: img.url,
+          alt: img.alt,
+          sortOrder: index,
+          isThumbnail: index === 0,
+        })),
+        detailImages: form.detailImages.map((img, index) => ({
+          url: img.url,
+          alt: img.alt,
+          sortOrder: index,
+        })),
       };
 
       if (mode === 'create') {
@@ -133,12 +156,25 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       </h1>
 
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
-        {/* 이미지 */}
+        {/* 갤러리 이미지 */}
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold">상품 이미지</h2>
-          <ProductImageUploader
-            imageUrl={form.imageUrl}
-            onChange={(url) => set('imageUrl', url)}
+          <h2 className="text-sm font-semibold">갤러리 이미지</h2>
+          <p className="text-xs text-muted-foreground">상품 목록에 표시될 이미지입니다. 드래그하여 순서를 변경할 수 있습니다.</p>
+          <MultiImageUploader
+            images={form.images}
+            onChange={(images) => set('images', images)}
+            maxImages={10}
+          />
+        </section>
+
+        {/* 상세 이미지 */}
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold">상품 상세 이미지</h2>
+          <p className="text-xs text-muted-foreground">상품 상세 페이지 하단에 표시될 이미지입니다.</p>
+          <MultiImageUploader
+            images={form.detailImages}
+            onChange={(images) => set('detailImages', images)}
+            maxImages={20}
           />
         </section>
 
