@@ -152,7 +152,7 @@ export default function ProductCard({
           </div>
         )}
         {shortDescription && (
-          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{shortDescription}</p>
+          <p className="mt-1 line-clamp-2 typo-body-sm text-muted-foreground">{shortDescription}</p>
         )}
       </div>
     </Link>
