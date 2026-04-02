@@ -9,6 +9,21 @@ import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import CategoryFormModal from '@/components/admin/CategoryFormModal';
 
+function flattenCategories(categories: AdminCategory[]): AdminCategory[] {
+  const result: AdminCategory[] = [];
+  function flatten(items: AdminCategory[]) {
+    for (const item of items) {
+      const { children, ...rest } = item;
+      result.push(rest as AdminCategory);
+      if (children && children.length > 0) {
+        flatten(children);
+      }
+    }
+  }
+  flatten(categories);
+  return result;
+}
+
 export default function AdminCategoriesPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [categories, setCategories] = useState<AdminCategory[]>([]);
@@ -18,7 +33,7 @@ export default function AdminCategoriesPage() {
   const { execute: loadCategories, isLoading: loading } = useAsyncAction(
     async () => {
       const data = await adminCategoriesApi.getAll();
-      setCategories(data);
+      setCategories(flattenCategories(data));
     },
     { errorMessage: '카테고리 목록을 불러오지 못했습니다.' },
   );
