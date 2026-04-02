@@ -1,6 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, MaxLength, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
+import { ProductImageInputDto, ProductDetailImageInputDto } from './create-product.dto';
 
 export class UpdateProductDto {
   @ApiProperty({ example: 1, description: '카테고리 ID', required: false })
@@ -64,4 +66,18 @@ export class UpdateProductDto {
   @IsOptional()
   @IsBoolean()
   isFeatured?: boolean;
+
+  @ApiPropertyOptional({ type: [ProductImageInputDto], description: '갤러리 이미지 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductImageInputDto)
+  images?: ProductImageInputDto[];
+
+  @ApiPropertyOptional({ type: [ProductDetailImageInputDto], description: '상품 상세 이미지 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductDetailImageInputDto)
+  detailImages?: ProductDetailImageInputDto[];
 }
