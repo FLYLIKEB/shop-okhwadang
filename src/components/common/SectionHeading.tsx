@@ -8,10 +8,10 @@ interface SectionHeadingProps {
 export function SectionHeading({ id, label, title, description }: SectionHeadingProps) {
   return (
     <div className="mb-12 text-center">
-      <span className="typo-label font-semibold tracking-widest text-muted-foreground uppercase">
+      <span className="typo-label tracking-widest text-muted-foreground uppercase">
         {label}
       </span>
-      <h2 id={id} className="mt-2 font-display typo-h2 font-bold tracking-tight text-foreground">
+      <h2 id={id} className="mt-2 font-display typo-h2 tracking-tight text-foreground">
         {title}
       </h2>
       {description && (

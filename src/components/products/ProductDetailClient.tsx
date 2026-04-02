@@ -111,7 +111,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Price */}
-          <div className="typo-h2 font-semibold">
+          <div className="typo-h2">
             <PriceDisplay price={product.price} salePrice={product.salePrice} size="lg" locale={locale} />
           </div>
 

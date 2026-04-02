@@ -34,7 +34,7 @@ export default function FaqPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="typo-h1 font-bold mb-6">자주 묻는 질문</h1>
+      <h1 className="typo-h1 mb-6">자주 묻는 질문</h1>
 
       <div className="flex gap-2 flex-wrap mb-6">
         {CATEGORIES.map((cat) => (
