@@ -151,18 +151,24 @@ export default function ImageGallery({ images: rawImages }: ImageGalleryProps) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); goPrev() }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 shadow opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                className="absolute left-0 top-0 h-full w-16 flex items-center justify-center z-10"
+                style={{ background: 'transparent' }}
                 aria-label="이전 이미지"
               >
-                <ChevronLeft className="size-4" />
+                <span className="flex items-center justify-center w-10 h-20 rounded-md bg-black/40 text-white text-2xl font-bold shadow hover:bg-black/60 transition-colors">
+                  ‹
+                </span>
               </button>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); goNext() }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 shadow opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                className="absolute right-0 top-0 h-full w-16 flex items-center justify-center z-10"
+                style={{ background: 'transparent' }}
                 aria-label="다음 이미지"
               >
-                <ChevronRight className="size-4" />
+                <span className="flex items-center justify-center w-10 h-20 rounded-md bg-black/40 text-white text-2xl font-bold shadow hover:bg-black/60 transition-colors">
+                  ›
+                </span>
               </button>
             </>
           )}
@@ -207,40 +213,45 @@ export default function ImageGallery({ images: rawImages }: ImageGalleryProps) {
           <button
             type="button"
             onClick={closeLightbox}
-            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+            className="absolute right-4 top-4 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 transition-colors z-50"
             aria-label="닫기"
           >
-            <X className="size-5" />
+            <X className="size-6" />
           </button>
 
           {/* 줌 토글 */}
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setLightboxZoomed((z) => !z) }}
-            className="absolute right-14 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+            className="absolute right-16 top-4 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 transition-colors z-50"
             aria-label={lightboxZoomed ? '축소' : '확대'}
           >
-            {lightboxZoomed ? <ZoomOut className="size-5" /> : <ZoomIn className="size-5" />}
+            {lightboxZoomed ? <ZoomOut className="size-6" /> : <ZoomIn className="size-6" />}
           </button>
 
           {/* 이미지 */}
           <div
-            className={cn(
-              'relative max-h-[80vh] max-w-[80vw] aspect-square overflow-hidden z-10 transition-transform duration-200',
-              lightboxZoomed ? 'cursor-zoom-out scale-150' : 'cursor-zoom-in scale-100',
-            )}
+            className="relative z-10"
             onClick={(e) => { e.stopPropagation(); setLightboxZoomed((z) => !z) }}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
-            <Image
-              src={selectedImage.url}
-              alt={selectedImage.alt ?? '상품 이미지'}
-              fill
-              sizes="80vw"
-              className="object-contain"
-              priority
-            />
+            <div
+              className={cn(
+                'relative transition-transform duration-200',
+                lightboxZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in',
+              )}
+              style={{ width: '80vw', height: '80vw', maxWidth: '80vw', maxHeight: '80vh' }}
+            >
+              <Image
+                src={selectedImage.url}
+                alt={selectedImage.alt ?? '상품 이미지'}
+                fill
+                sizes="80vw"
+                className="object-contain"
+                priority
+              />
+            </div>
           </div>
 
           {/* 화살표 */}
@@ -249,32 +260,32 @@ export default function ImageGallery({ images: rawImages }: ImageGalleryProps) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); goPrev() }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 transition-colors z-10"
+                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-4 text-white hover:bg-white/20 transition-colors z-50"
                 aria-label="이전 이미지"
               >
-                <ChevronLeft className="size-6" />
+                <ChevronLeft className="size-8" />
               </button>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); goNext() }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20 transition-colors z-10"
+                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-4 text-white hover:bg-white/20 transition-colors z-50"
                 aria-label="다음 이미지"
               >
-                <ChevronRight className="size-6" />
+                <ChevronRight className="size-8" />
               </button>
             </>
           )}
 
           {/* dot 인디케이터 */}
           {images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-50">
               {images.map((_, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setSelectedIndex(i) }}
                   className={cn(
-                    'size-1.5 rounded-full transition-all',
+                    'size-2 rounded-full transition-all',
                     i === selectedIndex ? 'bg-white scale-125' : 'bg-white/40',
                   )}
                   aria-label={`이미지 ${i + 1}`}
