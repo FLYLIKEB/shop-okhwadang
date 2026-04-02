@@ -2,30 +2,23 @@
 
 This file provides guidance to AI agents working in this repository.
 
-## Project Overview
-
-**옥화당 자사몰** — Korean traditional tea (자사호, 보이차, 다구) D2C shopping mall
-
-- **Frontend**: Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 + Radix UI
-- **Backend**: NestJS + TypeORM + MySQL 8.0
-- **Runtime**: Node.js 22.x
-
 ## Rules & Documentation
 
-**All agents must read and follow the rules in these files:**
+**Global Claude Code settings** (`~/.claude/CLAUDE.md`) apply first. Project rules below supplement and may override global settings for project-specific needs.
 
-| Purpose | File |
-|---------|------|
-| Project-wide rules, commands, git/PR workflow | `CLAUDE.md` |
-| Backend patterns, DB, security, testing | `backend/CLAUDE.md` |
-| Frontend patterns, UI, accessibility | `src/CLAUDE.md` |
-| Architecture decisions | `.claude/rules/architecture.md` |
-| Code style (cross-cutting) | `.claude/rules/code-style.md` |
-| Git/PR/Issue workflow | `.claude/rules/git-workflow.md` |
-| DB migration rules | `.claude/rules/database.md` |
-| Security rules | `.claude/rules/security.md` |
-| Deployment rules | `.claude/rules/deployment.md` |
-| Design system | `DESIGN.md` |
+| Priority | Purpose | File |
+|----------|---------|------|
+| 1 (global) | Claude Code global configuration | `~/.claude/CLAUDE.md` |
+| 2 | Project-wide rules, commands, git/PR workflow | `CLAUDE.md` |
+| 3 | Backend patterns, DB, security, testing | `backend/CLAUDE.md` |
+| 4 | Frontend patterns, UI, accessibility | `src/CLAUDE.md` |
+| 5 | Architecture decisions | `.claude/rules/architecture.md` |
+| 6 | Code style (cross-cutting) | `.claude/rules/code-style.md` |
+| 7 | Git/PR/Issue workflow | `.claude/rules/git-workflow.md` |
+| 8 | DB migration rules | `.claude/rules/database.md` |
+| 9 | Security rules | `.claude/rules/security.md` |
+| 10 | Deployment rules | `.claude/rules/deployment.md` |
+| - | Design system | `DESIGN.md` |
 
 **Available skills** (invoke via `/skill` or keyword triggers):
 - `/ship` — Full flow: TDD → test → PR → code review → merge
