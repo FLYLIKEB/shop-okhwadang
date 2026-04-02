@@ -70,14 +70,14 @@ export default function ProductListItem({
         {rating !== undefined && (
           <div className="flex items-center gap-1">
             <span className="text-[#4A6741]">★</span>
-            <span className="text-xs">{rating.toFixed(1)}</span>
+            <span className="typo-label">{rating.toFixed(1)}</span>
             {reviewCount !== undefined && reviewCount > 0 && (
-              <span className="text-xs text-muted-foreground">({reviewCount})</span>
+              <span className="typo-label text-muted-foreground">({reviewCount})</span>
             )}
           </div>
         )}
         {shortDescription && (
-          <p className="line-clamp-1 text-xs text-muted-foreground">{shortDescription}</p>
+          <p className="line-clamp-1 typo-body-sm text-muted-foreground">{shortDescription}</p>
         )}
       </div>
     </Link>
