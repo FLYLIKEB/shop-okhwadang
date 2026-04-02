@@ -67,9 +67,6 @@ export default function ProductListItem({
       <div className="flex flex-1 flex-col justify-center gap-1">
         <p className="typo-title-sm line-clamp-1 text-card-foreground">{name}</p>
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
-        {shortDescription && (
-          <p className="line-clamp-1 text-xs text-muted-foreground">{shortDescription}</p>
-        )}
         {rating !== undefined && (
           <div className="flex items-center gap-1">
             <span className="text-[#4A6741]">★</span>
@@ -78,6 +75,9 @@ export default function ProductListItem({
               <span className="text-xs text-muted-foreground">({reviewCount})</span>
             )}
           </div>
+        )}
+        {shortDescription && (
+          <p className="line-clamp-1 text-xs text-muted-foreground">{shortDescription}</p>
         )}
       </div>
     </Link>

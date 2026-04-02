@@ -25,6 +25,7 @@ interface ProductCardProps {
   isFeatured?: boolean;
   locale?: Locale;
   priority?: boolean;
+  showCartOnHover?: boolean;
 }
 
 export default function ProductCard({
@@ -39,6 +40,7 @@ export default function ProductCard({
   images,
   locale = 'ko',
   priority = false,
+  showCartOnHover = false,
 }: ProductCardProps) {
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
@@ -47,6 +49,7 @@ export default function ProductCard({
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
 
   const [isCartLoading, setIsCartLoading] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleAddToCart = useCallback(
     async (e: React.MouseEvent) => {
@@ -68,6 +71,8 @@ export default function ProductCard({
   return (
     <Link
       href={`/products/${id}`}
+      onMouseEnter={() => showCartOnHover && setIsHovered(true)}
+      onMouseLeave={() => showCartOnHover && setIsHovered(false)}
       className={cn(
         'group block',
         isSoldout && 'opacity-60',
@@ -121,7 +126,9 @@ export default function ProductCard({
             disabled={isCartLoading}
             className={cn(
               'absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-white/70 backdrop-blur-sm py-3 typo-body-sm text-foreground border-t border-foreground/10 transition-transform duration-300 disabled:cursor-not-allowed',
-              'translate-y-0 md:translate-y-full md:group-hover:translate-y-0',
+              showCartOnHover
+                ? isHovered ? 'translate-y-0' : 'translate-y-full'
+                : 'translate-y-0 md:translate-y-full md:group-hover:translate-y-0',
             )}
           >
             <ShoppingCart className="h-4 w-4" />
@@ -135,9 +142,6 @@ export default function ProductCard({
         <div className="mt-1">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         </div>
-        {shortDescription && (
-          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{shortDescription}</p>
-        )}
         {rating !== undefined && (
           <div className="mt-1 flex items-center gap-1">
             <span className="text-[#4A6741]">★</span>
@@ -146,6 +150,9 @@ export default function ProductCard({
               <span className="typo-label text-muted-foreground">({reviewCount})</span>
             )}
           </div>
+        )}
+        {shortDescription && (
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{shortDescription}</p>
         )}
       </div>
     </Link>
