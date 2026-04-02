@@ -128,7 +128,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           {products.map((product, index) => (
             <div
               key={product.id}
-              className={cn('shrink-0', isLarge ? 'w-72' : 'w-56')}
+              className={cn('shrink-0 group', isLarge ? 'w-72' : 'w-56')}
             >
               <ProductCard
                 key={product.id}
