@@ -7,6 +7,8 @@ export enum ProductSort {
   PRICE_ASC = 'price_asc',
   PRICE_DESC = 'price_desc',
   POPULAR = 'popular',
+  REVIEW_COUNT = 'review_count',
+  RATING = 'rating',
 }
 
 export class QueryProductsDto {

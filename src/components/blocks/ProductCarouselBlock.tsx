@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { productsApi } from '@/lib/api';
 import type { Product, ProductCarouselContent } from '@/lib/api';
 import ProductCard from '@/components/products/ProductCard';
@@ -12,7 +14,9 @@ interface Props {
 }
 
 export default function ProductCarouselBlock({ content }: Props) {
-  const { product_ids, category_id, limit, template, title } = content;
+  const params = useParams();
+  const locale = params.locale as string;
+  const { product_ids, category_id, auto, sort, limit, template, title } = content;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -29,11 +33,11 @@ export default function ProductCarouselBlock({ content }: Props) {
           if (!cancelled) {
             setProducts(results);
           }
-        } else if (category_id) {
-          const res = await productsApi.getList({ categoryId: category_id, limit });
+        } else if (category_id && auto) {
+          const res = await productsApi.getList({ categoryId: category_id, sort, limit });
           if (!cancelled) setProducts(res.items);
         } else {
-          const res = await productsApi.getList({ limit });
+          const res = await productsApi.getList({ sort, limit });
           if (!cancelled) setProducts(res.items);
         }
       } catch {
@@ -45,7 +49,7 @@ export default function ProductCarouselBlock({ content }: Props) {
 
     fetchProducts();
     return () => { cancelled = true; };
-  }, [product_ids, category_id, limit]);
+  }, [product_ids, category_id, auto, sort, limit]);
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;
@@ -102,7 +106,21 @@ export default function ProductCarouselBlock({ content }: Props) {
 
   return (
     <section className="py-12">
-      {title && <h2 className="text-2xl font-medium mb-8">{title}</h2>}
+      <div className="flex items-center justify-between mb-8">
+        {title ? (
+          <h2 className="text-2xl font-medium">{title}</h2>
+        ) : (
+          <div />
+        )}
+        {category_id && (
+          <Link
+            href={`/${locale}/products?category=${category_id}`}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            전체 보기
+          </Link>
+        )}
+      </div>
       <div className="relative group">
         {/* Left arrow */}
         <button
