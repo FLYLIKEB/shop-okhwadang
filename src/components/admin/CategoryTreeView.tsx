@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import type { AdminCategory } from '@/lib/api';
 
@@ -15,6 +17,8 @@ interface TreeNodeProps {
   category: AdminCategory;
   siblings: AdminCategory[];
   depth: number;
+  expandedIds: Set<number>;
+  onToggle: (id: number) => void;
   onEdit: (category: AdminCategory) => void;
   onDelete: (category: AdminCategory) => void;
   onMoveUp: (category: AdminCategory) => void;
@@ -25,6 +29,8 @@ function TreeNode({
   category,
   siblings,
   depth,
+  expandedIds,
+  onToggle,
   onEdit,
   onDelete,
   onMoveUp,
@@ -33,6 +39,8 @@ function TreeNode({
   const index = siblings.findIndex((s) => s.id === category.id);
   const isFirst = index === 0;
   const isLast = index === siblings.length - 1;
+  const hasChildren = category.children && category.children.length > 0;
+  const isExpanded = expandedIds.has(category.id);
 
   return (
     <div>
@@ -45,6 +53,21 @@ function TreeNode({
         style={{ marginLeft: depth * 20 }}
       >
         <div className="flex items-center gap-2 min-w-0">
+          <button
+            onClick={() => hasChildren && onToggle(category.id)}
+            className={cn(
+              'shrink-0 rounded p-0.5 transition-colors',
+              hasChildren ? 'cursor-pointer hover:bg-muted' : 'cursor-default',
+            )}
+            aria-label={hasChildren ? (isExpanded ? '접기' : '펼치기') : undefined}
+          >
+            <ChevronRight
+              className={cn(
+                'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                isExpanded && 'rotate-90',
+              )}
+            />
+          </button>
           <span className="text-xs text-muted-foreground select-none">
             {'└'.repeat(depth > 0 ? 1 : 0)}
           </span>
@@ -95,14 +118,16 @@ function TreeNode({
         </div>
       </div>
 
-      {category.children && category.children.length > 0 && (
+      {hasChildren && isExpanded && (
         <div>
-          {category.children.map((child) => (
+          {category.children!.map((child) => (
             <TreeNode
               key={child.id}
               category={child}
               siblings={category.children!}
               depth={depth + 1}
+              expandedIds={expandedIds}
+              onToggle={onToggle}
               onEdit={onEdit}
               onDelete={onDelete}
               onMoveUp={onMoveUp}
@@ -122,6 +147,28 @@ export default function CategoryTreeView({
   onMoveUp,
   onMoveDown,
 }: CategoryTreeViewProps) {
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => {
+    const initial = new Set<number>();
+    for (const cat of categories) {
+      if (cat.children && cat.children.length > 0) {
+        initial.add(cat.id);
+      }
+    }
+    return initial;
+  });
+
+  function handleToggle(id: number) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
   const roots = categories.filter((c) => c.parentId === null);
 
   if (roots.length === 0) {
@@ -140,6 +187,8 @@ export default function CategoryTreeView({
           category={cat}
           siblings={roots}
           depth={0}
+          expandedIds={expandedIds}
+          onToggle={handleToggle}
           onEdit={onEdit}
           onDelete={onDelete}
           onMoveUp={onMoveUp}
