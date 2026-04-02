@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/common/PriceDisplay'
-import type { ProductDetail, ProductOption } from '@/lib/api'
+import type { ProductDetail, ProductOption, ProductDetailImage } from '@/lib/api'
 import { useCart } from '@/contexts/CartContext'
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
 import ImageGallery from './ImageGallery'
@@ -44,7 +44,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   )
   const maxQuantity = selectedOption?.stock ?? product.stock
   const isSoldout = product.status === 'soldout'
-  const descriptionImages = product.images.filter((img) => img.isDescriptionImage)
+  const descriptionImages = product.detailImages?.filter((img) => img.isActive) ?? []
 
 
   function handleIncrease() {

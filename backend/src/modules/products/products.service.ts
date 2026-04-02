@@ -238,6 +238,7 @@ export class ProductsService {
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.options', 'option')
       .leftJoinAndSelect('product.images', 'image')
+      .leftJoinAndSelect('product.detailImages', 'detailImage')
       .leftJoinAndSelect('product.category', 'category')
       .where('product.id = :id', { id })
       .getOne();
