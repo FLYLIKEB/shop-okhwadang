@@ -36,6 +36,7 @@ globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 - N+1 prevention with TypeORM relations
 - Error response format: consistent structure `{ statusCode, message, error }` across all services — shipping included
 - ValidationPipe error messages: must be Korean — configure exceptionFactory to translate class-validator messages
+- **`findOrThrow(repo, where, message, relations?)`** — 인라인 `findOne → null check → throw` 패턴 금지. `backend/src/common/utils/repository.util.ts`에서 import 필수.
 
 ## Backend Decorator Order
 컨트롤러 메서드 데코레이터 순서: Route → Modifier → Status → Guard → Param
