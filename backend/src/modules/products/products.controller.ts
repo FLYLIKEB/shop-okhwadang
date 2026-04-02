@@ -22,6 +22,7 @@ import { ProductsService } from './products.service';
 import { QueryProductsDto } from './dto/query-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { BulkProductsDto } from './dto/bulk-products.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 
@@ -54,6 +55,16 @@ export class ProductsController {
   @ApiQuery({ name: 'q', required: true, type: String, description: '검색어' })
   autocomplete(@Query('q') q: string) {
     return this.productsService.autocomplete(q);
+  }
+
+  @Post('bulk')
+  @Public()
+  @ApiOperation({ summary: '상품 벌크 조회', description: '여러 상품 ID로 상품 목록을 한 번에 조회합니다.' })
+  @ApiResponse({ status: 200, description: '상품 목록 조회 성공' })
+  @ApiResponse({ status: 400, description: '잘못된 요청' })
+  bulkLookup(@Body() dto: BulkProductsDto, @Request() req: RequestWithUser) {
+    const isAdmin = req.user?.role === 'admin';
+    return this.productsService.findBulk(dto.ids, isAdmin);
   }
 
   @Get(':id')

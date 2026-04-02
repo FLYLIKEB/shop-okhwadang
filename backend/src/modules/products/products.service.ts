@@ -286,6 +286,34 @@ export class ProductsService {
     return { message: '삭제되었습니다.' };
   }
 
+  async findBulk(ids: number[], isAdmin = false, locale?: string): Promise<Product[]> {
+    if (!ids || ids.length === 0) return [];
+
+    const cacheKey = `products:bulk:${ids.sort().join(',')}`;
+    const cached = await this.cacheService.get<Product[]>(cacheKey);
+    if (cached) return cached.map((p) => this.applyLocale(p, locale));
+
+    const products = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.images', 'image', 'image.is_thumbnail = :isThumbnail', {
+        isThumbnail: true,
+      })
+      .where('product.id IN (:...ids)', { ids })
+      .getMany();
+
+    if (!isAdmin) {
+      const filtered = products.filter(
+        (p) => p.status === ProductStatus.ACTIVE,
+      );
+      await this.cacheService.set(cacheKey, filtered, CACHE_TTL_DETAIL);
+      return filtered.map((p) => this.applyLocale(p, locale));
+    }
+
+    await this.cacheService.set(cacheKey, products, CACHE_TTL_DETAIL);
+    return products.map((p) => this.applyLocale(p, locale));
+  }
+
   async autocomplete(q: string): Promise<{ id: number; name: string; slug: string }[]> {
     if (!q || q.length < 2) return [];
 
