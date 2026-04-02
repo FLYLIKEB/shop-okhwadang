@@ -14,6 +14,8 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 - `console.log` in committed code is forbidden
 - Tailwind arbitrary values (`h-[123px]`) forbidden — use theme tokens
 - File uploads: use `ApiClient.uploadFile()` — never bypass ApiClient with raw fetch + FormData
+- Typography: use `typo-h1`, `typo-h2`, `typo-body`, `typo-label`, `typo-button` utility classes — no raw `text-*` size overrides on headings. Font families: `font-display-ko` (Korean display), `font-body` (body text)
+- Scroll logo: HeroBanner wraps content in `<ScrollLogoProvider>`. Use `useScrollLogoTransition({ heroRef })` to get `heroLogoStyle` / `headerLogoStyle` / `progress` / `isHeroVisible` — do not duplicate scroll logic inline
 
 ## Responsive & Accessibility
 
@@ -55,6 +57,8 @@ hooks/useWishlistToggle.ts      # Wishlist toggle with optimistic update
 hooks/useAdminGuard.ts          # Admin role guard (redirect + isAdmin flag)
 hooks/useFormModal.ts           # Form modal state/submit boilerplate
 hooks/useAsyncAction.ts         # Async loading/error state management hook
+hooks/useScrollLogoTransition.ts # Hero scroll → header logo crossfade (heroLogoStyle, headerLogoStyle, progress)
+contexts/ScrollLogoContext.tsx  # Context for scroll logo state — wrap hero sections with ScrollLogoProvider
 components/admin/AdminTable.tsx # Common admin table shell
 components/admin/StatusBadge.tsx # Active/inactive status badge
 utils/currency.ts               # Price formatting utility (formatCurrency) — single source of truth
