@@ -12,7 +12,8 @@ import { cn } from '@/components/ui/utils';
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/';
+  const rawRedirect = searchParams.get('redirect');
+  const redirectTo = rawRedirect?.startsWith('/') ? rawRedirect : '/';
   const { login, loginWithKakao, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('');
