@@ -16,6 +16,10 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 - `console.log` in committed code is forbidden
 - Tailwind arbitrary values (`h-[123px]`) forbidden — use theme tokens
 - File uploads: use `ApiClient.uploadFile()` — never bypass ApiClient with raw fetch + FormData
+- API calls: always use `ApiClient` methods — no raw `fetch()` in feature code
+- Error extraction: always use `handleApiError(err)` from `@/utils/error` — never inline `err instanceof Error ? err.message : ...`
+- Price formatting: always use `formatCurrency()` from `@/utils/currency` — no inline `.toLocaleString() + '원'`
+- Data fetching: use `useAsyncAction` hook — no manual `useState(loading) + try/catch/finally`
 - Typography: use `typo-h1`, `typo-h2`, `typo-body`, `typo-label`, `typo-button` utility classes — no raw `text-*` size overrides on headings. Font families: `font-display-ko` (Korean display), `font-body` (body text)
 - Scroll logo: HeroBanner wraps content in `<ScrollLogoProvider>`. Use `useScrollLogoTransition({ heroRef })` to get `heroLogoStyle` / `headerLogoStyle` / `progress` / `isHeroVisible` — do not duplicate scroll logic inline
 
@@ -40,6 +44,8 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 
 - `npm run build && npm run test:run` before any push
 - Test runner: Vitest
+- Single test: `npx vitest run src/components/some/SingleTest.test.tsx`
+- Single test with filter: `npx vitest run --reporter=verbose --testNamePattern="test name"`
 
 ## Admin Patterns
 

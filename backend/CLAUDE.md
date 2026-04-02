@@ -10,6 +10,11 @@ NestJS + TypeORM + MySQL backend rules. Inherits root CLAUDE.md.
 - Global prefix: `/api`
 - NestJS Logger only — no `console.log`
 - NestJS built-in exceptions only (`NotFoundException`, `BadRequestException`, etc.)
+- Cursor-based pagination for lists
+- Redis caching for hot data
+- N+1 prevention with TypeORM relations
+- Error response format: consistent `{ statusCode, message, error }` across all services
+- ValidationPipe error messages: must be Korean — configure exceptionFactory to translate class-validator messages
 
 ## Guard Execution Order
 
@@ -75,6 +80,37 @@ app.getHttpAdapter().getInstance().set('json replacer', (_key: string, value: un
 });
 ```
 
+## API Documentation (Swagger/OpenAPI)
+
+- **Swagger UI**: `GET /api/docs`
+- **JSON Spec**: `GET /api/docs-json`
+- All DTOs must use `@nestjs/swagger` decorators (`ApiProperty`, `ApiPropertyOptional`)
+- Controllers must use `ApiTags`, `ApiOperation`, `ApiResponse` decorators
+- Auth endpoints use cookie-based auth: `accessToken`, `refreshToken`
+
+### DTO Example
+```typescript
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class CreateProductDto {
+  @ApiProperty({ example: '옥화당 보리차 100g' })
+  name: string;
+
+  @ApiPropertyOptional({ example: 15000 })
+  price?: number;
+}
+```
+
+### Controller Example
+```typescript
+@ApiTags('Products')
+@ApiOperation({ summary: '상품 목록 조회' })
+@ApiResponse({ status: 200, description: '성공' })
+@ApiResponse({ status: 401, description: '인증 실패' })
+@Get()
+async findAll() { }
+```
+
 ## Security
 
 Security pipeline: CORS → Rate Limiting → JWT Guard → ValidationPipe → Controller
@@ -83,8 +119,10 @@ Security pipeline: CORS → Rate Limiting → JWT Guard → ValidationPipe → C
 - bcrypt hashing (salt rounds 10+)
 - Rate limiting — Global: 200 req/min, Auth: 30 req/min
 - `ValidationPipe` globally: `whitelist: true`, `forbidNonWhitelisted: true`
-- `app.use(helmet())` in `main.ts`
+- `app.use(helmet())` in `main.ts` — CSP, X-Frame-Options, X-Content-Type-Options etc.
 - Server-side payment amount validation mandatory
+- PG webhook signature verification
+- Payment state transitions server-only
 - CORS: `FRONTEND_URL` + `FRONTEND_URLS` (comma-separated), `credentials: true`, no wildcard in prod
 - Log redaction: `password`, `token`, `authorization`, `credit_card`, `cvv` → `[REDACTED]`
 
@@ -92,6 +130,11 @@ Security pipeline: CORS → Rate Limiting → JWT Guard → ValidationPipe → C
 
 - Unit tests: `npm run build && npm run test`
 - E2E tests: `npm run test:e2e` — **required for any entity/migration/DB change**
+
+### When to Run E2E
+- Any entity change
+- Any migration file added
+- Any DB-related service change
 
 ## Common Utilities (`src/common/utils/`)
 
