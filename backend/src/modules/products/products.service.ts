@@ -330,7 +330,10 @@ export class ProductsService {
 
     const cacheKey = `products:bulk:${ids.sort().join(',')}`;
     const cached = await this.cacheService.get<(Product & { rating: number; reviewCount: number })[]>(cacheKey);
-    if (cached) return cached.map((p) => this.applyLocale(p, locale));
+    if (cached) {
+      const localized = cached.map((p) => this.applyLocale(p, locale));
+      return localized as (Product & { rating: number; reviewCount: number })[];
+    }
 
     const products = await this.productRepository
       .createQueryBuilder('product')

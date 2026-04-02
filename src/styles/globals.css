@@ -29,6 +29,7 @@
   --font-size-heading-1: 1.5rem;   /* 24px mobile */
   --font-size-heading-2: 1.25rem;  /* 20px mobile */
   --font-size-heading-3: 1.125rem; /* 18px mobile */
+  --font-size-title: 1.125rem;     /* 18px mobile */
   --font-size-body: 1rem;          /* 16px */
   --font-size-body-sm: 0.875rem;   /* 14px */
   --font-size-label: 0.625rem;      /* 10px */
@@ -83,6 +84,7 @@
     --font-size-heading-1: 2.25rem;  /* 36px desktop */
     --font-size-heading-2: 1.5rem;   /* 24px desktop */
     --font-size-heading-3: 1.25rem;  /* 20px desktop */
+    --font-size-title: 1.25rem;      /* 20px desktop */
     --font-size-heading-0: 3rem;     /* 48px desktop - hero only */
   }
 }
@@ -113,6 +115,13 @@
   font-size: var(--font-size-heading-3);
   line-height: var(--line-height-heading);
   font-weight: 600;
+}
+
+@utility typo-title {
+  font-size: var(--font-size-title);
+  font-family: var(--font-body);
+  font-weight: 600;
+  line-height: var(--line-height-compact);
 }
 
 @utility typo-body {
