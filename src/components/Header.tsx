@@ -449,7 +449,7 @@ export default function Header() {
             onLogout={() => void logout()}
           />
 
-          {/* 모바일 우측: 검색 + 홈 + 카트 */}
+          {/* 모바일 우측: 검색 + 카트 + 로그인/마이페이지 */}
           <div className="md:hidden flex items-center gap-1 ml-auto">
             <button
               type="button"
@@ -463,6 +463,15 @@ export default function Header() {
             <div className="p-2">
               <CartBadge itemCount={itemCount} />
             </div>
+            {isAuthenticated ? (
+              <Link href="/my" aria-label="마이페이지" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-5 w-5" />
+              </Link>
+            ) : (
+              <Link href="/login" aria-label="로그인" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-5 w-5" />
+              </Link>
+            )}
           </div>
         </div>
 
