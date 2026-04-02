@@ -87,8 +87,13 @@ export class AuthService implements OnModuleInit {
     const user = await this.userRepository.findOne({
       where: { email: dto.email },
     });
-    if (!user || !user.password) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
+    if (!user) {
+      throw new UnauthorizedException('가입되지 않은 이메일입니다.');
+    }
+    if (!user.password) {
+      throw new UnauthorizedException(
+        '소셜 로그인으로 가입된 계정입니다. 카카오 или Google 로그인을 이용해주세요.',
+      );
     }
 
     if (user.lockedUntil && user.lockedUntil > new Date()) {
@@ -118,7 +123,7 @@ export class AuthService implements OnModuleInit {
       });
       const delaySec = Math.pow(2, attempts);
       await this.delay(delaySec * 1000);
-      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
+      throw new UnauthorizedException('비밀번호가 올바르지 않습니다.');
     }
 
     if (!user.isActive) {
