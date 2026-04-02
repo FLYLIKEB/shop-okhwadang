@@ -359,4 +359,7 @@ UPDATE site_settings SET value = '#A0522D' WHERE setting_key = 'color_accent';
 UPDATE site_settings SET value = '#FFFDF7' WHERE setting_key = 'color_accent_foreground';
 UPDATE site_settings SET value = '#8B4513' WHERE setting_key = 'color_ring';
 
+INSERT IGNORE INTO site_settings (setting_key, value, `group`, label, input_type, options, default_value, sort_order)
+VALUES ('mobile_bottom_nav_visible', 'true', 'general', '하단 네비게이션 표시', 'boolean', NULL, 'true', 999);
+
 SELECT '✅ 옥화당 더미데이터 삽입 완료' AS result;
