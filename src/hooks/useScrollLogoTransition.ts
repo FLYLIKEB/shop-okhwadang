@@ -13,15 +13,15 @@ interface UseScrollLogoTransitionOptions {
   heroRef: React.RefObject<HTMLElement | null>;
 }
 
+const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
+
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
 export function useScrollLogoTransition({
   heroRef,
 }: UseScrollLogoTransitionOptions): ScrollLogoState {
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number | null>(null);
-
-  const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
-
-  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
   const calculateTransforms = useCallback(
     (scrollProgress: number) => {
