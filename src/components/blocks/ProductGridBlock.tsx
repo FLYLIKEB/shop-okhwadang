@@ -33,13 +33,9 @@ export default function ProductGridBlock({ content }: Props) {
     async function fetchProducts() {
       try {
         if (product_ids && product_ids.length > 0) {
-          const results = await Promise.all(
-            product_ids.slice(0, limit).map((id) =>
-              productsApi.getById(id).then((p): Product => p).catch(() => null),
-            ),
-          );
+          const results = await productsApi.getBulk(product_ids.slice(0, limit));
           if (!cancelled) {
-            setProducts(results.filter((p): p is Product => p !== null));
+            setProducts(results);
           }
         } else if (category_id) {
           const res = await productsApi.getList({ categoryId: category_id, limit });

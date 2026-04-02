@@ -231,6 +231,8 @@ export const productsApi = {
     apiClient.get<ProductListResponse>('/products', { params: params as Record<string, string | number | undefined> }),
   getById: (id: number, locale?: string) =>
     apiClient.get<ProductDetail>(`/products/${id}`, { params: locale ? { locale } : undefined }),
+  getBulk: (ids: number[]) =>
+    apiClient.post<Product[]>('/products/bulk', { ids }),
   autocomplete: (q: string) =>
     apiClient.get<AutocompleteItem[]>('/products/autocomplete', { params: { q } }),
 };
