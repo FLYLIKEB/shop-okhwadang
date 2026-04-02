@@ -7,6 +7,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useMemo,
   ReactNode,
 } from 'react';
 import { toast } from 'sonner';
@@ -214,19 +215,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [isAuthenticated],
   );
 
+  const value = useMemo(
+    () => ({
+      items: cartData.items,
+      itemCount: cartData.itemCount,
+      totalAmount: cartData.totalAmount,
+      isLoading,
+      addItem,
+      updateQuantity,
+      removeItem,
+      refetch: fetchCart,
+    }),
+    [cartData.items, cartData.itemCount, cartData.totalAmount, isLoading, addItem, updateQuantity, removeItem, fetchCart],
+  );
+
   return (
-    <CartContext.Provider
-      value={{
-        items: cartData.items,
-        itemCount: cartData.itemCount,
-        totalAmount: cartData.totalAmount,
-        isLoading,
-        addItem,
-        updateQuantity,
-        removeItem,
-        refetch: fetchCart,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );
