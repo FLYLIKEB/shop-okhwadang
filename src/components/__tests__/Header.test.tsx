@@ -50,7 +50,7 @@ describe('Header', () => {
     expect(screen.getByText('옥화당')).toBeInTheDocument();
     expect(screen.getByText('상품목록')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: '장바구니' }).length).toBeGreaterThan(0);
-    expect(screen.getByRole('link', { name: '로그인' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: '로그인' }).length).toBeGreaterThan(0);
   });
 
   it('search form: type query + submit → push called with /search?q=검색어', async () => {
