@@ -53,32 +53,9 @@ const req = context.switchToHttp().getRequest<{ user?: { id: number; role: strin
 
 ## Database (TypeORM + MySQL 8.0)
 
-- `synchronize: true` **forbidden in production**
-- **TypeORM Migration CLI only** — manual SQL files forbidden
-- Entity changes must **always be committed with migration file**
-- Migration CLI requires SSH tunnel on port 3307:
-  ```
-  LOCAL_DATABASE_URL=mysql://root:__REDACTED_ROOT_PW__@127.0.0.1:3307/commerce npm run migration:run
-  ```
-- MySQL does NOT support `DROP FOREIGN KEY IF EXISTS` — use INFORMATION_SCHEMA check helper
-- Partially-ran migrations: use `CREATE TABLE IF NOT EXISTS` + existence-check helpers for idempotent `up()`
+See `.claude/rules/database.md` for full migration/schema rules. Backend-specific additions:
+
 - **트랜잭션**: `dataSource.transaction(async (manager) => { ... })` 사용 필수 — `queryRunner` 수동 관리(`connect/startTransaction/commit/rollback/release`) 금지. 단, pessimistic lock이 필요한 경우는 `queryRunner` 허용.
-
-### Data Types
-- `DECIMAL(12,2)` for prices
-- `BIGINT` for IDs
-- `ENUM` for statuses
-
-### BigInt Serialization
-TypeORM returns BIGINT columns as strings. Register JSON replacer in `main.ts`:
-```typescript
-app.getHttpAdapter().getInstance().set('json replacer', (_key: string, value: unknown) => {
-  if (typeof value === 'string' && /^\d+$/.test(value) && Number.isSafeInteger(Number(value))) {
-    return Number(value);
-  }
-  return value;
-});
-```
 
 ## API Documentation (Swagger/OpenAPI)
 
@@ -113,18 +90,12 @@ async findAll() { }
 
 ## Security
 
-Security pipeline: CORS → Rate Limiting → JWT Guard → ValidationPipe → Controller
+See `.claude/rules/security.md` for full security rules. Backend-specific additions:
 
-- JWT (Access + Refresh Token), RBAC: `user` / `admin` / `super_admin`
-- bcrypt hashing (salt rounds 10+)
-- Rate limiting — Global: 200 req/min, Auth: 30 req/min
-- `ValidationPipe` globally: `whitelist: true`, `forbidNonWhitelisted: true`
 - `app.use(helmet())` in `main.ts` — CSP, X-Frame-Options, X-Content-Type-Options etc.
 - Server-side payment amount validation mandatory
 - PG webhook signature verification
 - Payment state transitions server-only
-- CORS: `FRONTEND_URL` + `FRONTEND_URLS` (comma-separated), `credentials: true`, no wildcard in prod
-- Log redaction: `password`, `token`, `authorization`, `credit_card`, `cvv` → `[REDACTED]`
 
 ## Testing
 
