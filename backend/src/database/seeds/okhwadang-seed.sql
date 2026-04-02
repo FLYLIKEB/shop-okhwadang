@@ -16,6 +16,7 @@ TRUNCATE TABLE payments;
 TRUNCATE TABLE shipping;
 TRUNCATE TABLE cart_items;
 TRUNCATE TABLE product_images;
+TRUNCATE TABLE product_detail_images;
 TRUNCATE TABLE product_options;
 TRUNCATE TABLE products;
 TRUNCATE TABLE categories;
@@ -206,132 +207,194 @@ INSERT INTO products (id, category_id, name, slug, description, short_descriptio
  75000.00, NULL, 10, 'OHD-TW-022', 'active', 1);
 
 -- ============================================================
--- 4. 상품 이미지 (Unsplash 스타일 placeholder URL)
+-- 4. 상품 이미지 (S3 URL)
 -- ============================================================
 INSERT INTO product_images (product_id, url, alt, sort_order, is_thumbnail) VALUES
 -- 주니 서시호 (4 images)
-(1, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '옥화당 주니 서시호 정면', 0, 1),
-(1, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '주니 서시호 측면', 1, 0),
-(1, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '주니 서시호 뚜껑 상세', 2, 0),
-(1, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '주니 서시호 차와 함께', 3, 0),
+(1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '옥화당 주니 서시호 정면', 0, 1),
+(1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 서시호 측면', 1, 0),
+(1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 서시호 뚜껑 상세', 2, 0),
+(1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '주니 서시호 차와 함께', 3, 0),
 -- 주니 주형호 (4 images)
-(2, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '주니 주형호 정면', 0, 1),
-(2, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '주니 주형호 측면', 1, 0),
-(2, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '주니 주형호 주둥이 상세', 2, 0),
-(2, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '주니 주형호 사용 예시', 3, 0),
+(2, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 주형호 정면', 0, 1),
+(2, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 주형호 측면', 1, 0),
+(2, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 주형호 주둥이 상세', 2, 0),
+(2, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '주니 주형호 사용 예시', 3, 0),
 -- 주니 석표호 (4 images)
-(3, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '주니 석표호 정면', 0, 1),
-(3, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '주니 석표호 상단', 1, 0),
-(3, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '주니 석표호 바닥', 2, 0),
-(3, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '주니 석표호 손잡이 상세', 3, 0),
+(3, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 석표호 정면', 0, 1),
+(3, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 석표호 상단', 1, 0),
+(3, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 석표호 바닥', 2, 0),
+(3, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '주니 석표호 손잡이 상세', 3, 0),
 -- 자사 편평호 (4 images)
-(4, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '자사 편평호 정면', 0, 1),
-(4, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '자사 편평호 상단', 1, 0),
-(4, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '자사 편평호 옆면', 2, 0),
-(4, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '자사 편평호 차와 함께', 3, 0),
+(4, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 편평호 정면', 0, 1),
+(4, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 편평호 상단', 1, 0),
+(4, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 편평호 옆면', 2, 0),
+(4, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '자사 편평호 차와 함께', 3, 0),
 -- 자사 서시호 (4 images)
-(5, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '자사 서시호 정면', 0, 1),
-(5, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '자사 서시호 뚜껑', 1, 0),
-(5, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '자사 서시호 손잡이', 2, 0),
-(5, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '자사 서시호 사용 예시', 3, 0),
+(5, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 서시호 정면', 0, 1),
+(5, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 서시호 뚜껑', 1, 0),
+(5, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 서시호 손잡이', 2, 0),
+(5, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '자사 서시호 사용 예시', 3, 0),
 -- 자사 주형호 (4 images)
-(6, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '자사 주형호 정면', 0, 1),
-(6, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '자사 주형호 전체', 1, 0),
-(6, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '자사 주형호 내부', 2, 0),
-(6, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '자사 주형호 보이차와 함께', 3, 0),
+(6, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 주형호 정면', 0, 1),
+(6, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 주형호 전체', 1, 0),
+(6, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 주형호 내부', 2, 0),
+(6, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '자사 주형호 보이차와 함께', 3, 0),
 -- 단니 석표호 (4 images)
-(7, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '단니 석표호 정면', 0, 1),
-(7, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '단니 석표호 색감', 1, 0),
-(7, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '단니 석표호 손잡이', 2, 0),
-(7, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '단니 석표호 차와 함께', 3, 0),
+(7, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '단니 석표호 정면', 0, 1),
+(7, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '단니 석표호 색감', 1, 0),
+(7, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '단니 석표호 손잡이', 2, 0),
+(7, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '단니 석표호 차와 함께', 3, 0),
 -- 단니 편평호 (4 images)
-(8, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '단니 편평호 정면', 0, 1),
-(8, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '단니 편평호 상단', 1, 0),
-(8, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '단니 편평호 옆면', 2, 0),
-(8, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '단니 편평호 다반 위', 3, 0),
+(8, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '단니 편평호 정면', 0, 1),
+(8, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '단니 편평호 상단', 1, 0),
+(8, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '단니 편평호 옆면', 2, 0),
+(8, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '단니 편평호 다반 위', 3, 0),
 -- 흑니 주형호 (4 images)
-(9, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '흑니 주형호 정면', 0, 1),
-(9, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '흑니 주형호 전체', 1, 0),
-(9, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '흑니 주형호 질감', 2, 0),
-(9, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '흑니 주형호 숙차와 함께', 3, 0),
+(9, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '흑니 주형호 정면', 0, 1),
+(9, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '흑니 주형호 전체', 1, 0),
+(9, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '흑니 주형호 질감', 2, 0),
+(9, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '흑니 주형호 숙차와 함께', 3, 0),
 -- 청회니 서시호 (4 images)
-(10, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '청회니 서시호 정면', 0, 1),
-(10, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '청회니 서시호 상단', 1, 0),
-(10, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '청회니 서시호 색감', 2, 0),
-(10, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '청회니 서시호 백차와 함께', 3, 0),
+(10, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '청회니 서시호 정면', 0, 1),
+(10, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '청회니 서시호 상단', 1, 0),
+(10, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '청회니 서시호 색감', 2, 0),
+(10, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '청회니 서시호 백차와 함께', 3, 0),
 -- 반장 생병 (5 images)
-(11, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '반장 고수 생병 전경', 0, 1),
-(11, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '반장 생병 포장지', 1, 0),
-(11, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '반장 생병 단면', 2, 0),
-(11, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '반장 생병 찻잎', 3, 0),
-(11, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '반장 생병 탕색', 4, 0),
+(11, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '반장 고수 생병 전경', 0, 1),
+(11, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '반장 생병 포장지', 1, 0),
+(11, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '반장 생병 단면', 2, 0),
+(11, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '반장 생병 찻잎', 3, 0),
+(11, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '반장 생병 탕색', 4, 0),
 -- 빙도 생병 (5 images)
-(12, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '빙도 고수 생병 전경', 0, 1),
-(12, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '빙도 생병 포장지', 1, 0),
-(12, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '빙도 생병 단면', 2, 0),
-(12, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '빙도 생병 차와 함께', 3, 0),
-(12, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '빙도 생병 탕색', 4, 0),
+(12, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '빙도 고수 생병 전경', 0, 1),
+(12, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '빙도 생병 포장지', 1, 0),
+(12, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '빙도 생병 단면', 2, 0),
+(12, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '빙도 생병 차와 함께', 3, 0),
+(12, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '빙도 생병 탕색', 4, 0),
 -- 대익 7572 숙병 (5 images)
-(13, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '대익 7572 숙병 전경', 0, 1),
-(13, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '대익 7572 포장지', 1, 0),
-(13, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '대익 7572 단면', 2, 0),
-(13, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '대익 7572 차와 함께', 3, 0),
-(13, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '대익 7572 탕색', 4, 0),
+(13, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '대익 7572 숙병 전경', 0, 1),
+(13, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '대익 7572 포장지', 1, 0),
+(13, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '대익 7572 단면', 2, 0),
+(13, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대익 7572 차와 함께', 3, 0),
+(13, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대익 7572 탕색', 4, 0),
 -- 하관 숙타 (5 images)
-(14, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '하관 FT 숙타 전경', 0, 1),
-(14, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '하관 숙타 전체', 1, 0),
-(14, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '하관 숙타 단면', 2, 0),
-(14, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '하관 숙타 사용 예시', 3, 0),
-(14, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '하관 숙타 탕색', 4, 0),
+(14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '하관 FT 숙타 전경', 0, 1),
+(14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '하관 숙타 전체', 1, 0),
+(14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '하관 숙타 단면', 2, 0),
+(14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '하관 숙타 사용 예시', 3, 0),
+(14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '하관 숙타 탕색', 4, 0),
 -- 홍인 노차 (5 images)
-(15, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '홍인 노차 소분 전경', 0, 1),
-(15, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '홍인 노차 포장', 1, 0),
-(15, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800', '홍인 노차 단면', 2, 0),
-(15, 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800', '홍인 노차 차잎', 3, 0),
-(15, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '홍인 노차 탕색', 4, 0),
+(15, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '홍인 노차 소분 전경', 0, 1),
+(15, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '홍인 노차 포장', 1, 0),
+(15, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '홍인 노차 단면', 2, 0),
+(15, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '홍인 노차 차잎', 3, 0),
+(15, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '홍인 노차 탕색', 4, 0),
 -- 경덕진 청화 다완 6P (5 images)
-(16, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '경덕진 청화 다완 6P 전체', 0, 1),
-(16, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '경덕진 청화 다완 단품', 1, 0),
-(16, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '경덕진 청화 다완 문양 상세', 2, 0),
-(16, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '경덕진 청화 다완 차와 함께', 3, 0),
-(16, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '경덕진 청화 다완 탕색 감상', 4, 0),
+(16, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '경덕진 청화 다완 6P 전체', 0, 1),
+(16, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '경덕진 청화 다완 단품', 1, 0),
+(16, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '경덕진 청화 다완 문양 상세', 2, 0),
+(16, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '경덕진 청화 다완 차와 함께', 3, 0),
+(16, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '경덕진 청화 다완 탕색 감상', 4, 0),
 -- 건수요 천목유 다완 (5 images)
-(17, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '건수요 천목유 다완 전체', 0, 1),
-(17, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '건수요 천목유 토호문 상세', 1, 0),
-(17, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '건수요 천목유 바닥', 2, 0),
-(17, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', '건수요 천목유 말차와 함께', 3, 0),
-(17, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '건수요 천목유 빛 아래', 4, 0),
+(17, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '건수요 천목유 다완 전체', 0, 1),
+(17, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '건수요 천목유 토호문 상세', 1, 0),
+(17, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '건수요 천목유 바닥', 2, 0),
+(17, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '건수요 천목유 말차와 함께', 3, 0),
+(17, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '건수요 천목유 빛 아래', 4, 0),
 -- 대나무 다반 (5 images)
-(18, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '대나무 다반 전체', 0, 1),
-(18, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '대나무 다반 질감', 1, 0),
-(18, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '대나무 다반 물받이', 2, 0),
-(18, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '대나무 다반 자사호와 함께', 3, 0),
-(18, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '대나무 다반 차도구와 함께', 4, 0),
+(18, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 다반 전체', 0, 1),
+(18, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 다반 질감', 1, 0),
+(18, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 다반 물받이', 2, 0),
+(18, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 다반 자사호와 함께', 3, 0),
+(18, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 다반 차도구와 함께', 4, 0),
 -- 입문 다도구 세트 (6 images)
-(19, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '옥화당 입문 다도구 세트 전체', 0, 1),
-(19, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '세트 구성품 전개', 1, 0),
-(19, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '세트 자사호 상세', 2, 0),
-(19, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '세트 다완 상세', 3, 0),
-(19, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '세트 다반 상세', 4, 0),
-(19, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '세트 사용 예시', 5, 0),
+(19, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '옥화당 입문 다도구 세트 전체', 0, 1),
+(19, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '세트 구성품 전개', 1, 0),
+(19, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '세트 자사호 상세', 2, 0),
+(19, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '세트 다완 상세', 3, 0),
+(19, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '세트 다반 상세', 4, 0),
+(19, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '세트 사용 예시', 5, 0),
 -- 대나무 차도구 5종 (5 images)
-(20, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '대나무 차도구 5종 전체', 0, 1),
-(20, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '차헌 상세', 1, 0),
-(20, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '차칙 상세', 2, 0),
-(20, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800', '차도구 통과 함께', 3, 0),
-(20, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '차도구 사용 예시', 4, 0),
+(20, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 차도구 5종 전체', 0, 1),
+(20, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '차헌 상세', 1, 0),
+(20, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '차칙 상세', 2, 0),
+(20, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '차도구 통과 함께', 3, 0),
+(20, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '차도구 사용 예시', 4, 0),
 -- 유리 공도배 (5 images)
-(21, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '유리 공도배 전체', 0, 1),
-(21, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '유리 공도배 눈금 상세', 1, 0),
-(21, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '유리 공도배 주둥이', 2, 0),
-(21, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '유리 공도배 찻물 담긴 상태', 3, 0),
-(21, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '유리 공도배 다반 위', 4, 0),
+(21, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '유리 공도배 전체', 0, 1),
+(21, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '유리 공도배 눈금 상세', 1, 0),
+(21, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '유리 공도배 주둥이', 2, 0),
+(21, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '유리 공도배 찻물 담긴 상태', 3, 0),
+(21, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '유리 공도배 다반 위', 4, 0),
 -- 여요 빙렬유 다완 (5 images)
-(22, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '여요 빙렬유 다완 전체', 0, 1),
-(22, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '여요 빙렬유 천청색', 1, 0),
-(22, 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800', '여요 빙렬유 빙렬 문양', 2, 0),
-(22, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800', '여요 빙렬유 빛 아래', 3, 0),
-(22, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800', '여요 빙렬유 차와 함께', 4, 0);
+(22, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '여요 빙렬유 다완 전체', 0, 1),
+(22, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '여요 빙렬유 천청색', 1, 0),
+(22, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '여요 빙렬유 빙렬 문양', 2, 0),
+(22, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '여요 빙렬유 빛 아래', 3, 0),
+(22, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '여요 빙렬유 차와 함께', 4, 0);
+
+-- ============================================================
+-- 4-2. 상품 상세정보 이미지 (상세정보 탭용)
+-- ============================================================
+INSERT INTO product_detail_images (product_id, url, alt, sort_order, is_active) VALUES
+-- 주니 서시호
+(1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 서시호 상세 설명 이미지', 0, 1),
+-- 주니 주형호
+(2, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 주형호 상세 설명 이미지', 0, 1),
+-- 주니 석표호
+(3, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '주니 석표호 상세 설명 이미지', 0, 1),
+-- 자사 편평호
+(4, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 편평호 상세 설명 이미지', 0, 1),
+-- 자사 서시호
+(5, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 서시호 상세 설명 이미지', 0, 1),
+-- 자사 주형호
+(6, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사 주형호 상세 설명 이미지', 0, 1),
+-- 단니 석표호
+(7, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '단니 석표호 상세 설명 이미지', 0, 1),
+-- 단니 편평호
+(8, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '단니 편평호 상세 설명 이미지', 0, 1),
+-- 흑니 주형호
+(9, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '흑니 주형호 상세 설명 이미지', 0, 1),
+-- 청회니 서시호
+(10, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '청회니 서시호 상세 설명 이미지', 0, 1),
+-- 반장 생병
+(11, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '반장 고수 생병 상세정보 1', 0, 1),
+(11, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '반장 고수 생병 상세정보 2', 1, 1),
+-- 빙도 생병
+(12, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '빙도 고수 생병 상세정보 1', 0, 1),
+(12, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '빙도 고수 생병 상세정보 2', 1, 1),
+-- 대익 7572 숙병
+(13, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '대익 7572 숙병 상세정보 1', 0, 1),
+(13, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대익 7572 숙병 상세정보 2', 1, 1),
+-- 하관 숙타
+(14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '하관 숙타 상세정보 1', 0, 1),
+(14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '하관 숙타 상세정보 2', 1, 1),
+-- 홍인 노차
+(15, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '홍인 노차 상세정보 1', 0, 1),
+(15, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '홍인 노차 상세정보 2', 1, 1),
+-- 경덕진 청화 다완
+(16, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '경덕진 청화 다완 상세정보 1', 0, 1),
+(16, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '경덕진 청화 다완 상세정보 2', 1, 1),
+-- 건수요 천목유 다완
+(17, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '건수요 천목유 다완 상세정보 1', 0, 1),
+(17, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '건수요 천목유 다완 상세정보 2', 1, 1),
+-- 대나무 다반
+(18, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 다반 상세정보 1', 0, 1),
+(18, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 다반 상세정보 2', 1, 1),
+-- 입문 다도구 세트
+(19, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '입문 세트 상세정보 1', 0, 1),
+(19, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '입문 세트 상세정보 2', 1, 1),
+(19, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '입문 세트 상세정보 3', 2, 1),
+-- 대나무 차도구 5종
+(20, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 차도구 상세정보 1', 0, 1),
+(20, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '대나무 차도구 상세정보 2', 1, 1),
+-- 유리 공도배
+(21, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '유리 공도배 상세정보 1', 0, 1),
+(21, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '유리 공도배 상세정보 2', 1, 1),
+-- 여요 빙렬유 다완
+(22, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '여요 빙렬유 다완 상세정보 1', 0, 1),
+(22, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '여요 빙렬유 다완 상세정보 2', 1, 1);
 
 -- ============================================================
 -- 5. 상품 옵션

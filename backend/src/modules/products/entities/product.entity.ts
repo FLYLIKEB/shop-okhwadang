@@ -12,6 +12,7 @@ import {
 import { Category } from './category.entity';
 import { ProductOption } from './product-option.entity';
 import { ProductImage } from './product-image.entity';
+import { ProductDetailImage } from './product-detail-image.entity';
 import { Review } from '../../reviews/entities/review.entity';
 
 export enum ProductStatus {
@@ -114,6 +115,9 @@ export class Product {
 
   @OneToMany(() => ProductImage, (image) => image.product)
   images!: ProductImage[];
+
+  @OneToMany(() => ProductDetailImage, (image) => image.product)
+  detailImages!: ProductDetailImage[];
 
   @OneToMany(() => Review, (review) => review.product)
   reviews!: Review[];

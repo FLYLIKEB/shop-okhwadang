@@ -4,7 +4,6 @@ import { useState, type FormEvent, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,8 @@ export default function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -28,12 +29,21 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setEmailError('');
+    setPasswordError('');
     setIsSubmitting(true);
     try {
       await login(email, password);
       router.push(redirectTo);
     } catch (err) {
-      toast.error(handleApiError(err, '로그인에 실패했습니다.'));
+      const message = handleApiError(err, '로그인에 실패했습니다.');
+      if (message.includes('이메일') || message.includes('email')) {
+        setEmailError(message);
+      } else if (message.includes('비밀번호') || message.includes('password')) {
+        setPasswordError(message);
+      } else {
+        setEmailError(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -54,13 +64,20 @@ export default function LoginForm() {
             autoComplete="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setEmailError('');
+            }}
             className={cn(
               'w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
               'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              emailError && 'border-destructive',
             )}
             placeholder="you@example.com"
           />
+          {emailError && (
+            <p className="text-sm text-destructive">{emailError}</p>
+          )}
         </div>
 
         <div className="space-y-1">
@@ -77,10 +94,14 @@ export default function LoginForm() {
               autoComplete="current-password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError('');
+              }}
               className={cn(
                 'w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm',
                 'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                passwordError && 'border-destructive',
               )}
               placeholder="••••••••"
             />
@@ -97,6 +118,9 @@ export default function LoginForm() {
               )}
             </button>
           </div>
+          {passwordError && (
+            <p className="text-sm text-destructive">{passwordError}</p>
+          )}
         </div>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>

@@ -122,6 +122,7 @@ export default async function LocaleLayout({
               <Toaster
                 position="top-right"
                 richColors
+                closeButton
                 toastOptions={{
                   style: {
                     fontFamily: 'var(--font-body)',

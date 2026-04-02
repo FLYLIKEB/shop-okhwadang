@@ -4,6 +4,7 @@ import { Product } from './entities/product.entity';
 import { Category } from './entities/category.entity';
 import { ProductOption } from './entities/product-option.entity';
 import { ProductImage } from './entities/product-image.entity';
+import { ProductDetailImage } from './entities/product-detail-image.entity';
 import { Review } from '../reviews/entities/review.entity';
 import { ProductsService } from './products.service';
 import { CategoriesService } from './categories.service';
@@ -12,7 +13,7 @@ import { CategoriesController } from './categories.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Product, Category, ProductOption, ProductImage, Review]),
+    TypeOrmModule.forFeature([Product, Category, ProductOption, ProductImage, ProductDetailImage, Review]),
   ],
   providers: [ProductsService, CategoriesService],
   controllers: [ProductsController, CategoriesController],

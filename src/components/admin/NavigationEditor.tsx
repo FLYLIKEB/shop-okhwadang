@@ -262,7 +262,15 @@ function NavigationFormModal({ open, onClose, onSubmit, initial, group, flatItem
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+      <div className="relative w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="닫기"
+          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
         <h2 className="mb-1 text-lg font-semibold">
           {initial ? '메뉴 수정' : '새 메뉴 추가'}
         </h2>
