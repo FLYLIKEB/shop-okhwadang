@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { uploadApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
-import { X, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 
 export interface ImageItem {
@@ -27,58 +27,40 @@ export default function MultiImageUploader({
 }: MultiImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
-  const handleFile = async (file: File, targetIndex?: number) => {
-    const tempUrl = `uploading-${Date.now()}`;
-    
-    if (targetIndex !== undefined) {
-      setUploadingIndex(targetIndex);
-    } else {
-      const newImages = [...images, { url: tempUrl }];
-      onChange(newImages);
-      setUploadingIndex(newImages.length - 1);
-    }
+  const handleFile = async (file: File) => {
+    const tempUrl = `uploading-${Date.now()}-${Math.random()}`;
+    const currentLength = images.length;
+    const newImages = [...images, { url: tempUrl }];
+    onChange(newImages);
 
     try {
       const result = await uploadApi.uploadImage(file);
-      const newImages = images.map((img, i) => 
-        i === (targetIndex ?? images.length) ? { url: result.url } : img
+      const updated = newImages.map((img, i) =>
+        i === currentLength ? { url: result.url } : img,
       );
-      if (targetIndex === undefined && images.length === newImages.length - 1) {
-        onChange(newImages.slice(0, -1).concat({ url: result.url }));
-      } else {
-        onChange(newImages);
-      }
+      onChange(updated);
       toast.success('이미지가 업로드되었습니다.');
     } catch (err) {
       toast.error(handleApiError(err, '이미지 업로드에 실패했습니다.'));
-      onChange(images.filter((img) => img.url !== tempUrl));
-    } finally {
-      setUploadingIndex(null);
+      onChange(images);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
-    
-    files.forEach((file) => {
-      if (images.length < maxImages) {
-        void handleFile(file);
-      }
-    });
+    files.slice(0, maxImages - images.length).forEach((file) => void handleFile(file));
     e.target.value = '';
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files).filter((f) => 
-      accept.split(',').some((type) => f.type === type || f.type.startsWith(type.replace(/\/.*/, '/')))
+    const files = Array.from(e.dataTransfer.files).filter((f) =>
+      accept.split(',').some((type) => f.type === type || f.type.startsWith(type.replace(/\/.*/, '/'))),
     );
-    const remaining = maxImages - images.length;
-    files.slice(0, remaining).forEach((file) => void handleFile(file));
+    files.slice(0, maxImages - images.length).forEach((file) => void handleFile(file));
   };
 
   const removeImage = (index: number) => {
@@ -95,16 +77,17 @@ export default function MultiImageUploader({
   return (
     <div className="space-y-3">
       <div
-        className={cn(
-          'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2',
-        )}
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2"
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
       >
         {images.map((img, index) => (
           <div
-            key={img.url}
+            key={`${index}-${img.url}`}
             className={cn(
               'relative aspect-square rounded-lg border overflow-hidden bg-muted group',
               img.url.startsWith('uploading-') && 'opacity-50',
