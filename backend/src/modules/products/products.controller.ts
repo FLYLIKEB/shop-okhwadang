@@ -10,6 +10,14 @@ import {
   ParseIntPipe,
   Request,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { QueryProductsDto } from './dto/query-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -21,12 +29,19 @@ interface RequestWithUser {
   user?: { id: number; email: string; role: string };
 }
 
+@ApiTags('상품')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
   @Public()
+  @ApiOperation({ summary: '상품 목록 조회', description: '상품 목록을 페이지네이션 및 필터링하여 조회합니다.' })
+  @ApiResponse({ status: 200, description: '상품 목록 조회 성공' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: '페이지 번호' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 개수' })
+  @ApiQuery({ name: 'categoryId', required: false, type: Number, description: '카테고리 ID' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: '검색어' })
   findAll(@Query() query: QueryProductsDto, @Request() req: RequestWithUser) {
     const isAdmin = req.user?.role === 'admin';
     return this.productsService.findAll(query, isAdmin);
@@ -34,12 +49,20 @@ export class ProductsController {
 
   @Get('autocomplete')
   @Public()
+  @ApiOperation({ summary: '상품 자동완성', description: '검색어 기반 상품 자동완성 제안어를 반환합니다.' })
+  @ApiResponse({ status: 200, description: '자동완성 결과 반환 성공' })
+  @ApiQuery({ name: 'q', required: true, type: String, description: '검색어' })
   autocomplete(@Query('q') q: string) {
     return this.productsService.autocomplete(q);
   }
 
   @Get(':id')
   @Public()
+  @ApiOperation({ summary: '상품 상세 조회', description: '상품 ID로 상품 상세 정보를 조회합니다.' })
+  @ApiResponse({ status: 200, description: '상품 상세 조회 성공' })
+  @ApiResponse({ status: 404, description: '상품을 찾을 수 없음' })
+  @ApiParam({ name: 'id', type: Number, description: '상품 ID' })
+  @ApiQuery({ name: 'locale', required: false, type: String, description: ' locale (ko/en)' })
   findOne(
     @Param('id', ParseIntPipe) id: number,
     @Query('locale') locale: string | undefined,
@@ -51,18 +74,37 @@ export class ProductsController {
 
   @Post()
   @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '상품 생성', description: '새로운 상품을 생성합니다.' })
+  @ApiResponse({ status: 201, description: '상품 생성 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
   create(@Body() dto: CreateProductDto) {
     return this.productsService.create(dto);
   }
 
   @Patch(':id')
   @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '상품 수정', description: '기존 상품 정보를 수정합니다.' })
+  @ApiResponse({ status: 200, description: '상품 수정 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiResponse({ status: 404, description: '상품을 찾을 수 없음' })
+  @ApiParam({ name: 'id', type: Number, description: '상품 ID' })
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductDto) {
     return this.productsService.update(id, dto);
   }
 
   @Delete(':id')
   @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '상품 삭제', description: '상품을 삭제합니다.' })
+  @ApiResponse({ status: 200, description: '상품 삭제 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiResponse({ status: 404, description: '상품을 찾을 수 없음' })
+  @ApiParam({ name: 'id', type: Number, description: '상품 ID' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.remove(id);
   }
