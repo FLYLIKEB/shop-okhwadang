@@ -16,7 +16,7 @@ interface LightboxOverlayProps {
   onSelectIndex: (index: number) => void
   lightboxOpen: boolean
   lightboxZoomed: boolean
-  setLightboxZoomed: (zoomed: boolean) => void
+  setLightboxZoomed: React.Dispatch<React.SetStateAction<boolean>>
   lightboxPanRef: React.MutableRefObject<{ x: number; y: number }>
   lightboxImageStyle: React.CSSProperties
   onClose: () => void
