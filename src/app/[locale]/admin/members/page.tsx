@@ -5,6 +5,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { adminMembersApi } from '@/lib/api';
 import type { AdminMember } from '@/lib/api';
 import { AdminMembersTable } from '@/components/admin/AdminMembersTable';
+import AdminPagination from '@/components/admin/AdminPagination';
 
 const ROLE_FILTERS = [
   { label: '전체', value: '' },
@@ -134,21 +135,7 @@ export default function AdminMembersPage() {
       )}
 
       {/* 페이지네이션 */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`rounded px-3 py-1 text-sm ${
-                page === p ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      )}
+      <AdminPagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }
