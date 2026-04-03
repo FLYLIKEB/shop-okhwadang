@@ -243,7 +243,7 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
           </div>
         )}
         {/* 패널 내용 */}
-        <div className={cn('relative overflow-hidden', panelStack.length > 0 ? 'h-[calc(100%-56px)]' : 'h-full')}>
+        <div className={cn('relative overflow-hidden', panelStack.length > 0 ? 'h-[calc(100%-5.5rem)]' : 'h-full')}>
           {renderPanel(menuItems, -1)}
           {panelStack.map((_, index) => renderPanel(panelStack[index].items, index))}
         </div>

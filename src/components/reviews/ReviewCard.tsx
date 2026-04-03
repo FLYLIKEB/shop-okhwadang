@@ -66,7 +66,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
             alt="확대 이미지"
             width={1200}
             height={900}
-            className="max-h-[80vh] max-w-[90vw] rounded-lg object-contain"
+            className="max-h-[80svh] max-w-[90svw] rounded-lg object-contain"
           />
         </div>
       )}

@@ -76,6 +76,18 @@
   --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-mono: 'DM Mono', 'Courier New', monospace;
 
+  /* ── Height tokens for arbitrary value replacements ── */
+  --spacing-88: 5.5rem;     /* 88px - header offset */
+  --size-hero-sm: 60svh;    /* Hero small height */
+  --size-hero-md: 80svh;    /* Hero medium height */
+  --size-hero-min: 25rem;   /* 400px - hero min height */
+  --size-hero-min-md: 35rem; /* 560px - hero min height md */
+  --size-gallery-max: 80svh; /* 80vh - gallery max height */
+  --size-gallery-max-w: 80svw; /* 80vw - gallery max width */
+  --size-review-max: 80svh; /* 80vh - review card max height */
+  --size-review-max-w: 90svw; /* 90vw - review card max width */
+  --size-split-large: 30rem; /* 480px - split content large min height */
+
 }
 
 /* ── Responsive typography — desktop overrides ─────────────────── */
