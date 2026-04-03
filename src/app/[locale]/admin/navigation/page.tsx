@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { adminNavigationApi, adminSettingsApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import type { NavigationItem } from '@/lib/api';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import NavigationEditor from '@/components/admin/NavigationEditor';
 
 type NavGroup = 'gnb' | 'sidebar' | 'footer';
@@ -20,44 +21,36 @@ export default function AdminNavigationPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [activeTab, setActiveTab] = useState<NavGroup>('gnb');
   const [items, setItems] = useState<NavigationItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [bottomNavVisible, setBottomNavVisible] = useState(true);
-  const [bottomNavLoading, setBottomNavLoading] = useState(true);
 
-
-  const loadItems = useCallback(async (group: NavGroup) => {
-    setLoading(true);
-    try {
+  const { execute: loadItems, isLoading: loading } = useAsyncAction(
+    async (group: NavGroup) => {
       const data = await adminNavigationApi.getByGroup(group);
       setItems(data);
-    } catch {
-      toast.error('네비게이션 목록을 불러오지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    { errorMessage: '네비게이션 목록을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     if (isAdmin) {
-      loadItems(activeTab);
+      void loadItems(activeTab);
     }
   }, [isAdmin, activeTab, loadItems]);
 
+  const { execute: loadBottomNav, isLoading: bottomNavLoading } = useAsyncAction(
+    async () => {
+      const settings = await adminSettingsApi.getAll('general');
+      const setting = settings.find((s) => s.key === 'mobile_bottom_nav_visible');
+      setBottomNavVisible(setting ? setting.value === 'true' : true);
+    },
+    { errorMessage: '네비게이션 설정을 불러오지 못했습니다.' },
+  );
+
   useEffect(() => {
     if (isAdmin) {
-      setBottomNavLoading(true);
-      adminSettingsApi.getAll('general')
-        .then((settings) => {
-          const setting = settings.find((s) => s.key === 'mobile_bottom_nav_visible');
-          setBottomNavVisible(setting ? setting.value === 'true' : true);
-        })
-        .catch((err) => {
-          setBottomNavVisible(true);
-          toast.error(handleApiError(err, '네비게이션 설정을 불러오지 못했습니다.'));
-        })
-        .finally(() => setBottomNavLoading(false));
+      void loadBottomNav();
     }
-  }, [isAdmin]);
+  }, [isAdmin, loadBottomNav]);
 
   const handleReload = async () => {
     await loadItems(activeTab);
