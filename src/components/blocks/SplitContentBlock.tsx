@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { SplitContentContent } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
+import { isSafeUrl } from '@/utils/url';
 
 interface Props {
   content: SplitContentContent;
@@ -111,7 +112,7 @@ export default function SplitContentBlock({ content }: Props) {
         )}
         {cta_text && cta_url && (
           <Link
-            href={cta_url}
+            href={isSafeUrl(cta_url) ? cta_url : '#'}
             className={cn(
               'mt-6 inline-block border border-foreground font-medium text-foreground transition-colors hover:bg-foreground hover:text-background',
               isLarge ? 'px-8 py-3 text-sm' : 'px-6 py-2.5 text-sm'
