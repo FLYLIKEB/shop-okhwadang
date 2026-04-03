@@ -31,8 +31,20 @@ export default function AdminFaqsPage() {
 
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [filterCategory, setFilterCategory] = useState('전체');
-  const { formData, setFormData, isOpen, editingId, openCreate, openEdit, close } =
-    useFormModal<CreateFaqData>(FAQ_DEFAULTS);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const editingFaq = editingId != null ? faqs.find((f) => f.id === editingId) ?? null : null;
+
+  const { formData, setFormData, loading: formLoading, handleSubmit } = useFormModal<CreateFaqData>(
+    FAQ_DEFAULTS,
+    editingFaq ? { category: editingFaq.category, question: editingFaq.question, answer: editingFaq.answer, sortOrder: editingFaq.sortOrder, isPublished: editingFaq.isPublished } : null,
+    modalOpen,
+  );
+
+  const openCreate = () => { setEditingId(null); setModalOpen(true); };
+  const openEdit = (id: number, data: CreateFaqData) => { setEditingId(id); setFormData(data); setModalOpen(true); };
+  const close = () => { setModalOpen(false); setEditingId(null); };
 
   const { execute: loadFaqs, isLoading } = useAsyncAction(
     async () => {
@@ -134,7 +146,7 @@ export default function AdminFaqsPage() {
             <td className="px-4 py-3 typo-body-sm text-muted-foreground">{faq.category}</td>
             <td className="px-4 py-3 typo-body-sm font-medium truncate max-w-xs">{faq.question}</td>
             <td className="px-4 py-3">
-              <StatusBadge active={faq.isPublished} />
+              <StatusBadge isActive={faq.isPublished} />
             </td>
             <td className="px-4 py-3">
               <div className="flex gap-2">
@@ -162,7 +174,7 @@ export default function AdminFaqsPage() {
         ))}
       </AdminTable>
 
-      <Modal open={isOpen} onOpenChange={(open) => !open && close()}>
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
         <div className="space-y-4 p-6">
           <h2 className="typo-h2">{editingId ? 'FAQ 수정' : '새 FAQ'}</h2>
           <div>
