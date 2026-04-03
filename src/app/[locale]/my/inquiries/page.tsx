@@ -18,7 +18,7 @@ export default function InquiriesPage() {
   const { execute: loadInquiries, isLoading: loading } = useAsyncAction(
     async () => {
       const res = await inquiriesApi.getList();
-      setInquiries(res.data);
+      setInquiries(Array.isArray(res) ? res : res.data);
     },
     { errorMessage: '문의 내역을 불러오지 못했습니다.' },
   );
