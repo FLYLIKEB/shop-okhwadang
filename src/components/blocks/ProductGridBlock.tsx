@@ -95,7 +95,7 @@ export default function ProductGridBlock({ content }: Props) {
         )}
         {!more_href && auto && category_id && (
           <Link
-            href={`/${locale}/products?category=${category_id}`}
+            href={`/${locale}/products?categoryId=${category_id}`}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             전체 보기

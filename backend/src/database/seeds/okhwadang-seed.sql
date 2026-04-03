@@ -426,23 +426,23 @@ INSERT INTO product_options (product_id, name, value, price_adjustment, stock, s
 INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, parent_id) VALUES
 -- GNB
 (1,  'gnb', '홈',         '/',                          0, 1, NULL),
-(2,  'gnb', '자사호',     '/products?category=teapot',  1, 1, NULL),
-(3,  'gnb', '보이차',     '/products?category=puerh-tea', 2, 1, NULL),
-(4,  'gnb', '다구',       '/products?category=tea-ware', 3, 1, NULL),
+(2,  'gnb', '자사호',     '/products?categoryId=1',  1, 1, NULL),
+(3,  'gnb', '보이차',     '/products?categoryId=2', 2, 1, NULL),
+(4,  'gnb', '다구',       '/products?categoryId=3', 3, 1, NULL),
 (5,  'gnb', '베스트',     '/products?sort=popular',     4, 1, NULL),
 (6,  'gnb', '브랜드 소개', '/p/about',                  5, 1, NULL),
 (7,  'gnb', '기획전',      '/p/exhibition',              6, 1, NULL),
 
 -- Sidebar
 (10, 'sidebar', '전체 상품',  '/products',                         0, 1, NULL),
-(11, 'sidebar', '자사호',     '/products?category=teapot',         1, 1, NULL),
-(12, 'sidebar', '└ 주니',     '/products?category=zhuní',          2, 1, 11),
-(13, 'sidebar', '└ 자사',     '/products?category=zǐshā',          3, 1, 11),
-(14, 'sidebar', '└ 단니',     '/products?category=duānní',         4, 1, 11),
-(15, 'sidebar', '보이차',     '/products?category=puerh-tea',      5, 1, NULL),
-(16, 'sidebar', '└ 생차',     '/products?category=sheng-puerh',    6, 1, 15),
-(17, 'sidebar', '└ 숙차',     '/products?category=shou-puerh',     7, 1, 15),
-(18, 'sidebar', '다구',       '/products?category=tea-ware',       8, 1, NULL),
+(11, 'sidebar', '자사호',     '/products?categoryId=1',          1, 1, NULL),
+(12, 'sidebar', '└ 주니',     '/products?categoryId=10',         2, 1, 11),
+(13, 'sidebar', '└ 자사',     '/products?categoryId=11',         3, 1, 11),
+(14, 'sidebar', '└ 단니',     '/products?categoryId=12',         4, 1, 11),
+(15, 'sidebar', '보이차',     '/products?categoryId=2',          5, 1, NULL),
+(16, 'sidebar', '└ 생차',     '/products?categoryId=30',         6, 1, 15),
+(17, 'sidebar', '└ 숙차',     '/products?categoryId=31',         7, 1, 15),
+(18, 'sidebar', '다구',       '/products?categoryId=3',          8, 1, NULL),
 (19, 'sidebar', '기획전',     '/p/exhibition',                     9, 1, NULL),
 
 -- Footer
@@ -821,7 +821,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'title', '',
   'template', 'slider',
   'slides', JSON_ARRAY(
-    JSON_OBJECT('title', '의흥 장인의 손끝에서', 'subtitle', '600년 전통, 정성으로 빚은 자사호를 만나보세요', 'cta_text', '컬렉션 보기', 'cta_url', '/products?category=teapot', 'bg_color', '#1B3A4B', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+    JSON_OBJECT('title', '의흥 장인의 손끝에서', 'subtitle', '600년 전통, 정성으로 빚은 자사호를 만나보세요', 'cta_text', '컬렉션 보기', 'cta_url', '/products?categoryId=1', 'bg_color', '#1B3A4B', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
     JSON_OBJECT('title', '보이차의 깊은 여운', 'subtitle', '세월이 빚어낸 맛, 엄선된 보이차 컬렉션', 'cta_text', '아카이브 보기', 'cta_url', '/archive', 'bg_color', '#4A6741', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
     JSON_OBJECT('title', '찻자리의 완성', 'subtitle', '자사호와 다구로 꾸미는 나만의 다석', 'cta_text', '저널 보기', 'cta_url', '/journal', 'bg_color', '#2A2520', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png')
   )
@@ -868,7 +868,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'subtitle', '복건 주니 신작 자사호 — 장인의 손끝에서 탄생한 한정 컬렉션',
   'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
   'cta_text', '컬렉션 보기',
-  'cta_url', '/products?category=teapot',
+  'cta_url', '/products?categoryId=1',
   'template', 'fullscreen'
 ), 0, 1, NOW(), NOW()),
 
@@ -882,7 +882,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'product_ids', JSON_ARRAY(1, 2, 3),
   'limit', 3,
   'template', '3col',
-  'more_href', '/products?category=teapot'
+  'more_href', '/products?categoryId=1'
 ), 2, 1, NOW(), NOW()),
 
 (10, 2, 'promotion_banner', JSON_OBJECT(
@@ -900,7 +900,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'product_ids', JSON_ARRAY(11, 12, 13, 14),
   'limit', 4,
   'template', '4col',
-  'more_href', '/products?category=puerh-tea'
+  'more_href', '/products?categoryId=2'
 ), 4, 1, NOW(), NOW()),
 
 (12, 2, 'text_content', JSON_OBJECT(
