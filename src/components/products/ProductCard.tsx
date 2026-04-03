@@ -104,13 +104,13 @@ function ProductCard({
           onClick={handleToggleWishlist}
           disabled={isWishlistLoading}
           className={cn(
-            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm disabled:cursor-not-allowed',
+            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 shadow-sm disabled:cursor-not-allowed backdrop-blur-sm',
           )}
         >
           <Heart
             className={cn(
               'h-4 w-4 transition-colors',
-              isWishlisted ? 'fill-red-500 text-red-500' : 'text-foreground',
+              isWishlisted ? 'fill-white text-white' : 'text-white',
             )}
           />
         </button>
