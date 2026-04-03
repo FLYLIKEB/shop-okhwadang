@@ -923,4 +923,16 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'textAlign', 'center'
 ), 1, 1, NOW(), NOW());
 
+-- ============================================================
+-- 문의하기 페이지
+-- ============================================================
+INSERT INTO pages (id, slug, title, template, is_published, created_at, updated_at) VALUES
+(4, 'contact', '문의하기', 'default', 1, NOW(), NOW());
+
+INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, created_at, updated_at) VALUES
+(15, 4, 'text_content', JSON_OBJECT(
+  'html', '<h1>문의하기</h1><p>옥화당에 궁금한 점이 있으시면 아래 양식을 통해 문의해주세요.<br/>영업일 기준 1~2일 이내에 답변드리겠습니다.</p><p><strong>운영시간</strong>: 평일 10:00 ~ 18:00 (점심 12:00 ~ 13:00)<br/><strong>이메일</strong>: help@okhwadang.com</p>',
+  'textAlign', 'left'
+), 0, 1, NOW(), NOW());
+
 SELECT '✅ 옥화당 더미데이터 삽입 완료' AS result;
