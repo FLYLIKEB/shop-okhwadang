@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { couponsApi } from '@/lib/api';
 import type { CouponItem, CalculateDiscountResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
@@ -16,19 +17,19 @@ interface CouponSelectorProps {
 export default function CouponSelector({ orderAmount, onDiscountChange }: CouponSelectorProps) {
   const [coupons, setCoupons] = useState<CouponItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | ''>('');
-  const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
 
+  const { execute: loadCoupons, isLoading: loading } = useAsyncAction(
+    async () => {
+      const res = await couponsApi.getList('available');
+      setCoupons(res.coupons);
+    },
+    { onError: () => setCoupons([]), errorMessage: '쿠폰 목록을 불러오지 못했습니다.' },
+  );
+
   useEffect(() => {
-    couponsApi
-      .getList('available')
-      .then((res) => setCoupons(res.coupons))
-      .catch((err) => {
-        setCoupons([]);
-        toast.error(handleApiError(err, '쿠폰 목록을 불러오지 못했습니다.'));
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    void loadCoupons();
+  }, [loadCoupons]);
 
   const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;

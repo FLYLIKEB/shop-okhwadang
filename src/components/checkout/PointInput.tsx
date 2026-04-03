@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { couponsApi } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
@@ -12,15 +13,18 @@ interface PointInputProps {
 export default function PointInput({ onPointsChange }: PointInputProps) {
   const [balance, setBalance] = useState(0);
   const [value, setValue] = useState('');
-  const [loading, setLoading] = useState(true);
+
+  const { execute: loadPoints, isLoading: loading } = useAsyncAction(
+    async () => {
+      const res = await couponsApi.getPoints();
+      setBalance(res.balance);
+    },
+    { onError: () => setBalance(0), errorMessage: '적립금을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
-    couponsApi
-      .getPoints()
-      .then((res) => setBalance(res.balance))
-      .catch(() => setBalance(0))
-      .finally(() => setLoading(false));
-  }, []);
+    void loadPoints();
+  }, [loadPoints]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, '');
