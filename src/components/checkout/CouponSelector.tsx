@@ -44,7 +44,8 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
     try {
       const result = await couponsApi.calculate({ orderAmount, userCouponId });
       onDiscountChange(result, userCouponId);
-    } catch {
+    } catch (err) {
+      toast.error(handleApiError(err, '쿠폰 할인 계산에 실패했습니다.'));
       onDiscountChange(null, undefined);
       setSelectedId('');
     } finally {
