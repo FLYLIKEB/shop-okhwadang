@@ -107,7 +107,7 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
   };
 
   return (
-    <div className="fixed inset-0 z-40 lg:hidden">
+    <div className="fixed inset-0 z-50 lg:hidden">
       <div
         className={cn(
           'absolute inset-0 bg-black/40 transition-opacity duration-300',
@@ -126,19 +126,35 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
         <div className="relative w-full h-full overflow-y-auto overflow-x-hidden">
           <div className="absolute inset-0 flex flex-col">
             <div className="flex items-center px-4 h-14 border-b border-border shrink-0">
-              <button
-                type="button"
-                onClick={history.length > 0 ? handleBack : onClose}
-                className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label={history.length > 0 ? '뒤로' : '메뉴 닫기'}
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 5l-5 5 5 5" />
-                </svg>
-              </button>
-              <span className={cn('typo-body-sm font-medium', history.length > 0 ? 'ml-3' : 'ml-0')}>
-                {current.title}
-              </span>
+              {history.length > 0 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="뒤로"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M12 5l-5 5 5 5" />
+                    </svg>
+                  </button>
+                  <span className="typo-body-sm font-medium ml-3">
+                    {current.title}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Logo variant="header" />
+                  <button
+                    type="button"
+                    onClick={closeAndReset}
+                    className="ml-auto p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="메뉴 닫기"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4">
               <div className="flex flex-col gap-1">
