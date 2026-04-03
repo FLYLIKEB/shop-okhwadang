@@ -6,14 +6,14 @@ import type { NavigationItem } from '@/lib/api';
 
 const FALLBACK_LINKS = {
   customerService: [
-    { id: -1, label: '고객센터', url: '/support' },
+    { id: -1, label: '고객센터', url: '/pages/support' },
     { id: -2, label: '자주 묻는 질문', url: '/faq' },
-    { id: -3, label: '배송 안내', url: '/shipping' },
-    { id: -4, label: '반품 및 교환', url: '/returns' },
+    { id: -3, label: '배송 안내', url: '/pages/shipping' },
+    { id: -4, label: '반품 및 교환', url: '/pages/returns' },
   ],
   company: [
-    { id: -5, label: '이용약관', url: '/terms' },
-    { id: -6, label: '개인정보처리방침', url: '/privacy' },
+    { id: -5, label: '이용약관', url: '/pages/terms' },
+    { id: -6, label: '개인정보처리방침', url: '/pages/privacy' },
   ],
   shop: [
     { id: -7, label: '전체 상품', url: '/products' },
