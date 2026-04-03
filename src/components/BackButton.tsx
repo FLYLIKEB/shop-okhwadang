@@ -21,7 +21,7 @@ export default function BackButton() {
       onClick={() => router.back()}
       aria-label="뒤로가기"
       className={cn(
-        'fixed left-4 top-[72px] z-10',
+        'fixed left-4 top-[4.5rem] z-10',
         'flex h-9 w-9 items-center justify-center rounded-full',
         'bg-background/80 backdrop-blur-sm border border-border shadow-sm',
         'text-foreground/70 hover:text-foreground hover:bg-muted',
