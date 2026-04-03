@@ -101,7 +101,7 @@ export default async function LocaleLayout({
     getSettingsMap(),
   ]);
 
-  const themeStyle = getThemeStyle(settingsMap);
+  const themeStyle = await getThemeStyle(settingsMap);
 
   const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible !== 'false';
 
