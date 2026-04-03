@@ -869,24 +869,24 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'limit', 8
 ), 2, 1, NOW(), NOW()),
 
-(4, 1, 'category_nav', JSON_OBJECT(
-  'template', 'text',
-  'category_ids', JSON_ARRAY(1, 2, 3, 4, 5)
-), 3, 1, NOW(), NOW()),
-
 (5, 1, 'promotion_banner', JSON_OBJECT(
   'title', '봄 기획전 — 주니 신작 입고',
   'subtitle', '복건 주니 신작 자사호 선착순 특가',
   'cta_text', '기획전 보기',
   'cta_url', '/p/exhibition',
   'template', 'full-width'
-), 4, 1, NOW(), NOW()),
+), 3, 1, NOW(), NOW()),
 
 (6, 1, 'product_grid', JSON_OBJECT(
   'title', '자사호 컬렉션',
   'category_id', 1,
   'limit', 8,
   'template', '4col'
+), 4, 1, NOW(), NOW()),
+
+(4, 1, 'category_nav', JSON_OBJECT(
+  'template', 'text',
+  'category_ids', JSON_ARRAY(1, 2, 3, 4, 5)
 ), 5, 1, NOW(), NOW()),
 
 -- ── 기획전 페이지 블록 ──
