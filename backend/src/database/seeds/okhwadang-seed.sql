@@ -477,7 +477,11 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 (16, 'sidebar', '└ 생차',     '/products?categoryId=30',         6, 1, 15),
 (17, 'sidebar', '└ 숙차',     '/products?categoryId=31',         7, 1, 15),
 (18, 'sidebar', '다구',       '/products?categoryId=3',          8, 1, NULL),
-(19, 'sidebar', '기획전',     '/p/exhibition',                     9, 1, NULL),
+(50, 'sidebar', '브랜드 소개', '/p/about',                       9, 1, NULL),
+(51, 'sidebar', '└ 저널',   '/journal',                         1, 1, 50),
+(52, 'sidebar', '└ 컬렉션', '/collection',                       2, 1, 50),
+(53, 'sidebar', '└ 아카이브', '/archive',                        3, 1, 50),
+(19, 'sidebar', '기획전',     '/p/exhibition',                  10, 1, NULL),
 
 (20, 'footer', '고객센터',        '/pages/support',  0, 1, NULL),
 (21, 'footer', '자주 묻는 질문',   '/faq',            1, 1, NULL),
