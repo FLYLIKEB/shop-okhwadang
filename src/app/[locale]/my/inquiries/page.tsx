@@ -45,7 +45,7 @@ export default function InquiriesPage() {
         <h1 className="typo-h1">1:1 문의</h1>
         <Link
           href="/my/inquiries/new"
-          className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/80 transition-colors"
         >
           문의하기
         </Link>
@@ -59,7 +59,7 @@ export default function InquiriesPage() {
             <li key={inquiry.id} className="border rounded-lg overflow-hidden">
               <button
                 onClick={() => setOpenId(openId === inquiry.id ? null : inquiry.id)}
-                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted transition-colors"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -73,26 +73,26 @@ export default function InquiriesPage() {
                     >
                       {inquiry.status === 'answered' ? '답변완료' : '접수'}
                     </span>
-                    <span className="text-xs text-gray-400">{inquiry.type}</span>
+                    <span className="text-xs text-muted-foreground">{inquiry.type}</span>
                   </div>
-                  <p className="text-sm font-medium text-gray-800 truncate">{inquiry.title}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{inquiry.title}</p>
                 </div>
-                <span className="ml-4 shrink-0 text-xs text-gray-400">
+                <span className="ml-4 shrink-0 text-xs text-muted-foreground">
                   {new Date(inquiry.createdAt).toLocaleDateString('ko-KR')}
                 </span>
               </button>
               {openId === inquiry.id && (
-                <div className="border-t px-4 py-3 bg-gray-50 space-y-3">
+                <div className="border-t px-4 py-3 bg-muted space-y-3">
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 mb-1">문의 내용</p>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{inquiry.content}</p>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">문의 내용</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{inquiry.content}</p>
                   </div>
                   {inquiry.answer && (
-                    <div className="bg-white border rounded p-3">
-                      <p className="text-xs font-semibold text-blue-600 mb-1">답변</p>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{inquiry.answer}</p>
+                    <div className="bg-card border rounded p-3">
+                      <p className="text-xs font-semibold text-primary mb-1">답변</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{inquiry.answer}</p>
                       {inquiry.answeredAt && (
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           {new Date(inquiry.answeredAt).toLocaleDateString('ko-KR')}
                         </p>
                       )}

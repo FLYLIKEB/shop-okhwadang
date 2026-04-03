@@ -41,11 +41,11 @@ export default function NewInquiryPage() {
       <h1 className="typo-h1 mb-6">문의하기</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">문의 유형</label>
+          <label className="block text-sm font-medium text-foreground mb-1">문의 유형</label>
           <select
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {INQUIRY_TYPES.map((t) => (
               <option key={t} value={t}>{t}</option>
@@ -53,38 +53,38 @@ export default function NewInquiryPage() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
+          <label className="block text-sm font-medium text-foreground mb-1">제목</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={255}
             placeholder="문의 제목을 입력해주세요"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">내용</label>
+          <label className="block text-sm font-medium text-foreground mb-1">내용</label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={6}
             placeholder="문의 내용을 자세히 입력해주세요"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
+            className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
           />
         </div>
         <div className="flex gap-3 pt-2">
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex-1 py-2.5 border border-input rounded-lg text-sm font-medium text-foreground hover:bg-muted"
           >
             취소
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? '접수 중...' : '문의 접수'}
           </button>
