@@ -190,15 +190,22 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   let processSteps: ProcessStep[] = [];
   let artists: Artist[] = [];
 
+  let fetchError: Error | null = null;
+
   try {
     const data = await fetchArchives();
     niloTypes = data.niloTypes;
     processSteps = data.processSteps;
     artists = data.artists;
-  } catch {
+  } catch (err) {
+    fetchError = err instanceof Error ? err : new Error('아카이브 데이터를 불러오지 못했습니다.');
     niloTypes = [];
     processSteps = [];
     artists = [];
+  }
+
+  if (fetchError) {
+    throw fetchError;
   }
 
   return (
