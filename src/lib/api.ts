@@ -145,7 +145,6 @@ class ApiClient {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { params: _extractedParams, ...fetchOptions } = options ?? {};
 
     const { headers: optionHeaders, ...restFetchOptions } = fetchOptions ?? {};
