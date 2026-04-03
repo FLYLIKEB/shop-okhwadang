@@ -35,7 +35,7 @@ export class JournalEntry {
   @Column({ type: 'varchar', length: 10 })
   date!: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
+  @Column({ name: 'read_time', type: 'varchar', length: 20, nullable: true })
   readTime!: string | null;
 
   @Column({ type: 'text', nullable: true })
