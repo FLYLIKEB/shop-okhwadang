@@ -53,6 +53,284 @@ const STATUS_OPTIONS = [
   { value: 'hidden', label: '숨김' },
 ] as const;
 
+const INPUT_CLASS = 'w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary';
+
+type Setter = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) => void;
+
+function ImagesSection({
+  images,
+  detailImages,
+  set,
+}: {
+  images: GalleryImage[];
+  detailImages: DetailImage[];
+  set: Setter;
+}) {
+  return (
+    <>
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold">갤러리 이미지</h2>
+        <p className="text-xs text-muted-foreground">상품 목록에 표시될 이미지입니다. 드래그하여 순서를 변경할 수 있습니다.</p>
+        <MultiImageUploader
+          images={images}
+          onChange={(imgs) => set('images', imgs)}
+          maxImages={10}
+        />
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold">상품 상세 이미지</h2>
+        <p className="text-xs text-muted-foreground">상품 상세 페이지 하단에 표시될 이미지입니다.</p>
+        <MultiImageUploader
+          images={detailImages}
+          onChange={(imgs) => set('detailImages', imgs)}
+          maxImages={20}
+        />
+      </section>
+    </>
+  );
+}
+
+function BasicInfoSection({
+  form,
+  set,
+}: {
+  form: Pick<ProductFormData, 'name' | 'slug' | 'shortDescription' | 'description'>;
+  set: Setter;
+}) {
+  return (
+    <section className="space-y-4">
+      <h2 className="text-sm font-semibold">기본 정보</h2>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">상품명 *</label>
+        <input
+          type="text"
+          value={form.name}
+          onChange={(e) => set('name', e.target.value)}
+          placeholder="상품명을 입력하세요"
+          required
+          className={INPUT_CLASS}
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">슬러그 *</label>
+        <input
+          type="text"
+          value={form.slug}
+          onChange={(e) => set('slug', e.target.value)}
+          placeholder="url-friendly-slug"
+          required
+          className={INPUT_CLASS}
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">짧은 설명</label>
+        <input
+          type="text"
+          value={form.shortDescription}
+          onChange={(e) => set('shortDescription', e.target.value)}
+          placeholder="상품 요약 설명"
+          className={INPUT_CLASS}
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">상세 설명</label>
+        <textarea
+          value={form.description}
+          onChange={(e) => set('description', e.target.value)}
+          rows={5}
+          placeholder="상품 상세 설명"
+          className={INPUT_CLASS}
+        />
+      </div>
+    </section>
+  );
+}
+
+function MultilingualSection({
+  form,
+  set,
+}: {
+  form: Pick<ProductFormData, 'name_en' | 'name_ja' | 'name_zh' | 'description_en' | 'description_ja' | 'description_zh'>;
+  set: Setter;
+}) {
+  return (
+    <section className="space-y-4">
+      <h2 className="text-sm font-semibold">다국어 정보</h2>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium">상품명 (영어)</label>
+          <input
+            type="text"
+            value={form.name_en}
+            onChange={(e) => set('name_en', e.target.value)}
+            placeholder="Product name in English"
+            className={INPUT_CLASS}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">상품명 (일본어)</label>
+          <input
+            type="text"
+            value={form.name_ja}
+            onChange={(e) => set('name_ja', e.target.value)}
+            placeholder="日本語の商品名"
+            className={INPUT_CLASS}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">상품명 (중국어)</label>
+          <input
+            type="text"
+            value={form.name_zh}
+            onChange={(e) => set('name_zh', e.target.value)}
+            placeholder="中文商品名称"
+            className={INPUT_CLASS}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">상세 설명 (영어)</label>
+        <textarea
+          value={form.description_en}
+          onChange={(e) => set('description_en', e.target.value)}
+          rows={3}
+          placeholder="Product description in English"
+          className={INPUT_CLASS}
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">상세 설명 (일본어)</label>
+        <textarea
+          value={form.description_ja}
+          onChange={(e) => set('description_ja', e.target.value)}
+          rows={3}
+          placeholder="日本語の商品説明"
+          className={INPUT_CLASS}
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">상세 설명 (중국어)</label>
+        <textarea
+          value={form.description_zh}
+          onChange={(e) => set('description_zh', e.target.value)}
+          rows={3}
+          placeholder="中文商品描述"
+          className={INPUT_CLASS}
+        />
+      </div>
+    </section>
+  );
+}
+
+function PricingSection({
+  form,
+  set,
+}: {
+  form: Pick<ProductFormData, 'price' | 'salePrice' | 'stock' | 'sku'>;
+  set: Setter;
+}) {
+  return (
+    <section className="space-y-4">
+      <h2 className="text-sm font-semibold">가격 / 재고</h2>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="mb-1 block text-sm font-medium">판매가 (원) *</label>
+          <input
+            type="number"
+            value={form.price}
+            onChange={(e) => set('price', e.target.value)}
+            min={1}
+            required
+            className={INPUT_CLASS}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">할인가 (원)</label>
+          <input
+            type="number"
+            value={form.salePrice}
+            onChange={(e) => set('salePrice', e.target.value)}
+            min={0}
+            className={INPUT_CLASS}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="mb-1 block text-sm font-medium">재고</label>
+          <input
+            type="number"
+            value={form.stock}
+            onChange={(e) => set('stock', e.target.value)}
+            min={0}
+            className={INPUT_CLASS}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">SKU</label>
+          <input
+            type="text"
+            value={form.sku}
+            onChange={(e) => set('sku', e.target.value)}
+            placeholder="재고 관리 코드"
+            className={INPUT_CLASS}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function VisibilitySection({
+  form,
+  set,
+}: {
+  form: Pick<ProductFormData, 'status' | 'isFeatured'>;
+  set: Setter;
+}) {
+  return (
+    <section className="space-y-4">
+      <h2 className="text-sm font-semibold">노출 설정</h2>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">상태</label>
+        <select
+          value={form.status}
+          onChange={(e) => set('status', e.target.value as ProductFormData['status'])}
+          className={INPUT_CLASS}
+        >
+          {STATUS_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <label className="flex cursor-pointer items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={form.isFeatured}
+          onChange={(e) => set('isFeatured', e.target.checked)}
+          className="h-4 w-4"
+        />
+        추천 상품으로 표시
+      </label>
+    </section>
+  );
+}
+
 export default function ProductFormPage({ mode, product }: ProductFormPageProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -156,233 +434,12 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       </h1>
 
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
-        {/* 갤러리 이미지 */}
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold">갤러리 이미지</h2>
-          <p className="text-xs text-muted-foreground">상품 목록에 표시될 이미지입니다. 드래그하여 순서를 변경할 수 있습니다.</p>
-          <MultiImageUploader
-            images={form.images}
-            onChange={(images) => set('images', images)}
-            maxImages={10}
-          />
-        </section>
+        <ImagesSection images={form.images} detailImages={form.detailImages} set={set} />
+        <BasicInfoSection form={form} set={set} />
+        <MultilingualSection form={form} set={set} />
+        <PricingSection form={form} set={set} />
+        <VisibilitySection form={form} set={set} />
 
-        {/* 상세 이미지 */}
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold">상품 상세 이미지</h2>
-          <p className="text-xs text-muted-foreground">상품 상세 페이지 하단에 표시될 이미지입니다.</p>
-          <MultiImageUploader
-            images={form.detailImages}
-            onChange={(images) => set('detailImages', images)}
-            maxImages={20}
-          />
-        </section>
-
-        {/* 기본 정보 */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold">기본 정보</h2>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">상품명 *</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => set('name', e.target.value)}
-              placeholder="상품명을 입력하세요"
-              required
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">슬러그 *</label>
-            <input
-              type="text"
-              value={form.slug}
-              onChange={(e) => set('slug', e.target.value)}
-              placeholder="url-friendly-slug"
-              required
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">짧은 설명</label>
-            <input
-              type="text"
-              value={form.shortDescription}
-              onChange={(e) => set('shortDescription', e.target.value)}
-              placeholder="상품 요약 설명"
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">상세 설명</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => set('description', e.target.value)}
-              rows={5}
-              placeholder="상품 상세 설명"
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-        </section>
-
-        {/* 다국어 정보 */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold">다국어 정보</h2>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-sm font-medium">상품명 (영어)</label>
-              <input
-                type="text"
-                value={form.name_en}
-                onChange={(e) => set('name_en', e.target.value)}
-                placeholder="Product name in English"
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">상품명 (일본어)</label>
-              <input
-                type="text"
-                value={form.name_ja}
-                onChange={(e) => set('name_ja', e.target.value)}
-                placeholder="日本語の商品名"
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">상품명 (중국어)</label>
-              <input
-                type="text"
-                value={form.name_zh}
-                onChange={(e) => set('name_zh', e.target.value)}
-                placeholder="中文商品名称"
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">상세 설명 (영어)</label>
-            <textarea
-              value={form.description_en}
-              onChange={(e) => set('description_en', e.target.value)}
-              rows={3}
-              placeholder="Product description in English"
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">상세 설명 (일본어)</label>
-            <textarea
-              value={form.description_ja}
-              onChange={(e) => set('description_ja', e.target.value)}
-              rows={3}
-              placeholder="日本語の商品説明"
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">상세 설명 (중국어)</label>
-            <textarea
-              value={form.description_zh}
-              onChange={(e) => set('description_zh', e.target.value)}
-              rows={3}
-              placeholder="中文商品描述"
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-        </section>
-
-        {/* 가격/재고 */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold">가격 / 재고</h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium">판매가 (원) *</label>
-              <input
-                type="number"
-                value={form.price}
-                onChange={(e) => set('price', e.target.value)}
-                min={1}
-                required
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">할인가 (원)</label>
-              <input
-                type="number"
-                value={form.salePrice}
-                onChange={(e) => set('salePrice', e.target.value)}
-                min={0}
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium">재고</label>
-              <input
-                type="number"
-                value={form.stock}
-                onChange={(e) => set('stock', e.target.value)}
-                min={0}
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">SKU</label>
-              <input
-                type="text"
-                value={form.sku}
-                onChange={(e) => set('sku', e.target.value)}
-                placeholder="재고 관리 코드"
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* 노출 설정 */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold">노출 설정</h2>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">상태</label>
-            <select
-              value={form.status}
-              onChange={(e) => set('status', e.target.value as ProductFormData['status'])}
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.isFeatured}
-              onChange={(e) => set('isFeatured', e.target.checked)}
-              className="h-4 w-4"
-            />
-            추천 상품으로 표시
-          </label>
-        </section>
-
-        {/* 옵션 */}
         <section>
           <ProductOptionsEditor
             options={form.options}
@@ -390,7 +447,6 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
           />
         </section>
 
-        {/* 버튼 */}
         <div className="flex justify-end gap-3 border-t pt-4">
           <button
             type="button"
