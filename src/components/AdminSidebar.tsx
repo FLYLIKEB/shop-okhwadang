@@ -51,6 +51,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: '주문관리', href: '/admin/orders' },
       { label: '회원관리', href: '/admin/members' },
+      { label: '문의관리', href: '/admin/inquiries' },
     ],
   },
   {
