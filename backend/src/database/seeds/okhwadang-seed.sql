@@ -457,17 +457,17 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 -- 7. 배너
 -- ============================================================
 INSERT INTO banners (title, image_url, link_url, sort_order, is_active, starts_at, ends_at) VALUES
-('옥화당 봄 기획전 — 주니 신작 입고', 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=1400', '/p/spring-2026', 0, 1, '2026-03-01 00:00:00', '2026-04-30 23:59:59'),
-('반장 고수 생병 2019년 한정 입고', 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=1400', '/products/banjang-gushu-2019-sheng', 1, 1, '2026-03-15 00:00:00', '2026-05-15 23:59:59'),
-('입문 다도구 세트 — 14% 특가', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1400', '/products/okhwadang-starter-tea-set', 2, 1, NULL, NULL);
+('옥화당 봄 기획전 — 주니 신작 입고', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '/p/spring-2026', 0, 1, '2026-03-01 00:00:00', '2026-04-30 23:59:59'),
+('반장 고수 생병 2019년 한정 입고', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/banjang-gushu-2019-sheng', 1, 1, '2026-03-15 00:00:00', '2026-05-15 23:59:59'),
+('입문 다도구 세트 — 14% 특가', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/okhwadang-starter-tea-set', 2, 1, NULL, NULL);
 
 -- ============================================================
 -- 8. 프로모션
 -- ============================================================
 INSERT INTO promotions (title, description, type, starts_at, ends_at, is_active, discount_rate, image_url) VALUES
-('봄 기획전 — 주니 신작', '복건 주니 신작 자사호 선착순 특가. 재고 한정으로 조기 마감될 수 있습니다.', 'exhibition', '2026-03-29 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800'),
-('입문 세트 14% 타임세일', '옥화당 입문 다도구 세트 한정 수량 특가 — 280,000원 → 240,000원', 'timesale', '2026-03-29 09:00:00', '2026-04-05 23:59:59', 1, 14, 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800'),
-('보이차 입문 이벤트', '대익 7572 숙병 구매 시 대나무 차도구 5종 증정 이벤트', 'event', '2026-04-01 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800');
+('봄 기획전 — 주니 신작', '복건 주니 신작 자사호 선착순 특가. 재고 한정으로 조기 마감될 수 있습니다.', 'exhibition', '2026-03-29 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+('입문 세트 14% 타임세일', '옥화당 입문 다도구 세트 한정 수량 특가 — 280,000원 → 240,000원', 'timesale', '2026-03-29 09:00:00', '2026-04-05 23:59:59', 1, 14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
+('보이차 입문 이벤트', '대익 7572 숙병 구매 시 대나무 차도구 5종 증정 이벤트', 'event', '2026-04-01 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png');
 
 -- ============================================================
 -- 9. 공지사항
@@ -821,9 +821,9 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'title', '',
   'template', 'slider',
   'slides', JSON_ARRAY(
-    JSON_OBJECT('title', '의흥 장인의 손끝에서', 'subtitle', '600년 전통, 정성으로 빚은 자사호를 만나보세요', 'cta_text', '컬렉션 보기', 'cta_url', '/products?category=teapot', 'bg_color', '#1B3A4B', 'image_url', 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=1920&q=80'),
-    JSON_OBJECT('title', '보이차의 깊은 여운', 'subtitle', '세월이 빚어낸 맛, 엄선된 보이차 컬렉션', 'cta_text', '아카이브 보기', 'cta_url', '/archive', 'bg_color', '#4A6741', 'image_url', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1920&q=80'),
-    JSON_OBJECT('title', '찻자리의 완성', 'subtitle', '자사호와 다구로 꾸미는 나만의 다석', 'cta_text', '저널 보기', 'cta_url', '/journal', 'bg_color', '#2A2520', 'image_url', 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=1920&q=80')
+    JSON_OBJECT('title', '의흥 장인의 손끝에서', 'subtitle', '600년 전통, 정성으로 빚은 자사호를 만나보세요', 'cta_text', '컬렉션 보기', 'cta_url', '/products?category=teapot', 'bg_color', '#1B3A4B', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+    JSON_OBJECT('title', '보이차의 깊은 여운', 'subtitle', '세월이 빚어낸 맛, 엄선된 보이차 컬렉션', 'cta_text', '아카이브 보기', 'cta_url', '/archive', 'bg_color', '#4A6741', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
+    JSON_OBJECT('title', '찻자리의 완성', 'subtitle', '자사호와 다구로 꾸미는 나만의 다석', 'cta_text', '저널 보기', 'cta_url', '/journal', 'bg_color', '#2A2520', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png')
   )
 ), 0, 1, NOW(), NOW()),
 
@@ -836,7 +836,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'title', '옥화당(玉花堂) 이야기',
   'subtitle', 'Our Story',
   'description', '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 자사호·보이차·다구를 국내에 소개하는 전문 D2C 쇼핑몰입니다. 600년 역사의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 산지 직수입을 원칙으로 합니다.',
-  'image_url', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800',
+  'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
   'image_position', 'right',
   'cta_text', '브랜드 소개 보기',
   'cta_url', '/p/about',
@@ -866,7 +866,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
 (7, 2, 'hero_banner', JSON_OBJECT(
   'title', '봄 기획전',
   'subtitle', '복건 주니 신작 자사호 — 장인의 손끝에서 탄생한 한정 컬렉션',
-  'image_url', 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=1920&q=80',
+  'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
   'cta_text', '컬렉션 보기',
   'cta_url', '/products?category=teapot',
   'template', 'fullscreen'
@@ -888,7 +888,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
 (10, 2, 'promotion_banner', JSON_OBJECT(
   'title', '입문 다도구 세트 14% 특가',
   'subtitle', '옥화당 입문 다도구 세트 한정 수량 특가 — 280,000원 → 240,000원',
-  'image_url', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800',
+  'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
   'cta_text', '특가 보기',
   'cta_url', '/products/okhwadang-starter-tea-set',
   'template', 'timer',
@@ -913,7 +913,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'title', '옥화당(玉花堂)',
   'subtitle', '자사호·보이차·다구 전문',
   'description', '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 자사호·보이차·다구를 국내에 소개하는 전문 D2C 쇼핑몰입니다. 600년 역사의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 산지 직수입을 원칙으로 합니다. 찻자리 하나에도 정성을 담는 것, 그것이 옥화당의 철학입니다.',
-  'image_url', 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800',
+  'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
   'image_position', 'right',
   'template', 'large'
 ), 0, 1, NOW(), NOW()),
