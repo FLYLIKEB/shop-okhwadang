@@ -84,6 +84,174 @@ interface HistoryEntry {
   items: NavigationItem[];
 }
 
+// ─── Mobile Menu Sub-components ──────────────────────────────────
+
+interface MobileMenuHeaderProps {
+  historyLength: number;
+  currentTitle: string;
+  onClose: () => void;
+  onBack: () => void;
+}
+
+function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: MobileMenuHeaderProps) {
+  return (
+    <>
+      <div className="flex items-center px-4 h-14 border-b border-border shrink-0">
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-2 -ml-2 mr-3 text-muted-foreground hover:text-foreground transition-all duration-200 active:scale-90"
+          aria-label="메뉴 닫기"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <Logo variant="header" />
+      </div>
+      {historyLength > 0 && (
+        <div className="flex items-center px-4 h-12 border-b border-border shrink-0">
+          <button
+            type="button"
+            onClick={onBack}
+            className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="뒤로"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M12 5l-5 5 5 5" />
+            </svg>
+          </button>
+          <span className="typo-body-sm font-medium ml-3">
+            {currentTitle}
+          </span>
+        </div>
+      )}
+    </>
+  );
+}
+
+interface MobileMenuContentProps {
+  items: NavigationItem[];
+  onItemClick: (item: NavigationItem) => void;
+  onLinkClick: () => void;
+}
+
+function MobileMenuContent({ items, onItemClick, onLinkClick }: MobileMenuContentProps) {
+  return (
+    <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex flex-col gap-1">
+        {items.map((item) => (
+          <div key={item.id}>
+            {item.children && item.children.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => onItemClick(item)}
+                className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
+              >
+                {item.label}
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
+                  <path d="M6 4l4 4-4 4" />
+                </svg>
+              </button>
+            ) : (
+              <Link
+                href={item.url}
+                onClick={onLinkClick}
+                className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
+              >
+                {item.label}
+              </Link>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface MobileMenuFooterProps {
+  isAuthenticated: boolean;
+  userName?: string;
+  onLogout: () => void;
+  onLinkClick: () => void;
+}
+
+function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: MobileMenuFooterProps) {
+  return (
+    <div className="px-4 py-4 border-t border-border shrink-0">
+      <div className="flex flex-col gap-1">
+        {isAuthenticated ? (
+          <>
+            <Link href="/my" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+              <User className="h-4 w-4" />
+              {userName ?? '마이페이지'}
+            </Link>
+            <button
+              type="button"
+              onClick={() => { onLinkClick(); onLogout(); }}
+              className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors text-left flex items-center gap-3"
+            >
+              <LogOut className="h-4 w-4" />
+              로그아웃
+            </button>
+          </>
+        ) : (
+          <>
+            <Link href="/login" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+              <LogIn className="h-4 w-4" />
+              로그인
+            </Link>
+            <Link href="/signup" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+              <UserPlus className="h-4 w-4" />
+              계정 만들기
+            </Link>
+          </>
+        )}
+        <Link href="/contact" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+          <MessageSquare className="h-4 w-4" />
+          문의하기
+        </Link>
+        <Link href="/order-tracking" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+          <Package className="h-4 w-4" />
+          주문조회
+        </Link>
+      </div>
+      <div className="mt-4">
+        <LanguageSelector />
+      </div>
+    </div>
+  );
+}
+
+function MobileMenuBackdrop({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  return (
+    <div
+      className={cn(
+        'absolute inset-0 bg-black/40 transition-opacity duration-300',
+        visible ? 'opacity-100' : 'opacity-0',
+      )}
+      onClick={onClose}
+      aria-hidden="true"
+    />
+  );
+}
+
+function MobileMenuNav({ visible, children }: { visible: boolean; children: React.ReactNode }) {
+  return (
+    <nav
+      aria-label="모바일 메뉴"
+      className={cn(
+        'absolute left-0 top-0 h-full w-80 bg-background shadow-xl transition-transform duration-500 ease-out',
+        visible ? 'translate-x-0' : '-translate-x-full',
+      )}
+    >
+      <div className="relative w-full h-full overflow-y-auto overflow-x-hidden">
+        <div className="absolute inset-0 flex flex-col">
+          {children}
+        </div>
+      </div>
+    </nav>
+  );
+}
+
 function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible, onClose, onLogout }: MobileMenuProps) {
   const menuItems = sidebarItems.length > 0 ? sidebarItems : navItems;
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -108,127 +276,26 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
-      <div
-        className={cn(
-          'absolute inset-0 bg-black/40 transition-opacity duration-300',
-          visible ? 'opacity-100' : 'opacity-0',
-        )}
-        onClick={closeAndReset}
-        aria-hidden="true"
-      />
-      <nav
-        aria-label="모바일 메뉴"
-        className={cn(
-          'absolute left-0 top-0 h-full w-80 bg-background shadow-xl transition-transform duration-500 ease-out',
-          visible ? 'translate-x-0' : '-translate-x-full',
-        )}
-      >
-        <div className="relative w-full h-full overflow-y-auto overflow-x-hidden">
-          <div className="absolute inset-0 flex flex-col">
-            <div className="flex items-center px-4 h-14 border-b border-border shrink-0">
-              {history.length > 0 ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="뒤로"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M12 5l-5 5 5 5" />
-                    </svg>
-                  </button>
-                  <span className="typo-body-sm font-medium ml-3">
-                    {current.title}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Logo variant="header" />
-                  <button
-                    type="button"
-                    onClick={closeAndReset}
-                    className="ml-auto p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="메뉴 닫기"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 py-4">
-              <div className="flex flex-col gap-1">
-                {current.items.map((item) => (
-                  <div key={item.id}>
-                    {item.children && item.children.length > 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => handleItemClick(item)}
-                        className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
-                      >
-                        {item.label}
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
-                          <path d="M6 4l4 4-4 4" />
-                        </svg>
-                      </button>
-                    ) : (
-                      <Link
-                        href={item.url}
-                        onClick={closeAndReset}
-                        className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
-                      >
-                        {item.label}
-                      </Link>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="px-4 py-4 border-t border-border shrink-0">
-              <div className="flex flex-col gap-1">
-                {isAuthenticated ? (
-                  <>
-                    <Link href="/my" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-                      <User className="h-4 w-4" />
-                      {userName ?? '마이페이지'}
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => { closeAndReset(); onLogout(); }}
-                      className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors text-left flex items-center gap-3"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      로그아웃
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/login" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-                      <LogIn className="h-4 w-4" />
-                      로그인
-                    </Link>
-                    <Link href="/signup" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-                      <UserPlus className="h-4 w-4" />
-                      계정 만들기
-                    </Link>
-                  </>
-                )}
-                <Link href="/contact" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-                  <MessageSquare className="h-4 w-4" />
-                  문의하기
-                </Link>
-                <Link href="/order-tracking" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-                  <Package className="h-4 w-4" />
-                  주문조회
-                </Link>
-              </div>
-              <div className="mt-4">
-                <LanguageSelector />
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <MobileMenuBackdrop visible={visible} onClose={closeAndReset} />
+      <MobileMenuNav visible={visible}>
+        <MobileMenuHeader
+          historyLength={history.length}
+          currentTitle={current.title}
+          onClose={closeAndReset}
+          onBack={handleBack}
+        />
+        <MobileMenuContent
+          items={current.items}
+          onItemClick={handleItemClick}
+          onLinkClick={closeAndReset}
+        />
+        <MobileMenuFooter
+          isAuthenticated={isAuthenticated}
+          userName={userName}
+          onLogout={onLogout}
+          onLinkClick={closeAndReset}
+        />
+      </MobileMenuNav>
     </div>
   );
 }
