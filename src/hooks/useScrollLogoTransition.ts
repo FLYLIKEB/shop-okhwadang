@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 interface ScrollLogoState {
   progress: number;
@@ -23,51 +23,48 @@ export function useScrollLogoTransition({
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number | null>(null);
 
-  const calculateTransforms = useCallback(
-    (scrollProgress: number) => {
-      const heroRect = heroRef.current?.getBoundingClientRect();
-      if (!heroRect) {
-        return {
-          progress: scrollProgress,
-          isHeroVisible: scrollProgress < 1,
-          heroLogoStyle: { opacity: Math.max(0, 1 - scrollProgress) },
-          headerLogoStyle: { opacity: Math.min(1, scrollProgress) },
-        };
-      }
-
-      const headerHeight = 56;
-      const heroStartTop = heroRect.top;
-      const heroStartLeft = heroRect.left;
-      const heroStartScale = 1.2;
-      const heroStartFontSize = 24;
-      const headerFontSize = 20;
-
-      const p = easeOutCubic(scrollProgress);
-
-      const currentTop = lerp(heroStartTop, headerHeight / 2 - 10, p);
-      const currentLeft = lerp(heroStartLeft, 16, p);
-      const currentScale = lerp(heroStartScale, 1, p);
-      const currentFontSize = lerp(heroStartFontSize, headerFontSize, p);
-
-      const heroOpacity = scrollProgress < 0.1 ? 1 : Math.max(0, 1 - (scrollProgress - 0.1) / 0.4);
-      const headerOpacity = scrollProgress > 0.3 ? Math.min(1, (scrollProgress - 0.3) / 0.4) : 0;
-
+  const transforms = useMemo(() => {
+    const heroRect = heroRef.current?.getBoundingClientRect();
+    if (!heroRect) {
       return {
-        progress: scrollProgress,
-        isHeroVisible: heroOpacity > 0,
-        heroLogoStyle: {
-          opacity: heroOpacity,
-          transform: `translate(${currentLeft - heroStartLeft}px, ${currentTop - heroStartTop}px) scale(${currentScale})`,
-          fontSize: `${currentFontSize}px`,
-        },
-        headerLogoStyle: {
-          opacity: headerOpacity,
-          transform: `translateY(${(1 - p) * -20}px)`,
-        },
+        progress,
+        isHeroVisible: progress < 1,
+        heroLogoStyle: { opacity: Math.max(0, 1 - progress) },
+        headerLogoStyle: { opacity: Math.min(1, progress) },
       };
-    },
-    [heroRef]
-  );
+    }
+
+    const headerHeight = 56;
+    const heroStartTop = heroRect.top;
+    const heroStartLeft = heroRect.left;
+    const heroStartScale = 1.2;
+    const heroStartFontSize = 24;
+    const headerFontSize = 20;
+
+    const p = easeOutCubic(progress);
+
+    const currentTop = lerp(heroStartTop, headerHeight / 2 - 10, p);
+    const currentLeft = lerp(heroStartLeft, 16, p);
+    const currentScale = lerp(heroStartScale, 1, p);
+    const currentFontSize = lerp(heroStartFontSize, headerFontSize, p);
+
+    const heroOpacity = progress < 0.1 ? 1 : Math.max(0, 1 - (progress - 0.1) / 0.4);
+    const headerOpacity = progress > 0.3 ? Math.min(1, (progress - 0.3) / 0.4) : 0;
+
+    return {
+      progress,
+      isHeroVisible: heroOpacity > 0,
+      heroLogoStyle: {
+        opacity: heroOpacity,
+        transform: `translate(${currentLeft - heroStartLeft}px, ${currentTop - heroStartTop}px) scale(${currentScale})`,
+        fontSize: `${currentFontSize}px`,
+      },
+      headerLogoStyle: {
+        opacity: headerOpacity,
+        transform: `translateY(${(1 - p) * -20}px)`,
+      },
+    };
+  }, [progress, heroRef]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -115,8 +112,6 @@ export function useScrollLogoTransition({
       }
     };
   }, [heroRef]);
-
-  const transforms = calculateTransforms(progress);
 
   return {
     progress,
