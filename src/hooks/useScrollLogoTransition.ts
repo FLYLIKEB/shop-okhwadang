@@ -26,12 +26,10 @@ const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 export function useScrollLogoTransition({
   heroRef,
 }: UseScrollLogoTransitionOptions): ScrollLogoState {
-  const [progress, setProgress] = useState(0);
-  // State-based cache triggers re-render when initial rect is measured
+  const [progress, setProgress] = useState(1);
   const [cachedRect, setCachedRect] = useState<CachedHeroRect | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  // Measure hero rect on mount and on resize — never inside scroll or render
   useEffect(() => {
     if (typeof window === 'undefined') return;
 

@@ -863,7 +863,9 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
 ), 1, 1, NOW(), NOW()),
 
 (3, 1, 'product_carousel', JSON_OBJECT(
-  'title', '신상품 추천',
+  'title', '베스트 자사호',
+  'category_id', 1,
+  'sort', 'popular',
   'limit', 8
 ), 2, 1, NOW(), NOW()),
 
@@ -881,7 +883,8 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
 ), 4, 1, NOW(), NOW()),
 
 (6, 1, 'product_grid', JSON_OBJECT(
-  'title', '베스트 상품',
+  'title', '자사호 컬렉션',
+  'category_id', 1,
   'limit', 8,
   'template', '4col'
 ), 5, 1, NOW(), NOW()),

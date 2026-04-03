@@ -40,7 +40,7 @@ export default function ProductGridBlock({ content }: Props) {
           if (!cancelled) {
             setProducts(results);
           }
-        } else if (category_id && auto) {
+        } else if (category_id) {
           const res = await productsApi.getList({ categoryId: category_id, limit });
           if (!cancelled) setProducts(res.items);
         } else {
@@ -93,7 +93,7 @@ export default function ProductGridBlock({ content }: Props) {
             전체 보기
           </Link>
         )}
-        {!more_href && auto && category_id && (
+        {!more_href && category_id && (
           <Link
             href={`/${locale}/products?categoryId=${category_id}`}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
