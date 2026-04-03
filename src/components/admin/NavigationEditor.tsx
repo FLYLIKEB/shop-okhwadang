@@ -42,6 +42,48 @@ const GROUP_INFO: Record<'gnb' | 'sidebar' | 'footer', { label: string; desc: st
   },
 };
 
+// --- GNB 미리보기용 Dropdown 아이템 ---
+function GNBDropdownPreviewItem({ item }: { item: NavigationItem }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const activeChildren = item.children.filter((c: NavigationItem) => c.is_active);
+  const hasActiveChildren = activeChildren.length > 0;
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <span className="flex items-center gap-1 px-3 py-1 text-slate-200 hover:text-white text-xs cursor-default transition-colors duration-200">
+        {item.label}
+        {hasActiveChildren && (
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            className={cn('transition-transform duration-300', isHovered && 'rotate-180')}
+          >
+            <path d="M2.5 4.5L5 7L7.5 4.5" />
+          </svg>
+        )}
+      </span>
+      {hasActiveChildren && isHovered && (
+        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 min-w-36 rounded-lg border border-slate-600 bg-slate-800 shadow-xl py-1 z-10 animate-accordion-down">
+          {activeChildren.map((child: NavigationItem) => (
+            <span key={child.id} className="flex items-center gap-2 px-4 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all duration-200 cursor-default border-l-2 border-transparent hover:border-slate-400/50">
+              <span className="text-slate-500">└</span>
+              {child.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- 미리보기 컴포넌트 ---
 function NavigationPreview({
   group,
@@ -61,12 +103,7 @@ function NavigationPreview({
             <span className="text-xs text-slate-400">(메뉴 없음)</span>
           ) : (
             activeItems.map((item) => (
-              <span key={item.id} className="flex items-center gap-0.5 px-3 py-1 text-slate-200 hover:text-white text-xs">
-                {item.label}
-                {item.children.filter(c => c.is_active).length > 0 && (
-                  <ChevronRight className="h-3 w-3" />
-                )}
-              </span>
+              <GNBDropdownPreviewItem key={item.id} item={item} />
             ))
           )}
         </div>

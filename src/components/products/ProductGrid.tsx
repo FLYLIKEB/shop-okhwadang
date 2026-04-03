@@ -42,7 +42,7 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
       </div>
 
       {view === 'grid' ? (
-        <div className={cn('grid gap-12 grid-cols-2 md:grid-cols-3 lg:grid-cols-4')}>
+        <div className={cn('grid gap-10 grid-cols-2 md:grid-cols-3 lg:grid-cols-4')}>
           {products.map((product) => (
             <ProductCard
               key={product.id}

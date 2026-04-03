@@ -158,7 +158,7 @@ export default function SearchPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-12 md:grid-cols-3">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonBox key={i} height="aspect-square" />
           ))}
@@ -170,7 +170,7 @@ export default function SearchPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-12 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-10 md:grid-cols-3">
             {products.map((product) => (
               <ProductCard
                 key={product.id}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { SplitContentContent } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
 import { isSafeUrl } from '@/utils/url';
+import SafeHtml from '@/components/common/SafeHtml';
 
 interface Props {
   content: SplitContentContent;
@@ -82,16 +83,15 @@ export default function SplitContentBlock({ content }: Props) {
           {title}
         </h2>
         {description && (
-          <p
+          <SafeHtml
+            html={description}
             className={cn(
-              'animate-fade-in-up typo-body text-muted-foreground',
+              'animate-fade-in-up typo-body text-muted-foreground prose max-w-none',
               isLarge ? 'mt-5' : 'mt-4',
               isVisible ? 'opacity-100' : 'opacity-0'
             )}
             style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
-          >
-            {description}
-          </p>
+          />
         )}
         {cta_text && cta_url && (
           <div
