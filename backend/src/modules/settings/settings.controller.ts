@@ -47,6 +47,15 @@ export class SettingsController {
 export class AdminSettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 
+  @Get()
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '설정 목록 조회 (관리자)', description: '관리자용 설정 목록을 조회합니다.' })
+  @ApiResponse({ status: 200, description: '설정 목록 조회 성공' })
+  @ApiQuery({ name: 'group', required: false, type: String, description: '설정 그룹 필터' })
+  findAll(@Query('group') group?: string) {
+    return this.settingsService.findAll(group);
+  }
+
   @Put()
   @ApiCookieAuth()
   @ApiOperation({ summary: '설정 일괄 수정', description: '여러 설정을 한 번에 수정합니다.' })
