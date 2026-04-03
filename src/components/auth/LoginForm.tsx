@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { handleApiError } from '@/utils/error';
+import { isSafeUrl } from '@/utils/url';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
@@ -13,10 +14,7 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get('redirect');
-  const redirectTo =
-    rawRedirect?.startsWith('/') && !rawRedirect.startsWith('//')
-      ? rawRedirect
-      : '/';
+  const redirectTo = rawRedirect && isSafeUrl(rawRedirect) ? rawRedirect : '/';
   const { login, loginWithKakao, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('');

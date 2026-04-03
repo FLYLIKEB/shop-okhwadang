@@ -99,13 +99,11 @@ export default function LightboxOverlay({
         onClick={(e) => {
           e.stopPropagation()
           if (!touchSwiped.current && !isDragging.current) {
-            setLightboxZoomed((z) => {
-              if (z) {
+            if (lightboxZoomed) {
                 const resetPan = { x: 0, y: 0 }
                 lightboxPanRef.current = resetPan
               }
-              return !z
-            })
+              setLightboxZoomed(!lightboxZoomed)
           }
         }}
         onMouseDown={handleLightboxMouseDown}
