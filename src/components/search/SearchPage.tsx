@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import { cn } from '@/components/ui/utils';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/EmptyState';
 import ProductCard from '@/components/products/ProductCard';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { productsApi, type Product, type ProductSort } from '@/lib/api';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
   { value: 'latest', label: '최신순' },
@@ -32,7 +32,6 @@ export default function SearchPage() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   const [priceMinInput, setPriceMinInput] = useState(priceMin?.toString() ?? '');
   const [priceMaxInput, setPriceMaxInput] = useState(priceMax?.toString() ?? '');
@@ -53,10 +52,9 @@ export default function SearchPage() {
     [searchParams, router],
   );
 
-  useEffect(() => {
-    setIsLoading(true);
-    productsApi
-      .getList({
+  const { execute: loadProducts, isLoading } = useAsyncAction(
+    async () => {
+      const data = await productsApi.getList({
         q: q || undefined,
         sort,
         categoryId,
@@ -64,18 +62,16 @@ export default function SearchPage() {
         price_max: priceMax,
         page,
         limit: LIMIT,
-      })
-      .then((data) => {
-        setProducts(data.items);
-        setTotal(data.total);
-      })
-      .catch(() => {
-        toast.error('검색 중 오류가 발생했습니다');
-        setProducts([]);
-        setTotal(0);
-      })
-      .finally(() => setIsLoading(false));
-  }, [q, sort, categoryId, priceMin, priceMax, page]);
+      });
+      setProducts(data.items);
+      setTotal(data.total);
+    },
+    { errorMessage: '검색 중 오류가 발생했습니다.' },
+  );
+
+  useEffect(() => {
+    void loadProducts();
+  }, [q, sort, categoryId, priceMin, priceMax, page, loadProducts]);
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateParams({ sort: e.target.value });
