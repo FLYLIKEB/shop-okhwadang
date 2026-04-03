@@ -12,11 +12,22 @@ vi.mock('@/i18n/routing', () => ({
 import { middleware } from '@/middleware';
 import { NextRequest } from 'next/server';
 
-function makeRequest(pathname: string, hasToken = false): NextRequest {
+/** Build a minimal JWT-shaped token with the given payload (no real signature). */
+function makeToken(payload: Record<string, unknown>): string {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).replace(/=/g, '');
+  const body = btoa(JSON.stringify(payload)).replace(/=/g, '');
+  return `${header}.${body}.fakesig`;
+}
+
+const ADMIN_TOKEN = makeToken({ sub: '1', role: 'admin' });
+const SUPER_ADMIN_TOKEN = makeToken({ sub: '2', role: 'super_admin' });
+const USER_TOKEN = makeToken({ sub: '3', role: 'user' });
+
+function makeRequest(pathname: string, token?: string): NextRequest {
   const url = `http://localhost${pathname}`;
   const req = new NextRequest(url);
-  if (hasToken) {
-    req.cookies.set('accessToken', 'test-token');
+  if (token) {
+    req.cookies.set('accessToken', token);
   }
   return req;
 }
@@ -31,10 +42,25 @@ describe('middleware', () => {
     expect(location).toContain('redirect=%2Fadmin');
   });
 
-  it('passes through /admin when accessToken cookie is present', () => {
-    const req = makeRequest('/admin', true);
+  it('passes through /admin when accessToken cookie has admin role', () => {
+    const req = makeRequest('/admin', ADMIN_TOKEN);
     const res = middleware(req);
     expect(res.status).toBe(200);
+  });
+
+  it('passes through /admin when accessToken cookie has super_admin role', () => {
+    const req = makeRequest('/admin', SUPER_ADMIN_TOKEN);
+    const res = middleware(req);
+    expect(res.status).toBe(200);
+  });
+
+  it('redirects /admin to / when accessToken cookie has non-admin role', () => {
+    const req = makeRequest('/admin', USER_TOKEN);
+    const res = middleware(req);
+    expect(res.status).toBe(307);
+    const location = res.headers.get('location');
+    expect(location).toContain('/');
+    expect(location).not.toContain('/login');
   });
 
   it('redirects /my to /login when no accessToken cookie', () => {
@@ -107,9 +133,18 @@ describe('middleware', () => {
     expect(location).toContain('/ja/login');
   });
 
-  it('passes through locale-prefixed admin when token present', () => {
-    const req = makeRequest('/en/admin', true);
+  it('passes through locale-prefixed admin when token has admin role', () => {
+    const req = makeRequest('/en/admin', ADMIN_TOKEN);
     const res = middleware(req);
     expect(res.status).toBe(200);
+  });
+
+  it('redirects locale-prefixed /ko/admin to /ko/ when token has non-admin role', () => {
+    const req = makeRequest('/ko/admin', USER_TOKEN);
+    const res = middleware(req);
+    expect(res.status).toBe(307);
+    const location = res.headers.get('location');
+    expect(location).toContain('/ko/');
+    expect(location).not.toContain('/login');
   });
 });
