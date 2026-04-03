@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import EmptyState from '@/components/EmptyState';
 import CartItemRow from '@/components/cart/CartItemRow';
 import { formatCurrency } from '@/utils/currency';
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 export default function CartPage() {
@@ -146,7 +147,7 @@ export default function CartPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">배송비</span>
-              <span>{selectedTotal >= 30000 ? '무료' : '3,000원'}</span>
+              <span>{selectedTotal >= FREE_SHIPPING_THRESHOLD ? '무료' : formatCurrency(SHIPPING_FEE)}</span>
             </div>
           </div>
 
@@ -156,7 +157,7 @@ export default function CartPage() {
               <span>
                 {formatCurrency(
                   selectedTotal +
-                  (selectedTotal >= 30000 || selectedTotal === 0 ? 0 : 3000)
+                  (selectedTotal >= FREE_SHIPPING_THRESHOLD || selectedTotal === 0 ? 0 : SHIPPING_FEE)
                 )}
               </span>
             </div>
