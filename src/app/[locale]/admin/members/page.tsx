@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { adminMembersApi } from '@/lib/api';
 import type { AdminMember } from '@/lib/api';
 import { AdminMembersTable } from '@/components/admin/AdminMembersTable';
@@ -23,6 +24,7 @@ const STATUS_FILTERS = [
 const PAGE_SIZE = 20;
 
 export default function AdminMembersPage() {
+  const { isAdmin } = useAdminGuard();
   const [members, setMembers] = useState<AdminMember[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -49,9 +51,9 @@ export default function AdminMembersPage() {
   );
 
   useEffect(() => {
-    void fetchMembers();
+    if (isAdmin) void fetchMembers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, roleFilter, statusFilter, keyword]);
+  }, [isAdmin, page, roleFilter, statusFilter, keyword]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
