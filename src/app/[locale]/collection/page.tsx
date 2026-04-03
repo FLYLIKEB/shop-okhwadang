@@ -131,13 +131,20 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   let clayCollections: Collection[] = [];
   let shapeCollections: Collection[] = [];
 
+  let fetchError: Error | null = null;
+
   try {
     const data = await fetchCollections();
     clayCollections = data.clay;
     shapeCollections = data.shape;
-  } catch {
+  } catch (err) {
+    fetchError = err instanceof Error ? err : new Error('컬렉션 데이터를 불러오지 못했습니다.');
     clayCollections = [];
     shapeCollections = [];
+  }
+
+  if (fetchError) {
+    throw fetchError;
   }
 
   return (
