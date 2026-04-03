@@ -1,4 +1,4 @@
-import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/constants/orderStatus';
+import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/constants/status';
 
 interface StatusBadgeProps {
   status: string;
