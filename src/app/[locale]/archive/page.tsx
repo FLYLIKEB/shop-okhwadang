@@ -3,7 +3,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/components/ui/utils';
 import { fetchArchives } from '@/lib/api-server';
-import { TEAPOT_IMAGES } from '@/lib/teapot-images';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { SectionHeading } from '@/components/common/SectionHeading';
 import type { NiloType, ProcessStep, Artist } from '@/lib/api';
@@ -76,7 +75,6 @@ function ProcessCard({ step: s }: { step: ProcessStep }) {
 }
 
 function ArtistCard({ artist, index, reversed }: { artist: Artist; index: number; reversed: boolean }) {
-  const img = TEAPOT_IMAGES[index % TEAPOT_IMAGES.length];
   return (
     <article
       className={cn(
