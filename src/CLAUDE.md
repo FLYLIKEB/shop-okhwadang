@@ -20,6 +20,11 @@ Next.js 15 (App Router) + React 19 + TypeScript + TailwindCSS v4 frontend rules.
 - Error extraction: always use `handleApiError(err)` from `@/utils/error` — never inline `err instanceof Error ? err.message : ...`
 - Price formatting: always use `formatCurrency()` from `@/utils/currency` — no inline `.toLocaleString() + '원'`
 - Data fetching: use `useAsyncAction` hook — no manual `useState(loading) + try/catch/finally`
+- **Component state props**: reusable components (ImageGallery, ProductList, etc.) must accept:
+  - `isLoading?: boolean` — show skeleton/placeholder
+  - `error?: Error | null` — show error message + retry button
+  - `onRetry?: () => void` — retry callback
+  - Empty state must use icon + descriptive text (not just "없음" text)
 - Typography: use `typo-h1`, `typo-h2`, `typo-body`, `typo-label`, `typo-button` utility classes — no raw `text-*` size overrides on headings. Font families: `font-display-ko` (Korean display), `font-body` (body text)
 - Scroll logo: HeroBanner wraps content in `<ScrollLogoProvider>`. Use `useScrollLogoTransition({ heroRef })` to get `heroLogoStyle` / `headerLogoStyle` / `progress` / `isHeroVisible` — do not duplicate scroll logic inline
 

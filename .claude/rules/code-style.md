@@ -7,6 +7,8 @@ Cross-cutting rules that apply to both frontend and backend.
 
 ## Error Handling
 - Silent `.catch(() => {})` is forbidden — all catch blocks must handle errors (log, toast, or set error state)
+- **Server Component API errors**: always `throw error` from catch block so Next.js error boundary catches it — never silently swallow with `catch { data = [] }`
+- **Error boundary required**: for any page with data fetching, create `error.tsx` sibling file with retry button
 - No `console.log` in committed code
 
 ## TypeScript
