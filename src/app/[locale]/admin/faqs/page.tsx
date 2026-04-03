@@ -223,7 +223,7 @@ export default function AdminFaqsPage() {
           <div className="flex gap-3 pt-2">
             <Button variant="outline" onClick={close} className="flex-1">취소</Button>
             <Button onClick={handleSave} className="flex-1">
-              {editingId ? '수정' : '생성'}
+              {editingId != null ? '수정' : '생성'}
             </Button>
           </div>
         </div>
