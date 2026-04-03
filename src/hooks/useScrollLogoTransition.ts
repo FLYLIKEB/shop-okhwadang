@@ -13,6 +13,12 @@ interface UseScrollLogoTransitionOptions {
   heroRef: React.RefObject<HTMLElement | null>;
 }
 
+interface CachedHeroRect {
+  top: number;
+  left: number;
+  height: number;
+}
+
 const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -21,22 +27,53 @@ export function useScrollLogoTransition({
   heroRef,
 }: UseScrollLogoTransitionOptions): ScrollLogoState {
   const [progress, setProgress] = useState(0);
+  // State-based cache triggers re-render when initial rect is measured
+  const [cachedRect, setCachedRect] = useState<CachedHeroRect | null>(null);
   const rafRef = useRef<number | null>(null);
 
+  // Measure hero rect on mount and on resize — never inside scroll or render
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const measureRect = () => {
+      const heroEl = heroRef.current;
+      if (!heroEl) return;
+      const rect = heroEl.getBoundingClientRect();
+      setCachedRect({
+        top: rect.top + window.scrollY,
+        left: rect.left,
+        height: rect.height,
+      });
+    };
+
+    measureRect();
+
+    const resizeObserver = new ResizeObserver(measureRect);
+    if (heroRef.current) {
+      resizeObserver.observe(heroRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [heroRef]);
+
   const transforms = useMemo(() => {
-    const heroRect = heroRef.current?.getBoundingClientRect();
-    if (!heroRect) {
+    if (!cachedRect) {
       return {
         progress,
         isHeroVisible: progress < 1,
-        heroLogoStyle: { opacity: Math.max(0, 1 - progress) },
-        headerLogoStyle: { opacity: Math.min(1, progress) },
+        heroLogoStyle: {
+          opacity: Math.max(0, 1 - progress),
+          transform: 'none',
+        } as React.CSSProperties,
+        headerLogoStyle: { opacity: Math.min(1, progress) } as React.CSSProperties,
       };
     }
 
     const headerHeight = 56;
-    const heroStartTop = heroRect.top;
-    const heroStartLeft = heroRect.left;
+    const heroStartTop = cachedRect.top;
+    const heroStartLeft = cachedRect.left;
     const heroStartScale = 1.2;
     const heroStartFontSize = 24;
     const headerFontSize = 20;
@@ -58,13 +95,13 @@ export function useScrollLogoTransition({
         opacity: heroOpacity,
         transform: `translate(${currentLeft - heroStartLeft}px, ${currentTop - heroStartTop}px) scale(${currentScale})`,
         fontSize: `${currentFontSize}px`,
-      },
+      } as React.CSSProperties,
       headerLogoStyle: {
         opacity: headerOpacity,
         transform: `translateY(${(1 - p) * -20}px)`,
-      },
+      } as React.CSSProperties,
     };
-  }, [progress, heroRef]);
+  }, [progress, cachedRect]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -84,8 +121,8 @@ export function useScrollLogoTransition({
         const heroEl = heroRef.current;
         if (!heroEl) return;
 
+        // getBoundingClientRect inside RAF is acceptable — not in the render path
         const heroRect = heroEl.getBoundingClientRect();
-
         const viewportHeight = window.innerHeight;
         const heroHeight = heroRect.height;
 
