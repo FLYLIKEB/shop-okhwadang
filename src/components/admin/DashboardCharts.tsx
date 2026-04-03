@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import {
   LineChart,
   Line,
@@ -23,7 +24,20 @@ function formatDate(dateStr: string): string {
   return `${parts[1]}/${parts[2]}`;
 }
 
+function formatYAxisRevenue(value: number): string {
+  return formatCurrency(value, 'ko', { abbreviated: true });
+}
+
+function formatLabel(label: unknown): string {
+  return `날짜: ${String(label)}`;
+}
+
 export function RevenueLineChart({ data }: DashboardChartsProps) {
+  const formatTooltipRevenue = useCallback(
+    (value: unknown) => [formatCurrency(Number(value)), '매출'] as [string, string],
+    [],
+  );
+
   return (
     <div className="rounded-lg border p-4">
       <h3 className="mb-4 text-lg font-semibold">매출 추이</h3>
@@ -31,13 +45,10 @@ export function RevenueLineChart({ data }: DashboardChartsProps) {
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" tickFormatter={formatDate} fontSize={12} />
-          <YAxis tickFormatter={(value: number) => formatCurrency(value, 'ko', { abbreviated: true })} fontSize={12} />
+          <YAxis tickFormatter={formatYAxisRevenue} fontSize={12} />
           <Tooltip
-            formatter={(value) => [
-              formatCurrency(Number(value)),
-              '매출',
-            ]}
-            labelFormatter={(label) => `날짜: ${String(label)}`}
+            formatter={formatTooltipRevenue}
+            labelFormatter={formatLabel}
           />
           <Line
             type="monotone"
@@ -53,6 +64,11 @@ export function RevenueLineChart({ data }: DashboardChartsProps) {
 }
 
 export function OrderBarChart({ data }: DashboardChartsProps) {
+  const formatTooltipOrders = useCallback(
+    (value: unknown) => [`${Number(value)}건`, '주문 수'] as [string, string],
+    [],
+  );
+
   return (
     <div className="rounded-lg border p-4">
       <h3 className="mb-4 text-lg font-semibold">주문 수 추이</h3>
@@ -62,8 +78,8 @@ export function OrderBarChart({ data }: DashboardChartsProps) {
           <XAxis dataKey="date" tickFormatter={formatDate} fontSize={12} />
           <YAxis fontSize={12} />
           <Tooltip
-            formatter={(value) => [`${Number(value)}건`, '주문 수']}
-            labelFormatter={(label) => `날짜: ${String(label)}`}
+            formatter={formatTooltipOrders}
+            labelFormatter={formatLabel}
           />
           <Bar dataKey="order_count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
         </BarChart>
