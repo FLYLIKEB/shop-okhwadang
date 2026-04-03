@@ -2,7 +2,7 @@
 -- 옥화당 (玉花堂) 자사호·보이차·다구 쇼핑몰 더미데이터
 -- ============================================================
 
-SET FOREIGN_KEY_CHECKS = 0;
+SET SESSION FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================
 -- 1. 기존 데이터 초기화 (의류 더미 → 옥화당 데이터로 교체)
@@ -27,10 +27,13 @@ TRUNCATE TABLE notices;
 TRUNCATE TABLE faqs;
 TRUNCATE TABLE collections;
 TRUNCATE TABLE journal_entries;
+TRUNCATE TABLE nilo_types;
+TRUNCATE TABLE process_steps;
+TRUNCATE TABLE artists;
 TRUNCATE TABLE page_blocks;
 TRUNCATE TABLE pages;
 
-SET FOREIGN_KEY_CHECKS = 1;
+SET SESSION FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- 2. 카테고리 (부모 → 자식 순서)
