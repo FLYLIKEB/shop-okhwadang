@@ -36,6 +36,12 @@ export class FaqsService {
     return faqs.map((f) => this.applyLocale(f, query.locale));
   }
 
+  async findAllForAdmin(): Promise<Faq[]> {
+    return this.faqRepo.find({
+      order: { sortOrder: 'ASC', createdAt: 'ASC' },
+    });
+  }
+
   async create(dto: CreateFaqDto): Promise<Faq> {
     const faq = this.faqRepo.create({
       category: dto.category,

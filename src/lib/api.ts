@@ -828,6 +828,7 @@ export interface SplitContentContent {
   cta_text?: string;
   cta_url?: string;
   template?: 'default' | 'large' | 'compact';
+  use_alternate_bg?: boolean;
 }
 
 export interface NewsletterSignupContent {
@@ -1125,6 +1126,7 @@ export interface Faq {
   answerJa: string | null;
   answerZh: string | null;
   sortOrder: number;
+  isPublished: boolean;
   createdAt: string;
 }
 
@@ -1138,6 +1140,21 @@ export const faqsApi = {
     const qs = params.toString();
     return apiClient.get<FaqListResponse>(`/faqs${qs ? `?${qs}` : ''}`);
   },
+};
+
+export interface CreateFaqData {
+  category: string;
+  question: string;
+  answer: string;
+  sortOrder?: number;
+  isPublished?: boolean;
+}
+
+export const adminFaqsApi = {
+  getAll: () => apiClient.get<Faq[]>('/admin/faqs'),
+  create: (data: CreateFaqData) => apiClient.post<Faq>('/admin/faqs', data),
+  update: (id: number, data: Partial<CreateFaqData>) => apiClient.patch<Faq>(`/admin/faqs/${id}`, data),
+  remove: (id: number) => apiClient.delete<void>(`/admin/faqs/${id}`),
 };
 
 // ===== Inquiries =====

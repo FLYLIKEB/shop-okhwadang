@@ -46,6 +46,14 @@ export class FaqsController {
 export class AdminFaqsController {
   constructor(private readonly faqsService: FaqsService) {}
 
+  @Get()
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'FAQ 전체 조회 (관리자)', description: '발행 여부 상관없이 모든 FAQ를 조회합니다.' })
+  @ApiResponse({ status: 200, description: 'FAQ 목록 조회 성공' })
+  findAll() {
+    return this.faqsService.findAllForAdmin();
+  }
+
   @Post()
   @ApiCookieAuth()
   @ApiOperation({ summary: 'FAQ 생성', description: '새로운 FAQ를 생성합니다.' })

@@ -193,8 +193,8 @@ export default function ProductCarouselBlock({ content }: Props) {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-16 overflow-visible">
-      <div className="relative mb-8 overflow-visible">
+    <section className="py-12">
+      <div className="relative mb-8">
         {title && <h2 className="text-2xl font-medium pr-24">{title}</h2>}
         {category_id && (
           <Link
@@ -207,7 +207,7 @@ export default function ProductCarouselBlock({ content }: Props) {
         )}
       </div>
 
-      <div className="relative overflow-visible py-16">
+      <div className="relative">
           <button
           type="button"
           onClick={() => scrollBy('left')}
@@ -235,10 +235,9 @@ export default function ProductCarouselBlock({ content }: Props) {
               <div
                 key={product.id}
                 className={cn(
-                  'shrink-0 snap-center transition-all duration-500 ease-out',
+                  'shrink-0 snap-center transition-all duration-500 ease-out will-change-transform',
                   isLarge ? 'w-72' : 'w-56',
-                  isCenter && 'scale-100 md:scale-105 z10',
-                  !isCenter && 'scale-100 opacity-90',
+                  isCenter ? 'md:scale-105 z-10' : 'scale-100 opacity-90',
                 )}
               >
                 <ProductCard
