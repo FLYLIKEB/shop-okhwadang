@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { inquiriesApi, pagesApi } from '@/lib/api';
@@ -62,7 +63,7 @@ export default function ContactPage() {
   return (
     <div>
       {isLoading ? (
-        <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto px-4 py-10">
           <SkeletonBox className="h-8 w-48 mb-4" />
           <SkeletonBox className="h-24" />
         </div>
@@ -71,23 +72,23 @@ export default function ContactPage() {
           <BlockRenderer blocks={blocks} />
         </div>
       ) : (
-        <div className="max-w-2xl mx-auto px-4 pt-8">
+        <div className="max-w-2xl mx-auto px-4 pt-10">
           <h1 className="typo-h1 mb-2">문의하기</h1>
-          <p className="typo-body text-muted-foreground mb-6">
+          <p className="typo-body text-muted-foreground mb-8">
             궁금한 점이 있으시면 아래 양식을 통해 문의해주세요.
           </p>
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <h2 className="typo-h2 mb-6">1:1 문의</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <h2 className="typo-h2 mb-8">1:1 문의</h2>
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">문의 유형</label>
+            <label className="block typo-body-sm font-medium text-foreground mb-1.5">문의 유형</label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
-              className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full border border-border rounded-md px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {INQUIRY_TYPES.map((t) => (
                 <option key={t} value={t}>{t}</option>
@@ -95,33 +96,41 @@ export default function ContactPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">제목</label>
+            <label className="block typo-body-sm font-medium text-foreground mb-1.5">제목</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={255}
               placeholder="문의 제목을 입력해주세요"
-              className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full border border-border rounded-md px-3 py-2.5 typo-body-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">내용</label>
+            <label className="block typo-body-sm font-medium text-foreground mb-1.5">내용</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={6}
               placeholder="문의 내용을 자세히 입력해주세요"
-              className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              className="w-full border border-border rounded-md px-3 py-2.5 typo-body-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-2.5 bg-foreground text-background rounded-lg text-sm font-medium hover:bg-foreground/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {submitting ? '접수 중...' : '문의 접수'}
-          </button>
+          <div className="flex gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 py-2.5 bg-foreground text-background rounded-md typo-button hover:bg-foreground/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {submitting ? '접수 중...' : '문의 접수'}
+            </button>
+            <Link
+              href="/my/inquiries"
+              className="flex-1 py-2.5 border border-border rounded-md typo-button text-foreground text-center hover:bg-muted transition-colors"
+            >
+              내 문의 확인
+            </Link>
+          </div>
         </form>
       </div>
     </div>
