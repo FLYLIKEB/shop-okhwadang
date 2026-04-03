@@ -1104,11 +1104,9 @@ export interface Notice {
   updatedAt: string;
 }
 
-export type NoticeListResponse = ListResponse<Notice>;
-
 export const noticesApi = {
   getList: (locale?: string) =>
-    apiClient.get<NoticeListResponse>(`/notices${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`),
+    apiClient.get<Notice[]>(`/notices${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`),
   getOne: (id: number, locale?: string) =>
     apiClient.get<Notice>(`/notices/${id}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`),
 };

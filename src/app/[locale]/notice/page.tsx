@@ -17,8 +17,8 @@ export default function NoticePage() {
 
   const { execute: loadNotices, isLoading: loading } = useAsyncAction(
     async () => {
-      const res = await noticesApi.getList(locale);
-      setNotices(res.data);
+      const notices = await noticesApi.getList(locale);
+      setNotices(notices);
     },
     { errorMessage: '공지사항을 불러오지 못했습니다.' },
   );
@@ -44,7 +44,7 @@ export default function NoticePage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">공지사항</h1>
-      {notices.length === 0 ? (
+      {!notices || notices.length === 0 ? (
         <EmptyState title="등록된 공지사항이 없습니다." />
       ) : (
         <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
