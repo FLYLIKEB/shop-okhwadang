@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { memo, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, ShoppingCart } from 'lucide-react';
@@ -29,7 +29,7 @@ interface ProductCardProps {
   showCartOnHover?: boolean;
 }
 
-export default function ProductCard({
+function ProductCard({
   id,
   name,
   price,
@@ -159,3 +159,5 @@ export default function ProductCard({
     </Link>
   );
 }
+
+export default memo(ProductCard);
