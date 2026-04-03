@@ -136,85 +136,33 @@ interface MobileMenuContentProps {
 }
 
 function MobileMenuContent({ items, history, onItemClick, onLinkClick }: MobileMenuContentProps) {
-  const totalLevels = history.length + 1;
-
-  const getPanelStyle = (index: number): React.CSSProperties => {
-    const baseOffset = history.length;
-    const translateX = (index - baseOffset) * 100;
-    return {
-      transform: `translateX(${translateX}%)`,
-      transition: 'transform 300ms ease-out',
-    };
-  };
+  const current = history.length > 0 ? history[history.length - 1].items : items;
 
   return (
-    <div className="relative flex-1 overflow-hidden">
-      <div className="absolute inset-0 flex">
-        {/* 메인 메뉴 패널 */}
-        <div
-          className="w-full shrink-0 overflow-y-auto px-4 py-4"
-          style={getPanelStyle(-1)}
-        >
-          <div className="flex flex-col gap-1">
-            {items.map((item) => (
-              <div key={item.id}>
-                {item.children && item.children.length > 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => onItemClick(item)}
-                    className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
-                  >
-                    {item.label}
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
-                      <path d="M6 4l4 4-4 4" />
-                    </svg>
-                  </button>
-                ) : (
-                  <Link
-                    href={item.url}
-                    onClick={onLinkClick}
-                    className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
-                  >
-                    {item.label}
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-        {/* 하위 카테고리 패널들 */}
-        {history.map((entry, i) => (
-          <div
-            key={entry.title + i}
-            className="w-full shrink-0 overflow-y-auto px-4 py-4"
-            style={getPanelStyle(i)}
-          >
-            <div className="flex flex-col gap-1">
-              {entry.items.map((item) => (
-                <div key={item.id}>
-                  {item.children && item.children.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => onItemClick(item)}
-                      className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
-                    >
-                      {item.label}
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
-                        <path d="M6 4l4 4-4 4" />
-                      </svg>
-                    </button>
-                  ) : (
-                    <Link
-                      href={item.url}
-                      onClick={onLinkClick}
-                      className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
-                    >
-                      {item.label}
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
+    <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex flex-col gap-1">
+        {current.map((item) => (
+          <div key={item.id}>
+            {item.children && item.children.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => onItemClick(item)}
+                className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
+              >
+                {item.label}
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
+                  <path d="M6 4l4 4-4 4" />
+                </svg>
+              </button>
+            ) : (
+              <Link
+                href={item.url}
+                onClick={onLinkClick}
+                className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
+              >
+                {item.label}
+              </Link>
+            )}
           </div>
         ))}
       </div>
