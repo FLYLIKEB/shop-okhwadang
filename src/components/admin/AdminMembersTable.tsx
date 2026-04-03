@@ -2,6 +2,7 @@
 
 import type { AdminMember } from '@/lib/api';
 import { MemberRoleSelect } from './MemberRoleSelect';
+import { StatusBadge } from './StatusBadge';
 
 const ROLE_LABELS: Record<string, string> = {
   user: '일반회원',
@@ -47,15 +48,7 @@ export function AdminMembersTable({ members, onRoleChange }: AdminMembersTablePr
                 </span>
               </td>
               <td className="px-4 py-3">
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs ${
-                    member.isActive
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                      : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                  }`}
-                >
-                  {member.isActive ? '활성' : '비활성'}
-                </span>
+                <StatusBadge isActive={member.isActive} />
               </td>
               <td className="px-4 py-3 text-muted-foreground">
                 {new Date(member.createdAt).toLocaleDateString('ko-KR')}

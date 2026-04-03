@@ -9,6 +9,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import CategoryFormModal from '@/components/admin/CategoryFormModal';
 import { ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
+import { StatusBadge } from '@/components/admin/StatusBadge';
 import {
   DndContext,
   DragOverlay,
@@ -140,15 +141,7 @@ function SortableCategoryRow({
       </td>
       <td className="px-4 py-3 text-muted-foreground">{category.slug}</td>
       <td className="px-4 py-3">
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs ${
-            category.isActive
-              ? 'bg-green-100 text-green-700'
-              : 'bg-secondary text-muted-foreground'
-          }`}
-        >
-          {category.isActive ? '활성' : '비활성'}
-        </span>
+        <StatusBadge isActive={category.isActive} />
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center justify-center gap-1">
@@ -458,15 +451,7 @@ export default function AdminCategoriesPage() {
                 <td className="px-4 py-3 font-medium">{activeCategory.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">{activeCategory.slug}</td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      activeCategory.isActive
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-secondary text-muted-foreground'
-                    }`}
-                  >
-                    {activeCategory.isActive ? '활성' : '비활성'}
-                  </span>
+                  <StatusBadge isActive={activeCategory.isActive} />
                 </td>
                 <td className="px-4 py-3"></td>
                 <td className="px-4 py-3 text-right"></td>
