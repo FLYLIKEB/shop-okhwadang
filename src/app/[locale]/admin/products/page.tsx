@@ -7,6 +7,7 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { adminProductsApi } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
+import AdminPagination from '@/components/admin/AdminPagination';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '임시저장',
@@ -174,21 +175,7 @@ export default function AdminProductsPage() {
       )}
 
       {/* 페이지네이션 */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`rounded px-3 py-1 text-sm ${
-                page === p ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      )}
+      <AdminPagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }
