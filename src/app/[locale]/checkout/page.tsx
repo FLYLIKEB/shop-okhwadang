@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
@@ -10,7 +10,7 @@ import type { CartItem, PreparePaymentResponse, UserAddress } from '@/lib/api';
 import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import type { Locale } from '@/i18n/routing';
-import PaymentGateway from '@/components/checkout/PaymentGateway';
+import PaymentGateway, { type PaymentGatewayHandle } from '@/components/checkout/PaymentGateway';
 
 type PaymentStep = 'idle' | 'creating_order' | 'preparing_payment' | 'confirming_payment' | 'success';
 
@@ -79,6 +79,7 @@ export default function CheckoutPage({
     memo: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const paymentRef = useRef<PaymentGatewayHandle>(null);
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | 'manual' | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
@@ -175,17 +176,14 @@ export default function CheckoutPage({
 
     // If already prepared (Stripe), trigger stripe confirm
     if (prepareResult && prepareResult.gateway === 'stripe') {
-      const stripeConfirm = (window as Window & { __stripeConfirm?: () => Promise<void> }).__stripeConfirm;
-      if (stripeConfirm) {
-        setStep('confirming_payment');
-        try {
-          await stripeConfirm();
-          // Stripe redirects on success — if we reach here it means redirect pending
-        } catch (err) {
-          handlePaymentError(handleApiError(err, '결제에 실패했습니다.'));
-        }
-        return;
+      setStep('confirming_payment');
+      try {
+        await paymentRef.current?.confirm();
+        // Stripe redirects on success — if we reach here it means redirect pending
+      } catch (err) {
+        handlePaymentError(handleApiError(err, '결제에 실패했습니다.'));
       }
+      return;
     }
 
     const validationErrors = validateForm(form);
@@ -217,7 +215,7 @@ export default function CheckoutPage({
         { orderId: order.id, locale },
       );
 
-      // Toss flow: invoke __tossPayHandler
+      // Toss flow
       const isToss =
         locale === 'ko' &&
         result.clientKey &&
@@ -227,13 +225,9 @@ export default function CheckoutPage({
         setCurrentOrderId(order.id);
         setCurrentOrderNumber(order.orderNumber);
         setPrepareResult(result);
-        // PaymentGateway component registers __tossPayHandler in useEffect
-        // Give it a tick to register, then call it
+        // PaymentGateway renders after state update; give it a tick before calling confirm
         setTimeout(async () => {
-          const tossHandler = (window as Window & { __tossPayHandler?: () => Promise<void> }).__tossPayHandler;
-          if (tossHandler) {
-            await tossHandler();
-          }
+          await paymentRef.current?.confirm();
         }, 100);
         return;
       }
@@ -444,6 +438,7 @@ export default function CheckoutPage({
               <h2 className="typo-h3">결제 수단</h2>
               {prepareResult ? (
                 <PaymentGateway
+                  ref={paymentRef}
                   prepareResult={prepareResult}
                   orderId={currentOrderId!}
                   orderNumber={currentOrderNumber}
