@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import type { CartItem, PreparePaymentResponse, UserAddress } from '@/lib/api';
 import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
 import { formatCurrency } from '@/utils/currency';
 import type { Locale } from '@/i18n/routing';
 import PaymentGateway, { type PaymentGatewayHandle } from '@/components/checkout/PaymentGateway';
@@ -144,7 +145,7 @@ export default function CheckoutPage({
   }, [isAuthenticated, isLoading]);
 
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const shippingFee = totalAmount >= 30000 ? 0 : 3000;
+  const shippingFee = totalAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const grandTotal = totalAmount + shippingFee;
 
   const handleAddressSelect = (id: number | 'manual') => {
