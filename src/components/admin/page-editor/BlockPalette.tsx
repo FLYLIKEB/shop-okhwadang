@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X } from 'lucide-react';
+import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft } from 'lucide-react';
 import type { PageBlock } from '@/lib/api';
 
 type BlockType = PageBlock['type'];
@@ -44,6 +44,13 @@ const BLOCK_TYPES: BlockTypeCard[] = [
     icon: FolderTree,
   },
   {
+    type: 'split_content',
+    label: '분할 콘텐츠',
+    description: '텍스트为中心的 콘텐츠 섹션',
+    detail: '서브타이틀, 제목, 설명, CTA 버튼을 설정할 수 있습니다.\n브랜드 소개, 이야기 등에 사용합니다.',
+    icon: AlignLeft,
+  },
+  {
     type: 'promotion_banner',
     label: '프로모션 배너',
     description: '할인·이벤트 안내 띠 배너',
@@ -79,7 +86,7 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
       return { html: '', template: 'default' };
     case 'split_content':
     case 'brand_story':
-      return { title: '', subtitle: '', description: '', image_url: '', image_position: 'left', cta_text: '', cta_url: '', template: 'default' };
+      return { title: '', subtitle: '', description: '', cta_text: '', cta_url: '', template: 'default' };
   }
 }
 
