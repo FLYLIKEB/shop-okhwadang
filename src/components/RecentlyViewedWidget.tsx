@@ -63,17 +63,22 @@ export default function RecentlyViewedWidget() {
       <div className="flex items-center gap-1">
         <button
           onClick={() => setIsOpen((v) => !v)}
-          className="flex h-12 w-12 items-center justify-center rounded-full border bg-background shadow-md hover:bg-muted transition-colors text-lg"
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background shadow-md hover:bg-muted transition-colors"
           aria-label="최근 본 상품"
         >
-          👁
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
         </button>
         <button
           onClick={() => setIsHidden(true)}
-          className="flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-muted transition-colors text-xs"
+          className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background shadow-sm hover:bg-muted transition-colors"
           aria-label="위젯 닫기"
         >
-          ✕
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
         </button>
       </div>
     </div>
