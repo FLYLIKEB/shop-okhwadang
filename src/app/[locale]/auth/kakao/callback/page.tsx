@@ -15,7 +15,7 @@ function KakaoCallbackFallback() {
 export default function KakaoCallbackPage() {
   return (
     <Suspense fallback={<KakaoCallbackFallback />}>
-      <OAuthCallbackHandler provider="kakao" apiMethod={(code) => authApi.kakaoCallback(code)} />
+      <OAuthCallbackHandler provider="kakao" apiMethod={authApi.kakaoCallback} />
     </Suspense>
   );
 }

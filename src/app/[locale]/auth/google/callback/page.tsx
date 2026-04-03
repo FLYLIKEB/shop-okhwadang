@@ -15,7 +15,7 @@ function GoogleCallbackFallback() {
 export default function GoogleCallbackPage() {
   return (
     <Suspense fallback={<GoogleCallbackFallback />}>
-      <OAuthCallbackHandler provider="google" apiMethod={(code) => authApi.googleCallback(code)} />
+      <OAuthCallbackHandler provider="google" apiMethod={authApi.googleCallback} />
     </Suspense>
   );
 }
