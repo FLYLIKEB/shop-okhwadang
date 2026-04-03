@@ -137,7 +137,7 @@ export default function LightboxOverlay({
               touchSwiped.current = false
               onPrev()
             }}
-            className="absolute left-4 top-4 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
+            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
             aria-label="이전 이미지"
           >
             <ChevronLeft className="size-8" />
@@ -149,7 +149,7 @@ export default function LightboxOverlay({
               touchSwiped.current = false
               onNext()
             }}
-            className="absolute right-4 top-4 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
             aria-label="다음 이미지"
           >
             <ChevronRight className="size-8" />
