@@ -808,14 +808,62 @@ INSERT INTO artists (name, title, region, story, specialty, image_url, product_u
 ('혜맹신', '인민공예미술사', '광동성 조주', '혜맹신은 소형 주전자 제작의 대가로, 그의 작품은 조주 공부차 문화의 상징이 되었습니다. 특히 100ml 미만의 초소형 호는 뜨거운 물을 한 번에만 담아내어, 차의 본연의 맛을 가장 순수하게 표현합니다. 그의 작품은 국제적으로 수집되고 있습니다.', '초소형 주니호', NULL, '/products?artist=hui-mengshen', 2, 1);
 
 -- ============================================================
--- CMS 페이지 — 기획전
+-- CMS 페이지
 -- ============================================================
 INSERT INTO pages (id, slug, title, template, is_published, created_at, updated_at) VALUES
-(1, 'exhibition', '봄 기획전 — 주니 신작 입고', 'default', 1, NOW(), NOW());
+(1, 'home', '홈 메인 페이지', 'default', 1, NOW(), NOW()),
+(2, 'exhibition', '봄 기획전 — 주니 신작 입고', 'default', 1, NOW(), NOW()),
+(3, 'about', '브랜드 소개', 'default', 1, NOW(), NOW());
 
+-- ── 홈 페이지 블록 ──
 INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, created_at, updated_at) VALUES
--- 히어로 배너
 (1, 1, 'hero_banner', JSON_OBJECT(
+  'title', '',
+  'template', 'slider',
+  'slides', JSON_ARRAY(
+    JSON_OBJECT('title', '의흥 장인의 손끝에서', 'subtitle', '600년 전통, 정성으로 빚은 자사호를 만나보세요', 'cta_text', '컬렉션 보기', 'cta_url', '/products?category=teapot', 'bg_color', '#1B3A4B', 'image_url', 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=1920&q=80'),
+    JSON_OBJECT('title', '보이차의 깊은 여운', 'subtitle', '세월이 빚어낸 맛, 엄선된 보이차 컬렉션', 'cta_text', '아카이브 보기', 'cta_url', '/archive', 'bg_color', '#4A6741', 'image_url', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1920&q=80'),
+    JSON_OBJECT('title', '찻자리의 완성', 'subtitle', '자사호와 다구로 꾸미는 나만의 다석', 'cta_text', '저널 보기', 'cta_url', '/journal', 'bg_color', '#2A2520', 'image_url', 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=1920&q=80')
+  )
+), 0, 1, NOW(), NOW()),
+
+(2, 1, 'product_carousel', JSON_OBJECT(
+  'title', '신상품 추천',
+  'limit', 8
+), 1, 1, NOW(), NOW()),
+
+(3, 1, 'split_content', JSON_OBJECT(
+  'title', '옥화당(玉花堂) 이야기',
+  'subtitle', 'Our Story',
+  'description', '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 자사호·보이차·다구를 국내에 소개하는 전문 D2C 쇼핑몰입니다. 600년 역사의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 산지 직수입을 원칙으로 합니다.',
+  'image_url', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800',
+  'image_position', 'right',
+  'cta_text', '브랜드 소개 보기',
+  'cta_url', '/p/about',
+  'template', 'large'
+), 2, 1, NOW(), NOW()),
+
+(4, 1, 'category_nav', JSON_OBJECT(
+  'template', 'text',
+  'category_ids', JSON_ARRAY(1, 2, 3, 4, 5)
+), 3, 1, NOW(), NOW()),
+
+(5, 1, 'promotion_banner', JSON_OBJECT(
+  'title', '봄 기획전 — 주니 신작 입고',
+  'subtitle', '복건 주니 신작 자사호 선착순 특가',
+  'cta_text', '기획전 보기',
+  'cta_url', '/p/exhibition',
+  'template', 'full-width'
+), 4, 1, NOW(), NOW()),
+
+(6, 1, 'product_grid', JSON_OBJECT(
+  'title', '베스트 상품',
+  'limit', 8,
+  'template', '4col'
+), 5, 1, NOW(), NOW()),
+
+-- ── 기획전 페이지 블록 ──
+(7, 2, 'hero_banner', JSON_OBJECT(
   'title', '봄 기획전',
   'subtitle', '복건 주니 신작 자사호 — 장인의 손끝에서 탄생한 한정 컬렉션',
   'image_url', 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=1920&q=80',
@@ -824,14 +872,12 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'template', 'fullscreen'
 ), 0, 1, NOW(), NOW()),
 
--- 소개 텍스트
-(2, 1, 'text_content', JSON_OBJECT(
+(8, 2, 'text_content', JSON_OBJECT(
   'html', '<h2>의흥 장인의 손끝에서, 옥화당까지</h2><p>복건성 주니(朱泥) 원료로 빚은 신작 자사호를 한정 수량으로 소개합니다. 주니 특유의 선홍빛 발색과 높은 수축률이 만들어내는 정교한 라인을 만나보세요. 이번 기획전에서는 서시호·주형호·석표호 등 다양한 형태의 주니 자사호를 엄선하였습니다.</p>',
   'textAlign', 'center'
 ), 1, 1, NOW(), NOW()),
 
--- 주니 자사호 상품 그리드
-(3, 1, 'product_grid', JSON_OBJECT(
+(9, 2, 'product_grid', JSON_OBJECT(
   'title', '주니 자사호 컬렉션',
   'product_ids', JSON_ARRAY(1, 2, 3),
   'limit', 3,
@@ -839,8 +885,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'more_href', '/products?category=teapot'
 ), 2, 1, NOW(), NOW()),
 
--- 프로모션 배너
-(4, 1, 'promotion_banner', JSON_OBJECT(
+(10, 2, 'promotion_banner', JSON_OBJECT(
   'title', '입문 다도구 세트 14% 특가',
   'subtitle', '옥화당 입문 다도구 세트 한정 수량 특가 — 280,000원 → 240,000원',
   'image_url', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800',
@@ -850,8 +895,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'end_date', '2026-04-30T23:59:59'
 ), 3, 1, NOW(), NOW()),
 
--- 보이차 추천 상품 그리드
-(5, 1, 'product_grid', JSON_OBJECT(
+(11, 2, 'product_grid', JSON_OBJECT(
   'title', '함께 즐기면 좋은 보이차',
   'product_ids', JSON_ARRAY(11, 12, 13, 14),
   'limit', 4,
@@ -859,10 +903,24 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'more_href', '/products?category=puerh-tea'
 ), 4, 1, NOW(), NOW()),
 
--- 마무리 텍스트
-(6, 1, 'text_content', JSON_OBJECT(
+(12, 2, 'text_content', JSON_OBJECT(
   'html', '<p>기획전 상품은 재고 한정으로 조기 마감될 수 있습니다.<br/>자사호는 수공예 특성상 개체별 미세한 색감 차이가 있을 수 있으며, 이는 불량이 아닙니다.</p>',
   'textAlign', 'center'
-), 5, 1, NOW(), NOW());
+), 5, 1, NOW(), NOW()),
+
+-- ── 브랜드 소개 페이지 블록 ──
+(13, 3, 'split_content', JSON_OBJECT(
+  'title', '옥화당(玉花堂)',
+  'subtitle', '자사호·보이차·다구 전문',
+  'description', '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 자사호·보이차·다구를 국내에 소개하는 전문 D2C 쇼핑몰입니다. 600년 역사의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 산지 직수입을 원칙으로 합니다. 찻자리 하나에도 정성을 담는 것, 그것이 옥화당의 철학입니다.',
+  'image_url', 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=800',
+  'image_position', 'right',
+  'template', 'large'
+), 0, 1, NOW(), NOW()),
+
+(14, 3, 'text_content', JSON_OBJECT(
+  'html', '<h2>우리의 약속</h2><p>산지 직수입 원칙 · 장인 직거래 · 품질 보증 · 정성 포장</p>',
+  'textAlign', 'center'
+), 1, 1, NOW(), NOW());
 
 SELECT '✅ 옥화당 더미데이터 삽입 완료' AS result;
