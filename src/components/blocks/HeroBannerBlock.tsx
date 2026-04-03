@@ -11,6 +11,7 @@ import Logo from '@/components/Logo';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 import { useScrollLogoTransition } from '@/hooks/useScrollLogoTransition';
 import { ScrollLogoProvider } from '@/contexts/ScrollLogoContext';
+import { isSafeUrl } from '@/utils/url';
 
 interface Props {
   content: HeroBannerContent;
@@ -123,7 +124,7 @@ function SliderHero({ slides, sectionRef, heroLogoStyle }: SliderHeroProps) {
                 {slide.cta_text && slide.cta_url && (
                   <div className="mt-8">
                     <Link
-                      href={slide.cta_url}
+                      href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}
                       className="inline-block rounded-full border border-white px-8 py-3 typo-button text-white tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
                     >
                       {slide.cta_text}
@@ -205,7 +206,7 @@ export default function HeroBannerBlock({ content }: Props) {
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
           {cta_text && cta_url && (
             <Link
-              href={cta_url}
+              href={isSafeUrl(cta_url) ? cta_url : '#'}
               className="mt-6 inline-block border border-foreground px-6 py-3 typo-button text-foreground hover:bg-foreground hover:text-background transition-colors"
             >
               {cta_text}
@@ -249,7 +250,7 @@ export default function HeroBannerBlock({ content }: Props) {
           {cta_text && cta_url && (
             <div className="mt-8">
               <Link
-                href={cta_url}
+                href={isSafeUrl(cta_url) ? cta_url : '#'}
                 className="inline-block rounded-full border border-current px-8 py-3 typo-button tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
               >
                 {cta_text}
