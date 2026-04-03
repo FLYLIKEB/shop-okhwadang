@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useFormModal } from '@/hooks/useFormModal';
 import {
   DndContext,
   closestCenter,
@@ -241,24 +242,13 @@ interface NavigationFormModalProps {
 }
 
 function NavigationFormModal({ open, onClose, onSubmit, initial, group, flatItems }: NavigationFormModalProps) {
-  const [label, setLabel] = useState(initial?.label ?? '');
-  const [url, setUrl] = useState(initial?.url ?? '');
-  const [parentId, setParentId] = useState<number | null>(initial?.parent_id ?? null);
-  const [isActive, setIsActive] = useState(initial?.is_active ?? true);
-  const [submitting, setSubmitting] = useState(false);
+  const defaults = { label: '', url: '', group, parent_id: null as number | null, is_active: true };
+  const modalInitial = initial
+    ? { label: initial.label, url: initial.url, group, parent_id: initial.parent_id, is_active: initial.is_active }
+    : null;
+  const { formData, setFormData, loading, handleSubmit } = useFormModal(defaults, modalInitial, open);
 
   if (!open) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await onSubmit({ label, url, group, parent_id: parentId, is_active: isActive });
-      onClose();
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -278,7 +268,7 @@ function NavigationFormModal({ open, onClose, onSubmit, initial, group, flatItem
           {GROUP_INFO[group].label}에 표시될 메뉴를 {initial ? '수정' : '추가'}합니다.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => handleSubmit(e, onSubmit, onClose)} className="space-y-4">
           <div>
             <label htmlFor="nav-label" className="mb-1 block text-sm font-medium">
               메뉴명 <span className="text-destructive">*</span>
@@ -286,8 +276,8 @@ function NavigationFormModal({ open, onClose, onSubmit, initial, group, flatItem
             <input
               id="nav-label"
               type="text"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
+              value={formData.label}
+              onChange={(e) => setFormData({ ...formData, label: e.target.value })}
               required
               maxLength={100}
               placeholder="예: 상품목록, 이벤트, 고객센터"
@@ -303,8 +293,8 @@ function NavigationFormModal({ open, onClose, onSubmit, initial, group, flatItem
             <input
               id="nav-url"
               type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              value={formData.url}
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
               required
               maxLength={500}
               placeholder="예: /products, /event, https://외부링크.com"
@@ -321,8 +311,8 @@ function NavigationFormModal({ open, onClose, onSubmit, initial, group, flatItem
             </label>
             <select
               id="nav-parent"
-              value={parentId ?? ''}
-              onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : null)}
+              value={formData.parent_id ?? ''}
+              onChange={(e) => setFormData({ ...formData, parent_id: e.target.value ? Number(e.target.value) : null })}
               className="w-full rounded-md border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">없음 (최상위 메뉴)</option>
@@ -344,8 +334,8 @@ function NavigationFormModal({ open, onClose, onSubmit, initial, group, flatItem
               <input
                 id="nav-active"
                 type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                 className="h-4 w-4 rounded border-input"
               />
               <label htmlFor="nav-active" className="text-sm font-medium">
@@ -367,10 +357,10 @@ function NavigationFormModal({ open, onClose, onSubmit, initial, group, flatItem
             </button>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={loading}
               className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 disabled:opacity-50"
             >
-              {submitting ? '저장 중...' : '저장'}
+              {loading ? '저장 중...' : '저장'}
             </button>
           </div>
         </form>
