@@ -1,4 +1,6 @@
-import DOMPurify from 'isomorphic-dompurify';
+'use client'
+
+import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 
 interface SafeHtmlProps {
@@ -7,9 +9,18 @@ interface SafeHtmlProps {
   style?: CSSProperties;
 }
 
-// Content is sanitized by DOMPurify before rendering — XSS safe
 export default function SafeHtml({ html, className, style }: SafeHtmlProps) {
-  const clean = DOMPurify.sanitize(html);
-  // eslint-disable-next-line react/no-danger
+  const [clean, setClean] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('dompurify').then((mod) => {
+        setClean(mod.default.sanitize(html));
+      });
+    }
+  }, [html]);
+
+  if (!clean) return <div className={className} style={style} suppressHydrationWarning />;
+
   return <div className={className} style={style} dangerouslySetInnerHTML={{ __html: clean }} />;
 }
