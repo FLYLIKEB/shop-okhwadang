@@ -157,7 +157,6 @@ export function usePageEditor({
         // fallback: clear dirty flags to prevent duplicate save
         const cleanBlocks: PageBlock[] = draft.blocks
           .filter((b) => !b._isNew || b.id > 0)
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           .map(({ _isNew, _isModified, ...b }) => b as PageBlock);
         setSelectedPage((prev) => prev ? { ...prev, title: draft.title, slug: draft.slug } : prev);
         dispatch({ type: 'INIT', blocks: cleanBlocks, title: draft.title, slug: draft.slug });
