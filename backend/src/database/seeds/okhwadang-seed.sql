@@ -491,15 +491,15 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 (19, 'sidebar', '기획전',     '/p/exhibition',                     9, 1, NULL),
 
 -- Footer
-(20, 'footer', '이용약관',        '/terms',   0, 1, NULL),
-(21, 'footer', '개인정보처리방침', '/privacy', 1, 1, NULL),
-(22, 'footer', '저널',           '/journal',  2, 1, NULL),
-(23, 'footer', '컬렉션',         '/collection', 3, 1, NULL),
-(24, 'footer', '아카이브',       '/archive',  4, 1, NULL),
-(25, 'footer', '공지사항',        '/notices', 5, 1, NULL),
-(26, 'footer', 'FAQ',             '/faq',     6, 1, NULL),
-(27, 'footer', '고객센터',        '/inquiry', 7, 1, NULL),
-(28, 'footer', '브랜드 소개',     '/p/about', 8, 1, NULL);
+(20, 'footer', '이용약관',        '/pages/terms',    0, 1, NULL),
+(21, 'footer', '개인정보처리방침', '/pages/privacy', 1, 1, NULL),
+(22, 'footer', '저널',           '/journal',        2, 1, NULL),
+(23, 'footer', '컬렉션',         '/collection',     3, 1, NULL),
+(24, 'footer', '아카이브',       '/archive',        4, 1, NULL),
+(25, 'footer', '공지사항',        '/notice',         5, 1, NULL),
+(26, 'footer', 'FAQ',             '/faq',            6, 1, NULL),
+(27, 'footer', '고객센터',        '/pages/support',  7, 1, NULL),
+(28, 'footer', '브랜드 소개',     '/p/about',        8, 1, NULL);
 
 -- ============================================================
 -- 7. 배너
