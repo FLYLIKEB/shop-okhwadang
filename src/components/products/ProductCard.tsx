@@ -116,23 +116,33 @@ function ProductCard({
         </button>
       </div>
 
-      <div className="mt-3 space-y-2">
-        <p className="typo-title line-clamp-2">{name}</p>
-        <div className="mt-1">
-          <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
+      <div className="mt-3 flex flex-col gap-1">
+        <p className="typo-title line-clamp-2 leading-tight h-11 shrink-0">{name}</p>
+
+        <div className="flex items-center gap-1.5 h-5 shrink-0">
+          {rating !== undefined && (
+            <>
+              <StarRating rating={rating} size="sm" interactive={false} />
+              <span className="typo-body-sm font-medium leading-none">{rating.toFixed(1)}</span>
+              {reviewCount !== undefined && reviewCount > 0 && (
+                <span className="typo-body-sm text-muted-foreground leading-none">({reviewCount})</span>
+              )}
+            </>
+          )}
         </div>
-        {rating !== undefined && (
-          <div className="mt-1 flex items-center gap-1.5">
-            <StarRating rating={rating} size="sm" interactive={false} />
-            <span className="typo-body-sm font-medium">{rating.toFixed(1)}</span>
-            {reviewCount !== undefined && reviewCount > 0 && (
-              <span className="typo-body-sm text-muted-foreground">({reviewCount})</span>
-            )}
-          </div>
-        )}
-        {shortDescription && (
-          <p className="mt-1 line-clamp-2 typo-body-sm text-muted-foreground">{shortDescription}</p>
-        )}
+
+        <div className="h-10 overflow-hidden">
+          {shortDescription && (
+            <p className="line-clamp-2 typo-body-sm text-muted-foreground leading-snug">{shortDescription}</p>
+          )}
+        </div>
+
+        <div className="mt-auto pt-2">
+          <hr className="border-gray-200" />
+        </div>
+
+        <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
+
         {!isSoldout && (
           <button
             type="button"
@@ -140,7 +150,7 @@ function ProductCard({
             onClick={handleAddToCart}
             disabled={isCartLoading}
             className={cn(
-              'mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed',
+              'flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed shrink-0',
             )}
           >
             <ShoppingCart className="h-4 w-4" />
