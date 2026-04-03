@@ -433,6 +433,32 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 (6,  'gnb', '브랜드 소개', '/p/about',                  5, 1, NULL),
 (7,  'gnb', '기획전',      '/p/exhibition',              6, 1, NULL),
 
+-- GNB 하위메뉴: 자사호
+(50, 'gnb', '└ 니료별',   '/products?categoryId=1',  1, 1, 2),
+(51, 'gnb', '└ 주니',     '/products?categoryId=10', 1, 1, 50),
+(52, 'gnb', '└ 자사',     '/products?categoryId=11', 2, 1, 50),
+(53, 'gnb', '└ 단니',     '/products?categoryId=12', 3, 1, 50),
+(54, 'gnb', '└ 흑니',     '/products?categoryId=13', 4, 1, 50),
+(55, 'gnb', '└ 청회니',   '/products?categoryId=14', 5, 1, 50),
+(56, 'gnb', '└ 모양별',   '/products?categoryId=1',  6, 1, 2),
+(57, 'gnb', '└ 주형',     '/products?categoryId=20', 1, 1, 56),
+(58, 'gnb', '└ 석표',     '/products?categoryId=21', 2, 1, 56),
+(59, 'gnb', '└ 서시',     '/products?categoryId=22', 3, 1, 56),
+(60, 'gnb', '└ 편평',     '/products?categoryId=23', 4, 1, 56),
+
+-- GNB 하위메뉴: 보이차
+(61, 'gnb', '└ 종류별',   '/products?categoryId=2',  2, 1, 3),
+(62, 'gnb', '└ 생차',     '/products?categoryId=30', 1, 1, 61),
+(63, 'gnb', '└ 숙차',     '/products?categoryId=31', 2, 1, 61),
+(64, 'gnb', '└ 노차',     '/products?categoryId=32', 3, 1, 61),
+
+-- GNB 하위메뉴: 다구
+(65, 'gnb', '└ 종류별',   '/products?categoryId=3',  3, 1, 4),
+(66, 'gnb', '└ 다완',     '/products?categoryId=40', 1, 1, 65),
+(67, 'gnb', '└ 다반',     '/products?categoryId=41', 2, 1, 65),
+(68, 'gnb', '└ 다도구 세트', '/products?categoryId=42', 3, 1, 65),
+(69, 'gnb', '└ 차 도구',  '/products?categoryId=43', 4, 1, 65),
+
 -- Sidebar
 (10, 'sidebar', '전체 상품',  '/products',                         0, 1, NULL),
 (11, 'sidebar', '자사호',     '/products?categoryId=1',          1, 1, NULL),
@@ -830,7 +856,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
 (2, 1, 'split_content', JSON_OBJECT(
   'title', '옥화당(玉花堂) 이야기',
   'subtitle', 'Our Story',
-  'description', '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 자사호·보이차·다구를 국내에 소개하는 전문 D2C 쇼핑몰입니다. 600년 역사의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 산지 직수입을 원칙으로 합니다.',
+  'description', '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 <strong>자사호·보이차·다구</strong>를 국내에 소개하는 전문 D2C 쇼핑몰입니다.<br/><br/><strong>600년 역사</strong>의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 <strong>산지 직수입</strong>을 원칙으로 합니다.',
   'cta_text', '브랜드 소개 보기',
   'cta_url', '/p/about',
   'template', 'large'
@@ -910,7 +936,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
 (13, 3, 'split_content', JSON_OBJECT(
   'title', '옥화당(玉花堂)',
   'subtitle', '자사호·보이차·다구 전문',
-  'description', '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 자사호·보이차·다구를 국내에 소개하는 전문 D2C 쇼핑몰입니다. 600년 역사의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 산지 직수입을 원칙으로 합니다. 찻자리 하나에도 정성을 담는 것, 그것이 옥화당의 철학입니다.',
+  'description', '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 <strong>자사호·보이차·다구</strong>를 국내에 소개하는 전문 D2C 쇼핑몰입니다.<br/><br/><strong>600년 역사</strong>의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 <strong>산지 직수입</strong>을 원칙으로 합니다.<br/><br/>찻자리 하나에도 정성을 담는 것, 그것이 옥화당의 철학입니다.',
   'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
   'image_position', 'right',
   'template', 'large'
