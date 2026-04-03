@@ -26,7 +26,7 @@ export default function OAuthCallbackHandler({ provider, apiMethod }: OAuthCallb
       return;
     }
 
-    if (state !== storedState) {
+    if (!state || !storedState || state !== storedState) {
       toast.error('보안 검증에 실패했습니다. 다시 시도해 주세요.');
       router.replace('/login');
       return;
