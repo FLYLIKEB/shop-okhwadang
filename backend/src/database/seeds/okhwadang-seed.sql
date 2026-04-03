@@ -27,6 +27,8 @@ TRUNCATE TABLE notices;
 TRUNCATE TABLE faqs;
 TRUNCATE TABLE collections;
 TRUNCATE TABLE journal_entries;
+TRUNCATE TABLE page_blocks;
+TRUNCATE TABLE pages;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -429,6 +431,7 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 (4,  'gnb', '다구',       '/products?category=tea-ware', 3, 1, NULL),
 (5,  'gnb', '베스트',     '/products?sort=popular',     4, 1, NULL),
 (6,  'gnb', '브랜드 소개', '/p/about',                  5, 1, NULL),
+(7,  'gnb', '기획전',      '/p/exhibition',              6, 1, NULL),
 
 -- Sidebar
 (10, 'sidebar', '전체 상품',  '/products',                         0, 1, NULL),
@@ -803,5 +806,63 @@ INSERT INTO process_steps (step, title, description, detail) VALUES
 INSERT INTO artists (name, title, region, story, specialty, image_url, product_url, sort_order, is_active) VALUES
 ('진위명', '국가급 공예미술사', '복건성 이싱', '40년 경력의 진위명 장인은 복건성에서 가장 존경받는 자사호 장인 중 한 명입니다. 그의 작품은 전통적인 공정과 현대적인 감각을 결합하여, 사용자가 오랜 시간 사용할수록 광택이 나는 것이 특징입니다. 그의 말에 따르면 "호는 살아있다. 사용자가 키우는 것이다."', '주니 서시호', NULL, '/products?artist=jin-weiming', 1, 1),
 ('혜맹신', '인민공예미술사', '광동성 조주', '혜맹신은 소형 주전자 제작의 대가로, 그의 작품은 조주 공부차 문화의 상징이 되었습니다. 특히 100ml 미만의 초소형 호는 뜨거운 물을 한 번에만 담아내어, 차의 본연의 맛을 가장 순수하게 표현합니다. 그의 작품은 국제적으로 수집되고 있습니다.', '초소형 주니호', NULL, '/products?artist=hui-mengshen', 2, 1);
+
+-- ============================================================
+-- CMS 페이지 — 기획전
+-- ============================================================
+INSERT INTO pages (id, slug, title, template, is_published, created_at, updated_at) VALUES
+(1, 'exhibition', '봄 기획전 — 주니 신작 입고', 'default', 1, NOW(), NOW());
+
+INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, created_at, updated_at) VALUES
+-- 히어로 배너
+(1, 1, 'hero_banner', JSON_OBJECT(
+  'title', '봄 기획전',
+  'subtitle', '복건 주니 신작 자사호 — 장인의 손끝에서 탄생한 한정 컬렉션',
+  'image_url', 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=1920&q=80',
+  'cta_text', '컬렉션 보기',
+  'cta_url', '/products?category=teapot',
+  'template', 'fullscreen'
+), 0, 1, NOW(), NOW()),
+
+-- 소개 텍스트
+(2, 1, 'text_content', JSON_OBJECT(
+  'html', '<h2>의흥 장인의 손끝에서, 옥화당까지</h2><p>복건성 주니(朱泥) 원료로 빚은 신작 자사호를 한정 수량으로 소개합니다. 주니 특유의 선홍빛 발색과 높은 수축률이 만들어내는 정교한 라인을 만나보세요. 이번 기획전에서는 서시호·주형호·석표호 등 다양한 형태의 주니 자사호를 엄선하였습니다.</p>',
+  'textAlign', 'center'
+), 1, 1, NOW(), NOW()),
+
+-- 주니 자사호 상품 그리드
+(3, 1, 'product_grid', JSON_OBJECT(
+  'title', '주니 자사호 컬렉션',
+  'product_ids', JSON_ARRAY(1, 2, 3),
+  'limit', 3,
+  'template', '3col',
+  'more_href', '/products?category=teapot'
+), 2, 1, NOW(), NOW()),
+
+-- 프로모션 배너
+(4, 1, 'promotion_banner', JSON_OBJECT(
+  'title', '입문 다도구 세트 14% 특가',
+  'subtitle', '옥화당 입문 다도구 세트 한정 수량 특가 — 280,000원 → 240,000원',
+  'image_url', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800',
+  'cta_text', '특가 보기',
+  'cta_url', '/products/okhwadang-starter-tea-set',
+  'template', 'timer',
+  'end_date', '2026-04-30T23:59:59'
+), 3, 1, NOW(), NOW()),
+
+-- 보이차 추천 상품 그리드
+(5, 1, 'product_grid', JSON_OBJECT(
+  'title', '함께 즐기면 좋은 보이차',
+  'product_ids', JSON_ARRAY(11, 12, 13, 14),
+  'limit', 4,
+  'template', '4col',
+  'more_href', '/products?category=puerh-tea'
+), 4, 1, NOW(), NOW()),
+
+-- 마무리 텍스트
+(6, 1, 'text_content', JSON_OBJECT(
+  'html', '<p>기획전 상품은 재고 한정으로 조기 마감될 수 있습니다.<br/>자사호는 수공예 특성상 개체별 미세한 색감 차이가 있을 수 있으며, 이는 불량이 아닙니다.</p>',
+  'textAlign', 'center'
+), 5, 1, NOW(), NOW());
 
 SELECT '✅ 옥화당 더미데이터 삽입 완료' AS result;
