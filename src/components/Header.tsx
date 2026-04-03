@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ShoppingCart, Menu, X, Search, User, LogOut } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
@@ -45,7 +45,7 @@ interface DesktopActionsProps {
   onLogout: () => void;
 }
 
-function DesktopActions({ isAuthenticated, userName, itemCount, onLogout }: DesktopActionsProps) {
+function DesktopActions({ isAuthenticated, itemCount, onLogout }: DesktopActionsProps) {
   const textClass = "text-muted-foreground hover:text-foreground";
   return (
     <div className="hidden md:flex items-center gap-4">
@@ -338,7 +338,6 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
 
 export default function Header() {
   const router = useRouter();
-  const pathname = usePathname();
   const { isAuthenticated, user, logout } = useAuth();
   const { itemCount } = useCart();
   const { items: navItems } = useNavigation('gnb');
