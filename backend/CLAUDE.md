@@ -22,6 +22,14 @@ APP_GUARD registration order: **ThrottlerGuard → JwtAuthGuard → RolesGuard**
 - RolesGuard depends on `request.user` — must run after JwtAuthGuard
 - Changing order breaks RBAC
 
+## Public API Endpoints
+
+**모든 공개 API 컨트롤러(로그인/회원가입/ публичная 정보 조회 등)는 반드시 `@Public()`을 명시적으로 붙여야 합니다.**
+
+- 전역 `JwtAuthGuard`가 기본 적용되므로, 인증이 필요 없는 엔드포인트도 `@Public()` 없으면 401 반환
+- 새 컨트롤러 생성 시 공개 여부를 먼저 판단하고 `@Public()` 또는 `@ApiCookieAuth()` 명확히 표시
+- `GET /journals` · `GET /journals/:slug` · `GET /archives` 등 외부 공개 페이지는 반드시 `@Public()`
+
 ## Custom Decorators
 
 - `@Public()` — skip JWT auth (login, signup endpoints)
@@ -56,6 +64,7 @@ const req = context.switchToHttp().getRequest<{ user?: { id: number; role: strin
 See `.claude/rules/database.md` for full migration/schema rules. Backend-specific additions:
 
 - **트랜잭션**: `dataSource.transaction(async (manager) => { ... })` 사용 필수 — `queryRunner` 수동 관리(`connect/startTransaction/commit/rollback/release`) 금지. 단, pessimistic lock이 필요한 경우는 `queryRunner` 허용.
+- **Entity 컬럼명 매핑**: DB 컬럼이 `snake_case`이면 TypeScript 프로퍼티가 `camelCase`더라도 `@Column({ name: 'snake_case' })` 명시 필수. 프로퍼티명과 컬럼명이 자동 매핑되지 않음 — `readTime` 프로퍼티에 `read_time` 컬럼을 사용하려면 반드시 `name` 옵션 필요.
 
 ## API Documentation (Swagger/OpenAPI)
 
