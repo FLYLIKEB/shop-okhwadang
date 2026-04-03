@@ -22,7 +22,7 @@ export default function FaqPage() {
     async () => {
       const cat = activeCategory === '전체' ? undefined : activeCategory;
       const res = await faqsApi.getList(cat, locale);
-      setFaqs(res.data);
+      setFaqs(Array.isArray(res) ? res : (res?.data ?? []));
     },
     { errorMessage: 'FAQ를 불러오지 못했습니다.' },
   );
@@ -59,16 +59,16 @@ export default function FaqPage() {
             <SkeletonBox key={i} className="h-14 rounded-lg" />
           ))}
         </div>
-      ) : faqs.length === 0 ? (
+      ) : (faqs?.length ?? 0) === 0 ? (
         <EmptyState title="해당 카테고리의 FAQ가 없습니다." />
       ) : (
         <Accordion.Root type="single" collapsible className="divide-y divide-gray-200 border-t border-b">
           {faqs.map((faq) => (
             <Accordion.Item key={faq.id} value={String(faq.id)}>
               <Accordion.Header>
-                <Accordion.Trigger className="flex items-center justify-between w-full px-2 py-4 text-left typo-h3 text-gray-800 hover:bg-gray-50 transition-colors [&[data-state=open]>span]:rotate-180">
+                <Accordion.Trigger className="flex items-center justify-between w-full px-2 py-4 text-left typo-h3 text-gray-800 hover:bg-gray-50 transition-colors">
                   <span>{faq.question}</span>
-                  <span className="ml-4 shrink-0 text-gray-400 transition-transform duration-200">▼</span>
+                  <span className="faq-arrow ml-4 shrink-0 text-gray-400 transition-transform duration-200">▼</span>
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">

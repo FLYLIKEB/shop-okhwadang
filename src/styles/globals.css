@@ -51,7 +51,7 @@
   --color-destructive: var(--db-color-destructive, #b91c1c);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
   --color-muted: var(--db-color-muted, #F5F3EF);
-  --color-muted-foreground: var(--db-color-muted-foreground, #6b6b6b);
+  --color-muted-foreground: var(--db-color-muted-foreground, #525252);
   --color-accent: var(--db-color-accent, #F5F3EF);
   --color-accent-foreground: var(--db-color-accent-foreground, #1a1a1a);
   --color-background: var(--db-color-background, #ffffff);
@@ -375,6 +375,30 @@ h3 {
 
 [data-sonner-toast][data-type="warning"] {
   border-left: 4px solid var(--color-danni) !important;
+}
+
+/* ── Accordion animations ──────────────────────────────────────────── */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 0.2s ease-out;
+}
+
+/* ── FAQ arrow rotation ───────────────────────────────────────────── */
+[data-state="open"] .faq-arrow {
+  transform: rotate(180deg);
 }
 
 /* Loading spinner */
