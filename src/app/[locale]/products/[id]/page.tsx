@@ -14,7 +14,7 @@ interface ProductDetailProps {
 export async function generateMetadata({ params }: ProductDetailProps): Promise<Metadata> {
   const { id, locale } = await params
   const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale;
-  const product = await fetchProduct(Number(id))
+  const product = await fetchProduct(Number(id), safeLocale)
   if (!product) return { title: '상품을 찾을 수 없습니다' }
 
   const imageUrl = product.images?.[0]?.url ?? '';
