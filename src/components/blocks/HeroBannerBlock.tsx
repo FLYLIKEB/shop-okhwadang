@@ -48,11 +48,12 @@ const DEFAULT_SLIDES: HeroBannerSlide[] = [
 
 interface SliderHeroProps {
   slides: HeroBannerSlide[];
+  description?: string;
   sectionRef: React.RefObject<HTMLElement | null>;
   heroLogoStyle: React.CSSProperties;
 }
 
-function SliderHero({ slides, sectionRef, heroLogoStyle }: SliderHeroProps) {
+function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHeroProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
 
@@ -123,9 +124,9 @@ function SliderHero({ slides, sectionRef, heroLogoStyle }: SliderHeroProps) {
                     {slide.subtitle}
                   </p>
                 )}
-                {content.description && (
+                {description && (
                   <div className="mt-4 text-white/80">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.description}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
                   </div>
                 )}
                 {slide.cta_text && slide.cta_url && (
@@ -177,7 +178,7 @@ function SliderHero({ slides, sectionRef, heroLogoStyle }: SliderHeroProps) {
 }
 
 export default function HeroBannerBlock({ content }: Props) {
-  const { title, subtitle, image_url, cta_text, cta_url, template, slides } = content;
+  const { title, subtitle, description, image_url, cta_text, cta_url, template, slides } = content;
   const pathname = usePathname();
   const isHome = pathname === '/';
   const sectionRef = useRef<HTMLElement>(null);
@@ -200,7 +201,7 @@ export default function HeroBannerBlock({ content }: Props) {
     const resolvedSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
     return (
       <ScrollLogoProvider value={scrollLogoContextValue}>
-        <SliderHero slides={resolvedSlides} sectionRef={sectionRef} heroLogoStyle={heroLogoStyle} />
+        <SliderHero slides={resolvedSlides} description={description} sectionRef={sectionRef} heroLogoStyle={heroLogoStyle} />
       </ScrollLogoProvider>
     );
   }
@@ -211,9 +212,9 @@ export default function HeroBannerBlock({ content }: Props) {
         <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
           <h2 className="typo-h2 text-foreground">{title}</h2>
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
-          {content.description && (
+          {description && (
             <div className="mt-4 text-muted-foreground">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.description}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
             </div>
           )}
           {cta_text && cta_url && (
@@ -259,9 +260,9 @@ export default function HeroBannerBlock({ content }: Props) {
         <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : 'text-foreground'}`}>
           <h1 className={cn('typo-h0 font-display', image_url ? 'text-white' : 'text-foreground')}>{title}</h1>
           {subtitle && <p className={cn('mt-4 typo-body', image_url ? 'text-white/90' : 'text-muted-foreground')}>{subtitle}</p>}
-          {content.description && (
+          {description && (
             <div className={cn('mt-4', image_url ? 'text-white/80' : 'text-muted-foreground')}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.description}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
             </div>
           )}
           {cta_text && cta_url && (
