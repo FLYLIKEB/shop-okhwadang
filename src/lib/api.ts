@@ -1166,6 +1166,12 @@ export const inquiriesApi = {
   create: (body: CreateInquiryBody) => apiClient.post<Inquiry>('/inquiries', body),
 };
 
+export const adminInquiriesApi = {
+  getAll: () => apiClient.get<Inquiry[]>('/admin/inquiries'),
+  answer: (id: number, answer: string) =>
+    apiClient.post<Inquiry>(`/admin/inquiries/${id}/answer`, { answer }),
+};
+
 // ===== Promotions =====
 export interface Promotion {
   id: number;
