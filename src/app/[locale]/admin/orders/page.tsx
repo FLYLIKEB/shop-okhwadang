@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { adminOrdersApi } from '@/lib/api';
 import type { AdminOrder } from '@/lib/api';
 import { AdminOrdersTable } from '@/components/admin/AdminOrdersTable';
@@ -22,6 +23,7 @@ const STATUS_FILTERS = [
 const PAGE_SIZE = 20;
 
 export default function AdminOrdersPage() {
+  const { isAdmin } = useAdminGuard();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -51,9 +53,9 @@ export default function AdminOrdersPage() {
   );
 
   useEffect(() => {
-    void fetchOrders();
+    if (isAdmin) void fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, statusFilter, keyword, startDate, endDate]);
+  }, [isAdmin, page, statusFilter, keyword, startDate, endDate]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

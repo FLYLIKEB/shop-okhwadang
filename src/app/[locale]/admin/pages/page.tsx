@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useReducer } from 'react';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { adminPagesApi } from '@/lib/api';
 import type { Page } from '@/lib/api';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
@@ -15,6 +16,7 @@ import BlockPropertyPanel from '@/components/admin/page-editor/BlockPropertyPane
 import PreviewModal from '@/components/admin/page-editor/PreviewModal';
 
 export default function AdminPagesPage() {
+  const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [pages, setPages] = useState<Page[]>([]);
   const [selectedPage, setSelectedPage] = useState<Page | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
@@ -40,8 +42,8 @@ export default function AdminPagesPage() {
   );
 
   useEffect(() => {
-    void loadPages();
-  }, [loadPages]);
+    if (isAdmin) void loadPages();
+  }, [isAdmin, loadPages]);
 
   const { handleSelectPage, handleCreatePage, handleDeletePage, handleTogglePublish, handleSave } =
     usePageEditor({
@@ -56,7 +58,7 @@ export default function AdminPagesPage() {
 
   const selectedBlock = draft.blocks.find((b) => b.id === selectedBlockId) ?? null;
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex h-full items-center justify-center">
         <span className="text-sm text-muted-foreground">로딩 중...</span>

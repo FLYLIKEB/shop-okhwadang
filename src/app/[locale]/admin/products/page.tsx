@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { adminProductsApi } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
@@ -19,6 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
 const PAGE_SIZE = 20;
 
 export default function AdminProductsPage() {
+  const { isAdmin } = useAdminGuard();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -39,8 +41,8 @@ export default function AdminProductsPage() {
   );
 
   useEffect(() => {
-    void fetchProducts();
-  }, [page, statusFilter, fetchProducts]);
+    if (isAdmin) void fetchProducts();
+  }, [isAdmin, page, statusFilter, fetchProducts]);
 
   const { execute: toggleStatus } = useAsyncAction(
     async (product: Product) => {
