@@ -7,8 +7,9 @@ import type { AdminCategory, CreateCategoryData } from '@/lib/api';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import CategoryFormModal from '@/components/admin/CategoryFormModal';
-import { ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
-import { cn } from '@/components/ui/utils';
+import { GripVertical } from 'lucide-react';
+import { StatusBadge } from '@/components/admin/StatusBadge';
+import { SortableCategoryRow } from '@/components/admin/SortableCategoryRow';
 import {
   DndContext,
   DragOverlay,
@@ -24,9 +25,7 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 interface FlattenedCategory extends AdminCategory {
   depth: number;
@@ -36,14 +35,15 @@ function flattenCategories(
   categories: AdminCategory[],
   parentId: number | null = null,
   depth = 0,
+  expandedIds: Set<number> = new Set(),
 ): FlattenedCategory[] {
   const result: FlattenedCategory[] = [];
   const roots = categories.filter((c) => c.parentId === parentId);
 
   for (const cat of roots) {
     result.push({ ...cat, depth });
-    if (cat.children && cat.children.length > 0) {
-      result.push(...flattenCategories(cat.children, cat.id, depth + 1));
+    if (cat.children && cat.children.length > 0 && expandedIds.has(cat.id)) {
+      result.push(...flattenCategories(cat.children, cat.id, depth + 1, expandedIds));
     }
   }
 
@@ -57,138 +57,6 @@ function getSiblings(category: AdminCategory, list: AdminCategory[]): AdminCateg
   return list.filter((c) => c.parentId === category.parentId);
 }
 
-interface SortableCategoryRowProps {
-  category: AdminCategory;
-  categories: AdminCategory[];
-  expandedIds: Set<number>;
-  onToggleExpand: (id: number) => void;
-  onEdit: (category: AdminCategory) => void;
-  onDelete: (category: AdminCategory) => void;
-  onMoveUp: (category: AdminCategory) => void;
-  onMoveDown: (category: AdminCategory) => void;
-  getSiblings: (category: AdminCategory, list: AdminCategory[]) => AdminCategory[];
-  isDraggable: boolean;
-}
-
-function SortableCategoryRow({
-  category,
-  categories,
-  expandedIds,
-  onToggleExpand,
-  onEdit,
-  onDelete,
-  onMoveUp,
-  onMoveDown,
-  getSiblings,
-  isDraggable,
-}: SortableCategoryRowProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: category.id, disabled: !isDraggable });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const hasChildren = category.children && category.children.length > 0;
-  const isExpanded = expandedIds.has(category.id);
-  const siblings = getSiblings(category, categories);
-  const index = siblings.findIndex((s) => s.id === category.id);
-  const isFirst = index === 0;
-  const isLast = index === siblings.length - 1;
-
-  return (
-    <tr ref={setNodeRef} style={style} className="hover:bg-secondary/30">
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-1">
-          {isDraggable && (
-            <button
-              {...attributes}
-              {...listeners}
-              className="cursor-grab touch-none rounded p-1 hover:bg-muted active:cursor-grabbing"
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
-          {hasChildren ? (
-            <button
-              onClick={() => onToggleExpand(category.id)}
-              className="rounded p-1 hover:bg-muted"
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </button>
-          ) : (
-            <span className="w-6" />
-          )}
-        </div>
-      </td>
-      <td className="px-4 py-3 text-muted-foreground">{category.id}</td>
-      <td className={cn('px-4 py-3 font-medium')}>
-        {category.name}
-      </td>
-      <td className="px-4 py-3 text-muted-foreground">{category.slug}</td>
-      <td className="px-4 py-3">
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs ${
-            category.isActive
-              ? 'bg-green-100 text-green-700'
-              : 'bg-secondary text-muted-foreground'
-          }`}
-        >
-          {category.isActive ? '활성' : '비활성'}
-        </span>
-      </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center justify-center gap-1">
-          <button
-            onClick={() => void onMoveUp(category)}
-            disabled={isFirst}
-            aria-label="위로 이동"
-            className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            ↑
-          </button>
-          <span className="text-xs text-muted-foreground">{index + 1}</span>
-          <button
-            onClick={() => void onMoveDown(category)}
-            disabled={isLast}
-            aria-label="아래로 이동"
-            className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            ↓
-          </button>
-        </div>
-      </td>
-      <td className="px-4 py-3 text-right">
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => onEdit(category)}
-            className="rounded border px-2 py-1 text-xs hover:bg-secondary"
-          >
-            수정
-          </button>
-          <button
-            onClick={() => onDelete(category)}
-            className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
-          >
-            삭제
-          </button>
-        </div>
-      </td>
-    </tr>
-  );
-}
 
 export default function AdminCategoriesPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
@@ -304,7 +172,7 @@ export default function AdminCategoriesPage() {
   );
 
   const rootCategories = categories.filter((c) => c.parentId === null);
-  const flattenedRootCategories = flattenCategories(rootCategories, null, 0);
+  const flattenedRootCategories = flattenCategories(rootCategories, null, 0, expandedIds);
   const rootCategoryIds = flattenedRootCategories.map((c) => c.id);
 
   const findCategoryById = (id: number): AdminCategory | undefined => {
@@ -437,6 +305,14 @@ export default function AdminCategoriesPage() {
         )}
       </div>
 
+      <CategoryFormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        initial={editTarget}
+        onSubmit={handleSubmit}
+        categories={categories}
+      />
+
       <DragOverlay>
         {activeCategory ? (
           <table className="w-full text-sm">
@@ -449,15 +325,7 @@ export default function AdminCategoriesPage() {
                 <td className="px-4 py-3 font-medium">{activeCategory.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">{activeCategory.slug}</td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      activeCategory.isActive
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-secondary text-muted-foreground'
-                    }`}
-                  >
-                    {activeCategory.isActive ? '활성' : '비활성'}
-                  </span>
+                  <StatusBadge isActive={activeCategory.isActive} />
                 </td>
                 <td className="px-4 py-3"></td>
                 <td className="px-4 py-3 text-right"></td>
