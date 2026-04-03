@@ -433,24 +433,20 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 (102, 'gnb', '보이차',     '/products?categoryId=2', 2, 1, NULL),
 (103, 'gnb', '다구',       '/products?categoryId=3', 3, 1, NULL),
 (104, 'gnb', '베스트',     '/products?sort=popular',     4, 1, NULL),
-(105, 'gnb', '저널',       '/journal',                  5, 1, NULL),
-(106, 'gnb', '컬렉션',     '/collection',               6, 1, NULL),
-(107, 'gnb', '아카이브',   '/archive',                  7, 1, NULL),
-(108, 'gnb', '브랜드 소개', '/p/about',                  8, 1, NULL),
-(109, 'gnb', '기획전',      '/p/exhibition',              9, 1, NULL),
+(108, 'gnb', '브랜드 소개', '/p/about',                  5, 1, NULL),
+(109, 'gnb', '기획전',      '/p/exhibition',              6, 1, NULL),
 
--- GNB 하위메뉴: 저널
-(120, 'gnb', '└ 찻자리',   '/journal?category=tea-ritual',  1, 1, 105),
-(121, 'gnb', '└ 자사호的故事', '/journal?category=teapot-stories', 2, 1, 105),
-(122, 'gnb', '└ 보이차 이야기', '/journal?category=puerh-stories', 3, 1, 105),
-
--- GNB 하위메뉴: 컬렉션
-(123, 'gnb', '└ 니료별 컬렉션', '/collection?type=clay',  1, 1, 106),
-(124, 'gnb', '└ 제조별 컬렉션', '/collection?type=maker',  2, 1, 106),
-
--- GNB 하위메뉴: 아카이브
-(125, 'gnb', '└ 연도별归档',   '/archive?by=year',  1, 1, 107),
-(126, 'gnb', '└ 니료별归档',   '/archive?by=clay',   2, 1, 107),
+-- GNB 하위메뉴: 브랜드 소개 (저널/컬렉션/아카이브)
+(105, 'gnb', '└ 저널',     '/journal',                    1, 1, 108),
+(120, 'gnb', '└ └ 찻자리',   '/journal?category=tea-ritual',  1, 1, 105),
+(121, 'gnb', '└ └ 자사호的故事', '/journal?category=teapot-stories', 2, 1, 105),
+(122, 'gnb', '└ └ 보이차 이야기', '/journal?category=puerh-stories', 3, 1, 105),
+(106, 'gnb', '└ 컬렉션',   '/collection',                2, 1, 108),
+(123, 'gnb', '└ └ 니료별 컬렉션', '/collection?type=clay',  1, 1, 106),
+(124, 'gnb', '└ └ 제조별 컬렉션', '/collection?type=maker',  2, 1, 106),
+(107, 'gnb', '└ 아카이브', '/archive',                   3, 1, 108),
+(125, 'gnb', '└ └ 연도별归档',   '/archive?by=year',  1, 1, 107),
+(126, 'gnb', '└ └ 니료별归档',   '/archive?by=clay',   2, 1, 107),
 
 -- GNB 하위메뉴: 자사호
 (150, 'gnb', '└ 니료별',   '/products?categoryId=1',  1, 1, 101),
