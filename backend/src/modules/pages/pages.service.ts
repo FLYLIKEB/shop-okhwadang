@@ -22,6 +22,8 @@ const SUPPORTED_BLOCK_TYPES = [
   'category_nav',
   'promotion_banner',
   'text_content',
+  'split_content',
+  'brand_story',
 ];
 
 @Injectable()
