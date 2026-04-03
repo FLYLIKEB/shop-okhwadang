@@ -425,39 +425,55 @@ INSERT INTO product_options (product_id, name, value, price_adjustment, stock, s
 -- ============================================================
 INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, parent_id) VALUES
 -- GNB
-(1,  'gnb', '홈',         '/',                          0, 1, NULL),
-(2,  'gnb', '자사호',     '/products?categoryId=1',  1, 1, NULL),
-(3,  'gnb', '보이차',     '/products?categoryId=2', 2, 1, NULL),
-(4,  'gnb', '다구',       '/products?categoryId=3', 3, 1, NULL),
-(5,  'gnb', '베스트',     '/products?sort=popular',     4, 1, NULL),
-(6,  'gnb', '브랜드 소개', '/p/about',                  5, 1, NULL),
-(7,  'gnb', '기획전',      '/p/exhibition',              6, 1, NULL),
+(100, 'gnb', '홈',         '/',                          0, 1, NULL),
+(101, 'gnb', '자사호',     '/products?categoryId=1',  1, 1, NULL),
+(102, 'gnb', '보이차',     '/products?categoryId=2', 2, 1, NULL),
+(103, 'gnb', '다구',       '/products?categoryId=3', 3, 1, NULL),
+(104, 'gnb', '베스트',     '/products?sort=popular',     4, 1, NULL),
+(105, 'gnb', '저널',       '/journal',                  5, 1, NULL),
+(106, 'gnb', '컬렉션',     '/collection',               6, 1, NULL),
+(107, 'gnb', '아카이브',   '/archive',                  7, 1, NULL),
+(108, 'gnb', '브랜드 소개', '/p/about',                  8, 1, NULL),
+(109, 'gnb', '기획전',      '/p/exhibition',              9, 1, NULL),
+
+-- GNB 하위메뉴: 저널
+(120, 'gnb', '└ 찻자리',   '/journal?category=tea-ritual',  1, 1, 105),
+(121, 'gnb', '└ 자사호的故事', '/journal?category=teapot-stories', 2, 1, 105),
+(122, 'gnb', '└ 보이차 이야기', '/journal?category=puerh-stories', 3, 1, 105),
+
+-- GNB 하위메뉴: 컬렉션
+(123, 'gnb', '└ 니료별 컬렉션', '/collection?type=clay',  1, 1, 106),
+(124, 'gnb', '└ 제조별 컬렉션', '/collection?type=maker',  2, 1, 106),
+
+-- GNB 하위메뉴: 아카이브
+(125, 'gnb', '└ 연도별归档',   '/archive?by=year',  1, 1, 107),
+(126, 'gnb', '└ 니료별归档',   '/archive?by=clay',   2, 1, 107),
 
 -- GNB 하위메뉴: 자사호
-(50, 'gnb', '└ 니료별',   '/products?categoryId=1',  1, 1, 2),
-(51, 'gnb', '└ 주니',     '/products?categoryId=10', 1, 1, 50),
-(52, 'gnb', '└ 자사',     '/products?categoryId=11', 2, 1, 50),
-(53, 'gnb', '└ 단니',     '/products?categoryId=12', 3, 1, 50),
-(54, 'gnb', '└ 흑니',     '/products?categoryId=13', 4, 1, 50),
-(55, 'gnb', '└ 청회니',   '/products?categoryId=14', 5, 1, 50),
-(56, 'gnb', '└ 모양별',   '/products?categoryId=1',  6, 1, 2),
-(57, 'gnb', '└ 주형',     '/products?categoryId=20', 1, 1, 56),
-(58, 'gnb', '└ 석표',     '/products?categoryId=21', 2, 1, 56),
-(59, 'gnb', '└ 서시',     '/products?categoryId=22', 3, 1, 56),
-(60, 'gnb', '└ 편평',     '/products?categoryId=23', 4, 1, 56),
+(150, 'gnb', '└ 니료별',   '/products?categoryId=1',  1, 1, 101),
+(151, 'gnb', '└ 주니',     '/products?categoryId=10', 1, 1, 150),
+(152, 'gnb', '└ 자사',     '/products?categoryId=11', 2, 1, 150),
+(153, 'gnb', '└ 단니',     '/products?categoryId=12', 3, 1, 150),
+(154, 'gnb', '└ 흑니',     '/products?categoryId=13', 4, 1, 150),
+(155, 'gnb', '└ 청회니',   '/products?categoryId=14', 5, 1, 150),
+(156, 'gnb', '└ 모양별',   '/products?categoryId=1',  6, 1, 101),
+(157, 'gnb', '└ 주형',     '/products?categoryId=20', 1, 1, 156),
+(158, 'gnb', '└ 석표',     '/products?categoryId=21', 2, 1, 156),
+(159, 'gnb', '└ 서시',     '/products?categoryId=22', 3, 1, 156),
+(160, 'gnb', '└ 편평',     '/products?categoryId=23', 4, 1, 156),
 
 -- GNB 하위메뉴: 보이차
-(61, 'gnb', '└ 종류별',   '/products?categoryId=2',  2, 1, 3),
-(62, 'gnb', '└ 생차',     '/products?categoryId=30', 1, 1, 61),
-(63, 'gnb', '└ 숙차',     '/products?categoryId=31', 2, 1, 61),
-(64, 'gnb', '└ 노차',     '/products?categoryId=32', 3, 1, 61),
+(161, 'gnb', '└ 종류별',   '/products?categoryId=2',  2, 1, 102),
+(162, 'gnb', '└ 생차',     '/products?categoryId=30', 1, 1, 161),
+(163, 'gnb', '└ 숙차',     '/products?categoryId=31', 2, 1, 161),
+(164, 'gnb', '└ 노차',     '/products?categoryId=32', 3, 1, 161),
 
 -- GNB 하위메뉴: 다구
-(65, 'gnb', '└ 종류별',   '/products?categoryId=3',  3, 1, 4),
-(66, 'gnb', '└ 다완',     '/products?categoryId=40', 1, 1, 65),
-(67, 'gnb', '└ 다반',     '/products?categoryId=41', 2, 1, 65),
-(68, 'gnb', '└ 다도구 세트', '/products?categoryId=42', 3, 1, 65),
-(69, 'gnb', '└ 차 도구',  '/products?categoryId=43', 4, 1, 65),
+(165, 'gnb', '└ 종류별',   '/products?categoryId=3',  3, 1, 103),
+(166, 'gnb', '└ 다완',     '/products?categoryId=40', 1, 1, 165),
+(167, 'gnb', '└ 다반',     '/products?categoryId=41', 2, 1, 165),
+(168, 'gnb', '└ 다도구 세트', '/products?categoryId=42', 3, 1, 165),
+(169, 'gnb', '└ 차 도구',  '/products?categoryId=43', 4, 1, 165),
 
 -- Sidebar
 (10, 'sidebar', '전체 상품',  '/products',                         0, 1, NULL),
@@ -474,10 +490,13 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 -- Footer
 (20, 'footer', '이용약관',        '/terms',   0, 1, NULL),
 (21, 'footer', '개인정보처리방침', '/privacy', 1, 1, NULL),
-(22, 'footer', '공지사항',        '/notices', 2, 1, NULL),
-(23, 'footer', 'FAQ',             '/faq',     3, 1, NULL),
-(24, 'footer', '고객센터',        '/inquiry', 4, 1, NULL),
-(25, 'footer', '브랜드 소개',     '/p/about', 5, 1, NULL);
+(22, 'footer', '저널',           '/journal',  2, 1, NULL),
+(23, 'footer', '컬렉션',         '/collection', 3, 1, NULL),
+(24, 'footer', '아카이브',       '/archive',  4, 1, NULL),
+(25, 'footer', '공지사항',        '/notices', 5, 1, NULL),
+(26, 'footer', 'FAQ',             '/faq',     6, 1, NULL),
+(27, 'footer', '고객센터',        '/inquiry', 7, 1, NULL),
+(28, 'footer', '브랜드 소개',     '/p/about', 8, 1, NULL);
 
 -- ============================================================
 -- 7. 배너
