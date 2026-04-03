@@ -59,7 +59,7 @@ export default function SplitContentBlock({ content }: Props) {
           ref={imageRef}
           className={cn(
             'relative transition-opacity duration-700 ease-in',
-            isLarge ? 'min-h-80 md:min-h-[480px]' : isCompact ? 'min-h-48 md:min-h-64' : 'min-h-64 md:min-h-96',
+            isLarge ? 'min-h-80 md:min-h-[30rem]' : isCompact ? 'min-h-48 md:min-h-64' : 'min-h-64 md:min-h-96',
             isVisible ? 'opacity-100' : 'opacity-0'
           )}
         >
