@@ -6,6 +6,11 @@ globs: ["backend/src/database/**", "backend/src/modules/**/*.entity.ts", "backen
 ## Stack
 - MySQL 8.0, TypeORM, charset `utf8mb4`
 
+## Seed Data Insertion
+- **UTF-8 encoding is mandatory** — always use `SET NAMES utf8mb4;` before INSERT/UPDATE when inserting Korean or other non-ASCII text via `docker exec mysql`
+- Heredoc syntax (`<<'EOSQL'`) is recommended to avoid shell escaping issues
+- Single-row INSERTs are safer for avoiding encoding corruption
+
 ## Migration
 - **TypeORM Migration CLI only** — manual SQL files forbidden
 - `synchronize: true` **forbidden in production**
