@@ -226,7 +226,7 @@ export default function ProductCarouselBlock({ content }: Props) {
 
         <div
           ref={scrollRef}
-          className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8"
+          className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8 py-4"
         >
           {products.map((product, index) => {
             const isCenter = activeIndex === index;
@@ -237,7 +237,7 @@ export default function ProductCarouselBlock({ content }: Props) {
                 className={cn(
                   'shrink-0 snap-center transition-all duration-500 ease-out will-change-transform',
                   isLarge ? 'w-72' : 'w-56',
-                  isCenter ? 'md:scale-105 z-10' : 'scale-100 opacity-90',
+                  isCenter ? 'md:scale-105 z-10' : 'scale-100 opacity-80',
                 )}
               >
                 <ProductCard
