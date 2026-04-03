@@ -98,6 +98,13 @@ export default function MyPage() {
           <span className="text-2xl">👁</span>
           최근 본 상품
         </Link>
+        <Link
+          href="/my/inquiries"
+          className="flex flex-col items-center gap-2 rounded-lg border p-4 text-sm font-medium hover:bg-muted transition-colors text-center"
+        >
+          <span className="text-2xl">💬</span>
+          1:1 문의
+        </Link>
       </section>
 
       {/* Recent orders */}
