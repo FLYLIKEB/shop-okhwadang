@@ -831,8 +831,6 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'title', '옥화당(玉花堂) 이야기',
   'subtitle', 'Our Story',
   'description', '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 자사호·보이차·다구를 국내에 소개하는 전문 D2C 쇼핑몰입니다. 600년 역사의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 산지 직수입을 원칙으로 합니다.',
-  'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
-  'image_position', 'right',
   'cta_text', '브랜드 소개 보기',
   'cta_url', '/p/about',
   'template', 'large'

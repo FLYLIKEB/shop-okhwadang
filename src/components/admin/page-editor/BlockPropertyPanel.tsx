@@ -502,6 +502,44 @@ function TextContentFields({
   );
 }
 
+function SplitContentFields({
+  content,
+  onChange,
+}: {
+  content: Record<string, unknown>;
+  onChange: (c: Record<string, unknown>) => void;
+}) {
+  const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
+  return (
+    <>
+      <StringField label="서브타이틀" value={(content.subtitle as string) ?? ''} onChange={(v) => update('subtitle', v)} placeholder="Our Story" />
+      <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
+      <StringField label="설명" value={(content.description as string) ?? ''} onChange={(v) => update('description', v)} multiline placeholder="브랜드 소개 텍스트" />
+      <StringField label="CTA 텍스트" value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
+      <StringField label="CTA URL" value={(content.cta_url as string) ?? ''} onChange={(v) => update('cta_url', v)} />
+      <SelectField
+        label="템플릿"
+        value={(content.template as string) ?? 'default'}
+        options={[
+          { value: 'default', label: '기본' },
+          { value: 'large', label: '대형' },
+          { value: 'compact', label: '컴팩트' },
+        ]}
+        onChange={(v) => update('template', v)}
+      />
+      <SelectField
+        label="배경색"
+        value={(content.use_alternate_bg as boolean) ? 'alternate' : 'white'}
+        options={[
+          { value: 'white', label: '화이트' },
+          { value: 'alternate', label: '따뜻한 회색' },
+        ]}
+        onChange={(v) => update('use_alternate_bg', v === 'alternate')}
+      />
+    </>
+  );
+}
+
 const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   hero_banner: '히어로 배너',
   product_grid: '상품 그리드',
@@ -520,8 +558,8 @@ const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
   category_nav: 'ℹ️ 카테고리 바로가기 버튼 모음입니다. 카테고리를 선택하면 순서대로 표시됩니다.',
   promotion_banner: 'ℹ️ 할인·이벤트를 강조하는 띠 배너입니다. 종료일을 설정하면 기간 표시가 가능합니다. 히어로 배너보다 작고 콤팩트합니다.',
   text_content: 'ℹ️ HTML 형식의 자유 텍스트 영역입니다. 공지사항·브랜드 소개 등에 사용하세요. <b>볼드</b>, <a href="">링크</a> 등 기본 HTML 태그 사용 가능합니다.',
-  split_content: 'ℹ️ 이미지와 텍스트를 2열로 나란히 표시합니다. 이미지 위치(좌/우), 제목·설명·버튼을 설정할 수 있습니다.',
-  brand_story: 'ℹ️ 브랜드 이야기 섹션입니다. 장인 이미지와 브랜드 소개 텍스트를 2열 레이아웃으로 표시합니다.',
+  split_content: 'ℹ️ 텍스트为中心的 콘텐츠 섹션입니다. 서브타이틀, 제목, 설명, CTA 버튼을 설정할 수 있습니다.',
+  brand_story: 'ℹ️ 브랜드 이야기 섹션입니다. 서브타이틀, 제목, 설명, CTA 버튼을 설정할 수 있습니다.',
 };
 
 export default function BlockPropertyPanel({ block, onUpdateContent }: BlockPropertyPanelProps) {
@@ -551,6 +589,9 @@ export default function BlockPropertyPanel({ block, onUpdateContent }: BlockProp
         return <PromotionBannerFields content={block.content} onChange={handleChange} />;
       case 'text_content':
         return <TextContentFields content={block.content} onChange={handleChange} />;
+      case 'split_content':
+      case 'brand_story':
+        return <SplitContentFields content={block.content} onChange={handleChange} />;
     }
   };
 
