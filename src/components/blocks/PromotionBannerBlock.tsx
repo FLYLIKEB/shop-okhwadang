@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import type { PromotionBannerContent } from '@/lib/api';
+import { isSafeUrl } from '@/utils/url';
 
 interface Props {
   content: PromotionBannerContent;
@@ -25,7 +26,7 @@ export default function PromotionBannerBlock({ content }: Props) {
         {end_date && <CountdownTimer endDate={end_date} />}
         {cta_text && cta_url && (
           <Link
-            href={cta_url}
+            href={isSafeUrl(cta_url) ? cta_url : '#'}
             className="mt-6 inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
           >
             {cta_text}
@@ -48,7 +49,7 @@ export default function PromotionBannerBlock({ content }: Props) {
           {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           {cta_text && cta_url && (
             <Link
-              href={cta_url}
+              href={isSafeUrl(cta_url) ? cta_url : '#'}
               className="mt-4 inline-block border border-foreground px-6 py-2 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
             >
               {cta_text}
@@ -92,7 +93,7 @@ export default function PromotionBannerBlock({ content }: Props) {
         )}
         {cta_text && cta_url && (
           <Link
-            href={cta_url}
+            href={isSafeUrl(cta_url) ? cta_url : '#'}
             className={`inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors duration-600 ease-out ${
               visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
             }`}
