@@ -32,7 +32,7 @@ export default function ProductSkeleton({ count = 20, view = 'grid' }: ProductSk
   }
 
   return (
-    <div className={cn('grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4')}>
+    <div className={cn('grid gap-12 grid-cols-2 md:grid-cols-3 lg:grid-cols-4')}>
       {items.map((i) => (
         <CardSkeleton key={i} />
       ))}
