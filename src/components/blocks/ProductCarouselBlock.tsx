@@ -21,7 +21,18 @@ export default function ProductCarouselBlock({ content }: Props) {
   const [loading, setLoading] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const autoScrollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isUserScrollingRef = useRef(false);
+
+  const AUTO_SCROLL_INTERVAL = 4000;
+  const RESUME_DELAY = 6000;
+
+  const cardWidth = template === 'large' ? 288 : 224;
+  const gap = 24;
+  const isLarge = template === 'large';
 
   useEffect(() => {
     let cancelled = false;
@@ -30,9 +41,7 @@ export default function ProductCarouselBlock({ content }: Props) {
       try {
         if (product_ids && product_ids.length > 0) {
           const results = await productsApi.getBulk(product_ids.slice(0, limit));
-          if (!cancelled) {
-            setProducts(results);
-          }
+          if (!cancelled) setProducts(results);
         } else if (category_id && auto) {
           const res = await productsApi.getList({ categoryId: category_id, sort, limit });
           if (!cancelled) setProducts(res.items);
@@ -41,7 +50,6 @@ export default function ProductCarouselBlock({ content }: Props) {
           if (!cancelled) setProducts(res.items);
         }
       } catch {
-        // Silently fail
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -51,37 +59,117 @@ export default function ProductCarouselBlock({ content }: Props) {
     return () => { cancelled = true; };
   }, [product_ids, category_id, auto, sort, limit]);
 
-  const updateScrollState = useCallback(() => {
+  useEffect(() => {
+    if (scrollRef.current && products.length > 0) {
+      scrollRef.current.scrollLeft = 0;
+    }
+  }, [products.length]);
+
+  const updateActiveIndex = useCallback(() => {
     const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 0);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
-  }, []);
+    if (!el || products.length === 0) return;
+
+    const scrollLeft = el.scrollLeft;
+    const cardTotalWidth = cardWidth + gap;
+    const newIndex = Math.round(scrollLeft / cardTotalWidth);
+    const clampedIndex = Math.max(0, Math.min(newIndex, products.length - 1));
+
+    setActiveIndex(clampedIndex);
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  }, [cardWidth, gap, products.length]);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    updateScrollState();
-    el.addEventListener('scroll', updateScrollState, { passive: true });
-    const ro = new ResizeObserver(updateScrollState);
+
+    updateActiveIndex();
+    el.addEventListener('scroll', updateActiveIndex, { passive: true });
+    const ro = new ResizeObserver(updateActiveIndex);
     ro.observe(el);
+
     return () => {
-      el.removeEventListener('scroll', updateScrollState);
+      el.removeEventListener('scroll', updateActiveIndex);
       ro.disconnect();
     };
-  }, [products, updateScrollState]);
+  }, [products, updateActiveIndex]);
 
-  const cardWidth = template === 'large' ? 288 : 224; // w-72 = 288px, w-56 = 224px
-  const gap = 24; // gap-6 = 24px
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollTimerRef.current) {
+      clearInterval(autoScrollTimerRef.current);
+      autoScrollTimerRef.current = null;
+    }
+  }, []);
+
+  const startAutoScroll = useCallback(() => {
+    stopAutoScroll();
+    if (products.length <= 1) return;
+
+    autoScrollTimerRef.current = setInterval(() => {
+      const el = scrollRef.current;
+      if (!el || isUserScrollingRef.current) return;
+
+      const cardTotalWidth = cardWidth + gap;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      const nextScroll = el.scrollLeft + cardTotalWidth;
+
+      if (nextScroll >= maxScroll - 5) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: cardTotalWidth, behavior: 'smooth' });
+      }
+    }, AUTO_SCROLL_INTERVAL);
+  }, [stopAutoScroll, products.length, cardWidth, gap]);
+
+  const pauseAutoScroll = useCallback(() => {
+    isUserScrollingRef.current = true;
+    stopAutoScroll();
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current);
+    }
+    resumeTimerRef.current = setTimeout(() => {
+      isUserScrollingRef.current = false;
+      startAutoScroll();
+    }, RESUME_DELAY);
+  }, [stopAutoScroll, startAutoScroll]);
+
+  useEffect(() => {
+    if (products.length > 1) {
+      startAutoScroll();
+    }
+    return () => {
+      stopAutoScroll();
+      if (resumeTimerRef.current) {
+        clearTimeout(resumeTimerRef.current);
+      }
+    };
+  }, [products.length, startAutoScroll, stopAutoScroll]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const handleInteraction = () => {
+      if (!isUserScrollingRef.current) {
+        pauseAutoScroll();
+      }
+    };
+
+    el.addEventListener('wheel', handleInteraction, { passive: true });
+    el.addEventListener('touchstart', handleInteraction, { passive: true });
+
+    return () => {
+      el.removeEventListener('wheel', handleInteraction);
+      el.removeEventListener('touchstart', handleInteraction);
+    };
+  }, [pauseAutoScroll]);
 
   function scrollBy(direction: 'left' | 'right') {
     const el = scrollRef.current;
     if (!el) return;
-    const amount = cardWidth + gap;
-    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
+    const cardTotalWidth = cardWidth + gap;
+    el.scrollBy({ left: direction === 'left' ? -cardTotalWidth : cardTotalWidth, behavior: 'smooth' });
   }
-
-  const isLarge = template === 'large';
 
   if (loading) {
     return (
@@ -92,7 +180,7 @@ export default function ProductCarouselBlock({ content }: Props) {
             <div
               key={i}
               className={cn(
-                'shrink-0 animate-pulse rounded bg-muted',
+                'shrink-0 animate-pulse rounded-lg bg-muted',
                 isLarge ? 'h-80 w-72' : 'h-64 w-56',
               )}
             />
@@ -105,84 +193,112 @@ export default function ProductCarouselBlock({ content }: Props) {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-12">
-      <div className="flex items-center justify-between mb-8">
-        {title ? (
-          <h2 className="text-2xl font-medium">{title}</h2>
-        ) : (
-          <div />
-        )}
+    <section className="py-16 overflow-visible">
+      <div className="relative mb-8 overflow-visible">
+        {title && <h2 className="text-2xl font-medium pr-24">{title}</h2>}
         {category_id && (
           <Link
             href={`/${locale}/products?categoryId=${category_id}`}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute top-0 right-0 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             전체 보기
+            <ChevronRight className="w-4 h-4" />
           </Link>
         )}
       </div>
-      <div className="relative group">
-        {/* Left arrow */}
-        <button
+
+      <div className="relative overflow-visible py-16">
+          <button
           type="button"
           onClick={() => scrollBy('left')}
           disabled={!canScrollLeft}
           aria-label="이전 상품"
           className={cn(
-            'absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10',
+            'absolute left-2 top-1/2 -translate-y-1/2 z-10',
             'hidden md:flex items-center justify-center',
-            'w-10 h-10 rounded-full bg-background border border-border shadow-md',
+            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 shadow-sm',
             'opacity-0 group-hover:opacity-100 transition-opacity duration-200',
             !canScrollLeft && 'opacity-0 pointer-events-none',
           )}
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
 
         <div
           ref={scrollRef}
-          className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide"
+          className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8"
         >
-          {products.map((product, index) => (
-            <div
-              key={product.id}
-              className={cn('shrink-0', isLarge ? 'w-72' : 'w-56')}
-            >
-              <ProductCard
+          {products.map((product, index) => {
+            const isCenter = activeIndex === index;
+
+            return (
+              <div
                 key={product.id}
-                id={product.id}
-                name={product.name}
-                price={product.price}
-                salePrice={product.salePrice}
-                shortDescription={product.shortDescription}
-                rating={product.rating}
-                reviewCount={product.reviewCount}
-                status={product.status}
-                images={product.images}
-                priority={index === 0}
-                showCartOnHover
-              />
-            </div>
-          ))}
+                className={cn(
+                  'shrink-0 snap-center transition-all duration-500 ease-out',
+                  isLarge ? 'w-72' : 'w-56',
+                  isCenter && 'scale-100 md:scale-105 z10',
+                  !isCenter && 'scale-100 opacity-90',
+                )}
+              >
+                <ProductCard
+                  id={product.id}
+                  name={product.name}
+                  price={product.price}
+                  salePrice={product.salePrice}
+                  shortDescription={product.shortDescription}
+                  rating={product.rating}
+                  reviewCount={product.reviewCount}
+                  status={product.status}
+                  images={product.images}
+                  priority={index === 0}
+                  showCartOnHover
+                />
+              </div>
+            );
+          })}
         </div>
 
-        {/* Right arrow */}
         <button
           type="button"
           onClick={() => scrollBy('right')}
           disabled={!canScrollRight}
           aria-label="다음 상품"
           className={cn(
-            'absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10',
+            'absolute right-2 top-1/2 -translate-y-1/2 z-10',
             'hidden md:flex items-center justify-center',
-            'w-10 h-10 rounded-full bg-background border border-border shadow-md',
+            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 shadow-sm',
             'opacity-0 group-hover:opacity-100 transition-opacity duration-200',
             !canScrollRight && 'opacity-0 pointer-events-none',
           )}
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
+
+      {products.length > 1 && (
+        <div className="flex justify-center gap-2 mt-6">
+          {products.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => {
+                const el = scrollRef.current;
+                if (!el) return;
+                const cardTotalWidth = cardWidth + gap;
+                el.scrollTo({ left: index * cardTotalWidth, behavior: 'smooth' });
+              }}
+              className={cn(
+                'h-1.5 rounded-full transition-all duration-300',
+                activeIndex === index
+                  ? 'w-6 bg-foreground'
+                  : 'w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50',
+              )}
+              aria-label={`${index + 1}번 상품으로 이동`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
