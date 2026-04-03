@@ -8,7 +8,7 @@ import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { ORDER_STATUS_LABELS } from '@/constants/orderStatus';
+import { ORDER_STATUS_LABELS } from '@/constants/status';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import ShippingTimeline from '@/components/ShippingTimeline';
 
