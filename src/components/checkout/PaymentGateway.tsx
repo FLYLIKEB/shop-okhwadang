@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { Locale } from '@/i18n/routing';
 import type { PreparePaymentResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+
+export interface PaymentGatewayHandle {
+  confirm: () => Promise<void>;
+}
 
 interface PaymentGatewayProps {
   prepareResult: PreparePaymentResponse;
@@ -16,79 +20,86 @@ interface PaymentGatewayProps {
 
 // ─── Toss Payments (ko) ───────────────────────────────────────────────────────
 
-function TossPaymentGateway({
-  prepareResult,
-  orderId,
-  orderNumber,
-  amount,
-  locale,
-  onError,
-}: PaymentGatewayProps) {
-  useEffect(() => {
-    const origin = window.location.origin;
+const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
+  function TossPaymentGateway(
+    { prepareResult, orderId, orderNumber, amount, locale, onError },
+    ref,
+  ) {
+    const handlerRef = useRef<(() => Promise<void>) | null>(null);
 
-    const handler = async () => {
-      try {
-        const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
-        const tossPayments = await loadTossPayments(prepareResult.clientKey);
-        const payment = tossPayments.payment({ customerKey: `user_${orderId}` });
+    useEffect(() => {
+      const origin = window.location.origin;
 
-        sessionStorage.setItem(
-          'tossPaymentContext',
-          JSON.stringify({ orderId, orderNumber, amount }),
-        );
+      const handler = async () => {
+        try {
+          const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+          const tossPayments = await loadTossPayments(prepareResult.clientKey);
+          const payment = tossPayments.payment({ customerKey: `user_${orderId}` });
 
-        await payment.requestPayment({
-          method: 'CARD',
-          amount: { currency: 'KRW', value: amount },
-          orderId: orderNumber,
-          orderName: `주문 ${orderNumber}`,
-          successUrl: `${origin}/${locale}/checkout/success`,
-          failUrl: `${origin}/${locale}/checkout/fail`,
-        });
-      } catch (err) {
-        onError(handleApiError(err, '결제 초기화 오류'));
-      }
-    };
+          sessionStorage.setItem(
+            'tossPaymentContext',
+            JSON.stringify({ orderId, orderNumber, amount }),
+          );
 
-    (window as Window & { __tossPayHandler?: () => Promise<void> }).__tossPayHandler = handler;
+          await payment.requestPayment({
+            method: 'CARD',
+            amount: { currency: 'KRW', value: amount },
+            orderId: orderNumber,
+            orderName: `주문 ${orderNumber}`,
+            successUrl: `${origin}/${locale}/checkout/success`,
+            failUrl: `${origin}/${locale}/checkout/fail`,
+          });
+        } catch (err) {
+          onError(handleApiError(err, '결제 초기화 오류'));
+        }
+      };
 
-    return () => {
-      delete (window as Window & { __tossPayHandler?: () => Promise<void> }).__tossPayHandler;
-    };
-  }, [prepareResult.clientKey, orderId, orderNumber, amount, locale, onError]);
+      handlerRef.current = handler;
 
-  return (
-    <label className="flex items-center gap-3 cursor-pointer">
-      <input
-        type="radio"
-        name="paymentMethod"
-        value="toss"
-        defaultChecked
-        readOnly
-        className="accent-foreground"
-      />
-      <span className="text-sm">토스페이먼츠 (카드)</span>
-    </label>
-  );
-}
+      return () => {
+        handlerRef.current = null;
+      };
+    }, [prepareResult.clientKey, orderId, orderNumber, amount, locale, onError]);
+
+    useImperativeHandle(ref, () => ({
+      confirm: async () => {
+        if (handlerRef.current) {
+          await handlerRef.current();
+        }
+      },
+    }));
+
+    return (
+      <label className="flex items-center gap-3 cursor-pointer">
+        <input
+          type="radio"
+          name="paymentMethod"
+          value="toss"
+          defaultChecked
+          readOnly
+          className="accent-foreground"
+        />
+        <span className="text-sm">토스페이먼츠 (카드)</span>
+      </label>
+    );
+  },
+);
 
 // ─── Stripe Payment Element (en / ja / zh) ────────────────────────────────────
 
-function StripePaymentGateway({
-  clientSecret,
-  publishableKey,
-  locale,
-  onError,
-}: {
-  clientSecret: string;
-  publishableKey: string;
-  locale: string;
-  onError: (msg: string) => void;
-}) {
+const StripePaymentGateway = forwardRef<
+  PaymentGatewayHandle,
+  {
+    clientSecret: string;
+    publishableKey: string;
+    locale: string;
+    onError: (msg: string) => void;
+  }
+>(function StripePaymentGateway({ clientSecret, publishableKey, locale, onError }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [mountError, setMountError] = useState<string | null>(null);
+  const confirmRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     if (!clientSecret || !publishableKey) {
@@ -129,7 +140,7 @@ function StripePaymentGateway({
         }
       });
 
-      (window as Window & { __stripeConfirm?: () => Promise<void> }).__stripeConfirm = async () => {
+      confirmRef.current = async () => {
         const { error } = await stripeInstance.confirmPayment({
           elements,
           confirmParams: {
@@ -144,10 +155,18 @@ function StripePaymentGateway({
 
     return () => {
       mounted = false;
-      delete (window as Window & { __stripeConfirm?: () => Promise<void> }).__stripeConfirm;
+      confirmRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientSecret, publishableKey]);
+
+  useImperativeHandle(ref, () => ({
+    confirm: async () => {
+      if (confirmRef.current) {
+        await confirmRef.current();
+      }
+    },
+  }));
 
   return (
     <div className="space-y-3">
@@ -169,56 +188,69 @@ function StripePaymentGateway({
       <div ref={containerRef} className={loading ? 'sr-only' : undefined} />
     </div>
   );
-}
+});
 
 // ─── Mock / fallback ──────────────────────────────────────────────────────────
 
-function MockPaymentGateway() {
-  return (
-    <label className="flex items-center gap-3 cursor-pointer">
-      <input
-        type="radio"
-        name="paymentMethod"
-        value="mock"
-        defaultChecked
-        readOnly
-        className="accent-foreground"
-      />
-      <span className="text-sm">테스트 결제 (Mock)</span>
-    </label>
-  );
-}
+const MockPaymentGateway = forwardRef<PaymentGatewayHandle>(
+  function MockPaymentGateway(_props, ref) {
+    useImperativeHandle(ref, () => ({
+      confirm: async () => {
+        // Mock gateway: no-op — caller handles mock payment directly
+      },
+    }));
+
+    return (
+      <label className="flex items-center gap-3 cursor-pointer">
+        <input
+          type="radio"
+          name="paymentMethod"
+          value="mock"
+          defaultChecked
+          readOnly
+          className="accent-foreground"
+        />
+        <span className="text-sm">테스트 결제 (Mock)</span>
+      </label>
+    );
+  },
+);
 
 // ─── Public component ─────────────────────────────────────────────────────────
 
-export default function PaymentGateway(props: PaymentGatewayProps) {
-  const { prepareResult, locale } = props;
+const PaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
+  function PaymentGateway(props, ref) {
+    const { prepareResult, locale } = props;
 
-  const isToss =
-    locale === 'ko' &&
-    prepareResult.clientKey &&
-    prepareResult.clientKey !== 'mock_client_key';
+    const isToss =
+      locale === 'ko' &&
+      prepareResult.clientKey &&
+      prepareResult.clientKey !== 'mock_client_key';
 
-  if (isToss) {
-    return <TossPaymentGateway {...props} />;
-  }
+    if (isToss) {
+      return <TossPaymentGateway ref={ref} {...props} />;
+    }
 
-  const isStripe =
-    prepareResult.gateway === 'stripe' &&
-    prepareResult.clientKey &&
-    prepareResult.clientKey !== 'mock_client_key';
+    const isStripe =
+      prepareResult.gateway === 'stripe' &&
+      prepareResult.clientKey &&
+      prepareResult.clientKey !== 'mock_client_key';
 
-  if (isStripe) {
-    const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
-    return (
-      <StripePaymentGateway
-        clientSecret={prepareResult.clientKey}
-        publishableKey={publishableKey}
-        locale={locale}
-        onError={props.onError}
-      />
-    );
-  }
+    if (isStripe) {
+      const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
+      return (
+        <StripePaymentGateway
+          ref={ref}
+          clientSecret={prepareResult.clientKey}
+          publishableKey={publishableKey}
+          locale={locale}
+          onError={props.onError}
+        />
+      );
+    }
 
-  return <MockPaymentGateway />;
-}
+    return <MockPaymentGateway ref={ref} />;
+  },
+);
+
+export default PaymentGateway;
