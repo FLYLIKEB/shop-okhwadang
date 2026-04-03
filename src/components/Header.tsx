@@ -79,76 +79,30 @@ interface MobileMenuProps {
   onLogout: () => void;
 }
 
-interface PanelState {
+interface HistoryEntry {
   title: string;
   items: NavigationItem[];
 }
 
 function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible, onClose, onLogout }: MobileMenuProps) {
   const menuItems = sidebarItems.length > 0 ? sidebarItems : navItems;
-  const [depth, setDepth] = useState(0);
-  const [currentItems, setCurrentItems] = useState<NavigationItem[]>(menuItems);
-  const [title, setTitle] = useState('메뉴');
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const current = history.length > 0 ? history[history.length - 1] : { title: '메뉴', items: menuItems };
 
   const handleItemClick = (item: NavigationItem) => {
     if (item.children.length > 0) {
-      setDepth(d => d + 1);
-      setCurrentItems(item.children);
-      setTitle(item.label);
+      setHistory(h => [...h, { title: item.label, items: item.children }]);
     } else {
-      onClose();
+      closeAndReset();
     }
   };
 
   const handleBack = () => {
-    if (depth > 0) {
-      setDepth(d => d - 1);
-      if (depth === 1) {
-        setCurrentItems(menuItems);
-        setTitle('메뉴');
-      } else {
-        const parent = findParentItem(menuItems, currentItems);
-        if (parent && parent.parent_id) {
-          const grandparentItems = findItemsByParentId(menuItems, parent.parent_id);
-          setCurrentItems(grandparentItems);
-          setTitle(parent.label);
-        } else {
-          setCurrentItems(menuItems);
-          setTitle('메뉴');
-        }
-      }
-    }
-  };
-
-  const findParentItem = (items: NavigationItem[], target: NavigationItem[]): NavigationItem | null => {
-    for (const item of items) {
-      if (item.children && item.children.some(c => currentItems.some(t => t.id === c.id))) {
-        return item;
-      }
-      if (item.children) {
-        const found = findParentItem(item.children, target);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  const findItemsByParentId = (items: NavigationItem[], parentId: number | null): NavigationItem[] => {
-    if (parentId === null) return [];
-    for (const item of items) {
-      if (item.id === parentId) return item.children || [];
-      if (item.children) {
-        const found = findItemsByParentId(item.children, parentId);
-        if (found.length > 0) return found;
-      }
-    }
-    return [];
+    setHistory(h => h.slice(0, -1));
   };
 
   const closeAndReset = () => {
-    setDepth(0);
-    setCurrentItems(menuItems);
-    setTitle('메뉴');
+    setHistory([]);
     onClose();
   };
 
@@ -165,8 +119,8 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
       <nav
         aria-label="모바일 메뉴"
         className={cn(
-          'absolute left-0 top-0 h-full w-[302px] bg-background shadow-xl transition-[left] duration-500 ease-[cubic-bezier(0,1,0,0.5,1)]',
-          visible ? 'left-0' : 'left-[-100%]',
+          'absolute left-0 top-0 h-full w-80 bg-background shadow-xl transition-transform duration-500 ease-out',
+          visible ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         <div className="relative w-full h-full overflow-y-auto overflow-x-hidden">
@@ -174,27 +128,27 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
             <div className="flex items-center px-4 h-14 border-b border-border shrink-0">
               <button
                 type="button"
-                onClick={depth > 0 ? handleBack : onClose}
+                onClick={history.length > 0 ? handleBack : onClose}
                 className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label={depth > 0 ? '뒤로' : '메뉴 닫기'}
+                aria-label={history.length > 0 ? '뒤로' : '메뉴 닫기'}
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M12 5l-5 5 5 5" />
                 </svg>
               </button>
-              <span className={cn('text-sm font-medium', depth > 0 ? 'ml-3' : 'ml-0')}>
-                {title}
+              <span className={cn('typo-body-sm font-medium', history.length > 0 ? 'ml-3' : 'ml-0')}>
+                {current.title}
               </span>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4">
               <div className="flex flex-col gap-1">
-                {currentItems.map((item) => (
+                {current.items.map((item) => (
                   <div key={item.id}>
                     {item.children && item.children.length > 0 ? (
                       <button
                         type="button"
                         onClick={() => handleItemClick(item)}
-                        className="w-full py-3 text-left text-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
+                        className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
                       >
                         {item.label}
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
@@ -205,7 +159,7 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
                       <Link
                         href={item.url}
                         onClick={closeAndReset}
-                        className="block py-3 text-sm text-foreground hover:text-muted-foreground transition-colors"
+                        className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
                       >
                         {item.label}
                       </Link>
@@ -218,14 +172,14 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
               <div className="flex flex-col gap-1">
                 {isAuthenticated ? (
                   <>
-                    <Link href="/my" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+                    <Link href="/my" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
                       <User className="h-4 w-4" />
                       {userName ?? '마이페이지'}
                     </Link>
                     <button
                       type="button"
                       onClick={() => { closeAndReset(); onLogout(); }}
-                      className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-left flex items-center gap-3"
+                      className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors text-left flex items-center gap-3"
                     >
                       <LogOut className="h-4 w-4" />
                       로그아웃
@@ -233,21 +187,21 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
                   </>
                 ) : (
                   <>
-                    <Link href="/login" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+                    <Link href="/login" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
                       <LogIn className="h-4 w-4" />
                       로그인
                     </Link>
-                    <Link href="/signup" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+                    <Link href="/signup" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
                       <UserPlus className="h-4 w-4" />
                       계정 만들기
                     </Link>
                   </>
                 )}
-                <Link href="/contact" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+                <Link href="/contact" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
                   <MessageSquare className="h-4 w-4" />
                   문의하기
                 </Link>
-                <Link href="/order-tracking" onClick={closeAndReset} className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+                <Link href="/order-tracking" onClick={closeAndReset} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
                   <Package className="h-4 w-4" />
                   주문조회
                 </Link>
