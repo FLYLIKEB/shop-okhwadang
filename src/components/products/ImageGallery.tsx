@@ -24,9 +24,45 @@ const FALLBACK_IMAGES: ProductImage[] = TEAPOT_IMAGES.map((img, i) => ({
 
 interface ImageGalleryProps {
   images: ProductImage[]
+  isLoading?: boolean
+  error?: Error | null
+  onRetry?: () => void
 }
 
-export default function ImageGallery({ images: rawImages }: ImageGalleryProps) {
+function ImageGallerySkeleton() {
+  return (
+    <div className="space-y-3">
+      <div className="aspect-square w-full rounded-lg bg-muted animate-pulse" />
+      <div className="flex gap-2">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="w-20 h-20 rounded-lg bg-muted animate-pulse" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ImageGalleryError({ error, onRetry }: { error: Error; onRetry?: () => void }) {
+  return (
+    <div className="aspect-square w-full rounded-lg bg-muted flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <div className="text-center">
+        <p className="text-sm font-medium text-foreground mb-1">이미지를 불러오지 못했습니다</p>
+        <p className="text-xs text-muted-foreground">{error.message || '알 수 없는 오류가 발생했습니다.'}</p>
+      </div>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          다시 시도
+        </button>
+      )}
+    </div>
+  )
+}
+
+export default function ImageGallery({ images: rawImages, isLoading, error, onRetry }: ImageGalleryProps) {
   const images = rawImages.length > 0 ? rawImages : FALLBACK_IMAGES
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
@@ -194,10 +230,21 @@ export default function ImageGallery({ images: rawImages }: ImageGalleryProps) {
     lightboxPanRef.current = { x: 0, y: 0 }
   }, [])
 
+  if (isLoading) {
+    return <ImageGallerySkeleton />
+  }
+
+  if (error) {
+    return <ImageGalleryError error={error} onRetry={onRetry} />
+  }
+
   if (images.length === 0) {
     return (
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
-        <span className="text-sm">이미지 없음</span>
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted flex flex-col items-center justify-center gap-2 text-muted-foreground">
+        <svg className="w-10 h-10 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span className="text-sm text-muted-foreground">등록된 이미지가 없습니다</span>
       </div>
     )
   }
