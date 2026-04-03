@@ -485,10 +485,11 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 (22, 'footer', '저널',           '/journal',        2, 1, NULL),
 (23, 'footer', '컬렉션',         '/collection',     3, 1, NULL),
 (24, 'footer', '아카이브',       '/archive',        4, 1, NULL),
-(25, 'footer', '공지사항',        '/notice',         5, 1, NULL),
-(26, 'footer', 'FAQ',             '/faq',            6, 1, NULL),
-(27, 'footer', '고객센터',        '/pages/support',  7, 1, NULL),
-(28, 'footer', '브랜드 소개',     '/p/about',        8, 1, NULL);
+(25, 'footer', '배송 안내',       '/pages/shipping', 5, 1, NULL),
+(26, 'footer', '반품 및 교환',    '/pages/returns',  6, 1, NULL),
+(27, 'footer', 'FAQ',             '/faq',            7, 1, NULL),
+(28, 'footer', '고객센터',        '/pages/support',  8, 1, NULL),
+(29, 'footer', '브랜드 소개',     '/p/about',        9, 1, NULL);
 
 -- ============================================================
 -- 7. 배너
