@@ -192,6 +192,7 @@ function HeroBannerFields({
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
       <StringField label="부제목" value={(content.subtitle as string) ?? ''} onChange={(v) => update('subtitle', v)} />
+      <StringField label="설명 (Markdown 지원)" value={(content.description as string) ?? ''} onChange={(v) => update('description', v)} multiline placeholder="**굵게**, *기울임*, **11** → 11 볼드 등 Markdown 포맷 사용 가능" />
       <StringField label="이미지 URL" value={(content.image_url as string) ?? ''} onChange={(v) => update('image_url', v)} placeholder="https://..." />
       <StringField label="CTA 텍스트" value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
       <StringField label="CTA URL" value={(content.cta_url as string) ?? ''} onChange={(v) => update('cta_url', v)} />

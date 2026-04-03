@@ -6,6 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
@@ -121,6 +123,11 @@ function SliderHero({ slides, sectionRef, heroLogoStyle }: SliderHeroProps) {
                     {slide.subtitle}
                   </p>
                 )}
+                {content.description && (
+                  <div className="mt-4 text-white/80">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.description}</ReactMarkdown>
+                  </div>
+                )}
                 {slide.cta_text && slide.cta_url && (
                   <div className="mt-8">
                     <Link
@@ -204,6 +211,11 @@ export default function HeroBannerBlock({ content }: Props) {
         <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
           <h2 className="typo-h2 text-foreground">{title}</h2>
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
+          {content.description && (
+            <div className="mt-4 text-muted-foreground">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.description}</ReactMarkdown>
+            </div>
+          )}
           {cta_text && cta_url && (
             <Link
               href={isSafeUrl(cta_url) ? cta_url : '#'}
@@ -247,6 +259,11 @@ export default function HeroBannerBlock({ content }: Props) {
         <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : 'text-foreground'}`}>
           <h1 className={cn('typo-h0 font-display', image_url ? 'text-white' : 'text-foreground')}>{title}</h1>
           {subtitle && <p className={cn('mt-4 typo-body', image_url ? 'text-white/90' : 'text-muted-foreground')}>{subtitle}</p>}
+          {content.description && (
+            <div className={cn('mt-4', image_url ? 'text-white/80' : 'text-muted-foreground')}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.description}</ReactMarkdown>
+            </div>
+          )}
           {cta_text && cta_url && (
             <div className="mt-8">
               <Link
