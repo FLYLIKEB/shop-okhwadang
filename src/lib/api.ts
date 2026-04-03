@@ -767,6 +767,7 @@ export interface HeroBannerSlide {
 export interface HeroBannerContent {
   title: string;
   subtitle?: string;
+  description?: string;
   image_url: string;
   cta_text?: string;
   cta_url?: string;
