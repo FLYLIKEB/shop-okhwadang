@@ -126,7 +126,7 @@ export default async function Home() {
   return (
     <div>
       {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-7xl px-4 mt-8">
         <BlockRenderer blocks={restBlocks} />
       </div>
     </div>
