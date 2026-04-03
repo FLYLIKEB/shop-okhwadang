@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/components/ui/utils';
 import { TEAPOT_IMAGES } from '@/lib/teapot-images';
-import {
-  JOURNAL_ENTRIES,
-  JOURNAL_CATEGORIES,
-  type JournalCategory,
-  type JournalEntry,
-} from '@/lib/journal';
+import { journalsApi, type Journal, JournalCategory } from '@/lib/api';
+
+const CATEGORY_LABELS: Record<JournalCategory, string> = {
+  [JournalCategory.CULTURE]: '다문화',
+  [JournalCategory.USAGE]: '사용법',
+  [JournalCategory.TABLE_SETTING]: '찻자리 세팅',
+  [JournalCategory.NEWS]: '소식',
+};
 
 function CategoryFilter({
   selected,
@@ -33,7 +35,7 @@ function CategoryFilter({
       >
         전체
       </button>
-      {JOURNAL_CATEGORIES.map((cat) => (
+      {Object.values(JournalCategory).map((cat) => (
         <button
           key={cat}
           onClick={() => onSelect(cat)}
@@ -45,56 +47,97 @@ function CategoryFilter({
               : 'bg-muted text-muted-foreground hover:text-foreground',
           )}
         >
-          {cat}
+          {CATEGORY_LABELS[cat]}
         </button>
       ))}
     </div>
   );
 }
 
-function JournalCard({ entry, index }: { entry: JournalEntry; index: number }) {
+function JournalCard({ journal, index }: { journal: Journal; index: number }) {
   const img = TEAPOT_IMAGES[index % TEAPOT_IMAGES.length];
+
   return (
     <Link
-      href={`/journal/${entry.slug}`}
+      href={`/journal/${journal.slug}`}
       className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg"
     >
       <div className="relative h-48 bg-muted overflow-hidden">
-        <Image
-          src={img.src}
-          alt={entry.title}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        />
+        {journal.coverImageUrl ? (
+          <Image
+            src={journal.coverImageUrl}
+            alt={journal.title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        ) : (
+          <Image
+            src={img.src}
+            alt={journal.title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        )}
       </div>
       <div className="p-5">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-            {entry.category}
+            {CATEGORY_LABELS[journal.category]}
           </span>
           <span className="text-xs text-muted-foreground">·</span>
-          <span className="text-xs text-muted-foreground">{entry.readTime}</span>
+          <span className="text-xs text-muted-foreground">{journal.readTime ?? ''}</span>
         </div>
         <h3 className="font-display typo-h3 text-foreground mb-1 group-hover:underline">
-          {entry.title}
+          {journal.title}
         </h3>
-        <p className="text-xs text-muted-foreground mb-3">{entry.subtitle}</p>
+        <p className="text-xs text-muted-foreground mb-3">{journal.subtitle ?? ''}</p>
         <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-          {entry.summary}
+          {journal.summary ?? ''}
         </p>
-        <time className="block mt-4 text-xs text-muted-foreground">{entry.date}</time>
+        <time className="block mt-4 text-xs text-muted-foreground">{journal.date}</time>
       </div>
     </Link>
   );
 }
 
 export default function JournalListClient() {
+  const [journals, setJournals] = useState<Journal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<JournalCategory | null>(null);
 
+  useEffect(() => {
+    async function loadJournals() {
+      try {
+        setLoading(true);
+        const data = await journalsApi.getAll();
+        setJournals(data);
+      } catch {
+        setError('저널 목록을 불러오지 못했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    void loadJournals();
+  }, []);
+
   const filtered = selectedCategory
-    ? JOURNAL_ENTRIES.filter((e) => e.category === selectedCategory)
-    : JOURNAL_ENTRIES;
+    ? journals.filter((j) => j.category === selectedCategory)
+    : journals;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <p className="text-center text-sm text-destructive py-20">{error}</p>;
+  }
 
   return (
     <>
@@ -108,8 +151,8 @@ export default function JournalListClient() {
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((entry, i) => (
-            <JournalCard key={entry.slug} entry={entry} index={i} />
+          {filtered.map((journal, i) => (
+            <JournalCard key={journal.id} journal={journal} index={i} />
           ))}
         </div>
       )}

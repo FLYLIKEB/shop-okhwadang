@@ -27,6 +27,7 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { CollectionsModule } from './modules/collections/collections.module';
 import { ArchivesModule } from './modules/archives/archives.module';
+import { JournalModule } from './modules/journal/journal.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -79,6 +80,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     SettingsModule,
     CollectionsModule,
     ArchivesModule,
+    JournalModule,
   ],
   providers: [
     // Guard execution order: ThrottlerGuard → JwtAuthGuard → RolesGuard

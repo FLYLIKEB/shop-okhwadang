@@ -10,8 +10,28 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
-import { AdminTable, AdminTableRowActions } from '@/components/admin/AdminTable';
+import { AdminTable } from '@/components/admin/AdminTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
+import ProductImageUploader from '@/components/admin/ProductImageUploader';
+import { GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const TYPE_LABELS: Record<CollectionType, string> = {
   [CollectionType.CLAY]: '니료',
@@ -44,17 +64,39 @@ function toFormData(c: Collection): CreateCollectionData {
   };
 }
 
-function CollectionRow({
-  collection,
-  onEdit,
-  onDelete,
-}: {
+interface SortableCollectionRowProps {
   collection: Collection;
   onEdit: (c: Collection) => void;
   onDelete: (c: Collection) => void;
-}) {
+}
+
+function SortableCollectionRow({ collection, onEdit, onDelete }: SortableCollectionRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: collection.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+    <tr ref={setNodeRef} style={style} className="border-b border-border hover:bg-muted/50 transition-colors">
+      <td className="py-3 px-4">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab touch-none rounded p-1 hover:bg-muted active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </td>
       <td className="py-3 px-4">
         <span
           className="inline-block w-6 h-6 rounded"
@@ -75,11 +117,30 @@ function CollectionRow({
       <td className="py-3 px-4 text-sm text-muted-foreground max-w-xs truncate">
         {collection.description}
       </td>
+      <td className="py-3 px-4">
+        {collection.imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={collection.imageUrl} alt="" className="w-10 h-10 rounded object-cover" />
+        )}
+      </td>
       <td className="py-3 px-4 text-sm">
         <StatusBadge isActive={collection.isActive} />
       </td>
       <td className="py-3 px-4">
-        <AdminTableRowActions onEdit={() => onEdit(collection)} onDelete={() => onDelete(collection)} />
+        <div className="flex gap-2">
+          <button
+            onClick={() => onEdit(collection)}
+            className="rounded border px-2 py-1 text-xs hover:bg-secondary"
+          >
+            수정
+          </button>
+          <button
+            onClick={() => onDelete(collection)}
+            className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+          >
+            삭제
+          </button>
+        </div>
       </td>
     </tr>
   );
@@ -175,12 +236,13 @@ function CollectionFormModal({
           />
         </div>
 
-        <FormInput
-          label="이미지 URL"
-          value={form.imageUrl}
-          onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-          placeholder="https://..."
-        />
+        <div>
+          <label className="text-sm font-medium block mb-1">이미지</label>
+          <ProductImageUploader
+            imageUrl={form.imageUrl ?? ''}
+            onChange={(url) => setForm({ ...form, imageUrl: url })}
+          />
+        </div>
 
         <FormInput
           label="상품 URL"
@@ -215,19 +277,58 @@ function CollectionFormModal({
 }
 
 const CLAY_COLUMNS = [
+  { label: '', width: 'w-12' },
   { label: '색상', width: 'w-16' },
   { label: '타입', width: 'w-24' },
   { label: '이름' },
   { label: '설명' },
+  { label: '이미지', width: 'w-16' },
   { label: '상태', width: 'w-20' },
-  { label: '작업', width: 'w-28' },
+  { label: '작업', width: 'w-36' },
 ];
+
+function CollectionSection({
+  title,
+  collections,
+  onEdit,
+  onDelete,
+}: {
+  title: string;
+  collections: Collection[];
+  onEdit: (c: Collection) => void;
+  onDelete: (c: Collection) => void;
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const ids = collections.map((c) => c.id);
+
+  return (
+    <section>
+      <h2 className="text-lg font-semibold mb-3">{title}</h2>
+      <AdminTable
+        columns={CLAY_COLUMNS}
+        isEmpty={collections.length === 0}
+        emptyMessage={`등록된 ${title}이 없습니다.`}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          {collections.map((c) => (
+            <SortableCollectionRow key={c.id} collection={c} onEdit={onEdit} onDelete={onDelete} />
+          ))}
+        </SortableContext>
+      </AdminTable>
+    </section>
+  );
+}
 
 export default function AdminCollectionsPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Collection | null>(null);
+  const [activeId, setActiveId] = useState<number | null>(null);
 
   const { execute: loadCollections, isLoading: loading } = useAsyncAction(
     async () => {
@@ -277,8 +378,64 @@ export default function AdminCollectionsPage() {
     void deleteCollection(collection);
   };
 
-  const clayCollections = collections.filter((c) => c.type === CollectionType.CLAY);
-  const shapeCollections = collections.filter((c) => c.type === CollectionType.SHAPE);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as number);
+  };
+
+  const { execute: handleReorder } = useAsyncAction(
+    async ({ activeId, overId, type }: { activeId: number; overId: number; type: CollectionType }) => {
+      if (activeId === overId) return;
+
+      const sameTypeCollections = collections.filter((c) => c.type === type);
+      const activeIndex = sameTypeCollections.findIndex((c) => c.id === activeId);
+      const overIndex = sameTypeCollections.findIndex((c) => c.id === overId);
+
+      if (activeIndex === -1 || overIndex === -1) return;
+
+      const newOrders: { id: number; sortOrder: number }[] = [];
+      const reordered = [...sameTypeCollections];
+      const [removed] = reordered.splice(activeIndex, 1);
+      reordered.splice(overIndex, 0, removed);
+
+      reordered.forEach((c, idx) => {
+        newOrders.push({ id: c.id, sortOrder: idx });
+      });
+
+      await adminCollectionsApi.reorder(newOrders);
+      await loadCollections();
+    },
+    { errorMessage: '순서 변경에 실패했습니다.' },
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (over && active.id !== over.id) {
+      const activeCollection = collections.find((c) => c.id === active.id);
+      if (activeCollection) {
+        void handleReorder({
+          activeId: active.id as number,
+          overId: over.id as number,
+          type: activeCollection.type,
+        });
+      }
+    }
+  };
+
+  const clayCollections = collections
+    .filter((c) => c.type === CollectionType.CLAY)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const shapeCollections = collections
+    .filter((c) => c.type === CollectionType.SHAPE)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const activeCollection = activeId ? collections.find((c) => c.id === activeId) : null;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   if (authLoading || loading) {
     return (
@@ -291,44 +448,64 @@ export default function AdminCollectionsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">컬렉션 관리</h1>
-        <button
-          onClick={handleOpenCreate}
-          className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-        >
-          + 컬렉션 추가
-        </button>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">컬렉션 관리</h1>
+          <button
+            onClick={handleOpenCreate}
+            className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
+          >
+            + 컬렉션 추가
+          </button>
+        </div>
+
+        <div className="space-y-8">
+          <CollectionSection
+            title="니료 컬렉션"
+            collections={clayCollections}
+            onEdit={handleOpenEdit}
+            onDelete={handleDelete}
+          />
+          <CollectionSection
+            title="형태 컬렉션"
+            collections={shapeCollections}
+            onEdit={handleOpenEdit}
+            onDelete={handleDelete}
+          />
+        </div>
       </div>
 
-      <div className="space-y-8">
-        <section>
-          <h2 className="text-lg font-semibold mb-3">니료 컬렉션</h2>
-          <AdminTable
-            columns={CLAY_COLUMNS}
-            isEmpty={clayCollections.length === 0}
-            emptyMessage="등록된 니료 컬렉션이 없습니다."
-          >
-            {clayCollections.map((c) => (
-              <CollectionRow key={c.id} collection={c} onEdit={handleOpenEdit} onDelete={handleDelete} />
-            ))}
-          </AdminTable>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold mb-3">형태 컬렉션</h2>
-          <AdminTable
-            columns={CLAY_COLUMNS}
-            isEmpty={shapeCollections.length === 0}
-            emptyMessage="등록된 형태 컬렉션이 없습니다."
-          >
-            {shapeCollections.map((c) => (
-              <CollectionRow key={c.id} collection={c} onEdit={handleOpenEdit} onDelete={handleDelete} />
-            ))}
-          </AdminTable>
-        </section>
-      </div>
+      <DragOverlay>
+        {activeCollection ? (
+          <table className="w-full text-sm">
+            <tbody>
+              <tr className="shadow-lg ring-2 ring-primary bg-background rounded-lg">
+                <td className="py-3 px-4">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                </td>
+                <td className="py-3 px-4">
+                  <span className="inline-block w-6 h-6 rounded" style={{ backgroundColor: activeCollection.color ?? '#ccc' }} />
+                </td>
+                <td className="py-3 px-4">
+                  <span className="font-medium">{activeCollection.name}</span>
+                </td>
+                <td className="py-3 px-4 text-muted-foreground">{activeCollection.description}</td>
+                <td className="py-3 px-4"></td>
+                <td className="py-3 px-4">
+                  <StatusBadge isActive={activeCollection.isActive} />
+                </td>
+                <td className="py-3 px-4"></td>
+              </tr>
+            </tbody>
+          </table>
+        ) : null}
+      </DragOverlay>
 
       <CollectionFormModal
         open={modalOpen}
@@ -336,6 +513,6 @@ export default function AdminCollectionsPage() {
         onSubmit={handleSubmit}
         initial={editTarget}
       />
-    </div>
+    </DndContext>
   );
 }

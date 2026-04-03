@@ -18,27 +18,51 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
-import { AdminTable, AdminTableRowActions } from '@/components/admin/AdminTable';
+import { AdminTable } from '@/components/admin/AdminTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
+import ProductImageUploader from '@/components/admin/ProductImageUploader';
+import { GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type Tab = 'nilo' | 'process' | 'artist';
 
-function NiloTypeRow({
-  item,
-  onEdit,
-  onDelete,
-}: {
+// ===== Sortable NiloType Row =====
+interface SortableNiloTypeRowProps {
   item: NiloType;
   onEdit: (n: NiloType) => void;
   onDelete: (n: NiloType) => void;
-}) {
+}
+
+function SortableNiloTypeRow({ item, onEdit, onDelete }: SortableNiloTypeRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+
   return (
-    <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+    <tr ref={setNodeRef} style={style} className="border-b border-border hover:bg-muted/50 transition-colors">
       <td className="py-3 px-4">
-        <span
-          className="inline-block w-6 h-6 rounded"
-          style={{ backgroundColor: item.color }}
-        />
+        <button {...attributes} {...listeners} className="cursor-grab touch-none rounded p-1 hover:bg-muted active:cursor-grabbing">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </td>
+      <td className="py-3 px-4">
+        <span className="inline-block w-6 h-6 rounded" style={{ backgroundColor: item.color }} />
       </td>
       <td className="py-3 px-4 font-medium">{item.nameKo}</td>
       <td className="py-3 px-4 text-sm text-muted-foreground">{item.name}</td>
@@ -47,50 +71,36 @@ function NiloTypeRow({
         <StatusBadge isActive={item.isActive} />
       </td>
       <td className="py-3 px-4">
-        <AdminTableRowActions onEdit={() => onEdit(item)} onDelete={() => onDelete(item)} />
+        <div className="flex gap-2">
+          <button onClick={() => onEdit(item)} className="rounded border px-2 py-1 text-xs hover:bg-secondary">수정</button>
+          <button onClick={() => onDelete(item)} className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10">삭제</button>
+        </div>
       </td>
     </tr>
   );
 }
 
-function ProcessStepRow({
-  item,
-  onEdit,
-  onDelete,
-}: {
-  item: ProcessStep;
-  onEdit: (p: ProcessStep) => void;
-  onDelete: (p: ProcessStep) => void;
-}) {
-  return (
-    <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-      <td className="py-3 px-4">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background text-sm font-bold">
-          {item.step}
-        </span>
-      </td>
-      <td className="py-3 px-4 font-medium">{item.title}</td>
-      <td className="py-3 px-4 text-sm text-muted-foreground">{item.description}</td>
-      <td className="py-3 px-4">
-        <AdminTableRowActions onEdit={() => onEdit(item)} onDelete={() => onDelete(item)} />
-      </td>
-    </tr>
-  );
-}
-
-function ArtistRow({
-  item,
-  onEdit,
-  onDelete,
-}: {
+// ===== Sortable Artist Row =====
+interface SortableArtistRowProps {
   item: Artist;
   onEdit: (a: Artist) => void;
   onDelete: (a: Artist) => void;
-}) {
+}
+
+function SortableArtistRow({ item, onEdit, onDelete }: SortableArtistRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+
   return (
-    <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+    <tr ref={setNodeRef} style={style} className="border-b border-border hover:bg-muted/50 transition-colors">
+      <td className="py-3 px-4">
+        <button {...attributes} {...listeners} className="cursor-grab touch-none rounded p-1 hover:bg-muted active:cursor-grabbing">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </td>
       <td className="py-3 px-4">
         {item.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded object-cover" />
         ) : (
           <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-muted-foreground">
@@ -105,7 +115,31 @@ function ArtistRow({
         <StatusBadge isActive={item.isActive} />
       </td>
       <td className="py-3 px-4">
-        <AdminTableRowActions onEdit={() => onEdit(item)} onDelete={() => onDelete(item)} />
+        <div className="flex gap-2">
+          <button onClick={() => onEdit(item)} className="rounded border px-2 py-1 text-xs hover:bg-secondary">수정</button>
+          <button onClick={() => onDelete(item)} className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10">삭제</button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// ===== ProcessStep Row (no drag) =====
+function ProcessStepRow({ item, onEdit, onDelete }: { item: ProcessStep; onEdit: (p: ProcessStep) => void; onDelete: (p: ProcessStep) => void }) {
+  return (
+    <tr className="border-b border-border hover:bg-muted/50 transition-colors">
+      <td className="py-3 px-4">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background text-sm font-bold">
+          {item.step}
+        </span>
+      </td>
+      <td className="py-3 px-4 font-medium">{item.title}</td>
+      <td className="py-3 px-4 text-sm text-muted-foreground">{item.description}</td>
+      <td className="py-3 px-4">
+        <div className="flex gap-2">
+          <button onClick={() => onEdit(item)} className="rounded border px-2 py-1 text-xs hover:bg-secondary">수정</button>
+          <button onClick={() => onDelete(item)} className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10">삭제</button>
+        </div>
       </td>
     </tr>
   );
@@ -146,10 +180,7 @@ function NiloTypeFormModal({
   onSubmit: (data: CreateNiloTypeData) => Promise<void>;
   initial?: NiloType | null;
 }) {
-  const initialFormData = useMemo(
-    () => (initial ? toNiloFormData(initial) : null),
-    [initial],
-  );
+  const initialFormData = useMemo(() => (initial ? toNiloFormData(initial) : null), [initial]);
   const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateNiloTypeData>(
     NILO_DEFAULTS,
     initialFormData,
@@ -166,10 +197,7 @@ function NiloTypeFormModal({
   }, [initial, open]);
 
   const handleFormSubmit = async (data: CreateNiloTypeData) => {
-    const merged = {
-      ...data,
-      characteristics: characteristicsText.split(',').map((s) => s.trim()).filter(Boolean),
-    };
+    const merged = { ...data, characteristics: characteristicsText.split(',').map((s) => s.trim()).filter(Boolean) };
     await onSubmit(merged);
   };
 
@@ -178,75 +206,25 @@ function NiloTypeFormModal({
       <h2 className="text-lg font-semibold mb-4">{initial ? '니로타입 수정' : '니로타입 추가'}</h2>
       <form onSubmit={(e) => handleSubmit(e, handleFormSubmit, onClose)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <FormInput
-            label="이름 (中文)"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="朱泥"
-            required
-          />
-          <FormInput
-            label="이름 (한글)"
-            value={form.nameKo}
-            onChange={(e) => setForm({ ...form, nameKo: e.target.value })}
-            placeholder="주니"
-            required
-          />
+          <FormInput label="이름 (中文)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="朱泥" required />
+          <FormInput label="이름 (한글)" value={form.nameKo} onChange={(e) => setForm({ ...form, nameKo: e.target.value })} placeholder="주니" required />
         </div>
         <div>
           <label className="text-sm font-medium block mb-1">색상</label>
           <div className="flex gap-2">
-            <input
-              type="color"
-              value={form.color}
-              onChange={(e) => setForm({ ...form, color: e.target.value })}
-              className="w-10 h-10 rounded border border-input cursor-pointer"
-            />
-            <FormInput
-              value={form.color}
-              onChange={(e) => setForm({ ...form, color: e.target.value })}
-              className="flex-1"
-            />
+            <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-10 h-10 rounded border border-input cursor-pointer" />
+            <FormInput value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="flex-1" />
           </div>
         </div>
-        <FormInput
-          label="산지"
-          value={form.region}
-          onChange={(e) => setForm({ ...form, region: e.target.value })}
-          placeholder="장쑤성 이싱 황룡산"
-          required
-        />
+        <FormInput label="산지" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} placeholder="장쑤성 이싱 황룡산" required />
         <div>
           <label className="text-sm font-medium block mb-1">설명</label>
-          <textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={3}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-            required
-          />
+          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none" required />
         </div>
-        <FormInput
-          label="특성 (쉼표로 구분)"
-          value={characteristicsText}
-          onChange={(e) => setCharacteristicsText(e.target.value)}
-          placeholder="철분 함량 14-16%, 소성 온도 1080-1120°C"
-        />
-        <FormInput
-          label="상품 URL"
-          value={form.productUrl}
-          onChange={(e) => setForm({ ...form, productUrl: e.target.value })}
-          placeholder="/products?clayType=주니"
-          required
-        />
+        <FormInput label="특성 (쉼표로 구분)" value={characteristicsText} onChange={(e) => setCharacteristicsText(e.target.value)} placeholder="철분 함량 14-16%, 소성 온도 1080-1120°C" />
+        <FormInput label="상품 URL" value={form.productUrl} onChange={(e) => setForm({ ...form, productUrl: e.target.value })} placeholder="/products?clayType=주니" required />
         <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="niloIsActive"
-            checked={form.isActive}
-            onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-            className="rounded"
-          />
+          <input type="checkbox" id="niloIsActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
           <label htmlFor="niloIsActive" className="text-sm">활성 상태</label>
         </div>
         <div className="flex justify-end gap-2 pt-2">
@@ -266,12 +244,7 @@ const PROCESS_DEFAULTS: CreateProcessStepData = {
 };
 
 function toProcessFormData(p: ProcessStep): CreateProcessStepData {
-  return {
-    step: p.step,
-    title: p.title,
-    description: p.description,
-    detail: p.detail,
-  };
+  return { step: p.step, title: p.title, description: p.description, detail: p.detail };
 }
 
 function ProcessStepFormModal({
@@ -285,10 +258,7 @@ function ProcessStepFormModal({
   onSubmit: (data: CreateProcessStepData) => Promise<void>;
   initial?: ProcessStep | null;
 }) {
-  const initialFormData = useMemo(
-    () => (initial ? toProcessFormData(initial) : null),
-    [initial],
-  );
+  const initialFormData = useMemo(() => (initial ? toProcessFormData(initial) : null), [initial]);
   const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateProcessStepData>(
     PROCESS_DEFAULTS,
     initialFormData,
@@ -299,37 +269,12 @@ function ProcessStepFormModal({
     <Modal isOpen={open} onClose={onClose} maxWidth="md">
       <h2 className="text-lg font-semibold mb-4">{initial ? '공정 수정' : '공정 추가'}</h2>
       <form onSubmit={(e) => handleSubmit(e, onSubmit, onClose)} className="space-y-4">
-        <FormInput
-          label="단계"
-          type="number"
-          min={1}
-          value={form.step}
-          onChange={(e) => setForm({ ...form, step: Number(e.target.value) })}
-          required
-        />
-        <FormInput
-          label="제목"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          placeholder="채토 (採土)"
-          required
-        />
-        <FormInput
-          label="간단 설명"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          placeholder="산지에서 원토를 채굴"
-          required
-        />
+        <FormInput label="단계" type="number" min={1} value={form.step} onChange={(e) => setForm({ ...form, step: Number(e.target.value) })} required />
+        <FormInput label="제목" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="채토 (採土)" required />
+        <FormInput label="간단 설명" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="산지에서 원토를 채굴" required />
         <div>
           <label className="text-sm font-medium block mb-1">상세 설명</label>
-          <textarea
-            value={form.detail}
-            onChange={(e) => setForm({ ...form, detail: e.target.value })}
-            rows={4}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-            required
-          />
+          <textarea value={form.detail} onChange={(e) => setForm({ ...form, detail: e.target.value })} rows={4} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none" required />
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onClose}>취소</Button>
@@ -375,10 +320,7 @@ function ArtistFormModal({
   onSubmit: (data: CreateArtistData) => Promise<void>;
   initial?: Artist | null;
 }) {
-  const initialFormData = useMemo(
-    () => (initial ? toArtistFormData(initial) : null),
-    [initial],
-  );
+  const initialFormData = useMemo(() => (initial ? toArtistFormData(initial) : null), [initial]);
   const { formData: form, setFormData: setForm, loading, handleSubmit } = useFormModal<CreateArtistData>(
     ARTIST_DEFAULTS,
     initialFormData,
@@ -390,68 +332,24 @@ function ArtistFormModal({
       <h2 className="text-lg font-semibold mb-4">{initial ? '아티스트 수정' : '아티스트 추가'}</h2>
       <form onSubmit={(e) => handleSubmit(e, onSubmit, onClose)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <FormInput
-            label="이름"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="진위명 (陳偉明)"
-            required
-          />
-          <FormInput
-            label="타이틀"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            placeholder="국가급 공예미술사"
-            required
-          />
+          <FormInput label="이름" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="진위명 (陳偉明)" required />
+          <FormInput label="타이틀" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="국가급 공예미술사" required />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <FormInput
-            label="지역"
-            value={form.region}
-            onChange={(e) => setForm({ ...form, region: e.target.value })}
-            placeholder="장쑤성 이싱"
-            required
-          />
-          <FormInput
-            label="전문"
-            value={form.specialty}
-            onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-            placeholder="이중 니층 석표식"
-            required
-          />
+          <FormInput label="지역" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} placeholder="장쑤성 이싱" required />
+          <FormInput label="전문" value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} placeholder="이중 니층 석표식" required />
         </div>
-        <FormInput
-          label="이미지 URL"
-          value={form.imageUrl}
-          onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-          placeholder="https://..."
-        />
+        <div>
+          <label className="text-sm font-medium block mb-1">사진</label>
+          <ProductImageUploader imageUrl={form.imageUrl ?? ''} onChange={(url) => setForm({ ...form, imageUrl: url })} />
+        </div>
         <div>
           <label className="text-sm font-medium block mb-1">스토리</label>
-          <textarea
-            value={form.story}
-            onChange={(e) => setForm({ ...form, story: e.target.value })}
-            rows={4}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-            required
-          />
+          <textarea value={form.story} onChange={(e) => setForm({ ...form, story: e.target.value })} rows={4} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none" required />
         </div>
-        <FormInput
-          label="상품 URL"
-          value={form.productUrl}
-          onChange={(e) => setForm({ ...form, productUrl: e.target.value })}
-          placeholder="/products?artist=chen-weiming"
-          required
-        />
+        <FormInput label="상품 URL" value={form.productUrl} onChange={(e) => setForm({ ...form, productUrl: e.target.value })} placeholder="/products?artist=chen-weiming" required />
         <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="artistIsActive"
-            checked={form.isActive}
-            onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-            className="rounded"
-          />
+          <input type="checkbox" id="artistIsActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
           <label htmlFor="artistIsActive" className="text-sm">활성 상태</label>
         </div>
         <div className="flex justify-end gap-2 pt-2">
@@ -477,6 +375,9 @@ export default function AdminArchivesPage() {
   const [editNilo, setEditNilo] = useState<NiloType | null>(null);
   const [editProcess, setEditProcess] = useState<ProcessStep | null>(null);
   const [editArtist, setEditArtist] = useState<Artist | null>(null);
+
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab | null>(null);
 
   const { execute: loadData, isLoading: loading } = useAsyncAction(
     async () => {
@@ -570,11 +471,83 @@ export default function AdminArchivesPage() {
     void deleteArtist(item);
   };
 
+  // Drag handlers for NiloType
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as number);
+    setActiveTab(tab);
+  };
+
+  const { execute: handleNiloReorder } = useAsyncAction(
+    async ({ activeId, overId }: { activeId: number; overId: number }) => {
+      if (activeId === overId) return;
+      const activeIndex = niloTypes.findIndex((n) => n.id === activeId);
+      const overIndex = niloTypes.findIndex((n) => n.id === overId);
+      if (activeIndex === -1 || overIndex === -1) return;
+
+      const reordered = [...niloTypes];
+      const [removed] = reordered.splice(activeIndex, 1);
+      reordered.splice(overIndex, 0, removed);
+
+      const orders = reordered.map((n, idx) => ({ id: n.id, sortOrder: idx }));
+      await adminArchivesApi.reorderNiloTypes(orders);
+      await loadData();
+    },
+    { errorMessage: '순서 변경에 실패했습니다.' },
+  );
+
+  const { execute: handleArtistReorder } = useAsyncAction(
+    async ({ activeId, overId }: { activeId: number; overId: number }) => {
+      if (activeId === overId) return;
+      const activeIndex = artists.findIndex((a) => a.id === activeId);
+      const overIndex = artists.findIndex((a) => a.id === overId);
+      if (activeIndex === -1 || overIndex === -1) return;
+
+      const reordered = [...artists];
+      const [removed] = reordered.splice(activeIndex, 1);
+      reordered.splice(overIndex, 0, removed);
+
+      const orders = reordered.map((a, idx) => ({ id: a.id, sortOrder: idx }));
+      await adminArchivesApi.reorderArtists(orders);
+      await loadData();
+    },
+    { errorMessage: '순서 변경에 실패했습니다.' },
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    setActiveTab(null);
+
+    if (over && active.id !== over.id) {
+      if (tab === 'nilo') {
+        void handleNiloReorder({ activeId: active.id as number, overId: over.id as number });
+      } else if (tab === 'artist') {
+        void handleArtistReorder({ activeId: active.id as number, overId: over.id as number });
+      }
+    }
+  };
+
   const tabs: { key: Tab; label: string }[] = [
     { key: 'nilo', label: '니로타입' },
     { key: 'process', label: '공정' },
     { key: 'artist', label: '아티스트' },
   ];
+
+  const sortedNiloTypes = [...niloTypes].sort((a, b) => a.sortOrder - b.sortOrder);
+  const sortedArtists = [...artists].sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const activeItem = activeId
+    ? activeTab === 'nilo'
+      ? niloTypes.find((n) => n.id === activeId)
+      : activeTab === 'artist'
+        ? artists.find((a) => a.id === activeId)
+        : null
+    : null;
 
   if (authLoading || loading) {
     return (
@@ -587,130 +560,150 @@ export default function AdminArchivesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">아카이브 관리</h1>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">아카이브 관리</h1>
+        </div>
+
+        <div className="flex gap-1 border-b border-border">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                tab === t.key ? 'border-b-2 border-foreground text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'nilo' && (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button onClick={() => { setEditNilo(null); setNiloModalOpen(true); }} className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90">
+                + 니로타입 추가
+              </button>
+            </div>
+            <AdminTable
+              columns={[
+                { label: '', width: 'w-12' },
+                { label: '색상', width: 'w-16' },
+                { label: '이름' },
+                { label: '원문' },
+                { label: '산지' },
+                { label: '상태', width: 'w-20' },
+                { label: '작업', width: 'w-36' },
+              ]}
+              isEmpty={sortedNiloTypes.length === 0}
+              emptyMessage="데이터가 없습니다."
+            >
+              <SortableContext items={sortedNiloTypes.map((n) => n.id)} strategy={verticalListSortingStrategy}>
+                {sortedNiloTypes.map((n) => (
+                  <SortableNiloTypeRow key={n.id} item={n} onEdit={(n) => { setEditNilo(n); setNiloModalOpen(true); }} onDelete={handleDeleteNilo} />
+                ))}
+              </SortableContext>
+            </AdminTable>
+          </div>
+        )}
+
+        {tab === 'process' && (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button onClick={() => { setEditProcess(null); setProcessModalOpen(true); }} className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90">
+                + 공정 추가
+              </button>
+            </div>
+            <AdminTable
+              columns={[
+                { label: '단계', width: 'w-16' },
+                { label: '제목' },
+                { label: '설명' },
+                { label: '작업', width: 'w-36' },
+              ]}
+              isEmpty={processSteps.length === 0}
+              emptyMessage="데이터가 없습니다."
+            >
+              {processSteps.map((p) => (
+                <ProcessStepRow key={p.id} item={p} onEdit={(p) => { setEditProcess(p); setProcessModalOpen(true); }} onDelete={handleDeleteProcess} />
+              ))}
+            </AdminTable>
+          </div>
+        )}
+
+        {tab === 'artist' && (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button onClick={() => { setEditArtist(null); setArtistModalOpen(true); }} className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90">
+                + 아티스트 추가
+              </button>
+            </div>
+            <AdminTable
+              columns={[
+                { label: '', width: 'w-12' },
+                { label: '이미지', width: 'w-16' },
+                { label: '이름' },
+                { label: '타이틀' },
+                { label: '지역' },
+                { label: '상태', width: 'w-20' },
+                { label: '작업', width: 'w-36' },
+              ]}
+              isEmpty={sortedArtists.length === 0}
+              emptyMessage="데이터가 없습니다."
+            >
+              <SortableContext items={sortedArtists.map((a) => a.id)} strategy={verticalListSortingStrategy}>
+                {sortedArtists.map((a) => (
+                  <SortableArtistRow key={a.id} item={a} onEdit={(a) => { setEditArtist(a); setArtistModalOpen(true); }} onDelete={handleDeleteArtist} />
+                ))}
+              </SortableContext>
+            </AdminTable>
+          </div>
+        )}
       </div>
 
-      <div className="flex gap-1 border-b border-border">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.key
-                ? 'border-b-2 border-foreground text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <DragOverlay>
+        {activeItem ? (
+          <table className="w-full text-sm">
+            <tbody>
+              <tr className="shadow-lg ring-2 ring-primary bg-background rounded-lg">
+                <td className="py-3 px-4"><GripVertical className="h-4 w-4 text-muted-foreground" /></td>
+                {activeTab === 'nilo' && (
+                  <>
+                    <td className="py-3 px-4"><span className="inline-block w-6 h-6 rounded" style={{ backgroundColor: (activeItem as NiloType).color }} /></td>
+                    <td className="py-3 px-4 font-medium">{(activeItem as NiloType).nameKo}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{(activeItem as NiloType).name}</td>
+                  </>
+                )}
+                {activeTab === 'artist' && (
+                  <>
+                    <td className="py-3 px-4">
+                      {(activeItem as Artist).imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={(activeItem as Artist).imageUrl!} alt="" className="w-10 h-10 rounded object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">{(activeItem as Artist).name.slice(0, 1)}</div>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 font-medium">{(activeItem as Artist).name}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{(activeItem as Artist).title}</td>
+                  </>
+                )}
+              </tr>
+            </tbody>
+          </table>
+        ) : null}
+      </DragOverlay>
 
-      {tab === 'nilo' && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <button
-              onClick={() => { setEditNilo(null); setNiloModalOpen(true); }}
-              className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-            >
-              + 니로타입 추가
-            </button>
-          </div>
-          <AdminTable
-            columns={[
-              { label: '색상', width: 'w-16' },
-              { label: '이름' },
-              { label: '원문' },
-              { label: '산지' },
-              { label: '상태', width: 'w-20' },
-              { label: '작업', width: 'w-28' },
-            ]}
-            isEmpty={niloTypes.length === 0}
-            emptyMessage="데이터가 없습니다."
-          >
-            {niloTypes.map((n) => (
-              <NiloTypeRow key={n.id} item={n} onEdit={(n) => { setEditNilo(n); setNiloModalOpen(true); }} onDelete={handleDeleteNilo} />
-            ))}
-          </AdminTable>
-        </div>
-      )}
-
-      {tab === 'process' && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <button
-              onClick={() => { setEditProcess(null); setProcessModalOpen(true); }}
-              className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-            >
-              + 공정 추가
-            </button>
-          </div>
-          <AdminTable
-            columns={[
-              { label: '단계', width: 'w-16' },
-              { label: '제목' },
-              { label: '설명' },
-              { label: '작업', width: 'w-28' },
-            ]}
-            isEmpty={processSteps.length === 0}
-            emptyMessage="데이터가 없습니다."
-          >
-            {processSteps.map((p) => (
-              <ProcessStepRow key={p.id} item={p} onEdit={(p) => { setEditProcess(p); setProcessModalOpen(true); }} onDelete={handleDeleteProcess} />
-            ))}
-          </AdminTable>
-        </div>
-      )}
-
-      {tab === 'artist' && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <button
-              onClick={() => { setEditArtist(null); setArtistModalOpen(true); }}
-              className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-            >
-              + 아티스트 추가
-            </button>
-          </div>
-          <AdminTable
-            columns={[
-              { label: '이미지', width: 'w-16' },
-              { label: '이름' },
-              { label: '타이틀' },
-              { label: '지역' },
-              { label: '상태', width: 'w-20' },
-              { label: '작업', width: 'w-28' },
-            ]}
-            isEmpty={artists.length === 0}
-            emptyMessage="데이터가 없습니다."
-          >
-            {artists.map((a) => (
-              <ArtistRow key={a.id} item={a} onEdit={(a) => { setEditArtist(a); setArtistModalOpen(true); }} onDelete={handleDeleteArtist} />
-            ))}
-          </AdminTable>
-        </div>
-      )}
-
-      <NiloTypeFormModal
-        open={niloModalOpen}
-        onClose={() => setNiloModalOpen(false)}
-        onSubmit={handleNiloSubmit}
-        initial={editNilo}
-      />
-      <ProcessStepFormModal
-        open={processModalOpen}
-        onClose={() => setProcessModalOpen(false)}
-        onSubmit={handleProcessSubmit}
-        initial={editProcess}
-      />
-      <ArtistFormModal
-        open={artistModalOpen}
-        onClose={() => setArtistModalOpen(false)}
-        onSubmit={handleArtistSubmit}
-        initial={editArtist}
-      />
-    </div>
+      <NiloTypeFormModal open={niloModalOpen} onClose={() => setNiloModalOpen(false)} onSubmit={handleNiloSubmit} initial={editNilo} />
+      <ProcessStepFormModal open={processModalOpen} onClose={() => setProcessModalOpen(false)} onSubmit={handleProcessSubmit} initial={editProcess} />
+      <ArtistFormModal open={artistModalOpen} onClose={() => setArtistModalOpen(false)} onSubmit={handleArtistSubmit} initial={editArtist} />
+    </DndContext>
   );
 }
