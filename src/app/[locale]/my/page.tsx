@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { ORDER_STATUS_LABELS } from '@/constants/orderStatus';
+import { ORDER_STATUS_LABELS } from '@/constants/status';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { formatCurrency } from '@/utils/currency';
 
