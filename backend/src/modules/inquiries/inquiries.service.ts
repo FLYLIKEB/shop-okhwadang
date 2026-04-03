@@ -46,6 +46,7 @@ export class InquiriesService {
 
   async findAllForAdmin(): Promise<Inquiry[]> {
     return this.inquiryRepo.find({
+      relations: ['user'],
       order: { createdAt: 'DESC' },
     });
   }

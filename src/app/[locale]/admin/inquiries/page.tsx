@@ -104,6 +104,7 @@ export default function AdminInquiriesPage() {
         <AdminTable
           columns={[
             { label: '상태', width: 'w-20' },
+            { label: '문의자', width: 'w-32' },
             { label: '유형', width: 'w-24' },
             { label: '제목' },
             { label: '접수일', width: 'w-28' },
@@ -132,6 +133,10 @@ export default function AdminInquiriesPage() {
                     {inquiry.status === 'answered' ? '답변완료' : '미답변'}
                   </span>
                 </td>
+                <td className="px-4 py-3 text-sm">
+                  <p className="font-medium truncate">{inquiry.user?.name ?? '-'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{inquiry.user?.email ?? ''}</p>
+                </td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">{inquiry.type}</td>
                 <td className="px-4 py-3 text-sm font-medium truncate max-w-xs">{inquiry.title}</td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
@@ -140,7 +145,7 @@ export default function AdminInquiriesPage() {
               </tr>
               {openId === inquiry.id && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-4 bg-muted/30 border-b">
+                  <td colSpan={5} className="px-4 py-4 bg-muted/30 border-b">
                     <div className="space-y-4">
                       <div>
                         <p className="text-xs font-semibold text-muted-foreground mb-1">문의 내용</p>

@@ -1150,6 +1150,11 @@ export interface Inquiry {
   answer: string | null;
   answeredAt: string | null;
   createdAt: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
 }
 
 export type InquiryListResponse = ListResponse<Inquiry>;
