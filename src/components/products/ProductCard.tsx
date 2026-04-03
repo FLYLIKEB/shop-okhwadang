@@ -50,7 +50,6 @@ function ProductCard({
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
 
   const [isCartLoading, setIsCartLoading] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleAddToCart = useCallback(
     async (e: React.MouseEvent) => {
@@ -72,14 +71,12 @@ function ProductCard({
   return (
     <Link
       href={`/products/${id}`}
-      onMouseEnter={() => showCartOnHover && setIsHovered(true)}
-      onMouseLeave={() => showCartOnHover && setIsHovered(false)}
       className={cn(
         'group block',
         isSoldout && 'opacity-60',
       )}
     >
-      <div className="relative aspect-square overflow-hidden bg-muted">
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
         {thumbnail ? (
           <Image
             src={thumbnail}
@@ -107,8 +104,7 @@ function ProductCard({
           onClick={handleToggleWishlist}
           disabled={isWishlistLoading}
           className={cn(
-            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm transition-opacity duration-200 disabled:cursor-not-allowed',
-            'opacity-100 md:opacity-0 md:group-hover:opacity-100',
+            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm disabled:cursor-not-allowed',
           )}
         >
           <Heart
@@ -118,27 +114,9 @@ function ProductCard({
             )}
           />
         </button>
-
-        {!isSoldout && (
-          <button
-            type="button"
-            aria-label="장바구니 담기"
-            onClick={handleAddToCart}
-            disabled={isCartLoading}
-            className={cn(
-              'absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-white/70 backdrop-blur-sm py-3 typo-body-sm text-foreground border-t border-foreground/10 transition-transform duration-300 disabled:cursor-not-allowed',
-              showCartOnHover
-                ? isHovered ? 'translate-y-0' : 'translate-y-full'
-                : 'translate-y-0 md:translate-y-full md:group-hover:translate-y-0',
-            )}
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {isCartLoading ? '담는 중...' : '장바구니 담기'}
-          </button>
-        )}
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 space-y-2">
         <p className="typo-title line-clamp-2">{name}</p>
         <div className="mt-1">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
@@ -154,6 +132,20 @@ function ProductCard({
         )}
         {shortDescription && (
           <p className="mt-1 line-clamp-2 typo-body-sm text-muted-foreground">{shortDescription}</p>
+        )}
+        {!isSoldout && (
+          <button
+            type="button"
+            aria-label="장바구니 담기"
+            onClick={handleAddToCart}
+            disabled={isCartLoading}
+            className={cn(
+              'mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed',
+            )}
+          >
+            <ShoppingCart className="h-4 w-4" />
+            {isCartLoading ? '담는 중...' : '장바구니 담기'}
+          </button>
         )}
       </div>
     </Link>
