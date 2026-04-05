@@ -404,7 +404,7 @@ function DesktopNavLink({ item, isActive, onMouseEnter }: DesktopNavLinkProps) {
         isActive ? 'text-foreground' : 'text-muted-foreground',
       )}
     >
-      <span className="relative font-display">
+      <span className="relative">
         {item.label}
         <span
           className={cn(
@@ -448,7 +448,7 @@ function DesktopNavBar({ navItems }: DesktopNavBarProps) {
       className="hidden md:block border-t border-border/50 relative"
       onMouseLeave={() => setHoveredId(null)}
     >
-      <div className="flex h-12 items-center px-10">
+      <div className="flex h-12 items-center px-20">
         <nav aria-label="메인 메뉴" className="flex items-center justify-between flex-1">
           {navItems.map((item) => (
             <DesktopNavLink
@@ -468,7 +468,7 @@ function DesktopNavBar({ navItems }: DesktopNavBarProps) {
           showDropdown ? 'opacity-100 max-h-60' : 'opacity-0 max-h-0 pointer-events-none',
         )}
       >
-        <div className="flex items-center gap-8 px-10 py-4">
+        <div className="flex items-center gap-8 px-20 py-4">
           {activeChildren.map((child: NavigationItem) => (
             <Link
               key={child.id}
@@ -538,7 +538,7 @@ export default function Header() {
           ? 'border-b border-[#D4BC8E]/40 shadow-sm'
           : 'border-b border-transparent',
       )}>
-        <div className="flex h-16 items-center justify-between gap-4 px-4 md:px-10">
+        <div className="flex h-16 items-center justify-between gap-4 px-4 md:px-20">
 
           <button
             type="button"
