@@ -542,7 +542,7 @@ export default function Header() {
           ? 'bg-background/85 backdrop-blur-lg border-b border-border shadow-sm'
           : 'bg-background border-b border-transparent',
       )}>
-        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between gap-2 px-4">
+        <div className="mx-auto flex h-12 max-w-8xl items-center justify-between gap-2 px-4">
 
           <button
             type="button"
