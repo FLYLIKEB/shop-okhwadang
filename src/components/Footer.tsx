@@ -105,7 +105,6 @@ export default function Footer() {
             <div className="flex flex-col gap-1 text-sm text-[#F8F5F0]/40 mt-4">
               <p className="font-display">자사호 · 보이차 · 다구 전문</p>
             </div>
-            {/* Social links */}
             <div className="flex items-center gap-3 mt-4">
               <a
                 href="https://instagram.com/okhwadang"
