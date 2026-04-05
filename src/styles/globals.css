@@ -74,8 +74,8 @@
   --color-surface: #f5f5f5;
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
-  --font-display: 'Cormorant Garamond', 'Noto Serif KR', 'Georgia', serif;
-  --font-body: 'Noto Serif KR', 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+  --font-display: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+  --font-body: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
   --font-mono: 'DM Mono', 'Courier New', monospace;
 
   /* ── Height tokens for arbitrary value replacements ── */
