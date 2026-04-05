@@ -181,7 +181,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
       </div>
 
       {/* Tabs */}
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-8xl px-4">
         <ProductTabs description={product.description} descriptionImages={descriptionImages} productId={Number(product.id)} />
       </div>
 
