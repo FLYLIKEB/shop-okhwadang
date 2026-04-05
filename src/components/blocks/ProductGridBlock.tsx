@@ -63,8 +63,8 @@ export default function ProductGridBlock({ content }: Props) {
   if (loading) {
     return (
       <section className="py-12">
-        {title && <h2 className="text-2xl font-display font-medium mb-8">{title}</h2>}
-        <div className={cn('grid gap-6', gridCols)}>
+        {title && <h2 className="font-semibold mb-8 text-center">{title}</h2>}
+        <div className={cn('grid gap-10', gridCols)}>
           {Array.from({ length: limit || 4 }).map((_, i) => (
             <CardSkeleton key={i} />
           ))}
@@ -83,26 +83,20 @@ export default function ProductGridBlock({ content }: Props) {
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
       )}
     >
-      <div className="flex items-center justify-between mb-8">
-        {title && <h2 className="text-2xl font-display font-medium">{title}</h2>}
-        {more_href && (
-          <Link
-            href={more_href}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            전체 보기
-          </Link>
-        )}
-        {!more_href && category_id && (
-          <Link
-            href={`/${locale}/products?categoryId=${category_id}`}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            전체 보기
-          </Link>
+      <div className="mb-8">
+        {title && <h2 className="font-semibold text-center">{title}</h2>}
+        {(more_href || category_id) && (
+          <div className="flex justify-end mt-2">
+            <Link
+              href={more_href || `/${locale}/products?categoryId=${category_id}`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              전체 보기
+            </Link>
+          </div>
         )}
       </div>
-      <div className={cn('grid gap-6', gridCols)}>
+      <div className={cn('grid gap-10', gridCols)}>
         {products.map((product, i) => (
           <div
             key={product.id}
@@ -117,9 +111,7 @@ export default function ProductGridBlock({ content }: Props) {
               name={product.name}
               price={product.price}
               salePrice={product.salePrice}
-              shortDescription={product.shortDescription}
-              rating={product.rating}
-              reviewCount={product.reviewCount}
+              categoryName={product.category?.name}
               status={product.status}
               images={product.images}
             />

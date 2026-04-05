@@ -33,3 +33,4 @@ coverage/
 *.tsbuildinfo
 .obsidian/
 marketing.md
+.vercel

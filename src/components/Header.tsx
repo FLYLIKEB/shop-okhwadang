@@ -406,7 +406,7 @@ function DesktopNav({ items }: DesktopNavProps) {
   return (
     <nav
       aria-label="메인 메뉴"
-      className="hidden md:flex items-center gap-6"
+      className="hidden md:flex w-full items-center gap-0"
       onMouseLeave={() => setHoveredId(null)}
     >
       {items.map((item) => (
@@ -414,11 +414,12 @@ function DesktopNav({ items }: DesktopNavProps) {
           key={item.id}
           ref={(el) => { if (el) itemRefs.current.set(item.id, el); }}
           onMouseEnter={() => setHoveredId(item.id)}
+          className="flex-1 flex items-center justify-center"
         >
           <Link
             href={item.url}
             className={cn(
-              'group relative flex items-center gap-1 py-2 typo-body-sm transition-colors duration-200',
+              'group relative flex w-full items-center justify-center gap-1 py-2 typo-body-sm transition-colors duration-200',
               hoveredId === item.id ? 'text-foreground' : 'text-muted-foreground',
             )}
           >
@@ -623,8 +624,8 @@ export default function Header() {
           </div>
         </div>
 
-        <div className="hidden md:block">
-          <div className="flex h-12 items-center px-20">
+        <div className="hidden md:block border-t border-border/50">
+          <div className="flex h-12 max-w-8xl items-stretch justify-between px-4 md:px-20">
             <DesktopNav items={navItems} />
           </div>
         </div>

@@ -9,7 +9,6 @@ import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/common/PriceDisplay';
 import { useWishlistToggle } from '@/hooks/useWishlistToggle';
 import type { Locale } from '@/utils/currency';
-import StarRating from '@/components/reviews/StarRating';
 
 interface ProductCardProps {
   id: number;
@@ -19,11 +18,13 @@ interface ProductCardProps {
   shortDescription?: string | null;
   rating?: number;
   reviewCount?: number;
+  categoryName?: string;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
   isFeatured?: boolean;
   locale?: Locale;
   priority?: boolean;
+  variant?: 'default' | 'minimal';
 }
 
 function ProductCard({
@@ -34,11 +35,14 @@ function ProductCard({
   shortDescription,
   rating,
   reviewCount,
+  categoryName,
   status,
   images,
   locale = 'ko',
   priority = false,
+  variant = 'default',
 }: ProductCardProps) {
+  const isMinimal = variant === 'minimal';
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
 
@@ -52,7 +56,7 @@ function ProductCard({
         isSoldout && 'opacity-60',
       )}
     >
-      <div className="relative aspect-square overflow-hidden bg-muted">
+      <div className="relative aspect-square overflow-hidden border border-muted-foreground/20 rounded">
         {thumbnail ? (
           <Image
             src={thumbnail}
@@ -95,38 +99,18 @@ function ProductCard({
         </button>
       </div>
 
-      <div className="mt-3 flex flex-col gap-1">
-        <p className="typo-title font-display line-clamp-2 leading-tight h-11 shrink-0">{name}</p>
-
-        <div className="flex items-center gap-1.5 h-5 shrink-0">
-          {rating !== undefined && (
-            <>
-              <StarRating rating={rating} size="sm" interactive={false} />
-              <span className="typo-body-sm font-medium leading-none">{rating.toFixed(1)}</span>
-              {reviewCount !== undefined && reviewCount > 0 && (
-                <span className="typo-body-sm text-muted-foreground leading-none">({reviewCount})</span>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="h-10 overflow-hidden">
-          {shortDescription && (
-            <p className="line-clamp-2 typo-body-sm text-muted-foreground leading-snug">{shortDescription}</p>
-          )}
-        </div>
-
-        <div className="mt-auto pt-2">
-          <hr className="border-[#D4BC8E]" />
-        </div>
-
+      <div className="mt-4 flex flex-col">
+        {categoryName && (
+          <p className="typo-label text-muted-foreground uppercase tracking-wider mb-1">{categoryName}</p>
+        )}
+        <p className="text-base font-semibold line-clamp-2 leading-tight shrink-0">{name}</p>
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
 
         <div className="mt-auto pt-2">
           <button
             type="button"
             className={cn(
-              'flex w-full items-center justify-center border border-foreground py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background shrink-0',
+              'flex w-full items-center justify-center bg-foreground py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/80 shrink-0',
             )}
           >
             자세히 보기
