@@ -263,7 +263,7 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
   const current = history.length > 0 ? history[history.length - 1] : { title: '메뉴', items: menuItems };
 
   const handleItemClick = (item: NavigationItem) => {
-    if (item.children.length > 0) {
+    if (item.children && item.children.length > 0) {
       setHistory(h => [...h, { title: item.label, items: item.children }]);
     } else {
       closeAndReset();
