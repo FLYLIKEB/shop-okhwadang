@@ -105,8 +105,18 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} 옥화당. All rights reserved.
+        {/* 공방 서명/낙관 영역 */}
+        <div className="mt-12 pt-8 border-t border-dashed border-border">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <span className="font-display text-2xl text-foreground/80 tracking-wide">옥화당</span>
+              <span className="text-muted-foreground/40 text-lg">|</span>
+              <span className="font-display text-lg text-muted-foreground/50">玉華堂</span>
+            </div>
+            <div className="font-mono text-xs text-muted-foreground text-center md:text-right space-y-0.5 tracking-wide">
+              <p>&copy; {new Date().getFullYear()} OKHWADANG. All rights reserved.</p>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

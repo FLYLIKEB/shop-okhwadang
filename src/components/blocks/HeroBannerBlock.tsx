@@ -112,8 +112,19 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                 </div>
               </div>
 
+              {/* 세로쓰기 한자 장식 — 우측 */}
+              <div className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 z-10 flex-col items-center gap-1 select-none pointer-events-none">
+                <span className="font-display text-white/20 text-2xl" style={{ writingMode: 'vertical-rl' }}>
+                  玉華堂
+                </span>
+                <span className="w-px h-12 bg-white/15" />
+                <span className="font-mono text-white/15 text-xs tracking-widest" style={{ writingMode: 'vertical-rl' }}>
+                  工房
+                </span>
+              </div>
+
               <div className="relative z-10 w-full px-8 md:px-12 max-w-3xl">
-                <p className="typo-label uppercase tracking-[0.25em] text-white/70 mb-3 font-body">
+                <p className="font-mono text-xs uppercase tracking-[0.3em] text-white/60 mb-3">
                   옥화당 공식 쇼핑몰
                 </p>
                 <h1 className="typo-h0 font-display text-white">
@@ -133,7 +144,7 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                   <div className="mt-8">
                     <Link
                       href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}
-                      className="inline-block rounded-full border border-white px-8 py-3 typo-button text-white tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+                      className="inline-block border border-white/80 px-8 py-3 font-mono text-xs text-white tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
                     >
                       {slide.cta_text}
                     </Link>
