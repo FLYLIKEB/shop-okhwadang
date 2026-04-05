@@ -76,7 +76,7 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
 
   return (
     <section ref={sectionRef} role="region" aria-label="메인 배너" className="relative">
-      <div ref={emblaRef} className="overflow-hidden">
+      <div ref={emblaRef} className="overflow-hidden relative z-10">
         <div className="flex">
           {slides.map((slide, slideIndex) => (
             <div
@@ -154,7 +154,7 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
               type="button"
               onClick={scrollPrev}
               aria-label="이전 슬라이드"
-              className="absolute left-6 md:left-12 z-20 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+              className="absolute left-6 md:left-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
             >
               <ChevronLeft className="h-7 w-7" />
             </button>
@@ -162,12 +162,12 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
               type="button"
               onClick={scrollNext}
               aria-label="다음 슬라이드"
-              className="absolute right-6 md:right-12 z-20 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+              className="absolute right-6 md:right-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
             >
               <ChevronRight className="h-7 w-7" />
             </button>
 
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
             {slides.map((_, idx) => (
               <button
                 key={idx}
