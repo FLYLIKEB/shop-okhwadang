@@ -68,7 +68,7 @@ function JournalCard({ journal, index }: { journal: Journal; index: number }) {
             src={journal.coverImageUrl}
             alt={journal.title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
@@ -76,7 +76,7 @@ function JournalCard({ journal, index }: { journal: Journal; index: number }) {
             src={img.src}
             alt={journal.title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         )}

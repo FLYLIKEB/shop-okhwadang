@@ -522,10 +522,10 @@ export default function Header() {
   return (
     <>
       <header className={cn(
-        'sticky top-0 z-50 transition-all duration-300 ease-in-out bg-background',
+        'sticky top-0 z-50 transition-all duration-300 ease-in-out',
         isScrolled
-          ? 'border-b border-border shadow-sm'
-          : 'border-b border-transparent',
+          ? 'bg-background border-b border-border shadow-sm'
+          : 'bg-transparent border-b border-transparent',
       )}>
         {/* Top row */}
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4">

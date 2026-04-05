@@ -133,7 +133,7 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                   <div className="mt-12">
                     <Link
                       href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}
-                      className="inline-block border-b border-white/40 pb-1 typo-body-sm text-white/80 tracking-[0.2em] uppercase hover:border-white hover:text-white transition-all duration-500"
+                      className="inline-block border-b border-white/40 pb-1 typo-body-sm text-white/80 tracking-[0.2em] uppercase hover:border-white hover:text-white transition-all duration-700 ease-out"
                     >
                       {slide.cta_text}
                     </Link>
@@ -273,7 +273,7 @@ export default function HeroBannerBlock({ content }: Props) {
             <div className="mt-8">
               <Link
                 href={isSafeUrl(cta_url) ? cta_url : '#'}
-                className="inline-block rounded-full border border-current px-8 py-3 typo-button tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+                className="inline-block rounded-full border border-current px-8 py-3 typo-button tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-700 ease-out"
               >
                 {cta_text}
               </Link>

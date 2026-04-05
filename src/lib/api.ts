@@ -860,6 +860,14 @@ export interface ImageGalleryContent {
   columns?: 2 | 3 | 4;
 }
 
+export interface BrandStoryContent {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  image_url?: string;
+  bg_color?: string;
+}
+
 export const pagesApi = {
   getBySlug: (slug: string) => apiClient.get<Page>(`/pages/${slug}`),
   getAll: () => apiClient.get<Page[]>('/pages'),

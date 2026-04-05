@@ -46,7 +46,7 @@ export default function SplitContentBlock({ content }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const bgClass = use_alternate_bg ? 'bg-[#F5F3EF]' : 'bg-white';
+  const bgClass = use_alternate_bg ? 'bg-surface' : 'bg-background';
 
   return (
     <div ref={sectionRef} className={cn(bgClass)}>
@@ -109,12 +109,12 @@ export default function SplitContentBlock({ content }: Props) {
               )}
             >
               <span className="relative">
-                <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
+                <span className="relative inline-block transition-transform duration-700 ease-out group-hover:-translate-y-px">
                   {cta_text}
                 </span>
-                <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-foreground transition-transform duration-300 group-hover:scale-x-110" />
+                <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-foreground transition-transform duration-700 ease-out group-hover:scale-x-110" />
               </span>
-              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+              <span className="inline-block transition-transform duration-700 ease-out group-hover:translate-x-1">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
