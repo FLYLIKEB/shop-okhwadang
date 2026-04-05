@@ -386,92 +386,103 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
   );
 }
 
-interface DesktopNavItemProps {
+interface DesktopNavLinkProps {
   item: NavigationItem;
+  isActive: boolean;
+  onMouseEnter: () => void;
 }
 
-function DesktopNavItem({ item }: DesktopNavItemProps) {
-  const [isHovered, setIsHovered] = useState(false);
+function DesktopNavLink({ item, isActive, onMouseEnter }: DesktopNavLinkProps) {
   const hasChildren = item.children && item.children.length > 0;
-  const activeChildren = item.children?.filter((c: NavigationItem) => c.is_active) ?? [];
+
+  return (
+    <Link
+      href={item.url}
+      onMouseEnter={onMouseEnter}
+      className={cn(
+        'group relative flex items-center gap-1 py-2 typo-body-sm transition-colors duration-200',
+        isActive ? 'text-foreground' : 'text-muted-foreground',
+      )}
+    >
+      <span className="relative font-display">
+        {item.label}
+        <span
+          className={cn(
+            'absolute -bottom-0.5 left-0 h-px bg-[#B8976A] transition-all duration-300 ease-out',
+            isActive ? 'w-full' : 'w-0',
+          )}
+        />
+      </span>
+      {hasChildren && (
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className={cn(
+            'transition-transform duration-300',
+            isActive && 'rotate-180',
+          )}
+        >
+          <path d="M2.5 4.5L5 7L7.5 4.5" />
+        </svg>
+      )}
+    </Link>
+  );
+}
+
+interface DesktopNavBarProps {
+  navItems: NavigationItem[];
+}
+
+function DesktopNavBar({ navItems }: DesktopNavBarProps) {
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const hoveredItem = navItems.find((item) => item.id === hoveredId);
+  const activeChildren = hoveredItem?.children?.filter((c: NavigationItem) => c.is_active) ?? [];
+  const showDropdown = activeChildren.length > 0;
 
   return (
     <div
-      className="relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="hidden md:block border-t border-border/50 relative"
+      onMouseLeave={() => setHoveredId(null)}
     >
-      <Link
-        href={item.url}
+      <div className="flex h-12 items-center px-10">
+        <nav aria-label="메인 메뉴" className="flex items-center justify-between flex-1">
+          {navItems.map((item) => (
+            <DesktopNavLink
+              key={item.id}
+              item={item}
+              isActive={hoveredId === item.id}
+              onMouseEnter={() => setHoveredId(item.id)}
+            />
+          ))}
+        </nav>
+      </div>
+
+      {/* Full-width mega dropdown */}
+      <div
         className={cn(
-          'group relative flex items-center gap-1 py-2 typo-body-sm transition-colors duration-200',
-          isHovered ? 'text-foreground' : 'text-muted-foreground',
+          'absolute left-0 right-0 z-50 border-t border-border/30 bg-background shadow-lg transition-all duration-200 ease-out overflow-hidden',
+          showDropdown ? 'opacity-100 max-h-60' : 'opacity-0 max-h-0 pointer-events-none',
         )}
       >
-        <span className="relative font-display">
-          {item.label}
-          <span
-            className={cn(
-              'absolute -bottom-0.5 left-0 h-px bg-[#B8976A] transition-all duration-300 ease-out',
-              isHovered ? 'w-full' : 'w-0',
-            )}
-          />
-        </span>
-        {hasChildren && (
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 10 10"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            className={cn(
-              'transition-transform duration-300',
-              isHovered && 'rotate-180',
-            )}
-          >
-            <path d="M2.5 4.5L5 7L7.5 4.5" />
-          </svg>
-        )}
-      </Link>
-
-      {hasChildren && isHovered && (
-        <div
-          className="absolute left-1/2 -translate-x-1/2 pt-3 z-50 w-48"
-          style={{ top: '100%' }}
-        >
-          <div
-            className={cn(
-              'overflow-hidden rounded-lg border border-border bg-background shadow-xl',
-              'animate-accordion-down',
-            )}
-          >
-            <div className="py-2">
-              {activeChildren.map((child: NavigationItem, index: number) => (
-                <Link
-                  key={child.id}
-                  href={child.url}
-                  className={cn(
-                    'flex items-center gap-3 px-4 py-2.5 typo-body-sm text-muted-foreground',
-                    'transition-all duration-200',
-                    'hover:bg-surface hover:text-foreground hover:pl-5',
-                    'border-l-2 border-transparent',
-                    'hover:border-primary/40',
-                  )}
-                  style={{ animationDelay: `${index * 30}ms` }}
-                >
-                  <span className="text-xs font-normal text-muted-foreground/60">└</span>
-                  <span>{child.label}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div
-            className="absolute left-1/2 -translate-x-1/2 -top-1 w-3 h-3 rotate-45 border-l border-t border-border bg-background"
-            style={{ clipPath: 'polygon(0 0, 100% 100%, 0 100%)' }}
-          />
+        <div className="flex items-center gap-8 px-10 py-4">
+          {activeChildren.map((child: NavigationItem) => (
+            <Link
+              key={child.id}
+              href={child.url}
+              className={cn(
+                'typo-body-sm text-muted-foreground transition-colors duration-200',
+                'hover:text-foreground',
+              )}
+            >
+              {child.label}
+            </Link>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -527,7 +538,7 @@ export default function Header() {
           ? 'border-b border-[#D4BC8E]/40 shadow-sm'
           : 'border-b border-transparent',
       )}>
-        <div className="flex h-16 items-center justify-between gap-4 px-4 md:px-6">
+        <div className="flex h-16 items-center justify-between gap-4 px-4 md:px-10">
 
           <button
             type="button"
@@ -613,15 +624,7 @@ export default function Header() {
           </div>
         </div>
 
-        <div className="hidden md:block border-t border-border/50">
-          <div className="flex h-12 items-center justify-between px-6">
-            <nav aria-label="메인 메뉴" className="flex items-center justify-between flex-1 px-2">
-              {navItems.map((item) => (
-                <DesktopNavItem key={item.id} item={item} />
-              ))}
-            </nav>
-          </div>
-        </div>
+        <DesktopNavBar navItems={navItems} />
 
       </header>
 
