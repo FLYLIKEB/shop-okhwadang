@@ -68,14 +68,32 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="mb-6 border-b border-border pb-4">
-        <h1 className="font-display typo-h1 tracking-tight text-foreground">
-          {q ? `"${q}" 검색 결과` : isFeatured ? '추천 상품' : categoryId && selectedCategory ? selectedCategory.name : '상품 목록'}
-        </h1>
-        {selectedCategory?.description && (
-          <p className="mt-2 typo-body-sm text-muted-foreground">{selectedCategory.description}</p>
-        )}
-      </div>
+      {categoryId && selectedCategory?.imageUrl ? (
+        <div className="mb-6 relative overflow-hidden rounded-lg">
+          <img
+            src={selectedCategory.imageUrl}
+            alt={selectedCategory.name}
+            className="w-full h-40 md:h-52 object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4 md:p-6">
+            <h1 className="font-display typo-h1 tracking-tight text-white">
+              {selectedCategory.name}
+            </h1>
+            {selectedCategory.description && (
+              <p className="mt-1 typo-body-sm text-white/80">{selectedCategory.description}</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="mb-6 border-b border-border pb-4">
+          <h1 className="font-display typo-h1 tracking-tight text-foreground">
+            {q ? `"${q}" 검색 결과` : isFeatured ? '추천 상품' : categoryId && selectedCategory ? selectedCategory.name : '상품 목록'}
+          </h1>
+          {selectedCategory?.description && (
+            <p className="mt-2 typo-body-sm text-muted-foreground">{selectedCategory.description}</p>
+          )}
+        </div>
+      )}
 
       {/* 모바일 필터 바 */}
       <div className="mt-4 md:hidden">
