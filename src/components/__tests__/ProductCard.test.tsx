@@ -86,7 +86,7 @@ describe('ProductCard', () => {
 
   it('shows soldout badge when status is soldout', () => {
     render(<ProductCard {...baseProps} status="soldout" />);
-    expect(screen.getByText('품절')).toBeInTheDocument();
+    expect(screen.getByText('SOLD OUT')).toBeInTheDocument();
   });
 
   it('renders without crashing when images are empty', () => {

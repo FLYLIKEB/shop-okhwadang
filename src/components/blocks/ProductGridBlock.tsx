@@ -63,7 +63,7 @@ export default function ProductGridBlock({ content }: Props) {
   if (loading) {
     return (
       <section className="py-12">
-        {title && <h2 className="text-2xl font-medium mb-8">{title}</h2>}
+        {title && <h2 className="text-2xl font-medium mb-8 font-display">{title}</h2>}
         <div className={cn('grid gap-6', gridCols)}>
           {Array.from({ length: limit || 4 }).map((_, i) => (
             <CardSkeleton key={i} />
@@ -84,7 +84,7 @@ export default function ProductGridBlock({ content }: Props) {
       )}
     >
       <div className="flex items-center justify-between mb-8">
-        {title && <h2 className="text-2xl font-medium">{title}</h2>}
+        {title && <h2 className="text-2xl font-medium font-display">{title}</h2>}
         {more_href && (
           <Link
             href={more_href}
@@ -122,6 +122,7 @@ export default function ProductGridBlock({ content }: Props) {
               reviewCount={product.reviewCount}
               status={product.status}
               images={product.images}
+              categoryName={product.category?.name ?? null}
             />
           </div>
         ))}

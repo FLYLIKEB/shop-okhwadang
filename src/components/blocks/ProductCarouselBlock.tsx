@@ -252,6 +252,7 @@ export default function ProductCarouselBlock({ content }: Props) {
                   images={product.images}
                   priority={index === 0}
                   showCartOnHover
+                  categoryName={product.category?.name ?? null}
                 />
               </div>
             );
