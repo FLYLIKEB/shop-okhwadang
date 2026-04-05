@@ -5,4 +5,5 @@ export interface UploadedFile {
 
 export interface StorageAdapter {
   save(filename: string, buffer: Buffer, mimetype: string): Promise<UploadedFile>;
+  saveCategoryImage(filename: string, buffer: Buffer, mimetype: string): Promise<UploadedFile>;
 }
