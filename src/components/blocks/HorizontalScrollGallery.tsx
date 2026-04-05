@@ -82,7 +82,10 @@ export default function HorizontalScrollGallery({
           aria-label="이전"
           onClick={() => scroll('left')}
           className={cn(
-            'absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center justify-center w-10 h-10 bg-background/80 border border-border text-foreground transition-opacity duration-300',
+            'absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10',
+            'hidden md:flex items-center justify-center w-10 h-10',
+            'bg-background/80 border border-border text-foreground',
+            'transition-all duration-300',
             canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none',
           )}
         >
@@ -94,7 +97,10 @@ export default function HorizontalScrollGallery({
           aria-label="다음"
           onClick={() => scroll('right')}
           className={cn(
-            'absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center justify-center w-10 h-10 bg-background/80 border border-border text-foreground transition-opacity duration-300',
+            'absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10',
+            'hidden md:flex items-center justify-center w-10 h-10',
+            'bg-background/80 border border-border text-foreground',
+            'transition-all duration-300',
             canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none',
           )}
         >
