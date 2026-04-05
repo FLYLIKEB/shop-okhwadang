@@ -14,6 +14,8 @@ import { useScrollLogoContext } from '@/contexts/ScrollLogoContext';
 import type { NavigationItem } from '@/lib/api';
 import LanguageSelector from '@/components/LanguageSelector';
 
+
+
 // ─── Sub-components ──────────────────────────────────────────────
 
 interface CartBadgeProps {
@@ -386,104 +388,90 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
   );
 }
 
-interface DesktopNavLinkProps {
-  item: NavigationItem;
-  isActive: boolean;
-  onMouseEnter: () => void;
+interface DesktopNavProps {
+  items: NavigationItem[];
 }
 
-function DesktopNavLink({ item, isActive, onMouseEnter }: DesktopNavLinkProps) {
-  const hasChildren = item.children && item.children.length > 0;
-
-  return (
-    <Link
-      href={item.url}
-      onMouseEnter={onMouseEnter}
-      className={cn(
-        'group relative flex items-center gap-1 py-2 typo-body-sm transition-colors duration-200',
-        isActive ? 'text-foreground' : 'text-muted-foreground',
-      )}
-    >
-      <span className="relative">
-        {item.label}
-        <span
-          className={cn(
-            'absolute -bottom-0.5 left-0 h-px bg-[#B8976A] transition-all duration-300 ease-out',
-            isActive ? 'w-full' : 'w-0',
-          )}
-        />
-      </span>
-      {hasChildren && (
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 10 10"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className={cn(
-            'transition-transform duration-300',
-            isActive && 'rotate-180',
-          )}
-        >
-          <path d="M2.5 4.5L5 7L7.5 4.5" />
-        </svg>
-      )}
-    </Link>
-  );
-}
-
-interface DesktopNavBarProps {
-  navItems: NavigationItem[];
-}
-
-function DesktopNavBar({ navItems }: DesktopNavBarProps) {
+function DesktopNav({ items }: DesktopNavProps) {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
-  const hoveredItem = navItems.find((item) => item.id === hoveredId);
+  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const hoveredItem = items.find((item) => item.id === hoveredId);
   const activeChildren = hoveredItem?.children?.filter((c: NavigationItem) => c.is_active) ?? [];
-  const showDropdown = activeChildren.length > 0;
+  const hasChildren = activeChildren.length > 0;
+
+  const hoveredLeft = hoveredId !== null
+    ? (itemRefs.current.get(hoveredId)?.getBoundingClientRect().left ?? 0)
+    : 0;
 
   return (
-    <div
-      className="hidden md:block border-t border-border/50 relative"
+    <nav
+      aria-label="메인 메뉴"
+      className="hidden md:flex items-center gap-6"
       onMouseLeave={() => setHoveredId(null)}
     >
-      <div className="flex h-12 items-center px-20">
-        <nav aria-label="메인 메뉴" className="flex items-center justify-between flex-1">
-          {navItems.map((item) => (
-            <DesktopNavLink
-              key={item.id}
-              item={item}
-              isActive={hoveredId === item.id}
-              onMouseEnter={() => setHoveredId(item.id)}
-            />
-          ))}
-        </nav>
-      </div>
-
-      {/* Full-width mega dropdown */}
-      <div
-        className={cn(
-          'absolute left-0 right-0 z-50 border-t border-border/30 bg-background shadow-lg transition-all duration-200 ease-out overflow-hidden',
-          showDropdown ? 'opacity-100 max-h-60' : 'opacity-0 max-h-0 pointer-events-none',
-        )}
-      >
-        <div className="flex items-center gap-8 px-20 py-4">
-          {activeChildren.map((child: NavigationItem) => (
-            <Link
-              key={child.id}
-              href={child.url}
-              className={cn(
-                'typo-body-sm text-muted-foreground transition-colors duration-200',
-                'hover:text-foreground',
-              )}
-            >
-              {child.label}
-            </Link>
-          ))}
+      {items.map((item) => (
+        <div
+          key={item.id}
+          ref={(el) => { if (el) itemRefs.current.set(item.id, el); }}
+          onMouseEnter={() => setHoveredId(item.id)}
+        >
+          <Link
+            href={item.url}
+            className={cn(
+              'group relative flex items-center gap-1 py-2 typo-body-sm transition-colors duration-200',
+              hoveredId === item.id ? 'text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            <span className="relative">
+              {item.label}
+              <span
+                className={cn(
+                  'absolute -bottom-0.5 left-0 h-px bg-foreground transition-all duration-300 ease-out',
+                  hoveredId === item.id ? 'w-full' : 'w-0',
+                )}
+              />
+            </span>
+          </Link>
         </div>
-      </div>
-    </div>
+      ))}
+
+      {hasChildren && (
+        <div
+          className="fixed left-0 right-0 z-50 bg-background border-b border-border shadow-md"
+          style={{ top: 'var(--header-bottom)' }}
+          onMouseEnter={() => setHoveredId(hoveredId)}
+          onMouseLeave={() => setHoveredId(null)}
+        >
+          <div className="py-6" style={{ paddingLeft: `${hoveredLeft}px` }}>
+            <div className="flex gap-12">
+              {activeChildren.map((child: NavigationItem) => (
+                <div key={child.id} className="flex flex-col gap-3">
+                  <Link
+                    href={child.url}
+                    className="typo-body-sm font-semibold text-foreground hover:text-primary transition-colors tracking-wide"
+                  >
+                    {child.label}
+                  </Link>
+                  {child.children && child.children.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      {child.children.filter((c: NavigationItem) => c.is_active).map((grandchild: NavigationItem) => (
+                        <Link
+                          key={grandchild.id}
+                          href={grandchild.url}
+                          className="typo-body-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {grandchild.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </nav>
   );
 }
 
@@ -501,6 +489,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollLogo = useScrollLogoContext();
   const menuPanel = useSlidePanel(isMenuOpen);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -523,6 +512,21 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const update = () => {
+      document.documentElement.style.setProperty('--header-bottom', `${el.getBoundingClientRect().bottom}px`);
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
   const handleDesktopSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = query.trim();
@@ -532,13 +536,13 @@ export default function Header() {
 
   return (
     <>
-      <header className={cn(
-        'sticky top-0 z-50 transition-all duration-300 ease-in-out bg-background',
+      <header ref={headerRef} className={cn(
+        'sticky top-0 z-50 transition-all duration-300 ease-in-out',
         isScrolled
-          ? 'border-b border-[#D4BC8E]/40 shadow-sm'
-          : 'border-b border-transparent',
+          ? 'bg-background/85 backdrop-blur-lg border-b border-border shadow-sm'
+          : 'bg-background border-b border-transparent',
       )}>
-        <div className="flex h-16 items-center justify-between gap-4 px-4 md:px-20">
+        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between gap-2 px-4">
 
           <button
             type="button"
@@ -546,24 +550,24 @@ export default function Header() {
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-            className="p-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground md:hidden"
+            className="p-2 -ml-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground lg:hidden"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          {/* 로고 */}
           <Link href="/" className="shrink-0">
             <div style={scrollLogo?.headerLogoStyle}>
               <Logo variant="header" />
             </div>
           </Link>
 
-          {/* 데스크탑 검색 — 中央 */}
+          <DesktopNav items={navItems} />
+
           <form
             onSubmit={handleDesktopSearch}
             role="search"
             aria-label="상품 검색"
-            className="hidden md:flex relative items-center flex-1 max-w-lg mx-8"
+            className="hidden md:flex relative items-center flex-1 max-w-sm"
           >
             <input
               type="search"
@@ -571,35 +575,21 @@ export default function Header() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="상품 검색..."
               aria-label="상품 검색"
-              className="w-full rounded-md border border-input bg-background pl-4 pr-10 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-input bg-background pl-3 pr-10 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <button type="submit" aria-label="검색" className="absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
+            <button type="submit" aria-label="검색" className="absolute right-2 transition-colors text-muted-foreground hover:text-foreground">
               <Search className="h-4 w-4" />
             </button>
           </form>
 
-          {/* 데스크탑 액션 — 오른쪽 */}
-          <div className="hidden md:flex items-center gap-1">
-            <LanguageSelector />
-            <CartBadge itemCount={itemCount} />
-            {isAuthenticated ? (
-              <>
-                <Link href="/my" aria-label="마이페이지" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <User className="h-5 w-5" />
-                </Link>
-                <button type="button" onClick={() => void logout()} aria-label="로그아웃" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <LogOut className="h-5 w-5" />
-                </button>
-              </>
-            ) : (
-              <Link href="/login" aria-label="로그인" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-5 w-5" />
-              </Link>
-            )}
-          </div>
+          <DesktopActions
+            isAuthenticated={isAuthenticated}
+            userName={user?.name}
+            itemCount={itemCount}
+            onLogout={() => void logout()}
+          />
 
-          {/* 모바일 우측: 검색 + 카트 + 로그인/마이페이지 */}
-          <div className="md:hidden flex items-center gap-1">
+          <div className="md:hidden flex items-center gap-1 ml-auto">
             <button
               type="button"
               onClick={() => { setIsSearchOpen((p) => !p); setIsMenuOpen(false); }}
@@ -623,8 +613,6 @@ export default function Header() {
             )}
           </div>
         </div>
-
-        <DesktopNavBar navItems={navItems} />
 
       </header>
 
