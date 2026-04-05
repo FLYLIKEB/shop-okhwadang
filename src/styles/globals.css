@@ -47,37 +47,37 @@
 }
 
 @theme inline {
-  /* ── shadcn/ui 호환 토큰 (DB override 지원) — 다실 테마 ── */
+  /* ── shadcn/ui 호환 토큰 (DB override 지원) — 다크 디폴트 ── */
   --color-primary: var(--db-color-primary, #2A2520);
   --color-primary-foreground: var(--db-color-primary-foreground, #F8F5F0);
-  --color-secondary: var(--db-color-secondary, #F5F0E8);
-  --color-secondary-foreground: var(--db-color-secondary-foreground, #2A2520);
+  --color-secondary: var(--db-color-secondary, #1E1B18);
+  --color-secondary-foreground: var(--db-color-secondary-foreground, #F8F5F0);
   --color-destructive: var(--db-color-destructive, #b91c1c);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #F0EBE3);
-  --color-muted-foreground: var(--db-color-muted-foreground, #6B5E52);
-  --color-accent: var(--db-color-accent, #F0EBE3);
-  --color-accent-foreground: var(--db-color-accent-foreground, #2A2520);
-  --color-background: var(--db-color-background, #FDFBF7);
-  --color-foreground: var(--db-color-foreground, #2A2520);
-  --color-card: var(--db-color-card, #FDFBF7);
-  --color-card-foreground: var(--db-color-card-foreground, #2A2520);
-  --color-border: var(--db-color-border, #E0D8CC);
-  --color-input: var(--db-color-input, #E0D8CC);
+  --color-muted: var(--db-color-muted, #1E1B18);
+  --color-muted-foreground: var(--db-color-muted-foreground, #9A9189);
+  --color-accent: var(--db-color-accent, #1E1B18);
+  --color-accent-foreground: var(--db-color-accent-foreground, #F8F5F0);
+  --color-background: var(--db-color-background, #0F0D0B);
+  --color-foreground: var(--db-color-foreground, #F5F3EF);
+  --color-card: var(--db-color-card, #1A1815);
+  --color-card-foreground: var(--db-color-card-foreground, #F5F3EF);
+  --color-border: var(--db-color-border, #2E2A26);
+  --color-input: var(--db-color-input, #2E2A26);
   --color-ring: var(--db-color-ring, #B8976A);
   --radius-sm: var(--db-radius-sm, 0.125rem);
   --radius-md: var(--db-radius-md, 0.25rem);
   --radius-lg: var(--db-radius-lg, 0.5rem);
 
-  /* ── 브랜드 확장 토큰 — 다실 테마 ── */
-  --color-zuni: #2A2520;
-  --color-tea: #4A6741;
-  --color-danni: #C9B8A3;
-  --color-surface: #F5F0E8;
+  /* ── 브랜드 확장 토큰 — 다크 디폴트 ── */
+  --color-zuni: #3D3630;
+  --color-tea: #5A7A52;
+  --color-danni: #A89880;
+  --color-surface: #1A1815;
   --color-gold: #B8976A;
   --color-gold-light: #D4BC8E;
-  --color-ink: #2A2520;
-  --color-ink-light: #3D3630;
+  --color-ink: #F5F3EF;
+  --color-ink-light: #C8C0B5;
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
@@ -180,7 +180,7 @@
   line-height: var(--line-height-compact);
 }
 
-/* ── Base styles — 다실 테마 ──────────────────────────────────── */
+/* ── Base styles — 다크 디폴트 ──────────────────────────────────── */
 body {
   font-family: var(--font-body);
   color: var(--color-foreground);
