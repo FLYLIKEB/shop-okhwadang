@@ -19,44 +19,39 @@ interface TeapotShapeFilterProps {
 
 export default function TeapotShapeFilter({ selected, onSelect }: TeapotShapeFilterProps) {
   return (
-    <div>
-      <h2 className="mb-3 text-sm font-semibold text-foreground">모양</h2>
-      <div className="flex flex-col gap-2">
-        <label className="flex cursor-pointer items-center gap-2">
+    <div className="flex flex-col gap-2">
+      <label className="flex cursor-pointer items-center gap-2">
+        <input
+          type="radio"
+          name="teapot-shape"
+          checked={selected === undefined}
+          onChange={() => onSelect(undefined)}
+          className={cn('h-4 w-4 border-border accent-primary')}
+        />
+        <span className={cn(
+          'text-sm transition-colors',
+          selected === undefined ? 'font-medium text-foreground' : 'text-muted-foreground',
+        )}>
+          전체
+        </span>
+      </label>
+      {TEAPOT_SHAPES.map((item) => (
+        <label key={item.value} className="flex cursor-pointer items-center gap-2">
           <input
             type="radio"
             name="teapot-shape"
-            checked={selected === undefined}
-            onChange={() => onSelect(undefined)}
-            className={cn(
-              'h-4 w-4 border-border accent-primary',
-            )}
+            checked={selected === item.value}
+            onChange={() => onSelect(item.value)}
+            className="h-4 w-4 border-border accent-primary"
           />
           <span className={cn(
             'text-sm transition-colors',
-            selected === undefined ? 'font-medium text-foreground' : 'text-muted-foreground',
+            selected === item.value ? 'font-medium text-foreground' : 'text-muted-foreground',
           )}>
-            전체
+            {item.label}
           </span>
         </label>
-        {TEAPOT_SHAPES.map((item) => (
-          <label key={item.value} className="flex cursor-pointer items-center gap-2">
-            <input
-              type="radio"
-              name="teapot-shape"
-              checked={selected === item.value}
-              onChange={() => onSelect(item.value)}
-              className="h-4 w-4 border-border accent-primary"
-            />
-            <span className={cn(
-              'text-sm transition-colors',
-              selected === item.value ? 'font-medium text-foreground' : 'text-muted-foreground',
-            )}>
-              {item.label}
-            </span>
-          </label>
-        ))}
-      </div>
+      ))}
     </div>
   );
 }

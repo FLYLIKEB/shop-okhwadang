@@ -7,6 +7,7 @@ import CategoryTree from './CategoryTree';
 import PriceRangeFilter from './PriceRangeFilter';
 import ClayTypeFilter from './ClayTypeFilter';
 import TeapotShapeFilter from './TeapotShapeFilter';
+import FilterSection from './FilterSection';
 import type { Category } from '@/lib/api';
 import type { ClayType } from './ClayTypeFilter';
 import type { TeapotShape } from './TeapotShapeFilter';
@@ -80,8 +81,8 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
   };
 
   const sidebarContent = (
-    <aside aria-label="상품 필터" className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+    <aside aria-label="상품 필터" className="flex flex-col">
+      <div className="flex items-center justify-between py-4 border-b border-border">
         <span className="text-sm font-semibold text-foreground">필터</span>
         {hasActiveFilters && (
           <button
@@ -94,33 +95,40 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
         )}
       </div>
 
-      <CategoryTree
-        categories={categories}
-        selectedId={selectedCategoryId}
-        onSelect={handleCategorySelect}
-      />
+      <FilterSection title="카테고리" defaultOpen={selectedCategoryId !== undefined}>
+        <CategoryTree
+          categories={categories}
+          selectedId={selectedCategoryId}
+          onSelect={handleCategorySelect}
+        />
+      </FilterSection>
 
-      <ClayTypeFilter
-        selected={selectedClayType}
-        onSelect={handleClayTypeSelect}
-      />
+      <FilterSection title="니료(泥料)" defaultOpen={selectedClayType !== undefined}>
+        <ClayTypeFilter
+          selected={selectedClayType}
+          onSelect={handleClayTypeSelect}
+        />
+      </FilterSection>
 
-      <TeapotShapeFilter
-        selected={selectedShape}
-        onSelect={handleShapeSelect}
-      />
+      <FilterSection title="모양" defaultOpen={selectedShape !== undefined}>
+        <TeapotShapeFilter
+          selected={selectedShape}
+          onSelect={handleShapeSelect}
+        />
+      </FilterSection>
 
-      <PriceRangeFilter
-        min={priceMin}
-        max={priceMax}
-        onChange={handlePriceChange}
-      />
+      <FilterSection title="가격 범위" defaultOpen={priceMin !== undefined || priceMax !== undefined}>
+        <PriceRangeFilter
+          min={priceMin}
+          max={priceMax}
+          onChange={handlePriceChange}
+        />
+      </FilterSection>
     </aside>
   );
 
   return (
     <>
-      {/* Mobile toggle button */}
       <div className="md:hidden">
         <button
           type="button"
@@ -139,7 +147,6 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
         )}
       </div>
 
-      {/* Tablet/Desktop sidebar */}
       <div className="hidden md:block">
         {sidebarContent}
       </div>
