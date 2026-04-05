@@ -20,7 +20,7 @@ export default function ImageGalleryBlock({ content }: Props) {
 
   if (template === 'carousel') {
     return (
-      <section className="py-12 bg-white">
+      <section className="py-12 bg-background">
         {title && (
           <h2 className="text-center text-2xl font-medium mb-8">{title}</h2>
         )}
@@ -50,7 +50,7 @@ export default function ImageGalleryBlock({ content }: Props) {
   }
 
   return (
-    <section className="py-12 bg-white">
+    <section className="py-12 bg-background">
       {title && (
         <h2 className="text-center text-2xl font-medium mb-8">{title}</h2>
       )}
