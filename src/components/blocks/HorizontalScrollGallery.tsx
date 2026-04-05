@@ -75,6 +75,31 @@ export default function HorizontalScrollGallery({
       </div>
 
       {/* Scroll container */}
+      <div className="relative">
+        {/* Left arrow */}
+        <button
+          type="button"
+          aria-label="이전"
+          onClick={() => scroll('left')}
+          className={cn(
+            'absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center justify-center w-10 h-10 bg-background/80 border border-border text-foreground transition-opacity duration-300',
+            canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none',
+          )}
+        >
+          ←
+        </button>
+        {/* Right arrow */}
+        <button
+          type="button"
+          aria-label="다음"
+          onClick={() => scroll('right')}
+          className={cn(
+            'absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center justify-center w-10 h-10 bg-background/80 border border-border text-foreground transition-opacity duration-300',
+            canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none',
+          )}
+        >
+          →
+        </button>
       <div
         ref={scrollRef}
         className="flex gap-6 overflow-x-auto scrollbar-hide px-6 md:px-16 snap-x snap-mandatory"
@@ -117,6 +142,7 @@ export default function HorizontalScrollGallery({
             </Link>
           );
         })}
+      </div>
       </div>
 
       {/* Mobile more link */}
