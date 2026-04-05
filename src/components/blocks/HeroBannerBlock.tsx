@@ -7,7 +7,6 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
-import Logo from '@/components/Logo';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 import { useScrollLogoTransition } from '@/hooks/useScrollLogoTransition';
 import { ScrollLogoProvider } from '@/contexts/ScrollLogoContext';
@@ -104,14 +103,6 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />
               <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-
-              {slideIndex === 0 && (
-                <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
-                  <div style={heroLogoStyle}>
-                    <Logo variant="hero" />
-                  </div>
-                </div>
-              )}
 
               <div className="relative z-10 w-full px-8 md:px-16 max-w-3xl">
                 <p className="typo-label uppercase tracking-[0.35em] text-[#B8976A] mb-4 font-body">
@@ -267,13 +258,6 @@ export default function HeroBannerBlock({ content }: Props) {
   return (
     <ScrollLogoProvider value={scrollLogoContextValue}>
       <section ref={sectionRef} className="relative flex h-[40svh] min-h-[25rem] md:h-[680px] items-center justify-center overflow-hidden bg-neutral-900">
-        {isHome && (
-          <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
-            <div style={heroLogoStyle}>
-              <Logo variant="hero" />
-            </div>
-          </div>
-        )}
         {image_url && (
           <Image
             src={image_url}
