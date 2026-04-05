@@ -388,43 +388,53 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
   );
 }
 
-interface DesktopNavItemProps {
-  item: NavigationItem;
+interface DesktopNavProps {
+  items: NavigationItem[];
 }
 
-function DesktopNavItem({ item }: DesktopNavItemProps) {
-  const [isHovered, setIsHovered] = useState(false);
-  const hasChildren = item.children && item.children.length > 0;
-  const activeChildren = item.children?.filter((c: NavigationItem) => c.is_active) ?? [];
+function DesktopNav({ items }: DesktopNavProps) {
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const hoveredItem = items.find((item) => item.id === hoveredId);
+  const activeChildren = hoveredItem?.children?.filter((c: NavigationItem) => c.is_active) ?? [];
+  const hasChildren = activeChildren.length > 0;
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <nav
+      aria-label="메인 메뉴"
+      className="hidden md:flex items-center gap-6"
+      onMouseLeave={() => setHoveredId(null)}
     >
-      <Link
-        href={item.url}
-        className={cn(
-          'group relative flex items-center gap-1 py-2 typo-body-sm transition-colors duration-200',
-          isHovered ? 'text-foreground' : 'text-muted-foreground',
-        )}
-      >
-        <span className="relative">
-          {item.label}
-          <span
-            className={cn(
-              'absolute -bottom-0.5 left-0 h-px bg-foreground transition-all duration-300 ease-out',
-              isHovered ? 'w-full' : 'w-0',
-            )}
-          />
-        </span>
-      </Link>
-
-      {hasChildren && isHovered && (
+      {items.map((item) => (
         <div
-          className="absolute left-0 right-0 z-50 bg-background border-b border-border shadow-md"
-          style={{ top: '100%' }}
+          key={item.id}
+          onMouseEnter={() => setHoveredId(item.id)}
+        >
+          <Link
+            href={item.url}
+            className={cn(
+              'group relative flex items-center gap-1 py-2 typo-body-sm transition-colors duration-200',
+              hoveredId === item.id ? 'text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            <span className="relative">
+              {item.label}
+              <span
+                className={cn(
+                  'absolute -bottom-0.5 left-0 h-px bg-foreground transition-all duration-300 ease-out',
+                  hoveredId === item.id ? 'w-full' : 'w-0',
+                )}
+              />
+            </span>
+          </Link>
+        </div>
+      ))}
+
+      {hasChildren && (
+        <div
+          className="fixed left-0 right-0 z-50 bg-background border-b border-border shadow-md"
+          style={{ top: 'var(--header-bottom)' }}
+          onMouseEnter={() => setHoveredId(hoveredId)}
+          onMouseLeave={() => setHoveredId(null)}
         >
           <div className="mx-auto max-w-7xl px-4 py-4">
             <div className="grid grid-cols-4 gap-8">
@@ -455,7 +465,7 @@ function DesktopNavItem({ item }: DesktopNavItemProps) {
           </div>
         </div>
       )}
-    </div>
+    </nav>
   );
 }
 
@@ -473,6 +483,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollLogo = useScrollLogoContext();
   const menuPanel = useSlidePanel(isMenuOpen);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -495,6 +506,21 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const update = () => {
+      document.documentElement.style.setProperty('--header-bottom', `${el.getBoundingClientRect().bottom}px`);
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
   const handleDesktopSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = query.trim();
@@ -504,7 +530,7 @@ export default function Header() {
 
   return (
     <>
-      <header className={cn(
+      <header ref={headerRef} className={cn(
         'sticky top-0 z-50 transition-all duration-300 ease-in-out',
         isScrolled
           ? 'bg-background/85 backdrop-blur-lg border-b border-border shadow-sm'
@@ -533,11 +559,7 @@ export default function Header() {
           </Link>
 
           {/* 데스크탑 네비 */}
-          <nav aria-label="메인 메뉴" className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
-              <DesktopNavItem key={item.id} item={item} />
-            ))}
-          </nav>
+          <DesktopNav items={navItems} />
 
           {/* 데스크탑 검색 */}
           <form
