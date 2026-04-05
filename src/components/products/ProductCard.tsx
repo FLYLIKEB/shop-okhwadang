@@ -23,10 +23,8 @@ interface ProductCardProps {
   reviewCount?: number;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
-  isFeatured?: boolean;
   locale?: Locale;
   priority?: boolean;
-  showCartOnHover?: boolean;
   categoryName?: string | null;
 }
 
@@ -109,7 +107,7 @@ function ProductCard({
             alt={name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-103"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             priority={priority}
           />
         ) : (
@@ -126,7 +124,7 @@ function ProductCard({
 
         {/* 니료 태그 배지 — 좌하단 */}
         {clayTagClass && (
-          <span className={cn('absolute left-2 bottom-2 z-10 px-2 py-0.5 rounded-sm', clayTagClass)}>
+          <span className={cn('absolute left-2 bottom-2 z-10 px-2 py-0.5 rounded-sm tag-clay', clayTagClass)}>
             {categoryName}
           </span>
         )}
@@ -155,7 +153,7 @@ function ProductCard({
           <span className="data-label">{categoryName}</span>
         )}
 
-        <p className="typo-title line-clamp-2 leading-snug min-h-[2.5rem] shrink-0">{name}</p>
+        <p className="typo-title line-clamp-2 leading-snug min-h-10 shrink-0">{name}</p>
 
         {/* 리뷰 */}
         <div className="flex items-center gap-1.5 h-4 shrink-0">

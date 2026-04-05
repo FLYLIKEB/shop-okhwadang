@@ -55,7 +55,6 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
               reviewCount={product.reviewCount}
               status={product.status}
               images={product.images}
-              isFeatured={product.isFeatured}
               locale={locale}
               categoryName={product.category?.name ?? null}
             />
