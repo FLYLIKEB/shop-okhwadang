@@ -64,7 +64,7 @@ export default function ProductGridBlock({ content }: Props) {
     return (
       <section className="py-12">
         {title && <h2 className="text-2xl font-medium mb-8 font-display">{title}</h2>}
-        <div className={cn('grid gap-6', gridCols)}>
+        <div className={cn('grid gap-8', gridCols)}>
           {Array.from({ length: limit || 4 }).map((_, i) => (
             <CardSkeleton key={i} />
           ))}
@@ -102,7 +102,7 @@ export default function ProductGridBlock({ content }: Props) {
           </Link>
         )}
       </div>
-      <div className={cn('grid gap-6', gridCols)}>
+      <div className={cn('grid gap-8', gridCols)}>
         {products.map((product, i) => (
           <div
             key={product.id}
