@@ -15,7 +15,7 @@ export default function AnnouncementBar() {
 
   return (
     <div className="bg-[#1A1815] border-b border-border/50">
-      <div className="flex items-center justify-between px-20">
+      <div className="mx-auto flex max-w-8xl items-center justify-between px-4 md:px-20">
         {ANNOUNCEMENTS.map((item) => (
           <Link
             key={item.id}

@@ -65,6 +65,9 @@ export interface Category {
   slug: string;
   description: string | null;
   parentId: number | null;
+  imageUrl: string | null;
+  sortOrder?: number;
+  isActive?: boolean;
   children?: Category[];
 }
 
