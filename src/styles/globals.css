@@ -16,9 +16,9 @@
 
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
-  /* Color: 공방(工房) Craft Palette — warm cream base */
-  --color-bg: #F5F3EF;
-  --color-text: #1C1710;
+  /* Color: 공방(工房) Craft Palette — dark base */
+  --color-bg: #0A0A0A;
+  --color-text: #F0EDE8;
   --color-accent-zuni: #8B4513;
   --color-accent-tea: #4A6741;
   --color-brand-secondary: #D4C5B0;
@@ -44,23 +44,23 @@
 
 @theme inline {
   /* ── shadcn/ui 호환 토큰 (DB override 지원) ── */
-  --color-primary: var(--db-color-primary, #8B4513);
-  --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
-  --color-secondary: var(--db-color-secondary, #EDE8E0);
-  --color-secondary-foreground: var(--db-color-secondary-foreground, #1C1710);
-  --color-destructive: var(--db-color-destructive, #b91c1c);
+  --color-primary: var(--db-color-primary, #C4956A);
+  --color-primary-foreground: var(--db-color-primary-foreground, #0A0A0A);
+  --color-secondary: var(--db-color-secondary, #1A1A1A);
+  --color-secondary-foreground: var(--db-color-secondary-foreground, #E8E0D4);
+  --color-destructive: var(--db-color-destructive, #ef4444);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #EDE8E0);
-  --color-muted-foreground: var(--db-color-muted-foreground, #6B5E4F);
-  --color-accent: var(--db-color-accent, #EDE8E0);
-  --color-accent-foreground: var(--db-color-accent-foreground, #1C1710);
-  --color-background: var(--db-color-background, #F5F3EF);
-  --color-foreground: var(--db-color-foreground, #1C1710);
-  --color-card: var(--db-color-card, #FAFAF7);
-  --color-card-foreground: var(--db-color-card-foreground, #1C1710);
-  --color-border: var(--db-color-border, #D4CCBE);
-  --color-input: var(--db-color-input, #D4CCBE);
-  --color-ring: var(--db-color-ring, #8B4513);
+  --color-muted: var(--db-color-muted, #1A1A1A);
+  --color-muted-foreground: var(--db-color-muted-foreground, #9B8E7E);
+  --color-accent: var(--db-color-accent, #1A1A1A);
+  --color-accent-foreground: var(--db-color-accent-foreground, #E8E0D4);
+  --color-background: var(--db-color-background, #0A0A0A);
+  --color-foreground: var(--db-color-foreground, #F0EDE8);
+  --color-card: var(--db-color-card, #111111);
+  --color-card-foreground: var(--db-color-card-foreground, #F0EDE8);
+  --color-border: var(--db-color-border, #2A2520);
+  --color-input: var(--db-color-input, #2A2520);
+  --color-ring: var(--db-color-ring, #C4956A);
   --radius-sm: var(--db-radius-sm, 0.125rem);
   --radius-md: var(--db-radius-md, 0.25rem);
   --radius-lg: var(--db-radius-lg, 0.5rem);
@@ -73,7 +73,7 @@
   --color-chunsuni: #3D6B6B;
   --color-nokni: #4A6741;
   --color-tea: #4A6741;
-  --color-surface: #EDE8E0;
+  --color-surface: #1A1A1A;
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
