@@ -40,7 +40,7 @@ export default function BlockRenderer({ blocks }: Props) {
   if (visibleBlocks.length === 0) return null;
 
   return (
-    <div className="space-y-8">
+    <div>
       {visibleBlocks.map((block, index) => {
         const Component = blockComponentMap[block.type];
         const isHero = block.type === 'hero_banner';
@@ -51,13 +51,16 @@ export default function BlockRenderer({ blocks }: Props) {
             {isHero ? (
               <Component content={block.content} />
             ) : (
-              <BlockReveal delay={staggerDelay}>
-                {Component ? (
-                  <Component content={block.content} />
-                ) : (
-                  <UnknownBlock type={block.type} />
-                )}
-              </BlockReveal>
+              <>
+                {index > 0 && <hr className="border-t border-border" />}
+                <BlockReveal delay={staggerDelay}>
+                  {Component ? (
+                    <Component content={block.content} />
+                  ) : (
+                    <UnknownBlock type={block.type} />
+                  )}
+                </BlockReveal>
+              </>
             )}
           </BlockErrorBoundary>
         );

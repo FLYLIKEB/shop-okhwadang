@@ -90,24 +90,32 @@ export default async function Home() {
     <div>
       {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
 
+      <hr className="border-t border-border" />
+
       {/* 수평 스크롤 갤러리 — 추천 상품 */}
       {homeData.featured.length > 0 && (
-        <HorizontalScrollGallery
-          title="추천 상품"
-          subtitle="Curated Selection"
-          products={homeData.featured}
-          moreHref="/products?isFeatured=true"
-        />
+        <>
+          <HorizontalScrollGallery
+            title="추천 상품"
+            subtitle="Curated Selection"
+            products={homeData.featured}
+            moreHref="/products?isFeatured=true"
+          />
+          <hr className="border-t border-border" />
+        </>
       )}
 
       {/* 수평 스크롤 갤러리 — 인기 상품 */}
       {homeData.popular.length > 0 && (
-        <HorizontalScrollGallery
-          title="인기 상품"
-          subtitle="Best Sellers"
-          products={homeData.popular}
-          moreHref="/products?sort=popular"
-        />
+        <>
+          <HorizontalScrollGallery
+            title="인기 상품"
+            subtitle="Best Sellers"
+            products={homeData.popular}
+            moreHref="/products?sort=popular"
+          />
+          <hr className="border-t border-border" />
+        </>
       )}
 
       {restBlocks.length > 0 && (
