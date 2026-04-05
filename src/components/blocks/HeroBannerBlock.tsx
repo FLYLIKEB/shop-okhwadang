@@ -21,27 +21,27 @@ interface Props {
 
 const DEFAULT_SLIDES: HeroBannerSlide[] = [
   {
-    title: '의흥 장인의 손끝에서',
-    subtitle: '600년 전통, 정성으로 빚은 자사호를 만나보세요',
+    title: '山水',
+    subtitle: '흙과 불이 빚어낸 600년의 시간',
     cta_text: '컬렉션 보기',
     cta_url: '/collection',
-    bg_color: '#1B3A4B',
+    bg_color: '#1a1a1a',
     image_url: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=1920&q=80',
   },
   {
-    title: '보이차의 깊은 여운',
-    subtitle: '세월이 빚어낸 맛, 엄선된 보이차 컬렉션',
+    title: '茶의 여운',
+    subtitle: '세월이 빚어낸 깊은 맛',
     cta_text: '아카이브 보기',
     cta_url: '/archive',
-    bg_color: '#4A6741',
+    bg_color: '#1a1a1a',
     image_url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1920&q=80',
   },
   {
-    title: '찻자리의 완성',
-    subtitle: '자사호와 다구로 꾸미는 나만의 다석',
+    title: '다석의 시간',
+    subtitle: '고요한 찻자리를 위한 다구',
     cta_text: '저널 보기',
     cta_url: '/journal',
-    bg_color: '#2A2520',
+    bg_color: '#1a1a1a',
     image_url: 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=1920&q=80',
   },
 ];
@@ -84,10 +84,10 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
             <div
               key={slideIndex}
               className={cn(
-                'relative min-w-full flex items-center justify-center overflow-hidden',
-                'h-[60svh] min-h-[25rem] md:h-[80svh] md:min-h-[35rem]',
+                'relative min-w-full flex items-end overflow-hidden',
+                'h-[100svh] min-h-[40rem]',
               )}
-              style={{ backgroundColor: slide.bg_color ?? '#1B3A4B' }}
+              style={{ backgroundColor: slide.bg_color ?? '#1a1a1a' }}
             >
               {slide.image_url && (
                 <Image
@@ -103,37 +103,37 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                 />
               )}
 
-              <div className="absolute inset-0 bg-black/45" />
-              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-black/55" />
+              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
-              <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
+              <div className="absolute left-0 top-0 px-6 pt-6 md:px-12 md:pt-10 select-none pointer-events-none z-20">
                 <div style={heroLogoStyle}>
                   <Logo variant="hero" />
                 </div>
               </div>
 
-              <div className="relative z-10 w-full px-8 md:px-12 max-w-3xl">
-                <p className="typo-label uppercase tracking-[0.25em] text-white/70 mb-3 font-body">
-                  옥화당 공식 쇼핑몰
+              <div className="relative z-10 w-full px-6 pb-16 md:px-16 md:pb-24 max-w-5xl">
+                <p className="typo-label uppercase tracking-[0.35em] text-white/50 mb-6 font-body">
+                  옥화당
                 </p>
-                <h1 className="typo-h0 font-display text-white">
+                <h1 className="typo-display text-white">
                   {slide.title}
                 </h1>
                 {slide.subtitle && (
-                  <p className="mt-4 typo-body text-white/90">
+                  <p className="mt-6 typo-body text-white/70 max-w-lg tracking-wide">
                     {slide.subtitle}
                   </p>
                 )}
                 {description && (
-                  <div className="mt-4 text-white/80">
+                  <div className="mt-6 text-white/60 max-w-lg">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
                   </div>
                 )}
                 {slide.cta_text && slide.cta_url && (
-                  <div className="mt-8">
+                  <div className="mt-12">
                     <Link
                       href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}
-                      className="inline-block rounded-full border border-white px-8 py-3 typo-button text-white tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+                      className="inline-block border-b border-white/40 pb-1 typo-body-sm text-white/80 tracking-[0.2em] uppercase hover:border-white hover:text-white transition-all duration-500"
                     >
                       {slide.cta_text}
                     </Link>
@@ -148,27 +148,27 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
       <button
         onClick={scrollPrev}
         aria-label="이전 배너"
-        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity hidden md:block"
+        className="absolute left-6 md:left-12 top-1/2 -translate-y-1/2 p-3 text-white/40 hover:text-white transition-colors hidden md:block"
       >
-        <ChevronLeft className="h-6 w-6" />
+        <ChevronLeft className="h-5 w-5" />
       </button>
       <button
         onClick={scrollNext}
         aria-label="다음 배너"
-        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity hidden md:block"
+        className="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 p-3 text-white/40 hover:text-white transition-colors hidden md:block"
       >
-        <ChevronRight className="h-6 w-6" />
+        <ChevronRight className="h-5 w-5" />
       </button>
 
-      <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
+      <div className="absolute bottom-6 md:bottom-10 right-6 md:right-12 flex gap-2">
         {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => scrollTo(i)}
             aria-label={`${i + 1}번 배너로 이동`}
             className={cn(
-              'w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300',
-              i === selectedIndex ? 'bg-white w-4 md:w-6' : 'bg-white/50',
+              'h-px transition-all duration-500',
+              i === selectedIndex ? 'bg-white w-8' : 'bg-white/30 w-4',
             )}
           />
         ))}

@@ -81,7 +81,7 @@ describe('ProductCard', () => {
     render(<ProductCard {...baseProps} salePrice={24000} />);
     expect(screen.getByText('₩24,000')).toBeInTheDocument();
     expect(screen.getByText('₩29,000')).toBeInTheDocument();
-    expect(screen.getByText('17%')).toBeInTheDocument();
+    expect(screen.getByText(/17%/)).toBeInTheDocument();
   });
 
   it('shows soldout badge when status is soldout', () => {

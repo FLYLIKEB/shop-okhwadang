@@ -28,6 +28,13 @@ vi.mock('next/image', () => ({
   ),
 }));
 
+// ---- next/navigation mock ----
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/',
+  useParams: () => ({ locale: 'ko' }),
+}));
+
 // ---- isomorphic-dompurify mock ----
 vi.mock('isomorphic-dompurify', () => ({
   default: {

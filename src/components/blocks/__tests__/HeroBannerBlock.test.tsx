@@ -11,19 +11,19 @@ vi.mock('embla-carousel-react', () => ({
 
 const DEFAULT_SLIDES = [
   {
-    title: '의흥 장인의 손끝에서',
-    subtitle: '600년 전통, 정성으로 빚은 자사호를 만나보세요',
+    title: '山水',
+    subtitle: '흙과 불이 빚어낸 600년의 시간',
     cta_text: '컬렉션 보기',
     cta_url: '/collection',
-    bg_color: '#1B3A4B',
+    bg_color: '#1a1a1a',
     image_url: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=1920&q=80',
   },
   {
-    title: '보이차의 깊은 여운',
-    subtitle: '세월이 빚어낸 맛, 엄선된 보이차 컬렉션',
+    title: '茶의 여운',
+    subtitle: '세월이 빚어낸 깊은 맛',
     cta_text: '아카이브 보기',
     cta_url: '/archive',
-    bg_color: '#4A6741',
+    bg_color: '#1a1a1a',
     image_url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1920&q=80',
   },
 ];
@@ -43,8 +43,8 @@ describe('HeroBannerBlock', () => {
         />
       );
 
-      expect(screen.getByText('의흥 장인의 손끝에서')).toBeInTheDocument();
-      expect(screen.getByText('보이차의 깊은 여운')).toBeInTheDocument();
+      expect(screen.getByText('山水')).toBeInTheDocument();
+      expect(screen.getByText('茶의 여운')).toBeInTheDocument();
     });
 
     it('좌우 화살표 버튼이 렌더링됨', () => {
@@ -91,7 +91,7 @@ describe('HeroBannerBlock', () => {
         />
       );
 
-      expect(screen.getByText('의흥 장인의 손끝에서')).toBeInTheDocument();
+      expect(screen.getByText('山水')).toBeInTheDocument();
     });
   });
 

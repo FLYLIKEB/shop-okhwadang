@@ -16,17 +16,17 @@
 
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
-  /* Color: Wedgwood-inspired Elegant Palette */
-  --color-bg: #FAFAFA;
+  /* Color: 산수(山水) Monochrome + Sage Green accent */
+  --color-bg: #FFFFFF;
   --color-text: #1a1a1a;
-  --color-accent-zuni: #1B3A4B;
+  --color-accent-zuni: #1a1a1a;
   --color-accent-tea: #4A6741;
-  --color-brand-secondary: #D4C5B0;
-  --color-accent-danni: #C9B8A3;
+  --color-brand-secondary: #e5e5e5;
+  --color-accent-danni: #d4d4d4;
 
   /* Typography — size scale */
-  --font-size-heading-0: 2rem;     /* 32px mobile - hero only */
-  --font-size-heading-1: 1.5rem;   /* 24px mobile */
+  --font-size-heading-0: 2.5rem;   /* 40px mobile - hero only */
+  --font-size-heading-1: 1.75rem;  /* 28px mobile */
   --font-size-heading-2: 1.25rem;  /* 20px mobile */
   --font-size-heading-3: 1.125rem; /* 18px mobile */
   --font-size-title: 1rem;         /* 16px mobile */
@@ -35,45 +35,47 @@
   --font-size-label: 0.625rem;      /* 10px */
   --font-size-label-sm: 0.5625rem;  /* 9px */
   --font-size-button: 0.875rem;    /* 14px */
+  --font-size-display: 3.5rem;     /* 56px mobile - display headline */
 
   /* Typography — line-height scale */
-  --line-height-heading: 1.25;
+  --line-height-heading: 1.15;
   --line-height-body: 1.6;
-  --line-height-compact: 1.1;
+  --line-height-compact: 1.05;
+  --line-height-display: 1.0;
 }
 
 @theme inline {
   /* ── shadcn/ui 호환 토큰 (DB override 지원) ── */
-  --color-primary: var(--db-color-primary, #1B3A4B);
+  --color-primary: var(--db-color-primary, #1a1a1a);
   --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
-  --color-secondary: var(--db-color-secondary, #F5F3EF);
+  --color-secondary: var(--db-color-secondary, #f5f5f5);
   --color-secondary-foreground: var(--db-color-secondary-foreground, #1a1a1a);
   --color-destructive: var(--db-color-destructive, #b91c1c);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #F5F3EF);
-  --color-muted-foreground: var(--db-color-muted-foreground, #525252);
-  --color-accent: var(--db-color-accent, #F5F3EF);
+  --color-muted: var(--db-color-muted, #f5f5f5);
+  --color-muted-foreground: var(--db-color-muted-foreground, #737373);
+  --color-accent: var(--db-color-accent, #f5f5f5);
   --color-accent-foreground: var(--db-color-accent-foreground, #1a1a1a);
   --color-background: var(--db-color-background, #ffffff);
   --color-foreground: var(--db-color-foreground, #1a1a1a);
   --color-card: var(--db-color-card, #ffffff);
   --color-card-foreground: var(--db-color-card-foreground, #1a1a1a);
-  --color-border: var(--db-color-border, #e8e4de);
-  --color-input: var(--db-color-input, #e8e4de);
-  --color-ring: var(--db-color-ring, #1B3A4B);
-  --radius-sm: var(--db-radius-sm, 0.125rem);
-  --radius-md: var(--db-radius-md, 0.25rem);
-  --radius-lg: var(--db-radius-lg, 0.5rem);
+  --color-border: var(--db-color-border, #e5e5e5);
+  --color-input: var(--db-color-input, #e5e5e5);
+  --color-ring: var(--db-color-ring, #4A6741);
+  --radius-sm: var(--db-radius-sm, 0rem);
+  --radius-md: var(--db-radius-md, 0rem);
+  --radius-lg: var(--db-radius-lg, 0rem);
 
   /* ── 브랜드 확장 토큰 ── */
-  --color-zuni: #1B3A4B;
+  --color-zuni: #1a1a1a;
   --color-tea: #4A6741;
-  --color-danni: #C9B8A3;
-  --color-surface: #F5F3EF;
+  --color-danni: #d4d4d4;
+  --color-surface: #f5f5f5;
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
-  --font-display: 'Noto Serif KR', 'Georgia', serif;
-  --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-display: 'Cormorant Garamond', 'Noto Serif KR', 'Georgia', serif;
+  --font-body: 'Noto Serif KR', 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
   --font-mono: 'DM Mono', 'Courier New', monospace;
 
   /* ── Height tokens for arbitrary value replacements ── */
@@ -93,40 +95,49 @@
 /* ── Responsive typography — desktop overrides ─────────────────── */
 @media (min-width: 768px) {
   :root {
-    --font-size-heading-1: 2.25rem;  /* 36px desktop */
-    --font-size-heading-2: 1.5rem;   /* 24px desktop */
+    --font-size-heading-1: 2.5rem;   /* 40px desktop */
+    --font-size-heading-2: 1.75rem;  /* 28px desktop */
     --font-size-heading-3: 1.25rem;  /* 20px desktop */
     --font-size-title: 1.125rem;     /* 18px desktop */
-    --font-size-heading-0: 3rem;     /* 48px desktop - hero only */
+    --font-size-heading-0: 4rem;     /* 64px desktop - hero only */
+    --font-size-display: 6rem;       /* 96px desktop - display headline */
   }
 }
 
 /* ── Typography utility classes ────────────────────────────────── */
+@utility typo-display {
+  font-size: var(--font-size-display, 3.5rem);
+  line-height: var(--line-height-display);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+}
+
 @utility typo-h0 {
-  font-size: var(--font-size-heading-0, 2rem);
-  line-height: var(--line-height-heading);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: var(--font-size-heading-0, 2.5rem);
+  line-height: var(--line-height-display);
+  font-weight: 300;
+  letter-spacing: -0.03em;
 }
 
 @utility typo-h1 {
   font-size: var(--font-size-heading-1);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: -0.02em;
 }
 
 @utility typo-h2 {
   font-size: var(--font-size-heading-2);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: -0.01em;
 }
 
 @utility typo-h3 {
   font-size: var(--font-size-heading-3);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 @utility typo-title {
@@ -180,7 +191,7 @@ h1 {
   font-family: var(--font-display);
   font-size: var(--font-size-heading-1);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: -0.02em;
 }
 
@@ -188,7 +199,7 @@ h2 {
   font-family: var(--font-display);
   font-size: var(--font-size-heading-2);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: -0.01em;
 }
 
@@ -196,41 +207,41 @@ h3 {
   font-family: var(--font-display);
   font-size: var(--font-size-heading-3);
   line-height: var(--line-height-heading);
-  font-weight: 500;
+  font-weight: 400;
 }
 
-/* ── 니료(泥料)별 태그 컬러 시스템 ────────────────────────────── */
-/* 주니(朱泥) — 브랜드 시그니처 레드 */
+/* ── 니료(泥料)별 태그 컬러 시스템 — 모노크롬 + 세이지 ────────── */
+/* 주니(朱泥) */
 .tag-zuni {
-  background-color: #8B4513;
+  background-color: #1a1a1a;
   color: #ffffff;
 }
 
-/* 단니(段泥) — 황토 베이지 */
+/* 단니(段泥) */
 .tag-danni {
-  background-color: #C4A882;
-  color: #1C1710;
+  background-color: #e5e5e5;
+  color: #1a1a1a;
 }
 
-/* 자니(紫泥) — 자주빛 */
+/* 자니(紫泥) */
 .tag-zini {
-  background-color: #6B3A5C;
+  background-color: #404040;
   color: #ffffff;
 }
 
-/* 흑니(黑泥) — 짙은 차콜 */
+/* 흑니(黑泥) */
 .tag-heukni {
-  background-color: #2A2520;
-  color: #F8F5F0;
+  background-color: #171717;
+  color: #f5f5f5;
 }
 
-/* 청수니(靑水泥) — 청록 */
+/* 청수니(靑水泥) */
 .tag-chunsuni {
-  background-color: #3D6B6B;
+  background-color: #525252;
   color: #ffffff;
 }
 
-/* 녹니(綠泥) — 차엽 녹색 */
+/* 녹니(綠泥) — 세이지 그린 악센트 */
 .tag-nokni {
   background-color: #4A6741;
   color: #ffffff;

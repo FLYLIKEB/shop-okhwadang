@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
+import HorizontalScrollGallery from '@/components/blocks/HorizontalScrollGallery';
 import { fetchPage, fetchCategories, fetchProducts } from '@/lib/api-server';
 import type { Product, Category, PageBlock } from '@/lib/api';
 
@@ -69,39 +70,13 @@ function buildDefaultBlocks(data: {
       is_visible: true,
     },
     {
-      id: -3,
-      type: 'product_grid',
-      content: {
-        title: '추천 상품',
-        template: '4col',
-        limit: 8,
-        more_href: '/products?isFeatured=true',
-        prefetched_products: data.featured,
-      },
-      sort_order: 2,
-      is_visible: true,
-    },
-    {
-      id: -4,
-      type: 'product_grid',
-      content: {
-        title: '인기 상품',
-        template: '4col',
-        limit: 8,
-        more_href: '/products?sort=popular',
-        prefetched_products: data.popular,
-      },
-      sort_order: 3,
-      is_visible: true,
-    },
-    {
       id: -5,
       type: 'promotion_banner',
       content: {
-        title: '지금 바로 쇼핑하세요',
-        subtitle: '다양한 상품을 둘러보세요',
-        cta_text: '쇼핑하기',
-        cta_url: '/products',
+        title: '차 한 잔의 여유',
+        subtitle: '자사호와 보이차가 만드는 고요한 시간',
+        cta_text: '더 알아보기',
+        cta_url: '/archive',
         template: 'full-width',
       },
       sort_order: 4,
@@ -121,14 +96,47 @@ export default async function Home() {
     : buildDefaultBlocks(homeData);
 
   const heroBlocks = blocks.filter((b) => b.type === 'hero_banner');
-  const restBlocks = blocks.filter((b) => b.type !== 'hero_banner');
+  const restBlocks = blocks.filter((b) => b.type !== 'hero_banner' && b.type !== 'product_grid');
+  const hasCustomBlocks = !!(homePage?.blocks?.length);
 
   return (
     <div>
       {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
-      <div className="mx-auto max-w-7xl px-4 mt-8">
-        <BlockRenderer blocks={restBlocks} />
-      </div>
+
+      {/* 수평 스크롤 갤러리 — 추천 상품 */}
+      {homeData.featured.length > 0 && (
+        <HorizontalScrollGallery
+          title="추천 상품"
+          subtitle="Curated Selection"
+          products={homeData.featured}
+          moreHref="/products?isFeatured=true"
+        />
+      )}
+
+      {/* 수평 스크롤 갤러리 — 인기 상품 */}
+      {homeData.popular.length > 0 && (
+        <HorizontalScrollGallery
+          title="인기 상품"
+          subtitle="Best Sellers"
+          products={homeData.popular}
+          moreHref="/products?sort=popular"
+        />
+      )}
+
+      {restBlocks.length > 0 && (
+        <div className="mx-auto max-w-7xl px-6 md:px-16">
+          <BlockRenderer blocks={restBlocks} />
+        </div>
+      )}
+
+      {/* DB 기반 product_grid 블록이 있으면 기존 방식 유지 */}
+      {hasCustomBlocks && (
+        <div className="mx-auto max-w-7xl px-6 md:px-16">
+          <BlockRenderer
+            blocks={blocks.filter((b) => b.type === 'product_grid')}
+          />
+        </div>
+      )}
     </div>
   );
 }

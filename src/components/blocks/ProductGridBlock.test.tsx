@@ -16,6 +16,12 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('next/navigation', () => ({
+  useParams: () => ({ locale: 'ko' }),
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/',
+}));
+
 vi.mock('@/lib/api', () => ({
   productsApi: {
     getList: vi.fn(),

@@ -99,7 +99,7 @@ describe('Home page', () => {
     const jsx = await Home();
     render(jsx);
     // PromotionBanner is always rendered
-    expect(screen.getByText('지금 바로 쇼핑하세요')).toBeInTheDocument();
+    expect(screen.getByText('차 한 잔의 여유')).toBeInTheDocument();
     vi.unstubAllGlobals();
   });
 });

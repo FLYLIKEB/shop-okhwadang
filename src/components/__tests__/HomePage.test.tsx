@@ -8,6 +8,7 @@ import type { HeroBannerContent, ProductGridContent, CategoryNavContent, Product
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/',
+  useParams: () => ({ locale: 'ko' }),
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
@@ -112,7 +113,7 @@ describe('HeroBannerBlock (slider)', () => {
       title: '', image_url: '', template: 'slider',
     };
     render(<HeroBannerBlock content={content} />);
-    expect(screen.getByText('의흥 장인의 손끝에서')).toBeInTheDocument();
+    expect(screen.getByText('山水')).toBeInTheDocument();
   });
 
   it('renders custom slides', () => {
@@ -173,7 +174,7 @@ describe('ProductGridBlock', () => {
       prefetched_products: sampleProducts,
     };
     render(<ProductGridBlock content={content} />);
-    const link = screen.getByRole('link', { name: /더 보기/ });
+    const link = screen.getByRole('link', { name: /전체 보기/ });
     expect(link).toHaveAttribute('href', '/products?isFeatured=true');
   });
 

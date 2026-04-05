@@ -61,20 +61,18 @@ export default function PromotionBannerBlock({ content }: Props) {
   }
 
   return (
-    <section ref={ref} className="relative overflow-hidden py-12 border-t border-b border-border">
+    <section ref={ref} className="relative overflow-hidden py-24 md:py-40 border-t border-border">
       {image_url && (
-        <Image src={image_url} alt={title} fill className="object-cover opacity-20" />
+        <Image src={image_url} alt={title} fill className="object-cover opacity-10" />
       )}
-      <div className="relative z-10 text-center px-8">
-        <p
-          className={`text-sm tracking-widest text-muted-foreground uppercase mb-3 transition-all duration-600 ease-out ${
-            visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+      <div className="relative z-10 text-center px-8 max-w-2xl mx-auto">
+        <div
+          className={`w-8 h-px bg-foreground/20 mx-auto mb-8 transition-all duration-700 ease-out ${
+            visible ? 'opacity-100 w-8' : 'opacity-0 w-0'
           }`}
-        >
-          {t('specialOffer')}
-        </p>
+        />
         <h2
-          className={`text-2xl font-medium mb-2 transition-all duration-600 ease-out ${
+          className={`font-display typo-h1 mb-4 transition-all duration-700 ease-out ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
           }`}
           style={{ transitionDelay: visible ? '100ms' : undefined }}
@@ -83,7 +81,7 @@ export default function PromotionBannerBlock({ content }: Props) {
         </h2>
         {subtitle && (
           <p
-            className={`text-muted-foreground text-sm mb-6 transition-all duration-600 ease-out ${
+            className={`text-muted-foreground typo-body-sm tracking-wide mb-10 transition-all duration-700 ease-out ${
               visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
             }`}
             style={{ transitionDelay: visible ? '200ms' : undefined }}
@@ -94,7 +92,7 @@ export default function PromotionBannerBlock({ content }: Props) {
         {cta_text && cta_url && (
           <Link
             href={isSafeUrl(cta_url) ? cta_url : '#'}
-            className={`inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors duration-600 ease-out ${
+            className={`inline-block border-b border-foreground/30 pb-1 typo-body-sm tracking-[0.2em] uppercase text-foreground hover:border-foreground transition-all duration-500 ${
               visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
             }`}
             style={{ transitionDelay: visible ? '300ms' : undefined }}
