@@ -160,17 +160,21 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
         <ChevronRight className="h-5 w-5" />
       </button>
 
-      <div className="absolute bottom-6 md:bottom-10 right-6 md:right-12 flex gap-2">
+      <div className="absolute bottom-4 md:bottom-8 right-6 md:right-12 flex gap-2">
         {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => scrollTo(i)}
             aria-label={`${i + 1}번 배너로 이동`}
-            className={cn(
-              'h-px transition-all duration-500',
-              i === selectedIndex ? 'bg-white w-8' : 'bg-white/30 w-4',
-            )}
-          />
+            className="py-3 group"
+          >
+            <span
+              className={cn(
+                'block h-px transition-all duration-500',
+                i === selectedIndex ? 'bg-white w-8' : 'bg-white/30 w-4 group-hover:bg-white/60',
+              )}
+            />
+          </button>
         ))}
       </div>
     </section>

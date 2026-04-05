@@ -145,7 +145,7 @@ export default function HorizontalScrollGallery({
                   </div>
                 )}
                 {product.status === 'soldout' && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/60">
                     <span className="typo-label text-foreground tracking-widest uppercase">Sold Out</span>
                   </div>
                 )}

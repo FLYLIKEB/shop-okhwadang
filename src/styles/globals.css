@@ -108,7 +108,7 @@
 @utility typo-display {
   font-size: var(--font-size-display, 3.5rem);
   line-height: var(--line-height-display);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: -0.03em;
   font-family: var(--font-display);
 }
@@ -116,7 +116,7 @@
 @utility typo-h0 {
   font-size: var(--font-size-heading-0, 2.5rem);
   line-height: var(--line-height-display);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: -0.03em;
 }
 
