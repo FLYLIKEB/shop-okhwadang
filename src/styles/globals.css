@@ -217,6 +217,7 @@ h3 {
 .tag-heukni    { background-color: var(--color-heukni);    color: #F8F5F0; }
 .tag-chunsuni  { background-color: var(--color-chunsuni);  color: #ffffff; }
 .tag-nokni { background-color: var(--color-nokni);    color: #ffffff; }
+.tag-generic { background-color: #6B5B4F; color: #ffffff; }
 
 /* ── 디스플레이 타이틀 ──────────────────────────────────────────── */
 .font-display {

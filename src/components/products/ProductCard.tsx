@@ -122,9 +122,8 @@ function ProductCard({
           </div>
         )}
 
-        {/* 니료 태그 배지 — 좌하단 */}
-        {clayTagClass && (
-          <span className={cn('absolute left-2 bottom-2 z-10 px-2 py-0.5 rounded-sm tag-clay', clayTagClass)}>
+        {categoryName && (
+          <span className={cn('absolute left-2 bottom-2 z-10 px-2 py-0.5 rounded-sm tag-clay', clayTagClass ?? 'tag-generic')}>
             {categoryName}
           </span>
         )}
@@ -148,11 +147,6 @@ function ProductCard({
 
       {/* ── 정보 영역 — 공방 도면 스타일 ── */}
       <div className="mt-2.5 flex flex-1 flex-col gap-1">
-        {/* 카테고리 라벨 (니료 태그가 없을 때) */}
-        {categoryName && !clayTagClass && (
-          <span className="data-label">{categoryName}</span>
-        )}
-
         <p className="typo-title line-clamp-2 leading-snug min-h-10 shrink-0">{name}</p>
 
         {/* 리뷰 */}
