@@ -542,15 +542,14 @@ export default function Header() {
           ? 'bg-background/85 backdrop-blur-lg border-b border-border shadow-sm'
           : 'bg-background border-b border-transparent',
       )}>
-        <div className="mx-auto flex h-12 max-w-8xl items-center justify-between gap-2 px-4">
-
+        <div className="mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
           <button
             type="button"
             onClick={() => { setIsMenuOpen((p) => !p); setIsSearchOpen(false); }}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-            className="p-2 -ml-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground lg:hidden"
+            className="p-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground md:hidden"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -561,13 +560,11 @@ export default function Header() {
             </div>
           </Link>
 
-          <DesktopNav items={navItems} />
-
           <form
             onSubmit={handleDesktopSearch}
             role="search"
             aria-label="상품 검색"
-            className="hidden md:flex relative items-center flex-1 max-w-sm"
+            className="hidden md:flex relative items-center flex-1 max-w-lg mx-8"
           >
             <input
               type="search"
@@ -575,21 +572,33 @@ export default function Header() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="상품 검색..."
               aria-label="상품 검색"
-              className="w-full rounded-md border border-input bg-background pl-3 pr-10 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full border-b border-muted-foreground/30 bg-transparent pl-1 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
             />
-            <button type="submit" aria-label="검색" className="absolute right-2 transition-colors text-muted-foreground hover:text-foreground">
+            <button type="submit" aria-label="검색" className="absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
               <Search className="h-4 w-4" />
             </button>
           </form>
 
-          <DesktopActions
-            isAuthenticated={isAuthenticated}
-            userName={user?.name}
-            itemCount={itemCount}
-            onLogout={() => void logout()}
-          />
+          <div className="hidden md:flex items-center gap-1">
+            <LanguageSelector />
+            <CartBadge itemCount={itemCount} />
+            {isAuthenticated ? (
+              <>
+                <Link href="/my" aria-label="마이페이지" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                  <User className="h-5 w-5" />
+                </Link>
+                <button type="button" onClick={() => void logout()} aria-label="로그아웃" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </>
+            ) : (
+              <Link href="/login" aria-label="로그인" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-5 w-5" />
+              </Link>
+            )}
+          </div>
 
-          <div className="md:hidden flex items-center gap-1 ml-auto">
+          <div className="md:hidden flex items-center gap-1">
             <button
               type="button"
               onClick={() => { setIsSearchOpen((p) => !p); setIsMenuOpen(false); }}
@@ -611,6 +620,12 @@ export default function Header() {
                 <User className="h-5 w-5" />
               </Link>
             )}
+          </div>
+        </div>
+
+        <div className="hidden md:block">
+          <div className="flex h-12 items-center px-20">
+            <DesktopNav items={navItems} />
           </div>
         </div>
 
