@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
+import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
@@ -124,6 +125,7 @@ export default async function LocaleLayout({
           <Providers>
             <MobileNavProvider initialVisible={mobileBottomNavVisible}>
               <div className="flex min-h-screen flex-col">
+              <AnnouncementBar />
               <Header />
               <BackButton />
               <main id="main-content" className="flex-1 pb-16 md:pb-0">{children}</main>
