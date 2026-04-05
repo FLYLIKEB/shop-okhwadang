@@ -76,7 +76,7 @@ function ProductCard({
         isSoldout && 'opacity-60',
       )}
     >
-      <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+      <div className="relative aspect-square overflow-hidden bg-muted">
         {thumbnail ? (
           <Image
             src={thumbnail}
@@ -117,7 +117,7 @@ function ProductCard({
       </div>
 
       <div className="mt-3 flex flex-col gap-1">
-        <p className="typo-title line-clamp-2 leading-tight h-11 shrink-0">{name}</p>
+        <p className="typo-title font-display line-clamp-2 leading-tight h-11 shrink-0">{name}</p>
 
         <div className="flex items-center gap-1.5 h-5 shrink-0">
           {rating !== undefined && (
@@ -138,7 +138,7 @@ function ProductCard({
         </div>
 
         <div className="mt-auto pt-2">
-          <hr className="border-gray-200" />
+          <hr className="border-[#D4BC8E]" />
         </div>
 
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
@@ -150,7 +150,7 @@ function ProductCard({
             onClick={handleAddToCart}
             disabled={isCartLoading}
             className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed shrink-0',
+              'flex w-full items-center justify-center gap-2 border border-foreground py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed shrink-0',
             )}
           >
             <ShoppingCart className="h-4 w-4" />
