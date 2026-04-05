@@ -739,9 +739,17 @@ export interface UploadedFile {
   filename: string;
 }
 
+export interface JournalPreviewContent {
+  title?: string;
+  limit?: number;
+  category?: JournalCategory;
+  more_href?: string;
+  prefetched_journals?: Journal[];
+}
+
 export interface PageBlock {
   id: number;
-  type: 'hero_banner' | 'product_grid' | 'product_carousel' | 'category_nav' | 'promotion_banner' | 'text_content' | 'split_content' | 'brand_story';
+  type: 'hero_banner' | 'product_grid' | 'product_carousel' | 'category_nav' | 'promotion_banner' | 'text_content' | 'split_content' | 'brand_story' | 'journal_preview';
   content: Record<string, unknown>;
   sort_order: number;
   is_visible: boolean;
