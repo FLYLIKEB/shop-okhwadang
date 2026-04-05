@@ -40,9 +40,16 @@ const nextConfig: NextConfig = {
         { key: 'X-Content-Type-Options', value: 'nosniff' },
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-        { key: 'Content-Security-Policy', value: process.env.NODE_ENV === 'production'
-          ? "default-src 'self'; style-src 'self'; script-src 'self' https://js.tosspayments.com https://js.sandbox.tosspayments.com; object-src 'none'; base-uri 'self'; img-src 'self' https://images.unsplash.com https://*.amazonaws.com https://cdn.okhwadang.com https://shop-okhwadang.com https://i.pinimg.com https://m.cbw.co.kr https://gdimg.gmarket.co.kr https://cdn-optimized.imweb.me; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;"
-          : "default-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.tosspayments.com https://js.sandbox.tosspayments.com; object-src 'none'; base-uri 'self'; img-src 'self' https://images.unsplash.com https://*.amazonaws.com https://cdn.okhwadang.com https://shop-okhwadang.com https://i.pinimg.com https://m.cbw.co.kr https://gdimg.gmarket.co.kr https://cdn-optimized.imweb.me; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;" },
+        { key: 'Content-Security-Policy', value: [
+          "default-src 'self'",
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          "script-src 'self' 'unsafe-inline' https://js.tosspayments.com https://js.sandbox.tosspayments.com",
+          "object-src 'none'",
+          "base-uri 'self'",
+          "img-src 'self' data: https://images.unsplash.com https://*.amazonaws.com https://cdn.okhwadang.com https://shop-okhwadang.com https://i.pinimg.com https://m.cbw.co.kr https://gdimg.gmarket.co.kr https://cdn-optimized.imweb.me",
+          "font-src 'self' https://fonts.gstatic.com",
+          "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+        ].join('; ') + ';' },
         { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
       ],
     }];
