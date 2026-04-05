@@ -134,9 +134,19 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                   <div className="mt-10">
                     <Link
                       href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}
-                      className="inline-block border border-[#B8976A] px-10 py-3.5 typo-button text-[#B8976A] tracking-[0.15em] uppercase hover:bg-[#B8976A] hover:text-white transition-colors duration-300"
+                      className="group inline-flex items-center gap-2 typo-button text-white tracking-[0.15em] uppercase"
                     >
-                      {slide.cta_text}
+                      <span className="relative">
+                        <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
+                          {slide.cta_text}
+                        </span>
+                        <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-white transition-transform duration-300 group-hover:scale-x-110" />
+                      </span>
+                      <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                          <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
                     </Link>
                   </div>
                 )}
@@ -229,9 +239,19 @@ export default function HeroBannerBlock({ content }: Props) {
           {cta_text && cta_url && (
             <Link
               href={isSafeUrl(cta_url) ? cta_url : '#'}
-              className="mt-6 inline-block border border-foreground px-6 py-3 typo-button text-foreground hover:bg-foreground hover:text-background transition-colors"
+              className="group mt-6 inline-flex items-center gap-2 typo-button text-foreground tracking-[0.15em] uppercase"
             >
-              {cta_text}
+              <span className="relative">
+                <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
+                  {cta_text}
+                </span>
+                <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-foreground transition-transform duration-300 group-hover:scale-x-110" />
+              </span>
+              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
             </Link>
           )}
         </div>
@@ -279,13 +299,23 @@ export default function HeroBannerBlock({ content }: Props) {
               <Link
                 href={isSafeUrl(cta_url) ? cta_url : '#'}
                 className={cn(
-                  'inline-block px-10 py-3.5 typo-button tracking-[0.15em] uppercase transition-colors duration-300',
+                  'group inline-flex items-center gap-2 typo-button tracking-[0.15em] uppercase',
                   image_url
-                    ? 'border border-[#B8976A] text-[#B8976A] hover:bg-[#B8976A] hover:text-white'
-                    : 'border border-foreground text-foreground hover:bg-foreground hover:text-background',
+                    ? 'text-white'
+                    : 'text-foreground',
                 )}
               >
-                {cta_text}
+                <span className="relative">
+                  <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
+                    {cta_text}
+                  </span>
+                  <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-current transition-transform duration-300 group-hover:scale-x-110" />
+                </span>
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
               </Link>
             </div>
           )}
