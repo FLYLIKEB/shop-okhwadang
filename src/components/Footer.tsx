@@ -5,6 +5,35 @@ import { Link } from '@/i18n/navigation';
 import { useNavigation } from '@/hooks/useNavigation';
 import type { NavigationItem } from '@/lib/api';
 
+const InstagramIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+  </svg>
+);
+
+const NaverIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M16.362 6.424c0 .99-.81 1.798-1.798 1.798H9.436v7.596h5.128c.988 0 1.798-.808 1.798-1.798V6.424zm-7.925 0c0 .99-.81 1.798-1.798 1.798v11.394c.988 0 1.798-.808 1.798-1.798V6.424zM6.12 5.41v13.608h2.41V5.41H6.12z" />
+  </svg>
+);
+
+const SOCIAL_LINKS = [
+  {
+    id: 'instagram',
+    label: '인스타그램',
+    href: 'https://www.instagram.com/ockhwadang',
+    icon: InstagramIcon,
+  },
+  {
+    id: 'naver',
+    label: '네이버 스마트스토어',
+    href: 'https://smartstore.naver.com/ockhwadang',
+    icon: NaverIcon,
+  },
+];
+
 const FALLBACK_LINKS = {
   customerService: [
     { id: -1, label: '고객센터', url: '/pages/support' },
@@ -101,6 +130,20 @@ export default function Footer() {
             <div className="flex flex-col gap-1 text-sm text-muted-foreground">
               <p>자사호 · 보이차 · 다구</p>
               <p>전문 쇼핑몰</p>
+            </div>
+            <div className="flex items-center gap-3 mt-4">
+              {SOCIAL_LINKS.map((social) => (
+                <a
+                  key={social.id}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <social.icon size={18} />
+                </a>
+              ))}
             </div>
           </div>
         </div>
