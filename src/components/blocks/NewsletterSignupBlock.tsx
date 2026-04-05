@@ -38,7 +38,7 @@ export default function NewsletterSignupBlock({ content }: Props) {
   if (status === 'success') {
     return (
       <section className={cn(
-        'py-16 md:py-24 text-center bg-white',
+        'py-16 md:py-24 text-center bg-card',
         template === 'with_image' && background_image && 'relative'
       )}>
         {template === 'with_image' && background_image && (
@@ -55,10 +55,10 @@ export default function NewsletterSignupBlock({ content }: Props) {
   }
 
   return (
-    <section className={cn(
-      'py-16 md:py-24',
-      template === 'with_image' && background_image ? 'relative' : 'bg-white'
-    )}>
+      <section className={cn(
+        'py-16 md:py-24',
+        template === 'with_image' && background_image ? 'relative' : 'bg-card'
+      )}>
       {template === 'with_image' && background_image && (
         <div className="absolute inset-0 z-0">
           <Image src={background_image} alt="" fill className="object-cover opacity-5" />
