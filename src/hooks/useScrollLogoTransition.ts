@@ -111,6 +111,12 @@ export function useScrollLogoTransition({
     }
 
     const handleScroll = () => {
+      // Disable scroll transition on desktop (md+)
+      if (window.innerWidth >= 768) {
+        setProgress(0);
+        return;
+      }
+
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
