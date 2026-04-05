@@ -903,6 +903,12 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'category_ids', JSON_ARRAY(1, 2, 3, 4, 5)
 ), 5, 1, NOW(), NOW()),
 
+(21, 1, 'journal_preview', JSON_OBJECT(
+  'title', '차와 흙, 그리고 사람의 이야기',
+  'limit', 6,
+  'more_href', '/journal'
+), 6, 1, NOW(), NOW()),
+
 -- ── 기획전 페이지 블록 ──
 (7, 2, 'hero_banner', JSON_OBJECT(
   'title', '봄 기획전',

@@ -502,6 +502,37 @@ function TextContentFields({
   );
 }
 
+function JournalPreviewFields({
+  content,
+  onChange,
+}: {
+  content: Record<string, unknown>;
+  onChange: (c: Record<string, unknown>) => void;
+}) {
+  const update = (key: string, value: unknown) => onChange({ ...content, [key]: value });
+  return (
+    <>
+      <StringField
+        label="제목"
+        value={(content.title as string) ?? ''}
+        onChange={(v) => update('title', v)}
+        placeholder="저널"
+      />
+      <NumberField
+        label="표시 개수"
+        value={(content.limit as number) ?? 6}
+        onChange={(v) => update('limit', v)}
+      />
+      <StringField
+        label="전체 보기 링크"
+        value={(content.more_href as string) ?? ''}
+        onChange={(v) => update('more_href', v)}
+        placeholder="/journal"
+      />
+    </>
+  );
+}
+
 function SplitContentFields({
   content,
   onChange,
@@ -549,6 +580,7 @@ const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   text_content: '텍스트',
   split_content: '분할 콘텐츠',
   brand_story: '브랜드 이야기',
+  journal_preview: '저널 미리보기',
 };
 
 const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
@@ -560,6 +592,7 @@ const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
   text_content: 'ℹ️ HTML 형식의 자유 텍스트 영역입니다. 공지사항·브랜드 소개 등에 사용하세요. <b>볼드</b>, <a href="">링크</a> 등 기본 HTML 태그 사용 가능합니다.',
   split_content: 'ℹ️ 텍스트为中心的 콘텐츠 섹션입니다. 서브타이틀, 제목, 설명, CTA 버튼을 설정할 수 있습니다.',
   brand_story: 'ℹ️ 브랜드 이야기 섹션입니다. 서브타이틀, 제목, 설명, CTA 버튼을 설정할 수 있습니다.',
+  journal_preview: 'ℹ️ 저널 글을卡片 형태로 미리보기 합니다. 제목, 표시 개수, 카테고리 필터를 설정할 수 있습니다.',
 };
 
 export default function BlockPropertyPanel({ block, onUpdateContent }: BlockPropertyPanelProps) {
@@ -592,6 +625,8 @@ export default function BlockPropertyPanel({ block, onUpdateContent }: BlockProp
       case 'split_content':
       case 'brand_story':
         return <SplitContentFields content={block.content} onChange={handleChange} />;
+      case 'journal_preview':
+        return <JournalPreviewFields content={block.content} onChange={handleChange} />;
     }
   };
 
