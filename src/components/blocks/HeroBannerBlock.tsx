@@ -121,9 +121,9 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                   {slide.title}
                 </h1>
                 {slide.subtitle && (
-                  <p className="mt-5 typo-body text-white/85 font-display leading-relaxed">
-                    {slide.subtitle}
-                  </p>
+                  <div className="mt-5 typo-body text-white/85 font-display leading-relaxed">
+                    <SafeHtml html={slide.subtitle} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline" />
+                  </div>
                 )}
                 {slideIndex === 0 && description && (
                   <div className="mt-4 text-white/75">
