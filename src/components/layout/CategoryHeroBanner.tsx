@@ -16,11 +16,12 @@ export default function CategoryHeroBanner({ category, imageUrl }: CategoryHeroB
   return (
     <section className="relative overflow-hidden bg-card">
       <div className="flex flex-col md:flex-row">
-        <div className="relative aspect-[4/3] md:aspect-auto md:w-1/2 md:h-64">
+        <div className="relative w-full md:w-1/2 h-48 md:h-64">
           <Image
             src={imageUrl || DEFAULT_IMAGE}
             alt={category.name}
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
             priority
           />

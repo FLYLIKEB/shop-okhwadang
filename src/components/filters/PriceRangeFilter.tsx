@@ -36,50 +36,47 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
   );
 
   return (
-    <div>
-      <h2 className="mb-3 text-sm font-semibold text-foreground">가격 범위</h2>
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            aria-label="최소 가격"
-            placeholder="최소"
-            min={0}
-            value={localMin}
-            onChange={(e) => setLocalMin(e.target.value)}
-            className={inputClass}
-          />
-          <span className="shrink-0 text-sm text-muted-foreground">~</span>
-          <input
-            type="number"
-            aria-label="최대 가격"
-            placeholder="최대"
-            min={0}
-            value={localMax}
-            onChange={(e) => setLocalMax(e.target.value)}
-            className={inputClass}
-          />
-        </div>
-        {(min !== undefined || max !== undefined) && (
-          <p className="text-xs text-muted-foreground">
-            {min !== undefined && max !== undefined
-              ? `${formatKRW(min)} ~ ${formatKRW(max)}`
-              : min !== undefined
-                ? `${formatKRW(min)} 이상`
-                : `${formatKRW(max!)} 이하`}
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={handleApply}
-          className={cn(
-            'w-full rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground',
-            'transition-colors hover:bg-primary/90',
-          )}
-        >
-          적용
-        </button>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          aria-label="최소 가격"
+          placeholder="최소"
+          min={0}
+          value={localMin}
+          onChange={(e) => setLocalMin(e.target.value)}
+          className={inputClass}
+        />
+        <span className="shrink-0 text-sm text-muted-foreground">~</span>
+        <input
+          type="number"
+          aria-label="최대 가격"
+          placeholder="최대"
+          min={0}
+          value={localMax}
+          onChange={(e) => setLocalMax(e.target.value)}
+          className={inputClass}
+        />
       </div>
+      {(min !== undefined || max !== undefined) && (
+        <p className="text-xs text-muted-foreground">
+          {min !== undefined && max !== undefined
+            ? `${formatKRW(min)} ~ ${formatKRW(max)}`
+            : min !== undefined
+              ? `${formatKRW(min)} 이상`
+              : `${formatKRW(max!)} 이하`}
+        </p>
+      )}
+      <button
+        type="button"
+        onClick={handleApply}
+        className={cn(
+          'w-full rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground',
+          'transition-colors hover:bg-primary/90',
+        )}
+      >
+        적용
+      </button>
     </div>
   );
 }

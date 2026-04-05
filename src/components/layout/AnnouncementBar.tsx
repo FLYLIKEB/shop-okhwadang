@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 const ANNOUNCEMENTS = [
-  { id: 1, label: '웨지우드와 보내는 신생활', href: '/event/wedgwood-new-life' },
-  { id: 2, label: '애프터눈 티', href: '/event/afternoon-tea' },
-  { id: 3, label: '리틀 사무라이 시리즈', href: '/event/little-samurai' },
+  { id: 1, label: '옥화당 핸드메이드 차茶', href: '/collection' },
+  { id: 2, label: '다실 도자기 특가', href: '/products?isFeatured=true' },
+  { id: 3, label: '신상품 입고', href: '/products?sort=latest' },
 ];
 
 export default function AnnouncementBar() {
@@ -15,7 +15,7 @@ export default function AnnouncementBar() {
 
   return (
     <div className="bg-[#1A1815] border-b border-border/50">
-      <div className="mx-auto flex max-w-7xl items-center justify-center">
+      <div className="flex items-center justify-center">
         {ANNOUNCEMENTS.map((item) => (
           <Link
             key={item.id}
