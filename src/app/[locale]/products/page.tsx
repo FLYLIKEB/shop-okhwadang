@@ -10,7 +10,6 @@ import { fetchProducts, fetchCategories } from '@/lib/api-server';
 import ProductErrorState from '@/components/products/ProductErrorState';
 import type { ProductSort } from '@/lib/api';
 import type { Locale } from '@/utils/currency';
-import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import Breadcrumb from '@/components/layout/Breadcrumb';
 import CategoryHeroBanner from '@/components/layout/CategoryHeroBanner';
 
@@ -70,68 +69,65 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     : null;
 
   return (
-    <>
-      <AnnouncementBar />
-      <div className="mx-auto max-w-7xl px-4">
-        <Breadcrumb category={selectedCategory} />
-        
-        {selectedCategory && (
-          <CategoryHeroBanner category={selectedCategory} />
-        )}
+    <div className="mx-auto max-w-7xl px-4">
+      <Breadcrumb category={selectedCategory} />
 
-        {!selectedCategory && !q && !isFeatured && (
-          <h1 className="py-6 text-2xl font-display font-medium text-foreground">
-            상품목록
-          </h1>
-        )}
+      {selectedCategory && (
+        <CategoryHeroBanner category={selectedCategory} />
+      )}
 
-        {(q || isFeatured) && (
-          <h1 className="py-6 text-xl font-bold text-foreground">
-            {q ? `"${q}" 검색 결과` : '추천 상품'}
-          </h1>
-        )}
+      {!selectedCategory && !q && !isFeatured && (
+        <h1 className="py-6 text-2xl font-display font-medium text-foreground">
+          상품목록
+        </h1>
+      )}
 
-        <div className="md:hidden">
+      {(q || isFeatured) && (
+        <h1 className="py-6 text-xl font-bold text-foreground">
+          {q ? `"${q}" 검색 결과` : '추천 상품'}
+        </h1>
+      )}
+
+      <div className="md:hidden">
+        <Suspense fallback={null}>
+          <MobileFilterBar categories={categories ?? []} />
+        </Suspense>
+      </div>
+
+      <div className="flex gap-8 pb-12">
+        <div className="hidden md:block md:w-48 md:shrink-0">
           <Suspense fallback={null}>
-            <MobileFilterBar categories={categories ?? []} />
+            <FilterSidebar categories={categories ?? []} />
           </Suspense>
         </div>
 
-        <div className="flex gap-8 pb-12">
-          <div className="hidden md:block md:w-48 md:shrink-0">
-            <Suspense fallback={null}>
-              <FilterSidebar categories={categories ?? []} />
-            </Suspense>
-          </div>
+        <div className="min-w-0 flex-1">
+          {error ? (
+            <ProductErrorState />
+          ) : !productsData || productsData.items.length === 0 ? (
+            <EmptyState
+              title="상품이 없습니다"
+              description={q ? `"${q}"에 대한 검색 결과가 없습니다.` : '등록된 상품이 없습니다.'}
+            />
+          ) : (
+            <>
+              <Suspense fallback={<ProductSkeleton />}>
+                <ProductGrid products={productsData.items} total={productsData.total} locale={safeLocale} />
+              </Suspense>
 
-          <div className="min-w-0 flex-1">
-            {error ? (
-              <ProductErrorState />
-            ) : !productsData || productsData.items.length === 0 ? (
-              <EmptyState
-                title="상품이 없습니다"
-                description={q ? `"${q}"에 대한 검색 결과가 없습니다.` : '등록된 상품이 없습니다.'}
-              />
-            ) : (
-              <>
-                <Suspense fallback={<ProductSkeleton />}>
-                  <ProductGrid products={productsData.items} total={productsData.total} locale={safeLocale} />
+              <div className="mt-8">
+                <Suspense fallback={null}>
+                  <Pagination
+                    total={productsData.total}
+                    page={productsData.page}
+                    limit={productsData.limit}
+                  />
                 </Suspense>
-
-                <div className="mt-8">
-                  <Suspense fallback={null}>
-                    <Pagination
-                      total={productsData.total}
-                      page={productsData.page}
-                      limit={productsData.limit}
-                    />
-                  </Suspense>
-                </div>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
