@@ -15,12 +15,12 @@ export default function AnnouncementBar() {
 
   return (
     <div className="bg-[#1A1815] border-b border-border/50">
-      <div className="flex items-center justify-between px-4 md:px-6">
+      <div className="flex items-center justify-between px-6">
         {ANNOUNCEMENTS.map((item) => (
           <Link
             key={item.id}
             href={`/${locale}${item.href}`}
-            className="flex items-center py-2.5 px-4 text-sm transition-colors hover:text-[#D4BC8E] text-[#F5F3EF]/80"
+            className="flex items-center py-2.5 px-6 text-sm transition-colors hover:text-[#D4BC8E] text-[#F5F3EF]/80"
           >
             {item.label}
           </Link>

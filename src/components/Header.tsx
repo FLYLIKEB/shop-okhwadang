@@ -615,7 +615,7 @@ export default function Header() {
 
         <div className="hidden md:block border-t border-border/50">
           <div className="flex h-12 items-center justify-between px-6">
-            <nav aria-label="메인 메뉴" className="flex items-center justify-between flex-1">
+            <nav aria-label="메인 메뉴" className="flex items-center justify-between flex-1 px-2">
               {navItems.map((item) => (
                 <DesktopNavItem key={item.id} item={item} />
               ))}
