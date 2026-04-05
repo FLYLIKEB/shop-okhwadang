@@ -430,11 +430,10 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 -- GNB
 (100, 'gnb', '홈',         '/',                          0, 1, NULL),
 (101, 'gnb', '자사호',     '/products?categoryId=1',  1, 1, NULL),
-(102, 'gnb', '보이차',     '/products?categoryId=2', 2, 1, NULL),
-(103, 'gnb', '다구',       '/products?categoryId=3', 3, 1, NULL),
-(104, 'gnb', '베스트',     '/products?sort=popular',     4, 1, NULL),
-(108, 'gnb', '브랜드 소개', '/p/about',                  5, 1, NULL),
-(109, 'gnb', '기획전',      '/p/exhibition',              6, 1, NULL),
+(102, 'gnb', '보이차·다구', '/products?categoryId=2', 2, 1, NULL),
+(104, 'gnb', '베스트',     '/products?sort=popular',     3, 1, NULL),
+(108, 'gnb', '브랜드 소개', '/p/about',                  4, 1, NULL),
+(109, 'gnb', '기획전',      '/p/exhibition',              5, 1, NULL),
 
 -- GNB 하위메뉴: 브랜드 소개
 (105, 'gnb', '└ 저널',     '/journal',                    1, 1, 108),
@@ -454,14 +453,14 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 (159, 'gnb', '└ 서시',     '/products?categoryId=22', 3, 1, 156),
 (160, 'gnb', '└ 편평',     '/products?categoryId=23', 4, 1, 156),
 
--- GNB 하위메뉴: 보이차
-(161, 'gnb', '└ 종류별',   '/products?categoryId=2',  2, 1, 102),
+-- GNB 하위메뉴: 보이차·다구 > 보이차
+(161, 'gnb', '└ 보이차',   '/products?categoryId=2',  1, 1, 102),
 (162, 'gnb', '└ 생차',     '/products?categoryId=30', 1, 1, 161),
 (163, 'gnb', '└ 숙차',     '/products?categoryId=31', 2, 1, 161),
 (164, 'gnb', '└ 노차',     '/products?categoryId=32', 3, 1, 161),
 
--- GNB 하위메뉴: 다구
-(165, 'gnb', '└ 종류별',   '/products?categoryId=3',  3, 1, 103),
+-- GNB 하위메뉴: 보이차·다구 > 다구
+(165, 'gnb', '└ 다구',     '/products?categoryId=3',  2, 1, 102),
 (166, 'gnb', '└ 다완',     '/products?categoryId=40', 1, 1, 165),
 (167, 'gnb', '└ 다반',     '/products?categoryId=41', 2, 1, 165),
 (168, 'gnb', '└ 다도구 세트', '/products?categoryId=42', 3, 1, 165),
