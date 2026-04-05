@@ -271,7 +271,7 @@ export default function CheckoutPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-6 typo-h1">주문 / 결제</h1>
+      <h1 className="mb-6 typo-h1 font-display">주문 / 결제</h1>
 
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6 lg:grid-cols-3">
@@ -463,40 +463,40 @@ export default function CheckoutPage({
 
           {/* Order summary */}
           <div className="space-y-4">
-            <section className="rounded-lg border p-6 space-y-4 lg:sticky lg:top-24">
-              <h2 className="typo-h3">주문 상품</h2>
+            <section className="border border-dashed border-border p-6 space-y-4 lg:sticky lg:top-24">
+              <h2 className="font-display text-lg font-semibold border-b border-border pb-3">주문 상품</h2>
 
-              <ul className="divide-y text-sm">
+              <ul className="divide-y divide-dashed divide-border text-sm">
                 {checkoutItems.map((item) => (
                   <li key={item.id} className="py-3 space-y-0.5">
                     <p className="font-medium">{item.product.name}</p>
                     {item.option && (
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-muted-foreground text-xs font-mono">
                         {item.option.name}: {item.option.value}
                       </p>
                     )}
-                    <p className="text-muted-foreground">
-                      {formatCurrency(item.unitPrice, locale)} × {item.quantity}개 ={' '}
+                    <p className="text-muted-foreground font-mono text-xs">
+                      {formatCurrency(item.unitPrice, locale)} × {item.quantity} ={' '}
                       {formatCurrency(item.subtotal, locale)}
                     </p>
                   </li>
                 ))}
               </ul>
 
-              <div className="border-t pt-4 space-y-2 text-sm">
+              <div className="border-t border-dashed border-border pt-4 space-y-2 font-mono text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">상품 금액</span>
+                  <span className="text-muted-foreground tracking-wider text-xs uppercase">Subtotal</span>
                   <span>{formatCurrency(totalAmount, locale)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">배송비</span>
+                  <span className="text-muted-foreground tracking-wider text-xs uppercase">Shipping</span>
                   <span>{shippingFee === 0 ? '무료' : formatCurrency(shippingFee, locale)}</span>
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <div className="flex justify-between typo-h3">
-                  <span>합계</span>
+              <div className="border-t border-dashed border-border pt-4">
+                <div className="flex justify-between font-bold font-mono">
+                  <span className="tracking-wider text-xs uppercase">Total</span>
                   <span>{formatCurrency(grandTotal, locale)}</span>
                 </div>
               </div>
@@ -504,7 +504,7 @@ export default function CheckoutPage({
               <button
                 type="submit"
                 disabled={step !== 'idle'}
-                className="w-full rounded-md bg-foreground py-3 typo-button text-background hover:opacity-90 transition-opacity disabled:opacity-40"
+                className="w-full bg-foreground py-3 font-mono text-xs font-semibold text-background tracking-widest uppercase hover:opacity-90 transition-opacity disabled:opacity-40"
               >
                 {STEP_LABELS[step]}
               </button>

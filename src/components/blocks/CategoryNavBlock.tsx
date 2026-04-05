@@ -11,6 +11,29 @@ interface Props {
   content: CategoryNavContent;
 }
 
+/** 카테고리명 → 니료 컬러 매핑 (clay swatch) */
+const CLAY_SWATCH_MAP: Record<string, string> = {
+  '주니': '#8B4513',
+  '朱泥': '#8B4513',
+  '단니': '#C4A882',
+  '段泥': '#C4A882',
+  '자니': '#6B3A5C',
+  '紫泥': '#6B3A5C',
+  '흑니': '#2A2520',
+  '黑泥': '#2A2520',
+  '청수니': '#3D6B6B',
+  '靑水泥': '#3D6B6B',
+  '녹니': '#4A6741',
+  '綠泥': '#4A6741',
+};
+
+function getClaySwatch(name: string): string | null {
+  for (const [key, color] of Object.entries(CLAY_SWATCH_MAP)) {
+    if (name.includes(key)) return color;
+  }
+  return null;
+}
+
 export default function CategoryNavBlock({ content }: Props) {
   const { title, category_ids = [], template, prefetched_categories } = content;
   const [categories, setCategories] = useState<Category[]>(prefetched_categories ?? []);
@@ -113,10 +136,19 @@ export default function CategoryNavBlock({ content }: Props) {
               transition: `opacity 0.6s ease ${i * 100}ms, transform 0.6s ease ${i * 100}ms, background-color 0.3s`,
             }}
           >
-            <span className="font-display text-base font-medium text-foreground tracking-wide">
-              {cat.name}
-            </span>
-            <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-auto">
+            <div className="flex items-center gap-2.5">
+              {getClaySwatch(cat.name) && (
+                <span
+                  className="inline-block h-3 w-3 rounded-full shrink-0 ring-1 ring-border"
+                  style={{ backgroundColor: getClaySwatch(cat.name)! }}
+                  aria-hidden="true"
+                />
+              )}
+              <span className="font-display text-base font-medium text-foreground tracking-wide">
+                {cat.name}
+              </span>
+            </div>
+            <span className="font-mono text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-auto tracking-wider">
               →
             </span>
           </Link>

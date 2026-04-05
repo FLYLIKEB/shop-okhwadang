@@ -134,33 +134,50 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
         {/* Right: Product info */}
         <div className="flex flex-col gap-6">
-          {/* Breadcrumb */}
+          {/* Breadcrumb — 도면 라벨 스타일 */}
           {product.category && (
-            <nav className="typo-label text-muted-foreground">
+            <nav className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
               <span>{product.category.name}</span>
-              <span className="mx-1">/</span>
+              <span className="mx-1.5">/</span>
               <span className="text-foreground">{product.name}</span>
             </nav>
           )}
 
           {/* Name */}
-          <h1 className="typo-h1 text-foreground">{product.name}</h1>
+          <h1 className="typo-h1 font-display text-foreground">{product.name}</h1>
 
           {/* Short description */}
           {product.shortDescription && (
             <p className="typo-body text-muted-foreground">{product.shortDescription}</p>
           )}
 
-          {/* Rating */}
-          {product.rating !== undefined && (
-            <div className="flex items-center gap-2">
-              <StarRating rating={product.rating} size="md" interactive={false} />
-              <span className="typo-body font-medium">{product.rating.toFixed(1)}</span>
-              {product.reviewCount !== undefined && product.reviewCount > 0 && (
-                <span className="typo-body text-muted-foreground">({product.reviewCount}개의 후기)</span>
-              )}
-            </div>
-          )}
+          {/* 스펙 테이블 — 도면/감정서 느낌 */}
+          <div className="border border-dashed border-border p-4 space-y-2">
+            {product.rating !== undefined && (
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Rating</span>
+                <div className="flex items-center gap-2">
+                  <StarRating rating={product.rating} size="md" interactive={false} />
+                  <span className="font-mono text-sm font-medium">{product.rating.toFixed(1)}</span>
+                  {product.reviewCount !== undefined && product.reviewCount > 0 && (
+                    <span className="font-mono text-xs text-muted-foreground">({product.reviewCount})</span>
+                  )}
+                </div>
+              </div>
+            )}
+            {product.category && (
+              <div className="flex items-center justify-between border-t border-dashed border-border pt-2">
+                <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Category</span>
+                <span className="font-mono text-sm">{product.category.name}</span>
+              </div>
+            )}
+            {product.sku && (
+              <div className="flex items-center justify-between border-t border-dashed border-border pt-2">
+                <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">SKU</span>
+                <span className="font-mono text-sm">{product.sku}</span>
+              </div>
+            )}
+          </div>
 
           {/* Price */}
           <div className="typo-h2">

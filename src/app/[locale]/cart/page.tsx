@@ -100,7 +100,7 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-6 typo-h1">장바구니</h1>
+      <h1 className="mb-6 typo-h1 font-display">장바구니</h1>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Item list */}
@@ -132,28 +132,28 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* Summary */}
-        <div className="h-fit rounded-lg border p-6 space-y-4 lg:sticky lg:top-24">
-          <h2 className="font-semibold text-lg">주문 요약</h2>
+        {/* Summary — 견적서 스타일 */}
+        <div className="h-fit border border-dashed border-border p-6 space-y-4 lg:sticky lg:top-24">
+          <h2 className="font-display text-lg font-semibold border-b border-border pb-3">주문 요약</h2>
 
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 font-mono text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">선택 상품</span>
+              <span className="text-muted-foreground tracking-wider text-xs uppercase">Items</span>
               <span>{selectedIds.size}개</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">상품 금액</span>
+              <span className="text-muted-foreground tracking-wider text-xs uppercase">Subtotal</span>
               <span>{formatCurrency(selectedTotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">배송비</span>
+              <span className="text-muted-foreground tracking-wider text-xs uppercase">Shipping</span>
               <span>{selectedTotal >= FREE_SHIPPING_THRESHOLD ? '무료' : formatCurrency(SHIPPING_FEE)}</span>
             </div>
           </div>
 
-          <div className="border-t pt-4">
-            <div className="flex justify-between font-bold">
-              <span>합계</span>
+          <div className="border-t border-dashed border-border pt-4">
+            <div className="flex justify-between font-bold font-mono">
+              <span className="tracking-wider text-xs uppercase">Total</span>
               <span>
                 {formatCurrency(
                   selectedTotal +
@@ -166,7 +166,7 @@ export default function CartPage() {
           <button
             type="button"
             onClick={handleOrder}
-            className="w-full rounded-md bg-foreground py-3 text-sm font-semibold text-background hover:opacity-90 transition-opacity disabled:opacity-40"
+            className="w-full bg-foreground py-3 font-mono text-xs font-semibold text-background tracking-widest uppercase hover:opacity-90 transition-opacity disabled:opacity-40"
           >
             선택 상품 주문하기
           </button>
