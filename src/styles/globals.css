@@ -31,12 +31,12 @@
   /* Typography — size scale */
   --font-size-heading-0: 2rem;     /* 32px mobile - hero only */
   --font-size-heading-1: 1.5rem;   /* 24px mobile */
-  --font-size-heading-2: 1.25rem;  /* 20px mobile */
+  --font-size-heading-2: 1.875rem; /* 30px mobile */
   --font-size-heading-3: 1.125rem; /* 18px mobile */
   --font-size-title: 1rem;         /* 16px mobile */
   --font-size-body: 1rem;          /* 16px */
   --font-size-body-sm: 0.875rem;   /* 14px */
-  --font-size-label: 0.625rem;      /* 10px */
+  --font-size-label: 0.75rem;        /* 12px */
   --font-size-label-sm: 0.5625rem;  /* 9px */
   --font-size-button: 0.875rem;    /* 14px */
 
@@ -102,7 +102,7 @@
 @media (min-width: 768px) {
   :root {
     --font-size-heading-1: 2.25rem;  /* 36px desktop */
-    --font-size-heading-2: 1.5rem;   /* 24px desktop */
+    --font-size-heading-2: 1.875rem; /* 30px desktop */
     --font-size-heading-3: 1.25rem;  /* 20px desktop */
     --font-size-title: 1.125rem;     /* 18px desktop */
     --font-size-heading-0: 3rem;     /* 48px desktop - hero only */

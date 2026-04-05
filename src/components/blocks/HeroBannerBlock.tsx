@@ -85,7 +85,7 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
               key={slideIndex}
               className={cn(
                 'relative min-w-full flex items-center justify-center overflow-hidden',
-                'h-[40svh] min-h-[25rem] md:h-[60svh] md:min-h-[35rem]',
+                'h-[40svh] min-h-[25rem] md:h-[680px]',
               )}
               style={{ backgroundColor: slide.bg_color ?? '#2A2520' }}
             >
@@ -143,45 +143,46 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                 )}
               </div>
 
-              {slides.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={scrollPrev}
-                    aria-label="이전 슬라이드"
-                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={scrollNext}
-                    aria-label="다음 슬라이드"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-                    {slides.map((_, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => scrollTo(idx)}
-                        aria-label={`${idx + 1}번 슬라이드로 이동`}
-                        className={cn(
-                          'h-1.5 rounded-full transition-all duration-300',
-                          idx === selectedIndex ? 'w-6 bg-[#B8976A]' : 'w-1.5 bg-white/40 hover:bg-white/60',
-                        )}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
             </div>
           ))}
         </div>
       </div>
+
+      {slides.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={scrollPrev}
+            aria-label="이전 슬라이드"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={scrollNext}
+            aria-label="다음 슬라이드"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => scrollTo(idx)}
+                aria-label={`${idx + 1}번 슬라이드로 이동`}
+                className={cn(
+                  'h-1.5 rounded-full transition-all duration-300',
+                  idx === selectedIndex ? 'w-6 bg-[#B8976A]' : 'w-1.5 bg-white/40 hover:bg-white/60',
+                )}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -246,7 +247,7 @@ export default function HeroBannerBlock({ content }: Props) {
 
   return (
     <ScrollLogoProvider value={scrollLogoContextValue}>
-      <section ref={sectionRef} className="relative flex h-[40svh] min-h-[25rem] md:h-[60svh] items-center justify-center overflow-hidden bg-neutral-900">
+      <section ref={sectionRef} className="relative flex h-[40svh] min-h-[25rem] md:h-[680px] items-center justify-center overflow-hidden bg-neutral-900">
         {isHome && (
           <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
             <div style={heroLogoStyle}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { categoriesApi } from '@/lib/api';
@@ -22,6 +22,38 @@ function getClayColor(slug: string): string | null {
     if (slug.includes(key)) return color;
   }
   return null;
+}
+
+function CategoryImageCard({ cat }: { cat: Category }) {
+  const [imgError, setImgError] = useState(false);
+  const handleError = useCallback(() => setImgError(true), []);
+  const clayColor = getClayColor(cat.slug);
+
+  return (
+    <Link
+      href={`/products?categoryId=${cat.id}`}
+      className="group relative aspect-square overflow-hidden bg-muted"
+    >
+      {!imgError ? (
+        <Image
+          src={`/images/categories/${cat.slug}.jpg`}
+          alt={cat.name}
+          fill
+          className="object-cover transition-opacity group-hover:opacity-80"
+          sizes="(max-width: 768px) 50vw, 25vw"
+          onError={handleError}
+        />
+      ) : (
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ backgroundColor: clayColor ?? '#2A2520' }}
+        />
+      )}
+      <span className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent p-2 text-sm font-medium text-white">
+        {cat.name}
+      </span>
+    </Link>
+  );
 }
 
 interface Props {
@@ -82,22 +114,7 @@ export default function CategoryNavBlock({ content }: Props) {
     return (
       <nav className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {categories.map((cat) => (
-          <Link
-            key={cat.id}
-            href={`/products?categoryId=${cat.id}`}
-            className="group relative aspect-square overflow-hidden bg-muted"
-          >
-            <Image
-              src={`/images/categories/${cat.slug}.jpg`}
-              alt={cat.name}
-              fill
-              className="object-cover transition-opacity group-hover:opacity-80"
-              sizes="(max-width: 768px) 50vw, 25vw"
-            />
-            <span className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent p-2 text-sm font-medium text-white">
-              {cat.name}
-            </span>
-          </Link>
+          <CategoryImageCard key={cat.id} cat={cat} />
         ))}
       </nav>
     );
