@@ -6,14 +6,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 import { useScrollLogoTransition } from '@/hooks/useScrollLogoTransition';
 import { ScrollLogoProvider } from '@/contexts/ScrollLogoContext';
 import { isSafeUrl } from '@/utils/url';
+import SafeHtml from '@/components/common/SafeHtml';
 
 interface Props {
   content: HeroBannerContent;
@@ -128,7 +127,7 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                 )}
                 {slideIndex === 0 && description && (
                   <div className="mt-4 text-white/75">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
+                    <SafeHtml html={description} className="[&_p]:mt-1 [&_strong]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline" />
                   </div>
                 )}
                 {slide.cta_text && slide.cta_url && (
@@ -224,7 +223,7 @@ export default function HeroBannerBlock({ content }: Props) {
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
           {description && (
             <div className="mt-4 text-muted-foreground">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
+              <SafeHtml html={description} />
             </div>
           )}
           {cta_text && cta_url && (
@@ -272,7 +271,7 @@ export default function HeroBannerBlock({ content }: Props) {
           {subtitle && <p className={cn('mt-5 typo-body font-display leading-relaxed', image_url ? 'text-white/85' : 'text-muted-foreground')}>{subtitle}</p>}
           {description && (
             <div className={cn('mt-4', image_url ? 'text-white/75' : 'text-muted-foreground')}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
+              <SafeHtml html={description} className={image_url ? '[&_p]:mt-1 [&_strong]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline' : '[&_p]:mt-1'} />
             </div>
           )}
           {cta_text && cta_url && (
