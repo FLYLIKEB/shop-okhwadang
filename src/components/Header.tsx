@@ -394,9 +394,14 @@ interface DesktopNavProps {
 
 function DesktopNav({ items }: DesktopNavProps) {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const hoveredItem = items.find((item) => item.id === hoveredId);
   const activeChildren = hoveredItem?.children?.filter((c: NavigationItem) => c.is_active) ?? [];
   const hasChildren = activeChildren.length > 0;
+
+  const hoveredLeft = hoveredId !== null
+    ? (itemRefs.current.get(hoveredId)?.getBoundingClientRect().left ?? 0)
+    : 0;
 
   return (
     <nav
@@ -407,6 +412,7 @@ function DesktopNav({ items }: DesktopNavProps) {
       {items.map((item) => (
         <div
           key={item.id}
+          ref={(el) => { if (el) itemRefs.current.set(item.id, el); }}
           onMouseEnter={() => setHoveredId(item.id)}
         >
           <Link
@@ -436,8 +442,8 @@ function DesktopNav({ items }: DesktopNavProps) {
           onMouseEnter={() => setHoveredId(hoveredId)}
           onMouseLeave={() => setHoveredId(null)}
         >
-          <div className="mx-auto max-w-7xl px-4 py-6">
-            <div className="flex justify-center gap-16">
+          <div className="py-6" style={{ paddingLeft: `${hoveredLeft}px` }}>
+            <div className="flex gap-12">
               {activeChildren.map((child: NavigationItem) => (
                 <div key={child.id} className="flex flex-col gap-3">
                   <Link
