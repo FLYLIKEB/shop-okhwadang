@@ -57,6 +57,7 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
               images={product.images}
               isFeatured={product.isFeatured}
               locale={locale}
+              categoryName={product.category?.name ?? null}
             />
           ))}
         </div>

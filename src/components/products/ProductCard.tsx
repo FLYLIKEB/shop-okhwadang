@@ -27,6 +27,30 @@ interface ProductCardProps {
   locale?: Locale;
   priority?: boolean;
   showCartOnHover?: boolean;
+  categoryName?: string | null;
+}
+
+/** 카테고리명 → 니료 태그 CSS 클래스 매핑 */
+const CLAY_TAG_MAP: Record<string, string> = {
+  '주니': 'tag-zuni',
+  '朱泥': 'tag-zuni',
+  '단니': 'tag-danni',
+  '段泥': 'tag-danni',
+  '자니': 'tag-zini',
+  '紫泥': 'tag-zini',
+  '흑니': 'tag-heukni',
+  '黑泥': 'tag-heukni',
+  '청수니': 'tag-chunsuni',
+  '靑水泥': 'tag-chunsuni',
+  '녹니': 'tag-nokni',
+  '綠泥': 'tag-nokni',
+};
+
+function getClayTagClass(categoryName: string): string | null {
+  for (const [key, cls] of Object.entries(CLAY_TAG_MAP)) {
+    if (categoryName.includes(key)) return cls;
+  }
+  return null;
 }
 
 function ProductCard({
@@ -41,10 +65,11 @@ function ProductCard({
   images,
   locale = 'ko',
   priority = false,
-  showCartOnHover = false,
+  categoryName,
 }: ProductCardProps) {
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
+  const clayTagClass = categoryName ? getClayTagClass(categoryName) : null;
 
   const { addItem } = useCart();
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
@@ -76,69 +101,82 @@ function ProductCard({
         isSoldout && 'opacity-60',
       )}
     >
-      <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+      {/* ── 이미지 영역 ── */}
+      <div className="relative aspect-square overflow-hidden bg-secondary">
         {thumbnail ? (
           <Image
             src={thumbnail}
             alt={name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-500 group-hover:scale-103"
             priority={priority}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <span className="typo-label">No Image</span>
+            <span className="data-label">No Image</span>
           </div>
         )}
 
         {isSoldout && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/60">
-            <span className="typo-label text-foreground">품절</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+            <span className="data-label text-foreground tracking-widest">SOLD OUT</span>
           </div>
         )}
 
+        {/* 니료 태그 배지 — 좌하단 */}
+        {clayTagClass && (
+          <span className={cn('absolute left-2 bottom-2 z-10 px-2 py-0.5 rounded-sm', clayTagClass)}>
+            {categoryName}
+          </span>
+        )}
+
+        {/* 찜하기 버튼 — 우상단 */}
         <button
           type="button"
           aria-label={isWishlisted ? '찜하기 취소' : '찜하기'}
           onClick={handleToggleWishlist}
           disabled={isWishlistLoading}
-          className={cn(
-            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 shadow-sm disabled:cursor-not-allowed backdrop-blur-sm',
-          )}
+          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm disabled:cursor-not-allowed transition-colors hover:bg-background/80"
         >
           <Heart
             className={cn(
-              'h-4 w-4 transition-colors',
-              isWishlisted ? 'fill-white text-white' : 'text-white',
+              'h-3.5 w-3.5 transition-colors',
+              isWishlisted ? 'fill-foreground text-foreground' : 'text-foreground/60',
             )}
           />
         </button>
       </div>
 
-      <div className="mt-3 flex flex-col gap-1">
-        <p className="typo-title line-clamp-2 leading-tight h-11 shrink-0">{name}</p>
+      {/* ── 정보 영역 — 공방 도면 스타일 ── */}
+      <div className="mt-2.5 flex flex-col gap-1">
+        {/* 카테고리 라벨 (니료 태그가 없을 때) */}
+        {categoryName && !clayTagClass && (
+          <span className="data-label">{categoryName}</span>
+        )}
 
-        <div className="flex items-center gap-1.5 h-5 shrink-0">
+        <p className="typo-title line-clamp-2 leading-snug min-h-[2.5rem] shrink-0">{name}</p>
+
+        {/* 리뷰 */}
+        <div className="flex items-center gap-1.5 h-4 shrink-0">
           {rating !== undefined && (
             <>
               <StarRating rating={rating} size="sm" interactive={false} />
-              <span className="typo-body-sm font-medium leading-none">{rating.toFixed(1)}</span>
+              <span className="font-mono text-xs leading-none text-muted-foreground">{rating.toFixed(1)}</span>
               {reviewCount !== undefined && reviewCount > 0 && (
-                <span className="typo-body-sm text-muted-foreground leading-none">({reviewCount})</span>
+                <span className="font-mono text-xs text-muted-foreground leading-none">({reviewCount})</span>
               )}
             </>
           )}
         </div>
 
-        <div className="h-10 overflow-hidden">
-          {shortDescription && (
-            <p className="line-clamp-2 typo-body-sm text-muted-foreground leading-snug">{shortDescription}</p>
-          )}
-        </div>
+        {shortDescription && (
+          <p className="line-clamp-2 text-xs text-muted-foreground leading-relaxed">{shortDescription}</p>
+        )}
 
-        <div className="mt-auto pt-2">
-          <hr className="border-gray-200" />
+        {/* 구분선 — 가느다란 보더 */}
+        <div className="pt-2">
+          <hr className="border-border" />
         </div>
 
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
@@ -150,10 +188,10 @@ function ProductCard({
             onClick={handleAddToCart}
             disabled={isCartLoading}
             className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed shrink-0',
+              'flex w-full items-center justify-center gap-2 border border-border py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed shrink-0 font-mono tracking-wide',
             )}
           >
-            <ShoppingCart className="h-4 w-4" />
+            <ShoppingCart className="h-3.5 w-3.5" />
             {isCartLoading ? '담는 중...' : '장바구니 담기'}
           </button>
         )}

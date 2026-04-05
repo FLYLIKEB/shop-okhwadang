@@ -8,9 +8,9 @@ interface PriceDisplayProps {
 }
 
 export default function PriceDisplay({ price, salePrice, size = 'sm', locale = 'ko' }: PriceDisplayProps) {
-  const discountClass = size === 'lg' ? 'text-sm font-bold' : 'text-xs font-bold';
-  const priceClass = size === 'lg' ? 'text-2xl font-bold' : 'text-sm font-bold';
-  const originalClass = size === 'lg' ? 'text-sm' : 'text-xs';
+  const discountClass = size === 'lg' ? 'text-sm font-bold font-mono tracking-wide' : 'text-xs font-bold font-mono tracking-wide';
+  const priceClass = size === 'lg' ? 'text-2xl font-bold font-mono tracking-tight' : 'text-sm font-bold font-mono tracking-tight';
+  const originalClass = size === 'lg' ? 'text-sm font-mono' : 'text-xs font-mono';
 
   if (salePrice !== null && salePrice < price) {
     return (

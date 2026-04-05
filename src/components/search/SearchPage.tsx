@@ -184,6 +184,7 @@ export default function SearchPage() {
                 status={product.status}
                 images={product.images}
                 isFeatured={product.isFeatured}
+                categoryName={product.category?.name ?? null}
               />
             ))}
           </div>
