@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useNavigation } from '@/hooks/useNavigation';
 import type { NavigationItem } from '@/lib/api';
@@ -96,7 +97,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">옥화당</p>
+            <Image src="/logo-okhwadang.png" alt="옥화당" width={120} height={34} className="object-contain mb-4" />
             <div className="flex flex-col gap-1 text-sm text-muted-foreground">
               <p>자사호 · 보이차 · 다구</p>
               <p>전문 쇼핑몰</p>
