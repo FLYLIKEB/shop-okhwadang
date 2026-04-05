@@ -11,6 +11,7 @@ import CategoryNavBlock from './CategoryNavBlock';
 import PromotionBannerBlock from './PromotionBannerBlock';
 import TextContentBlock from './TextContentBlock';
 import SplitContentBlock from './SplitContentBlock';
+import JournalPreviewBlock from './JournalPreviewBlock';
 import UnknownBlock from './UnknownBlock';
 
 type BlockComponent = ComponentType<{ content: Record<string, unknown> }>;
@@ -24,6 +25,7 @@ const blockComponentMap: Record<string, BlockComponent> = {
   text_content: TextContentBlock as unknown as BlockComponent,
   split_content: SplitContentBlock as unknown as BlockComponent,
   brand_story: SplitContentBlock as unknown as BlockComponent,
+  journal_preview: JournalPreviewBlock as unknown as BlockComponent,
 };
 
 interface Props {

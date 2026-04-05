@@ -492,12 +492,9 @@ docker compose down -v     # Reset (volume cleanup)
 
 ### Environment Variables (`backend/.env`)
 
-```env
-NODE_ENV=development
-LOCAL_DATABASE_URL=mysql://root:__REDACTED_ROOT_PW__@127.0.0.1:3306/commerce
-DB_SYNCHRONIZE=true
-DB_SSL_ENABLED=false
-```
+환경변수는 `backend/.env.example`을 참고하여 `backend/.env`에 설정합니다.
+
+**주의**: `.env` 파일에는 실제 비밀번호/키가 포함되므로 **절대 Git에 커밋하지 않습니다**.
 
 ---
 
