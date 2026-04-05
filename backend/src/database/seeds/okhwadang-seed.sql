@@ -40,33 +40,33 @@ SET SESSION FOREIGN_KEY_CHECKS = 1;
 -- ============================================================
 INSERT INTO categories (id, name, slug, parent_id, sort_order, is_active, image_url, description) VALUES
 -- 최상위 카테고리
-(1,  '자사호',    'teapot',       NULL, 1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '중국 의흥(宜興)의 자사니료로 빚은 전통 다호. 600년 도예 역사가 담긴 장인의 손끝에서 태어난 자사호를 만나보세요.'),
-(2,  '보이차',    'puerh-tea',    NULL, 2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '운남성(雲南省) 고수차(古樹茶) 산지에서 직수입한 보이차. 세월이 빚어낸 깊은 맛과 향을 경험하세요.'),
-(3,  '다구',      'tea-ware',     NULL, 3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '찻자리를 완성하는 다구 컬렉션. 다완, 다반, 차 도구까지 정성스러운 한 잔을 위한 모든 것.'),
-(4,  '다엽',      'tea-leaf',     NULL, 4, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '엄선된 찻잎을 소량 단위로 즐기는 다엽 컬렉션. 다양한 산지와 품종의 차를 만나보세요.'),
+(1,  '자사호',    'teapot',       NULL, 1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '<b>중국 의흥(宜興) 황룡산 자사니</b>로 빚은 전통 다호. <b>600년 도예 역사</b>가 담긴 장인의 손끝에서 태어난 자사호를 만나보세요. 사용하면 사용할수록 차기(茶氣)가 쌓여 맛이 깊어집니다.'),
+(2,  '보이차',    'puerh-tea',    NULL, 2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '<b>운남성(雲南省) 고수차(古樹茶) 산지</b>에서 직수입한 보이차. <b>세월이 빚어낸 깊은 맛과 향</b>을 경험하세요. 생차·숙차·노차로 나누어 만나볼 수 있습니다.'),
+(3,  '다구',      'tea-ware',     NULL, 3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '찻자리를 완성하는 <b>다구 컬렉션</b>. 다완, 다반, 차 도구까지 정성스러운 한 잔을 위한 모든 것. 자사호와 어울리는 다구를 엄선했습니다.'),
+(4,  '다엽',      'tea-leaf',     NULL, 4, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '엄선된 <b>찻잎을 소량 단위</b>로 즐기는 다엽 컬렉션. 다양한 산지(반장·빙도·남糯等)와 품종의 차를 만나보세요. 소분으로 다양한 차를 경험해보세요.'),
 
 -- 자사호 > 니료별
-(10, '주니',      'zhuní',        1,    1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '붉은빛이 감도는 주니(朱泥) 자사호. 높은 수축률로 섬세한 질감과 빠른 열전도가 특징이며, 고산 우롱차·홍차에 잘 어울립니다.'),
-(11, '자사',      'zǐshā',        1,    2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '보라빛 자사(紫砂) 원광 니료로 만든 정통 자사호. 기공성이 뛰어나 보이차·흑차 등 발효차에 최적입니다.'),
-(12, '단니',      'duānní',       1,    3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '밝은 노란빛의 단니(段泥) 자사호. 가벼운 색감에 깨끗한 맛을 내며, 녹차·백차·경발효 우롱차에 어울립니다.'),
-(13, '흑니',      'hēiní',        1,    4, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '깊은 흑색의 흑니(黑泥) 자사호. 묵직한 존재감과 뛰어난 보온성으로 숙차·흑차를 우리기에 좋습니다.'),
-(14, '청회니',    'qīnghuīní',    1,    5, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '청회색 톤의 청회니(青灰泥) 자사호. 은은한 색감에 단정한 미감을 지니며, 생차·백차에 잘 어울립니다.'),
+(10, '주니',      'zhuní',        1,    1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '<b>주철질의 대표 니료</b>로, 적색~황갈색을 띱니다. <b>높은 수축률</b>으로 섬세한 질감이 특징이며, <b>빠른 열전도</b>로 고산 우롱차·홍차에 잘 어울립니다.'),
+(11, '자사',      'zǐshā',        1,    2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '<b>보라빛 자사(紫砂) 원광 니료</b>로 만든 정통 자사호. <b>뛰어난 기공성(透氣性)</b>으로 보이차·흑차 등 발효차에 최적입니다. 사용하면 할수록 광택이 납니다.'),
+(12, '단니',      'duānní',       1,    3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '<b>밝은 노란빛의 단니(段泥)</b> 자사호. <b>가벼운 색감</b>에 깨끗한 맛을 내며, <b>녹차·백차·경발효 우롱차</b>에 어울립니다. 차 색감을 감상하기 좋습니다.'),
+(13, '흑니',      'hēiní',        1,    4, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '<b>깊은 흑색의 흑니(黑泥)</b> 자사호. <b>묵직한 존재감</b>과 <b>뛰어난 보온성</b>으로 <b>숙차·흑차</b>를 우리기에 좋습니다. 완전 소성된 표면이 풍격을 더합니다.'),
+(14, '청회니',    'qīnghuīní',    1,    5, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '<b>청회색 톤의 청회니(青灰泥)</b> 자사호. <b>은은한 색감</b>에 단정한 미감을 지니며, <b>생차·백차</b>에 잘 어울립니다. 섬세한 질감이 특징입니다.'),
 
 -- 자사호 > 모양별
-(20, '주형',      'zhūxíng',      1,    6, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '대나무 마디를 본뜬 주형호(竹型壺). 곧고 단정한 조형미와 자연의 생명력이 담긴 전통 조형입니다.'),
-(21, '석표',      'shípião',      1,    7, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '바가지 모양의 석표호(石瓢壺). 삼각 구도의 안정감과 힘 있는 선이 특징인 자사호의 대표 조형입니다.'),
-(22, '서시',      'xīshī',        1,    8, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '미인 서시(西施)에서 이름을 딴 서시호. 풍만하고 부드러운 곡선이 여성적 아름다움을 표현한 대표적 원형호입니다.'),
-(23, '편평',      'biānpíng',     1,    9, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '납작한 원판 형태의 편평호(扁平壺). 넓은 바닥과 낮은 몸체로 찻잎이 고르게 펼쳐져 맛의 균형이 좋습니다.'),
+(20, '주형',      'zhūxíng',      1,    6, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '<b>대나무 마디를 본뜬 주형호(竹型壺)</b>. 곧고 단정한 조형미와 자연의 생명력이 담긴 전통 조형입니다. <b>수직 선</b>이 현대적 감각을 더합니다.'),
+(21, '석표',      'shípião',      1,    7, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '<b>바가지 모양의 석표호(石瓢壺)</b>. <b>삼각 구도의 안정감</b>과 힘 있는 선이 특징인 자사호의 <b>대표 조형</b>입니다. 삼각 뚜껑 손잡이가 독특합니다.'),
+(22, '서시',      'xīshī',        1,    8, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '<b>미인 서시(西施)에서 이름을 딴 서시호</b>. <b>풍만하고 부드러운 곡선</b>이 여성적 아름다움을 표현한 <b>대표적 원형호</b>입니다. 쥐리기가 좋아 입문자 추천.'),
+(23, '편평',      'biānpíng',     1,    9, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '<b>납작한 원판 형태의 편평호(扁平壺)</b>. <b>넓은 바닥과 낮은 몸체</b>로 찻잎이 고르게 펼쳐져 <b>맛의 균형</b>이 좋습니다. 다반 위 배치에 적합합니다.'),
 
 -- 보이차 > 종류별
-(30, '생차 (生茶)',  'sheng-puerh',  2,  1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '자연 발효 방식의 생차(生茶). 시간이 지날수록 맛이 변화하며, 초기 쓴맛과 떫은맛이 세월과 함께 깊은 감미로 바뀝니다.'),
-(31, '숙차 (熟茶)',  'shou-puerh',   2,  2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '악퇴 발효를 거친 숙차(熟茶). 부드럽고 달콤한 맛으로 바로 음용하기 좋으며, 대추·감초 향이 특징입니다.'),
-(32, '노차 (老茶)',  'aged-puerh',   2,  3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '10년 이상 숙성된 노차(老茶). 오랜 세월이 만들어낸 깊은 진향(陳香)과 약향이 매력적인 프리미엄 보이차입니다.'),
+(30, '생차 (生茶)',  'sheng-puerh',  2,  1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '<b>자연 발효 방식의 생차(生茶)</b>. 시간이 지날수록 맛이 변화하며, 초기 <b>쓴맛과 떫은맛</b>이 세월과 함께 <b>깊은 감미</b>로 바뀝니다. <b>반장·빙도</b> 등 유명 산지 생차를 만나보세요.'),
+(31, '숙차 (熟茶)',  'shou-puerh',   2,  2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '<b>악퇴 발효를 거친 숙차(熟茶)</b>. <b>부드럽고 달콤한 맛</b>으로 바로 음용하기 좋으며, <b>대추·감초 향</b>이 특징입니다. <b>대익 7572</b> 등 입문 추천 숙차를 엄선했습니다.'),
+(32, '노차 (老茶)',  'aged-puerh',   2,  3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '<b>10년 이상 숙성된 노차(老茶)</b>. 오랜 세월이 만들어낸 <b>깊은 진향(陳香)</b>과 <b>약향</b>이 매력적인 <b>프리미엄 보이차</b>입니다. 소분으로 시음해보세요.'),
 
 -- 다구 > 종류별
-(40, '다완',      'teacup',       3,    1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '차를 마시는 찻잔(茶碗). 자사·청자·백자 등 다양한 소재의 다완으로 찻자리의 품격을 높여보세요.'),
-(41, '다반',      'tea-tray',     3,    2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '자사호와 다완을 올려놓는 다반(茶盤). 대나무·석재·도자기 소재로 찻자리의 기초를 완성합니다.'),
-(42, '다도구 세트', 'tea-set',     3,    3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '차 도구 일체를 갖춘 다도구 세트. 입문자부터 숙련자까지, 찻자리에 필요한 모든 도구를 한 번에 만나보세요.'),
+(40, '다완',      'teacup',       3,    1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '<b>차를 마시는 찻잔(茶碗)</b>. 자사·청자·백자 등 다양한 소재의 다완으로 찻자리의 품격을 높여보세요. <b>경덕진 청화</b>, <b>천목유</b>, <b>여요 빙렬유</b> 등 명랑을 엄선했습니다.'),
+(41, '다반',      'tea-tray',     3,    2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '<b>자사호와 다완을 올려놓는 다반(茶盤)</b>. 대나무·석재·도자기 소재로 찻자리의 기초를 완성합니다. <b>물받이 내장</b> 다반으로 행다(行茶)도 깔끔하게.'),
+(42, '다도구 세트', 'tea-set',     3,    3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png', '<b>차 도구 일체를 갖춘 다도구 세트</b>. 입문자부터 숙련자까지, 찻자리에 필요한 모든 도구를 한 번에 만나보세요. <b>자사호+다완+다반+차도구</b> 구성으로 즉시 다구를 시작할 수 있습니다.'),
 (43, '차 도구',   'tea-tools',    3,    4, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '차칙·차침·차협 등 개별 차 도구. 하나하나 엄선한 도구로 우리는 과정의 즐거움을 더합니다.');
 
 -- ============================================================
@@ -497,17 +497,17 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 -- 7. 배너
 -- ============================================================
 INSERT INTO banners (title, image_url, link_url, sort_order, is_active, starts_at, ends_at) VALUES
-('옥화당 봄 기획전 — 주니 신작 입고', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '/p/spring-2026', 0, 1, '2026-03-01 00:00:00', '2026-04-30 23:59:59'),
-('반장 고수 생병 2019년 한정 입고', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/banjang-gushu-2019-sheng', 1, 1, '2026-03-15 00:00:00', '2026-05-15 23:59:59'),
-('입문 다도구 세트 — 14% 특가', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/okhwadang-starter-tea-set', 2, 1, NULL, NULL);
+('봄 기획전 — <b>주니 신작</b> 입고', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '/p/spring-2026', 0, 1, '2026-03-01 00:00:00', '2026-04-30 23:59:59'),
+('<b>반장 고수</b> 생병 2019년 한정 입고', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/banjang-gushu-2019-sheng', 1, 1, '2026-03-15 00:00:00', '2026-05-15 23:59:59'),
+('입문 다도구 세트 — <b>14% 특가</b> 240,000원', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/okhwadang-starter-tea-set', 2, 1, NULL, NULL);
 
 -- ============================================================
 -- 8. 프로모션
 -- ============================================================
 INSERT INTO promotions (title, description, type, starts_at, ends_at, is_active, discount_rate, image_url) VALUES
-('봄 기획전 — 주니 신작', '복건 주니 신작 자사호 선착순 특가. 재고 한정으로 조기 마감될 수 있습니다.', 'exhibition', '2026-03-29 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
-('입문 세트 14% 타임세일', '옥화당 입문 다도구 세트 한정 수량 특가 — 280,000원 → 240,000원', 'timesale', '2026-03-29 09:00:00', '2026-04-05 23:59:59', 1, 14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
-('보이차 입문 이벤트', '대익 7572 숙병 구매 시 대나무 차도구 5종 증정 이벤트', 'event', '2026-04-01 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png');
+('봄 기획전 — 주니 신작', '<b>복건 주니(朱泥)</b> 신작 자사호 선착순 특가. <b>주니 서시호·주형호·석표호</b> 한정 수량 입고. 재고 소진 시 조기 마감될 수 있습니다.', 'exhibition', '2026-03-29 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+('입문 세트 14% 타임세일', '<b>옥화당 입문 다도구 세트</b> 한정 수량 특가. <b>280,000원 → 240,000원</b> (40,000원 할인). 자사호+다완+다반+차도구 완전 구성.', 'timesale', '2026-03-29 09:00:00', '2026-04-05 23:59:59', 1, 14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
+('보이차 입문 이벤트', '<b>대익 7572 숙병</b> 구매 시 <b>대나무 차도구 5종 세트</b> 증정. 차도구(차칙·차침·차협·차루·차침)가 모두 포함된 입문 필수 세트.', 'event', '2026-04-01 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png');
 
 -- ============================================================
 -- 9. 공지사항
@@ -861,9 +861,9 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'title', '',
   'template', 'slider',
   'slides', JSON_ARRAY(
-    JSON_OBJECT('title', '의흥 장인의 손끝에서', 'subtitle', '600년 전통, 정성으로 빚은 자사호를 만나보세요', 'cta_text', '컬렉션 보기', 'cta_url', '/products?categoryId=1', 'bg_color', '#1B3A4B', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
-    JSON_OBJECT('title', '보이차의 깊은 여운', 'subtitle', '세월이 빚어낸 맛, 엄선된 보이차 컬렉션', 'cta_text', '아카이브 보기', 'cta_url', '/archive', 'bg_color', '#4A6741', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
-    JSON_OBJECT('title', '찻자리의 완성', 'subtitle', '자사호와 다구로 꾸미는 나만의 다석', 'cta_text', '저널 보기', 'cta_url', '/journal', 'bg_color', '#2A2520', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png')
+    JSON_OBJECT('title', '의흥 장인의 손끝에서', 'subtitle', '<b>중국 의흥(宜興) 황룡산</b> 자사니로 빚은 600년 전통의 자사호. 장인의 정성이 담긴 수공예품을 만나보세요.', 'cta_text', '컬렉션 보기', 'cta_url', '/products?categoryId=1', 'bg_color', '#1B3A4B', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+    JSON_OBJECT('title', '보이차의 깊은 여운', 'subtitle', '<b>운남성 고수차 산지</b>에서 직수입한 보이차. 세월이 빚어낸 <b>반장·빙도·대익</b>의 깊은 맛을 경험하세요.', 'cta_text', '아카이브 보기', 'cta_url', '/archive', 'bg_color', '#4A6741', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
+    JSON_OBJECT('title', '찻자리의 완성', 'subtitle', '<b>자사호와 다구</b>로 완성하는 나만의 다석. <b>경덕진 청화</b>, <b>천목유</b> 다완으로 찻자리의 품격을 높여보세요.', 'cta_text', '저널 보기', 'cta_url', '/journal', 'bg_color', '#2A2520', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png')
   )
 ), 0, 1, NOW(), NOW()),
 
