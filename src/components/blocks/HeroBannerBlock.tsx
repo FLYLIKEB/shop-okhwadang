@@ -85,7 +85,7 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
               key={slideIndex}
               className={cn(
                 'relative min-w-full flex items-end overflow-hidden',
-                'h-[100svh] min-h-[40rem]',
+                'h-[50svh] min-h-[20rem] md:h-[50svh]',
               )}
               style={{ backgroundColor: slide.bg_color ?? '#1a1a1a' }}
             >
@@ -241,7 +241,7 @@ export default function HeroBannerBlock({ content }: Props) {
 
   return (
     <ScrollLogoProvider value={scrollLogoContextValue}>
-      <section ref={sectionRef} className="relative flex h-[60svh] min-h-[25rem] md:h-[80svh] items-center justify-center overflow-hidden bg-neutral-900">
+      <section ref={sectionRef} className="relative flex h-[40svh] min-h-[18rem] md:h-[40svh] items-center justify-center overflow-hidden bg-neutral-900">
         {isHome && (
           <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
             <div style={heroLogoStyle}>
