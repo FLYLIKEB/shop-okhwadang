@@ -19,7 +19,7 @@ export default function PromotionBannerBlock({ content }: Props) {
 
   if (template === 'timer') {
     return (
-      <section className="py-12 border-y border-border text-center">
+      <section className="py-20 md:py-28 border-y border-border text-center">
         <p className="text-sm tracking-widest text-muted-foreground uppercase mb-3">{t('limitedTime')}</p>
         <h2 className="text-2xl font-medium">{title}</h2>
         {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
@@ -44,7 +44,7 @@ export default function PromotionBannerBlock({ content }: Props) {
             <Image src={image_url} alt={title} fill className="object-cover" />
           </div>
         )}
-        <div className="flex flex-1 flex-col justify-center p-6">
+        <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
           <h2 className="text-lg font-medium">{title}</h2>
           {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           {cta_text && cta_url && (
@@ -61,7 +61,7 @@ export default function PromotionBannerBlock({ content }: Props) {
   }
 
   return (
-    <section ref={ref} className="relative overflow-hidden py-12 border-t border-b border-border">
+    <section ref={ref} className="relative overflow-hidden py-20 md:py-28 border-t border-b border-border">
       {image_url && (
         <Image src={image_url} alt={title} fill className="object-cover opacity-20" />
       )}
