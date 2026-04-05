@@ -149,23 +149,23 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
       </div>
 
       {slides.length > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={scrollPrev}
-            aria-label="이전 슬라이드"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={scrollNext}
-            aria-label="다음 슬라이드"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={scrollPrev}
+              aria-label="이전 슬라이드"
+              className="absolute left-6 md:left-12 z-20 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+            >
+              <ChevronLeft className="h-7 w-7" />
+            </button>
+            <button
+              type="button"
+              onClick={scrollNext}
+              aria-label="다음 슬라이드"
+              className="absolute right-6 md:right-12 z-20 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+            >
+              <ChevronRight className="h-7 w-7" />
+            </button>
 
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
             {slides.map((_, idx) => (
