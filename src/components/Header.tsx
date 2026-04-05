@@ -417,59 +417,40 @@ function DesktopNavItem({ item }: DesktopNavItemProps) {
             )}
           />
         </span>
-        {hasChildren && (
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 10 10"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            className={cn(
-              'transition-transform duration-300',
-              isHovered && 'rotate-180',
-            )}
-          >
-            <path d="M2.5 4.5L5 7L7.5 4.5" />
-          </svg>
-        )}
       </Link>
 
       {hasChildren && isHovered && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 pt-3 z-50 w-48"
+          className="absolute left-0 right-0 z-50 bg-background border-b border-border shadow-md"
           style={{ top: '100%' }}
         >
-          <div
-            className={cn(
-              'overflow-hidden rounded-lg border border-border bg-background shadow-xl',
-              'animate-accordion-down',
-            )}
-          >
-            <div className="py-2">
-              {activeChildren.map((child: NavigationItem, index: number) => (
-                <Link
-                  key={child.id}
-                  href={child.url}
-                  className={cn(
-                    'flex items-center gap-3 px-4 py-2.5 typo-body-sm text-muted-foreground',
-                    'transition-all duration-200',
-                    'hover:bg-surface hover:text-foreground hover:pl-5',
-                    'border-l-2 border-transparent',
-                    'hover:border-primary/40',
+          <div className="mx-auto max-w-7xl px-4 py-4">
+            <div className="grid grid-cols-4 gap-8">
+              {activeChildren.map((child: NavigationItem) => (
+                <div key={child.id} className="flex flex-col gap-2">
+                  <Link
+                    href={child.url}
+                    className="typo-body-sm font-medium text-foreground hover:text-primary transition-colors"
+                  >
+                    {child.label}
+                  </Link>
+                  {child.children && child.children.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      {child.children.filter((c: NavigationItem) => c.is_active).map((grandchild: NavigationItem) => (
+                        <Link
+                          key={grandchild.id}
+                          href={grandchild.url}
+                          className="typo-body-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {grandchild.label}
+                        </Link>
+                      ))}
+                    </div>
                   )}
-                  style={{ animationDelay: `${index * 30}ms` }}
-                >
-                  <span className="text-xs font-normal text-muted-foreground/60">└</span>
-                  <span>{child.label}</span>
-                </Link>
+                </div>
               ))}
             </div>
           </div>
-          <div
-            className="absolute left-1/2 -translate-x-1/2 -top-1 w-3 h-3 rotate-45 border-l border-t border-border bg-background"
-            style={{ clipPath: 'polygon(0 0, 100% 100%, 0 100%)' }}
-          />
         </div>
       )}
     </div>
