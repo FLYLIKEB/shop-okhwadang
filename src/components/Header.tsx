@@ -436,18 +436,18 @@ function DesktopNav({ items }: DesktopNavProps) {
           onMouseEnter={() => setHoveredId(hoveredId)}
           onMouseLeave={() => setHoveredId(null)}
         >
-          <div className="mx-auto max-w-7xl px-4 py-4">
-            <div className="grid grid-cols-4 gap-8">
+          <div className="mx-auto max-w-7xl px-4 py-6">
+            <div className="flex justify-center gap-16">
               {activeChildren.map((child: NavigationItem) => (
-                <div key={child.id} className="flex flex-col gap-2">
+                <div key={child.id} className="flex flex-col gap-3">
                   <Link
                     href={child.url}
-                    className="typo-body-sm font-medium text-foreground hover:text-primary transition-colors"
+                    className="typo-body-sm font-semibold text-foreground hover:text-primary transition-colors tracking-wide"
                   >
                     {child.label}
                   </Link>
                   {child.children && child.children.length > 0 && (
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-2">
                       {child.children.filter((c: NavigationItem) => c.is_active).map((grandchild: NavigationItem) => (
                         <Link
                           key={grandchild.id}
