@@ -527,8 +527,20 @@ export default function Header() {
           ? 'border-b border-[#D4BC8E]/40 shadow-sm'
           : 'border-b border-transparent',
       )}>
-        {/* Top row — 로고 + 검색 + 액션 */}
+        {/* 
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
+
+
+          <button
+            type="button"
+            onClick={() => { setIsMenuOpen((p) => !p); setIsSearchOpen(false); }}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
+            aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+            className="p-2 -ml-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground md:hidden"
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
 
           {/* 로고 */}
           <Link href="/" className="shrink-0">
@@ -603,7 +615,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Bottom row — 헤더 메뉴列表 */}
+        {/* 
         <div className="hidden md:block border-t border-border/50">
           <div className="mx-auto flex h-12 max-w-7xl items-center justify-center px-4">
             <nav aria-label="메인 메뉴" className="flex items-center gap-8">
