@@ -15,6 +15,7 @@ const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   text_content: '텍스트',
   split_content: '분할 콘텐츠',
   brand_story: '브랜드 이야기',
+  journal_preview: '저널 미리보기',
 };
 
 interface DraftBlock {
@@ -56,6 +57,8 @@ function getContentSummary(block: DraftBlock): string {
     case 'split_content':
     case 'brand_story':
       return (c.title as string) || (c.description as string) || '(내용 없음)';
+    case 'journal_preview':
+      return `${(c.title as string) || '저널'} · ${c.limit ?? 6}개`;
   }
 }
 

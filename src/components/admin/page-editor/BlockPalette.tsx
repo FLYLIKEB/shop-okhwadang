@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft } from 'lucide-react';
+import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft, BookOpen } from 'lucide-react';
 import type { PageBlock } from '@/lib/api';
 
 type BlockType = PageBlock['type'];
@@ -64,6 +64,13 @@ const BLOCK_TYPES: BlockTypeCard[] = [
     detail: 'HTML 형식으로 자유롭게 텍스트를 작성할 수 있는 블록입니다.\n공지사항, 브랜드 소개, 이용약관 안내 등 다양한 텍스트 콘텐츠에 사용합니다.\n기본·강조 두 가지 스타일을 선택할 수 있습니다.',
     icon: Type,
   },
+  {
+    type: 'journal_preview',
+    label: '저널 미리보기',
+    description: '저널 목록을 카드 형태로 표시',
+    detail: '최근 저널 글을卡片 형태로 미리볼 수 있는 블록입니다.\n제목, 표시 개수, 카테고리 필터를 설정할 수 있으며, "전체 보기" 링크를 연결할 수 있습니다.\n홈페이지 하단, 저널 섹션 전에 사용합니다.',
+    icon: BookOpen,
+  },
 ];
 
 interface BlockPaletteProps {
@@ -87,6 +94,8 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
     case 'split_content':
     case 'brand_story':
       return { title: '', subtitle: '', description: '', cta_text: '', cta_url: '', template: 'default' };
+    case 'journal_preview':
+      return { title: '저널', limit: 6, more_href: '/journal' };
   }
 }
 
