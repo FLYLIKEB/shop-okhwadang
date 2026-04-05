@@ -95,7 +95,7 @@ function ProductCard({
     <Link
       href={`/products/${id}`}
       className={cn(
-        'group block',
+        'group flex flex-col h-full',
         isSoldout && 'opacity-60',
       )}
     >
@@ -147,7 +147,7 @@ function ProductCard({
       </div>
 
       {/* ── 정보 영역 — 공방 도면 스타일 ── */}
-      <div className="mt-2.5 flex flex-col gap-1">
+      <div className="mt-2.5 flex flex-1 flex-col gap-1">
         {/* 카테고리 라벨 (니료 태그가 없을 때) */}
         {categoryName && !clayTagClass && (
           <span className="data-label">{categoryName}</span>
@@ -173,7 +173,7 @@ function ProductCard({
         )}
 
         {/* 구분선 — 가느다란 보더 */}
-        <div className="pt-2">
+        <div className="pt-2 mt-auto">
           <hr className="border-border" />
         </div>
 
