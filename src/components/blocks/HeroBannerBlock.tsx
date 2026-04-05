@@ -98,7 +98,6 @@ interface StorytellingSlideProps {
 
 function StorytellingSlide({ slide, index, isFirst, description, heroLogoStyle }: StorytellingSlideProps) {
   const { ref, isVisible } = useInView(0.2);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   return (
     <div
