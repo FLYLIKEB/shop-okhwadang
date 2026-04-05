@@ -40,34 +40,34 @@ SET SESSION FOREIGN_KEY_CHECKS = 1;
 -- ============================================================
 INSERT INTO categories (id, name, slug, parent_id, sort_order, is_active, image_url) VALUES
 -- 최상위 카테고리
-(1,  '자사호',    'teapot',       NULL, 1, 1, NULL),
-(2,  '보이차',    'puerh-tea',    NULL, 2, 1, NULL),
-(3,  '다구',      'tea-ware',     NULL, 3, 1, NULL),
-(4,  '다엽',      'tea-leaf',     NULL, 4, 1, NULL),
+(1,  '자사호',    'teapot',       NULL, 1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+(2,  '보이차',    'puerh-tea',    NULL, 2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
+(3,  '다구',      'tea-ware',     NULL, 3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png'),
+(4,  '다엽',      'tea-leaf',     NULL, 4, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
 
 -- 자사호 > 니료별
-(10, '주니',      'zhuní',        1,    1, 1, NULL),
-(11, '자사',      'zǐshā',        1,    2, 1, NULL),
-(12, '단니',      'duānní',       1,    3, 1, NULL),
-(13, '흑니',      'hēiní',        1,    4, 1, NULL),
-(14, '청회니',    'qīnghuīní',    1,    5, 1, NULL),
+(10, '주니',      'zhuní',        1,    1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+(11, '자사',      'zǐshā',        1,    2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+(12, '단니',      'duānní',       1,    3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
+(13, '흑니',      'hēiní',        1,    4, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+(14, '청회니',    'qīnghuīní',    1,    5, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
 
 -- 자사호 > 모양별
-(20, '주형',      'zhūxíng',      1,    6, 1, NULL),
-(21, '석표',      'shípião',      1,    7, 1, NULL),
-(22, '서시',      'xīshī',        1,    8, 1, NULL),
-(23, '편평',      'biānpíng',     1,    9, 1, NULL),
+(20, '주형',      'zhūxíng',      1,    6, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+(21, '석표',      'shípião',      1,    7, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
+(22, '서시',      'xīshī',        1,    8, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+(23, '편평',      'biānpíng',     1,    9, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
 
 -- 보이차 > 종류별
-(30, '생차 (生茶)',  'sheng-puerh',  2,  1, 1, NULL),
-(31, '숙차 (熟茶)',  'shou-puerh',   2,  2, 1, NULL),
-(32, '노차 (老茶)',  'aged-puerh',   2,  3, 1, NULL),
+(30, '생차 (生茶)',  'sheng-puerh',  2,  1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
+(31, '숙차 (熟茶)',  'shou-puerh',   2,  2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png'),
+(32, '노차 (老茶)',  'aged-puerh',   2,  3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
 
 -- 다구 > 종류별
-(40, '다완',      'teacup',       3,    1, 1, NULL),
-(41, '다반',      'tea-tray',     3,    2, 1, NULL),
-(42, '다도구 세트', 'tea-set',     3,    3, 1, NULL),
-(43, '차 도구',   'tea-tools',    3,    4, 1, NULL);
+(40, '다완',      'teacup',       3,    1, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png'),
+(41, '다반',      'tea-tray',     3,    2, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+(42, '다도구 세트', 'tea-set',     3,    3, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png'),
+(43, '차 도구',   'tea-tools',    3,    4, 1, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png');
 
 -- ============================================================
 -- 3. 상품 (자사호 15개, 보이차 8개, 다구 7개)
