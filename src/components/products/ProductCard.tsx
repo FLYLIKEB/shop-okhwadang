@@ -100,7 +100,7 @@ function ProductCard({
       )}
     >
       {/* ── 이미지 영역 ── */}
-      <div className="relative aspect-square overflow-hidden bg-secondary">
+      <div className="relative aspect-square overflow-hidden bg-secondary rounded-md">
         {thumbnail ? (
           <Image
             src={thumbnail}
