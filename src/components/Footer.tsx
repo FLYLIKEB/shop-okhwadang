@@ -28,7 +28,7 @@ function renderNavLinks(items: NavigationItem[]) {
     <Link
       key={item.id}
       href={item.url}
-      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+      className="text-sm text-[#F8F5F0]/60 hover:text-[#B8976A] transition-colors"
     >
       {item.label}
     </Link>
@@ -41,11 +41,11 @@ export default function Footer() {
   const rootItems = hasCmsData ? footerItems.filter((item) => item.parent_id === null) : [];
 
   return (
-    <footer className="bg-background border-t mt-auto">
+    <footer className="bg-[#2A2520] text-[#F8F5F0] mt-auto">
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">고객센터</p>
+            <p className="text-sm font-display font-medium text-[#B8976A] mb-4 tracking-wide">고객센터</p>
             <nav className="flex flex-col gap-2">
               {hasCmsData
                 ? renderNavLinks(rootItems.slice(0, 4))
@@ -53,7 +53,7 @@ export default function Footer() {
                   <Link
                     key={link.id}
                     href={link.url}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-[#F8F5F0]/60 hover:text-[#B8976A] transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -62,7 +62,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">회사</p>
+            <p className="text-sm font-display font-medium text-[#B8976A] mb-4 tracking-wide">회사</p>
             <nav className="flex flex-col gap-2">
               {hasCmsData
                 ? renderNavLinks(rootItems.slice(4, 6))
@@ -70,7 +70,7 @@ export default function Footer() {
                   <Link
                     key={link.id}
                     href={link.url}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-[#F8F5F0]/60 hover:text-[#B8976A] transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -79,7 +79,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">쇼핑</p>
+            <p className="text-sm font-display font-medium text-[#B8976A] mb-4 tracking-wide">쇼핑</p>
             <nav className="flex flex-col gap-2">
               {hasCmsData
                 ? renderNavLinks(rootItems.slice(6, 10))
@@ -87,7 +87,7 @@ export default function Footer() {
                   <Link
                     key={link.id}
                     href={link.url}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-[#F8F5F0]/60 hover:text-[#B8976A] transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -96,15 +96,15 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">옥화당</p>
-            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-              <p>자사호 · 보이차 · 다구</p>
+            <p className="text-sm font-display font-medium text-[#B8976A] mb-4 tracking-wide">옥화당</p>
+            <div className="flex flex-col gap-1 text-sm text-[#F8F5F0]/60">
+              <p className="font-display">자사호 · 보이차 · 다구</p>
               <p>전문 쇼핑몰</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
+        <div className="mt-12 pt-8 border-t border-[#F8F5F0]/10 text-center text-sm text-[#F8F5F0]/40">
           &copy; {new Date().getFullYear()} 옥화당. All rights reserved.
         </div>
       </div>

@@ -16,13 +16,17 @@
 
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
-  /* Color: Wedgwood-inspired Elegant Palette */
-  --color-bg: #FAFAFA;
-  --color-text: #1a1a1a;
-  --color-accent-zuni: #1B3A4B;
+  /* Color: 다실(茶室) — 먹색 기조 + 금박 포인트 */
+  --color-bg: #F8F5F0;
+  --color-text: #2A2520;
+  --color-accent-zuni: #2A2520;
   --color-accent-tea: #4A6741;
   --color-brand-secondary: #D4C5B0;
   --color-accent-danni: #C9B8A3;
+  --color-gold: #B8976A;
+  --color-gold-light: #D4BC8E;
+  --color-ink: #2A2520;
+  --color-ink-light: #3D3630;
 
   /* Typography — size scale */
   --font-size-heading-0: 2rem;     /* 32px mobile - hero only */
@@ -43,33 +47,37 @@
 }
 
 @theme inline {
-  /* ── shadcn/ui 호환 토큰 (DB override 지원) ── */
-  --color-primary: var(--db-color-primary, #1B3A4B);
-  --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
-  --color-secondary: var(--db-color-secondary, #F5F3EF);
-  --color-secondary-foreground: var(--db-color-secondary-foreground, #1a1a1a);
+  /* ── shadcn/ui 호환 토큰 (DB override 지원) — 다실 테마 ── */
+  --color-primary: var(--db-color-primary, #2A2520);
+  --color-primary-foreground: var(--db-color-primary-foreground, #F8F5F0);
+  --color-secondary: var(--db-color-secondary, #F5F0E8);
+  --color-secondary-foreground: var(--db-color-secondary-foreground, #2A2520);
   --color-destructive: var(--db-color-destructive, #b91c1c);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #F5F3EF);
-  --color-muted-foreground: var(--db-color-muted-foreground, #525252);
-  --color-accent: var(--db-color-accent, #F5F3EF);
-  --color-accent-foreground: var(--db-color-accent-foreground, #1a1a1a);
-  --color-background: var(--db-color-background, #ffffff);
-  --color-foreground: var(--db-color-foreground, #1a1a1a);
-  --color-card: var(--db-color-card, #ffffff);
-  --color-card-foreground: var(--db-color-card-foreground, #1a1a1a);
-  --color-border: var(--db-color-border, #e8e4de);
-  --color-input: var(--db-color-input, #e8e4de);
-  --color-ring: var(--db-color-ring, #1B3A4B);
+  --color-muted: var(--db-color-muted, #F0EBE3);
+  --color-muted-foreground: var(--db-color-muted-foreground, #6B5E52);
+  --color-accent: var(--db-color-accent, #F0EBE3);
+  --color-accent-foreground: var(--db-color-accent-foreground, #2A2520);
+  --color-background: var(--db-color-background, #FDFBF7);
+  --color-foreground: var(--db-color-foreground, #2A2520);
+  --color-card: var(--db-color-card, #FDFBF7);
+  --color-card-foreground: var(--db-color-card-foreground, #2A2520);
+  --color-border: var(--db-color-border, #E0D8CC);
+  --color-input: var(--db-color-input, #E0D8CC);
+  --color-ring: var(--db-color-ring, #B8976A);
   --radius-sm: var(--db-radius-sm, 0.125rem);
   --radius-md: var(--db-radius-md, 0.25rem);
   --radius-lg: var(--db-radius-lg, 0.5rem);
 
-  /* ── 브랜드 확장 토큰 ── */
-  --color-zuni: #1B3A4B;
+  /* ── 브랜드 확장 토큰 — 다실 테마 ── */
+  --color-zuni: #2A2520;
   --color-tea: #4A6741;
   --color-danni: #C9B8A3;
-  --color-surface: #F5F3EF;
+  --color-surface: #F5F0E8;
+  --color-gold: #B8976A;
+  --color-gold-light: #D4BC8E;
+  --color-ink: #2A2520;
+  --color-ink-light: #3D3630;
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
@@ -104,6 +112,7 @@
 /* ── Typography utility classes ────────────────────────────────── */
 @utility typo-h0 {
   font-size: var(--font-size-heading-0, 2rem);
+  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -111,6 +120,7 @@
 
 @utility typo-h1 {
   font-size: var(--font-size-heading-1);
+  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -118,6 +128,7 @@
 
 @utility typo-h2 {
   font-size: var(--font-size-heading-2);
+  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -125,14 +136,15 @@
 
 @utility typo-h3 {
   font-size: var(--font-size-heading-3);
+  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
 }
 
 @utility typo-title {
   font-size: var(--font-size-title);
-  font-family: var(--font-body);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 500;
   line-height: var(--line-height-compact);
 }
 
@@ -157,23 +169,41 @@
 @utility typo-button {
   font-size: var(--font-size-button);
   line-height: var(--line-height-compact);
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.05em;
 }
 
 @utility typo-title-sm {
   font-size: var(--font-size-body-sm);
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-weight: 500;
   line-height: var(--line-height-compact);
 }
 
-/* ── Base styles ───────────────────────────────────────────────── */
+/* ── Base styles — 다실 테마 ──────────────────────────────────── */
 body {
   font-family: var(--font-body);
   color: var(--color-foreground);
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── 금박(金箔) 포인트 악센트 ─────────────────────────────────── */
+.accent-gold {
+  color: var(--color-gold);
+}
+
+.border-gold {
+  border-color: var(--color-gold);
+}
+
+.bg-gold {
+  background-color: var(--color-gold);
+}
+
+.divide-gold > * + * {
+  border-color: var(--color-gold-light);
 }
 
 h1 {

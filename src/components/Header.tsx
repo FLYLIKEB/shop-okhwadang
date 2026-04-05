@@ -408,11 +408,11 @@ function DesktopNavItem({ item }: DesktopNavItemProps) {
           isHovered ? 'text-foreground' : 'text-muted-foreground',
         )}
       >
-        <span className="relative">
+        <span className="relative font-display">
           {item.label}
           <span
             className={cn(
-              'absolute -bottom-0.5 left-0 h-px bg-foreground transition-all duration-300 ease-out',
+              'absolute -bottom-0.5 left-0 h-px bg-[#B8976A] transition-all duration-300 ease-out',
               isHovered ? 'w-full' : 'w-0',
             )}
           />
@@ -524,7 +524,7 @@ export default function Header() {
       <header className={cn(
         'sticky top-0 z-50 transition-all duration-300 ease-in-out bg-background',
         isScrolled
-          ? 'border-b border-border shadow-sm'
+          ? 'border-b border-[#D4BC8E]/40 shadow-sm'
           : 'border-b border-transparent',
       )}>
         {/* Top row */}
