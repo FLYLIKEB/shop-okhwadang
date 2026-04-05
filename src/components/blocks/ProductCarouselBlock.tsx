@@ -208,25 +208,40 @@ export default function ProductCarouselBlock({ content }: Props) {
       </div>
 
       <div className="relative">
+        <button
+          type="button"
+          onClick={() => scrollBy('left')}
+          disabled={!canScrollLeft}
+          aria-label="이전 상품"
+          className={cn(
+            'absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10',
+            'hidden md:flex items-center justify-center',
+            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 shadow-sm',
+            'transition-opacity duration-200',
+            canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none',
+          )}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollBy('right')}
+          disabled={!canScrollRight}
+          aria-label="다음 상품"
+          className={cn(
+            'absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10',
+            'hidden md:flex items-center justify-center',
+            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 shadow-sm',
+            'transition-opacity duration-200',
+            canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none',
+          )}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
         <div
           ref={scrollRef}
-          className="relative flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8 py-4"
+          className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8 py-4"
         >
-          <button
-            type="button"
-            onClick={() => scrollBy('left')}
-            disabled={!canScrollLeft}
-            aria-label="이전 상품"
-            className={cn(
-              'absolute left-2 top-1/2 -translate-y-1/2 z-10',
-              'hidden md:flex items-center justify-center',
-              'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 shadow-sm',
-              'transition-opacity duration-200',
-              canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none',
-            )}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
           {products.map((product, index) => {
             const isCenter = activeIndex === index;
 
@@ -255,21 +270,6 @@ export default function ProductCarouselBlock({ content }: Props) {
               </div>
             );
           })}
-          <button
-            type="button"
-            onClick={() => scrollBy('right')}
-            disabled={!canScrollRight}
-            aria-label="다음 상품"
-            className={cn(
-              'absolute right-2 top-1/2 -translate-y-1/2 z-10',
-              'hidden md:flex items-center justify-center',
-              'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 shadow-sm',
-              'transition-opacity duration-200',
-              canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none',
-            )}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
