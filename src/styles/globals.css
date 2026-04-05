@@ -17,7 +17,7 @@
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
   /* Color: 공방(工房) Craft Palette — dark base */
-  --color-bg: #0A0A0A;
+  --color-bg: #141210;
   --color-text: #F0EDE8;
   --color-accent-zuni: #8B4513;
   --color-accent-tea: #4A6741;
@@ -45,21 +45,21 @@
 @theme inline {
   /* ── shadcn/ui 호환 토큰 (DB override 지원) ── */
   --color-primary: #C4956A;
-  --color-primary-foreground: #0A0A0A;
-  --color-secondary: #1A1A1A;
+  --color-primary-foreground: #141210;
+  --color-secondary: #1E1C18;
   --color-secondary-foreground: #E8E0D4;
   --color-destructive: #ef4444;
   --color-destructive-foreground: #ffffff;
-  --color-muted: #1A1A1A;
+  --color-muted: #1E1C18;
   --color-muted-foreground: #9B8E7E;
-  --color-accent: #1A1A1A;
+  --color-accent: #1E1C18;
   --color-accent-foreground: #E8E0D4;
-  --color-background: #0A0A0A;
+  --color-background: #141210;
   --color-foreground: #F0EDE8;
-  --color-card: #111111;
+  --color-card: #1A1714;
   --color-card-foreground: #F0EDE8;
-  --color-border: #2A2520;
-  --color-input: #2A2520;
+  --color-border: #2E2822;
+  --color-input: #2E2822;
   --color-ring: #C4956A;
   --radius-sm: var(--db-radius-sm, 0.125rem);
   --radius-md: var(--db-radius-md, 0.25rem);
@@ -73,7 +73,7 @@
   --color-chunsuni: #3D6B6B;
   --color-nokni: #4A6741;
   --color-tea: #4A6741;
-  --color-surface: #1A1A1A;
+  --color-surface: #1E1C18;
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
