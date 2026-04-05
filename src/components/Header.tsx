@@ -527,7 +527,7 @@ export default function Header() {
           ? 'border-b border-[#D4BC8E]/40 shadow-sm'
           : 'border-b border-transparent',
       )}>
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
+        <div className="flex h-16 items-center justify-between gap-4 px-4 md:px-6">
 
           <button
             type="button"
@@ -535,7 +535,7 @@ export default function Header() {
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-            className="p-2 -ml-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground md:hidden"
+            className="p-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground md:hidden"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -552,7 +552,7 @@ export default function Header() {
             onSubmit={handleDesktopSearch}
             role="search"
             aria-label="상품 검색"
-            className="hidden md:flex relative items-center flex-1 max-w-md mx-auto"
+            className="hidden md:flex relative items-center flex-1 max-w-lg mx-8"
           >
             <input
               type="search"
@@ -568,7 +568,7 @@ export default function Header() {
           </form>
 
           {/* 데스크탑 액션 — 오른쪽 */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-1">
             <LanguageSelector />
             <CartBadge itemCount={itemCount} />
             {isAuthenticated ? (
@@ -588,7 +588,7 @@ export default function Header() {
           </div>
 
           {/* 모바일 우측: 검색 + 카트 + 로그인/마이페이지 */}
-          <div className="md:hidden flex items-center gap-1 ml-auto">
+          <div className="md:hidden flex items-center gap-1">
             <button
               type="button"
               onClick={() => { setIsSearchOpen((p) => !p); setIsMenuOpen(false); }}
@@ -614,8 +614,8 @@ export default function Header() {
         </div>
 
         <div className="hidden md:block border-t border-border/50">
-          <div className="mx-auto flex h-12 max-w-7xl items-center justify-center px-4">
-            <nav aria-label="메인 메뉴" className="flex items-center gap-8">
+          <div className="flex h-12 items-center justify-between px-6">
+            <nav aria-label="메인 메뉴" className="flex items-center gap-6">
               {navItems.map((item) => (
                 <DesktopNavItem key={item.id} item={item} />
               ))}
