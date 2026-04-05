@@ -5,20 +5,21 @@ import type { Category } from '@/lib/api';
 
 interface CategoryHeroBannerProps {
   category: Category | null;
-  imageUrl?: string;
 }
 
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1578500494198-4f09534e1f4e?w=800&q=80';
 
-export default function CategoryHeroBanner({ category, imageUrl }: CategoryHeroBannerProps) {
+export default function CategoryHeroBanner({ category }: CategoryHeroBannerProps) {
   if (!category) return null;
+
+  const imageSrc = category.imageUrl || DEFAULT_IMAGE;
 
   return (
     <section className="relative overflow-hidden bg-card">
       <div className="flex flex-col md:flex-row">
         <div className="relative aspect-[4/3] md:aspect-[16/9] md:w-1/2">
           <Image
-            src={imageUrl || DEFAULT_IMAGE}
+            src={imageSrc}
             alt={category.name}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
