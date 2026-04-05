@@ -12,11 +12,23 @@ import {
 @Injectable()
 export class StripePaymentAdapter implements PaymentGateway {
   private readonly logger = new Logger(StripePaymentAdapter.name);
-  private readonly stripe: Stripe;
+  private readonly stripe: Stripe | null;
 
   constructor() {
-    const secretKey = process.env.STRIPE_SECRET_KEY ?? '';
-    this.stripe = new Stripe(secretKey);
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (secretKey) {
+      this.stripe = new Stripe(secretKey);
+    } else {
+      this.logger.warn('STRIPE_SECRET_KEY not set — Stripe adapter disabled');
+      this.stripe = null;
+    }
+  }
+
+  private ensureStripe(): Stripe {
+    if (!this.stripe) {
+      throw new BadGatewayException('Stripe is not configured');
+    }
+    return this.stripe;
   }
 
   private get publishableKey(): string {
@@ -29,7 +41,7 @@ export class StripePaymentAdapter implements PaymentGateway {
 
   async prepare(orderId: string, amount: number): Promise<PrepareResult> {
     try {
-      const paymentIntent = await this.stripe.paymentIntents.create({
+      const paymentIntent = await this.ensureStripe().paymentIntents.create({
         amount,
         currency: 'usd',
         metadata: { orderId },
@@ -49,7 +61,7 @@ export class StripePaymentAdapter implements PaymentGateway {
 
   async confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult> {
     try {
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentKey);
+      const paymentIntent = await this.ensureStripe().paymentIntents.retrieve(paymentKey);
 
       if (paymentIntent.status !== 'succeeded') {
         this.logger.error(
@@ -81,7 +93,7 @@ export class StripePaymentAdapter implements PaymentGateway {
 
   async cancel(paymentKey: string, reason: string): Promise<CancelResult> {
     try {
-      const refund = await this.stripe.refunds.create({
+      const refund = await this.ensureStripe().refunds.create({
         payment_intent: paymentKey,
         reason: 'requested_by_customer',
         metadata: { reason },
