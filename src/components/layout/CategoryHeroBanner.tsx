@@ -16,7 +16,7 @@ export default function CategoryHeroBanner({ category, imageUrl }: CategoryHeroB
   return (
     <section className="relative overflow-hidden bg-card">
       <div className="flex flex-col md:flex-row">
-        <div className="relative w-full md:w-1/2 h-48 md:h-64">
+        <div className="relative aspect-[4/3] md:aspect-[16/9] md:w-1/2">
           <Image
             src={imageUrl || DEFAULT_IMAGE}
             alt={category.name}
