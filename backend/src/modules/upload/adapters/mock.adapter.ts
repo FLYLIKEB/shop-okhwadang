@@ -9,4 +9,11 @@ export class MockStorageAdapter implements StorageAdapter {
       filename,
     };
   }
+
+  async saveCategoryImage(filename: string, _buffer: Buffer, _mimetype: string): Promise<UploadedFile> {
+    return {
+      url: `/uploads/mock/categories/${filename}`,
+      filename: `categories/${filename}`,
+    };
+  }
 }

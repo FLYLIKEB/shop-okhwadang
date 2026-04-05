@@ -66,6 +66,32 @@ export class UploadService {
 
     return this.adapter.save(filename, resized, file.mimetype);
   }
+
+  async uploadCategoryImage(file: Express.Multer.File): Promise<UploadedFile> {
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)`,
+      );
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      throw new PayloadTooLargeException('파일 크기는 5MB를 초과할 수 없습니다.');
+    }
+
+    const detectedMime = detectMimeFromMagicBytes(file.buffer);
+    if (!detectedMime || !ALLOWED_MIME_TYPES.includes(detectedMime)) {
+      throw new BadRequestException('허용되지 않는 이미지 형식입니다.');
+    }
+
+    const ext = path.extname(file.originalname).toLowerCase() || `.${file.mimetype.split('/')[1]}`;
+    const filename = `${randomUUID()}${ext}`;
+
+    const resized = await sharp(file.buffer)
+      .resize(MAX_WIDTH, MAX_HEIGHT, { fit: 'inside', withoutEnlargement: true })
+      .toBuffer();
+
+    return this.adapter.saveCategoryImage(filename, resized, file.mimetype);
+  }
 }
 
 function detectMimeFromMagicBytes(buffer: Buffer): string | null {

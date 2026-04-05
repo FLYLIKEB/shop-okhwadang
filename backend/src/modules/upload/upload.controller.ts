@@ -45,4 +45,27 @@ export class UploadController {
   ): Promise<UploadedFileType> {
     return this.uploadService.uploadImage(file);
   }
+
+  @Post('category-image')
+  @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '카테고리 이미지 업로드', description: '관리자가 카테고리 이미지를 업로드합니다.' })
+  @ApiResponse({ status: 201, description: '카테고리 이미지 업로드 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  uploadCategoryImage(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<UploadedFileType> {
+    return this.uploadService.uploadCategoryImage(file);
+  }
 }
