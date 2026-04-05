@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { categoriesApi } from '@/lib/api';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import type { Category, CategoryNavContent } from '@/lib/api';
+import SafeHtml from '@/components/common/SafeHtml';
 
 /* ── 니료(泥料) 컬러 매핑 — 카테고리 slug으로 매칭 ── */
 const CLAY_COLORS: Record<string, string> = {
