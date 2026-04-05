@@ -77,7 +77,7 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
   }, [emblaApi]);
 
   return (
-    <section ref={sectionRef} role="region" aria-label="메인 배너" className="relative">
+    <section ref={sectionRef} role="region" aria-label="메인 배너" className="relative border-b border-border">
       <div ref={emblaRef} className="overflow-hidden">
         <div className="flex">
           {slides.map((slide, slideIndex) => (
@@ -219,7 +219,7 @@ export default function HeroBannerBlock({ content }: Props) {
 
   if (template === 'split') {
     return (
-      <section className="flex flex-col overflow-hidden md:flex-row bg-background">
+      <section className="flex flex-col overflow-hidden md:flex-row bg-background border-b border-border">
         <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
           <h2 className="typo-h2 text-foreground">{title}</h2>
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
@@ -248,7 +248,7 @@ export default function HeroBannerBlock({ content }: Props) {
 
   return (
     <ScrollLogoProvider value={scrollLogoContextValue}>
-      <section ref={sectionRef} className="relative flex h-[50svh] min-h-[20rem] md:h-[40svh] md:min-h-[25rem] items-center justify-center overflow-hidden bg-neutral-900">
+      <section ref={sectionRef} className="relative flex h-[50svh] min-h-[20rem] md:h-[40svh] md:min-h-[25rem] items-center justify-center overflow-hidden bg-neutral-900 border-b border-border">
         {isHome && (
           <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
             <div style={heroLogoStyle}>
