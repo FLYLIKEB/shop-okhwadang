@@ -159,5 +159,84 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
         await dataSource.query('DELETE FROM categories WHERE id IN (?, ?)', [id1, id2]);
       });
     });
+
+    describe('POST /api/upload/category-image', () => {
+      it('admin → 201, 카테고리 이미지 업로드 성공', async () => {
+        const fakeImage = Buffer.from([
+          0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00,
+        ]);
+        const res = await request(app.getHttpServer())
+          .post('/api/upload/category-image')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .attach('file', fakeImage, {
+            filename: 'test.jpg',
+            contentType: 'image/jpeg',
+          })
+          .expect(201);
+
+        const body = res.body as { url: string; filename: string };
+        expect(body.url).toContain('/categories/');
+        expect(body.filename).toMatch(/^categories\/.+\.jpg$/);
+      });
+
+      it('일반 user → 403', async () => {
+        const fakeImage = Buffer.from([
+          0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00,
+        ]);
+        await request(app.getHttpServer())
+          .post('/api/upload/category-image')
+          .set('Authorization', `Bearer ${userToken}`)
+          .attach('file', fakeImage, {
+            filename: 'test.jpg',
+            contentType: 'image/jpeg',
+          })
+          .expect(403);
+      });
+
+      it('인증 없음 → 401', async () => {
+        const fakeImage = Buffer.from([
+          0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00,
+        ]);
+        await request(app.getHttpServer())
+          .post('/api/upload/category-image')
+          .attach('file', fakeImage, {
+            filename: 'test.jpg',
+            contentType: 'image/jpeg',
+          })
+          .expect(401);
+      });
+    });
+
+    describe('PATCH /api/categories/:id with imageUrl', () => {
+      it('admin → 업로드된 이미지 URL을 카테고리에 설정', async () => {
+        const catRes = await request(app.getHttpServer())
+          .post('/api/categories')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ name: '이미지카테고리', slug: 'img-cat-admin-e2e', sortOrder: 0 });
+        const catId = (catRes.body as { id: number }).id;
+
+        const fakeImage = Buffer.from([
+          0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00,
+        ]);
+        const uploadRes = await request(app.getHttpServer())
+          .post('/api/upload/category-image')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .attach('file', fakeImage, {
+            filename: 'test.jpg',
+            contentType: 'image/jpeg',
+          });
+        const imageUrl = (uploadRes.body as { url: string }).url;
+
+        const updateRes = await request(app.getHttpServer())
+          .patch(`/api/categories/${catId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ imageUrl })
+          .expect(200);
+
+        expect((updateRes.body as { imageUrl: string }).imageUrl).toBe(imageUrl);
+
+        await dataSource.query('DELETE FROM categories WHERE id = ?', [catId]);
+      });
+    });
   });
 }

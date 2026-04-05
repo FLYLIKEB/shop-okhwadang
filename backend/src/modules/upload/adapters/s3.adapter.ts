@@ -31,7 +31,15 @@ export class S3StorageAdapter implements StorageAdapter {
   }
 
   async save(filename: string, buffer: Buffer, mimetype: string): Promise<UploadedFile> {
-    const key = `products/${filename}`;
+    return this.saveToFolder(filename, buffer, mimetype, 'products');
+  }
+
+  async saveCategoryImage(filename: string, buffer: Buffer, mimetype: string): Promise<UploadedFile> {
+    return this.saveToFolder(filename, buffer, mimetype, 'categories');
+  }
+
+  private async saveToFolder(filename: string, buffer: Buffer, mimetype: string, folder: string): Promise<UploadedFile> {
+    const key = `${folder}/${filename}`;
 
     await this.client.send(
       new PutObjectCommand({
