@@ -204,59 +204,19 @@ h3 {
 }
 
 /* ── 니료(泥料)별 태그 컬러 시스템 ────────────────────────────── */
-/* 주니(朱泥) — 브랜드 시그니처 레드 */
-.tag-zuni {
-  background-color: var(--color-zuni);
-  color: #ffffff;
+/* 공통 베이스 */
+.tag-clay {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.04em;
 }
 
-/* 단니(段泥) — 황토 베이지 */
-.tag-danni {
-  background-color: var(--color-danni);
-  color: #1C1710;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-}
-
-/* 자니(紫泥) — 자주빛 */
-.tag-zini {
-  background-color: var(--color-zini);
-  color: #ffffff;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-}
-
-/* 흑니(黑泥) — 짙은 차콜 */
-.tag-heukni {
-  background-color: var(--color-heukni);
-  color: #F8F5F0;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-}
-
-/* 청수니(靑水泥) — 청록 */
-.tag-chunsuni {
-  background-color: var(--color-chunsuni);
-  color: #ffffff;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-}
-
-/* 녹니(綠泥) — 차엽 녹색 */
-.tag-nokni {
-  background-color: var(--color-nokni);
-  color: #ffffff;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-}
+.tag-zuni  { background-color: var(--color-zuni);     color: #ffffff; }
+.tag-danni { background-color: var(--color-danni);    color: #1C1710; }
+.tag-zini  { background-color: var(--color-zini);     color: #ffffff; }
+.tag-heukni    { background-color: var(--color-heukni);    color: #F8F5F0; }
+.tag-chunsuni  { background-color: var(--color-chunsuni);  color: #ffffff; }
+.tag-nokni { background-color: var(--color-nokni);    color: #ffffff; }
 
 /* ── 디스플레이 타이틀 ──────────────────────────────────────────── */
 .font-display {
