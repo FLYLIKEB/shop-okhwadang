@@ -20,7 +20,6 @@ interface TeapotShapeFilterProps {
 export default function TeapotShapeFilter({ selected, onSelect }: TeapotShapeFilterProps) {
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold text-foreground">모양</h2>
       <div className="flex flex-col gap-2">
         <label className="flex cursor-pointer items-center gap-2">
           <input

@@ -37,7 +37,6 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold text-foreground">가격 범위</h2>
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <input
