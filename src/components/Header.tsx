@@ -527,9 +527,7 @@ export default function Header() {
           ? 'border-b border-[#D4BC8E]/40 shadow-sm'
           : 'border-b border-transparent',
       )}>
-        {/* 
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
-
 
           <button
             type="button"
@@ -615,7 +613,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* 
         <div className="hidden md:block border-t border-border/50">
           <div className="mx-auto flex h-12 max-w-7xl items-center justify-center px-4">
             <nav aria-label="메인 메뉴" className="flex items-center gap-8">
