@@ -124,4 +124,53 @@ describe('UploadService', () => {
       await expect(service.uploadImage(file)).rejects.toThrow(BadRequestException);
     });
   });
+
+  describe('uploadCategoryImage', () => {
+    it('카테고리 이미지 업로드 성공 — categories/ 폴더에 저장', async () => {
+      const file = makeFile({ mimetype: 'image/jpeg' });
+      const result = await service.uploadCategoryImage(file);
+      expect(result.url).toContain('/uploads/mock/categories/');
+      expect(result.filename).toMatch(/^categories\/.+\.jpg$/);
+    });
+
+    it('PNG 카테고리 이미지 업로드 성공', async () => {
+      const file = makeFile({ mimetype: 'image/png', originalname: 'cat.png' });
+      const result = await service.uploadCategoryImage(file);
+      expect(result.url).toContain('/uploads/mock/categories/');
+      expect(result.filename).toMatch(/^categories\/.+\.png$/);
+    });
+
+    it('MIME 검증 실패 — gif 거부', async () => {
+      const file = makeFile({ mimetype: 'image/gif', originalname: 'anim.gif' });
+      await expect(service.uploadCategoryImage(file)).rejects.toThrow(BadRequestException);
+    });
+
+    it('파일 크기 초과 — 5MB 이상 거부', async () => {
+      const file = makeFile({ size: 6 * 1024 * 1024 });
+      await expect(service.uploadCategoryImage(file)).rejects.toThrow(PayloadTooLargeException);
+    });
+
+    it('UUID 재명명 확인 — 원본 파일명과 다름', async () => {
+      const file = makeFile({ originalname: 'my-category.jpg' });
+      const result = await service.uploadCategoryImage(file);
+      expect(result.filename).not.toBe('my-category.jpg');
+      expect(result.filename).toMatch(
+        /^categories\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg$/,
+      );
+    });
+
+    it('Content-Type 위조 — HTML 버퍼를 image/jpeg로 업로드 시 거부', async () => {
+      const file = makeFile({ buffer: HTML_BUFFER, mimetype: 'image/jpeg' });
+      await expect(service.uploadCategoryImage(file)).rejects.toThrow(BadRequestException);
+    });
+
+    it('Content-Type 위조 — HTML 버퍼를 image/png로 업로드 시 거부', async () => {
+      const file = makeFile({
+        buffer: HTML_BUFFER,
+        mimetype: 'image/png',
+        originalname: 'evil.png',
+      });
+      await expect(service.uploadCategoryImage(file)).rejects.toThrow(BadRequestException);
+    });
+  });
 });
