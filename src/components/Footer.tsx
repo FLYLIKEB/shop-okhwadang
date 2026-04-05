@@ -96,17 +96,29 @@ export default function Footer() {
             </nav>
           </div>
 
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <Image src="/logo-okhwadang.png" alt="옥화당" width={120} height={34} className="object-contain mb-4" />
-            <div className="flex flex-col gap-1 text-sm text-[#F8F5F0]/60">
-              <p className="font-display">자사호 · 보이차 · 다구</p>
-              <p>전문 쇼핑몰</p>
+            <p className="font-display text-sm text-[#F8F5F0]/70 leading-relaxed mt-3">
+              한 잔의 차에 담긴 고요,<br />
+              장인의 손끝에서 시작된 이야기.
+            </p>
+            <div className="flex flex-col gap-1 text-sm text-[#F8F5F0]/40 mt-4">
+              <p className="font-display">자사호 · 보이차 · 다구 전문</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-[#F8F5F0]/10 text-center text-sm text-[#F8F5F0]/40">
-          &copy; {new Date().getFullYear()} 옥화당. All rights reserved.
+        {/* 한문 캘리그래피 브랜드 마크 */}
+        <div className="mt-12 pt-8 border-t border-[#F8F5F0]/10 flex flex-col items-center gap-4">
+          <p className="font-display text-3xl tracking-[0.3em] text-[#B8976A]/50">
+            以壺載道
+          </p>
+          <p className="text-xs text-[#F8F5F0]/30 tracking-widest">
+            호에 도를 싣다 — 옥화당의 철학
+          </p>
+          <p className="text-sm text-[#F8F5F0]/40 mt-2">
+            &copy; {new Date().getFullYear()} 옥화당. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

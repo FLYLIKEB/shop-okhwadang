@@ -1,11 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/components/ui/utils';
@@ -46,134 +44,161 @@ const DEFAULT_SLIDES: HeroBannerSlide[] = [
   },
 ];
 
-interface SliderHeroProps {
+/* ── Scroll Storytelling Section ──────────────────────────────── */
+
+function useInView(threshold = 0.3) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
+      { threshold },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return { ref, isVisible };
+}
+
+interface StorytellingHeroProps {
   slides: HeroBannerSlide[];
   description?: string;
   sectionRef: React.RefObject<HTMLElement | null>;
   heroLogoStyle: React.CSSProperties;
 }
 
-function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHeroProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+function StorytellingHero({ slides, description, sectionRef, heroLogoStyle }: StorytellingHeroProps) {
+  return (
+    <section ref={sectionRef} role="region" aria-label="메인 배너">
+      {slides.map((slide, i) => (
+        <StorytellingSlide
+          key={i}
+          slide={slide}
+          index={i}
+          isFirst={i === 0}
+          description={i === 0 ? description : undefined}
+          heroLogoStyle={heroLogoStyle}
+        />
+      ))}
+    </section>
+  );
+}
 
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
-  const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi]);
+interface StorytellingSlideProps {
+  slide: HeroBannerSlide;
+  index: number;
+  isFirst: boolean;
+  description?: string;
+  heroLogoStyle: React.CSSProperties;
+}
 
-  useEffect(() => {
-    if (!emblaApi) return;
-    const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
-    emblaApi.on('select', onSelect);
-    return () => { emblaApi.off('select', onSelect); };
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    const interval = setInterval(() => {
-      emblaApi.scrollNext();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [emblaApi]);
+function StorytellingSlide({ slide, index, isFirst, description, heroLogoStyle }: StorytellingSlideProps) {
+  const { ref, isVisible } = useInView(0.2);
 
   return (
-    <section ref={sectionRef} role="region" aria-label="메인 배너" className="relative">
-      <div ref={emblaRef} className="overflow-hidden">
-        <div className="flex">
-          {slides.map((slide, slideIndex) => (
-            <div
-              key={slideIndex}
-              className={cn(
-                'relative min-w-full flex items-center justify-center overflow-hidden',
-                'h-[60svh] min-h-[25rem] md:h-[80svh] md:min-h-[35rem]',
-              )}
-              style={{ backgroundColor: slide.bg_color ?? '#1B3A4B' }}
-            >
-              {slide.image_url && (
-                <Image
-                  src={slide.image_url}
-                  alt={slide.title}
-                  fill
-                  className={cn(
-                    'object-cover object-center',
-                    slideIndex === selectedIndex && 'animate-kenburns',
-                  )}
-                  priority={slideIndex === 0}
-                  sizes="100vw"
-                />
-              )}
+    <div
+      ref={ref}
+      className={cn(
+        'relative flex items-center justify-center overflow-hidden',
+        'h-svh min-h-[30rem]',
+      )}
+      style={{ backgroundColor: slide.bg_color ?? '#2A2520' }}
+    >
+      {slide.image_url && (
+        <Image
+          src={slide.image_url}
+          alt={slide.title}
+          fill
+          className={cn(
+            'object-cover object-center transition-transform duration-[2s] ease-out',
+            isVisible ? 'scale-100' : 'scale-110',
+          )}
+          priority={isFirst}
+          sizes="100vw"
+        />
+      )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />
-              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
-              <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
-                <div style={heroLogoStyle}>
-                  <Logo variant="hero" />
-                </div>
-              </div>
-
-              <div className="relative z-10 w-full px-8 md:px-16 max-w-3xl">
-                <p className="typo-label uppercase tracking-[0.35em] text-[#B8976A] mb-4 font-body">
-                  옥화당 茶室
-                </p>
-                <h1 className="typo-h0 font-display text-white leading-tight">
-                  {slide.title}
-                </h1>
-                {slide.subtitle && (
-                  <p className="mt-5 typo-body text-white/85 font-display leading-relaxed">
-                    {slide.subtitle}
-                  </p>
-                )}
-                {description && (
-                  <div className="mt-4 text-white/75">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
-                  </div>
-                )}
-                {slide.cta_text && slide.cta_url && (
-                  <div className="mt-10">
-                    <Link
-                      href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}
-                      className="inline-block border border-[#B8976A] px-10 py-3.5 typo-button text-[#B8976A] tracking-[0.15em] uppercase hover:bg-[#B8976A] hover:text-white transition-colors duration-300"
-                    >
-                      {slide.cta_text}
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+      {isFirst && (
+        <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
+          <div style={heroLogoStyle}>
+            <Logo variant="hero" />
+          </div>
         </div>
+      )}
+
+      <div
+        className={cn(
+          'relative z-10 w-full px-8 md:px-16 max-w-3xl transition-all duration-1000 ease-out',
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12',
+        )}
+        style={{ transitionDelay: '200ms' }}
+      >
+        <p
+          className="typo-label uppercase tracking-[0.35em] text-[#B8976A] mb-4 font-body transition-all duration-700 ease-out"
+          style={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateY(0)' : 'translateY(8px)',
+            transitionDelay: '100ms',
+          }}
+        >
+          {index === 0 ? '옥화당 茶室' : `0${index + 1}`}
+        </p>
+        <h1 className="typo-h0 font-display text-white leading-tight">
+          {slide.title}
+        </h1>
+        {slide.subtitle && (
+          <p
+            className="mt-5 typo-body text-white/85 font-display leading-relaxed transition-all duration-700 ease-out"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'translateY(0)' : 'translateY(8px)',
+              transitionDelay: '400ms',
+            }}
+          >
+            {slide.subtitle}
+          </p>
+        )}
+        {description && (
+          <div className="mt-4 text-white/75">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
+          </div>
+        )}
+        {slide.cta_text && slide.cta_url && (
+          <div
+            className="mt-10 transition-all duration-700 ease-out"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'translateY(0)' : 'translateY(8px)',
+              transitionDelay: '600ms',
+            }}
+          >
+            <Link
+              href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}
+              className="inline-block border border-[#B8976A] px-10 py-3.5 typo-button text-[#B8976A] tracking-[0.15em] uppercase hover:bg-[#B8976A] hover:text-white transition-colors duration-300"
+            >
+              {slide.cta_text}
+            </Link>
+          </div>
+        )}
       </div>
 
-      <button
-        onClick={scrollPrev}
-        aria-label="이전 배너"
-        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity hidden md:block"
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </button>
-      <button
-        onClick={scrollNext}
-        aria-label="다음 배너"
-        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity hidden md:block"
-      >
-        <ChevronRight className="h-6 w-6" />
-      </button>
-
-      <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => scrollTo(i)}
-            aria-label={`${i + 1}번 배너로 이동`}
-            className={cn(
-              'w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300',
-              i === selectedIndex ? 'bg-white w-4 md:w-6' : 'bg-white/50',
-            )}
-          />
-        ))}
-      </div>
-    </section>
+      {/* Scroll indicator on first slide */}
+      {isFirst && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50 animate-fade-in-up">
+          <span className="text-xs tracking-[0.2em] uppercase">Scroll</span>
+          <svg width="16" height="24" viewBox="0 0 16 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="animate-bounce">
+            <path d="M8 4v16M3 15l5 5 5-5" />
+          </svg>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -201,7 +226,7 @@ export default function HeroBannerBlock({ content }: Props) {
     const resolvedSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
     return (
       <ScrollLogoProvider value={scrollLogoContextValue}>
-        <SliderHero slides={resolvedSlides} description={description} sectionRef={sectionRef} heroLogoStyle={heroLogoStyle} />
+        <StorytellingHero slides={resolvedSlides} description={description} sectionRef={sectionRef} heroLogoStyle={heroLogoStyle} />
       </ScrollLogoProvider>
     );
   }
