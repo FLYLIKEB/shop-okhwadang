@@ -805,9 +805,9 @@ export interface ProductCarouselContent {
 }
 
 export interface CategoryNavContent {
+  title?: string;
   category_ids: number[];
   template: 'icon' | 'image' | 'text';
-  /** 서버에서 미리 가져온 카테고리 데이터 (fallback용) */
   prefetched_categories?: Category[];
 }
 
