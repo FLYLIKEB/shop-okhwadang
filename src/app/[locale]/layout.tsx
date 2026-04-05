@@ -9,6 +9,7 @@ import { MobileNavProvider } from '@/contexts/MobileNavContext';
 import Providers from '@/components/Providers';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
 import BackButton from '@/components/BackButton';
+import PageTransition from '@/components/PageTransition';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
 
@@ -123,6 +124,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <Providers>
             <MobileNavProvider initialVisible={mobileBottomNavVisible}>
+              <PageTransition />
               <div className="flex min-h-screen flex-col">
               <Header />
               <BackButton />

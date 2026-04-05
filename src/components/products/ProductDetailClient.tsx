@@ -89,28 +89,34 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        {/* Left: Image gallery */}
-        <ImageGallery images={product.images} />
+    <div className="pb-24 md:pb-8">
+      {/* 풀블리드 갤러리 + 정보 영역 */}
+      <div className="grid grid-cols-1 gap-0 md:grid-cols-[1.2fr_1fr]">
+        {/* Left: Image gallery — 풀블리드 */}
+        <div className="md:sticky md:top-14 md:self-start">
+          <ImageGallery images={product.images} />
+        </div>
 
-        {/* Right: Product info */}
-        <div className="flex flex-col gap-6">
+        {/* Right: Product info — 도록풍 */}
+        <div className="flex flex-col gap-6 px-6 py-8 md:px-12 md:py-12">
           {/* Breadcrumb */}
           {product.category && (
-            <nav className="typo-label text-muted-foreground">
+            <nav className="typo-label text-muted-foreground tracking-widest uppercase">
               <span>{product.category.name}</span>
-              <span className="mx-1">/</span>
+              <span className="mx-2 text-[#B8976A]">·</span>
               <span className="text-foreground">{product.name}</span>
             </nav>
           )}
 
           {/* Name */}
-          <h1 className="typo-h1 text-foreground">{product.name}</h1>
+          <h1 className="typo-h1 font-display text-foreground">{product.name}</h1>
+
+          {/* 금박 구분선 */}
+          <hr className="border-[#D4BC8E] w-16" />
 
           {/* Short description */}
           {product.shortDescription && (
-            <p className="typo-body text-muted-foreground">{product.shortDescription}</p>
+            <p className="typo-body text-muted-foreground font-display leading-relaxed">{product.shortDescription}</p>
           )}
 
           {/* Rating */}
@@ -175,7 +181,9 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
       </div>
 
       {/* Tabs */}
-      <ProductTabs description={product.description} descriptionImages={descriptionImages} productId={Number(product.id)} />
+      <div className="mx-auto max-w-7xl px-4">
+        <ProductTabs description={product.description} descriptionImages={descriptionImages} productId={Number(product.id)} />
+      </div>
 
       {/* Mobile fixed bottom action bar — sits above MobileBottomNav (z-50, ~56px tall) */}
       <div className={isNavVisible ? 'md:hidden fixed bottom-14 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3' : 'md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3'}>
