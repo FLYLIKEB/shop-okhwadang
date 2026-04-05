@@ -21,7 +21,6 @@ interface ClayTypeFilterProps {
 export default function ClayTypeFilter({ selected, onSelect }: ClayTypeFilterProps) {
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold text-foreground">니료(泥料)</h2>
       <div className="flex flex-wrap gap-2">
         <button
           type="button"

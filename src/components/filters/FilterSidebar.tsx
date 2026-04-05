@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import CategoryTree from './CategoryTree';
 import PriceRangeFilter from './PriceRangeFilter';
@@ -10,6 +11,23 @@ import TeapotShapeFilter from './TeapotShapeFilter';
 import type { Category } from '@/lib/api';
 import type { ClayType } from './ClayTypeFilter';
 import type { TeapotShape } from './TeapotShapeFilter';
+
+function FilterSection({ title, defaultOpen = false, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-border pb-4">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors"
+      >
+        {title}
+        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
+      </button>
+      {open && <div className="pt-2">{children}</div>}
+    </div>
+  );
+}
 
 interface FilterSidebarProps {
   categories: Category[];
@@ -94,27 +112,35 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
         )}
       </div>
 
-      <CategoryTree
-        categories={categories}
-        selectedId={selectedCategoryId}
-        onSelect={handleCategorySelect}
-      />
+      <FilterSection title="카테고리" defaultOpen>
+        <CategoryTree
+          categories={categories}
+          selectedId={selectedCategoryId}
+          onSelect={handleCategorySelect}
+        />
+      </FilterSection>
 
-      <ClayTypeFilter
-        selected={selectedClayType}
-        onSelect={handleClayTypeSelect}
-      />
+      <FilterSection title="니료(泥料)">
+        <ClayTypeFilter
+          selected={selectedClayType}
+          onSelect={handleClayTypeSelect}
+        />
+      </FilterSection>
 
-      <TeapotShapeFilter
-        selected={selectedShape}
-        onSelect={handleShapeSelect}
-      />
+      <FilterSection title="모양">
+        <TeapotShapeFilter
+          selected={selectedShape}
+          onSelect={handleShapeSelect}
+        />
+      </FilterSection>
 
-      <PriceRangeFilter
-        min={priceMin}
-        max={priceMax}
-        onChange={handlePriceChange}
-      />
+      <FilterSection title="가격 범위">
+        <PriceRangeFilter
+          min={priceMin}
+          max={priceMax}
+          onChange={handlePriceChange}
+        />
+      </FilterSection>
     </aside>
   );
 
