@@ -42,8 +42,8 @@ export default function Footer() {
   const rootItems = hasCmsData ? footerItems.filter((item) => item.parent_id === null) : [];
 
   return (
-    <footer className="bg-[#2A2520] text-[#F8F5F0] mt-auto">
-      <div className="mx-auto max-w-8xl px-4 py-12">
+    <footer className="bg-[#1A1815] text-[#F8F5F0] mt-auto">
+      <div className="mx-auto max-w-8xl px-4 md:px-20 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
             <p className="text-sm font-display font-medium text-[#B8976A] mb-4 tracking-wide">고객센터</p>

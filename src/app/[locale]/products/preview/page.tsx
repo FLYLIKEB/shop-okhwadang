@@ -51,6 +51,7 @@ const DUMMY_PRODUCT: ProductDetail = {
     slug: 'yixing-teapot',
     description: null,
     parentId: null,
+    imageUrl: null,
   },
   options: [
     { id: 1, name: '용량', value: '120ml (기본)', priceAdjustment: 0, stock: 2, sortOrder: 1 },
