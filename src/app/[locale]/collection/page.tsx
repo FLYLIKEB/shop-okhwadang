@@ -23,7 +23,7 @@ function ClayCard({ collection }: { collection: Collection }) {
       className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg"
     >
       <div
-        className="h-40 transition-transform duration-300 group-hover:scale-105"
+        className="h-40 transition-transform duration-700 ease-out group-hover:scale-105"
         style={{ backgroundColor: collection.color ?? '#888' }}
         role="img"
         aria-label={`${collection.nameKo ?? collection.name} 색상`}
@@ -65,7 +65,7 @@ function ShapeCard({ collection }: { collection: Collection }) {
             src={collection.imageUrl}
             alt={`${collection.name} 형태 자사호`}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (

@@ -47,11 +47,10 @@ export default function CategoryNavBlock({ content }: Props) {
     return (
       <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
         {Array.from({ length: category_ids.length || 4 }).map((_, i) => (
-          <div key={i} className="bg-background px-6 py-8">
+          <div key={i} className="bg-background py-10 px-4 sm:px-6">
             <div className="animate-pulse">
-              <div className="h-10 w-10 rounded bg-muted mb-4" />
-              <div className="h-4 w-16 rounded bg-muted mb-2" />
-              <div className="h-3 w-10 rounded bg-muted" />
+              <div className="h-8 w-32 rounded bg-muted mb-2" />
+              <div className="h-3 w-24 rounded bg-muted" />
             </div>
           </div>
         ))}
@@ -87,25 +86,28 @@ export default function CategoryNavBlock({ content }: Props) {
   }
 
   return (
-    <nav ref={ref} className="py-12 border-t border-border">
+    <nav ref={ref} className="border-t border-border">
       <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
         {categories.map((cat, i) => (
           <Link
             key={cat.id}
             href={`/products?categoryId=${cat.id}`}
-            className="group bg-background px-6 py-8 flex flex-col gap-3 hover:bg-muted/40 transition-colors duration-300"
+            className="group relative bg-background py-10 px-4 sm:px-6 flex flex-col hover:bg-muted/30 transition-colors duration-700 ease-out"
             style={{
               opacity: visible ? 1 : 0,
               transform: visible ? 'translateY(0)' : 'translateY(12px)',
-              transition: `opacity 0.6s ease ${i * 100}ms, transform 0.6s ease ${i * 100}ms, background-color 0.3s`,
+              transition: `opacity 0.6s ease ${i * 100}ms, transform 0.6s ease ${i * 100}ms, background-color 0.5s`,
             }}
           >
-            <span className="font-display text-base font-medium text-foreground tracking-wide">
+            <span className="font-display text-2xl sm:text-3xl font-light text-foreground tracking-wide relative inline-block pb-1">
               {cat.name}
+              <span className="absolute bottom-0 left-0 h-px w-0 group-hover:w-full bg-foreground/40 transition-all duration-700 ease-out" />
             </span>
-            <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-auto">
-              →
-            </span>
+            {cat.description && (
+              <span className="text-sm text-muted-foreground mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                {cat.description}
+              </span>
+            )}
           </Link>
         ))}
       </div>

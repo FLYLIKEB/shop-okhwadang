@@ -89,13 +89,20 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        {/* Left: Image gallery */}
-        <ImageGallery images={product.images} />
+    <div className="pb-24 md:pb-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 min-h-[80vh]">
+        {/* Left: Image gallery — sticky full-height */}
+        <div className="sticky top-0 h-screen hidden md:block">
+          <ImageGallery images={product.images} />
+        </div>
 
-        {/* Right: Product info */}
-        <div className="flex flex-col gap-6">
+        {/* Mobile: Image gallery non-sticky */}
+        <div className="md:hidden">
+          <ImageGallery images={product.images} />
+        </div>
+
+        {/* Right: Product info — generous padding */}
+        <div className="flex flex-col gap-8 px-8 md:px-12 lg:px-16 xl:px-20 py-8 md:py-12">
           {/* Breadcrumb */}
           {product.category && (
             <nav className="typo-label text-muted-foreground">
@@ -106,16 +113,16 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Name */}
-          <h1 className="typo-h1 text-foreground">{product.name}</h1>
+          <h1 className="typo-h1 text-foreground leading-tight">{product.name}</h1>
 
           {/* Short description */}
           {product.shortDescription && (
-            <p className="typo-body text-muted-foreground">{product.shortDescription}</p>
+            <p className="typo-body text-muted-foreground leading-relaxed">{product.shortDescription}</p>
           )}
 
           {/* Rating */}
           {product.rating !== undefined && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <StarRating rating={product.rating} size="md" interactive={false} />
               <span className="typo-body font-medium">{product.rating.toFixed(1)}</span>
               {product.reviewCount !== undefined && product.reviewCount > 0 && (
@@ -139,7 +146,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Quantity */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <span className="typo-label text-foreground">수량</span>
             <QuantitySelector
               quantity={quantity}
@@ -150,7 +157,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           </div>
 
           {/* Action buttons — desktop only */}
-          <div className="hidden md:flex gap-3">
+          <div className="hidden md:flex gap-4 pt-4">
             <Button
               variant="outline"
               className="flex-1"
