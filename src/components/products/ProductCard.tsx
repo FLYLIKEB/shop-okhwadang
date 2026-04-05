@@ -1,14 +1,12 @@
 'use client';
 
-import { memo, useState, useCallback } from 'react';
+import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, ShoppingCart } from 'lucide-react';
-import { toast } from 'sonner';
+import { Heart } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/common/PriceDisplay';
-import { useCart } from '@/contexts/CartContext';
 import { useWishlistToggle } from '@/hooks/useWishlistToggle';
 import type { Locale } from '@/utils/currency';
 import StarRating from '@/components/reviews/StarRating';
@@ -26,7 +24,6 @@ interface ProductCardProps {
   isFeatured?: boolean;
   locale?: Locale;
   priority?: boolean;
-  showCartOnHover?: boolean;
 }
 
 function ProductCard({
@@ -41,32 +38,11 @@ function ProductCard({
   images,
   locale = 'ko',
   priority = false,
-  showCartOnHover = false,
 }: ProductCardProps) {
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
 
-  const { addItem } = useCart();
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
-
-  const [isCartLoading, setIsCartLoading] = useState(false);
-
-  const handleAddToCart = useCallback(
-    async (e: React.MouseEvent) => {
-      e.preventDefault();
-      if (isSoldout || isCartLoading) return;
-      setIsCartLoading(true);
-      try {
-        await addItem({ productId: id, productOptionId: null, quantity: 1 });
-        toast.success('장바구니에 담았습니다.');
-      } catch {
-        toast.error('장바구니 담기에 실패했습니다.');
-      } finally {
-        setIsCartLoading(false);
-      }
-    },
-    [id, isSoldout, isCartLoading, addItem],
-  );
 
   return (
     <Link
@@ -101,7 +77,10 @@ function ProductCard({
         <button
           type="button"
           aria-label={isWishlisted ? '찜하기 취소' : '찜하기'}
-          onClick={handleToggleWishlist}
+          onClick={(e) => {
+            e.preventDefault();
+            handleToggleWishlist(e);
+          }}
           disabled={isWishlistLoading}
           className={cn(
             'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 shadow-sm disabled:cursor-not-allowed backdrop-blur-sm',
@@ -143,20 +122,16 @@ function ProductCard({
 
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
 
-        {!isSoldout && (
+        <div className="mt-auto pt-2">
           <button
             type="button"
-            aria-label="장바구니 담기"
-            onClick={handleAddToCart}
-            disabled={isCartLoading}
             className={cn(
-              'flex w-full items-center justify-center gap-2 border border-foreground py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed shrink-0',
+              'flex w-full items-center justify-center border border-foreground py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background shrink-0',
             )}
           >
-            <ShoppingCart className="h-4 w-4" />
-            {isCartLoading ? '담는 중...' : '장바구니 담기'}
+            자세히 보기
           </button>
-        )}
+        </div>
       </div>
     </Link>
   );
