@@ -63,23 +63,10 @@ function buildDefaultBlocks(data: {
       type: 'category_nav',
       content: {
         category_ids: [],
-        template: 'text',
+        template: 'image',
         prefetched_categories: data.categories,
       },
       sort_order: 1,
-      is_visible: true,
-    },
-    {
-      id: -5,
-      type: 'promotion_banner',
-      content: {
-        title: '차 한 잔의 여유',
-        subtitle: '자사호와 보이차가 만드는 고요한 시간',
-        cta_text: '더 알아보기',
-        cta_url: '/archive',
-        template: 'full-width',
-      },
-      sort_order: 4,
       is_visible: true,
     },
   ];

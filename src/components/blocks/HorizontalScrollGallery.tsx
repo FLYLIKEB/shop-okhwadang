@@ -57,63 +57,21 @@ export default function HorizontalScrollGallery({
   if (products.length === 0) return null;
 
   return (
-    <section className="py-20 md:py-32">
-      {/* Header */}
-      <div className="px-6 md:px-16 mb-12 md:mb-16 flex items-end justify-between">
+    <section className="py-12 md:py-16">
+      <div className="px-6 md:px-16 mb-8 flex items-center justify-between">
         <div>
-          {subtitle && (
-            <p className="typo-label uppercase tracking-[0.3em] text-muted-foreground mb-4">
-              {subtitle}
-            </p>
-          )}
           {title && (
-            <h2 className="font-display typo-h1 text-foreground">{title}</h2>
+            <h2 className="font-display text-xl md:text-2xl text-foreground">{title}</h2>
           )}
         </div>
-        <div className="hidden md:flex items-center gap-6">
-          {moreHref && (
-            <Link
-              href={moreHref}
-              className="typo-body-sm text-muted-foreground tracking-[0.15em] uppercase border-b border-transparent hover:border-foreground hover:text-foreground transition-all duration-300"
-            >
-              View All
-            </Link>
-          )}
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => scroll('left')}
-              disabled={!canScrollLeft}
-              aria-label="이전 상품"
-              className={cn(
-                'w-10 h-10 border border-border flex items-center justify-center transition-all duration-300',
-                canScrollLeft
-                  ? 'text-foreground hover:bg-foreground hover:text-background'
-                  : 'text-muted-foreground/30 cursor-not-allowed',
-              )}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1">
-                <path d="M10 3L5 8L10 13" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => scroll('right')}
-              disabled={!canScrollRight}
-              aria-label="다음 상품"
-              className={cn(
-                'w-10 h-10 border border-border flex items-center justify-center transition-all duration-300',
-                canScrollRight
-                  ? 'text-foreground hover:bg-foreground hover:text-background'
-                  : 'text-muted-foreground/30 cursor-not-allowed',
-              )}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1">
-                <path d="M6 3L11 8L6 13" />
-              </svg>
-            </button>
-          </div>
-        </div>
+        {moreHref && (
+          <Link
+            href={moreHref}
+            className="typo-body-sm text-muted-foreground tracking-[0.1em] uppercase border-b border-transparent hover:border-foreground hover:text-foreground transition-all duration-300"
+          >
+            더보기
+          </Link>
+        )}
       </div>
 
       {/* Scroll container */}

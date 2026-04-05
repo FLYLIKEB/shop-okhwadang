@@ -27,6 +27,7 @@ interface ProductCardProps {
   locale?: Locale;
   priority?: boolean;
   showCartOnHover?: boolean;
+  showRating?: boolean;
 }
 
 function ProductCard({
@@ -42,6 +43,7 @@ function ProductCard({
   locale = 'ko',
   priority = false,
   showCartOnHover = false,
+  showRating = false,
 }: ProductCardProps) {
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
@@ -119,17 +121,15 @@ function ProductCard({
       <div className="mt-3 flex flex-col gap-1">
         <p className="typo-title line-clamp-2 leading-tight h-11 shrink-0">{name}</p>
 
-        <div className="flex items-center gap-1.5 h-5 shrink-0">
-          {rating !== undefined && (
-            <>
-              <StarRating rating={rating} size="sm" interactive={false} />
-              <span className="typo-body-sm font-medium leading-none">{rating.toFixed(1)}</span>
-              {reviewCount !== undefined && reviewCount > 0 && (
-                <span className="typo-body-sm text-muted-foreground leading-none">({reviewCount})</span>
-              )}
-            </>
-          )}
-        </div>
+        {showRating && rating !== undefined && (
+          <div className="flex items-center gap-1.5 h-5 shrink-0">
+            <StarRating rating={rating} size="sm" interactive={false} />
+            <span className="typo-body-sm font-medium leading-none">{rating.toFixed(1)}</span>
+            {reviewCount !== undefined && reviewCount > 0 && (
+              <span className="typo-body-sm text-muted-foreground leading-none">({reviewCount})</span>
+            )}
+          </div>
+        )}
 
         <div className="h-10 overflow-hidden">
           {shortDescription && (
