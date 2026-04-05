@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import type { Category } from '@/lib/api';
+import SafeHtml from '@/components/common/SafeHtml';
 
 interface CategoryHeroBannerProps {
   category: Category | null;
@@ -30,9 +31,12 @@ export default function CategoryHeroBanner({ category }: CategoryHeroBannerProps
         <div className="flex flex-1 flex-col justify-center p-6 md:p-10">
           <h1 className="typo-h1 font-display text-foreground">{category.name}</h1>
           {category.description && (
-            <p className="mt-3 typo-body text-muted-foreground max-w-md">
-              {category.description}
-            </p>
+            <div className="mt-3 max-w-md">
+              <SafeHtml
+                html={category.description}
+                className="typo-body text-muted-foreground [&_p]:mt-2 [&_p:first-child]:mt-0 [&_strong]:text-foreground [&_a]:text-primary hover:[&_a]:underline"
+              />
+            </div>
           )}
         </div>
       </div>
