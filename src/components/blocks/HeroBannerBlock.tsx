@@ -220,7 +220,7 @@ export default function HeroBannerBlock({ content }: Props) {
 
   if (template === 'split') {
     return (
-      <section className="flex flex-col overflow-hidden md:flex-row bg-white">
+      <section className="flex flex-col overflow-hidden md:flex-row bg-background">
         <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
           <h2 className="typo-h2 text-foreground">{title}</h2>
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}

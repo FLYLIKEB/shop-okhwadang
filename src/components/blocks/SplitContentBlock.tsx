@@ -46,7 +46,7 @@ export default function SplitContentBlock({ content }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const bgClass = use_alternate_bg ? 'bg-[#F5F3EF]' : 'bg-white';
+  const bgClass = use_alternate_bg ? 'bg-surface' : 'bg-background';
 
   return (
     <div ref={sectionRef} className={cn(bgClass)}>
