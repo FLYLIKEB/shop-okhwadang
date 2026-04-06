@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { categoriesApi } from '@/lib/api';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import type { Category, CategoryNavContent } from '@/lib/api';
-import SafeHtml from '@/components/common/SafeHtml';
 
 /* ── 니료(泥料) 컬러 매핑 — 카테고리 slug으로 매칭 ── */
 const CLAY_COLORS: Record<string, string> = {
@@ -33,24 +32,26 @@ function CategoryImageCard({ cat }: { cat: Category }) {
   return (
     <Link
       href={`/products?categoryId=${cat.id}`}
-      className="group relative aspect-square overflow-hidden bg-muted"
+      className="group relative aspect-[4/3] overflow-hidden rounded-lg bg-muted"
     >
-      {!imgError ? (
+      {cat.imageUrl && !imgError ? (
         <Image
-          src={`/images/categories/${cat.slug}.jpg`}
+          src={cat.imageUrl}
           alt={cat.name}
           fill
-          className="object-cover transition-opacity group-hover:opacity-80"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 50vw, 25vw"
+          unoptimized
           onError={handleError}
         />
-      ) : (
+      ) : imgError || !cat.imageUrl ? (
         <div
           className="absolute inset-0 flex items-center justify-center"
           style={{ backgroundColor: clayColor ?? '#2A2520' }}
         />
-      )}
-      <span className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent p-2 text-sm font-medium text-white">
+      ) : null}
+      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300" />
+      <span className="absolute inset-0 flex items-center justify-center font-display text-lg font-medium text-white tracking-wide">
         {cat.name}
       </span>
     </Link>
