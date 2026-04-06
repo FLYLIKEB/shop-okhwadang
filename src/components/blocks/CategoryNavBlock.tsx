@@ -106,7 +106,7 @@ export default function CategoryNavBlock({ content }: Props) {
               <span className="absolute -bottom-1 left-0 h-px w-0 group-hover:w-full bg-foreground/40 transition-all duration-700 ease-out" />
             </span>
             {cat.description && (
-              <span className="text-sm text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span className="text-sm text-muted-foreground md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500">
                 {cat.description}
               </span>
             )}

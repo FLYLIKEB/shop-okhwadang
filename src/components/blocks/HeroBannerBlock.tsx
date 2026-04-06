@@ -6,8 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import SafeHtml from '@/components/common/SafeHtml';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
@@ -126,7 +125,10 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                 )}
                 {description && (
                   <div className="mt-6 text-white/60 max-w-lg">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
+                    <SafeHtml
+                      html={description}
+                      className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white"
+                    />
                   </div>
                 )}
                 {slide.cta_text && slide.cta_url && (
@@ -218,7 +220,10 @@ export default function HeroBannerBlock({ content }: Props) {
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
           {description && (
             <div className="mt-4 text-muted-foreground">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
+              <SafeHtml
+                html={description}
+                className="[&_p]:mt-1 [&_strong]:text-muted-foreground [&_b]:text-muted-foreground"
+              />
             </div>
           )}
           {cta_text && cta_url && (
@@ -266,7 +271,10 @@ export default function HeroBannerBlock({ content }: Props) {
           {subtitle && <p className={cn('mt-4 typo-body', image_url ? 'text-white/90' : 'text-muted-foreground')}>{subtitle}</p>}
           {description && (
             <div className={cn('mt-4', image_url ? 'text-white/80' : 'text-muted-foreground')}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
+              <SafeHtml
+                html={description}
+                className={image_url ? '[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white' : '[&_p]:mt-1 [&_strong]:text-muted-foreground [&_b]:text-muted-foreground'}
+              />
             </div>
           )}
           {cta_text && cta_url && (
