@@ -227,7 +227,7 @@ export class OAuthService {
 
   private async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.id, email: user.email, role: user.role };
-    const accessToken = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign({ ...payload, tokenType: 'access' });
     const refreshExpiresIn = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as ms.StringValue;
     const refreshToken = this.jwtService.sign(
       { ...payload, tokenType: 'refresh' },
