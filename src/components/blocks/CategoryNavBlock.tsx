@@ -96,16 +96,16 @@ export default function CategoryNavBlock({ content }: Props) {
                 />
               )}
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300" />
-              <span className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/40 via-black/20 to-transparent">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
                 <span className="font-display text-lg font-medium text-white tracking-wide text-center">
                   {cat.name}
                 </span>
                 {cat.description && (
-                  <span className="text-xs text-white/70 line-clamp-2 [&_br]:hidden">
+                  <span className="text-xs text-white/70 text-center line-clamp-2 [&_br]:hidden px-2">
                     <SafeHtml html={cat.description} className="[&_p]:!mt-0 [&_strong]:!text-white/80 [&_b]:!text-white/80 [&_span]:!text-white/70" />
                   </span>
                 )}
-              </span>
+              </div>
             </Link>
           ))}
         </div>
