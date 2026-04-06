@@ -4,7 +4,6 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { cn } from '@/components/ui/utils'
 import { ZoomIn } from 'lucide-react'
-import { TEAPOT_IMAGES } from '@/lib/teapot-images'
 import { useLightboxInteraction } from '@/hooks/useLightboxInteraction'
 import LightboxOverlay from './LightboxOverlay'
 import ThumbnailStrip from './ThumbnailStrip'
@@ -16,14 +15,6 @@ interface ProductImage {
   sortOrder: number
   isThumbnail: boolean
 }
-
-const FALLBACK_IMAGES: ProductImage[] = TEAPOT_IMAGES.map((img, i) => ({
-  id: -(i + 1),
-  url: img.src,
-  alt: img.alt,
-  sortOrder: i,
-  isThumbnail: i === 0,
-}))
 
 interface ImageGalleryProps {
   images: ProductImage[]
@@ -75,15 +66,15 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const thumbnailRef = useRef<HTMLDivElement>(null)
   const rafId = useRef<number>(0)
-  const isDragging = useRef(false)
   const isScrolling = useRef(false)
-  const touchSwiped = useRef(false)
+  const scrollTimeoutId = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const {
     lightboxZoomed,
     setLightboxZoomed,
     lightboxPan,
     lightboxPanRef,
+    isDragging,
     handleLightboxMouseDown,
     handleLightboxMouseMove,
     handleLightboxMouseUp,
@@ -96,10 +87,10 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
   const scrollToIndex = useCallback((index: number) => {
     const container = scrollContainerRef.current
     if (!container) return
-    const slideWidth = container.offsetWidth
     isScrolling.current = true
-    container.scrollTo({ left: slideWidth * index, behavior: 'smooth' })
-    setTimeout(() => { isScrolling.current = false }, 350)
+    clearTimeout(scrollTimeoutId.current)
+    container.scrollTo({ left: container.offsetWidth * index, behavior: 'smooth' })
+    scrollTimeoutId.current = setTimeout(() => { isScrolling.current = false }, 350)
   }, [])
 
   const goPrev = useCallback(() => {
@@ -224,22 +215,20 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
   return (
     <>
       <div className="flex flex-col gap-3">
-        {/* Horizontal scroll-snap gallery */}
         <div className="relative overflow-hidden rounded-lg bg-muted group">
           <div
             ref={scrollContainerRef}
             className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-            style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {images.map((image, index) => (
               <div
                 key={image.id}
                 ref={index === selectedIndex ? mainImageRef : undefined}
                 className="relative aspect-square w-full flex-shrink-0 snap-center cursor-zoom-in"
-                onMouseEnter={() => { if (index === selectedIndex) setIsZoomed(true) }}
+                onMouseEnter={() => setIsZoomed(true)}
                 onMouseLeave={() => setIsZoomed(false)}
                 onMouseMove={index === selectedIndex ? handleMouseMove : undefined}
-                onClick={() => { setLightboxOpen(true) }}
+                onClick={() => setLightboxOpen(true)}
                 role="button"
                 tabIndex={index === selectedIndex ? 0 : -1}
                 aria-label={`이미지 ${index + 1} 확대해서 보기`}
@@ -261,7 +250,6 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
             ))}
           </div>
 
-          {/* Dot indicators */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {images.map((_, i) => (
               <span
@@ -274,7 +262,6 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
             ))}
           </div>
 
-          {/* Zoom hint */}
           {!isZoomed && (
             <div className="absolute inset-0 flex items-end justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
               <span className="flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm">
@@ -284,7 +271,6 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
             </div>
           )}
 
-          {/* Prev/Next arrows */}
           {images.length > 1 && (
             <>
               <button
@@ -341,7 +327,6 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
         handleLightboxTouchStart={handleLightboxTouchStart}
         handleLightboxTouchMove={handleLightboxTouchMove}
         handleLightboxTouchEnd={handleLightboxTouchEnd}
-        touchSwiped={touchSwiped}
         isDragging={isDragging}
       />
     </>

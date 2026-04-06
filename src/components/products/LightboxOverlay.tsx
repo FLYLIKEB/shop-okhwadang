@@ -28,7 +28,6 @@ interface LightboxOverlayProps {
   handleLightboxTouchStart: (e: React.TouchEvent) => void
   handleLightboxTouchMove: (e: React.TouchEvent) => void
   handleLightboxTouchEnd: (e: React.TouchEvent) => void
-  touchSwiped: React.MutableRefObject<boolean>
   isDragging: React.MutableRefObject<boolean>
 }
 
@@ -50,7 +49,6 @@ export default function LightboxOverlay({
   handleLightboxTouchStart,
   handleLightboxTouchMove,
   handleLightboxTouchEnd,
-  touchSwiped,
   isDragging,
 }: LightboxOverlayProps) {
   if (!lightboxOpen) return null
@@ -78,7 +76,6 @@ export default function LightboxOverlay({
         type="button"
         onClick={(e) => {
           e.stopPropagation()
-          touchSwiped.current = false
           setLightboxZoomed(!lightboxZoomed)
           if (lightboxZoomed) {
             const resetPan = { x: 0, y: 0 }
@@ -98,12 +95,11 @@ export default function LightboxOverlay({
         className="relative z-10 max-h-[85vh] max-w-[90vw]"
         onClick={(e) => {
           e.stopPropagation()
-          if (!touchSwiped.current && !isDragging.current) {
+          if (!isDragging.current) {
             if (lightboxZoomed) {
-                const resetPan = { x: 0, y: 0 }
-                lightboxPanRef.current = resetPan
-              }
-              setLightboxZoomed(!lightboxZoomed)
+              lightboxPanRef.current = { x: 0, y: 0 }
+            }
+            setLightboxZoomed(!lightboxZoomed)
           }
         }}
         onMouseDown={handleLightboxMouseDown}
@@ -134,7 +130,6 @@ export default function LightboxOverlay({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              touchSwiped.current = false
               onPrev()
             }}
             className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
@@ -146,7 +141,6 @@ export default function LightboxOverlay({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              touchSwiped.current = false
               onNext()
             }}
             className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
@@ -169,7 +163,6 @@ export default function LightboxOverlay({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                touchSwiped.current = false
                 onSelectIndex(i)
               }}
               className={cn(
