@@ -17,21 +17,21 @@ export default function QuantitySelector({
   onDecrease,
 }: QuantitySelectorProps) {
   return (
-    <div className="inline-flex items-center rounded-full border border-border bg-background overflow-hidden">
+    <div className="inline-flex items-center w-fit border border-border bg-background">
       <button
         type="button"
         onClick={onDecrease}
         disabled={quantity <= 1}
         aria-label="수량 감소"
         className={cn(
-          'relative h-9 w-9 p-1.5 transition-colors text-foreground hover:bg-muted rounded-full',
+          'flex items-center justify-center h-9 w-9 shrink-0 border-r border-border transition-colors text-muted-foreground hover:bg-muted',
           'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent',
         )}
       >
-        <Minus className="absolute inset-0 m-auto size-4" strokeWidth={2} />
+        <Minus className="size-3.5" strokeWidth={1.5} />
       </button>
 
-      <span className="min-w-[2.5rem] px-1.5 text-sm font-medium text-center text-foreground tabular-nums">
+      <span className="w-10 text-sm font-medium text-center text-foreground tabular-nums">
         {quantity}
       </span>
 
@@ -41,11 +41,11 @@ export default function QuantitySelector({
         disabled={quantity >= maxQuantity}
         aria-label="수량 증가"
         className={cn(
-          'relative h-9 w-9 p-1.5 transition-colors text-foreground hover:bg-muted rounded-full',
+          'flex items-center justify-center h-9 w-9 shrink-0 border-l border-border transition-colors text-muted-foreground hover:bg-muted',
           'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent',
         )}
       >
-        <Plus className="absolute inset-0 m-auto size-4" strokeWidth={2} />
+        <Plus className="size-3.5" strokeWidth={1.5} />
       </button>
     </div>
   )
