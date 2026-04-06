@@ -105,7 +105,9 @@ function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: Mobi
         >
           <X className="h-5 w-5" />
         </button>
-        <Logo variant="header" />
+        <Link href="/" onClick={onClose} className="shrink-0">
+          <Logo variant="header" />
+        </Link>
       </div>
       {historyLength > 0 && (
         <div className="flex items-center px-4 h-12 border-b border-border shrink-0">
