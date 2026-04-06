@@ -24,7 +24,7 @@ export default function QuantitySelector({
         disabled={quantity <= 1}
         aria-label="수량 감소"
         className={cn(
-          'flex items-center justify-center h-10 px-2 transition-colors',
+          'flex items-center justify-center h-10 w-10 shrink-0 transition-colors',
           'text-foreground hover:bg-accent',
           'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent',
         )}
@@ -32,7 +32,7 @@ export default function QuantitySelector({
         <Minus className="size-4" strokeWidth={2} />
       </button>
 
-      <span className="flex items-center justify-center h-10 w-10 text-sm font-medium border-x border-border">
+      <span className="flex items-center justify-center h-10 w-10 text-sm font-medium border-x border-border shrink-0">
         {quantity}
       </span>
 
@@ -42,7 +42,7 @@ export default function QuantitySelector({
         disabled={quantity >= maxQuantity}
         aria-label="수량 증가"
         className={cn(
-          'flex items-center justify-center h-10 px-2 transition-colors',
+          'flex items-center justify-center h-10 w-10 shrink-0 transition-colors',
           'text-foreground hover:bg-accent',
           'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent',
         )}
