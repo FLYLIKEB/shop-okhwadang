@@ -37,11 +37,11 @@ USE_LOCAL_DB=$(echo "${LOCAL_DATABASE_URL:-}" | grep -qE "localhost:330[67]|127\
 if [ "$USE_LOCAL_DB" = "yes" ] && command -v docker > /dev/null 2>&1; then
     if ! docker info > /dev/null 2>&1; then
         echo -e "${YELLOW}⚠️  Docker Desktop 시작 중...${NC}"
-        open -a Docker 2>/dev/null || true
-        sleep 3
-        for i in {1..30}; do
+        open --new -a Docker 2>/dev/null || true
+        echo -e "${YELLOW}⏳ Docker Desktop 시작 대기 (최대 60초)...${NC}"
+        for i in {1..60}; do
             docker info > /dev/null 2>&1 && break
-            [ $i -eq 30 ] && echo -e "${RED}❌ Docker Desktop 시작 실패${NC}" && exit 1
+            [ $i -eq 60 ] && echo -e "${RED}❌ Docker Desktop 시작 실패${NC}" && exit 1
             sleep 1
         done
         echo -e "${GREEN}✅ Docker Desktop 준비 완료${NC}"
