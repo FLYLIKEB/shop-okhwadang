@@ -38,13 +38,21 @@ bash "$PROJECT_ROOT/scripts/stop-local.sh" 2>/dev/null || true
 echo ""
 
 # ──────────────────────────────────────────────
-# 2. Docker 컨테이너 시작 (MySQL + Redis)
+# 2. Docker Desktop 상태 확인 및 컨테이너 시작 (MySQL + Redis)
 # ──────────────────────────────────────────────
 if echo "${LOCAL_DATABASE_URL:-}" | grep -qE "localhost:330[67]|127\.0\.0\.1:330[67]"; then
     echo -e "${BLUE}📦 Docker 컨테이너 시작 중 (MySQL + Redis)...${NC}"
     if command -v docker > /dev/null 2>&1; then
+        # Docker Desktop이 실행 중인지 확인
+        if ! docker info > /dev/null 2>&1; then
+            echo -e "${RED}❌ Docker Desktop이 실행 중이 아닙니다.${NC}"
+            echo "   Docker Desktop 앱을 시작한 후 다시 시도하세요."
+            exit 1
+        fi
+
         cd "$BACKEND_DIR"
-        docker compose up -d 2>&1 | tail -3
+        # 이미 실행 중인 컨테이너는 그대로 유지, 없으면 새로 시작
+        docker compose up -d --no-recreate 2>&1 | tail -3
         cd "$PROJECT_ROOT"
 
         # MySQL 준비 대기
