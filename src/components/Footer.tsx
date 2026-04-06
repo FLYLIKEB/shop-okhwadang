@@ -33,7 +33,7 @@ const FALLBACK_LINKS = {
 };
 
 function FooterLink({ item }: { item: FooterLink | NavigationItem }) {
-  const url = 'url' in item ? item.url : `/${item.url}`;
+  const url = (item as FooterLink).url;
   return (
     <Link
       href={url}
