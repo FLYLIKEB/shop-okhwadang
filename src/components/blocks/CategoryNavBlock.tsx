@@ -70,7 +70,7 @@ export default function CategoryNavBlock({ content }: Props) {
             <Link
               key={cat.id}
               href={`/products?categoryId=${cat.id}`}
-              className="group relative aspect-[4/3] overflow-hidden rounded-lg bg-muted"
+              className="group relative aspect-[4/3] overflow-hidden bg-muted"
               style={{
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(12px)',

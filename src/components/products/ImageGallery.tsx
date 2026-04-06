@@ -36,10 +36,10 @@ interface ImageGalleryProps {
 function ImageGallerySkeleton() {
   return (
     <div className="space-y-3">
-      <div className="aspect-square w-full rounded-lg bg-muted animate-pulse" />
+      <div className="aspect-square w-full bg-muted animate-pulse" />
       <div className="flex gap-2">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="w-20 h-20 rounded-lg bg-muted animate-pulse" />
+          <div key={i} className="w-20 h-20 bg-muted animate-pulse" />
         ))}
       </div>
     </div>
@@ -48,7 +48,7 @@ function ImageGallerySkeleton() {
 
 function ImageGalleryError({ error, onRetry }: { error: Error; onRetry?: () => void }) {
   return (
-    <div className="aspect-square w-full rounded-lg bg-muted flex flex-col items-center justify-center gap-4 text-muted-foreground">
+    <div className="aspect-square w-full bg-muted flex flex-col items-center justify-center gap-4 text-muted-foreground">
       <div className="text-center">
         <p className="text-sm font-medium text-foreground mb-1">이미지를 불러오지 못했습니다</p>
         <p className="text-xs text-muted-foreground">{error.message || '알 수 없는 오류가 발생했습니다.'}</p>
@@ -171,7 +171,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
 
   if (images.length === 0) {
     return (
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted flex flex-col items-center justify-center gap-2 text-muted-foreground">
+      <div className="relative aspect-square w-full overflow-hidden bg-muted flex flex-col items-center justify-center gap-2 text-muted-foreground">
         <svg className="w-10 h-10 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
@@ -187,7 +187,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
       <div className="flex flex-col gap-3">
         <div
           ref={mainImageRef}
-          className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted cursor-zoom-in group"
+          className="relative aspect-square w-full overflow-hidden bg-muted cursor-zoom-in group"
           onMouseEnter={() => setIsZoomed(true)}
           onMouseLeave={() => setIsZoomed(false)}
           onMouseMove={handleMouseMove}
