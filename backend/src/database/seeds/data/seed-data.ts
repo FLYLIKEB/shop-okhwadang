@@ -276,6 +276,7 @@ export const categories: SeedCategory[] = [
 // 상품 (Product)
 // ============================================================
 export interface SeedProduct {
+  id: number;
   categoryId: number | null;
   name: string;
   slug: string;
@@ -294,6 +295,7 @@ export interface SeedProduct {
 export const products: SeedProduct[] = [
   // ── 자사호 (주니) ──
   {
+    id: 1,
     categoryId: 10,
     name: '옥화당 주니 서시호 120ml',
     slug: 'zhuní-xishi-120',
@@ -310,6 +312,7 @@ export const products: SeedProduct[] = [
     teapotShape: 'seoshi',
   },
   {
+    id: 2,
     categoryId: 10,
     name: '옥화당 주니 주형호 80ml',
     slug: 'zhuní-zhu-80',
@@ -326,6 +329,7 @@ export const products: SeedProduct[] = [
     teapotShape: 'juhu',
   },
   {
+    id: 3,
     categoryId: 10,
     name: '옥화당 주니 석표호 160ml',
     slug: 'zhuní-shipiao-160',
@@ -344,6 +348,7 @@ export const products: SeedProduct[] = [
 
   // ── 자사호 (자사) ──
   {
+    id: 4,
     categoryId: 11,
     name: '옥화당 자사 편평호 200ml',
     slug: 'zǐshā-biānpíng-200',
@@ -360,6 +365,7 @@ export const products: SeedProduct[] = [
     teapotShape: 'bianping',
   },
   {
+    id: 5,
     categoryId: 11,
     name: '옥화당 자사 서시호 150ml',
     slug: 'zǐshā-xishi-150',
@@ -376,6 +382,7 @@ export const products: SeedProduct[] = [
     teapotShape: 'seoshi',
   },
   {
+    id: 6,
     categoryId: 11,
     name: '옥화당 자사 주형호 180ml',
     slug: 'zǐshā-zhu-180',
@@ -394,6 +401,7 @@ export const products: SeedProduct[] = [
 
   // ── 자사호 (단니) ──
   {
+    id: 7,
     categoryId: 12,
     name: '옥화당 단니 석표호 220ml',
     slug: 'duānní-shipiao-220',
@@ -410,6 +418,7 @@ export const products: SeedProduct[] = [
     teapotShape: 'seokpyo',
   },
   {
+    id: 8,
     categoryId: 12,
     name: '옥화당 단니 편평호 140ml',
     slug: 'duānní-biānpíng-140',
@@ -428,6 +437,7 @@ export const products: SeedProduct[] = [
 
   // ── 자사호 (흑니) ──
   {
+    id: 9,
     categoryId: 13,
     name: '옥화당 흑니 주형호 100ml',
     slug: 'hēiní-zhu-100',
@@ -446,6 +456,7 @@ export const products: SeedProduct[] = [
 
   // ── 자사호 (청회니) ──
   {
+    id: 10,
     categoryId: 14,
     name: '옥화당 청회니 서시호 130ml',
     slug: 'qīnghuīní-xishi-130',
@@ -464,6 +475,7 @@ export const products: SeedProduct[] = [
 
   // ── 보이차 ──
   {
+    id: 11,
     categoryId: 30,
     name: '2019년 반장 고수 생병 357g',
     slug: 'banjang-gushu-2019-sheng',
@@ -478,6 +490,7 @@ export const products: SeedProduct[] = [
     isFeatured: true,
   },
   {
+    id: 12,
     categoryId: 30,
     name: '2021년 빙도 고수 생병 357g',
     slug: 'bingdao-gushu-2021-sheng',
@@ -492,6 +505,7 @@ export const products: SeedProduct[] = [
     isFeatured: true,
   },
   {
+    id: 13,
     categoryId: 31,
     name: '2015년 대익 7572 숙병 357g',
     slug: 'dayi-7572-2015-shou',
@@ -506,6 +520,7 @@ export const products: SeedProduct[] = [
     isFeatured: false,
   },
   {
+    id: 14,
     categoryId: 31,
     name: '2010년 하관 FT 숙타 250g',
     slug: 'xiaguan-ft-2010-shou-tuo',
@@ -520,6 +535,7 @@ export const products: SeedProduct[] = [
     isFeatured: false,
   },
   {
+    id: 15,
     categoryId: 32,
     name: '1990년대 홍인 노숙병 (소분) 10g',
     slug: 'hong-yin-1990s-aged-10g',
@@ -536,6 +552,7 @@ export const products: SeedProduct[] = [
 
   // ── 다구 ──
   {
+    id: 16,
     categoryId: 40,
     name: '경덕진 청화 다완 6P 세트',
     slug: 'jingdezhen-blue-white-teacup-6p',
@@ -550,6 +567,7 @@ export const products: SeedProduct[] = [
     isFeatured: true,
   },
   {
+    id: 17,
     categoryId: 40,
     name: '건수요 천목유 다완 단품',
     slug: 'jian-ware-tenmoku-teacup',
@@ -564,6 +582,7 @@ export const products: SeedProduct[] = [
     isFeatured: false,
   },
   {
+    id: 18,
     categoryId: 41,
     name: '대나무 다반 40×25cm',
     slug: 'bamboo-tea-tray-40x25',
@@ -578,6 +597,7 @@ export const products: SeedProduct[] = [
     isFeatured: true,
   },
   {
+    id: 19,
     categoryId: 42,
     name: '옥화당 입문 다도구 세트',
     slug: 'okhwadang-starter-tea-set',
@@ -592,6 +612,7 @@ export const products: SeedProduct[] = [
     isFeatured: true,
   },
   {
+    id: 20,
     categoryId: 43,
     name: '대나무 차도구 5종 세트',
     slug: 'bamboo-tea-tools-5p',
@@ -606,6 +627,7 @@ export const products: SeedProduct[] = [
     isFeatured: false,
   },
   {
+    id: 21,
     categoryId: 43,
     name: '유리 공도배 (公道杯) 200ml',
     slug: 'glass-fairness-cup-200ml',
@@ -620,6 +642,7 @@ export const products: SeedProduct[] = [
     isFeatured: false,
   },
   {
+    id: 22,
     categoryId: 40,
     name: '여요 빙렬유 다완 단품',
     slug: 'ru-ware-crackle-teacup',
@@ -920,11 +943,11 @@ export interface SeedPromotion {
   title: string;
   description: string;
   type: PromotionType;
-  starts_at: Date;
-  ends_at: Date;
-  is_active: boolean;
-  discount_rate: number | null;
-  image_url: string | null;
+  startsAt: Date;
+  endsAt: Date;
+  isActive: boolean;
+  discountRate: number | null;
+  imageUrl: string | null;
 }
 
 export const promotions: SeedPromotion[] = [
@@ -932,31 +955,31 @@ export const promotions: SeedPromotion[] = [
     title: '봄 기획전 — 주니 신작',
     description: '<b>복건 주니(朱泥)</b> 신작 자사호 선착순 특가. <b>주니 서시호·주형호·석표호</b> 한정 수량 입고. 재고 소진 시 조기 마감될 수 있습니다.',
     type: 'exhibition',
-    starts_at: new Date('2026-03-29'),
-    ends_at: new Date('2026-04-30'),
-    is_active: true,
-    discount_rate: null,
-    image_url: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
+    startsAt: new Date('2026-03-29'),
+    endsAt: new Date('2026-04-30'),
+    isActive: true,
+    discountRate: null,
+    imageUrl: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
   },
   {
     title: '입문 세트 14% 타임세일',
     description: '<b>옥화당 입문 다도구 세트</b> 한정 수량 특가. <b>280,000원 → 240,000원</b> (40,000원 할인). 자사호+다완+다반+차도구 완전 구성.',
     type: 'timesale',
-    starts_at: new Date('2026-03-29T09:00:00'),
-    ends_at: new Date('2026-04-05T23:59:59'),
-    is_active: true,
-    discount_rate: 14,
-    image_url: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
+    startsAt: new Date('2026-03-29T09:00:00'),
+    endsAt: new Date('2026-04-05T23:59:59'),
+    isActive: true,
+    discountRate: 14,
+    imageUrl: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
   },
   {
     title: '보이차 입문 이벤트',
     description: '<b>대익 7572 숙병</b> 구매 시 <b>대나무 차도구 5종 세트</b> 증정. 차도구(차칙·차침·차협·차루·차침)가 모두 포함된 입문 필수 세트.',
     type: 'event',
-    starts_at: new Date('2026-04-01'),
-    ends_at: new Date('2026-04-30'),
-    is_active: true,
-    discount_rate: null,
-    image_url: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
+    startsAt: new Date('2026-04-01'),
+    endsAt: new Date('2026-04-30'),
+    isActive: true,
+    discountRate: null,
+    imageUrl: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
   },
 ];
 
@@ -1046,54 +1069,60 @@ export const faqs: SeedFaq[] = [
 type UserRole = 'user' | 'admin' | 'super_admin';
 
 export interface SeedUser {
+  id: number;
   email: string;
   password: string;
   name: string;
   phone: string | null;
   role: UserRole;
-  is_active: boolean;
+  isActive: boolean;
 }
 
 export const users: SeedUser[] = [
   {
+    id: 1,
     email: 'reviewer1@okhwadang.com',
     password: '$2b$10$wJAaOWFn9rdHbx3K5AEzu.mpoUHtqMxPWzE9WSWSm15Vj85WdCL7S',
     name: '김차림',
     phone: null,
     role: 'user',
-    is_active: true,
+    isActive: true,
   },
   {
+    id: 2,
     email: 'reviewer2@okhwadang.com',
     password: '$2b$10$oe0RiBM7H3BAATi0ip1eGO1NT0wCqeKG3SBowfVaLUDytUC4i9dRq',
     name: '이보이',
     phone: null,
     role: 'user',
-    is_active: true,
+    isActive: true,
   },
   {
+    id: 3,
     email: 'reviewer3@okhwadang.com',
     password: '$2b$10$yICUqkVMdV.yu9IUVU7F7uc754wywBlXAGCgRC/ao3LQ7mOHM6uyS',
     name: '박다구',
     phone: null,
     role: 'user',
-    is_active: true,
+    isActive: true,
   },
   {
+    id: 4,
     email: 'reviewer4@okhwadang.com',
     password: '$2b$10$4l/Mqok3lGJuc2/uWUiZS.5TXBGlysr0vzjJ2bmsVCGO3p7C/Xel.',
     name: '정자호',
     phone: null,
     role: 'user',
-    is_active: true,
+    isActive: true,
   },
   {
+    id: 5,
     email: 'admin@okhwadang.com',
     password: '$2b$10$l46hZJmq5F8DoKvHZrQ0geSQgIxVXjaDPn2oCv7fv5L2AHtMQPSlW',
     name: '관리자',
     phone: null,
     role: 'admin',
-    is_active: true,
+    isActive: true,
   },
 ];
 
@@ -1103,6 +1132,7 @@ export const users: SeedUser[] = [
 type OrderStatus = 'pending' | 'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 
 export interface SeedOrder {
+  id: number;
   userId: number;
   orderNumber: string;
   status: OrderStatus;
@@ -1120,17 +1150,18 @@ export interface SeedOrder {
 }
 
 export const orders: SeedOrder[] = [
-  { userId: 1, orderNumber: 'ORD-20260301-001', status: 'delivered', totalAmount: 580000, discountAmount: 0, shippingFee: 0, recipientName: '김차림', recipientPhone: '010-1234-1001', zipcode: '06000', address: '서울특별시 강남구 테헤란로 1', addressDetail: '101동 1001호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-01T10:00:00') },
-  { userId: 2, orderNumber: 'ORD-20260302-001', status: 'delivered', totalAmount: 760000, discountAmount: 0, shippingFee: 0, recipientName: '이보이', recipientPhone: '010-1234-1002', zipcode: '06000', address: '서울특별시 강남구 테헤란로 2', addressDetail: '202동 2002호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-02T11:00:00') },
-  { userId: 3, orderNumber: 'ORD-20260303-001', status: 'delivered', totalAmount: 650000, discountAmount: 0, shippingFee: 0, recipientName: '박다구', recipientPhone: '010-1234-1003', zipcode: '06000', address: '서울특별시 서초구 방배로 3', addressDetail: '303동 3003호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-03T09:00:00') },
-  { userId: 4, orderNumber: 'ORD-20260304-001', status: 'delivered', totalAmount: 380000, discountAmount: 0, shippingFee: 0, recipientName: '정자호', recipientPhone: '010-1234-1004', zipcode: '06000', address: '서울특별시 마포구 합정로 4', addressDetail: '404동 4004호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-04T14:00:00') },
-  { userId: 1, orderNumber: 'ORD-20260305-001', status: 'delivered', totalAmount: 450000, discountAmount: 50000, shippingFee: 0, recipientName: '김차림', recipientPhone: '010-1234-1001', zipcode: '06000', address: '서울특별시 강남구 테헤란로 1', addressDetail: '101동 1001호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-05T10:00:00') },
+  { id: 1, userId: 1, orderNumber: 'ORD-20260301-001', status: 'delivered', totalAmount: 580000, discountAmount: 0, shippingFee: 0, recipientName: '김차림', recipientPhone: '010-1234-1001', zipcode: '06000', address: '서울특별시 강남구 테헤란로 1', addressDetail: '101동 1001호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-01T10:00:00') },
+  { id: 2, userId: 2, orderNumber: 'ORD-20260302-001', status: 'delivered', totalAmount: 760000, discountAmount: 0, shippingFee: 0, recipientName: '이보이', recipientPhone: '010-1234-1002', zipcode: '06000', address: '서울특별시 강남구 테헤란로 2', addressDetail: '202동 2002호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-02T11:00:00') },
+  { id: 3, userId: 3, orderNumber: 'ORD-20260303-001', status: 'delivered', totalAmount: 650000, discountAmount: 0, shippingFee: 0, recipientName: '박다구', recipientPhone: '010-1234-1003', zipcode: '06000', address: '서울특별시 서초구 방배로 3', addressDetail: '303동 3003호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-03T09:00:00') },
+  { id: 4, userId: 4, orderNumber: 'ORD-20260304-001', status: 'delivered', totalAmount: 380000, discountAmount: 0, shippingFee: 0, recipientName: '정자호', recipientPhone: '010-1234-1004', zipcode: '06000', address: '서울특별시 마포구 합정로 4', addressDetail: '404동 4004호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-04T14:00:00') },
+  { id: 5, userId: 1, orderNumber: 'ORD-20260305-001', status: 'delivered', totalAmount: 450000, discountAmount: 50000, shippingFee: 0, recipientName: '김차림', recipientPhone: '010-1234-1001', zipcode: '06000', address: '서울특별시 강남구 테헤란로 1', addressDetail: '101동 1001호', memo: null, pointsUsed: 0, createdAt: new Date('2026-03-05T10:00:00') },
 ];
 
 // ============================================================
 // 주문항목 (OrderItem)
 // ============================================================
 export interface SeedOrderItem {
+  id: number;
   orderId: number;
   productId: number;
   productOptionId: number | null;
@@ -1141,11 +1172,11 @@ export interface SeedOrderItem {
 }
 
 export const orderItems: SeedOrderItem[] = [
-  { orderId: 1, productId: 1, productOptionId: null, productName: '옥화당 주니 서시호 120ml', optionName: null, price: 580000, quantity: 1 },
-  { orderId: 2, productId: 2, productOptionId: null, productName: '옥화당 주니 주형호 80ml', optionName: null, price: 380000, quantity: 2 },
-  { orderId: 3, productId: 3, productOptionId: null, productName: '옥화당 주니 석표호 160ml', optionName: null, price: 650000, quantity: 1 },
-  { orderId: 4, productId: 4, productOptionId: null, productName: '옥화당 자사 편평호 200ml', optionName: null, price: 380000, quantity: 1 },
-  { orderId: 5, productId: 5, productOptionId: null, productName: '옥화당 자사 서시호 150ml', optionName: null, price: 400000, quantity: 1 },
+  { id: 1, orderId: 1, productId: 1, productOptionId: null, productName: '옥화당 주니 서시호 120ml', optionName: null, price: 580000, quantity: 1 },
+  { id: 2, orderId: 2, productId: 2, productOptionId: null, productName: '옥화당 주니 주형호 80ml', optionName: null, price: 380000, quantity: 2 },
+  { id: 3, orderId: 3, productId: 3, productOptionId: null, productName: '옥화당 주니 석표호 160ml', optionName: null, price: 650000, quantity: 1 },
+  { id: 4, orderId: 4, productId: 4, productOptionId: null, productName: '옥화당 자사 편평호 200ml', optionName: null, price: 380000, quantity: 1 },
+  { id: 5, orderId: 5, productId: 5, productOptionId: null, productName: '옥화당 자사 서시호 150ml', optionName: null, price: 400000, quantity: 1 },
 ];
 
 // ============================================================
