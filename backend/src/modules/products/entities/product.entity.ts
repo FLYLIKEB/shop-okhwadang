@@ -14,6 +14,7 @@ import { ProductOption } from './product-option.entity';
 import { ProductImage } from './product-image.entity';
 import { ProductDetailImage } from './product-detail-image.entity';
 import { Review } from '../../reviews/entities/review.entity';
+import { ProductAttribute } from './product-attribute.entity';
 
 export enum ProductStatus {
   DRAFT = 'draft',
@@ -97,12 +98,6 @@ export class Product {
   @Column({ name: 'view_count', default: 0 })
   viewCount!: number;
 
-  @Column({ name: 'clay_type', type: 'varchar', length: 50, nullable: true })
-  clayType!: string | null;
-
-  @Column({ name: 'teapot_shape', type: 'varchar', length: 50, nullable: true })
-  teapotShape!: string | null;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
@@ -127,4 +122,7 @@ export class Product {
 
   @OneToMany(() => Review, (review) => review.product)
   reviews!: Review[];
+
+  @OneToMany(() => ProductAttribute, (attr) => attr.product)
+  attributes!: ProductAttribute[];
 }

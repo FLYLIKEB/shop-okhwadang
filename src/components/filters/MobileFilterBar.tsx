@@ -13,6 +13,32 @@ interface MobileFilterBarProps {
   shapeCollections: Collection[];
 }
 
+function parseAttrsParam(attrs: string | null): Map<string, string> {
+  const result = new Map<string, string>();
+  if (!attrs) return result;
+  const pairs = attrs.split(',');
+  for (const pair of pairs) {
+    const [code, value] = pair.split(':');
+    if (code && value) {
+      result.set(code.trim(), value.trim());
+    }
+  }
+  return result;
+}
+
+function buildAttrsParam(current: Map<string, string>, key: string, value: string | undefined): string | undefined {
+  const next = new Map(current);
+  if (value === undefined) {
+    next.delete(key);
+  } else {
+    next.set(key, value);
+  }
+  if (next.size === 0) return undefined;
+  return Array.from(next.entries())
+    .map(([k, v]) => `${k}:${v}`)
+    .join(',');
+}
+
 export default function MobileFilterBar({ categories, clayCollections, shapeCollections }: MobileFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,13 +48,17 @@ export default function MobileFilterBar({ categories, clayCollections, shapeColl
   const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : undefined;
   const priceMin = searchParams.get('price_min') ? Number(searchParams.get('price_min')) : undefined;
   const priceMax = searchParams.get('price_max') ? Number(searchParams.get('price_max')) : undefined;
-  const selectedClayType = searchParams.get('clayType') ?? undefined;
-  const selectedShape = searchParams.get('teapotShape') ?? undefined;
+
+  const attrsParam = searchParams.get('attrs');
+  const parsedAttrs = parseAttrsParam(attrsParam);
+  const selectedClayType = parsedAttrs.get('clay_type');
+  const selectedShape = parsedAttrs.get('teapot_shape');
 
   const hasActiveFilters =
     priceMin !== undefined ||
     priceMax !== undefined ||
-    selectedShape !== undefined;
+    selectedShape !== undefined ||
+    selectedClayType !== undefined;
 
   const rootCategories = categories.filter((c) => c.parentId === null);
 
@@ -52,7 +82,8 @@ export default function MobileFilterBar({ categories, clayCollections, shapeColl
   };
 
   const handleClayTypeSelect = (value: string | undefined) => {
-    updateParams({ clayType: value });
+    const newAttrs = buildAttrsParam(parsedAttrs, 'clay_type', value);
+    updateParams({ attrs: newAttrs });
   };
 
   const handlePriceChange = (min?: number, max?: number) => {
@@ -63,11 +94,14 @@ export default function MobileFilterBar({ categories, clayCollections, shapeColl
   };
 
   const handleShapeSelect = (value: string | undefined) => {
-    updateParams({ teapotShape: value });
+    const newAttrs = buildAttrsParam(parsedAttrs, 'teapot_shape', value);
+    updateParams({ attrs: newAttrs });
   };
 
   const handleReset = () => {
-    updateParams({ price_min: undefined, price_max: undefined, teapotShape: undefined });
+    const params = new URLSearchParams();
+    params.delete('page');
+    router.push(`/products?${params.toString()}`);
     setFilterOpen(false);
   };
 
@@ -93,7 +127,7 @@ export default function MobileFilterBar({ categories, clayCollections, shapeColl
             <button
               key={cat.id}
               type="button"
-              onClick={() => handleCategorySelect(cat.id)}
+              onClick={() => handleCategorySelect(Number(cat.id))}
               className={cn(
                 'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                 isRootActive(cat)
@@ -105,97 +139,40 @@ export default function MobileFilterBar({ categories, clayCollections, shapeColl
             </button>
           ))}
         </div>
-
-        {/* 필터 버튼 */}
-        <button
-          type="button"
-          onClick={() => setFilterOpen(true)}
-          className={cn(
-            'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-            hasActiveFilters
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-background text-muted-foreground',
-          )}
-        >
-          {hasActiveFilters ? '필터 적용중' : '필터'}
-        </button>
       </div>
 
-      {/* 니료 칩 행 */}
-      <div className="mt-2 flex gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <button
-          type="button"
-          onClick={() => handleClayTypeSelect(undefined)}
-          className={cn(
-            'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-            selectedClayType === undefined
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-background text-muted-foreground',
-          )}
-        >
-          전체
-        </button>
-        {clayCollections.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() =>
-              handleClayTypeSelect(selectedClayType === item.name ? undefined : item.name)
-            }
-            className={cn(
-              'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              selectedClayType === item.name
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-background text-muted-foreground',
-            )}
-          >
-            {item.nameKo ?? item.name}
-          </button>
-        ))}
-      </div>
-
-      {/* 바텀시트 오버레이 */}
+      {/* 필터 패널 */}
       {filterOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-black/40"
-            onClick={() => setFilterOpen(false)}
+        <div className="mt-4 space-y-4 rounded-lg border border-border bg-background p-4">
+          <PriceRangeFilter
+            min={priceMin}
+            max={priceMax}
+            onChange={handlePriceChange}
           />
-          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-background p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-base font-semibold">필터</span>
-              <button
-                type="button"
-                onClick={() => setFilterOpen(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="flex flex-col gap-6">
-              <TeapotShapeFilter collections={shapeCollections} selected={selectedShape} onSelect={handleShapeSelect} />
-              <PriceRangeFilter min={priceMin} max={priceMax} onChange={handlePriceChange} />
-            </div>
-            <div className="mt-6 flex gap-3">
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium text-muted-foreground"
-                >
-                  초기화
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setFilterOpen(false)}
-                className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground"
-              >
-                적용
-              </button>
-            </div>
+
+          <TeapotShapeFilter
+            collections={shapeCollections}
+            selected={selectedShape}
+            onSelect={handleShapeSelect}
+          />
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="flex-1 rounded-md border border-border py-2 text-sm"
+            >
+              초기화
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterOpen(false)}
+              className="flex-1 rounded-md bg-foreground py-2 text-sm text-background"
+            >
+              적용
+            </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

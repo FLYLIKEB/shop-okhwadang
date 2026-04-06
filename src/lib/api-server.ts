@@ -42,8 +42,7 @@ export function fetchProducts(params?: {
   price_max?: number;
   isFeatured?: boolean;
   locale?: string;
-  clayType?: string;
-  teapotShape?: string;
+  attrs?: string;
 }) {
   return fetchFromBackend<ProductListResponse>(
     '/products',

@@ -26,8 +26,7 @@ interface ProductsPageProps {
     price_min?: string;
     price_max?: string;
     isFeatured?: string;
-    clayType?: string;
-    teapotShape?: string;
+    attrs?: string;
   }>;
 }
 
@@ -46,8 +45,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   const priceMin = sp.price_min ? Number(sp.price_min) : undefined;
   const priceMax = sp.price_max ? Number(sp.price_max) : undefined;
   const isFeatured = sp.isFeatured === 'true' ? true : undefined;
-  const clayType = sp.clayType ?? undefined;
-  const teapotShape = sp.teapotShape ?? undefined;
+  const attrs = sp.attrs ?? undefined;
 
   let productsData: Awaited<ReturnType<typeof fetchProducts>> | null = null;
   let categories: Awaited<ReturnType<typeof fetchCategories>> = [];
@@ -56,7 +54,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
 
   try {
     [productsData, categories, collections] = await Promise.all([
-      fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured, locale: safeLocale, clayType, teapotShape }),
+      fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured, locale: safeLocale, attrs }),
       fetchCategories(),
       fetchCollections(),
     ]);
