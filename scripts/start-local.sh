@@ -34,15 +34,18 @@ echo ""
 USE_LOCAL_DB=$(echo "${LOCAL_DATABASE_URL:-}" | grep -qE "localhost:330[67]|127\.0\.0\.1:330[67]" && echo "yes" || echo "no")
 
 # Docker Desktop 확인/시작
-if [ "$USE_LOCAL_DB" = "yes" ] && command -v docker > /dev/null 2>&1 && ! docker info > /dev/null 2>&1; then
-    echo -e "${YELLOW}⚠️  Docker Desktop 시작 중...${NC}"
-    open -a Docker 2>/dev/null || true
-    for i in {1..30}; do
-        sleep 1
-        docker info > /dev/null 2>&1 && break
-        [ $i -eq 30 ] && echo -e "${RED}❌ Docker Desktop 시작 실패${NC}" && exit 1
-    done
-    echo -e "${GREEN}✅ Docker Desktop 준비 완료${NC}"
+if [ "$USE_LOCAL_DB" = "yes" ] && command -v docker > /dev/null 2>&1; then
+    if ! docker info > /dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  Docker Desktop 시작 중...${NC}"
+        open -a Docker 2>/dev/null || true
+        sleep 3
+        for i in {1..30}; do
+            docker info > /dev/null 2>&1 && break
+            [ $i -eq 30 ] && echo -e "${RED}❌ Docker Desktop 시작 실패${NC}" && exit 1
+            sleep 1
+        done
+        echo -e "${GREEN}✅ Docker Desktop 준비 완료${NC}"
+    fi
 fi
 
 # Docker 컨테이너 시작 (--wait로 준비 완료까지 대기)
