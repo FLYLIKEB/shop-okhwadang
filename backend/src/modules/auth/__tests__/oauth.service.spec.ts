@@ -209,4 +209,42 @@ describe('OAuthService', () => {
       expect(mockUserRepository.create).not.toHaveBeenCalled();
     });
   });
+
+  describe('generateTokens', () => {
+    it('accessToken payload에 tokenType: access 포함', async () => {
+      const user = makeUser({ id: 1, email: 'test@example.com', role: UserRole.USER });
+      const signCalls: { payload: Record<string, unknown> }[] = [];
+      mockJwtService.sign.mockImplementation((payload: Record<string, unknown>) => {
+        signCalls.push({ payload });
+        return 'mock-token';
+      });
+
+      // Access private method via prototype
+      const generateTokens = (service as unknown as { generateTokens: (user: User) => Promise<{ accessToken: string; refreshToken: string }> }).generateTokens.bind(service);
+      await generateTokens(user);
+
+      // First sign call should be access token with tokenType: 'access'
+      const accessTokenCall = signCalls[0];
+      expect(accessTokenCall.payload).toHaveProperty('tokenType', 'access');
+      expect(accessTokenCall.payload).toHaveProperty('sub', user.id);
+      expect(accessTokenCall.payload).toHaveProperty('email', user.email);
+      expect(accessTokenCall.payload).toHaveProperty('role', user.role);
+    });
+
+    it('refreshToken payload에 tokenType: refresh 포함', async () => {
+      const user = makeUser({ id: 1, email: 'test@example.com', role: UserRole.USER });
+      const signCalls: { payload: Record<string, unknown> }[] = [];
+      mockJwtService.sign.mockImplementation((payload: Record<string, unknown>) => {
+        signCalls.push({ payload });
+        return 'mock-token';
+      });
+
+      const generateTokens = (service as unknown as { generateTokens: (user: User) => Promise<{ accessToken: string; refreshToken: string }> }).generateTokens.bind(service);
+      await generateTokens(user);
+
+      // Second sign call should be refresh token with tokenType: 'refresh'
+      const refreshTokenCall = signCalls[1];
+      expect(refreshTokenCall.payload).toHaveProperty('tokenType', 'refresh');
+    });
+  });
 });
