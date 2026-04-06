@@ -96,8 +96,8 @@ export default function CategoryNavBlock({ content }: Props) {
                 />
               )}
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300" />
-              <span className="absolute inset-0 flex flex-col items-start justify-end bg-gradient-to-t from-black/60 via-black/20 to-transparent p-3">
-                <span className="font-display text-lg font-medium text-white tracking-wide">
+              <span className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/40 via-black/20 to-transparent">
+                <span className="font-display text-lg font-medium text-white tracking-wide text-center">
                   {cat.name}
                 </span>
                 {cat.description && (
