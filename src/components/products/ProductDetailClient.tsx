@@ -89,7 +89,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   }
 
   return (
-    <div className="pb-24 md:pb-0">
+    <div className="pb-24 md:pb-0 mx-auto max-w-7xl px-4">
       <div className="grid grid-cols-1 md:grid-cols-2 min-h-[80vh]">
         {/* Left: Image gallery — sticky, full-bleed */}
         <div className="sticky top-0 h-screen hidden md:block">
