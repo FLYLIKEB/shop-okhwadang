@@ -18,5 +18,7 @@
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
     "esModuleInterop": true
-  }
+  },
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["eslint.config.js", "node_modules", "dist"]
 }
