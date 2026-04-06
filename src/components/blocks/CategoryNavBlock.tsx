@@ -62,7 +62,7 @@ interface Props {
 }
 
 export default function CategoryNavBlock({ content }: Props) {
-  const { category_ids = [], template, prefetched_categories } = content;
+  const { title, category_ids = [], template, prefetched_categories } = content;
   const [categories, setCategories] = useState<Category[]>(prefetched_categories ?? []);
   const [loading, setLoading] = useState(!prefetched_categories);
   const { ref, visible } = useScrollAnimation<HTMLElement>();
@@ -114,6 +114,7 @@ export default function CategoryNavBlock({ content }: Props) {
   if (template === 'image') {
     return (
       <nav className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {title && <h2 className="col-span-full text-2xl font-medium mb-2">{title}</h2>}
         {categories.map((cat) => (
           <CategoryImageCard key={cat.id} cat={cat} />
         ))}
@@ -123,6 +124,7 @@ export default function CategoryNavBlock({ content }: Props) {
 
   return (
     <nav ref={ref} className="py-12 border-t border-border">
+      {title && <h2 className="text-2xl font-medium mb-8 text-center">{title}</h2>}
       <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
         {categories.map((cat, i) => {
           const clayColor = getClayColor(cat.slug);

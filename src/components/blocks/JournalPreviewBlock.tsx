@@ -138,24 +138,16 @@ export default function JournalPreviewBlock({ content }: Props) {
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
       )}
     >
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8">
         {title && <h2 className="text-2xl font-medium">{title}</h2>}
-        {more_href && (
+        <div className="text-right mt-2">
           <Link
-            href={more_href}
+            href={more_href ?? '/journal'}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            전체 보기
+            전체 보기 →
           </Link>
-        )}
-        {!more_href && (
-          <Link
-            href="/journal"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            전체 보기
-          </Link>
-        )}
+        </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {journals.map((journal, i) => (
