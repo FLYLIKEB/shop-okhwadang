@@ -47,7 +47,7 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
     }
 
     paymentsApi
-      .confirm({ orderId: ctx.orderId, paymentKey, amount })
+      .confirm({ orderId: ctx.orderId, paymentKey, amount: ctx.amount })
       .then(async () => {
         toast.success('결제가 완료되었습니다.');
         sessionStorage.removeItem('checkoutItems');
