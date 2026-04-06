@@ -16,6 +16,8 @@ const DUMMY_PRODUCT: ProductDetail = {
   status: 'active',
   isFeatured: true,
   viewCount: 0,
+  clayType: 'zhuni',
+  teapotShape: 'xishi',
   rating: 4.5,
   reviewCount: 12,
   stock: 3,

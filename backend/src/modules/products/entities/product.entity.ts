@@ -97,6 +97,12 @@ export class Product {
   @Column({ name: 'view_count', default: 0 })
   viewCount!: number;
 
+  @Column({ name: 'clay_type', type: 'varchar', length: 50, nullable: true })
+  clayType!: string | null;
+
+  @Column({ name: 'teapot_shape', type: 'varchar', length: 50, nullable: true })
+  teapotShape!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

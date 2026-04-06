@@ -6,7 +6,7 @@ import FilterSidebar from '@/components/filters/FilterSidebar';
 import MobileFilterBar from '@/components/filters/MobileFilterBar';
 import Pagination from '@/components/products/Pagination';
 import ProductSkeleton from '@/components/products/ProductSkeleton';
-import { fetchProducts, fetchCategories } from '@/lib/api-server';
+import { fetchProducts, fetchCategories, fetchCollections } from '@/lib/api-server';
 import ProductErrorState from '@/components/products/ProductErrorState';
 import type { ProductSort } from '@/lib/api';
 import type { Locale } from '@/utils/currency';
@@ -27,7 +27,7 @@ interface ProductsPageProps {
     price_max?: string;
     isFeatured?: string;
     clayType?: string;
-    shape?: string;
+    teapotShape?: string;
   }>;
 }
 
@@ -46,21 +46,29 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   const priceMin = sp.price_min ? Number(sp.price_min) : undefined;
   const priceMax = sp.price_max ? Number(sp.price_max) : undefined;
   const isFeatured = sp.isFeatured === 'true' ? true : undefined;
+  const clayType = sp.clayType ?? undefined;
+  const teapotShape = sp.teapotShape ?? undefined;
 
   let productsData: Awaited<ReturnType<typeof fetchProducts>> | null = null;
   let categories: Awaited<ReturnType<typeof fetchCategories>> = [];
+  let collections: Awaited<ReturnType<typeof fetchCollections>> | null = null;
   let error = false;
 
   try {
-    [productsData, categories] = await Promise.all([
-      fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured, locale: safeLocale }),
+    [productsData, categories, collections] = await Promise.all([
+      fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured, locale: safeLocale, clayType, teapotShape }),
       fetchCategories(),
+      fetchCollections(),
     ]);
   } catch {
     error = true;
     productsData = null;
     categories = [];
+    collections = null;
   }
+
+  const clayCollections = collections?.clay ?? [];
+  const shapeCollections = collections?.shape ?? [];
 
   const selectedCategory = categoryId
     ? categories.find((c) => c.id === categoryId || c.children?.some((child) => child.id === categoryId))
@@ -79,7 +87,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
       {/* 모바일 필터 바 */}
       <div className="mt-4 md:hidden">
         <Suspense fallback={null}>
-          <MobileFilterBar categories={categories ?? []} />
+          <MobileFilterBar categories={categories ?? []} clayCollections={clayCollections} shapeCollections={shapeCollections} />
         </Suspense>
       </div>
 
@@ -87,7 +95,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
         {/* 데스크탑 사이드바 */}
         <div className="hidden md:block md:w-48 md:shrink-0">
           <Suspense fallback={null}>
-            <FilterSidebar categories={categories ?? []} />
+            <FilterSidebar categories={categories ?? []} clayCollections={clayCollections} shapeCollections={shapeCollections} />
           </Suspense>
         </div>
 

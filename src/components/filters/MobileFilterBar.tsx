@@ -5,24 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/components/ui/utils';
 import PriceRangeFilter from './PriceRangeFilter';
 import TeapotShapeFilter from './TeapotShapeFilter';
-import type { Category } from '@/lib/api';
-import type { ClayType } from './ClayTypeFilter';
-import type { TeapotShape } from './TeapotShapeFilter';
-
-const CLAY_TYPES: { value: ClayType; label: string }[] = [
-  { value: '주니', label: '주니(朱泥)' },
-  { value: '단니', label: '단니(段泥)' },
-  { value: '자니', label: '자니(紫泥)' },
-  { value: '흑니', label: '흑니(黑泥)' },
-  { value: '청수니', label: '청수니(靑水泥)' },
-  { value: '녹니', label: '녹니(綠泥)' },
-];
+import type { Category, Collection } from '@/lib/api';
 
 interface MobileFilterBarProps {
   categories: Category[];
+  clayCollections: Collection[];
+  shapeCollections: Collection[];
 }
 
-export default function MobileFilterBar({ categories }: MobileFilterBarProps) {
+export default function MobileFilterBar({ categories, clayCollections, shapeCollections }: MobileFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filterOpen, setFilterOpen] = useState(false);
@@ -31,10 +22,8 @@ export default function MobileFilterBar({ categories }: MobileFilterBarProps) {
   const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : undefined;
   const priceMin = searchParams.get('price_min') ? Number(searchParams.get('price_min')) : undefined;
   const priceMax = searchParams.get('price_max') ? Number(searchParams.get('price_max')) : undefined;
-  const clayTypeParam = searchParams.get('clayType');
-  const selectedClayType = clayTypeParam ? (clayTypeParam as ClayType) : undefined;
-  const shapeParam = searchParams.get('shape');
-  const selectedShape = shapeParam ? (shapeParam as TeapotShape) : undefined;
+  const selectedClayType = searchParams.get('clayType') ?? undefined;
+  const selectedShape = searchParams.get('teapotShape') ?? undefined;
 
   const hasActiveFilters =
     priceMin !== undefined ||
@@ -62,7 +51,7 @@ export default function MobileFilterBar({ categories }: MobileFilterBarProps) {
     updateParams({ categoryId: id !== undefined ? String(id) : undefined });
   };
 
-  const handleClayTypeSelect = (value: ClayType | undefined) => {
+  const handleClayTypeSelect = (value: string | undefined) => {
     updateParams({ clayType: value });
   };
 
@@ -73,12 +62,12 @@ export default function MobileFilterBar({ categories }: MobileFilterBarProps) {
     });
   };
 
-  const handleShapeSelect = (value: TeapotShape | undefined) => {
-    updateParams({ shape: value });
+  const handleShapeSelect = (value: string | undefined) => {
+    updateParams({ teapotShape: value });
   };
 
   const handleReset = () => {
-    updateParams({ price_min: undefined, price_max: undefined, shape: undefined });
+    updateParams({ price_min: undefined, price_max: undefined, teapotShape: undefined });
     setFilterOpen(false);
   };
 
@@ -146,21 +135,21 @@ export default function MobileFilterBar({ categories }: MobileFilterBarProps) {
         >
           전체
         </button>
-        {CLAY_TYPES.map((item) => (
+        {clayCollections.map((item) => (
           <button
-            key={item.value}
+            key={item.id}
             type="button"
             onClick={() =>
-              handleClayTypeSelect(selectedClayType === item.value ? undefined : item.value)
+              handleClayTypeSelect(selectedClayType === item.name ? undefined : item.name)
             }
             className={cn(
               'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              selectedClayType === item.value
+              selectedClayType === item.name
                 ? 'border-primary bg-primary text-primary-foreground'
                 : 'border-border bg-background text-muted-foreground',
             )}
           >
-            {item.label}
+            {item.nameKo ?? item.name}
           </button>
         ))}
       </div>
@@ -184,7 +173,7 @@ export default function MobileFilterBar({ categories }: MobileFilterBarProps) {
               </button>
             </div>
             <div className="flex flex-col gap-6">
-              <TeapotShapeFilter selected={selectedShape} onSelect={handleShapeSelect} />
+              <TeapotShapeFilter collections={shapeCollections} selected={selectedShape} onSelect={handleShapeSelect} />
               <PriceRangeFilter min={priceMin} max={priceMax} onChange={handlePriceChange} />
             </div>
             <div className="mt-6 flex gap-3">

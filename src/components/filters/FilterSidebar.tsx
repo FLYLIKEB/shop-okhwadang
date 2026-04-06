@@ -7,15 +7,15 @@ import CategoryTree from './CategoryTree';
 import PriceRangeFilter from './PriceRangeFilter';
 import ClayTypeFilter from './ClayTypeFilter';
 import TeapotShapeFilter from './TeapotShapeFilter';
-import type { Category } from '@/lib/api';
-import type { ClayType } from './ClayTypeFilter';
-import type { TeapotShape } from './TeapotShapeFilter';
+import type { Category, Collection } from '@/lib/api';
 
 interface FilterSidebarProps {
   categories: Category[];
+  clayCollections: Collection[];
+  shapeCollections: Collection[];
 }
 
-export default function FilterSidebar({ categories }: FilterSidebarProps) {
+export default function FilterSidebar({ categories, clayCollections, shapeCollections }: FilterSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -24,10 +24,8 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
   const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : undefined;
   const priceMin = searchParams.get('price_min') ? Number(searchParams.get('price_min')) : undefined;
   const priceMax = searchParams.get('price_max') ? Number(searchParams.get('price_max')) : undefined;
-  const clayTypeParam = searchParams.get('clayType');
-  const selectedClayType = clayTypeParam ? (clayTypeParam as ClayType) : undefined;
-  const shapeParam = searchParams.get('shape');
-  const selectedShape = shapeParam ? (shapeParam as TeapotShape) : undefined;
+  const selectedClayType = searchParams.get('clayType') ?? undefined;
+  const selectedShape = searchParams.get('teapotShape') ?? undefined;
 
   const hasActiveFilters =
     selectedCategoryId !== undefined ||
@@ -60,12 +58,12 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
     });
   };
 
-  const handleClayTypeSelect = (value: ClayType | undefined) => {
+  const handleClayTypeSelect = (value: string | undefined) => {
     updateParams({ clayType: value });
   };
 
-  const handleShapeSelect = (value: TeapotShape | undefined) => {
-    updateParams({ shape: value });
+  const handleShapeSelect = (value: string | undefined) => {
+    updateParams({ teapotShape: value });
   };
 
   const handleReset = () => {
@@ -74,7 +72,7 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
     params.delete('price_min');
     params.delete('price_max');
     params.delete('clayType');
-    params.delete('shape');
+    params.delete('teapotShape');
     params.delete('page');
     router.push(`/products?${params.toString()}`);
   };
@@ -101,11 +99,13 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
       />
 
       <ClayTypeFilter
+        collections={clayCollections}
         selected={selectedClayType}
         onSelect={handleClayTypeSelect}
       />
 
       <TeapotShapeFilter
+        collections={shapeCollections}
         selected={selectedShape}
         onSelect={handleShapeSelect}
       />

@@ -81,6 +81,8 @@ export interface Product {
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   isFeatured: boolean;
   viewCount: number;
+  clayType: string | null;
+  teapotShape: string | null;
   category: Category | null;
   images: ProductImage[];
 }
