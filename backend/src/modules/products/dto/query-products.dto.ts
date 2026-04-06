@@ -69,6 +69,16 @@ export class QueryProductsDto {
   @Min(0)
   price_max?: number;
 
+  @ApiProperty({ example: '주니', description: '니료 종류 필터', required: false })
+  @IsOptional()
+  @IsString()
+  clayType?: string;
+
+  @ApiProperty({ example: '서시', description: '모양 필터', required: false })
+  @IsOptional()
+  @IsString()
+  teapotShape?: string;
+
   @ApiProperty({ example: 'ko', description: '언어 (ko, en, ja, zh)', required: false })
   @IsOptional()
   @IsString()

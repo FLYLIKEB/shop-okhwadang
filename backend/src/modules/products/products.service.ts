@@ -105,6 +105,8 @@ export class ProductsService {
       price_min,
       price_max,
       locale,
+      clayType,
+      teapotShape,
     } = query;
 
     if (price_min !== undefined && price_max !== undefined && price_min > price_max) {
@@ -152,6 +154,14 @@ export class ProductsService {
 
     if (price_max !== undefined) {
       qb.andWhere('product.price <= :priceMax', { priceMax: price_max });
+    }
+
+    if (clayType) {
+      qb.andWhere('product.clayType = :clayType', { clayType });
+    }
+
+    if (teapotShape) {
+      qb.andWhere('product.teapotShape = :teapotShape', { teapotShape });
     }
 
     switch (sort) {

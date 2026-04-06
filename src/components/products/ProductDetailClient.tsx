@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/common/PriceDisplay'
-import type { ProductDetail, ProductOption, ProductDetailImage } from '@/lib/api'
+import type { ProductDetail, ProductOption, ProductDetailImage, Collection } from '@/lib/api'
 import { wishlistApi } from '@/lib/api'
 import { useCart } from '@/contexts/CartContext'
 import { useMobileNav } from '@/contexts/MobileNavContext'
@@ -17,14 +18,21 @@ import OptionSelector from './OptionSelector'
 import QuantitySelector from './QuantitySelector'
 import ProductTabs from './ProductTabs'
 import StarRating from '@/components/reviews/StarRating'
-import type { Locale } from '@/utils/currency'
+import { formatCurrency, type Locale } from '@/utils/currency'
+
+function findCollectionLabel(collections: Collection[], name: string): string {
+  const found = collections.find((c) => c.name === name)
+  return found?.nameKo ?? name
+}
 
 interface ProductDetailClientProps {
   product: ProductDetail
   locale?: Locale
+  clayCollections?: Collection[]
+  shapeCollections?: Collection[]
 }
 
-export default function ProductDetailClient({ product, locale = 'ko' }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, locale = 'ko', clayCollections = [], shapeCollections = [] }: ProductDetailClientProps) {
   const router = useRouter()
   const { addItem } = useCart()
   const { addItem: addRecentlyViewed } = useRecentlyViewed()
@@ -64,6 +72,10 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const maxQuantity = selectedOption?.stock ?? product.stock
   const isSoldout = product.status === 'soldout'
   const descriptionImages = product.detailImages?.filter((img) => img.isActive) ?? []
+
+  const basePrice = product.salePrice ?? product.price
+  const unitPrice = basePrice + (selectedOption?.priceAdjustment ?? 0)
+  const totalPrice = unitPrice * quantity
 
 
   function handleIncrease() {
@@ -137,10 +149,34 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Breadcrumb */}
           {product.category && (
             <nav className="typo-label text-muted-foreground">
-              <span>{product.category.name}</span>
+              <Link href={`/products?categoryId=${product.category.id}`} className="hover:text-foreground transition-colors underline-offset-2 hover:underline">
+                {product.category.name}
+              </Link>
               <span className="mx-1">/</span>
               <span className="text-foreground">{product.name}</span>
             </nav>
+          )}
+
+          {/* Clay type & Shape badges */}
+          {(product.clayType || product.teapotShape) && (
+            <div className="flex flex-wrap gap-2">
+              {product.clayType && (
+                <Link
+                  href={`/products?clayType=${encodeURIComponent(product.clayType)}`}
+                  className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
+                >
+                  니료: {findCollectionLabel(clayCollections, product.clayType)}
+                </Link>
+              )}
+              {product.teapotShape && (
+                <Link
+                  href={`/products?teapotShape=${encodeURIComponent(product.teapotShape)}`}
+                  className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
+                >
+                  모양: {findCollectionLabel(shapeCollections, product.teapotShape)}
+                </Link>
+              )}
+            </div>
           )}
 
           {/* Name */}
@@ -179,13 +215,44 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Quantity */}
           <div className="flex flex-col gap-2">
             <span className="typo-label text-foreground">수량</span>
-            <QuantitySelector
-              quantity={quantity}
-              maxQuantity={Math.max(maxQuantity, 1)}
-              onIncrease={handleIncrease}
-              onDecrease={handleDecrease}
-            />
+            <div className="flex items-center gap-3">
+              <QuantitySelector
+                quantity={quantity}
+                maxQuantity={Math.max(maxQuantity, 1)}
+                onIncrease={handleIncrease}
+                onDecrease={handleDecrease}
+              />
+              <span className="text-base font-semibold text-foreground tabular-nums">
+                {formatCurrency(totalPrice, locale)}
+              </span>
+            </div>
           </div>
+
+          {/* Selected summary */}
+          {(product.options.length === 0 || selectedOption) && (
+            <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-4">
+              {selectedOption && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {selectedOption.name}: {selectedOption.value}
+                    {selectedOption.priceAdjustment !== 0 && (
+                      <span className="ml-1 text-xs">
+                        ({selectedOption.priceAdjustment > 0 ? '+' : ''}{formatCurrency(selectedOption.priceAdjustment, locale)})
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-foreground">{formatCurrency(unitPrice, locale)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">수량 {quantity}개</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-3">
+                <span className="text-sm font-medium text-foreground">총 상품금액</span>
+                <span className="text-xl font-bold text-foreground">{formatCurrency(totalPrice, locale)}</span>
+              </div>
+            </div>
+          )}
 
           {/* Action buttons — desktop only */}
           <div className="hidden md:flex gap-3">

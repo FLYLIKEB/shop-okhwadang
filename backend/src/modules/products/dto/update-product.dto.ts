@@ -67,6 +67,18 @@ export class UpdateProductDto {
   @IsBoolean()
   isFeatured?: boolean;
 
+  @ApiPropertyOptional({ example: '주니', description: '니료(泥料) 종류' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  clayType?: string;
+
+  @ApiPropertyOptional({ example: '서시', description: '자사호 모양' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  teapotShape?: string;
+
   @ApiPropertyOptional({ type: [ProductImageInputDto], description: '갤러리 이미지 목록' })
   @IsOptional()
   @IsArray()

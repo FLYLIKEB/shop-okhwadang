@@ -1,24 +1,15 @@
 'use client';
 
 import { cn } from '@/components/ui/utils';
-
-export type ClayType = '주니' | '단니' | '자니' | '흑니' | '청수니' | '녹니';
-
-const CLAY_TYPES: { value: ClayType; label: string }[] = [
-  { value: '주니', label: '주니(朱泥)' },
-  { value: '단니', label: '단니(段泥)' },
-  { value: '자니', label: '자니(紫泥)' },
-  { value: '흑니', label: '흑니(黑泥)' },
-  { value: '청수니', label: '청수니(靑水泥)' },
-  { value: '녹니', label: '녹니(綠泥)' },
-];
+import type { Collection } from '@/lib/api';
 
 interface ClayTypeFilterProps {
-  selected: ClayType | undefined;
-  onSelect: (value: ClayType | undefined) => void;
+  collections: Collection[];
+  selected: string | undefined;
+  onSelect: (value: string | undefined) => void;
 }
 
-export default function ClayTypeFilter({ selected, onSelect }: ClayTypeFilterProps) {
+export default function ClayTypeFilter({ collections, selected, onSelect }: ClayTypeFilterProps) {
   return (
     <div>
       <h2 className="mb-3 text-sm font-semibold text-foreground">니료(泥料)</h2>
@@ -35,19 +26,19 @@ export default function ClayTypeFilter({ selected, onSelect }: ClayTypeFilterPro
         >
           전체
         </button>
-        {CLAY_TYPES.map((item) => (
+        {collections.map((item) => (
           <button
-            key={item.value}
+            key={item.id}
             type="button"
-            onClick={() => onSelect(selected === item.value ? undefined : item.value)}
+            onClick={() => onSelect(selected === item.name ? undefined : item.name)}
             className={cn(
               'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              selected === item.value
+              selected === item.name
                 ? 'border-primary bg-primary text-primary-foreground'
                 : 'border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground',
             )}
           >
-            {item.label}
+            {item.nameKo ?? item.name}
           </button>
         ))}
       </div>
