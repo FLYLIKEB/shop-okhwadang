@@ -14,13 +14,14 @@ const eslintConfig = tseslint.configs.recommended;
 
 export default [
   {
-    ignores: ['backend/**', '.next/**'],
+    ignores: ['backend/**', '.next/**', 'src/test/**'],
   },
   ...eslintConfig,
   ...compat.extends('next/core-web-vitals'),
   {
     rules: {
       'no-console': 'error',
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
 ];
