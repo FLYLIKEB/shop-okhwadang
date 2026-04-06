@@ -8,7 +8,6 @@ import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 import { MobileNavProvider } from '@/contexts/MobileNavContext';
 import Providers from '@/components/Providers';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
-import BackButton from '@/components/BackButton';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
 
@@ -125,7 +124,6 @@ export default async function LocaleLayout({
             <MobileNavProvider initialVisible={mobileBottomNavVisible}>
               <div className="flex min-h-screen flex-col">
               <Header />
-              <BackButton />
               <main id="main-content" className="flex-1 pb-16 md:pb-0">{children}</main>
               <Footer />
               <MobileBottomNavWrapper />

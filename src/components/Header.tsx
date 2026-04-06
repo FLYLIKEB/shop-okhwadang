@@ -595,9 +595,6 @@ export default function Header() {
             >
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </button>
-            <div className="p-2">
-              <CartBadge itemCount={itemCount} />
-            </div>
             {isAuthenticated ? (
               <Link href="/my" aria-label="마이페이지" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                 <User className="h-5 w-5" />
@@ -607,6 +604,9 @@ export default function Header() {
                 <User className="h-5 w-5" />
               </Link>
             )}
+            <div className="p-2">
+              <CartBadge itemCount={itemCount} />
+            </div>
           </div>
         </div>
 
