@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { handleApiError } from '@/utils/error';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { formatCurrency } from '@/utils/currency';
 import {
   adminDashboardApi,
@@ -83,6 +84,7 @@ function KpiCard({ label, value, diffPct, unit }: KpiCardProps) {
 }
 
 export default function DashboardPage() {
+  const { isAdmin } = useAdminGuard();
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState('30d');
@@ -109,10 +111,11 @@ export default function DashboardPage() {
   );
 
   useEffect(() => {
+    if (!isAdmin) return;
     if (period === 'custom' && (!customStart || !customEnd)) return;
     void fetchDashboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, customStart, customEnd]);
+  }, [isAdmin, period, customStart, customEnd]);
 
   return (
     <div>
