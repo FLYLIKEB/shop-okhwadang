@@ -45,9 +45,25 @@ if echo "${LOCAL_DATABASE_URL:-}" | grep -qE "localhost:330[67]|127\.0\.0\.1:330
     if command -v docker > /dev/null 2>&1; then
         # Docker Desktop이 실행 중인지 확인
         if ! docker info > /dev/null 2>&1; then
-            echo -e "${RED}❌ Docker Desktop이 실행 중이 아닙니다.${NC}"
-            echo "   Docker Desktop 앱을 시작한 후 다시 시도하세요."
-            exit 1
+            echo -e "${YELLOW}⚠️  Docker Desktop이 실행 중이 아닙니다. 자동 시작 시도...${NC}"
+            if command -v open > /dev/null 2>&1; then
+                open -a Docker 2>/dev/null || true
+                echo -e "${YELLOW}⏳ Docker Desktop 시작 대기 중 (최대 30초)...${NC}"
+                for i in {1..30}; do
+                    sleep 1
+                    if docker info > /dev/null 2>&1; then
+                        echo -e "${GREEN}✅ Docker Desktop 시작됨${NC}"
+                        break
+                    fi
+                    if [ $i -eq 30 ]; then
+                        echo -e "${RED}❌ Docker Desktop 시작 시간 초과. 수동으로 시작한 후 다시 시도하세요.${NC}"
+                        exit 1
+                    fi
+                done
+            else
+                echo -e "${RED}❌ Docker Desktop을 시작할 수 없습니다.${NC}"
+                exit 1
+            fi
         fi
 
         cd "$BACKEND_DIR"
