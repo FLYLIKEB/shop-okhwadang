@@ -63,7 +63,7 @@ export interface Category {
   id: number;
   name: string;
   slug: string;
-  description: string | null;
+  description?: string | null;
   parentId: number | null;
   imageUrl?: string | null;
   children?: Category[];
