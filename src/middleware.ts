@@ -5,51 +5,115 @@ import { routing } from '@/i18n/routing';
 
 const intlMiddleware = createMiddleware(routing);
 
-// Compile regex once at module scope; trailing path is optional to match bare /ko
 const localePattern = new RegExp(`^/(${routing.locales.join('|')})(/.*)?$`);
 
 const ADMIN_ROLES = new Set(['admin', 'super_admin']);
 
-/**
- * Decode JWT payload without signature verification (edge runtime safe).
- * Returns true if the token's role claim is an admin role.
- */
-function hasAdminRole(token: string): boolean {
+export function resetPublicKeyCache(): void {
+  // No-op for backwards compatibility
+}
+
+let testPublicKey: string | null = null;
+
+export function setTestPublicKey(pem: string): void {
+  testPublicKey = pem;
+}
+
+async function getPublicKey(): Promise<CryptoKey | null> {
+  const publicKeyPem = testPublicKey ?? process.env.JWT_PUBLIC_KEY;
+  if (!publicKeyPem) return null;
+
+  const keyType = publicKeyPem.includes('BEGIN PUBLIC KEY') ? 'spki' : 'raw';
+
+  let binaryKey: ArrayBuffer;
+  if (keyType === 'spki') {
+    const pemBody = publicKeyPem
+      .replace(/-----BEGIN PUBLIC KEY-----/, '')
+      .replace(/-----END PUBLIC KEY-----/, '')
+      .replace(/\s/g, '');
+    const binaryStr = atob(pemBody);
+    const keyBytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      keyBytes[i] = binaryStr.charCodeAt(i);
+    }
+    binaryKey = keyBytes.buffer;
+  } else {
+    const binaryStr = atob(publicKeyPem);
+    const keyBytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      keyBytes[i] = binaryStr.charCodeAt(i);
+    }
+    binaryKey = keyBytes.buffer;
+  }
+
+  return crypto.subtle.importKey(
+    'spki',
+    binaryKey,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['verify'],
+  );
+}
+
+async function verifyRS256(token: string): Promise<Record<string, unknown> | null> {
   try {
     const parts = token.split('.');
-    if (parts.length !== 3) return false;
-    // base64url → base64 → JSON
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const json = atob(base64);
-    const payload = JSON.parse(json) as Record<string, unknown>;
-    return typeof payload.role === 'string' && ADMIN_ROLES.has(payload.role);
+    if (parts.length !== 3) return null;
+
+    const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
+    if (header.alg !== 'RS256' || header.typ !== 'JWT') return null;
+
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+
+    const key = await getPublicKey();
+    if (!key) return null;
+
+    const signature = Uint8Array.from(
+      atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
+      (c) => c.charCodeAt(0),
+    ).buffer;
+
+    const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
+
+    const valid = await crypto.subtle.verify(
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      key,
+      signature,
+      data,
+    );
+
+    if (!valid) return null;
+    return payload;
   } catch {
-    return false;
+    return null;
   }
 }
 
-export function middleware(request: NextRequest) {
+async function hasAdminRole(token: string): Promise<boolean> {
+  const payload = await verifyRS256(token);
+  if (!payload) return false;
+  return typeof payload.role === 'string' && ADMIN_ROLES.has(payload.role);
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('accessToken')?.value;
 
-  // Extract locale prefix and stripped path for auth checks
   const localeMatch = pathname.match(localePattern);
   const localePrefix = localeMatch ? `/${localeMatch[1]}` : '';
   const pathnameWithoutLocale = localeMatch ? (localeMatch[2] || '/') : pathname;
 
-  // Protect admin routes — require authentication and admin role
   if (pathnameWithoutLocale.startsWith('/admin')) {
     if (!token) {
       const loginUrl = new URL(`${localePrefix}/login`, request.url);
       loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
       return NextResponse.redirect(loginUrl);
     }
-    if (!hasAdminRole(token)) {
+    if (!(await hasAdminRole(token))) {
       return NextResponse.redirect(new URL(`${localePrefix}/`, request.url));
     }
   }
 
-  // Protect user-only routes
   if (pathnameWithoutLocale.startsWith('/my') || pathnameWithoutLocale.startsWith('/checkout')) {
     if (!token) {
       const loginUrl = new URL(`${localePrefix}/login`, request.url);
@@ -58,7 +122,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Skip intl middleware for API routes
   if (pathnameWithoutLocale.startsWith('/api')) {
     return NextResponse.next();
   }
