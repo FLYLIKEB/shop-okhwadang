@@ -6,8 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import SafeHtml from '@/components/common/SafeHtml';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
@@ -131,14 +130,16 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                   {slide.title}
                 </h1>
                 {slide.subtitle && (
-                  <p className="mt-4 typo-body text-white/90">
-                    {slide.subtitle}
-                  </p>
+                  <SafeHtml
+                    html={slide.subtitle}
+                    className="mt-4 typo-body text-white/90 [&_p]:mt-1 [&_strong]:text-white [&_b]:text-white"
+                  />
                 )}
                 {description && (
-                  <div className="mt-4 text-white/80">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
-                  </div>
+                  <SafeHtml
+                    html={description}
+                    className="mt-4 text-white/80 [&_p]:mt-1 [&_strong]:text-white [&_b]:text-white"
+                  />
                 )}
                 {slide.cta_text && slide.cta_url && (
                   <div className="mt-8">
@@ -224,9 +225,10 @@ export default function HeroBannerBlock({ content }: Props) {
           <h2 className="typo-h2 text-foreground">{title}</h2>
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
           {description && (
-            <div className="mt-4 text-muted-foreground">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
-            </div>
+            <SafeHtml
+              html={description}
+              className="mt-4 text-muted-foreground [&_p]:mt-1 [&_strong]:text-foreground [&_b]:text-foreground"
+            />
           )}
           {cta_text && cta_url && (
             <Link
@@ -272,9 +274,10 @@ export default function HeroBannerBlock({ content }: Props) {
           <h1 className={cn('typo-h0 font-display', image_url ? 'text-white' : 'text-foreground')}>{title}</h1>
           {subtitle && <p className={cn('mt-4 typo-body', image_url ? 'text-white/90' : 'text-muted-foreground')}>{subtitle}</p>}
           {description && (
-            <div className={cn('mt-4', image_url ? 'text-white/80' : 'text-muted-foreground')}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
-            </div>
+            <SafeHtml
+              html={description}
+              className={cn('mt-4 [&_p]:mt-1', image_url ? 'text-white/80 [&_strong]:text-white [&_b]:text-white' : 'text-muted-foreground [&_strong]:text-foreground [&_b]:text-foreground')}
+            />
           )}
           {cta_text && cta_url && (
             <div className="mt-8">
