@@ -199,10 +199,14 @@ export default function HeroBannerBlock({ content }: Props) {
   );
 
   if (template === 'slider') {
-    const resolvedSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
+    if (!slides || slides.length === 0) {
+      return (
+        <section className="relative w-full aspect-[16/7] md:aspect-[16/6] bg-muted animate-pulse" />
+      );
+    }
     return (
       <ScrollLogoProvider value={scrollLogoContextValue}>
-        <SliderHero slides={resolvedSlides} description={description} sectionRef={sectionRef} heroLogoStyle={heroLogoStyle} />
+        <SliderHero slides={slides} description={description} sectionRef={sectionRef} heroLogoStyle={heroLogoStyle} />
       </ScrollLogoProvider>
     );
   }

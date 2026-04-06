@@ -29,6 +29,15 @@ echo -e "${BLUE}🚀 옥화당 — 로컬 개발 환경 시작 중...${NC}"
 echo ""
 
 bash "$PROJECT_ROOT/scripts/stop-local.sh" 2>/dev/null || true
+
+# 다른 워크트리/세션에서 남은 좀비 nest/next 프로세스 정리
+STALE_NEST=$(pgrep -f "shop-okhwadang.*nest start" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$STALE_NEST" -gt 0 ]; then
+    echo -e "${YELLOW}⚠️  좀비 nest 프로세스 ${STALE_NEST}개 정리 중...${NC}"
+    pkill -9 -f "shop-okhwadang.*nest start" 2>/dev/null || true
+    sleep 0.5
+fi
+
 echo ""
 
 USE_LOCAL_DB=$(echo "${LOCAL_DATABASE_URL:-}" | grep -qE "localhost:330[67]|127\.0\.0\.1:330[67]" && echo "yes" || echo "no")

@@ -66,15 +66,18 @@ function ImageGalleryError({ error, onRetry }: { error: Error; onRetry?: () => v
 }
 
 export default function ImageGallery({ images: rawImages, isLoading, error, onRetry }: ImageGalleryProps) {
-  const images = rawImages.length > 0 ? rawImages : FALLBACK_IMAGES
+  const images = rawImages.length > 0 ? rawImages : []
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const mainImageRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const thumbnailRef = useRef<HTMLDivElement>(null)
   const rafId = useRef<number>(0)
   const isDragging = useRef(false)
+  const isScrolling = useRef(false)
+  const touchSwiped = useRef(false)
 
   const {
     lightboxZoomed,
@@ -90,21 +93,60 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
     resetLightboxState,
   } = useLightboxInteraction()
 
+  const scrollToIndex = useCallback((index: number) => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    const slideWidth = container.offsetWidth
+    isScrolling.current = true
+    container.scrollTo({ left: slideWidth * index, behavior: 'smooth' })
+    setTimeout(() => { isScrolling.current = false }, 350)
+  }, [])
+
   const goPrev = useCallback(() => {
     resetLightboxState()
-    setSelectedIndex((i) => (i === 0 ? images.length - 1 : i - 1))
-  }, [images.length, resetLightboxState])
+    setSelectedIndex((i) => {
+      const next = i === 0 ? images.length - 1 : i - 1
+      scrollToIndex(next)
+      return next
+    })
+  }, [images.length, resetLightboxState, scrollToIndex])
 
   const goNext = useCallback(() => {
     resetLightboxState()
-    setSelectedIndex((i) => (i === images.length - 1 ? 0 : i + 1))
-  }, [images.length, resetLightboxState])
+    setSelectedIndex((i) => {
+      const next = i === images.length - 1 ? 0 : i + 1
+      scrollToIndex(next)
+      return next
+    })
+  }, [images.length, resetLightboxState, scrollToIndex])
 
-  const { handleTouchStart, handleTouchEnd, touchSwiped } = useImageGallerySwipe({
-    onSwipeLeft: goNext,
-    onSwipeRight: goPrev,
-    thumbnailRef,
-  })
+  // Sync selectedIndex from scroll position
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    let scrollRaf = 0
+    function onScroll() {
+      cancelAnimationFrame(scrollRaf)
+      scrollRaf = requestAnimationFrame(() => {
+        if (isScrolling.current || !container) return
+        const slideWidth = container.offsetWidth
+        if (slideWidth === 0) return
+        const newIndex = Math.round(container.scrollLeft / slideWidth)
+        setSelectedIndex((prev) => (prev !== newIndex ? newIndex : prev))
+      })
+    }
+    container.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      container.removeEventListener('scroll', onScroll)
+      cancelAnimationFrame(scrollRaf)
+    }
+  }, [])
+
+  // Sync scroll position when selectedIndex changes from thumbnail click
+  const handleSelectIndex = useCallback((index: number) => {
+    setSelectedIndex(index)
+    scrollToIndex(index)
+  }, [scrollToIndex])
 
   const closeLightbox = useCallback(() => {
     setLightboxOpen(false)
@@ -179,39 +221,48 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
     )
   }
 
-  const selectedImage = images[selectedIndex]
-
   return (
     <>
       <div className="flex flex-col gap-3">
-        <div
-          ref={mainImageRef}
-          className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted cursor-zoom-in group"
-          onMouseEnter={() => setIsZoomed(true)}
-          onMouseLeave={() => setIsZoomed(false)}
-          onMouseMove={handleMouseMove}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onClick={() => { if (!touchSwiped.current) setLightboxOpen(true) }}
-          role="button"
-          tabIndex={0}
-          aria-label="이미지 확대해서 보기"
-          onKeyDown={(e) => e.key === 'Enter' && setLightboxOpen(true)}
-        >
-          <Image
-            src={selectedImage.url}
-            alt={selectedImage.alt ?? '상품 이미지'}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className={cn(
-              'object-cover transition-transform duration-200',
-              isZoomed ? 'scale-150' : 'scale-100',
-            )}
-            style={imageStyle}
-            priority
-          />
+        {/* Horizontal scroll-snap gallery */}
+        <div className="relative overflow-hidden rounded-lg bg-muted group">
+          <div
+            ref={scrollContainerRef}
+            className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {images.map((image, index) => (
+              <div
+                key={image.id}
+                ref={index === selectedIndex ? mainImageRef : undefined}
+                className="relative aspect-square w-full flex-shrink-0 snap-center cursor-zoom-in"
+                onMouseEnter={() => { if (index === selectedIndex) setIsZoomed(true) }}
+                onMouseLeave={() => setIsZoomed(false)}
+                onMouseMove={index === selectedIndex ? handleMouseMove : undefined}
+                onClick={() => { setLightboxOpen(true) }}
+                role="button"
+                tabIndex={index === selectedIndex ? 0 : -1}
+                aria-label={`이미지 ${index + 1} 확대해서 보기`}
+                onKeyDown={(e) => e.key === 'Enter' && setLightboxOpen(true)}
+              >
+                <Image
+                  src={image.url}
+                  alt={image.alt ?? `상품 이미지 ${index + 1}`}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className={cn(
+                    'object-cover transition-transform duration-200',
+                    isZoomed && index === selectedIndex ? 'scale-150' : 'scale-100',
+                  )}
+                  style={index === selectedIndex ? imageStyle : undefined}
+                  priority={index === 0}
+                />
+              </div>
+            ))}
+          </div>
 
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {/* Dot indicators */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {images.map((_, i) => (
               <span
                 key={i}
@@ -223,8 +274,9 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
             ))}
           </div>
 
+          {/* Zoom hint */}
           {!isZoomed && (
-            <div className="absolute inset-0 flex items-end justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="absolute inset-0 flex items-end justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
               <span className="flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm">
                 <ZoomIn className="size-3" />
                 확대
@@ -232,12 +284,13 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
             </div>
           )}
 
+          {/* Prev/Next arrows */}
           {images.length > 1 && (
             <>
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); touchSwiped.current = false; goPrev() }}
-                className="absolute left-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-40 hover:opacity-100 transition-opacity"
+                onClick={(e) => { e.stopPropagation(); goPrev() }}
+                className="absolute left-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity"
                 style={{ background: 'transparent' }}
                 aria-label="이전 이미지"
               >
@@ -247,8 +300,8 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
               </button>
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); touchSwiped.current = false; goNext() }}
-                className="absolute right-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-40 hover:opacity-100 transition-opacity"
+                onClick={(e) => { e.stopPropagation(); goNext() }}
+                className="absolute right-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity"
                 style={{ background: 'transparent' }}
                 aria-label="다음 이미지"
               >
@@ -264,7 +317,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
           <ThumbnailStrip
             images={images}
             selectedIndex={selectedIndex}
-            onSelectIndex={setSelectedIndex}
+            onSelectIndex={handleSelectIndex}
             thumbnailRef={thumbnailRef}
           />
         )}
