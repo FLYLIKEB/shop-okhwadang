@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import SafeHtml from '@/components/common/SafeHtml';
 import { cn } from '@/components/ui/utils';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 import { useScrollLogoTransition } from '@/hooks/useScrollLogoTransition';
@@ -118,7 +119,7 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                 )}
                 {slideIndex === 0 && description && (
                   <div className="mt-4 text-white/75">
-                    <SafeHtml html={description} className="[&_p]:mt-1 [&_strong]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline" />
+                    <SafeHtml html={description} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline" />
                   </div>
                 )}
                 {slide.cta_text && slide.cta_url && (
@@ -223,9 +224,10 @@ export default function HeroBannerBlock({ content }: Props) {
           <h2 className="typo-h2 text-foreground">{title}</h2>
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
           {description && (
-            <div className="mt-4 text-muted-foreground">
-              <SafeHtml html={description} />
-            </div>
+            <SafeHtml
+              html={description}
+              className="mt-4 text-muted-foreground [&_p]:mt-1 [&_strong]:text-foreground [&_b]:text-foreground"
+            />
           )}
           {cta_text && cta_url && (
             <Link
@@ -274,9 +276,10 @@ export default function HeroBannerBlock({ content }: Props) {
           <h1 className={cn('typo-h0 font-display leading-tight', image_url ? 'text-white' : 'text-foreground')}>{title}</h1>
           {subtitle && <p className={cn('mt-5 typo-body font-display leading-relaxed', image_url ? 'text-white/85' : 'text-muted-foreground')}>{subtitle}</p>}
           {description && (
-            <div className={cn('mt-4', image_url ? 'text-white/75' : 'text-muted-foreground')}>
-              <SafeHtml html={description} className={image_url ? '[&_p]:mt-1 [&_strong]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline' : '[&_p]:mt-1'} />
-            </div>
+            <SafeHtml
+              html={description}
+              className={cn('mt-4 [&_p]:mt-1', image_url ? 'text-white/75 [&_strong]:text-white [&_b]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline' : 'text-muted-foreground [&_strong]:text-foreground [&_b]:text-foreground')}
+            />
           )}
           {cta_text && cta_url && (
             <div className="mt-10">
