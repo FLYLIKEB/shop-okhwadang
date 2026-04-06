@@ -12,7 +12,6 @@ import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 import { useScrollLogoTransition } from '@/hooks/useScrollLogoTransition';
 import { ScrollLogoProvider } from '@/contexts/ScrollLogoContext';
 import { isSafeUrl } from '@/utils/url';
-import SafeHtml from '@/components/common/SafeHtml';
 
 interface Props {
   content: HeroBannerContent;
