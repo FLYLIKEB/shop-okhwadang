@@ -113,11 +113,13 @@ export default function CategoryNavBlock({ content }: Props) {
 
   if (template === 'image') {
     return (
-      <nav className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {title && <h2 className="col-span-full text-2xl font-medium mb-2">{title}</h2>}
-        {categories.map((cat) => (
-          <CategoryImageCard key={cat.id} cat={cat} />
-        ))}
+      <nav ref={ref} className="py-12">
+        {title && <h2 className="text-2xl font-medium mb-8 text-center">{title}</h2>}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {categories.map((cat, i) => (
+            <CategoryImageCard key={cat.id} cat={cat} />
+          ))}
+        </div>
       </nav>
     );
   }
