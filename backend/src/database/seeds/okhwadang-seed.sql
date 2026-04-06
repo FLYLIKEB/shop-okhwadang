@@ -18,7 +18,9 @@ TRUNCATE TABLE cart_items;
 TRUNCATE TABLE product_images;
 TRUNCATE TABLE product_detail_images;
 TRUNCATE TABLE product_options;
+TRUNCATE TABLE product_attributes;
 TRUNCATE TABLE products;
+TRUNCATE TABLE attribute_types;
 TRUNCATE TABLE categories;
 TRUNCATE TABLE navigation_items;
 TRUNCATE TABLE banners;
@@ -34,6 +36,53 @@ TRUNCATE TABLE page_blocks;
 TRUNCATE TABLE pages;
 
 SET SESSION FOREIGN_KEY_CHECKS = 1;
+
+-- ============================================================
+-- 1-5. 속성 유형 (Dynamic Attribute System)
+-- ============================================================
+INSERT INTO attribute_types (id, code, name, name_ko, input_type, is_filterable, is_searchable, valid_values, sort_order) VALUES
+(1, 'clay_type', 'Clay Type', '니료', 'select', TRUE, FALSE, '["zhuni","zisha","duanni","heini","qinghuini"]', 1),
+(2, 'teapot_shape', 'Shape', '모양', 'select', TRUE, FALSE, '["zhuxing","shipiao","xishi","bianping"]', 2);
+
+-- ============================================================
+-- 1-6. 상품 속성 (Dynamic Attributes for Products)
+-- ============================================================
+-- 상품별 니료(clay_type)와 모양(teapot_shape) 속성
+-- clay_type: category 10=주니(zhuni), 11=자사(zisha), 12=단니(duanni), 13=흑니(heini), 14=청회니(qinghuini)
+-- teapot_shape: 서시(xishi), 주형(zhuxing), 석표(shipiao), 편평(bianping)
+INSERT INTO product_attributes (product_id, attribute_type_id, value, display_value) VALUES
+-- 자사호 (주니) - product_id 1,2,3
+(1, 1, 'zhuni', '주니'),
+(1, 2, 'xishi', '서시'),
+(2, 1, 'zhuni', '주니'),
+(2, 2, 'zhuxing', '주형'),
+(3, 1, 'zhuni', '주니'),
+(3, 2, 'shipiao', '석표'),
+
+-- 자사호 (자사) - product_id 4,5,6
+(4, 1, 'zisha', '자사'),
+(4, 2, 'bianping', '편평'),
+(5, 1, 'zisha', '자사'),
+(5, 2, 'xishi', '서시'),
+(6, 1, 'zisha', '자사'),
+(6, 2, 'zhuxing', '주형'),
+
+-- 자사호 (단니) - product_id 7,8
+(7, 1, 'duanni', '단니'),
+(7, 2, 'shipiao', '석표'),
+(8, 1, 'duanni', '단니'),
+(8, 2, 'bianping', '편평'),
+
+-- 자사호 (흑니) - product_id 9
+(9, 1, 'heini', '흑니'),
+(9, 2, 'zhuxing', '주형'),
+
+-- 자사호 (청회니) - product_id 10
+(10, 1, 'qinghuini', '청회니'),
+(10, 2, 'xishi', '서시'),
+
+-- 보이차 - product_id 11,12,13,14,15 (no clay_type or shape)
+-- 다구 - product_id 16,17,18,19,20,21,22 (no clay_type or shape)
 
 -- ============================================================
 -- 2. 카테고리 (부모 → 자식 순서)

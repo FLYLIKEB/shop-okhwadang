@@ -222,7 +222,7 @@ function NiloTypeFormModal({
           <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none" required />
         </div>
         <FormInput label="특성 (쉼표로 구분)" value={characteristicsText} onChange={(e) => setCharacteristicsText(e.target.value)} placeholder="철분 함량 14-16%, 소성 온도 1080-1120°C" />
-        <FormInput label="상품 URL" value={form.productUrl} onChange={(e) => setForm({ ...form, productUrl: e.target.value })} placeholder="/products?clayType=주니" required />
+        <FormInput label="상품 URL" value={form.productUrl} onChange={(e) => setForm({ ...form, productUrl: e.target.value })} placeholder="/products?attrs=clay_type:zhuni" required />
         <div className="flex items-center gap-2">
           <input type="checkbox" id="niloIsActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
           <label htmlFor="niloIsActive" className="text-sm">활성 상태</label>

@@ -158,24 +158,33 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
           )}
 
           {/* Clay type & Shape badges */}
-          {(product.clayType || product.teapotShape) && (
+          {product.attributes && product.attributes.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {product.clayType && (
-                <Link
-                  href={`/products?clayType=${encodeURIComponent(product.clayType)}`}
-                  className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
-                >
-                  니료: {findCollectionLabel(clayCollections, product.clayType)}
-                </Link>
-              )}
-              {product.teapotShape && (
-                <Link
-                  href={`/products?teapotShape=${encodeURIComponent(product.teapotShape)}`}
-                  className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
-                >
-                  모양: {findCollectionLabel(shapeCollections, product.teapotShape)}
-                </Link>
-              )}
+              {product.attributes.map((attr) => {
+                if (attr.attributeType?.code === 'clay_type') {
+                  return (
+                    <Link
+                      key={attr.id}
+                      href={`/products?attrs=clay_type:${encodeURIComponent(attr.value)}`}
+                      className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
+                    >
+                      니료: {findCollectionLabel(clayCollections, attr.value)}
+                    </Link>
+                  );
+                }
+                if (attr.attributeType?.code === 'teapot_shape') {
+                  return (
+                    <Link
+                      key={attr.id}
+                      href={`/products?attrs=teapot_shape:${encodeURIComponent(attr.value)}`}
+                      className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
+                    >
+                      모양: {findCollectionLabel(shapeCollections, attr.value)}
+                    </Link>
+                  );
+                }
+                return null;
+              })}
             </div>
           )}
 

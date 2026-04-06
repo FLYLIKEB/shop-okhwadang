@@ -248,7 +248,7 @@ function CollectionFormModal({
           label="상품 URL"
           value={form.productUrl}
           onChange={(e) => setForm({ ...form, productUrl: e.target.value })}
-          placeholder="/products?clayType=주니"
+          placeholder="/products?attrs=clay_type:zhuni"
           required
         />
 

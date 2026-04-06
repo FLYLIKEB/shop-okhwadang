@@ -16,8 +16,6 @@ const DUMMY_PRODUCT: ProductDetail = {
   status: 'active',
   isFeatured: true,
   viewCount: 0,
-  clayType: 'zhuni',
-  teapotShape: 'xishi',
   rating: 4.5,
   reviewCount: 12,
   stock: 3,
@@ -110,6 +108,10 @@ const DUMMY_PRODUCT: ProductDetail = {
       sortOrder: 2,
       isActive: true,
     },
+  ],
+  attributes: [
+    { id: 1, attributeTypeId: 1, value: 'zhuni', displayValue: '주니', sortOrder: 0 },
+    { id: 2, attributeTypeId: 2, value: 'xishi', displayValue: '서시', sortOrder: 1 },
   ],
 }
 
