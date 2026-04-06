@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { categoriesApi } from '@/lib/api';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import SafeHtml from '@/components/common/SafeHtml';
 import type { Category, CategoryNavContent } from '@/lib/api';
 
 interface Props {
@@ -77,8 +78,13 @@ export default function CategoryNavBlock({ content }: Props) {
               className="object-cover transition-opacity group-hover:opacity-80"
               sizes="(max-width: 768px) 50vw, 25vw"
             />
-            <span className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent p-2 text-sm font-medium text-white">
-              {cat.name}
+            <span className="absolute inset-0 flex flex-col items-start justify-end bg-gradient-to-t from-black/60 via-black/20 to-transparent p-3">
+              <span className="text-sm font-medium text-white mb-0.5">{cat.name}</span>
+              {cat.description && (
+                <span className="text-xs text-white/70 line-clamp-2 [&_br]:hidden">
+                  <SafeHtml html={cat.description} className="[&_p]:!mt-0 [&_strong]:!text-white/80 [&_b]:!text-white/80 [&_span]:!text-white/70" />
+                </span>
+              )}
             </span>
           </Link>
         ))}
@@ -106,8 +112,8 @@ export default function CategoryNavBlock({ content }: Props) {
               <span className="absolute -bottom-1 left-0 h-px w-0 group-hover:w-full bg-foreground/40 transition-all duration-700 ease-out" />
             </span>
             {cat.description && (
-              <span className="text-sm text-muted-foreground md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500">
-                {cat.description}
+              <span className="text-sm text-muted-foreground md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 [&_p]:!mt-0 [&_strong]:!text-muted-foreground [&_b]:!text-muted-foreground">
+                <SafeHtml html={cat.description} />
               </span>
             )}
           </Link>
