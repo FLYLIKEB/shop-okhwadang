@@ -38,7 +38,7 @@ function JournalCard({ journal, index }: { journal: Journal; index: number }) {
   return (
     <Link
       href={`/journal/${journal.slug}`}
-      className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg"
+      className="group block bg-background overflow-hidden transition-shadow hover:shadow-lg"
     >
       <div className="relative h-48 bg-muted overflow-hidden">
         {journal.coverImageUrl ? (
@@ -114,7 +114,7 @@ export default function JournalPreviewBlock({ content }: Props) {
         {title && <h2 className="text-2xl font-medium mb-8">{title}</h2>}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: limit }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-border overflow-hidden">
+            <div key={i} className="rounded-lg overflow-hidden">
               <div className="h-48 bg-muted animate-pulse" />
               <div className="p-5 space-y-2">
                 <div className="h-3 w-16 bg-muted rounded animate-pulse" />

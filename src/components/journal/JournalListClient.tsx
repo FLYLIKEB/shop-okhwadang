@@ -60,7 +60,7 @@ function JournalCard({ journal, index }: { journal: Journal; index: number }) {
   return (
     <Link
       href={`/journal/${journal.slug}`}
-      className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg"
+      className="group block bg-background overflow-hidden transition-shadow hover:shadow-lg"
     >
       <div className="relative h-48 bg-muted overflow-hidden">
         {journal.coverImageUrl ? (
