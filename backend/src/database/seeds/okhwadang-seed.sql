@@ -899,6 +899,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
 ), 4, 1, NOW(), NOW()),
 
 (4, 1, 'category_nav', JSON_OBJECT(
+  'title', '상품 카테고리',
   'template', 'text',
   'category_ids', JSON_ARRAY(1, 2, 3, 4, 5)
 ), 5, 1, NOW(), NOW()),

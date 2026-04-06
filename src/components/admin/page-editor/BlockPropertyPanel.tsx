@@ -418,6 +418,12 @@ function CategoryNavFields({
   const categoryIds = (content.category_ids as number[]) ?? [];
   return (
     <>
+      <StringField
+        label="제목"
+        value={(content.title as string) ?? ''}
+        onChange={(v) => update('title', v)}
+        placeholder="카테고리"
+      />
       <SelectField
         label="템플릿"
         value={(content.template as string) ?? 'text'}
