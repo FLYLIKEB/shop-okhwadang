@@ -127,16 +127,16 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   }
 
   return (
-    <div className="pb-24 md:pb-8">
-      {/* 풀블리드 갤러리 + 정보 영역 */}
-      <div className="grid grid-cols-1 gap-0 md:grid-cols-[1.2fr_1fr]">
-        {/* Left: Image gallery — 풀블리드 */}
+    <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">
+      {/* 갤러리 + 정보 영역 */}
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.2fr_1fr]">
+        {/* Left: Image gallery */}
         <div className="md:sticky md:top-14 md:self-start">
           <ImageGallery images={product.images} />
         </div>
 
-        {/* Right: Product info — 도록풍 */}
-        <div className="flex flex-col gap-6 px-6 py-8 md:px-12 md:py-12">
+        {/* Right: Product info */}
+        <div className="flex flex-col gap-6">
           {/* Breadcrumb */}
           {product.category && (
             <nav className="typo-label text-muted-foreground tracking-widest uppercase">
