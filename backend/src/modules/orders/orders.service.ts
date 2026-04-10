@@ -4,7 +4,7 @@ import {
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { randomBytes } from 'crypto';
-import { Order } from './entities/order.entity';
+import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
@@ -128,7 +128,7 @@ export class OrdersService {
       const order = queryRunner.manager.create(Order, {
         userId,
         orderNumber: this.generateOrderNumber(),
-        status: 'pending' as any,
+        status: OrderStatus.PENDING,
         totalAmount,
         discountAmount: 0,
         shippingFee: 0,

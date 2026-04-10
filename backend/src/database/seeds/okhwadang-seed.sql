@@ -18,7 +18,9 @@ TRUNCATE TABLE cart_items;
 TRUNCATE TABLE product_images;
 TRUNCATE TABLE product_detail_images;
 TRUNCATE TABLE product_options;
+TRUNCATE TABLE product_attributes;
 TRUNCATE TABLE products;
+TRUNCATE TABLE attribute_types;
 TRUNCATE TABLE categories;
 TRUNCATE TABLE navigation_items;
 TRUNCATE TABLE banners;
@@ -34,6 +36,53 @@ TRUNCATE TABLE page_blocks;
 TRUNCATE TABLE pages;
 
 SET SESSION FOREIGN_KEY_CHECKS = 1;
+
+-- ============================================================
+-- 1-5. 속성 유형 (Dynamic Attribute System)
+-- ============================================================
+INSERT INTO attribute_types (id, code, name, name_ko, input_type, is_filterable, is_searchable, valid_values, sort_order) VALUES
+(1, 'clay_type', 'Clay Type', '니료', 'select', TRUE, FALSE, '["zhuni","zisha","duanni","heini","qinghuini"]', 1),
+(2, 'teapot_shape', 'Shape', '모양', 'select', TRUE, FALSE, '["zhuxing","shipiao","xishi","bianping"]', 2);
+
+-- ============================================================
+-- 1-6. 상품 속성 (Dynamic Attributes for Products)
+-- ============================================================
+-- 상품별 니료(clay_type)와 모양(teapot_shape) 속성
+-- clay_type: category 10=주니(zhuni), 11=자사(zisha), 12=단니(duanni), 13=흑니(heini), 14=청회니(qinghuini)
+-- teapot_shape: 서시(xishi), 주형(zhuxing), 석표(shipiao), 편평(bianping)
+INSERT INTO product_attributes (product_id, attribute_type_id, value, display_value) VALUES
+-- 자사호 (주니) - product_id 1,2,3
+(1, 1, 'zhuni', '주니'),
+(1, 2, 'xishi', '서시'),
+(2, 1, 'zhuni', '주니'),
+(2, 2, 'zhuxing', '주형'),
+(3, 1, 'zhuni', '주니'),
+(3, 2, 'shipiao', '석표'),
+
+-- 자사호 (자사) - product_id 4,5,6
+(4, 1, 'zisha', '자사'),
+(4, 2, 'bianping', '편평'),
+(5, 1, 'zisha', '자사'),
+(5, 2, 'xishi', '서시'),
+(6, 1, 'zisha', '자사'),
+(6, 2, 'zhuxing', '주형'),
+
+-- 자사호 (단니) - product_id 7,8
+(7, 1, 'duanni', '단니'),
+(7, 2, 'shipiao', '석표'),
+(8, 1, 'duanni', '단니'),
+(8, 2, 'bianping', '편평'),
+
+-- 자사호 (흑니) - product_id 9
+(9, 1, 'heini', '흑니'),
+(9, 2, 'zhuxing', '주형'),
+
+-- 자사호 (청회니) - product_id 10
+(10, 1, 'qinghuini', '청회니'),
+(10, 2, 'xishi', '서시'),
+
+-- 보이차 - product_id 11,12,13,14,15 (no clay_type or shape)
+-- 다구 - product_id 16,17,18,19,20,21,22 (no clay_type or shape)
 
 -- ============================================================
 -- 2. 카테고리 (부모 → 자식 순서)
@@ -736,18 +785,32 @@ VALUES ('mobile_bottom_nav_visible', 'false', 'general', '하단 네비게이션
 -- ============================================================
 INSERT INTO collections (type, name, nameKo, color, description, product_url, sort_order, is_active) VALUES
 -- 니료별 컬렉션 (Clay)
-('clay', 'Junni', '주니', '#8B4513', '주철질의 대표 니료로, 적색 내지 황갈색을 띱니다. 내열성과 보온성이 뛰어나며, 차의 풍미를 극대화합니다.', '/ko/products?clay=junni', 1, 1),
-('clay', 'Danji', '단니', '#D4A574', '황토계열의 단단한 니료로, 밝은 황금빛을 띱니다. 은은한 향과 부드러운 맛을 표현하는 데 적합합니다.', '/ko/products?clay=danji', 2, 1),
-('clay', 'Jani', '자니', '#2F4F4F', '청자질의 대표 니료로, 청록색 내지 암청색을 띱니다. 깊은 향과 시원한 맛을 자랑합니다.', '/ko/products?clay=jani', 3, 1),
-('clay', 'Heugni', '흑니', '#1C1C1C', '흑색 도자기 전용 니료로, 검은색을 띱니다. 떫은맛을 줄이고 깊은 맛을내는 특성이 있습니다.', '/ko/products?clay=heugni', 4, 1),
-('clay', 'Cheongsu', '청수니', '#4682B4', '청수(정선) 지역 특유의 청백색 니료입니다. 산뜻한 맛과 깨끗한 향이 특징입니다.', '/ko/products?clay=cheongsu', 5, 1),
-('clay', 'Nokni', '녹니', '#556B2F', '녹토계열의 독특한 니료로, 녹색기를 띱니다. 건강과 풍미를 동시에 생각하는 이들에게 사랑받습니다.', '/ko/products?clay=nokni', 6, 1),
+('clay', 'junni', '주니', '#8B4513', '주철질의 대표 니료로, 적색 내지 황갈색을 띱니다. 내열성과 보온성이 뛰어나며, 차의 풍미를 극대화합니다.', '/products?clayType=junni', 1, 1),
+('clay', 'danji', '단니', '#D4A574', '황토계열의 단단한 니료로, 밝은 황금빛을 띱니다. 은은한 향과 부드러운 맛을 표현하는 데 적합합니다.', '/products?clayType=danji', 2, 1),
+('clay', 'jani', '자니', '#2F4F4F', '청자질의 대표 니료로, 청록색 내지 암청색을 띱니다. 깊은 향과 시원한 맛을 자랑합니다.', '/products?clayType=jani', 3, 1),
+('clay', 'heugni', '흑니', '#1C1C1C', '흑색 도자기 전용 니료로, 검은색을 띱니다. 떫은맛을 줄이고 깊은 맛을내는 특성이 있습니다.', '/products?clayType=heugni', 4, 1),
+('clay', 'cheongsu', '청수니', '#4682B4', '청수(정선) 지역 특유의 청백색 니료입니다. 산뜻한 맛과 깨끗한 향이 특징입니다.', '/products?clayType=cheongsu', 5, 1),
+('clay', 'nokni', '녹니', '#556B2F', '녹토계열의 독특한 니료로, 녹색기를 띱니다. 건강과 풍미를 동시에 생각하는 이들에게 사랑받습니다.', '/products?clayType=nokni', 6, 1),
 -- 모양별 컬렉션 (Shape)
-('shape', 'Seoshi', '서시', NULL, '평평하고 넓은 형태의 주전자. 뛰어난 안정감과 넓은 탕면으로 차의 풍미를 펼쳐줍니다.', '/ko/products?shape=seoshi', 1, 1),
-('shape', 'Seokpyo', '석표', NULL, '곰방대 형태에서 영감을 받은 독특한 모양. 절제된 아름다움과 실용성을 겸비합니다.', '/ko/products?shape=seokpyo', 2, 1),
-('shape', 'Inwang', '인왕', NULL, '인왕산의 기품을 담은 날카롭고 세련된 라인. 현대적 감각으로 재해석한 전통 형태입니다.', '/ko/products?shape=inwang', 3, 1),
-('shape', 'Deokjong', '덕종', NULL, '고려 시대의 달인으로 유명한 덕종달인의 기법을 현대에 재현. 우아하고 정제된 실루엿입니다.', '/ko/products?shape=deokjong', 4, 1),
-('shape', 'Supeong', '수평', NULL, '수평의 아름다운 곡선. 검소하고 담백한 아름다움으로 평온함을 선물합니다.', '/ko/products?shape=supeong', 5, 1);
+('shape', 'seoshi', '서시', NULL, '평평하고 넓은 형태의 주전자. 뛰어난 안정감과 넓은 탕면으로 차의 풍미를 펼쳐줍니다.', '/products?teapotShape=seoshi', 1, 1),
+('shape', 'seokpyo', '석표', NULL, '곰방대 형태에서 영감을 받은 독특한 모양. 절제된 아름다움과 실용성을 겸비합니다.', '/products?teapotShape=seokpyo', 2, 1),
+('shape', 'inwang', '인왕', NULL, '인왕산의 기품을 담은 날카롭고 세련된 라인. 현대적 감각으로 재해석한 전통 형태입니다.', '/products?teapotShape=inwang', 3, 1),
+('shape', 'deokjong', '덕종', NULL, '고려 시대의 달인으로 유명한 덕종달인의 기법을 현대에 재현. 우아하고 정제된 실루엿입니다.', '/products?teapotShape=deokjong', 4, 1),
+('shape', 'supeong', '수평', NULL, '수평의 아름다운 곡선. 검소하고 담백한 아름다움으로 평온함을 선물합니다.', '/products?teapotShape=supeong', 5, 1);
+
+-- ============================================================
+-- 상품 니료/모양 데이터 설정
+-- ============================================================
+UPDATE products SET clay_type = 'junni', teapot_shape = 'seoshi' WHERE id = 1;
+UPDATE products SET clay_type = 'junni', teapot_shape = 'juhu' WHERE id = 2;
+UPDATE products SET clay_type = 'junni', teapot_shape = 'seokpyo' WHERE id = 3;
+UPDATE products SET clay_type = 'jani', teapot_shape = 'bianping' WHERE id = 4;
+UPDATE products SET clay_type = 'jani', teapot_shape = 'seoshi' WHERE id = 5;
+UPDATE products SET clay_type = 'jani', teapot_shape = 'juhu' WHERE id = 6;
+UPDATE products SET clay_type = 'danji', teapot_shape = 'seokpyo' WHERE id = 7;
+UPDATE products SET clay_type = 'danji', teapot_shape = 'bianping' WHERE id = 8;
+UPDATE products SET clay_type = 'heugni', teapot_shape = 'juhu' WHERE id = 9;
+UPDATE products SET clay_type = 'cheongsu', teapot_shape = 'seoshi' WHERE id = 10;
 
 -- ============================================================
 -- 저널 (Journal) - 다문화/사용법/찻자리 세팅/소식

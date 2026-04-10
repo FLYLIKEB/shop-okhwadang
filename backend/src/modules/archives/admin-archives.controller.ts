@@ -66,6 +66,16 @@ export class AdminArchivesController {
     return this.archivesService.createNiloType(dto);
   }
 
+  @Patch('nilo-types/reorder')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '이ilo 유형 순서 변경', description: '이ilo 유형들의 순서를 변경합니다.' })
+  @ApiResponse({ status: 200, description: '이ilo 유형 순서 변경 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  async reorderNiloTypes(@Body() items: { id: number; sortOrder: number }[]) {
+    await this.archivesService.reorderNiloTypes(items);
+  }
+
   @Patch('nilo-types/:id')
   @ApiCookieAuth()
   @ApiOperation({ summary: '이ilo 유형 수정', description: '기존 이ilo 유형 정보를 수정합니다.' })
@@ -92,16 +102,6 @@ export class AdminArchivesController {
   @ApiParam({ name: 'id', type: Number, description: '이ilo 유형 ID' })
   async deleteNiloType(@Param('id', ParseIntPipe) id: number) {
     await this.archivesService.deleteNiloType(id);
-  }
-
-  @Patch('nilo-types/reorder')
-  @ApiCookieAuth()
-  @ApiOperation({ summary: '이ilo 유형 순서 변경', description: '이ilo 유형들의 순서를 변경합니다.' })
-  @ApiResponse({ status: 200, description: '이ilo 유형 순서 변경 성공' })
-  @ApiResponse({ status: 401, description: '인증 필요' })
-  @ApiResponse({ status: 403, description: '권한 없음' })
-  async reorderNiloTypes(@Body() items: { id: number; sortOrder: number }[]) {
-    await this.archivesService.reorderNiloTypes(items);
   }
 
   @Get('process-steps')
@@ -196,6 +196,16 @@ export class AdminArchivesController {
     return this.archivesService.createArtist(dto);
   }
 
+  @Patch('artists/reorder')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '작가 순서 변경', description: '작가들의 순서를 변경합니다.' })
+  @ApiResponse({ status: 200, description: '작가 순서 변경 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  async reorderArtists(@Body() items: { id: number; sortOrder: number }[]) {
+    await this.archivesService.reorderArtists(items);
+  }
+
   @Patch('artists/:id')
   @ApiCookieAuth()
   @ApiOperation({ summary: '작가 수정', description: '기존 작가 정보를 수정합니다.' })
@@ -222,15 +232,5 @@ export class AdminArchivesController {
   @ApiParam({ name: 'id', type: Number, description: '작가 ID' })
   async deleteArtist(@Param('id', ParseIntPipe) id: number) {
     await this.archivesService.deleteArtist(id);
-  }
-
-  @Patch('artists/reorder')
-  @ApiCookieAuth()
-  @ApiOperation({ summary: '작가 순서 변경', description: '작가들의 순서를 변경합니다.' })
-  @ApiResponse({ status: 200, description: '작가 순서 변경 성공' })
-  @ApiResponse({ status: 401, description: '인증 필요' })
-  @ApiResponse({ status: 403, description: '권한 없음' })
-  async reorderArtists(@Body() items: { id: number; sortOrder: number }[]) {
-    await this.archivesService.reorderArtists(items);
   }
 }

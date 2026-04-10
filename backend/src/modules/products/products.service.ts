@@ -12,6 +12,8 @@ import { Category } from './entities/category.entity';
 import { ProductImage } from './entities/product-image.entity';
 import { ProductDetailImage } from './entities/product-detail-image.entity';
 import { Review } from '../reviews/entities/review.entity';
+import { AttributeType } from './entities/attribute-type.entity';
+import { ProductAttribute } from './entities/product-attribute.entity';
 import { QueryProductsDto, ProductSort } from './dto/query-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -38,6 +40,10 @@ export class ProductsService {
     private readonly productImageRepository: Repository<ProductImage>,
     @InjectRepository(ProductDetailImage)
     private readonly productDetailImageRepository: Repository<ProductDetailImage>,
+    @InjectRepository(AttributeType)
+    private readonly attributeTypeRepository: Repository<AttributeType>,
+    @InjectRepository(ProductAttribute)
+    private readonly productAttributeRepository: Repository<ProductAttribute>,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -82,6 +88,42 @@ export class ProductsService {
     return `products:list:${hash}`;
   }
 
+  /**
+   * Parse attrs query param: 'clay_type:zhuni,teapot_shape:xishi'
+   * Returns Map of attributeTypeCode -> value
+   */
+  private parseAttrsParam(attrs?: string): Map<string, string> {
+    const result = new Map<string, string>();
+    if (!attrs) return result;
+
+    const pairs = attrs.split(',');
+    for (const pair of pairs) {
+      const [code, value] = pair.split(':');
+      if (code && value) {
+        result.set(code.trim(), value.trim());
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Resolve attribute type codes to IDs, returning Map<code, id>
+   */
+  private async resolveAttributeTypeIds(codes: string[]): Promise<Map<string, number>> {
+    if (!codes.length) return new Map();
+
+    const types = await this.attributeTypeRepository
+      .createQueryBuilder('at')
+      .where('at.code IN (:...codes)', { codes })
+      .getMany();
+
+    const map = new Map<string, number>();
+    for (const type of types) {
+      map.set(type.code, type.id);
+    }
+    return map;
+  }
+
   private applyLocale(product: Product, locale?: string): Product {
     return applyLocale(product, locale, ['name', 'description', 'shortDescription']);
   }
@@ -105,11 +147,15 @@ export class ProductsService {
       price_min,
       price_max,
       locale,
+      attrs: attrsParam,
     } = query;
 
     if (price_min !== undefined && price_max !== undefined && price_min > price_max) {
       throw new BadRequestException('price_min은 price_max보다 클 수 없습니다.');
     }
+
+    // Parse attribute filters
+    const attrFilters = this.parseAttrsParam(attrsParam);
 
     const qb = this.productRepository
       .createQueryBuilder('product')
@@ -152,6 +198,28 @@ export class ProductsService {
 
     if (price_max !== undefined) {
       qb.andWhere('product.price <= :priceMax', { priceMax: price_max });
+    }
+
+    // Apply attribute filters via product_attributes join
+    if (attrFilters.size > 0) {
+      const attrCodes = Array.from(attrFilters.keys());
+      const typeIdMap = await this.resolveAttributeTypeIds(attrCodes);
+
+      // Build subquery for each attribute filter
+      let attrIndex = 0;
+      for (const [code, value] of attrFilters) {
+        const typeId = typeIdMap.get(code);
+        if (typeId === undefined) continue; // Skip unknown codes
+
+        const alias = `pa_${attrIndex}`;
+        qb.innerJoin(
+          'product.attributes',
+          alias,
+          `${alias}.attributeTypeId = :typeId${attrIndex} AND ${alias}.value = :attrValue${attrIndex}`,
+          { [`typeId${attrIndex}`]: typeId, [`attrValue${attrIndex}`]: value },
+        );
+        attrIndex++;
+      }
     }
 
     switch (sort) {

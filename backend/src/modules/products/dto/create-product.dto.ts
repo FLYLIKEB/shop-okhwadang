@@ -102,6 +102,18 @@ export class CreateProductDto {
   @IsBoolean({ message: '추천 상품 여부는 불리언이어야 합니다.' })
   isFeatured?: boolean;
 
+  @ApiPropertyOptional({ example: '주니', description: '니료(泥料) 종류' })
+  @IsOptional()
+  @IsString({ message: '니료 종류는 문자열이어야 합니다.' })
+  @MaxLength(50, { message: '니료 종류는 최대 50자까지 입력 가능합니다.' })
+  clayType?: string;
+
+  @ApiPropertyOptional({ example: '서시', description: '자사호 모양' })
+  @IsOptional()
+  @IsString({ message: '모양은 문자열이어야 합니다.' })
+  @MaxLength(50, { message: '모양은 최대 50자까지 입력 가능합니다.' })
+  teapotShape?: string;
+
   @ApiPropertyOptional({ type: [ProductImageInputDto], description: '갤러리 이미지 목록' })
   @IsOptional()
   @IsArray()

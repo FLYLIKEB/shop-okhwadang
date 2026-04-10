@@ -14,6 +14,7 @@ import { ProductOption } from './product-option.entity';
 import { ProductImage } from './product-image.entity';
 import { ProductDetailImage } from './product-detail-image.entity';
 import { Review } from '../../reviews/entities/review.entity';
+import { ProductAttribute } from './product-attribute.entity';
 
 export enum ProductStatus {
   DRAFT = 'draft',
@@ -121,4 +122,7 @@ export class Product {
 
   @OneToMany(() => Review, (review) => review.product)
   reviews!: Review[];
+
+  @OneToMany(() => ProductAttribute, (attr) => attr.product)
+  attributes!: ProductAttribute[];
 }

@@ -175,12 +175,9 @@ export class ReviewsService {
     this.logger.log(`Review created: id=${saved.id}, userId=${userId}, productId=${dto.productId}`);
 
     // Reload with user
-    const loaded = await this.reviewRepo.findOne({
-      where: { id: saved.id },
-      relations: ['user'],
-    });
+    const loaded = await findOrThrow(this.reviewRepo, { id: saved.id }, '리뷰를 찾을 수 없습니다.', ['user']);
 
-    return this.toResponse(loaded!);
+    return this.toResponse(loaded);
   }
 
   async update(id: number, userId: number, dto: UpdateReviewDto): Promise<ReviewResponse> {

@@ -66,6 +66,7 @@ export function useLightboxInteraction() {
     lightboxPan,
     setLightboxPan,
     lightboxPanRef,
+    isDragging,
     handleLightboxMouseDown,
     handleLightboxMouseMove,
     handleLightboxMouseUp,

@@ -4,52 +4,50 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import { wishlistApi, cartApi } from '@/lib/api';
 import type { WishlistItem } from '@/lib/api';
-import { handleApiError } from '@/utils/error';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import { cn } from '@/components/ui/utils';
 import PriceDisplay from '@/components/common/PriceDisplay';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 export default function WishlistPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [items, setItems] = useState<WishlistItem[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
+
+  const { execute: loadWishlist, isLoading: dataLoading } = useAsyncAction(
+    async () => {
+      const res = await wishlistApi.getList();
+      setItems(res.data);
+    },
+    { errorMessage: '위시리스트를 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    wishlistApi
-      .getList()
-      .then((res) => setItems(res.data))
-      .catch((err) => {
-        setItems([]);
-        toast.error(handleApiError(err, '위시리스트를 불러오지 못했습니다.'));
-      })
-      .finally(() => setDataLoading(false));
-  }, [isAuthenticated]);
+    void loadWishlist();
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleRemove = async (wishlistId: number) => {
-    try {
+  const { execute: removeItem } = useAsyncAction(
+    async (wishlistId: number) => {
       await wishlistApi.remove(wishlistId);
       setItems((prev) => prev.filter((item) => item.id !== wishlistId));
-      toast.success('위시리스트에서 삭제되었습니다.');
-    } catch (err) {
-      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
-    }
-  };
+    },
+    { successMessage: '위시리스트에서 삭제되었습니다.', errorMessage: '삭제에 실패했습니다.' },
+  );
 
-  const handleAddToCart = async (productId: number) => {
-    try {
+  const { execute: addToCartAction } = useAsyncAction(
+    async (productId: number) => {
       await cartApi.add({ productId, productOptionId: null, quantity: 1 });
-      toast.success('장바구니에 추가되었습니다.');
-    } catch (err) {
-      toast.error(handleApiError(err, '장바구니 추가에 실패했습니다.'));
-    }
-  };
+    },
+    { successMessage: '장바구니에 추가되었습니다.', errorMessage: '장바구니 추가에 실패했습니다.' },
+  );
+
+  const handleRemove = (wishlistId: number) => { void removeItem(wishlistId); };
+  const handleAddToCart = (productId: number) => { void addToCartAction(productId); };
 
   if (isLoading) {
     return (

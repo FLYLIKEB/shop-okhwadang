@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useMemo, useState } from 'react'
 
 interface MobileNavContextValue {
   isVisible: boolean
@@ -17,8 +17,10 @@ export function MobileNavProvider({
 }) {
   const [isVisible] = useState(initialVisible)
 
+  const value = useMemo(() => ({ isVisible }), [isVisible])
+
   return (
-    <MobileNavContext.Provider value={{ isVisible }}>
+    <MobileNavContext.Provider value={value}>
       {children}
     </MobileNavContext.Provider>
   )
