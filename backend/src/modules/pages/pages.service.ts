@@ -146,11 +146,13 @@ export class PagesService {
     dto: ReorderBlocksDto,
   ): Promise<void> {
     const page = await findOrThrow(this.pageRepository, { id: pageId }, '존재하지 않는 페이지입니다.');
-    for (const item of dto.orders) {
-      await this.blockRepository.update(
-        { id: item.id, page_id: pageId },
-        { sort_order: item.sort_order },
-      );
-    }
+    await Promise.all(
+      dto.orders.map((item) =>
+        this.blockRepository.update(
+          { id: item.id, page_id: pageId },
+          { sort_order: item.sort_order },
+        ),
+      ),
+    );
   }
 }
