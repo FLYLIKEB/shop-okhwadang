@@ -46,6 +46,9 @@ export class AuthService implements OnModuleInit {
 
   onModuleInit() {
     if (!process.env.JWT_REFRESH_SECRET) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_REFRESH_SECRET must be set in production');
+      }
       this.logger.warn(
         'JWT_REFRESH_SECRET is not set. Using JWT_SECRET as fallback. Set a separate secret in production.',
       );
