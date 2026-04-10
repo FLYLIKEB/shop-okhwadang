@@ -8,7 +8,6 @@ import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SafeHtml from '@/components/common/SafeHtml';
 import { cn } from '@/components/ui/utils';
-import Logo from '@/components/Logo';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 import { useScrollLogoTransition } from '@/hooks/useScrollLogoTransition';
 import { ScrollLogoProvider } from '@/contexts/ScrollLogoContext';
@@ -21,23 +20,23 @@ interface Props {
 const DEFAULT_SLIDES: HeroBannerSlide[] = [
   {
     title: '의흥 장인의 손끝에서',
-    subtitle: '600년 전통, 정성으로 빚은 자사호를 만나보세요',
+    subtitle: '600년 전통, 정성으로 빚은 자사호의 세계로 초대합니다',
     cta_text: '컬렉션 보기',
     cta_url: '/collection',
-    bg_color: '#1B3A4B',
+    bg_color: '#2A2520',
     image_url: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=1920&q=80',
   },
   {
     title: '보이차의 깊은 여운',
-    subtitle: '세월이 빚어낸 맛, 엄선된 보이차 컬렉션',
+    subtitle: '세월이 빚어낸 맛, 시간의 결을 담은 엄선된 보이차',
     cta_text: '아카이브 보기',
     cta_url: '/archive',
-    bg_color: '#4A6741',
+    bg_color: '#2A2520',
     image_url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1920&q=80',
   },
   {
     title: '찻자리의 완성',
-    subtitle: '자사호와 다구로 꾸미는 나만의 다석',
+    subtitle: '자사호와 다구로 꾸미는 나만의 다석, 고요한 시간의 시작',
     cta_text: '저널 보기',
     cta_url: '/journal',
     bg_color: '#2A2520',
@@ -54,7 +53,7 @@ interface SliderHeroProps {
 
 function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHeroProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, watchDrag: true });
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
@@ -77,16 +76,16 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
 
   return (
     <section ref={sectionRef} role="region" aria-label="메인 배너" className="relative">
-      <div ref={emblaRef} className="overflow-hidden">
+      <div ref={emblaRef} className="overflow-hidden relative z-10">
         <div className="flex">
           {slides.map((slide, slideIndex) => (
             <div
               key={slideIndex}
               className={cn(
                 'relative min-w-full flex items-center justify-center overflow-hidden',
-                'h-[60svh] min-h-[25rem] md:h-[80svh] md:min-h-[35rem]',
+                'h-[40svh] min-h-[25rem] md:h-[680px]',
               )}
-              style={{ backgroundColor: slide.bg_color ?? '#1B3A4B' }}
+              style={{ backgroundColor: slide.bg_color ?? '#2A2520' }}
             >
               {slide.image_url && (
                 <Image
@@ -102,78 +101,88 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
                 />
               )}
 
-              <div className="absolute inset-0 bg-black/45" />
-              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />
+              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
-              <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
-                <div style={heroLogoStyle}>
-                  <Logo variant="hero" />
-                </div>
-              </div>
-
-              <div className="relative z-10 w-full px-8 md:px-12 max-w-3xl">
-                <p className="typo-label uppercase tracking-[0.25em] text-white/70 mb-3 font-body">
-                  옥화당 공식 쇼핑몰
+              <div className="relative z-10 w-full px-8 md:px-16 max-w-3xl">
+                <p className="typo-label uppercase tracking-[0.35em] text-[#B8976A] mb-4 font-body">
+                  {slideIndex === 0 ? '옥화당 茶室' : `0${slideIndex + 1}`}
                 </p>
-                <h1 className="typo-h0 font-display text-white">
+                <h1 className="typo-h0 font-display text-white leading-tight">
                   {slide.title}
                 </h1>
                 {slide.subtitle && (
-                  <SafeHtml
-                    html={slide.subtitle}
-                    className="mt-4 typo-body text-white/90 [&_p]:mt-1 [&_strong]:text-white [&_b]:text-white"
-                  />
+                  <div className="mt-5 typo-body text-white/85 font-display leading-relaxed">
+                    <SafeHtml html={slide.subtitle} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline" />
+                  </div>
                 )}
-                {description && (
-                  <SafeHtml
-                    html={description}
-                    className="mt-4 text-white/80 [&_p]:mt-1 [&_strong]:text-white [&_b]:text-white"
-                  />
+                {slideIndex === 0 && description && (
+                  <div className="mt-4 text-white/75">
+                    <SafeHtml html={description} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline" />
+                  </div>
                 )}
                 {slide.cta_text && slide.cta_url && (
-                  <div className="mt-8">
+                  <div className="mt-10">
                     <Link
                       href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}
-                      className="inline-block rounded-full border border-white px-8 py-3 typo-button text-white tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+                      className="group inline-flex items-center gap-2 typo-button text-white tracking-[0.15em] uppercase"
                     >
-                      {slide.cta_text}
+                      <span className="relative">
+                        <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
+                          {slide.cta_text}
+                        </span>
+                        <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-white transition-transform duration-300 group-hover:scale-x-110" />
+                      </span>
+                      <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                          <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
                     </Link>
                   </div>
                 )}
               </div>
+
             </div>
           ))}
         </div>
       </div>
 
-      <button
-        onClick={scrollPrev}
-        aria-label="이전 배너"
-        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity hidden md:block"
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </button>
-      <button
-        onClick={scrollNext}
-        aria-label="다음 배너"
-        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white hover:opacity-60 transition-opacity hidden md:block"
-      >
-        <ChevronRight className="h-6 w-6" />
-      </button>
+      {slides.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={scrollPrev}
+              aria-label="이전 슬라이드"
+              className="absolute left-6 md:left-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+            >
+              <ChevronLeft className="h-7 w-7" />
+            </button>
+            <button
+              type="button"
+              onClick={scrollNext}
+              aria-label="다음 슬라이드"
+              className="absolute right-6 md:right-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+            >
+              <ChevronRight className="h-7 w-7" />
+            </button>
 
-      <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => scrollTo(i)}
-            aria-label={`${i + 1}번 배너로 이동`}
-            className={cn(
-              'w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300',
-              i === selectedIndex ? 'bg-white w-4 md:w-6' : 'bg-white/50',
-            )}
-          />
-        ))}
-      </div>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => scrollTo(idx)}
+                aria-label={`${idx + 1}번 슬라이드로 이동`}
+                className={cn(
+                  'h-1.5 rounded-full transition-all duration-300',
+                  idx === selectedIndex ? 'w-6 bg-[#B8976A]' : 'w-1.5 bg-white/40 hover:bg-white/60',
+                )}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -213,7 +222,7 @@ export default function HeroBannerBlock({ content }: Props) {
 
   if (template === 'split') {
     return (
-      <section className="flex flex-col overflow-hidden md:flex-row bg-white">
+      <section className="flex flex-col overflow-hidden md:flex-row bg-card">
         <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
           <h2 className="typo-h2 text-foreground">{title}</h2>
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
@@ -226,9 +235,19 @@ export default function HeroBannerBlock({ content }: Props) {
           {cta_text && cta_url && (
             <Link
               href={isSafeUrl(cta_url) ? cta_url : '#'}
-              className="mt-6 inline-block border border-foreground px-6 py-3 typo-button text-foreground hover:bg-foreground hover:text-background transition-colors"
+              className="group mt-6 inline-flex items-center gap-2 typo-button text-foreground tracking-[0.15em] uppercase"
             >
-              {cta_text}
+              <span className="relative">
+                <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
+                  {cta_text}
+                </span>
+                <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-foreground transition-transform duration-300 group-hover:scale-x-110" />
+              </span>
+              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
             </Link>
           )}
         </div>
@@ -243,14 +262,7 @@ export default function HeroBannerBlock({ content }: Props) {
 
   return (
     <ScrollLogoProvider value={scrollLogoContextValue}>
-      <section ref={sectionRef} className="relative flex h-[60svh] min-h-[25rem] md:h-[80svh] items-center justify-center overflow-hidden bg-neutral-900">
-        {isHome && (
-          <div className="absolute left-0 top-0 px-6 pt-6 select-none pointer-events-none z-20">
-            <div style={heroLogoStyle}>
-              <Logo variant="hero" />
-            </div>
-          </div>
-        )}
+      <section ref={sectionRef} className="relative flex h-[40svh] min-h-[25rem] md:h-[680px] items-center justify-center overflow-hidden bg-neutral-900">
         {image_url && (
           <Image
             src={image_url}
@@ -261,24 +273,39 @@ export default function HeroBannerBlock({ content }: Props) {
             sizes="100vw"
           />
         )}
-        {image_url && <div className="absolute inset-0 bg-black/45" />}
-        {image_url && <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />}
-        <div className={`relative z-10 w-full px-8 md:px-12 ${image_url ? 'text-white' : 'text-foreground'}`}>
-          <h1 className={cn('typo-h0 font-display', image_url ? 'text-white' : 'text-foreground')}>{title}</h1>
-          {subtitle && <p className={cn('mt-4 typo-body', image_url ? 'text-white/90' : 'text-muted-foreground')}>{subtitle}</p>}
+        {image_url && <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />}
+        {image_url && <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />}
+        <div className={`relative z-10 w-full px-8 md:px-16 ${image_url ? 'text-white' : 'text-foreground'}`}>
+          <h1 className={cn('typo-h0 font-display leading-tight', image_url ? 'text-white' : 'text-foreground')}>{title}</h1>
+          {subtitle && <p className={cn('mt-5 typo-body font-display leading-relaxed', image_url ? 'text-white/85' : 'text-muted-foreground')}>{subtitle}</p>}
           {description && (
             <SafeHtml
               html={description}
-              className={cn('mt-4 [&_p]:mt-1', image_url ? 'text-white/80 [&_strong]:text-white [&_b]:text-white' : 'text-muted-foreground [&_strong]:text-foreground [&_b]:text-foreground')}
+              className={cn('mt-4 [&_p]:mt-1', image_url ? 'text-white/75 [&_strong]:text-white [&_b]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline' : 'text-muted-foreground [&_strong]:text-foreground [&_b]:text-foreground')}
             />
           )}
           {cta_text && cta_url && (
-            <div className="mt-8">
+            <div className="mt-10">
               <Link
                 href={isSafeUrl(cta_url) ? cta_url : '#'}
-                className="inline-block rounded-full border border-current px-8 py-3 typo-button tracking-widest uppercase hover:bg-white hover:text-foreground transition-colors duration-300"
+                className={cn(
+                  'group inline-flex items-center gap-2 typo-button tracking-[0.15em] uppercase',
+                  image_url
+                    ? 'text-white'
+                    : 'text-foreground',
+                )}
               >
-                {cta_text}
+                <span className="relative">
+                  <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
+                    {cta_text}
+                  </span>
+                  <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-current transition-transform duration-300 group-hover:scale-x-110" />
+                </span>
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
               </Link>
             </div>
           )}

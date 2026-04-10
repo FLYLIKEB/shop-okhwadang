@@ -16,23 +16,27 @@
 
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
-  /* Color: Wedgwood-inspired Elegant Palette */
-  --color-bg: #FAFAFA;
-  --color-text: #1a1a1a;
-  --color-accent-zuni: #1B3A4B;
+  /* Color: 다실(茶室) — 먹색 기조 + 금박 포인트 */
+  --color-bg: #F8F5F0;
+  --color-text: #2A2520;
+  --color-accent-zuni: #2A2520;
   --color-accent-tea: #4A6741;
   --color-brand-secondary: #D4C5B0;
   --color-accent-danni: #C9B8A3;
+  --color-gold: #B8976A;
+  --color-gold-light: #D4BC8E;
+  --color-ink: #2A2520;
+  --color-ink-light: #3D3630;
 
   /* Typography — size scale */
   --font-size-heading-0: 2rem;     /* 32px mobile - hero only */
   --font-size-heading-1: 1.5rem;   /* 24px mobile */
-  --font-size-heading-2: 1.25rem;  /* 20px mobile */
+  --font-size-heading-2: 1.875rem; /* 30px mobile */
   --font-size-heading-3: 1.125rem; /* 18px mobile */
   --font-size-title: 1rem;         /* 16px mobile */
   --font-size-body: 1rem;          /* 16px */
   --font-size-body-sm: 0.875rem;   /* 14px */
-  --font-size-label: 0.625rem;      /* 10px */
+  --font-size-label: 0.75rem;        /* 12px */
   --font-size-label-sm: 0.5625rem;  /* 9px */
   --font-size-button: 0.875rem;    /* 14px */
 
@@ -43,33 +47,37 @@
 }
 
 @theme inline {
-  /* ── shadcn/ui 호환 토큰 (DB override 지원) ── */
-  --color-primary: var(--db-color-primary, #1B3A4B);
-  --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
-  --color-secondary: var(--db-color-secondary, #F5F3EF);
-  --color-secondary-foreground: var(--db-color-secondary-foreground, #1a1a1a);
+  /* ── shadcn/ui 호환 토큰 (DB override 지원) — 다크 디폴트 ── */
+  --color-primary: var(--db-color-primary, #2A2520);
+  --color-primary-foreground: var(--db-color-primary-foreground, #F8F5F0);
+  --color-secondary: var(--db-color-secondary, #1E1B18);
+  --color-secondary-foreground: var(--db-color-secondary-foreground, #F8F5F0);
   --color-destructive: var(--db-color-destructive, #b91c1c);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #F5F3EF);
-  --color-muted-foreground: var(--db-color-muted-foreground, #525252);
-  --color-accent: var(--db-color-accent, #F5F3EF);
-  --color-accent-foreground: var(--db-color-accent-foreground, #1a1a1a);
-  --color-background: var(--db-color-background, #ffffff);
-  --color-foreground: var(--db-color-foreground, #1a1a1a);
-  --color-card: var(--db-color-card, #ffffff);
-  --color-card-foreground: var(--db-color-card-foreground, #1a1a1a);
-  --color-border: var(--db-color-border, #e8e4de);
-  --color-input: var(--db-color-input, #e8e4de);
-  --color-ring: var(--db-color-ring, #1B3A4B);
+  --color-muted: var(--db-color-muted, #1E1B18);
+  --color-muted-foreground: var(--db-color-muted-foreground, #9A9189);
+  --color-accent: var(--db-color-accent, #1E1B18);
+  --color-accent-foreground: var(--db-color-accent-foreground, #F8F5F0);
+  --color-background: var(--db-color-background, #0F0D0B);
+  --color-foreground: var(--db-color-foreground, #F5F3EF);
+  --color-card: var(--db-color-card, #1A1815);
+  --color-card-foreground: var(--db-color-card-foreground, #F5F3EF);
+  --color-border: var(--db-color-border, #2E2A26);
+  --color-input: var(--db-color-input, #2E2A26);
+  --color-ring: var(--db-color-ring, #B8976A);
   --radius-sm: var(--db-radius-sm, 0.125rem);
   --radius-md: var(--db-radius-md, 0.25rem);
   --radius-lg: var(--db-radius-lg, 0.5rem);
 
-  /* ── 브랜드 확장 토큰 ── */
-  --color-zuni: #1B3A4B;
-  --color-tea: #4A6741;
-  --color-danni: #C9B8A3;
-  --color-surface: #F5F3EF;
+  /* ── 브랜드 확장 토큰 — 다크 디폴트 ── */
+  --color-zuni: #3D3630;
+  --color-tea: #5A7A52;
+  --color-danni: #A89880;
+  --color-surface: #1A1815;
+  --color-gold: #B8976A;
+  --color-gold-light: #D4BC8E;
+  --color-ink: #F5F3EF;
+  --color-ink-light: #C8C0B5;
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
@@ -94,7 +102,7 @@
 @media (min-width: 768px) {
   :root {
     --font-size-heading-1: 2.25rem;  /* 36px desktop */
-    --font-size-heading-2: 1.5rem;   /* 24px desktop */
+    --font-size-heading-2: 1.875rem; /* 30px desktop */
     --font-size-heading-3: 1.25rem;  /* 20px desktop */
     --font-size-title: 1.125rem;     /* 18px desktop */
     --font-size-heading-0: 3rem;     /* 48px desktop - hero only */
@@ -104,6 +112,7 @@
 /* ── Typography utility classes ────────────────────────────────── */
 @utility typo-h0 {
   font-size: var(--font-size-heading-0, 2rem);
+  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -111,6 +120,7 @@
 
 @utility typo-h1 {
   font-size: var(--font-size-heading-1);
+  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -118,6 +128,7 @@
 
 @utility typo-h2 {
   font-size: var(--font-size-heading-2);
+  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -125,14 +136,15 @@
 
 @utility typo-h3 {
   font-size: var(--font-size-heading-3);
+  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
 }
 
 @utility typo-title {
   font-size: var(--font-size-title);
-  font-family: var(--font-body);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 500;
   line-height: var(--line-height-compact);
 }
 
@@ -157,23 +169,41 @@
 @utility typo-button {
   font-size: var(--font-size-button);
   line-height: var(--line-height-compact);
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.05em;
 }
 
 @utility typo-title-sm {
   font-size: var(--font-size-body-sm);
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-weight: 500;
   line-height: var(--line-height-compact);
 }
 
-/* ── Base styles ───────────────────────────────────────────────── */
+/* ── Base styles — 다크 디폴트 ──────────────────────────────────── */
 body {
   font-family: var(--font-body);
   color: var(--color-foreground);
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── 금박(金箔) 포인트 악센트 ─────────────────────────────────── */
+.accent-gold {
+  color: var(--color-gold);
+}
+
+.border-gold {
+  border-color: var(--color-gold);
+}
+
+.bg-gold {
+  background-color: var(--color-gold);
+}
+
+.divide-gold > * + * {
+  border-color: var(--color-gold-light);
 }
 
 h1 {
@@ -247,6 +277,25 @@ h3 {
   font-size: 0.875rem;
   font-weight: 400;
   letter-spacing: 0.025em;
+}
+
+/* ── Page transition overlay ────────────────────────────────────── */
+@keyframes page-cover {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0%); }
+}
+
+@keyframes page-reveal {
+  from { transform: translateY(0%); }
+  to   { transform: translateY(-100%); }
+}
+
+.page-transition-cover {
+  animation: page-cover 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.page-transition-reveal {
+  animation: page-reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* ── Hero animations ────────────────────────────────────────────── */

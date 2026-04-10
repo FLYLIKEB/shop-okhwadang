@@ -20,8 +20,8 @@ export default function PromotionBannerBlock({ content }: Props) {
   if (template === 'timer') {
     return (
       <section className="py-12 border-y border-border text-center">
-        <p className="text-sm tracking-widest text-muted-foreground uppercase mb-3">{t('limitedTime')}</p>
-        <h2 className="text-2xl font-medium">{title}</h2>
+        <p className="text-sm tracking-widest text-[#B8976A] uppercase mb-3">{t('limitedTime')}</p>
+        <h2 className="text-2xl font-display font-medium">{title}</h2>
         {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
         {end_date && <CountdownTimer endDate={end_date} />}
         {cta_text && cta_url && (
@@ -67,14 +67,14 @@ export default function PromotionBannerBlock({ content }: Props) {
       )}
       <div className="relative z-10 text-center px-8">
         <p
-          className={`text-sm tracking-widest text-muted-foreground uppercase mb-3 transition-all duration-600 ease-out ${
+          className={`text-sm tracking-widest text-[#B8976A] uppercase mb-3 transition-all duration-600 ease-out ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
           }`}
         >
           {t('specialOffer')}
         </p>
         <h2
-          className={`text-2xl font-medium mb-2 transition-all duration-600 ease-out ${
+          className={`text-2xl font-display font-medium mb-2 transition-all duration-600 ease-out ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
           }`}
           style={{ transitionDelay: visible ? '100ms' : undefined }}

@@ -75,8 +75,10 @@ export interface Category {
   name: string;
   slug: string;
   description?: string | null;
-  imageUrl?: string | null;
   parentId: number | null;
+  imageUrl: string | null;
+  sortOrder?: number;
+  isActive?: boolean;
   children?: Category[];
 }
 

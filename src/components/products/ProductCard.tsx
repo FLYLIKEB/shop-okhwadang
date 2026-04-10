@@ -3,15 +3,12 @@
 import { memo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/common/PriceDisplay';
-import { useCart } from '@/contexts/CartContext';
 import { useWishlistToggle } from '@/hooks/useWishlistToggle';
 import type { Locale } from '@/utils/currency';
-import StarRating from '@/components/reviews/StarRating';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 interface ProductCardProps {
   id: number;
@@ -21,12 +18,13 @@ interface ProductCardProps {
   shortDescription?: string | null;
   rating?: number;
   reviewCount?: number;
+  categoryName?: string;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
   isFeatured?: boolean;
   locale?: Locale;
   priority?: boolean;
-  showCartOnHover?: boolean;
+  variant?: 'default' | 'minimal';
 }
 
 function ProductCard({
@@ -37,33 +35,18 @@ function ProductCard({
   shortDescription,
   rating,
   reviewCount,
+  categoryName,
   status,
   images,
   locale = 'ko',
   priority = false,
-  showCartOnHover = false,
+  variant = 'default',
 }: ProductCardProps) {
+  const isMinimal = variant === 'minimal';
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
 
-  const { addItem } = useCart();
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
-
-  const { execute: addToCart, isLoading: isCartLoading } = useAsyncAction(
-    async () => {
-      await addItem({ productId: id, productOptionId: null, quantity: 1 });
-    },
-    { successMessage: '장바구니에 담았습니다.', errorMessage: '장바구니 담기에 실패했습니다.' },
-  );
-
-  const handleAddToCart = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      if (isSoldout || isCartLoading) return;
-      void addToCart();
-    },
-    [id, isSoldout, isCartLoading, addToCart],
-  );
 
   return (
     <Link
@@ -73,7 +56,7 @@ function ProductCard({
         isSoldout && 'opacity-60',
       )}
     >
-      <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+      <div className="relative aspect-square overflow-hidden border border-muted-foreground/20 rounded">
         {thumbnail ? (
           <Image
             src={thumbnail}
@@ -98,7 +81,10 @@ function ProductCard({
         <button
           type="button"
           aria-label={isWishlisted ? '찜하기 취소' : '찜하기'}
-          onClick={handleToggleWishlist}
+          onClick={(e) => {
+            e.preventDefault();
+            handleToggleWishlist(e);
+          }}
           disabled={isWishlistLoading}
           className={cn(
             'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 shadow-sm disabled:cursor-not-allowed backdrop-blur-sm',
@@ -113,47 +99,23 @@ function ProductCard({
         </button>
       </div>
 
-      <div className="mt-3 flex flex-col gap-1">
-        <p className="typo-title line-clamp-2 leading-tight h-11 shrink-0">{name}</p>
-
-        <div className="flex items-center gap-1.5 h-5 shrink-0">
-          {rating !== undefined && (
-            <>
-              <StarRating rating={rating} size="sm" interactive={false} />
-              <span className="typo-body-sm font-medium leading-none">{rating.toFixed(1)}</span>
-              {reviewCount !== undefined && reviewCount > 0 && (
-                <span className="typo-body-sm text-muted-foreground leading-none">({reviewCount})</span>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="h-10 overflow-hidden">
-          {shortDescription && (
-            <p className="line-clamp-2 typo-body-sm text-muted-foreground leading-snug">{shortDescription}</p>
-          )}
-        </div>
-
-        <div className="mt-auto pt-2">
-          <hr className="border-gray-200" />
-        </div>
-
+      <div className="mt-4 flex flex-col">
+        {categoryName && (
+          <p className="typo-label text-muted-foreground uppercase tracking-wider mb-1">{categoryName}</p>
+        )}
+        <p className="text-base font-semibold line-clamp-2 leading-tight shrink-0">{name}</p>
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
 
-        {!isSoldout && (
+        <div className="mt-auto pt-2">
           <button
             type="button"
-            aria-label="장바구니 담기"
-            onClick={handleAddToCart}
-            disabled={isCartLoading}
             className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed shrink-0',
+              'flex w-full items-center justify-center bg-foreground py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/80 shrink-0',
             )}
           >
-            <ShoppingCart className="h-4 w-4" />
-            {isCartLoading ? '담는 중...' : '장바구니 담기'}
+            자세히 보기
           </button>
-        )}
+        </div>
       </div>
     </Link>
   );

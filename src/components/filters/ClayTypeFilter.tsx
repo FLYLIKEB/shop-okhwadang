@@ -11,37 +11,34 @@ interface ClayTypeFilterProps {
 
 export default function ClayTypeFilter({ collections, selected, onSelect }: ClayTypeFilterProps) {
   return (
-    <div>
-      <h2 className="mb-3 text-sm font-semibold text-foreground">니료(泥料)</h2>
-      <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={() => onSelect(undefined)}
+        className={cn(
+          'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+          selected === undefined
+            ? 'border-primary bg-primary text-primary-foreground'
+            : 'border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground',
+        )}
+      >
+        전체
+      </button>
+      {collections.map((item) => (
         <button
+          key={item.id}
           type="button"
-          onClick={() => onSelect(undefined)}
+          onClick={() => onSelect(selected === item.name ? undefined : item.name)}
           className={cn(
             'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-            selected === undefined
+            selected === item.name
               ? 'border-primary bg-primary text-primary-foreground'
               : 'border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground',
           )}
         >
-          전체
+          {item.nameKo ?? item.name}
         </button>
-        {collections.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => onSelect(selected === item.name ? undefined : item.name)}
-            className={cn(
-              'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              selected === item.name
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground',
-            )}
-          >
-            {item.nameKo ?? item.name}
-          </button>
-        ))}
-      </div>
+      ))}
     </div>
   );
 }

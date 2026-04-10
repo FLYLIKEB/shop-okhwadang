@@ -113,6 +113,16 @@ export function useScrollLogoTransition({
     }
 
     const handleScroll = () => {
+      if (typeof window === 'undefined') return;
+
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) {
+        setProgress(0);
+        return;
+      }
+
+      const isDesktop = window.innerWidth >= 768;
+
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
@@ -121,13 +131,15 @@ export function useScrollLogoTransition({
         const heroEl = heroRef.current;
         if (!heroEl) return;
 
-        // getBoundingClientRect inside RAF is acceptable — not in the render path
         const heroRect = heroEl.getBoundingClientRect();
         const viewportHeight = window.innerHeight;
         const heroHeight = heroRect.height;
 
         let newProgress = 0;
-        if (heroRect.bottom < viewportHeight * 0.5) {
+
+        if (isDesktop) {
+          newProgress = 0;
+        } else if (heroRect.bottom < viewportHeight * 0.5) {
           newProgress = 1;
         } else if (heroRect.top < viewportHeight) {
           const scrollableDistance = heroHeight - viewportHeight * 0.5;

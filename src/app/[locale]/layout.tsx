@@ -2,11 +2,14 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
+import AnnouncementBar from '@/components/layout/AnnouncementBar';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 import { MobileNavProvider } from '@/contexts/MobileNavContext';
 import Providers from '@/components/Providers';
+import BackButton from '@/components/BackButton';
+import PageTransition from '@/components/PageTransition';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
@@ -117,7 +120,9 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <Providers>
             <MobileNavProvider initialVisible={mobileBottomNavVisible}>
+              <PageTransition />
               <div className="flex min-h-screen flex-col">
+              <AnnouncementBar />
               <Header />
               <main id="main-content" className="flex-1 pb-16 md:pb-0">{children}</main>
               <Footer />
