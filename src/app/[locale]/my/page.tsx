@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
@@ -9,6 +10,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { ORDER_STATUS_LABELS } from '@/constants/status';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { formatCurrency } from '@/utils/currency';
+import { handleApiError } from '@/utils/error';
 import {
   Package,
   Heart,
@@ -41,7 +43,10 @@ export default function MyPage() {
     ordersApi
       .getList({ page: 1, limit: 3 })
       .then((res) => setRecentOrders(res.items))
-      .catch(() => setRecentOrders([]))
+      .catch((err: unknown) => {
+        toast.error(handleApiError(err, '주문 내역을 불러올 수 없습니다.'));
+        setRecentOrders([]);
+      })
       .finally(() => setOrdersLoading(false));
   }, [isAuthenticated]);
 
