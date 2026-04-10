@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Heart } from 'lucide-react'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/common/PriceDisplay'
 import type { ProductDetail, ProductOption, ProductDetailImage, Collection } from '@/lib/api'
@@ -39,10 +40,8 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
   const { isVisible: isNavVisible } = useMobileNav()
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
   const [quantity, setQuantity] = useState(1)
-  const [isAdding, setIsAdding] = useState(false)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [wishlistId, setWishlistId] = useState<number | null>(null)
-  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false)
 
   useEffect(() => {
     addRecentlyViewed({
@@ -82,29 +81,19 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
     setQuantity((q) => Math.min(q + 1, maxQuantity))
   }
 
-  async function handleAddToCart() {
-    if (product.options.length > 0 && !selectedOptionId) {
-      toast.error('옵션을 선택해 주세요.')
-      return
-    }
-    setIsAdding(true)
-    try {
-      await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
-      toast.success('장바구니에 담았습니다.')
-    } catch {
-      toast.error('장바구니 담기에 실패했습니다.')
-    } finally {
-      setIsAdding(false)
-    }
-  }
-
   function handleDecrease() {
     setQuantity((q) => Math.max(q - 1, 1))
   }
 
-  async function handleToggleWishlist() {
-    setIsTogglingWishlist(true)
-    try {
+  const { execute: addToCart, isLoading: isAdding } = useAsyncAction(
+    async () => {
+      await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
+    },
+    { successMessage: '장바구니에 담았습니다.', errorMessage: '장바구니 담기에 실패했습니다.' },
+  )
+
+  const { execute: toggleWishlist, isLoading: isTogglingWishlist } = useAsyncAction(
+    async () => {
       if (isWishlisted && wishlistId) {
         await wishlistApi.remove(wishlistId)
         setIsWishlisted(false)
@@ -116,26 +105,36 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
         setWishlistId(res.id)
         toast.success('위시리스트에 추가했습니다。')
       }
-    } catch {
-      toast.error('위시리스트 처리 중 오류가 발생했습니다。')
-    } finally {
-      setIsTogglingWishlist(false)
-    }
-  }
+    },
+    { errorMessage: '위시리스트 처리 중 오류가 발생했습니다。' },
+  )
 
-  async function handleBuyNow() {
+  const { execute: buyNow } = useAsyncAction(
+    async () => {
+      await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
+      router.push('/checkout')
+    },
+    { errorMessage: '구매 처리 중 오류가 발생했습니다.' },
+  )
+
+  function handleAddToCart() {
     if (product.options.length > 0 && !selectedOptionId) {
       toast.error('옵션을 선택해 주세요.')
       return
     }
-    setIsAdding(true)
-    try {
-      await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
-      router.push('/checkout')
-    } catch {
-      toast.error('구매 처리 중 오류가 발생했습니다.')
-      setIsAdding(false)
+    void addToCart()
+  }
+
+  function handleToggleWishlist() {
+    void toggleWishlist()
+  }
+
+  function handleBuyNow() {
+    if (product.options.length > 0 && !selectedOptionId) {
+      toast.error('옵션을 선택해 주세요.')
+      return
     }
+    void buyNow()
   }
 
   return (

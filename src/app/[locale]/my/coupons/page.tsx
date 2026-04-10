@@ -7,8 +7,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
 import { formatCurrency } from '@/utils/currency';
-import { handleApiError } from '@/utils/error';
-import { toast } from 'sonner';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 type TabStatus = 'available' | 'used' | 'expired';
 
@@ -62,23 +61,20 @@ export default function MyCouponsPage() {
   const [tab, setTab] = useState<TabStatus>('available');
   const [coupons, setCoupons] = useState<CouponItem[]>([]);
   const [pointBalance, setPointBalance] = useState(0);
-  const [dataLoading, setDataLoading] = useState(true);
+
+  const { execute: loadCoupons, isLoading: dataLoading } = useAsyncAction(
+    async () => {
+      const res = await couponsApi.getList(tab);
+      setCoupons(res.coupons);
+      setPointBalance(res.points.balance);
+    },
+    { errorMessage: '쿠폰 목록을 불러오지 못했습니다.' },
+  );
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    setDataLoading(true);
-    couponsApi
-      .getList(tab)
-      .then((res) => {
-        setCoupons(res.coupons);
-        setPointBalance(res.points.balance);
-      })
-      .catch((err) => {
-        setCoupons([]);
-        toast.error(handleApiError(err, '쿠폰 목록을 불러오지 못했습니다.'));
-      })
-      .finally(() => setDataLoading(false));
-  }, [isAuthenticated, tab]);
+    void loadCoupons();
+  }, [isAuthenticated, tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) {
     return (

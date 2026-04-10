@@ -126,7 +126,7 @@ describe('ProductCard', () => {
   });
 
   it('shows error toast when cart add fails', async () => {
-    mockAddItem.mockRejectedValue(new Error('fail'));
+    mockAddItem.mockRejectedValue(new Error('장바구니 담기에 실패했습니다.'));
     render(<ProductCard {...baseProps} />);
     fireEvent.click(screen.getByRole('button', { name: '장바구니 담기' }));
     await waitFor(() => {

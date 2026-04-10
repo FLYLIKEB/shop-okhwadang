@@ -1,10 +1,9 @@
 'use client';
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, ShoppingCart } from 'lucide-react';
-import { toast } from 'sonner';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/common/PriceDisplay';
@@ -12,6 +11,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlistToggle } from '@/hooks/useWishlistToggle';
 import type { Locale } from '@/utils/currency';
 import StarRating from '@/components/reviews/StarRating';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 interface ProductCardProps {
   id: number;
@@ -49,23 +49,20 @@ function ProductCard({
   const { addItem } = useCart();
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
 
-  const [isCartLoading, setIsCartLoading] = useState(false);
+  const { execute: addToCart, isLoading: isCartLoading } = useAsyncAction(
+    async () => {
+      await addItem({ productId: id, productOptionId: null, quantity: 1 });
+    },
+    { successMessage: '장바구니에 담았습니다.', errorMessage: '장바구니 담기에 실패했습니다.' },
+  );
 
   const handleAddToCart = useCallback(
-    async (e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
       if (isSoldout || isCartLoading) return;
-      setIsCartLoading(true);
-      try {
-        await addItem({ productId: id, productOptionId: null, quantity: 1 });
-        toast.success('장바구니에 담았습니다.');
-      } catch {
-        toast.error('장바구니 담기에 실패했습니다.');
-      } finally {
-        setIsCartLoading(false);
-      }
+      void addToCart();
     },
-    [id, isSoldout, isCartLoading, addItem],
+    [id, isSoldout, isCartLoading, addToCart],
   );
 
   return (
