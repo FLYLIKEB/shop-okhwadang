@@ -37,10 +37,12 @@ export function useScrollLogoTransition({
       const heroEl = heroRef.current;
       if (!heroEl) return;
       const rect = heroEl.getBoundingClientRect();
-      setCachedRect({
-        top: rect.top + window.scrollY,
-        left: rect.left,
-        height: rect.height,
+      setCachedRect((prev) => {
+        const newRect = { top: rect.top + window.scrollY, left: rect.left, height: rect.height };
+        if (prev && prev.top === newRect.top && prev.left === newRect.left && prev.height === newRect.height) {
+          return prev;
+        }
+        return newRect;
       });
     };
 
@@ -133,7 +135,7 @@ export function useScrollLogoTransition({
           newProgress = Math.min(1, Math.max(0, scrolled / scrollableDistance));
         }
 
-        setProgress(newProgress);
+        setProgress((prev) => Math.abs(newProgress - prev) > 0.01 ? newProgress : prev);
       });
     };
 
