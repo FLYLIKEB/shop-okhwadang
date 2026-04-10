@@ -6,19 +6,27 @@ import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { User } from '../../users/entities/user.entity';
 import { Product } from '../../products/entities/product.entity';
 
+function createMockQueryBuilder(overrides: Record<string, unknown> = {}) {
+  const qb: Record<string, jest.Mock> = {
+    select: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    groupBy: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn().mockResolvedValue({ revenue: '0', count: '0', total: '0' }),
+    getRawMany: jest.fn().mockResolvedValue([]),
+  };
+  Object.assign(qb, overrides);
+  return qb;
+}
+
 function createMockRepository() {
   return {
     find: jest.fn().mockResolvedValue([]),
     count: jest.fn().mockResolvedValue(0),
     findOne: jest.fn(),
-    createQueryBuilder: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      addSelect: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      groupBy: jest.fn().mockReturnThis(),
-      getRawOne: jest.fn().mockResolvedValue({ total: '0' }),
-      getRawMany: jest.fn().mockResolvedValue([]),
-    })),
+    createQueryBuilder: jest.fn(() => createMockQueryBuilder()),
   };
 }
 
@@ -70,19 +78,12 @@ describe('AdminDashboardService', () => {
     });
 
     it('should calculate revenue from orders excluding cancelled/refunded', async () => {
-      const todayOrders = [
-        { totalAmount: '50000', status: OrderStatus.PAID, createdAt: new Date() },
-        { totalAmount: '30000', status: OrderStatus.DELIVERED, createdAt: new Date() },
-      ];
-
-      // First call: today orders (KPI), second: yesterday orders
-      // Third call: revenue chart orders
-      // Fourth call: recent orders
-      orderRepo.find
-        .mockResolvedValueOnce(todayOrders)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      // createQueryBuilder is called multiple times: todayAgg, yesterdayAgg, revenueChart rows, orderStatusSummary
+      orderRepo.createQueryBuilder
+        .mockReturnValueOnce(createMockQueryBuilder({ getRawOne: jest.fn().mockResolvedValue({ revenue: '80000', count: '2' }) }))
+        .mockReturnValueOnce(createMockQueryBuilder({ getRawOne: jest.fn().mockResolvedValue({ revenue: '0', count: '0' }) }))
+        .mockReturnValueOnce(createMockQueryBuilder({ getRawMany: jest.fn().mockResolvedValue([]) }))
+        .mockReturnValue(createMockQueryBuilder({ getRawMany: jest.fn().mockResolvedValue([]) }));
 
       const result = await service.getDashboard({ period: 'today' });
 
@@ -91,18 +92,11 @@ describe('AdminDashboardService', () => {
     });
 
     it('should calculate diff percentage correctly', async () => {
-      const todayOrders = [
-        { totalAmount: '100000', status: OrderStatus.PAID, createdAt: new Date() },
-      ];
-      const yesterdayOrders = [
-        { totalAmount: '80000', status: OrderStatus.PAID, createdAt: new Date() },
-      ];
-
-      orderRepo.find
-        .mockResolvedValueOnce(todayOrders)
-        .mockResolvedValueOnce(yesterdayOrders)
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      orderRepo.createQueryBuilder
+        .mockReturnValueOnce(createMockQueryBuilder({ getRawOne: jest.fn().mockResolvedValue({ revenue: '100000', count: '1' }) }))
+        .mockReturnValueOnce(createMockQueryBuilder({ getRawOne: jest.fn().mockResolvedValue({ revenue: '80000', count: '1' }) }))
+        .mockReturnValueOnce(createMockQueryBuilder({ getRawMany: jest.fn().mockResolvedValue([]) }))
+        .mockReturnValue(createMockQueryBuilder({ getRawMany: jest.fn().mockResolvedValue([]) }));
 
       const result = await service.getDashboard({ period: 'today' });
 
@@ -111,11 +105,11 @@ describe('AdminDashboardService', () => {
     });
 
     it('should return 100% diff when previous is 0 and current > 0', async () => {
-      orderRepo.find
-        .mockResolvedValueOnce([{ totalAmount: '50000', status: OrderStatus.PAID, createdAt: new Date() }])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      orderRepo.createQueryBuilder
+        .mockReturnValueOnce(createMockQueryBuilder({ getRawOne: jest.fn().mockResolvedValue({ revenue: '50000', count: '1' }) }))
+        .mockReturnValueOnce(createMockQueryBuilder({ getRawOne: jest.fn().mockResolvedValue({ revenue: '0', count: '0' }) }))
+        .mockReturnValueOnce(createMockQueryBuilder({ getRawMany: jest.fn().mockResolvedValue([]) }))
+        .mockReturnValue(createMockQueryBuilder({ getRawMany: jest.fn().mockResolvedValue([]) }));
 
       const result = await service.getDashboard({ period: 'today' });
 
@@ -123,18 +117,16 @@ describe('AdminDashboardService', () => {
     });
 
     it('should aggregate order status summary', async () => {
-      orderRepo.createQueryBuilder.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        groupBy: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '0' }),
-        getRawMany: jest.fn().mockResolvedValue([
-          { status: 'pending', count: '5' },
-          { status: 'paid', count: '12' },
-          { status: 'delivered', count: '150' },
-        ]),
-      });
+      orderRepo.createQueryBuilder.mockReturnValue(
+        createMockQueryBuilder({
+          getRawOne: jest.fn().mockResolvedValue({ revenue: '0', count: '0' }),
+          getRawMany: jest.fn().mockResolvedValue([
+            { status: 'pending', count: '5' },
+            { status: 'paid', count: '12' },
+            { status: 'delivered', count: '150' },
+          ]),
+        }),
+      );
 
       const result = await service.getDashboard({});
 
@@ -155,11 +147,8 @@ describe('AdminDashboardService', () => {
         },
       ];
 
-      orderRepo.find
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce(mockOrders);
+      // getRecentOrders still uses find(); KPI/chart now use createQueryBuilder
+      orderRepo.find.mockResolvedValue(mockOrders);
 
       const result = await service.getDashboard({});
 
@@ -210,14 +199,9 @@ describe('AdminDashboardService', () => {
     });
 
     it('should sum product view counts for total_product_views', async () => {
-      productRepo.createQueryBuilder.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        groupBy: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '4520' }),
-        getRawMany: jest.fn().mockResolvedValue([]),
-      });
+      productRepo.createQueryBuilder.mockReturnValue(
+        createMockQueryBuilder({ getRawOne: jest.fn().mockResolvedValue({ total: '4520' }) }),
+      );
 
       const result = await service.getDashboard({});
 
@@ -225,14 +209,9 @@ describe('AdminDashboardService', () => {
     });
 
     it('should handle null view count total', async () => {
-      productRepo.createQueryBuilder.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        groupBy: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: null }),
-        getRawMany: jest.fn().mockResolvedValue([]),
-      });
+      productRepo.createQueryBuilder.mockReturnValue(
+        createMockQueryBuilder({ getRawOne: jest.fn().mockResolvedValue({ total: null }) }),
+      );
 
       const result = await service.getDashboard({});
 
@@ -240,19 +219,15 @@ describe('AdminDashboardService', () => {
     });
 
     it('should show user name as 알 수 없음 when user is null', async () => {
-      orderRepo.find
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([
-          {
-            orderNumber: 'ORD-002',
-            user: null,
-            totalAmount: '10000',
-            status: OrderStatus.PENDING,
-            createdAt: new Date(),
-          },
-        ]);
+      orderRepo.find.mockResolvedValue([
+        {
+          orderNumber: 'ORD-002',
+          user: null,
+          totalAmount: '10000',
+          status: OrderStatus.PENDING,
+          createdAt: new Date(),
+        },
+      ]);
 
       const result = await service.getDashboard({});
 
