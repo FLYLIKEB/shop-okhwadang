@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, BadRequestException, ConflictException,
+  Injectable, BadRequestException, ConflictException,
   Logger, Inject, InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -16,6 +16,7 @@ import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { resolveGatewayByLocale } from './payments.module';
 import { assertOwnership } from '../../common/utils/ownership.util';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 @Injectable()
 export class PaymentsService {
@@ -43,8 +44,7 @@ export class PaymentsService {
   }
 
   async prepare(dto: PreparePaymentDto, userId: number) {
-    const order = await this.orderRepository.findOne({ where: { id: dto.orderId } });
-    if (!order) throw new NotFoundException('주문을 찾을 수 없습니다.');
+    const order = await findOrThrow(this.orderRepository, { id: dto.orderId }, '주문을 찾을 수 없습니다.');
     assertOwnership(order.userId, userId);
     if (order.status !== OrderStatus.PENDING) {
       throw new ConflictException('이미 처리된 주문입니다.');
@@ -78,11 +78,7 @@ export class PaymentsService {
   }
 
   async confirm(dto: ConfirmPaymentDto, userId: number) {
-    const payment = await this.paymentRepository.findOne({
-      where: { orderId: dto.orderId },
-      relations: ['order'],
-    });
-    if (!payment) throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
+    const payment = await findOrThrow(this.paymentRepository, { orderId: dto.orderId }, '결제 정보를 찾을 수 없습니다.', ['order']);
     assertOwnership(payment.order.userId, userId);
 
     if (payment.status === PaymentStatus.CONFIRMED) {
@@ -139,11 +135,7 @@ export class PaymentsService {
   }
 
   async cancel(dto: CancelPaymentDto, userId: number) {
-    const payment = await this.paymentRepository.findOne({
-      where: { orderId: dto.orderId },
-      relations: ['order'],
-    });
-    if (!payment) throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
+    const payment = await findOrThrow(this.paymentRepository, { orderId: dto.orderId }, '결제 정보를 찾을 수 없습니다.', ['order']);
     assertOwnership(payment.order.userId, userId);
 
     if (payment.status !== PaymentStatus.CONFIRMED) {

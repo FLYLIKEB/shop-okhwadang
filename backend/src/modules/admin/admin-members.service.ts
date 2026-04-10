@@ -117,7 +117,7 @@ export class AdminMembersService {
       `Member #${targetId} role changed: ${target.role} → ${newRole} by #${requesterId}`,
     );
 
-    const updated = await this.userRepository.findOne({ where: { id: targetId } });
-    return toSafeUser(updated!);
+    const updated = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
+    return toSafeUser(updated);
   }
 }
