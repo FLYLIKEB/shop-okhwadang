@@ -10,6 +10,8 @@ import { fetchProducts, fetchCategories, fetchCollections } from '@/lib/api-serv
 import ProductErrorState from '@/components/products/ProductErrorState';
 import type { ProductSort } from '@/lib/api';
 import type { Locale } from '@/utils/currency';
+import Breadcrumb from '@/components/layout/Breadcrumb';
+import CategoryHeroBanner from '@/components/layout/CategoryHeroBanner';
 
 export const metadata: Metadata = {
   title: 'Products | 옥화당',
@@ -73,24 +75,32 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     : null;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <h1 className="text-xl font-bold text-foreground md:text-2xl">
-        {q ? `"${q}" 검색 결과` : isFeatured ? '추천 상품' : categoryId && selectedCategory ? selectedCategory.name : '상품 목록'}
-      </h1>
+    <div className="mx-auto max-w-7xl px-4">
+      <Breadcrumb category={selectedCategory} />
 
-      {selectedCategory?.description && (
-        <p className="mt-2 text-sm text-muted-foreground">{selectedCategory.description}</p>
+      {selectedCategory && (
+        <CategoryHeroBanner category={selectedCategory} />
       )}
 
-      {/* 모바일 필터 바 */}
-      <div className="mt-4 md:hidden">
+      {!selectedCategory && !q && !isFeatured && (
+        <h1 className="py-6 text-2xl font-display font-medium text-foreground">
+          상품목록
+        </h1>
+      )}
+
+      {(q || isFeatured) && (
+        <h1 className="py-6 text-xl font-bold text-foreground">
+          {q ? `"${q}" 검색 결과` : '추천 상품'}
+        </h1>
+      )}
+
+      <div className="md:hidden">
         <Suspense fallback={null}>
           <MobileFilterBar categories={categories ?? []} clayCollections={clayCollections} shapeCollections={shapeCollections} />
         </Suspense>
       </div>
 
-      <div className="mt-4 flex gap-8 md:mt-6">
-        {/* 데스크탑 사이드바 */}
+      <div className="flex gap-8 pb-12">
         <div className="hidden md:block md:w-48 md:shrink-0">
           <Suspense fallback={null}>
             <FilterSidebar categories={categories ?? []} clayCollections={clayCollections} shapeCollections={shapeCollections} />
