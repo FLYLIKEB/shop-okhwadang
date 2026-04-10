@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { reviewsApi } from '@/lib/api'
 import type { ReviewItem, ReviewStats as ReviewStatsType, ReviewSort } from '@/lib/api'
 import { cn } from '@/components/ui/utils'
+import { handleApiError } from '@/utils/error'
 import ReviewCard from './ReviewCard'
 import ReviewStatsComponent from './ReviewStats'
 
@@ -37,8 +39,8 @@ export default function ReviewList({ productId }: ReviewListProps) {
       setReviews(res.data)
       setStats(res.stats)
       setTotal(res.pagination.total)
-    } catch {
-      // Silently fail - empty state is shown
+    } catch (err: unknown) {
+      toast.error(handleApiError(err, '리뷰를 불러올 수 없습니다.'))
     } finally {
       setIsLoading(false)
     }
