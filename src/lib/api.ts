@@ -8,6 +8,7 @@ const AUTH_SKIP_REFRESH = new Set([
   '/auth/logout',
   '/auth/kakao',
   '/auth/google',
+  '/auth/me',
 ]);
 
 // 401 interceptor state — shared across all ApiClient instances
