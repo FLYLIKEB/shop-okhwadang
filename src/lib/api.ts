@@ -1,5 +1,15 @@
 const API_BASE = '/api';
 
+// Auth endpoints that must not trigger token refresh on 401 (would cause infinite loops)
+const AUTH_SKIP_REFRESH = new Set([
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/kakao',
+  '/auth/google',
+]);
+
 // 401 interceptor state — shared across all ApiClient instances
 let _isRefreshing = false;
 let _refreshQueue: Array<{ resolve: () => void; reject: (err: unknown) => void }> = [];
@@ -183,7 +193,7 @@ class ApiClient {
     });
 
     if (response.status === 401) {
-      if (endpoint === '/auth/login') {
+      if (AUTH_SKIP_REFRESH.has(endpoint)) {
         const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
         throw new Error(error.message || `HTTP ${response.status}`);
       }
