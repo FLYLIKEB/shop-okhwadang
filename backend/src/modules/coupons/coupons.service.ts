@@ -139,14 +139,7 @@ export class CouponsService {
     let couponDiscount = 0;
 
     if (userCouponId) {
-      const uc = await this.userCouponRepo.findOne({
-        where: { id: userCouponId, userId },
-        relations: ['coupon'],
-      });
-
-      if (!uc) {
-        throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
-      }
+      const uc = await findOrThrow(this.userCouponRepo, { id: userCouponId, userId }, '쿠폰을 찾을 수 없습니다.', ['coupon']);
 
       const now = new Date();
       if (uc.coupon.expiresAt < now) {
