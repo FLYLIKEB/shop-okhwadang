@@ -5,9 +5,11 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
+import { handleApiError } from '@/utils/error';
 
 function OrderCompleteContent() {
   const router = useRouter();
@@ -32,7 +34,8 @@ function OrderCompleteContent() {
     ordersApi
       .getById(id)
       .then((data) => setOrder(data))
-      .catch(() => {
+      .catch((err: unknown) => {
+        toast.error(handleApiError(err, '주문 정보를 불러올 수 없습니다.'));
         router.replace('/');
       })
       .finally(() => setIsLoading(false));

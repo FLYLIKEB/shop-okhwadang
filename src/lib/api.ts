@@ -1,5 +1,16 @@
 const API_BASE = '/api';
 
+// Auth endpoints that must not trigger token refresh on 401 (would cause infinite loops)
+const AUTH_SKIP_REFRESH = new Set([
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/kakao',
+  '/auth/google',
+  '/auth/me',
+]);
+
 // 401 interceptor state — shared across all ApiClient instances
 let _isRefreshing = false;
 let _refreshQueue: Array<{ resolve: () => void; reject: (err: unknown) => void }> = [];
@@ -85,6 +96,28 @@ export interface Product {
   viewCount: number;
   category: Category | null;
   images: ProductImage[];
+  attributes?: ProductAttribute[];
+}
+
+export interface ProductAttribute {
+  id: number;
+  attributeTypeId: number;
+  value: string;
+  displayValue: string | null;
+  sortOrder: number;
+  attributeType?: AttributeType;
+}
+
+export interface AttributeType {
+  id: number;
+  code: string;
+  name: string;
+  nameKo: string | null;
+  inputType: 'text' | 'select' | 'range';
+  isFilterable: boolean;
+  isSearchable: boolean;
+  validValues: string[] | null;
+  sortOrder: number;
 }
 
 export interface ProductOption {
@@ -163,7 +196,7 @@ class ApiClient {
     });
 
     if (response.status === 401) {
-      if (endpoint === '/auth/login') {
+      if (AUTH_SKIP_REFRESH.has(endpoint)) {
         const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
         throw new Error(error.message || `HTTP ${response.status}`);
       }
@@ -245,7 +278,7 @@ export interface AutocompleteItem {
 }
 
 export const productsApi = {
-  getList: (params?: { page?: number; limit?: number; sort?: ProductSort; categoryId?: number; q?: string; price_min?: number; price_max?: number; locale?: string }) =>
+  getList: (params?: { page?: number; limit?: number; sort?: ProductSort; categoryId?: number; q?: string; price_min?: number; price_max?: number; locale?: string; attrs?: string }) =>
     apiClient.get<ProductListResponse>('/products', { params: params as Record<string, string | number | undefined> }),
   getById: (id: number, locale?: string) =>
     apiClient.get<ProductDetail>(`/products/${id}`, { params: locale ? { locale } : undefined }),
@@ -261,6 +294,15 @@ export const searchApi = {
 
 export const categoriesApi = {
   getTree: () => apiClient.get<Category[]>('/categories'),
+};
+
+export const attributesApi = {
+  getTypes: () => apiClient.get<AttributeType[]>('/attributes/types'),
+  getFilterableTypes: () => apiClient.get<AttributeType[]>('/attributes/types/filterable'),
+  getTypeById: (id: number) => apiClient.get<AttributeType>(`/attributes/types/${id}`),
+  getTypeByCode: (code: string) => apiClient.get<AttributeType | null>(`/attributes/types/code/${code}`),
+  getTypeValues: (code: string) => apiClient.get<string[]>(`/attributes/types/${code}/values`),
+  getProductAttributes: (productId: number) => apiClient.get<ProductAttribute[]>(`/attributes/products/${productId}`),
 };
 
 export const homeApi = {

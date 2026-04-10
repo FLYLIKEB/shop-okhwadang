@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart } from 'lucide-react';

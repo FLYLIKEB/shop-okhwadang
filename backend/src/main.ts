@@ -49,16 +49,18 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('옥화당 API')
-    .setDescription('옥화당 자사몰 백엔드 API 문서입니다.')
-    .setVersion('1.0')
-    .addCookieAuth('accessToken', { type: 'apiKey', in: 'cookie' }, 'accessToken')
-    .addCookieAuth('refreshToken', { type: 'apiKey', in: 'cookie' }, 'refreshToken')
-    .build();
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('옥화당 API')
+      .setDescription('옥화당 자사몰 백엔드 API 문서입니다.')
+      .setVersion('1.0')
+      .addCookieAuth('accessToken', { type: 'apiKey', in: 'cookie' }, 'accessToken')
+      .addCookieAuth('refreshToken', { type: 'apiKey', in: 'cookie' }, 'refreshToken')
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');

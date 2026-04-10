@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { Heart } from 'lucide-react'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/common/PriceDisplay'
-import type { ProductDetail, ProductOption, ProductDetailImage } from '@/lib/api'
+import type { ProductDetail, ProductOption, ProductDetailImage, Collection } from '@/lib/api'
 import { wishlistApi } from '@/lib/api'
 import { useCart } from '@/contexts/CartContext'
 import { useMobileNav } from '@/contexts/MobileNavContext'
@@ -17,24 +19,29 @@ import OptionSelector from './OptionSelector'
 import QuantitySelector from './QuantitySelector'
 import ProductTabs from './ProductTabs'
 import StarRating from '@/components/reviews/StarRating'
-import type { Locale } from '@/utils/currency'
+import { formatCurrency, type Locale } from '@/utils/currency'
+
+function findCollectionLabel(collections: Collection[], name: string): string {
+  const found = collections.find((c) => c.name === name)
+  return found?.nameKo ?? name
+}
 
 interface ProductDetailClientProps {
   product: ProductDetail
   locale?: Locale
+  clayCollections?: Collection[]
+  shapeCollections?: Collection[]
 }
 
-export default function ProductDetailClient({ product, locale = 'ko' }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, locale = 'ko', clayCollections = [], shapeCollections = [] }: ProductDetailClientProps) {
   const router = useRouter()
   const { addItem } = useCart()
   const { addItem: addRecentlyViewed } = useRecentlyViewed()
   const { isVisible: isNavVisible } = useMobileNav()
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
   const [quantity, setQuantity] = useState(1)
-  const [isAdding, setIsAdding] = useState(false)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [wishlistId, setWishlistId] = useState<number | null>(null)
-  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false)
 
   useEffect(() => {
     addRecentlyViewed({
@@ -65,34 +72,28 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const isSoldout = product.status === 'soldout'
   const descriptionImages = product.detailImages?.filter((img) => img.isActive) ?? []
 
+  const basePrice = product.salePrice ?? product.price
+  const unitPrice = basePrice + (selectedOption?.priceAdjustment ?? 0)
+  const totalPrice = unitPrice * quantity
+
 
   function handleIncrease() {
     setQuantity((q) => Math.min(q + 1, maxQuantity))
-  }
-
-  async function handleAddToCart() {
-    if (product.options.length > 0 && !selectedOptionId) {
-      toast.error('옵션을 선택해 주세요.')
-      return
-    }
-    setIsAdding(true)
-    try {
-      await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
-      toast.success('장바구니에 담았습니다.')
-    } catch {
-      toast.error('장바구니 담기에 실패했습니다.')
-    } finally {
-      setIsAdding(false)
-    }
   }
 
   function handleDecrease() {
     setQuantity((q) => Math.max(q - 1, 1))
   }
 
-  async function handleToggleWishlist() {
-    setIsTogglingWishlist(true)
-    try {
+  const { execute: addToCart, isLoading: isAdding } = useAsyncAction(
+    async () => {
+      await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
+    },
+    { successMessage: '장바구니에 담았습니다.', errorMessage: '장바구니 담기에 실패했습니다.' },
+  )
+
+  const { execute: toggleWishlist, isLoading: isTogglingWishlist } = useAsyncAction(
+    async () => {
       if (isWishlisted && wishlistId) {
         await wishlistApi.remove(wishlistId)
         setIsWishlisted(false)
@@ -104,26 +105,36 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
         setWishlistId(res.id)
         toast.success('위시리스트에 추가했습니다。')
       }
-    } catch {
-      toast.error('위시리스트 처리 중 오류가 발생했습니다。')
-    } finally {
-      setIsTogglingWishlist(false)
-    }
-  }
+    },
+    { errorMessage: '위시리스트 처리 중 오류가 발생했습니다。' },
+  )
 
-  async function handleBuyNow() {
+  const { execute: buyNow } = useAsyncAction(
+    async () => {
+      await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
+      router.push('/checkout')
+    },
+    { errorMessage: '구매 처리 중 오류가 발생했습니다.' },
+  )
+
+  function handleAddToCart() {
     if (product.options.length > 0 && !selectedOptionId) {
       toast.error('옵션을 선택해 주세요.')
       return
     }
-    setIsAdding(true)
-    try {
-      await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
-      router.push('/checkout')
-    } catch {
-      toast.error('구매 처리 중 오류가 발생했습니다.')
-      setIsAdding(false)
+    void addToCart()
+  }
+
+  function handleToggleWishlist() {
+    void toggleWishlist()
+  }
+
+  function handleBuyNow() {
+    if (product.options.length > 0 && !selectedOptionId) {
+      toast.error('옵션을 선택해 주세요.')
+      return
     }
+    void buyNow()
   }
 
   return (
@@ -140,10 +151,43 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Breadcrumb */}
           {product.category && (
             <nav className="typo-label text-muted-foreground tracking-widest uppercase">
-              <span>{product.category.name}</span>
+              <Link href={`/products?categoryId=${product.category.id}`} className="hover:text-foreground transition-colors">
+                {product.category.name}
+              </Link>
               <span className="mx-2 text-[#B8976A]">·</span>
               <span className="text-foreground">{product.name}</span>
             </nav>
+          )}
+
+          {/* Clay type & Shape badges */}
+          {product.attributes && product.attributes.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {product.attributes.map((attr) => {
+                if (attr.attributeType?.code === 'clay_type') {
+                  return (
+                    <Link
+                      key={attr.id}
+                      href={`/products?attrs=clay_type:${encodeURIComponent(attr.value)}`}
+                      className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
+                    >
+                      니료: {findCollectionLabel(clayCollections, attr.value)}
+                    </Link>
+                  );
+                }
+                if (attr.attributeType?.code === 'teapot_shape') {
+                  return (
+                    <Link
+                      key={attr.id}
+                      href={`/products?attrs=teapot_shape:${encodeURIComponent(attr.value)}`}
+                      className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
+                    >
+                      모양: {findCollectionLabel(shapeCollections, attr.value)}
+                    </Link>
+                  );
+                }
+                return null;
+              })}
+            </div>
           )}
 
           {/* Name */}
@@ -185,13 +229,44 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Quantity */}
           <div className="flex flex-col gap-2">
             <span className="typo-label text-foreground">수량</span>
-            <QuantitySelector
-              quantity={quantity}
-              maxQuantity={Math.max(maxQuantity, 1)}
-              onIncrease={handleIncrease}
-              onDecrease={handleDecrease}
-            />
+            <div className="flex items-center gap-3">
+              <QuantitySelector
+                quantity={quantity}
+                maxQuantity={Math.max(maxQuantity, 1)}
+                onIncrease={handleIncrease}
+                onDecrease={handleDecrease}
+              />
+              <span className="text-base font-semibold text-foreground tabular-nums">
+                {formatCurrency(totalPrice, locale)}
+              </span>
+            </div>
           </div>
+
+          {/* Selected summary */}
+          {(product.options.length === 0 || selectedOption) && (
+            <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-4">
+              {selectedOption && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {selectedOption.name}: {selectedOption.value}
+                    {selectedOption.priceAdjustment !== 0 && (
+                      <span className="ml-1 text-xs">
+                        ({selectedOption.priceAdjustment > 0 ? '+' : ''}{formatCurrency(selectedOption.priceAdjustment, locale)})
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-foreground">{formatCurrency(unitPrice, locale)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">수량 {quantity}개</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-3">
+                <span className="text-sm font-medium text-foreground">총 상품금액</span>
+                <span className="text-xl font-bold text-foreground">{formatCurrency(totalPrice, locale)}</span>
+              </div>
+            </div>
+          )}
 
           {/* Action buttons — desktop only */}
           <div className="hidden md:flex gap-3">

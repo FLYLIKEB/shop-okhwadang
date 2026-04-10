@@ -9,6 +9,7 @@ import { isSafeUrl } from '@/utils/url';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -21,7 +22,6 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleTogglePassword = useCallback(() => {
@@ -29,26 +29,30 @@ export default function LoginForm() {
     setTimeout(() => setShowPassword(false), 1000);
   }, []);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const { execute: submitLogin, isLoading: isSubmitting } = useAsyncAction(
+    async () => {
+      await login(email, password);
+      router.push(redirectTo);
+    },
+    {
+      onError: (err) => {
+        const message = handleApiError(err, '로그인에 실패했습니다.');
+        if (message.includes('이메일') || message.includes('email')) {
+          setEmailError(message);
+        } else if (message.includes('비밀번호') || message.includes('password')) {
+          setPasswordError(message);
+        } else {
+          setEmailError(message);
+        }
+      },
+    },
+  );
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setEmailError('');
     setPasswordError('');
-    setIsSubmitting(true);
-    try {
-      await login(email, password);
-      router.push(redirectTo);
-    } catch (err) {
-      const message = handleApiError(err, '로그인에 실패했습니다.');
-      if (message.includes('이메일') || message.includes('email')) {
-        setEmailError(message);
-      } else if (message.includes('비밀번호') || message.includes('password')) {
-        setPasswordError(message);
-      } else {
-        setEmailError(message);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    void submitLogin();
   };
 
   return (

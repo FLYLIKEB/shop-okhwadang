@@ -51,6 +51,24 @@ function getStaticFallback(group: 'gnb' | 'sidebar' | 'footer'): NavigationItem[
   }
 }
 
+// Module-level cache with TTL
+const NAV_CACHE = new Map<string, { data: NavigationItem[]; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getCached(group: string): NavigationItem[] | null {
+  const entry = NAV_CACHE.get(group);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    NAV_CACHE.delete(group);
+    return null;
+  }
+  return entry.data;
+}
+
+export function clearNavCache(): void {
+  NAV_CACHE.clear();
+}
+
 export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
   const [items, setItems] = useState<NavigationItem[]>(getStaticFallback(group));
   const [loading, setLoading] = useState(true);
@@ -59,10 +77,19 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
     let cancelled = false;
 
     async function load() {
+      const cached = getCached(group);
+      if (cached) {
+        setItems(cached);
+        setLoading(false);
+        return;
+      }
+
       try {
         const data = await navigationApi.getByGroup(group);
         if (!cancelled) {
-          setItems(data.length > 0 ? data : getStaticFallback(group));
+          const result = data.length > 0 ? data : getStaticFallback(group);
+          setItems(result);
+          NAV_CACHE.set(group, { data: result, timestamp: Date.now() });
         }
       } catch {
         if (!cancelled) {

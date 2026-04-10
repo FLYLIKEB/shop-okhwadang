@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { fetchProduct } from '@/lib/api-server'
+import { fetchProduct, fetchCollections } from '@/lib/api-server'
 import ProductDetailClient from '@/components/products/ProductDetailClient'
 import { routing } from '@/i18n/routing'
 import type { Locale } from '@/i18n/routing'
@@ -53,8 +53,14 @@ export async function generateMetadata({ params }: ProductDetailProps): Promise<
 export default async function ProductDetailPage({ params }: ProductDetailProps) {
   const { id, locale } = await params
   const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale
-  const product = await fetchProduct(Number(id), safeLocale)
+  const [product, collections] = await Promise.all([
+    fetchProduct(Number(id), safeLocale),
+    fetchCollections().catch(() => null),
+  ])
   if (!product) notFound()
+
+  const clayCollections = collections?.clay ?? []
+  const shapeCollections = collections?.shape ?? []
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -82,7 +88,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: jsonLdString }}
       />
-      <ProductDetailClient product={product} locale={safeLocale} />
+      <ProductDetailClient product={product} locale={safeLocale} clayCollections={clayCollections} shapeCollections={shapeCollections} />
     </>
   )
 }

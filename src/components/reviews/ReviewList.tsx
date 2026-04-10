@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { reviewsApi } from '@/lib/api'
 import type { ReviewItem, ReviewStats as ReviewStatsType, ReviewSort } from '@/lib/api'
 import { cn } from '@/components/ui/utils'
+import { useAsyncAction } from '@/hooks/useAsyncAction'
 import ReviewCard from './ReviewCard'
 import ReviewStatsComponent from './ReviewStats'
 
@@ -27,26 +28,21 @@ export default function ReviewList({ productId }: ReviewListProps) {
   const [sort, setSort] = useState<ReviewSort>('recent')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
   const limit = 20
 
-  const fetchReviews = useCallback(async () => {
-    setIsLoading(true)
-    try {
+  const { execute: fetchReviews, isLoading } = useAsyncAction(
+    async () => {
       const res = await reviewsApi.getByProduct(productId, { sort, page, limit })
       setReviews(res.data)
       setStats(res.stats)
       setTotal(res.pagination.total)
-    } catch {
-      // Silently fail - empty state is shown
-    } finally {
-      setIsLoading(false)
-    }
-  }, [productId, sort, page])
+    },
+    { errorMessage: '리뷰를 불러올 수 없습니다.' },
+  )
 
   useEffect(() => {
     void fetchReviews()
-  }, [fetchReviews])
+  }, [productId, sort, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalPages = Math.ceil(total / limit)
 

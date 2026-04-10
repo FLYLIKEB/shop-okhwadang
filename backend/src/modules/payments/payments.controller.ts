@@ -10,6 +10,7 @@ import { PaymentsService } from './payments.service';
 import { PreparePaymentDto } from './dto/prepare-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import { CancelPaymentDto } from './dto/cancel-payment.dto';
+import { WebhookPayloadDto } from './dto/webhook-payload.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
@@ -52,10 +53,10 @@ export class PaymentsController {
   @ApiResponse({ status: 200, description: '웹훅 수신 성공' })
   @ApiHeader({ name: 'toss-signature', description: 'Toss 서명', required: true })
   async webhook(
-    @Body() payload: unknown,
+    @Body() dto: WebhookPayloadDto,
     @Headers('toss-signature') signature: string,
   ): Promise<{ received: boolean }> {
-    await this.paymentsService.handleWebhook(payload, signature);
+    await this.paymentsService.handleWebhook(dto, signature);
     return { received: true };
   }
 }

@@ -8,15 +8,41 @@ import PriceRangeFilter from './PriceRangeFilter';
 import ClayTypeFilter from './ClayTypeFilter';
 import TeapotShapeFilter from './TeapotShapeFilter';
 import FilterSection from './FilterSection';
-import type { Category } from '@/lib/api';
-import type { ClayType } from './ClayTypeFilter';
-import type { TeapotShape } from './TeapotShapeFilter';
+import type { Category, Collection } from '@/lib/api';
 
 interface FilterSidebarProps {
   categories: Category[];
+  clayCollections: Collection[];
+  shapeCollections: Collection[];
 }
 
-export default function FilterSidebar({ categories }: FilterSidebarProps) {
+function parseAttrsParam(attrs: string | null): Map<string, string> {
+  const result = new Map<string, string>();
+  if (!attrs) return result;
+  const pairs = attrs.split(',');
+  for (const pair of pairs) {
+    const [code, value] = pair.split(':');
+    if (code && value) {
+      result.set(code.trim(), value.trim());
+    }
+  }
+  return result;
+}
+
+function buildAttrsParam(current: Map<string, string>, key: string, value: string | undefined): string | undefined {
+  const next = new Map(current);
+  if (value === undefined) {
+    next.delete(key);
+  } else {
+    next.set(key, value);
+  }
+  if (next.size === 0) return undefined;
+  return Array.from(next.entries())
+    .map(([k, v]) => `${k}:${v}`)
+    .join(',');
+}
+
+export default function FilterSidebar({ categories, clayCollections, shapeCollections }: FilterSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -25,10 +51,11 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
   const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : undefined;
   const priceMin = searchParams.get('price_min') ? Number(searchParams.get('price_min')) : undefined;
   const priceMax = searchParams.get('price_max') ? Number(searchParams.get('price_max')) : undefined;
-  const clayTypeParam = searchParams.get('clayType');
-  const selectedClayType = clayTypeParam ? (clayTypeParam as ClayType) : undefined;
-  const shapeParam = searchParams.get('shape');
-  const selectedShape = shapeParam ? (shapeParam as TeapotShape) : undefined;
+
+  const attrsParam = searchParams.get('attrs');
+  const parsedAttrs = parseAttrsParam(attrsParam);
+  const selectedClayType = parsedAttrs.get('clay_type');
+  const selectedShape = parsedAttrs.get('teapot_shape');
 
   const hasActiveFilters =
     selectedCategoryId !== undefined ||
@@ -61,12 +88,14 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
     });
   };
 
-  const handleClayTypeSelect = (value: ClayType | undefined) => {
-    updateParams({ clayType: value });
+  const handleClayTypeSelect = (value: string | undefined) => {
+    const newAttrs = buildAttrsParam(parsedAttrs, 'clay_type', value);
+    updateParams({ attrs: newAttrs });
   };
 
-  const handleShapeSelect = (value: TeapotShape | undefined) => {
-    updateParams({ shape: value });
+  const handleShapeSelect = (value: string | undefined) => {
+    const newAttrs = buildAttrsParam(parsedAttrs, 'teapot_shape', value);
+    updateParams({ attrs: newAttrs });
   };
 
   const handleReset = () => {
@@ -74,8 +103,7 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
     params.delete('categoryId');
     params.delete('price_min');
     params.delete('price_max');
-    params.delete('clayType');
-    params.delete('shape');
+    params.delete('attrs');
     params.delete('page');
     router.push(`/products?${params.toString()}`);
   };
@@ -105,6 +133,7 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
 
       <FilterSection title="니료(泥料)" defaultOpen={selectedClayType !== undefined}>
         <ClayTypeFilter
+          collections={clayCollections}
           selected={selectedClayType}
           onSelect={handleClayTypeSelect}
         />
@@ -112,6 +141,7 @@ export default function FilterSidebar({ categories }: FilterSidebarProps) {
 
       <FilterSection title="모양" defaultOpen={selectedShape !== undefined}>
         <TeapotShapeFilter
+          collections={shapeCollections}
           selected={selectedShape}
           onSelect={handleShapeSelect}
         />
