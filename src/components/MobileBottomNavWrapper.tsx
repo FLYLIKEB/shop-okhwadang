@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { settingsApi } from '@/lib/api';
 import MobileBottomNav from './MobileBottomNav';
 
 export default function MobileBottomNavWrapper() {
   const [visible, setVisible] = useState<boolean | null>(null);
 
   useEffect(() => {
-    fetch('/api/settings?group=general')
-      .then((res) => res.json())
-      .then((data: Array<{ key: string; value: string }>) => {
+    settingsApi
+      .getAll('general')
+      .then((data) => {
         const setting = data.find((s) => s.key === 'mobile_bottom_nav_visible');
         setVisible(setting ? setting.value === 'true' : true);
       })

@@ -10,6 +10,7 @@ import Providers from '@/components/Providers';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
+import { fetchSettingsMap } from '@/lib/api-server';
 
 const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
 
@@ -43,8 +44,6 @@ export async function generateMetadata({
   };
 }
 
-const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
-
 async function getThemeStyle(map: Record<string, string> | null): Promise<string> {
   if (!map) return '';
   const COLOR_RE = /^#[0-9a-fA-F]{3,8}$|^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/;
@@ -73,11 +72,7 @@ async function getThemeStyle(map: Record<string, string> | null): Promise<string
 
 async function getSettingsMap(): Promise<Record<string, string> | null> {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/settings/map`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    return res.json();
+    return await fetchSettingsMap();
   } catch {
     return null;
   }
