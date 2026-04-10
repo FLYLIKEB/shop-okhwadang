@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, CollectionsResponse, ArchivesResponse } from '@/lib/api';
+import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, CollectionsResponse, ArchivesResponse, SiteSetting } from '@/lib/api';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
@@ -76,4 +76,12 @@ export function fetchCollections() {
 
 export function fetchArchives() {
   return fetchFromBackend<ArchivesResponse>('/archives');
+}
+
+export function fetchSettings(group?: string) {
+  return fetchFromBackend<SiteSetting[]>('/settings', group ? { group } : undefined);
+}
+
+export function fetchSettingsMap() {
+  return fetchFromBackend<Record<string, string>>('/settings/map');
 }
