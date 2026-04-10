@@ -13,6 +13,7 @@ import { CreateCouponDto } from './dto/create-coupon.dto';
 import { CalculateDiscountDto } from './dto/calculate-discount.dto';
 import { IssueCouponDto } from './dto/issue-coupon.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 export interface CouponResponse {
   id: number;
@@ -259,9 +260,7 @@ export class CouponsService {
       if (!uc) {
         throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
       }
-      if (Number(uc.userId) !== Number(userId)) {
-        throw new BadRequestException('권한이 없는 쿠폰입니다.');
-      }
+      assertOwnership(uc.userId, userId, '권한이 없는 쿠폰입니다.');
       if (uc.status !== 'available') {
         throw new BadRequestException('이미 사용된 쿠폰입니다.');
       }
