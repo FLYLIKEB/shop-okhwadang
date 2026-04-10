@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { useNavigation } from '../useNavigation';
+import { useNavigation, clearNavCache } from '../useNavigation';
 
 const mockGetByGroup = vi.fn();
 
@@ -12,6 +12,7 @@ vi.mock('@/lib/api', () => ({
 describe('useNavigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearNavCache();
   });
 
   it('API에서 네비게이션 항목을 가져온다', async () => {
