@@ -59,6 +59,16 @@ export class AdminCollectionsController {
     return this.collectionsService.create(dto);
   }
 
+  @Patch('reorder')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '컬렉션 순서 변경', description: '컬렉션들의 순서를 변경합니다.' })
+  @ApiResponse({ status: 200, description: '컬렉션 순서 변경 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  async reorder(@Body() items: { id: number; sortOrder: number }[]) {
+    await this.collectionsService.reorder(items);
+  }
+
   @Patch(':id')
   @ApiCookieAuth()
   @ApiOperation({ summary: '컬렉션 수정', description: '기존 컬렉션 정보를 수정합니다.' })
@@ -85,15 +95,5 @@ export class AdminCollectionsController {
   @ApiParam({ name: 'id', type: Number, description: '컬렉션 ID' })
   async remove(@Param('id', ParseIntPipe) id: number) {
     await this.collectionsService.remove(id);
-  }
-
-  @Patch('reorder')
-  @ApiCookieAuth()
-  @ApiOperation({ summary: '컬렉션 순서 변경', description: '컬렉션들의 순서를 변경합니다.' })
-  @ApiResponse({ status: 200, description: '컬렉션 순서 변경 성공' })
-  @ApiResponse({ status: 401, description: '인증 필요' })
-  @ApiResponse({ status: 403, description: '권한 없음' })
-  async reorder(@Body() items: { id: number; sortOrder: number }[]) {
-    await this.collectionsService.reorder(items);
   }
 }
