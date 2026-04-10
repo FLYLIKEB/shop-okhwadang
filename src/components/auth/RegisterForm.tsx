@@ -3,11 +3,10 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { toast } from 'sonner';
-import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,7 +38,13 @@ export default function RegisterForm() {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { execute: submitRegister, isLoading: isSubmitting } = useAsyncAction(
+    async () => {
+      await register(email, password, name);
+      router.push('/login');
+    },
+    { errorMessage: '회원가입에 실패했습니다.' },
+  );
 
   const validate = (): boolean => {
     const next: Record<string, string> = {};
@@ -54,19 +59,10 @@ export default function RegisterForm() {
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
-
-    setIsSubmitting(true);
-    try {
-      await register(email, password, name);
-      router.push('/login');
-    } catch (err) {
-      toast.error(handleApiError(err, '회원가입에 실패했습니다.'));
-    } finally {
-      setIsSubmitting(false);
-    }
+    void submitRegister();
   };
 
   return (

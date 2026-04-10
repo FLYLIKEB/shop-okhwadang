@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { inquiriesApi } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { handleApiError } from '@/utils/error';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 const INQUIRY_TYPES = ['상품', '배송', '결제', '교환/반품', '기타'];
 
@@ -16,24 +16,21 @@ export default function NewInquiryPage() {
   const [type, setType] = useState(INQUIRY_TYPES[0]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const { execute: submitInquiry, isLoading: submitting } = useAsyncAction(
+    async () => {
+      await inquiriesApi.create({ type, title: title.trim(), content: content.trim() });
+      router.push('/my/inquiries');
+    },
+    { successMessage: '문의가 접수되었습니다.', errorMessage: '문의 접수에 실패했습니다.' },
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
       toast.error('제목과 내용을 입력해주세요.');
       return;
     }
-    setSubmitting(true);
-    try {
-      await inquiriesApi.create({ type, title: title.trim(), content: content.trim() });
-      toast.success('문의가 접수되었습니다.');
-      router.push('/my/inquiries');
-    } catch (err) {
-      toast.error(handleApiError(err, '문의 접수에 실패했습니다.'));
-    } finally {
-      setSubmitting(false);
-    }
+    void submitInquiry();
   };
 
   return (
