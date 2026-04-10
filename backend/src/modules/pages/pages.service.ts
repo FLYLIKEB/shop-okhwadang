@@ -1,7 +1,6 @@
 import {
   Injectable,
   ConflictException,
-  NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -43,13 +42,7 @@ export class PagesService {
   }
 
   async findBySlug(slug: string): Promise<Page> {
-    const page = await this.pageRepository.findOne({
-      where: { slug, is_published: true },
-      relations: ['blocks'],
-    });
-    if (!page) {
-      throw new NotFoundException('존재하지 않는 페이지입니다.');
-    }
+    const page = await findOrThrow(this.pageRepository, { slug, is_published: true }, '존재하지 않는 페이지입니다.', ['blocks']);
     page.blocks = page.blocks
       .filter((b) => b.is_visible)
       .sort((a, b) => a.sort_order - b.sort_order);
@@ -118,12 +111,7 @@ export class PagesService {
     blockId: number,
     dto: UpdatePageBlockDto,
   ): Promise<PageBlock> {
-    const block = await this.blockRepository.findOne({
-      where: { id: blockId, page_id: pageId },
-    });
-    if (!block) {
-      throw new NotFoundException('존재하지 않는 블록입니다.');
-    }
+    const block = await findOrThrow(this.blockRepository, { id: blockId, page_id: pageId }, '존재하지 않는 블록입니다.');
     if (dto.type && !SUPPORTED_BLOCK_TYPES.includes(dto.type)) {
       throw new BadRequestException('지원하지 않는 블록 타입입니다.');
     }
@@ -132,12 +120,7 @@ export class PagesService {
   }
 
   async removeBlock(pageId: number, blockId: number): Promise<void> {
-    const block = await this.blockRepository.findOne({
-      where: { id: blockId, page_id: pageId },
-    });
-    if (!block) {
-      throw new NotFoundException('존재하지 않는 블록입니다.');
-    }
+    const block = await findOrThrow(this.blockRepository, { id: blockId, page_id: pageId }, '존재하지 않는 블록입니다.');
     await this.blockRepository.remove(block);
   }
 

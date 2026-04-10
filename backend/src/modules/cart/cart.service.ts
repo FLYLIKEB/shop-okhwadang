@@ -1,6 +1,5 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
   Logger,
 } from '@nestjs/common';
@@ -96,12 +95,7 @@ export class CartService {
   }
 
   async add(userId: number, dto: AddToCartDto): Promise<CartResponse> {
-    const product = await this.productRepository.findOne({
-      where: { id: dto.productId },
-    });
-    if (!product) {
-      throw new NotFoundException('상품을 찾을 수 없습니다.');
-    }
+    const product = await findOrThrow(this.productRepository, { id: dto.productId }, '상품을 찾을 수 없습니다.');
 
     if (dto.productOptionId != null) {
       const option = await this.productOptionRepository.findOne({
