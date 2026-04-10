@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { toast } from 'sonner';
-import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi } from '@/lib/api';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 
 interface ProfileForm {
   name: string;
@@ -35,7 +34,17 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const [form, setForm] = useState<ProfileForm>({ name: '', phone: '' });
   const [errors, setErrors] = useState<FormErrors>({});
-  const [submitting, setSubmitting] = useState(false);
+
+  const { execute: submitProfile, isLoading: submitting } = useAsyncAction(
+    async () => {
+      const updated = await usersApi.updateProfile({
+        name: form.name.trim(),
+        phone: form.phone.trim() || null,
+      });
+      updateUser({ name: updated.name, phone: updated.phone });
+    },
+    { successMessage: '회원정보가 수정되었습니다.', errorMessage: '수정 중 오류가 발생했습니다.' },
+  );
 
   useEffect(() => {
     if (user) {
@@ -51,27 +60,14 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validateForm(form);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
-
-    setSubmitting(true);
-    try {
-      const updated = await usersApi.updateProfile({
-        name: form.name.trim(),
-        phone: form.phone.trim() || null,
-      });
-      updateUser({ name: updated.name, phone: updated.phone });
-      toast.success('회원정보가 수정되었습니다.');
-    } catch (err) {
-      toast.error(handleApiError(err, '수정 중 오류가 발생했습니다.'));
-    } finally {
-      setSubmitting(false);
-    }
+    void submitProfile();
   };
 
   if (isLoading || !user) {
