@@ -38,3 +38,32 @@ This file provides guidance to AI agents working in this repository.
 | Backend main | `backend/src/main.ts` |
 | TypeORM config | `backend/src/database/typeorm.config.ts` |
 | Design system | `DESIGN.md` |
+
+## Claude Hooks Best Practices
+
+Hooks in `~/.claude/hooks/` that spawn subagents (via `claude --dangerously-skip-permissions`) **must** prevent recursive execution:
+
+```bash
+#!/bin/bash
+PROJECT_DIR=$(pwd)
+
+# 1. Check if already in a subagent - prevent recursion
+if [ -n "$CLAUDE_HOOKS_DISABLED" ]; then
+  exit 0
+fi
+
+# 2. Run only in git repos
+if ! git -C "$PROJECT_DIR" rev-parse --git-dir > /dev/null 2>&1; then
+  exit 0
+fi
+
+# 3. Launch subagent with CLAUDE_HOOKS_DISABLED set
+CLAUDE_HOOKS_DISABLED=1 claude --dangerously-skip-permissions -p "..." 2>/dev/null &
+exit 0
+```
+
+**Why**: When a hook spawns a subagent and the subagent session ends, the Stop hook fires again → infinite loop.
+
+**Kill switches** (OMC):
+- `DISABLE_OMC=1` — disable entire OMC
+- `OMC_SKIP_HOOKS=hook-name` — skip specific hook only
