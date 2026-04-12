@@ -7,7 +7,9 @@ next-env.d.ts
 .env
 .env.local
 .env.*.local
+.env.production
 backend/.env
+backend/.env.production
 *.pem
 *.key
 
@@ -34,3 +36,4 @@ coverage/
 .obsidian/
 marketing.md
 .vercel
+docs/infrastructure/s3-cloudfront-cdn.md

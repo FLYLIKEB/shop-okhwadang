@@ -55,9 +55,9 @@ const req = context.switchToHttp().getRequest<{ user?: { id: number; role: strin
 
 ## Adapter Pattern
 
-- **Payments**: `PaymentGateway` interface → `MockAdapter` / `TossAdapter` / `InicisAdapter`. Selected by `PAYMENT_GATEWAY` env.
-- **Shipping**: `ShippingProvider` interface → `MockAdapter` / `CjAdapter` / `HanjinAdapter` / `LotteAdapter`. Selected by env.
-- **Storage**: `local` / `s3` / `r2`. Selected by `STORAGE_PROVIDER` env.
+- **Payments**: `PaymentGateway` interface → `MockAdapter` / `TossAdapter` / `StripeAdapter`. Selected by `PAYMENT_GATEWAY` env.
+- **Shipping**: `ShippingProvider` interface → `MockShippingAdapter`. CarrierCode type supports `'mock' | 'cj' | 'hanjin' | 'lotte'`. Selected by env.
+- **Storage**: `local` / `s3`. Selected by `STORAGE_PROVIDER` env.
 
 ## Database (TypeORM + MySQL 8.0)
 
