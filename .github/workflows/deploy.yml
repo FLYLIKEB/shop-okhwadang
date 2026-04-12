@@ -10,7 +10,7 @@ permissions:
 jobs:
   deploy-backend:
     name: Deploy Backend to EC2
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
@@ -21,37 +21,26 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          ssh-host-key-checking: no
-
       - name: Deploy to EC2
-        env:
-          HOST: ${{ secrets.EC2_HOST }}
-          USER: ec2-user
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/okhwadang-ec2-key.pem $USER@$HOST << 'EOF'
-            cd /app/shop-okhwadang/shop-okhwadang/backend
-            
-            # git pull
-            git fetch origin main
-            git reset --hard origin/main
-            
-            # install dependencies
-            npm ci --omit=dev
-            
-            # build
-            npm run build
-            
-            # run migration
-            npm run migration:run:prod
-            
-            # restart pm2
-            pm2 restart commerce || pm2 start dist/main.js --name commerce
-            pm2 save
-          EOF
+          cd /app/shop-okhwadang/shop-okhwadang/backend
+          
+          # git pull
+          git fetch origin main
+          git reset --hard origin/main
+          
+          # install dependencies
+          npm ci --omit=dev
+          
+          # build
+          npm run build
+          
+          # run migration
+          npm run migration:run:prod
+          
+          # restart pm2
+          pm2 restart commerce || pm2 start dist/main.js --name commerce
+          pm2 save
 
       - name: Smoke test
         run: |
