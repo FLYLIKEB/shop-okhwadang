@@ -1,0 +1,31 @@
+{
+  "agent": {
+    "metrics_collection_interval": 60,
+    "run_as_user": "cwagent"
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/pm2/commerce-out.log",
+            "log_group_name": "/okhwadang/commerce/out",
+            "log_stream_name": "{instance_id}"
+          },
+          {
+            "file_path": "/var/log/pm2/commerce-error.log",
+            "log_group_name": "/okhwadang/commerce/error",
+            "log_stream_name": "{instance_id}"
+          }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "metrics_collected": {
+      "mem": { "measurement": ["mem_used", "mem_available"] },
+      "cpu": { "measurement": ["cpu_user", "cpu_system"] },
+      "disk": { "measurement": ["disk_used", "disk_free"], "resources": ["/"] }
+    }
+  }
+}
