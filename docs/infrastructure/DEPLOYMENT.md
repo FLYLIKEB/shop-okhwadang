@@ -129,25 +129,20 @@ curl https://api.your-domain.com/api/health
 
 ## Nginx + HTTPS 설정 (EC2)
 
+Nginx 설정 파일은 `infra/nginx/commerce.conf`에서 버전 관리됩니다.
+
 ```bash
 sudo apt install -y nginx certbot python3-certbot-nginx
 sudo certbot --nginx -d api.your-domain.com
+
+# 버전 관리된 설정 파일을 Nginx 설정 디렉토리에 복사
+sudo cp infra/nginx/commerce.conf /etc/nginx/sites-available/commerce.conf
+sudo ln -s /etc/nginx/sites-available/commerce.conf /etc/nginx/sites-enabled/commerce.conf
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
-Nginx 리버스 프록시 설정:
-```nginx
-server {
-    server_name api.your-domain.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
+자세한 설정은 [`infra/nginx/commerce.conf`](infra/nginx/commerce.conf)를 참조하세요.
 
 ---
 
