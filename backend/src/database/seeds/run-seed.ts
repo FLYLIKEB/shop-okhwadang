@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { CategorySeeder } from './seeders/category.seeder';
 import { ProductSeeder } from './seeders/product.seeder';

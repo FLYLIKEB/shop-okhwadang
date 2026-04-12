@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy Backend
 
 on:
   push:
@@ -12,26 +12,51 @@ jobs:
     name: Deploy Backend to EC2
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
-      - name: Save deployment commit
-        run: echo $(git rev-parse HEAD) > .deployment_commit
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2  # v1.2.5
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /app/shop-okhwadang/backend
-            git pull origin main
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          ssh-host-key-checking: no
+
+      - name: Deploy to EC2
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ec2-user
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/okhwadang-ec2-key.pem $USER@$HOST << 'EOF'
+            cd /app/shop-okhwadang/shop-okhwadang/backend
+            
+            # git pull
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # install dependencies
             npm ci --omit=dev
+            
+            # build
             npm run build
+            
+            # run migration
             npm run migration:run:prod
-            pm2 startOrReload ecosystem.config.js --env production
+            
+            # restart pm2
+            pm2 restart commerce || pm2 start dist/main.js --name commerce
+            pm2 save
+          EOF
+
       - name: Smoke test
         run: |
-          sleep 10
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.EC2_HOST }}/api/health)
+          sleep 20
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.EC2_HOST }}:3000/api/health)
           if [ "$STATUS" != "200" ]; then
             echo "Smoke test failed! HTTP status: $STATUS"
             exit 1

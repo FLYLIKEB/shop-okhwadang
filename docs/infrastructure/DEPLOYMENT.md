@@ -9,89 +9,67 @@
     │                 │
     │                 └── /api/* rewrites ──→ AWS EC2 t3.small (NestJS :3000)
     │                                              │
-    │                                              └── MySQL ──→ AWS Lightsail MySQL :3306
+    │                                              ├── MySQL ──→ AWS Lightsail MySQL :3306
+    │                                              └── Redis ──→ EC2 내장 또는 ElastiCache
     └──────────────────────────────────────────────────────────────────────────────────────────
 ```
 
 > 프론트엔드는 Vercel, 백엔드는 AWS EC2, DB는 AWS Lightsail MySQL로 운영.
+> **CI/CD: GitHub Actions OIDC + SSM (SSH 키 없음)**
 
 ---
 
 ## 백엔드 (AWS EC2 t3.small)
 
 ### 배포 방식
-- `main` 브랜치 push 시 GitHub Actions (`deploy.yml`) → EC2 SSH 배포 자동 실행
-- 배포 시작 시 `migration:run:prod` 자동 실행 후 서버 기동
+- `main` 브랜치 push 시 GitHub Actions → OIDC 인증 → SSM으로 EC2 명령어 실행
+- 배포 시작 시 `migration:run:prod` 자동 실행 후 PM2 재시작
 
 ### 서버 구성
-- Ubuntu 22.04 LTS
+- Amazon Linux 2023
 - PM2로 프로세스 관리
-- Nginx + Let's Encrypt SSL (HTTPS)
+- Nginx (HTTP → HTTPS 리다이렉트)
 
-```bash
-pm2 start dist/main.js --name commerce
-pm2 save && pm2 startup
-```
-
-### 빌드 (`backend/Dockerfile`)
-- Node.js 22 Alpine 멀티스테이지 빌드
-- `npm ci --omit=dev` — devDependencies 제외
-
-### 환경 변수 (EC2 환경 또는 GitHub Secrets)
-| 변수 | 값 |
-|---|---|
-| `DATABASE_URL` | `mysql://user:password@<lightsail-private-ip>:3306/commerce` |
-| `NODE_ENV` | `production` |
-| `PORT` | `3000` |
-| `JWT_SECRET` | `openssl rand -hex 32` 로 생성 |
-| `JWT_EXPIRES_IN` | `1h` |
-| `JWT_REFRESH_EXPIRES_IN` | `7d` |
-| `FRONTEND_URL` | Vercel 배포 URL |
-| `PAYMENT_GATEWAY` | `mock` |
-| `STORAGE_PROVIDER` | `local` |
-
-### MySQL 연결
-- AWS Lightsail MySQL과 EC2 간 내부 IP로 직접 연결
-- `DATABASE_URL`이 Lightsail 내부 IP를 가리킴
-- TypeORM 설정: `process.env.DATABASE_URL` 우선 사용
-
----
-
-## GitHub Actions CI/CD
-
-### PR (`.github/workflows/ci.yml`)
-- `main` 브랜치 PR 시 트리거
-- 프론트엔드: lint + test
-- 백엔드: lint + build + unit test + e2e test
-
-### 배포 (`.github/workflows/deploy.yml`)
-- `main` 브랜치 push 시 트리거
-- EC2에 SSH 접속하여 배포 실행
+### OIDC + SSM 배포 (현재 방식)
 
 ```yaml
-- name: Deploy to EC2
-  uses: appleboy/ssh-action@v1
+permissions:
+  id-token: write
+  contents: read
+
+- name: Configure AWS credentials
+  uses: aws-actions/configure-aws-credentials@v4
   with:
-    host: ${{ secrets.EC2_HOST }}
-    username: ${{ secrets.EC2_USER }}
-    key: ${{ secrets.SSH_PRIVATE_KEY }}
-    script: |
-      cd /app/shop-okhwadang/backend
-      git pull origin main
-      npm ci --omit=dev
-      npm run build
-      npm run migration:run:prod
-      pm2 reload commerce --update-env
+    role-to-assume: arn:aws:iam::618647024184:role/GithubActionsEC2DeployRole
+    role-session-name: github-actions-deploy
+    aws-region: ap-northeast-2
+
+- name: Deploy to EC2 via SSM
+  run: |
+    aws ssm send-command \
+      --instance-ids i-0af729245abbb06f2 \
+      --document-name AWS-RunShellScript \
+      --parameters commands=[
+        "cd /app/shop-okhwadang/backend",
+        "git pull origin main",
+        "npm ci --omit=dev",
+        "npm run build",
+        "npm run migration:run:prod",
+        "pm2 restart commerce",
+        "pm2 save"
+      ]
 ```
+
+자세한 내용은 [`docs/infrastructure/GITHUB_ACTIONS_OIDC.md`](./GITHUB_ACTIONS_OIDC.md)를 참조하세요.
 
 ### GitHub Secrets 설정
 | Secret | 설명 |
 |---|---|
-| `EC2_HOST` | EC2 인스턴스 퍼블릭 IP 또는 도메인 |
-| `EC2_USER` | SSH 사용자 (예: `ubuntu`) |
-| `SSH_PRIVATE_KEY` | EC2 접속용 SSH 프라이빗 키 |
-| `DATABASE_URL` | Lightsail MySQL 연결 문자열 |
-| `JWT_SECRET` | JWT 시크릿 키 |
+| `EC2_HOST` | EC2 인스턴스 퍼블릭 IP (`3.38.168.41`) |
+
+> **SSH_PRIVATE_KEY, EC2_USER 등 불필요** - OIDC가 대신 처리
+
+자세한 OIDC 설정은 [`docs/infrastructure/GITHUB_ACTIONS_OIDC.md`](./GITHUB_ACTIONS_OIDC.md)를 참조하세요.
 
 ---
 
