@@ -1,12 +1,14 @@
 {
-  "experimentalServices": {
-    "frontend": {
-      "routePrefix": "/",
-      "framework": "nextjs"
-    },
-    "backend": {
-      "entrypoint": "backend",
-      "routePrefix": "/_/backend"
+  "framework": "nextjs",
+  "regions": ["icn1"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
     }
-  }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next"
 }
