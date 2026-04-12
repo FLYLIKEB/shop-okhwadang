@@ -25,4 +25,4 @@ jobs:
             npm ci --omit=dev
             npm run build
             npm run migration:run:prod
-            pm2 reload commerce --update-env
+            pm2 startOrReload ecosystem.config.js --env production
