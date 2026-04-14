@@ -67,7 +67,7 @@ sleep 2
 NEW_PID=$(lsof -ti:$SSH_TUNNEL_LOCAL_PORT 2>/dev/null || true)
 if [ -n "$NEW_PID" ]; then
     echo -e "${GREEN}✅ 터널 시작 완료 (PID: $NEW_PID, Port: ${SSH_TUNNEL_LOCAL_PORT})${NC}"
-    echo -e "${GREEN}   접속: mysql -h 127.0.0.1 -P ${SSH_TUNNEL_LOCAL_PORT} -u <user> -p<pass> okhwadang${NC}"
+    echo -e "${GREEN}   접속: mysql -h 127.0.0.1 -P ${SSH_TUNNEL_LOCAL_PORT} -u <user> -p<pass> commerce${NC}"
 else
     echo -e "${RED}❌ 터널 시작 실패${NC}"
     exit 1
