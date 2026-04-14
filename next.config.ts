@@ -3,8 +3,6 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
-const backendUrl = process.env.BACKEND_URL ?? 'http://localhost:3000';
-
 const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   images: {
@@ -21,16 +19,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    return [
-      {
-        source: '/:locale/api/:path*',
-        destination: `${backendUrl}/api/:path*`,
-      },
-      {
-        source: '/api/:path*',
-        destination: `${backendUrl}/api/:path*`,
-      },
-    ];
+    return [];
   },
   async headers() {
     return [{

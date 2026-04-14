@@ -123,7 +123,56 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathnameWithoutLocale.startsWith('/api')) {
-    return NextResponse.next();
+    // Proxy to backend using runtime BACKEND_URL
+    const backendUrl = process.env.BACKEND_URL;
+
+    if (!backendUrl) {
+      return NextResponse.json(
+        { error: 'BACKEND_URL not configured' },
+        { status: 500 }
+      );
+    }
+
+    const apiPath = pathname.startsWith('/api')
+      ? pathname
+      : pathname.replace(/^\/[a-z]{2}\/api/, '/api'); // handle /ko/api -> /api
+
+    const url = new URL(`${backendUrl}${apiPath}`);
+
+    // Forward request to backend
+    const headers = new Headers();
+    request.headers.forEach((value, key) => {
+      if (!['host', 'connection'].includes(key.toLowerCase())) {
+        headers.set(key, value);
+      }
+    });
+
+    try {
+      const response = await fetch(url.toString(), {
+        method: request.method,
+        headers,
+        body: request.body,
+        redirect: 'follow',
+      });
+
+      const data = await response.arrayBuffer();
+
+      const responseHeaders = new Headers();
+      response.headers.forEach((value, key) => {
+        responseHeaders.set(key, value);
+      });
+      responseHeaders.set('X-Proxy-By', 'Next.js Middleware');
+
+      return new NextResponse(data, {
+        status: response.status,
+        headers: responseHeaders,
+      });
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Backend unreachable', details: String(error) },
+        { status: 502 }
+      );
+    }
   }
 
   return intlMiddleware(request);
