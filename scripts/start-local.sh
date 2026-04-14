@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # 로컬 개발 환경 전체 시작 스크립트
-# Docker(MySQL, Redis), 백엔드(NestJS), 프론트엔드(Next.js)를 한 번에 실행합니다.
+# Docker(MySQL), 백엔드(NestJS), 프론트엔드(Next.js)를 한 번에 실행합니다.
+# 캐시는 백엔드 프로세스의 in-memory 캐시를 사용하므로 Redis는 더이상 필요하지 않습니다.
 
 set -e
 
@@ -62,7 +63,7 @@ if [ "$USE_LOCAL_DB" = "yes" ]; then
     echo -e "${BLUE}📦 Docker 컨테이너 시작...${NC}"
     cd "$BACKEND_DIR"
     docker compose up -d --wait 2>&1 | tail -2
-    echo -e "${GREEN}✅ MySQL + Redis 준비 완료${NC}"
+    echo -e "${GREEN}✅ MySQL 준비 완료${NC}"
     echo ""
 
     # 마이그레이션
@@ -111,7 +112,6 @@ echo -e "   프론트엔드: ${GREEN}http://localhost:5173${NC}"
 echo -e "   백엔드:     ${GREEN}http://localhost:3000/api${NC}"
 if [ "$USE_LOCAL_DB" = "yes" ]; then
     echo -e "   MySQL:      ${GREEN}127.0.0.1:3307${NC}"
-    echo -e "   Redis:      ${GREEN}127.0.0.1:6380${NC}"
 fi
 echo ""
 echo -e "${BLUE}📋 PID: 백엔드=$BACKEND_PID / 프론트엔드=$FRONTEND_PID${NC}"

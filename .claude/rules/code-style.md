@@ -47,7 +47,7 @@ Cross-cutting rules that apply to both frontend and backend.
 
 ## Backend-Specific
 - Cursor-based pagination for lists
-- Redis caching for hot data
+- In-memory caching for hot data (`CacheService`)
 - N+1 prevention with TypeORM relations
 - Error response format: consistent `{ statusCode, message, error }`
 - ValidationPipe error messages: must be Korean (configure exceptionFactory)

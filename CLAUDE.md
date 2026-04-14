@@ -28,7 +28,7 @@ bash scripts/stop-local.sh           # Full-stack stop
 npm run build && npm run test:run && bash scripts/start-local.sh  # FE build+test+restart
 cd backend && npm run build && npm run test      # BE build+test
 cd backend && npm run test:e2e       # BE E2E (required for DB schema changes)
-cd backend && docker compose up -d   # MySQL + Redis
+cd backend && docker compose up -d   # MySQL
 cd backend && docker compose down -v # Reset DB
 ```
 
