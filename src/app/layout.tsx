@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import { SITE_URL } from '@/lib/site-url';
 
 export const metadata: Metadata = {
   title: {
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
     template: '%s | 옥화당',
   },
   description: '자사호·보이차·다구 전문 쇼핑몰',
-  metadataBase: new URL(process.env.SITE_URL ?? 'https://shop-okhwadang.com'),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     siteName: '옥화당',
     type: 'website',

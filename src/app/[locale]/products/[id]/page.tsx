@@ -4,8 +4,7 @@ import { fetchProduct, fetchCollections } from '@/lib/api-server'
 import ProductDetailClient from '@/components/products/ProductDetailClient'
 import { routing } from '@/i18n/routing'
 import type { Locale } from '@/i18n/routing'
-
-const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
+import { SITE_URL } from '@/lib/site-url'
 
 interface ProductDetailProps {
   params: Promise<{ id: string; locale: string }>

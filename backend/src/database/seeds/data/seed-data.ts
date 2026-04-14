@@ -1081,7 +1081,7 @@ export interface SeedUser {
 export const users: SeedUser[] = [
   {
     id: 1,
-    email: 'reviewer1@okhwadang.com',
+    email: 'reviewer1@ockhwadang.com',
     password: '$2b$10$wJAaOWFn9rdHbx3K5AEzu.mpoUHtqMxPWzE9WSWSm15Vj85WdCL7S',
     name: '김차림',
     phone: null,
@@ -1090,7 +1090,7 @@ export const users: SeedUser[] = [
   },
   {
     id: 2,
-    email: 'reviewer2@okhwadang.com',
+    email: 'reviewer2@ockhwadang.com',
     password: '$2b$10$oe0RiBM7H3BAATi0ip1eGO1NT0wCqeKG3SBowfVaLUDytUC4i9dRq',
     name: '이보이',
     phone: null,
@@ -1099,7 +1099,7 @@ export const users: SeedUser[] = [
   },
   {
     id: 3,
-    email: 'reviewer3@okhwadang.com',
+    email: 'reviewer3@ockhwadang.com',
     password: '$2b$10$yICUqkVMdV.yu9IUVU7F7uc754wywBlXAGCgRC/ao3LQ7mOHM6uyS',
     name: '박다구',
     phone: null,
@@ -1108,7 +1108,7 @@ export const users: SeedUser[] = [
   },
   {
     id: 4,
-    email: 'reviewer4@okhwadang.com',
+    email: 'reviewer4@ockhwadang.com',
     password: '$2b$10$4l/Mqok3lGJuc2/uWUiZS.5TXBGlysr0vzjJ2bmsVCGO3p7C/Xel.',
     name: '정자호',
     phone: null,
@@ -1117,7 +1117,7 @@ export const users: SeedUser[] = [
   },
   {
     id: 5,
-    email: 'admin@okhwadang.com',
+    email: 'admin@ockhwadang.com',
     password: '$2b$10$l46hZJmq5F8DoKvHZrQ0geSQgIxVXjaDPn2oCv7fv5L2AHtMQPSlW',
     name: '관리자',
     phone: null,
