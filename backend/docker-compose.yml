@@ -16,15 +16,5 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: okhwadang-redis
-    command: redis-server --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
-    ports:
-      - "127.0.0.1:6380:6379"
-    volumes:
-      - redis_data:/data
-
 volumes:
   mysql_data:
-  redis_data:

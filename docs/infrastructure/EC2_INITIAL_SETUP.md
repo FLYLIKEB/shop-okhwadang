@@ -112,8 +112,6 @@ JWT_EXPIRES_IN=1h
 JWT_REFRESH_EXPIRES_IN=7d
 JWT_REFRESH_SECRET=<openssl rand -hex 32로 생성>
 
-REDIS_URL=redis://:your-redis-password@localhost:6379
-
 PAYMENT_GATEWAY=mock
 
 STORAGE_PROVIDER=s3
@@ -132,20 +130,9 @@ chown ec2-user:ec2-user .env.production
 
 ---
 
-## 6. Redis 설정
+## 6. 캐시
 
-```bash
-# Redis 설치 및 시작
-sudo dnf install -y redis
-sudo systemctl start redis
-sudo systemctl enable redis
-
-# 비밀번호 설정 (선택)
-sudo nano /etc/redis/redis.conf
-# requirepass 원하는_비밀번호
-
-sudo systemctl restart redis
-```
+백엔드 프로세스 내 `CacheService`(in-memory, TTL)만 사용. Redis/ElastiCache 설치 불필요.
 
 ---
 
@@ -265,14 +252,11 @@ ssh -i ~/okhwadang-ec2-key.pem ec2-user@3.38.168.41
 # 2. Node/npm 버전
 node --version && npm --version
 
-# 3. Redis 실행
-redis-cli ping
-
-# 4. 프로젝트 빌드
+# 3. 프로젝트 빌드
 cd /app/shop-okhwadang/backend
 npm ci --omit=dev && npm run build
 
-# 5. PM2 시작
+# 4. PM2 시작
 pm2 start ecosystem.config.js --env production
 pm2 status
 

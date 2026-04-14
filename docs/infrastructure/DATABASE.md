@@ -486,7 +486,7 @@ payment_confirmed → preparing → shipped → in_transit → delivered
 
 ```bash
 cd backend
-docker compose up -d      # Start MySQL + Redis
+docker compose up -d      # Start MySQL
 docker compose down -v     # Reset (volume cleanup)
 ```
 

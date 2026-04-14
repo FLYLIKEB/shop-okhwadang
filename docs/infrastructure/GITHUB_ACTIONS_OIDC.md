@@ -239,7 +239,6 @@ JWT_SECRET=<openssl rand -hex 32>
 JWT_EXPIRES_IN=1h
 JWT_REFRESH_EXPIRES_IN=7d
 JWT_REFRESH_SECRET=<openssl rand -hex 32>
-REDIS_URL=redis://:password@localhost:6379
 PAYMENT_GATEWAY=mock
 STORAGE_PROVIDER=s3
 AWS_REGION=ap-northeast-2

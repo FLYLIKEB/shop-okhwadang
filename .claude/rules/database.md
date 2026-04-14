@@ -72,14 +72,15 @@ app.getHttpAdapter().getInstance().set('json replacer', (_key: string, value: un
 - **마이그레이션**: EC2 내부에서 직접 실행하거나, 로컬에서는 EC2 bastion 경유 SSH 터널(`3307`) 사용
 - **관련 문서**: `docs/infrastructure/REMOTE_DB_ACCESS.md`, `docs/infrastructure/DEPLOYMENT.md`, `docs/infrastructure/ENVIRONMENT_VARIABLES.md`
 
-## Redis Cache Rules
+## In-memory Cache Rules
+
+백엔드 프로세스 내 `CacheService` (Map 기반, TTL 지원). 외부 의존성 없음.
 
 **Cache invalidation:**
-- When modifying via API (`bulkUpdate`, `resetToDefaults`), the `settings:*` cache key is automatically deleted
-- **When directly modifying DB via SQL**, Redis cache persists and returns stale data
-  - In this case: run `docker exec okhwadang-redis redis-cli -a 'changeme_redis_password' FLUSHALL`, then restart the backend
+- API 경유 수정(`bulkUpdate`, `resetToDefaults`) 시 `settings:*` 키 자동 삭제
+- **DB를 SQL로 직접 수정**한 경우 캐시가 stale 상태. 백엔드 프로세스 재시작(PM2 `pm2 restart commerce` 또는 로컬 `bash scripts/start-local.sh`)으로 초기화
 - Cache TTL: `settings:*` = 3600 seconds (1 hour)
 
-**Redis connection:**
-- Dev: `docker exec okhwadang-redis redis-cli -a 'changeme_redis_password' ...`
-- Prod: `redis-cli -a $REDIS_PASSWORD` or AWS ElastiCache console
+**특성:**
+- 프로세스 메모리 상주 → 재시작 시 캐시 소실(부팅 직후 첫 요청이 DB 조회, 이후 TTL 동안 캐시)
+- 단일 인스턴스 전제. 다중 인스턴스/cluster 모드 전환 시 외부 캐시(Redis 등) 재도입 검토

@@ -8,8 +8,7 @@ This document describes the security group rules for the shop-okhwadang AWS infr
 
 | Port | Protocol | Source | Description |
 |------|----------|--------|-------------|
-| 80 | TCP | 0.0.0.0/0 | HTTP - Public web traffic |
-| 443 | TCP | 0.0.0.0/0 | HTTPS - Secure web traffic |
+| 80 | TCP | 0.0.0.0/0 | HTTP - Vercel 서버측에서 `/api/*` 프록시 (HTTPS는 Vercel/Cloudflare 종료) |
 | 22 | TCP | <admin-ip>/32 | SSH - Admin access only (restrict to known IPs) |
 | 3000 | TCP | BLOCKED | Application port - Nginx proxy only |
 
@@ -29,15 +28,9 @@ EC2 (Private IP) ---:3306---> Lightsail MySQL
 - No public internet access to database
 - SSH tunnel via EC2 for direct database administration
 
-## ElastiCache (Redis) Access
+## 캐시
 
-```
-EC2 ---:6379---> ElastiCache Redis
-```
-
-| Port | Protocol | Source | Description |
-|------|----------|--------|-------------|
-| 6379 | TCP | EC2 Security Group | Redis access - EC2 only |
+백엔드 프로세스 내 `CacheService`(in-memory, TTL)만 사용. 별도 캐시 서버(ElastiCache 등) 및 관련 Security Group 규칙 없음.
 
 ## Architecture Diagram
 
@@ -45,22 +38,18 @@ EC2 ---:6379---> ElastiCache Redis
                           Internet
                               |
                     -----------------
-                    |   Load Balancer  |
+                    |  Cloudflare + Vercel  |
+                    -----------------
+                              |  (/api/* proxy, HTTP)
+                    -----------------
+                    |   EC2 (Nginx 80)  |
+                    |  Port 3000 BLOCKED |
                     -----------------
                               |
                     -----------------
-                    |   EC2 (Nginx)    |
-                    |  Port 3000 BLOCKED |
+                    | Lightsail MySQL |
+                    |  :3306 EC2 only |
                     -----------------
-                         /    |    \
-                        /     |     \
-                       v      v      v
-               ------------  ---------  ------------
-               | Lightsail  | ElastiCache |  External  |
-               |   MySQL   |   (Redis)   |  Services  |
-               |  :3306    |    :6379    |   (SMTP)   |
-               | EC2 only  |  EC2 only  |            |
-               ------------  ---------  ------------
 ```
 
 ## Security Best Practices
@@ -68,5 +57,4 @@ EC2 ---:6379---> ElastiCache Redis
 1. **SSH Access**: Restrict to known admin IP addresses only
 2. **Application Port**: Port 3000 must remain blocked - all traffic goes through Nginx
 3. **Database**: Never expose MySQL to public internet
-4. **Redis**: ElastiCache should only be accessible from EC2
-5. **Monitoring**: Enable VPC Flow Logs to track rejected traffic
+4. **Monitoring**: Enable VPC Flow Logs to track rejected traffic
