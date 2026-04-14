@@ -13,9 +13,7 @@ module.exports = {
       AWS_CDN_URL: 'https://dt24i8idwxww1.cloudfront.net',
     },
     max_memory_restart: '512M',
-    log_date_format: 'YYYY-MM-DD HH:mm:ss',
-    error_file: '/var/log/pm2/commerce-error.log',
-    out_file: '/var/log/pm2/commerce-out.log',
+    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     merge_logs: true,
   }]
 };
