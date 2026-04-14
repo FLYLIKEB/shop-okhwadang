@@ -53,9 +53,9 @@ shop-okhwadang/
 │   └── styles/             # TailwindCSS v4 토큰
 ├── backend/                # 백엔드 (NestJS)
 │   └── src/modules/        # auth, users, products, orders, payments, shipping, admin...
-├── docs/                   # 문서
+├── docs/                   # 기술 문서
 ├── scripts/                # 유틸리티 스크립트
-└── .claude/rules/          # Claude 규칙
+└── .claude/rules/          # Claude AI 규칙
 ```
 
 ## 시작하기
@@ -89,21 +89,7 @@ cd backend && docker compose down -v   # DB 초기화
                                             → AWS Lightsail MySQL :3306
 ```
 
-## 구현 우선순위
-
-| Phase | 내용 |
-|-------|------|
-| **Phase 1 (MVP)** | 메인, 상품 목록/상세, 장바구니, 주문/결제(Mock PG) |
-| **Phase 2 (Core)** | 회원 시스템, 검색, 카테고리 필터, 마이페이지 |
-| **Phase 3 (Payment)** | 실제 PG 연동 (네이버페이 필수), 배송 시스템 |
-| **Phase 4 (Admin)** | 어드민 (상품/주문/배송/회원 관리) |
-| **Phase 5 (CMS)** | 템플릿 시스템, 동적 페이지/네비게이션 관리 |
-| **Phase 6 (Polish)** | 리뷰, 위시리스트, 쿠폰, 글로벌 스토어, 외부 연동 |
-| **Phase 7 (Ops)** | CI/CD, 모니터링, 테스트 커버리지 |
-
-## 문서
-
-### 기술 문서
+## 기술 문서
 
 | 문서 | 경로 |
 |------|------|
@@ -119,24 +105,6 @@ cd backend && docker compose down -v   # DB 초기화
 | Docker 설정 | [`docs/infrastructure/DOCKER.md`](docs/infrastructure/DOCKER.md) |
 | 환경 변수 | [`docs/infrastructure/ENVIRONMENT_VARIABLES.md`](docs/infrastructure/ENVIRONMENT_VARIABLES.md) |
 
-### 마케팅/고객 문서
+## 관련 프로젝트
 
-| 문서 | 경로 |
-|------|------|
-| 목차 | [`docs/marketing/0_목차.md`](docs/marketing/0_목차.md) |
-| 프로젝트 개요 | [`docs/marketing/1_프로젝트_개요.md`](docs/marketing/1_프로젝트_개요.md) |
-| 견적 및 사양 | [`docs/marketing/1-1_견적_및_사양.md`](docs/marketing/1-1_견적_및_사양.md) |
-| 개발 일정 (8주) | [`docs/marketing/1-2_개발_일정_8주.md`](docs/marketing/1-2_개발_일정_8주.md) |
-| 기술 스택 및 아키텍처 | [`docs/marketing/2_기술_스택_및_아키텍처.md`](docs/marketing/2_기술_스택_및_아키텍처.md) |
-| 어드민 커스터마이징 | [`docs/marketing/2-1_어드민_커스터마이징.md`](docs/marketing/2-1_어드민_커스터마이징.md) |
-| 보안 정책 | [`docs/marketing/2-2_보안_정책.md`](docs/marketing/2-2_보안_정책.md) |
-| 서버 비용 및 인프라 | [`docs/marketing/2-3_서버_비용_및_인프라.md`](docs/marketing/2-3_서버_비용_및_인프라.md) |
-| 데이터 이전 가이드 | [`docs/marketing/3_데이터_이전_가이드.md`](docs/marketing/3_데이터_이전_가이드.md) |
-| 유지보수 및 지원 | [`docs/marketing/3-1_유지보수_및_지원.md`](docs/marketing/3-1_유지보수_및_지원.md) |
-| FAQ | [`docs/marketing/4_자주_묻는_질문.md`](docs/marketing/4_자주_묻는_질문.md) |
-| 구축 사양 체크리스트 | [`docs/marketing/4-1_구축_사양_체크리스트.md`](docs/marketing/4-1_구축_사양_체크리스트.md) |
-
-## 관련 링크
-
-- [옥화당 스마트스토어](https://smartstore.naver.com/ockhwadang)
-- [ChaLog (기술 스택 기준 프로젝트)](https://github.com/FLYLIKEB/ChaLog)
+- [ChaLog](https://github.com/FLYLIKEB/ChaLog) — 기술 스택 기준 프로젝트
