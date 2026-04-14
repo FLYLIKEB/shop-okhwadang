@@ -7,7 +7,7 @@ NestJS + TypeORM + MySQL. Inherits root CLAUDE.md. See `.claude/rules/backend-pa
 - Module structure: `src/modules/{module}/`, global prefix `/api`
 - NestJS Logger only — no `console.log`
 - NestJS built-in exceptions only (`NotFoundException`, `BadRequestException`, etc.)
-- Cursor-based pagination, Redis caching, N+1 prevention via TypeORM relations
+- Cursor-based pagination, in-memory caching (CacheService), N+1 prevention via TypeORM relations
 - Error response: `{ statusCode, message, error }`
 - ValidationPipe messages must be Korean (configure exceptionFactory)
 

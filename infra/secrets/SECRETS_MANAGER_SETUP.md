@@ -16,7 +16,6 @@ This document describes the AWS Secrets Manager integration for Phase 1 of the A
 | `TOSS_SECRET_KEY` | Toss Payments secret key (ko locale) |
 | `STRIPE_SECRET_KEY` | Stripe secret key (global locale) |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-| `REDIS_PASSWORD` | Redis password |
 | `AWS_SECRET_ACCESS_KEY` | AWS credentials secret access key |
 
 ### Secret Format
@@ -31,7 +30,6 @@ Secrets are stored as JSON key-value pairs:
   "TOSS_SECRET_KEY": "your-toss-secret",
   "STRIPE_SECRET_KEY": "your-stripe-secret",
   "STRIPE_WEBHOOK_SECRET": "your-stripe-webhook-secret",
-  "REDIS_PASSWORD": "your-redis-password",
   "AWS_SECRET_ACCESS_KEY": "your-aws-secret-key"
 }
 ```
@@ -139,7 +137,6 @@ DB_SSL_ENABLED=true
 JWT_EXPIRES_IN=1h
 JWT_REFRESH_EXPIRES_IN=7d
 FRONTEND_URL=https://ockhwadang.com
-REDIS_URL=redis://localhost:6380
 PAYMENT_GATEWAY=toss
 AWS_REGION=ap-northeast-2
 AWS_S3_BUCKET_NAME=your-bucket

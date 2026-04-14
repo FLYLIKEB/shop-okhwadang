@@ -4,7 +4,7 @@
 
 - NestJS + TypeORM + MySQL 8.0
 - JWT (Access + Refresh Token) + OAuth (카카오/구글)
-- Docker Compose (MySQL, Redis)
+- Docker Compose (MySQL). 캐시는 백엔드 프로세스 내 in-memory `CacheService`
 
 ---
 
@@ -143,6 +143,6 @@ PAYMENT_CONFIRMED → PREPARING → SHIPPED → IN_TRANSIT → DELIVERED
 ## 성능
 
 - 상품/게시글 목록: 커서 기반 페이지네이션
-- 상품 상세/목록: Redis 캐싱 (선택)
+- 상품 상세/목록: in-memory 캐싱 (`CacheService`, 선택)
 - DB 인덱싱 최적화
 - N+1 쿼리 방지 (TypeORM relations/queryBuilder)
