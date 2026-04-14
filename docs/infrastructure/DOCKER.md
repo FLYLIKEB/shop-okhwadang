@@ -23,7 +23,7 @@ services:
     container_name: okhwadang-mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: okhwadang
+      MYSQL_DATABASE: commerce
     ports:
       - "127.0.0.1:3307:3306"
     volumes:

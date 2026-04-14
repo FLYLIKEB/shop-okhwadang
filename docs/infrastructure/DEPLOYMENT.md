@@ -3,11 +3,11 @@
 ## 도메인
 
 - **운영 도메인**: `https://ockhwadang.com` (Cloudflare DNS → Vercel, HTTPS는 Vercel/Cloudflare가 처리)
-- **API 경로**: 별도 서브도메인 없음. 브라우저는 `ockhwadang.com/api/*` 만 호출하고, Next.js `next.config.ts` rewrites가 Vercel 서버측에서 EC2(`BACKEND_URL`)로 평문 프록시한다.
+- **API 경로**: 브라우저는 `ockhwadang.com/api/*`만 호출. Next.js middleware(`src/middleware.ts`)가 Vercel Edge에서 `BACKEND_URL`로 런타임 프록시. Vercel Edge는 IP 직접 fetch를 금지하므로 반드시 도메인(`api.ockhwadang.com`) 경유.
 - **CDN 서브도메인**: `https://cdn.ockhwadang.com` → CloudFront → S3 `okhwadang-assets`
 
 ### Vercel 환경변수
-- `BACKEND_URL=http://3.38.168.41:3000` (EC2 Public IP, HTTP)
+- `BACKEND_URL=http://api.ockhwadang.com` (Cloudflare Proxied → EC2 Nginx :80 → NestJS :3000, HTTP)
 - `SITE_URL=https://ockhwadang.com`
 
 ## 배포 구조

@@ -8,7 +8,8 @@ This document describes the security group rules for the shop-okhwadang AWS infr
 
 | Port | Protocol | Source | Description |
 |------|----------|--------|-------------|
-| 80 | TCP | 0.0.0.0/0 | HTTP - Vercel 서버측에서 `/api/*` 프록시 (HTTPS는 Vercel/Cloudflare 종료) |
+| 80 | TCP | 0.0.0.0/0 | HTTP - Vercel middleware가 `api.ockhwadang.com`(Cloudflare Proxied)으로 `/api/*` 프록시. Vercel Edge는 도메인 fetch만 허용하므로 서브도메인 경유 필수 |
+| 443 | TCP | Cloudflare IPv4 ranges | HTTPS (optional, Cloudflare Full/Strict 모드 사용 시) |
 | 22 | TCP | <admin-ip>/32 | SSH - Admin access only (restrict to known IPs) |
 | 3000 | TCP | BLOCKED | Application port - Nginx proxy only |
 
@@ -35,21 +36,31 @@ EC2 (Private IP) ---:3306---> Lightsail MySQL
 ## Architecture Diagram
 
 ```
-                          Internet
+                          Internet (browser)
                               |
-                    -----------------
-                    |  Cloudflare + Vercel  |
-                    -----------------
-                              |  (/api/* proxy, HTTP)
-                    -----------------
-                    |   EC2 (Nginx 80)  |
-                    |  Port 3000 BLOCKED |
-                    -----------------
+                    -------------------------------
+                    | Cloudflare (ockhwadang.com)  |
+                    -------------------------------
                               |
-                    -----------------
-                    | Lightsail MySQL |
-                    |  :3306 EC2 only |
-                    -----------------
+                    -------------------------------
+                    |  Vercel (Next.js SSR/Edge)   |
+                    |  middleware: /api/* proxy    |
+                    |  BACKEND_URL = http://api.ockhwadang.com |
+                    -------------------------------
+                              |
+                    -------------------------------
+                    | Cloudflare (api.ockhwadang.com, Proxied) |
+                    -------------------------------
+                              |
+                    -------------------------------
+                    |   EC2 (Nginx :80 → :3000)    |
+                    |   Port 3000 BLOCKED 외부에서   |
+                    -------------------------------
+                              |
+                    -------------------------------
+                    |       Lightsail MySQL        |
+                    |   :3306 EC2 private IP only  |
+                    -------------------------------
 ```
 
 ## Security Best Practices
