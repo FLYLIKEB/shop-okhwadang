@@ -43,8 +43,8 @@ jobs:
           printf '%s' "$JWT_PUBLIC_KEY" > keys/jwt-public.pem
           chmod 600 keys/jwt-private.pem keys/jwt-public.pem
 
-          # install dependencies
-          npm ci --omit=dev
+          # install dependencies (빌드엔 devDeps 필요 — @types/*, @nestjs/cli 등)
+          npm ci
 
           # build
           npm run build
