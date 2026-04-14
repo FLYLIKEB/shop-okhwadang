@@ -69,7 +69,7 @@ vi.mock('embla-carousel-autoplay', () => ({
 describe('Header', () => {
   it('renders the brand name', () => {
     render(<Header />);
-    expect(screen.getByText('옥화당')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: '옥화당' })).toBeInTheDocument();
   });
 
   it('renders navigation links', () => {

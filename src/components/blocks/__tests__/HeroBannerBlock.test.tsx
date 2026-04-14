@@ -59,8 +59,8 @@ describe('HeroBannerBlock', () => {
         />
       );
 
-      expect(screen.getByLabelText('이전 배너')).toBeInTheDocument();
-      expect(screen.getByLabelText('다음 배너')).toBeInTheDocument();
+      expect(screen.getByLabelText('이전 슬라이드')).toBeInTheDocument();
+      expect(screen.getByLabelText('다음 슬라이드')).toBeInTheDocument();
     });
 
     it('슬라이드 인디케이터가 렌더링됨', () => {
@@ -75,11 +75,11 @@ describe('HeroBannerBlock', () => {
         />
       );
 
-      expect(screen.getByLabelText('1번 배너로 이동')).toBeInTheDocument();
-      expect(screen.getByLabelText('2번 배너로 이동')).toBeInTheDocument();
+      expect(screen.getByLabelText('1번 슬라이드로 이동')).toBeInTheDocument();
+      expect(screen.getByLabelText('2번 슬라이드로 이동')).toBeInTheDocument();
     });
 
-    it('슬라이드가 없을 때 skeleton 로딩 표시', () => {
+    it('슬라이드가 없을 때 기본 슬라이드 사용', () => {
       render(
         <HeroBannerBlock
           content={{
@@ -91,7 +91,7 @@ describe('HeroBannerBlock', () => {
         />
       );
 
-      expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(screen.getByText('의흥 장인의 손끝에서')).toBeInTheDocument();
     });
   });
 

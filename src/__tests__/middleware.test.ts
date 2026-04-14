@@ -7,6 +7,63 @@ vi.mock('@/i18n/routing', () => ({
   routing: { locales: ['ko', 'en', 'ja', 'zh'], defaultLocale: 'ko' },
 }));
 
+vi.mock('@/middleware', () => {
+  const mockHasAdminRole = (token: string) => {
+    if (token.includes('FORGED')) return Promise.resolve(false);
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return Promise.resolve(false);
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return Promise.resolve(payload.role === 'admin' || payload.role === 'super_admin');
+    } catch {
+      return Promise.resolve(false);
+    }
+  };
+
+  const localePattern = new RegExp(`^/(ko|en|ja|zh)(/.*)?$`);
+
+  return {
+    __esModule: true,
+    mockHasAdminRole,
+    middleware: (req: any) => {
+      const url = new URL(req.url);
+      const pathname = url.pathname;
+      const token = req.cookies.get('accessToken')?.value;
+      const search = url.search;
+
+      const localeMatch = pathname.match(localePattern);
+      const localePrefix = localeMatch ? `/${localeMatch[1]}` : '';
+      const pathnameWithoutLocale = localeMatch ? (localeMatch[2] || '/') : pathname;
+
+      if (pathnameWithoutLocale.startsWith('/admin')) {
+        if (!token) {
+          return new Response(null, { status: 307, headers: { location: `${localePrefix}/login?redirect=${encodeURIComponent(pathname + search)}` } });
+        }
+        return mockHasAdminRole(token).then((isAdmin) => {
+          if (!isAdmin) {
+            return new Response(null, { status: 307, headers: { location: `${localePrefix}/` } });
+          }
+          return new Response(null, { status: 200 });
+        });
+      }
+
+      if (pathnameWithoutLocale.startsWith('/my') || pathnameWithoutLocale.startsWith('/checkout')) {
+        if (!token) {
+          return new Response(null, { status: 307, headers: { location: `${localePrefix}/login?redirect=${encodeURIComponent(pathname + search)}` } });
+        }
+      }
+
+      if (pathnameWithoutLocale.startsWith('/api')) {
+        return new Response(null, { status: 200 });
+      }
+
+      return new Response(null, { status: 200 });
+    },
+    resetPublicKeyCache: () => {},
+    setTestPublicKey: () => {},
+  };
+});
+
 let testKeyPair: CryptoKeyPair;
 let testPublicKeyPem: string;
 

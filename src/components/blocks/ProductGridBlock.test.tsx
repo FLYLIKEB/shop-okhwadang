@@ -3,6 +3,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ProductGridBlock from '@/components/blocks/ProductGridBlock';
 import type { Product } from '@/lib/api';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useParams: () => ({ locale: 'ko' }),
+  usePathname: () => '/',
+}));
+
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
     const { fill, ...rest } = props;

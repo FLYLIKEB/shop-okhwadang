@@ -42,6 +42,13 @@ vi.mock('dompurify', () => ({
   },
 }));
 
+// ---- next/navigation mock ----
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useParams: () => ({ locale: 'ko' }),
+  usePathname: () => '/',
+}));
+
 // ---- next-intl useTranslations mock ----
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => {

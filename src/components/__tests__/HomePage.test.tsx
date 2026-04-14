@@ -7,6 +7,7 @@ import type { HeroBannerContent, ProductGridContent, CategoryNavContent, Product
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useParams: () => ({ locale: 'ko' }),
   usePathname: () => '/',
 }));
 
@@ -135,8 +136,8 @@ describe('HeroBannerBlock (slider)', () => {
       title: '', image_url: '', template: 'slider',
     };
     render(<HeroBannerBlock content={content} />);
-    expect(screen.getByLabelText('이전 배너')).toBeInTheDocument();
-    expect(screen.getByLabelText('다음 배너')).toBeInTheDocument();
+    expect(screen.getByLabelText('이전 슬라이드')).toBeInTheDocument();
+    expect(screen.getByLabelText('다음 슬라이드')).toBeInTheDocument();
   });
 
   it('renders CTA link when provided', () => {
@@ -173,7 +174,7 @@ describe('ProductGridBlock', () => {
       prefetched_products: sampleProducts,
     };
     render(<ProductGridBlock content={content} />);
-    const link = screen.getByRole('link', { name: /더 보기/ });
+    const link = screen.getByRole('link', { name: /전체 보기/ });
     expect(link).toHaveAttribute('href', '/products?isFeatured=true');
   });
 

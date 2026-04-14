@@ -81,7 +81,7 @@ describe('ProductCard', () => {
     render(<ProductCard {...baseProps} salePrice={24000} />);
     expect(screen.getByText('₩24,000')).toBeInTheDocument();
     expect(screen.getByText('₩29,000')).toBeInTheDocument();
-    expect(screen.getByText('17%')).toBeInTheDocument();
+    expect(screen.getByText('17% 할인')).toBeInTheDocument();
   });
 
   it('shows soldout badge when status is soldout', () => {
@@ -105,33 +105,20 @@ describe('ProductCard', () => {
     expect(screen.getByRole('button', { name: '찜하기' })).toBeInTheDocument();
   });
 
-  it('shows cart button for active product', () => {
+  it('shows details button for active product', () => {
     render(<ProductCard {...baseProps} />);
-    expect(screen.getByRole('button', { name: '장바구니 담기' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '자세히 보기' })).toBeInTheDocument();
   });
 
-  it('hides cart button when soldout', () => {
+  it('shows soldout overlay when status is soldout', () => {
     render(<ProductCard {...baseProps} status="soldout" />);
-    expect(screen.queryByRole('button', { name: '장바구니 담기' })).not.toBeInTheDocument();
+    expect(screen.getByText('품절')).toBeInTheDocument();
   });
 
-  it('calls addItem and shows toast on cart button click', async () => {
-    mockAddItem.mockResolvedValue(undefined);
+  it('links to product detail page', () => {
     render(<ProductCard {...baseProps} />);
-    fireEvent.click(screen.getByRole('button', { name: '장바구니 담기' }));
-    await waitFor(() => {
-      expect(mockAddItem).toHaveBeenCalledWith({ productId: 1, productOptionId: null, quantity: 1 });
-      expect(toast.success).toHaveBeenCalledWith('장바구니에 담았습니다.');
-    });
-  });
-
-  it('shows error toast when cart add fails', async () => {
-    mockAddItem.mockRejectedValue(new Error('장바구니 담기에 실패했습니다.'));
-    render(<ProductCard {...baseProps} />);
-    fireEvent.click(screen.getByRole('button', { name: '장바구니 담기' }));
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('장바구니 담기에 실패했습니다.');
-    });
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/products/1');
   });
 
   it('redirects to login when unauthenticated user clicks wishlist', async () => {
