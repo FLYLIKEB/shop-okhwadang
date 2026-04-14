@@ -15,6 +15,14 @@ backend/.env.secrets
 *.pem
 *.key
 
+# Environment & secret backups (CRITICAL - never commit)
+*.backup
+*.bak
+*.old
+.env.backup
+backend/.env.backup
+*.orig
+
 # Agent tools (auto-generated, not project code)
 agent-monitor.html
 agent-tracker.cjs
