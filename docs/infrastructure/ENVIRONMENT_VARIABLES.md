@@ -85,15 +85,37 @@
 |------|--------|------|
 | `REDIS_URL` | `redis://localhost:6379` | Redis 연결 URL |
 
-### SSH 터널 (로컬 → 원격 DB)
+---
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `SSH_KEY_PATH` | `~/.ssh/your-key.pem` | SSH 키 경로 |
-| `EC2_HOST` | — | EC2 IP |
-| `EC2_USER` | `ubuntu` | EC2 사용자 |
-| `SSH_TUNNEL_LOCAL_PORT` | `3307` | 로컬 터널 포트 |
-| `SSH_TUNNEL_REMOTE_PORT` | `3306` | 원격 MySQL 포트 |
+## `.env.secrets` (gitignored) — 운영 민감값
+
+실제 endpoint·계정·패스워드는 리포지토리에 커밋하지 않고 프로젝트 루트의 `.env.secrets`에 보관합니다.
+키 이름만 아래에 기재합니다. 값은 `.env.secrets`를 직접 확인하세요.
+
+### Lightsail MySQL
+
+| 변수 | 설명 |
+|------|------|
+| `LIGHTSAIL_DB_NAME` | DB 인스턴스 이름 |
+| `LIGHTSAIL_DB_REGION` | 리전 (`ap-northeast-2`) |
+| `LIGHTSAIL_DB_HOST` | MySQL endpoint 호스트 |
+| `LIGHTSAIL_DB_PORT` | 3306 |
+| `LIGHTSAIL_DB_INITIAL_SCHEMA` | 초기 스키마 (`commerce`) |
+| `LIGHTSAIL_DB_MASTER_USERNAME` | 관리 계정 (`dbadmin`) |
+| `LIGHTSAIL_DB_MASTER_PASSWORD` | 관리 계정 패스워드 |
+| `APP_DB_USER` | 앱 계정 (`okhwadang_app`) |
+| `APP_DB_PASSWORD` | 앱 계정 패스워드 |
+| `DATABASE_URL` | 앱 계정 기반 완성된 URL |
+
+### EC2 bastion (로컬 SSH 터널용)
+
+| 변수 | 설명 |
+|------|------|
+| `BASTION_HOST` | EC2 public IP |
+| `BASTION_USER` | SSH user (`ec2-user`) |
+| `BASTION_KEY` | SSH private key 경로 (`~/okhwadang-ec2-key.pem`) |
+
+사용법은 [`REMOTE_DB_ACCESS.md`](./REMOTE_DB_ACCESS.md) 참조.
 
 ---
 

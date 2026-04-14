@@ -104,7 +104,8 @@ BACKEND_URL=http://3.38.168.41:3000
 
 DB_SYNCHRONIZE=false
 DB_SSL_ENABLED=false
-DATABASE_URL=mysql://user:password@<lightsail-private-ip>:3306/okhwadang
+# Lightsail MySQL (endpoint/user/password는 .env.secrets 참조)
+DATABASE_URL=mysql://okhwadang_app:<APP_DB_PASSWORD>@<LIGHTSAIL_DB_HOST>:3306/commerce
 
 JWT_SECRET=<openssl rand -hex 32로 생성>
 JWT_EXPIRES_IN=1h

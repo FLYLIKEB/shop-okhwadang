@@ -580,14 +580,14 @@ INSERT INTO faqs (question, answer, category, sort_order, is_published) VALUES
 -- 11. 테스트 사용자 (리뷰 작성을 위해 필요)
 -- ============================================================
 INSERT INTO users (id, email, password, name, phone, role, is_active, created_at, updated_at) VALUES
-(1, 'reviewer1@okhwadang.com', '$2b$10$wJAaOWFn9rdHbx3K5AEzu.mpoUHtqMxPWzE9WSWSm15Vj85WdCL7S', '김차림', NULL, 'user', 1, NOW(), NOW()),
-(2, 'reviewer2@okhwadang.com', '$2b$10$oe0RiBM7H3BAATi0ip1eGO1NT0wCqeKG3SBowfVaLUDytUC4i9dRq', '이보이', NULL, 'user', 1, NOW(), NOW()),
-(3, 'reviewer3@okhwadang.com', '$2b$10$yICUqkVMdV.yu9IUVU7F7uc754wywBlXAGCgRC/ao3LQ7mOHM6uyS', '박다구', NULL, 'user', 1, NOW(), NOW()),
-(4, 'reviewer4@okhwadang.com', '$2b$10$4l/Mqok3lGJuc2/uWUiZS.5TXBGlysr0vzjJ2bmsVCGO3p7C/Xel.', '정자호', NULL, 'user', 1, NOW(), NOW());
+(1, 'reviewer1@ockhwadang.com', '$2b$10$wJAaOWFn9rdHbx3K5AEzu.mpoUHtqMxPWzE9WSWSm15Vj85WdCL7S', '김차림', NULL, 'user', 1, NOW(), NOW()),
+(2, 'reviewer2@ockhwadang.com', '$2b$10$oe0RiBM7H3BAATi0ip1eGO1NT0wCqeKG3SBowfVaLUDytUC4i9dRq', '이보이', NULL, 'user', 1, NOW(), NOW()),
+(3, 'reviewer3@ockhwadang.com', '$2b$10$yICUqkVMdV.yu9IUVU7F7uc754wywBlXAGCgRC/ao3LQ7mOHM6uyS', '박다구', NULL, 'user', 1, NOW(), NOW()),
+(4, 'reviewer4@ockhwadang.com', '$2b$10$4l/Mqok3lGJuc2/uWUiZS.5TXBGlysr0vzjJ2bmsVCGO3p7C/Xel.', '정자호', NULL, 'user', 1, NOW(), NOW());
 
 -- 어드민 계정
 INSERT INTO users (id, email, password, name, phone, role, is_active, created_at, updated_at) VALUES
-(99, 'admin@okhwadang.com', '$2b$10$l46hZJmq5F8DoKvHZrQ0geSQgIxVXjaDPn2oCv7fv5L2AHtMQPSlW', '관리자', NULL, 'admin', 1, NOW(), NOW());
+(99, 'admin@ockhwadang.com', '$2b$10$l46hZJmq5F8DoKvHZrQ0geSQgIxVXjaDPn2oCv7fv5L2AHtMQPSlW', '관리자', NULL, 'admin', 1, NOW(), NOW());
 
 -- ============================================================
 -- 12. 주문 (리뷰 작성용으로 delivery 완료 상태)
@@ -1042,7 +1042,7 @@ INSERT INTO pages (id, slug, title, template, is_published, created_at, updated_
 
 INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, created_at, updated_at) VALUES
 (15, 4, 'text_content', JSON_OBJECT(
-  'html', '<h1>문의하기</h1><p>옥화당에 궁금한 점이 있으시면 아래 양식을 통해 문의해주세요.<br/>영업일 기준 1~2일 이내에 답변드리겠습니다.</p><p><strong>운영시간</strong>: 평일 10:00 ~ 18:00 (점심 12:00 ~ 13:00)<br/><strong>이메일</strong>: help@okhwadang.com</p>',
+  'html', '<h1>문의하기</h1><p>옥화당에 궁금한 점이 있으시면 아래 양식을 통해 문의해주세요.<br/>영업일 기준 1~2일 이내에 답변드리겠습니다.</p><p><strong>운영시간</strong>: 평일 10:00 ~ 18:00 (점심 12:00 ~ 13:00)<br/><strong>이메일</strong>: help@ockhwadang.com</p>',
   'textAlign', 'left'
 ), 0, 1, NOW(), NOW());
 

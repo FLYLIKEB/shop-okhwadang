@@ -1,13 +1,23 @@
 # Deployment Guide
 
+## 도메인
+
+- **운영 도메인**: `https://ockhwadang.com` (Cloudflare DNS → Vercel, HTTPS는 Vercel/Cloudflare가 처리)
+- **API 경로**: 별도 서브도메인 없음. 브라우저는 `ockhwadang.com/api/*` 만 호출하고, Next.js `next.config.ts` rewrites가 Vercel 서버측에서 EC2(`BACKEND_URL`)로 평문 프록시한다.
+- **CDN 서브도메인**: `https://cdn.ockhwadang.com` → CloudFront → S3 `okhwadang-assets`
+
+### Vercel 환경변수
+- `BACKEND_URL=http://3.38.168.41:3000` (EC2 Public IP, HTTP)
+- `SITE_URL=https://ockhwadang.com`
+
 ## 배포 구조
 
 ```
 클라이언트 브라우저
     │
-    ├── HTTPS ──→ Vercel CDN (Next.js SSR)
+    ├── HTTPS ──→ Cloudflare ──→ Vercel CDN (Next.js SSR, ockhwadang.com)
     │                 │
-    │                 └── /api/* rewrites ──→ AWS EC2 t3.small (NestJS :3000)
+    │                 └── /api/* rewrites ──→ api.ockhwadang.com → AWS EC2 t3.small (NestJS :3000)
     │                                              │
     │                                              ├── MySQL ──→ AWS Lightsail MySQL :3306
     │                                              └── Redis ──→ EC2 내장 또는 ElastiCache
@@ -100,25 +110,24 @@ pm2 monit           # CPU/메모리 모니터링
 
 ### 헬스 체크 수동 확인
 ```bash
-curl https://api.your-domain.com/api/health
+curl https://api.ockhwadang.com/api/health
 ```
 
 ---
 
-## Nginx + HTTPS 설정 (EC2)
+## Nginx 설정 (EC2)
 
-Nginx 설정 파일은 `infra/nginx/commerce.conf`에서 버전 관리됩니다.
+HTTPS는 Vercel(Cloudflare)에서 종료되고, EC2 nginx는 **HTTP 80 → NestJS :3000** 리버스 프록시만 담당. SSL/certbot 불필요.
 
 ```bash
-sudo apt install -y nginx certbot python3-certbot-nginx
-sudo certbot --nginx -d api.your-domain.com
-
-# 버전 관리된 설정 파일을 Nginx 설정 디렉토리에 복사
-sudo cp infra/nginx/commerce.conf /etc/nginx/sites-available/commerce.conf
-sudo ln -s /etc/nginx/sites-available/commerce.conf /etc/nginx/sites-enabled/commerce.conf
+sudo dnf install -y nginx
+sudo cp infra/nginx/commerce.conf /etc/nginx/conf.d/commerce.conf
 sudo nginx -t
-sudo systemctl reload nginx
+sudo systemctl enable --now nginx
 ```
+
+> ⚠️ EC2 보안그룹은 80 포트를 0.0.0.0/0 에 허용해야 한다. (Vercel egress IP가 동적이라 IP 화이트리스트는 비현실적)
+> Vercel ↔ EC2 구간은 평문이므로, 민감 데이터가 많아지면 추후 Cloudflare Tunnel 또는 Origin Cert 도입을 검토.
 
 자세한 설정은 [`infra/nginx/commerce.conf`](infra/nginx/commerce.conf)를 참조하세요.
 
@@ -126,10 +135,21 @@ sudo systemctl reload nginx
 
 ## 데이터베이스 (AWS Lightsail MySQL)
 
-- Lightsail MySQL 인스턴스로 관리형 DB 운영
-- EC2에서 내부 IP로 직접 연결 (SSH 터널 불필요)
-- `DATABASE_URL=mysql://user:password@<lightsail-private-ip>:3306/commerce`
-- 7일 자동 백업 포함
+- **인스턴스**: `okhwadang-prod-db` (MySQL 8.0, `micro_2_0` 번들, ap-northeast-2a)
+- **Endpoint / 계정 / 패스워드**: `.env.secrets` 참조 (`LIGHTSAIL_DB_HOST`, `APP_DB_USER`, `APP_DB_PASSWORD`)
+- **publicly accessible**: `true` (보안은 MySQL 사용자 host 제한으로 처리)
+- **VPC peering**: Lightsail VPC ↔ EC2 VPC(`vpc-02836c09f4af7ddbb`) 활성
+  - EC2에서 endpoint로 접속 시 private IP(`172.26.x.x`)로 라우팅됨
+- **접근 통제**:
+  - `dbadmin@%` — 관리용 (긴급 대응만)
+  - `okhwadang_app@172.31.8.153` — 애플리케이션용, EC2 사설IP에서만 접속 허용, `commerce.*` 권한만
+- **자동 백업**: 매일 18:00-18:30 KST, 7일 보관
+- **유지보수 창**: 월요일 19:00-19:30 KST
+- **charset**: `utf8mb4` / `utf8mb4_unicode_ci`
+
+### 접속 경로 / 마이그레이션 실행
+
+자세한 사용법은 [`REMOTE_DB_ACCESS.md`](./REMOTE_DB_ACCESS.md) 참조.
 
 ---
 
@@ -150,12 +170,22 @@ pm2 reload commerce            # 무중단 재시작
 ### Lightsail MySQL 연결 실패
 
 #### 증상
-NestJS 기동 후 `Unable to connect to the database`.
+NestJS 기동 후 `Unable to connect to the database` 또는
+`ERROR 1045 Access denied for user 'okhwadang_app'@'<ip>'`.
 
 #### 확인 사항
-1. EC2 보안그룹에서 Lightsail MySQL 포트(3306) 허용 여부
-2. `DATABASE_URL`의 호스트가 Lightsail 내부 IP인지 확인
-3. Lightsail 네트워킹에서 EC2 IP 화이트리스트 등록 여부
+1. Lightsail DB 상태가 `available`인지 (`aws lightsail get-relational-database`)
+2. VPC peering이 `active`인지, EC2 route table에 `172.26.0.0/16` 경로가 있는지
+3. EC2에서 endpoint로 접속 시 나가는 소스 IP 확인:
+   ```sql
+   SELECT CURRENT_USER(), USER();  -- user@<source-ip> 형태 반환
+   ```
+   반환된 IP가 `okhwadang_app` 계정의 host와 일치해야 함. EC2 사설IP가 바뀐 경우 `dbadmin`으로 붙어 host 갱신:
+   ```sql
+   CREATE USER 'okhwadang_app'@'<new-private-ip>' IDENTIFIED BY '<password>';
+   GRANT ... ON commerce.* TO 'okhwadang_app'@'<new-private-ip>';
+   ```
+4. `DATABASE_URL` 값이 `.env.secrets`와 일치하는지 (EC2 `backend/.env.production`)
 
 ### Nginx 502 Bad Gateway
 
