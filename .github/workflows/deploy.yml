@@ -55,6 +55,9 @@ jobs:
           set +a
           NODE_ENV=production npm run migration:run:prod
 
+          # prune devDeps (빌드 완료 후 node_modules 슬림화)
+          npm prune --omit=dev
+
           # restart pm2
           pm2 restart commerce --update-env || pm2 start dist/main.js --name commerce
           pm2 save
@@ -62,7 +65,8 @@ jobs:
       - name: Smoke test
         run: |
           sleep 20
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.EC2_HOST }}:3000/api/health)
+          # self-hosted runner 가 EC2 내부에서 도는 전제 → localhost 로 점검
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/health)
           if [ "$STATUS" != "200" ]; then
             echo "Smoke test failed! HTTP status: $STATUS"
             exit 1
