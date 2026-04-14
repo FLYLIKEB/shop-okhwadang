@@ -8,8 +8,10 @@ next-env.d.ts
 .env.local
 .env.*.local
 .env.production
+.env.secrets
 backend/.env
 backend/.env.production
+backend/.env.secrets
 *.pem
 *.key
 
