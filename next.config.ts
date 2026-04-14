@@ -10,8 +10,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.amazonaws.com' },
-      { protocol: 'https', hostname: 'cdn.okhwadang.com' },
-      { protocol: 'https', hostname: 'shop-okhwadang.com' },
+      { protocol: 'https', hostname: 'cdn.ockhwadang.com' },
+      { protocol: 'https', hostname: 'ockhwadang.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'i.pinimg.com' },
       { protocol: 'https', hostname: 'm.cbw.co.kr' },
@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
           "script-src 'self' 'unsafe-inline' https://js.tosspayments.com https://js.sandbox.tosspayments.com",
           "object-src 'none'",
           "base-uri 'self'",
-          "img-src 'self' data: https://images.unsplash.com https://*.amazonaws.com https://cdn.okhwadang.com https://shop-okhwadang.com https://i.pinimg.com https://m.cbw.co.kr https://gdimg.gmarket.co.kr https://cdn-optimized.imweb.me",
+          "img-src 'self' data: https://images.unsplash.com https://*.amazonaws.com https://cdn.ockhwadang.com https://ockhwadang.com https://i.pinimg.com https://m.cbw.co.kr https://gdimg.gmarket.co.kr https://cdn-optimized.imweb.me",
           "font-src 'self' https://fonts.gstatic.com",
           "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
         ].join('; ') + ';' },

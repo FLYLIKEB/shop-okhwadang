@@ -138,13 +138,13 @@ DB_SYNCHRONIZE=false
 DB_SSL_ENABLED=true
 JWT_EXPIRES_IN=1h
 JWT_REFRESH_EXPIRES_IN=7d
-FRONTEND_URL=https://your-domain.com
+FRONTEND_URL=https://ockhwadang.com
 REDIS_URL=redis://localhost:6380
 PAYMENT_GATEWAY=toss
 AWS_REGION=ap-northeast-2
 AWS_S3_BUCKET_NAME=your-bucket
 AWS_ACCESS_KEY_ID=your-access-key  # Use IAM role instead for production
-AWS_CDN_URL=https://cdn.your-domain.com
+AWS_CDN_URL=https://cdn.ockhwadang.com
 STORAGE_PROVIDER=s3
 ```
 

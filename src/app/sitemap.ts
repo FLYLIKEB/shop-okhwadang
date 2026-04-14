@@ -1,8 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { fetchProducts } from '@/lib/api-server';
 import { routing } from '@/i18n/routing';
-
-const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
+import { SITE_URL } from '@/lib/site-url';
 const locales = routing.locales;
 
 const staticPaths = [
