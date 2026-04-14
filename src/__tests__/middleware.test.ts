@@ -25,7 +25,7 @@ vi.mock('@/middleware', () => {
   return {
     __esModule: true,
     mockHasAdminRole,
-    middleware: (req: any) => {
+    middleware: (req: { url: string; cookies: { get: (name: string) => { value: string } | undefined } }) => {
       const url = new URL(req.url);
       const pathname = url.pathname;
       const token = req.cookies.get('accessToken')?.value;

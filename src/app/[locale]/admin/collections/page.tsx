@@ -298,11 +298,6 @@ function CollectionSection({
   onEdit: (c: Collection) => void;
   onDelete: (c: Collection) => void;
 }) {
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
   const ids = collections.map((c) => c.id);
 
   return (

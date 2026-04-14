@@ -17,9 +17,19 @@ function getJwtPrivateKey(): string {
   if (process.env.JWT_PRIVATE_KEY) {
     return process.env.JWT_PRIVATE_KEY;
   }
-  const keyPath = path.resolve(process.cwd(), 'keys', 'jwt-private.pem');
-  if (fs.existsSync(keyPath)) {
-    return fs.readFileSync(keyPath, 'utf-8');
+  if (process.env.JWT_PRIVATE_KEY_FILE && fs.existsSync(process.env.JWT_PRIVATE_KEY_FILE)) {
+    return fs.readFileSync(process.env.JWT_PRIVATE_KEY_FILE, 'utf-8');
+  }
+  const possiblePaths = [
+    path.resolve(process.cwd(), 'keys', 'jwt-private.pem'),
+    path.resolve(process.cwd(), '..', 'keys', 'jwt-private.pem'),
+    path.resolve(__dirname, '..', '..', 'keys', 'jwt-private.pem'),
+    path.resolve(__dirname, '..', '..', '..', 'keys', 'jwt-private.pem'),
+  ];
+  for (const keyPath of possiblePaths) {
+    if (fs.existsSync(keyPath)) {
+      return fs.readFileSync(keyPath, 'utf-8');
+    }
   }
   throw new Error('JWT_PRIVATE_KEY environment variable or keys/jwt-private.pem file is required');
 }
