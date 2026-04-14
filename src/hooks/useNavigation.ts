@@ -77,8 +77,9 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
     let cancelled = false;
 
     async function load() {
+      // Skip cache on group change to prevent stale data flash
       const cached = getCached(group);
-      if (cached) {
+      if (cached && !cancelled) {
         setItems(cached);
         setLoading(false);
         return;
@@ -101,6 +102,10 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
         }
       }
     }
+
+    // Reset state when group changes to show fallback immediately
+    setItems(getStaticFallback(group));
+    setLoading(true);
 
     load();
     return () => {
