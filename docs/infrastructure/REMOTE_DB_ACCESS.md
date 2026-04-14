@@ -54,6 +54,15 @@ mysql -h 127.0.0.1 -P 3307 \
 
 ### TypeORM 마이그레이션 실행
 
+**권장: 원격 실행 스크립트**
+```bash
+bash scripts/remote-migration.sh run      # 대기 중인 마이그레이션 실행
+bash scripts/remote-migration.sh revert   # 마지막 1건 되돌리기
+bash scripts/remote-migration.sh show     # 적용/미적용 목록
+```
+스크립트는 `.env.secrets`의 `BASTION_*`를 읽어 EC2에 SSH로 접속 후 백엔드 디렉토리에서 `NODE_ENV=production`으로 실행합니다.
+
+**수동 (SSH 터널 방식)**
 ```bash
 # 터널 열어둔 상태에서
 cd backend
