@@ -14,8 +14,7 @@ import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
 import { fetchSettingsMap } from '@/lib/api-server';
-
-const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
+import { SITE_URL } from '@/lib/site-url';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
