@@ -79,7 +79,7 @@ describe('HeroBannerBlock', () => {
       expect(screen.getByLabelText('2번 배너로 이동')).toBeInTheDocument();
     });
 
-    it('슬라이드가 없을 때 기본 슬라이드 사용', () => {
+    it('슬라이드가 없을 때 skeleton 로딩 표시', () => {
       render(
         <HeroBannerBlock
           content={{
@@ -91,7 +91,7 @@ describe('HeroBannerBlock', () => {
         />
       );
 
-      expect(screen.getByText('의흥 장인의 손끝에서')).toBeInTheDocument();
+      expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
     });
   });
 

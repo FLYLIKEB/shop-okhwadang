@@ -32,6 +32,8 @@ Object.defineProperty(global, 'ResizeObserver', {
   configurable: true,
   value: ResizeObserverStub,
 });
+Element.prototype.scrollTo = vi.fn();
+
 // jsdom does not implement IntersectionObserver — provide a class stub
 class IntersectionObserverStub {
   observe = vi.fn();

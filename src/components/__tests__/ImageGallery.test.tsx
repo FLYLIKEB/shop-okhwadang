@@ -31,10 +31,8 @@ describe('ImageGallery', () => {
     expect(mainImages[0]).toHaveAttribute('src', '/img/2.jpg')
   })
 
-  it('shows fallback teapot images when images are empty', () => {
+  it('shows fallback message when images are empty', () => {
     render(<ImageGallery images={[]} />)
-    const fallbackImage = screen.getAllByRole('img')[0]
-    expect(fallbackImage).toBeInTheDocument()
-    expect(fallbackImage).toHaveAttribute('alt', '자사호 — 전통 주니 자사호')
+    expect(screen.getByText('등록된 이미지가 없습니다')).toBeInTheDocument()
   })
 })
