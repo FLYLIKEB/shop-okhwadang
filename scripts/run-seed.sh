@@ -8,7 +8,7 @@ DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-3307}"
 DB_USER="${DB_USER:-root}"
 DB_PASS="${DB_PASS:-__REDACTED_ROOT_PW__}"
-DB_NAME="${DB_NAME:-okhwadang}"
+DB_NAME="${DB_NAME:-commerce}"
 
 export LOCAL_DATABASE_URL="mysql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
