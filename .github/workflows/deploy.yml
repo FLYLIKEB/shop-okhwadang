@@ -22,24 +22,41 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Deploy to EC2
+        env:
+          BACKEND_ENV_PRODUCTION: ${{ secrets.BACKEND_ENV_PRODUCTION }}
+          JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
+          JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
         run: |
           cd /app/shop-okhwadang/shop-okhwadang/backend
-          
+
           # git pull
           git fetch origin main
           git reset --hard origin/main
-          
+
+          # restore .env (.gitignored) — dotenv/config 가 런타임에 로드
+          printf '%s' "$BACKEND_ENV_PRODUCTION" > .env
+          chmod 600 .env
+
+          # restore JWT RSA keys (.gitignored)
+          mkdir -p keys
+          printf '%s' "$JWT_PRIVATE_KEY" > keys/jwt-private.pem
+          printf '%s' "$JWT_PUBLIC_KEY" > keys/jwt-public.pem
+          chmod 600 keys/jwt-private.pem keys/jwt-public.pem
+
           # install dependencies
           npm ci --omit=dev
-          
+
           # build
           npm run build
-          
-          # run migration
-          npm run migration:run:prod
-          
+
+          # run migration (NODE_ENV=production 으로 dist glob 사용)
+          set -a
+          . ./.env
+          set +a
+          NODE_ENV=production npm run migration:run:prod
+
           # restart pm2
-          pm2 restart commerce || pm2 start dist/main.js --name commerce
+          pm2 restart commerce --update-env || pm2 start dist/main.js --name commerce
           pm2 save
 
       - name: Smoke test
