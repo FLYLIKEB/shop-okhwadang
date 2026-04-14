@@ -79,11 +79,9 @@
 | `S3_ACCESS_KEY` | — | S3 액세스 키 |
 | `S3_SECRET_KEY` | — | S3 시크릿 키 |
 
-### Redis
+### Cache
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `REDIS_URL` | `redis://localhost:6379` | Redis 연결 URL |
+백엔드 프로세스 내 `CacheService`(Map+TTL)만 사용. 외부 캐시(Redis/ElastiCache) 환경변수 없음.
 
 ---
 

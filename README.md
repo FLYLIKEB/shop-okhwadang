@@ -28,11 +28,11 @@
 | 인증 | JWT + OAuth (카카오/구글) | |
 | 결제 | 네이버페이 + 토스페이먼츠 | 어댑터 패턴으로 PG 교체 가능 |
 | 배송 | 택배사 API 연동 | 어댑터 패턴으로 택배사 교체 가능 |
-| 캐시 | Redis | 상품 캐싱, 세션 |
+| 캐시 | In-memory (CacheService) | 설정/상품 핫 데이터, TTL 기반 |
 | 스토리지 | AWS S3 + CloudFront | 이미지/미디어 CDN |
-| 인프라 | Docker Compose | MySQL, Redis 로컬 통합 관리 |
+| 인프라 | Docker Compose | 로컬 MySQL 관리 |
 | FE 배포 | Vercel Pro | Next.js SSR 자동 배포 |
-| BE 배포 | AWS EC2 t3.small + PM2 | Nginx + Let's Encrypt SSL |
+| BE 배포 | AWS EC2 t3.small + PM2 | Nginx (HTTP), HTTPS는 Cloudflare/Vercel 종료 |
 | DB 호스팅 | AWS Lightsail MySQL | 7일 자동 백업 |
 | 테스트 | Vitest (FE) + Jest E2E (BE) | |
 | Node.js | 22.x | .nvmrc로 고정 |
@@ -76,7 +76,7 @@ cd backend && npm run build && npm run test
 # 백엔드 E2E 테스트 (DB 스키마 변경 시 필수)
 cd backend && npm run test:e2e
 
-# MySQL + Redis 시작/정지
+# MySQL 시작/정지
 cd backend && docker compose up -d
 cd backend && docker compose down -v   # DB 초기화
 ```

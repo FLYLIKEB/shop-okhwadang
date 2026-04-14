@@ -19,8 +19,8 @@
     │                 │
     │                 └── /api/* rewrites ──→ api.ockhwadang.com → AWS EC2 t3.small (NestJS :3000)
     │                                              │
-    │                                              ├── MySQL ──→ AWS Lightsail MySQL :3306
-    │                                              └── Redis ──→ EC2 내장 또는 ElastiCache
+    │                                              └── MySQL ──→ AWS Lightsail MySQL :3306
+    │                                                 (캐시는 백엔드 프로세스 내 in-memory)
     └──────────────────────────────────────────────────────────────────────────────────────────
 ```
 
