@@ -77,7 +77,10 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
     },
   };
 
-  const jsonLdString = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+  const jsonLdString = JSON.stringify(jsonLd)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
 
   return (
     <>
