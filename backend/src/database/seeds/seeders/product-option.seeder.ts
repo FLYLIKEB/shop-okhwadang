@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { DataSource } from 'typeorm';
 import { Seeder } from '../base/seeder';
 import { ProductOption } from '../../../modules/products/entities/product-option.entity';
@@ -12,7 +13,7 @@ export class ProductOptionSeeder extends Seeder {
     const repo = this.dataSource.getRepository(ProductOption);
     const inserted = await this.upsert(
       repo,
-      productOptions.map((p) => ({ ...p } as any)),
+      productOptions.map((p) => ({ ...p } as unknown as Partial<ProductOption>)),
       (e) => `${e.productId}:${e.name}:${e.value}`,
     );
     console.log(`✓ Product options: ${inserted} inserted, ${productOptions.length - inserted} existing`);

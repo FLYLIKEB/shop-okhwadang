@@ -95,7 +95,7 @@ export class PagesService {
     pageId: number,
     dto: CreatePageBlockDto,
   ): Promise<PageBlock> {
-    const page = await findOrThrow(this.pageRepository, { id: pageId }, '존재하지 않는 페이지입니다.');
+    await findOrThrow(this.pageRepository, { id: pageId }, '존재하지 않는 페이지입니다.');
     if (!SUPPORTED_BLOCK_TYPES.includes(dto.type)) {
       throw new BadRequestException('지원하지 않는 블록 타입입니다.');
     }
@@ -128,7 +128,7 @@ export class PagesService {
     pageId: number,
     dto: ReorderBlocksDto,
   ): Promise<void> {
-    const page = await findOrThrow(this.pageRepository, { id: pageId }, '존재하지 않는 페이지입니다.');
+    await findOrThrow(this.pageRepository, { id: pageId }, '존재하지 않는 페이지입니다.');
     await Promise.all(
       dto.orders.map((item) =>
         this.blockRepository.update(

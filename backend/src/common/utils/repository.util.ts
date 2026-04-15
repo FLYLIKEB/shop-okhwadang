@@ -1,4 +1,4 @@
-import { Repository, ObjectLiteral } from 'typeorm';
+import { Repository, ObjectLiteral, FindOptionsWhere } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 
 /**
@@ -6,12 +6,12 @@ import { NotFoundException } from '@nestjs/common';
  */
 export async function findOrThrow<T extends ObjectLiteral>(
   repo: Repository<T>,
-  where: Record<string, unknown>,
+  where: FindOptionsWhere<T>,
   message: string,
   relations?: string[],
 ): Promise<T> {
   const entity = await repo.findOne({
-    where: where as any,
+    where,
     ...(relations ? { relations } : {}),
   });
   if (!entity) {

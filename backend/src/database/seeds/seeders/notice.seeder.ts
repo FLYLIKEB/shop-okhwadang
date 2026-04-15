@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { DataSource } from 'typeorm';
 import { Seeder } from '../base/seeder';
 import { Notice } from '../../../modules/notices/entities/notice.entity';
@@ -10,7 +11,7 @@ export class NoticeSeeder extends Seeder {
 
   async run(): Promise<void> {
     const repo = this.dataSource.getRepository(Notice);
-    const inserted = await this.upsert(repo, notices as any[], (n) => n.title);
+    const inserted = await this.upsert(repo, notices as unknown as Partial<Notice>[], (n) => n.title);
     console.log(`✓ Notices: ${inserted} inserted, ${notices.length - inserted} existing`);
   }
 }

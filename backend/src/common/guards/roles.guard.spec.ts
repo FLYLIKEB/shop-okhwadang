@@ -1,8 +1,6 @@
 import { RolesGuard } from './roles.guard';
 import { Reflector } from '@nestjs/core';
 import { ExecutionContext } from '@nestjs/common';
-import { ROLES_KEY } from '../decorators/roles.decorator';
-
 describe('RolesGuard', () => {
   let guard: RolesGuard;
   let reflector: Reflector;

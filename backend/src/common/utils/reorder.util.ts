@@ -13,7 +13,7 @@ export async function reorderEntities<T extends ObjectLiteral>(
 ): Promise<void> {
   await Promise.all(
     items.map(({ id, sortOrder }) =>
-      repo.update(id, { [sortField]: sortOrder } as any),
+      repo.update(id, { [sortField]: sortOrder } as unknown as Parameters<typeof repo.update>[1]),
     ),
   );
 }

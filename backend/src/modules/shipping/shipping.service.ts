@@ -81,7 +81,7 @@ export class ShippingService {
   }
 
   async registerTracking(orderId: number, dto: RegisterTrackingDto) {
-    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문 정보를 찾을 수 없습니다.');
+    await findOrThrow(this.orderRepository, { id: orderId }, '주문 정보를 찾을 수 없습니다.');
 
     const shipping = await findOrThrow(this.shippingRepository, { orderId }, '배송 정보를 찾을 수 없습니다.');
 

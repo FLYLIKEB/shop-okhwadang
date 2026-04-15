@@ -10,7 +10,6 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
     let userAToken: string;
     let userBToken: string;
     let productId: number;
-    let optionId: number;
     let orderId: number;
 
     const userAEmail = `orders-user-a-${Date.now()}@test.com`;
@@ -55,7 +54,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
          VALUES (?, '사이즈', 'M', 0, 3, 0)`,
         [productId],
       );
-      optionId = (optResult as { insertId: number }).insertId;
+      void (optResult as { insertId: number }).insertId;
     });
 
     afterAll(async () => {

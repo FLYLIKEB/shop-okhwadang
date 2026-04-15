@@ -108,7 +108,7 @@ export class AdminOrdersService {
   }
 
   async registerShipping(orderId: number, dto: RegisterShippingDto) {
-    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
+    await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
 
     const existing = await this.shippingRepository.findOne({ where: { orderId } });
     if (existing && existing.trackingNumber) {

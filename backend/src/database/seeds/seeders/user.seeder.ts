@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { DataSource } from 'typeorm';
 import { Seeder } from '../base/seeder';
 import { User } from '../../../modules/users/entities/user.entity';
@@ -10,7 +11,7 @@ export class UserSeeder extends Seeder {
 
   async run(): Promise<void> {
     const repo = this.dataSource.getRepository(User);
-    const inserted = await this.upsert(repo, users as any[], (u) => u.email);
+    const inserted = await this.upsert(repo, users as unknown as Partial<User>[], (u) => u.email);
     console.log(`✓ Users: ${inserted} inserted, ${users.length - inserted} existing`);
   }
 }
