@@ -87,7 +87,7 @@ describe('ProductCard', () => {
 
   it('shows soldout badge when status is soldout', () => {
     render(<ProductCard {...baseProps} status="soldout" />);
-    expect(screen.getByText('품절')).toBeInTheDocument();
+    expect(screen.getByText('SOLD OUT')).toBeInTheDocument();
   });
 
   it('renders without crashing when images are empty', () => {
@@ -106,14 +106,14 @@ describe('ProductCard', () => {
     expect(screen.getByRole('button', { name: '찜하기' })).toBeInTheDocument();
   });
 
-  it('shows details button for active product', () => {
+  it('shows add to cart button for active product', () => {
     render(<ProductCard {...baseProps} />);
-    expect(screen.getByRole('button', { name: '자세히 보기' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '장바구니 담기' })).toBeInTheDocument();
   });
 
   it('shows soldout overlay when status is soldout', () => {
     render(<ProductCard {...baseProps} status="soldout" />);
-    expect(screen.getByText('품절')).toBeInTheDocument();
+    expect(screen.getByText('SOLD OUT')).toBeInTheDocument();
   });
 
   it('links to product detail page', () => {

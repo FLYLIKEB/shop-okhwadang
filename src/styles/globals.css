@@ -14,19 +14,19 @@
 
 @import "tailwindcss";
 
+/* ── Locale-scoped color tokens ────────────────────────────────── */
+@import './tokens-ko.css';
+@import './tokens-en.css';
+
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
-  /* Color: 다실(茶室) — 먹색 기조 + 금박 포인트 */
-  --color-bg: #F8F5F0;
-  --color-text: #2A2520;
-  --color-accent-zuni: #2A2520;
+  /* Color: 공용 브랜드 변수 — locale token 파일에서 override됨 */
+  --color-bg: #141210;
+  --color-text: #F0EDE8;
+  --color-accent-zuni: #8B4513;
   --color-accent-tea: #4A6741;
   --color-brand-secondary: #D4C5B0;
-  --color-accent-danni: #C9B8A3;
-  --color-gold: #B8976A;
-  --color-gold-light: #D4BC8E;
-  --color-ink: #2A2520;
-  --color-ink-light: #3D3630;
+  --color-accent-danni: #C4A882;
 
   /* Typography — size scale */
   --font-size-heading-0: 2rem;     /* 32px mobile - hero only */
@@ -47,37 +47,38 @@
 }
 
 @theme inline {
-  /* ── shadcn/ui 호환 토큰 (DB override 지원) — 다크 디폴트 ── */
-  --color-primary: var(--db-color-primary, #2A2520);
-  --color-primary-foreground: var(--db-color-primary-foreground, #F8F5F0);
-  --color-secondary: var(--db-color-secondary, #1E1B18);
-  --color-secondary-foreground: var(--db-color-secondary-foreground, #F8F5F0);
-  --color-destructive: var(--db-color-destructive, #b91c1c);
-  --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #1E1B18);
-  --color-muted-foreground: var(--db-color-muted-foreground, #9A9189);
-  --color-accent: var(--db-color-accent, #1E1B18);
-  --color-accent-foreground: var(--db-color-accent-foreground, #F8F5F0);
-  --color-background: var(--db-color-background, #0F0D0B);
-  --color-foreground: var(--db-color-foreground, #F5F3EF);
-  --color-card: var(--db-color-card, #1A1815);
-  --color-card-foreground: var(--db-color-card-foreground, #F5F3EF);
-  --color-border: var(--db-color-border, #2E2A26);
-  --color-input: var(--db-color-input, #2E2A26);
-  --color-ring: var(--db-color-ring, #B8976A);
+  /* ── 색상 토큰 — locale token 파일에서 override됨 (KO dark / EN light) ── */
+  /* 폴백: KO 다크 팔레트 (공방 테마) */
+  --color-primary: #C4956A;
+  --color-primary-foreground: #141210;
+  --color-secondary: #1E1C18;
+  --color-secondary-foreground: #E8E0D4;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-muted: #1E1C18;
+  --color-muted-foreground: #9B8E7E;
+  --color-accent: #1E1C18;
+  --color-accent-foreground: #E8E0D4;
+  --color-background: #141210;
+  --color-foreground: #F0EDE8;
+  --color-card: #1A1714;
+  --color-card-foreground: #F0EDE8;
+  --color-border: #2E2822;
+  --color-input: #2E2822;
+  --color-ring: #C4956A;
   --radius-sm: var(--db-radius-sm, 0.125rem);
   --radius-md: var(--db-radius-md, 0.25rem);
   --radius-lg: var(--db-radius-lg, 0.5rem);
 
-  /* ── 브랜드 확장 토큰 — 다크 디폴트 ── */
-  --color-zuni: #3D3630;
-  --color-tea: #5A7A52;
-  --color-danni: #A89880;
-  --color-surface: #1A1815;
-  --color-gold: #B8976A;
-  --color-gold-light: #D4BC8E;
-  --color-ink: #F5F3EF;
-  --color-ink-light: #C8C0B5;
+  /* ── 니료(泥料) 악센트 토큰 — 카테고리 필터·배지 등 UI 악센트용 ── */
+  --color-zuni: #8B4513;
+  --color-danni: #C4A882;
+  --color-zini: #6B3A5C;
+  --color-heukni: #2A2520;
+  --color-chunsuni: #3D6B6B;
+  --color-nokni: #4A6741;
+  --color-tea: #4A6741;
+  --color-surface: #1E1C18;
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
@@ -230,45 +231,34 @@ h3 {
 }
 
 /* ── 니료(泥料)별 태그 컬러 시스템 ────────────────────────────── */
-/* 주니(朱泥) — 브랜드 시그니처 레드 */
-.tag-zuni {
-  background-color: #8B4513;
-  color: #ffffff;
+/* 공통 베이스 */
+.tag-clay {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
 }
 
-/* 단니(段泥) — 황토 베이지 */
-.tag-danni {
-  background-color: #C4A882;
-  color: #1C1710;
-}
-
-/* 자니(紫泥) — 자주빛 */
-.tag-zini {
-  background-color: #6B3A5C;
-  color: #ffffff;
-}
-
-/* 흑니(黑泥) — 짙은 차콜 */
-.tag-heukni {
-  background-color: #2A2520;
-  color: #F8F5F0;
-}
-
-/* 청수니(靑水泥) — 청록 */
-.tag-chunsuni {
-  background-color: #3D6B6B;
-  color: #ffffff;
-}
-
-/* 녹니(綠泥) — 차엽 녹색 */
-.tag-nokni {
-  background-color: #4A6741;
-  color: #ffffff;
-}
+.tag-zuni     { background-color: var(--color-zuni);     color: #ffffff; }
+.tag-danni    { background-color: var(--color-danni);    color: #1C1710; }
+.tag-zini     { background-color: var(--color-zini);     color: #ffffff; }
+.tag-heukni   { background-color: var(--color-heukni);   color: #F8F5F0; }
+.tag-chunsuni { background-color: var(--color-chunsuni); color: #ffffff; }
+.tag-nokni    { background-color: var(--color-nokni);    color: #ffffff; }
+.tag-generic  { background-color: #6B5B4F; color: #ffffff; }
 
 /* ── 디스플레이 타이틀 ──────────────────────────────────────────── */
 .font-display {
   font-family: var(--font-display);
+}
+
+/* ── 데이터 라벨 — 공방 도면 느낌의 메타데이터 표시 ───────────── */
+.data-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
 }
 
 /* ── 산지·중량·용량 스펙 데이터 ─────────────────────────────────── */

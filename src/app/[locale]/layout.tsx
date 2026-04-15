@@ -1,19 +1,19 @@
 import type { Metadata } from 'next';
-import { NextIntlClientProvider } from 'next-intl';
+import { notFound } from 'next/navigation';
 import { getMessages, setRequestLocale } from 'next-intl/server';
-import { Toaster } from 'sonner';
-import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
-import Header from '@/components/ko/Header';
-import Footer from '@/components/ko/Footer';
-import MobileBottomNavWrapper from '@/components/shared/MobileBottomNavWrapper';
-import { MobileNavProvider } from '@/contexts/MobileNavContext';
-import Providers from '@/components/shared/Providers';
-import PageTransition from '@/components/shared/PageTransition';
-import RecentlyViewedWidget from '@/components/shared/RecentlyViewedWidget';
+import KoShell from '@/components/ko/KoShell';
+import EnShell from '@/components/en/EnShell';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
 import { fetchSettingsMap } from '@/lib/api-server';
 import { SITE_URL } from '@/lib/site-url';
+
+const SUPPORTED_LOCALES = ['ko', 'en'] as const;
+type SupportedLocale = typeof SUPPORTED_LOCALES[number];
+
+function isSupportedLocale(locale: string): locale is SupportedLocale {
+  return SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -87,6 +87,11 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+
+  if (!isSupportedLocale(locale)) {
+    notFound();
+  }
+
   const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale;
 
   setRequestLocale(safeLocale);
@@ -97,58 +102,13 @@ export default async function LocaleLayout({
   ]);
 
   const themeStyle = await getThemeStyle(settingsMap);
-
   const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible !== 'false';
 
-  return (
-    <html lang={safeLocale}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet" />
-        {themeStyle ? <style>{themeStyle}</style> : null}
-      </head>
-      <body>
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
-        >
-          본문으로 바로가기
-        </a>
-        <NextIntlClientProvider messages={messages}>
-          <Providers>
-            <MobileNavProvider initialVisible={mobileBottomNavVisible}>
-              <PageTransition />
-              <div className="flex min-h-screen flex-col">
-              <AnnouncementBar />
-              <Header />
-              <main id="main-content" className="flex-1 pb-16 md:pb-0">{children}</main>
-              <Footer />
-              <MobileBottomNavWrapper />
-              <Toaster
-                position="top-right"
-                richColors
-                closeButton
-                toastOptions={{
-                  style: {
-                    fontFamily: 'var(--font-body)',
-                    borderRadius: 'var(--radius-md)',
-                  },
-                  classNames: {
-                    toast: 'bg-card border-border shadow-md',
-                    success: 'border-l-4 border-l-[--color-tea]',
-                    error: 'border-l-4 border-l-destructive',
-                    info: 'border-l-4 border-l-[--color-primary]',
-                  },
-                }}
-              />
-              <RecentlyViewedWidget />
-            </div>
-            </MobileNavProvider>
-          </Providers>
-        </NextIntlClientProvider>
-      </body>
-    </html>
-  );
+  const shellProps = { children, messages, themeStyle, mobileBottomNavVisible };
+
+  if (locale === 'ko') {
+    return <KoShell {...shellProps} />;
+  }
+
+  return <EnShell {...shellProps} />;
 }

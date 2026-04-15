@@ -150,7 +150,6 @@ export default function ProductCarouselBlock({ content }: Props) {
                 status={product.status}
                 images={product.images}
                 priority={index === 0}
-                variant="minimal"
               />
             </div>
           ))}

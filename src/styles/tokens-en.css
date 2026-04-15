@@ -1,0 +1,37 @@
+/* ── EN 로케일 라이트 테마 토큰 (Wedgwood 웨지우드 팔레트) ─────────
+   html[lang="en"] 스코프: main 브랜치의 기존 라이트 테마
+   ────────────────────────────────────────────────────────────────── */
+html[lang="en"] {
+  /* 브랜드 레거시 변수 */
+  --color-bg: #FAFAFA;
+  --color-text: #1a1a1a;
+  --color-accent-zuni: #1B3A4B;
+  --color-accent-tea: #4A6741;
+  --color-brand-secondary: #D4C5B0;
+  --color-accent-danni: #C9B8A3;
+
+  /* shadcn/ui 호환 시맨틱 토큰 */
+  --color-primary: var(--db-color-primary, #1B3A4B);
+  --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
+  --color-secondary: var(--db-color-secondary, #F5F3EF);
+  --color-secondary-foreground: var(--db-color-secondary-foreground, #1a1a1a);
+  --color-destructive: var(--db-color-destructive, #b91c1c);
+  --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
+  --color-muted: var(--db-color-muted, #F5F3EF);
+  --color-muted-foreground: var(--db-color-muted-foreground, #525252);
+  --color-accent: var(--db-color-accent, #F5F3EF);
+  --color-accent-foreground: var(--db-color-accent-foreground, #1a1a1a);
+  --color-background: var(--db-color-background, #ffffff);
+  --color-foreground: var(--db-color-foreground, #1a1a1a);
+  --color-card: var(--db-color-card, #ffffff);
+  --color-card-foreground: var(--db-color-card-foreground, #1a1a1a);
+  --color-border: var(--db-color-border, #e8e4de);
+  --color-input: var(--db-color-input, #e8e4de);
+  --color-ring: var(--db-color-ring, #1B3A4B);
+
+  /* 브랜드 확장 토큰 */
+  --color-zuni: #1B3A4B;
+  --color-tea: #4A6741;
+  --color-danni: #C9B8A3;
+  --color-surface: #F5F3EF;
+}

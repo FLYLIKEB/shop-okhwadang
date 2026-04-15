@@ -1,0 +1,41 @@
+/* ── KO 로케일 다크 테마 토큰 (공방/工房 테마) ─────────────────────
+   html[lang="ko"] 스코프: Design B 웜 차콜 다크 팔레트
+   ────────────────────────────────────────────────────────────────── */
+html[lang="ko"] {
+  /* 브랜드 레거시 변수 */
+  --color-bg: #141210;
+  --color-text: #F0EDE8;
+  --color-accent-zuni: #8B4513;
+  --color-accent-tea: #4A6741;
+  --color-brand-secondary: #D4C5B0;
+  --color-accent-danni: #C4A882;
+
+  /* shadcn/ui 호환 시맨틱 토큰 */
+  --color-primary: #C4956A;
+  --color-primary-foreground: #141210;
+  --color-secondary: #1E1C18;
+  --color-secondary-foreground: #E8E0D4;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-muted: #1E1C18;
+  --color-muted-foreground: #9B8E7E;
+  --color-accent: #1E1C18;
+  --color-accent-foreground: #E8E0D4;
+  --color-background: #141210;
+  --color-foreground: #F0EDE8;
+  --color-card: #1A1714;
+  --color-card-foreground: #F0EDE8;
+  --color-border: #2E2822;
+  --color-input: #2E2822;
+  --color-ring: #C4956A;
+
+  /* 니료(泥料) 악센트 토큰 */
+  --color-zuni: #8B4513;
+  --color-danni: #C4A882;
+  --color-zini: #6B3A5C;
+  --color-heukni: #2A2520;
+  --color-chunsuni: #3D6B6B;
+  --color-nokni: #4A6741;
+  --color-tea: #4A6741;
+  --color-surface: #1E1C18;
+}

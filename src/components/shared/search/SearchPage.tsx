@@ -183,7 +183,7 @@ export default function SearchPage() {
                 reviewCount={product.reviewCount}
                 status={product.status}
                 images={product.images}
-                isFeatured={product.isFeatured}
+                categoryName={product.category?.name ?? null}
               />
             ))}
           </div>
