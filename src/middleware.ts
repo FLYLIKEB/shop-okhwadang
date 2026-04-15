@@ -137,7 +137,9 @@ export async function middleware(request: NextRequest) {
       ? pathname
       : pathname.replace(/^\/[a-z]{2}\/api/, '/api'); // handle /ko/api -> /api
 
-    const search = new URL(request.url).search;
+    const searchFromUrl = new URL(request.url).search;
+    const searchFromNextUrl = request.nextUrl.search;
+    const search = searchFromUrl || searchFromNextUrl;
     const url = `${backendUrl}${apiPath}${search}`;
 
     // Forward request to backend
@@ -163,6 +165,9 @@ export async function middleware(request: NextRequest) {
         responseHeaders.set(key, value);
       });
       responseHeaders.set('X-Proxy-By', 'Next.js Middleware');
+      responseHeaders.set('X-Debug-Search-Url', searchFromUrl || 'EMPTY');
+      responseHeaders.set('X-Debug-Search-NextUrl', searchFromNextUrl || 'EMPTY');
+      responseHeaders.set('X-Debug-Request-Url', request.url);
 
       return new NextResponse(data, {
         status: response.status,
