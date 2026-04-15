@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
 import { AdminTable } from '@/components/admin/AdminTable';
+import { JournalStatusBadge } from '@/components/admin/StatusBadge';
 import ProductImageUploader from '@/components/admin/ProductImageUploader';
 
 const CATEGORY_LABELS: Record<JournalCategory, string> = {
@@ -91,16 +92,7 @@ function JournalRow({
       </td>
       <td className="py-3 px-4 text-sm text-muted-foreground">{journal.date}</td>
       <td className="py-3 px-4">
-        <button
-          onClick={() => onTogglePublish(journal)}
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            journal.isPublished
-              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-              : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
-          }`}
-        >
-          {journal.isPublished ? '공개' : '비공개'}
-        </button>
+        <JournalStatusBadge isPublished={journal.isPublished} onClick={() => onTogglePublish(journal)} />
       </td>
       <td className="py-3 px-4">
         <div className="flex gap-2">

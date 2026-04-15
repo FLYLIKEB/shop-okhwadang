@@ -9,6 +9,7 @@ import type { Inquiry } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { AdminTable } from '@/components/admin/AdminTable';
+import { InquiryStatusBadge } from '@/components/admin/StatusBadge';
 import { cn } from '@/components/ui/utils';
 
 type StatusFilter = 'all' | 'pending' | 'answered';
@@ -122,16 +123,7 @@ export default function AdminInquiriesPage() {
                 }}
               >
                 <td className="px-4 py-3">
-                  <span
-                    className={cn(
-                      'text-xs font-semibold px-2 py-0.5 rounded',
-                      inquiry.status === 'answered'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-yellow-100 text-yellow-700',
-                    )}
-                  >
-                    {inquiry.status === 'answered' ? '답변완료' : '미답변'}
-                  </span>
+                  <InquiryStatusBadge status={inquiry.status as 'answered' | 'pending'} context="admin" />
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <p className="font-medium truncate">{inquiry.user?.name ?? '-'}</p>
