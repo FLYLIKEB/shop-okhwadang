@@ -607,12 +607,12 @@ export interface CreateProductData {
   sku?: string;
   status?: string;
   isFeatured?: boolean;
-  name_en?: string;
-  name_ja?: string;
-  name_zh?: string;
-  description_en?: string;
-  description_ja?: string;
-  description_zh?: string;
+  nameEn?: string;
+  nameJa?: string;
+  nameZh?: string;
+  descriptionEn?: string;
+  descriptionJa?: string;
+  descriptionZh?: string;
   images?: Array<{
     url: string;
     alt?: string;
