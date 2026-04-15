@@ -172,9 +172,8 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard
               label="오늘 매출"
-              value={data.kpi.today_revenue.toLocaleString()}
+              value={formatCurrency(data.kpi.today_revenue)}
               diffPct={data.kpi.today_revenue_diff_pct}
-              unit="원"
             />
             <KpiCard
               label="오늘 주문수"
