@@ -1,13 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { getDataSourceToken } from '@nestjs/typeorm';
-import { Repository, DataSource, SelectQueryBuilder } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { OrdersService } from '../orders.service';
 import { Order, OrderStatus } from '../entities/order.entity';
-import { OrderItem } from '../entities/order-item.entity';
 import { CreateOrderDto } from '../dto/create-order.dto';
-import { PointHistory } from '../../coupons/entities/point-history.entity';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -20,6 +17,7 @@ const mockQueryRunner = {
     create: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
+    getRepository: jest.fn(),
   },
 };
 
@@ -30,8 +28,6 @@ const mockDataSource = {
 const mockOrderRepository = {
   createQueryBuilder: jest.fn(),
 };
-
-const mockPointHistoryRepository = {};
 
 describe('OrdersService', () => {
   let service: OrdersService;
@@ -44,7 +40,6 @@ describe('OrdersService', () => {
       providers: [
         OrdersService,
         { provide: getRepositoryToken(Order), useValue: mockOrderRepository },
-        { provide: getRepositoryToken(PointHistory), useValue: mockPointHistoryRepository },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
@@ -163,6 +158,26 @@ describe('OrdersService', () => {
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
     });
 
+    it('insufficient points inside transaction → BadRequestException + rollback', async () => {
+      const dto: CreateOrderDto = {
+        items: [{ productId: 1, quantity: 1 }],
+        recipientName: '홍길동',
+        recipientPhone: '010-1234-5678',
+        zipcode: '12345',
+        address: '서울시',
+        pointsUsed: 5000,
+      };
+
+      // point balance check uses queryRunner.manager.getRepository (inside transaction)
+      const mockPointRepo = {
+        findOne: jest.fn().mockResolvedValue({ balance: 1000 }),
+      };
+      mockQueryRunner.manager.getRepository.mockReturnValue(mockPointRepo);
+
+      await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+    });
+
     it('valid dto → creates order, deducts stock, clears cart', async () => {
       const dto: CreateOrderDto = {
         items: [{ productId: 1, quantity: 2 }],
@@ -225,14 +240,14 @@ describe('OrdersService', () => {
   });
 
   describe('findAll()', () => {
-    it('returns paginated user orders', async () => {
+    it('returns paginated user orders without loading full item relations', async () => {
       const mockOrders = [
-        { id: 1, userId: 1, orderNumber: 'ORD-1', items: [] },
-        { id: 2, userId: 1, orderNumber: 'ORD-2', items: [] },
+        { id: 1, userId: 1, orderNumber: 'ORD-1', itemCount: 2 },
+        { id: 2, userId: 1, orderNumber: 'ORD-2', itemCount: 1 },
       ] as unknown as Order[];
 
       const mockQb = {
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
@@ -246,6 +261,8 @@ describe('OrdersService', () => {
       expect(result.total).toBe(2);
       expect(result.page).toBe(1);
       expect(result.limit).toBe(10);
+      // must use loadRelationCountAndMap, not leftJoinAndSelect
+      expect(mockQb.loadRelationCountAndMap).toHaveBeenCalledWith('order.itemCount', 'order.items');
     });
   });
 
