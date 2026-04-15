@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { DataSource } from 'typeorm';
 import { Seeder } from '../base/seeder';
 import { Banner } from '../../../modules/promotions/entities/banner.entity';
@@ -10,7 +11,7 @@ export class BannerSeeder extends Seeder {
 
   async run(): Promise<void> {
     const repo = this.dataSource.getRepository(Banner);
-    const inserted = await this.upsert(repo, banners as any[], (e) => `${e.title}:${e.imageUrl}`);
+    const inserted = await this.upsert(repo, banners as unknown as Partial<Banner>[], (e) => `${e.title}:${e.imageUrl}`);
     console.log(`✓ Banners: ${inserted} inserted, ${banners.length - inserted} existing`);
   }
 }

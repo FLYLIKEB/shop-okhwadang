@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsBoolean, IsDateString } from 'class-validator';
-import { CreateNoticeDto } from './create-notice.dto';
+import { IsOptional, IsString, IsBoolean } from 'class-validator';
 
 export class UpdateNoticeDto {
   @ApiProperty({ example: '[안내] 배송 지연 안내', description: '공지 제목', required: false })

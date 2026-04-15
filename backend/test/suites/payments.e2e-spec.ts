@@ -8,7 +8,6 @@ let dataSource: DataSource;
 export function registerPaymentsSuite(getApp: () => INestApplication) {
   describe('Payments (e2e)', () => {
     let userToken: string;
-    let otherToken: string;
     let productId: number;
     let orderId: number;
 
@@ -35,11 +34,9 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({ email: otherEmail, password: 'Test1234!', name: '다른유저' });
-      const loginOther = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/api/auth/login')
         .send({ email: otherEmail, password: 'Test1234!' });
-      otherToken = (loginOther.body as { accessToken: string }).accessToken;
-
       // Seed product
       const prodResult = await dataSource.query(`
         INSERT INTO products (name, slug, price, sale_price, stock, status)

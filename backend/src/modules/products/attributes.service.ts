@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AttributeType, AttributeInputType } from './entities/attribute-type.entity';
 import { ProductAttribute } from './entities/product-attribute.entity';
 import { CreateAttributeTypeDto, UpdateAttributeTypeDto } from './dto/attribute-type.dto';

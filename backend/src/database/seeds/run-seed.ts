@@ -1,5 +1,5 @@
+/* eslint-disable no-console */
 import 'dotenv/config';
-import { DataSource } from 'typeorm';
 import { CategorySeeder } from './seeders/category.seeder';
 import { ProductSeeder } from './seeders/product.seeder';
 import { ProductImageSeeder } from './seeders/product-image.seeder';

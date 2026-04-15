@@ -1,7 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import * as path from 'path';
 
 let app: INestApplication;
 let dataSource: DataSource;

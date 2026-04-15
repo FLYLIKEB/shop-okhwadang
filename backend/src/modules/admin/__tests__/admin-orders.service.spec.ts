@@ -68,7 +68,7 @@ describe('AdminOrdersService', () => {
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID });
       orderRepo.update.mockResolvedValue({ affected: 1 });
 
-      const result = await service.updateStatus(1, OrderStatus.PAID);
+      await service.updateStatus(1, OrderStatus.PAID);
       expect(orderRepo.update).toHaveBeenCalledWith(1, { status: OrderStatus.PAID });
     });
 
@@ -168,7 +168,7 @@ describe('AdminOrdersService', () => {
       shippingRepo.create.mockReturnValue({ orderId: 1, carrier: 'cj', trackingNumber: '123' });
       shippingRepo.save.mockResolvedValue({ id: 1 });
 
-      const result = await service.registerShipping(1, { carrier: 'cj', trackingNumber: '123' });
+      await service.registerShipping(1, { carrier: 'cj', trackingNumber: '123' });
       expect(shippingRepo.create).toHaveBeenCalled();
       expect(shippingRepo.save).toHaveBeenCalled();
     });
@@ -180,7 +180,7 @@ describe('AdminOrdersService', () => {
         .mockResolvedValueOnce({ id: 5, carrier: 'hanjin', trackingNumber: '789' });
       shippingRepo.update.mockResolvedValue({ affected: 1 });
 
-      const result = await service.registerShipping(1, { carrier: 'hanjin', trackingNumber: '789' });
+      await service.registerShipping(1, { carrier: 'hanjin', trackingNumber: '789' });
       expect(shippingRepo.update).toHaveBeenCalledWith(5, expect.objectContaining({
         carrier: 'hanjin',
         trackingNumber: '789',

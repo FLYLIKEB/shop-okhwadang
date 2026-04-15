@@ -9,7 +9,6 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
   describe('Admin Orders (e2e)', () => {
     let adminToken: string;
     let userToken: string;
-    let userId: number;
     let orderId: number;
 
     const adminEmail = `admin-orders-admin-${Date.now()}@test.com`;
@@ -37,11 +36,6 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         .post('/api/auth/login')
         .send({ email: userEmail, password: 'Test1234!' });
       userToken = (userRes.body as { accessToken: string }).accessToken;
-      const userProfile = await request(app.getHttpServer())
-        .get('/api/auth/profile')
-        .set('Authorization', `Bearer ${userToken}`);
-      userId = (userProfile.body as { id: number }).id;
-
       // Create product for order
       const slug = `admin-orders-test-product-${Date.now()}`;
       const productRes = await request(app.getHttpServer())

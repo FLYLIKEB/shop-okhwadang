@@ -1,4 +1,4 @@
-import { DataSource, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
+import { DataSource, ObjectLiteral, Repository } from 'typeorm';
 
 export abstract class Seeder {
   protected dataSource: DataSource;
@@ -18,7 +18,7 @@ export abstract class Seeder {
     const existingKeys = new Set(existing.map(keySelector));
     const toInsert = seedData.filter((s) => !existingKeys.has(keySelector(s as T)));
     if (toInsert.length > 0) {
-      await repo.insert(toInsert as any);
+      await repo.insert(toInsert as Parameters<typeof repo.insert>[0]);
     }
     return toInsert.length;
   }

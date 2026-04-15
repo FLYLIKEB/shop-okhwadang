@@ -4,6 +4,7 @@
  * @param idKey ID 필드명 (기본값: 'id')
  * @param parentKey 부모 ID 필드명 (기본값: 'parentId')
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildTree<T extends Record<string, any>>(
   items: T[],
   idKey = 'id',

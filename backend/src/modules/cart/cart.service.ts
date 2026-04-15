@@ -95,7 +95,7 @@ export class CartService {
   }
 
   async add(userId: number, dto: AddToCartDto): Promise<CartResponse> {
-    const product = await findOrThrow(this.productRepository, { id: dto.productId }, '상품을 찾을 수 없습니다.');
+    await findOrThrow(this.productRepository, { id: dto.productId }, '상품을 찾을 수 없습니다.');
 
     if (dto.productOptionId != null) {
       const option = await this.productOptionRepository.findOne({

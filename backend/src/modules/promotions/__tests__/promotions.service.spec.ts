@@ -133,7 +133,6 @@ describe('PromotionsService', () => {
 
   describe('findAllActiveBanners', () => {
     it('활성 배너 sort_order 정렬 반환', async () => {
-      const now = new Date();
       const mockBanners = [
         { id: 1, title: '배너1', isActive: true, sortOrder: 0, startsAt: null, endsAt: null },
         { id: 2, title: '배너2', isActive: true, sortOrder: 1, startsAt: null, endsAt: null },

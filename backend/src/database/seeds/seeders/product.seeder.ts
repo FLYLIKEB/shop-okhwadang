@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { DataSource } from 'typeorm';
 import { Seeder } from '../base/seeder';
 import { Product } from '../../../modules/products/entities/product.entity';
