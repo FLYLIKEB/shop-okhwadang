@@ -1,11 +1,9 @@
 'use client';
 
+import { useAdminDndSensors } from '@/hooks/useDndSensors';
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
 } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
@@ -32,9 +30,7 @@ export default function EditorCanvas({
   onToggleVisibility,
   onReorder,
 }: EditorCanvasProps) {
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-  );
+  const sensors = useAdminDndSensors();
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;

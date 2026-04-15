@@ -22,20 +22,16 @@ import { AdminTable } from '@/components/admin/AdminTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import ProductImageUploader from '@/components/admin/ProductImageUploader';
 import { GripVertical } from 'lucide-react';
+import { useAdminDndSensors } from '@/hooks/useDndSensors';
 import {
   DndContext,
   DragOverlay,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
   DragStartEvent,
   DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
@@ -472,10 +468,7 @@ export default function AdminArchivesPage() {
   };
 
   // Drag handlers for NiloType
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  const sensors = useAdminDndSensors();
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as number);

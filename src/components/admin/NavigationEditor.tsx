@@ -2,21 +2,17 @@
 
 import { useState } from 'react';
 import { useFormModal } from '@/hooks/useFormModal';
+import { useAdminDndSensors } from '@/hooks/useDndSensors';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
+  DragEndEvent,
 } from '@dnd-kit/core';
-import type { DragEndEvent } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
+  arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pencil, Trash2, Plus, Eye, EyeOff, ExternalLink, ChevronRight, X } from 'lucide-react';
@@ -452,12 +448,7 @@ export default function NavigationEditor({
   const [editTarget, setEditTarget] = useState<NavigationItem | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  const sensors = useAdminDndSensors();
 
   const flatItems = flattenItems(items);
   const rootIds = items.map((i) => i.id);
