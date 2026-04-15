@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -32,6 +32,7 @@ export class ShippingController {
   }
 
   @Post('track')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '배송 추적', description: '운송장 번호로 배송을 추적합니다.' })
   @ApiResponse({ status: 200, description: '배송 추적 성공' })
   track(@Body() dto: TrackShipmentDto) {

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Headers, HttpCode, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -29,6 +29,7 @@ export class PaymentsController {
   }
 
   @Post('confirm')
+  @HttpCode(HttpStatus.OK)
   @ApiCookieAuth()
   @ApiOperation({ summary: '결제 승인', description: '결제를 확정합니다.' })
   @ApiResponse({ status: 200, description: '결제 확정 성공' })
@@ -38,6 +39,7 @@ export class PaymentsController {
   }
 
   @Post('cancel')
+  @HttpCode(HttpStatus.OK)
   @ApiCookieAuth()
   @ApiOperation({ summary: '결제 취소', description: '결제를 취소합니다.' })
   @ApiResponse({ status: 200, description: '결제 취소 성공' })

@@ -5,6 +5,8 @@ import {
   Body,
   Query,
   Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -43,6 +45,7 @@ export class CouponsController {
   }
 
   @Post('calculate')
+  @HttpCode(HttpStatus.OK)
   @ApiCookieAuth()
   @ApiOperation({ summary: '할인 금액 계산', description: '쿠폰 적용 시 할인 금액을 계산합니다.' })
   @ApiResponse({ status: 200, description: '할인 금액 계산 성공' })
