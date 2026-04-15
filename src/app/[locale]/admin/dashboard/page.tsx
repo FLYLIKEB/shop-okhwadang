@@ -13,19 +13,8 @@ import {
 } from '@/lib/api';
 import { ORDER_STATUS_LABELS } from '@/constants/status';
 
-const RevenueLineChart = dynamic(
-  () =>
-    import('@/components/admin/DashboardCharts').then(
-      (mod) => mod.RevenueLineChart,
-    ),
-  { ssr: false, loading: () => <ChartSkeleton /> },
-);
-
-const OrderBarChart = dynamic(
-  () =>
-    import('@/components/admin/DashboardCharts').then(
-      (mod) => mod.OrderBarChart,
-    ),
+const DashboardCharts = dynamic(
+  () => import('@/components/admin/DashboardCharts'),
   { ssr: false, loading: () => <ChartSkeleton /> },
 );
 
@@ -195,10 +184,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <RevenueLineChart data={data.revenue_chart} />
-            <OrderBarChart data={data.revenue_chart} />
-          </div>
+          <DashboardCharts data={data.revenue_chart} />
 
           {/* Order Status Summary */}
           <div className="rounded-lg border p-4">

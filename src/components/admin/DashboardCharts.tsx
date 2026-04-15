@@ -87,3 +87,12 @@ export function OrderBarChart({ data }: DashboardChartsProps) {
     </div>
   );
 }
+
+export default function DashboardCharts({ data }: DashboardChartsProps) {
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <RevenueLineChart data={data} />
+      <OrderBarChart data={data} />
+    </div>
+  );
+}
