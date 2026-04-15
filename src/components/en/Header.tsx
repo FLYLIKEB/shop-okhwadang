@@ -40,37 +40,7 @@ function CartBadge({ itemCount, className, iconSize = 'h-5 w-5' }: CartBadgeProp
   );
 }
 
-interface DesktopActionsProps {
-  isAuthenticated: boolean;
-  userName?: string;
-  itemCount: number;
-  onLogout: () => void;
-}
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function DesktopActions({ isAuthenticated, itemCount, onLogout }: DesktopActionsProps) {
-  const textClass = "text-muted-foreground hover:text-foreground";
-  return (
-    <div className="hidden md:flex items-center gap-4">
-      <LanguageSelector />
-      <CartBadge itemCount={itemCount} />
-      {isAuthenticated ? (
-        <>
-          <Link href="/my" aria-label="마이페이지" className={cn("transition-colors", textClass)}>
-            <User className="h-5 w-5" />
-          </Link>
-          <button type="button" onClick={onLogout} aria-label="로그아웃" className={cn("transition-colors", textClass)}>
-            <LogOut className="h-5 w-5" />
-          </button>
-        </>
-      ) : (
-        <Link href="/login" aria-label="로그인" className={cn("transition-colors", textClass)}>
-          <User className="h-5 w-5" />
-        </Link>
-      )}
-    </div>
-  );
-}
 
 interface MobileMenuProps {
   isAuthenticated: boolean;

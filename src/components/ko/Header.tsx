@@ -45,12 +45,11 @@ interface DesktopActionsProps {
   onLogout: () => void;
 }
 
-function DesktopActions({ isAuthenticated, itemCount, onLogout }: DesktopActionsProps) {
+function DesktopActions({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout: () => void }) {
   const textClass = "text-muted-foreground hover:text-foreground";
   return (
     <div className="hidden md:flex items-center gap-4">
       <LanguageSelector />
-      <CartBadge itemCount={itemCount} />
       {isAuthenticated ? (
         <>
           <Link href="/my" aria-label="마이페이지" className={cn("transition-colors", textClass)}>
@@ -592,8 +591,6 @@ export default function Header() {
           {/* 데스크탑 액션 */}
           <DesktopActions
             isAuthenticated={isAuthenticated}
-            userName={user?.name}
-            itemCount={itemCount}
             onLogout={() => void logout()}
           />
 
