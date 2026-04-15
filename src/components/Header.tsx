@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, Menu, X, Search, User, LogOut, LogIn, UserPlus, MessageSquare, Package } from 'lucide-react';
@@ -508,9 +508,15 @@ export default function Header() {
     return () => { document.body.classList.remove('overflow-hidden'); };
   }, [isMenuOpen]);
 
+  const handleLogout = useCallback(() => void logout(), [logout]);
+  const closeSearch = useCallback(() => setIsSearchOpen(false), []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 10;
+      setIsScrolled(prev => prev === scrolled ? prev : scrolled);
+    };
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -591,7 +597,7 @@ export default function Header() {
                 <Link href="/my" aria-label="마이페이지" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                   <User className="h-5 w-5" />
                 </Link>
-                <button type="button" onClick={() => void logout()} aria-label="로그아웃" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <button type="button" onClick={handleLogout} aria-label="로그아웃" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                   <LogOut className="h-5 w-5" />
                 </button>
               </>
@@ -644,12 +650,12 @@ export default function Header() {
           sidebarItems={sidebarItems}
           visible={menuPanel.visible}
           onClose={() => setIsMenuOpen(false)}
-          onLogout={() => void logout()}
+          onLogout={handleLogout}
         />
       )}
 
       {/* 모바일 검색 오버레이 (헤더 바깥 — sticky 헤더 아래에 fixed로 위치) */}
-      <MobileSearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <MobileSearchOverlay isOpen={isSearchOpen} onClose={closeSearch} />
     </>
   );
 }
