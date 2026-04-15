@@ -38,12 +38,7 @@ function CartBadge({ itemCount, className, iconSize = 'h-5 w-5' }: CartBadgeProp
   );
 }
 
-interface DesktopActionsProps {
-  isAuthenticated: boolean;
-  userName?: string;
-  itemCount: number;
-  onLogout: () => void;
-}
+
 
 function DesktopActions({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout: () => void }) {
   const textClass = "text-muted-foreground hover:text-foreground";
