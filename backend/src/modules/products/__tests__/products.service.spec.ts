@@ -5,6 +5,11 @@ import { SelectQueryBuilder } from 'typeorm';
 import { ProductsService } from '../products.service';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
+import { ProductImage } from '../entities/product-image.entity';
+import { ProductDetailImage } from '../entities/product-detail-image.entity';
+import { Review } from '../../reviews/entities/review.entity';
+import { AttributeType } from '../entities/attribute-type.entity';
+import { ProductAttribute } from '../entities/product-attribute.entity';
 import { ProductSort } from '../dto/query-products.dto';
 import { CacheService } from '../../cache/cache.service';
 
@@ -53,8 +58,37 @@ describe('ProductsService', () => {
           useValue: { find: jest.fn().mockResolvedValue([]) },
         },
         {
+          provide: getRepositoryToken(Review),
+          useValue: {
+            createQueryBuilder: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnThis(),
+              addSelect: jest.fn().mockReturnThis(),
+              where: jest.fn().mockReturnThis(),
+              andWhere: jest.fn().mockReturnThis(),
+              groupBy: jest.fn().mockReturnThis(),
+              getRawMany: jest.fn().mockResolvedValue([]),
+            }),
+          },
+        },
+        {
+          provide: getRepositoryToken(ProductImage),
+          useValue: { create: jest.fn(), save: jest.fn(), delete: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(ProductDetailImage),
+          useValue: { create: jest.fn(), save: jest.fn(), delete: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(AttributeType),
+          useValue: { find: jest.fn().mockResolvedValue([]) },
+        },
+        {
+          provide: getRepositoryToken(ProductAttribute),
+          useValue: { find: jest.fn().mockResolvedValue([]), delete: jest.fn(), save: jest.fn(), create: jest.fn() },
+        },
+        {
           provide: CacheService,
-          useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined) },
+          useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined), delPattern: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();
@@ -131,7 +165,8 @@ describe('ProductsService', () => {
 
       const result = await service.findAll({ page: 2, limit: 10 });
 
-      expect(result).toEqual({ items, total: 1, page: 2, limit: 10 });
+      expect(result).toMatchObject({ total: 1, page: 2, limit: 10 });
+      expect(result.items[0]).toMatchObject({ id: 1 });
       expect(mockSkip).toHaveBeenCalledWith(10);
       expect(mockTake).toHaveBeenCalledWith(10);
     });
@@ -168,7 +203,7 @@ describe('ProductsService', () => {
 
       const result = await service.findOne(3);
 
-      expect(result).toBe(product);
+      expect(result).toMatchObject({ id: 3, status: ProductStatus.ACTIVE });
     });
 
     it('관리자 draft 상품 조회 성공', async () => {
@@ -177,7 +212,7 @@ describe('ProductsService', () => {
 
       const result = await service.findOne(4, true);
 
-      expect(result).toBe(product);
+      expect(result).toMatchObject({ id: 4, status: ProductStatus.DRAFT });
     });
   });
 
@@ -207,6 +242,65 @@ describe('ProductsService', () => {
       });
 
       expect(result).toBe(created);
+    });
+
+    it('다국어 필드 포함 생성 시 entity에 전달됨', async () => {
+      const created = { id: 2 } as Product;
+      mockRepository.create.mockReturnValue(created);
+      mockRepository.save.mockResolvedValue(created);
+
+      await service.create({
+        name: '보이차',
+        slug: 'pu-erh',
+        price: 35000,
+        nameEn: 'Pu-erh Tea',
+        nameJa: '普洱茶',
+        nameZh: '普洱茶',
+        descriptionEn: 'Traditional pu-erh',
+        descriptionJa: '伝統的な普洱茶',
+        descriptionZh: '传统普洱茶',
+        shortDescriptionEn: 'Smooth taste',
+        shortDescriptionJa: 'なめらかな味',
+        shortDescriptionZh: '口感顺滑',
+      });
+
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nameEn: 'Pu-erh Tea',
+          nameJa: '普洱茶',
+          nameZh: '普洱茶',
+          descriptionEn: 'Traditional pu-erh',
+          descriptionJa: '伝統的な普洱茶',
+          descriptionZh: '传统普洱茶',
+          shortDescriptionEn: 'Smooth taste',
+          shortDescriptionJa: 'なめらかな味',
+          shortDescriptionZh: '口感顺滑',
+        }),
+      );
+    });
+  });
+
+  describe('update', () => {
+    it('다국어 필드 업데이트 시 entity에 반영됨', async () => {
+      const existing = {
+        id: 1,
+        status: ProductStatus.ACTIVE,
+        nameEn: null,
+        nameJa: null,
+        nameZh: null,
+        descriptionEn: null,
+        descriptionJa: null,
+        descriptionZh: null,
+        shortDescriptionEn: null,
+        shortDescriptionJa: null,
+        shortDescriptionZh: null,
+      } as unknown as Product;
+      mockRepository.findOne.mockResolvedValue(existing);
+      mockRepository.save.mockResolvedValue({ ...existing, nameEn: 'Updated English Name' });
+
+      const result = await service.update(1, { nameEn: 'Updated English Name' });
+
+      expect(result).toMatchObject({ nameEn: 'Updated English Name' });
     });
   });
 });

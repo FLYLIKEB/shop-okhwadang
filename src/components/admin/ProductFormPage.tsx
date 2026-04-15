@@ -33,12 +33,12 @@ interface ProductFormData {
   images: GalleryImage[];
   detailImages: DetailImage[];
   options: ProductOptionDraft[];
-  name_en: string;
-  name_ja: string;
-  name_zh: string;
-  description_en: string;
-  description_ja: string;
-  description_zh: string;
+  nameEn: string;
+  nameJa: string;
+  nameZh: string;
+  descriptionEn: string;
+  descriptionJa: string;
+  descriptionZh: string;
 }
 
 interface ProductFormPageProps {
@@ -155,7 +155,7 @@ function MultilingualSection({
   form,
   set,
 }: {
-  form: Pick<ProductFormData, 'name_en' | 'name_ja' | 'name_zh' | 'description_en' | 'description_ja' | 'description_zh'>;
+  form: Pick<ProductFormData, 'nameEn' | 'nameJa' | 'nameZh' | 'descriptionEn' | 'descriptionJa' | 'descriptionZh'>;
   set: Setter;
 }) {
   return (
@@ -167,8 +167,8 @@ function MultilingualSection({
           <label className="mb-1 block text-sm font-medium">상품명 (영어)</label>
           <input
             type="text"
-            value={form.name_en}
-            onChange={(e) => set('name_en', e.target.value)}
+            value={form.nameEn}
+            onChange={(e) => set('nameEn', e.target.value)}
             placeholder="Product name in English"
             className={INPUT_CLASS}
           />
@@ -177,8 +177,8 @@ function MultilingualSection({
           <label className="mb-1 block text-sm font-medium">상품명 (일본어)</label>
           <input
             type="text"
-            value={form.name_ja}
-            onChange={(e) => set('name_ja', e.target.value)}
+            value={form.nameJa}
+            onChange={(e) => set('nameJa', e.target.value)}
             placeholder="日本語の商品名"
             className={INPUT_CLASS}
           />
@@ -187,8 +187,8 @@ function MultilingualSection({
           <label className="mb-1 block text-sm font-medium">상품명 (중국어)</label>
           <input
             type="text"
-            value={form.name_zh}
-            onChange={(e) => set('name_zh', e.target.value)}
+            value={form.nameZh}
+            onChange={(e) => set('nameZh', e.target.value)}
             placeholder="中文商品名称"
             className={INPUT_CLASS}
           />
@@ -198,8 +198,8 @@ function MultilingualSection({
       <div>
         <label className="mb-1 block text-sm font-medium">상세 설명 (영어)</label>
         <textarea
-          value={form.description_en}
-          onChange={(e) => set('description_en', e.target.value)}
+          value={form.descriptionEn}
+          onChange={(e) => set('descriptionEn', e.target.value)}
           rows={3}
           placeholder="Product description in English"
           className={INPUT_CLASS}
@@ -209,8 +209,8 @@ function MultilingualSection({
       <div>
         <label className="mb-1 block text-sm font-medium">상세 설명 (일본어)</label>
         <textarea
-          value={form.description_ja}
-          onChange={(e) => set('description_ja', e.target.value)}
+          value={form.descriptionJa}
+          onChange={(e) => set('descriptionJa', e.target.value)}
           rows={3}
           placeholder="日本語の商品説明"
           className={INPUT_CLASS}
@@ -220,8 +220,8 @@ function MultilingualSection({
       <div>
         <label className="mb-1 block text-sm font-medium">상세 설명 (중국어)</label>
         <textarea
-          value={form.description_zh}
-          onChange={(e) => set('description_zh', e.target.value)}
+          value={form.descriptionZh}
+          onChange={(e) => set('descriptionZh', e.target.value)}
           rows={3}
           placeholder="中文商品描述"
           className={INPUT_CLASS}
@@ -353,12 +353,12 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       priceAdjustment: o.priceAdjustment,
       stock: o.stock,
     })) ?? [],
-    name_en: '',
-    name_ja: '',
-    name_zh: '',
-    description_en: '',
-    description_ja: '',
-    description_zh: '',
+    nameEn: '',
+    nameJa: '',
+    nameZh: '',
+    descriptionEn: '',
+    descriptionJa: '',
+    descriptionZh: '',
   });
 
   const set = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) =>
@@ -393,12 +393,12 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         sku: form.sku || undefined,
         status: form.status,
         isFeatured: form.isFeatured,
-        name_en: form.name_en.trim() || undefined,
-        name_ja: form.name_ja.trim() || undefined,
-        name_zh: form.name_zh.trim() || undefined,
-        description_en: form.description_en.trim() || undefined,
-        description_ja: form.description_ja.trim() || undefined,
-        description_zh: form.description_zh.trim() || undefined,
+        nameEn: form.nameEn.trim() || undefined,
+        nameJa: form.nameJa.trim() || undefined,
+        nameZh: form.nameZh.trim() || undefined,
+        descriptionEn: form.descriptionEn.trim() || undefined,
+        descriptionJa: form.descriptionJa.trim() || undefined,
+        descriptionZh: form.descriptionZh.trim() || undefined,
         images: form.images.map((img, index) => ({
           url: img.url,
           alt: img.alt,
