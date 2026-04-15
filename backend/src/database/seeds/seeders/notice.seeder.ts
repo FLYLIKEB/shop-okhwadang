@@ -9,8 +9,8 @@ export class NoticeSeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(Notice);
-    await this.dataSource.getRepository(Notice).insert(notices);
-    console.log(`✓ Seeded ${notices.length} notices`);
+    const repo = this.dataSource.getRepository(Notice);
+    const inserted = await this.upsert(repo, notices as any[], (n) => n.title);
+    console.log(`✓ Notices: ${inserted} inserted, ${notices.length - inserted} existing`);
   }
 }

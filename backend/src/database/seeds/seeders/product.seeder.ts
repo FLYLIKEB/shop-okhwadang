@@ -9,8 +9,8 @@ export class ProductSeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(Product);
-    await this.dataSource.getRepository(Product).insert(products);
-    console.log(`✓ Seeded ${products.length} products`);
+    const repo = this.dataSource.getRepository(Product);
+    const inserted = await this.upsert(repo, products, (p) => p.slug);
+    console.log(`✓ Products: ${inserted} inserted, ${products.length - inserted} existing`);
   }
 }

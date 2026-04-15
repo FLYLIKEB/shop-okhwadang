@@ -9,8 +9,12 @@ export class ProductDetailImageSeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(ProductDetailImage);
-    await this.dataSource.getRepository(ProductDetailImage).insert(productDetailImages);
-    console.log(`✓ Seeded ${productDetailImages.length} product detail images`);
+    const repo = this.dataSource.getRepository(ProductDetailImage);
+    const inserted = await this.upsert(
+      repo,
+      productDetailImages.map((p) => ({ ...p } as any)),
+      (e) => `${e.productId}:${e.url}:${e.sortOrder}`,
+    );
+    console.log(`✓ Product detail images: ${inserted} inserted, ${productDetailImages.length - inserted} existing`);
   }
 }

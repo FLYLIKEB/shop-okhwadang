@@ -1,4 +1,4 @@
-import { DataSource, EntityTarget, ObjectLiteral } from 'typeorm';
+import { DataSource, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 
 export abstract class Seeder {
   protected dataSource: DataSource;
@@ -9,26 +9,17 @@ export abstract class Seeder {
 
   abstract run(): Promise<void>;
 
-  protected async deleteAll<T extends ObjectLiteral>(
-    entity: EntityTarget<T>,
-  ): Promise<void> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      await queryRunner.query('SET FOREIGN_KEY_CHECKS = 0');
-      await queryRunner
-        .manager.getRepository(entity)
-        .createQueryBuilder()
-        .delete()
-        .execute();
-      await queryRunner.query('SET FOREIGN_KEY_CHECKS = 1');
-      await queryRunner.commitTransaction();
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
+  protected async upsert<T extends ObjectLiteral>(
+    repo: Repository<T>,
+    seedData: Partial<T>[],
+    keySelector: (item: T) => string,
+  ): Promise<number> {
+    const existing = await repo.find();
+    const existingKeys = new Set(existing.map(keySelector));
+    const toInsert = seedData.filter((s) => !existingKeys.has(keySelector(s as T)));
+    if (toInsert.length > 0) {
+      await repo.insert(toInsert as any);
     }
+    return toInsert.length;
   }
 }

@@ -4,7 +4,6 @@ import { Order } from '../../../modules/orders/entities/order.entity';
 import { OrderItem } from '../../../modules/orders/entities/order-item.entity';
 import { Review } from '../../../modules/reviews/entities/review.entity';
 import { orders, orderItems, reviews } from '../data/seed-data';
-import { OrderStatus } from '../../../modules/orders/entities/order.entity';
 
 export class OrderSeeder extends Seeder {
   constructor(dataSource: DataSource) {
@@ -12,17 +11,14 @@ export class OrderSeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(Review);
-    await this.deleteAll(OrderItem);
-    await this.deleteAll(Order);
-    
-    await this.dataSource.getRepository(Order).insert(orders as any);
-    console.log(`✓ Seeded ${orders.length} orders`);
+    const orderRepo = this.dataSource.getRepository(Order);
+    const orderItemRepo = this.dataSource.getRepository(OrderItem);
+    const reviewRepo = this.dataSource.getRepository(Review);
 
-    await this.dataSource.getRepository(OrderItem).insert(orderItems as any);
-    console.log(`✓ Seeded ${orderItems.length} order items`);
+    const o = await this.upsert(orderRepo, orders as any[], (r) => String(r.id));
+    const oi = await this.upsert(orderItemRepo, orderItems as any[], (e) => `${e.orderId}:${e.productId}:${e.productOptionId ?? 'null'}`);
+    const r = await this.upsert(reviewRepo, reviews as any[], (e) => `${e.userId}:${e.productId}:${e.orderItemId}`);
 
-    await this.dataSource.getRepository(Review).insert(reviews as any);
-    console.log(`✓ Seeded ${reviews.length} reviews`);
+    console.log(`✓ Orders: ${o}, Order items: ${oi}, Reviews: ${r}`);
   }
 }

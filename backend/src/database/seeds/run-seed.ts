@@ -12,6 +12,8 @@ import { NoticeSeeder } from './seeders/notice.seeder';
 import { FaqSeeder } from './seeders/faq.seeder';
 import { UserSeeder } from './seeders/user.seeder';
 import { OrderSeeder } from './seeders/order.seeder';
+import { PageSeeder } from './seeders/page.seeder';
+import { PageBlockSeeder } from './seeders/page-block.seeder';
 import { Seeder } from './base/seeder';
 import dataSource from '../typeorm.config';
 
@@ -28,6 +30,8 @@ const seeders: Seeder[] = [
   new FaqSeeder(dataSource),
   new UserSeeder(dataSource),
   new OrderSeeder(dataSource),
+  new PageSeeder(dataSource),
+  new PageBlockSeeder(dataSource),
 ];
 
 async function runSeed() {

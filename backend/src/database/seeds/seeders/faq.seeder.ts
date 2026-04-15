@@ -9,8 +9,8 @@ export class FaqSeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(Faq);
-    await this.dataSource.getRepository(Faq).insert(faqs);
-    console.log(`✓ Seeded ${faqs.length} faqs`);
+    const repo = this.dataSource.getRepository(Faq);
+    const inserted = await this.upsert(repo, faqs as any[], (f) => `${f.question}:${f.category}`);
+    console.log(`✓ FAQs: ${inserted} inserted, ${faqs.length - inserted} existing`);
   }
 }

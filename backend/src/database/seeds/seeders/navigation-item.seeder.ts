@@ -9,8 +9,8 @@ export class NavigationItemSeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(NavigationItem);
-    await this.dataSource.getRepository(NavigationItem).insert(navigationItems);
-    console.log(`✓ Seeded ${navigationItems.length} navigation items`);
+    const repo = this.dataSource.getRepository(NavigationItem);
+    const inserted = await this.upsert(repo, navigationItems as any, (e) => `${e.group}:${e.sort_order}`);
+    console.log(`✓ Navigation items: ${inserted} inserted, ${navigationItems.length - inserted} existing`);
   }
 }

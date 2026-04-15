@@ -9,8 +9,8 @@ export class PromotionSeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(Promotion);
-    await this.dataSource.getRepository(Promotion).insert(promotions);
-    console.log(`✓ Seeded ${promotions.length} promotions`);
+    const repo = this.dataSource.getRepository(Promotion);
+    const inserted = await this.upsert(repo, promotions as any[], (e) => `${e.title}:${e.startsAt}`);
+    console.log(`✓ Promotions: ${inserted} inserted, ${promotions.length - inserted} existing`);
   }
 }

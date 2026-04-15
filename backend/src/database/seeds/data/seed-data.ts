@@ -1161,7 +1161,6 @@ export const orders: SeedOrder[] = [
 // 주문항목 (OrderItem)
 // ============================================================
 export interface SeedOrderItem {
-  id: number;
   orderId: number;
   productId: number;
   productOptionId: number | null;
@@ -1172,11 +1171,11 @@ export interface SeedOrderItem {
 }
 
 export const orderItems: SeedOrderItem[] = [
-  { id: 1, orderId: 1, productId: 1, productOptionId: null, productName: '옥화당 주니 서시호 120ml', optionName: null, price: 580000, quantity: 1 },
-  { id: 2, orderId: 2, productId: 2, productOptionId: null, productName: '옥화당 주니 주형호 80ml', optionName: null, price: 380000, quantity: 2 },
-  { id: 3, orderId: 3, productId: 3, productOptionId: null, productName: '옥화당 주니 석표호 160ml', optionName: null, price: 650000, quantity: 1 },
-  { id: 4, orderId: 4, productId: 4, productOptionId: null, productName: '옥화당 자사 편평호 200ml', optionName: null, price: 380000, quantity: 1 },
-  { id: 5, orderId: 5, productId: 5, productOptionId: null, productName: '옥화당 자사 서시호 150ml', optionName: null, price: 400000, quantity: 1 },
+  { orderId: 1, productId: 1, productOptionId: null, productName: '옥화당 주니 서시호 120ml', optionName: null, price: 580000, quantity: 1 },
+  { orderId: 2, productId: 2, productOptionId: null, productName: '옥화당 주니 주형호 80ml', optionName: null, price: 380000, quantity: 2 },
+  { orderId: 3, productId: 3, productOptionId: null, productName: '옥화당 주니 석표호 160ml', optionName: null, price: 650000, quantity: 1 },
+  { orderId: 4, productId: 4, productOptionId: null, productName: '옥화당 자사 편평호 200ml', optionName: null, price: 380000, quantity: 1 },
+  { orderId: 5, productId: 5, productOptionId: null, productName: '옥화당 자사 서시호 150ml', optionName: null, price: 400000, quantity: 1 },
 ];
 
 // ============================================================
@@ -1341,3 +1340,310 @@ export const pages: SeedPage[] = [
   { slug: 'terms', title: '이용약관', template: 'default', isPublished: true },
   { slug: 'privacy', title: '개인정보처리방침', template: 'default', isPublished: true },
 ];
+
+// ============================================================
+// 페이지 블록 (PageBlock)
+// ============================================================
+export interface SeedPageBlock {
+  pageSlug: string;
+  type: string;
+  content: string;
+  sortOrder: number;
+  isVisible: boolean;
+}
+
+export const pageBlocks: SeedPageBlock[] = JSON.parse(JSON.stringify([
+  // ── 홈 페이지 (page_id: 1) ──
+  {
+    pageSlug: 'home',
+    type: 'hero_banner',
+    content: {
+      title: '',
+      template: 'slider',
+      slides: [
+        {
+          title: '의흥 장인의 손끝에서',
+          subtitle: '<b>중국 의흥(宜興) 황룡산</b> 자사니로 빚은 600년 전통의 자사호. 장인의 정성이 담긴 수공예품을 만나보세요.',
+          cta_text: '컬렉션 보기',
+          cta_url: '/products?categoryId=1',
+          bg_color: '#1B3A4B',
+          image_url: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
+        },
+        {
+          title: '보이차의 깊은 여운',
+          subtitle: '<b>운남성 고수차 산지</b>에서 직수입한 보이차. 세월이 빚어낸 <b>반장·빙도·대익</b>의 깊은 맛을 경험하세요.',
+          cta_text: '아카이브 보기',
+          cta_url: '/archive',
+          bg_color: '#4A6741',
+          image_url: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
+        },
+        {
+          title: '찻자리의 완성',
+          subtitle: '<b>자사호와 다구</b>로 완성하는 나만의 다석. <b>경덕진 청화</b>, <b>천목유</b> 다완으로 찻자리의 품격을 높여보세요.',
+          cta_text: '저널 보기',
+          cta_url: '/journal',
+          bg_color: '#2A2520',
+          image_url: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
+        },
+      ],
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'home',
+    type: 'split_content',
+    content: {
+      title: '옥화당(玉花堂) 이야기',
+      subtitle: 'Our Story',
+      description: '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 <strong>자사호·보이차·다구</strong>를 국내에 소개하는 전문 D2C 쇼핑몰입니다.<br/><br/><strong>600년 역사</strong>의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 <strong>산지 직수입</strong>을 원칙으로 합니다.',
+      cta_text: '브랜드 소개 보기',
+      cta_url: '/p/about',
+      template: 'large',
+    },
+    sortOrder: 1,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'home',
+    type: 'product_carousel',
+    content: {
+      title: '베스트 자사호',
+      category_id: 1,
+      sort: 'popular',
+      limit: 8,
+    },
+    sortOrder: 2,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'home',
+    type: 'promotion_banner',
+    content: {
+      title: '봄 기획전 — 주니 신작 입고',
+      subtitle: '복건 주니 신작 자사호 선착순 특가',
+      cta_text: '기획전 보기',
+      cta_url: '/p/exhibition',
+      template: 'full-width',
+    },
+    sortOrder: 3,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'home',
+    type: 'product_grid',
+    content: {
+      title: '자사호 컬렉션',
+      category_id: 1,
+      limit: 8,
+      template: '4col',
+    },
+    sortOrder: 4,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'home',
+    type: 'category_nav',
+    content: {
+      title: '상품 카테고리',
+      template: 'image',
+      category_ids: [1, 2, 3, 4],
+    },
+    sortOrder: 5,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'home',
+    type: 'journal_preview',
+    content: {
+      title: '차와 흙, 그리고 사람의 이야기',
+      limit: 6,
+      more_href: '/journal',
+    },
+    sortOrder: 6,
+    isVisible: true,
+  },
+
+  // ── 기획전 페이지 (page_id: 2) ──
+  {
+    pageSlug: 'exhibition',
+    type: 'hero_banner',
+    content: {
+      title: '봄 기획전',
+      subtitle: '복건 주니 신작 자사호 — 장인의 손끝에서 탄생한 한정 컬렉션',
+      image_url: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
+      cta_text: '컬렉션 보기',
+      cta_url: '/products?categoryId=1',
+      template: 'fullscreen',
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'exhibition',
+    type: 'text_content',
+    content: {
+      html: '<h2>의흥 장인의 손끝에서, 옥화당까지</h2><p>복건성 주니(朱泥) 원료로 빚은 신작 자사호를 한정 수량으로 소개합니다. 주니 특유의 선홍빛 발색과 높은 수축률이 만들어내는 정교한 라인을 만나보세요. 이번 기획전에서는 서시호·주형호·석표호 등 다양한 형태의 주니 자사호를 엄선하였습니다.</p>',
+      textAlign: 'center',
+    },
+    sortOrder: 1,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'exhibition',
+    type: 'product_grid',
+    content: {
+      title: '주니 자사호 컬렉션',
+      product_ids: [1, 2, 3],
+      limit: 3,
+      template: '3col',
+      more_href: '/products?categoryId=1',
+    },
+    sortOrder: 2,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'exhibition',
+    type: 'promotion_banner',
+    content: {
+      title: '입문 다도구 세트 14% 특가',
+      subtitle: '옥화당 입문 다도구 세트 한정 수량 특가 — 280,000원 → 240,000원',
+      image_url: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
+      cta_text: '특가 보기',
+      cta_url: '/products/okhwadang-starter-tea-set',
+      template: 'timer',
+      end_date: '2026-04-30T23:59:59',
+    },
+    sortOrder: 3,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'exhibition',
+    type: 'product_grid',
+    content: {
+      title: '함께 즐기면 좋은 보이차',
+      product_ids: [11, 12, 13, 14],
+      limit: 4,
+      template: '4col',
+      more_href: '/products?categoryId=2',
+    },
+    sortOrder: 4,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'exhibition',
+    type: 'text_content',
+    content: {
+      html: '<p>기획전 상품은 재고 한정으로 조기 마감될 수 있습니다.<br/>자사호는 수공예 특성상 개체별 미세한 색감 차이가 있을 수 있으며, 이는 불량이 아닙니다.</p>',
+      textAlign: 'center',
+    },
+    sortOrder: 5,
+    isVisible: true,
+  },
+
+  // ── 브랜드 소개 페이지 (page_id: 3) ──
+  {
+    pageSlug: 'about',
+    type: 'split_content',
+    content: {
+      title: '옥화당(玉花堂)',
+      subtitle: '자사호·보이차·다구 전문',
+      description: '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 <strong>자사호·보이차·다구</strong>를 국내에 소개하는 전문 D2C 쇼핑몰입니다.<br/><br/><strong>600년 역사</strong>의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 <strong>산지 직수입</strong>을 원칙으로 합니다.<br/><br/>찻자리 하나에도 정성을 담는 것, 그것이 옥화당의 철학입니다.',
+      image_url: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
+      image_position: 'right',
+      template: 'large',
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'about',
+    type: 'text_content',
+    content: {
+      html: '<h2>우리의 약속</h2><p>산지 직수입 원칙 · 장인 직거래 · 품질 보증 · 정성 포장</p>',
+      textAlign: 'center',
+    },
+    sortOrder: 1,
+    isVisible: true,
+  },
+
+  // ── 문의하기 페이지 (page_id: 4) ──
+  {
+    pageSlug: 'contact',
+    type: 'text_content',
+    content: {
+      html: '<h1>문의하기</h1><p>옥화당에 궁금한 점이 있으시면 아래 양식을 통해 문의해주세요.<br/>영업일 기준 1~2일 이내에 답변드리겠습니다.</p><p><strong>운영시간</strong>: 평일 10:00 ~ 18:00 (점심 12:00 ~ 13:00)<br/><strong>이메일</strong>: help@ockhwadang.com</p>',
+      textAlign: 'left',
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+
+  // ── 고객센터 페이지 (page_id: 5) ──
+  {
+    pageSlug: 'support',
+    type: 'split_content',
+    content: {
+      subtitle: 'CUSTOMER CENTER',
+      title: '무엇을 도와드릴까요?',
+      description: '자주 묻는 질문, 공지사항, 1:1 문의를 통해 빠르게 안내해 드립니다.',
+      cta_text: '1:1 문의하기',
+      cta_url: '/my/inquiries/new',
+      template: 'default',
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+
+  // ── 배송 안내 페이지 (page_id: 6) ──
+  {
+    pageSlug: 'shipping',
+    type: 'text_content',
+    content: {
+      html: '<h2>배송 안내</h2><p>옥화당은 주문 확인 후 2~3일 내에 배송을 진행합니다. (공휴일/주말 제외)</p><h3>배송 비용</h3><ul><li><strong>기본 배송비:</strong> 3,000원 (도서산간 지역은 추가 비용 발생)</li><li><strong>무료 배송:</strong> 50,000원 이상 구매 시 무료</li><li><strong>배송업체:</strong> CJ대한통운</li><li><strong>배송 조회:</strong> 주문 상세 페이지에서 추적이 가능합니다.</li></ul><h3>배송 기간</h3><ul><li><strong>서울/경기:</strong> 1~2일</li><li><strong>지방:</strong> 2~3일</li><li><strong>도서산간:</strong> 3~5일</li></ul><p>배송 지연이나 이상 발생 시 고객센터로 문의해 주세요.</p>',
+      textAlign: 'left',
+      template: 'default',
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+
+  // ── 반품 및 교환 페이지 (page_id: 7) ──
+  {
+    pageSlug: 'returns',
+    type: 'text_content',
+    content: {
+      html: '<h2>반품 및 교환 안내</h2><h3>반품/교환 가능 기간</h3><p>상품 수령 후 <strong>7일 이내</strong>에 신청 가능합니다. (단, 상품의 가치가 현저히 감소한 경우는 제외)</p><h3>반품/교환 불가 사유</h3><ul><li>사용 또는 개봉한 상품</li><li>고객님의 과실로 상품이 훼손된 경우</li><li>배송 후 결품이 발견된 경우 (고객센터로 즉시 연락)</li></ul><h3>반품/교환 절차</h3><ol><li>고객센터(1:1 문의)로 반품/교환 신청</li><li>접수 확정 후 지정된 주소로 상품 발송</li><li>상품 확인 후 환불/교환 처리 (2~3일)</li></ol><h3>환불 안내</h3><p>반품 상품 확인 후 3~5일 내에 결제 수단으로 환불됩니다. 무통장입금의 경우 등록된 계좌로 입금 처리됩니다.</p>',
+      textAlign: 'left',
+      template: 'default',
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+
+  // ── 이용약관 페이지 (page_id: 8) ──
+  {
+    pageSlug: 'terms',
+    type: 'text_content',
+    content: {
+      html: '<h2>이용약관</h2><p>본 약관은 옥화당(이하 "당사")이 운영하는 온라인 쇼핑몰에서 제공하는 서비스의 이용 조건을 정합니다.</p><h3>제1조 (목적)</h3><p>본 약관은 당사가 운영하는 온라인 쇼핑몰 서비스(이하 "서비스")의 이용에 관한 일반적인 조건을 규정합니다.</p><h3>제2조 (이용계약의 성립)</h3><p>이용자는 당사가 정한 이용 계약 조건에 동의한 후 서비스를 이용함으로써 이용 계약이 성립합니다.</p><h3>제3조 (서비스의 제공 및 변경)</h3><p>당사는 서비스의 내용, 이용 시간, 중단 등의 사항을 변경할 수 있으며, 이 경우 사전에 고지합니다.</p><h3>제4조 (결제)</h3><p>서비스 이용에 대한 대금 결제는 당사가 정한 결제 수단으로 할 수 있으며, 카드결제/무통장입금 등을 지원합니다.</p><h3>제5조 (환불)</h3><p>결제 취소 및 환불은 상품 수령 후 7일 이내에 신청 가능하며, 당사의 환불 정책에 따릅니다.</p><h3>제6조 (책임)</h3><p>당사는 서비스 제공 시 성실한 주의 의무를 다하나, 불가항력에 의한 서비스 중단은 책임지지 않습니다.</p><h3>제7조 (분쟁 해결)</h3><p>서비스 이용 관련 분쟁은 당사의 고객센터를 통해 해결하며, 합의가 이루어지지 않을 경우 관할 법원에 소송할 수 있습니다.</p>',
+      textAlign: 'left',
+      template: 'default',
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+
+  // ── 개인정보처리방침 페이지 (page_id: 9) ──
+  {
+    pageSlug: 'privacy',
+    type: 'text_content',
+    content: {
+      html: '<h2>개인정보처리방침</h2><p>옥화당(이하 "당사")는 이용자의 개인정보를 소중히 취급하며, 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」 등 관련 법령을 준수합니다.</p><h3>1. 수집하는 개인정보 항목</h3><ul><li><strong>필수:</strong> 이름, 이메일, 연락처, 주소</li><li><strong>선택:</strong> 생년월일, 성별 (회원 가입 시)</li><li><strong>자동 수집:</strong> IP 주소, 쿠키, 방문 기록</li></ul><h3>2. 개인정보의 수집 및 이용 목적</h3><p>수집한 개인정보는 서비스 제공, 계약 이행, 고객 관리, 마케팅/광고 등에 이용됩니다.</p><h3>3. 개인정보의 보유 기간</h3><p>이용자의 개인정보는 가입 해지 시까지 보유하며, 관련 법령에 따라 일정 기간 보존합니다. (계약이행 관련: 5년, 소비자분쟁: 3년)</p><h3>4. 개인정보의 제3자 제공</h3><p>당사는 이용자의 사전 동의 없이 개인정보를 제3자에게 제공하지 않습니다. 다만, 법률에 의한 경우나 서비스 제공에 필수적인 경우 예외로 합니다.</p><h3>5. 이용자 권리</h3><p>이용자는 자신의 개인정보에 대해 열람, 정정, 삭제, 처리 정지 요구 등 권리를 가지며, 언제든 고객센터를 통해 신청할 수 있습니다.</p><h3>6. 개인정보 보호 책임자</h3><p>책임자: 옥화당 고객센터 | 이메일: help@okhwandang.com</p>',
+      textAlign: 'left',
+      template: 'default',
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+]));

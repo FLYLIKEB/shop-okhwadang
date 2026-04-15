@@ -9,8 +9,8 @@ export class CategorySeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(Category);
-    await this.dataSource.getRepository(Category).insert(categories);
-    console.log(`✓ Seeded ${categories.length} categories`);
+    const repo = this.dataSource.getRepository(Category);
+    const inserted = await this.upsert(repo, categories, (c) => c.slug);
+    console.log(`✓ Categories: ${inserted} inserted, ${categories.length - inserted} existing`);
   }
 }

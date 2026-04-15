@@ -9,8 +9,8 @@ export class BannerSeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(Banner);
-    await this.dataSource.getRepository(Banner).insert(banners);
-    console.log(`✓ Seeded ${banners.length} banners`);
+    const repo = this.dataSource.getRepository(Banner);
+    const inserted = await this.upsert(repo, banners as any[], (e) => `${e.title}:${e.imageUrl}`);
+    console.log(`✓ Banners: ${inserted} inserted, ${banners.length - inserted} existing`);
   }
 }

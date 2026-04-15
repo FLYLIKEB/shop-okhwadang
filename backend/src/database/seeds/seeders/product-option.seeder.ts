@@ -9,8 +9,12 @@ export class ProductOptionSeeder extends Seeder {
   }
 
   async run(): Promise<void> {
-    await this.deleteAll(ProductOption);
-    await this.dataSource.getRepository(ProductOption).insert(productOptions);
-    console.log(`✓ Seeded ${productOptions.length} product options`);
+    const repo = this.dataSource.getRepository(ProductOption);
+    const inserted = await this.upsert(
+      repo,
+      productOptions.map((p) => ({ ...p } as any)),
+      (e) => `${e.productId}:${e.name}:${e.value}`,
+    );
+    console.log(`✓ Product options: ${inserted} inserted, ${productOptions.length - inserted} existing`);
   }
 }
