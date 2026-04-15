@@ -27,7 +27,7 @@ const FAQ_DEFAULTS: CreateFaqData = {
 };
 
 export default function AdminFaqsPage() {
-  useAdminGuard();
+  const { isAdmin } = useAdminGuard();
 
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [filterCategory, setFilterCategory] = useState('전체');
@@ -55,8 +55,9 @@ export default function AdminFaqsPage() {
   );
 
   useEffect(() => {
+    if (!isAdmin) return;
     void loadFaqs();
-  }, [loadFaqs]);
+  }, [isAdmin, loadFaqs]);
 
   const filtered = filterCategory === '전체'
     ? faqs

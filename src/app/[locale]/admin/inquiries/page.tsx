@@ -15,7 +15,7 @@ import { cn } from '@/components/ui/utils';
 type StatusFilter = 'all' | 'pending' | 'answered';
 
 export default function AdminInquiriesPage() {
-  useAdminGuard();
+  const { isAdmin } = useAdminGuard();
 
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [filter, setFilter] = useState<StatusFilter>('all');
@@ -32,8 +32,9 @@ export default function AdminInquiriesPage() {
   );
 
   useEffect(() => {
+    if (!isAdmin) return;
     void loadInquiries();
-  }, [loadInquiries]);
+  }, [isAdmin, loadInquiries]);
 
   const filtered = filter === 'all'
     ? inquiries
