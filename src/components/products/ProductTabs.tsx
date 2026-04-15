@@ -21,7 +21,10 @@ export default function ProductTabs({ description, descriptionImages, productId 
 
   useEffect(() => {
     import('dompurify').then((mod) => {
-      setSanitized(mod.default.sanitize(description ?? ''))
+      setSanitized(mod.default.sanitize(description ?? '', {
+        ALLOWED_TAGS: ['p','br','strong','em','ul','ol','li','h2','h3','h4','a','img'],
+        ALLOWED_ATTR: ['href','src','alt','target','rel'],
+      }))
     })
   }, [description])
 
