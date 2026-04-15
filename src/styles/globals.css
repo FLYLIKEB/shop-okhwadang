@@ -14,13 +14,9 @@
 
 @import "tailwindcss";
 
-/* ── Locale-scoped color tokens ────────────────────────────────── */
-@import './tokens-ko.css';
-@import './tokens-en.css';
-
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
-  /* Color: 공용 브랜드 변수 — locale token 파일에서 override됨 */
+  /* Color: 공방(工房) Craft Palette — dark base */
   --color-bg: #141210;
   --color-text: #F0EDE8;
   --color-accent-zuni: #8B4513;
@@ -31,12 +27,12 @@
   /* Typography — size scale */
   --font-size-heading-0: 2rem;     /* 32px mobile - hero only */
   --font-size-heading-1: 1.5rem;   /* 24px mobile */
-  --font-size-heading-2: 1.875rem; /* 30px mobile */
+  --font-size-heading-2: 1.25rem;  /* 20px mobile */
   --font-size-heading-3: 1.125rem; /* 18px mobile */
   --font-size-title: 1rem;         /* 16px mobile */
   --font-size-body: 1rem;          /* 16px */
   --font-size-body-sm: 0.875rem;   /* 14px */
-  --font-size-label: 0.75rem;        /* 12px */
+  --font-size-label: 0.625rem;      /* 10px */
   --font-size-label-sm: 0.5625rem;  /* 9px */
   --font-size-button: 0.875rem;    /* 14px */
 
@@ -47,8 +43,7 @@
 }
 
 @theme inline {
-  /* ── 색상 토큰 — locale token 파일에서 override됨 (KO dark / EN light) ── */
-  /* 폴백: KO 다크 팔레트 (공방 테마) */
+  /* ── shadcn/ui 호환 토큰 (DB override 지원) ── */
   --color-primary: #C4956A;
   --color-primary-foreground: #141210;
   --color-secondary: #1E1C18;
@@ -103,7 +98,7 @@
 @media (min-width: 768px) {
   :root {
     --font-size-heading-1: 2.25rem;  /* 36px desktop */
-    --font-size-heading-2: 1.875rem; /* 30px desktop */
+    --font-size-heading-2: 1.5rem;   /* 24px desktop */
     --font-size-heading-3: 1.25rem;  /* 20px desktop */
     --font-size-title: 1.125rem;     /* 18px desktop */
     --font-size-heading-0: 3rem;     /* 48px desktop - hero only */
@@ -113,7 +108,6 @@
 /* ── Typography utility classes ────────────────────────────────── */
 @utility typo-h0 {
   font-size: var(--font-size-heading-0, 2rem);
-  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -121,7 +115,6 @@
 
 @utility typo-h1 {
   font-size: var(--font-size-heading-1);
-  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -129,7 +122,6 @@
 
 @utility typo-h2 {
   font-size: var(--font-size-heading-2);
-  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -137,15 +129,14 @@
 
 @utility typo-h3 {
   font-size: var(--font-size-heading-3);
-  font-family: var(--font-display);
   line-height: var(--line-height-heading);
   font-weight: 600;
 }
 
 @utility typo-title {
   font-size: var(--font-size-title);
-  font-family: var(--font-display);
-  font-weight: 500;
+  font-family: var(--font-body);
+  font-weight: 600;
   line-height: var(--line-height-compact);
 }
 
@@ -170,41 +161,23 @@
 @utility typo-button {
   font-size: var(--font-size-button);
   line-height: var(--line-height-compact);
-  font-weight: 500;
-  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 @utility typo-title-sm {
   font-size: var(--font-size-body-sm);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 500;
   line-height: var(--line-height-compact);
 }
 
-/* ── Base styles — 다크 디폴트 ──────────────────────────────────── */
+/* ── Base styles ───────────────────────────────────────────────── */
 body {
   font-family: var(--font-body);
   color: var(--color-foreground);
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* ── 금박(金箔) 포인트 악센트 ─────────────────────────────────── */
-.accent-gold {
-  color: var(--color-gold);
-}
-
-.border-gold {
-  border-color: var(--color-gold);
-}
-
-.bg-gold {
-  background-color: var(--color-gold);
-}
-
-.divide-gold > * + * {
-  border-color: var(--color-gold-light);
 }
 
 h1 {
@@ -238,27 +211,17 @@ h3 {
   letter-spacing: 0.04em;
 }
 
-.tag-zuni     { background-color: var(--color-zuni);     color: #ffffff; }
-.tag-danni    { background-color: var(--color-danni);    color: #1C1710; }
-.tag-zini     { background-color: var(--color-zini);     color: #ffffff; }
-.tag-heukni   { background-color: var(--color-heukni);   color: #F8F5F0; }
-.tag-chunsuni { background-color: var(--color-chunsuni); color: #ffffff; }
-.tag-nokni    { background-color: var(--color-nokni);    color: #ffffff; }
-.tag-generic  { background-color: #6B5B4F; color: #ffffff; }
+.tag-zuni  { background-color: var(--color-zuni);     color: #ffffff; }
+.tag-danni { background-color: var(--color-danni);    color: #1C1710; }
+.tag-zini  { background-color: var(--color-zini);     color: #ffffff; }
+.tag-heukni    { background-color: var(--color-heukni);    color: #F8F5F0; }
+.tag-chunsuni  { background-color: var(--color-chunsuni);  color: #ffffff; }
+.tag-nokni { background-color: var(--color-nokni);    color: #ffffff; }
+.tag-generic { background-color: #6B5B4F; color: #ffffff; }
 
 /* ── 디스플레이 타이틀 ──────────────────────────────────────────── */
 .font-display {
   font-family: var(--font-display);
-}
-
-/* ── 데이터 라벨 — 공방 도면 느낌의 메타데이터 표시 ───────────── */
-.data-label {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 400;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--color-muted-foreground);
 }
 
 /* ── 산지·중량·용량 스펙 데이터 ─────────────────────────────────── */
@@ -269,23 +232,14 @@ h3 {
   letter-spacing: 0.025em;
 }
 
-/* ── Page transition overlay ────────────────────────────────────── */
-@keyframes page-cover {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0%); }
-}
-
-@keyframes page-reveal {
-  from { transform: translateY(0%); }
-  to   { transform: translateY(-100%); }
-}
-
-.page-transition-cover {
-  animation: page-cover 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.page-transition-reveal {
-  animation: page-reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+/* ── 데이터 라벨 — 공방 도면 느낌의 메타데이터 표시 ───────────── */
+.data-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
 }
 
 /* ── Hero animations ────────────────────────────────────────────── */
