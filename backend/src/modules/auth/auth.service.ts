@@ -167,6 +167,7 @@ export class AuthService implements OnModuleInit {
     try {
       payload = this.jwtService.verify(rawRefreshToken, {
         secret: process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET,
+        algorithms: ['HS256'],
       });
     } catch {
       throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
@@ -211,6 +212,7 @@ export class AuthService implements OnModuleInit {
       {
         secret: refreshSecret ?? process.env.JWT_SECRET,
         expiresIn: refreshExpiresIn,
+        algorithm: 'HS256',
       },
     );
     return { accessToken, refreshToken };

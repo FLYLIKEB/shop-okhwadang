@@ -234,6 +234,7 @@ export class OAuthService {
       {
         secret: process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET,
         expiresIn: refreshExpiresIn,
+        algorithm: 'HS256',
       },
     );
     const hashedRefresh = await bcrypt.hash(refreshToken, 10);
