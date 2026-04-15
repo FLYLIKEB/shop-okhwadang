@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   ParseIntPipe,
   HttpCode,
   HttpStatus,
@@ -14,6 +15,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { AttributesService } from './attributes.service';
 import { CreateAttributeTypeDto, UpdateAttributeTypeDto } from './dto/attribute-type.dto';
@@ -30,26 +32,36 @@ export class AttributesController {
 
   @Get('types')
   @ApiOperation({ summary: '모든 속성 유형 조회' })
-  async findAllTypes(): Promise<AttributeType[]> {
-    return this.attributesService.findAllAttributeTypes();
+  @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en, ja, zh)' })
+  async findAllTypes(@Query('locale') locale?: string): Promise<AttributeType[]> {
+    return this.attributesService.findAllAttributeTypes(locale);
   }
 
   @Get('types/filterable')
   @ApiOperation({ summary: '필터 가능한 속성 유형만 조회' })
-  async findFilterableTypes(): Promise<AttributeType[]> {
-    return this.attributesService.getFilterableAttributes();
+  @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en, ja, zh)' })
+  async findFilterableTypes(@Query('locale') locale?: string): Promise<AttributeType[]> {
+    return this.attributesService.getFilterableAttributes(locale);
   }
 
   @Get('types/:id')
   @ApiOperation({ summary: '속성 유형 상세 조회' })
-  async findTypeById(@Param('id', ParseIntPipe) id: number): Promise<AttributeType> {
-    return this.attributesService.findAttributeTypeById(id);
+  @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en, ja, zh)' })
+  async findTypeById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('locale') locale?: string,
+  ): Promise<AttributeType> {
+    return this.attributesService.findAttributeTypeById(id, locale);
   }
 
   @Get('types/code/:code')
   @ApiOperation({ summary: '속성 유형 코드로 조회' })
-  async findTypeByCode(@Param('code') code: string): Promise<AttributeType | null> {
-    return this.attributesService.findAttributeTypeByCode(code);
+  @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en, ja, zh)' })
+  async findTypeByCode(
+    @Param('code') code: string,
+    @Query('locale') locale?: string,
+  ): Promise<AttributeType | null> {
+    return this.attributesService.findAttributeTypeByCode(code, locale);
   }
 
   @Get('types/:code/values')

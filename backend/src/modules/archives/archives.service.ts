@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { NiloType, ProcessStep, Artist } from './entities/archive.entity';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { reorderEntities } from '../../common/utils/reorder.util';
+import { applyLocale } from '../../common/utils/locale.util';
 import {
   CreateNiloTypeDto,
   UpdateNiloTypeDto,
@@ -24,11 +25,16 @@ export class ArchivesService {
     private readonly artistRepository: Repository<Artist>,
   ) {}
 
-  async findAllNiloTypes(): Promise<NiloType[]> {
-    return this.niloTypeRepository.find({
+  private applyLocaleToNiloType(entity: NiloType, locale?: string): NiloType {
+    return applyLocale(entity, locale, ['name']);
+  }
+
+  async findAllNiloTypes(locale?: string): Promise<NiloType[]> {
+    const types = await this.niloTypeRepository.find({
       where: { isActive: true },
       order: { sortOrder: 'ASC' },
     });
+    return types.map((t) => this.applyLocaleToNiloType(t, locale));
   }
 
   async findAllProcessSteps(): Promise<ProcessStep[]> {

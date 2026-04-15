@@ -13,6 +13,7 @@ import { CreatePageBlockDto } from './dto/create-page-block.dto';
 import { UpdatePageBlockDto } from './dto/update-page-block.dto';
 import { ReorderBlocksDto } from './dto/reorder-blocks.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { applyLocale } from '../../common/utils/locale.util';
 
 const SUPPORTED_BLOCK_TYPES = [
   'hero_banner',
@@ -34,19 +35,24 @@ export class PagesService {
     private readonly blockRepository: Repository<PageBlock>,
   ) {}
 
-  async findAllPublished(): Promise<Page[]> {
-    return this.pageRepository.find({
+  private applyLocaleToPage(entity: Page, locale?: string): Page {
+    return applyLocale(entity, locale, ['title']);
+  }
+
+  async findAllPublished(locale?: string): Promise<Page[]> {
+    const pages = await this.pageRepository.find({
       where: { is_published: true },
       order: { created_at: 'DESC' },
     });
+    return pages.map((p) => this.applyLocaleToPage(p, locale));
   }
 
-  async findBySlug(slug: string): Promise<Page> {
+  async findBySlug(slug: string, locale?: string): Promise<Page> {
     const page = await findOrThrow(this.pageRepository, { slug, is_published: true }, '존재하지 않는 페이지입니다.', ['blocks']);
     page.blocks = page.blocks
       .filter((b) => b.is_visible)
       .sort((a, b) => a.sort_order - b.sort_order);
-    return page;
+    return this.applyLocaleToPage(page, locale);
   }
 
   async findAllAdmin(): Promise<Page[]> {

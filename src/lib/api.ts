@@ -283,8 +283,8 @@ export const productsApi = {
     apiClient.get<ProductListResponse>('/products', { params: params as Record<string, string | number | undefined> }),
   getById: (id: number, locale?: string) =>
     apiClient.get<ProductDetail>(`/products/${id}`, { params: locale ? { locale } : undefined }),
-  getBulk: (ids: number[]) =>
-    apiClient.post<Product[]>('/products/bulk', { ids }),
+  getBulk: (ids: number[], locale?: string) =>
+    apiClient.post<Product[]>('/products/bulk', { ids }, { params: locale ? { locale } : undefined }),
   autocomplete: (q: string) =>
     apiClient.get<AutocompleteItem[]>('/products/autocomplete', { params: { q } }),
 };
@@ -907,7 +907,8 @@ export interface ImageGalleryContent {
 }
 
 export const pagesApi = {
-  getBySlug: (slug: string) => apiClient.get<Page>(`/pages/${slug}`),
+  getBySlug: (slug: string, locale?: string) =>
+    apiClient.get<Page>(`/pages/${slug}`, { params: locale ? { locale } : undefined }),
   getAll: () => apiClient.get<Page[]>('/pages'),
 };
 
