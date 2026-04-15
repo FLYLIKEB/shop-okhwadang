@@ -1,13 +1,15 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
+import StarRating from '@/components/shared/reviews/StarRating';
 import { useWishlistToggle } from '@/components/shared/hooks/useWishlistToggle';
+import { useCart } from '@/contexts/CartContext';
 import type { Locale } from '@/utils/currency';
 
 interface ProductCardProps {
@@ -18,13 +20,34 @@ interface ProductCardProps {
   shortDescription?: string | null;
   rating?: number;
   reviewCount?: number;
-  categoryName?: string;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
-  isFeatured?: boolean;
   locale?: Locale;
   priority?: boolean;
-  variant?: 'default' | 'minimal';
+  categoryName?: string | null;
+}
+
+/** 카테고리명 → 니료 태그 CSS 클래스 매핑 */
+const CLAY_TAG_MAP: Record<string, string> = {
+  '주니': 'tag-zuni',
+  '朱泥': 'tag-zuni',
+  '단니': 'tag-danni',
+  '段泥': 'tag-danni',
+  '자니': 'tag-zini',
+  '紫泥': 'tag-zini',
+  '흑니': 'tag-heukni',
+  '黑泥': 'tag-heukni',
+  '청수니': 'tag-chunsuni',
+  '靑水泥': 'tag-chunsuni',
+  '녹니': 'tag-nokni',
+  '綠泥': 'tag-nokni',
+};
+
+function getClayTagClass(categoryName: string): string | null {
+  for (const [key, cls] of Object.entries(CLAY_TAG_MAP)) {
+    if (categoryName.includes(key)) return cls;
+  }
+  return null;
 }
 
 function ProductCard({
@@ -32,47 +55,71 @@ function ProductCard({
   name,
   price,
   salePrice,
-  categoryName,
+  shortDescription,
+  rating,
+  reviewCount,
   status,
   images,
   locale = 'ko',
   priority = false,
+  categoryName,
 }: ProductCardProps) {
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
+  const clayTagClass = categoryName ? getClayTagClass(categoryName) : null;
 
+  const { addItem } = useCart();
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsCartLoading(true);
+    try {
+      await addItem({ productId: id, productOptionId: null, quantity: 1 });
+    } finally {
+      setIsCartLoading(false);
+    }
+  };
 
   return (
     <Link
       href={`/products/${id}`}
       className={cn(
-        'group block',
+        'group flex flex-col h-full',
         isSoldout && 'opacity-60',
       )}
     >
-      <div className="relative aspect-square overflow-hidden border border-muted-foreground/20 rounded">
+      {/* ── 이미지 영역 ── */}
+      <div className="relative aspect-square overflow-hidden bg-secondary rounded-md">
         {thumbnail ? (
           <Image
             src={thumbnail}
             alt={name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             priority={priority}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <span className="typo-label">No Image</span>
+            <span className="data-label">No Image</span>
           </div>
         )}
 
         {isSoldout && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/60">
-            <span className="typo-label text-foreground">품절</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+            <span className="data-label text-foreground tracking-widest">SOLD OUT</span>
           </div>
         )}
 
+        {categoryName && (
+          <span className={cn('absolute left-2 bottom-2 z-10 px-2 py-0.5 rounded-sm tag-clay', clayTagClass ?? 'tag-generic')}>
+            {categoryName}
+          </span>
+        )}
+
+        {/* 찜하기 버튼 — 우상단 */}
         <button
           type="button"
           aria-label={isWishlisted ? '찜하기 취소' : '찜하기'}
@@ -81,36 +128,58 @@ function ProductCard({
             handleToggleWishlist(e);
           }}
           disabled={isWishlistLoading}
-          className={cn(
-            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 shadow-sm disabled:cursor-not-allowed backdrop-blur-sm',
-          )}
+          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm disabled:cursor-not-allowed transition-colors hover:bg-background/80"
         >
           <Heart
             className={cn(
-              'h-4 w-4 transition-colors',
-              isWishlisted ? 'fill-white text-white' : 'text-white',
+              'h-3.5 w-3.5 transition-colors',
+              isWishlisted ? 'fill-foreground text-foreground' : 'text-foreground/60',
             )}
           />
         </button>
       </div>
 
-      <div className="mt-4 flex flex-col">
-        {categoryName && (
-          <p className="typo-label text-muted-foreground uppercase tracking-wider mb-1">{categoryName}</p>
+      {/* ── 정보 영역 — 공방 도면 스타일 ── */}
+      <div className="mt-2.5 flex flex-1 flex-col gap-1">
+        <p className="typo-title line-clamp-2 leading-snug min-h-10 shrink-0">{name}</p>
+
+        {/* 리뷰 */}
+        <div className="flex items-center gap-1.5 h-4 shrink-0">
+          {rating !== undefined && (
+            <>
+              <StarRating rating={rating} size="sm" interactive={false} />
+              <span className="font-mono text-xs leading-none text-muted-foreground">{rating.toFixed(1)}</span>
+              {reviewCount !== undefined && reviewCount > 0 && (
+                <span className="font-mono text-xs text-muted-foreground leading-none">({reviewCount})</span>
+              )}
+            </>
+          )}
+        </div>
+
+        {shortDescription && (
+          <p className="line-clamp-2 text-xs text-muted-foreground leading-relaxed">{shortDescription}</p>
         )}
-        <p className="text-base font-semibold line-clamp-2 leading-tight shrink-0">{name}</p>
+
+        {/* 구분선 */}
+        <div className="pt-2 mt-auto">
+          <hr className="border-border" />
+        </div>
+
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
 
-        <div className="mt-auto pt-2">
+        {!isSoldout && (
           <button
             type="button"
+            onClick={handleAddToCart}
+            disabled={isCartLoading}
             className={cn(
-              'flex w-full items-center justify-center bg-foreground py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/80 shrink-0',
+              'flex w-full items-center justify-center gap-2 border border-border py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed shrink-0 font-mono tracking-wide',
             )}
           >
-            자세히 보기
+            <ShoppingCart className="h-3.5 w-3.5" />
+            {isCartLoading ? '담는 중...' : '장바구니 담기'}
           </button>
-        </div>
+        )}
       </div>
     </Link>
   );

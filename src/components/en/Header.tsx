@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, Menu, X, Search, User, LogOut, LogIn, UserPlus, MessageSquare, Package } from 'lucide-react';
@@ -13,6 +13,8 @@ import { useSlidePanel } from '@/components/shared/hooks/useSlidePanel';
 import { useScrollLogoContext } from '@/contexts/ScrollLogoContext';
 import type { NavigationItem } from '@/lib/api';
 import LanguageSelector from '@/components/shared/LanguageSelector';
+
+
 
 // ─── Sub-components ──────────────────────────────────────────────
 
@@ -39,29 +41,6 @@ function CartBadge({ itemCount, className, iconSize = 'h-5 w-5' }: CartBadgeProp
 }
 
 
-
-function DesktopActions({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout: () => void }) {
-  const textClass = "text-muted-foreground hover:text-foreground";
-  return (
-    <div className="hidden md:flex items-center gap-4">
-      <LanguageSelector />
-      {isAuthenticated ? (
-        <>
-          <Link href="/my" aria-label="마이페이지" className={cn("transition-colors", textClass)}>
-            <User className="h-5 w-5" />
-          </Link>
-          <button type="button" onClick={onLogout} aria-label="로그아웃" className={cn("transition-colors", textClass)}>
-            <LogOut className="h-5 w-5" />
-          </button>
-        </>
-      ) : (
-        <Link href="/login" aria-label="로그인" className={cn("transition-colors", textClass)}>
-          <User className="h-5 w-5" />
-        </Link>
-      )}
-    </div>
-  );
-}
 
 interface MobileMenuProps {
   isAuthenticated: boolean;
@@ -257,7 +236,7 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
   const current = history.length > 0 ? history[history.length - 1] : { title: '메뉴', items: menuItems };
 
   const handleItemClick = (item: NavigationItem) => {
-    if (item.children && item.children.length > 0) {
+    if (item.children.length > 0) {
       setHistory(h => [...h, { title: item.label, items: item.children }]);
     } else {
       closeAndReset();
@@ -353,7 +332,7 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
           'md:hidden fixed left-0 right-0 z-[46] bg-background/95 backdrop-blur-md shadow-md transition-[opacity,transform] duration-200 ease-in-out',
           isOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-2',
         )}
-        style={{ top: '48px' }}
+        style={{ top: '112px' }}
         role="search"
         aria-label="모바일 검색"
       >
@@ -382,8 +361,6 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
   );
 }
 
-// ─── Desktop Mega-Menu Nav ────────────────────────────────────────
-
 interface DesktopNavProps {
   items: NavigationItem[];
 }
@@ -402,7 +379,7 @@ function DesktopNav({ items }: DesktopNavProps) {
   return (
     <nav
       aria-label="메인 메뉴"
-      className="hidden md:flex items-center gap-6"
+      className="hidden md:flex w-full items-center gap-0"
       onMouseLeave={() => setHoveredId(null)}
     >
       {items.map((item) => (
@@ -410,11 +387,12 @@ function DesktopNav({ items }: DesktopNavProps) {
           key={item.id}
           ref={(el) => { if (el) itemRefs.current.set(item.id, el); }}
           onMouseEnter={() => setHoveredId(item.id)}
+          className="flex-1 flex items-center justify-center"
         >
           <Link
             href={item.url}
             className={cn(
-              'group relative flex items-center gap-1 py-2 typo-body-sm transition-colors duration-200',
+              'group relative flex w-full items-center justify-center gap-1 py-2 typo-body-sm transition-colors duration-200',
               hoveredId === item.id ? 'text-foreground' : 'text-muted-foreground',
             )}
           >
@@ -500,9 +478,15 @@ export default function Header() {
     return () => { document.body.classList.remove('overflow-hidden'); };
   }, [isMenuOpen]);
 
+  const handleLogout = useCallback(() => void logout(), [logout]);
+  const closeSearch = useCallback(() => setIsSearchOpen(false), []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 10;
+      setIsScrolled(prev => prev === scrolled ? prev : scrolled);
+    };
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -538,37 +522,29 @@ export default function Header() {
           ? 'bg-background/85 backdrop-blur-lg border-b border-border shadow-sm'
           : 'bg-background border-b border-transparent',
       )}>
-        {/* Top row */}
-        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between gap-2 px-4">
-
-          {/* 햄버거 */}
+        <div className="mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
           <button
             type="button"
             onClick={() => { setIsMenuOpen((p) => !p); setIsSearchOpen(false); }}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-            className="p-2 -ml-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground lg:hidden"
+            className="p-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground md:hidden"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          {/* 로고 */}
           <Link href="/" className="shrink-0">
             <div style={scrollLogo?.headerLogoStyle}>
               <Logo variant="header" />
             </div>
           </Link>
 
-          {/* 데스크탑 네비 */}
-          <DesktopNav items={navItems} />
-
-          {/* 데스크탑 검색 */}
           <form
             onSubmit={handleDesktopSearch}
             role="search"
             aria-label="상품 검색"
-            className="hidden md:flex relative items-center flex-1 max-w-sm"
+            className="hidden md:flex relative items-center flex-1 max-w-lg mx-8"
           >
             <input
               type="search"
@@ -576,21 +552,33 @@ export default function Header() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="상품 검색..."
               aria-label="상품 검색"
-              className="w-full rounded-md border border-input bg-background pl-3 pr-10 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full border-b border-muted-foreground/30 bg-transparent pl-1 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
             />
-            <button type="submit" aria-label="검색" className="absolute right-2 transition-colors text-muted-foreground hover:text-foreground">
+            <button type="submit" aria-label="검색" className="absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
               <Search className="h-4 w-4" />
             </button>
           </form>
 
-          {/* 데스크탑 액션 */}
-          <DesktopActions
-            isAuthenticated={isAuthenticated}
-            onLogout={() => void logout()}
-          />
+          <div className="hidden md:flex items-center gap-1">
+            <LanguageSelector />
+            <CartBadge itemCount={itemCount} />
+            {isAuthenticated ? (
+              <>
+                <Link href="/my" aria-label="마이페이지" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                  <User className="h-5 w-5" />
+                </Link>
+                <button type="button" onClick={handleLogout} aria-label="로그아웃" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </>
+            ) : (
+              <Link href="/login" aria-label="로그인" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-5 w-5" />
+              </Link>
+            )}
+          </div>
 
-          {/* 모바일 우측: 검색 + 카트 + 로그인/마이페이지 */}
-          <div className="md:hidden flex items-center gap-1 ml-auto">
+          <div className="md:hidden flex items-center gap-1">
             <button
               type="button"
               onClick={() => { setIsSearchOpen((p) => !p); setIsMenuOpen(false); }}
@@ -615,6 +603,12 @@ export default function Header() {
           </div>
         </div>
 
+        <div className="hidden md:block border-t border-border/50">
+          <div className="flex h-12 max-w-8xl items-stretch justify-between px-4 md:px-20">
+            <DesktopNav items={navItems} />
+          </div>
+        </div>
+
       </header>
 
       {/* 모바일 메뉴 오버레이 */}
@@ -626,12 +620,12 @@ export default function Header() {
           sidebarItems={sidebarItems}
           visible={menuPanel.visible}
           onClose={() => setIsMenuOpen(false)}
-          onLogout={() => void logout()}
+          onLogout={handleLogout}
         />
       )}
 
       {/* 모바일 검색 오버레이 (헤더 바깥 — sticky 헤더 아래에 fixed로 위치) */}
-      <MobileSearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <MobileSearchOverlay isOpen={isSearchOpen} onClose={closeSearch} />
     </>
   );
 }
