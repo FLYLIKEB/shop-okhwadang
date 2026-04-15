@@ -18,61 +18,88 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Node.js 설정
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
-      - name: Deploy to EC2
+      - name: EC2에 배포
         env:
           BACKEND_ENV_PRODUCTION: ${{ secrets.BACKEND_ENV_PRODUCTION }}
           JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
           JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
         run: |
+          set -e
+
           cd /app/shop-okhwadang/shop-okhwadang/backend
 
-          # git pull
+          # ------------------------------------------------------------------
+          # 1. 코드 동기화
+          # ------------------------------------------------------------------
           git fetch origin main
           git reset --hard origin/main
 
-          # restore .env (.gitignored) — dotenv/config 가 런타임에 로드
+          # ------------------------------------------------------------------
+          # 2. 환경변수 복원 (.gitignored)
+          # ------------------------------------------------------------------
           printf '%s' "$BACKEND_ENV_PRODUCTION" > .env
           chmod 600 .env
 
-          # restore JWT RSA keys (.gitignored)
+          # JWT RSA 키 복원 (.gitignored)
           mkdir -p keys
           printf '%s' "$JWT_PRIVATE_KEY" > keys/jwt-private.pem
           printf '%s' "$JWT_PUBLIC_KEY" > keys/jwt-public.pem
           chmod 600 keys/jwt-private.pem keys/jwt-public.pem
 
-          # install dependencies (빌드엔 devDeps 필요 — @types/*, @nestjs/cli 등)
+          # ------------------------------------------------------------------
+          # 3. 의존성 설치 및 빌드
+          # ------------------------------------------------------------------
           npm ci
-
-          # build
           npm run build
 
-          # run migration (NODE_ENV=production 으로 dist glob 사용)
+          # ------------------------------------------------------------------
+          # 4. 마이그레이션 실행
+          # ------------------------------------------------------------------
           set -a
-          . ./.env
+          source .env
           set +a
+
+          # 실패 시 배포 중지 (set -e 덕분에 자동으로 스크립트 중단)
           NODE_ENV=production npm run migration:run:prod
 
-          # prune devDeps (빌드 완료 후 node_modules 슬림화)
+          # ------------------------------------------------------------------
+          # 5. 불필요한 devDependencies 정리 (디스크 절약)
+          # ------------------------------------------------------------------
           npm prune --omit=dev
 
-          # restart pm2
-          pm2 restart commerce --update-env || pm2 start dist/main.js --name commerce
+          # ------------------------------------------------------------------
+          # 6. PM2 서비스 재시작
+          # ------------------------------------------------------------------
+          # 이미 실행 중인 프로세스면 restart, 없으면 start
+          if pm2 describe commerce > /dev/null 2>&1; then
+            pm2 restart commerce --update-env
+          else
+            pm2 start dist/main.js --name commerce
+          fi
           pm2 save
 
-      - name: Smoke test
-        run: |
-          sleep 20
-          # self-hosted runner 가 EC2 내부에서 도는 전제 → localhost 로 점검
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/health)
-          if [ "$STATUS" != "200" ]; then
-            echo "Smoke test failed! HTTP status: $STATUS"
-            exit 1
-          fi
-          echo "Smoke test passed"
+          # ------------------------------------------------------------------
+          # 7. 상태 확인 (烟雾测试)
+          # ------------------------------------------------------------------
+          # 앱이 완전히 기동될 때까지 최대 60초 대기 (10초 간격 6회)
+          for i in $(seq 1 6); do
+            sleep 10
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/health)
+            if [ "$STATUS" = "200" ]; then
+              echo "烟雾测试通过"
+              exit 0
+            fi
+            echo "尝试 $i/6: HTTP $STATUS — 10초 후 재시도..."
+          done
+
+          # 6회 시도 모두 실패
+          echo "烟雾测试 실패 (HTTP $STATUS)"
+          pm2 logs commerce --lines 30 --nostream
+          exit 1
