@@ -55,8 +55,7 @@ export default function AdminFaqsPage() {
   );
 
   useEffect(() => {
-    if (!isAdmin) return;
-    void loadFaqs();
+    if (isAdmin) void loadFaqs();
   }, [isAdmin, loadFaqs]);
 
   const filtered = filterCategory === '전체'
