@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
-import { useNavigation } from '@/components/shared/hooks/useNavigation';
+import { useNavigation } from '@/hooks/useNavigation';
 import type { NavigationItem } from '@/lib/api';
 
 const InstagramIcon = ({ size = 18 }: { size?: number }) => (

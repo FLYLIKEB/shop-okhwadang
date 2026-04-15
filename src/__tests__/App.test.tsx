@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import Header from '@/components/ko/Header';
-import Footer from '@/components/ko/Footer';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import Home from '@/app/[locale]/(routes)/page';
 
 vi.mock('next/navigation', () => ({
