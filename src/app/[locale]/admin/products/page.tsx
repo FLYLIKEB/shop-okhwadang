@@ -9,6 +9,7 @@ import { adminProductsApi } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import AdminPagination from '@/components/admin/AdminPagination';
+import { ProductStatusBadge } from '@/components/admin/StatusBadge';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '임시저장',
@@ -134,17 +135,7 @@ export default function AdminProductsPage() {
                   <td className="px-4 py-3 font-medium">{p.name}</td>
                   <td className="px-4 py-3">{formatCurrency(p.price)}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        p.status === 'active'
-                          ? 'bg-green-100 text-green-700'
-                          : p.status === 'soldout'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-secondary text-muted-foreground'
-                      }`}
-                    >
-                      {STATUS_LABELS[p.status] ?? p.status}
-                    </span>
+                    <ProductStatusBadge status={p.status as 'active' | 'soldout' | 'draft' | 'hidden'} />
                   </td>
                   <td className="px-4 py-3">{p.isFeatured ? '✓' : '-'}</td>
                   <td className="px-4 py-3 text-right">

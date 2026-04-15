@@ -8,7 +8,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/EmptyState';
-import { cn } from '@/components/ui/utils';
+import { InquiryStatusBadge } from '@/components/admin/StatusBadge';
 
 export default function InquiriesPage() {
   const { isAuthenticated } = useRequireAuth();
@@ -63,16 +63,7 @@ export default function InquiriesPage() {
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={cn(
-                        'text-xs font-semibold px-2 py-0.5 rounded',
-                        inquiry.status === 'answered'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-yellow-100 text-yellow-700',
-                      )}
-                    >
-                      {inquiry.status === 'answered' ? '답변완료' : '접수'}
-                    </span>
+                    <InquiryStatusBadge status={inquiry.status as 'answered' | 'pending'} context="my" />
                     <span className="text-xs text-muted-foreground">{inquiry.type}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground truncate">{inquiry.title}</p>
