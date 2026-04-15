@@ -12,7 +12,7 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@/hooks/useUnsavedChanges', () => ({
+vi.mock('@/components/shared/hooks/useUnsavedChanges', () => ({
   useUnsavedChanges: vi.fn(),
 }));
 

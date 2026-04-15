@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import LoginForm from '@/components/auth/LoginForm';
+import LoginForm from '@/components/shared/auth/LoginForm';
 
 export const metadata: Metadata = {
   title: '로그인',

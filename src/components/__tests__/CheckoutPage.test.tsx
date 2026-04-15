@@ -41,7 +41,7 @@ vi.mock('@/i18n/routing', () => ({
 }));
 
 // ---- PaymentGateway ----
-vi.mock('@/components/checkout/PaymentGateway', () => ({
+vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
   default: () => <div data-testid="payment-gateway">PaymentGateway</div>,
 }));
 

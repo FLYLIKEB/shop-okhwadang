@@ -1,4 +1,4 @@
-import JournalListClient from '@/components/journal/JournalListClient';
+import JournalListClient from '@/components/shared/journal/JournalListClient';
 
 export default function JournalPage() {
   return (

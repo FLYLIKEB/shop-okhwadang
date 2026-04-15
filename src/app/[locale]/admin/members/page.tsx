@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { adminMembersApi } from '@/lib/api';
 import type { AdminMember } from '@/lib/api';
-import { AdminMembersTable } from '@/components/admin/AdminMembersTable';
-import AdminPagination from '@/components/admin/AdminPagination';
+import { AdminMembersTable } from '@/components/shared/admin/AdminMembersTable';
+import AdminPagination from '@/components/shared/admin/AdminPagination';
 
 const ROLE_FILTERS = [
   { label: '전체', value: '' },

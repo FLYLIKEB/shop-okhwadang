@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useFormModal } from '@/hooks/useFormModal';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useFormModal } from '@/components/shared/hooks/useFormModal';
 import {
   adminArchivesApi,
   type NiloType,
@@ -18,11 +18,11 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
-import { AdminTable } from '@/components/admin/AdminTable';
-import { StatusBadge } from '@/components/admin/StatusBadge';
-import ProductImageUploader from '@/components/admin/ProductImageUploader';
+import { AdminTable } from '@/components/shared/admin/AdminTable';
+import { StatusBadge } from '@/components/shared/admin/StatusBadge';
+import ProductImageUploader from '@/components/shared/admin/ProductImageUploader';
 import { GripVertical } from 'lucide-react';
-import { useAdminDndSensors } from '@/hooks/useDndSensors';
+import { useAdminDndSensors } from '@/components/shared/hooks/useDndSensors';
 import {
   DndContext,
   DragOverlay,

@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { adminCategoriesApi } from '@/lib/api';
 import type { AdminCategory, CreateCategoryData } from '@/lib/api';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import CategoryFormModal from '@/components/admin/CategoryFormModal';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import CategoryFormModal from '@/components/shared/admin/CategoryFormModal';
 import { GripVertical } from 'lucide-react';
-import { StatusBadge } from '@/components/admin/StatusBadge';
-import { SortableCategoryRow } from '@/components/admin/SortableCategoryRow';
-import { useAdminDndSensors } from '@/hooks/useDndSensors';
+import { StatusBadge } from '@/components/shared/admin/StatusBadge';
+import { SortableCategoryRow } from '@/components/shared/admin/SortableCategoryRow';
+import { useAdminDndSensors } from '@/components/shared/hooks/useDndSensors';
 import {
   DndContext,
   DragOverlay,

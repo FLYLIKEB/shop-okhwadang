@@ -24,7 +24,7 @@ vi.mock('@/lib/api', () => ({
 
 const mockUseAdminGuard = vi.fn();
 
-vi.mock('@/hooks/useAdminGuard', () => ({
+vi.mock('@/components/shared/hooks/useAdminGuard', () => ({
   useAdminGuard: () => mockUseAdminGuard(),
 }));
 

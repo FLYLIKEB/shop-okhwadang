@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { inquiriesApi } from '@/lib/api';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 
 const INQUIRY_TYPES = ['상품', '배송', '결제', '교환/반품', '기타'];
 

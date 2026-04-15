@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { authApi } from '@/lib/api';
-import OAuthCallbackHandler from '@/components/auth/OAuthCallbackHandler';
+import OAuthCallbackHandler from '@/components/shared/auth/OAuthCallbackHandler';
 
 function KakaoCallbackFallback() {
   return (

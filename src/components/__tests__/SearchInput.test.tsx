@@ -8,11 +8,11 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
-vi.mock('@/hooks/useAutocomplete', () => ({
+vi.mock('@/components/shared/hooks/useAutocomplete', () => ({
   useAutocomplete: vi.fn(() => ({ suggestions: [], isLoading: false })),
 }));
 
-vi.mock('@/hooks/useRecentSearches', () => ({
+vi.mock('@/components/shared/hooks/useRecentSearches', () => ({
   useRecentSearches: vi.fn(() => ({
     recentSearches: ['sneakers', 'bags'],
     addSearch: vi.fn(),
@@ -43,7 +43,7 @@ describe('SearchInput', () => {
 
   it('shows recent searches on focus when input is empty', async () => {
     const user = userEvent.setup();
-    const { default: SearchInput } = await import('@/components/search/SearchInput');
+    const { default: SearchInput } = await import('@/components/shared/search/SearchInput');
     render(<SearchInput />);
 
     const input = screen.getByRole('searchbox');
@@ -58,7 +58,7 @@ describe('SearchInput', () => {
 
   it('ESC key closes the dropdown', async () => {
     const user = userEvent.setup();
-    const { default: SearchInput } = await import('@/components/search/SearchInput');
+    const { default: SearchInput } = await import('@/components/shared/search/SearchInput');
     render(<SearchInput />);
 
     const input = screen.getByRole('searchbox');
@@ -76,7 +76,7 @@ describe('SearchInput', () => {
   });
 
   it('shows autocomplete results when typing', async () => {
-    const { useAutocomplete } = await import('@/hooks/useAutocomplete');
+    const { useAutocomplete } = await import('@/components/shared/hooks/useAutocomplete');
     const mockedUseAutocomplete = vi.mocked(useAutocomplete);
     mockedUseAutocomplete.mockReturnValue({
       suggestions: [
@@ -87,7 +87,7 @@ describe('SearchInput', () => {
     });
 
     const user = userEvent.setup();
-    const { default: SearchInput } = await import('@/components/search/SearchInput');
+    const { default: SearchInput } = await import('@/components/shared/search/SearchInput');
     render(<SearchInput />);
 
     const input = screen.getByRole('searchbox');

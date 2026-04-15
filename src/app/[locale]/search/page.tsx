@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import SearchPage from '@/components/search/SearchPage';
+import SearchPage from '@/components/shared/search/SearchPage';
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;

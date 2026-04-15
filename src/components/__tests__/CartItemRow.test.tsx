@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
-import CartItemRow from '@/components/cart/CartItemRow';
+import CartItemRow from '@/components/shared/cart/CartItemRow';
 import { CartItem } from '@/lib/api';
 
 vi.mock('next/image', () => ({

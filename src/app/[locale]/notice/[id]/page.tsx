@@ -5,12 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { noticesApi } from '@/lib/api';
 import type { Notice } from '@/lib/api';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 // DOMPurify requires browser environment — load without SSR
 const DOMPurifyContent = dynamic(
-  () => import('@/components/common/SafeHtml'),
+  () => import('@/components/shared/common/SafeHtml'),
   { ssr: false },
 );
 

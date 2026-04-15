@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import Header from '@/components/Header';
+import Header from '@/components/ko/Header';
 
 const mockPush = vi.fn();
 const mockBack = vi.fn();

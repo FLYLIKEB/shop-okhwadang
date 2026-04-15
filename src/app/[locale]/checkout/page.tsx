@@ -12,9 +12,9 @@ import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
 import { SESSION_KEYS } from '@/constants/storage';
 import { formatCurrency } from '@/utils/currency';
 import type { Locale } from '@/i18n/routing';
-import PaymentGateway, { type PaymentGatewayHandle } from '@/components/checkout/PaymentGateway';
-import { AddressSelectorSection } from '@/components/checkout/AddressSelectorSection';
-import { OrderSummarySection } from '@/components/checkout/OrderSummarySection';
+import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
+import { AddressSelectorSection } from '@/components/shared/checkout/AddressSelectorSection';
+import { OrderSummarySection } from '@/components/shared/checkout/OrderSummarySection';
 import {
   ShippingFormSection,
   PhoneInputSection,
@@ -22,10 +22,10 @@ import {
   AddressInputSection,
   AddressDetailInputSection,
   MemoInputSection,
-} from '@/components/checkout/ShippingFormSection';
-import { useCheckout, type PaymentStep } from '@/hooks/useCheckout';
+} from '@/components/shared/checkout/ShippingFormSection';
+import { useCheckout, type PaymentStep } from '@/components/shared/hooks/useCheckout';
 
-type { PaymentStep };
+// Re-exported for type usage
 
 const STEP_LABELS: Record<PaymentStep, string> = {
   idle: '결제하기',
@@ -35,7 +35,7 @@ const STEP_LABELS: Record<PaymentStep, string> = {
   success: '완료',
 };
 
-interface ShippingForm {
+export interface ShippingForm {
   recipientName: string;
   recipientPhone: string;
   zipcode: string;
@@ -44,7 +44,7 @@ interface ShippingForm {
   memo: string;
 }
 
-interface FormErrors {
+export interface FormErrors {
   recipientName?: string;
   recipientPhone?: string;
   zipcode?: string;

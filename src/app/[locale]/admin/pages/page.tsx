@@ -1,19 +1,19 @@
 'use client';
 
 import { useEffect, useState, useReducer } from 'react';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { adminPagesApi } from '@/lib/api';
 import type { Page } from '@/lib/api';
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
-import { draftReducer } from '@/components/admin/page-editor/useDraftReducer';
-import { usePageEditor } from '@/components/admin/page-editor/usePageEditor';
-import PageListSidebar from '@/components/admin/page-editor/PageListSidebar';
-import EditorTopBar from '@/components/admin/page-editor/EditorTopBar';
-import BlockPalette from '@/components/admin/page-editor/BlockPalette';
-import EditorCanvas from '@/components/admin/page-editor/EditorCanvas';
-import BlockPropertyPanel from '@/components/admin/page-editor/BlockPropertyPanel';
-import PreviewModal from '@/components/admin/page-editor/PreviewModal';
+import { useUnsavedChanges } from '@/components/shared/hooks/useUnsavedChanges';
+import { draftReducer } from '@/components/shared/admin/page-editor/useDraftReducer';
+import { usePageEditor } from '@/components/shared/admin/page-editor/usePageEditor';
+import PageListSidebar from '@/components/shared/admin/page-editor/PageListSidebar';
+import EditorTopBar from '@/components/shared/admin/page-editor/EditorTopBar';
+import BlockPalette from '@/components/shared/admin/page-editor/BlockPalette';
+import EditorCanvas from '@/components/shared/admin/page-editor/EditorCanvas';
+import BlockPropertyPanel from '@/components/shared/admin/page-editor/BlockPropertyPanel';
+import PreviewModal from '@/components/shared/admin/page-editor/PreviewModal';
 
 export default function AdminPagesPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();

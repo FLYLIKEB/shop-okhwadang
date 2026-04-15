@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { settingsApi, adminSettingsApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import type { SiteSetting } from '@/lib/api';
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useUnsavedChanges } from '@/components/shared/hooks/useUnsavedChanges';
 import { cn } from '@/components/ui/utils';
 
 const TABS = [

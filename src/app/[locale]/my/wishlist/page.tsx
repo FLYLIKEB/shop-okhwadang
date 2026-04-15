@@ -6,12 +6,12 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { wishlistApi, cartApi } from '@/lib/api';
 import type { WishlistItem } from '@/lib/api';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import EmptyState from '@/components/EmptyState';
+import EmptyState from '@/components/shared/EmptyState';
 import { cn } from '@/components/ui/utils';
-import PriceDisplay from '@/components/common/PriceDisplay';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import PriceDisplay from '@/components/shared/common/PriceDisplay';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 
 export default function WishlistPage() {
   const router = useRouter();

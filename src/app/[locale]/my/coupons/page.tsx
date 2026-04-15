@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import { couponsApi } from '@/lib/api';
 import type { CouponItem } from '@/lib/api';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
 import { formatCurrency } from '@/utils/currency';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 
 type TabStatus = 'available' | 'used' | 'expired';
 

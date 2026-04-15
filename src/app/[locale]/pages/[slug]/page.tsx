@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import BlockRenderer from '@/components/blocks/BlockRenderer';
+import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
 import { fetchPage } from '@/lib/api-server';
 import type { Page } from '@/lib/api';
 

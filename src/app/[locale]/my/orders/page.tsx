@@ -6,9 +6,9 @@ import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import StatusBadge from '@/components/common/StatusBadge';
+import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import StatusBadge from '@/components/shared/common/StatusBadge';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 const PAGE_LIMIT = 10;

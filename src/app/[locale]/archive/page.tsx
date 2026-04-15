@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { cn } from '@/components/ui/utils';
 import { fetchArchives } from '@/lib/api-server';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import { SectionHeading } from '@/components/common/SectionHeading';
+import { SectionHeading } from '@/components/shared/common/SectionHeading';
 import type { NiloType, ProcessStep, Artist } from '@/lib/api';
 
 export const metadata: Metadata = {

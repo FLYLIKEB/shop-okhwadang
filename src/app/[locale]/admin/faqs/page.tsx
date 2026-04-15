@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useFormModal } from '@/hooks/useFormModal';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useFormModal } from '@/components/shared/hooks/useFormModal';
 import { adminFaqsApi } from '@/lib/api';
 import type { Faq, CreateFaqData } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
@@ -12,8 +12,8 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
-import { AdminTable } from '@/components/admin/AdminTable';
-import { StatusBadge } from '@/components/admin/StatusBadge';
+import { AdminTable } from '@/components/shared/admin/AdminTable';
+import { StatusBadge } from '@/components/shared/admin/StatusBadge';
 import { cn } from '@/components/ui/utils';
 
 const FAQ_CATEGORIES = ['배송', '결제', '교환/반품', '회원', '기타'];

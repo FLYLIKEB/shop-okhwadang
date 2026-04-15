@@ -75,7 +75,7 @@ describe('SearchPage', () => {
       limit: 20,
     });
 
-    const { default: SearchPage } = await import('@/components/search/SearchPage');
+    const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
     await waitFor(() => {
@@ -88,7 +88,7 @@ describe('SearchPage', () => {
   it('shows EmptyState when no results', async () => {
     mockGetList.mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 });
 
-    const { default: SearchPage } = await import('@/components/search/SearchPage');
+    const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
     await waitFor(() => {
@@ -105,7 +105,7 @@ describe('SearchPage', () => {
       limit: 20,
     });
 
-    const { default: SearchPage } = await import('@/components/search/SearchPage');
+    const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
     await waitFor(() => {
@@ -121,7 +121,7 @@ describe('SearchPage', () => {
   it('shows filter options (price inputs and apply button)', async () => {
     mockGetList.mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 });
 
-    const { default: SearchPage } = await import('@/components/search/SearchPage');
+    const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
     expect(screen.getByLabelText('최소 가격')).toBeInTheDocument();

@@ -1,17 +1,17 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import EmptyState from '@/components/EmptyState';
-import ProductGrid from '@/components/products/ProductGrid';
-import FilterSidebar from '@/components/filters/FilterSidebar';
-import MobileFilterBar from '@/components/filters/MobileFilterBar';
-import Pagination from '@/components/products/Pagination';
-import ProductSkeleton from '@/components/products/ProductSkeleton';
+import EmptyState from '@/components/shared/EmptyState';
+import ProductGrid from '@/components/shared/products/ProductGrid';
+import FilterSidebar from '@/components/shared/filters/FilterSidebar';
+import MobileFilterBar from '@/components/shared/filters/MobileFilterBar';
+import Pagination from '@/components/shared/products/Pagination';
+import ProductSkeleton from '@/components/shared/products/ProductSkeleton';
 import { fetchProducts, fetchCategories, fetchCollections } from '@/lib/api-server';
-import ProductErrorState from '@/components/products/ProductErrorState';
+import ProductErrorState from '@/components/shared/products/ProductErrorState';
 import type { ProductSort } from '@/lib/api';
 import type { Locale } from '@/utils/currency';
-import Breadcrumb from '@/components/layout/Breadcrumb';
-import CategoryHeroBanner from '@/components/layout/CategoryHeroBanner';
+import Breadcrumb from '@/components/shared/layout/Breadcrumb';
+import CategoryHeroBanner from '@/components/shared/layout/CategoryHeroBanner';
 
 export const metadata: Metadata = {
   title: 'Products | 옥화당',

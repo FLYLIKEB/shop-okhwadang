@@ -2,17 +2,17 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useFormModal } from '@/hooks/useFormModal';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useFormModal } from '@/components/shared/hooks/useFormModal';
 import { adminJournalsApi, type Journal, type CreateJournalData, JournalCategory } from '@/lib/api';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
-import { AdminTable } from '@/components/admin/AdminTable';
-import { JournalStatusBadge } from '@/components/admin/StatusBadge';
-import ProductImageUploader from '@/components/admin/ProductImageUploader';
+import { AdminTable } from '@/components/shared/admin/AdminTable';
+import { JournalStatusBadge } from '@/components/shared/admin/StatusBadge';
+import ProductImageUploader from '@/components/shared/admin/ProductImageUploader';
 
 const CATEGORY_LABELS: Record<JournalCategory, string> = {
   [JournalCategory.CULTURE]: '다문화',

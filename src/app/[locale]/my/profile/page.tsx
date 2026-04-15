@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi } from '@/lib/api';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 
 interface ProfileForm {
   name: string;

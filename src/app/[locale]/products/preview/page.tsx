@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import type { ProductDetail } from '@/lib/api'
-import ProductDetailClient from '@/components/products/ProductDetailClient'
+import ProductDetailClient from '@/components/shared/products/ProductDetailClient'
 
 export const metadata: Metadata = {
   title: '상품 상세 프리뷰 — 옥화당',
