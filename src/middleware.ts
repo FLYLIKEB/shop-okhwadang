@@ -160,8 +160,13 @@ export async function middleware(request: NextRequest) {
 
       const responseHeaders = new Headers();
       response.headers.forEach((value, key) => {
+        if (key.toLowerCase() === 'set-cookie') return;
         responseHeaders.set(key, value);
       });
+      const setCookies = response.headers.getSetCookie?.() ?? [];
+      for (const cookie of setCookies) {
+        responseHeaders.append('set-cookie', cookie);
+      }
       responseHeaders.set('X-Proxy-By', 'Next.js Middleware');
 
       return new NextResponse(data, {
