@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest'
 import ImageGallery from '@/components/products/ImageGallery'
 
 vi.mock('next/image', () => ({
+  // eslint-disable-next-line @next/next/no-img-element
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }))
 

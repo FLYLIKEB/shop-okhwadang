@@ -99,6 +99,7 @@ export default function MultiImageUploader({
               </div>
             ) : (
               <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={img.url}
                   alt={img.alt ?? `이미지 ${index + 1}`}

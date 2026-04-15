@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useAdminGuard } from '@/hooks/useAdminGuard';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useFormModal } from '@/hooks/useFormModal';
-import { adminJournalsApi, journalsApi, type Journal, type CreateJournalData, JournalCategory } from '@/lib/api';
+import { adminJournalsApi, type Journal, type CreateJournalData, JournalCategory } from '@/lib/api';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';

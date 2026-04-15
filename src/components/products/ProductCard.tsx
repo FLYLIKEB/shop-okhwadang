@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart } from 'lucide-react';
@@ -32,17 +32,12 @@ function ProductCard({
   name,
   price,
   salePrice,
-  shortDescription,
-  rating,
-  reviewCount,
   categoryName,
   status,
   images,
   locale = 'ko',
   priority = false,
-  variant = 'default',
 }: ProductCardProps) {
-  const isMinimal = variant === 'minimal';
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
 

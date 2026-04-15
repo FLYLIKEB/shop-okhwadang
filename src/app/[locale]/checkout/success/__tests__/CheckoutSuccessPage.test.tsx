@@ -37,7 +37,8 @@ vi.mock('@/lib/api', () => ({
 
 // ---- error utility ----
 vi.mock('@/utils/error', () => ({
-  handleApiError: vi.fn((err: unknown) => '결제 확인 중 오류가 발생했습니다.'),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handleApiError: vi.fn((_err: unknown) => '결제 확인 중 오류가 발생했습니다.'),
 }));
 
 const makeParams = () => Promise.resolve({ locale: 'ko' as const });

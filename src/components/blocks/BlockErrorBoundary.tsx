@@ -22,6 +22,7 @@ export default class BlockErrorBoundary extends Component<Props, State> {
     return { hasError: true };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   componentDidCatch(_error: Error, _errorInfo: ErrorInfo): void {
     // Error logging can be added here
   }

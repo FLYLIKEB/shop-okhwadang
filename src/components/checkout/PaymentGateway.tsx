@@ -95,7 +95,9 @@ const StripePaymentGateway = forwardRef<
     locale: string;
     onError: (msg: string) => void;
   }
->(function StripePaymentGateway({ clientSecret, publishableKey, locale, onError }, ref) {
+>(function StripePaymentGateway({ clientSecret, publishableKey, locale,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onError: _onError }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [mountError, setMountError] = useState<string | null>(null);

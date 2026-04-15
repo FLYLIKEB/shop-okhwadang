@@ -25,7 +25,6 @@ export default function ProductCarouselBlock({ content }: Props) {
 
   const cardWidth = template === 'large' ? 288 : 224;
   const gap = 24;
-  const isLarge = template === 'large';
 
   useEffect(() => {
     let cancelled = false;

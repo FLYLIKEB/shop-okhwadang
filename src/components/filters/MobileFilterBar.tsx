@@ -39,7 +39,7 @@ function buildAttrsParam(current: Map<string, string>, key: string, value: strin
     .join(',');
 }
 
-export default function MobileFilterBar({ categories, clayCollections, shapeCollections }: MobileFilterBarProps) {
+export default function MobileFilterBar({ categories, shapeCollections }: MobileFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filterOpen, setFilterOpen] = useState(false);
@@ -51,14 +51,7 @@ export default function MobileFilterBar({ categories, clayCollections, shapeColl
 
   const attrsParam = searchParams.get('attrs');
   const parsedAttrs = parseAttrsParam(attrsParam);
-  const selectedClayType = parsedAttrs.get('clay_type');
   const selectedShape = parsedAttrs.get('teapot_shape');
-
-  const hasActiveFilters =
-    priceMin !== undefined ||
-    priceMax !== undefined ||
-    selectedShape !== undefined ||
-    selectedClayType !== undefined;
 
   const rootCategories = categories.filter((c) => c.parentId === null);
 
@@ -79,11 +72,6 @@ export default function MobileFilterBar({ categories, clayCollections, shapeColl
 
   const handleCategorySelect = (id: number | undefined) => {
     updateParams({ categoryId: id !== undefined ? String(id) : undefined });
-  };
-
-  const handleClayTypeSelect = (value: string | undefined) => {
-    const newAttrs = buildAttrsParam(parsedAttrs, 'clay_type', value);
-    updateParams({ attrs: newAttrs });
   };
 
   const handlePriceChange = (min?: number, max?: number) => {

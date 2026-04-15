@@ -126,7 +126,7 @@ interface CollectionPageProps {
 }
 
 export default async function CollectionPage({ params }: CollectionPageProps) {
-  const { locale } = await params;
+  await params;
 
   let clayCollections: Collection[] = [];
   let shapeCollections: Collection[] = [];

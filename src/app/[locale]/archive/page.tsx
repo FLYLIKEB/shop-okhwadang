@@ -74,7 +74,7 @@ function ProcessCard({ step: s }: { step: ProcessStep }) {
   );
 }
 
-function ArtistCard({ artist, index, reversed }: { artist: Artist; index: number; reversed: boolean }) {
+function ArtistCard({ artist, reversed }: { artist: Artist; reversed: boolean }) {
   return (
     <article
       className={cn(
@@ -182,7 +182,7 @@ interface ArchivePageProps {
 }
 
 export default async function ArchivePage({ params }: ArchivePageProps) {
-  const { locale } = await params;
+  await params;
 
   let niloTypes: NiloType[] = [];
   let processSteps: ProcessStep[] = [];
@@ -268,7 +268,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
         <div className="space-y-20" id="artist-heading">
           {artists.length > 0 ? (
             artists.map((artist, i) => (
-              <ArtistCard key={artist.id} artist={artist} index={i} reversed={i % 2 === 1} />
+              <ArtistCard key={artist.id} artist={artist} reversed={i % 2 === 1} />
             ))
           ) : (
             Array.from({ length: 2 }).map((_, i) => (
