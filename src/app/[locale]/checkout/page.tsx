@@ -9,6 +9,7 @@ import { useCart } from '@/contexts/CartContext';
 import type { CartItem, PreparePaymentResponse, UserAddress } from '@/lib/api';
 import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
+import { SESSION_KEYS } from '@/constants/storage';
 import { formatCurrency } from '@/utils/currency';
 import type { Locale } from '@/i18n/routing';
 import PaymentGateway, { type PaymentGatewayHandle } from '@/components/checkout/PaymentGateway';
@@ -102,7 +103,7 @@ export default function CheckoutPage({
       router.replace(`/${locale}/login`);
       return;
     }
-    const raw = sessionStorage.getItem('checkoutItems');
+    const raw = sessionStorage.getItem(SESSION_KEYS.CHECKOUT_ITEMS);
     if (!raw) {
       router.replace(`/${locale}/cart`);
       return;
@@ -256,7 +257,7 @@ export default function CheckoutPage({
 
       setStep('success');
       toast.success('결제가 완료되었습니다.');
-      sessionStorage.removeItem('checkoutItems');
+      sessionStorage.removeItem(SESSION_KEYS.CHECKOUT_ITEMS);
       await refetch();
       router.replace(`/${locale}/order/complete?orderId=${order.id}&orderNumber=${order.orderNumber}`);
     } catch (err) {

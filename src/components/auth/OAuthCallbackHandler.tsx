@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { AuthTokenResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { SESSION_KEYS } from '@/constants/storage';
 
 interface OAuthCallbackHandlerProps {
   provider: 'kakao' | 'google';
@@ -18,7 +19,7 @@ export default function OAuthCallbackHandler({ provider, apiMethod }: OAuthCallb
   useEffect(() => {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
-    const storedState = sessionStorage.getItem('oauth_state');
+    const storedState = sessionStorage.getItem(SESSION_KEYS.OAUTH_STATE);
 
     if (!code) {
       toast.error('인증 코드가 없습니다.');
@@ -32,7 +33,7 @@ export default function OAuthCallbackHandler({ provider, apiMethod }: OAuthCallb
       return;
     }
 
-    sessionStorage.removeItem('oauth_state');
+    sessionStorage.removeItem(SESSION_KEYS.OAUTH_STATE);
 
     apiMethod(code, state)
       .then(() => {

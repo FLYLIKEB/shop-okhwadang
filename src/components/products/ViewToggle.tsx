@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react';
 import { LayoutGrid, List } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
+import { LOCAL_KEYS } from '@/constants/storage';
 
 type ViewMode = 'grid' | 'list';
-
-const STORAGE_KEY = 'products-view-mode';
 
 interface ViewToggleProps {
   value?: ViewMode;
@@ -18,7 +17,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
 
   useEffect(() => {
     if (value === undefined) {
-      const stored = localStorage.getItem(STORAGE_KEY) as ViewMode | null;
+      const stored = localStorage.getItem(LOCAL_KEYS.VIEW_MODE) as ViewMode | null;
       if (stored === 'grid' || stored === 'list') {
         setMode(stored);
       }
@@ -27,7 +26,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
 
   const handleChange = (newMode: ViewMode) => {
     setMode(newMode);
-    localStorage.setItem(STORAGE_KEY, newMode);
+    localStorage.setItem(LOCAL_KEYS.VIEW_MODE, newMode);
     onChange?.(newMode);
   };
 

@@ -9,6 +9,7 @@ import EmptyState from '@/components/EmptyState';
 import CartItemRow from '@/components/cart/CartItemRow';
 import { formatCurrency } from '@/utils/currency';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
+import { SESSION_KEYS } from '@/constants/storage';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 export default function CartPage() {
@@ -55,7 +56,7 @@ export default function CartPage() {
       return;
     }
     const selectedItems = items.filter((item) => selectedIds.has(item.id));
-    sessionStorage.setItem('checkoutItems', JSON.stringify(selectedItems));
+    sessionStorage.setItem(SESSION_KEYS.CHECKOUT_ITEMS, JSON.stringify(selectedItems));
     router.push('/checkout');
   };
 

@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
+import { SESSION_KEYS } from '@/constants/storage';
 
 interface User {
   id: number;
@@ -77,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithKakao = useCallback(() => {
     const state = generateState();
-    sessionStorage.setItem('oauth_state', state);
+    sessionStorage.setItem(SESSION_KEYS.OAUTH_STATE, state);
     const clientId = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID ?? '';
     const redirectUri = process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI ?? '';
     const url = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithGoogle = useCallback(() => {
     const state = generateState();
-    sessionStorage.setItem('oauth_state', state);
+    sessionStorage.setItem(SESSION_KEYS.OAUTH_STATE, state);
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
     const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI ?? '';
     const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&state=${state}`;
