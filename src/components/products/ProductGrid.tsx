@@ -8,10 +8,9 @@ import SortDropdown from '@/components/products/SortDropdown';
 import { cn } from '@/components/ui/utils';
 import type { Product } from '@/lib/api';
 import type { Locale } from '@/utils/currency';
+import { LOCAL_KEYS } from '@/constants/storage';
 
 type ViewMode = 'grid' | 'list';
-
-const STORAGE_KEY = 'products-view-mode';
 
 interface ProductGridProps {
   products: Product[];
@@ -23,7 +22,7 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
   const [view, setView] = useState<ViewMode>('grid');
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as ViewMode | null;
+    const stored = localStorage.getItem(LOCAL_KEYS.VIEW_MODE) as ViewMode | null;
     if (stored === 'grid' || stored === 'list') {
       setView(stored);
     }

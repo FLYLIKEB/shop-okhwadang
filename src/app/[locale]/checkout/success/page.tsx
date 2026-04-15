@@ -8,6 +8,7 @@ import { handleApiError } from '@/utils/error';
 import { useCart } from '@/contexts/CartContext';
 import { paymentsApi } from '@/lib/api';
 import type { Locale } from '@/i18n/routing';
+import { SESSION_KEYS } from '@/constants/storage';
 
 function CheckoutSuccessContent({ locale }: { locale: Locale }) {
   const router = useRouter();
@@ -26,7 +27,7 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
       return;
     }
 
-    const raw = sessionStorage.getItem('tossPaymentContext');
+    const raw = sessionStorage.getItem(SESSION_KEYS.TOSS_CONTEXT);
     if (!raw) {
       toast.error('결제 컨텍스트를 찾을 수 없습니다.');
       router.replace(`/${locale}/cart`);
@@ -50,8 +51,8 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
       .confirm({ orderId: ctx.orderId, paymentKey, amount: ctx.amount })
       .then(async () => {
         toast.success('결제가 완료되었습니다.');
-        sessionStorage.removeItem('checkoutItems');
-        sessionStorage.removeItem('tossPaymentContext');
+        sessionStorage.removeItem(SESSION_KEYS.CHECKOUT_ITEMS);
+        sessionStorage.removeItem(SESSION_KEYS.TOSS_CONTEXT);
         await refetch();
         router.replace(
           `/${locale}/order/complete?orderId=${ctx.orderId}&orderNumber=${ctx.orderNumber}`,

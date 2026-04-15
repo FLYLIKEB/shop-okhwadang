@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import type { Locale } from '@/i18n/routing';
+import { SESSION_KEYS } from '@/constants/storage';
 
 function CheckoutFailContent({ locale }: { locale: Locale }) {
   const searchParams = useSearchParams();
@@ -15,7 +16,7 @@ function CheckoutFailContent({ locale }: { locale: Locale }) {
 
   useEffect(() => {
     toast.error(message);
-    sessionStorage.removeItem('tossPaymentContext');
+    sessionStorage.removeItem(SESSION_KEYS.TOSS_CONTEXT);
   }, [message]);
 
   return (

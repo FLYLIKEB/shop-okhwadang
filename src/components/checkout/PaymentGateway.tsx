@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import type { Locale } from '@/i18n/routing';
 import type { PreparePaymentResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { SESSION_KEYS } from '@/constants/storage';
 
 export interface PaymentGatewayHandle {
   confirm: () => Promise<void>;
@@ -37,7 +38,7 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
           const payment = tossPayments.payment({ customerKey: `user_${orderId}` });
 
           sessionStorage.setItem(
-            'tossPaymentContext',
+            SESSION_KEYS.TOSS_CONTEXT,
             JSON.stringify({ orderId, orderNumber, amount }),
           );
 
