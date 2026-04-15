@@ -2,7 +2,7 @@ import {
   Injectable, NotFoundException, BadRequestException, Logger,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
@@ -21,8 +21,6 @@ export class OrdersService {
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
-    @InjectRepository(PointHistory)
-    private readonly pointHistoryRepo: Repository<PointHistory>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
@@ -33,32 +31,29 @@ export class OrdersService {
     return `ORD-${date}-${random}`;
   }
 
-  private async getUserPointBalance(userId: number): Promise<number> {
-    const latest = await this.pointHistoryRepo.findOne({
-      where: { userId },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
-    return latest ? latest.balance : 0;
-  }
-
   async create(userId: number, dto: CreateOrderDto): Promise<Order> {
     if (!dto.items || dto.items.length === 0) {
       throw new BadRequestException('주문 항목이 없습니다.');
     }
 
     const pointsToUse = dto.pointsUsed ?? 0;
-    if (pointsToUse > 0) {
-      const balance = await this.getUserPointBalance(userId);
-      if (pointsToUse > balance) {
-        throw new BadRequestException('적립금이 부족합니다.');
-      }
-    }
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      if (pointsToUse > 0) {
+        const latest = await queryRunner.manager.getRepository(PointHistory).findOne({
+          where: { userId },
+          order: { createdAt: 'DESC', id: 'DESC' },
+        });
+        const balance = latest ? latest.balance : 0;
+        if (pointsToUse > balance) {
+          throw new BadRequestException('적립금이 부족합니다.');
+        }
+      }
+
       const orderItems: Partial<OrderItem>[] = [];
       let totalAmount = 0;
 
@@ -143,7 +138,11 @@ export class OrdersService {
       const savedOrder = await queryRunner.manager.save(Order, order);
 
       if (pointsToUse > 0) {
-        const currentBalance = await this.getUserPointBalance(userId);
+        const latestPoint = await queryRunner.manager.getRepository(PointHistory).findOne({
+          where: { userId },
+          order: { createdAt: 'DESC', id: 'DESC' },
+        });
+        const currentBalance = latestPoint ? latestPoint.balance : 0;
         const newBalance = currentBalance - pointsToUse;
         const pointHistory = queryRunner.manager.create(PointHistory, {
           userId,
@@ -186,7 +185,7 @@ export class OrdersService {
   async findAll(userId: number, page = 1, limit = 10): Promise<PaginatedResult<Order>> {
     const qb = this.orderRepository
       .createQueryBuilder('order')
-      .leftJoinAndSelect('order.items', 'item')
+      .loadRelationCountAndMap('order.itemCount', 'order.items')
       .where('order.userId = :userId', { userId })
       .orderBy('order.createdAt', 'DESC');
 
