@@ -27,7 +27,7 @@ describe('LocalStorageAdapter', () => {
         Buffer.from('data'),
       );
       expect(result.url).toBe('/uploads/image.jpg');
-      expect(result.filename).toBe('image.jpg');
+      expect(result.filename).toBe('uploads/image.jpg');
     });
 
     it('../ 경로 탐색 → BadRequestException', async () => {
@@ -42,9 +42,17 @@ describe('LocalStorageAdapter', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('슬래시 포함 경로 → BadRequestException', async () => {
+it('슬래시 포함 경로 → BadRequestException', async () => {
+      mockMkdir.mockRejectedValue(new Error('should not be called'));
       await expect(
         adapter.save('subdir/image.jpg', Buffer.from('data'), 'image/jpeg'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('백슬래시 포함 경로 → BadRequestException', async () => {
+      mockMkdir.mockRejectedValue(new Error('should not be called'));
+      await expect(
+        adapter.save('subdir\\image.jpg', Buffer.from('data'), 'text/plain'),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -57,7 +65,7 @@ describe('LocalStorageAdapter', () => {
     it('url에 safeName 사용 (원본 파일명 그대로)', async () => {
       const result = await adapter.save('photo.png', Buffer.from(''), 'image/png');
       expect(result.url).toBe('/uploads/photo.png');
-      expect(result.filename).toBe('photo.png');
+      expect(result.filename).toBe('uploads/photo.png');
     });
   });
 });

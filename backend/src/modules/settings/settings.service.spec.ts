@@ -97,6 +97,7 @@ describe('SettingsService', () => {
           where: jest.fn().mockReturnThis(),
           execute: jest.fn().mockResolvedValue({ affected: 1 }),
         }),
+        update: jest.fn().mockResolvedValue({ affected: 1 }),
       };
       mockDataSource.transaction.mockImplementation(async (cb: (m: unknown) => Promise<void>) => cb(mockManager));
 
@@ -117,6 +118,7 @@ describe('SettingsService', () => {
           where: jest.fn().mockReturnThis(),
           execute: jest.fn().mockResolvedValue({ affected: 0 }),
         }),
+        update: jest.fn().mockResolvedValue({ affected: 0 }),
       };
       mockDataSource.transaction.mockImplementation(async (cb: (m: unknown) => Promise<void>) => cb(mockManager));
 
