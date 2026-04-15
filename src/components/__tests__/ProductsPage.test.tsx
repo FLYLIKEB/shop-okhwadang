@@ -30,7 +30,7 @@ describe('ViewToggle', () => {
   });
 
   it('defaults to grid view and switches to list on click', async () => {
-    const { default: ViewToggle } = await import('@/components/products/ViewToggle');
+    const { default: ViewToggle } = await import('@/components/shared/products/ViewToggle');
     const onChange = vi.fn();
     render(<ViewToggle value="grid" onChange={onChange} />);
 
@@ -48,7 +48,7 @@ describe('SortDropdown', () => {
   });
 
   it('updates URL with sort parameter on change', async () => {
-    const { default: SortDropdown } = await import('@/components/products/SortDropdown');
+    const { default: SortDropdown } = await import('@/components/shared/products/SortDropdown');
     render(<SortDropdown />);
 
     const select = screen.getByLabelText('정렬 기준');
@@ -64,7 +64,7 @@ describe('Pagination', () => {
   });
 
   it('renders page buttons and navigates on click', async () => {
-    const { default: Pagination } = await import('@/components/products/Pagination');
+    const { default: Pagination } = await import('@/components/shared/products/Pagination');
     render(<Pagination total={100} page={1} limit={20} />);
 
     const nextButton = screen.getByText('다음');
@@ -74,7 +74,7 @@ describe('Pagination', () => {
   });
 
   it('disables prev button on first page', async () => {
-    const { default: Pagination } = await import('@/components/products/Pagination');
+    const { default: Pagination } = await import('@/components/shared/products/Pagination');
     render(<Pagination total={100} page={1} limit={20} />);
 
     const prevButton = screen.getByText('이전');
@@ -82,7 +82,7 @@ describe('Pagination', () => {
   });
 
   it('does not render when total fits in one page', async () => {
-    const { default: Pagination } = await import('@/components/products/Pagination');
+    const { default: Pagination } = await import('@/components/shared/products/Pagination');
     const { container } = render(<Pagination total={10} page={1} limit={20} />);
     expect(container.innerHTML).toBe('');
   });

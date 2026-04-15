@@ -3,8 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
-import EmptyState from '@/components/EmptyState';
+import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed';
+import EmptyState from '@/components/shared/EmptyState';
 import { formatCurrency } from '@/utils/currency';
 
 export default function RecentlyViewedPage() {

@@ -5,10 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { promotionsApi } from '@/lib/api';
 import type { Promotion } from '@/lib/api';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import EmptyState from '@/components/EmptyState';
-import CountdownTimer from '@/components/home/CountdownTimer';
+import EmptyState from '@/components/shared/EmptyState';
+import CountdownTimer from '@/components/shared/home/CountdownTimer';
 
 const TYPE_LABELS: Record<Promotion['type'], string> = {
   timesale: '타임세일',

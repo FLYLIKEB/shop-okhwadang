@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { usersApi } from '@/lib/api';
 import type { UserAddress, CreateAddressData } from '@/lib/api';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 interface AddressForm {

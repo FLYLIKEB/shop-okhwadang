@@ -1,7 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import RegisterForm from '@/components/auth/RegisterForm';
+import RegisterForm from '@/components/shared/auth/RegisterForm';
 import { AuthContext } from '@/contexts/AuthContext';
 import type { AuthContextValue } from '@/contexts/AuthContext';
 

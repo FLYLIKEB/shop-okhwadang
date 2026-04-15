@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { MessageSquare, FileText } from 'lucide-react';
 import { pagesApi } from '@/lib/api';
 import type { PageBlock } from '@/lib/api';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import BlockRenderer from '@/components/blocks/BlockRenderer';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 export default function ContactPage() {

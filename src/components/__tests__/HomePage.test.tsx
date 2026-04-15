@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import HeroBannerBlock from '@/components/blocks/HeroBannerBlock';
-import ProductGridBlock from '@/components/blocks/ProductGridBlock';
-import CategoryNavBlock from '@/components/blocks/CategoryNavBlock';
+import HeroBannerBlock from '@/components/shared/blocks/HeroBannerBlock';
+import ProductGridBlock from '@/components/shared/blocks/ProductGridBlock';
+import CategoryNavBlock from '@/components/shared/blocks/CategoryNavBlock';
 import type { HeroBannerContent, ProductGridContent, CategoryNavContent, Product, Category } from '@/lib/api';
 
 vi.mock('next/navigation', () => ({

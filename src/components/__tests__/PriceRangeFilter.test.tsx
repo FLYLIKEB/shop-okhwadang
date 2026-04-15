@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
-import PriceRangeFilter from '@/components/filters/PriceRangeFilter';
+import PriceRangeFilter from '@/components/shared/filters/PriceRangeFilter';
 
 describe('PriceRangeFilter', () => {
   it('renders min/max inputs', () => {

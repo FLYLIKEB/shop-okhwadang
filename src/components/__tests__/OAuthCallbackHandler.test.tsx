@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import OAuthCallbackHandler from '@/components/auth/OAuthCallbackHandler';
+import OAuthCallbackHandler from '@/components/shared/auth/OAuthCallbackHandler';
 import { AuthTokenResponse } from '@/lib/api';
 
 // Mock next/navigation

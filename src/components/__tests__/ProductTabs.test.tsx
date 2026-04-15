@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
-import ProductTabs from '@/components/products/ProductTabs'
+import ProductTabs from '@/components/shared/products/ProductTabs'
 
 vi.mock('isomorphic-dompurify', () => ({
   default: { sanitize: (html: string) => html },

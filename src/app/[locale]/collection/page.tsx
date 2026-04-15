@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { fetchCollections } from '@/lib/api-server';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import { SectionHeading } from '@/components/common/SectionHeading';
+import { SectionHeading } from '@/components/shared/common/SectionHeading';
 import type { Collection } from '@/lib/api';
 
 export const metadata: Metadata = {

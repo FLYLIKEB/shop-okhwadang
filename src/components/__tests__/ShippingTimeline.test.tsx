@@ -1,6 +1,6 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import ShippingTimeline from '@/components/ShippingTimeline';
+import ShippingTimeline from '@/components/shared/ShippingTimeline';
 import type { ShippingResponse } from '@/lib/api';
 
 const mockRefresh = vi.fn();

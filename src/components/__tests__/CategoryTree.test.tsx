@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
-import CategoryTree from '@/components/filters/CategoryTree';
+import CategoryTree from '@/components/shared/filters/CategoryTree';
 import type { Category } from '@/lib/api';
 
 const mockCategories: Category[] = [

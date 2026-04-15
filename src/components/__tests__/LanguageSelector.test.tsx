@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import LanguageSelector from '@/components/LanguageSelector';
+import LanguageSelector from '@/components/shared/LanguageSelector';
 
 const mockReplace = vi.fn();
 let mockPathname = '/';

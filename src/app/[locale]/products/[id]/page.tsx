@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { fetchProduct, fetchCollections } from '@/lib/api-server'
-import ProductDetailClient from '@/components/products/ProductDetailClient'
+import ProductDetailClient from '@/components/shared/products/ProductDetailClient'
 import { routing } from '@/i18n/routing'
 import type { Locale } from '@/i18n/routing'
 import { SITE_URL } from '@/lib/site-url'

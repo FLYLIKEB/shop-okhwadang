@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { handleApiError } from '@/utils/error';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { formatCurrency } from '@/utils/currency';
 import {
   adminDashboardApi,
@@ -14,7 +14,7 @@ import {
 import { ORDER_STATUS_LABELS } from '@/constants/status';
 
 const DashboardCharts = dynamic(
-  () => import('@/components/admin/DashboardCharts'),
+  () => import('@/components/shared/admin/DashboardCharts'),
   { ssr: false, loading: () => <ChartSkeleton /> },
 );
 

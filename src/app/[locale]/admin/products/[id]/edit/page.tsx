@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { productsApi } from '@/lib/api';
 import type { ProductDetail } from '@/lib/api';
-import ProductFormPage from '@/components/admin/ProductFormPage';
+import ProductFormPage from '@/components/shared/admin/ProductFormPage';
 
 export default function AdminProductEditPage() {
   const params = useParams();

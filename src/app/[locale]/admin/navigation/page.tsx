@@ -5,9 +5,9 @@ import { toast } from 'sonner';
 import { adminNavigationApi, adminSettingsApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import type { NavigationItem } from '@/lib/api';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import NavigationEditor from '@/components/admin/NavigationEditor';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import NavigationEditor from '@/components/shared/admin/NavigationEditor';
 
 type NavGroup = 'gnb' | 'sidebar' | 'footer';
 

@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { adminInquiriesApi } from '@/lib/api';
 import type { Inquiry } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import { AdminTable } from '@/components/admin/AdminTable';
-import { InquiryStatusBadge } from '@/components/admin/StatusBadge';
+import { AdminTable } from '@/components/shared/admin/AdminTable';
+import { InquiryStatusBadge } from '@/components/shared/admin/StatusBadge';
 import { cn } from '@/components/ui/utils';
 
 type StatusFilter = 'all' | 'pending' | 'answered';

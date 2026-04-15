@@ -5,9 +5,9 @@ import { useParams } from 'next/navigation';
 import * as Accordion from '@radix-ui/react-accordion';
 import { faqsApi } from '@/lib/api';
 import type { Faq } from '@/lib/api';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import EmptyState from '@/components/EmptyState';
+import EmptyState from '@/components/shared/EmptyState';
 import { cn } from '@/components/ui/utils';
 
 const CATEGORIES = ['전체', '배송', '결제', '교환/반품', '회원', '기타'];

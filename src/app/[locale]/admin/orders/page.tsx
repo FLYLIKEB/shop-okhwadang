@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { adminOrdersApi } from '@/lib/api';
 import type { AdminOrder } from '@/lib/api';
-import { AdminOrdersTable } from '@/components/admin/AdminOrdersTable';
-import { ShippingModal } from '@/components/admin/ShippingModal';
-import AdminPagination from '@/components/admin/AdminPagination';
+import { AdminOrdersTable } from '@/components/shared/admin/AdminOrdersTable';
+import { ShippingModal } from '@/components/shared/admin/ShippingModal';
+import AdminPagination from '@/components/shared/admin/AdminPagination';
 
 const STATUS_FILTERS = [
   { label: '전체', value: '' },

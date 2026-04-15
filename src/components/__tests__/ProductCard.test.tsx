@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { toast } from 'sonner';
 import { wishlistApi } from '@/lib/api';
-import ProductCard from '@/components/products/ProductCard';
+import ProductCard from '@/components/shared/products/ProductCard';
 
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {

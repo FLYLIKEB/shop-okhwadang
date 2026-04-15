@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import BlockRenderer from '@/components/blocks/BlockRenderer';
+import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
 import { fetchPage, fetchCategories, fetchProducts } from '@/lib/api-server';
 import type { Product, Category, PageBlock } from '@/lib/api';
 

@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
-import type { RecentlyViewedProduct } from '@/hooks/useRecentlyViewed';
+import RecentlyViewedWidget from '@/components/shared/RecentlyViewedWidget';
+import type { RecentlyViewedProduct } from '@/components/shared/hooks/useRecentlyViewed';
 
 const mockUseRecentlyViewed = vi.fn();
-vi.mock('@/hooks/useRecentlyViewed', () => ({
+vi.mock('@/components/shared/hooks/useRecentlyViewed', () => ({
   useRecentlyViewed: () => mockUseRecentlyViewed(),
 }));
 

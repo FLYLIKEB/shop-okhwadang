@@ -1,4 +1,4 @@
-import ProductSkeleton from '@/components/products/ProductSkeleton';
+import ProductSkeleton from '@/components/shared/products/ProductSkeleton';
 
 export default function ProductsLoading() {
   return (

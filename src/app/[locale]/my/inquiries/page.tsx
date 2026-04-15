@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { inquiriesApi } from '@/lib/api';
 import type { Inquiry } from '@/lib/api';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import EmptyState from '@/components/EmptyState';
-import { InquiryStatusBadge } from '@/components/admin/StatusBadge';
+import EmptyState from '@/components/shared/EmptyState';
+import { InquiryStatusBadge } from '@/components/shared/admin/StatusBadge';
 
 export default function InquiriesPage() {
   const { isAuthenticated } = useRequireAuth();

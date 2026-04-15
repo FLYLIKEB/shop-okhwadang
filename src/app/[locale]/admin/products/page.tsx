@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useAdminGuard } from '@/hooks/useAdminGuard';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { adminProductsApi } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
-import AdminPagination from '@/components/admin/AdminPagination';
-import { ProductStatusBadge } from '@/components/admin/StatusBadge';
+import AdminPagination from '@/components/shared/admin/AdminPagination';
+import { ProductStatusBadge } from '@/components/shared/admin/StatusBadge';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '임시저장',
