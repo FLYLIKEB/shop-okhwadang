@@ -191,7 +191,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
       transform: `scale(1.5) translate(${lightboxPan.x}px, ${lightboxPan.y}px)`,
       transition: isDragging.current ? 'none' : 'transform 0.2s ease-out',
     }
-  }, [lightboxZoomed, lightboxPan.x, lightboxPan.y])
+  }, [lightboxZoomed, lightboxPan.x, lightboxPan.y, isDragging])
 
   if (isLoading) {
     return <ImageGallerySkeleton />

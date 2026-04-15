@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SafeHtml from '@/components/common/SafeHtml';
 import { cn } from '@/components/ui/utils';
@@ -48,10 +47,9 @@ interface SliderHeroProps {
   slides: HeroBannerSlide[];
   description?: string;
   sectionRef: React.RefObject<HTMLElement | null>;
-  heroLogoStyle: React.CSSProperties;
 }
 
-function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHeroProps) {
+function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, watchDrag: true });
 
@@ -189,8 +187,6 @@ function SliderHero({ slides, description, sectionRef, heroLogoStyle }: SliderHe
 
 export default function HeroBannerBlock({ content }: Props) {
   const { title, subtitle, description, image_url, cta_text, cta_url, template, slides } = content;
-  const pathname = usePathname();
-  const isHome = pathname === '/';
   const sectionRef = useRef<HTMLElement>(null);
 
   const { heroLogoStyle, headerLogoStyle, progress, isHeroVisible } = useScrollLogoTransition({
@@ -211,7 +207,7 @@ export default function HeroBannerBlock({ content }: Props) {
     const effectiveSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
     return (
       <ScrollLogoProvider value={scrollLogoContextValue}>
-        <SliderHero slides={effectiveSlides} description={description} sectionRef={sectionRef} heroLogoStyle={heroLogoStyle} />
+        <SliderHero slides={effectiveSlides} description={description} sectionRef={sectionRef} />
       </ScrollLogoProvider>
     );
   }

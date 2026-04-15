@@ -11,7 +11,9 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
-    const { fill, ...rest } = props;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { fill: _fill, ...rest } = props;
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     return <img data-testid="next-image" {...rest} />;
   },
 }));

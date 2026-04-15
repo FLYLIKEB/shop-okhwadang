@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import type { PageBlock, ProductSort } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
 import EntitySelector from './EntitySelector';

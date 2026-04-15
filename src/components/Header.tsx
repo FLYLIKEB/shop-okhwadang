@@ -47,6 +47,7 @@ interface DesktopActionsProps {
   onLogout: () => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function DesktopActions({ isAuthenticated, itemCount, onLogout }: DesktopActionsProps) {
   const textClass = "text-muted-foreground hover:text-foreground";
   return (

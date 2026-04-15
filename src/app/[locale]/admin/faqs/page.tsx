@@ -36,7 +36,7 @@ export default function AdminFaqsPage() {
 
   const editingFaq = editingId != null ? faqs.find((f) => f.id === editingId) ?? null : null;
 
-  const { formData, setFormData, loading: formLoading, handleSubmit } = useFormModal<CreateFaqData>(
+  const { formData, setFormData } = useFormModal<CreateFaqData>(
     FAQ_DEFAULTS,
     editingFaq ? { category: editingFaq.category, question: editingFaq.question, answer: editingFaq.answer, sortOrder: editingFaq.sortOrder, isPublished: editingFaq.isPublished } : null,
     modalOpen,

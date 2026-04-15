@@ -87,7 +87,6 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
       {/* JSON-LD structured data — server-generated, safe */}
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: jsonLdString }}
       />
       <ProductDetailClient product={product} locale={safeLocale} clayCollections={clayCollections} shapeCollections={shapeCollections} />
