@@ -137,7 +137,8 @@ export async function middleware(request: NextRequest) {
       ? pathname
       : pathname.replace(/^\/[a-z]{2}\/api/, '/api'); // handle /ko/api -> /api
 
-    const url = `${backendUrl}${apiPath}${request.nextUrl.search}`;
+    const search = new URL(request.url).search;
+    const url = `${backendUrl}${apiPath}${search}`;
 
     // Forward request to backend
     const headers = new Headers();
