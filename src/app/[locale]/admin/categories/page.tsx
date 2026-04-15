@@ -10,20 +10,16 @@ import CategoryFormModal from '@/components/admin/CategoryFormModal';
 import { GripVertical } from 'lucide-react';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { SortableCategoryRow } from '@/components/admin/SortableCategoryRow';
+import { useAdminDndSensors } from '@/hooks/useDndSensors';
 import {
   DndContext,
   DragOverlay,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
   DragStartEvent,
   DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
@@ -160,16 +156,7 @@ export default function AdminCategoriesPage() {
     { errorMessage: '순서 변경에 실패했습니다.' },
   );
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  const sensors = useAdminDndSensors();
 
   const rootCategories = categories.filter((c) => c.parentId === null);
   const flattenedRootCategories = flattenCategories(rootCategories, null, 0, expandedIds);

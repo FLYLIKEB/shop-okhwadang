@@ -14,20 +14,16 @@ import { AdminTable } from '@/components/admin/AdminTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import ProductImageUploader from '@/components/admin/ProductImageUploader';
 import { GripVertical } from 'lucide-react';
+import { useAdminDndSensors } from '@/hooks/useDndSensors';
 import {
   DndContext,
   DragOverlay,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
   DragStartEvent,
   DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
@@ -427,10 +423,7 @@ export default function AdminCollectionsPage() {
 
   const activeCollection = activeId ? collections.find((c) => c.id === activeId) : null;
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  const sensors = useAdminDndSensors();
 
   if (authLoading || loading) {
     return (
