@@ -5,6 +5,11 @@ import { SelectQueryBuilder } from 'typeorm';
 import { ProductsService } from '../products.service';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
+import { Review } from '../../reviews/entities/review.entity';
+import { ProductImage } from '../entities/product-image.entity';
+import { ProductDetailImage } from '../entities/product-detail-image.entity';
+import { AttributeType } from '../entities/attribute-type.entity';
+import { ProductAttribute } from '../entities/product-attribute.entity';
 import { ProductSort } from '../dto/query-products.dto';
 import { CacheService } from '../../cache/cache.service';
 
@@ -57,6 +62,26 @@ describe('ProductsService — Search', () => {
         {
           provide: getRepositoryToken(Category),
           useValue: { find: jest.fn().mockResolvedValue([]) },
+        },
+        {
+          provide: getRepositoryToken(Review),
+          useValue: { createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder) },
+        },
+        {
+          provide: getRepositoryToken(ProductImage),
+          useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(ProductDetailImage),
+          useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(AttributeType),
+          useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(ProductAttribute),
+          useValue: mockRepository,
         },
         {
           provide: CacheService,
