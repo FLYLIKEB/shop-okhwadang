@@ -3,21 +3,29 @@
 import { useEffect, useState } from 'react';
 import MobileBottomNav from './MobileBottomNav';
 
-export default function MobileBottomNavWrapper() {
-  const [visible, setVisible] = useState<boolean | null>(null);
+interface MobileBottomNavWrapperProps {
+  visible?: boolean;
+}
+
+export default function MobileBottomNavWrapper({ visible = true }: MobileBottomNavWrapperProps) {
+  const [clientVisible, setClientVisible] = useState<boolean | null>(null);
 
   useEffect(() => {
+    if (!visible) {
+      setClientVisible(false);
+      return;
+    }
     fetch('/api/settings?group=general')
       .then((res) => res.json())
       .then((data: Array<{ key: string; value: string }>) => {
         const setting = data.find((s) => s.key === 'mobile_bottom_nav_visible');
-        setVisible(setting ? setting.value === 'true' : true);
+        setClientVisible(setting ? setting.value === 'true' : true);
       })
-      .catch(() => setVisible(true));
-  }, []);
+      .catch(() => setClientVisible(true));
+  }, [visible]);
 
-  if (visible === null) return null;
-  if (!visible) return null;
+  if (clientVisible === null) return null;
+  if (!clientVisible) return null;
 
   return <MobileBottomNav />;
 }

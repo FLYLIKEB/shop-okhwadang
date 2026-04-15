@@ -126,7 +126,7 @@ export default async function LocaleLayout({
               <Header />
               <main id="main-content" className="flex-1 pb-16 md:pb-0">{children}</main>
               <Footer />
-              <MobileBottomNavWrapper />
+              <MobileBottomNavWrapper visible={mobileBottomNavVisible} />
               <Toaster
                 position="top-right"
                 richColors
