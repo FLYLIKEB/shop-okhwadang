@@ -12,6 +12,7 @@ module.exports = {
       AWS_S3_BUCKET_NAME: 'okhwadang-assets',
       AWS_CDN_URL: 'https://dt24i8idwxww1.cloudfront.net',
       JWT_PRIVATE_KEY_FILE: '/app/shop-okhwadang/shop-okhwadang/backend/keys/jwt-private.pem',
+      JWT_PUBLIC_KEY_FILE: '/app/shop-okhwadang/shop-okhwadang/backend/keys/jwt-public.pem',
     },
     max_memory_restart: '512M',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',

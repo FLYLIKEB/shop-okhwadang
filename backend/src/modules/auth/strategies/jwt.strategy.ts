@@ -25,6 +25,9 @@ function getJwtPublicKey(): string {
   if (process.env.JWT_PUBLIC_KEY) {
     return process.env.JWT_PUBLIC_KEY;
   }
+  if (process.env.JWT_PUBLIC_KEY_FILE && fs.existsSync(process.env.JWT_PUBLIC_KEY_FILE)) {
+    return fs.readFileSync(process.env.JWT_PUBLIC_KEY_FILE, 'utf-8');
+  }
   const keyPath = path.resolve(process.cwd(), 'keys', 'jwt-public.pem');
   if (fs.existsSync(keyPath)) {
     return fs.readFileSync(keyPath, 'utf-8');

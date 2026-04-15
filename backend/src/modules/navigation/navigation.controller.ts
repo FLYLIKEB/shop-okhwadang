@@ -35,6 +35,7 @@ export class NavigationController {
   @Public()
   @ApiOperation({ summary: '네비게이션 목록 조회', description: '지정된 그룹의 활성화된 네비게이션 항목을 조회합니다.' })
   @ApiResponse({ status: 200, description: '네비게이션 목록 조회 성공' })
+  @ApiResponse({ status: 400, description: 'group 파라미터 필요' })
   @ApiQuery({ name: 'group', required: true, enum: ['gnb', 'sidebar', 'footer'], description: '네비게이션 그룹' })
   findByGroup(@Query('group') group: 'gnb' | 'sidebar' | 'footer') {
     return this.navigationService.findActiveByGroup(group);
