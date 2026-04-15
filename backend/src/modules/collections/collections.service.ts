@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Collection, CollectionType } from './entities/collection.entity';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { reorderEntities } from '../../common/utils/reorder.util';
+import { applyLocale } from '../../common/utils/locale.util';
 import { CreateCollectionDto, UpdateCollectionDto } from './dto/collection.dto';
 
 @Injectable()
@@ -13,21 +14,28 @@ export class CollectionsService {
     private readonly collectionRepository: Repository<Collection>,
   ) {}
 
-  async findAllByType(type: CollectionType): Promise<Collection[]> {
-    return this.collectionRepository.find({
+  private applyLocaleToCollection(entity: Collection, locale?: string): Collection {
+    return applyLocale(entity, locale, ['name']);
+  }
+
+  async findAllByType(type: CollectionType, locale?: string): Promise<Collection[]> {
+    const collections = await this.collectionRepository.find({
       where: { type, isActive: true },
       order: { sortOrder: 'ASC' },
     });
+    return collections.map((c) => this.applyLocaleToCollection(c, locale));
   }
 
-  async findAll(): Promise<Collection[]> {
-    return this.collectionRepository.find({
+  async findAll(locale?: string): Promise<Collection[]> {
+    const collections = await this.collectionRepository.find({
       order: { type: 'ASC', sortOrder: 'ASC' },
     });
+    return collections.map((c) => this.applyLocaleToCollection(c, locale));
   }
 
-  async findById(id: number): Promise<Collection> {
-    return findOrThrow(this.collectionRepository, { id }, '컬렉션을 찾을 수 없습니다.');
+  async findById(id: number, locale?: string): Promise<Collection> {
+    const collection = await findOrThrow(this.collectionRepository, { id }, '컬렉션을 찾을 수 없습니다.');
+    return this.applyLocaleToCollection(collection, locale);
   }
 
   async create(dto: CreateCollectionDto): Promise<Collection> {

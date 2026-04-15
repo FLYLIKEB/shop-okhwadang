@@ -1,4 +1,5 @@
 const LOCALE_SUFFIX_MAP: Record<string, string> = {
+  ko: 'Ko',
   en: 'En',
   ja: 'Ja',
   zh: 'Zh',

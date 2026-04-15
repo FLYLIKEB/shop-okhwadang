@@ -5,6 +5,7 @@ import { AttributeType, AttributeInputType } from './entities/attribute-type.ent
 import { ProductAttribute } from './entities/product-attribute.entity';
 import { CreateAttributeTypeDto, UpdateAttributeTypeDto } from './dto/attribute-type.dto';
 import { CreateProductAttributeDto, UpdateProductAttributeDto } from './dto/product-attribute.dto';
+import { applyLocale } from '../../common/utils/locale.util';
 
 @Injectable()
 export class AttributesService {
@@ -17,25 +18,32 @@ export class AttributesService {
     private readonly productAttributeRepository: Repository<ProductAttribute>,
   ) {}
 
+  private applyLocaleToAttributeType(entity: AttributeType, locale?: string): AttributeType {
+    return applyLocale(entity, locale, ['name']);
+  }
+
   // ─── Attribute Types ────────────────────────────────────────────────
 
-  async findAllAttributeTypes(): Promise<AttributeType[]> {
-    return this.attributeTypeRepository.find({
+  async findAllAttributeTypes(locale?: string): Promise<AttributeType[]> {
+    const types = await this.attributeTypeRepository.find({
       where: { isActive: true },
       order: { sortOrder: 'ASC', id: 'ASC' },
     });
+    return types.map((t) => this.applyLocaleToAttributeType(t, locale));
   }
 
-  async findAttributeTypeById(id: number): Promise<AttributeType> {
+  async findAttributeTypeById(id: number, locale?: string): Promise<AttributeType> {
     const type = await this.attributeTypeRepository.findOne({ where: { id } });
     if (!type) {
       throw new NotFoundException(`AttributeType ID ${id} not found`);
     }
-    return type;
+    return this.applyLocaleToAttributeType(type, locale);
   }
 
-  async findAttributeTypeByCode(code: string): Promise<AttributeType | null> {
-    return this.attributeTypeRepository.findOne({ where: { code } });
+  async findAttributeTypeByCode(code: string, locale?: string): Promise<AttributeType | null> {
+    const type = await this.attributeTypeRepository.findOne({ where: { code } });
+    if (!type) return null;
+    return this.applyLocaleToAttributeType(type, locale);
   }
 
   async createAttributeType(dto: CreateAttributeTypeDto): Promise<AttributeType> {
@@ -207,11 +215,12 @@ export class AttributesService {
 
   // ─── Filtering ──────────────────────────────────────────────────────
 
-  async getFilterableAttributes(): Promise<AttributeType[]> {
-    return this.attributeTypeRepository.find({
+  async getFilterableAttributes(locale?: string): Promise<AttributeType[]> {
+    const types = await this.attributeTypeRepository.find({
       where: { isFilterable: true, isActive: true },
       order: { sortOrder: 'ASC' },
     });
+    return types.map((t) => this.applyLocaleToAttributeType(t, locale));
   }
 
   async getAttributeValuesByTypeCode(code: string): Promise<string[]> {

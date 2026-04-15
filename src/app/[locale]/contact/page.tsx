@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { MessageSquare, FileText } from 'lucide-react';
 import { pagesApi } from '@/lib/api';
 import type { PageBlock } from '@/lib/api';
@@ -10,11 +11,13 @@ import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 
 export default function ContactPage() {
+  const params = useParams();
+  const locale = params.locale as string;
   const [blocks, setBlocks] = useState<PageBlock[]>([]);
 
   const { execute: loadPage, isLoading } = useAsyncAction(
     async () => {
-      const page = await pagesApi.getBySlug('contact');
+      const page = await pagesApi.getBySlug('contact', locale);
       if (page?.blocks) setBlocks(page.blocks);
     },
     { errorMessage: '페이지를 불러오지 못했습니다.' },
