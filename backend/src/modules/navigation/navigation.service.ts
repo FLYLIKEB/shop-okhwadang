@@ -34,7 +34,7 @@ export class NavigationService {
   private applyLocaleToTree(items: NavigationItem[], locale?: string): NavigationItem[] {
     if (!locale || locale === 'ko') return items;
     return items.map((item) => {
-      const localized = applyLocale(item, locale, ['label']);
+      const localized = { ...applyLocale(item, locale, ['label']) };
       if (localized.children && localized.children.length) {
         localized.children = this.applyLocaleToTree(localized.children, locale);
       }

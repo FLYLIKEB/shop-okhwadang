@@ -70,12 +70,12 @@ export async function fetchPage(slug: string, locale?: string): Promise<Page | n
   }
 }
 
-export function fetchCollections() {
-  return fetchFromBackend<CollectionsResponse>('/collections');
+export function fetchCollections(locale?: string) {
+  return fetchFromBackend<CollectionsResponse>('/collections', locale ? { locale } : undefined);
 }
 
-export function fetchArchives() {
-  return fetchFromBackend<ArchivesResponse>('/archives');
+export function fetchArchives(locale?: string) {
+  return fetchFromBackend<ArchivesResponse>('/archives', locale ? { locale } : undefined);
 }
 
 export function fetchSettings(group?: string, locale?: string) {

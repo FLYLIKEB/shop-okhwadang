@@ -48,10 +48,12 @@ export class SettingsService {
     await this.dataSource.transaction(async (manager) => {
       const invalidKeys: string[] = [];
       for (const item of items) {
-        const updateFields: Partial<SiteSetting> = { value: item.value };
+        const updateFields: Partial<SiteSetting> = {};
+        if (item.value !== undefined) updateFields.value = item.value;
         if (item.valueEn !== undefined) updateFields.valueEn = item.valueEn;
         if (item.valueJa !== undefined) updateFields.valueJa = item.valueJa;
         if (item.valueZh !== undefined) updateFields.valueZh = item.valueZh;
+        if (Object.keys(updateFields).length === 0) continue;
         const result = await manager.update(SiteSetting, { key: item.key }, updateFields);
         if (result.affected === 0) {
           invalidKeys.push(item.key);

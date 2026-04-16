@@ -9,11 +9,11 @@ export class SettingItemDto {
   @MaxLength(100)
   key!: string;
 
-  @ApiProperty({ example: '옥화당', description: '설정 값' })
+  @ApiPropertyOptional({ example: '옥화당', description: '설정 값' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(1000)
-  value!: string;
+  value?: string;
 
   @ApiPropertyOptional({ example: 'Okhwadang', description: '영문 설정 값' })
   @IsOptional()

@@ -182,7 +182,7 @@ interface ArchivePageProps {
 }
 
 export default async function ArchivePage({ params }: ArchivePageProps) {
-  await params;
+  const { locale } = await params;
 
   let niloTypes: NiloType[] = [];
   let processSteps: ProcessStep[] = [];
@@ -191,7 +191,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   let fetchError: Error | null = null;
 
   try {
-    const data = await fetchArchives();
+    const data = await fetchArchives(locale);
     niloTypes = data.niloTypes;
     processSteps = data.processSteps;
     artists = data.artists;

@@ -54,7 +54,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
   const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale
   const [product, collections] = await Promise.all([
     fetchProduct(Number(id), safeLocale),
-    fetchCollections().catch(() => null),
+    fetchCollections(safeLocale).catch(() => null),
   ])
   if (!product) notFound()
 

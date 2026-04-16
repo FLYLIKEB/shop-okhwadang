@@ -183,11 +183,12 @@ export default function ThemeEditor({ initialSettings }: Props) {
     setSaving(true);
     try {
       const allKeys = new Set([...Object.keys(pendingChanges), ...Object.keys(pendingEnChanges)]);
-      const items = Array.from(allKeys).map((key) => ({
-        key,
-        value: pendingChanges[key] ?? (settings.find((s) => s.key === key)?.value ?? ''),
-        ...(pendingEnChanges[key] !== undefined ? { valueEn: pendingEnChanges[key] } : {}),
-      }));
+      const items = Array.from(allKeys).map((key) => {
+        const payload: { key: string; value?: string; valueEn?: string } = { key };
+        if (pendingChanges[key] !== undefined) payload.value = pendingChanges[key];
+        if (pendingEnChanges[key] !== undefined) payload.valueEn = pendingEnChanges[key];
+        return payload;
+      });
       await adminSettingsApi.bulkUpdate(items);
       setSettings((prev) =>
         prev.map((s) => ({
