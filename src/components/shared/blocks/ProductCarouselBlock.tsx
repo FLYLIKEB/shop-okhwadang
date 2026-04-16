@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { productsApi } from '@/lib/api';
 import type { Product, ProductCarouselContent } from '@/lib/api';
 import ProductCard from '@/components/shared/products/ProductCard';
@@ -16,6 +17,8 @@ interface Props {
 export default function ProductCarouselBlock({ content }: Props) {
   const params = useParams();
   const locale = params.locale as string;
+  const t = useTranslations('product');
+  const tCommon = useTranslations('common');
   const { product_ids, category_id, sort, limit, template, title } = content;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +111,7 @@ export default function ProductCarouselBlock({ content }: Props) {
               href={`/${locale}/products?categoryId=${category_id}`}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              전체 보기
+              {tCommon('viewAll')}
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -120,7 +123,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           type="button"
           onClick={() => handleScroll('left')}
           disabled={!canScrollLeft}
-          aria-label="이전 상품"
+          aria-label={t('prevProduct')}
           className={cn(
             'absolute left-2 top-1/2 -translate-y-1/2 z-10',
             'flex items-center justify-center',
@@ -159,7 +162,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           type="button"
           onClick={() => handleScroll('right')}
           disabled={!canScrollRight}
-          aria-label="다음 상품"
+          aria-label={t('nextProduct')}
           className={cn(
             'absolute right-2 top-1/2 -translate-y-1/2 z-10',
             'flex items-center justify-center',

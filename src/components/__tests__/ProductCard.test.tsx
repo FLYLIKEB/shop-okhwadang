@@ -42,6 +42,23 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+const translations: Record<string, string> = {
+  addToCart: '장바구니 담기',
+  addingToCart: '담는 중...',
+  discountOff: '{percent}% 할인',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, values?: Record<string, string | number>) => {
+    const template = translations[key] ?? key;
+    if (!values) return template;
+    return Object.entries(values).reduce(
+      (acc, [k, v]) => acc.replace(`{${k}}`, String(v)),
+      template,
+    );
+  },
+}));
+
 vi.mock('@/lib/api', () => ({
   wishlistApi: {
     add: vi.fn(),

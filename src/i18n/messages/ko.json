@@ -126,6 +126,10 @@
   },
   "product": {
     "addToCart": "장바구니 담기",
+    "addingToCart": "담는 중...",
+    "discountOff": "{percent}% 할인",
+    "prevProduct": "이전 상품",
+    "nextProduct": "다음 상품",
     "buyNow": "바로 구매",
     "outOfStock": "품절",
     "outOfStockMessage": "현재 품절된 상품입니다.",
@@ -581,6 +585,8 @@
   "wishlist": {
     "add": "위시리스트에 추가",
     "remove": "위시리스트에서 제거",
+    "toggleOn": "찜하기",
+    "toggleOff": "찜하기 취소",
     "addSuccess": "위시리스트에 추가되었습니다.",
     "removeSuccess": "위시리스트에서 제거되었습니다.",
     "loginRequired": "로그인이 필요합니다.",
@@ -632,6 +638,12 @@
         "ctaText": "저널 보기"
       }
     ]
+  },
+  "journalCategories": {
+    "culture": "다문화",
+    "usage": "사용법",
+    "tableSetting": "찻자리 세팅",
+    "news": "소식"
   },
   "nav": {
     "products": "상품목록",

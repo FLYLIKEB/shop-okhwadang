@@ -118,6 +118,10 @@
   },
   "product": {
     "addToCart": "カートに追加",
+    "addingToCart": "追加中...",
+    "discountOff": "{percent}% OFF",
+    "prevProduct": "前の商品",
+    "nextProduct": "次の商品",
     "buyNow": "今すぐ購入",
     "outOfStock": "在庫切れ",
     "outOfStockMessage": "現在、在庫切れの商品です。",

@@ -4,6 +4,7 @@ import { memo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, ShoppingCart } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
@@ -64,6 +65,8 @@ function ProductCard({
   priority = false,
   categoryName,
 }: ProductCardProps) {
+  const t = useTranslations('product');
+  const tWishlist = useTranslations('wishlist');
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
   const clayTagClass = categoryName ? getClayTagClass(categoryName) : null;
@@ -122,7 +125,7 @@ function ProductCard({
         {/* 찜하기 버튼 — 우상단 */}
         <button
           type="button"
-          aria-label={isWishlisted ? '찜하기 취소' : '찜하기'}
+          aria-label={isWishlisted ? tWishlist('toggleOff') : tWishlist('toggleOn')}
           onClick={(e) => {
             e.preventDefault();
             handleToggleWishlist(e);
@@ -177,7 +180,7 @@ function ProductCard({
             )}
           >
             <ShoppingCart className="h-3.5 w-3.5" />
-            {isCartLoading ? '담는 중...' : '장바구니 담기'}
+            {isCartLoading ? t('addingToCart') : t('addToCart')}
           </button>
         )}
       </div>

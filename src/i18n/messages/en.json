@@ -126,6 +126,10 @@
   },
   "product": {
     "addToCart": "Add to Cart",
+    "addingToCart": "Adding...",
+    "discountOff": "{percent}% OFF",
+    "prevProduct": "Previous product",
+    "nextProduct": "Next product",
     "buyNow": "Buy Now",
     "outOfStock": "Out of Stock",
     "outOfStockMessage": "This item is currently out of stock.",
@@ -581,6 +585,8 @@
   "wishlist": {
     "add": "Add to Wishlist",
     "remove": "Remove from Wishlist",
+    "toggleOn": "Add to wishlist",
+    "toggleOff": "Remove from wishlist",
     "addSuccess": "Added to wishlist.",
     "removeSuccess": "Removed from wishlist.",
     "loginRequired": "Please log in.",
@@ -632,6 +638,12 @@
         "ctaText": "View Journal"
       }
     ]
+  },
+  "journalCategories": {
+    "culture": "Tea Culture",
+    "usage": "How to Use",
+    "tableSetting": "Tea Table",
+    "news": "News"
   },
   "nav": {
     "products": "Products",

@@ -118,6 +118,10 @@
   },
   "product": {
     "addToCart": "加入购物车",
+    "addingToCart": "添加中...",
+    "discountOff": "{percent}% OFF",
+    "prevProduct": "上一个商品",
+    "nextProduct": "下一个商品",
     "buyNow": "立即购买",
     "outOfStock": "缺货",
     "outOfStockMessage": "该商品当前缺货。",
