@@ -12,6 +12,9 @@ import { ProductStatus } from '../../../modules/products/entities/product.entity
 export interface SeedCategory {
   id: number;
   name: string;
+  nameEn: string | null;
+  nameJa: string | null;
+  nameZh: string | null;
   slug: string;
   parentId: number | null;
   sortOrder: number;
@@ -25,6 +28,9 @@ export const categories: SeedCategory[] = [
   {
     id: 1,
     name: '자사호',
+    nameEn: 'Teapot (Zisha)',
+    nameJa: '急須（紫砂）',
+    nameZh: '紫砂壶',
     slug: 'teapot',
     parentId: null,
     sortOrder: 1,
@@ -37,6 +43,9 @@ export const categories: SeedCategory[] = [
   {
     id: 2,
     name: '보이차',
+    nameEn: 'Pu-erh Tea',
+    nameJa: '普洱茶',
+    nameZh: '普洱茶',
     slug: 'puerh-tea',
     parentId: null,
     sortOrder: 2,
@@ -49,6 +58,9 @@ export const categories: SeedCategory[] = [
   {
     id: 3,
     name: '다구',
+    nameEn: 'Tea Ware',
+    nameJa: '茶具',
+    nameZh: '茶具',
     slug: 'tea-ware',
     parentId: null,
     sortOrder: 3,
@@ -61,6 +73,9 @@ export const categories: SeedCategory[] = [
   {
     id: 4,
     name: '다엽',
+    nameEn: 'Tea Leaf',
+    nameJa: '茶葉',
+    nameZh: '茶叶',
     slug: 'tea-leaf',
     parentId: null,
     sortOrder: 4,
@@ -75,6 +90,9 @@ export const categories: SeedCategory[] = [
   {
     id: 10,
     name: '주니',
+    nameEn: 'Zhuni (朱泥)',
+    nameJa: '朱泥（シュナイ）',
+    nameZh: '朱泥',
     slug: 'zhuní',
     parentId: 1,
     sortOrder: 1,
@@ -87,6 +105,9 @@ export const categories: SeedCategory[] = [
   {
     id: 11,
     name: '자사',
+    nameEn: 'Zisha',
+    nameJa: '紫砂（シサ）',
+    nameZh: '紫砂',
     slug: 'zǐshā',
     parentId: 1,
     sortOrder: 2,
@@ -99,6 +120,9 @@ export const categories: SeedCategory[] = [
   {
     id: 12,
     name: '단니',
+    nameEn: 'Duanni',
+    nameJa: '段泥（ダンニ）',
+    nameZh: '段泥',
     slug: 'duānní',
     parentId: 1,
     sortOrder: 3,
@@ -111,6 +135,9 @@ export const categories: SeedCategory[] = [
   {
     id: 13,
     name: '흑니',
+    nameEn: 'Heini (Black Clay)',
+    nameJa: '黒泥（ヘイニ）',
+    nameZh: '黑泥',
     slug: 'hēiní',
     parentId: 1,
     sortOrder: 4,
@@ -123,6 +150,9 @@ export const categories: SeedCategory[] = [
   {
     id: 14,
     name: '청회니',
+    nameEn: 'Qinghuini (Blue-Gray Clay)',
+    nameJa: '青灰泥（セイカイニ）',
+    nameZh: '青灰泥',
     slug: 'qīnghuīní',
     parentId: 1,
     sortOrder: 5,
@@ -137,6 +167,9 @@ export const categories: SeedCategory[] = [
   {
     id: 20,
     name: '주형',
+    nameEn: 'Zhuxing (Bamboo Shape)',
+    nameJa: '竹型（チクケイ）',
+    nameZh: '竹型',
     slug: 'zhūxíng',
     parentId: 1,
     sortOrder: 6,
@@ -149,6 +182,9 @@ export const categories: SeedCategory[] = [
   {
     id: 21,
     name: '석표',
+    nameEn: 'Shipiao (Stone Scoop)',
+    nameJa: '石瓢（セキヒョウ）',
+    nameZh: '石瓢',
     slug: 'shípião',
     parentId: 1,
     sortOrder: 7,
@@ -161,6 +197,9 @@ export const categories: SeedCategory[] = [
   {
     id: 22,
     name: '서시',
+    nameEn: 'Xishi',
+    nameJa: '西施（セイシ）',
+    nameZh: '西施',
     slug: 'xīshī',
     parentId: 1,
     sortOrder: 8,
@@ -173,6 +212,9 @@ export const categories: SeedCategory[] = [
   {
     id: 23,
     name: '편평',
+    nameEn: 'Bianping (Flat)',
+    nameJa: '扁平（ヘイヘイ）',
+    nameZh: '扁平',
     slug: 'biānpíng',
     parentId: 1,
     sortOrder: 9,
@@ -187,6 +229,9 @@ export const categories: SeedCategory[] = [
   {
     id: 30,
     name: '생차 (生茶)',
+    nameEn: 'Sheng (Raw) Tea',
+    nameJa: '生茶',
+    nameZh: '生茶',
     slug: 'sheng-puerh',
     parentId: 2,
     sortOrder: 1,
@@ -199,6 +244,9 @@ export const categories: SeedCategory[] = [
   {
     id: 31,
     name: '숙차 (熟茶)',
+    nameEn: 'Shou (Ripe) Tea',
+    nameJa: '熟茶',
+    nameZh: '熟茶',
     slug: 'shou-puerh',
     parentId: 2,
     sortOrder: 2,
@@ -211,6 +259,9 @@ export const categories: SeedCategory[] = [
   {
     id: 32,
     name: '노차 (老茶)',
+    nameEn: 'Aged Tea',
+    nameJa: '老茶',
+    nameZh: '老茶',
     slug: 'aged-puerh',
     parentId: 2,
     sortOrder: 3,
@@ -225,6 +276,9 @@ export const categories: SeedCategory[] = [
   {
     id: 40,
     name: '다완',
+    nameEn: 'Teacup',
+    nameJa: '茶碗',
+    nameZh: '茶杯',
     slug: 'teacup',
     parentId: 3,
     sortOrder: 1,
@@ -237,6 +291,9 @@ export const categories: SeedCategory[] = [
   {
     id: 41,
     name: '다반',
+    nameEn: 'Tea Tray',
+    nameJa: '茶盘',
+    nameZh: '茶盘',
     slug: 'tea-tray',
     parentId: 3,
     sortOrder: 2,
@@ -249,6 +306,9 @@ export const categories: SeedCategory[] = [
   {
     id: 42,
     name: '다도구 세트',
+    nameEn: 'Tea Set',
+    nameJa: '茶道具セット',
+    nameZh: '茶具套装',
     slug: 'tea-set',
     parentId: 3,
     sortOrder: 3,
@@ -261,6 +321,9 @@ export const categories: SeedCategory[] = [
   {
     id: 43,
     name: '차 도구',
+    nameEn: 'Tea Tools',
+    nameJa: '茶道具',
+    nameZh: '茶具',
     slug: 'tea-tools',
     parentId: 3,
     sortOrder: 4,
