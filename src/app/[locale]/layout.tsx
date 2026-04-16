@@ -108,11 +108,14 @@ export default async function LocaleLayout({
 
   const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible !== 'false';
 
-  // FOUC 방지 인라인 스크립트: JS hydrate 전에 data-theme 세팅 (신뢰할 수 없는 입력 없음)
-  const foucScript = "(function(){try{var s=localStorage.getItem('theme');var l=document.documentElement.lang;var d=l==='ko'?'dark':'light';document.documentElement.dataset.theme=s&&(s==='dark'||s==='light')?s:d;}catch(e){}})();";
+  // SSR 단계에서 data-theme 기본값을 locale 기반으로 설정 — hydration mismatch 방지.
+  // 클라이언트의 FOUC 스크립트가 localStorage 에 저장된 사용자 선호가 있으면 즉시 덮어씀.
+  const initialTheme = safeLocale === 'ko' ? 'dark' : 'light';
+
+  const foucScript = "(function(){try{var s=localStorage.getItem('theme');if(s==='dark'||s==='light'){document.documentElement.dataset.theme=s;}}catch(e){}})();";
 
   return (
-    <html lang={safeLocale}>
+    <html lang={safeLocale} data-theme={initialTheme} suppressHydrationWarning>
       <head>
         {/* eslint-disable-next-line react/no-danger */}
         <script dangerouslySetInnerHTML={{ __html: foucScript }} />
