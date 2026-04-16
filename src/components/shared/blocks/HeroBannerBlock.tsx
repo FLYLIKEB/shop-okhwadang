@@ -37,12 +37,16 @@ const DEFAULT_SLIDE_IMAGES: Array<Pick<HeroBannerSlide, 'image_url' | 'bg_color'
 
 function useDefaultSlides(): HeroBannerSlide[] {
   const t = useTranslations('home.heroDefaultSlides');
-  return DEFAULT_SLIDE_IMAGES.map((base, idx) => ({
-    ...base,
-    title: t(`${idx}.title`),
-    subtitle: t(`${idx}.subtitle`),
-    cta_text: t(`${idx}.ctaText`),
-  }));
+  return useMemo(
+    () =>
+      DEFAULT_SLIDE_IMAGES.map((base, idx) => ({
+        ...base,
+        title: t(`${idx}.title`),
+        subtitle: t(`${idx}.subtitle`),
+        cta_text: t(`${idx}.ctaText`),
+      })),
+    [t],
+  );
 }
 
 interface SliderHeroProps {

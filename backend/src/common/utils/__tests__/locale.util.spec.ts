@@ -75,11 +75,51 @@ describe('applyLocaleToContent', () => {
     const content = { title: '제목', title_en: '' };
     const result = applyLocaleToContent(content, 'en') as typeof content;
     expect(result.title).toBe('제목');
+
+    const content2: Record<string, unknown> = { title: '제목', title_en: null };
+    const result2 = applyLocaleToContent(content2, 'en') as Record<string, unknown>;
+    expect(result2.title).toBe('제목');
   });
 
   it('non-object 값은 그대로 반환', () => {
     expect(applyLocaleToContent('string', 'en')).toBe('string');
     expect(applyLocaleToContent(42, 'en')).toBe(42);
     expect(applyLocaleToContent(null, 'en')).toBe(null);
+  });
+
+  it('순환 참조가 있어도 스택 오버플로 없이 반환', () => {
+    const content: Record<string, unknown> = { title: '제목', title_en: 'Title' };
+    content.self = content;
+    expect(() => applyLocaleToContent(content, 'en')).not.toThrow();
+    const result = applyLocaleToContent(content, 'en') as Record<string, unknown>;
+    expect(result.title).toBe('Title');
+  });
+
+  it('깊이 16을 초과하면 이후 하위는 원본 유지 (크래시 없음)', () => {
+    const root: Record<string, unknown> = { title: 't0', title_en: 'T0' };
+    let cur = root;
+    for (let i = 1; i < 25; i++) {
+      const next: Record<string, unknown> = { title: `t${i}`, title_en: `T${i}` };
+      cur.child = next;
+      cur = next;
+    }
+    expect(() => applyLocaleToContent(root, 'en')).not.toThrow();
+  });
+
+  it('Date/Map/Buffer 같은 non-plain object는 원본 유지', () => {
+    const date = new Date('2024-01-01');
+    const content = { title: '제목', title_en: 'Title', updatedAt: date };
+    const result = applyLocaleToContent(content, 'en') as typeof content;
+    expect(result.title).toBe('Title');
+    expect(result.updatedAt).toBe(date);
+  });
+
+  it('2-pass: 객체 필드와 같은 base 이름의 _en 오버라이드가 객체보다 우선', () => {
+    const content = {
+      config: { nested: '중첩' },
+      config_en: 'English config',
+    };
+    const result = applyLocaleToContent(content, 'en') as Record<string, unknown>;
+    expect(result.config).toBe('English config');
   });
 });
