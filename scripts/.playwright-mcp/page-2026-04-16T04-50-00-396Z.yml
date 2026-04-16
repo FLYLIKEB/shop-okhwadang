@@ -1,0 +1,85 @@
+- generic [active] [ref=e1]:
+  - link "본문으로 바로가기" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "옥화당" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "옥화당" [ref=e8]
+        - search "상품 검색" [ref=e9]:
+          - searchbox "상품 검색" [ref=e10]
+          - button "검색" [ref=e11]:
+            - img [ref=e12]
+        - generic [ref=e15]:
+          - button "언어 선택" [ref=e17]:
+            - generic [ref=e18]: 🇺🇸
+            - generic [ref=e19]: English
+          - link "장바구니" [ref=e20] [cursor=pointer]:
+            - /url: /cart
+            - img [ref=e21]
+          - link "로그인" [ref=e25] [cursor=pointer]:
+            - /url: /login
+            - img [ref=e26]
+      - navigation "메인 메뉴" [ref=e31]:
+        - link "상품목록" [ref=e33] [cursor=pointer]:
+          - /url: /products
+          - generic [ref=e34]: 상품목록
+        - link "장인" [ref=e36] [cursor=pointer]:
+          - /url: /artist
+          - generic [ref=e37]: 장인
+        - link "Archive" [ref=e39] [cursor=pointer]:
+          - /url: /archive
+          - generic [ref=e40]: Archive
+    - main [ref=e41]
+    - contentinfo [ref=e146]:
+      - generic [ref=e147]:
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - paragraph [ref=e150]: 고객센터
+            - navigation [ref=e151]:
+              - link "고객센터" [ref=e152] [cursor=pointer]:
+                - /url: /en/pages/support
+              - link "자주 묻는 질문" [ref=e153] [cursor=pointer]:
+                - /url: /en/faq
+              - link "배송 안내" [ref=e154] [cursor=pointer]:
+                - /url: /en/pages/shipping
+              - link "반품 및 교환" [ref=e155] [cursor=pointer]:
+                - /url: /en/pages/returns
+          - generic [ref=e156]:
+            - paragraph [ref=e157]: 회사
+            - navigation [ref=e158]:
+              - link "이용약관" [ref=e159] [cursor=pointer]:
+                - /url: /en/pages/terms
+              - link "개인정보처리방침" [ref=e160] [cursor=pointer]:
+                - /url: /en/pages/privacy
+          - generic [ref=e161]:
+            - paragraph [ref=e162]: 쇼핑
+            - navigation [ref=e163]:
+              - link "전체 상품" [ref=e164] [cursor=pointer]:
+                - /url: /en/products
+              - link "컬렉션" [ref=e165] [cursor=pointer]:
+                - /url: /en/collection
+              - link "Archive" [ref=e166] [cursor=pointer]:
+                - /url: /en/archive
+              - link "Journal" [ref=e167] [cursor=pointer]:
+                - /url: /en/journal
+          - generic [ref=e168]:
+            - img "옥화당" [ref=e169]
+            - generic [ref=e170]:
+              - paragraph [ref=e171]: 자사호 · 보이차 · 다구
+              - paragraph [ref=e172]: 전문 쇼핑몰
+            - generic [ref=e173]:
+              - link "인스타그램" [ref=e174] [cursor=pointer]:
+                - /url: https://www.instagram.com/ockhwadang
+                - img [ref=e175]
+              - link "네이버 스마트스토어" [ref=e178] [cursor=pointer]:
+                - /url: https://smartstore.naver.com/ockhwadang
+                - img [ref=e179]
+        - generic [ref=e183]:
+          - generic [ref=e184]:
+            - generic [ref=e185]: 옥화당
+            - generic [ref=e186]: "|"
+            - generic [ref=e187]: 玉華堂
+          - paragraph [ref=e189]: © 2026 OKHWADANG. All rights reserved.
+    - region "Notifications alt+T"

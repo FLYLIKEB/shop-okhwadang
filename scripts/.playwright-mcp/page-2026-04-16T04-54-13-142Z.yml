@@ -1,0 +1,400 @@
+- generic [active] [ref=e1]:
+  - link "본문으로 바로가기" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "옥화당" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "옥화당" [ref=e8]
+        - search "상품 검색" [ref=e9]:
+          - searchbox "상품 검색" [ref=e10]
+          - button "검색" [ref=e11]:
+            - img [ref=e12]
+        - generic [ref=e15]:
+          - button "언어 선택" [ref=e17]:
+            - generic [ref=e18]: 🇰🇷
+            - generic [ref=e19]: 한국어
+          - link "장바구니" [ref=e20] [cursor=pointer]:
+            - /url: /cart
+            - img [ref=e21]
+          - link "로그인" [ref=e25] [cursor=pointer]:
+            - /url: /login
+            - img [ref=e26]
+      - navigation "메인 메뉴" [ref=e31]:
+        - link "상품목록" [ref=e33] [cursor=pointer]:
+          - /url: /products
+          - generic [ref=e34]: 상품목록
+        - link "장인" [ref=e36] [cursor=pointer]:
+          - /url: /artist
+          - generic [ref=e37]: 장인
+        - link "Archive" [ref=e39] [cursor=pointer]:
+          - /url: /archive
+          - generic [ref=e40]: Archive
+    - main [ref=e41]:
+      - generic [ref=e42]:
+        - region "메인 배너" [ref=e44]:
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - img "의흥 장인의 손끝에서" [ref=e48]
+              - generic [ref=e50]:
+                - paragraph [ref=e51]: 옥화당 茶室
+                - heading "의흥 장인의 손끝에서" [level=1] [ref=e52]
+                - link "컬렉션 보기" [ref=e54] [cursor=pointer]:
+                  - /url: /collection
+                  - generic [ref=e56]: 컬렉션 보기
+                  - img [ref=e59]
+            - generic [ref=e61]:
+              - img "보이차의 깊은 여운" [ref=e62]
+              - generic [ref=e64]:
+                - paragraph [ref=e65]: "02"
+                - heading "보이차의 깊은 여운" [level=1] [ref=e66]
+                - link "아카이브 보기" [ref=e68] [cursor=pointer]:
+                  - /url: /archive
+                  - generic [ref=e70]: 아카이브 보기
+                  - img [ref=e73]
+            - generic [ref=e75]:
+              - img "찻자리의 완성" [ref=e76]
+              - generic [ref=e78]:
+                - paragraph [ref=e79]: "03"
+                - heading "찻자리의 완성" [level=1] [ref=e80]
+                - link "저널 보기" [ref=e82] [cursor=pointer]:
+                  - /url: /journal
+                  - generic [ref=e84]: 저널 보기
+                  - img [ref=e87]
+          - button "이전 슬라이드" [ref=e89]:
+            - img [ref=e90]
+          - button "다음 슬라이드" [ref=e92]:
+            - img [ref=e93]
+          - generic [ref=e95]:
+            - button "1번 슬라이드로 이동" [ref=e96]
+            - button "2번 슬라이드로 이동" [ref=e97]
+            - button "3번 슬라이드로 이동" [ref=e98]
+        - generic [ref=e100]:
+          - navigation [ref=e102]:
+            - generic [ref=e103]:
+              - link "자사호 →" [ref=e104] [cursor=pointer]:
+                - /url: /products?categoryId=1
+                - generic [ref=e105]: 자사호
+                - generic [ref=e106]: →
+              - link "보이차 →" [ref=e107] [cursor=pointer]:
+                - /url: /products?categoryId=2
+                - generic [ref=e108]: 보이차
+                - generic [ref=e109]: →
+              - link "다구 →" [ref=e110] [cursor=pointer]:
+                - /url: /products?categoryId=3
+                - generic [ref=e111]: 다구
+                - generic [ref=e112]: →
+              - link "다엽 →" [ref=e113] [cursor=pointer]:
+                - /url: /products?categoryId=4
+                - generic [ref=e114]: 다엽
+                - generic [ref=e115]: →
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - heading "추천 상품" [level=2] [ref=e119]
+              - link "전체 보기" [ref=e121] [cursor=pointer]:
+                - /url: /products?isFeatured=true
+            - generic [ref=e122]:
+              - link "옥화당 주니 서시호 120ml 주니 찜하기 옥화당 주니 서시호 120ml ₩580,000 장바구니 담기" [ref=e124] [cursor=pointer]:
+                - /url: /products/1
+                - generic [ref=e125]:
+                  - img "옥화당 주니 서시호 120ml" [ref=e126]
+                  - generic [ref=e127]: 주니
+                  - button "찜하기" [ref=e128]:
+                    - img [ref=e129]
+                - generic [ref=e131]:
+                  - paragraph [ref=e132]: 옥화당 주니 서시호 120ml
+                  - separator [ref=e135]
+                  - generic [ref=e137]: ₩580,000
+                  - button "장바구니 담기" [ref=e138]:
+                    - img [ref=e139]
+                    - text: 장바구니 담기
+              - link "옥화당 주니 주형호 80ml 주니 찜하기 옥화당 주니 주형호 80ml ₩380,000 10% 할인 ₩420,000 장바구니 담기" [ref=e144] [cursor=pointer]:
+                - /url: /products/2
+                - generic [ref=e145]:
+                  - img "옥화당 주니 주형호 80ml" [ref=e146]
+                  - generic [ref=e147]: 주니
+                  - button "찜하기" [ref=e148]:
+                    - img [ref=e149]
+                - generic [ref=e151]:
+                  - paragraph [ref=e152]: 옥화당 주니 주형호 80ml
+                  - separator [ref=e155]
+                  - generic [ref=e156]:
+                    - generic [ref=e157]:
+                      - generic [ref=e158]: ₩380,000
+                      - generic [ref=e159]: 10% 할인
+                    - generic [ref=e160]: ₩420,000
+                  - button "장바구니 담기" [ref=e161]:
+                    - img [ref=e162]
+                    - text: 장바구니 담기
+              - link "No Image 자사 찜하기 옥화당 자사 편평호 200ml ₩380,000 장바구니 담기" [ref=e167] [cursor=pointer]:
+                - /url: /products/4
+                - generic [ref=e168]:
+                  - generic [ref=e170]: No Image
+                  - generic [ref=e171]: 자사
+                  - button "찜하기" [ref=e172]:
+                    - img [ref=e173]
+                - generic [ref=e175]:
+                  - paragraph [ref=e176]: 옥화당 자사 편평호 200ml
+                  - separator [ref=e179]
+                  - generic [ref=e181]: ₩380,000
+                  - button "장바구니 담기" [ref=e182]:
+                    - img [ref=e183]
+                    - text: 장바구니 담기
+              - link "No Image 단니 찜하기 옥화당 단니 석표호 220ml ₩520,000 장바구니 담기" [ref=e188] [cursor=pointer]:
+                - /url: /products/7
+                - generic [ref=e189]:
+                  - generic [ref=e191]: No Image
+                  - generic [ref=e192]: 단니
+                  - button "찜하기" [ref=e193]:
+                    - img [ref=e194]
+                - generic [ref=e196]:
+                  - paragraph [ref=e197]: 옥화당 단니 석표호 220ml
+                  - separator [ref=e200]
+                  - generic [ref=e202]: ₩520,000
+                  - button "장바구니 담기" [ref=e203]:
+                    - img [ref=e204]
+                    - text: 장바구니 담기
+              - link "No Image 청회니 찜하기 옥화당 청회니 서시호 130ml ₩420,000 장바구니 담기" [ref=e209] [cursor=pointer]:
+                - /url: /products/10
+                - generic [ref=e210]:
+                  - generic [ref=e212]: No Image
+                  - generic [ref=e213]: 청회니
+                  - button "찜하기" [ref=e214]:
+                    - img [ref=e215]
+                - generic [ref=e217]:
+                  - paragraph [ref=e218]: 옥화당 청회니 서시호 130ml
+                  - separator [ref=e221]
+                  - generic [ref=e223]: ₩420,000
+                  - button "장바구니 담기" [ref=e224]:
+                    - img [ref=e225]
+                    - text: 장바구니 담기
+              - link "No Image 생차 (生茶) 찜하기 2019년 반장 고수 생병 357g ₩180,000 장바구니 담기" [ref=e230] [cursor=pointer]:
+                - /url: /products/11
+                - generic [ref=e231]:
+                  - generic [ref=e233]: No Image
+                  - generic [ref=e234]: 생차 (生茶)
+                  - button "찜하기" [ref=e235]:
+                    - img [ref=e236]
+                - generic [ref=e238]:
+                  - paragraph [ref=e239]: 2019년 반장 고수 생병 357g
+                  - separator [ref=e242]
+                  - generic [ref=e244]: ₩180,000
+                  - button "장바구니 담기" [ref=e245]:
+                    - img [ref=e246]
+                    - text: 장바구니 담기
+              - link "No Image 생차 (生茶) 찜하기 2021년 빙도 고수 생병 357g ₩320,000 장바구니 담기" [ref=e251] [cursor=pointer]:
+                - /url: /products/12
+                - generic [ref=e252]:
+                  - generic [ref=e254]: No Image
+                  - generic [ref=e255]: 생차 (生茶)
+                  - button "찜하기" [ref=e256]:
+                    - img [ref=e257]
+                - generic [ref=e259]:
+                  - paragraph [ref=e260]: 2021년 빙도 고수 생병 357g
+                  - separator [ref=e263]
+                  - generic [ref=e265]: ₩320,000
+                  - button "장바구니 담기" [ref=e266]:
+                    - img [ref=e267]
+                    - text: 장바구니 담기
+              - link "No Image 노차 (老茶) 찜하기 1990년대 홍인 노숙병 (소분) 10g ₩120,000 장바구니 담기" [ref=e272] [cursor=pointer]:
+                - /url: /products/15
+                - generic [ref=e273]:
+                  - generic [ref=e275]: No Image
+                  - generic [ref=e276]: 노차 (老茶)
+                  - button "찜하기" [ref=e277]:
+                    - img [ref=e278]
+                - generic [ref=e280]:
+                  - paragraph [ref=e281]: 1990년대 홍인 노숙병 (소분) 10g
+                  - separator [ref=e284]
+                  - generic [ref=e286]: ₩120,000
+                  - button "장바구니 담기" [ref=e287]:
+                    - img [ref=e288]
+                    - text: 장바구니 담기
+          - generic [ref=e293]:
+            - generic [ref=e294]:
+              - heading "인기 상품" [level=2] [ref=e295]
+              - link "전체 보기" [ref=e297] [cursor=pointer]:
+                - /url: /products?sort=popular
+            - generic [ref=e298]:
+              - link "옥화당 주니 서시호 120ml 주니 찜하기 옥화당 주니 서시호 120ml ₩580,000 장바구니 담기" [ref=e300] [cursor=pointer]:
+                - /url: /products/1
+                - generic [ref=e301]:
+                  - img "옥화당 주니 서시호 120ml" [ref=e302]
+                  - generic [ref=e303]: 주니
+                  - button "찜하기" [ref=e304]:
+                    - img [ref=e305]
+                - generic [ref=e307]:
+                  - paragraph [ref=e308]: 옥화당 주니 서시호 120ml
+                  - separator [ref=e311]
+                  - generic [ref=e313]: ₩580,000
+                  - button "장바구니 담기" [ref=e314]:
+                    - img [ref=e315]
+                    - text: 장바구니 담기
+              - link "옥화당 주니 주형호 80ml 주니 찜하기 옥화당 주니 주형호 80ml ₩380,000 10% 할인 ₩420,000 장바구니 담기" [ref=e320] [cursor=pointer]:
+                - /url: /products/2
+                - generic [ref=e321]:
+                  - img "옥화당 주니 주형호 80ml" [ref=e322]
+                  - generic [ref=e323]: 주니
+                  - button "찜하기" [ref=e324]:
+                    - img [ref=e325]
+                - generic [ref=e327]:
+                  - paragraph [ref=e328]: 옥화당 주니 주형호 80ml
+                  - separator [ref=e331]
+                  - generic [ref=e332]:
+                    - generic [ref=e333]:
+                      - generic [ref=e334]: ₩380,000
+                      - generic [ref=e335]: 10% 할인
+                    - generic [ref=e336]: ₩420,000
+                  - button "장바구니 담기" [ref=e337]:
+                    - img [ref=e338]
+                    - text: 장바구니 담기
+              - link "No Image 주니 찜하기 옥화당 주니 석표호 160ml ₩650,000 장바구니 담기" [ref=e343] [cursor=pointer]:
+                - /url: /products/3
+                - generic [ref=e344]:
+                  - generic [ref=e346]: No Image
+                  - generic [ref=e347]: 주니
+                  - button "찜하기" [ref=e348]:
+                    - img [ref=e349]
+                - generic [ref=e351]:
+                  - paragraph [ref=e352]: 옥화당 주니 석표호 160ml
+                  - separator [ref=e355]
+                  - generic [ref=e357]: ₩650,000
+                  - button "장바구니 담기" [ref=e358]:
+                    - img [ref=e359]
+                    - text: 장바구니 담기
+              - link "No Image 자사 찜하기 옥화당 자사 편평호 200ml ₩380,000 장바구니 담기" [ref=e364] [cursor=pointer]:
+                - /url: /products/4
+                - generic [ref=e365]:
+                  - generic [ref=e367]: No Image
+                  - generic [ref=e368]: 자사
+                  - button "찜하기" [ref=e369]:
+                    - img [ref=e370]
+                - generic [ref=e372]:
+                  - paragraph [ref=e373]: 옥화당 자사 편평호 200ml
+                  - separator [ref=e376]
+                  - generic [ref=e378]: ₩380,000
+                  - button "장바구니 담기" [ref=e379]:
+                    - img [ref=e380]
+                    - text: 장바구니 담기
+              - link "No Image 자사 찜하기 옥화당 자사 서시호 150ml ₩400,000 11% 할인 ₩450,000 장바구니 담기" [ref=e385] [cursor=pointer]:
+                - /url: /products/5
+                - generic [ref=e386]:
+                  - generic [ref=e388]: No Image
+                  - generic [ref=e389]: 자사
+                  - button "찜하기" [ref=e390]:
+                    - img [ref=e391]
+                - generic [ref=e393]:
+                  - paragraph [ref=e394]: 옥화당 자사 서시호 150ml
+                  - separator [ref=e397]
+                  - generic [ref=e398]:
+                    - generic [ref=e399]:
+                      - generic [ref=e400]: ₩400,000
+                      - generic [ref=e401]: 11% 할인
+                    - generic [ref=e402]: ₩450,000
+                  - button "장바구니 담기" [ref=e403]:
+                    - img [ref=e404]
+                    - text: 장바구니 담기
+              - link "No Image 자사 찜하기 옥화당 자사 주형호 180ml ₩320,000 장바구니 담기" [ref=e409] [cursor=pointer]:
+                - /url: /products/6
+                - generic [ref=e410]:
+                  - generic [ref=e412]: No Image
+                  - generic [ref=e413]: 자사
+                  - button "찜하기" [ref=e414]:
+                    - img [ref=e415]
+                - generic [ref=e417]:
+                  - paragraph [ref=e418]: 옥화당 자사 주형호 180ml
+                  - separator [ref=e421]
+                  - generic [ref=e423]: ₩320,000
+                  - button "장바구니 담기" [ref=e424]:
+                    - img [ref=e425]
+                    - text: 장바구니 담기
+              - link "No Image 단니 찜하기 옥화당 단니 석표호 220ml ₩520,000 장바구니 담기" [ref=e430] [cursor=pointer]:
+                - /url: /products/7
+                - generic [ref=e431]:
+                  - generic [ref=e433]: No Image
+                  - generic [ref=e434]: 단니
+                  - button "찜하기" [ref=e435]:
+                    - img [ref=e436]
+                - generic [ref=e438]:
+                  - paragraph [ref=e439]: 옥화당 단니 석표호 220ml
+                  - separator [ref=e442]
+                  - generic [ref=e444]: ₩520,000
+                  - button "장바구니 담기" [ref=e445]:
+                    - img [ref=e446]
+                    - text: 장바구니 담기
+              - link "No Image 단니 찜하기 옥화당 단니 편평호 140ml ₩430,000 10% 할인 ₩480,000 장바구니 담기" [ref=e451] [cursor=pointer]:
+                - /url: /products/8
+                - generic [ref=e452]:
+                  - generic [ref=e454]: No Image
+                  - generic [ref=e455]: 단니
+                  - button "찜하기" [ref=e456]:
+                    - img [ref=e457]
+                - generic [ref=e459]:
+                  - paragraph [ref=e460]: 옥화당 단니 편평호 140ml
+                  - separator [ref=e463]
+                  - generic [ref=e464]:
+                    - generic [ref=e465]:
+                      - generic [ref=e466]: ₩430,000
+                      - generic [ref=e467]: 10% 할인
+                    - generic [ref=e468]: ₩480,000
+                  - button "장바구니 담기" [ref=e469]:
+                    - img [ref=e470]
+                    - text: 장바구니 담기
+          - generic [ref=e476]:
+            - paragraph [ref=e477]: Special Offer
+            - heading "지금 바로 쇼핑하세요" [level=2] [ref=e478]
+            - paragraph [ref=e479]: 다양한 상품을 둘러보세요
+            - link "쇼핑하기" [ref=e480] [cursor=pointer]:
+              - /url: /products
+    - contentinfo [ref=e481]:
+      - generic [ref=e482]:
+        - generic [ref=e483]:
+          - generic [ref=e484]:
+            - paragraph [ref=e485]: 고객센터
+            - navigation [ref=e486]:
+              - link "고객센터" [ref=e487] [cursor=pointer]:
+                - /url: /ko/pages/support
+              - link "자주 묻는 질문" [ref=e488] [cursor=pointer]:
+                - /url: /ko/faq
+              - link "배송 안내" [ref=e489] [cursor=pointer]:
+                - /url: /ko/pages/shipping
+              - link "반품 및 교환" [ref=e490] [cursor=pointer]:
+                - /url: /ko/pages/returns
+          - generic [ref=e491]:
+            - paragraph [ref=e492]: 회사
+            - navigation [ref=e493]:
+              - link "이용약관" [ref=e494] [cursor=pointer]:
+                - /url: /ko/pages/terms
+              - link "개인정보처리방침" [ref=e495] [cursor=pointer]:
+                - /url: /ko/pages/privacy
+          - generic [ref=e496]:
+            - paragraph [ref=e497]: 쇼핑
+            - navigation [ref=e498]:
+              - link "전체 상품" [ref=e499] [cursor=pointer]:
+                - /url: /ko/products
+              - link "컬렉션" [ref=e500] [cursor=pointer]:
+                - /url: /ko/collection
+              - link "Archive" [ref=e501] [cursor=pointer]:
+                - /url: /ko/archive
+              - link "Journal" [ref=e502] [cursor=pointer]:
+                - /url: /ko/journal
+          - generic [ref=e503]:
+            - img "옥화당" [ref=e504]
+            - generic [ref=e505]:
+              - paragraph [ref=e506]: 자사호 · 보이차 · 다구
+              - paragraph [ref=e507]: 전문 쇼핑몰
+            - generic [ref=e508]:
+              - link "인스타그램" [ref=e509] [cursor=pointer]:
+                - /url: https://www.instagram.com/ockhwadang
+                - img [ref=e510]
+              - link "네이버 스마트스토어" [ref=e513] [cursor=pointer]:
+                - /url: https://smartstore.naver.com/ockhwadang
+                - img [ref=e514]
+        - generic [ref=e518]:
+          - generic [ref=e519]:
+            - generic [ref=e520]: 옥화당
+            - generic [ref=e521]: "|"
+            - generic [ref=e522]: 玉華堂
+          - paragraph [ref=e524]: © 2026 OKHWADANG. All rights reserved.
+    - region "Notifications alt+T"
