@@ -26,10 +26,6 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: EC2에 배포
-        env:
-          BACKEND_ENV_PRODUCTION: ${{ secrets.BACKEND_ENV_PRODUCTION }}
-          JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
-          JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
         run: |
           set -e
 
@@ -42,16 +38,14 @@ jobs:
           git reset --hard origin/main
 
           # ------------------------------------------------------------------
-          # 2. 환경변수 복원 (.gitignored)
+          # 2. 환경변수 확인 — EC2 내부 .env / keys/ 를 신뢰한다.
+          #    (GitHub Secret 으로 덮어쓰지 않음. 로컬 수정은
+          #     scripts/remote-env-sync.sh push 로 반영)
           # ------------------------------------------------------------------
-          printf '%s' "$BACKEND_ENV_PRODUCTION" > .env
-          chmod 600 .env
-
-          # JWT RSA 키 복원 (.gitignored)
-          mkdir -p keys
-          printf '%s' "$JWT_PRIVATE_KEY" > keys/jwt-private.pem
-          printf '%s' "$JWT_PUBLIC_KEY" > keys/jwt-public.pem
-          chmod 600 keys/jwt-private.pem keys/jwt-public.pem
+          [ -f .env ] || { echo "ERROR: backend/.env 가 원격에 없습니다. remote-env-sync.sh push 로 먼저 업로드하세요." >&2; exit 1; }
+          [ -f keys/jwt-private.pem ] || { echo "ERROR: keys/jwt-private.pem 가 원격에 없습니다." >&2; exit 1; }
+          [ -f keys/jwt-public.pem ] || { echo "ERROR: keys/jwt-public.pem 가 원격에 없습니다." >&2; exit 1; }
+          chmod 600 .env keys/jwt-private.pem keys/jwt-public.pem
 
           # ------------------------------------------------------------------
           # 3. 의존성 설치 및 빌드
