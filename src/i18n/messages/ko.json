@@ -55,10 +55,18 @@
     "searchPlaceholder": "상품 검색...",
     "searchLabel": "상품 검색",
     "searchButton": "검색",
+    "searchShort": "검색...",
+    "searchOpen": "검색 열기",
+    "searchClose": "검색 닫기",
     "cartLabel": "장바구니",
     "myPage": "마이페이지",
     "logout": "로그아웃",
     "login": "로그인",
+    "createAccount": "계정 만들기",
+    "contact": "문의하기",
+    "orderTracking": "주문조회",
+    "menuLabel": "메뉴",
+    "menuBack": "뒤로",
     "goBack": "뒤로가기",
     "goHome": "홈"
   },
@@ -589,6 +597,22 @@
   },
   "pages": {
     "adminPages": "페이지 관리"
+  },
+  "home": {
+    "metaTitle": "옥화당 — 공식 쇼핑몰",
+    "metaDescription": "다양한 상품을 만나보세요.",
+    "featuredProducts": "추천 상품",
+    "popularProducts": "인기 상품",
+    "promoTitle": "지금 바로 쇼핑하세요",
+    "promoSubtitle": "다양한 상품을 둘러보세요",
+    "promoCta": "쇼핑하기"
+  },
+  "nav": {
+    "products": "상품목록",
+    "artist": "장인",
+    "archive": "Archive",
+    "collection": "컬렉션",
+    "journal": "Journal"
   },
   "errors": {
     "generic": "오류가 발생했습니다.",

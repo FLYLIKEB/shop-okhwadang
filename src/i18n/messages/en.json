@@ -55,10 +55,18 @@
     "searchPlaceholder": "Search products...",
     "searchLabel": "Search products",
     "searchButton": "Search",
+    "searchShort": "Search...",
+    "searchOpen": "Open search",
+    "searchClose": "Close search",
     "cartLabel": "Cart",
     "myPage": "My Page",
     "logout": "Log Out",
     "login": "Log In",
+    "createAccount": "Create Account",
+    "contact": "Contact Us",
+    "orderTracking": "Order Tracking",
+    "menuLabel": "Menu",
+    "menuBack": "Back",
     "goBack": "Back",
     "goHome": "Home"
   },
@@ -589,6 +597,22 @@
   },
   "pages": {
     "adminPages": "Page Management"
+  },
+  "home": {
+    "metaTitle": "Okhwadang — Official Store",
+    "metaDescription": "Discover a curated selection of Yixing teapots, pu-erh tea and tea ware.",
+    "featuredProducts": "Featured Products",
+    "popularProducts": "Popular Products",
+    "promoTitle": "Shop Now",
+    "promoSubtitle": "Explore our curated collection.",
+    "promoCta": "Shop Now"
+  },
+  "nav": {
+    "products": "Products",
+    "artist": "Artist",
+    "archive": "Archive",
+    "collection": "Collection",
+    "journal": "Journal"
   },
   "errors": {
     "generic": "An error occurred.",

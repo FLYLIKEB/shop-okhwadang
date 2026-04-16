@@ -20,9 +20,18 @@ vi.mock('@/i18n/navigation', () => ({
   usePathname: () => mockPathname,
 }));
 
-vi.mock('next-intl', () => ({
-  useLocale: () => 'ko',
-}));
+vi.mock('next-intl', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-intl')>();
+  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, Record<string, string>>;
+  return {
+    ...actual,
+    useLocale: () => 'ko',
+    useTranslations: (namespace: string) => (key: string) => {
+      const ns = messages[namespace] ?? {};
+      return ns[key] ?? key;
+    },
+  };
+});
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({

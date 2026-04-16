@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { useNavigation } from '@/hooks/useNavigation';
 import type { NavigationItem } from '@/lib/api';
 
@@ -21,39 +22,22 @@ const ShoppingBagIcon = ({ size = 18 }: { size?: number }) => (
   </svg>
 );
 
-const SOCIAL_LINKS = [
+const SOCIAL_LINKS: {
+  id: 'instagram' | 'naver';
+  href: string;
+  icon: ({ size }: { size?: number }) => React.ReactElement;
+}[] = [
   {
     id: 'instagram',
-    label: '인스타그램',
     href: 'https://www.instagram.com/ockhwadang',
     icon: InstagramIcon,
   },
   {
     id: 'naver',
-    label: '네이버 스마트스토어',
     href: 'https://smartstore.naver.com/ockhwadang',
     icon: ShoppingBagIcon,
   },
 ];
-
-const FALLBACK_LINKS = {
-  customerService: [
-    { id: -1, label: '고객센터', url: '/pages/support' },
-    { id: -2, label: '자주 묻는 질문', url: '/faq' },
-    { id: -3, label: '배송 안내', url: '/pages/shipping' },
-    { id: -4, label: '반품 및 교환', url: '/pages/returns' },
-  ],
-  company: [
-    { id: -5, label: '이용약관', url: '/pages/terms' },
-    { id: -6, label: '개인정보처리방침', url: '/pages/privacy' },
-  ],
-  shop: [
-    { id: -7, label: '전체 상품', url: '/products' },
-    { id: -8, label: '컬렉션', url: '/collection' },
-    { id: -9, label: 'Archive', url: '/archive' },
-    { id: -10, label: 'Journal', url: '/journal' },
-  ],
-};
 
 function renderNavLinks(items: NavigationItem[]) {
   return items.map((item) => (
@@ -68,20 +52,45 @@ function renderNavLinks(items: NavigationItem[]) {
 }
 
 export default function Footer() {
+  const t = useTranslations('footer');
   const { items: footerItems } = useNavigation('footer');
   const hasCmsData = footerItems.length > 0;
   const rootItems = hasCmsData ? footerItems.filter((item) => item.parent_id === null) : [];
+
+  const socialLabels: Record<'instagram' | 'naver', string> = {
+    instagram: 'Instagram',
+    naver: 'Naver Smart Store',
+  };
+
+  const fallbackLinks = {
+    customerService: [
+      { id: -1, label: t('support'), url: '/pages/support' },
+      { id: -2, label: t('faq'), url: '/faq' },
+      { id: -3, label: t('shipping'), url: '/pages/shipping' },
+      { id: -4, label: t('returns'), url: '/pages/returns' },
+    ],
+    company: [
+      { id: -5, label: t('terms'), url: '/pages/terms' },
+      { id: -6, label: t('privacy'), url: '/pages/privacy' },
+    ],
+    shop: [
+      { id: -7, label: t('allProducts'), url: '/products' },
+      { id: -8, label: t('collection'), url: '/collection' },
+      { id: -9, label: t('archive'), url: '/archive' },
+      { id: -10, label: t('journal'), url: '/journal' },
+    ],
+  };
 
   return (
     <footer className="bg-card border-t border-border mt-auto">
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">고객센터</p>
+            <p className="text-sm font-medium text-foreground mb-4">{t('customerService')}</p>
             <nav className="flex flex-col gap-2">
               {hasCmsData
                 ? renderNavLinks(rootItems.slice(0, 4))
-                : FALLBACK_LINKS.customerService.map((link) => (
+                : fallbackLinks.customerService.map((link) => (
                   <Link
                     key={link.id}
                     href={link.url}
@@ -94,11 +103,11 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">회사</p>
+            <p className="text-sm font-medium text-foreground mb-4">{t('company')}</p>
             <nav className="flex flex-col gap-2">
               {hasCmsData
                 ? renderNavLinks(rootItems.slice(4, 6))
-                : FALLBACK_LINKS.company.map((link) => (
+                : fallbackLinks.company.map((link) => (
                   <Link
                     key={link.id}
                     href={link.url}
@@ -111,11 +120,11 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">쇼핑</p>
+            <p className="text-sm font-medium text-foreground mb-4">{t('shop')}</p>
             <nav className="flex flex-col gap-2">
               {hasCmsData
                 ? renderNavLinks(rootItems.slice(6, 10))
-                : FALLBACK_LINKS.shop.map((link) => (
+                : fallbackLinks.shop.map((link) => (
                   <Link
                     key={link.id}
                     href={link.url}
@@ -128,10 +137,10 @@ export default function Footer() {
           </div>
 
           <div>
-            <Image src="/logo-okhwadang.png" alt="옥화당" width={120} height={34} className="object-contain mb-4" />
+            <Image src="/logo-okhwadang.png" alt={t('okhwadang')} width={120} height={34} className="object-contain mb-4" />
             <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-              <p>자사호 · 보이차 · 다구</p>
-              <p>전문 쇼핑몰</p>
+              <p>{t('tagline')}</p>
+              <p>{t('specialty')}</p>
             </div>
             <div className="flex items-center gap-3 mt-4">
               {SOCIAL_LINKS.map((social) => (
@@ -140,7 +149,7 @@ export default function Footer() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={social.label}
+                  aria-label={socialLabels[social.id]}
                   className="flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <social.icon size={18} />
@@ -154,7 +163,7 @@ export default function Footer() {
         <div className="mt-12 pt-8 border-t border-dashed border-border">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <span className="font-display text-2xl text-foreground/80 tracking-wide">옥화당</span>
+              <span className="font-display text-2xl text-foreground/80 tracking-wide">{t('okhwadang')}</span>
               <span className="text-muted-foreground/40 text-lg">|</span>
               <span className="font-display text-lg text-muted-foreground/50">玉華堂</span>
             </div>

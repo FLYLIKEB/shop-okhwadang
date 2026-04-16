@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -95,9 +95,10 @@ export default async function LocaleLayout({
 
   setRequestLocale(safeLocale);
 
-  const [messages, settingsMap] = await Promise.all([
+  const [messages, settingsMap, tNav] = await Promise.all([
     getMessages(),
     getSettingsMap(),
+    getTranslations('navigation'),
   ]);
 
   const themeStyle = await getThemeStyle(settingsMap);
@@ -117,7 +118,7 @@ export default async function LocaleLayout({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
         >
-          본문으로 바로가기
+          {tNav('skipToContent')}
         </a>
         <NextIntlClientProvider messages={messages}>
           <Providers>
