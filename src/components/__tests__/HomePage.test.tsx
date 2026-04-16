@@ -11,6 +11,51 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace?: string) => {
+    const dict: Record<string, Record<string, string>> = {
+      'home.hero': {
+        bannerLabel: '메인 배너',
+        primaryLabel: '옥화당 茶室',
+        prevSlide: '이전 슬라이드',
+        nextSlide: '다음 슬라이드',
+        goToSlide: '{index}번 슬라이드로 이동',
+      },
+      'home.heroDefaultSlides': {
+        '0.title': '의흥 장인의 손끝에서',
+        '0.subtitle': '600년 전통',
+        '0.ctaText': '컬렉션 보기',
+        '1.title': '보이차의 깊은 여운',
+        '1.subtitle': '세월이 빚어낸 맛',
+        '1.ctaText': '아카이브 보기',
+        '2.title': '찻자리의 완성',
+        '2.subtitle': '고요한 시간의 시작',
+        '2.ctaText': '저널 보기',
+      },
+      common: {
+        viewAll: '전체 보기',
+      },
+      promotion: {
+        limitedTime: 'Limited Time',
+        specialOffer: 'Special Offer',
+        days: '일', hours: '시간', minutes: '분', seconds: '초',
+        eventEnded: '이벤트가 종료되었습니다',
+      },
+    };
+    const bucket = dict[namespace ?? ''] ?? {};
+    return (key: string, params?: Record<string, unknown>) => {
+      const value = bucket[key];
+      if (typeof value === 'string' && params) {
+        return Object.entries(params).reduce(
+          (acc, [k, v]) => acc.replace(`{${k}}`, String(v)),
+          value,
+        );
+      }
+      return value ?? key;
+    };
+  },
+}));
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ isAuthenticated: false, isLoading: false, user: null, logout: vi.fn() }),
 }));

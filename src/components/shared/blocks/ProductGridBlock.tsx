@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { productsApi } from '@/lib/api';
 import type { Product, ProductGridContent } from '@/lib/api';
 import ProductCard from '@/components/shared/products/ProductCard';
@@ -23,6 +24,7 @@ const gridColsMap: Record<string, string> = {
 export default function ProductGridBlock({ content }: Props) {
   const params = useParams();
   const locale = params.locale as string;
+  const t = useTranslations('common');
   const { product_ids, category_id, auto, limit, template, title, more_href, prefetched_products } = content;
   const [products, setProducts] = useState<Product[]>(prefetched_products ?? []);
   const [loading, setLoading] = useState(!prefetched_products);
@@ -91,7 +93,7 @@ export default function ProductGridBlock({ content }: Props) {
               href={more_href || `/${locale}/products?categoryId=${category_id}`}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              전체 보기
+              {t('viewAll')}
             </Link>
           </div>
         )}

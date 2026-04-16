@@ -127,9 +127,14 @@ function buildDefaultBlocks(
   ];
 }
 
-export default async function Home() {
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const [homePage, homeData, t] = await Promise.all([
-    fetchPage('home'),
+    fetchPage('home', locale),
     fetchHomeData(),
     getTranslations('home'),
   ]);
