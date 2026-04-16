@@ -118,6 +118,10 @@
   },
   "product": {
     "addToCart": "加入购物车",
+    "addingToCart": "添加中...",
+    "discountOff": "{percent}% OFF",
+    "prevProduct": "上一个商品",
+    "nextProduct": "下一个商品",
     "buyNow": "立即购买",
     "outOfStock": "缺货",
     "outOfStockMessage": "该商品当前缺货。",
@@ -573,6 +577,8 @@
   "wishlist": {
     "add": "加入心愿单",
     "remove": "从心愿单移除",
+    "toggleOn": "加入心愿单",
+    "toggleOff": "取消心愿单",
     "addSuccess": "已加入心愿单。",
     "removeSuccess": "已从心愿单移除。",
     "loginRequired": "请先登录。",
@@ -615,6 +621,12 @@
   },
   "teapotShapes": {
     "all": "全部"
+  },
+  "journalCategories": {
+    "culture": "茶文化",
+    "usage": "使用指南",
+    "tableSetting": "茶席布置",
+    "news": "资讯"
   },
   "promotion": {
     "limitedTime": "Limited Time",

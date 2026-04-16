@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { journalsApi, type Journal, JournalCategory } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
 import { cn } from '@/components/ui/utils';
@@ -20,14 +21,15 @@ interface Props {
   content: JournalPreviewContent;
 }
 
-const CATEGORY_LABELS: Record<JournalCategory, string> = {
-  [JournalCategory.CULTURE]: '다문화',
-  [JournalCategory.USAGE]: '사용법',
-  [JournalCategory.TABLE_SETTING]: '찻자리 세팅',
-  [JournalCategory.NEWS]: '소식',
+const CATEGORY_KEY_MAP: Record<JournalCategory, string> = {
+  [JournalCategory.CULTURE]: 'culture',
+  [JournalCategory.USAGE]: 'usage',
+  [JournalCategory.TABLE_SETTING]: 'tableSetting',
+  [JournalCategory.NEWS]: 'news',
 };
 
 function JournalCard({ journal, index }: { journal: Journal; index: number }) {
+  const tCat = useTranslations('journalCategories');
   const imgSources = [
     'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
     'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
@@ -62,7 +64,7 @@ function JournalCard({ journal, index }: { journal: Journal; index: number }) {
       <div className="p-5">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-            {CATEGORY_LABELS[journal.category]}
+            {tCat(CATEGORY_KEY_MAP[journal.category])}
           </span>
           <span className="text-xs text-muted-foreground">·</span>
           <span className="text-xs text-muted-foreground">{journal.readTime ?? ''}</span>
@@ -81,6 +83,7 @@ function JournalCard({ journal, index }: { journal: Journal; index: number }) {
 }
 
 export default function JournalPreviewBlock({ content }: Props) {
+  const tCommon = useTranslations('common');
   const { title, limit = 6, category, more_href, prefetched_journals } = content;
   const [journals, setJournals] = useState<Journal[]>(prefetched_journals ?? []);
   const [loading, setLoading] = useState(!prefetched_journals);
@@ -145,7 +148,7 @@ export default function JournalPreviewBlock({ content }: Props) {
             href={more_href ?? '/journal'}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            전체 보기 →
+            {tCommon('viewAll')} →
           </Link>
         </div>
       </div>

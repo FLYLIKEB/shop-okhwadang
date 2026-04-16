@@ -118,6 +118,10 @@
   },
   "product": {
     "addToCart": "カートに追加",
+    "addingToCart": "追加中...",
+    "discountOff": "{percent}% OFF",
+    "prevProduct": "前の商品",
+    "nextProduct": "次の商品",
     "buyNow": "今すぐ購入",
     "outOfStock": "在庫切れ",
     "outOfStockMessage": "現在、在庫切れの商品です。",
@@ -573,6 +577,8 @@
   "wishlist": {
     "add": "ウィッシュリストに追加",
     "remove": "ウィッシュリストから削除",
+    "toggleOn": "ウィッシュリストに追加",
+    "toggleOff": "ウィッシュリストから削除",
     "addSuccess": "ウィッシュリストに追加しました。",
     "removeSuccess": "ウィッシュリストから削除しました。",
     "loginRequired": "ログインが必要です。",
@@ -615,6 +621,12 @@
   },
   "teapotShapes": {
     "all": "すべて"
+  },
+  "journalCategories": {
+    "culture": "茶文化",
+    "usage": "使い方",
+    "tableSetting": "茶席設定",
+    "news": "お知らせ"
   },
   "promotion": {
     "limitedTime": "Limited Time",

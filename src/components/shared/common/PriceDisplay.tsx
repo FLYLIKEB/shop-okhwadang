@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { calcDiscount, formatCurrency, type Locale } from '@/utils/currency';
 
 interface PriceDisplayProps {
@@ -8,6 +9,7 @@ interface PriceDisplayProps {
 }
 
 export default function PriceDisplay({ price, salePrice, size = 'sm', locale = 'ko' }: PriceDisplayProps) {
+  const t = useTranslations('product');
   const discountClass = size === 'lg' ? 'text-sm font-bold' : 'text-xs font-bold';
   const priceClass = size === 'lg' ? 'text-2xl font-bold' : 'text-sm font-bold';
   const originalClass = size === 'lg' ? 'text-sm' : 'text-xs';
@@ -18,7 +20,7 @@ export default function PriceDisplay({ price, salePrice, size = 'sm', locale = '
         <div className="flex items-baseline gap-1.5 flex-wrap leading-none">
           <span className={`${priceClass} text-foreground`}>{formatCurrency(salePrice, locale)}</span>
           <span className={`${discountClass} text-destructive`}>
-            {calcDiscount(price, salePrice)}% 할인
+            {t('discountOff', { percent: calcDiscount(price, salePrice) })}
           </span>
         </div>
         <span className={`${originalClass} text-muted-foreground line-through leading-none`}>
