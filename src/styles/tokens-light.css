@@ -1,7 +1,7 @@
-/* ── EN 로케일 라이트 테마 토큰 (Wedgwood 웨지우드 팔레트) ─────────
-   html[lang="en"] 스코프: main 브랜치의 기존 라이트 테마
+/* ── 라이트 테마 토큰 (Wedgwood 웨지우드 팔레트) ────────────────────
+   html[data-theme="light"] 스코프. 기본 로케일: en/ja/zh
    ────────────────────────────────────────────────────────────────── */
-html[lang="en"] {
+html[data-theme="light"] {
   /* 브랜드 레거시 변수 */
   --color-bg: #FAFAFA;
   --color-text: #1a1a1a;

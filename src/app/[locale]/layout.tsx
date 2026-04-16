@@ -108,9 +108,14 @@ export default async function LocaleLayout({
 
   const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible !== 'false';
 
+  // FOUC 방지 인라인 스크립트: JS hydrate 전에 data-theme 세팅 (신뢰할 수 없는 입력 없음)
+  const foucScript = "(function(){try{var s=localStorage.getItem('theme');var l=document.documentElement.lang;var d=l==='ko'?'dark':'light';document.documentElement.dataset.theme=s&&(s==='dark'||s==='light')?s:d;}catch(e){}})();";
+
   return (
     <html lang={safeLocale}>
       <head>
+        {/* eslint-disable-next-line react/no-danger */}
+        <script dangerouslySetInnerHTML={{ __html: foucScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet" />
@@ -124,7 +129,7 @@ export default async function LocaleLayout({
           {tNav('skipToContent')}
         </a>
         <NextIntlClientProvider messages={messages}>
-          <Providers>
+          <Providers locale={safeLocale}>
             <MobileNavProvider initialVisible={mobileBottomNavVisible}>
               <div className="flex min-h-screen flex-col">
               <Header />

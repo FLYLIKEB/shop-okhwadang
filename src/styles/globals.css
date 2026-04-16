@@ -14,10 +14,15 @@
 
 @import "tailwindcss";
 
-/* ── Locale-scoped color tokens ────────────────────────────────── */
-/* KO (html[lang="ko"]) = 공방 다크 테마 / EN (html[lang="en"]) = 다실 라이트 테마 */
-@import './tokens-ko.css';
-@import './tokens-en.css';
+/* ── Theme-scoped color tokens ─────────────────────────────────── */
+/* html[data-theme="dark"] = 공방 다크 테마 / html[data-theme="light"] = 웨지우드 라이트 테마
+   로케일별 기본값은 ThemeContext(DEFAULT_THEME_BY_LOCALE)에서 관리 */
+@import './tokens-dark.css';
+@import './tokens-light.css';
+
+/* ── Tailwind v4 dark variant ──────────────────────────────────── */
+/* dark: 유틸리티가 data-theme="dark" 스코프에 반응하도록 매핑 */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
@@ -48,11 +53,11 @@
 }
 
 /* 색상 토큰은 @theme (non-inline) — 유틸리티가 var(--color-*)로 생성되어야
-   html[lang="en"] / html[lang="ko"] 스코프에서 tokens-*.css 의 런타임 오버라이드가
+   html[data-theme="dark"] / html[data-theme="light"] 스코프에서 tokens-*.css 의 런타임 오버라이드가
    실제로 적용된다. @theme inline 을 쓰면 hex 리터럴이 유틸리티에 박혀서
    런타임에 CSS 변수를 바꿔도 색상이 변경되지 않음. */
 @theme {
-  /* ── shadcn/ui 호환 토큰 — locale token 파일에서 런타임 override (KO 다크 폴백) ── */
+  /* ── shadcn/ui 호환 토큰 — theme token 파일에서 런타임 override (다크 폴백) ── */
   --color-primary: #C4956A;
   --color-primary-foreground: #141210;
   --color-secondary: #1E1C18;

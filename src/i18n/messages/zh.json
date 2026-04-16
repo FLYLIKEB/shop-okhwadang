@@ -60,7 +60,9 @@
     "logout": "退出登录",
     "login": "登录",
     "goBack": "返回",
-    "goHome": "首页"
+    "goHome": "首页",
+    "themeToggleToLight": "切换到浅色模式",
+    "themeToggleToDark": "切换到深色模式"
   },
   "footer": {
     "customerService": "客户服务",
