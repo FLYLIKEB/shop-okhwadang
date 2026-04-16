@@ -18,6 +18,7 @@ Next.js 15 (App Router) + React 19 + TS + TailwindCSS v4. Inherits root CLAUDE.m
 - Error extraction: `handleApiError(err)` from `@/utils/error` — no inline instanceof checks
 - Price formatting: `formatCurrency()` from `@/utils/currency` — no inline `.toLocaleString() + '원'`
 - Data fetching: `useAsyncAction` hook — no manual useState(loading) + try/catch/finally
+- i18n: `useTranslations('ns')` from `next-intl` for all user-facing strings. Locale files: `src/i18n/messages/{ko,en,ja,zh}.json`. Hardcoded Korean literals in components/blocks are forbidden — map enum/key values to translation keys instead (see `JournalPreviewBlock` CATEGORY_KEY_MAP pattern). When adding a key, update all 4 locale files.
 
 ## Responsive & Accessibility
 - Responsive: flex/grid based, component-level mobile branching
