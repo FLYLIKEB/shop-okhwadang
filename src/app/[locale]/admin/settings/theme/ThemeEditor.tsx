@@ -66,11 +66,15 @@ function ColorTokenRow({
 function GenericTokenRow({
   setting,
   currentValue,
+  currentValueEn,
   onChange,
+  onChangeEn,
 }: {
   setting: SiteSetting;
   currentValue: string;
+  currentValueEn: string;
   onChange: (key: string, value: string) => void;
+  onChangeEn: (key: string, value: string) => void;
 }) {
   const handleChange = (value: string) => {
     onChange(setting.key, value);
@@ -86,12 +90,21 @@ function GenericTokenRow({
         <p className="text-sm font-medium">{setting.label}</p>
         <p className="text-xs text-muted-foreground">{setting.key}</p>
       </div>
-      <input
-        type={setting.inputType === 'number' ? 'number' : 'text'}
-        value={currentValue}
-        onChange={(e) => handleChange(e.target.value)}
-        className="w-40 rounded border px-2 py-1 text-sm"
-      />
+      <div className="flex flex-col gap-1">
+        <input
+          type={setting.inputType === 'number' ? 'number' : 'text'}
+          value={currentValue}
+          onChange={(e) => handleChange(e.target.value)}
+          className="w-40 rounded border px-2 py-1 text-sm"
+        />
+        <input
+          type="text"
+          value={currentValueEn}
+          onChange={(e) => onChangeEn(setting.key, e.target.value)}
+          className="w-40 rounded border px-2 py-1 text-xs text-muted-foreground placeholder:text-muted-foreground/50"
+          placeholder="EN"
+        />
+      </div>
     </div>
   );
 }
@@ -138,14 +151,13 @@ function ThemePreviewPanel() {
 export default function ThemeEditor({ initialSettings }: Props) {
   const router = useRouter();
   const [settings, setSettings] = useState<SiteSetting[]>(initialSettings);
-  const [pendingChanges, setPendingChanges] = useState<
-    Record<string, string>
-  >({});
+  const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({});
+  const [pendingEnChanges, setPendingEnChanges] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<TabId>('color');
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
 
-  const hasChanges = Object.keys(pendingChanges).length > 0;
+  const hasChanges = Object.keys(pendingChanges).length > 0 || Object.keys(pendingEnChanges).length > 0;
   useUnsavedChanges(hasChanges);
 
   const getCurrentValue = useCallback(
@@ -153,27 +165,40 @@ export default function ThemeEditor({ initialSettings }: Props) {
     [pendingChanges],
   );
 
+  const getCurrentValueEn = useCallback(
+    (setting: SiteSetting) => pendingEnChanges[setting.key] ?? (setting.valueEn ?? ''),
+    [pendingEnChanges],
+  );
+
   const handleChange = useCallback((key: string, value: string) => {
     setPendingChanges((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleChangeEn = useCallback((key: string, value: string) => {
+    setPendingEnChanges((prev) => ({ ...prev, [key]: value }));
   }, []);
 
   const handleSave = async () => {
     if (!hasChanges) return;
     setSaving(true);
     try {
-      const items = Object.entries(pendingChanges).map(([key, value]) => ({
-        key,
-        value,
-      }));
+      const allKeys = new Set([...Object.keys(pendingChanges), ...Object.keys(pendingEnChanges)]);
+      const items = Array.from(allKeys).map((key) => {
+        const payload: { key: string; value?: string; valueEn?: string } = { key };
+        if (pendingChanges[key] !== undefined) payload.value = pendingChanges[key];
+        if (pendingEnChanges[key] !== undefined) payload.valueEn = pendingEnChanges[key];
+        return payload;
+      });
       await adminSettingsApi.bulkUpdate(items);
       setSettings((prev) =>
-        prev.map((s) =>
-          pendingChanges[s.key] !== undefined
-            ? { ...s, value: pendingChanges[s.key] }
-            : s,
-        ),
+        prev.map((s) => ({
+          ...s,
+          ...(pendingChanges[s.key] !== undefined ? { value: pendingChanges[s.key] } : {}),
+          ...(pendingEnChanges[s.key] !== undefined ? { valueEn: pendingEnChanges[s.key] } : {}),
+        })),
       );
       setPendingChanges({});
+      setPendingEnChanges({});
       toast.success('테마 설정이 저장되었습니다.');
       router.refresh();
     } catch (err) {
@@ -194,6 +219,7 @@ export default function ThemeEditor({ initialSettings }: Props) {
       const fresh = await settingsApi.getAll();
       setSettings(fresh);
       setPendingChanges({});
+      setPendingEnChanges({});
       fresh.forEach((s) => {
         document.documentElement.style.setProperty(
           `--db-${s.key.replace(/_/g, '-')}`,
@@ -287,7 +313,9 @@ export default function ThemeEditor({ initialSettings }: Props) {
                   key={setting.key}
                   setting={setting}
                   currentValue={getCurrentValue(setting)}
+                  currentValueEn={getCurrentValueEn(setting)}
                   onChange={handleChange}
+                  onChangeEn={handleChangeEn}
                 />
               ),
             )

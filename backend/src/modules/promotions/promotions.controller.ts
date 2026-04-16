@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   ParseIntPipe,
 } from '@nestjs/common';
 import {
@@ -13,6 +14,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { PromotionsService } from './promotions.service';
@@ -30,8 +32,9 @@ export class PromotionsController {
   @Get()
   @ApiOperation({ summary: '활성 프로모션 목록 조회', description: '현재 활성화된 프로모션 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '프로모션 목록 조회 성공' })
-  findAll() {
-    return this.promotionsService.findAllActive();
+  @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
+  findAll(@Query('locale') locale?: string) {
+    return this.promotionsService.findAllActive(locale);
   }
 
   @Public()
@@ -40,8 +43,9 @@ export class PromotionsController {
   @ApiResponse({ status: 200, description: '프로모션 상세 조회 성공' })
   @ApiResponse({ status: 404, description: '프로모션을 찾을 수 없음' })
   @ApiParam({ name: 'id', type: Number, description: '프로모션 ID' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.promotionsService.findOne(id);
+  @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
+  findOne(@Param('id', ParseIntPipe) id: number, @Query('locale') locale?: string) {
+    return this.promotionsService.findOne(id, locale);
   }
 }
 
@@ -54,8 +58,9 @@ export class BannersController {
   @Get()
   @ApiOperation({ summary: '배너 목록 조회', description: '활성화된 배너 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '배너 목록 조회 성공' })
-  findAll() {
-    return this.promotionsService.findAllActiveBanners();
+  @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
+  findAll(@Query('locale') locale?: string) {
+    return this.promotionsService.findAllActiveBanners(locale);
   }
 }
 

@@ -126,7 +126,7 @@ interface CollectionPageProps {
 }
 
 export default async function CollectionPage({ params }: CollectionPageProps) {
-  await params;
+  const { locale } = await params;
 
   let clayCollections: Collection[] = [];
   let shapeCollections: Collection[] = [];
@@ -134,7 +134,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   let fetchError: Error | null = null;
 
   try {
-    const data = await fetchCollections();
+    const data = await fetchCollections(locale);
     clayCollections = data.clay;
     shapeCollections = data.shape;
   } catch (err) {

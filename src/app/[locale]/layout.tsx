@@ -71,9 +71,12 @@ async function getThemeStyle(map: Record<string, string> | null): Promise<string
   return vars ? `:root { ${vars} }` : '';
 }
 
-async function getSettingsMap(): Promise<Record<string, string> | null> {
+async function getSettingsMap(locale?: string): Promise<Record<string, string> | null> {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/settings/map`, {
+    const url = locale && locale !== 'ko'
+      ? `${BACKEND_URL}/api/settings/map?locale=${locale}`
+      : `${BACKEND_URL}/api/settings/map`;
+    const res = await fetch(url, {
       cache: 'no-store',
     });
     if (!res.ok) return null;
@@ -97,7 +100,7 @@ export default async function LocaleLayout({
 
   const [messages, settingsMap, tNav] = await Promise.all([
     getMessages(),
-    getSettingsMap(),
+    getSettingsMap(safeLocale),
     getTranslations('navigation'),
   ]);
 

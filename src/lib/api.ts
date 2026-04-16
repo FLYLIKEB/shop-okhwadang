@@ -953,8 +953,8 @@ export interface NavigationItem {
 }
 
 export const navigationApi = {
-  getByGroup: (group: 'gnb' | 'sidebar' | 'footer') =>
-    apiClient.get<NavigationItem[]>(`/navigation?group=${group}`),
+  getByGroup: (group: 'gnb' | 'sidebar' | 'footer', locale?: string) =>
+    apiClient.get<NavigationItem[]>(`/navigation?group=${group}${locale ? `&locale=${locale}` : ''}`),
 };
 
 export const adminNavigationApi = {
@@ -1264,8 +1264,10 @@ export interface Promotion {
 export type PromotionListResponse = ListResponse<Promotion>;
 
 export const promotionsApi = {
-  getList: () => apiClient.get<Promotion[]>('/promotions'),
-  getOne: (id: number) => apiClient.get<Promotion>(`/promotions/${id}`),
+  getList: (locale?: string) =>
+    apiClient.get<Promotion[]>(locale ? `/promotions?locale=${locale}` : '/promotions'),
+  getOne: (id: number, locale?: string) =>
+    apiClient.get<Promotion>(locale ? `/promotions/${id}?locale=${locale}` : `/promotions/${id}`),
 };
 
 // ===== Banners =====
@@ -1282,7 +1284,8 @@ export interface Banner {
 }
 
 export const bannersApi = {
-  getList: () => apiClient.get<Banner[]>('/banners'),
+  getList: (locale?: string) =>
+    apiClient.get<Banner[]>(locale ? `/banners?locale=${locale}` : '/banners'),
 };
 
 // ===== Site Settings =====
@@ -1290,6 +1293,9 @@ export interface SiteSetting {
   id: number;
   key: string;
   value: string;
+  valueEn?: string | null;
+  valueJa?: string | null;
+  valueZh?: string | null;
   group: string;
   label: string;
   inputType: string;
@@ -1307,7 +1313,7 @@ export const settingsApi = {
 export const adminSettingsApi = {
   getAll: (group?: string) =>
     apiClient.get<SiteSetting[]>(`/admin/settings${group ? `?group=${group}` : ''}`),
-  bulkUpdate: (settings: Array<{ key: string; value: string }>) =>
+  bulkUpdate: (settings: Array<{ key: string; value: string; valueEn?: string; valueJa?: string; valueZh?: string }>) =>
     apiClient.put<SiteSetting[]>('/admin/settings', { settings }),
   reset: () =>
     apiClient.post<{ message: string }>('/admin/settings/reset'),
@@ -1338,7 +1344,8 @@ export interface CollectionsResponse {
 }
 
 export const collectionsApi = {
-  getAll: () => apiClient.get<CollectionsResponse>('/collections'),
+  getAll: (locale?: string) =>
+    apiClient.get<CollectionsResponse>(locale ? `/collections?locale=${locale}` : '/collections'),
 };
 
 // ===== Archives =====
@@ -1383,7 +1390,8 @@ export interface ArchivesResponse {
 }
 
 export const archivesApi = {
-  getAll: () => apiClient.get<ArchivesResponse>('/archives'),
+  getAll: (locale?: string) =>
+    apiClient.get<ArchivesResponse>(locale ? `/archives?locale=${locale}` : '/archives'),
 };
 
 // ===== Admin Collections =====

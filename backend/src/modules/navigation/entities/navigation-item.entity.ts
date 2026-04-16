@@ -20,6 +20,9 @@ export class NavigationItem {
   @Column({ type: 'varchar', length: 100 })
   label!: string;
 
+  @Column({ name: 'label_en', type: 'varchar', length: 100, nullable: true })
+  labelEn!: string | null;
+
   @Column({ type: 'varchar', length: 500 })
   url!: string;
 

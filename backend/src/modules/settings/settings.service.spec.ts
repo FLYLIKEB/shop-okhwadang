@@ -13,9 +13,9 @@ describe('SettingsService', () => {
   let mockDataSource: Record<string, jest.Mock>;
 
   const mockSettings: Partial<SiteSetting>[] = [
-    { id: 1, key: 'color_primary', value: '#2563eb', group: 'color', defaultValue: '#2563eb', sortOrder: 1 },
-    { id: 2, key: 'color_background', value: '#ffffff', group: 'color', defaultValue: '#ffffff', sortOrder: 4 },
-    { id: 3, key: 'font_size_base', value: '1rem', group: 'typography', defaultValue: '1rem', sortOrder: 12 },
+    { id: 1, key: 'color_primary', value: '#2563eb', valueEn: null, group: 'color', defaultValue: '#2563eb', sortOrder: 1 },
+    { id: 2, key: 'color_background', value: '#ffffff', valueEn: null, group: 'color', defaultValue: '#ffffff', sortOrder: 4 },
+    { id: 3, key: 'font_size_base', value: '1rem', valueEn: null, group: 'typography', defaultValue: '1rem', sortOrder: 12 },
   ];
 
   beforeEach(async () => {
@@ -60,7 +60,7 @@ describe('SettingsService', () => {
         where: {},
         order: { sortOrder: 'ASC' },
       });
-      expect(mockCache.set).toHaveBeenCalledWith('settings:all', mockSettings, 3600);
+      expect(mockCache.set).toHaveBeenCalledWith('settings:all:ko', mockSettings, 3600);
       expect(result).toEqual(mockSettings);
     });
 
@@ -72,8 +72,19 @@ describe('SettingsService', () => {
         where: { group: 'color' },
         order: { sortOrder: 'ASC' },
       });
-      expect(mockCache.set).toHaveBeenCalledWith('settings:color', colorSettings, 3600);
+      expect(mockCache.set).toHaveBeenCalledWith('settings:color:ko', colorSettings, 3600);
       expect(result).toEqual(colorSettings);
+    });
+
+    it('should use locale-specific cache key for EN locale', async () => {
+      const enSettings: Partial<SiteSetting>[] = [
+        { id: 1, key: 'color_primary', value: '#2563eb', valueEn: null, group: 'color', defaultValue: '#2563eb', sortOrder: 1 },
+        { id: 2, key: 'color_background', value: '#ffffff', valueEn: null, group: 'color', defaultValue: '#ffffff', sortOrder: 4 },
+        { id: 3, key: 'font_size_base', value: '1rem', valueEn: null, group: 'typography', defaultValue: '1rem', sortOrder: 12 },
+      ];
+      mockRepo.find.mockResolvedValue(enSettings);
+      await service.findAll(undefined, 'en');
+      expect(mockCache.set).toHaveBeenCalledWith('settings:all:en', expect.any(Array), 3600);
     });
   });
 
@@ -85,6 +96,20 @@ describe('SettingsService', () => {
         color_background: '#ffffff',
         font_size_base: '1rem',
       });
+    });
+
+    it('should return EN values when locale is en and valueEn is set', async () => {
+      const settingsWithEn: Partial<SiteSetting>[] = [
+        { id: 1, key: 'brand_name', value: '옥화당', valueEn: 'Okhwadang', group: 'brand', defaultValue: '옥화당', sortOrder: 100 },
+        { id: 2, key: 'brand_tagline', value: '자연을 담은 그릇', valueEn: 'Vessels that hold nature', group: 'brand', defaultValue: '자연을 담은 그릇', sortOrder: 101 },
+        { id: 3, key: 'font_size_base', value: '1rem', valueEn: null, group: 'typography', defaultValue: '1rem', sortOrder: 12 },
+      ];
+      mockRepo.find.mockResolvedValue(settingsWithEn);
+      const result = await service.getMap('en');
+      expect(result['brand_name']).toBe('Okhwadang');
+      expect(result['brand_tagline']).toBe('Vessels that hold nature');
+      // null valueEn falls back to KO value
+      expect(result['font_size_base']).toBe('1rem');
     });
   });
 

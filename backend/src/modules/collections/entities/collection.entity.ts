@@ -24,6 +24,9 @@ export class Collection {
   @Column({ type: 'varchar', length: 100 })
   name!: string;
 
+  @Column({ name: 'name_en', type: 'varchar', length: 100, nullable: true })
+  nameEn!: string | null;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   nameKo!: string | null;
 

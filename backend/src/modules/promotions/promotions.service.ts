@@ -6,6 +6,7 @@ import { Banner } from './entities/banner.entity';
 import { CreatePromotionDto, UpdatePromotionDto } from './dto/create-promotion.dto';
 import { CreateBannerDto, UpdateBannerDto } from './dto/create-banner.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { applyLocale } from '../../common/utils/locale.util';
 
 @Injectable()
 export class PromotionsService {
@@ -18,9 +19,17 @@ export class PromotionsService {
     private readonly bannerRepo: Repository<Banner>,
   ) {}
 
-  async findAllActive(): Promise<Promotion[]> {
+  private applyLocaleToPromotion(promotion: Promotion, locale?: string): Promotion {
+    return applyLocale(promotion, locale, ['title', 'description']);
+  }
+
+  private applyLocaleToBanner(banner: Banner, locale?: string): Banner {
+    return applyLocale(banner, locale, ['title']);
+  }
+
+  async findAllActive(locale?: string): Promise<Promotion[]> {
     const now = new Date();
-    return this.promotionRepo.find({
+    const promotions = await this.promotionRepo.find({
       where: {
         isActive: true,
         startsAt: LessThanOrEqual(now),
@@ -28,10 +37,12 @@ export class PromotionsService {
       },
       order: { createdAt: 'DESC' },
     });
+    return promotions.map((p) => this.applyLocaleToPromotion(p, locale));
   }
 
-  async findOne(id: number): Promise<Promotion> {
-    return findOrThrow(this.promotionRepo, { id }, '프로모션을 찾을 수 없습니다.');
+  async findOne(id: number, locale?: string): Promise<Promotion> {
+    const promotion = await findOrThrow(this.promotionRepo, { id }, '프로모션을 찾을 수 없습니다.');
+    return this.applyLocaleToPromotion(promotion, locale);
   }
 
   async create(dto: CreatePromotionDto): Promise<Promotion> {
@@ -69,17 +80,19 @@ export class PromotionsService {
     this.logger.log(`Promotion deleted: id=${id}`);
   }
 
-  async findAllActiveBanners(): Promise<Banner[]> {
+  async findAllActiveBanners(locale?: string): Promise<Banner[]> {
     const now = new Date();
     const banners = await this.bannerRepo.find({
       where: { isActive: true },
       order: { sortOrder: 'ASC' },
     });
-    return banners.filter((b) => {
-      if (b.startsAt && b.startsAt > now) return false;
-      if (b.endsAt && b.endsAt < now) return false;
-      return true;
-    });
+    return banners
+      .filter((b) => {
+        if (b.startsAt && b.startsAt > now) return false;
+        if (b.endsAt && b.endsAt < now) return false;
+        return true;
+      })
+      .map((b) => this.applyLocaleToBanner(b, locale));
   }
 
   async createBanner(dto: CreateBannerDto): Promise<Banner> {

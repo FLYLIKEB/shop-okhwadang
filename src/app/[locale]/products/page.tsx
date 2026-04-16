@@ -58,7 +58,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     [productsData, categories, collections] = await Promise.all([
       fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured, locale: safeLocale, attrs }),
       fetchCategories(),
-      fetchCollections(),
+      fetchCollections(safeLocale),
     ]);
   } catch {
     error = true;

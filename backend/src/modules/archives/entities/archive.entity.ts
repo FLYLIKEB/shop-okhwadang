@@ -14,6 +14,9 @@ export class NiloType {
   @Column({ type: 'varchar', length: 100 })
   name!: string;
 
+  @Column({ name: 'name_en', type: 'varchar', length: 100, nullable: true })
+  nameEn!: string | null;
+
   @Column({ type: 'varchar', length: 100 })
   nameKo!: string;
 
@@ -25,6 +28,9 @@ export class NiloType {
 
   @Column({ type: 'text' })
   description!: string;
+
+  @Column({ name: 'description_en', type: 'text', nullable: true })
+  descriptionEn!: string | null;
 
   @Column({ type: 'json' })
   characteristics!: string[];
@@ -56,11 +62,20 @@ export class ProcessStep {
   @Column({ type: 'varchar', length: 100 })
   title!: string;
 
+  @Column({ name: 'title_en', type: 'varchar', length: 100, nullable: true })
+  titleEn!: string | null;
+
   @Column({ type: 'varchar', length: 200 })
   description!: string;
 
+  @Column({ name: 'description_en', type: 'varchar', length: 200, nullable: true })
+  descriptionEn!: string | null;
+
   @Column({ type: 'text' })
   detail!: string;
+
+  @Column({ name: 'detail_en', type: 'text', nullable: true })
+  detailEn!: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
@@ -77,17 +92,32 @@ export class Artist {
   @Column({ type: 'varchar', length: 100 })
   name!: string;
 
+  @Column({ name: 'name_en', type: 'varchar', length: 100, nullable: true })
+  nameEn!: string | null;
+
   @Column({ type: 'varchar', length: 100 })
   title!: string;
+
+  @Column({ name: 'title_en', type: 'varchar', length: 100, nullable: true })
+  titleEn!: string | null;
 
   @Column({ type: 'varchar', length: 100 })
   region!: string;
 
+  @Column({ name: 'region_en', type: 'varchar', length: 100, nullable: true })
+  regionEn!: string | null;
+
   @Column({ type: 'text' })
   story!: string;
 
+  @Column({ name: 'story_en', type: 'text', nullable: true })
+  storyEn!: string | null;
+
   @Column({ type: 'varchar', length: 200 })
   specialty!: string;
+
+  @Column({ name: 'specialty_en', type: 'varchar', length: 200, nullable: true })
+  specialtyEn!: string | null;
 
   @Column({ name: 'image_url', type: 'varchar', length: 500, nullable: true })
   imageUrl!: string | null;

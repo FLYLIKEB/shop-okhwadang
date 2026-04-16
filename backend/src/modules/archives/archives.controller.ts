@@ -16,8 +16,8 @@ export class ArchivesController {
   async getAll(@Query('locale') locale?: string) {
     const [niloTypes, processSteps, artists] = await Promise.all([
       this.archivesService.findAllNiloTypes(locale),
-      this.archivesService.findAllProcessSteps(),
-      this.archivesService.findAllArtists(),
+      this.archivesService.findAllProcessSteps(locale),
+      this.archivesService.findAllArtists(locale),
     ]);
     return { niloTypes, processSteps, artists };
   }

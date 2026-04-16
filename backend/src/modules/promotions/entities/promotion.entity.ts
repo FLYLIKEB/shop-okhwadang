@@ -15,8 +15,14 @@ export class Promotion {
   @Column({ type: 'varchar', length: 255 })
   title!: string;
 
+  @Column({ name: 'title_en', type: 'varchar', length: 255, nullable: true })
+  titleEn!: string | null;
+
   @Column({ type: 'longtext', nullable: true })
   description!: string | null;
+
+  @Column({ name: 'description_en', type: 'longtext', nullable: true })
+  descriptionEn!: string | null;
 
   @Column({ type: 'enum', enum: ['timesale', 'exhibition', 'event'] })
   type!: PromotionType;

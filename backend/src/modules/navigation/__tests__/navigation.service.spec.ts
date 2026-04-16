@@ -45,6 +45,48 @@ describe('NavigationService', () => {
         order: { sort_order: 'ASC' },
       });
     });
+
+    it('locale=en 요청 시 labelEn 값으로 반환한다', async () => {
+      const items = [
+        { id: 1, group: 'gnb', label: '상품', labelEn: 'Products', url: '/products', sort_order: 0, is_active: true, parent_id: null },
+      ];
+      mockRepository.find.mockResolvedValue(items);
+
+      const result = await service.findActiveByGroup('gnb', 'en');
+      expect(result[0].label).toBe('Products');
+    });
+
+    it('locale 없으면 한국어 label을 유지한다', async () => {
+      const items = [
+        { id: 1, group: 'gnb', label: '상품', labelEn: 'Products', url: '/products', sort_order: 0, is_active: true, parent_id: null },
+      ];
+      mockRepository.find.mockResolvedValue(items);
+
+      const result = await service.findActiveByGroup('gnb');
+      expect(result[0].label).toBe('상품');
+    });
+
+    it('labelEn이 null이면 원본 label로 폴백한다', async () => {
+      const items = [
+        { id: 1, group: 'gnb', label: '상품', labelEn: null, url: '/products', sort_order: 0, is_active: true, parent_id: null },
+      ];
+      mockRepository.find.mockResolvedValue(items);
+
+      const result = await service.findActiveByGroup('gnb', 'en');
+      expect(result[0].label).toBe('상품');
+    });
+
+    it('children에도 locale이 적용된다', async () => {
+      const items = [
+        { id: 1, group: 'gnb', label: '상품', labelEn: 'Products', url: '/products', sort_order: 0, is_active: true, parent_id: null },
+        { id: 2, group: 'gnb', label: '신상품', labelEn: 'New Arrivals', url: '/products?sort=newest', sort_order: 0, is_active: true, parent_id: 1 },
+      ];
+      mockRepository.find.mockResolvedValue(items);
+
+      const result = await service.findActiveByGroup('gnb', 'en');
+      expect(result[0].label).toBe('Products');
+      expect(result[0].children[0].label).toBe('New Arrivals');
+    });
   });
 
   describe('findAllByGroup', () => {

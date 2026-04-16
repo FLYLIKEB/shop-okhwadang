@@ -41,13 +41,14 @@ export class NavigationController {
   @ApiResponse({ status: 200, description: '네비게이션 목록 조회 성공' })
   @ApiResponse({ status: 400, description: 'group 파라미터 필요' })
   @ApiQuery({ name: 'group', required: true, enum: ['gnb', 'sidebar', 'footer'], description: '네비게이션 그룹' })
-  findByGroup(@Query('group') group?: string) {
+  @ApiQuery({ name: 'locale', required: false, example: 'en', description: '언어 코드 (ko, en, ja, zh)' })
+  findByGroup(@Query('group') group?: string, @Query('locale') locale?: string) {
     if (!group || !VALID_GROUPS.includes(group as NavigationGroup)) {
       throw new BadRequestException(
         `group 파라미터가 필요합니다. (${VALID_GROUPS.join(', ')})`,
       );
     }
-    return this.navigationService.findActiveByGroup(group as NavigationGroup);
+    return this.navigationService.findActiveByGroup(group as NavigationGroup, locale);
   }
 
   @Post()

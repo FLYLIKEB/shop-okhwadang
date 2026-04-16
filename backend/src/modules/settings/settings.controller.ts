@@ -28,16 +28,18 @@ export class SettingsController {
   @ApiOperation({ summary: '설정 목록 조회', description: '설정 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '설정 목록 조회 성공' })
   @ApiQuery({ name: 'group', required: false, type: String, description: '설정 그룹 필터' })
-  findAll(@Query('group') group?: string) {
-    return this.settingsService.findAll(group);
+  @ApiQuery({ name: 'locale', required: false, type: String, description: '언어 코드 (ko|en|ja|zh)' })
+  findAll(@Query('group') group?: string, @Query('locale') locale?: string) {
+    return this.settingsService.findAll(group, locale);
   }
 
   @Public()
   @Get('map')
-  @ApiOperation({ summary: '지도 설정 조회', description: '지도 관련 설정을 조회합니다.' })
-  @ApiResponse({ status: 200, description: '지도 설정 조회 성공' })
-  getMap() {
-    return this.settingsService.getMap();
+  @ApiOperation({ summary: '설정 맵 조회', description: '설정을 key-value 맵으로 조회합니다.' })
+  @ApiResponse({ status: 200, description: '설정 맵 조회 성공' })
+  @ApiQuery({ name: 'locale', required: false, type: String, description: '언어 코드 (ko|en|ja|zh)' })
+  getMap(@Query('locale') locale?: string) {
+    return this.settingsService.getMap(locale);
   }
 }
 
