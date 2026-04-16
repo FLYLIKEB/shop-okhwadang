@@ -125,7 +125,11 @@ export class ProductsService {
   }
 
   private applyLocale(product: Product, locale?: string): Product {
-    return applyLocale(product, locale, ['name', 'description', 'shortDescription']);
+    const localized = applyLocale(product, locale, ['name', 'description', 'shortDescription']);
+    if (locale && locale !== 'ko' && localized.category) {
+      localized.category = applyLocale(localized.category, locale, ['name']);
+    }
+    return localized;
   }
 
   async findAll(

@@ -18,6 +18,9 @@ const mockRepository = {
 const makeCategory = (overrides: Partial<Category> = {}): Category => ({
   id: 1,
   name: '패션',
+  nameEn: null,
+  nameJa: null,
+  nameZh: null,
   slug: 'fashion',
   parentId: null,
   sortOrder: 0,
