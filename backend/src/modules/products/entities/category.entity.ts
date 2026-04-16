@@ -19,13 +19,13 @@ export class Category {
   @Column({ length: 100 })
   name!: string;
 
-  @Column({ name: 'name_en', length: 100, nullable: true })
+  @Column({ name: 'name_en', type: 'varchar', length: 100, nullable: true })
   nameEn!: string | null;
 
-  @Column({ name: 'name_ja', length: 100, nullable: true })
+  @Column({ name: 'name_ja', type: 'varchar', length: 100, nullable: true })
   nameJa!: string | null;
 
-  @Column({ name: 'name_zh', length: 100, nullable: true })
+  @Column({ name: 'name_zh', type: 'varchar', length: 100, nullable: true })
   nameZh!: string | null;
 
   @Column({ length: 100, unique: true })

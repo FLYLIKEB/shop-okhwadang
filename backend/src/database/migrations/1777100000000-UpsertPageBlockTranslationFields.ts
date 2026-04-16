@@ -80,7 +80,7 @@ export class UpsertPageBlockTranslationFields1777100000000 implements MigrationI
       await updateBlockContent(exhHeroBlock[0].id, content);
     }
 
-    const exhPromoBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 2 AND type = 'promotion_banner' AND template = 'timer' LIMIT 1`);
+    const exhPromoBlock = await query(`SELECT pb.id, pb.content FROM \`page_blocks\` pb JOIN \`pages\` p ON p.id = pb.page_id WHERE pb.page_id = 2 AND pb.type = 'promotion_banner' AND p.template = 'timer' LIMIT 1`);
     if (exhPromoBlock.length > 0) {
       const content = exhPromoBlock[0].content;
       content.title_en = 'Beginner Tea Set 14% Off';

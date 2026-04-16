@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import 'reflect-metadata';
 import 'dotenv/config';
 import { CategorySeeder } from './seeders/category.seeder';
 import { ProductSeeder } from './seeders/product.seeder';
