@@ -14,6 +14,7 @@ import { useSlidePanel } from '@/hooks/useSlidePanel';
 import { useScrollLogoContext } from '@/contexts/ScrollLogoContext';
 import type { NavigationItem } from '@/lib/api';
 import LanguageSelector from '@/components/LanguageSelector';
+import ThemeToggle from '@/components/ThemeToggle';
 
 // ─── Sub-components ──────────────────────────────────────────────
 
@@ -195,6 +196,7 @@ function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: 
       </div>
       <div className="mt-4">
         <LanguageSelector />
+        <ThemeToggle className="-ml-2 mt-1" />
       </div>
     </div>
   );
@@ -571,6 +573,7 @@ export default function Header() {
 
           {/* 데스크탑 액션 */}
           <div className="hidden md:flex items-center gap-1">
+            <ThemeToggle />
             <LanguageSelector />
             <CartBadge itemCount={itemCount} />
             {isAuthenticated ? (

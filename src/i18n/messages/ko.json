@@ -68,7 +68,9 @@
     "menuLabel": "메뉴",
     "menuBack": "뒤로",
     "goBack": "뒤로가기",
-    "goHome": "홈"
+    "goHome": "홈",
+    "themeToggleToLight": "라이트 모드로 전환",
+    "themeToggleToDark": "다크 모드로 전환"
   },
   "footer": {
     "customerService": "고객센터",

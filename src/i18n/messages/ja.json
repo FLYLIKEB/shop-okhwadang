@@ -60,7 +60,9 @@
     "logout": "ログアウト",
     "login": "ログイン",
     "goBack": "戻る",
-    "goHome": "ホーム"
+    "goHome": "ホーム",
+    "themeToggleToLight": "ライトモードに切り替え",
+    "themeToggleToDark": "ダークモードに切り替え"
   },
   "footer": {
     "customerService": "カスタマーサービス",

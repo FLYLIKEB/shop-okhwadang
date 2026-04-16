@@ -68,7 +68,9 @@
     "menuLabel": "Menu",
     "menuBack": "Back",
     "goBack": "Back",
-    "goHome": "Home"
+    "goHome": "Home",
+    "themeToggleToLight": "Switch to light mode",
+    "themeToggleToDark": "Switch to dark mode"
   },
   "footer": {
     "customerService": "Customer Service",

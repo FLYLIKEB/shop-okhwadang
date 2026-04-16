@@ -33,6 +33,14 @@ vi.mock('next-intl', async (importOriginal) => {
   };
 });
 
+vi.mock('@/contexts/ThemeContext', () => ({
+  useTheme: () => ({
+    theme: 'dark',
+    setTheme: vi.fn(),
+    toggleTheme: vi.fn(),
+  }),
+}));
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     isAuthenticated: false,
