@@ -14,6 +14,11 @@
 
 @import "tailwindcss";
 
+/* ── Locale-scoped color tokens ────────────────────────────────── */
+/* KO (html[lang="ko"]) = 공방 다크 테마 / EN (html[lang="en"]) = 다실 라이트 테마 */
+@import './tokens-ko.css';
+@import './tokens-en.css';
+
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
   /* Color: 공방(工房) Craft Palette — dark base */
