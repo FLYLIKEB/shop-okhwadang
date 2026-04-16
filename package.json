@@ -19,6 +19,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-slot": "^1.1.1",
+    "@reduxjs/toolkit": "^2.11.2",
     "@stripe/stripe-js": "^9.0.1",
     "@testing-library/dom": "^10.4.1",
     "@tosspayments/tosspayments-sdk": "^2.6.0",
