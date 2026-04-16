@@ -188,9 +188,6 @@ export default function HeroBannerBlock({ content }: Props) {
     // slides 는 DB page_blocks.content.slides 에서 온다. 비어있으면 렌더하지 않음 —
     // 시드 데이터가 올바른지 확인 (scripts/run-seed.sh).
     if (!slides || slides.length === 0) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('[HeroBannerBlock] slider template 인데 slides 가 비어있음 — DB 시드 확인 필요');
-      }
       return null;
     }
     return (
