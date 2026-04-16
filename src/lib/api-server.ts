@@ -62,9 +62,9 @@ export const fetchProduct = cache(async (id: number, locale?: string): Promise<P
   }
 });
 
-export async function fetchPage(slug: string): Promise<Page | null> {
+export async function fetchPage(slug: string, locale?: string): Promise<Page | null> {
   try {
-    return await fetchFromBackend<Page>(`/pages/${slug}`);
+    return await fetchFromBackend<Page>(`/pages/${slug}`, locale ? { locale } : undefined);
   } catch {
     return null;
   }

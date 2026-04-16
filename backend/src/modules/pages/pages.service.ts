@@ -13,7 +13,7 @@ import { CreatePageBlockDto } from './dto/create-page-block.dto';
 import { UpdatePageBlockDto } from './dto/update-page-block.dto';
 import { ReorderBlocksDto } from './dto/reorder-blocks.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
-import { applyLocale } from '../../common/utils/locale.util';
+import { applyLocale, applyLocaleToContent } from '../../common/utils/locale.util';
 
 const SUPPORTED_BLOCK_TYPES = [
   'hero_banner',
@@ -36,7 +36,14 @@ export class PagesService {
   ) {}
 
   private applyLocaleToPage(entity: Page, locale?: string): Page {
-    return applyLocale(entity, locale, ['title']);
+    const localized = applyLocale(entity, locale, ['title']);
+    if (localized.blocks) {
+      localized.blocks = localized.blocks.map((block) => ({
+        ...block,
+        content: applyLocaleToContent(block.content, locale),
+      }));
+    }
+    return localized;
   }
 
   async findAllPublished(locale?: string): Promise<Page[]> {

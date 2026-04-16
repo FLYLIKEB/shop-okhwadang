@@ -17,27 +17,47 @@ vi.mock('@/i18n/navigation', () => ({
   usePathname: () => '/',
 }));
 
+function resolveByPath(obj: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((acc, part) => {
+    if (acc == null) return acc;
+    if (Array.isArray(acc)) return acc[Number(part)];
+    if (typeof acc === 'object') return (acc as Record<string, unknown>)[part];
+    return undefined;
+  }, obj);
+}
+
+function format(value: unknown, params?: Record<string, unknown>): string {
+  if (typeof value !== 'string') return '';
+  if (!params) return value;
+  return Object.entries(params).reduce(
+    (acc, [k, v]) => acc.replace(`{${k}}`, String(v)),
+    value,
+  );
+}
+
 vi.mock('next-intl', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next-intl')>();
-  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, Record<string, string>>;
+  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, unknown>;
   return {
     ...actual,
     useLocale: () => 'ko',
-    useTranslations: (namespace: string) => (key: string) => {
-      const ns = messages[namespace] ?? {};
-      return ns[key] ?? key;
+    useTranslations: (namespace: string) => (key: string, params?: Record<string, unknown>) => {
+      const value = resolveByPath(messages, `${namespace}.${key}`);
+      return value == null ? key : format(value, params);
     },
   };
 });
 
 vi.mock('next-intl/server', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next-intl/server')>();
-  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, Record<string, string>>;
+  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, unknown>;
   return {
     ...actual,
     getTranslations: async (namespace: string) => {
-      const ns = messages[namespace] ?? {};
-      return (key: string) => ns[key] ?? key;
+      return (key: string, params?: Record<string, unknown>) => {
+        const value = resolveByPath(messages, `${namespace}.${key}`);
+        return value == null ? key : format(value, params);
+      };
     },
   };
 });
@@ -105,7 +125,7 @@ describe('Home page', () => {
         : { items: [], total: 0, page: 1, limit: 8 };
       return Promise.resolve({ ok: true, json: async () => data });
     }));
-    const jsx = await Home();
+    const jsx = await Home({ params: Promise.resolve({ locale: 'ko' }) });
     render(jsx);
     // PromotionBanner is always rendered
     expect(screen.getByText('지금 바로 쇼핑하세요')).toBeInTheDocument();

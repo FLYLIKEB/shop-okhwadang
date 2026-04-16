@@ -162,10 +162,13 @@ function HeroBannerFields({
 
   interface Slide {
     title: string;
+    title_en?: string;
     subtitle?: string;
+    subtitle_en?: string;
     image_url?: string;
     bg_color?: string;
     cta_text?: string;
+    cta_text_en?: string;
     cta_url?: string;
   }
 
@@ -190,10 +193,14 @@ function HeroBannerFields({
   return (
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
+      <StringField label="제목 (EN)" value={(content.title_en as string) ?? ''} onChange={(v) => update('title_en', v)} placeholder="영문 제목" />
       <StringField label="부제목" value={(content.subtitle as string) ?? ''} onChange={(v) => update('subtitle', v)} />
+      <StringField label="부제목 (EN)" value={(content.subtitle_en as string) ?? ''} onChange={(v) => update('subtitle_en', v)} placeholder="영문 부제목" />
       <StringField label="설명 (Markdown 지원)" value={(content.description as string) ?? ''} onChange={(v) => update('description', v)} multiline placeholder="**굵게**, *기울임*, **11** → 11 볼드 등 Markdown 포맷 사용 가능" />
+      <StringField label="설명 (EN)" value={(content.description_en as string) ?? ''} onChange={(v) => update('description_en', v)} multiline placeholder="영문 설명" />
       <StringField label="이미지 URL" value={(content.image_url as string) ?? ''} onChange={(v) => update('image_url', v)} placeholder="https://..." />
       <StringField label="CTA 텍스트" value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
+      <StringField label="CTA 텍스트 (EN)" value={(content.cta_text_en as string) ?? ''} onChange={(v) => update('cta_text_en', v)} placeholder="영문 CTA" />
       <StringField label="CTA URL" value={(content.cta_url as string) ?? ''} onChange={(v) => update('cta_url', v)} />
       <SelectField
         label="템플릿"
@@ -233,10 +240,13 @@ function HeroBannerFields({
                 </button>
               </div>
               <StringField label="제목" value={slide.title} onChange={(v) => updateSlide(index, 'title', v)} />
+              <StringField label="제목 (EN)" value={slide.title_en ?? ''} onChange={(v) => updateSlide(index, 'title_en', v)} placeholder="영문 제목" />
               <StringField label="부제목" value={slide.subtitle ?? ''} onChange={(v) => updateSlide(index, 'subtitle', v)} />
+              <StringField label="부제목 (EN)" value={slide.subtitle_en ?? ''} onChange={(v) => updateSlide(index, 'subtitle_en', v)} placeholder="영문 부제목" />
               <StringField label="이미지 URL" value={slide.image_url ?? ''} onChange={(v) => updateSlide(index, 'image_url', v)} />
               <StringField label="배경색" value={slide.bg_color ?? '#1B3A4B'} onChange={(v) => updateSlide(index, 'bg_color', v)} />
               <StringField label="CTA 텍스트" value={slide.cta_text ?? ''} onChange={(v) => updateSlide(index, 'cta_text', v)} />
+              <StringField label="CTA 텍스트 (EN)" value={slide.cta_text_en ?? ''} onChange={(v) => updateSlide(index, 'cta_text_en', v)} placeholder="영문 CTA" />
               <StringField label="CTA URL" value={slide.cta_url ?? ''} onChange={(v) => updateSlide(index, 'cta_url', v)} />
             </div>
           ))}
@@ -280,6 +290,7 @@ function ProductGridFields({
   return (
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
+      <StringField label="제목 (EN)" value={(content.title_en as string) ?? ''} onChange={(v) => update('title_en', v)} placeholder="영문 제목" />
       <NumberField label="표시 개수" value={(content.limit as number) ?? 8} onChange={(v) => update('limit', v)} />
       <SelectField
         label="템플릿"
@@ -354,6 +365,7 @@ function ProductCarouselFields({
   return (
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
+      <StringField label="제목 (EN)" value={(content.title_en as string) ?? ''} onChange={(v) => update('title_en', v)} placeholder="영문 제목" />
       <NumberField label="표시 개수" value={(content.limit as number) ?? 8} onChange={(v) => update('limit', v)} />
       <SelectField
         label="템플릿"
@@ -423,6 +435,12 @@ function CategoryNavFields({
         onChange={(v) => update('title', v)}
         placeholder="카테고리"
       />
+      <StringField
+        label="제목 (EN)"
+        value={(content.title_en as string) ?? ''}
+        onChange={(v) => update('title_en', v)}
+        placeholder="영문 제목"
+      />
       <SelectField
         label="템플릿"
         value={(content.template as string) ?? 'text'}
@@ -454,9 +472,12 @@ function PromotionBannerFields({
   return (
     <>
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
+      <StringField label="제목 (EN)" value={(content.title_en as string) ?? ''} onChange={(v) => update('title_en', v)} placeholder="영문 제목" />
       <StringField label="부제목" value={(content.subtitle as string) ?? ''} onChange={(v) => update('subtitle', v)} />
+      <StringField label="부제목 (EN)" value={(content.subtitle_en as string) ?? ''} onChange={(v) => update('subtitle_en', v)} placeholder="영문 부제목" />
       <StringField label="이미지 URL" value={(content.image_url as string) ?? ''} onChange={(v) => update('image_url', v)} />
       <StringField label="CTA 텍스트" value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
+      <StringField label="CTA 텍스트 (EN)" value={(content.cta_text_en as string) ?? ''} onChange={(v) => update('cta_text_en', v)} placeholder="영문 CTA" />
       <StringField label="CTA URL" value={(content.cta_url as string) ?? ''} onChange={(v) => update('cta_url', v)} />
       <StringField label="종료일" value={(content.expires_at as string) ?? ''} onChange={(v) => update('expires_at', v)} placeholder="YYYY-MM-DD" />
       <SelectField
@@ -494,6 +515,7 @@ function TextContentFields({
         onChange={(v) => update('textAlign', v)}
       />
       <StringField label="HTML 내용" value={(content.html as string) ?? ''} onChange={(v) => update('html', v)} multiline />
+      <StringField label="HTML 내용 (EN)" value={(content.html_en as string) ?? ''} onChange={(v) => update('html_en', v)} multiline placeholder="영문 HTML 내용" />
       <SelectField
         label="템플릿"
         value={(content.template as string) ?? 'default'}
@@ -523,6 +545,12 @@ function JournalPreviewFields({
         onChange={(v) => update('title', v)}
         placeholder="저널"
       />
+      <StringField
+        label="제목 (EN)"
+        value={(content.title_en as string) ?? ''}
+        onChange={(v) => update('title_en', v)}
+        placeholder="영문 제목"
+      />
       <NumberField
         label="표시 개수"
         value={(content.limit as number) ?? 6}
@@ -549,9 +577,13 @@ function SplitContentFields({
   return (
     <>
       <StringField label="서브타이틀" value={(content.subtitle as string) ?? ''} onChange={(v) => update('subtitle', v)} placeholder="Our Story" />
+      <StringField label="서브타이틀 (EN)" value={(content.subtitle_en as string) ?? ''} onChange={(v) => update('subtitle_en', v)} placeholder="Our Story" />
       <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
+      <StringField label="제목 (EN)" value={(content.title_en as string) ?? ''} onChange={(v) => update('title_en', v)} placeholder="영문 제목" />
       <StringField label="설명" value={(content.description as string) ?? ''} onChange={(v) => update('description', v)} multiline placeholder="브랜드 소개 텍스트" />
+      <StringField label="설명 (EN)" value={(content.description_en as string) ?? ''} onChange={(v) => update('description_en', v)} multiline placeholder="영문 설명" />
       <StringField label="CTA 텍스트" value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
+      <StringField label="CTA 텍스트 (EN)" value={(content.cta_text_en as string) ?? ''} onChange={(v) => update('cta_text_en', v)} placeholder="영문 CTA" />
       <StringField label="CTA URL" value={(content.cta_url as string) ?? ''} onChange={(v) => update('cta_url', v)} />
       <SelectField
         label="템플릿"

@@ -605,7 +605,31 @@
     "popularProducts": "Popular Products",
     "promoTitle": "Shop Now",
     "promoSubtitle": "Explore our curated collection.",
-    "promoCta": "Shop Now"
+    "promoCta": "Shop Now",
+    "hero": {
+      "bannerLabel": "Main banner",
+      "primaryLabel": "Okhwadang Tea Room",
+      "prevSlide": "Previous slide",
+      "nextSlide": "Next slide",
+      "goToSlide": "Go to slide {index}"
+    },
+    "heroDefaultSlides": [
+      {
+        "title": "Crafted by Yixing Masters",
+        "subtitle": "Step into the world of Zisha teapots — 600 years of tradition, hand-crafted with devotion",
+        "ctaText": "View Collection"
+      },
+      {
+        "title": "The Depth of Pu-erh",
+        "subtitle": "Curated pu-erh tea shaped by time, carrying the flavor of the years",
+        "ctaText": "View Archive"
+      },
+      {
+        "title": "The Art of the Tea Table",
+        "subtitle": "A quiet ritual begun with Yixing teapots and tea ware of your own",
+        "ctaText": "View Journal"
+      }
+    ]
   },
   "nav": {
     "products": "Products",

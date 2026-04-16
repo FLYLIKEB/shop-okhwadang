@@ -5,6 +5,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import SafeHtml from '@/components/shared/common/SafeHtml';
 import { cn } from '@/components/ui/utils';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
@@ -16,32 +17,33 @@ interface Props {
   content: HeroBannerContent;
 }
 
-const DEFAULT_SLIDES: HeroBannerSlide[] = [
+const DEFAULT_SLIDE_IMAGES: Array<Pick<HeroBannerSlide, 'image_url' | 'bg_color' | 'cta_url'>> = [
   {
-    title: '의흥 장인의 손끝에서',
-    subtitle: '600년 전통, 정성으로 빚은 자사호의 세계로 초대합니다',
-    cta_text: '컬렉션 보기',
     cta_url: '/collection',
     bg_color: '#2A2520',
     image_url: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=1920&q=80',
   },
   {
-    title: '보이차의 깊은 여운',
-    subtitle: '세월이 빚어낸 맛, 시간의 결을 담은 엄선된 보이차',
-    cta_text: '아카이브 보기',
     cta_url: '/archive',
     bg_color: '#2A2520',
     image_url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1920&q=80',
   },
   {
-    title: '찻자리의 완성',
-    subtitle: '자사호와 다구로 꾸미는 나만의 다석, 고요한 시간의 시작',
-    cta_text: '저널 보기',
     cta_url: '/journal',
     bg_color: '#2A2520',
     image_url: 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=1920&q=80',
   },
 ];
+
+function useDefaultSlides(): HeroBannerSlide[] {
+  const t = useTranslations('home.heroDefaultSlides');
+  return DEFAULT_SLIDE_IMAGES.map((base, idx) => ({
+    ...base,
+    title: t(`${idx}.title`),
+    subtitle: t(`${idx}.subtitle`),
+    cta_text: t(`${idx}.ctaText`),
+  }));
+}
 
 interface SliderHeroProps {
   slides: HeroBannerSlide[];
@@ -52,6 +54,7 @@ interface SliderHeroProps {
 function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, watchDrag: true });
+  const t = useTranslations('home.hero');
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
@@ -73,7 +76,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
   }, [emblaApi]);
 
   return (
-    <section ref={sectionRef} role="region" aria-label="메인 배너" className="relative">
+    <section ref={sectionRef} role="region" aria-label={t('bannerLabel')} className="relative">
       <div ref={emblaRef} className="overflow-hidden relative z-10">
         <div className="flex">
           {slides.map((slide, slideIndex) => (
@@ -104,7 +107,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
 
               <div className="relative z-10 w-full px-8 md:px-16 max-w-3xl">
                 <p className="typo-label uppercase tracking-[0.35em] text-[#B8976A] mb-4 font-body">
-                  {slideIndex === 0 ? '옥화당 茶室' : `0${slideIndex + 1}`}
+                  {slideIndex === 0 ? t('primaryLabel') : `0${slideIndex + 1}`}
                 </p>
                 <h1 className="typo-h0 font-display text-white leading-tight">
                   {slide.title}
@@ -151,7 +154,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
             <button
               type="button"
               onClick={scrollPrev}
-              aria-label="이전 슬라이드"
+              aria-label={t('prevSlide')}
               className="absolute left-6 md:left-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
             >
               <ChevronLeft className="h-7 w-7" />
@@ -159,7 +162,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
             <button
               type="button"
               onClick={scrollNext}
-              aria-label="다음 슬라이드"
+              aria-label={t('nextSlide')}
               className="absolute right-6 md:right-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
             >
               <ChevronRight className="h-7 w-7" />
@@ -171,7 +174,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                 key={idx}
                 type="button"
                 onClick={() => scrollTo(idx)}
-                aria-label={`${idx + 1}번 슬라이드로 이동`}
+                aria-label={t('goToSlide', { index: idx + 1 })}
                 className={cn(
                   'h-1.5 rounded-full transition-all duration-300',
                   idx === selectedIndex ? 'w-6 bg-[#B8976A]' : 'w-1.5 bg-white/40 hover:bg-white/60',
@@ -183,6 +186,20 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
       )}
     </section>
   );
+}
+
+function SliderHeroWithDefaults({
+  slides,
+  description,
+  sectionRef,
+}: {
+  slides: HeroBannerSlide[] | undefined;
+  description?: string;
+  sectionRef: React.RefObject<HTMLElement | null>;
+}) {
+  const defaultSlides = useDefaultSlides();
+  const effectiveSlides = slides && slides.length > 0 ? slides : defaultSlides;
+  return <SliderHero slides={effectiveSlides} description={description} sectionRef={sectionRef} />;
 }
 
 export default function HeroBannerBlock({ content }: Props) {
@@ -204,10 +221,9 @@ export default function HeroBannerBlock({ content }: Props) {
   );
 
   if (template === 'slider') {
-    const effectiveSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
     return (
       <ScrollLogoProvider value={scrollLogoContextValue}>
-        <SliderHero slides={effectiveSlides} description={description} sectionRef={sectionRef} />
+        <SliderHeroWithDefaults slides={slides} description={description} sectionRef={sectionRef} />
       </ScrollLogoProvider>
     );
   }

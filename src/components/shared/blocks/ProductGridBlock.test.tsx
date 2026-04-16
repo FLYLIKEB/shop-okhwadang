@@ -24,6 +24,13 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => {
+    const map: Record<string, string> = { viewAll: '전체 보기' };
+    return map[key] ?? key;
+  },
+}));
+
 vi.mock('@/lib/api', () => ({
   productsApi: {
     getList: vi.fn(),

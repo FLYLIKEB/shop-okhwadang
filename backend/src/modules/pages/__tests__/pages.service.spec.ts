@@ -80,6 +80,66 @@ describe('PagesService', () => {
       mockPageRepository.findOne.mockResolvedValue(null);
       await expect(service.findBySlug('nonexistent')).rejects.toThrow(NotFoundException);
     });
+
+    it('locale=en일 때 page.title 및 block.content 내 *_en 필드가 적용된다', async () => {
+      const page = {
+        id: 1,
+        slug: 'home',
+        is_published: true,
+        title: '홈',
+        titleEn: 'Home',
+        blocks: [
+          {
+            id: 1,
+            is_visible: true,
+            sort_order: 0,
+            content: {
+              title: '의흥 장인',
+              title_en: 'Yixing Masters',
+              subtitle: '600년',
+              subtitle_en: '600 years',
+              slides: [
+                { title: '슬라이드1', title_en: 'Slide 1', cta_text: '보기', cta_text_en: 'View' },
+              ],
+            },
+          },
+        ],
+      };
+      mockPageRepository.findOne.mockResolvedValue(page);
+
+      const result = await service.findBySlug('home', 'en');
+      expect(result.title).toBe('Home');
+      const block = result.blocks[0] as { content: Record<string, unknown> };
+      expect(block.content.title).toBe('Yixing Masters');
+      expect(block.content.subtitle).toBe('600 years');
+      const slides = block.content.slides as Array<Record<string, unknown>>;
+      expect(slides[0].title).toBe('Slide 1');
+      expect(slides[0].cta_text).toBe('View');
+    });
+
+    it('locale=ko면 *_en 필드는 무시되고 원본 유지', async () => {
+      const page = {
+        id: 1,
+        slug: 'home',
+        is_published: true,
+        title: '홈',
+        titleEn: 'Home',
+        blocks: [
+          {
+            id: 1,
+            is_visible: true,
+            sort_order: 0,
+            content: { title: '의흥 장인', title_en: 'Yixing Masters' },
+          },
+        ],
+      };
+      mockPageRepository.findOne.mockResolvedValue(page);
+
+      const result = await service.findBySlug('home', 'ko');
+      expect(result.title).toBe('홈');
+      const block = result.blocks[0] as { content: Record<string, unknown> };
+      expect(block.content.title).toBe('의흥 장인');
+    });
   });
 
   describe('create', () => {
