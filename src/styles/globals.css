@@ -47,8 +47,12 @@
   --line-height-compact: 1.1;
 }
 
-@theme inline {
-  /* ── shadcn/ui 호환 토큰 (DB override 지원) ── */
+/* 색상 토큰은 @theme (non-inline) — 유틸리티가 var(--color-*)로 생성되어야
+   html[lang="en"] / html[lang="ko"] 스코프에서 tokens-*.css 의 런타임 오버라이드가
+   실제로 적용된다. @theme inline 을 쓰면 hex 리터럴이 유틸리티에 박혀서
+   런타임에 CSS 변수를 바꿔도 색상이 변경되지 않음. */
+@theme {
+  /* ── shadcn/ui 호환 토큰 — locale token 파일에서 런타임 override (KO 다크 폴백) ── */
   --color-primary: #C4956A;
   --color-primary-foreground: #141210;
   --color-secondary: #1E1C18;
@@ -66,9 +70,6 @@
   --color-border: #2E2822;
   --color-input: #2E2822;
   --color-ring: #C4956A;
-  --radius-sm: var(--db-radius-sm, 0.125rem);
-  --radius-md: var(--db-radius-md, 0.25rem);
-  --radius-lg: var(--db-radius-lg, 0.5rem);
 
   /* ── 니료(泥料) 악센트 토큰 — 카테고리 필터·배지 등 UI 악센트용 ── */
   --color-zuni: #8B4513;
@@ -79,6 +80,12 @@
   --color-nokni: #4A6741;
   --color-tea: #4A6741;
   --color-surface: #1E1C18;
+}
+
+@theme inline {
+  --radius-sm: var(--db-radius-sm, 0.125rem);
+  --radius-md: var(--db-radius-md, 0.25rem);
+  --radius-lg: var(--db-radius-lg, 0.5rem);
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
