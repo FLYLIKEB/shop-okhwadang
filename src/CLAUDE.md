@@ -27,6 +27,7 @@ Next.js 15 (App Router) + React 19 + TS + TailwindCSS v4. Inherits root CLAUDE.m
 ## Template / CMS System
 - Pages built as blocks: hero-banner, product-grid, carousel, category-nav, etc.
 - Navigation and categories managed in DB (CMS)
+- **홈 페이지(`/`)는 반드시 DB `pages`(slug=`home`)의 `page_blocks`로만 렌더** — 하드코딩 기본값·폴백 배열·i18n 기반 기본 슬라이드 금지. 빈 블록이면 `throw`. 상세는 `.claude/rules/frontend-patterns.md` "CMS 페이지 렌더링" 섹션 참조
 
 ## Testing
 - `npm run build && npm run test:run` before push

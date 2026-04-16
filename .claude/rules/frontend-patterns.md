@@ -2,6 +2,23 @@
 
 Next.js/React-specific patterns, hooks, and key files. Complements `src/CLAUDE.md`.
 
+## CMS 페이지 렌더링 — **홈 페이지는 DB 필수**
+
+홈 페이지(`/`)는 **반드시** DB `pages` 테이블(slug=`home`)의 `page_blocks` 데이터로만 렌더해야 한다.
+
+- 프론트엔드 코드에 **하드코딩된 기본/폴백 블록 배열 금지**. `buildDefaultBlocks` 같은 헬퍼 두지 말 것.
+- i18n 메시지로 기본 슬라이드/문구 보강도 금지 (`heroDefaultSlides` 같은 키를 런타임에 참조해 기본 슬라이드를 조립하지 말 것).
+- DB 조회 실패/빈 블록 시: **`throw new Error(...)` 로 명시적 에러 발생** → `error.tsx` 로 운영 알림.
+- 시드 방법: `scripts/run-seed.sh` 또는 `/db-seed` skill.
+
+**이유**
+- 운영팀이 CMS 에서 홈을 자유롭게 편집해야 하는데, 코드 폴백이 있으면 DB 수정이 반영 안 보여 혼란 발생.
+- 로케일 추가 시마다 프론트 코드를 수정해야 하는 결합 제거.
+
+**관련 파일**
+- `src/app/[locale]/(routes)/page.tsx` — 홈 엔트리. 상단 주석에 규칙 명시됨.
+- `src/components/shared/blocks/HeroBannerBlock.tsx` — DB `page_blocks.content.slides` 외 기본값 없음.
+
 ## Component State Props
 
 Reusable components (ImageGallery, ProductList, etc.) must accept:
