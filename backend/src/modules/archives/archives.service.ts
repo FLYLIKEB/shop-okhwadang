@@ -26,7 +26,15 @@ export class ArchivesService {
   ) {}
 
   private applyLocaleToNiloType(entity: NiloType, locale?: string): NiloType {
-    return applyLocale(entity, locale, ['name']);
+    return applyLocale(entity, locale, ['name', 'description']);
+  }
+
+  private applyLocaleToProcessStep(entity: ProcessStep, locale?: string): ProcessStep {
+    return applyLocale(entity, locale, ['title', 'description', 'detail']);
+  }
+
+  private applyLocaleToArtist(entity: Artist, locale?: string): Artist {
+    return applyLocale(entity, locale, ['name', 'title', 'region', 'story', 'specialty']);
   }
 
   async findAllNiloTypes(locale?: string): Promise<NiloType[]> {
@@ -37,17 +45,19 @@ export class ArchivesService {
     return types.map((t) => this.applyLocaleToNiloType(t, locale));
   }
 
-  async findAllProcessSteps(): Promise<ProcessStep[]> {
-    return this.processStepRepository.find({
+  async findAllProcessSteps(locale?: string): Promise<ProcessStep[]> {
+    const steps = await this.processStepRepository.find({
       order: { step: 'ASC' },
     });
+    return steps.map((s) => this.applyLocaleToProcessStep(s, locale));
   }
 
-  async findAllArtists(): Promise<Artist[]> {
-    return this.artistRepository.find({
+  async findAllArtists(locale?: string): Promise<Artist[]> {
+    const artists = await this.artistRepository.find({
       where: { isActive: true },
       order: { sortOrder: 'ASC' },
     });
+    return artists.map((a) => this.applyLocaleToArtist(a, locale));
   }
 
   async findNiloTypeById(id: number): Promise<NiloType> {

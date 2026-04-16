@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { navigationApi } from '@/lib/api';
 import type { NavigationItem } from '@/lib/api';
 
@@ -42,6 +42,7 @@ function buildStaticGnb(t: (key: string) => string): NavigationItem[] {
 
 export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
   const tNav = useTranslations('nav');
+  const locale = useLocale();
   const fallback = useMemo<NavigationItem[]>(() => {
     if (group === 'gnb') return buildStaticGnb(tNav);
     return [];
@@ -55,7 +56,7 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
 
     async function load() {
       try {
-        const data = await navigationApi.getByGroup(group);
+        const data = await navigationApi.getByGroup(group, locale);
         if (!cancelled) {
           setItems(data.length > 0 ? data : fallback);
         }
@@ -74,7 +75,7 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
     return () => {
       cancelled = true;
     };
-  }, [group, fallback]);
+  }, [group, locale, fallback]);
 
   return { items, loading };
 }

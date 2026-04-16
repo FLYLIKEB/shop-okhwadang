@@ -11,6 +11,7 @@ import { ReorderNavigationDto } from './dto/reorder-navigation.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { reorderEntities } from '../../common/utils/reorder.util';
 import { buildTree } from '../../common/utils/tree.util';
+import { applyLocale } from '../../common/utils/locale.util';
 
 const MAX_DEPTH = 3;
 
@@ -21,12 +22,24 @@ export class NavigationService {
     private readonly navigationRepository: Repository<NavigationItem>,
   ) {}
 
-  async findActiveByGroup(group: 'gnb' | 'sidebar' | 'footer'): Promise<NavigationItem[]> {
+  async findActiveByGroup(group: 'gnb' | 'sidebar' | 'footer', locale?: string): Promise<NavigationItem[]> {
     const items = await this.navigationRepository.find({
       where: { group, is_active: true },
       order: { sort_order: 'ASC' },
     });
-    return this.buildTree(items);
+    const tree = this.buildTree(items);
+    return this.applyLocaleToTree(tree, locale);
+  }
+
+  private applyLocaleToTree(items: NavigationItem[], locale?: string): NavigationItem[] {
+    if (!locale || locale === 'ko') return items;
+    return items.map((item) => {
+      const localized = applyLocale(item, locale, ['label']);
+      if (localized.children && localized.children.length) {
+        localized.children = this.applyLocaleToTree(localized.children, locale);
+      }
+      return localized;
+    });
   }
 
   async findAllByGroup(group: 'gnb' | 'sidebar' | 'footer'): Promise<NavigationItem[]> {

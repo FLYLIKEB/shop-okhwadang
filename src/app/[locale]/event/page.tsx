@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
 import { promotionsApi } from '@/lib/api';
 import type { Promotion } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -19,11 +20,12 @@ const TYPE_LABELS: Record<Promotion['type'], string> = {
 const TYPE_ORDER: Promotion['type'][] = ['timesale', 'exhibition', 'event'];
 
 export default function EventPage() {
+  const { locale } = useParams<{ locale: string }>();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
 
   const { execute: loadPromotions, isLoading: loading } = useAsyncAction(
     async () => {
-      const data = await promotionsApi.getList();
+      const data = await promotionsApi.getList(locale);
       setPromotions(Array.isArray(data) ? data : []);
     },
     { errorMessage: '이벤트 목록을 불러오지 못했습니다.' },

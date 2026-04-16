@@ -16,7 +16,7 @@ const TYPE_LABELS: Record<Promotion['type'], string> = {
 };
 
 export default function EventDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id, locale } = useParams<{ id: string; locale: string }>();
   const router = useRouter();
   const [promotion, setPromotion] = useState<Promotion | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -28,7 +28,7 @@ export default function EventDetailPage() {
         setNotFound(true);
         return;
       }
-      const data = await promotionsApi.getOne(numericId);
+      const data = await promotionsApi.getOne(numericId, locale);
       setPromotion(data);
     },
     { onError: () => setNotFound(true) },

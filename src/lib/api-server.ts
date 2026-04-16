@@ -78,10 +78,13 @@ export function fetchArchives() {
   return fetchFromBackend<ArchivesResponse>('/archives');
 }
 
-export function fetchSettings(group?: string) {
-  return fetchFromBackend<SiteSetting[]>('/settings', group ? { group } : undefined);
+export function fetchSettings(group?: string, locale?: string) {
+  const params: Record<string, string | undefined> = {};
+  if (group) params.group = group;
+  if (locale) params.locale = locale;
+  return fetchFromBackend<SiteSetting[]>('/settings', Object.keys(params).length ? params : undefined);
 }
 
-export function fetchSettingsMap() {
-  return fetchFromBackend<Record<string, string>>('/settings/map');
+export function fetchSettingsMap(locale?: string) {
+  return fetchFromBackend<Record<string, string>>('/settings/map', locale ? { locale } : undefined);
 }

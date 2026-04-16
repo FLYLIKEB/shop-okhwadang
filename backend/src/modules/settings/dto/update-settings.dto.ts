@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsString, IsNotEmpty, ValidateNested, MaxLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsArray, IsString, IsNotEmpty, IsOptional, ValidateNested, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SettingItemDto {
@@ -14,6 +14,24 @@ export class SettingItemDto {
   @IsNotEmpty()
   @MaxLength(1000)
   value!: string;
+
+  @ApiPropertyOptional({ example: 'Okhwadang', description: '영문 설정 값' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  valueEn?: string;
+
+  @ApiPropertyOptional({ example: '玉花堂', description: '일본어 설정 값' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  valueJa?: string;
+
+  @ApiPropertyOptional({ example: '玉花堂', description: '중국어 설정 값' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  valueZh?: string;
 }
 
 export class UpdateSettingsDto {
