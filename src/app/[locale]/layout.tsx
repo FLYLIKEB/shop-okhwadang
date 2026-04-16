@@ -117,7 +117,6 @@ export default async function LocaleLayout({
   return (
     <html lang={safeLocale} data-theme={initialTheme} suppressHydrationWarning>
       <head>
-        {/* eslint-disable-next-line react/no-danger */}
         <script dangerouslySetInnerHTML={{ __html: foucScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

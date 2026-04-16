@@ -3,6 +3,8 @@ import { getTranslations } from 'next-intl/server';
 import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
 import { fetchPage } from '@/lib/api-server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 홈페이지 렌더링 규칙 (필수)
  * ─────────────────────────────────────────────────────────────

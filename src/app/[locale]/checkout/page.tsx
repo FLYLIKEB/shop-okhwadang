@@ -3,14 +3,12 @@
 import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { handleApiError } from '@/utils/error';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import type { CartItem, PreparePaymentResponse, UserAddress } from '@/lib/api';
-import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
+import { usersApi } from '@/lib/api';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
 import { SESSION_KEYS } from '@/constants/storage';
-import { formatCurrency } from '@/utils/currency';
 import type { Locale } from '@/i18n/routing';
 import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
 import { AddressSelectorSection } from '@/components/shared/checkout/AddressSelectorSection';
@@ -49,23 +47,6 @@ export interface FormErrors {
   recipientPhone?: string;
   zipcode?: string;
   address?: string;
-}
-
-function validateForm(form: ShippingForm): FormErrors {
-  const errors: FormErrors = {};
-  if (form.recipientName.trim().length < 2) {
-    errors.recipientName = '이름은 2자 이상 입력해주세요.';
-  }
-  if (!/^\d{3}-\d{3,4}-\d{4}$/.test(form.recipientPhone)) {
-    errors.recipientPhone = '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)';
-  }
-  if (!/^\d{5}$/.test(form.zipcode)) {
-    errors.zipcode = '우편번호는 5자리 숫자로 입력해주세요.';
-  }
-  if (form.address.trim().length === 0) {
-    errors.address = '주소를 입력해주세요.';
-  }
-  return errors;
 }
 
 export default function CheckoutPage({

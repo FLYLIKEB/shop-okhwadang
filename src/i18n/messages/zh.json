@@ -55,6 +55,9 @@
     "searchPlaceholder": "搜索商品...",
     "searchLabel": "搜索商品",
     "searchButton": "搜索",
+    "searchShort": "搜索...",
+    "searchOpen": "打开搜索",
+    "searchClose": "关闭搜索",
     "cartLabel": "购物车",
     "myPage": "我的页面",
     "logout": "退出登录",
@@ -636,5 +639,12 @@
     "hours": "小时",
     "minutes": "分",
     "seconds": "秒"
+  },
+  "nav": {
+    "products": "商品列表",
+    "artist": "匠人",
+    "archive": "Archive",
+    "collection": "收藏",
+    "journal": "Journal"
   }
 }

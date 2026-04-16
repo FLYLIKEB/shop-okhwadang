@@ -55,6 +55,9 @@
     "searchPlaceholder": "商品を検索...",
     "searchLabel": "商品を検索",
     "searchButton": "検索",
+    "searchShort": "検索...",
+    "searchOpen": "検索を開く",
+    "searchClose": "検索を閉じる",
     "cartLabel": "カート",
     "myPage": "マイページ",
     "logout": "ログアウト",
@@ -636,5 +639,12 @@
     "hours": "時間",
     "minutes": "分",
     "seconds": "秒"
+  },
+  "nav": {
+    "products": "商品一覧",
+    "artist": "職人",
+    "archive": "Archive",
+    "collection": "コレクション",
+    "journal": "Journal"
   }
 }
