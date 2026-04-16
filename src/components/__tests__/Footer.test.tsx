@@ -10,6 +10,19 @@ vi.mock('@/i18n/navigation', () => ({
   usePathname: () => '/',
 }));
 
+vi.mock('next-intl', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-intl')>();
+  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, Record<string, string>>;
+  return {
+    ...actual,
+    useLocale: () => 'ko',
+    useTranslations: (namespace: string) => (key: string) => {
+      const ns = messages[namespace] ?? {};
+      return ns[key] ?? key;
+    },
+  };
+});
+
 describe('Footer', () => {
   it('renders 이용약관, 개인정보처리방침, 고객센터 links', () => {
     render(<Footer />);

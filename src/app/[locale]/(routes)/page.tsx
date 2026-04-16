@@ -1,19 +1,25 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
 import { fetchPage, fetchCategories, fetchProducts } from '@/lib/api-server';
 import type { Product, Category, PageBlock } from '@/lib/api';
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: '옥화당 — 공식 쇼핑몰',
-  description: '다양한 상품을 만나보세요.',
-  openGraph: {
-    title: '옥화당 — 공식 쇼핑몰',
-    description: '다양한 상품을 만나보세요.',
-    type: 'website',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('home');
+  const title = t('metaTitle');
+  const description = t('metaDescription');
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+    },
+  };
+}
 
 async function fetchHomeData(): Promise<{
   featured: Product[];
@@ -43,12 +49,23 @@ async function fetchHomeData(): Promise<{
   };
 }
 
+interface DefaultBlockCopy {
+  featuredProducts: string;
+  popularProducts: string;
+  promoTitle: string;
+  promoSubtitle: string;
+  promoCta: string;
+}
+
 /** DB에 홈페이지가 없을 때 사용하는 기본 블록 배열 */
-function buildDefaultBlocks(data: {
-  featured: Product[];
-  popular: Product[];
-  categories: Category[];
-}): PageBlock[] {
+function buildDefaultBlocks(
+  data: {
+    featured: Product[];
+    popular: Product[];
+    categories: Category[];
+  },
+  copy: DefaultBlockCopy,
+): PageBlock[] {
   return [
     {
       id: -1,
@@ -72,7 +89,7 @@ function buildDefaultBlocks(data: {
       id: -3,
       type: 'product_grid',
       content: {
-        title: '추천 상품',
+        title: copy.featuredProducts,
         template: '4col',
         limit: 8,
         more_href: '/products?isFeatured=true',
@@ -85,7 +102,7 @@ function buildDefaultBlocks(data: {
       id: -4,
       type: 'product_grid',
       content: {
-        title: '인기 상품',
+        title: copy.popularProducts,
         template: '4col',
         limit: 8,
         more_href: '/products?sort=popular',
@@ -98,9 +115,9 @@ function buildDefaultBlocks(data: {
       id: -5,
       type: 'promotion_banner',
       content: {
-        title: '지금 바로 쇼핑하세요',
-        subtitle: '다양한 상품을 둘러보세요',
-        cta_text: '쇼핑하기',
+        title: copy.promoTitle,
+        subtitle: copy.promoSubtitle,
+        cta_text: copy.promoCta,
         cta_url: '/products',
         template: 'full-width',
       },
@@ -111,14 +128,21 @@ function buildDefaultBlocks(data: {
 }
 
 export default async function Home() {
-  const [homePage, homeData] = await Promise.all([
+  const [homePage, homeData, t] = await Promise.all([
     fetchPage('home'),
     fetchHomeData(),
+    getTranslations('home'),
   ]);
 
   const blocks = homePage?.blocks?.length
     ? homePage.blocks
-    : buildDefaultBlocks(homeData);
+    : buildDefaultBlocks(homeData, {
+        featuredProducts: t('featuredProducts'),
+        popularProducts: t('popularProducts'),
+        promoTitle: t('promoTitle'),
+        promoSubtitle: t('promoSubtitle'),
+        promoCta: t('promoCta'),
+      });
 
   const heroBlocks = blocks.filter((b) => b.type === 'hero_banner');
   const restBlocks = blocks.filter((b) => b.type !== 'hero_banner');

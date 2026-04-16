@@ -17,21 +17,30 @@ vi.mock('@/i18n/navigation', () => ({
   usePathname: () => '/',
 }));
 
-vi.mock('next-intl', () => ({
-  useLocale: () => 'ko',
-  useTranslations: () => (key: string) => {
-    const translations: Record<string, string> = {
-      'promotion.limitedTime': 'Limited Time',
-      'promotion.specialOffer': 'Special Offer',
-      'promotion.eventEnded': '이벤트가 종료되었습니다',
-      'promotion.days': '일',
-      'promotion.hours': '시간',
-      'promotion.minutes': '분',
-      'promotion.seconds': '초',
-    };
-    return translations[key] || key;
-  },
-}));
+vi.mock('next-intl', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-intl')>();
+  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, Record<string, string>>;
+  return {
+    ...actual,
+    useLocale: () => 'ko',
+    useTranslations: (namespace: string) => (key: string) => {
+      const ns = messages[namespace] ?? {};
+      return ns[key] ?? key;
+    },
+  };
+});
+
+vi.mock('next-intl/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-intl/server')>();
+  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, Record<string, string>>;
+  return {
+    ...actual,
+    getTranslations: async (namespace: string) => {
+      const ns = messages[namespace] ?? {};
+      return (key: string) => ns[key] ?? key;
+    },
+  };
+});
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({

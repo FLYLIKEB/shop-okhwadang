@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { ShoppingCart, Menu, X, Search, User, LogOut, LogIn, UserPlus, MessageSquare, Package } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
@@ -23,8 +24,9 @@ interface CartBadgeProps {
 }
 
 function CartBadge({ itemCount, className, iconSize = 'h-5 w-5' }: CartBadgeProps) {
+  const t = useTranslations('header');
   return (
-    <Link href="/cart" aria-label="장바구니" className={cn('relative', className)}>
+    <Link href="/cart" aria-label={t('cartLabel')} className={cn('relative', className)}>
       <ShoppingCart className={cn(iconSize, 'text-muted-foreground hover:text-foreground transition-colors')} />
       {itemCount > 0 && (
         <span
@@ -63,6 +65,8 @@ interface MobileMenuHeaderProps {
 }
 
 function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: MobileMenuHeaderProps) {
+  const tNav = useTranslations('navigation');
+  const tHeader = useTranslations('header');
   return (
     <>
       <div className="flex items-center px-4 h-14 border-b border-border shrink-0">
@@ -70,7 +74,7 @@ function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: Mobi
           type="button"
           onClick={onClose}
           className="p-2 -ml-2 mr-3 text-muted-foreground hover:text-foreground transition-all duration-200 active:scale-90"
-          aria-label="메뉴 닫기"
+          aria-label={tNav('closeMenu')}
         >
           <X className="h-5 w-5" />
         </button>
@@ -84,7 +88,7 @@ function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: Mobi
             type="button"
             onClick={onBack}
             className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="뒤로"
+            aria-label={tHeader('menuBack')}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M12 5l-5 5 5 5" />
@@ -149,6 +153,7 @@ interface MobileMenuFooterProps {
 }
 
 function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: MobileMenuFooterProps) {
+  const t = useTranslations('header');
   return (
     <div className="px-4 py-4 border-t border-border shrink-0">
       <div className="flex flex-col gap-1">
@@ -156,7 +161,7 @@ function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: 
           <>
             <Link href="/my" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
               <User className="h-4 w-4" />
-              {userName ?? '마이페이지'}
+              {userName ?? t('myPage')}
             </Link>
             <button
               type="button"
@@ -164,28 +169,28 @@ function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: 
               className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors text-left flex items-center gap-3"
             >
               <LogOut className="h-4 w-4" />
-              로그아웃
+              {t('logout')}
             </button>
           </>
         ) : (
           <>
             <Link href="/login" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
               <LogIn className="h-4 w-4" />
-              로그인
+              {t('login')}
             </Link>
             <Link href="/signup" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
               <UserPlus className="h-4 w-4" />
-              계정 만들기
+              {t('createAccount')}
             </Link>
           </>
         )}
         <Link href="/contact" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
           <MessageSquare className="h-4 w-4" />
-          문의하기
+          {t('contact')}
         </Link>
         <Link href="/order-tracking" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
           <Package className="h-4 w-4" />
-          주문조회
+          {t('orderTracking')}
         </Link>
       </div>
       <div className="mt-4">
@@ -209,9 +214,10 @@ function MobileMenuBackdrop({ visible, onClose }: { visible: boolean; onClose: (
 }
 
 function MobileMenuNav({ visible, children }: { visible: boolean; children: React.ReactNode }) {
+  const tNav = useTranslations('navigation');
   return (
     <nav
-      aria-label="모바일 메뉴"
+      aria-label={tNav('mobileMenu')}
       className={cn(
         'absolute left-0 top-0 h-full w-80 bg-background shadow-xl transition-transform duration-500 ease-out',
         visible ? 'translate-x-0' : '-translate-x-full',
@@ -227,9 +233,10 @@ function MobileMenuNav({ visible, children }: { visible: boolean; children: Reac
 }
 
 function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible, onClose, onLogout }: MobileMenuProps) {
+  const t = useTranslations('header');
   const menuItems = sidebarItems.length > 0 ? sidebarItems : navItems;
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const current = history.length > 0 ? history[history.length - 1] : { title: '메뉴', items: menuItems };
+  const current = history.length > 0 ? history[history.length - 1] : { title: t('menuLabel'), items: menuItems };
 
   const handleItemClick = (item: NavigationItem) => {
     if (item.children && item.children.length > 0) {
@@ -284,6 +291,7 @@ interface MobileSearchOverlayProps {
 
 function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
   const router = useRouter();
+  const t = useTranslations('header');
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -330,7 +338,7 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
         )}
         style={{ top: '48px' }}
         role="search"
-        aria-label="모바일 검색"
+        aria-label={t('searchLabel')}
       >
         <form onSubmit={handleSubmit} className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Search className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -339,14 +347,14 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="검색..."
-            aria-label="상품 검색"
+            placeholder={t('searchShort')}
+            aria-label={t('searchLabel')}
             className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
           <button
             type="button"
             onClick={onClose}
-            aria-label="검색 닫기"
+            aria-label={t('searchClose')}
             className="p-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-5 w-5" />
@@ -363,6 +371,7 @@ interface DesktopNavProps {
 }
 
 function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
+  const tNav = useTranslations('navigation');
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const hoveredItem = items.find((item) => item.id === hoveredId);
@@ -375,7 +384,7 @@ function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
 
   return (
     <nav
-      aria-label="메인 메뉴"
+      aria-label={tNav('mainMenu')}
       className={cn(
         'hidden md:flex items-center',
         fullWidth ? 'w-full gap-0' : 'gap-6',
@@ -454,6 +463,8 @@ function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
 
 export default function Header() {
   const router = useRouter();
+  const t = useTranslations('header');
+  const tNav = useTranslations('navigation');
   const { isAuthenticated, user, logout } = useAuth();
   const { itemCount } = useCart();
   const { items: navItems } = useNavigation('gnb');
@@ -525,7 +536,7 @@ export default function Header() {
             onClick={() => { setIsMenuOpen((p) => !p); setIsSearchOpen(false); }}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
-            aria-label={isMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+            aria-label={isMenuOpen ? tNav('closeMenu') : tNav('openMenu')}
             className="p-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground md:hidden"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -542,18 +553,18 @@ export default function Header() {
           <form
             onSubmit={handleDesktopSearch}
             role="search"
-            aria-label="상품 검색"
+            aria-label={t('searchLabel')}
             className="hidden md:flex relative items-center flex-1 max-w-lg mx-8"
           >
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="상품 검색..."
-              aria-label="상품 검색"
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchLabel')}
               className="w-full border-b border-muted-foreground/30 bg-transparent pl-1 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
             />
-            <button type="submit" aria-label="검색" className="absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
+            <button type="submit" aria-label={t('searchButton')} className="absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
               <Search className="h-4 w-4" />
             </button>
           </form>
@@ -564,15 +575,15 @@ export default function Header() {
             <CartBadge itemCount={itemCount} />
             {isAuthenticated ? (
               <>
-                <Link href="/my" aria-label="마이페이지" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/my" aria-label={t('myPage')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                   <User className="h-5 w-5" />
                 </Link>
-                <button type="button" onClick={() => void logout()} aria-label="로그아웃" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <button type="button" onClick={() => void logout()} aria-label={t('logout')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                   <LogOut className="h-5 w-5" />
                 </button>
               </>
             ) : (
-              <Link href="/login" aria-label="로그인" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+              <Link href="/login" aria-label={t('login')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                 <User className="h-5 w-5" />
               </Link>
             )}
@@ -583,18 +594,18 @@ export default function Header() {
             <button
               type="button"
               onClick={() => { setIsSearchOpen((p) => !p); setIsMenuOpen(false); }}
-              aria-label={isSearchOpen ? '검색 닫기' : '검색 열기'}
+              aria-label={isSearchOpen ? t('searchClose') : t('searchOpen')}
               aria-expanded={isSearchOpen}
               className="p-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </button>
             {isAuthenticated ? (
-              <Link href="/my" aria-label="마이페이지" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+              <Link href="/my" aria-label={t('myPage')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                 <User className="h-5 w-5" />
               </Link>
             ) : (
-              <Link href="/login" aria-label="로그인" className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+              <Link href="/login" aria-label={t('login')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                 <User className="h-5 w-5" />
               </Link>
             )}
