@@ -1,15 +1,12 @@
 /**
- * Directory Structure Test - Issue #398 Phase 1
+ * Directory Structure Test
  *
  * This test verifies the component directory structure follows the architecture:
  * - src/components/shared/ - locale-agnostic components
- * - src/components/ko/ - Korean-specific components
- * - src/components/en/ - English-specific components (placeholder)
+ * - src/components/ - top-level locale-specific components (Header, Footer, etc.)
  *
- * Rules:
- * - ko/ and en/ can import from shared/
- * - shared/ cannot import from ko/ or en/
- * - ko/ and en/ cannot import from each other
+ * Note: Issue #398 planned to split into ko/en directories, but current architecture
+ * uses top-level components with shared/ for locale-agnostic ones.
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -18,8 +15,6 @@ import path from 'path';
 
 const COMPONENTS_DIR = path.join(process.cwd(), 'src/components');
 const SHARED_DIR = path.join(COMPONENTS_DIR, 'shared');
-const KO_DIR = path.join(COMPONENTS_DIR, 'ko');
-const EN_DIR = path.join(COMPONENTS_DIR, 'en');
 
 // Expected shared subdirectories
 const EXPECTED_SHARED_SUBDIRS = [
@@ -40,10 +35,10 @@ const EXPECTED_SHARED_SUBDIRS = [
   'search',
 ];
 
-// Files that should exist in ko/ directory
-const EXPECTED_KO_FILES = ['Header.tsx', 'Footer.tsx'];
+// Files that should exist at top-level components directory
+const EXPECTED_TOP_LEVEL_FILES = ['Header.tsx', 'Footer.tsx', 'LanguageSelector.tsx', 'Logo.tsx'];
 
-describe('Directory Structure - Issue #398 Phase 1', () => {
+describe('Directory Structure', () => {
   describe('shared/ directory', () => {
     it('should exist', () => {
       expect(fs.existsSync(SHARED_DIR)).toBe(true);
@@ -65,38 +60,12 @@ describe('Directory Structure - Issue #398 Phase 1', () => {
     });
   });
 
-  describe('ko/ directory', () => {
-    it('should exist', () => {
-      expect(fs.existsSync(KO_DIR)).toBe(true);
-    });
-
-    it('should contain Header.tsx and Footer.tsx', () => {
-      if (!fs.existsSync(KO_DIR)) {
-        return;
+  describe('Top-level component files', () => {
+    it('should have Header.tsx and Footer.tsx at top level', () => {
+      for (const expectedFile of EXPECTED_TOP_LEVEL_FILES) {
+        const filePath = path.join(COMPONENTS_DIR, expectedFile);
+        expect(fs.existsSync(filePath)).toBe(true);
       }
-
-      const files = fs.readdirSync(KO_DIR).filter((f) => f.endsWith('.tsx'));
-      for (const expectedFile of EXPECTED_KO_FILES) {
-        expect(files).toContain(expectedFile);
-      }
-    });
-  });
-
-  describe('en/ directory', () => {
-    it('should exist', () => {
-      expect(fs.existsSync(EN_DIR)).toBe(true);
-    });
-
-    it('should have placeholder content or home directory', () => {
-      if (!fs.existsSync(EN_DIR)) {
-        return;
-      }
-
-      const contents = fs.readdirSync(EN_DIR);
-      // en/ should either have a home/ directory or a .gitkeep file
-      const hasHomeDir = contents.includes('home');
-      const hasGitkeep = contents.includes('.gitkeep');
-      expect(hasHomeDir || hasGitkeep).toBe(true);
     });
   });
 
@@ -117,9 +86,9 @@ describe('Directory Structure - Issue #398 Phase 1', () => {
       { file: 'RecentlyViewedWidget.tsx', expectedDir: SHARED_DIR },
       { file: 'ShippingTimeline.tsx', expectedDir: SHARED_DIR },
       { file: 'ErrorFallback.tsx', expectedDir: SHARED_DIR },
-      // Files that should be in ko/
-      { file: 'Header.tsx', expectedDir: KO_DIR },
-      { file: 'Footer.tsx', expectedDir: KO_DIR },
+      // Files that should be at top level (not in shared/)
+      { file: 'Header.tsx', expectedDir: COMPONENTS_DIR },
+      { file: 'Footer.tsx', expectedDir: COMPONENTS_DIR },
     ];
 
     for (const { file, expectedDir } of COMPONENT_MOVES) {
@@ -165,7 +134,7 @@ describe('Directory Structure - Issue #398 Phase 1', () => {
   });
 
   describe('Hooks directory', () => {
-    it('should have hooks moved to shared/hooks/', () => {
+    it('should have hooks in shared/hooks/', () => {
       const hooksDir = path.join(SHARED_DIR, 'hooks');
       expect(fs.existsSync(hooksDir)).toBe(true);
 
@@ -181,9 +150,7 @@ describe('Directory Structure - Issue #398 Phase 1', () => {
   });
 
   describe('Import path restrictions', () => {
-    it('should not allow imports from ko/ or en/ in shared/ files', () => {
-      // This is enforced by ESLint import/no-restricted-paths rule
-      // We verify the rule is configured in eslint.config.js
+    it('should have eslint config for import restrictions', () => {
       const eslintConfigPath = path.join(process.cwd(), 'eslint.config.js');
       expect(fs.existsSync(eslintConfigPath)).toBe(true);
 

@@ -9,8 +9,11 @@ const makeParams = () => Promise.resolve({ locale: 'ko' as const });
 
 // ---- next/navigation ----
 const mockReplace = vi.fn();
+const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: mockReplace, push: vi.fn() }),
+  useRouter: () => ({ replace: mockReplace, push: mockPush }),
+  usePathname: () => '/ko/checkout',
+  redirect: vi.fn(),
 }));
 
 // ---- sonner ----
