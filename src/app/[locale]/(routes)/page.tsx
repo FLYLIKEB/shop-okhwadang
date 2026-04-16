@@ -1,8 +1,24 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
-import { fetchPage, fetchCategories, fetchProducts } from '@/lib/api-server';
-import type { Product, Category, PageBlock } from '@/lib/api';
+import { fetchPage } from '@/lib/api-server';
+
+/**
+ * 홈페이지 렌더링 규칙 (필수)
+ * ─────────────────────────────────────────────────────────────
+ * 홈 페이지는 **반드시** DB 의 `pages` 테이블 (slug='home') 에 저장된
+ * 블록 데이터로 렌더링되어야 한다. 하드코딩 기본값/폴백 블록을 두지 않는다.
+ *
+ * 이유:
+ * - 운영팀이 CMS 에서 홈을 자유롭게 편집할 수 있어야 함.
+ * - 프론트 코드 폴백이 있으면 DB 수정이 안 보여서 혼란 발생.
+ * - i18n 기본 슬라이드 같은 하드코딩은 로케일 추가 시마다 코드 수정 필요.
+ *
+ * DB 에서 home 페이지 로드 실패 시:
+ * - 개발 환경: error.tsx 로 명시적 에러 노출 (여기서 throw)
+ * - 시드 필요: `scripts/run-seed.sh` 또는 `/db-seed` skill 사용
+ * ─────────────────────────────────────────────────────────────
+ */
 
 export const revalidate = 60;
 
@@ -21,134 +37,23 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-async function fetchHomeData(): Promise<{
-  featured: Product[];
-  popular: Product[];
-  categories: Category[];
-}> {
-  const withTimeout = <T,>(promise: Promise<T>, ms = 5000): Promise<T> => {
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), ms)
-    );
-    return Promise.race([promise, timeout]);
-  };
-
-  const [featuredResult, popularResult, categoriesResult] = await Promise.allSettled([
-    withTimeout(fetchProducts({ isFeatured: true, limit: 8 })),
-    withTimeout(fetchProducts({ sort: 'popular', limit: 8 })),
-    withTimeout(fetchCategories()),
-  ]);
-
-  return {
-    featured: featuredResult.status === 'fulfilled' ? featuredResult.value.items : [],
-    popular: popularResult.status === 'fulfilled' ? popularResult.value.items : [],
-    categories:
-      categoriesResult.status === 'fulfilled'
-        ? categoriesResult.value.filter((c) => c.parentId === null)
-        : [],
-  };
-}
-
-interface DefaultBlockCopy {
-  featuredProducts: string;
-  popularProducts: string;
-  promoTitle: string;
-  promoSubtitle: string;
-  promoCta: string;
-}
-
-/** DB에 홈페이지가 없을 때 사용하는 기본 블록 배열 */
-function buildDefaultBlocks(
-  data: {
-    featured: Product[];
-    popular: Product[];
-    categories: Category[];
-  },
-  copy: DefaultBlockCopy,
-): PageBlock[] {
-  return [
-    {
-      id: -1,
-      type: 'hero_banner',
-      content: { template: 'slider' },
-      sort_order: 0,
-      is_visible: true,
-    },
-    {
-      id: -2,
-      type: 'category_nav',
-      content: {
-        category_ids: [],
-        template: 'text',
-        prefetched_categories: data.categories,
-      },
-      sort_order: 1,
-      is_visible: true,
-    },
-    {
-      id: -3,
-      type: 'product_grid',
-      content: {
-        title: copy.featuredProducts,
-        template: '4col',
-        limit: 8,
-        more_href: '/products?isFeatured=true',
-        prefetched_products: data.featured,
-      },
-      sort_order: 2,
-      is_visible: true,
-    },
-    {
-      id: -4,
-      type: 'product_grid',
-      content: {
-        title: copy.popularProducts,
-        template: '4col',
-        limit: 8,
-        more_href: '/products?sort=popular',
-        prefetched_products: data.popular,
-      },
-      sort_order: 3,
-      is_visible: true,
-    },
-    {
-      id: -5,
-      type: 'promotion_banner',
-      content: {
-        title: copy.promoTitle,
-        subtitle: copy.promoSubtitle,
-        cta_text: copy.promoCta,
-        cta_url: '/products',
-        template: 'full-width',
-      },
-      sort_order: 4,
-      is_visible: true,
-    },
-  ];
-}
-
 export default async function Home({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const [homePage, homeData, t] = await Promise.all([
-    fetchPage('home', locale),
-    fetchHomeData(),
-    getTranslations('home'),
-  ]);
+  const homePage = await fetchPage('home', locale);
 
-  const blocks = homePage?.blocks?.length
-    ? homePage.blocks
-    : buildDefaultBlocks(homeData, {
-        featuredProducts: t('featuredProducts'),
-        popularProducts: t('popularProducts'),
-        promoTitle: t('promoTitle'),
-        promoSubtitle: t('promoSubtitle'),
-        promoCta: t('promoCta'),
-      });
+  // 홈은 반드시 DB 에서 렌더. 폴백 금지 — 상단 주석 참조.
+  if (!homePage?.blocks?.length) {
+    throw new Error(
+      `[home] DB 에 slug='home' 페이지가 없거나 블록이 비어있습니다 (locale=${locale}). ` +
+        `시드 데이터를 확인하세요: scripts/run-seed.sh`,
+    );
+  }
 
+  const blocks = homePage.blocks;
   const heroBlocks = blocks.filter((b) => b.type === 'hero_banner');
   const restBlocks = blocks.filter((b) => b.type !== 'hero_banner');
 

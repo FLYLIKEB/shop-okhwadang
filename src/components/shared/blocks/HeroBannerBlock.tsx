@@ -13,40 +13,14 @@ import { useScrollLogoTransition } from '@/components/shared/hooks/useScrollLogo
 import { ScrollLogoProvider } from '@/contexts/ScrollLogoContext';
 import { isSafeUrl } from '@/utils/url';
 
+/**
+ * HeroBannerBlock — DB 의 page_blocks.content 로만 렌더된다.
+ * 하드코딩 default slides/이미지 없음. slides 가 비어 있으면 아무 것도 렌더하지 않는다.
+ * 홈페이지 시드 규칙은 `src/app/[locale]/(routes)/page.tsx` 상단 주석 참조.
+ */
+
 interface Props {
   content: HeroBannerContent;
-}
-
-const DEFAULT_SLIDE_IMAGES: Array<Pick<HeroBannerSlide, 'image_url' | 'bg_color' | 'cta_url'>> = [
-  {
-    cta_url: '/collection',
-    bg_color: '#2A2520',
-    image_url: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=1920&q=80',
-  },
-  {
-    cta_url: '/archive',
-    bg_color: '#2A2520',
-    image_url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=1920&q=80',
-  },
-  {
-    cta_url: '/journal',
-    bg_color: '#2A2520',
-    image_url: 'https://images.unsplash.com/photo-1563822249366-3efb23b8e0c9?w=1920&q=80',
-  },
-];
-
-function useDefaultSlides(): HeroBannerSlide[] {
-  const t = useTranslations('home.heroDefaultSlides');
-  return useMemo(
-    () =>
-      DEFAULT_SLIDE_IMAGES.map((base, idx) => ({
-        ...base,
-        title: t(`${idx}.title`),
-        subtitle: t(`${idx}.subtitle`),
-        cta_text: t(`${idx}.ctaText`),
-      })),
-    [t],
-  );
 }
 
 interface SliderHeroProps {
@@ -192,20 +166,6 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
   );
 }
 
-function SliderHeroWithDefaults({
-  slides,
-  description,
-  sectionRef,
-}: {
-  slides: HeroBannerSlide[] | undefined;
-  description?: string;
-  sectionRef: React.RefObject<HTMLElement | null>;
-}) {
-  const defaultSlides = useDefaultSlides();
-  const effectiveSlides = slides && slides.length > 0 ? slides : defaultSlides;
-  return <SliderHero slides={effectiveSlides} description={description} sectionRef={sectionRef} />;
-}
-
 export default function HeroBannerBlock({ content }: Props) {
   const { title, subtitle, description, image_url, cta_text, cta_url, template, slides } = content;
   const sectionRef = useRef<HTMLElement>(null);
@@ -225,9 +185,17 @@ export default function HeroBannerBlock({ content }: Props) {
   );
 
   if (template === 'slider') {
+    // slides 는 DB page_blocks.content.slides 에서 온다. 비어있으면 렌더하지 않음 —
+    // 시드 데이터가 올바른지 확인 (scripts/run-seed.sh).
+    if (!slides || slides.length === 0) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[HeroBannerBlock] slider template 인데 slides 가 비어있음 — DB 시드 확인 필요');
+      }
+      return null;
+    }
     return (
       <ScrollLogoProvider value={scrollLogoContextValue}>
-        <SliderHeroWithDefaults slides={slides} description={description} sectionRef={sectionRef} />
+        <SliderHero slides={slides} description={description} sectionRef={sectionRef} />
       </ScrollLogoProvider>
     );
   }

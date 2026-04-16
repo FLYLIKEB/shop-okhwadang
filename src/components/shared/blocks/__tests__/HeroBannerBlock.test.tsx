@@ -115,8 +115,9 @@ describe('HeroBannerBlock', () => {
       expect(screen.getByLabelText('2번 슬라이드로 이동')).toBeInTheDocument();
     });
 
-    it('슬라이드가 없을 때 기본 슬라이드 사용', () => {
-      render(
+    it('슬라이드가 비어 있으면 아무것도 렌더하지 않음 (DB 필수 정책)', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const { container } = render(
         <HeroBannerBlock
           content={{
             title: '테스트',
@@ -127,7 +128,8 @@ describe('HeroBannerBlock', () => {
         />
       );
 
-      expect(screen.getByText('의흥 장인의 손끝에서')).toBeInTheDocument();
+      expect(container).toBeEmptyDOMElement();
+      warnSpy.mockRestore();
     });
   });
 

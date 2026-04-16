@@ -153,12 +153,14 @@ const sampleCategories: Category[] = [
 describe('HeroBannerBlock (slider)', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders default slides when no slides provided', () => {
+  it('renders nothing when no slides provided (DB required policy)', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const content: HeroBannerContent = {
       title: '', image_url: '', template: 'slider',
     };
-    render(<HeroBannerBlock content={content} />);
-    expect(screen.getByText('의흥 장인의 손끝에서')).toBeInTheDocument();
+    const { container } = render(<HeroBannerBlock content={content} />);
+    expect(container).toBeEmptyDOMElement();
+    warnSpy.mockRestore();
   });
 
   it('renders custom slides', () => {
@@ -179,6 +181,10 @@ describe('HeroBannerBlock (slider)', () => {
   it('renders prev/next buttons', () => {
     const content: HeroBannerContent = {
       title: '', image_url: '', template: 'slider',
+      slides: [
+        { title: '슬라이드 1' },
+        { title: '슬라이드 2' },
+      ],
     };
     render(<HeroBannerBlock content={content} />);
     expect(screen.getByLabelText('이전 슬라이드')).toBeInTheDocument();
