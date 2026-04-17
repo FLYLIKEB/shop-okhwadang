@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { JournalEntry, JournalCategory } from './entities/journal-entry.entity';
 import { CreateJournalDto, UpdateJournalDto } from './dto/journal.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { applyLocale } from '../../common/utils/locale.util';
+
+const I18N_FIELDS = ['title', 'subtitle', 'summary', 'content'];
 
 @Injectable()
 export class JournalService {
@@ -14,15 +17,20 @@ export class JournalService {
     private readonly journalRepository: Repository<JournalEntry>,
   ) {}
 
-  async findAll(category?: JournalCategory): Promise<JournalEntry[]> {
+  private applyLocaleToEntry(entry: JournalEntry, locale?: string): JournalEntry {
+    return applyLocale(entry, locale, I18N_FIELDS);
+  }
+
+  async findAll(category?: JournalCategory, locale?: string): Promise<JournalEntry[]> {
     const where = { isPublished: true };
     if (category) {
       Object.assign(where, { category });
     }
-    return this.journalRepository.find({
+    const entries = await this.journalRepository.find({
       where,
       order: { date: 'DESC' },
     });
+    return entries.map((e) => this.applyLocaleToEntry(e, locale));
   }
 
   async findAllAdmin(): Promise<JournalEntry[]> {
@@ -31,8 +39,9 @@ export class JournalService {
     });
   }
 
-  async findBySlug(slug: string): Promise<JournalEntry> {
-    return findOrThrow(this.journalRepository, { slug }, '저널을 찾을 수 없습니다.');
+  async findBySlug(slug: string, locale?: string): Promise<JournalEntry> {
+    const entry = await findOrThrow(this.journalRepository, { slug }, '저널을 찾을 수 없습니다.');
+    return this.applyLocaleToEntry(entry, locale);
   }
 
   async findById(id: number): Promise<JournalEntry> {

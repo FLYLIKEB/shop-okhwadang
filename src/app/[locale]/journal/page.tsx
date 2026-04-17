@@ -1,19 +1,26 @@
+import { getTranslations } from 'next-intl/server';
 import JournalListClient from '@/components/shared/journal/JournalListClient';
 
-export default function JournalPage() {
+interface JournalPageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function JournalPage({ params }: JournalPageProps) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'journalPage' });
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
       <section className="bg-foreground text-background py-20 px-4 text-center">
         <p className="typo-label tracking-widest uppercase text-background/60 mb-3">
-          Journal
+          {t('heroEyebrow')}
         </p>
         <h1 className="font-display typo-h1 tracking-tight mb-4">
-          차와 흙, 그리고 사람의 이야기
+          {t('heroTitle')}
         </h1>
         <p className="max-w-xl mx-auto typo-body text-background/80">
-          다문화의 깊이, 자사호 사용법, 아름다운 찻자리 세팅, 옥화당 소식까지.
-          차를 사랑하는 이들을 위한 읽을거리를 모았습니다.
+          {t('heroDesc')}
         </p>
       </section>
 

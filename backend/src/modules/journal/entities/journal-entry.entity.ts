@@ -26,8 +26,14 @@ export class JournalEntry {
   @Column({ type: 'varchar', length: 200 })
   title!: string;
 
+  @Column({ name: 'title_en', type: 'varchar', length: 200, nullable: true })
+  titleEn!: string | null;
+
   @Column({ type: 'varchar', length: 300, nullable: true })
   subtitle!: string | null;
+
+  @Column({ name: 'subtitle_en', type: 'varchar', length: 300, nullable: true })
+  subtitleEn!: string | null;
 
   @Column({ type: 'varchar', length: 50 })
   category!: JournalCategory;
@@ -41,8 +47,14 @@ export class JournalEntry {
   @Column({ type: 'text', nullable: true })
   summary!: string | null;
 
+  @Column({ name: 'summary_en', type: 'text', nullable: true })
+  summaryEn!: string | null;
+
   @Column({ type: 'text', nullable: true })
   content!: string | null;
+
+  @Column({ name: 'content_en', type: 'text', nullable: true })
+  contentEn!: string | null;
 
   @Column({ name: 'cover_image_url', type: 'varchar', length: 500, nullable: true })
   coverImageUrl!: string | null;

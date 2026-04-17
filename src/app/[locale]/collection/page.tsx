@@ -1,22 +1,39 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getTranslations } from 'next-intl/server';
 import { fetchCollections } from '@/lib/api-server';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { SectionHeading } from '@/components/shared/common/SectionHeading';
 import type { Collection } from '@/lib/api';
 
-export const metadata: Metadata = {
-  title: 'Collection — 니료별·모양별 큐레이션',
-  description:
-    '자사호를 니료(泥料)별, 모양별로 탐색하세요. 주니·단니·자니·흑니·청수니·녹니 컬렉션과 서시·석표·인왕·덕종·수평 형태별 큐레이션.',
-  openGraph: {
-    title: 'Collection — 옥화당',
-    description: '니료별·모양별 자사호 큐레이션 컬렉션',
-  },
-};
+interface CollectionPageProps {
+  params: Promise<{ locale: string }>;
+}
 
-function ClayCard({ collection }: { collection: Collection }) {
+export async function generateMetadata({ params }: CollectionPageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'collectionPage' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+    openGraph: {
+      title: t('metaOgTitle'),
+      description: t('metaOgDescription'),
+    },
+  };
+}
+
+function ClayCard({
+  collection,
+  cta,
+  colorAria,
+}: {
+  collection: Collection;
+  cta: string;
+  colorAria: (name: string) => string;
+}) {
+  const displayName = collection.nameKo ?? collection.name;
   return (
     <Link
       href={collection.productUrl}
@@ -26,7 +43,7 @@ function ClayCard({ collection }: { collection: Collection }) {
         className="h-40 transition-transform duration-300 group-hover:scale-105"
         style={{ backgroundColor: collection.color ?? '#888' }}
         role="img"
-        aria-label={`${collection.nameKo ?? collection.name} 색상`}
+        aria-label={colorAria(displayName)}
       />
       <div className="p-5">
         <div className="flex items-center gap-2 mb-2">
@@ -40,20 +57,28 @@ function ClayCard({ collection }: { collection: Collection }) {
           </span>
         </div>
         <h3 className="text-lg font-bold text-foreground mb-1">
-          {collection.nameKo ?? collection.name}
+          {displayName}
         </h3>
         <p className="text-sm text-muted-foreground leading-relaxed">
           {collection.description}
         </p>
         <span className="inline-block mt-4 text-xs font-medium text-foreground border-b border-foreground pb-0.5 group-hover:border-foreground/60 transition-colors">
-          컬렉션 보기 →
+          {cta}
         </span>
       </div>
     </Link>
   );
 }
 
-function ShapeCard({ collection }: { collection: Collection }) {
+function ShapeCard({
+  collection,
+  cta,
+  shapeAria,
+}: {
+  collection: Collection;
+  cta: string;
+  shapeAria: (name: string) => string;
+}) {
   return (
     <Link
       href={collection.productUrl}
@@ -63,7 +88,7 @@ function ShapeCard({ collection }: { collection: Collection }) {
         {collection.imageUrl ? (
           <Image
             src={collection.imageUrl}
-            alt={`${collection.name} 형태 자사호`}
+            alt={shapeAria(collection.name)}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -82,7 +107,7 @@ function ShapeCard({ collection }: { collection: Collection }) {
           {collection.description}
         </p>
         <span className="inline-block mt-4 text-xs font-medium text-foreground border-b border-foreground pb-0.5 group-hover:border-foreground/60 transition-colors">
-          컬렉션 보기 →
+          {cta}
         </span>
       </div>
     </Link>
@@ -121,12 +146,13 @@ function ShapeSkeletonCard() {
   );
 }
 
-interface CollectionPageProps {
-  params: Promise<{ locale: string }>;
-}
-
 export default async function CollectionPage({ params }: CollectionPageProps) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'collectionPage' });
+
+  const cta = t('cardCta');
+  const colorAria = (name: string) => t('colorAria', { name });
+  const shapeAria = (name: string) => t('shapeAria', { name });
 
   let clayCollections: Collection[] = [];
   let shapeCollections: Collection[] = [];
@@ -151,14 +177,13 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
     <div className="min-h-screen">
       <section className="bg-foreground text-background py-20 px-4 text-center">
         <p className="text-xs font-semibold tracking-widest uppercase text-background/60 mb-3">
-          Collection
+          {t('heroEyebrow')}
         </p>
         <h1 className="font-display typo-h1 tracking-tight mb-4">
-          니료별 · 모양별 큐레이션
+          {t('heroTitle')}
         </h1>
         <p className="max-w-xl mx-auto text-sm text-background/70 leading-relaxed">
-          자사호의 개성은 흙과 형태에서 비롯됩니다. 니료의 색과 질감, 형태의 선과
-          비례로 나만의 자사호를 찾아보세요.
+          {t('heroDesc')}
         </p>
       </section>
 
@@ -168,14 +193,14 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
       >
         <SectionHeading
           id="clay-collection-heading"
-          label="니료별"
-          title="흙의 색으로 찾기"
-          description="6종의 니료는 각기 다른 색상, 질감, 차 궁합을 지닙니다. 관심 있는 니료를 선택해보세요."
+          label={t('clayLabel')}
+          title={t('clayTitle')}
+          description={t('clayDesc')}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {clayCollections.length > 0 ? (
             clayCollections.map((clay) => (
-              <ClayCard key={clay.id} collection={clay} />
+              <ClayCard key={clay.id} collection={clay} cta={cta} colorAria={colorAria} />
             ))
           ) : (
             <>
@@ -195,14 +220,14 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
       >
         <SectionHeading
           id="shape-collection-heading"
-          label="모양별"
-          title="형태의 선으로 찾기"
-          description="자사호의 대표적인 5가지 형태. 각 형태가 지닌 미학과 기능을 탐색해보세요."
+          label={t('shapeLabel')}
+          title={t('shapeTitle')}
+          description={t('shapeDesc')}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {shapeCollections.length > 0 ? (
             shapeCollections.map((shape) => (
-              <ShapeCard key={shape.id} collection={shape} />
+              <ShapeCard key={shape.id} collection={shape} cta={cta} shapeAria={shapeAria} />
             ))
           ) : (
             <>
@@ -216,16 +241,16 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
 
       <section className="bg-muted py-16 px-4 text-center">
         <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-3">
-          Shop
+          {t('shopEyebrow')}
         </p>
         <h2 className="font-display typo-h2 text-foreground mb-4">
-          전체 상품을 둘러보세요
+          {t('shopTitle')}
         </h2>
         <Link
           href="/products"
           className="inline-flex items-center gap-2 text-sm font-medium bg-foreground text-background rounded px-6 py-3 hover:opacity-80 transition-opacity"
         >
-          전체 상품 보기 →
+          {t('shopCta')}
         </Link>
       </section>
     </div>
