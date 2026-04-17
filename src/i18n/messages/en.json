@@ -36,7 +36,13 @@
     "cases": "case(s)",
     "persons": "person(s)",
     "viewAll": "View All",
-    "continueShopping": "Continue Shopping"
+    "continueShopping": "Continue Shopping",
+    "pagination": {
+      "nav": "Pagination",
+      "prev": "Previous",
+      "next": "Next",
+      "pageNumber": "Page number"
+    }
   },
   "navigation": {
     "skipToContent": "Skip to main content",
@@ -70,7 +76,9 @@
     "goBack": "Back",
     "goHome": "Home",
     "themeToggleToLight": "Switch to light mode",
-    "themeToggleToDark": "Switch to dark mode"
+    "themeToggleToDark": "Switch to dark mode",
+    "languageSelector": "Select Language",
+    "languageList": "Language list"
   },
   "footer": {
     "customerService": "Customer Service",
@@ -173,7 +181,7 @@
       "priceRange": "Price Range",
       "priceMin": "Min",
       "priceMax": "Max",
-      "clayType": "Clay Type (泥料)",
+      "clayType": "Clay Type",
       "teapotShape": "Shape",
       "category": "Category"
     },
@@ -350,7 +358,9 @@
     "maxImagesError": "You can upload up to 5 images.",
     "ratingRequired": "Please select a rating.",
     "submitSuccess": "Review submitted successfully.",
-    "submitError": "Failed to submit review."
+    "submitError": "Failed to submit review.",
+    "nStar": "{n}-star",
+    "totalCount": "{count} reviews"
   },
   "shipping": {
     "title": "Register Tracking Number",
@@ -651,7 +661,7 @@
   },
   "archivePage": {
     "metaTitle": "Archive — Clay Origins & Process Records",
-    "metaDescription": "Records of clay (泥料) origins, the quarrying-kneading-forming-firing process, and artisan interviews behind Yixing teapots.",
+    "metaDescription": "Records of clay origins, the quarrying-kneading-forming-firing process, and artisan interviews behind Yixing teapots.",
     "heroEyebrow": "Archive",
     "heroTitle": "Clay Origins & Process Records",
     "heroDesc": "The life of a Yixing teapot begins with the clay. We record the character of clays by origin, the stages from quarrying to firing, and the stories of masters who have lived with the earth.",
@@ -677,7 +687,7 @@
   },
   "collectionPage": {
     "metaTitle": "Collection — Curated by Clay & Form",
-    "metaDescription": "Explore Yixing teapots by clay (泥料) and form. Zhuni · Duani · Zini · Heini · Qingshuini · Luni collections and curated shapes including Xi Shi, Shibiao, Inwang, Dezhong, and Flat.",
+    "metaDescription": "Explore Yixing teapots by clay and form. Zhuni · Duani · Zini · Heini · Qingshuini · Luni collections and curated shapes including Xi Shi, Shibiao, Inwang, Dezhong, and Flat.",
     "metaOgTitle": "Collection — Okhwadang",
     "metaOgDescription": "Yixing teapots curated by clay and form.",
     "heroEyebrow": "Collection",

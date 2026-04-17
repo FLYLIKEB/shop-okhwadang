@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import type { ReviewStats as ReviewStatsType } from '@/lib/api'
 import StarRating from './StarRating'
 
@@ -8,6 +9,7 @@ interface ReviewStatsProps {
 }
 
 export default function ReviewStats({ stats }: ReviewStatsProps) {
+  const t = useTranslations('review')
   const maxCount = Math.max(...Object.values(stats.distribution), 1)
 
   return (
@@ -19,7 +21,7 @@ export default function ReviewStats({ stats }: ReviewStatsProps) {
         </span>
         <StarRating rating={Math.round(stats.averageRating)} size="md" />
         <span className="text-xs text-muted-foreground">
-          {stats.totalCount}개 리뷰
+          {t('totalCount', { count: stats.totalCount })}
         </span>
       </div>
 
@@ -31,7 +33,7 @@ export default function ReviewStats({ stats }: ReviewStatsProps) {
 
           return (
             <div key={star} className="flex items-center gap-2 text-xs">
-              <span className="w-6 text-right text-muted-foreground">{star}점</span>
+              <span className="w-6 text-right text-muted-foreground">{t('nStar', { n: star })}</span>
               <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full rounded-full bg-yellow-400 transition-all"

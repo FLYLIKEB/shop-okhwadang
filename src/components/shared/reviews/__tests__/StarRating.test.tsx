@@ -2,6 +2,13 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import StarRating from '../StarRating'
 
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, values?: Record<string, string | number>) => {
+    if (key === 'nStar' && values) return `${values.n}점`
+    return key
+  },
+}))
+
 describe('StarRating', () => {
   it('renders correct number of stars', () => {
     render(<StarRating rating={3} />)

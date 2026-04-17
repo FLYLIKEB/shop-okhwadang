@@ -12,8 +12,17 @@ vi.mock('@/i18n/navigation', () => ({
   usePathname: () => mockPathname,
 }));
 
+const translations: Record<string, string> = {
+  'header.languageSelector': '언어 선택',
+  'header.languageList': '언어 목록',
+};
+
 vi.mock('next-intl', () => ({
   useLocale: () => mockLocale,
+  useTranslations: (namespace?: string) => (key: string) => {
+    const fullKey = namespace ? `${namespace}.${key}` : key;
+    return translations[fullKey] ?? fullKey;
+  },
 }));
 
 beforeEach(() => {

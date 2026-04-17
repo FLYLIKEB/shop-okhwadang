@@ -36,7 +36,13 @@
     "cases": "건",
     "persons": "명",
     "viewAll": "전체 보기",
-    "continueShopping": "쇼핑 계속하기"
+    "continueShopping": "쇼핑 계속하기",
+    "pagination": {
+      "nav": "페이지 네비게이션",
+      "prev": "이전",
+      "next": "다음",
+      "pageNumber": "페이지 번호"
+    }
   },
   "navigation": {
     "skipToContent": "본문으로 바로가기",
@@ -70,7 +76,9 @@
     "goBack": "뒤로가기",
     "goHome": "홈",
     "themeToggleToLight": "라이트 모드로 전환",
-    "themeToggleToDark": "다크 모드로 전환"
+    "themeToggleToDark": "다크 모드로 전환",
+    "languageSelector": "언어 선택",
+    "languageList": "언어 목록"
   },
   "footer": {
     "customerService": "고객센터",
@@ -350,7 +358,9 @@
     "maxImagesError": "이미지는 최대 5장까지 업로드 가능합니다.",
     "ratingRequired": "별점을 선택해 주세요.",
     "submitSuccess": "리뷰가 등록되었습니다.",
-    "submitError": "리뷰 작성에 실패했습니다."
+    "submitError": "리뷰 작성에 실패했습니다.",
+    "nStar": "{n}점",
+    "totalCount": "{count}개 리뷰"
   },
   "shipping": {
     "title": "운송장 등록",

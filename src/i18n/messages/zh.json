@@ -36,7 +36,13 @@
     "cases": "条",
     "persons": "人",
     "viewAll": "查看全部",
-    "continueShopping": "继续购物"
+    "continueShopping": "继续购物",
+    "pagination": {
+      "nav": "分页导航",
+      "prev": "上一页",
+      "next": "下一页",
+      "pageNumber": "页码"
+    }
   },
   "navigation": {
     "skipToContent": "跳转到主要内容",
@@ -65,7 +71,9 @@
     "goBack": "返回",
     "goHome": "首页",
     "themeToggleToLight": "切换到浅色模式",
-    "themeToggleToDark": "切换到深色模式"
+    "themeToggleToDark": "切换到深色模式",
+    "languageSelector": "选择语言",
+    "languageList": "语言列表"
   },
   "footer": {
     "customerService": "客户服务",
@@ -345,7 +353,9 @@
     "maxImagesError": "最多可上传5张图片。",
     "ratingRequired": "请选择评分。",
     "submitSuccess": "评价提交成功。",
-    "submitError": "评价提交失败。"
+    "submitError": "评价提交失败。",
+    "nStar": "{n}星",
+    "totalCount": "{count}条评价"
   },
   "shipping": {
     "title": "登记快递单号",

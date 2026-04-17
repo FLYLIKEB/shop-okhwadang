@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/components/ui/utils'
 
 interface StarRatingProps {
@@ -25,11 +26,12 @@ export default function StarRating({
   onChange,
 }: StarRatingProps) {
   const [hoverRating, setHoverRating] = useState(0)
+  const t = useTranslations('review')
 
   const displayRating = interactive && hoverRating > 0 ? hoverRating : rating
 
   return (
-    <div className="flex items-center -space-x-px" role="group" aria-label={`${rating}점`}>
+    <div className="flex items-center -space-x-px" role="group" aria-label={t('nStar', { n: rating })}>
       {Array.from({ length: maxRating }, (_, i) => {
         const starValue = i + 1
         const isFilled = starValue <= displayRating
@@ -47,7 +49,7 @@ export default function StarRating({
             onClick={() => interactive && onChange?.(starValue)}
             onMouseEnter={() => interactive && setHoverRating(starValue)}
             onMouseLeave={() => interactive && setHoverRating(0)}
-            aria-label={`${starValue}점`}
+            aria-label={t('nStar', { n: starValue })}
           >
             <svg
               viewBox="0 0 24 24"
