@@ -4,6 +4,8 @@ import { NotFoundException, BadRequestException, ForbiddenException } from '@nes
 import { ShippingService } from '../shipping.service';
 import { Shipping, ShippingStatus } from '../../payments/entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
+import { User } from '../../users/entities/user.entity';
+import { NotificationService } from '../../notification/notification.service';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({ id: 1, userId: 10, status: OrderStatus.PAID, ...overrides } as unknown as Order);
@@ -39,6 +41,8 @@ describe('ShippingService', () => {
         ShippingService,
         { provide: getRepositoryToken(Shipping), useValue: mockShippingRepo },
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
+        { provide: getRepositoryToken(User), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
+        { provide: NotificationService, useValue: { sendShippingUpdate: jest.fn() } },
       ],
     }).compile();
     service = module.get<ShippingService>(ShippingService);

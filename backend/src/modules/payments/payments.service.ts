@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { Payment, PaymentStatus, PaymentGatewayType, PaymentMethod } from './entities/payment.entity';
 import { Shipping, ShippingStatus } from './entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
+import { User } from '../users/entities/user.entity';
 import { PaymentGateway } from './interfaces/payment-gateway.interface';
 import { PreparePaymentDto } from './dto/prepare-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
@@ -17,6 +18,7 @@ import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { resolveGatewayByLocale } from './payments.module';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { findOrThrow } from '../../common/utils/repository.util';
+import { NotificationService } from '../notification/notification.service';
 
 const DEFAULT_CARRIER = process.env.DEFAULT_CARRIER || 'mock';
 
@@ -31,10 +33,13 @@ export class PaymentsService {
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     @Inject('PaymentGateway')
     private readonly gateway: PaymentGateway,
     private readonly tossAdapter: TossPaymentAdapter,
     private readonly stripeAdapter: StripePaymentAdapter,
+    private readonly notificationService: NotificationService,
   ) {}
 
   private resolveGateway(locale?: string): PaymentGateway {
@@ -135,6 +140,14 @@ export class PaymentsService {
 
       this.logger.log(`Payment confirmed: orderId=${dto.orderId}`);
 
+      void this.notifyPaymentConfirmed(
+        payment.order.userId,
+        payment.order.orderNumber,
+        payment.order.recipientName,
+        Number(payment.amount),
+        result.method,
+      );
+
       return {
         paymentId: Number(payment.id),
         orderId: dto.orderId,
@@ -182,6 +195,27 @@ export class PaymentsService {
       cancelledAt: result.cancelledAt,
       cancelReason: reason,
     };
+  }
+
+  private async notifyPaymentConfirmed(
+    userId: number,
+    orderNumber: string,
+    recipientName: string,
+    amount: number,
+    method: string,
+  ): Promise<void> {
+    try {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user?.email) return;
+      await this.notificationService.sendPaymentConfirmed(user.email, {
+        recipientName,
+        orderNumber,
+        amount,
+        method,
+      });
+    } catch (err) {
+      this.logger.warn(`Payment confirmation email failed: ${String(err)}`);
+    }
   }
 
   async handleWebhook(payload: unknown, signature: string): Promise<void> {

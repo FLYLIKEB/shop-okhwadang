@@ -10,10 +10,12 @@ import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
+import { User } from '../users/entities/user.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { PointsService } from '../points/points.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class OrdersService {
@@ -22,9 +24,12 @@ export class OrdersService {
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly pointsService: PointsService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   private generateOrderNumber(): string {
@@ -175,6 +180,8 @@ export class OrdersService {
       await queryRunner.commitTransaction();
       this.logger.log(`Order created: ${savedOrder.orderNumber} userId=${userId}`);
 
+      void this.notifyOrderCreated(userId, savedOrder.orderNumber, totalAmount, dto.recipientName);
+
       return this.findOne(Number(savedOrder.id), userId);
     } catch (err) {
       await queryRunner.rollbackTransaction();
@@ -208,5 +215,24 @@ export class OrdersService {
     assertOwnership(order.userId, userId);
 
     return order;
+  }
+
+  private async notifyOrderCreated(
+    userId: number,
+    orderNumber: string,
+    totalAmount: number,
+    recipientName: string,
+  ): Promise<void> {
+    try {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user?.email) return;
+      await this.notificationService.sendOrderConfirmed(user.email, {
+        recipientName,
+        orderNumber,
+        totalAmount,
+      });
+    } catch (err) {
+      this.logger.warn(`Order confirmation email failed: ${String(err)}`);
+    }
   }
 }

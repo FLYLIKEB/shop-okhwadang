@@ -6,12 +6,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
+import { User } from '../users/entities/user.entity';
 import { MockShippingAdapter } from './adapters/mock-shipping.adapter';
 import { CarrierCode, TrackingResult } from './interfaces/shipping-provider.interface';
 import { RegisterTrackingDto } from './dto/register-tracking.dto';
 import { TrackShipmentDto } from './dto/track-shipment.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
+import { NotificationService } from '../notification/notification.service';
 
 const ALLOWED_TRANSITIONS: Record<ShippingStatus, ShippingStatus[]> = {
   [ShippingStatus.PAYMENT_CONFIRMED]: [ShippingStatus.PREPARING],
@@ -32,6 +34,9 @@ export class ShippingService {
     private readonly shippingRepository: Repository<Shipping>,
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly notificationService: NotificationService,
   ) {
     this.mockAdapter = new MockShippingAdapter();
   }
@@ -95,7 +100,7 @@ export class ShippingService {
   }
 
   async registerTracking(orderId: number, dto: RegisterTrackingDto): Promise<Shipping | null> {
-    await findOrThrow(this.orderRepository, { id: orderId }, '주문 정보를 찾을 수 없습니다.');
+    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문 정보를 찾을 수 없습니다.');
 
     const shipping = await findOrThrow(this.shippingRepository, { orderId }, '배송 정보를 찾을 수 없습니다.');
 
@@ -111,7 +116,36 @@ export class ShippingService {
 
     await this.orderRepository.update(orderId, { status: OrderStatus.PREPARING });
 
+    void this.notifyShippingUpdate(
+      order.userId,
+      order.orderNumber,
+      order.recipientName,
+      dto.carrier,
+      dto.trackingNumber,
+    );
+
     return this.shippingRepository.findOne({ where: { orderId } });
+  }
+
+  private async notifyShippingUpdate(
+    userId: number,
+    orderNumber: string,
+    recipientName: string,
+    carrier: string,
+    trackingNumber: string,
+  ): Promise<void> {
+    try {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user?.email) return;
+      await this.notificationService.sendShippingUpdate(user.email, {
+        recipientName,
+        orderNumber,
+        carrier,
+        trackingNumber,
+      });
+    } catch (err) {
+      this.logger.warn(`Shipping update email failed: ${String(err)}`);
+    }
   }
 
   validateTransition(current: ShippingStatus, next: ShippingStatus): void {

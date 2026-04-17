@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InquiriesService } from '../inquiries.service';
 import { Inquiry, InquiryType, InquiryStatus } from '../entities/inquiry.entity';
+import { User } from '../../users/entities/user.entity';
+import { NotificationService } from '../../notification/notification.service';
 
 const mockRepo = () => ({
   createQueryBuilder: jest.fn(),
@@ -21,6 +23,8 @@ describe('InquiriesService', () => {
       providers: [
         InquiriesService,
         { provide: getRepositoryToken(Inquiry), useFactory: mockRepo },
+        { provide: getRepositoryToken(User), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
+        { provide: NotificationService, useValue: { sendInquiryAnswered: jest.fn() } },
       ],
     }).compile();
 
