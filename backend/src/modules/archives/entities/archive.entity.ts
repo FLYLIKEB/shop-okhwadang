@@ -26,6 +26,9 @@ export class NiloType {
   @Column({ type: 'varchar', length: 200 })
   region!: string;
 
+  @Column({ name: 'region_en', type: 'varchar', length: 200, nullable: true })
+  regionEn!: string | null;
+
   @Column({ type: 'text' })
   description!: string;
 
