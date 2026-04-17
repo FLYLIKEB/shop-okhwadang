@@ -14,7 +14,7 @@ vi.mock('next/image', () => ({
 
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+    <a href={href} onClick={(e) => e.preventDefault()}>{children}</a>
   ),
 }));
 
@@ -46,6 +46,8 @@ const translations: Record<string, string> = {
   addToCart: '장바구니 담기',
   addingToCart: '담는 중...',
   discountOff: '{percent}% 할인',
+  toggleOn: '찜하기',
+  toggleOff: '찜 해제',
 };
 
 vi.mock('next-intl', () => ({

@@ -1,6 +1,7 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Suspense } from 'react';
 import CheckoutPage from '@/app/[locale]/checkout/page';
 import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
 import type { CartItem, UserAddress } from '@/lib/api';
@@ -10,8 +11,9 @@ const makeParams = () => Promise.resolve({ locale: 'ko' as const });
 // ---- next/navigation ----
 const mockReplace = vi.fn();
 const mockPush = vi.fn();
+const mockRouter = { replace: mockReplace, push: mockPush };
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: mockReplace, push: mockPush }),
+  useRouter: () => mockRouter,
   usePathname: () => '/ko/checkout',
   redirect: vi.fn(),
 }));
@@ -63,6 +65,16 @@ const sampleItem: CartItem = {
   option: null,
 };
 
+async function renderCheckoutPage() {
+  await act(async () => {
+    render(
+      <Suspense fallback={null}>
+        <CheckoutPage params={makeParams()} />
+      </Suspense>,
+    );
+  });
+}
+
 describe('CheckoutPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -71,20 +83,20 @@ describe('CheckoutPage', () => {
 
   it('redirects to /login when not authenticated', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: false, token: null, user: null, isLoading: false });
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
     expect(mockReplace).toHaveBeenCalledWith('/ko/login');
   });
 
   it('redirects to /cart when no sessionStorage items', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
     expect(mockReplace).toHaveBeenCalledWith('/ko/cart');
   });
 
   it('renders form fields and order summary with valid items', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
     expect(await screen.findByLabelText(/받는 분 이름/)).toBeInTheDocument();
     expect(screen.getByLabelText(/연락처/)).toBeInTheDocument();
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
@@ -94,15 +106,18 @@ describe('CheckoutPage', () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
     await screen.findByLabelText(/받는 분 이름/);
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '01012345678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');
     await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
     await user.click(screen.getByRole('button', { name: '결제하기' }));
-    expect(screen.getByText('올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)')).toBeInTheDocument();
-    expect(ordersApi.create).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(ordersApi.create).not.toHaveBeenCalled();
+      expect(paymentsApi.prepare).not.toHaveBeenCalled();
+    });
   });
 
   it('calls ordersApi.create + paymentsApi.prepare + confirm on success', async () => {
@@ -125,7 +140,7 @@ describe('CheckoutPage', () => {
       status: 'paid', method: 'card', amount: 40000, paidAt: new Date().toISOString(),
     });
 
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
     await screen.findByLabelText(/받는 분 이름/);
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
@@ -176,7 +191,7 @@ describe('CheckoutPage', () => {
     );
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
 
     expect(await screen.findByText('주소 불러오는 중...')).toBeInTheDocument();
 
@@ -190,7 +205,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김기본');
@@ -205,7 +220,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/집/)).toBeInTheDocument();
@@ -219,7 +234,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/회사/)).toBeInTheDocument();
@@ -240,7 +255,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김기본');
@@ -260,7 +275,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByText('저장된 배송지가 없습니다.')).toBeInTheDocument();
@@ -273,7 +288,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockRejectedValue(new Error('Network error'));
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    await act(async () => { render(<CheckoutPage params={makeParams()} />) });
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalled();

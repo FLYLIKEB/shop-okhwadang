@@ -9,10 +9,15 @@ describe('JwtStrategy', () => {
 
   beforeEach(() => {
     process.env.JWT_SECRET = 'test-secret';
+    process.env.JWT_PUBLIC_KEY = 'test-public-key';
     userRepository = {
       findOne: jest.fn(),
     };
     strategy = new JwtStrategy(userRepository as unknown as Repository<User>);
+  });
+
+  afterEach(() => {
+    delete process.env.JWT_PUBLIC_KEY;
   });
 
   describe('validate()', () => {
