@@ -26,6 +26,7 @@ import {
   CreateArtistDto,
   UpdateArtistDto,
 } from './dto/archive.dto';
+import { ReorderItemsDto } from './dto/reorder.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('관리자 - 아카이브')
@@ -72,8 +73,8 @@ export class AdminArchivesController {
   @ApiResponse({ status: 200, description: '이ilo 유형 순서 변경 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
-  async reorderNiloTypes(@Body() items: { id: number; sortOrder: number }[]) {
-    await this.archivesService.reorderNiloTypes(items);
+  async reorderNiloTypes(@Body() dto: ReorderItemsDto) {
+    await this.archivesService.reorderNiloTypes(dto.orders);
   }
 
   @Patch('nilo-types/:id')
@@ -202,8 +203,8 @@ export class AdminArchivesController {
   @ApiResponse({ status: 200, description: '작가 순서 변경 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
-  async reorderArtists(@Body() items: { id: number; sortOrder: number }[]) {
-    await this.archivesService.reorderArtists(items);
+  async reorderArtists(@Body() dto: ReorderItemsDto) {
+    await this.archivesService.reorderArtists(dto.orders);
   }
 
   @Patch('artists/:id')
