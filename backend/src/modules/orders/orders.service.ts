@@ -13,6 +13,7 @@ import { PointHistory } from '../coupons/entities/point-history.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
+import { PointsService } from '../points/points.service';
 
 @Injectable()
 export class OrdersService {
@@ -23,6 +24,7 @@ export class OrdersService {
     private readonly orderRepository: Repository<Order>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly pointsService: PointsService,
   ) {}
 
   private generateOrderNumber(): string {
