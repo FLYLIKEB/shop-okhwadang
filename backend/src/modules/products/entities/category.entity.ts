@@ -46,6 +46,9 @@ export class Category {
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
+  @Column({ name: 'description_en', type: 'text', nullable: true })
+  descriptionEn!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
