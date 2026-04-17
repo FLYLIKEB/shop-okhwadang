@@ -81,6 +81,24 @@ cd backend && docker compose up -d
 cd backend && docker compose down -v   # DB 초기화
 ```
 
+### Claude Code에서 Codex (Vibe Proxy) 사용
+
+```bash
+# 1) 자동 설정 파일 생성 + 연결 확인
+bash scripts/setup-codex-vibe.sh --check
+
+# 2) Codex 호출 (OMC)
+bash scripts/setup-codex-vibe.sh omc ask codex "간단한 테스트 응답만 해줘"
+
+# 3) 현재 셸에 환경변수 적용 후 직접 사용
+eval "$(bash scripts/setup-codex-vibe.sh --print-env | sed -n '/^export /p')"
+omc ask codex "리팩토링 포인트 3개만 알려줘"
+```
+
+- 설정 파일: `.env.codex.vibe.local` (최초 실행 시 자동 생성)
+- 기본 URL: `~/.cli-proxy-api/merged-config.yaml`의 `host/port` 자동 감지 (미감지 시 `http://127.0.0.1:8317`)
+- 기본 API Key: `dummy-not-used` (Vibe Proxy OpenAI 호환 모드)
+
 ## 배포 구조
 
 ```
