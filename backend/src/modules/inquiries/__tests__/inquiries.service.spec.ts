@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InquiriesService } from '../inquiries.service';
-import { Inquiry } from '../entities/inquiry.entity';
+import { Inquiry, InquiryType, InquiryStatus } from '../entities/inquiry.entity';
 
 const mockRepo = () => ({
   createQueryBuilder: jest.fn(),
@@ -34,8 +34,8 @@ describe('InquiriesService', () => {
 
   describe('create', () => {
     it('문의 작성 성공', async () => {
-      const dto = { type: '상품' as const, title: '문의 제목', content: '내용' };
-      const created = { id: 1, userId: 10, status: 'pending', ...dto };
+      const dto = { type: InquiryType.PRODUCT, title: '문의 제목', content: '내용' };
+      const created = { id: 1, userId: 10, status: InquiryStatus.PENDING, ...dto };
       repo.create.mockReturnValue(created as never);
       repo.save.mockResolvedValue(created as never);
 
@@ -61,12 +61,12 @@ describe('InquiriesService', () => {
 
   describe('answer', () => {
     it('답변 작성 → status answered 변경', async () => {
-      const inquiry = { id: 1, status: 'pending', answer: null } as Inquiry;
+      const inquiry = { id: 1, status: InquiryStatus.PENDING, answer: null } as Inquiry;
       repo.findOne.mockResolvedValue(inquiry);
-      repo.save.mockResolvedValue({ ...inquiry, status: 'answered', answer: '답변 내용' } as never);
+      repo.save.mockResolvedValue({ ...inquiry, status: InquiryStatus.ANSWERED, answer: '답변 내용' } as never);
 
       const result = await service.answerInquiry(1, { answer: '답변 내용' });
-      expect(result.status).toBe('answered');
+      expect(result.status).toBe(InquiryStatus.ANSWERED);
       expect(result.answer).toBe('답변 내용');
     });
   });

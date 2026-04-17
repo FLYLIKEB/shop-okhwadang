@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Inquiry } from './entities/inquiry.entity';
+import { Inquiry, InquiryStatus } from './entities/inquiry.entity';
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AnswerInquiryDto } from './dto/answer-inquiry.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
@@ -54,7 +54,7 @@ export class InquiriesService {
   async answerInquiry(id: number, dto: AnswerInquiryDto): Promise<Inquiry> {
     const inquiry = await findOrThrow(this.inquiryRepo, { id }, '문의를 찾을 수 없습니다.');
     inquiry.answer = dto.answer;
-    inquiry.status = 'answered';
+    inquiry.status = InquiryStatus.ANSWERED;
     inquiry.answeredAt = new Date();
     const saved = await this.inquiryRepo.save(inquiry);
     this.logger.log(`Inquiry answered: id=${id}`);

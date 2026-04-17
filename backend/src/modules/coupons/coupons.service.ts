@@ -65,6 +65,7 @@ export interface PointsResponse {
 }
 
 const SHIPPING_FEE = 3000;
+const FREE_SHIPPING_THRESHOLD = 30000;
 
 @Injectable()
 export class CouponsService {
@@ -160,7 +161,7 @@ export class CouponsService {
 
     const pointsDiscount = Math.min(pointsToUse, orderAmount - couponDiscount);
     const afterDiscount = Math.max(0, orderAmount - couponDiscount - pointsDiscount);
-    const shippingFee = afterDiscount >= 30000 ? 0 : SHIPPING_FEE;
+    const shippingFee = afterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
     const finalAmount = afterDiscount;
     const totalPayable = Math.max(0, finalAmount + shippingFee);
 

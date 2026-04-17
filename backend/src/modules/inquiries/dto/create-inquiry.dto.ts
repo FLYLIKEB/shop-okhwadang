@@ -3,8 +3,8 @@ import { IsString, IsNotEmpty, IsEnum, MaxLength } from 'class-validator';
 import { InquiryType } from '../entities/inquiry.entity';
 
 export class CreateInquiryDto {
-  @ApiProperty({ example: '상품', enum: ['상품', '배송', '결제', '교환/반품', '기타'], description: '문의 유형' })
-  @IsEnum(['상품', '배송', '결제', '교환/반품', '기타'])
+  @ApiProperty({ example: InquiryType.PRODUCT, enum: InquiryType, description: '문의 유형' })
+  @IsEnum(InquiryType)
   type!: InquiryType;
 
   @ApiProperty({ example: '이 상품의 원산지가 어디인가요?', description: '문의 제목' })

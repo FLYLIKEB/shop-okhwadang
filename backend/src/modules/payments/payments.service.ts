@@ -18,6 +18,8 @@ import { resolveGatewayByLocale } from './payments.module';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { findOrThrow } from '../../common/utils/repository.util';
 
+const DEFAULT_CARRIER = process.env.DEFAULT_CARRIER || 'mock';
+
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
@@ -125,7 +127,7 @@ export class PaymentsService {
         await this.shippingRepository.save(
           this.shippingRepository.create({
             orderId: dto.orderId,
-            carrier: 'mock',
+            carrier: DEFAULT_CARRIER,
             status: ShippingStatus.PAYMENT_CONFIRMED,
           }),
         );
