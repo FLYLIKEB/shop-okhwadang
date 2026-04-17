@@ -26,15 +26,7 @@
 
 /* ── Brand CSS variables ───────────────────────────────────────── */
 :root {
-  /* Color: 공방(工房) Craft Palette — dark base */
-  --color-bg: #141210;
-  --color-text: #F0EDE8;
-  --color-accent-zuni: #8B4513;
-  --color-accent-tea: #4A6741;
-  --color-brand-secondary: #D4C5B0;
-  --color-accent-danni: #C4A882;
-
-  /* Typography — size scale */
+  /* Typography — size scale (locale-agnostic) */
   --font-size-heading-0: 2rem;     /* 32px mobile - hero only */
   --font-size-heading-1: 1.5rem;   /* 24px mobile */
   --font-size-heading-2: 1.25rem;  /* 20px mobile */
@@ -52,39 +44,49 @@
   --line-height-compact: 1.1;
 }
 
+/* ── Default light theme colors in :root (for non-Korean locales) ── */
+:root {
+  --color-bg: #FAFAFA;
+  --color-text: #1a1a1a;
+  --color-accent-zuni: #1B3A4B;
+  --color-accent-tea: #4A6741;
+  --color-brand-secondary: #D4C5B0;
+  --color-accent-danni: #C9B8A3;
+}
+
 /* 색상 토큰은 @theme (non-inline) — 유틸리티가 var(--color-*)로 생성되어야
    html[data-theme="dark"] / html[data-theme="light"] 스코프에서 tokens-*.css 의 런타임 오버라이드가
    실제로 적용된다. @theme inline 을 쓰면 hex 리터럴이 유틸리티에 박혀서
    런타임에 CSS 변수를 바꿔도 색상이 변경되지 않음. */
 @theme {
-  /* ── shadcn/ui 호환 토큰 — theme token 파일에서 런타임 override (다크 폴백) ── */
-  --color-primary: #C4956A;
-  --color-primary-foreground: #141210;
-  --color-secondary: #1E1C18;
-  --color-secondary-foreground: #E8E0D4;
-  --color-destructive: #ef4444;
+  /* ── shadcn/ui 호환 토큰 — light theme as :root default, dark theme in tokens-dark.css ── */
+  --color-primary: #1B3A4B;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #F5F3EF;
+  --color-secondary-foreground: #1a1a1a;
+  --color-destructive: #b91c1c;
   --color-destructive-foreground: #ffffff;
-  --color-muted: #1E1C18;
-  --color-muted-foreground: #9B8E7E;
-  --color-accent: #1E1C18;
-  --color-accent-foreground: #E8E0D4;
-  --color-background: #141210;
-  --color-foreground: #F0EDE8;
-  --color-card: #1A1714;
-  --color-card-foreground: #F0EDE8;
-  --color-border: #2E2822;
-  --color-input: #2E2822;
-  --color-ring: #C4956A;
+  --color-muted: #F5F3EF;
+  --color-muted-foreground: #525252;
+  --color-accent: #F5F3EF;
+  --color-accent-foreground: #1a1a1a;
+  --color-background: #ffffff;
+  --color-foreground: #1a1a1a;
+  --color-card: #ffffff;
+  --color-card-foreground: #1a1a1a;
+  --color-border: #e8e4de;
+  --color-input: #e8e4de;
+  --color-ring: #1B3A4B;
 
   /* ── 니료(泥料) 악센트 토큰 — 카테고리 필터·배지 등 UI 악센트용 ── */
-  --color-zuni: #8B4513;
-  --color-danni: #C4A882;
+  --color-zuni: #1B3A4B;
+  --color-danni: #C9B8A3;
   --color-zini: #6B3A5C;
   --color-heukni: #2A2520;
   --color-chunsuni: #3D6B6B;
   --color-nokni: #4A6741;
   --color-tea: #4A6741;
-  --color-surface: #1E1C18;
+  --color-surface: #F5F3EF;
 }
 
 @theme inline {
