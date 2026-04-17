@@ -26,7 +26,16 @@ export class ArchivesService {
   ) {}
 
   private applyLocaleToNiloType(entity: NiloType, locale?: string): NiloType {
-    return applyLocale(entity, locale, ['name', 'description']);
+    const localized = applyLocale(entity, locale, ['name', 'description', 'region']);
+    if (locale && locale !== 'ko') {
+      // nameKo 는 한글 고정 컬럼이므로 en 로케일에서는 name(localized)으로 override
+      if (localized.name) localized.nameKo = localized.name;
+      // characteristics 는 JSON 배열이므로 characteristicsEn 이 있으면 치환
+      if (entity.characteristicsEn && entity.characteristicsEn.length > 0) {
+        localized.characteristics = entity.characteristicsEn;
+      }
+    }
+    return localized;
   }
 
   private applyLocaleToProcessStep(entity: ProcessStep, locale?: string): ProcessStep {
