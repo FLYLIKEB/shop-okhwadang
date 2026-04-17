@@ -36,6 +36,9 @@ export class Collection {
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
+  @Column({ name: 'description_en', type: 'text', nullable: true })
+  descriptionEn!: string | null;
+
   @Column({ type: 'varchar', length: 500, nullable: true })
   imageUrl!: string | null;
 

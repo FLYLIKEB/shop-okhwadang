@@ -1,18 +1,45 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { cn } from '@/components/ui/utils';
 import { fetchArchives } from '@/lib/api-server';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { SectionHeading } from '@/components/shared/common/SectionHeading';
 import type { NiloType, ProcessStep, Artist } from '@/lib/api';
 
-export const metadata: Metadata = {
-  title: 'Archive — 니료 산지 기록 & 공정 스토리',
-  description: '자사호의 원료인 니료(泥料) 산지 기록과 채토·연토·성형·소성 공정 스토리, 그리고 장인 인터뷰를 담은 아카이브입니다.',
-};
+interface ArchivePageProps {
+  params: Promise<{ locale: string }>;
+}
 
-function NiloCard({ entry, reversed }: { entry: NiloType; reversed: boolean }) {
+export async function generateMetadata({ params }: ArchivePageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'archivePage' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+  };
+}
+
+interface ArchiveStrings {
+  niloColorAria: (name: string) => string;
+  niloRegionLabel: string;
+  niloCtaPrefix: string;
+  artistRegionLabel: string;
+  artistSpecialtyLabel: string;
+  artistCta: string;
+  artistAltSuffix: string;
+}
+
+function NiloCard({
+  entry,
+  reversed,
+  strings,
+}: {
+  entry: NiloType;
+  reversed: boolean;
+  strings: ArchiveStrings;
+}) {
   return (
     <article
       className={cn(
@@ -24,7 +51,7 @@ function NiloCard({ entry, reversed }: { entry: NiloType; reversed: boolean }) {
         className="w-full md:w-2/5 aspect-square rounded-lg shrink-0"
         style={{ backgroundColor: entry.color }}
         role="img"
-        aria-label={`${entry.nameKo} 색상 샘플`}
+        aria-label={strings.niloColorAria(entry.nameKo || entry.name)}
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3 mb-4">
@@ -36,7 +63,7 @@ function NiloCard({ entry, reversed }: { entry: NiloType; reversed: boolean }) {
           <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">{entry.name}</span>
         </div>
         <h3 className="text-2xl font-bold text-foreground mb-1">{entry.nameKo}</h3>
-        <p className="text-xs text-muted-foreground mb-4">산지: {entry.region}</p>
+        <p className="text-xs text-muted-foreground mb-4">{strings.niloRegionLabel}: {entry.region}</p>
         <p className="text-sm text-foreground leading-relaxed mb-6">{entry.description}</p>
         <ul className="grid grid-cols-2 gap-2 mb-6">
           {entry.characteristics.map((c) => (
@@ -49,7 +76,7 @@ function NiloCard({ entry, reversed }: { entry: NiloType; reversed: boolean }) {
           href={entry.productUrl}
           className="inline-flex items-center gap-1 text-sm font-medium text-foreground border border-foreground rounded px-4 py-2 hover:bg-foreground hover:text-background transition-colors"
         >
-          이 니료의 작품 보기 →
+          {strings.niloCtaPrefix}
         </Link>
       </div>
     </article>
@@ -74,7 +101,15 @@ function ProcessCard({ step: s }: { step: ProcessStep }) {
   );
 }
 
-function ArtistCard({ artist, reversed }: { artist: Artist; reversed: boolean }) {
+function ArtistCard({
+  artist,
+  reversed,
+  strings,
+}: {
+  artist: Artist;
+  reversed: boolean;
+  strings: ArchiveStrings;
+}) {
   return (
     <article
       className={cn(
@@ -86,7 +121,7 @@ function ArtistCard({ artist, reversed }: { artist: Artist; reversed: boolean })
         {artist.imageUrl ? (
           <Image
             src={artist.imageUrl}
-            alt={`${artist.name} 작가 작품`}
+            alt={`${artist.name} ${strings.artistAltSuffix}`}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 40vw"
@@ -100,7 +135,9 @@ function ArtistCard({ artist, reversed }: { artist: Artist; reversed: boolean })
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase mb-2">{artist.title}</p>
         <h3 className="text-2xl font-bold text-foreground mb-1">{artist.name}</h3>
-        <p className="text-xs text-muted-foreground mb-4">지역: {artist.region} · 전문: {artist.specialty}</p>
+        <p className="text-xs text-muted-foreground mb-4">
+          {strings.artistRegionLabel}: {artist.region} · {strings.artistSpecialtyLabel}: {artist.specialty}
+        </p>
         <blockquote className="border-l-2 border-foreground pl-4 mb-6">
           <p className="text-sm text-foreground leading-relaxed italic">{artist.story}</p>
         </blockquote>
@@ -108,7 +145,7 @@ function ArtistCard({ artist, reversed }: { artist: Artist; reversed: boolean })
           href={artist.productUrl}
           className="inline-flex items-center gap-1 text-sm font-medium text-foreground border border-foreground rounded px-4 py-2 hover:bg-foreground hover:text-background transition-colors"
         >
-          이 작가의 다른 호 →
+          {strings.artistCta}
         </Link>
       </div>
     </article>
@@ -177,12 +214,19 @@ function ArtistSkeletonCard({ reversed }: { reversed: boolean }) {
   );
 }
 
-interface ArchivePageProps {
-  params: Promise<{ locale: string }>;
-}
-
 export default async function ArchivePage({ params }: ArchivePageProps) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'archivePage' });
+
+  const strings: ArchiveStrings = {
+    niloColorAria: (name: string) => t('niloColorAria', { name }),
+    niloRegionLabel: t('niloRegionLabel'),
+    niloCtaPrefix: t('niloCtaPrefix'),
+    artistRegionLabel: t('artistRegionLabel'),
+    artistSpecialtyLabel: t('artistSpecialtyLabel'),
+    artistCta: t('artistCta'),
+    artistAltSuffix: t('artistAltSuffix'),
+  };
 
   let niloTypes: NiloType[] = [];
   let processSteps: ProcessStep[] = [];
@@ -209,24 +253,23 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   return (
     <div className="min-h-screen">
       <section className="bg-foreground text-background py-20 px-4 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-background/60 mb-3">Archive</p>
-        <h1 className="text-4xl font-bold tracking-tight mb-4">니료 산지 기록 & 공정 스토리</h1>
+        <p className="text-xs font-semibold tracking-widest uppercase text-background/60 mb-3">{t('heroEyebrow')}</p>
+        <h1 className="text-4xl font-bold tracking-tight mb-4">{t('heroTitle')}</h1>
         <p className="max-w-xl mx-auto text-sm text-background/70 leading-relaxed">
-          자사호의 생명은 흙에서 시작됩니다. 산지별 니료의 특성, 채토부터 소성까지의 공정,
-          그리고 흙과 함께 살아온 장인들의 이야기를 기록합니다.
+          {t('heroDesc')}
         </p>
       </section>
 
       <section className="py-20 px-4 max-w-5xl mx-auto" aria-labelledby="nilo-heading">
         <SectionHeading
-          label="니료 사전"
-          title="흙의 종류와 산지"
-          description="자사호에 사용되는 대표 니료 6종의 산지, 특성, 적합한 차종을 소개합니다."
+          label={t('niloLabel')}
+          title={t('niloTitle')}
+          description={t('niloDesc')}
         />
         <div className="space-y-20" id="nilo-heading">
           {niloTypes.length > 0 ? (
             niloTypes.map((entry, i) => (
-              <NiloCard key={entry.id} entry={entry} reversed={i % 2 === 1} />
+              <NiloCard key={entry.id} entry={entry} reversed={i % 2 === 1} strings={strings} />
             ))
           ) : (
             Array.from({ length: 6 }).map((_, i) => (
@@ -240,9 +283,9 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
       <section className="py-20 px-4 max-w-3xl mx-auto" aria-labelledby="process-heading">
         <SectionHeading
-          label="공정 기록"
-          title="채토에서 소성까지"
-          description="자사호 한 점이 완성되기까지 거치는 네 단계의 공정을 기록합니다."
+          label={t('processLabel')}
+          title={t('processTitle')}
+          description={t('processDesc')}
         />
         <div id="process-heading">
           {processSteps.length > 0 ? (
@@ -261,14 +304,14 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
 
       <section className="py-20 px-4 max-w-5xl mx-auto" aria-labelledby="artist-heading">
         <SectionHeading
-          label="작가 인터뷰"
-          title="장인의 이야기"
-          description="흙을 빚는 손끝에 담긴 삶의 기록을 소개합니다."
+          label={t('artistLabel')}
+          title={t('artistTitle')}
+          description={t('artistDesc')}
         />
         <div className="space-y-20" id="artist-heading">
           {artists.length > 0 ? (
             artists.map((artist, i) => (
-              <ArtistCard key={artist.id} artist={artist} reversed={i % 2 === 1} />
+              <ArtistCard key={artist.id} artist={artist} reversed={i % 2 === 1} strings={strings} />
             ))
           ) : (
             Array.from({ length: 2 }).map((_, i) => (
@@ -279,13 +322,13 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
       </section>
 
       <section className="bg-muted py-16 px-4 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-3">Shop</p>
-        <h2 className="text-2xl font-bold text-foreground mb-4">마음에 드는 니료의 작품을 만나보세요</h2>
+        <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-3">{t('shopEyebrow')}</p>
+        <h2 className="text-2xl font-bold text-foreground mb-4">{t('shopTitle')}</h2>
         <Link
           href="/products"
           className="inline-flex items-center gap-2 text-sm font-medium bg-foreground text-background rounded px-6 py-3 hover:opacity-80 transition-opacity"
         >
-          전체 상품 보기 →
+          {t('shopCta')}
         </Link>
       </section>
     </div>

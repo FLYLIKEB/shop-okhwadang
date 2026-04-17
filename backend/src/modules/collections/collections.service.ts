@@ -15,7 +15,7 @@ export class CollectionsService {
   ) {}
 
   private applyLocaleToCollection(entity: Collection, locale?: string): Collection {
-    return applyLocale(entity, locale, ['name']);
+    return applyLocale(entity, locale, ['name', 'description']);
   }
 
   async findAllByType(type: CollectionType, locale?: string): Promise<Collection[]> {

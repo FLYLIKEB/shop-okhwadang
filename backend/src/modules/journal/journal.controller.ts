@@ -14,8 +14,12 @@ export class JournalController {
   @ApiOperation({ summary: '저널 목록 조회', description: '공개된 저널 목록을 조회합니다. 카테고리로 필터링할 수 있습니다.' })
   @ApiResponse({ status: 200, description: '저널 목록 조회 성공' })
   @ApiQuery({ name: 'category', required: false, enum: JournalCategory, description: '카테고리 필터' })
-  async getAllJournals(@Query('category') category?: JournalCategory) {
-    return this.journalService.findAll(category);
+  @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko|en|ja|zh)' })
+  async getAllJournals(
+    @Query('category') category?: JournalCategory,
+    @Query('locale') locale?: string,
+  ) {
+    return this.journalService.findAll(category, locale);
   }
 
   @Get(':slug')
@@ -23,7 +27,11 @@ export class JournalController {
   @ApiOperation({ summary: '저널 상세 조회', description: '슬러그로 저널 상세 정보를 조회합니다.' })
   @ApiResponse({ status: 200, description: '저널 상세 조회 성공' })
   @ApiResponse({ status: 404, description: '저널을 찾을 수 없음' })
-  async getJournalBySlug(@Param('slug') slug: string) {
-    return this.journalService.findBySlug(slug);
+  @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko|en|ja|zh)' })
+  async getJournalBySlug(
+    @Param('slug') slug: string,
+    @Query('locale') locale?: string,
+  ) {
+    return this.journalService.findBySlug(slug, locale);
   }
 }
