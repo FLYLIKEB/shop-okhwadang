@@ -51,6 +51,31 @@ export class PaymentsService {
     return this.gateway;
   }
 
+  private resolveGatewayByType(gatewayType: PaymentGatewayType): PaymentGateway {
+    switch (gatewayType) {
+      case PaymentGatewayType.TOSS:
+        return this.tossAdapter;
+      case PaymentGatewayType.INICIS:
+        return this.stripeAdapter;
+      case PaymentGatewayType.MOCK:
+      default:
+        return this.gateway;
+    }
+  }
+
+  private gatewayNameToType(name: string): PaymentGatewayType {
+    switch (name) {
+      case 'toss':
+        return PaymentGatewayType.TOSS;
+      case 'stripe':
+      case 'inicis':
+        return PaymentGatewayType.INICIS;
+      case 'mock':
+      default:
+        return PaymentGatewayType.MOCK;
+    }
+  }
+
   async prepare(dto: PreparePaymentDto, userId: number): Promise<{
     paymentId: number;
     orderId: number;
@@ -75,9 +100,14 @@ export class PaymentsService {
         amount: Number(order.totalAmount),
         status: PaymentStatus.PENDING,
         method: PaymentMethod.MOCK,
-        gateway: PaymentGatewayType.MOCK,
+        gateway: this.gatewayNameToType(gatewayName),
       });
       payment = await this.paymentRepository.save(payment);
+    } else {
+      await this.paymentRepository.update(payment.id, {
+        gateway: this.gatewayNameToType(gatewayName),
+      });
+      payment = await findOrThrow(this.paymentRepository, { id: payment.id }, '결제 정보를 찾을 수 없습니다.');
     }
 
     const result = await selectedGateway.prepare(String(dto.orderId), Number(order.totalAmount));
@@ -116,7 +146,8 @@ export class PaymentsService {
     }
 
     try {
-      const result = await this.gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
+      const confirmGateway = this.resolveGatewayByType(payment.gateway);
+      const result = await confirmGateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
 
       await this.dataSource.transaction(async (manager) => {
         await manager.update(Payment, payment.id, {
