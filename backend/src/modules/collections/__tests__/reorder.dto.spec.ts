@@ -13,7 +13,7 @@ describe('Reorder DTO (collections)', () => {
 
     it('id가 정수가 아니면 실패', async () => {
       const dto = new ReorderItemDto();
-      (dto as any).id = 'not-a-number';
+      Reflect.set(dto, 'id', 'not-a-number');
       dto.sortOrder = 0;
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
