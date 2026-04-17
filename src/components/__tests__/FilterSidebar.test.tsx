@@ -11,6 +11,30 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(mockSearchParamsString),
 }));
 
+const translations: Record<string, string> = {
+  'product.filter.label': '필터',
+  'product.filter.openFilter': '필터 열기',
+  'product.filter.closeFilter': '필터 닫기',
+  'product.filter.resetFilter': '필터 초기화',
+  'product.filter.filterLabel': '상품 필터',
+  'product.filter.priceRange': '가격 범위',
+  'product.filter.priceMin': '최소',
+  'product.filter.priceMax': '최대',
+  'product.filter.clayType': '니료(泥料)',
+  'product.filter.teapotShape': '모양',
+  'product.filter.category': '카테고리',
+  'common.all': '전체',
+  'common.apply': '적용',
+  'common.reset': '초기화',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace?: string) => (key: string) => {
+    const fullKey = namespace ? `${namespace}.${key}` : key;
+    return translations[fullKey] ?? fullKey;
+  },
+}));
+
 const mockCategories: Category[] = [
   { id: 1, name: '의류', slug: 'clothing', parentId: null, children: [] },
   { id: 2, name: '신발', slug: 'shoes', parentId: null, children: [] },

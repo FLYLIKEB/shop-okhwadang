@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { Category } from '@/lib/api';
 
 interface BreadcrumbProps {
@@ -12,6 +13,7 @@ interface BreadcrumbProps {
 export default function Breadcrumb({ category }: BreadcrumbProps) {
   const params = useParams();
   const locale = params.locale as string;
+  const t = useTranslations('product');
 
   return (
     <nav aria-label="breadcrumb" className="py-3">
@@ -28,7 +30,7 @@ export default function Breadcrumb({ category }: BreadcrumbProps) {
           <>
             <li>
               <Link href={`/${locale}/products`} className="hover:text-foreground transition-colors">
-                상품목록
+                {t('productList')}
               </Link>
             </li>
             <li className="flex items-center gap-1">
@@ -40,7 +42,7 @@ export default function Breadcrumb({ category }: BreadcrumbProps) {
           </>
         ) : (
           <li className="text-foreground font-medium">
-            상품목록
+            {t('productList')}
           </li>
         )}
       </ol>

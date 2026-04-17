@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { LayoutGrid, List } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import { LOCAL_KEYS } from '@/constants/storage';
 
@@ -13,6 +14,7 @@ interface ViewToggleProps {
 }
 
 export default function ViewToggle({ value, onChange }: ViewToggleProps) {
+  const t = useTranslations('product.view');
   const [mode, setMode] = useState<ViewMode>(value ?? 'grid');
 
   useEffect(() => {
@@ -36,7 +38,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
     <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
       <button
         type="button"
-        aria-label="그리드 보기"
+        aria-label={t('grid')}
         onClick={() => handleChange('grid')}
         className={cn(
           'rounded p-1.5 transition-colors',
@@ -49,7 +51,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
       </button>
       <button
         type="button"
-        aria-label="리스트 보기"
+        aria-label={t('list')}
         onClick={() => handleChange('list')}
         className={cn(
           'rounded p-1.5 transition-colors',

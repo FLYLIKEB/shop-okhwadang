@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { Category } from '@/lib/api';
 
@@ -11,6 +12,8 @@ interface CategoryFilterSidebarProps {
 export default function CategoryFilterSidebar({ categories }: CategoryFilterSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations('product.filter');
+  const tCommon = useTranslations('common');
   const activeCategoryId = searchParams.get('categoryId');
 
   const handleSelect = (categoryId: number | null) => {
@@ -25,8 +28,8 @@ export default function CategoryFilterSidebar({ categories }: CategoryFilterSide
   };
 
   return (
-    <aside aria-label="카테고리 필터">
-      <h2 className="mb-3 text-sm font-semibold text-foreground">카테고리</h2>
+    <aside aria-label={t('category')}>
+      <h2 className="mb-3 text-sm font-semibold text-foreground">{t('category')}</h2>
       <ul className="flex flex-col gap-1">
         <li>
           <button
@@ -39,7 +42,7 @@ export default function CategoryFilterSidebar({ categories }: CategoryFilterSide
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground',
             )}
           >
-            전체
+            {tCommon('all')}
           </button>
         </li>
         {categories.map((category) => (

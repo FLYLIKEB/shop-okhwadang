@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { getTranslations } from 'next-intl/server';
 import EmptyState from '@/components/shared/EmptyState';
 import ProductGrid from '@/components/shared/products/ProductGrid';
 import FilterSidebar from '@/components/shared/filters/FilterSidebar';
@@ -13,10 +14,14 @@ import type { Locale } from '@/utils/currency';
 import Breadcrumb from '@/components/shared/layout/Breadcrumb';
 import CategoryHeroBanner from '@/components/shared/layout/CategoryHeroBanner';
 
-export const metadata: Metadata = {
-  title: 'Products | 옥화당',
-  description: '상품 목록',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'product' });
+  return {
+    title: `${t('productList')} | Okhwadang`,
+    description: t('productList'),
+  };
+}
 
 interface ProductsPageProps {
   params: Promise<{ locale: string }>;
@@ -36,6 +41,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   const { locale } = await params;
   const safeLocale = (['ko', 'en', 'ja', 'zh'].includes(locale) ? locale : 'ko') as Locale;
   const sp = await searchParams;
+  const t = await getTranslations({ locale: safeLocale, namespace: 'product' });
 
   const page = Number(sp.page) || 1;
   const VALID_SORTS: ProductSort[] = ['latest', 'price_asc', 'price_desc', 'popular'];
@@ -57,7 +63,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   try {
     [productsData, categories, collections] = await Promise.all([
       fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured, locale: safeLocale, attrs }),
-      fetchCategories(),
+      fetchCategories(safeLocale),
       fetchCollections(safeLocale),
     ]);
   } catch {
@@ -84,13 +90,13 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
 
       {!selectedCategory && !q && !isFeatured && (
         <h1 className="py-6 text-2xl font-display font-medium text-foreground">
-          상품목록
+          {t('productList')}
         </h1>
       )}
 
       {(q || isFeatured) && (
         <h1 className="py-6 text-xl font-bold text-foreground">
-          {q ? `"${q}" 검색 결과` : '추천 상품'}
+          {q ? t('searchResults', { query: q }) : t('featuredProducts')}
         </h1>
       )}
 
@@ -112,8 +118,8 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
             <ProductErrorState />
           ) : !productsData || productsData.items.length === 0 ? (
             <EmptyState
-              title="상품이 없습니다"
-              description={q ? `"${q}"에 대한 검색 결과가 없습니다.` : '등록된 상품이 없습니다.'}
+              title={t('noProducts')}
+              description={q ? t('noSearchResults', { query: q }) : t('noProductsDescription')}
             />
           ) : (
             <>

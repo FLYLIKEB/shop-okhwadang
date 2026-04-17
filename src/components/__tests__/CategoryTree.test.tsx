@@ -4,6 +4,17 @@ import { describe, it, expect, vi } from 'vitest';
 import CategoryTree from '@/components/shared/filters/CategoryTree';
 import type { Category } from '@/lib/api';
 
+const translations: Record<string, string> = {
+  'common.all': '전체',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace?: string) => (key: string) => {
+    const fullKey = namespace ? `${namespace}.${key}` : key;
+    return translations[fullKey] ?? fullKey;
+  },
+}));
+
 const mockCategories: Category[] = [
   {
     id: 1,

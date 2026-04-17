@@ -294,7 +294,8 @@ export const searchApi = {
 };
 
 export const categoriesApi = {
-  getTree: () => apiClient.get<Category[]>('/categories'),
+  getTree: (locale?: string) =>
+    apiClient.get<Category[]>('/categories', locale ? { params: { locale } } : undefined),
 };
 
 export const attributesApi = {

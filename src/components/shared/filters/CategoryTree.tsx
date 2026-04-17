@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { Category } from '@/lib/api';
 
@@ -11,6 +12,7 @@ interface CategoryTreeProps {
 }
 
 export default function CategoryTree({ categories, selectedId, onSelect }: CategoryTreeProps) {
+  const tCommon = useTranslations('common');
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   const toggleExpand = (id: number) => {
@@ -40,7 +42,7 @@ export default function CategoryTree({ categories, selectedId, onSelect }: Categ
               : 'text-muted-foreground hover:bg-accent hover:text-foreground',
           )}
         >
-          전체
+          {tCommon('all')}
         </button>
       </li>
       {categories.map((category) => {

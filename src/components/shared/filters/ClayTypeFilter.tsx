@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { Collection } from '@/lib/api';
 
@@ -10,6 +11,7 @@ interface ClayTypeFilterProps {
 }
 
 export default function ClayTypeFilter({ collections, selected, onSelect }: ClayTypeFilterProps) {
+  const tCommon = useTranslations('common');
   return (
     <div className="flex flex-wrap gap-2">
       <button
@@ -22,7 +24,7 @@ export default function ClayTypeFilter({ collections, selected, onSelect }: Clay
             : 'border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground',
         )}
       >
-        전체
+        {tCommon('all')}
       </button>
       {collections.map((item) => (
         <button
@@ -36,7 +38,7 @@ export default function ClayTypeFilter({ collections, selected, onSelect }: Clay
               : 'border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground',
           )}
         >
-          {item.nameKo ?? item.name}
+          {item.name}
         </button>
       ))}
     </div>

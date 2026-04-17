@@ -50,8 +50,8 @@ export function fetchProducts(params?: {
   );
 }
 
-export function fetchCategories() {
-  return fetchFromBackend<Category[]>('/categories');
+export function fetchCategories(locale?: string) {
+  return fetchFromBackend<Category[]>('/categories', locale ? { locale } : undefined);
 }
 
 export const fetchProduct = cache(async (id: number, locale?: string): Promise<ProductDetail | null> => {

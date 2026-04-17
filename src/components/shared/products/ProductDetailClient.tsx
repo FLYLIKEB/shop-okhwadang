@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Heart } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/shared/common/PriceDisplay'
@@ -23,7 +24,8 @@ import { formatCurrency, type Locale } from '@/utils/currency'
 
 function findCollectionLabel(collections: Collection[], name: string): string {
   const found = collections.find((c) => c.name === name)
-  return found?.nameKo ?? name
+  if (!found) return name
+  return found.name ?? name
 }
 
 interface ProductDetailClientProps {
@@ -35,6 +37,7 @@ interface ProductDetailClientProps {
 
 export default function ProductDetailClient({ product, locale = 'ko', clayCollections = [], shapeCollections = [] }: ProductDetailClientProps) {
   const router = useRouter()
+  const t = useTranslations('product')
   const { addItem } = useCart()
   const { addItem: addRecentlyViewed } = useRecentlyViewed()
   const { isVisible: isNavVisible } = useMobileNav()
@@ -170,7 +173,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
                       href={`/products?attrs=clay_type:${encodeURIComponent(attr.value)}`}
                       className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
                     >
-                      니료: {findCollectionLabel(clayCollections, attr.value)}
+                      {t('clay')}: {findCollectionLabel(clayCollections, attr.value)}
                     </Link>
                   );
                 }
@@ -181,7 +184,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
                       href={`/products?attrs=teapot_shape:${encodeURIComponent(attr.value)}`}
                       className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:border-foreground/20"
                     >
-                      모양: {findCollectionLabel(shapeCollections, attr.value)}
+                      {t('shape')}: {findCollectionLabel(shapeCollections, attr.value)}
                     </Link>
                   );
                 }

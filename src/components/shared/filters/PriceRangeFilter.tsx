@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 
 interface PriceRangeFilterProps {
@@ -14,6 +15,8 @@ function formatKRW(value: number): string {
 }
 
 export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilterProps) {
+  const t = useTranslations('product.filter');
+  const tCommon = useTranslations('common');
   const [localMin, setLocalMin] = useState(min !== undefined ? String(min) : '');
   const [localMax, setLocalMax] = useState(max !== undefined ? String(max) : '');
 
@@ -40,8 +43,8 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
       <div className="flex items-center gap-2">
         <input
           type="number"
-          aria-label="최소 가격"
-          placeholder="최소"
+          aria-label={t('priceMin')}
+          placeholder={t('priceMin')}
           min={0}
           value={localMin}
           onChange={(e) => setLocalMin(e.target.value)}
@@ -50,8 +53,8 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
         <span className="shrink-0 text-sm text-muted-foreground">~</span>
         <input
           type="number"
-          aria-label="최대 가격"
-          placeholder="최대"
+          aria-label={t('priceMax')}
+          placeholder={t('priceMax')}
           min={0}
           value={localMax}
           onChange={(e) => setLocalMax(e.target.value)}
@@ -75,7 +78,7 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
           'transition-colors hover:bg-primary/90',
         )}
       >
-        적용
+        {tCommon('apply')}
       </button>
     </div>
   );

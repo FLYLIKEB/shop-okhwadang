@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   ParseIntPipe,
   HttpCode,
   HttpStatus,
@@ -15,6 +16,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
@@ -32,20 +34,22 @@ export class CategoriesController {
   @Get()
   @Public()
   @ApiOperation({ summary: '카테고리 트리 조회', description: '활성화된 카테고리 트리 구조를 조회합니다.' })
+  @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko/en/ja/zh)', example: 'en' })
   @ApiResponse({ status: 200, description: '카테고리 트리 조회 성공' })
-  findTree() {
-    return this.categoriesService.findTree();
+  findTree(@Query('locale') locale?: string) {
+    return this.categoriesService.findTree(locale);
   }
 
   @Get('all')
   @Roles('admin', 'super_admin')
   @ApiCookieAuth()
   @ApiOperation({ summary: '전체 카테고리 목록 조회', description: '비활성화된 카테고리를 포함한 전체 카테고리 목록을 조회합니다.' })
+  @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko/en/ja/zh)', example: 'en' })
   @ApiResponse({ status: 200, description: '전체 카테고리 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
-  findAll() {
-    return this.categoriesService.findAll();
+  findAll(@Query('locale') locale?: string) {
+    return this.categoriesService.findAll(locale);
   }
 
   @Post()

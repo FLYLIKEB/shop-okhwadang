@@ -12,6 +12,9 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { ReorderCategoriesDto } from './dto/reorder-categories.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { buildTree } from '../../common/utils/tree.util';
+import { applyLocale } from '../../common/utils/locale.util';
+
+const LOCALIZED_FIELDS = ['name', 'description'];
 
 export interface CategoryTree extends Omit<Category, 'children' | 'products'> {
   children: CategoryTree[];
@@ -26,25 +29,38 @@ export class CategoriesService {
     private readonly categoryRepository: Repository<Category>,
   ) {}
 
-  async findTree(): Promise<CategoryTree[]> {
+  async findTree(locale?: string): Promise<CategoryTree[]> {
     const all = await this.categoryRepository.find({
       where: { isActive: true },
       order: { sortOrder: 'ASC', id: 'ASC' },
     });
 
-    return this.buildTree(all);
+    const tree = this.buildTree(all);
+    return this.applyLocaleToTree(tree, locale);
   }
 
-  async findAll(): Promise<CategoryTree[]> {
+  async findAll(locale?: string): Promise<CategoryTree[]> {
     const all = await this.categoryRepository.find({
       order: { sortOrder: 'ASC', id: 'ASC' },
     });
 
-    return this.buildTree(all);
+    const tree = this.buildTree(all);
+    return this.applyLocaleToTree(tree, locale);
   }
 
   private buildTree(categories: Category[]): CategoryTree[] {
     return buildTree(categories, 'id', 'parentId') as CategoryTree[];
+  }
+
+  private applyLocaleToTree(items: CategoryTree[], locale?: string): CategoryTree[] {
+    if (!locale || locale === 'ko') return items;
+    return items.map((item) => {
+      const localized = { ...applyLocale(item, locale, LOCALIZED_FIELDS) } as CategoryTree;
+      if (localized.children && localized.children.length) {
+        localized.children = this.applyLocaleToTree(localized.children, locale);
+      }
+      return localized;
+    });
   }
 
   private async getDepth(parentId: number | null | undefined): Promise<number> {
