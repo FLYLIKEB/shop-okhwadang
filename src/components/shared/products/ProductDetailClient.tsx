@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -80,13 +80,13 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
   const totalPrice = unitPrice * quantity
 
 
-  function handleIncrease() {
+  const handleIncrease = useCallback(() => {
     setQuantity((q) => Math.min(q + 1, maxQuantity))
-  }
+  }, [maxQuantity])
 
-  function handleDecrease() {
+  const handleDecrease = useCallback(() => {
     setQuantity((q) => Math.max(q - 1, 1))
-  }
+  }, [])
 
   const { execute: addToCart, isLoading: isAdding } = useAsyncAction(
     async () => {
@@ -120,25 +120,25 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
     { errorMessage: '구매 처리 중 오류가 발생했습니다.' },
   )
 
-  function handleAddToCart() {
+  const handleAddToCart = useCallback(() => {
     if (product.options.length > 0 && !selectedOptionId) {
       toast.error('옵션을 선택해 주세요.')
       return
     }
     void addToCart()
-  }
+  }, [product.options.length, selectedOptionId, addToCart])
 
-  function handleToggleWishlist() {
+  const handleToggleWishlist = useCallback(() => {
     void toggleWishlist()
-  }
+  }, [toggleWishlist])
 
-  function handleBuyNow() {
+  const handleBuyNow = useCallback(() => {
     if (product.options.length > 0 && !selectedOptionId) {
       toast.error('옵션을 선택해 주세요.')
       return
     }
     void buyNow()
-  }
+  }, [product.options.length, selectedOptionId, buyNow])
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">

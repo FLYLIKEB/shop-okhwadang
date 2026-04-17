@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
@@ -66,7 +66,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
     selectedClayType !== undefined ||
     selectedShape !== undefined;
 
-  const updateParams = (updates: Record<string, string | undefined>) => {
+  const updateParams = useCallback((updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(updates)) {
       if (value === undefined) {
@@ -77,30 +77,30 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
     }
     params.delete('page');
     router.push(`/products?${params.toString()}`);
-  };
+  }, [searchParams, router]);
 
-  const handleCategorySelect = (id: number | undefined) => {
+  const handleCategorySelect = useCallback((id: number | undefined) => {
     updateParams({ categoryId: id !== undefined ? String(id) : undefined });
-  };
+  }, [updateParams]);
 
-  const handlePriceChange = (min?: number, max?: number) => {
+  const handlePriceChange = useCallback((min?: number, max?: number) => {
     updateParams({
       price_min: min !== undefined ? String(min) : undefined,
       price_max: max !== undefined ? String(max) : undefined,
     });
-  };
+  }, [updateParams]);
 
-  const handleClayTypeSelect = (value: string | undefined) => {
+  const handleClayTypeSelect = useCallback((value: string | undefined) => {
     const newAttrs = buildAttrsParam(parsedAttrs, 'clay_type', value);
     updateParams({ attrs: newAttrs });
-  };
+  }, [parsedAttrs, updateParams]);
 
-  const handleShapeSelect = (value: string | undefined) => {
+  const handleShapeSelect = useCallback((value: string | undefined) => {
     const newAttrs = buildAttrsParam(parsedAttrs, 'teapot_shape', value);
     updateParams({ attrs: newAttrs });
-  };
+  }, [parsedAttrs, updateParams]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('categoryId');
     params.delete('price_min');
@@ -108,7 +108,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
     params.delete('attrs');
     params.delete('page');
     router.push(`/products?${params.toString()}`);
-  };
+  }, [searchParams, router]);
 
   const sidebarContent = (
     <aside aria-label={t('filterLabel')} className="flex flex-col">

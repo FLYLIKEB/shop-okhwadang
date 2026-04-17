@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import Image from 'next/image'
 import type { ReviewItem } from '@/lib/api'
 import StarRating from './StarRating'
@@ -9,7 +9,7 @@ interface ReviewCardProps {
   review: ReviewItem
 }
 
-export default function ReviewCard({ review }: ReviewCardProps) {
+const ReviewCardComponent = memo(function ReviewCard({ review }: ReviewCardProps) {
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
 
   const formattedDate = new Date(review.createdAt).toLocaleDateString('ko-KR', {
@@ -72,4 +72,6 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       )}
     </div>
   )
-}
+})
+
+export default ReviewCardComponent
