@@ -58,7 +58,7 @@ export default function ProductGridBlock({ content }: Props) {
 
     fetchProducts();
     return () => { cancelled = true; };
-  }, [product_ids, category_id, auto, limit, prefetched_products]);
+  }, [product_ids, category_id, auto, limit, prefetched_products, locale]);
 
   const gridCols = gridColsMap[template] ?? gridColsMap['4col'];
 

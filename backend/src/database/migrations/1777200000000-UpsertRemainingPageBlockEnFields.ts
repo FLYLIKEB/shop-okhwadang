@@ -202,7 +202,10 @@ export class UpsertRemainingPageBlockEnFields1777200000000 implements MigrationI
         content.slides = content.slides.map((s: Record<string, unknown>) => {
           if (s.title_en || s.subtitle_en || s.cta_text_en) {
             changed = true;
-            const { title_en, subtitle_en, cta_text_en, ...rest } = s;
+            const rest = { ...s };
+            delete rest.title_en;
+            delete rest.subtitle_en;
+            delete rest.cta_text_en;
             return rest;
           }
           return s;

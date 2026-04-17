@@ -1,5 +1,4 @@
 import { validate } from 'class-validator';
-import { IsInt, Min } from 'class-validator';
 import { ReorderItemDto, ReorderItemsDto } from '../dto/reorder.dto';
 
 describe('Reorder DTO', () => {
@@ -14,7 +13,7 @@ describe('Reorder DTO', () => {
 
     it('id가 정수가 아니면 실패', async () => {
       const dto = new ReorderItemDto();
-      (dto as any).id = 'not-a-number';
+      Reflect.set(dto, 'id', 'not-a-number');
       dto.sortOrder = 0;
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
@@ -44,7 +43,7 @@ describe('Reorder DTO', () => {
 
     it('orders가 배열이 아니면 실패', async () => {
       const dto = new ReorderItemsDto();
-      (dto as any).orders = 'not-an-array';
+      Reflect.set(dto, 'orders', 'not-an-array');
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0].property).toBe('orders');

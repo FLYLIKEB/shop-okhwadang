@@ -303,7 +303,7 @@ export class ProductsService {
     locale?: string,
     cacheKey?: string,
   ) {
-    const { q, status } = query;
+    const { status } = query;
 
     const likeQb = this.buildBaseQueryBuilder(isAdmin, status as ProductStatus | undefined);
     this.applyFiltersAndSort(likeQb, query, categoryIds, attrTypeIdMap);
