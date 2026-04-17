@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { NavigationService } from '../navigation.service';
 import { NavigationItem } from '../entities/navigation-item.entity';
+import { CacheService } from '../../cache/cache.service';
 
 const mockRepository = {
   find: jest.fn(),
@@ -13,6 +14,13 @@ const mockRepository = {
   update: jest.fn(),
 };
 
+const mockCacheService = {
+  get: jest.fn(),
+  set: jest.fn(),
+  del: jest.fn(),
+  delPattern: jest.fn(),
+};
+
 describe('NavigationService', () => {
   let service: NavigationService;
 
@@ -21,6 +29,7 @@ describe('NavigationService', () => {
       providers: [
         NavigationService,
         { provide: getRepositoryToken(NavigationItem), useValue: mockRepository },
+        { provide: CacheService, useValue: mockCacheService },
       ],
     }).compile();
 
@@ -29,27 +38,41 @@ describe('NavigationService', () => {
   });
 
   describe('findActiveByGroup', () => {
-    it('활성 항목만 트리 구조로 반환한다', async () => {
+    it('캐시 히트 시 DB 조회 없이 반환한다', async () => {
+      const cachedItems = [
+        { id: 1, group: 'gnb', label: '상품', url: '/products', sort_order: 0, is_active: true, parent_id: null, children: [] },
+      ];
+      mockCacheService.get.mockResolvedValue(cachedItems);
+
+      const result = await service.findActiveByGroup('gnb');
+      expect(result).toEqual(cachedItems);
+      expect(mockRepository.find).not.toHaveBeenCalled();
+    });
+
+    it('캐시 미스 시 DB 조회 후 캐시에 저장한다', async () => {
       const items = [
         { id: 1, group: 'gnb', label: '상품', url: '/products', sort_order: 0, is_active: true, parent_id: null },
         { id: 2, group: 'gnb', label: '신상품', url: '/products?sort=newest', sort_order: 0, is_active: true, parent_id: 1 },
       ];
+      mockCacheService.get.mockResolvedValue(null);
       mockRepository.find.mockResolvedValue(items);
 
       const result = await service.findActiveByGroup('gnb');
       expect(result).toHaveLength(1);
       expect(result[0].children).toHaveLength(1);
       expect(result[0].children[0].label).toBe('신상품');
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { group: 'gnb', is_active: true },
-        order: { sort_order: 'ASC' },
-      });
+      expect(mockCacheService.set).toHaveBeenCalledWith(
+        'navigation:active:gnb:ko',
+        expect.any(Array),
+        300,
+      );
     });
 
     it('locale=en 요청 시 labelEn 값으로 반환한다', async () => {
       const items = [
         { id: 1, group: 'gnb', label: '상품', labelEn: 'Products', url: '/products', sort_order: 0, is_active: true, parent_id: null },
       ];
+      mockCacheService.get.mockResolvedValue(null);
       mockRepository.find.mockResolvedValue(items);
 
       const result = await service.findActiveByGroup('gnb', 'en');
@@ -60,6 +83,7 @@ describe('NavigationService', () => {
       const items = [
         { id: 1, group: 'gnb', label: '상품', labelEn: 'Products', url: '/products', sort_order: 0, is_active: true, parent_id: null },
       ];
+      mockCacheService.get.mockResolvedValue(null);
       mockRepository.find.mockResolvedValue(items);
 
       const result = await service.findActiveByGroup('gnb');
@@ -70,6 +94,7 @@ describe('NavigationService', () => {
       const items = [
         { id: 1, group: 'gnb', label: '상품', labelEn: null, url: '/products', sort_order: 0, is_active: true, parent_id: null },
       ];
+      mockCacheService.get.mockResolvedValue(null);
       mockRepository.find.mockResolvedValue(items);
 
       const result = await service.findActiveByGroup('gnb', 'en');
@@ -81,6 +106,7 @@ describe('NavigationService', () => {
         { id: 1, group: 'gnb', label: '상품', labelEn: 'Products', url: '/products', sort_order: 0, is_active: true, parent_id: null },
         { id: 2, group: 'gnb', label: '신상품', labelEn: 'New Arrivals', url: '/products?sort=newest', sort_order: 0, is_active: true, parent_id: 1 },
       ];
+      mockCacheService.get.mockResolvedValue(null);
       mockRepository.find.mockResolvedValue(items);
 
       const result = await service.findActiveByGroup('gnb', 'en');
@@ -115,13 +141,17 @@ describe('NavigationService', () => {
 
       const result = await service.create(dto);
       expect(result).toEqual(created);
+      expect(mockCacheService.delPattern).toHaveBeenCalledWith('navigation:active:*');
     });
 
     it('parent_id가 있으면 depth를 검증한다', async () => {
       const dto = { group: 'gnb' as const, label: '하위', url: '/sub', parent_id: 1 };
-      // parent exists at depth 1
-      mockRepository.findOne.mockResolvedValueOnce({ id: 1, parent_id: null });
-      const created = { id: 2, ...dto };
+      const items = [
+        { id: 1, group: 'gnb', label: '상품', url: '/products', parent_id: null },
+        { id: 2, group: 'gnb', label: '기존하위', url: '/sub2', parent_id: 1 },
+      ];
+      mockRepository.find.mockResolvedValue(items);
+      const created = { id: 3, ...dto };
       mockRepository.create.mockReturnValue(created);
       mockRepository.save.mockResolvedValue(created);
 
@@ -130,12 +160,14 @@ describe('NavigationService', () => {
     });
 
     it('depth 초과 → BadRequestException', async () => {
-      const dto = { group: 'gnb' as const, label: '깊은 하위', url: '/deep', parent_id: 3 };
-      // depth chain: 3 -> 2 -> 1 -> null (already 3 levels, adding child would be 4)
-      mockRepository.findOne
-        .mockResolvedValueOnce({ id: 3, parent_id: 2 })
-        .mockResolvedValueOnce({ id: 2, parent_id: 1 })
-        .mockResolvedValueOnce({ id: 1, parent_id: null });
+      const dto = { group: 'gnb' as const, label: '깊은 하위', url: '/deep', parent_id: 4 };
+      const items = [
+        { id: 1, group: 'gnb', label: '레벨1', url: '/l1', parent_id: null },
+        { id: 2, group: 'gnb', label: '레벨2', url: '/l2', parent_id: 1 },
+        { id: 3, group: 'gnb', label: '레벨3', url: '/l3', parent_id: 2 },
+        { id: 4, group: 'gnb', label: '레벨4', url: '/l4', parent_id: 3 },
+      ];
+      mockRepository.find.mockResolvedValue(items);
 
       await expect(service.create(dto)).rejects.toThrow(BadRequestException);
     });
@@ -149,6 +181,7 @@ describe('NavigationService', () => {
 
       const result = await service.update(1, { label: '수정됨' });
       expect(result.label).toBe('수정됨');
+      expect(mockCacheService.delPattern).toHaveBeenCalledWith('navigation:active:*');
     });
 
     it('존재하지 않는 항목 → NotFoundException', async () => {
@@ -164,11 +197,12 @@ describe('NavigationService', () => {
     });
 
     it('순환 참조 → BadRequestException', async () => {
-      const item = { id: 1, group: 'gnb', label: '부모', url: '/', parent_id: null };
-      // item 1 wants parent_id = 2, but 2's parent is 1
-      mockRepository.findOne
-        .mockResolvedValueOnce(item) // find item 1
-        .mockResolvedValueOnce({ id: 2, parent_id: 1 }); // check circular: parent of 2 is 1
+      const items = [
+        { id: 1, group: 'gnb', label: '부모', url: '/', parent_id: null },
+        { id: 2, group: 'gnb', label: '자식', url: '/child', parent_id: 1 },
+      ];
+      mockRepository.find.mockResolvedValue(items);
+      mockRepository.findOne.mockResolvedValueOnce({ id: 1, group: 'gnb', label: '부모', url: '/', parent_id: null });
 
       await expect(service.update(1, { parent_id: 2 })).rejects.toThrow(BadRequestException);
     });
@@ -182,6 +216,7 @@ describe('NavigationService', () => {
 
       await service.remove(1);
       expect(mockRepository.remove).toHaveBeenCalledWith(item);
+      expect(mockCacheService.delPattern).toHaveBeenCalledWith('navigation:active:*');
     });
 
     it('존재하지 않는 항목 → NotFoundException', async () => {
@@ -202,6 +237,7 @@ describe('NavigationService', () => {
       });
 
       expect(mockRepository.update).toHaveBeenCalledTimes(2);
+      expect(mockCacheService.delPattern).toHaveBeenCalledWith('navigation:active:*');
     });
   });
 });
