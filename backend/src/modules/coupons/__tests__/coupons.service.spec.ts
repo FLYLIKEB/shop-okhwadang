@@ -6,6 +6,7 @@ import { Coupon } from '../entities/coupon.entity';
 import { UserCoupon } from '../entities/user-coupon.entity';
 import { PointHistory } from '../entities/point-history.entity';
 import { DataSource } from 'typeorm';
+import { PointsService } from '../../points/points.service';
 
 describe('CouponsService', () => {
   let service: CouponsService;
@@ -80,6 +81,10 @@ describe('CouponsService', () => {
     transaction: jest.fn(),
   };
 
+  const mockPointsService = {
+    getUserPointBalance: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -88,6 +93,7 @@ describe('CouponsService', () => {
         { provide: getRepositoryToken(UserCoupon), useValue: mockUserCouponRepo },
         { provide: getRepositoryToken(PointHistory), useValue: mockPointHistoryRepo },
         { provide: DataSource, useValue: mockDataSource },
+        { provide: PointsService, useValue: mockPointsService },
       ],
     }).compile();
 
@@ -97,13 +103,11 @@ describe('CouponsService', () => {
 
   describe('computeCouponDiscount', () => {
     it('percentage 쿠폰: 할인액 = min(주문액 × rate, max_discount)', () => {
-      // 100000원 * 10% = 10000원, max_discount=5000 → 5000원
       const discount = service.computeCouponDiscount(100000, mockPercentageCoupon);
       expect(discount).toBe(5000);
     });
 
     it('percentage 쿠폰: max_discount 미만 시 rate 적용', () => {
-      // 30000원 * 10% = 3000원, max_discount=5000 → 3000원
       const discount = service.computeCouponDiscount(30000, mockPercentageCoupon);
       expect(discount).toBe(3000);
     });
@@ -131,7 +135,7 @@ describe('CouponsService', () => {
     });
 
     it('최소 주문금액 미충족 → BadRequestException', async () => {
-      const uc = mockUserCoupon(mockPercentageCoupon); // minOrderAmount=10000
+      const uc = mockUserCoupon(mockPercentageCoupon);
       mockUserCouponRepo.findOne.mockResolvedValue(uc);
 
       await expect(
@@ -150,7 +154,7 @@ describe('CouponsService', () => {
 
     it('적립금 잔액 부족 → BadRequestException', async () => {
       mockUserCouponRepo.findOne.mockResolvedValue(null);
-      mockPointHistoryRepo.findOne.mockResolvedValue({ balance: 1000 });
+      mockPointsService.getUserPointBalance.mockResolvedValue(1000);
 
       await expect(
         service.calculate(10, { orderAmount: 20000, pointsToUse: 5000 }),
@@ -158,13 +162,13 @@ describe('CouponsService', () => {
     });
 
     it('쿠폰 없이 계산 성공', async () => {
-      mockPointHistoryRepo.findOne.mockResolvedValue(null);
+      mockPointsService.getUserPointBalance.mockResolvedValue(0);
 
       const result = await service.calculate(10, { orderAmount: 50000 });
       expect(result.originalAmount).toBe(50000);
       expect(result.couponDiscount).toBe(0);
       expect(result.pointsDiscount).toBe(0);
-      expect(result.shippingFee).toBe(0); // 50000 >= 30000
+      expect(result.shippingFee).toBe(0);
       expect(result.totalPayable).toBe(50000);
     });
   });
@@ -173,7 +177,7 @@ describe('CouponsService', () => {
     it('보유 쿠폰 목록 조회', async () => {
       const uc = mockUserCoupon(mockPercentageCoupon);
       mockUserCouponRepo.find.mockResolvedValue([uc]);
-      mockPointHistoryRepo.findOne.mockResolvedValue({ balance: 3000 });
+      mockPointsService.getUserPointBalance.mockResolvedValue(3000);
 
       const result = await service.findAll(10);
       expect(result.coupons).toHaveLength(1);
@@ -183,7 +187,7 @@ describe('CouponsService', () => {
 
     it('status 필터 적용', async () => {
       mockUserCouponRepo.find.mockResolvedValue([]);
-      mockPointHistoryRepo.findOne.mockResolvedValue(null);
+      mockPointsService.getUserPointBalance.mockResolvedValue(0);
 
       const result = await service.findAll(10, 'used');
       expect(result.coupons).toHaveLength(0);
@@ -195,7 +199,7 @@ describe('CouponsService', () => {
 
   describe('getPoints', () => {
     it('적립금 잔액 조회', async () => {
-      mockPointHistoryRepo.findOne.mockResolvedValue({ balance: 5000 });
+      mockPointsService.getUserPointBalance.mockResolvedValue(5000);
       mockPointHistoryRepo.find.mockResolvedValue([
         { id: 1, type: 'earn', amount: 5000, balance: 5000, description: '주문 적립', createdAt: now },
       ]);
@@ -207,7 +211,7 @@ describe('CouponsService', () => {
     });
 
     it('적립금 내역 없으면 잔액 0', async () => {
-      mockPointHistoryRepo.findOne.mockResolvedValue(null);
+      mockPointsService.getUserPointBalance.mockResolvedValue(0);
       mockPointHistoryRepo.find.mockResolvedValue([]);
 
       const result = await service.getPoints(10);

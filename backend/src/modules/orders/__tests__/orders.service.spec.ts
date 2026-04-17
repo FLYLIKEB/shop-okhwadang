@@ -5,6 +5,7 @@ import { NotFoundException, BadRequestException, ForbiddenException } from '@nes
 import { OrdersService } from '../orders.service';
 import { Order, OrderStatus } from '../entities/order.entity';
 import { CreateOrderDto } from '../dto/create-order.dto';
+import { PointsService } from '../../points/points.service';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -29,6 +30,10 @@ const mockOrderRepository = {
   createQueryBuilder: jest.fn(),
 };
 
+const mockPointsService = {
+  getUserPointBalance: jest.fn(),
+};
+
 describe('OrdersService', () => {
   let service: OrdersService;
 
@@ -41,6 +46,7 @@ describe('OrdersService', () => {
         OrdersService,
         { provide: getRepositoryToken(Order), useValue: mockOrderRepository },
         { provide: DataSource, useValue: mockDataSource },
+        { provide: PointsService, useValue: mockPointsService },
       ],
     }).compile();
 

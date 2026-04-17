@@ -5,9 +5,10 @@ import { UserCoupon } from './entities/user-coupon.entity';
 import { PointHistory } from './entities/point-history.entity';
 import { CouponsController, AdminCouponsController } from './coupons.controller';
 import { CouponsService } from './coupons.service';
+import { PointsModule } from '../points/points.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Coupon, UserCoupon, PointHistory])],
+  imports: [TypeOrmModule.forFeature([Coupon, UserCoupon, PointHistory]), PointsModule],
   controllers: [CouponsController, AdminCouponsController],
   providers: [CouponsService],
   exports: [CouponsService],

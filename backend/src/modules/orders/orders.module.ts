@@ -5,9 +5,10 @@ import { OrderItem } from './entities/order-item.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
+import { PointsModule } from '../points/points.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, OrderItem, PointHistory])],
+  imports: [TypeOrmModule.forFeature([Order, OrderItem, PointHistory]), PointsModule],
   controllers: [OrdersController],
   providers: [OrdersService],
   exports: [OrdersService],

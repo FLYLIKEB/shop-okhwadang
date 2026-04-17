@@ -14,6 +14,7 @@ import { CalculateDiscountDto } from './dto/calculate-discount.dto';
 import { IssueCouponDto } from './dto/issue-coupon.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
+import { PointsService } from '../points/points.service';
 
 export interface CouponResponse {
   id: number;
@@ -77,15 +78,8 @@ export class CouponsService {
     @InjectRepository(PointHistory)
     private readonly pointHistoryRepo: Repository<PointHistory>,
     private readonly dataSource: DataSource,
+    private readonly pointsService: PointsService,
   ) {}
-
-  private async getUserPointBalance(userId: number): Promise<number> {
-    const latest = await this.pointHistoryRepo.findOne({
-      where: { userId },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
-    return latest ? latest.balance : 0;
-  }
 
   private toResponse(uc: UserCoupon): CouponResponse {
     return {
@@ -126,7 +120,7 @@ export class CouponsService {
       order: { issuedAt: 'DESC' },
     });
 
-    const balance = await this.getUserPointBalance(userId);
+    const balance = await this.pointsService.getUserPointBalance(userId);
 
     return {
       coupons: userCoupons.map((uc) => this.toResponse(uc)),
@@ -158,7 +152,7 @@ export class CouponsService {
     }
 
     if (pointsToUse > 0) {
-      const balance = await this.getUserPointBalance(userId);
+      const balance = await this.pointsService.getUserPointBalance(userId);
       if (pointsToUse > balance) {
         throw new BadRequestException('적립금이 부족합니다.');
       }
@@ -181,7 +175,7 @@ export class CouponsService {
   }
 
   async getPoints(userId: number): Promise<PointsResponse> {
-    const balance = await this.getUserPointBalance(userId);
+    const balance = await this.pointsService.getUserPointBalance(userId);
     const history = await this.pointHistoryRepo.find({
       where: { userId },
       order: { createdAt: 'DESC', id: 'DESC' },
