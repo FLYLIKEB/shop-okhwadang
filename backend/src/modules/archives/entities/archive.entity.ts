@@ -35,6 +35,9 @@ export class NiloType {
   @Column({ type: 'json' })
   characteristics!: string[];
 
+  @Column({ name: 'characteristics_en', type: 'json', nullable: true })
+  characteristicsEn!: string[] | null;
+
   @Column({ name: 'product_url', type: 'varchar', length: 500 })
   productUrl!: string;
 
