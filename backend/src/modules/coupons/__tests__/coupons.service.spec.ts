@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CouponsService } from '../coupons.service';
 import { Coupon } from '../entities/coupon.entity';
 import { UserCoupon } from '../entities/user-coupon.entity';
@@ -217,6 +217,98 @@ describe('CouponsService', () => {
       const result = await service.getPoints(10);
       expect(result.balance).toBe(0);
       expect(result.history).toHaveLength(0);
+    });
+  });
+
+  describe('issueCoupon', () => {
+    const buildManager = (
+      couponRow: Coupon | null,
+      existingUserCoupon: UserCoupon | null = null,
+    ) => ({
+      findOne: jest.fn().mockImplementation((entity: unknown) => {
+        if (entity === Coupon) return Promise.resolve(couponRow);
+        if (entity === UserCoupon) return Promise.resolve(existingUserCoupon);
+        return Promise.resolve(null);
+      }),
+      create: jest.fn().mockReturnValue({ id: 99, userId: 10, couponId: 1, status: 'available' }),
+      save: jest.fn().mockImplementation((_, v) => Promise.resolve(v)),
+      increment: jest.fn().mockResolvedValue(undefined),
+    });
+
+    it('쿠폰 발급 성공 — UserCoupon 반환 및 issuedCount 증가', async () => {
+      const coupon = { ...mockPercentageCoupon, issuedCount: 0, totalQuantity: 10 } as Coupon;
+      const manager = buildManager(coupon);
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      const dto = { userId: 10, couponId: 1 };
+      const result = await service.issueCoupon(dto);
+
+      expect(result).toBeDefined();
+      expect(manager.increment).toHaveBeenCalledWith(Coupon, { id: 1 }, 'issuedCount', 1);
+    });
+
+    it('트랜잭션 내부에서 Coupon을 pessimistic_write 락으로 조회한다 (TOCTOU 방어)', async () => {
+      const coupon = { ...mockPercentageCoupon, issuedCount: 0, totalQuantity: 10 } as Coupon;
+      const manager = buildManager(coupon);
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await service.issueCoupon({ userId: 10, couponId: 1 });
+
+      const firstCall = manager.findOne.mock.calls[0];
+      expect(firstCall[0]).toBe(Coupon);
+      expect(firstCall[1]).toMatchObject({ lock: { mode: 'pessimistic_write' } });
+    });
+
+    it('존재하지 않는 쿠폰 → NotFoundException', async () => {
+      const manager = buildManager(null);
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await expect(service.issueCoupon({ userId: 10, couponId: 999 })).rejects.toThrow(NotFoundException);
+    });
+
+    it('비활성화된 쿠폰 → BadRequestException', async () => {
+      const coupon = { ...mockPercentageCoupon, isActive: false } as Coupon;
+      const manager = buildManager(coupon);
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await expect(service.issueCoupon({ userId: 10, couponId: 1 })).rejects.toThrow(BadRequestException);
+    });
+
+    it('수량 한도 초과 쿠폰 → BadRequestException (트랜잭션 내부 체크)', async () => {
+      const coupon = { ...mockPercentageCoupon, issuedCount: 10, totalQuantity: 10 } as Coupon;
+      const manager = buildManager(coupon);
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await expect(service.issueCoupon({ userId: 10, couponId: 1 })).rejects.toThrow(BadRequestException);
+      expect(manager.increment).not.toHaveBeenCalled();
+    });
+
+    it('TOCTOU 시뮬레이션: 락 시점의 issuedCount가 한도와 같으면 두 번째 요청은 거부된다', async () => {
+      const couponAtLimit = { ...mockPercentageCoupon, issuedCount: 10, totalQuantity: 10 } as Coupon;
+      const manager = buildManager(couponAtLimit);
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await expect(service.issueCoupon({ userId: 11, couponId: 1 })).rejects.toThrow(BadRequestException);
+    });
+
+    it('이미 발급된 쿠폰 → BadRequestException (트랜잭션 내부 중복 체크)', async () => {
+      const coupon = { ...mockPercentageCoupon, issuedCount: 1 } as Coupon;
+      const existingUc = { id: 5, userId: 10, couponId: 1, status: 'available' } as UserCoupon;
+      const manager = buildManager(coupon, existingUc);
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await expect(service.issueCoupon({ userId: 10, couponId: 1 })).rejects.toThrow(BadRequestException);
+      expect(manager.increment).not.toHaveBeenCalled();
+    });
+
+    it('totalQuantity null 쿠폰은 수량 제한 없이 발급 성공', async () => {
+      const coupon = { ...mockFixedCoupon, issuedCount: 9999 } as Coupon;
+      const manager = buildManager(coupon);
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      const result = await service.issueCoupon({ userId: 10, couponId: 2 });
+      expect(result).toBeDefined();
+      expect(manager.increment).toHaveBeenCalled();
     });
   });
 });
