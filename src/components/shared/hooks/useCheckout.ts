@@ -1,10 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useRef, useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
 import { handleApiError } from '@/utils/error';
 import { SESSION_KEYS } from '@/constants/storage';
 import type { CartItem, PreparePaymentResponse } from '@/lib/api';
@@ -32,7 +30,7 @@ export interface UseCheckoutOptions {
 }
 
 export function useCheckout(options: UseCheckoutOptions) {
-  const { locale, paymentRef, grandTotal, refetch, form, checkoutItems } = options;
+  const { locale, grandTotal, refetch, form, checkoutItems } = options;
   const router = useRouter();
 
   const handlePaymentError = useCallback((message: string) => {

@@ -118,9 +118,6 @@ export default async function LocaleLayout({
     <html lang={safeLocale} data-theme={initialTheme} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: foucScript }} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet" />
         {themeStyle ? <style>{themeStyle}</style> : null}
       </head>
       <body>

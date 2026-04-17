@@ -52,7 +52,7 @@ export default function ProductCarouselBlock({ content }: Props) {
 
     fetchProducts();
     return () => { cancelled = true; };
-  }, [product_ids, category_id, sort, limit]);
+  }, [product_ids, category_id, sort, limit, locale]);
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;

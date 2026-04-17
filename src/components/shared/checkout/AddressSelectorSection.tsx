@@ -1,6 +1,5 @@
 'use client';
 
-import type { Locale } from '@/i18n/routing';
 import type { UserAddress } from '@/lib/api';
 
 interface AddressSelectorSectionProps {
