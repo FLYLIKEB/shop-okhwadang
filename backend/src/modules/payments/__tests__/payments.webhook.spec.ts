@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { PaymentsService } from '../payments.service';
 import { Payment } from '../entities/payment.entity';
 import { Order } from '../../orders/entities/order.entity';
@@ -37,6 +38,7 @@ describe('PaymentsService — webhook', () => {
         { provide: TossPaymentAdapter, useValue: mockGateway },
         { provide: StripePaymentAdapter, useValue: mockGateway },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
+        { provide: DataSource, useValue: { transaction: jest.fn() } },
       ],
     }).compile();
 
