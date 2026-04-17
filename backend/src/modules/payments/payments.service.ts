@@ -51,6 +51,34 @@ export class PaymentsService {
     return this.gateway;
   }
 
+  // NOTE: PaymentGatewayType enum에는 아직 STRIPE 값이 없어서 INICIS를 overseas 게이트웨이
+  // placeholder로 겸용 중 (stripe/inicis 문자열 → INICIS enum). 실제 Inicis 연동을 추가하려면
+  // enum에 STRIPE를 추가하고 마이그레이션으로 기존 INICIS 데이터를 재분류해야 한다. (#476 후속)
+  private resolveGatewayByType(gatewayType: PaymentGatewayType): PaymentGateway {
+    switch (gatewayType) {
+      case PaymentGatewayType.TOSS:
+        return this.tossAdapter;
+      case PaymentGatewayType.INICIS:
+        return this.stripeAdapter; // 임시: INICIS enum이 stripe 어댑터를 의미함 (위 NOTE 참고)
+      case PaymentGatewayType.MOCK:
+      default:
+        return this.gateway;
+    }
+  }
+
+  private gatewayNameToType(name: string): PaymentGatewayType {
+    switch (name) {
+      case 'toss':
+        return PaymentGatewayType.TOSS;
+      case 'stripe':
+      case 'inicis':
+        return PaymentGatewayType.INICIS; // 임시: stripe도 INICIS enum으로 저장 (위 NOTE 참고)
+      case 'mock':
+      default:
+        return PaymentGatewayType.MOCK;
+    }
+  }
+
   async prepare(dto: PreparePaymentDto, userId: number): Promise<{
     paymentId: number;
     orderId: number;
@@ -75,9 +103,14 @@ export class PaymentsService {
         amount: Number(order.totalAmount),
         status: PaymentStatus.PENDING,
         method: PaymentMethod.MOCK,
-        gateway: PaymentGatewayType.MOCK,
+        gateway: this.gatewayNameToType(gatewayName),
       });
       payment = await this.paymentRepository.save(payment);
+    } else {
+      await this.paymentRepository.update(payment.id, {
+        gateway: this.gatewayNameToType(gatewayName),
+      });
+      payment = await findOrThrow(this.paymentRepository, { id: payment.id }, '결제 정보를 찾을 수 없습니다.');
     }
 
     const result = await selectedGateway.prepare(String(dto.orderId), Number(order.totalAmount));
@@ -116,7 +149,8 @@ export class PaymentsService {
     }
 
     try {
-      const result = await this.gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
+      const confirmGateway = this.resolveGatewayByType(payment.gateway);
+      const result = await confirmGateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
 
       await this.dataSource.transaction(async (manager) => {
         await manager.update(Payment, payment.id, {
@@ -179,7 +213,8 @@ export class PaymentsService {
     }
 
     const reason = dto.reason ?? '고객 요청';
-    const result = await this.gateway.cancel(payment.paymentKey!, reason);
+    const cancelGateway = this.resolveGatewayByType(payment.gateway);
+    const result = await cancelGateway.cancel(payment.paymentKey!, reason);
 
     await this.paymentRepository.update(payment.id, {
       status: PaymentStatus.CANCELLED,
