@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Payment, PaymentStatus, PaymentGatewayType, PaymentMethod } from './entities/payment.entity';
 import { Shipping, ShippingStatus } from './entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
@@ -40,6 +40,7 @@ export class PaymentsService {
     private readonly tossAdapter: TossPaymentAdapter,
     private readonly stripeAdapter: StripePaymentAdapter,
     private readonly notificationService: NotificationService,
+    private readonly dataSource: DataSource,
   ) {}
 
   private resolveGateway(locale?: string): PaymentGateway {
@@ -117,26 +118,26 @@ export class PaymentsService {
     try {
       const result = await this.gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
 
-      await this.paymentRepository.update(payment.id, {
-        status: PaymentStatus.CONFIRMED,
-        paymentKey: dto.paymentKey,
-        method: result.method as PaymentMethod,
-        paidAt: new Date(),
-        rawResponse: result.rawResponse as object,
-      });
+      await this.dataSource.transaction(async (manager) => {
+        await manager.update(Payment, payment.id, {
+          status: PaymentStatus.CONFIRMED,
+          paymentKey: dto.paymentKey,
+          method: result.method as PaymentMethod,
+          paidAt: new Date(),
+          rawResponse: result.rawResponse as object,
+        });
 
-      await this.orderRepository.update(dto.orderId, { status: OrderStatus.PAID });
+        await manager.update(Order, dto.orderId, { status: OrderStatus.PAID });
 
-      const existing = await this.shippingRepository.findOne({ where: { orderId: dto.orderId } });
-      if (!existing) {
-        await this.shippingRepository.save(
-          this.shippingRepository.create({
+        const existing = await manager.findOne(Shipping, { where: { orderId: dto.orderId } });
+        if (!existing) {
+          await manager.save(Shipping, {
             orderId: dto.orderId,
             carrier: DEFAULT_CARRIER,
             status: ShippingStatus.PAYMENT_CONFIRMED,
-          }),
-        );
-      }
+          });
+        }
+      });
 
       this.logger.log(`Payment confirmed: orderId=${dto.orderId}`);
 

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { NotFoundException, BadRequestException, ConflictException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { PaymentsService } from '../payments.service';
 import { Payment, PaymentStatus, PaymentMethod, PaymentGatewayType } from '../entities/payment.entity';
 import { Shipping, ShippingStatus } from '../entities/shipping.entity';
@@ -33,6 +34,19 @@ const makePayment = (overrides: Partial<Payment> = {}): Payment =>
     order: makeOrder(),
     ...overrides,
   } as unknown as Payment);
+
+const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
+  update: jest.fn().mockResolvedValue({}),
+  findOne: jest.fn().mockResolvedValue(null),
+  save: jest.fn().mockResolvedValue({}),
+  create: jest.fn().mockImplementation((_entity: unknown, data: unknown) => data),
+  ...overrides,
+});
+
+const makeDataSourceMock = (manager = makeTransactionManager()) => ({
+  transaction: jest.fn(async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(manager)),
+  _manager: manager,
+});
 
 describe('MockPaymentAdapter', () => {
   let adapter: MockPaymentAdapter;
@@ -97,8 +111,11 @@ describe('PaymentsService', () => {
     verifyWebhook: jest.fn(),
   };
 
+  let mockDataSource: ReturnType<typeof makeDataSourceMock>;
+
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockDataSource = makeDataSourceMock();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -111,6 +128,7 @@ describe('PaymentsService', () => {
         { provide: TossPaymentAdapter, useValue: mockGateway },
         { provide: StripePaymentAdapter, useValue: mockGateway },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
+        { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
 
@@ -159,14 +177,74 @@ describe('PaymentsService', () => {
         status: 'confirmed',
         rawResponse: { mock: true },
       });
-      mockPaymentRepo.update.mockResolvedValue({});
-      mockOrderRepo.update.mockResolvedValue({});
-      mockShippingRepo.findOne.mockResolvedValue(null);
-      mockShippingRepo.create.mockReturnValue({ orderId: 1, carrier: 'mock', status: ShippingStatus.PAYMENT_CONFIRMED });
-      mockShippingRepo.save.mockResolvedValue({});
 
       const result = await service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10);
       expect(result.status).toBe(PaymentStatus.CONFIRMED);
+    });
+
+    it('confirm() — dataSource.transaction() 이 1회 호출되어야 함', async () => {
+      const payment = makePayment();
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockGateway.confirm.mockResolvedValue({
+        paymentKey: 'pay_abc',
+        method: 'mock',
+        amount: 30000,
+        status: 'confirmed',
+        rawResponse: { mock: true },
+      });
+
+      await service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10);
+
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('confirm() — 트랜잭션 내에서 payment·order·shipping 모두 업데이트', async () => {
+      const payment = makePayment();
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockGateway.confirm.mockResolvedValue({
+        paymentKey: 'pay_abc',
+        method: 'mock',
+        amount: 30000,
+        status: 'confirmed',
+        rawResponse: { mock: true },
+      });
+
+      await service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10);
+
+      const manager = mockDataSource._manager;
+      expect(manager.update).toHaveBeenCalledWith(
+        Payment,
+        payment.id,
+        expect.objectContaining({ status: PaymentStatus.CONFIRMED }),
+      );
+      expect(manager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.PAID });
+      expect(manager.save).toHaveBeenCalled();
+    });
+
+    it('shipping save 실패 → 트랜잭션 롤백 → payment FAILED 마킹 → InternalServerErrorException', async () => {
+      const payment = makePayment();
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockGateway.confirm.mockResolvedValue({
+        paymentKey: 'pay_abc',
+        method: 'mock',
+        amount: 30000,
+        status: 'confirmed',
+        rawResponse: { mock: true },
+      });
+      mockPaymentRepo.update.mockResolvedValue({});
+
+      const failingManager = makeTransactionManager({
+        save: jest.fn().mockRejectedValue(new Error('DB 오류 — shipping insert 실패')),
+      });
+      mockDataSource.transaction.mockImplementation(
+        async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+      );
+
+      await expect(
+        service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10),
+      ).rejects.toThrow(InternalServerErrorException);
+
+      expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, { status: PaymentStatus.FAILED });
     });
 
     it('amount mismatch → BadRequestException', async () => {
