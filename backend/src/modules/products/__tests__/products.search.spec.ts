@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { SelectQueryBuilder } from 'typeorm';
+import { SelectQueryBuilder, QueryFailedError } from 'typeorm';
 import { ProductsService } from '../products.service';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
@@ -12,6 +12,16 @@ import { AttributeType } from '../entities/attribute-type.entity';
 import { ProductAttribute } from '../entities/product-attribute.entity';
 import { ProductSort } from '../dto/query-products.dto';
 import { CacheService } from '../../cache/cache.service';
+
+function makeFulltextError(): QueryFailedError {
+  const err = new QueryFailedError(
+    'SELECT * FROM product WHERE MATCH(product.name) AGAINST(:q IN BOOLEAN MODE)',
+    ['보이차'],
+    new Error(' FULLTEXT index error'),
+  );
+  Object.defineProperty(err, 'errno', { value: 1191, enumerable: true });
+  return err;
+}
 
 const mockSelect = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
@@ -24,6 +34,7 @@ const mockGetManyAndCount = jest.fn();
 const mockGetMany = jest.fn();
 const mockGetOne = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
+const mockInnerJoin = jest.fn().mockReturnThis();
 
 const mockQueryBuilder = {
   select: mockSelect,
@@ -34,6 +45,7 @@ const mockQueryBuilder = {
   skip: mockSkip,
   take: mockTake,
   limit: mockLimit,
+  innerJoin: mockInnerJoin,
   getManyAndCount: mockGetManyAndCount,
   getMany: mockGetMany,
   getOne: mockGetOne,
@@ -52,6 +64,7 @@ describe('ProductsService — Search', () => {
   let service: ProductsService;
 
   beforeEach(async () => {
+    jest.resetAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductsService,
@@ -91,7 +104,6 @@ describe('ProductsService — Search', () => {
     }).compile();
 
     service = module.get<ProductsService>(ProductsService);
-    jest.clearAllMocks();
     mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
     mockSelect.mockReturnThis();
     mockLeftJoinAndSelect.mockReturnThis();
@@ -215,6 +227,34 @@ describe('ProductsService — Search', () => {
       await service.findAll({});
 
       expect(mockOrderBy).toHaveBeenCalledWith('product.createdAt', 'DESC');
+    });
+  });
+
+  describe('findAll — LIKE fallback', () => {
+    it('FULLTEXT 실패 시 errno 1191 → LIKE 폴백으로 정상 결과 반환', async () => {
+      mockGetManyAndCount
+        .mockRejectedValueOnce(makeFulltextError())
+        .mockResolvedValue([[], 0]);
+
+      const result = await service.findAll({ q: '보이차', sort: ProductSort.PRICE_ASC });
+
+      expect(result).toMatchObject({ total: 0, items: [] });
+    });
+
+    it('LIKE 폴백 시에도 categoryId + price 필터 적용 → sort price DESC 적용', async () => {
+      mockGetManyAndCount
+        .mockRejectedValueOnce(makeFulltextError())
+        .mockResolvedValue([[], 0]);
+
+      await service.findAll({
+        q: '보이차',
+        categoryId: 2,
+        price_min: 10000,
+        price_max: 50000,
+        sort: ProductSort.PRICE_DESC,
+      });
+
+      expect(mockOrderBy).toHaveBeenCalledWith('product.price', 'DESC');
     });
   });
 });
