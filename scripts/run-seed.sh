@@ -10,7 +10,10 @@ DB_USER="${DB_USER:-root}"
 DB_PASS="${DB_PASS:-changeme_root_password}"
 DB_NAME="${DB_NAME:-commerce}"
 
-export LOCAL_DATABASE_URL="mysql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+# typeorm.config.ts는 DATABASE_URL을 LOCAL_DATABASE_URL보다 우선 사용하고,
+# run-seed.ts가 dotenv/config로 .env를 먼저 로드하므로
+# DATABASE_URL로 export해야 .env 값을 덮어쓸 수 있다.
+export DATABASE_URL="mysql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
 echo "Running TypeORM seed..."
 echo "Database: ${DB_NAME} at ${DB_HOST}:${DB_PORT}"

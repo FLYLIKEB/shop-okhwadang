@@ -12,7 +12,7 @@ echo "==> Installing CloudWatch Agent..."
 
 # Download and install CloudWatch Agent
 wget -q "$CW_AGENT_URL" -O /tmp/amazon-cloudwatch-agent.deb
-dpkg -i -y /tmp/amazon-cloudwatch-agent.deb
+dpkg -i /tmp/amazon-cloudwatch-agent.deb
 rm /tmp/amazon-cloudwatch-agent.deb
 
 # Create config directory

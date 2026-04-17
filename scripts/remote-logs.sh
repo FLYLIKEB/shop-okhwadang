@@ -61,7 +61,7 @@ case "$SUBCMD" in
   error)      REMOTE_CMD="pm2 logs $APP_NAME --err --lines $LINES --nostream --timestamp 'YYYY-MM-DD HH:mm:ss'" ;;
   error-tail) REMOTE_CMD="pm2 logs $APP_NAME --err --lines $LINES --timestamp 'YYYY-MM-DD HH:mm:ss'" ;;
   flush)      REMOTE_CMD="pm2 flush $APP_NAME" ;;
-  reload)     REMOTE_CMD="cd /app/shop-okhwadang/shop-okhwadang/backend && git pull --ff-only && pm2 delete $APP_NAME 2>/dev/null; pm2 start ecosystem.config.js --env production && pm2 save" ;;
+  reload)     REMOTE_CMD="cd /app/shop-okhwadang/shop-okhwadang/backend && git pull --ff-only && pm2 delete $APP_NAME 2>/dev/null || true; cd /app/shop-okhwadang/shop-okhwadang/backend && pm2 start ecosystem.config.js --env production && pm2 save" ;;
   *)
     echo "Usage: $0 [tail|recent|status|monit|error|error-tail|flush|reload] [lines]" >&2
     exit 1

@@ -71,6 +71,10 @@ ssh -i "$BASTION_KEY_EXPANDED" \
        echo 'ERROR: 원격 .env 파일이 없습니다.' >&2
        exit 1
      fi
+     if [ ! -f dist/database/typeorm.config.js ]; then
+       echo 'ERROR: dist/ 빌드가 없습니다. 먼저 npm run build 를 실행하세요.' >&2
+       exit 1
+     fi
      set -a
      . ./.env
      set +a

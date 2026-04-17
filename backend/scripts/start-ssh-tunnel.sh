@@ -22,6 +22,7 @@ load_env() {
         export SSH_TUNNEL_REMOTE_HOST=$(grep -v '^#' "$ENV_FILE" | grep 'SSH_TUNNEL_REMOTE_HOST=' | head -1 | cut -d '=' -f2- | tr -d '"' | tr -d "'")
         export SSH_TUNNEL_REMOTE_PORT=$(grep -v '^#' "$ENV_FILE" | grep 'SSH_TUNNEL_REMOTE_PORT=' | head -1 | cut -d '=' -f2- | tr -d '"' | tr -d "'")
         export SSH_KEY_PATH=$(grep -v '^#' "$ENV_FILE" | grep 'SSH_KEY_PATH=' | head -1 | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+        export LIGHTSAIL_DB_HOST=$(grep -v '^#' "$ENV_FILE" | grep 'LIGHTSAIL_DB_HOST=' | head -1 | cut -d '=' -f2- | tr -d '"' | tr -d "'")
     fi
 }
 
@@ -30,6 +31,8 @@ load_env
 SSH_TUNNEL_LOCAL_PORT=${SSH_TUNNEL_LOCAL_PORT:-3307}
 SSH_TUNNEL_REMOTE_PORT=${SSH_TUNNEL_REMOTE_PORT:-3306}
 SSH_KEY_PATH=${SSH_KEY_PATH:-$HOME/.ssh/okhwadang.pem}
+# Lightsail DB 엔드포인트 (미설정 시 EC2 localhost로 폴백)
+LIGHTSAIL_DB_HOST=${LIGHTSAIL_DB_HOST:-localhost}
 
 if [ "$SSH_TUNNEL_ENABLED" != "true" ]; then
     echo -e "${YELLOW}⚠️  SSH_TUNNEL_ENABLED=true 로 설정되지 않았습니다${NC}"
@@ -56,7 +59,7 @@ fi
 echo -e "${BLUE}🔐 터널 시작: localhost:${SSH_TUNNEL_LOCAL_PORT} → ${SSH_TUNNEL_REMOTE_HOST}:${SSH_TUNNEL_REMOTE_PORT}${NC}"
 
 ssh -f -N \
-    -L "${SSH_TUNNEL_LOCAL_PORT}:localhost:${SSH_TUNNEL_REMOTE_PORT}" \
+    -L "${SSH_TUNNEL_LOCAL_PORT}:${LIGHTSAIL_DB_HOST}:${SSH_TUNNEL_REMOTE_PORT}" \
     -i "$SSH_KEY_PATH" \
     -o StrictHostKeyChecking=no \
     -o ServerAliveInterval=60 \
