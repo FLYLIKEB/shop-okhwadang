@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from '@/i18n/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
@@ -30,6 +30,7 @@ export default function LanguageSelector({ className, compact = false }: Languag
   const router = useRouter();
   const pathname = usePathname();
   const currentLocale = useLocale() as Locale;
+  const t = useTranslations('header');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +72,7 @@ export default function LanguageSelector({ className, compact = false }: Languag
         type="button"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label="언어 선택"
+        aria-label={t('languageSelector')}
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
           'flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors',
@@ -85,7 +86,7 @@ export default function LanguageSelector({ className, compact = false }: Languag
       {isOpen && (
         <ul
           role="listbox"
-          aria-label="언어 목록"
+          aria-label={t('languageList')}
           className={cn(
             'absolute right-0 top-full mt-1 z-50',
             'min-w-[8rem] rounded-md border border-border bg-background shadow-md',

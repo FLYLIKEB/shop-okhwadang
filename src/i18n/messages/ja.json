@@ -36,7 +36,13 @@
     "cases": "件",
     "persons": "名",
     "viewAll": "すべて見る",
-    "continueShopping": "お買い物を続ける"
+    "continueShopping": "お買い物を続ける",
+    "pagination": {
+      "nav": "ページネーション",
+      "prev": "前へ",
+      "next": "次へ",
+      "pageNumber": "ページ番号"
+    }
   },
   "navigation": {
     "skipToContent": "メインコンテンツへスキップ",
@@ -65,7 +71,9 @@
     "goBack": "戻る",
     "goHome": "ホーム",
     "themeToggleToLight": "ライトモードに切り替え",
-    "themeToggleToDark": "ダークモードに切り替え"
+    "themeToggleToDark": "ダークモードに切り替え",
+    "languageSelector": "言語を選択",
+    "languageList": "言語リスト"
   },
   "footer": {
     "customerService": "カスタマーサービス",
@@ -345,7 +353,9 @@
     "maxImagesError": "画像は最大5枚までアップロードできます。",
     "ratingRequired": "評価を選択してください。",
     "submitSuccess": "レビューを投稿しました。",
-    "submitError": "レビューの投稿に失敗しました。"
+    "submitError": "レビューの投稿に失敗しました。",
+    "nStar": "{n}点",
+    "totalCount": "レビュー{count}件"
   },
   "shipping": {
     "title": "追跡番号の登録",

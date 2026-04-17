@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 
 interface PaginationProps {
@@ -39,6 +40,7 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
 export default function Pagination({ total, page, limit }: PaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations('common.pagination');
   const totalPages = Math.ceil(total / limit);
 
   if (totalPages <= 1) return null;
@@ -52,7 +54,7 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
   const pages = getPageNumbers(page, totalPages);
 
   return (
-    <nav aria-label="페이지 네비게이션" className="flex items-center justify-center gap-1">
+    <nav aria-label={t('nav')} className="flex items-center justify-center gap-1">
       <button
         type="button"
         onClick={() => goToPage(page - 1)}
@@ -64,7 +66,7 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
             : 'text-foreground hover:bg-accent',
         )}
       >
-        이전
+        {t('prev')}
       </button>
 
       {pages.map((p, idx) =>
@@ -77,7 +79,7 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
             key={p}
             type="button"
             onClick={() => goToPage(p)}
-            aria-label="페이지 번호"
+            aria-label={t('pageNumber')}
             aria-current={p === page ? 'page' : undefined}
             className={cn(
               'min-w-8 rounded-md px-2 py-1.5 text-sm transition-colors',
@@ -102,7 +104,7 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
             : 'text-foreground hover:bg-accent',
         )}
       >
-        다음
+        {t('next')}
       </button>
     </nav>
   );

@@ -1,6 +1,14 @@
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import ReviewStats from '../ReviewStats'
+
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, values?: Record<string, string | number>) => {
+    if (key === 'nStar' && values) return `${values.n}점`
+    if (key === 'totalCount' && values) return `${values.count}개 리뷰`
+    return key
+  },
+}))
 
 describe('ReviewStats', () => {
   const mockStats = {
