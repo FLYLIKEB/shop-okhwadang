@@ -4,7 +4,7 @@ import { DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException, ConflictException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { PaymentsService } from '../payments.service';
 import { Payment, PaymentStatus, PaymentMethod, PaymentGatewayType } from '../entities/payment.entity';
-import { Shipping, ShippingStatus } from '../entities/shipping.entity';
+import { Shipping } from '../entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { User } from '../../users/entities/user.entity';
 import { MockPaymentAdapter, MOCK_TEST_SIGNATURE } from '../adapters/mock.adapter';
