@@ -7,9 +7,12 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('navigation_items')
+@Index(['group'])
+@Index(['parent_id'])
 export class NavigationItem {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: number;
