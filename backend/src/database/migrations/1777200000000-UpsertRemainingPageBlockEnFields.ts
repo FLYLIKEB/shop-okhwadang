@@ -7,7 +7,10 @@ export class UpsertRemainingPageBlockEnFields1777200000000 implements MigrationI
     const query = (sql: string) => queryRunner.query(sql);
 
     const updateBlockContent = async (id: number, content: Record<string, unknown>): Promise<void> => {
-      await query(`UPDATE \`page_blocks\` SET content = '${JSON.stringify(content).replace(/'/g, "\\'")}' WHERE id = ${id}`);
+      await queryRunner.query(
+        `UPDATE \`page_blocks\` SET content = ? WHERE id = ?`,
+        [JSON.stringify(content), id],
+      );
     };
 
     const heroBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 6 AND type = 'hero_banner' LIMIT 1`);
@@ -211,7 +214,10 @@ export class UpsertRemainingPageBlockEnFields1777200000000 implements MigrationI
       if (content.cta_text_en) { delete content.cta_text_en; changed = true; }
       if (content.html_en) { delete content.html_en; changed = true; }
       if (changed) {
-        await query(`UPDATE \`page_blocks\` SET content = '${JSON.stringify(content).replace(/'/g, "\\'")}' WHERE id = ${block.id}`);
+        await queryRunner.query(
+          `UPDATE \`page_blocks\` SET content = ? WHERE id = ?`,
+          [JSON.stringify(content), block.id],
+        );
       }
     }
   }

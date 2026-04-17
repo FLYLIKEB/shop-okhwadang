@@ -7,7 +7,10 @@ export class UpsertPageBlockTranslationFields1777100000000 implements MigrationI
     const query = (sql: string) => queryRunner.query(sql);
 
     const updateBlockContent = async (id: number, content: Record<string, unknown>): Promise<void> => {
-      await query(`UPDATE \`page_blocks\` SET content = '${JSON.stringify(content).replace(/'/g, "\\'")}' WHERE id = ${id}`);
+      await queryRunner.query(
+        `UPDATE \`page_blocks\` SET content = ? WHERE id = ?`,
+        [JSON.stringify(content), id],
+      );
     };
 
     const heroBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 1 AND type = 'hero_banner' LIMIT 1`);
@@ -131,7 +134,10 @@ export class UpsertPageBlockTranslationFields1777100000000 implements MigrationI
         for (const key of keys) {
           delete content[key];
         }
-        await query(`UPDATE \`page_blocks\` SET content = '${JSON.stringify(content).replace(/'/g, "\\'")}' WHERE id = ${id}`);
+        await queryRunner.query(
+          `UPDATE \`page_blocks\` SET content = ? WHERE id = ?`,
+          [JSON.stringify(content), id],
+        );
       }
     };
 
@@ -146,7 +152,10 @@ export class UpsertPageBlockTranslationFields1777100000000 implements MigrationI
             delete s.cta_text_en;
             return s;
           });
-          await query(`UPDATE \`page_blocks\` SET content = '${JSON.stringify(content).replace(/'/g, "\\'")}' WHERE id = ${b.id}`);
+          await queryRunner.query(
+            `UPDATE \`page_blocks\` SET content = ? WHERE id = ?`,
+            [JSON.stringify(content), b.id],
+          );
         } else {
           await cleanEnFields(b.id, ['title_en', 'subtitle_en', 'description_en', 'cta_text_en']);
         }
