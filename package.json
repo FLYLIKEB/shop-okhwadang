@@ -4,15 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "node scripts/ensure-node-runtime.mjs",
     "dev": "next dev --turbopack -p 5173",
     "build": "next build",
     "start": "next start",
     "test": "vitest",
-    "pretest:run": "node scripts/ensure-node-runtime.mjs",
     "test:run": "vitest run",
-    "pretest:run:oom-safe": "node scripts/ensure-node-runtime.mjs",
-    "test:run:oom-safe": "NODE_OPTIONS=--max-old-space-size=4096 vitest run --pool=forks --maxWorkers=1",
     "test:coverage": "vitest run --coverage",
     "dev:local": "concurrently \"cd backend && npm run start:dev\" \"next dev --turbopack -p 5173\"",
     "lint": "next lint"
