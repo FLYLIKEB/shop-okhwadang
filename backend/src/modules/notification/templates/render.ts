@@ -1,4 +1,4 @@
-import { escapeHtml, sanitizeContext } from './sanitize';
+import { escapeHtml } from './sanitize';
 
 export interface OrderConfirmedContext {
   recipientName: string;
@@ -40,8 +40,7 @@ function formatKRW(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`;
 }
 
-export function renderOrderConfirmed(raw: OrderConfirmedContext): RenderedEmail {
-  const ctx = sanitizeContext(raw as unknown as Record<string, unknown>) as unknown as typeof raw;
+export function renderOrderConfirmed(ctx: OrderConfirmedContext): RenderedEmail {
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? `[옥화당] 주문이 접수되었습니다 (${ctx.orderNumber})`
@@ -53,8 +52,7 @@ export function renderOrderConfirmed(raw: OrderConfirmedContext): RenderedEmail 
   return { subject, html, text };
 }
 
-export function renderPaymentConfirmed(raw: PaymentConfirmedContext): RenderedEmail {
-  const ctx = sanitizeContext(raw as unknown as Record<string, unknown>) as unknown as typeof raw;
+export function renderPaymentConfirmed(ctx: PaymentConfirmedContext): RenderedEmail {
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? `[옥화당] 결제가 완료되었습니다 (${ctx.orderNumber})`
@@ -66,8 +64,7 @@ export function renderPaymentConfirmed(raw: PaymentConfirmedContext): RenderedEm
   return { subject, html, text };
 }
 
-export function renderShippingUpdate(raw: ShippingUpdateContext): RenderedEmail {
-  const ctx = sanitizeContext(raw as unknown as Record<string, unknown>) as unknown as typeof raw;
+export function renderShippingUpdate(ctx: ShippingUpdateContext): RenderedEmail {
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? `[옥화당] 배송이 시작되었습니다 (${ctx.orderNumber})`
@@ -79,8 +76,7 @@ export function renderShippingUpdate(raw: ShippingUpdateContext): RenderedEmail 
   return { subject, html, text };
 }
 
-export function renderInquiryAnswered(raw: InquiryAnsweredContext): RenderedEmail {
-  const ctx = sanitizeContext(raw as unknown as Record<string, unknown>) as unknown as typeof raw;
+export function renderInquiryAnswered(ctx: InquiryAnsweredContext): RenderedEmail {
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? `[옥화당] 문의에 답변이 등록되었습니다`

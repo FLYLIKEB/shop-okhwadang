@@ -8,7 +8,7 @@ const SENSITIVE_KEYS = [
   'refreshtoken',
   'refresh_token',
   'authorization',
-  'auth',
+  'auth_token',
   'secret',
   'apikey',
   'api_key',
@@ -20,17 +20,23 @@ const SENSITIVE_KEYS = [
   'card_number',
 ];
 
+function sanitizeValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeValue(item));
+  }
+  if (value && typeof value === 'object' && !(value instanceof Date)) {
+    return sanitizeContext(value as Record<string, unknown>);
+  }
+  return value;
+}
+
 export function sanitizeContext<T extends Record<string, unknown>>(context: T): T {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(context)) {
     if (SENSITIVE_KEYS.includes(key.toLowerCase())) {
       continue;
     }
-    if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
-      result[key] = sanitizeContext(value as Record<string, unknown>);
-    } else {
-      result[key] = value;
-    }
+    result[key] = sanitizeValue(value);
   }
   return result as T;
 }
