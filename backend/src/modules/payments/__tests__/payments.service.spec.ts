@@ -332,5 +332,25 @@ describe('PaymentsService', () => {
       mockPaymentRepo.findOne.mockResolvedValue(makePayment({ status: PaymentStatus.PENDING }));
       await expect(service.cancel({ orderId: 1 }, 10)).rejects.toThrow(BadRequestException);
     });
+
+    it('payment.gateway=TOSS → cancel 시 Toss adapter의 cancel()이 호출되어야 함', async () => {
+      // confirm()과 동일한 class of bug: 저장된 gateway를 무시하고 default를 쓰면
+      // Toss로 결제된 건을 Mock으로 환불 요청하게 되어 실제 환불이 일어나지 않음.
+      const payment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pay_toss_abc',
+        gateway: PaymentGatewayType.TOSS,
+      });
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockTossAdapter.cancel.mockResolvedValue({ cancelledAt: new Date(), rawResponse: { toss: true } });
+      mockPaymentRepo.update.mockResolvedValue({});
+      mockOrderRepo.update.mockResolvedValue({});
+
+      const result = await service.cancel({ orderId: 1 }, 10);
+
+      expect(result.status).toBe(PaymentStatus.CANCELLED);
+      expect(mockTossAdapter.cancel).toHaveBeenCalledWith('pay_toss_abc', '고객 요청');
+      expect(mockDefaultGateway.cancel).not.toHaveBeenCalled();
+    });
   });
 });
