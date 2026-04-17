@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Payment } from './entities/payment.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order } from '../orders/entities/order.entity';
+import { User } from '../users/entities/user.entity';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { MockPaymentAdapter } from './adapters/mock.adapter';
@@ -54,7 +55,7 @@ const gatewayProviders = [
 ];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, Shipping, Order])],
+  imports: [TypeOrmModule.forFeature([Payment, Shipping, Order, User])],
   controllers: [PaymentsController],
   providers: [...gatewayProviders, PaymentsService],
   exports: [PaymentsService],

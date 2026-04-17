@@ -5,10 +5,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Inquiry, InquiryStatus } from './entities/inquiry.entity';
+import { User } from '../users/entities/user.entity';
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AnswerInquiryDto } from './dto/answer-inquiry.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class InquiriesService {
@@ -17,6 +19,9 @@ export class InquiriesService {
   constructor(
     @InjectRepository(Inquiry)
     private readonly inquiryRepo: Repository<Inquiry>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async findAllByUser(userId: number): Promise<Inquiry[]> {
@@ -58,6 +63,27 @@ export class InquiriesService {
     inquiry.answeredAt = new Date();
     const saved = await this.inquiryRepo.save(inquiry);
     this.logger.log(`Inquiry answered: id=${id}`);
+
+    void this.notifyInquiryAnswered(saved.userId, saved.title, saved.answer ?? '');
+
     return saved;
+  }
+
+  private async notifyInquiryAnswered(
+    userId: number,
+    inquiryTitle: string,
+    answer: string,
+  ): Promise<void> {
+    try {
+      const user = await this.userRepo.findOne({ where: { id: userId } });
+      if (!user?.email) return;
+      await this.notificationService.sendInquiryAnswered(user.email, {
+        recipientName: user.name,
+        inquiryTitle,
+        answer,
+      });
+    } catch (err) {
+      this.logger.warn(`Inquiry answered email failed: ${String(err)}`);
+    }
   }
 }

@@ -4,8 +4,10 @@ import { DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { OrdersService } from '../orders.service';
 import { Order, OrderStatus } from '../entities/order.entity';
+import { User } from '../../users/entities/user.entity';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { PointsService } from '../../points/points.service';
+import { NotificationService } from '../../notification/notification.service';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -45,8 +47,10 @@ describe('OrdersService', () => {
       providers: [
         OrdersService,
         { provide: getRepositoryToken(Order), useValue: mockOrderRepository },
+        { provide: getRepositoryToken(User), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
         { provide: DataSource, useValue: mockDataSource },
         { provide: PointsService, useValue: mockPointsService },
+        { provide: NotificationService, useValue: { sendOrderConfirmed: jest.fn() } },
       ],
     }).compile();
 

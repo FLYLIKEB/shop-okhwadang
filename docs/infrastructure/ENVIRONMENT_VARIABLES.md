@@ -79,6 +79,14 @@
 | `S3_ACCESS_KEY` | — | S3 액세스 키 |
 | `S3_SECRET_KEY` | — | S3 시크릿 키 |
 
+### 알림 (이메일)
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `NOTIFICATION_PROVIDER` | `mock` | 이메일 어댑터 (`mock`/`resend`/`ses`). 프로덕션에서는 `mock` 금지 |
+| `RESEND_API_KEY` | — | Resend API 키 (`NOTIFICATION_PROVIDER=resend` 시 필수) |
+| `EMAIL_FROM` | `no-reply@okhwadang.com` | 발신자 이메일 주소 |
+
 ### Cache
 
 백엔드 프로세스 내 `CacheService`(Map+TTL)만 사용. 외부 캐시(Redis/ElastiCache) 환경변수 없음.
