@@ -9,6 +9,8 @@ import {
   Body,
   ParseIntPipe,
   Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -58,6 +60,7 @@ export class ProductsController {
   }
 
   @Post('bulk')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOperation({ summary: '상품 벌크 조회', description: '여러 상품 ID로 상품 목록을 한 번에 조회합니다.' })
   @ApiResponse({ status: 200, description: '상품 목록 조회 성공' })
