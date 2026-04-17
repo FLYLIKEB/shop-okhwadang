@@ -8,6 +8,7 @@ import { User } from '../../users/entities/user.entity';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { PointsService } from '../../points/points.service';
 import { NotificationService } from '../../notification/notification.service';
+import { CouponsService } from '../../coupons/coupons.service';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -36,6 +37,11 @@ const mockPointsService = {
   getUserPointBalance: jest.fn(),
 };
 
+const mockCouponsService = {
+  calculate: jest.fn(),
+  useCoupon: jest.fn(),
+};
+
 describe('OrdersService', () => {
   let service: OrdersService;
 
@@ -51,6 +57,7 @@ describe('OrdersService', () => {
         { provide: DataSource, useValue: mockDataSource },
         { provide: PointsService, useValue: mockPointsService },
         { provide: NotificationService, useValue: { sendOrderConfirmed: jest.fn() } },
+        { provide: CouponsService, useValue: mockCouponsService },
       ],
     }).compile();
 
@@ -246,6 +253,108 @@ describe('OrdersService', () => {
       );
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
       expect(mockDeleteQb.execute).toHaveBeenCalled();
+    });
+
+    it('valid dto with userCouponId → applies coupon discount, sets discountAmount, calls useCoupon', async () => {
+      const dto: CreateOrderDto = {
+        items: [{ productId: 1, quantity: 2 }],
+        recipientName: '홍길동',
+        recipientPhone: '010-1234-5678',
+        zipcode: '12345',
+        address: '서울시 강남구',
+        pointsUsed: 0,
+        userCouponId: 10,
+      };
+
+      const mockProduct = { id: 1, name: '상품', price: 10000, salePrice: 9000, stock: 5 };
+      const mockSavedOrder = {
+        id: 42,
+        orderNumber: 'ORD-20240101-XYZ12',
+        userId: 1,
+        status: OrderStatus.PENDING,
+        totalAmount: 18000,
+        discountAmount: 2000,
+        items: [],
+      } as unknown as Order;
+
+      const mockProductQb = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockProduct),
+      };
+      const mockDeleteQb = {
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({}),
+      };
+
+      mockQueryRunner.manager.createQueryBuilder
+        .mockReturnValueOnce(mockProductQb)
+        .mockReturnValueOnce(mockDeleteQb);
+      mockQueryRunner.manager.update.mockResolvedValue({});
+      mockQueryRunner.manager.create.mockReturnValue(mockSavedOrder);
+      mockQueryRunner.manager.save
+        .mockResolvedValueOnce(mockSavedOrder)
+        .mockResolvedValue([]);
+
+      // Mock couponsService.calculate to return discount
+      mockCouponsService.calculate.mockResolvedValue({
+        originalAmount: 18000,
+        couponDiscount: 2000,
+        pointsDiscount: 0,
+        finalAmount: 16000,
+        shippingFee: 3000,
+        totalPayable: 19000,
+      });
+      mockCouponsService.useCoupon.mockResolvedValue(undefined);
+
+      const mockOrderQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockSavedOrder),
+      };
+      mockOrderRepository.createQueryBuilder.mockReturnValue(mockOrderQb);
+
+      const result = await service.create(1, dto);
+      expect(result).toBe(mockSavedOrder);
+      expect(mockCouponsService.calculate).toHaveBeenCalledWith(1, {
+        orderAmount: 18000,
+        userCouponId: 10,
+        pointsToUse: 0,
+      });
+      expect(mockCouponsService.useCoupon).toHaveBeenCalledWith(10, 1, 42);
+      // discountAmount should be set in the created order
+      expect(mockQueryRunner.manager.create).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ discountAmount: 2000 }),
+      );
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+    });
+
+    it('userCouponId but coupon calculate throws → BadRequestException + rollback', async () => {
+      const dto: CreateOrderDto = {
+        items: [{ productId: 1, quantity: 1 }],
+        recipientName: '홍길동',
+        recipientPhone: '010-1234-5678',
+        zipcode: '12345',
+        address: '서울시',
+        userCouponId: 10,
+      };
+
+      const mockProduct = { id: 1, name: '상품', price: 10000, salePrice: null, stock: 5 };
+      const mockQb = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockProduct),
+      };
+      mockQueryRunner.manager.createQueryBuilder.mockReturnValue(mockQb);
+
+      mockCouponsService.calculate.mockRejectedValue(new BadRequestException('만료된 쿠폰입니다.'));
+
+      await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
     });
   });
 
