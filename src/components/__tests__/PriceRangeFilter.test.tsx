@@ -3,6 +3,19 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import PriceRangeFilter from '@/components/shared/filters/PriceRangeFilter';
 
+const translations: Record<string, string> = {
+  'product.filter.priceMin': '최소 가격',
+  'product.filter.priceMax': '최대 가격',
+  'common.apply': '적용',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace?: string) => (key: string) => {
+    const fullKey = namespace ? `${namespace}.${key}` : key;
+    return translations[fullKey] ?? fullKey;
+  },
+}));
+
 describe('PriceRangeFilter', () => {
   it('renders min/max inputs', () => {
     render(<PriceRangeFilter onChange={vi.fn()} />);

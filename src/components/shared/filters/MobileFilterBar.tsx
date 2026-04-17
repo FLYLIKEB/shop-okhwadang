@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import PriceRangeFilter from './PriceRangeFilter';
 import TeapotShapeFilter from './TeapotShapeFilter';
@@ -42,6 +43,8 @@ function buildAttrsParam(current: Map<string, string>, key: string, value: strin
 export default function MobileFilterBar({ categories, shapeCollections }: MobileFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations('product.filter');
+  const tCommon = useTranslations('common');
   const [filterOpen, setFilterOpen] = useState(false);
 
   const categoryIdParam = searchParams.get('categoryId');
@@ -109,7 +112,7 @@ export default function MobileFilterBar({ categories, shapeCollections }: Mobile
                 : 'border-border bg-background text-muted-foreground',
             )}
           >
-            전체
+            {tCommon('all')}
           </button>
           {rootCategories.map((cat) => (
             <button
@@ -150,14 +153,14 @@ export default function MobileFilterBar({ categories, shapeCollections }: Mobile
               onClick={handleReset}
               className="flex-1 rounded-md border border-border py-2 text-sm"
             >
-              초기화
+              {tCommon('reset')}
             </button>
             <button
               type="button"
               onClick={() => setFilterOpen(false)}
               className="flex-1 rounded-md bg-foreground py-2 text-sm text-background"
             >
-              적용
+              {t('label')}
             </button>
           </div>
         </div>

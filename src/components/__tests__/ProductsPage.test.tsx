@@ -10,6 +10,43 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/products',
 }));
 
+const translations: Record<string, string> = {
+  'product.view.grid': '그리드 보기',
+  'product.view.list': '리스트 보기',
+  'product.sort.label': '정렬 기준',
+  'product.sort.latest': '최신순',
+  'product.sort.priceAsc': '가격낮은순',
+  'product.sort.priceDesc': '가격높은순',
+  'product.sort.popular': '인기순',
+  'product.totalItems': '총 {count}개 상품',
+  'common.previous': '이전',
+  'common.next': '다음',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace?: string) => {
+    const t = (key: string, values?: Record<string, string | number>) => {
+      const fullKey = namespace ? `${namespace}.${key}` : key;
+      const template = translations[fullKey] ?? fullKey;
+      if (!values) return template;
+      return Object.entries(values).reduce(
+        (acc, [k, v]) => acc.replace(`{${k}}`, String(v)),
+        template,
+      );
+    };
+    t.rich = (key: string, values?: Record<string, unknown>) => {
+      const fullKey = namespace ? `${namespace}.${key}` : key;
+      const template = translations[fullKey] ?? fullKey;
+      if (!values) return template;
+      return Object.entries(values).reduce<string>(
+        (acc, [k, v]) => typeof v === 'function' ? acc.replace(`<${k}>`, '').replace(`</${k}>`, '') : acc.replace(`{${k}}`, String(v)),
+        template,
+      );
+    };
+    return t;
+  },
+}));
+
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
     const { fill, ...rest } = props;

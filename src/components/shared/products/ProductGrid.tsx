@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import ProductCard from '@/components/shared/products/ProductCard';
 import ProductListItem from '@/components/shared/products/ProductListItem';
 import ViewToggle from '@/components/shared/products/ViewToggle';
@@ -19,6 +20,7 @@ interface ProductGridProps {
 }
 
 export default function ProductGrid({ products, total, locale = 'ko' }: ProductGridProps) {
+  const t = useTranslations('product');
   const [view, setView] = useState<ViewMode>('grid');
 
   useEffect(() => {
@@ -32,7 +34,10 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
     <div>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          총 <span className="font-medium text-foreground">{total}</span>개 상품
+          {t.rich('totalItems', {
+            count: total,
+            strong: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+          })}
         </p>
         <div className="flex items-center gap-2">
           <SortDropdown />

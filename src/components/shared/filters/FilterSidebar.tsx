@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import CategoryTree from './CategoryTree';
 import PriceRangeFilter from './PriceRangeFilter';
@@ -45,6 +46,7 @@ function buildAttrsParam(current: Map<string, string>, key: string, value: strin
 export default function FilterSidebar({ categories, clayCollections, shapeCollections }: FilterSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations('product.filter');
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const categoryIdParam = searchParams.get('categoryId');
@@ -109,21 +111,21 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
   };
 
   const sidebarContent = (
-    <aside aria-label="상품 필터" className="flex flex-col">
+    <aside aria-label={t('filterLabel')} className="flex flex-col">
       <div className="flex items-center justify-between py-4 border-b border-border">
-        <span className="text-sm font-semibold text-foreground">필터</span>
+        <span className="text-sm font-semibold text-foreground">{t('label')}</span>
         {hasActiveFilters && (
           <button
             type="button"
             onClick={handleReset}
             className="text-xs text-muted-foreground underline hover:text-foreground"
           >
-            필터 초기화
+            {t('resetFilter')}
           </button>
         )}
       </div>
 
-      <FilterSection title="카테고리" defaultOpen={selectedCategoryId !== undefined}>
+      <FilterSection title={t('category')} defaultOpen={selectedCategoryId !== undefined}>
         <CategoryTree
           categories={categories}
           selectedId={selectedCategoryId}
@@ -131,7 +133,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
         />
       </FilterSection>
 
-      <FilterSection title="니료(泥料)" defaultOpen={selectedClayType !== undefined}>
+      <FilterSection title={t('clayType')} defaultOpen={selectedClayType !== undefined}>
         <ClayTypeFilter
           collections={clayCollections}
           selected={selectedClayType}
@@ -139,7 +141,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
         />
       </FilterSection>
 
-      <FilterSection title="모양" defaultOpen={selectedShape !== undefined}>
+      <FilterSection title={t('teapotShape')} defaultOpen={selectedShape !== undefined}>
         <TeapotShapeFilter
           collections={shapeCollections}
           selected={selectedShape}
@@ -147,7 +149,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
         />
       </FilterSection>
 
-      <FilterSection title="가격 범위" defaultOpen={priceMin !== undefined || priceMax !== undefined}>
+      <FilterSection title={t('priceRange')} defaultOpen={priceMin !== undefined || priceMax !== undefined}>
         <PriceRangeFilter
           min={priceMin}
           max={priceMax}
@@ -168,7 +170,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
             'transition-colors hover:bg-accent',
           )}
         >
-          {mobileOpen ? '필터 닫기' : '필터 열기'}
+          {mobileOpen ? t('closeFilter') : t('openFilter')}
         </button>
         {mobileOpen && (
           <div className="mt-4 rounded-lg border border-border bg-background p-4">

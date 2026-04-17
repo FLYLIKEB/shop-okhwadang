@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { Collection } from '@/lib/api';
 
@@ -10,6 +11,7 @@ interface TeapotShapeFilterProps {
 }
 
 export default function TeapotShapeFilter({ collections, selected, onSelect }: TeapotShapeFilterProps) {
+  const tCommon = useTranslations('common');
   return (
     <div className="flex flex-col gap-2">
       <label className="flex cursor-pointer items-center gap-2">
@@ -24,7 +26,7 @@ export default function TeapotShapeFilter({ collections, selected, onSelect }: T
           'text-sm transition-colors',
           selected === undefined ? 'font-medium text-foreground' : 'text-muted-foreground',
         )}>
-          전체
+          {tCommon('all')}
         </span>
       </label>
       {collections.map((item) => (
@@ -40,7 +42,7 @@ export default function TeapotShapeFilter({ collections, selected, onSelect }: T
             'text-sm transition-colors',
             selected === item.name ? 'font-medium text-foreground' : 'text-muted-foreground',
           )}>
-            {item.nameKo ?? item.name}
+            {item.name}
           </span>
         </label>
       ))}
