@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { useTranslations } from 'next-intl'
 import type { ReviewStats as ReviewStatsType } from '@/lib/api'
 import StarRating from './StarRating'
@@ -8,7 +9,7 @@ interface ReviewStatsProps {
   stats: ReviewStatsType
 }
 
-export default function ReviewStats({ stats }: ReviewStatsProps) {
+const ReviewStatsComponent = memo(function ReviewStats({ stats }: ReviewStatsProps) {
   const t = useTranslations('review')
   const maxCount = Math.max(...Object.values(stats.distribution), 1)
 
@@ -47,4 +48,6 @@ export default function ReviewStats({ stats }: ReviewStatsProps) {
       </div>
     </div>
   )
-}
+})
+
+export default ReviewStatsComponent

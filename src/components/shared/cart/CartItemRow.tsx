@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
+import { memo } from 'react';
 import { CartItem } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
 import { formatCurrency } from '@/utils/currency';
@@ -15,7 +16,7 @@ interface CartItemRowProps {
   onRemove: (id: number) => void;
 }
 
-export default function CartItemRow({
+const CartItemRowComponent = memo(function CartItemRow({
   item,
   selected,
   onSelect,
@@ -81,4 +82,6 @@ export default function CartItemRow({
       </div>
     </div>
   );
-}
+});
+
+export default CartItemRowComponent

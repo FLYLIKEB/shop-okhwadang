@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/components/ui/utils'
 
@@ -18,7 +18,7 @@ const SIZE_CLASSES = {
   lg: 'w-6 h-6',
 }
 
-export default function StarRating({
+const StarRatingComponent = memo(function StarRating({
   rating,
   maxRating = 5,
   size = 'md',
@@ -71,4 +71,6 @@ export default function StarRating({
       })}
     </div>
   )
-}
+})
+
+export default StarRatingComponent
