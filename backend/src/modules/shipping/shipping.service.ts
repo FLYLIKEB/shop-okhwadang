@@ -36,7 +36,16 @@ export class ShippingService {
     this.mockAdapter = new MockShippingAdapter();
   }
 
-  async getByOrderId(orderId: number, userId: number) {
+  async getByOrderId(orderId: number, userId: number): Promise<{
+    id: number;
+    order_id: number;
+    carrier: string | null;
+    tracking_number: string | null;
+    status: ShippingStatus;
+    shipped_at: Date | null;
+    delivered_at: Date | null;
+    tracking: TrackingResult | null;
+  }> {
     const order = await findOrThrow(this.orderRepository, { id: orderId }, '배송 정보를 찾을 수 없습니다.');
     assertOwnership(order.userId, userId);
 
@@ -66,7 +75,12 @@ export class ShippingService {
     };
   }
 
-  async track(dto: TrackShipmentDto) {
+  async track(dto: TrackShipmentDto): Promise<{
+    carrier: string;
+    trackingNumber: string;
+    status: string;
+    steps: unknown[];
+  }> {
     try {
       const result = await this.mockAdapter.getTrackingStatus(dto.trackingNumber, dto.carrier);
       return {
@@ -80,7 +94,7 @@ export class ShippingService {
     }
   }
 
-  async registerTracking(orderId: number, dto: RegisterTrackingDto) {
+  async registerTracking(orderId: number, dto: RegisterTrackingDto): Promise<Shipping | null> {
     await findOrThrow(this.orderRepository, { id: orderId }, '주문 정보를 찾을 수 없습니다.');
 
     const shipping = await findOrThrow(this.shippingRepository, { orderId }, '배송 정보를 찾을 수 없습니다.');

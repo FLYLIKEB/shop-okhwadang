@@ -10,7 +10,7 @@ import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
-import { paginate } from '../../common/utils/pagination.util';
+import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 
 const ALLOWED_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.PAID],
@@ -35,7 +35,7 @@ export class AdminOrdersService {
     private readonly shippingRepository: Repository<Shipping>,
   ) {}
 
-  async findAll(query: AdminOrderQueryDto) {
+  async findAll(query: AdminOrderQueryDto): Promise<PaginatedResult<Order>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
 
@@ -67,7 +67,7 @@ export class AdminOrdersService {
     return paginate(qb, { page, limit });
   }
 
-  async updateStatus(orderId: number, nextStatus: OrderStatus) {
+  async updateStatus(orderId: number, nextStatus: OrderStatus): Promise<Order | null> {
     const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
 
     const currentStatus = order.status;
@@ -107,7 +107,7 @@ export class AdminOrdersService {
     });
   }
 
-  async registerShipping(orderId: number, dto: RegisterShippingDto) {
+  async registerShipping(orderId: number, dto: RegisterShippingDto): Promise<Shipping | null> {
     await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
 
     const existing = await this.shippingRepository.findOne({ where: { orderId } });

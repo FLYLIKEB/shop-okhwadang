@@ -43,7 +43,14 @@ export class PaymentsService {
     return this.gateway;
   }
 
-  async prepare(dto: PreparePaymentDto, userId: number) {
+  async prepare(dto: PreparePaymentDto, userId: number): Promise<{
+    paymentId: number;
+    orderId: number;
+    orderNumber: string;
+    amount: number;
+    gateway: string;
+    clientKey: string;
+  }> {
     const order = await findOrThrow(this.orderRepository, { id: dto.orderId }, '주문을 찾을 수 없습니다.');
     assertOwnership(order.userId, userId);
     if (order.status !== OrderStatus.PENDING) {
@@ -77,7 +84,15 @@ export class PaymentsService {
     };
   }
 
-  async confirm(dto: ConfirmPaymentDto, userId: number) {
+  async confirm(dto: ConfirmPaymentDto, userId: number): Promise<{
+    paymentId: number;
+    orderId: number;
+    orderNumber: string;
+    status: PaymentStatus;
+    method: string;
+    amount: number;
+    paidAt: Date;
+  }> {
     const payment = await findOrThrow(this.paymentRepository, { orderId: dto.orderId }, '결제 정보를 찾을 수 없습니다.', ['order']);
     assertOwnership(payment.order.userId, userId);
 
@@ -134,7 +149,12 @@ export class PaymentsService {
     }
   }
 
-  async cancel(dto: CancelPaymentDto, userId: number) {
+  async cancel(dto: CancelPaymentDto, userId: number): Promise<{
+    paymentId: number;
+    status: PaymentStatus;
+    cancelledAt: Date;
+    cancelReason: string;
+  }> {
     const payment = await findOrThrow(this.paymentRepository, { orderId: dto.orderId }, '결제 정보를 찾을 수 없습니다.', ['order']);
     assertOwnership(payment.order.userId, userId);
 

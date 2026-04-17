@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
 import { AdminMembersQueryDto } from './dto/admin-members-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
-import { paginate } from '../../common/utils/pagination.util';
+import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 
 export interface SafeUser {
   id: number;
@@ -44,7 +44,7 @@ export class AdminMembersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async findAll(query: AdminMembersQueryDto) {
+  async findAll(query: AdminMembersQueryDto): Promise<PaginatedResult<SafeUser>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
 
