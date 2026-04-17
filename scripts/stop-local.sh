@@ -37,13 +37,23 @@ stop_frontend() {
     pkill -9 -f "next dev" 2>/dev/null || true
 }
 
+stop_vitest_workers() {
+    # 다른 워크트리에서 남아 있는 vitest worker 정리 (OOM 방지)
+    pkill -f "shop-okhwadang.*vitest" 2>/dev/null || true
+    pkill -f "shop-okhwadang.*/node_modules/vitest/dist/workers/forks.js" 2>/dev/null || true
+    sleep 0.5
+    pkill -9 -f "shop-okhwadang.*vitest" 2>/dev/null || true
+    pkill -9 -f "shop-okhwadang.*/node_modules/vitest/dist/workers/forks.js" 2>/dev/null || true
+}
+
 stop_ssh_tunnel() {
     [ -f "$BACKEND_DIR/scripts/stop-ssh-tunnel.sh" ] && bash "$BACKEND_DIR/scripts/stop-ssh-tunnel.sh" 2>/dev/null || true
 }
 
-echo -e "${YELLOW}백엔드 + 프론트엔드 + SSH 터널 종료 중...${NC}"
+echo -e "${YELLOW}백엔드 + 프론트엔드 + Vitest + SSH 터널 종료 중...${NC}"
 stop_backend &
 stop_frontend &
+stop_vitest_workers &
 stop_ssh_tunnel &
 wait
 
