@@ -216,22 +216,29 @@ export class CouponsService {
   }
 
   async issueCoupon(dto: IssueCouponDto): Promise<UserCoupon> {
-    const coupon = await findOrThrow(this.couponRepo, { id: dto.couponId }, '쿠폰을 찾을 수 없습니다.');
-    if (!coupon.isActive) {
-      throw new BadRequestException('비활성화된 쿠폰입니다.');
-    }
-    if (coupon.totalQuantity != null && coupon.issuedCount >= coupon.totalQuantity) {
-      throw new BadRequestException('발급 수량이 소진된 쿠폰입니다.');
-    }
-
-    const existing = await this.userCouponRepo.findOne({
-      where: { userId: dto.userId, couponId: dto.couponId },
-    });
-    if (existing) {
-      throw new BadRequestException('이미 발급된 쿠폰입니다.');
-    }
-
     return await this.dataSource.transaction(async (manager) => {
+      const coupon = await manager.findOne(Coupon, {
+        where: { id: dto.couponId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!coupon) {
+        throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
+      }
+      if (!coupon.isActive) {
+        throw new BadRequestException('비활성화된 쿠폰입니다.');
+      }
+      if (coupon.totalQuantity != null && coupon.issuedCount >= coupon.totalQuantity) {
+        throw new BadRequestException('발급 수량이 소진된 쿠폰입니다.');
+      }
+
+      const existing = await manager.findOne(UserCoupon, {
+        where: { userId: dto.userId, couponId: dto.couponId },
+      });
+      if (existing) {
+        throw new BadRequestException('이미 발급된 쿠폰입니다.');
+      }
+
       const uc = manager.create(UserCoupon, {
         userId: dto.userId,
         couponId: dto.couponId,
