@@ -7,9 +7,10 @@ import { User } from '../users/entities/user.entity';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { PointsModule } from '../points/points.module';
+import { CouponsModule } from '../coupons/coupons.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, OrderItem, PointHistory, User]), PointsModule],
+  imports: [TypeOrmModule.forFeature([Order, OrderItem, PointHistory, User]), PointsModule, CouponsModule],
   controllers: [OrdersController],
   providers: [OrdersService],
   exports: [OrdersService],

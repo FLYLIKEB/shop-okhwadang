@@ -70,4 +70,9 @@ export class CreateOrderDto {
   @IsInt({ message: '포인트 사용량은 정수여야 합니다.' })
   @Min(0, { message: '포인트 사용량은 0 이상이어야 합니다.' })
   pointsUsed?: number;
+
+  @ApiProperty({ example: 1, description: '사용할 쿠폰 ID (사용자 발급 쿠폰)', required: false })
+  @IsOptional()
+  @IsInt({ message: '쿠폰 ID는 정수여야 합니다.' })
+  userCouponId?: number;
 }

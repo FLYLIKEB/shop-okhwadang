@@ -16,6 +16,8 @@ import { assertOwnership } from '../../common/utils/ownership.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { PointsService } from '../points/points.service';
 import { NotificationService } from '../notification/notification.service';
+import { CouponsService } from '../coupons/coupons.service';
+import { CalculateDiscountDto } from '../coupons/dto/calculate-discount.dto';
 
 @Injectable()
 export class OrdersService {
@@ -30,6 +32,7 @@ export class OrdersService {
     private readonly dataSource: DataSource,
     private readonly pointsService: PointsService,
     private readonly notificationService: NotificationService,
+    private readonly couponsService: CouponsService,
   ) {}
 
   private generateOrderNumber(): string {
@@ -127,12 +130,24 @@ export class OrdersService {
         });
       }
 
+      let discountAmount = 0;
+      if (dto.userCouponId) {
+        const calculateDto: CalculateDiscountDto = {
+          orderAmount: totalAmount,
+          userCouponId: dto.userCouponId,
+          pointsToUse,
+        };
+        const discountResult = await this.couponsService.calculate(userId, calculateDto);
+        discountAmount = discountResult.couponDiscount;
+        totalAmount = discountResult.finalAmount;
+      }
+
       const order = queryRunner.manager.create(Order, {
         userId,
         orderNumber: this.generateOrderNumber(),
         status: OrderStatus.PENDING,
         totalAmount,
-        discountAmount: 0,
+        discountAmount,
         shippingFee: 0,
         recipientName: dto.recipientName,
         recipientPhone: dto.recipientPhone,
@@ -143,6 +158,10 @@ export class OrdersService {
         pointsUsed: pointsToUse,
       });
       const savedOrder = await queryRunner.manager.save(Order, order);
+
+      if (dto.userCouponId) {
+        await this.couponsService.useCoupon(dto.userCouponId, userId, Number(savedOrder.id));
+      }
 
       if (pointsToUse > 0) {
         const latestPoint = await queryRunner.manager.getRepository(PointHistory).findOne({
