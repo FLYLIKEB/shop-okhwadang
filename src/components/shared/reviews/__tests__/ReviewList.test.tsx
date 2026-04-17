@@ -10,6 +10,18 @@ vi.mock('@/lib/api', () => ({
   },
 }))
 
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, params?: Record<string, number>) => {
+    if (key === 'totalCount') {
+      return `총 ${params?.count ?? 0}개`
+    }
+    if (key === 'nStar') {
+      return `${params?.n ?? 0}점`
+    }
+    return key
+  },
+}))
+
 describe('ReviewList', () => {
   const mockResponse = {
     data: [

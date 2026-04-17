@@ -19,8 +19,10 @@ const translations: Record<string, string> = {
   'product.sort.priceDesc': '가격높은순',
   'product.sort.popular': '인기순',
   'product.totalItems': '총 {count}개 상품',
-  'common.previous': '이전',
-  'common.next': '다음',
+  'common.pagination.nav': '페이지네이션',
+  'common.pagination.prev': '이전',
+  'common.pagination.next': '다음',
+  'common.pagination.pageNumber': '페이지',
 };
 
 vi.mock('next-intl', () => ({

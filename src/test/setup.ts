@@ -1,6 +1,7 @@
 /// <reference types="vitest/globals" />
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import { afterEach } from 'vitest';
 
 // jsdom does not implement window.matchMedia — provide a stub so tests can spy on it
 Object.defineProperty(window, 'matchMedia', {
@@ -52,4 +53,9 @@ Object.defineProperty(global, 'IntersectionObserver', {
   writable: true,
   configurable: true,
   value: IntersectionObserverStub,
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
