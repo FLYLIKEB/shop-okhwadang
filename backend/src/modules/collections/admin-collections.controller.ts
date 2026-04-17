@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { CollectionsService } from './collections.service';
 import { CreateCollectionDto, UpdateCollectionDto } from './dto/collection.dto';
+import { ReorderItemsDto } from './dto/reorder.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('관리자 - 컬렉션')
@@ -65,8 +66,8 @@ export class AdminCollectionsController {
   @ApiResponse({ status: 200, description: '컬렉션 순서 변경 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
-  async reorder(@Body() items: { id: number; sortOrder: number }[]) {
-    await this.collectionsService.reorder(items);
+  async reorder(@Body() dto: ReorderItemsDto) {
+    await this.collectionsService.reorder(dto.orders);
   }
 
   @Patch(':id')
