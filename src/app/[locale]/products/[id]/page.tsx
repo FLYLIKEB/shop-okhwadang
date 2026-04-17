@@ -68,6 +68,8 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
     description: product.description,
     image: product.images?.map(img => img.url) ?? [],
     sku: product.sku,
+    brand: { '@type': 'Brand', name: '옥화당' },
+    url: `${SITE_URL}/${safeLocale}/products/${id}`,
     offers: {
       '@type': 'Offer',
       priceCurrency: 'KRW',
