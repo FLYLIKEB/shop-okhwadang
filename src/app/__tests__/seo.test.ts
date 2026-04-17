@@ -18,13 +18,14 @@ describe('SEO', () => {
   });
 
   describe('robots.ts', () => {
-    it('disallows admin, my, checkout paths', () => {
+    it('disallows admin, my, checkout, api paths', () => {
       const result = robots();
       const rule = result.rules;
       const firstRule = Array.isArray(rule) ? rule[0] : rule;
       expect(firstRule.disallow).toContain('/admin/');
       expect(firstRule.disallow).toContain('/my/');
       expect(firstRule.disallow).toContain('/checkout/');
+      expect(firstRule.disallow).toContain('/api/');
     });
 
     it('allows root path', () => {
@@ -102,6 +103,8 @@ describe('SEO', () => {
         description: product.description,
         image: product.images?.map((img) => img.url) ?? [],
         sku: product.sku,
+        brand: { '@type': 'Brand', name: '옥화당' },
+        url: `https://ockhwadang.com/ko/products/${product.id}`,
         offers: {
           '@type': 'Offer',
           priceCurrency: 'KRW',
@@ -115,6 +118,8 @@ describe('SEO', () => {
       expect(jsonLd['@type']).toBe('Product');
       expect(jsonLd.name).toBe('Test Product');
       expect(jsonLd.sku).toBe('TEST-001');
+      expect(jsonLd.brand).toEqual({ '@type': 'Brand', name: '옥화당' });
+      expect(jsonLd.url).toBe('https://ockhwadang.com/ko/products/1');
       expect(jsonLd.offers.price).toBe(25000);
       expect(jsonLd.offers.priceCurrency).toBe('KRW');
       expect(jsonLd.offers.availability).toBe('https://schema.org/InStock');
@@ -125,6 +130,18 @@ describe('SEO', () => {
       const stock = 0;
       const availability = stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
       expect(availability).toBe('https://schema.org/OutOfStock');
+    });
+  });
+
+  describe('root layout metadata', () => {
+    it('includes 자사호 keyword in default title and keywords', async () => {
+      const { metadata } = await import('@/app/layout');
+      const title = typeof metadata.title === 'object' && metadata.title !== null && 'default' in metadata.title
+        ? (metadata.title as { default: string }).default
+        : String(metadata.title);
+      expect(title).toContain('자사호');
+      expect(metadata.description).toContain('자사호');
+      expect(metadata.keywords).toEqual(expect.arrayContaining(['자사호', '보이차', '다구', '옥화당']));
     });
   });
 
