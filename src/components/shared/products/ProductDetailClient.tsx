@@ -92,7 +92,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
     async () => {
       await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
     },
-    { successMessage: '장바구니에 담았습니다.', errorMessage: '장바구니 담기에 실패했습니다.' },
+    { successMessage: t('addToCartSuccess'), errorMessage: t('addToCartError') },
   )
 
   const { execute: toggleWishlist, isLoading: isTogglingWishlist } = useAsyncAction(
@@ -101,15 +101,15 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
         await wishlistApi.remove(wishlistId)
         setIsWishlisted(false)
         setWishlistId(null)
-        toast.success('위시리스트에서 삭제しました。')
+        toast.success(t('wishlistRemoveSuccess'))
       } else {
         const res = await wishlistApi.add(Number(product.id))
         setIsWishlisted(true)
         setWishlistId(res.id)
-        toast.success('위시리스트에 추가했습니다。')
+        toast.success(t('wishlistAddSuccess'))
       }
     },
-    { errorMessage: '위시리스트 처리 중 오류가 발생했습니다。' },
+    { errorMessage: t('wishlistError') },
   )
 
   const { execute: buyNow } = useAsyncAction(
@@ -117,16 +117,16 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
       await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
       router.push('/checkout')
     },
-    { errorMessage: '구매 처리 중 오류가 발생했습니다.' },
+    { errorMessage: t('buyNowError') },
   )
 
   const handleAddToCart = useCallback(() => {
     if (product.options.length > 0 && !selectedOptionId) {
-      toast.error('옵션을 선택해 주세요.')
+      toast.error(t('selectOption'))
       return
     }
     void addToCart()
-  }, [product.options.length, selectedOptionId, addToCart])
+  }, [product.options.length, selectedOptionId, addToCart, t])
 
   const handleToggleWishlist = useCallback(() => {
     void toggleWishlist()
@@ -134,11 +134,11 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
 
   const handleBuyNow = useCallback(() => {
     if (product.options.length > 0 && !selectedOptionId) {
-      toast.error('옵션을 선택해 주세요.')
+      toast.error(t('selectOption'))
       return
     }
     void buyNow()
-  }, [product.options.length, selectedOptionId, buyNow])
+  }, [product.options.length, selectedOptionId, buyNow, t])
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">
@@ -157,7 +157,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
               <Link href={`/products?categoryId=${product.category.id}`} className="hover:text-foreground transition-colors">
                 {product.category.name}
               </Link>
-              <span className="mx-2 text-[#B8976A]">·</span>
+              <span className="mx-2 text-danni">·</span>
               <span className="text-foreground">{product.name}</span>
             </nav>
           )}
@@ -197,7 +197,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
           <h1 className="typo-h1 font-display text-foreground">{product.name}</h1>
 
           {/* 금박 구분선 */}
-          <hr className="border-[#D4BC8E] w-16" />
+          <hr className="w-16 border-danni" />
 
           {/* Short description */}
           {product.shortDescription && (
@@ -210,7 +210,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
               <StarRating rating={product.rating} size="md" interactive={false} />
               <span className="typo-body font-medium">{product.rating.toFixed(1)}</span>
               {product.reviewCount !== undefined && product.reviewCount > 0 && (
-                <span className="typo-body text-muted-foreground">({product.reviewCount}개의 후기)</span>
+                <span className="typo-body text-muted-foreground">{t('reviewCount', { count: product.reviewCount })}</span>
               )}
             </div>
           )}
@@ -231,7 +231,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
 
           {/* Quantity */}
           <div className="flex flex-col gap-2">
-            <span className="typo-label text-foreground">수량</span>
+            <span className="typo-label text-foreground">{t('quantity')}</span>
             <div className="flex items-center gap-3">
               <QuantitySelector
                 quantity={quantity}
@@ -239,7 +239,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
                 onIncrease={handleIncrease}
                 onDecrease={handleDecrease}
               />
-              <span className="text-base font-semibold text-foreground tabular-nums">
+              <span className="typo-body font-semibold text-foreground tabular-nums">
                 {formatCurrency(totalPrice, locale)}
               </span>
             </div>
@@ -249,24 +249,24 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
           {(product.options.length === 0 || selectedOption) && (
             <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-4">
               {selectedOption && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
+                <div className="flex items-center justify-between">
+                  <span className="typo-body-sm text-muted-foreground">
                     {selectedOption.name}: {selectedOption.value}
                     {selectedOption.priceAdjustment !== 0 && (
-                      <span className="ml-1 text-xs">
+                      <span className="typo-label ml-1">
                         ({selectedOption.priceAdjustment > 0 ? '+' : ''}{formatCurrency(selectedOption.priceAdjustment, locale)})
                       </span>
                     )}
                   </span>
-                  <span className="text-foreground">{formatCurrency(unitPrice, locale)}</span>
+                  <span className="typo-body-sm text-foreground">{formatCurrency(unitPrice, locale)}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">수량 {quantity}개</span>
+              <div className="flex items-center justify-between">
+                <span className="typo-body-sm text-muted-foreground">{t('selectedQuantity', { quantity })}</span>
               </div>
               <div className="flex items-center justify-between border-t border-border pt-3">
-                <span className="text-sm font-medium text-foreground">총 상품금액</span>
-                <span className="text-xl font-bold text-foreground">{formatCurrency(totalPrice, locale)}</span>
+                <span className="typo-body-sm font-medium text-foreground">{t('totalProductPrice')}</span>
+                <span className="typo-h2 font-semibold text-foreground">{formatCurrency(totalPrice, locale)}</span>
               </div>
             </div>
           )}
@@ -279,25 +279,25 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
               disabled={isSoldout || isAdding}
               onClick={() => void handleAddToCart()}
             >
-              장바구니 담기
+              {t('addToCart')}
             </Button>
             <Button
               className="flex-1"
               disabled={isSoldout || isAdding}
               onClick={() => void handleBuyNow()}
             >
-              바로 구매
+              {t('buyNow')}
             </Button>
           </div>
 
           {isSoldout && (
-            <p className="text-sm font-medium text-destructive">현재 품절된 상품입니다.</p>
+            <p className="typo-body-sm font-medium text-destructive">{t('outOfStockMessage')}</p>
           )}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mx-auto max-w-8xl px-4">
+      <div className="mx-auto max-w-7xl px-4">
         <ProductTabs description={product.description} descriptionImages={descriptionImages} productId={Number(product.id)} />
       </div>
 
@@ -307,7 +307,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
           type="button"
           onClick={() => void handleToggleWishlist()}
           disabled={isTogglingWishlist}
-          aria-label={isWishlisted ? '위시리스트에서 삭제' : '위시리스트에 추가'}
+          aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
           className={cn(
             'flex items-center justify-center h-11 w-11 shrink-0 rounded-md border transition-colors',
             isWishlisted
@@ -323,14 +323,14 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
           disabled={isSoldout || isAdding}
           onClick={() => void handleAddToCart()}
         >
-          장바구니 담기
+          {t('addToCart')}
         </Button>
         <Button
           className="flex-1"
           disabled={isSoldout || isAdding}
           onClick={() => void handleBuyNow()}
         >
-          바로 구매
+          {t('buyNow')}
         </Button>
       </div>
     </div>
