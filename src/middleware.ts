@@ -103,6 +103,10 @@ export async function middleware(request: NextRequest) {
   const localePrefix = localeMatch ? `/${localeMatch[1]}` : '';
   const pathnameWithoutLocale = localeMatch ? (localeMatch[2] || '/') : pathname;
 
+  if (pathnameWithoutLocale === '/sitemap.xml' || pathnameWithoutLocale === '/robots.txt') {
+    return NextResponse.next();
+  }
+
   if (pathnameWithoutLocale.startsWith('/admin')) {
     if (!token) {
       const loginUrl = new URL(`${localePrefix}/login`, request.url);
@@ -186,6 +190,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|ttf|woff|woff2|eot|otf)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|ttf|woff|woff2|eot|otf)$).*)',
   ],
 };
