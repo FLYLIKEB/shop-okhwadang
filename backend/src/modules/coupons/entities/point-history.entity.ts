@@ -30,6 +30,9 @@ export class PointHistory {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description!: string | null;
 
+  @Column({ name: 'expires_at', type: 'datetime', nullable: true })
+  expiresAt!: Date | null;
+
   @Column({ name: 'order_id', type: 'bigint', nullable: true })
   orderId!: number | null;
 
