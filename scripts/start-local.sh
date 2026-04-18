@@ -44,16 +44,32 @@ echo ""
 USE_LOCAL_DB=$(echo "${LOCAL_DATABASE_URL:-}" | grep -qE "localhost:330[67]|127\.0\.0\.1:330[67]" && echo "yes" || echo "no")
 
 # Docker Desktop 확인/시작
+# DOCKER_BOOT_TIMEOUT 환경변수로 대기 시간 override 가능 (기본 120초)
 if [ "$USE_LOCAL_DB" = "yes" ] && command -v docker > /dev/null 2>&1; then
     if ! docker info > /dev/null 2>&1; then
         echo -e "${YELLOW}⚠️  Docker Desktop 시작 중...${NC}"
-        open -ga Docker 2>/dev/null || true
-        echo -e "${YELLOW}⏳ Docker Desktop 시작 대기 (최대 60초)...${NC}"
-        for i in {1..60}; do
-            docker info > /dev/null 2>&1 && break
-            [ $i -eq 60 ] && echo -e "${RED}❌ Docker Desktop 시작 실패${NC}" && exit 1
+        if ! open -ga Docker 2>&1; then
+            echo -e "${RED}❌ Docker Desktop 실행 실패 — 미설치 또는 권한 문제일 수 있습니다.${NC}"
+            echo -e "${YELLOW}   설치: https://www.docker.com/products/docker-desktop/${NC}"
+            exit 1
+        fi
+        DOCKER_BOOT_TIMEOUT="${DOCKER_BOOT_TIMEOUT:-120}"
+        echo -e "${YELLOW}⏳ Docker Desktop 시작 대기 (최대 ${DOCKER_BOOT_TIMEOUT}초)...${NC}"
+        for ((i=1; i<=DOCKER_BOOT_TIMEOUT; i++)); do
+            if docker info > /dev/null 2>&1; then
+                break
+            fi
+            if [ $((i % 10)) -eq 0 ]; then
+                echo -e "${YELLOW}   ⏳ Docker Desktop 부팅 중... (${i}s 경과)${NC}"
+            fi
             sleep 1
         done
+        # 타임아웃 후에도 한 번 더 시도 (race condition 방어)
+        if ! docker info > /dev/null 2>&1; then
+            echo -e "${RED}❌ Docker Desktop 시작 실패 (${DOCKER_BOOT_TIMEOUT}초 경과)${NC}"
+            echo -e "${YELLOW}   타임아웃 상향: DOCKER_BOOT_TIMEOUT=180 bash scripts/start-local.sh${NC}"
+            exit 1
+        fi
         echo -e "${GREEN}✅ Docker Desktop 준비 완료${NC}"
     fi
 fi
