@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
+import cookieParser from 'cookie-parser';
 import { AppModule } from '../src/app.module';
 import { registerAuthSuite } from './suites/auth.e2e-spec';
 import { registerCartSuite } from './suites/cart.e2e-spec';
@@ -28,6 +29,7 @@ describe('App (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.use(cookieParser());
     app.setGlobalPrefix('api');
     app.useGlobalPipes(
       new ValidationPipe({
