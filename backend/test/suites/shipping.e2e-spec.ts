@@ -30,6 +30,10 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({ email: userEmail, password: 'Test1234!', name: '배송유저' });
+      await dataSource.query(
+        `UPDATE users SET is_email_verified = 1, email_verified_at = NOW() WHERE email = ?`,
+        [userEmail],
+      );
 
       userCookies = await loginAndGetCookies(app, {
         email: userEmail,
@@ -39,6 +43,10 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({ email: otherEmail, password: 'Test1234!', name: '다른유저' });
+      await dataSource.query(
+        `UPDATE users SET is_email_verified = 1, email_verified_at = NOW() WHERE email = ?`,
+        [otherEmail],
+      );
       otherCookies = await loginAndGetCookies(app, {
         email: otherEmail,
         password: 'Test1234!',
@@ -49,7 +57,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
         .post('/api/auth/register')
         .send({ email: adminEmail, password: 'Test1234!', name: '관리자' });
       await dataSource.query(
-        `UPDATE users SET role = 'admin' WHERE email = ?`,
+        `UPDATE users SET role = 'admin', is_email_verified = 1, email_verified_at = NOW() WHERE email = ?`,
         [adminEmail],
       );
       adminCookies = await loginAndGetCookies(app, {

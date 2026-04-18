@@ -31,7 +31,10 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({ email: superAdminEmail, password: 'Test1234!', name: '슈퍼관리자' });
-      await dataSource.query(`UPDATE users SET role = 'super_admin' WHERE email = ?`, [superAdminEmail]);
+      await dataSource.query(
+        `UPDATE users SET role = 'super_admin', is_email_verified = 1, email_verified_at = NOW() WHERE email = ?`,
+        [superAdminEmail],
+      );
       superAdminCookies = await loginAndGetCookies(app, {
         email: superAdminEmail,
         password: 'Test1234!',
@@ -45,7 +48,10 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({ email: adminEmail, password: 'Test1234!', name: '회원관리자' });
-      await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
+      await dataSource.query(
+        `UPDATE users SET role = 'admin', is_email_verified = 1, email_verified_at = NOW() WHERE email = ?`,
+        [adminEmail],
+      );
       adminCookies = await loginAndGetCookies(app, {
         email: adminEmail,
         password: 'Test1234!',
@@ -59,6 +65,10 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({ email: userEmail, password: 'Test1234!', name: '일반회원' });
+      await dataSource.query(
+        `UPDATE users SET is_email_verified = 1, email_verified_at = NOW() WHERE email = ?`,
+        [userEmail],
+      );
       userCookies = await loginAndGetCookies(app, {
         email: userEmail,
         password: 'Test1234!',

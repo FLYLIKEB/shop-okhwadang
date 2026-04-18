@@ -23,7 +23,10 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({ email: adminEmail, password: adminPassword, name: '속성관리자' });
-      await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
+      await dataSource.query(
+        `UPDATE users SET role = 'admin', is_email_verified = 1, email_verified_at = NOW() WHERE email = ?`,
+        [adminEmail],
+      );
       adminCookies = await loginAndGetCookies(app, {
         email: adminEmail,
         password: adminPassword,
