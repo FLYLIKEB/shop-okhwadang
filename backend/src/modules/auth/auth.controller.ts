@@ -22,11 +22,13 @@ import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { JwtService } from '@nestjs/jwt';
 
 interface JwtUser {
   id: number;
   email: string;
   role: string;
+  jti?: string;
 }
 
 const ACCESS_TOKEN_MAX_AGE = 60 * 60 * 1000;
@@ -65,6 +67,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly oauthService: OAuthService,
+    private readonly jwtService: JwtService,
   ) {}
 
   @Post('register')
@@ -164,8 +167,30 @@ export class AuthController {
   @ApiOperation({ summary: '로그아웃', description: '현재 세션을 종료하고 토큰을 무효화합니다. 인증 쿠키가 삭제됩니다.' })
   @ApiResponse({ status: 204, description: '로그아웃 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  async logout(@CurrentUser() user: JwtUser, @Res({ passthrough: true }) res: Response) {
-    await this.authService.logout(user.id);
+  async logout(@CurrentUser() user: JwtUser, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
+    const rawAccessToken = (req.cookies as Record<string, string | undefined>)?.accessToken ?? '';
+    if (rawAccessToken) {
+      const decoded = this.jwtService.decode(rawAccessToken) as { jti?: string; exp?: number } | null;
+      if (decoded?.jti && decoded?.exp) {
+        const expiresAt = new Date(decoded.exp * 1000);
+        await this.authService.logout(user.id, decoded.jti, expiresAt);
+        clearAuthCookies(res);
+        return;
+      }
+    }
+    await this.authService.logoutAll(user.id);
+    clearAuthCookies(res);
+  }
+
+  @Post('logout-all')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '모든 기기 로그아웃', description: '해당 사용자의 모든 토큰을 무효화합니다. 모든 기기에서 로그아웃됩니다.' })
+  @ApiResponse({ status: 204, description: '모든 기기 로그아웃 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  async logoutAll(@CurrentUser() user: JwtUser, @Res({ passthrough: true }) res: Response) {
+    await this.authService.logoutAll(user.id);
     clearAuthCookies(res);
   }
 

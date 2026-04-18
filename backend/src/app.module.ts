@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import * as fs from 'fs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -79,6 +80,7 @@ import { RolesGuard } from './common/guards/roles.guard';
       },
     ]),
     CacheModule,
+    ScheduleModule.forRoot(),
     AuthModule,
     HealthModule,
     ProductsModule,

@@ -11,7 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 import type ms from 'ms';
 import { User } from '../users/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
@@ -22,6 +22,7 @@ import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { NotificationService } from '../notification/notification.service';
 import { AuditLogService } from '../audit-logs/audit-log.service';
 import { AuditAction } from '../audit-logs/entities/audit-log.entity';
+import { TokenBlacklistService } from './token-blacklist.service';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
@@ -62,6 +63,7 @@ export class AuthService implements OnModuleInit {
     private readonly jwtService: JwtService,
     private readonly notificationService: NotificationService,
     private readonly auditLogService: AuditLogService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
   ) {}
 
   onModuleInit() {
@@ -318,15 +320,23 @@ export class AuthService implements OnModuleInit {
     return RESET_PASSWORD_SUCCESS_RESPONSE;
   }
 
-  async logout(userId: number): Promise<void> {
+  async logout(userId: number, jti: string, expiresAt: Date): Promise<void> {
+    await this.tokenBlacklistService.addToBlacklist(jti, userId, expiresAt, 'user_logout');
     await this.userRepository.update(userId, { refreshToken: null });
-    this.logger.log(`User logged out: ${userId}`);
+    this.logger.log(`User logged out: userId=${userId}, jti=${jti}`);
+  }
+
+  async logoutAll(userId: number): Promise<void> {
+    await this.tokenBlacklistService.revokeAllUserTokens(userId, 'user_logout_all');
+    await this.userRepository.update(userId, { refreshToken: null });
+    this.logger.log(`All tokens revoked for user: ${userId}`);
   }
 
   private generateTokens(user: User): TokenPair {
     const payload = { sub: user.id, email: user.email, role: user.role };
-    // accessToken includes tokenType: 'access' to prevent refresh tokens from being used as access tokens
-    const accessToken = this.jwtService.sign({ ...payload, tokenType: 'access' });
+    const jti = randomUUID();
+    // accessToken includes tokenType: 'access' and jti (JWT ID) for blacklist tracking
+    const accessToken = this.jwtService.sign({ ...payload, tokenType: 'access', jti });
     // refreshToken uses longer expiry; cast to ms.StringValue required by jsonwebtoken types
     const refreshExpiresIn = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as ms.StringValue;
     const refreshSecret = process.env.JWT_REFRESH_SECRET;

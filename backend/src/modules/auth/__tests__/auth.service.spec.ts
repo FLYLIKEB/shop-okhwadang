@@ -8,6 +8,7 @@ import { User, UserRole } from '../../users/entities/user.entity';
 import { PasswordResetToken } from '../entities/password-reset-token.entity';
 import { NotificationService } from '../../notification/notification.service';
 import { AuditLogService } from '../../audit-logs/audit-log.service';
+import { TokenBlacklistService } from '../token-blacklist.service';
 
 const mockUserRepository = {
   findOne: jest.fn(),
@@ -34,6 +35,12 @@ const mockNotificationService = {
 
 const mockAuditLogService = {
   log: jest.fn(),
+};
+
+const mockTokenBlacklistService = {
+  addToBlacklist: jest.fn(),
+  isBlacklisted: jest.fn(),
+  revokeAllUserTokens: jest.fn(),
 };
 
 function makeUser(overrides: Partial<User> = {}): User {
@@ -74,6 +81,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: mockJwtService },
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: AuditLogService, useValue: mockAuditLogService },
+        { provide: TokenBlacklistService, useValue: mockTokenBlacklistService },
       ],
     }).compile();
 
@@ -276,11 +284,35 @@ describe('AuthService', () => {
   });
 
   describe('logout', () => {
-    it('logout: refresh_token NULL 저장', async () => {
+    it('logout: blacklists the access token jti then clears refreshToken', async () => {
+      const jti = 'test-jti-1234';
+      const expiresAt = new Date(Date.now() + 3600_000);
+      mockTokenBlacklistService.addToBlacklist.mockResolvedValue(undefined);
       mockUserRepository.update.mockResolvedValue(undefined);
 
-      await service.logout(1);
+      await service.logout(1, jti, expiresAt);
 
+      expect(mockTokenBlacklistService.addToBlacklist).toHaveBeenCalledWith(
+        jti,
+        1,
+        expiresAt,
+        'user_logout',
+      );
+      expect(mockUserRepository.update).toHaveBeenCalledWith(1, { refreshToken: null });
+    });
+  });
+
+  describe('logoutAll', () => {
+    it('revokes all user tokens and clears refreshToken', async () => {
+      mockTokenBlacklistService.revokeAllUserTokens.mockResolvedValue(undefined);
+      mockUserRepository.update.mockResolvedValue(undefined);
+
+      await service.logoutAll(1);
+
+      expect(mockTokenBlacklistService.revokeAllUserTokens).toHaveBeenCalledWith(
+        1,
+        'user_logout_all',
+      );
       expect(mockUserRepository.update).toHaveBeenCalledWith(1, { refreshToken: null });
     });
   });
