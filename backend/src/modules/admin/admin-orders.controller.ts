@@ -1,6 +1,6 @@
 import {
   Controller, Get, Patch, Post, Param, Body, Query,
-  ParseIntPipe,
+  ParseIntPipe, UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -11,11 +11,14 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { AuditLog } from '../../common/decorators/audit-log.decorator';
+import { AuditLogInterceptor } from '../../common/interceptors/audit-log.interceptor';
 import { AdminOrdersService } from './admin-orders.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
 import { OrderStatus } from '../orders/entities/order.entity';
+import { AuditAction } from '../audit-logs/entities/audit-log.entity';
 
 @ApiTags('관리자 - 주문')
 @Controller('admin')
@@ -38,6 +41,8 @@ export class AdminOrdersController {
   }
 
   @Patch('orders/:id')
+  @UseInterceptors(AuditLogInterceptor)
+  @AuditLog({ action: AuditAction.ORDER_STATUS_UPDATE, resourceType: 'order' })
   @ApiCookieAuth()
   @ApiOperation({ summary: '주문 상태 수정', description: '주문의 상태를 수정합니다.' })
   @ApiResponse({ status: 200, description: '주문 상태 수정 성공' })
@@ -53,6 +58,8 @@ export class AdminOrdersController {
   }
 
   @Post('shipping/:orderId')
+  @UseInterceptors(AuditLogInterceptor)
+  @AuditLog({ action: AuditAction.ORDER_SHIPPING_REGISTER, resourceType: 'order' })
   @ApiCookieAuth()
   @ApiOperation({ summary: '배송 정보 등록', description: '주문에 배송 정보를 등록합니다.' })
   @ApiResponse({ status: 201, description: '배송 정보 등록 성공' })

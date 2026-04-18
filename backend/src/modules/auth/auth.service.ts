@@ -20,6 +20,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { NotificationService } from '../notification/notification.service';
+import { AuditLogService } from '../audit-logs/audit-log.service';
+import { AuditAction } from '../audit-logs/entities/audit-log.entity';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
@@ -59,6 +61,7 @@ export class AuthService implements OnModuleInit {
     private readonly passwordResetTokenRepository: Repository<PasswordResetToken>,
     private readonly jwtService: JwtService,
     private readonly notificationService: NotificationService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   onModuleInit() {
@@ -103,11 +106,21 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  async login(dto: LoginDto): Promise<AuthResponse> {
+  async login(dto: LoginDto, ip?: string | null, userAgent?: string | null): Promise<AuthResponse> {
     const user = await this.userRepository.findOne({
       where: { email: dto.email },
     });
     if (!user) {
+      await this.auditLogService.log({
+        actorId: 0,
+        actorRole: 'anonymous',
+        action: AuditAction.LOGIN_FAILURE,
+        resourceType: 'auth',
+        beforeJson: { email: dto.email },
+        afterJson: { reason: 'user_not_found' },
+        ip: ip ?? null,
+        userAgent: userAgent ?? null,
+      });
       throw new UnauthorizedException('가입되지 않은 이메일입니다.');
     }
     if (!user.password) {
@@ -143,6 +156,16 @@ export class AuthService implements OnModuleInit {
       });
       const delaySec = Math.pow(2, attempts);
       await this.delay(delaySec * 1000);
+      await this.auditLogService.log({
+        actorId: user.id,
+        actorRole: user.role,
+        action: AuditAction.LOGIN_FAILURE,
+        resourceType: 'auth',
+        beforeJson: { email: dto.email },
+        afterJson: { reason: 'invalid_password', attempts },
+        ip: ip ?? null,
+        userAgent: userAgent ?? null,
+      });
       throw new UnauthorizedException('비밀번호가 올바르지 않습니다.');
     }
 
@@ -162,6 +185,16 @@ export class AuthService implements OnModuleInit {
     await this.userRepository.update(user.id, { refreshToken: hashedRefresh });
 
     this.logger.log(`User logged in: ${dto.email}`);
+    await this.auditLogService.log({
+      actorId: user.id,
+      actorRole: user.role,
+      action: AuditAction.LOGIN_SUCCESS,
+      resourceType: 'auth',
+      beforeJson: { email: dto.email },
+      afterJson: { userId: user.id },
+      ip: ip ?? null,
+      userAgent: userAgent ?? null,
+    });
     return {
       ...tokens,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
