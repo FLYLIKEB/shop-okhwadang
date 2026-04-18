@@ -89,6 +89,10 @@ export function registerAuthSuite(getApp: () => INestApplication): void {
         const body = res.body as AuthBody;
         expect(body.user.id).toBeDefined();
         userId = body.user.id;
+        await dataSource.query(
+          'UPDATE users SET is_email_verified = 1, email_verified_at = NOW() WHERE id = ?',
+          [userId],
+        );
         cookies = extractAuthCookies(res);
       });
 

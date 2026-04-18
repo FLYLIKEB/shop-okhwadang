@@ -32,8 +32,7 @@ export default function AdminInquiriesPage() {
   );
 
   useEffect(() => {
-    if (!isAdmin) return;
-    void loadInquiries();
+    if (isAdmin) void loadInquiries();
   }, [isAdmin, loadInquiries]);
 
   const filtered = filter === 'all'
