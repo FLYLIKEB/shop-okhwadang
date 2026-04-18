@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ValidateCartDto, ValidateCartResponseDto } from './dto/validate-cart.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -53,6 +54,27 @@ export class CartController {
   @ApiResponse({ status: 401, description: '인증 필요' })
   add(@CurrentUser() user: AuthUser, @Body() dto: AddToCartDto) {
     return this.cartService.add(user.id, dto);
+  }
+
+  @Post('validate')
+  @ApiCookieAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '장바구니 재검증',
+    description:
+      '결제 전 장바구니 항목의 재고·단종·가격 상태를 확인합니다. 가격 정책: 가격 변동은 사용자에게 안내 후 최신 가격으로 자동 반영됩니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '항목별 가용성 및 이슈 목록 반환',
+    type: ValidateCartResponseDto,
+  })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  validate(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ValidateCartDto,
+  ): Promise<ValidateCartResponseDto> {
+    return this.cartService.validate(user.id, dto.itemIds);
   }
 
   @Patch(':id')
