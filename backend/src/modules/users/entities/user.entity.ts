@@ -46,6 +46,12 @@ export class User {
   @Column({ name: 'locked_until', type: 'datetime', nullable: true })
   lockedUntil!: Date | null;
 
+  @Column({ name: 'is_email_verified', type: 'tinyint', default: false })
+  isEmailVerified!: boolean;
+
+  @Column({ name: 'email_verified_at', type: 'datetime', nullable: true })
+  emailVerifiedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

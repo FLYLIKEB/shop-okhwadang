@@ -18,7 +18,10 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { VerificationToken } from './entities/verification-token.entity';
 import { NotificationService } from '../notification/notification.service';
 import { AuditLogService } from '../audit-logs/audit-log.service';
 import { AuditAction } from '../audit-logs/entities/audit-log.entity';
@@ -26,6 +29,8 @@ import { AuditAction } from '../audit-logs/entities/audit-log.entity';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
+const EMAIL_VERIFICATION_TTL_MIN = 15;
+const EMAIL_VERIFICATION_TTL_MS = EMAIL_VERIFICATION_TTL_MIN * 60 * 1000;
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 const FORGOT_PASSWORD_RESPONSE = {
   message: '가입된 계정이 있다면 비밀번호 재설정 링크를 이메일로 발송했습니다.',
@@ -35,6 +40,15 @@ const RESET_PASSWORD_SUCCESS_RESPONSE = {
 };
 const INVALID_PASSWORD_RESET_TOKEN_MESSAGE =
   '유효하지 않거나 만료된 비밀번호 재설정 토큰입니다.';
+const VERIFICATION_EMAIL_SENT_RESPONSE = {
+  message: '인증 이메일이 발송되었습니다. 링크를 확인해 주세요.',
+};
+const EMAIL_VERIFIED_RESPONSE = {
+  message: '이메일이 인증되었습니다.',
+};
+const INVALID_VERIFICATION_TOKEN_MESSAGE =
+  '유효하지 않거나 만료된 인증 토큰입니다.';
+const EMAIL_ALREADY_VERIFIED_MESSAGE = '이미 인증된 이메일입니다.';
 
 export interface TokenPair {
   accessToken: string;
@@ -59,6 +73,8 @@ export class AuthService implements OnModuleInit {
     private readonly userRepository: Repository<User>,
     @InjectRepository(PasswordResetToken)
     private readonly passwordResetTokenRepository: Repository<PasswordResetToken>,
+    @InjectRepository(VerificationToken)
+    private readonly verificationTokenRepository: Repository<VerificationToken>,
     private readonly jwtService: JwtService,
     private readonly notificationService: NotificationService,
     private readonly auditLogService: AuditLogService,
@@ -92,8 +108,11 @@ export class AuthService implements OnModuleInit {
       email: dto.email,
       password: hashed,
       name: dto.name,
+      isEmailVerified: false,
     });
     await this.userRepository.save(user);
+
+    await this.createVerificationTokenAndSendEmail(user);
 
     const tokens = this.generateTokens(user);
     const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
@@ -171,6 +190,10 @@ export class AuthService implements OnModuleInit {
 
     if (!user.isActive) {
       throw new ForbiddenException('비활성화된 계정입니다.');
+    }
+
+    if (!user.isEmailVerified) {
+      throw new ForbiddenException('이메일 인증이 필요합니다. 인증 메일을 확인해 주세요.');
     }
 
     if (user.failedLoginAttempts > 0 || user.lockedUntil) {
@@ -323,6 +346,80 @@ export class AuthService implements OnModuleInit {
     this.logger.log(`User logged out: ${userId}`);
   }
 
+  async verifyEmail(dto: VerifyEmailDto): Promise<{ message: string }> {
+    const tokenHash = this.hashVerificationToken(dto.token);
+    const verificationToken = await this.verificationTokenRepository.findOne({
+      where: { tokenHash },
+    });
+
+    if (!verificationToken || verificationToken.usedAt) {
+      throw new BadRequestException(INVALID_VERIFICATION_TOKEN_MESSAGE);
+    }
+
+    if (verificationToken.expiresAt.getTime() <= Date.now()) {
+      throw new BadRequestException(INVALID_VERIFICATION_TOKEN_MESSAGE);
+    }
+
+    const markUsedResult = await this.verificationTokenRepository.update(
+      { id: verificationToken.id, usedAt: IsNull() },
+      { usedAt: new Date() },
+    );
+
+    if (markUsedResult.affected !== 1) {
+      throw new BadRequestException(INVALID_VERIFICATION_TOKEN_MESSAGE);
+    }
+
+    await this.userRepository.update(verificationToken.userId, {
+      isEmailVerified: true,
+      emailVerifiedAt: new Date(),
+    });
+
+    this.logger.log(`Email verified for user: ${verificationToken.userId}`);
+    return EMAIL_VERIFIED_RESPONSE;
+  }
+
+  async resendVerification(dto: ResendVerificationDto): Promise<{ message: string }> {
+    const normalizedEmail = dto.email.trim().toLowerCase();
+    const user = await this.userRepository.findOne({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user || !user.isActive) {
+      return VERIFICATION_EMAIL_SENT_RESPONSE;
+    }
+
+    if (user.isEmailVerified) {
+      return { message: EMAIL_ALREADY_VERIFIED_MESSAGE };
+    }
+
+    await this.verificationTokenRepository.update(
+      { userId: user.id, usedAt: IsNull() },
+      { usedAt: new Date() },
+    );
+
+    await this.createVerificationTokenAndSendEmail(user);
+
+    return VERIFICATION_EMAIL_SENT_RESPONSE;
+  }
+
+  private async createVerificationTokenAndSendEmail(user: User): Promise<void> {
+    const rawToken = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS);
+    const verificationToken = this.verificationTokenRepository.create({
+      userId: user.id,
+      tokenHash: this.hashVerificationToken(rawToken),
+      expiresAt,
+      usedAt: null,
+    });
+    await this.verificationTokenRepository.save(verificationToken);
+
+    await this.notificationService.sendEmailVerification(user.email, {
+      recipientName: user.name,
+      verificationUrl: this.buildEmailVerificationUrl(rawToken),
+      expiresInMinutes: EMAIL_VERIFICATION_TTL_MIN,
+    });
+  }
+
   private generateTokens(user: User): TokenPair {
     const payload = { sub: user.id, email: user.email, role: user.role };
     // accessToken includes tokenType: 'access' to prevent refresh tokens from being used as access tokens
@@ -356,6 +453,21 @@ export class AuthService implements OnModuleInit {
     }
 
     const url = new URL('/reset-password', baseUrl);
+    url.searchParams.set('token', token);
+    return url.toString();
+  }
+
+  private hashVerificationToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private buildEmailVerificationUrl(token: string): string {
+    const baseUrl = process.env.FRONTEND_URL;
+    if (!baseUrl) {
+      throw new Error('FRONTEND_URL environment variable is required');
+    }
+
+    const url = new URL('/verify-email', baseUrl);
     url.searchParams.set('token', token);
     return url.toString();
   }

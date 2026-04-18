@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth.service';
 import { User, UserRole } from '../../users/entities/user.entity';
 import { PasswordResetToken } from '../entities/password-reset-token.entity';
+import { VerificationToken } from '../entities/verification-token.entity';
 import { NotificationService } from '../../notification/notification.service';
 import { AuditLogService } from '../../audit-logs/audit-log.service';
 
@@ -23,6 +24,13 @@ const mockPasswordResetTokenRepository = {
   update: jest.fn(),
 };
 
+const mockVerificationTokenRepository = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+  save: jest.fn(),
+  update: jest.fn(),
+};
+
 const mockJwtService = {
   sign: jest.fn().mockReturnValue('mock-token'),
   verify: jest.fn().mockReturnValue({ sub: 1, email: 'test@example.com', role: 'user' }),
@@ -30,6 +38,7 @@ const mockJwtService = {
 
 const mockNotificationService = {
   sendPasswordReset: jest.fn(),
+  sendEmailVerification: jest.fn(),
 };
 
 const mockAuditLogService = {
@@ -45,6 +54,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     phone: null,
     role: UserRole.USER,
     isActive: true,
+    isEmailVerified: false,
+    emailVerifiedAt: null,
     refreshToken: null,
     failedLoginAttempts: 0,
     lockedUntil: null,
@@ -70,6 +81,10 @@ describe('AuthService', () => {
         {
           provide: getRepositoryToken(PasswordResetToken),
           useValue: mockPasswordResetTokenRepository,
+        },
+        {
+          provide: getRepositoryToken(VerificationToken),
+          useValue: mockVerificationTokenRepository,
         },
         { provide: JwtService, useValue: mockJwtService },
         { provide: NotificationService, useValue: mockNotificationService },
@@ -153,7 +168,7 @@ describe('AuthService', () => {
 
     it('로그인 성공 시 refreshToken을 DB에 해싱 저장', async () => {
       const hashed = await bcrypt.hash('Test1234!', 10);
-      mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed }));
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed, isEmailVerified: true }));
       mockUserRepository.update.mockResolvedValue(undefined);
 
       await service.login({ email: 'test@example.com', password: 'Test1234!' });
@@ -313,6 +328,189 @@ describe('AuthService', () => {
       );
 
       delete process.env.JWT_REFRESH_SECRET;
+    });
+  });
+
+  describe('register (이메일 인증)', () => {
+    it('가입 시 인증 이메일 발송', async () => {
+      mockUserRepository.findOne.mockResolvedValue(null);
+      const newUser = makeUser({ id: 2, email: 'new@example.com', name: '신규', isEmailVerified: false });
+      mockUserRepository.create.mockReturnValue(newUser);
+      mockUserRepository.save.mockResolvedValue(newUser);
+      mockUserRepository.update.mockResolvedValue(undefined);
+      mockVerificationTokenRepository.create.mockImplementation((value) => value);
+      mockVerificationTokenRepository.save.mockResolvedValue(undefined);
+      mockNotificationService.sendEmailVerification.mockResolvedValue(undefined);
+
+      await service.register({ email: 'new@example.com', password: 'Test1234!', name: '신규' });
+
+      expect(mockVerificationTokenRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 2,
+          tokenHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          usedAt: null,
+        }),
+      );
+      expect(mockNotificationService.sendEmailVerification).toHaveBeenCalledWith(
+        'new@example.com',
+        expect.objectContaining({
+          recipientName: '신규',
+          verificationUrl: expect.stringContaining('/verify-email?token='),
+          expiresInMinutes: 15,
+        }),
+      );
+    });
+
+    it('가입 시 isEmailVerified: false로 저장됨', async () => {
+      mockUserRepository.findOne.mockResolvedValue(null);
+      const newUser = makeUser({ id: 2, email: 'new@example.com', name: '신규', isEmailVerified: false });
+      mockUserRepository.create.mockReturnValue(newUser);
+      mockUserRepository.save.mockResolvedValue(newUser);
+      mockUserRepository.update.mockResolvedValue(undefined);
+      mockVerificationTokenRepository.create.mockImplementation((value) => value);
+      mockVerificationTokenRepository.save.mockResolvedValue(undefined);
+      mockNotificationService.sendEmailVerification.mockResolvedValue(undefined);
+
+      await service.register({ email: 'new@example.com', password: 'Test1234!', name: '신규' });
+
+      expect(mockUserRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'new@example.com',
+          name: '신규',
+          isEmailVerified: false,
+        }),
+      );
+    });
+  });
+
+  describe('login (이메일 인증 체크)', () => {
+    it('이메일 미인증 계정 로그인 시 ForbiddenException', async () => {
+      const hashed = await bcrypt.hash('Test1234!', 10);
+      mockUserRepository.findOne.mockResolvedValue(
+        makeUser({ password: hashed, isEmailVerified: false }),
+      );
+
+      await expect(
+        service.login({ email: 'test@example.com', password: 'Test1234!' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('이메일 인증된 계정은 정상 로그인 가능', async () => {
+      const hashed = await bcrypt.hash('Test1234!', 10);
+      mockUserRepository.findOne.mockResolvedValue(
+        makeUser({ password: hashed, isEmailVerified: true }),
+      );
+      mockUserRepository.update.mockResolvedValue(undefined);
+
+      const result = await service.login({ email: 'test@example.com', password: 'Test1234!' });
+
+      expect(result).toHaveProperty('accessToken');
+      expect(result).toHaveProperty('refreshToken');
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('유효한 토큰으로 이메일 인증 성공', async () => {
+      mockVerificationTokenRepository.findOne.mockResolvedValue({
+        id: 1,
+        userId: 1,
+        tokenHash: 'validhash',
+        usedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      mockVerificationTokenRepository.update.mockResolvedValue({ affected: 1 });
+      mockUserRepository.update.mockResolvedValue(undefined);
+
+      const result = await service.verifyEmail({ token: 'valid-token' });
+
+      expect(result).toEqual({ message: '이메일이 인증되었습니다.' });
+      expect(mockUserRepository.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          isEmailVerified: true,
+          emailVerifiedAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('이미 사용된 토큰 재사용 시 BadRequestException', async () => {
+      mockVerificationTokenRepository.findOne.mockResolvedValue({
+        id: 1,
+        userId: 1,
+        usedAt: new Date(),
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+
+      await expect(
+        service.verifyEmail({ token: 'used-token' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('만료된 토큰 사용 시 BadRequestException', async () => {
+      mockVerificationTokenRepository.findOne.mockResolvedValue({
+        id: 1,
+        userId: 1,
+        usedAt: null,
+        expiresAt: new Date(Date.now() - 60_000),
+      });
+
+      await expect(
+        service.verifyEmail({ token: 'expired-token' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('유효하지 않은 토큰 시 BadRequestException', async () => {
+      mockVerificationTokenRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.verifyEmail({ token: 'invalid-token' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('resendVerification', () => {
+    it('존재하지 않는 이메일에도 동일한 성공 응답 반환', async () => {
+      mockUserRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.resendVerification({ email: 'missing@example.com' })).resolves.toEqual({
+        message: '인증 이메일이 발송되었습니다. 링크를 확인해 주세요.',
+      });
+
+      expect(mockNotificationService.sendEmailVerification).not.toHaveBeenCalled();
+    });
+
+    it('이미 인증된 이메일 요청 시 이미 인증됨 응답', async () => {
+      mockUserRepository.findOne.mockResolvedValue(
+        makeUser({ email: 'verified@example.com', isEmailVerified: true }),
+      );
+
+      await expect(service.resendVerification({ email: 'verified@example.com' })).resolves.toEqual({
+        message: '이미 인증된 이메일입니다.',
+      });
+
+      expect(mockNotificationService.sendEmailVerification).not.toHaveBeenCalled();
+    });
+
+    it('미인증 이메일 요청 시 인증 이메일 재발송', async () => {
+      const user = makeUser({ email: 'unverified@example.com', isEmailVerified: false });
+      mockUserRepository.findOne.mockResolvedValue(user);
+      mockVerificationTokenRepository.update.mockResolvedValue({ affected: 1 });
+      mockVerificationTokenRepository.create.mockImplementation((value) => value);
+      mockVerificationTokenRepository.save.mockResolvedValue(undefined);
+      mockNotificationService.sendEmailVerification.mockResolvedValue(undefined);
+
+      await expect(service.resendVerification({ email: 'unverified@example.com' })).resolves.toEqual({
+        message: '인증 이메일이 발송되었습니다. 링크를 확인해 주세요.',
+      });
+
+      expect(mockNotificationService.sendEmailVerification).toHaveBeenCalledWith(
+        'unverified@example.com',
+        expect.objectContaining({
+          recipientName: '홍길동',
+          verificationUrl: expect.stringContaining('/verify-email?token='),
+          expiresInMinutes: 15,
+        }),
+      );
     });
   });
 });

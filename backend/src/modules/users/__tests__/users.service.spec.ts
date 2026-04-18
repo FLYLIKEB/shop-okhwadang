@@ -56,6 +56,8 @@ describe('UsersService', () => {
         phone: null,
         role: UserRole.USER,
         isActive: true,
+        isEmailVerified: true,
+        emailVerifiedAt: new Date(),
         password: 'hashed',
         refreshToken: 'token',
         failedLoginAttempts: 0,
