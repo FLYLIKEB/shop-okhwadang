@@ -3,6 +3,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
+import { ScheduleModule } from '@nestjs/schedule';
 import * as fs from 'fs';
 import * as path from 'path';
 import type ms from 'ms';
@@ -11,6 +12,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { OAuthService } from './oauth.service';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { TokenBlacklist } from './entities/token-blacklist.entity';
+import { TokenBlacklistService } from './token-blacklist.service';
 import { User } from '../users/entities/user.entity';
 import { UserAuthentication } from '../users/entities/user-authentication.entity';
 import { AuditLogModule } from '../audit-logs/audit-log.module';
@@ -38,7 +41,7 @@ function getJwtPrivateKey(): string {
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserAuthentication, PasswordResetToken]),
+    TypeOrmModule.forFeature([User, UserAuthentication, PasswordResetToken, TokenBlacklist]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       privateKey: getJwtPrivateKey(),
@@ -47,11 +50,12 @@ function getJwtPrivateKey(): string {
         algorithm: 'RS256',
       },
     }),
+    ScheduleModule,
     HttpModule,
     AuditLogModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, OAuthService, JwtStrategy],
+  providers: [AuthService, OAuthService, JwtStrategy, TokenBlacklistService],
   exports: [PassportModule, JwtModule, AuditLogModule],
 })
 export class AuthModule {}
