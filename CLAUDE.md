@@ -25,17 +25,20 @@
 ```bash
 bash scripts/start-local.sh          # Full-stack start
 bash scripts/stop-local.sh           # Full-stack stop
-npm run build && npm run test:run && bash scripts/start-local.sh  # FE build+test+restart
-cd backend && npm run build && npm run test      # BE build+test
-cd backend && npm run test:e2e       # BE E2E (required for DB schema changes)
-cd backend && docker compose up -d   # MySQL
-cd backend && docker compose down -v # Reset DB
+bash scripts/test.sh                 # FE + BE unit tests (Docker 자동 기동)
+bash scripts/test.sh frontend        # FE only
+bash scripts/test.sh backend         # BE unit only
+bash scripts/test.sh e2e             # BE E2E (test MySQL on :3308 자동 기동)
+bash scripts/test.sh all             # FE + BE unit + E2E
+bash scripts/test-stop.sh            # Stop test MySQL + cleanup workers
+cd backend && docker compose up -d   # Dev MySQL
+cd backend && docker compose down -v # Reset dev DB
 ```
 
 ## Issue Tracker
 * Phase 0-7 (Setup → MVP → Core → Payment → Admin → CMS → Polish → Ops)
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Latest merged PR: #518
+* Latest merged PR: #552
 
 ## Rules Reference
 | Subject | File |
