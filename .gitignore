@@ -47,3 +47,5 @@ coverage/
 marketing.md
 .vercel
 docs/infrastructure/s3-cloudfront-cdn.md
+.omx/
+.codex/
