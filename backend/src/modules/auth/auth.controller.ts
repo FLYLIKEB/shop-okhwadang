@@ -16,10 +16,12 @@ import { OAuthService } from './oauth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 interface JwtUser {
   id: number;
@@ -56,6 +58,7 @@ function clearAuthCookies(res: Response): void {
 }
 
 @Throttle({ auth: { limit: 30, ttl: 60000 } })
+@SkipThrottle({ forgotPassword: true })
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -85,6 +88,34 @@ export class AuthController {
     const { accessToken, refreshToken, user } = await this.authService.login(dto);
     setAuthCookies(res, accessToken, refreshToken);
     return { user };
+  }
+
+  @Post('forgot-password')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @SkipThrottle({ forgotPassword: false })
+  @Throttle({ forgotPassword: { limit: 1, ttl: 60000 } })
+  @ApiOperation({
+    summary: '비밀번호 재설정 요청',
+    description: '가입된 이메일이면 비밀번호 재설정 링크를 발송합니다. 존재하지 않는 이메일에도 동일한 응답을 반환합니다.',
+  })
+  @ApiResponse({ status: 200, description: '비밀번호 재설정 안내 처리 완료' })
+  @ApiResponse({ status: 429, description: '같은 이메일로 너무 많은 요청' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Post('reset-password')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '비밀번호 재설정',
+    description: '이메일로 받은 재설정 토큰과 새 비밀번호로 비밀번호를 변경합니다.',
+  })
+  @ApiResponse({ status: 200, description: '비밀번호 재설정 성공' })
+  @ApiResponse({ status: 400, description: '토큰이 유효하지 않거나 만료됨' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 
   @Get('profile')

@@ -1,12 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { ConflictException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ConflictException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth.service';
 import { User, UserRole } from '../../users/entities/user.entity';
+import { PasswordResetToken } from '../entities/password-reset-token.entity';
+import { NotificationService } from '../../notification/notification.service';
 
 const mockUserRepository = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+  save: jest.fn(),
+  update: jest.fn(),
+};
+
+const mockPasswordResetTokenRepository = {
   findOne: jest.fn(),
   create: jest.fn(),
   save: jest.fn(),
@@ -16,6 +25,10 @@ const mockUserRepository = {
 const mockJwtService = {
   sign: jest.fn().mockReturnValue('mock-token'),
   verify: jest.fn().mockReturnValue({ sub: 1, email: 'test@example.com', role: 'user' }),
+};
+
+const mockNotificationService = {
+  sendPasswordReset: jest.fn(),
 };
 
 function makeUser(overrides: Partial<User> = {}): User {
@@ -38,19 +51,36 @@ function makeUser(overrides: Partial<User> = {}): User {
 
 describe('AuthService', () => {
   let service: AuthService;
+  let originalFrontendUrl: string | undefined;
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    originalFrontendUrl = process.env.FRONTEND_URL;
+    process.env.FRONTEND_URL = 'https://frontend.test';
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: getRepositoryToken(User), useValue: mockUserRepository },
+        {
+          provide: getRepositoryToken(PasswordResetToken),
+          useValue: mockPasswordResetTokenRepository,
+        },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: NotificationService, useValue: mockNotificationService },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
+  });
+
+  afterEach(() => {
+    if (originalFrontendUrl === undefined) {
+      delete process.env.FRONTEND_URL;
+      return;
+    }
+
+    process.env.FRONTEND_URL = originalFrontendUrl;
   });
 
   describe('register', () => {
@@ -157,6 +187,85 @@ describe('AuthService', () => {
       mockJwtService.verify.mockImplementationOnce(() => { throw new Error('invalid'); });
 
       await expect(service.refresh('invalid.token')).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('존재하지 않는 이메일에도 동일한 성공 응답을 반환하고 메일을 보내지 않음', async () => {
+      mockUserRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.forgotPassword({ email: 'missing@example.com' })).resolves.toEqual({
+        message: '가입된 계정이 있다면 비밀번호 재설정 링크를 이메일로 발송했습니다.',
+      });
+
+      expect(mockNotificationService.sendPasswordReset).not.toHaveBeenCalled();
+    });
+
+    it('존재하는 이메일이면 토큰을 저장하고 재설정 메일을 발송함', async () => {
+      const user = makeUser({ email: 'test@example.com', name: '홍길동' });
+      mockUserRepository.findOne.mockResolvedValue(user);
+      mockPasswordResetTokenRepository.create.mockImplementation((value) => value);
+      mockPasswordResetTokenRepository.save.mockResolvedValue(undefined);
+      mockPasswordResetTokenRepository.update.mockResolvedValue({ affected: 1 });
+      mockNotificationService.sendPasswordReset.mockResolvedValue(undefined);
+
+      await service.forgotPassword({ email: 'test@example.com' });
+
+      expect(mockPasswordResetTokenRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: user.id,
+          tokenHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          usedAt: null,
+        }),
+      );
+      expect(mockNotificationService.sendPasswordReset).toHaveBeenCalledWith(
+        'test@example.com',
+        expect.objectContaining({
+          recipientName: '홍길동',
+          resetUrl: expect.stringContaining('/reset-password?token='),
+          expiresInMinutes: 60,
+        }),
+      );
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('이미 사용된 토큰 재사용 시 BadRequestException', async () => {
+      mockPasswordResetTokenRepository.findOne.mockResolvedValue({
+        id: 1,
+        userId: 1,
+        usedAt: new Date(),
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+
+      await expect(
+        service.resetPassword({ token: 'used-token', newPassword: 'NewPass123!' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('유효한 토큰이면 새 비밀번호를 저장하고 토큰을 사용 처리함', async () => {
+      mockPasswordResetTokenRepository.findOne.mockResolvedValue({
+        id: 1,
+        userId: 1,
+        usedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      mockPasswordResetTokenRepository.update
+        .mockResolvedValueOnce({ affected: 1 })
+        .mockResolvedValueOnce({ affected: 0 });
+      mockUserRepository.update.mockResolvedValue(undefined);
+
+      await expect(
+        service.resetPassword({ token: 'valid-token', newPassword: 'NewPass123!' }),
+      ).resolves.toEqual({ message: '비밀번호가 재설정되었습니다.' });
+
+      expect(mockUserRepository.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          password: expect.stringMatching(/^\$2[aby]\$/),
+          refreshToken: null,
+        }),
+      );
     });
   });
 

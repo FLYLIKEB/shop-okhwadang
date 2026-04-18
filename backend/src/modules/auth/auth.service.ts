@@ -8,17 +8,31 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { createHash, randomBytes } from 'crypto';
 import type ms from 'ms';
 import { User } from '../users/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { NotificationService } from '../notification/notification.service';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+const FORGOT_PASSWORD_RESPONSE = {
+  message: '가입된 계정이 있다면 비밀번호 재설정 링크를 이메일로 발송했습니다.',
+};
+const RESET_PASSWORD_SUCCESS_RESPONSE = {
+  message: '비밀번호가 재설정되었습니다.',
+};
+const INVALID_PASSWORD_RESET_TOKEN_MESSAGE =
+  '유효하지 않거나 만료된 비밀번호 재설정 토큰입니다.';
 
 export interface TokenPair {
   accessToken: string;
@@ -41,7 +55,10 @@ export class AuthService implements OnModuleInit {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(PasswordResetToken)
+    private readonly passwordResetTokenRepository: Repository<PasswordResetToken>,
     private readonly jwtService: JwtService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   onModuleInit() {
@@ -195,6 +212,79 @@ export class AuthService implements OnModuleInit {
     return tokens;
   }
 
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const normalizedEmail = dto.email.trim().toLowerCase();
+    const user = await this.userRepository.findOne({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user || !user.isActive) {
+      return FORGOT_PASSWORD_RESPONSE;
+    }
+
+    await this.passwordResetTokenRepository.update(
+      { userId: user.id, usedAt: IsNull() },
+      { usedAt: new Date() },
+    );
+
+    const rawToken = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
+    const resetToken = this.passwordResetTokenRepository.create({
+      userId: user.id,
+      tokenHash: this.hashPasswordResetToken(rawToken),
+      expiresAt,
+      usedAt: null,
+    });
+    await this.passwordResetTokenRepository.save(resetToken);
+
+    await this.notificationService.sendPasswordReset(user.email, {
+      recipientName: user.name,
+      resetUrl: this.buildPasswordResetUrl(rawToken),
+      expiresInMinutes: PASSWORD_RESET_TTL_MS / 60000,
+    });
+
+    return FORGOT_PASSWORD_RESPONSE;
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    if (!PASSWORD_REGEX.test(dto.newPassword)) {
+      throw new BadRequestException('비밀번호는 문자, 숫자, 특수문자를 포함해야 합니다.');
+    }
+
+    const tokenHash = this.hashPasswordResetToken(dto.token);
+    const resetToken = await this.passwordResetTokenRepository.findOne({
+      where: { tokenHash },
+    });
+
+    if (!resetToken || resetToken.usedAt || resetToken.expiresAt.getTime() <= Date.now()) {
+      throw new BadRequestException(INVALID_PASSWORD_RESET_TOKEN_MESSAGE);
+    }
+
+    const markUsedResult = await this.passwordResetTokenRepository.update(
+      { id: resetToken.id, usedAt: IsNull() },
+      { usedAt: new Date() },
+    );
+
+    if (markUsedResult.affected !== 1) {
+      throw new BadRequestException(INVALID_PASSWORD_RESET_TOKEN_MESSAGE);
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    await this.userRepository.update(resetToken.userId, {
+      password: hashedPassword,
+      refreshToken: null,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    });
+
+    await this.passwordResetTokenRepository.update(
+      { userId: resetToken.userId, usedAt: IsNull() },
+      { usedAt: new Date() },
+    );
+
+    return RESET_PASSWORD_SUCCESS_RESPONSE;
+  }
+
   async logout(userId: number): Promise<void> {
     await this.userRepository.update(userId, { refreshToken: null });
     this.logger.log(`User logged out: ${userId}`);
@@ -220,5 +310,20 @@ export class AuthService implements OnModuleInit {
 
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private hashPasswordResetToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private buildPasswordResetUrl(token: string): string {
+    const baseUrl = process.env.FRONTEND_URL;
+    if (!baseUrl) {
+      throw new Error('FRONTEND_URL environment variable is required');
+    }
+
+    const url = new URL('/reset-password', baseUrl);
+    url.searchParams.set('token', token);
+    return url.toString();
   }
 }

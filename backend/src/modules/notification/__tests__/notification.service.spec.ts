@@ -6,6 +6,7 @@ import {
   renderInquiryAnswered,
   renderOrderConfirmed,
   renderPaymentConfirmed,
+  renderPasswordReset,
   renderShippingUpdate,
 } from '../templates/render';
 
@@ -86,6 +87,17 @@ describe('render helpers', () => {
     expect(email.html).not.toContain('<script>');
     expect(email.html).toContain('&lt;script&gt;');
   });
+
+  it('renders password reset email with reset URL', () => {
+    const email = renderPasswordReset({
+      recipientName: '홍길동',
+      resetUrl: 'https://example.com/reset-password?token=abc123',
+      expiresInMinutes: 60,
+    });
+    expect(email.subject).toContain('비밀번호 재설정');
+    expect(email.text).toContain('https://example.com/reset-password?token=abc123');
+    expect(email.html).toContain('href="https://example.com/reset-password?token=abc123"');
+  });
 });
 
 describe('NotificationService', () => {
@@ -141,5 +153,18 @@ describe('NotificationService', () => {
       svc.sendEmail({ to: 'x@y.z', subject: 's', html: 'h' }),
     ).resolves.toBeUndefined();
     expect(failing.send).toHaveBeenCalled();
+  });
+
+  it('sends password reset email via the provider', async () => {
+    await service.sendPasswordReset('user@example.com', {
+      recipientName: '홍길동',
+      resetUrl: 'https://example.com/reset-password?token=abc123',
+      expiresInMinutes: 60,
+    });
+
+    const sent = mockAdapter.getSent();
+    expect(sent).toHaveLength(1);
+    expect(sent[0].subject).toContain('비밀번호 재설정');
+    expect(sent[0].text).toContain('abc123');
   });
 });

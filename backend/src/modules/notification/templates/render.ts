@@ -30,6 +30,13 @@ export interface InquiryAnsweredContext {
   locale?: 'ko' | 'en';
 }
 
+export interface PasswordResetContext {
+  recipientName: string;
+  resetUrl: string;
+  expiresInMinutes: number;
+  locale?: 'ko' | 'en';
+}
+
 export interface RenderedEmail {
   subject: string;
   html: string;
@@ -85,5 +92,17 @@ export function renderInquiryAnswered(ctx: InquiryAnsweredContext): RenderedEmai
     ? `${ctx.recipientName}님, 문의하신 "${ctx.inquiryTitle}"에 답변이 등록되었습니다.\n\n${ctx.answer}`
     : `Hi ${ctx.recipientName}, your inquiry "${ctx.inquiryTitle}" has been answered.\n\n${ctx.answer}`;
   const html = `<div><h2>${escapeHtml(subject)}</h2><p>${escapeHtml(text).replace(/\n/g, '<br>')}</p></div>`;
+  return { subject, html, text };
+}
+
+export function renderPasswordReset(ctx: PasswordResetContext): RenderedEmail {
+  const isKo = (ctx.locale ?? 'ko') === 'ko';
+  const subject = isKo
+    ? '[옥화당] 비밀번호 재설정 안내'
+    : '[Okhwadang] Reset your password';
+  const text = isKo
+    ? `${ctx.recipientName}님, 아래 링크에서 비밀번호를 재설정해 주세요. 링크는 ${ctx.expiresInMinutes}분 후 만료됩니다.\n\n${ctx.resetUrl}`
+    : `Hi ${ctx.recipientName}, use the link below to reset your password. It expires in ${ctx.expiresInMinutes} minutes.\n\n${ctx.resetUrl}`;
+  const html = `<div><h2>${escapeHtml(subject)}</h2><p>${escapeHtml(text).replace(/\n/g, '<br>')}</p><p><a href="${escapeHtml(ctx.resetUrl)}">${escapeHtml(ctx.resetUrl)}</a></p></div>`;
   return { subject, html, text };
 }
