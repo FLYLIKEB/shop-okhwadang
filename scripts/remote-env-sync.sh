@@ -7,13 +7,15 @@
 # .env.secrets의 DATABASE_URL을 덮어쓰기 옵션으로 적용.
 #
 # 사용법:
-#   bash scripts/remote-env-sync.sh [push|diff|pull|rollback|set-secret] [--verbose]
+#   bash scripts/remote-env-sync.sh [push|diff|pull|rollback|set-secret|verify] [--verbose]
 #     push          (기본) 로컬 → 원격 업로드 + pm2 restart
 #     diff                  로컬 vs 원격 차이 (기본은 키 이름만, --verbose 시 값 노출)
 #     pull                  원격 → /tmp/remote.env 로 백업 (mode 600)
 #     rollback              원격의 .env.prev 를 .env 로 되돌리고 pm2 restart
 #     set-secret            GitHub Secret BACKEND_ENV_PRODUCTION 도 같이 업데이트
 #                           (deploy.yml 이 매 배포마다 Secret → .env 로 복원하므로 필수)
+#     verify                로컬 .env.example 의 # REQUIRED 키가 원격 .env 에 모두 있는지 확인
+#                           누락 키 발견 시 목록 출력 후 exit 1
 #
 # 보호 장치:
 #   - 업로드 전 값에 localhost/127.0.0.1 포함 시 경고 후 중단
@@ -159,8 +161,38 @@ case "$SUBCMD" in
     chmod 600 "$OUT"
     echo "✓ 백업: $OUT (mode 600)"
     ;;
+  verify)
+    # .env.example 의 # REQUIRED 태그 키를 파싱하여 원격 .env 에 존재하는지 확인
+    REQUIRED_KEYS=$(grep -E '#[[:space:]]*REQUIRED' backend/.env.example | grep -oE '^[A-Z_]+' || true)
+    if [ -z "$REQUIRED_KEYS" ]; then
+      echo "WARNING: backend/.env.example 에서 # REQUIRED 태그를 찾지 못했습니다." >&2
+      exit 0
+    fi
+
+    REMOTE_ENV_CONTENT=$(ssh -i "$BASTION_KEY_EXPANDED" $SSH_OPTS \
+        "$BASTION_USER@$BASTION_HOST" "cat $REMOTE_PATH")
+
+    MISSING_KEYS=""
+    for key in $REQUIRED_KEYS; do
+      if ! echo "$REMOTE_ENV_CONTENT" | grep -qE "^${key}=.+"; then
+        MISSING_KEYS="${MISSING_KEYS} ${key}"
+      fi
+    done
+
+    if [ -n "$MISSING_KEYS" ]; then
+      echo "ERROR: 원격 .env 에 다음 필수 키가 없거나 비어 있습니다:" >&2
+      for key in $MISSING_KEYS; do
+        echo "  ✗ ${key}" >&2
+      done
+      echo "" >&2
+      echo "  해결: bash scripts/remote-env-sync.sh push" >&2
+      exit 1
+    fi
+
+    echo "✓ 원격 .env 필수 키 검증 통과 ($(echo "$REQUIRED_KEYS" | wc -w | tr -d ' ')개 확인)"
+    ;;
   *)
-    echo "Usage: $0 [push|diff|pull|rollback|set-secret] [--verbose]" >&2
+    echo "Usage: $0 [push|diff|pull|rollback|set-secret|verify] [--verbose]" >&2
     exit 1
     ;;
 esac
