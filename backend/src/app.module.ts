@@ -57,6 +57,26 @@ import { RolesGuard } from './common/guards/roles.guard';
         ttl: 60000,
         limit: 30,
       },
+      {
+        name: 'forgotPassword',
+        ttl: 60000,
+        limit: 1,
+        getTracker: (req) => {
+          const rawEmail =
+            typeof req.body === 'object' && req.body !== null && 'email' in req.body
+              ? req.body.email
+              : undefined;
+
+          if (typeof rawEmail === 'string') {
+            const normalizedEmail = rawEmail.trim().toLowerCase();
+            if (normalizedEmail.length > 0) {
+              return `forgot-password:${normalizedEmail}`;
+            }
+          }
+
+          return `forgot-password:${req.ip}`;
+        },
+      },
     ]),
     CacheModule,
     AuthModule,

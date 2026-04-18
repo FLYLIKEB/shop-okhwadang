@@ -10,6 +10,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { OAuthService } from './oauth.service';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { User } from '../users/entities/user.entity';
 import { UserAuthentication } from '../users/entities/user-authentication.entity';
 
@@ -36,7 +37,7 @@ function getJwtPrivateKey(): string {
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserAuthentication]),
+    TypeOrmModule.forFeature([User, UserAuthentication, PasswordResetToken]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       privateKey: getJwtPrivateKey(),

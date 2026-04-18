@@ -4,10 +4,12 @@ import {
   renderInquiryAnswered,
   renderOrderConfirmed,
   renderPaymentConfirmed,
+  renderPasswordReset,
   renderShippingUpdate,
   type InquiryAnsweredContext,
   type OrderConfirmedContext,
   type PaymentConfirmedContext,
+  type PasswordResetContext,
   type ShippingUpdateContext,
 } from './templates/render';
 
@@ -59,6 +61,11 @@ export class NotificationService {
 
   async sendInquiryAnswered(to: string, context: InquiryAnsweredContext): Promise<void> {
     const rendered = renderInquiryAnswered(context);
+    await this.sendEmail({ to, ...rendered });
+  }
+
+  async sendPasswordReset(to: string, context: PasswordResetContext): Promise<void> {
+    const rendered = renderPasswordReset(context);
     await this.sendEmail({ to, ...rendered });
   }
 }
