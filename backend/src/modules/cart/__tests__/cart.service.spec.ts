@@ -207,4 +207,140 @@ describe('CartService', () => {
       await expect(service.remove(999, 1)).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('validate', () => {
+    const buildValidateQb = (items: Partial<CartItem>[]) => {
+      const qb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(items),
+      };
+      return qb;
+    };
+
+    it('returns available=true for active in-stock item without option', async () => {
+      const items = [
+        {
+          id: 1,
+          userId: 1,
+          quantity: 2,
+          product: { id: 1, price: 20000, salePrice: null, stock: 5, status: 'active' } as Product,
+          option: null,
+        },
+      ];
+      mockCartItemRepo.createQueryBuilder.mockReturnValue(buildValidateQb(items));
+
+      const result = await service.validate(1, [1]);
+
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0]).toMatchObject({
+        itemId: 1,
+        available: true,
+        unitPrice: 20000,
+        stock: 5,
+        issues: [],
+      });
+    });
+
+    it('returns out_of_stock issue when product stock is 0', async () => {
+      const items = [
+        {
+          id: 2,
+          userId: 1,
+          quantity: 1,
+          product: { id: 2, price: 15000, salePrice: null, stock: 0, status: 'active' } as Product,
+          option: null,
+        },
+      ];
+      mockCartItemRepo.createQueryBuilder.mockReturnValue(buildValidateQb(items));
+
+      const result = await service.validate(1, [2]);
+
+      expect(result.results[0].available).toBe(false);
+      expect(result.results[0].issues).toContain('out_of_stock');
+    });
+
+    it('returns out_of_stock issue when product status is soldout', async () => {
+      const items = [
+        {
+          id: 3,
+          userId: 1,
+          quantity: 1,
+          product: { id: 3, price: 10000, salePrice: null, stock: 10, status: 'soldout' } as Product,
+          option: null,
+        },
+      ];
+      mockCartItemRepo.createQueryBuilder.mockReturnValue(buildValidateQb(items));
+
+      const result = await service.validate(1, [3]);
+
+      expect(result.results[0].available).toBe(false);
+      expect(result.results[0].issues).toContain('out_of_stock');
+    });
+
+    it('returns discontinued issue when product status is hidden', async () => {
+      const items = [
+        {
+          id: 4,
+          userId: 1,
+          quantity: 1,
+          product: { id: 4, price: 10000, salePrice: null, stock: 5, status: 'hidden' } as Product,
+          option: null,
+        },
+      ];
+      mockCartItemRepo.createQueryBuilder.mockReturnValue(buildValidateQb(items));
+
+      const result = await service.validate(1, [4]);
+
+      expect(result.results[0].available).toBe(false);
+      expect(result.results[0].issues).toContain('discontinued');
+    });
+
+    it('uses option stock when option is present', async () => {
+      const items = [
+        {
+          id: 5,
+          userId: 1,
+          quantity: 1,
+          product: { id: 5, price: 20000, salePrice: null, stock: 10, status: 'active' } as Product,
+          option: { id: 1, priceAdjustment: 2000, stock: 0 } as ProductOption,
+        },
+      ];
+      mockCartItemRepo.createQueryBuilder.mockReturnValue(buildValidateQb(items));
+
+      const result = await service.validate(1, [5]);
+
+      expect(result.results[0].stock).toBe(0);
+      expect(result.results[0].unitPrice).toBe(22000);
+      expect(result.results[0].available).toBe(false);
+      expect(result.results[0].issues).toContain('out_of_stock');
+    });
+
+    it('uses salePrice when set', async () => {
+      const items = [
+        {
+          id: 6,
+          userId: 1,
+          quantity: 1,
+          product: { id: 6, price: 30000, salePrice: 25000, stock: 3, status: 'active' } as Product,
+          option: null,
+        },
+      ];
+      mockCartItemRepo.createQueryBuilder.mockReturnValue(buildValidateQb(items));
+
+      const result = await service.validate(1, [6]);
+
+      expect(result.results[0].unitPrice).toBe(25000);
+      expect(result.results[0].available).toBe(true);
+    });
+
+    it('returns empty results when no matching items', async () => {
+      mockCartItemRepo.createQueryBuilder.mockReturnValue(buildValidateQb([]));
+
+      const result = await service.validate(1, [999]);
+
+      expect(result.results).toHaveLength(0);
+    });
+  });
 });
