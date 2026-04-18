@@ -27,8 +27,7 @@ process.env.DATABASE_URL = process.env.TEST_DATABASE_URL ?? process.env.DATABASE
       url: process.env.DATABASE_URL,
       charset: 'utf8mb4',
       autoLoadEntities: true,
-      synchronize: true,
-      dropSchema: true,
+      synchronize: false,
     }),
     ThrottlerModule.forRoot([
       {
