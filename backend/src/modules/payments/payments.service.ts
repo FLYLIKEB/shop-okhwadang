@@ -233,6 +233,40 @@ export class PaymentsService {
     };
   }
 
+  async cancelAdmin(orderId: number, reason: string): Promise<{
+    paymentId: number;
+    status: PaymentStatus;
+    cancelledAt: Date;
+    cancelReason: string;
+  }> {
+    const payment = await findOrThrow(
+      this.paymentRepository,
+      { orderId },
+      '결제 정보를 찾을 수 없습니다.',
+    );
+
+    if (payment.status !== PaymentStatus.CONFIRMED) {
+      throw new BadRequestException('환불 가능한 상태가 아닙니다.');
+    }
+
+    const cancelGateway = this.resolveGatewayByType(payment.gateway);
+    const result = await cancelGateway.cancel(payment.paymentKey!, reason);
+
+    await this.paymentRepository.update(payment.id, {
+      status: PaymentStatus.REFUNDED,
+      cancelledAt: result.cancelledAt,
+      cancelReason: reason,
+      rawResponse: result.rawResponse as object,
+    });
+
+    return {
+      paymentId: Number(payment.id),
+      status: PaymentStatus.REFUNDED,
+      cancelledAt: result.cancelledAt,
+      cancelReason: reason,
+    };
+  }
+
   private async notifyPaymentConfirmed(
     userId: number,
     orderNumber: string,

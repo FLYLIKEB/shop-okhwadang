@@ -5,6 +5,7 @@ import { AdminOrdersService } from '../admin-orders.service';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { Shipping } from '../../payments/entities/shipping.entity';
+import { PaymentsService } from '../../payments/payments.service';
 
 function createMockRepository() {
   return {
@@ -30,11 +31,15 @@ describe('AdminOrdersService', () => {
   let orderRepo: ReturnType<typeof createMockRepository>;
   let paymentRepo: ReturnType<typeof createMockRepository>;
   let shippingRepo: ReturnType<typeof createMockRepository>;
+  let paymentsService: jest.Mocked<PaymentsService>;
 
   beforeEach(async () => {
     orderRepo = createMockRepository();
     paymentRepo = createMockRepository();
     shippingRepo = createMockRepository();
+    paymentsService = {
+      cancelAdmin: jest.fn(),
+    } as unknown as jest.Mocked<PaymentsService>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -42,6 +47,7 @@ describe('AdminOrdersService', () => {
         { provide: getRepositoryToken(Order), useValue: orderRepo },
         { provide: getRepositoryToken(Payment), useValue: paymentRepo },
         { provide: getRepositoryToken(Shipping), useValue: shippingRepo },
+        { provide: PaymentsService, useValue: paymentsService },
       ],
     }).compile();
 
@@ -119,19 +125,21 @@ describe('AdminOrdersService', () => {
         .rejects.toThrow(BadRequestException);
     });
 
-    it('paid → refunded: should update payment status', async () => {
+    it('paid → refunded: should call paymentsService.cancelAdmin (PG cancel)', async () => {
       orderRepo.findOne
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
       paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });
-      paymentRepo.update.mockResolvedValue({ affected: 1 });
+      paymentsService.cancelAdmin.mockResolvedValue({
+        paymentId: 10,
+        status: PaymentStatus.REFUNDED,
+        cancelledAt: new Date(),
+        cancelReason: '관리자 환불 처리',
+      });
       orderRepo.update.mockResolvedValue({ affected: 1 });
 
       await service.updateStatus(1, OrderStatus.REFUNDED);
-      expect(paymentRepo.update).toHaveBeenCalledWith(10, expect.objectContaining({
-        status: PaymentStatus.REFUNDED,
-        cancelReason: '관리자 환불 처리',
-      }));
+      expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리');
     });
 
     it('paid → cancelled: allowed', async () => {
@@ -164,19 +172,21 @@ describe('AdminOrdersService', () => {
       expect(orderRepo.update).toHaveBeenCalledWith(1, { status: OrderStatus.REFUND_REQUESTED });
     });
 
-    it('refund_requested → refunded: allowed', async () => {
+    it('refund_requested → refunded: should call paymentsService.cancelAdmin', async () => {
       orderRepo.findOne
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED })
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
       paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });
-      paymentRepo.update.mockResolvedValue({ affected: 1 });
+      paymentsService.cancelAdmin.mockResolvedValue({
+        paymentId: 10,
+        status: PaymentStatus.REFUNDED,
+        cancelledAt: new Date(),
+        cancelReason: '관리자 환불 처리',
+      });
       orderRepo.update.mockResolvedValue({ affected: 1 });
 
       await service.updateStatus(1, OrderStatus.REFUNDED);
-      expect(paymentRepo.update).toHaveBeenCalledWith(10, expect.objectContaining({
-        status: PaymentStatus.REFUNDED,
-        cancelReason: '관리자 환불 처리',
-      }));
+      expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리');
     });
 
     it('completed → any: not allowed (terminal state)', async () => {

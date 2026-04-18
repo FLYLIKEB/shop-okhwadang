@@ -5,8 +5,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
-import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
+import { Payment } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
+import { PaymentsService } from '../payments/payments.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
@@ -35,6 +36,7 @@ export class AdminOrdersService {
     private readonly paymentRepository: Repository<Payment>,
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   async findAll(query: AdminOrderQueryDto): Promise<PaginatedResult<Order>> {
@@ -91,11 +93,7 @@ export class AdminOrdersService {
     if (nextStatus === OrderStatus.REFUNDED) {
       const payment = await this.paymentRepository.findOne({ where: { orderId } });
       if (payment) {
-        await this.paymentRepository.update(payment.id, {
-          status: PaymentStatus.REFUNDED,
-          cancelledAt: new Date(),
-          cancelReason: '관리자 환불 처리',
-        });
+        await this.paymentsService.cancelAdmin(orderId, '관리자 환불 처리');
       }
     }
 
