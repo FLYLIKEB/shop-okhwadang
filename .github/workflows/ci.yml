@@ -52,7 +52,22 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
       - run: cd backend && npm ci
+      - name: Write JWT RS256 keys for tests
+        env:
+          JWT_PRIVATE_KEY_SECRET: ${{ secrets.TEST_JWT_PRIVATE_KEY }}
+          JWT_PUBLIC_KEY_SECRET: ${{ secrets.TEST_JWT_PUBLIC_KEY }}
+        run: |
+          if [ -z "$JWT_PRIVATE_KEY_SECRET" ] || [ -z "$JWT_PUBLIC_KEY_SECRET" ]; then
+            echo "::error::TEST_JWT_PRIVATE_KEY / TEST_JWT_PUBLIC_KEY repository secrets are not set"
+            exit 1
+          fi
+          mkdir -p backend/keys
+          printf '%s' "$JWT_PRIVATE_KEY_SECRET" > backend/keys/jwt-private.pem
+          printf '%s' "$JWT_PUBLIC_KEY_SECRET" > backend/keys/jwt-public.pem
+          chmod 600 backend/keys/jwt-private.pem backend/keys/jwt-public.pem
       - run: cd backend && npm run lint
       - run: cd backend && npm run build
       - run: cd backend && npm run test
+      - name: Run migrations on test DB
+        run: cd backend && DATABASE_URL="$TEST_DATABASE_URL" npm run migration:run
       - run: cd backend && npm run test:e2e
