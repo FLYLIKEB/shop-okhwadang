@@ -143,6 +143,53 @@ describe('AdminOrdersService', () => {
       await service.updateStatus(1, OrderStatus.CANCELLED);
       expect(orderRepo.update).toHaveBeenCalledWith(1, { status: OrderStatus.CANCELLED });
     });
+
+    it('delivered → completed: allowed', async () => {
+      orderRepo.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED })
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.COMPLETED });
+      orderRepo.update.mockResolvedValue({ affected: 1 });
+
+      await service.updateStatus(1, OrderStatus.COMPLETED);
+      expect(orderRepo.update).toHaveBeenCalledWith(1, { status: OrderStatus.COMPLETED });
+    });
+
+    it('delivered → refund_requested: allowed', async () => {
+      orderRepo.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED })
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED });
+      orderRepo.update.mockResolvedValue({ affected: 1 });
+
+      await service.updateStatus(1, OrderStatus.REFUND_REQUESTED);
+      expect(orderRepo.update).toHaveBeenCalledWith(1, { status: OrderStatus.REFUND_REQUESTED });
+    });
+
+    it('refund_requested → refunded: allowed', async () => {
+      orderRepo.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED })
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });
+      paymentRepo.update.mockResolvedValue({ affected: 1 });
+      orderRepo.update.mockResolvedValue({ affected: 1 });
+
+      await service.updateStatus(1, OrderStatus.REFUNDED);
+      expect(paymentRepo.update).toHaveBeenCalledWith(10, expect.objectContaining({
+        status: PaymentStatus.REFUNDED,
+        cancelReason: '관리자 환불 처리',
+      }));
+    });
+
+    it('completed → any: not allowed (terminal state)', async () => {
+      orderRepo.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.COMPLETED });
+      await expect(service.updateStatus(1, OrderStatus.DELIVERED))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('delivered → refunded directly: not allowed (must go through refund_requested)', async () => {
+      orderRepo.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED });
+      await expect(service.updateStatus(1, OrderStatus.REFUNDED))
+        .rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('registerShipping', () => {
