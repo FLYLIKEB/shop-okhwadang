@@ -50,6 +50,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     phone: null,
     role: UserRole.USER,
     isActive: true,
+    isEmailVerified: true,
+    emailVerifiedAt: new Date(),
     refreshToken: null,
     failedLoginAttempts: 0,
     lockedUntil: null,

@@ -37,6 +37,13 @@ export interface PasswordResetContext {
   locale?: 'ko' | 'en';
 }
 
+export interface EmailVerificationContext {
+  recipientName: string;
+  verificationUrl: string;
+  expiresInMinutes: number;
+  locale?: 'ko' | 'en';
+}
+
 export interface RenderedEmail {
   subject: string;
   html: string;
@@ -104,5 +111,17 @@ export function renderPasswordReset(ctx: PasswordResetContext): RenderedEmail {
     ? `${ctx.recipientName}님, 아래 링크에서 비밀번호를 재설정해 주세요. 링크는 ${ctx.expiresInMinutes}분 후 만료됩니다.\n\n${ctx.resetUrl}`
     : `Hi ${ctx.recipientName}, use the link below to reset your password. It expires in ${ctx.expiresInMinutes} minutes.\n\n${ctx.resetUrl}`;
   const html = `<div><h2>${escapeHtml(subject)}</h2><p>${escapeHtml(text).replace(/\n/g, '<br>')}</p><p><a href="${escapeHtml(ctx.resetUrl)}">${escapeHtml(ctx.resetUrl)}</a></p></div>`;
+  return { subject, html, text };
+}
+
+export function renderEmailVerification(ctx: EmailVerificationContext): RenderedEmail {
+  const isKo = (ctx.locale ?? 'ko') === 'ko';
+  const subject = isKo
+    ? '[옥화당] 이메일 인증을 완료해 주세요'
+    : '[Okhwadang] Please verify your email';
+  const text = isKo
+    ? `${ctx.recipientName}님, 아래 링크를 클릭하여 이메일 인증을 완료해 주세요. 링크는 ${ctx.expiresInMinutes}분 후 만료됩니다.\n\n${ctx.verificationUrl}`
+    : `Hi ${ctx.recipientName}, click the link below to verify your email address. The link expires in ${ctx.expiresInMinutes} minutes.\n\n${ctx.verificationUrl}`;
+  const html = `<div><h2>${escapeHtml(subject)}</h2><p>${escapeHtml(text).replace(/\n/g, '<br>')}</p><p><a href="${escapeHtml(ctx.verificationUrl)}">${escapeHtml(ctx.verificationUrl)}</a></p></div>`;
   return { subject, html, text };
 }

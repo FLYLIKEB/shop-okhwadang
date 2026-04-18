@@ -14,6 +14,7 @@ import { OAuthService } from './oauth.service';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { TokenBlacklist } from './entities/token-blacklist.entity';
 import { TokenBlacklistService } from './token-blacklist.service';
+import { VerificationToken } from './entities/verification-token.entity';
 import { User } from '../users/entities/user.entity';
 import { UserAuthentication } from '../users/entities/user-authentication.entity';
 import { AuditLogModule } from '../audit-logs/audit-log.module';
@@ -41,7 +42,7 @@ function getJwtPrivateKey(): string {
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserAuthentication, PasswordResetToken, TokenBlacklist]),
+    TypeOrmModule.forFeature([User, UserAuthentication, PasswordResetToken, TokenBlacklist, VerificationToken]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       privateKey: getJwtPrivateKey(),

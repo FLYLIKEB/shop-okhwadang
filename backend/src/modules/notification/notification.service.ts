@@ -1,11 +1,13 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { EmailMessage, EmailProvider } from './interfaces/email-provider.interface';
 import {
+  renderEmailVerification,
   renderInquiryAnswered,
   renderOrderConfirmed,
   renderPaymentConfirmed,
   renderPasswordReset,
   renderShippingUpdate,
+  type EmailVerificationContext,
   type InquiryAnsweredContext,
   type OrderConfirmedContext,
   type PaymentConfirmedContext,
@@ -66,6 +68,11 @@ export class NotificationService {
 
   async sendPasswordReset(to: string, context: PasswordResetContext): Promise<void> {
     const rendered = renderPasswordReset(context);
+    await this.sendEmail({ to, ...rendered });
+  }
+
+  async sendEmailVerification(to: string, context: EmailVerificationContext): Promise<void> {
+    const rendered = renderEmailVerification(context);
     await this.sendEmail({ to, ...rendered });
   }
 }
