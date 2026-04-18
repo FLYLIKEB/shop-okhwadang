@@ -127,7 +127,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('201 — 속성 유형 생성', () => {
         return request(app.getHttpServer())
           .post('/api/attributes/types')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({
             code: 'new_test_attr',
             name: 'New Test',
@@ -144,7 +144,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('400 — 중복 코드', () => {
         return request(app.getHttpServer())
           .post('/api/attributes/types')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({
             code: 'new_test_attr',
             name: 'Duplicate Test',
@@ -157,7 +157,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 속성 유형 수정', () => {
         return request(app.getHttpServer())
           .patch(`/api/attributes/types/${attributeTypeId}`)
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({
             name: 'Updated Test',
           })
@@ -183,7 +183,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('201 — 상품 속성 생성', () => {
         return request(app.getHttpServer())
           .post('/api/attributes/products')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({
             productId,
             attributeTypeId,
@@ -202,7 +202,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 상품 속성 일괄 설정', () => {
         return request(app.getHttpServer())
           .post(`/api/attributes/products/${productId}/set`)
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({
             attributes: [
               { attributeTypeId, value: 'val2', displayValue: '값2' },
@@ -221,7 +221,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('404 — 존재하지 않는 속성 ID', () => {
         return request(app.getHttpServer())
           .patch('/api/attributes/products/999999')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({ value: 'updated' })
           .expect(404);
       });
@@ -231,7 +231,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('204 — 상품 속성 삭제', async () => {
         const createResult = await request(app.getHttpServer())
           .post('/api/attributes/products')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({
             productId,
             attributeTypeId,
@@ -242,7 +242,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
 
         return request(app.getHttpServer())
           .delete(`/api/attributes/products/${attrId}`)
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .expect(204);
       });
     });
@@ -251,7 +251,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('204 — 속성 유형 삭제', async () => {
         const createResult = await request(app.getHttpServer())
           .post('/api/attributes/types')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({
             code: 'to_delete_type',
             name: 'To Delete',
@@ -261,7 +261,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
 
         return request(app.getHttpServer())
           .delete(`/api/attributes/types/${typeId}`)
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .expect(204);
       });
     });
@@ -270,7 +270,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 속성 필터로 상품 조회 (attrs 파라미터)', async () => {
         await request(app.getHttpServer())
           .post('/api/attributes/products')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({
             productId,
             attributeTypeId,
@@ -288,7 +288,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 여러 속성 필터 (comma-separated)', async () => {
         await request(app.getHttpServer())
           .post('/api/attributes/products')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', ['accessToken=admin_token'])
           .send({
             productId,
             attributeTypeId,
