@@ -44,16 +44,42 @@ echo ""
 USE_LOCAL_DB=$(echo "${LOCAL_DATABASE_URL:-}" | grep -qE "localhost:330[67]|127\.0\.0\.1:330[67]" && echo "yes" || echo "no")
 
 # Docker Desktop 확인/시작
+# DOCKER_BOOT_TIMEOUT 환경변수로 대기 시간 override 가능 (기본 120초)
 if [ "$USE_LOCAL_DB" = "yes" ] && command -v docker > /dev/null 2>&1; then
     if ! docker info > /dev/null 2>&1; then
+        # macOS Docker Desktop 미설치를 확실히 감지 (open 명령은 미설치 시에도 0 반환 가능)
+        if [[ "$OSTYPE" == "darwin"* ]] && [ ! -d "/Applications/Docker.app" ]; then
+            echo -e "${RED}❌ Docker Desktop 미설치${NC}"
+            echo -e "${YELLOW}   설치: https://www.docker.com/products/docker-desktop/${NC}"
+            exit 1
+        fi
+        DOCKER_BOOT_TIMEOUT="${DOCKER_BOOT_TIMEOUT:-120}"
+        if ! [[ "$DOCKER_BOOT_TIMEOUT" =~ ^[0-9]+$ ]]; then
+            echo -e "${RED}❌ DOCKER_BOOT_TIMEOUT 값이 정수가 아닙니다: ${DOCKER_BOOT_TIMEOUT}${NC}"
+            exit 1
+        fi
         echo -e "${YELLOW}⚠️  Docker Desktop 시작 중...${NC}"
-        open -ga Docker 2>/dev/null || true
-        echo -e "${YELLOW}⏳ Docker Desktop 시작 대기 (최대 60초)...${NC}"
-        for i in {1..60}; do
-            docker info > /dev/null 2>&1 && break
-            [ $i -eq 60 ] && echo -e "${RED}❌ Docker Desktop 시작 실패${NC}" && exit 1
+        # macOS 에서만 GUI 앱 자동 기동, Linux 는 사용자가 직접 daemon 시작
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            open -ga Docker 2>/dev/null || true
+        else
+            echo -e "${YELLOW}   Docker daemon 을 수동으로 시작해주세요 (예: sudo systemctl start docker)${NC}"
+        fi
+        echo -e "${YELLOW}⏳ Docker Desktop 시작 대기 (최대 ${DOCKER_BOOT_TIMEOUT}초)...${NC}"
+        for ((i=1; i<=DOCKER_BOOT_TIMEOUT; i++)); do
+            if docker info > /dev/null 2>&1; then
+                break
+            fi
+            if [ $((i % 10)) -eq 0 ]; then
+                echo -e "${YELLOW}   ⏳ Docker Desktop 부팅 중... (${i}s 경과)${NC}"
+            fi
             sleep 1
         done
+        if ! docker info > /dev/null 2>&1; then
+            echo -e "${RED}❌ Docker Desktop 시작 실패 (${DOCKER_BOOT_TIMEOUT}초 경과)${NC}"
+            echo -e "${YELLOW}   타임아웃 상향: DOCKER_BOOT_TIMEOUT=180 bash scripts/start-local.sh${NC}"
+            exit 1
+        fi
         echo -e "${GREEN}✅ Docker Desktop 준비 완료${NC}"
     fi
 fi
