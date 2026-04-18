@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { SelectQueryBuilder } from 'typeorm';
 import { ProductsService } from '../products.service';
@@ -40,6 +40,16 @@ const mockRepository = {
   save: jest.fn(),
   remove: jest.fn(),
   increment: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockManager = {
+  create: jest.fn(),
+  save: jest.fn(),
+  delete: jest.fn(),
+};
+
+const mockDataSource = {
+  transaction: jest.fn().mockImplementation(async (cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager)),
 };
 
 describe('ProductsService', () => {
@@ -90,6 +100,10 @@ describe('ProductsService', () => {
           provide: CacheService,
           useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined), delPattern: jest.fn().mockResolvedValue(undefined) },
         },
+        {
+          provide: getDataSourceToken(),
+          useValue: mockDataSource,
+        },
       ],
     }).compile();
 
@@ -102,6 +116,10 @@ describe('ProductsService', () => {
     mockOrderBy.mockReturnThis();
     mockSkip.mockReturnThis();
     mockTake.mockReturnThis();
+    mockDataSource.transaction.mockImplementation(async (cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager));
+    mockManager.create.mockReturnValue({});
+    mockManager.save.mockResolvedValue({});
+    mockManager.delete.mockResolvedValue(undefined);
   });
 
   describe('findAll', () => {
@@ -222,8 +240,8 @@ describe('ProductsService', () => {
         name: 'QueryFailedError',
         code: 'ER_DUP_ENTRY',
       });
-      mockRepository.create.mockReturnValue({});
-      mockRepository.save.mockRejectedValue(dupError);
+      mockManager.create.mockReturnValue({});
+      mockManager.save.mockRejectedValue(dupError);
 
       await expect(
         service.create({ name: 'test', slug: 'duplicate', price: 1000 }),
@@ -232,8 +250,8 @@ describe('ProductsService', () => {
 
     it('정상 생성', async () => {
       const created = { id: 1 } as Product;
-      mockRepository.create.mockReturnValue(created);
-      mockRepository.save.mockResolvedValue(created);
+      mockManager.create.mockReturnValue(created);
+      mockManager.save.mockResolvedValue(created);
 
       const result = await service.create({
         name: '신상품',
@@ -246,8 +264,8 @@ describe('ProductsService', () => {
 
     it('다국어 필드 포함 생성 시 entity에 전달됨', async () => {
       const created = { id: 2 } as Product;
-      mockRepository.create.mockReturnValue(created);
-      mockRepository.save.mockResolvedValue(created);
+      mockManager.create.mockReturnValue(created);
+      mockManager.save.mockResolvedValue(created);
 
       await service.create({
         name: '보이차',
@@ -264,7 +282,8 @@ describe('ProductsService', () => {
         shortDescriptionZh: '口感顺滑',
       });
 
-      expect(mockRepository.create).toHaveBeenCalledWith(
+      expect(mockManager.create).toHaveBeenCalledWith(
+        expect.any(Function),
         expect.objectContaining({
           nameEn: 'Pu-erh Tea',
           nameJa: '普洱茶',
@@ -277,6 +296,26 @@ describe('ProductsService', () => {
           shortDescriptionZh: '口感顺滑',
         }),
       );
+    });
+
+    it('이미지 저장 실패 시 상품도 롤백됨', async () => {
+      const created = { id: 10 } as Product;
+      mockManager.create.mockReturnValue(created);
+      // 첫 번째 save(Product) 성공, 두 번째 save(ProductImage) 실패
+      mockManager.save
+        .mockResolvedValueOnce(created)
+        .mockRejectedValueOnce(new Error('이미지 저장 실패'));
+      // transaction 자체가 reject되도록 실제 콜백 실행
+      mockDataSource.transaction.mockImplementation(async (cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager));
+
+      await expect(
+        service.create({
+          name: '롤백테스트',
+          slug: 'rollback-test',
+          price: 5000,
+          images: [{ url: 'https://example.com/img.jpg' }],
+        }),
+      ).rejects.toThrow('이미지 저장 실패');
     });
   });
 
@@ -296,7 +335,8 @@ describe('ProductsService', () => {
         shortDescriptionZh: null,
       } as unknown as Product;
       mockRepository.findOne.mockResolvedValue(existing);
-      mockRepository.save.mockResolvedValue({ ...existing, nameEn: 'Updated English Name' });
+      const updated = { ...existing, nameEn: 'Updated English Name' };
+      mockManager.save.mockResolvedValue(updated);
 
       const result = await service.update(1, { nameEn: 'Updated English Name' });
 

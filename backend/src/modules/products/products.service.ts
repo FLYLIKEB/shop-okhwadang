@@ -6,7 +6,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, QueryFailedError, SelectQueryBuilder } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, EntityManager, Repository, QueryFailedError, SelectQueryBuilder } from 'typeorm';
 import { Product, ProductStatus } from './entities/product.entity';
 import { Category } from './entities/category.entity';
 import { ProductImage } from './entities/product-image.entity';
@@ -45,6 +46,8 @@ export class ProductsService {
     @InjectRepository(ProductAttribute)
     private readonly productAttributeRepository: Repository<ProductAttribute>,
     private readonly cacheService: CacheService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   private async getReviewStats(
@@ -365,43 +368,44 @@ export class ProductsService {
 
   async create(dto: CreateProductDto): Promise<Product> {
     const { images, detailImages, ...productData } = dto;
-    const product = this.productRepository.create({
-      ...productData,
-      categoryId: dto.categoryId ?? null,
-      salePrice: dto.salePrice ?? null,
-      sku: dto.sku ?? null,
-    });
-
     try {
-      const saved = await this.productRepository.save(product);
+      return await this.dataSource.transaction(async (manager: EntityManager) => {
+        const product = manager.create(Product, {
+          ...productData,
+          categoryId: dto.categoryId ?? null,
+          salePrice: dto.salePrice ?? null,
+          sku: dto.sku ?? null,
+        });
+        const saved = await manager.save(product);
 
-      if (images && images.length > 0) {
-        const imageEntities = images.map((img, index) =>
-          this.productImageRepository.create({
-            productId: saved.id,
-            url: img.url,
-            alt: img.alt ?? null,
-            sortOrder: img.sortOrder ?? index,
-            isThumbnail: img.isThumbnail ?? index === 0,
-          }),
-        );
-        await this.productImageRepository.save(imageEntities);
-      }
+        if (images && images.length > 0) {
+          const imageEntities = images.map((img, index) =>
+            manager.create(ProductImage, {
+              productId: saved.id,
+              url: img.url,
+              alt: img.alt ?? null,
+              sortOrder: img.sortOrder ?? index,
+              isThumbnail: img.isThumbnail ?? index === 0,
+            }),
+          );
+          await manager.save(ProductImage, imageEntities);
+        }
 
-      if (detailImages && detailImages.length > 0) {
-        const detailEntities = detailImages.map((img, index) =>
-          this.productDetailImageRepository.create({
-            productId: saved.id,
-            url: img.url,
-            alt: img.alt ?? null,
-            sortOrder: img.sortOrder ?? index,
-            isActive: true,
-          }),
-        );
-        await this.productDetailImageRepository.save(detailEntities);
-      }
+        if (detailImages && detailImages.length > 0) {
+          const detailEntities = detailImages.map((img, index) =>
+            manager.create(ProductDetailImage, {
+              productId: saved.id,
+              url: img.url,
+              alt: img.alt ?? null,
+              sortOrder: img.sortOrder ?? index,
+              isActive: true,
+            }),
+          );
+          await manager.save(ProductDetailImage, detailEntities);
+        }
 
-      return saved;
+        return saved;
+      });
     } catch (err) {
       if (
         err instanceof Error &&
@@ -420,39 +424,43 @@ export class ProductsService {
     Object.assign(product, productData);
 
     try {
-      const saved = await this.productRepository.save(product);
+      const saved = await this.dataSource.transaction(async (manager: EntityManager) => {
+        const updatedProduct = await manager.save(product);
 
-      if (images !== undefined) {
-        await this.productImageRepository.delete({ productId: id });
-        if (images && images.length > 0) {
-          const imageEntities = images.map((img, index) =>
-            this.productImageRepository.create({
-              productId: id,
-              url: img.url,
-              alt: img.alt ?? null,
-              sortOrder: img.sortOrder ?? index,
-              isThumbnail: img.isThumbnail ?? index === 0,
-            }),
-          );
-          await this.productImageRepository.save(imageEntities);
+        if (images !== undefined) {
+          await manager.delete(ProductImage, { productId: id });
+          if (images && images.length > 0) {
+            const imageEntities = images.map((img, index) =>
+              manager.create(ProductImage, {
+                productId: id,
+                url: img.url,
+                alt: img.alt ?? null,
+                sortOrder: img.sortOrder ?? index,
+                isThumbnail: img.isThumbnail ?? index === 0,
+              }),
+            );
+            await manager.save(ProductImage, imageEntities);
+          }
         }
-      }
 
-      if (detailImages !== undefined) {
-        await this.productDetailImageRepository.delete({ productId: id });
-        if (detailImages && detailImages.length > 0) {
-          const detailEntities = detailImages.map((img, index) =>
-            this.productDetailImageRepository.create({
-              productId: id,
-              url: img.url,
-              alt: img.alt ?? null,
-              sortOrder: img.sortOrder ?? index,
-              isActive: true,
-            }),
-          );
-          await this.productDetailImageRepository.save(detailEntities);
+        if (detailImages !== undefined) {
+          await manager.delete(ProductDetailImage, { productId: id });
+          if (detailImages && detailImages.length > 0) {
+            const detailEntities = detailImages.map((img, index) =>
+              manager.create(ProductDetailImage, {
+                productId: id,
+                url: img.url,
+                alt: img.alt ?? null,
+                sortOrder: img.sortOrder ?? index,
+                isActive: true,
+              }),
+            );
+            await manager.save(ProductDetailImage, detailEntities);
+          }
         }
-      }
+
+        return updatedProduct;
+      });
 
       await Promise.all([
         this.cacheService.del(`products:detail:${id}`),
