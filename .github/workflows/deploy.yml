@@ -48,6 +48,25 @@ jobs:
           chmod 600 .env keys/jwt-private.pem keys/jwt-public.pem
 
           # ------------------------------------------------------------------
+          # 2-1. 필수 env 키 존재 여부 사전 검증
+          #      .env.example 의 # REQUIRED 태그가 붙은 키를 파싱하여 확인.
+          #      누락 시 배포를 즉시 중단 — PM2 크래시 루프 방지.
+          # ------------------------------------------------------------------
+          REQUIRED_KEYS=$(grep -E '#[[:space:]]*REQUIRED' .env.example | grep -oE '^[A-Z_]+' || true)
+          MISSING_KEYS=""
+          for key in $REQUIRED_KEYS; do
+            if ! grep -qE "^${key}=.+" .env; then
+              MISSING_KEYS="${MISSING_KEYS} ${key}"
+            fi
+          done
+          if [ -n "$MISSING_KEYS" ]; then
+            echo "ERROR: backend/.env 에 다음 필수 키가 없거나 비어 있습니다:${MISSING_KEYS}" >&2
+            echo "       remote-env-sync.sh push 로 EC2 .env 를 업데이트한 후 재배포하세요." >&2
+            exit 1
+          fi
+          echo "필수 env 키 검증 통과"
+
+          # ------------------------------------------------------------------
           # 3. 의존성 설치 및 빌드
           # ------------------------------------------------------------------
           npm ci

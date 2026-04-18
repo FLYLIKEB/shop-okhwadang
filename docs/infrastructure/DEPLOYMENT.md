@@ -153,6 +153,24 @@ sudo systemctl enable --now nginx
 
 ---
 
+## 환경변수 추가 시 작업 순서
+
+> 2026-04-18 장애 재발 방지용. 새 env 키를 추가할 때 반드시 이 순서를 따를 것.
+
+1. **`backend/.env.example` 수정** — 새 키 추가, 프로덕션 필수 키면 끝에 `# REQUIRED` 주석 추가
+2. **로컬 `backend/.env` 업데이트** — 개발 값 설정
+3. **`backend/.env.production` 업데이트** — 운영 값 설정 (민감값은 `.env.secrets` 오버라이드 활용)
+4. **원격 동기화**: `bash scripts/remote-env-sync.sh push`
+5. **검증**: `bash scripts/remote-env-sync.sh verify` — 원격 `.env`에 REQUIRED 키가 모두 있는지 확인
+6. **배포** — deploy.yml이 Step 2-1에서 REQUIRED 키를 재검증. 누락 시 배포 중단.
+
+> **`# REQUIRED` 규칙**: `.env.example` 의 키 라인 끝에 `# REQUIRED` 주석을 붙이면
+> `deploy.yml`(Step 2-1)과 `remote-env-sync.sh verify`가 자동으로 해당 키를 필수 항목으로 인식한다.
+> NestJS bootstrap 전 `src/config/env-validator.ts`도 동일 목록을 검증하므로,
+> 새 필수 키 추가 시 `REQUIRED_PROD_ENV_KEYS` 배열도 함께 업데이트한다.
+
+---
+
 ## 트러블슈팅
 
 ### EC2 — PM2 프로세스 비정상 종료
