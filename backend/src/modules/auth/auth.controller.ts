@@ -18,6 +18,8 @@ import { LoginDto } from './dto/login.dto';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -60,7 +62,7 @@ function clearAuthCookies(res: Response): void {
 }
 
 @Throttle({ auth: { limit: 30, ttl: 60000 } })
-@SkipThrottle({ forgotPassword: true })
+@SkipThrottle({ forgotPassword: true, resendVerification: true })
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -125,6 +127,34 @@ export class AuthController {
   @ApiResponse({ status: 400, description: '토큰이 유효하지 않거나 만료됨' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Post('verify-email')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ resendVerification: { limit: 3, ttl: 60000 } })
+  @ApiOperation({
+    summary: '이메일 인증',
+    description: '이메일로 받은 인증 토큰으로 이메일 인증을 완료합니다.',
+  })
+  @ApiResponse({ status: 200, description: '이메일 인증 성공' })
+  @ApiResponse({ status: 400, description: '토큰이 유효하지 않거나 만료됨' })
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto);
+  }
+
+  @Post('resend-verification')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ resendVerification: { limit: 3, ttl: 60000 } })
+  @ApiOperation({
+    summary: '인증 이메일 재발송',
+    description: '이메일 인증을 다시 요청합니다. 1분間に最大3回まで.',
+  })
+  @ApiResponse({ status: 200, description: '인증 이메일 발송 처리 완료' })
+  @ApiResponse({ status: 429, description: '너무 많은 요청' })
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerification(dto);
   }
 
   @Get('profile')
