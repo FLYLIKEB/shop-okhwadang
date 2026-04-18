@@ -31,6 +31,7 @@ import { ArchivesModule } from './modules/archives/archives.module';
 import { JournalModule } from './modules/journal/journal.module';
 import { PointsModule } from './modules/points/points.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -107,6 +108,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     JournalModule,
     PointsModule,
     NotificationModule,
+    SchedulerModule,
   ],
   providers: [
     // Guard execution order: ThrottlerGuard → JwtAuthGuard → RolesGuard
