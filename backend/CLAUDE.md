@@ -5,7 +5,8 @@ NestJS + TypeORM + MySQL. Inherits root CLAUDE.md. See `.claude/rules/backend-pa
 ## Architecture
 - **Controller → Service → Entity** (DI pattern), DTO validation (class-validator)
 - Module structure: `src/modules/{module}/`, global prefix `/api`
-- NestJS Logger only — no `console.log`
+- NestJS Logger only — no `console.log` in application runtime code
+- Seeders/CLI support scripts may use `console.log` for progress output
 - NestJS built-in exceptions only (`NotFoundException`, `BadRequestException`, etc.)
 - Cursor-based pagination, in-memory caching (CacheService), N+1 prevention via TypeORM relations
 - Error response: `{ statusCode, message, error }`
