@@ -2,13 +2,20 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
+
 let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerCartSuite(getApp: () => INestApplication) {
   describe('Cart (e2e)', () => {
-    let userAToken: string;
-    let userBToken: string;
+    let userACookies: AuthCookies;
+    let userBCookies: AuthCookies;
     let productId: number;
     let optionId: number;
     let cartItemId: number;
@@ -21,26 +28,26 @@ export function registerCartSuite(getApp: () => INestApplication) {
       dataSource = app.get(DataSource);
 
       // Create user A
-      const regA = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userAEmail, password: 'Test1234!', name: '카트유저A' });
-      if (regA.status !== 201) throw new Error(`Register A failed: ${regA.status} ${JSON.stringify(regA.body)}`);
-
-      const loginA = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userAEmail, password: 'Test1234!' });
-      if (loginA.status !== 200) throw new Error(`Login A failed: ${loginA.status} ${JSON.stringify(loginA.body)}`);
-      userAToken = (loginA.body as { accessToken: string }).accessToken;
+      await registerAndGetCookies(app, {
+        email: userAEmail,
+        password: 'Test1234!',
+        name: '카트유저A',
+      });
+      userACookies = await loginAndGetCookies(app, {
+        email: userAEmail,
+        password: 'Test1234!',
+      });
 
       // Create user B
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userBEmail, password: 'Test1234!', name: '카트유저B' });
-
-      const loginB = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userBEmail, password: 'Test1234!' });
-      userBToken = (loginB.body as { accessToken: string }).accessToken;
+      await registerAndGetCookies(app, {
+        email: userBEmail,
+        password: 'Test1234!',
+        name: '카트유저B',
+      });
+      userBCookies = await loginAndGetCookies(app, {
+        email: userBEmail,
+        password: 'Test1234!',
+      });
 
       // Seed product and option
       const prodResult = await dataSource.query(`
@@ -85,7 +92,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('user A — empty cart → 200, items=[]', () => {
         return request(app.getHttpServer())
           .get('/api/cart')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .expect(200)
           .expect((res) => {
             expect((res.body as { items: unknown[] }).items).toHaveLength(0);
@@ -98,7 +105,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('adds item for user A → 201', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/cart')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .send({ productId, productOptionId: null, quantity: 1 })
           .expect(201);
 
@@ -111,7 +118,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('same product again → 201, quantity upserted to 2', () => {
         return request(app.getHttpServer())
           .post('/api/cart')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .send({ productId, productOptionId: null, quantity: 1 })
           .expect(201)
           .expect((res) => {
@@ -124,7 +131,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('non-existent productId → 404', () => {
         return request(app.getHttpServer())
           .post('/api/cart')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .send({ productId: 999999, productOptionId: null, quantity: 1 })
           .expect(404);
       });
@@ -132,7 +139,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('quantity=0 → 400 validation error', () => {
         return request(app.getHttpServer())
           .post('/api/cart')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .send({ productId, productOptionId: null, quantity: 0 })
           .expect(400);
       });
@@ -142,7 +149,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('user A — 1 item quantity=2', () => {
         return request(app.getHttpServer())
           .get('/api/cart')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .expect(200)
           .expect((res) => {
             const items = (res.body as { items: Array<{ quantity: number }> })
@@ -157,7 +164,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('user A updates quantity to 5 → 200', () => {
         return request(app.getHttpServer())
           .patch(`/api/cart/${cartItemId}`)
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .send({ quantity: 5 })
           .expect(200)
           .expect((res) => {
@@ -168,7 +175,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('user B updates user A item → 403', () => {
         return request(app.getHttpServer())
           .patch(`/api/cart/${cartItemId}`)
-          .set('Authorization', `Bearer ${userBToken}`)
+          .set('Cookie', cookieHeader(userBCookies))
           .send({ quantity: 3 })
           .expect(403);
       });
@@ -178,14 +185,14 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('user B deletes user A item → 403', () => {
         return request(app.getHttpServer())
           .delete(`/api/cart/${cartItemId}`)
-          .set('Authorization', `Bearer ${userBToken}`)
+          .set('Cookie', cookieHeader(userBCookies))
           .expect(403);
       });
 
       it('user A deletes own item → 200', () => {
         return request(app.getHttpServer())
           .delete(`/api/cart/${cartItemId}`)
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .expect(200)
           .expect((res) => {
             expect((res.body as { message: string }).message).toBe(
@@ -197,7 +204,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('GET /api/cart after delete — items=[]', () => {
         return request(app.getHttpServer())
           .get('/api/cart')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .expect(200)
           .expect((res) => {
             expect((res.body as { items: unknown[] }).items).toHaveLength(0);
@@ -209,7 +216,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
       it('adds item with option → 201, totalAmount accounts for priceAdjustment', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/cart')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .send({ productId, productOptionId: optionId, quantity: 2 })
           .expect(201);
 
@@ -227,7 +234,7 @@ export function registerCartSuite(getApp: () => INestApplication) {
         ).items[0].id;
         await request(app.getHttpServer())
           .delete(`/api/cart/${itemId}`)
-          .set('Authorization', `Bearer ${userAToken}`);
+          .set('Cookie', cookieHeader(userACookies));
       });
     });
   });
