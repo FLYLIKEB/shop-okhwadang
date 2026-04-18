@@ -10,9 +10,25 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
     let adminToken: string;
     let userToken: string;
     let orderId: number;
+    let refundOrderId: number;
+    let productId: number;
 
     const adminEmail = `admin-orders-admin-${Date.now()}@test.com`;
     const userEmail = `admin-orders-user-${Date.now()}@test.com`;
+
+    async function createOrder(): Promise<number> {
+      const orderRes = await request(app.getHttpServer())
+        .post('/api/orders')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          items: [{ productId, quantity: 1 }],
+          recipientName: '테스트',
+          recipientPhone: '010-1234-5678',
+          zipcode: '12345',
+          address: '서울시 강남구',
+        });
+      return (orderRes.body as { id: number }).id;
+    }
 
     beforeAll(async () => {
       app = getApp();
@@ -42,20 +58,10 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         .post('/api/products')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ name: '주문테스트상품', slug, price: 10000, stock: 100, status: 'active' });
-      const productId = (productRes.body as { id: number }).id;
+      productId = (productRes.body as { id: number }).id;
 
-      // Create order
-      const orderRes = await request(app.getHttpServer())
-        .post('/api/orders')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          items: [{ productId, quantity: 1 }],
-          recipientName: '테스트',
-          recipientPhone: '010-1234-5678',
-          zipcode: '12345',
-          address: '서울시 강남구',
-        });
-      orderId = (orderRes.body as { id: number }).id;
+      orderId = await createOrder();
+      refundOrderId = await createOrder();
     });
 
     describe('GET /api/admin/orders', () => {
@@ -176,7 +182,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       });
     });
 
-    describe('shipped → delivered flow', () => {
+    describe('delivered → completed flow', () => {
       it('preparing → shipped (운송장 등록 후)', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
@@ -199,12 +205,103 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         expect(body.status).toBe('delivered');
       });
 
-      it('delivered → 최종 상태, 전이 불가', async () => {
+      it('delivered → completed', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${orderId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status: 'completed' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('completed');
+      });
+
+      it('completed → paid: 전이 불가', async () => {
         await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
           .set('Authorization', `Bearer ${adminToken}`)
           .send({ status: 'paid' })
           .expect(400);
+      });
+    });
+
+    describe('delivered → refund_requested → refunded flow', () => {
+      it('refund order 운송장 등록 → 201', async () => {
+        const res = await request(app.getHttpServer())
+          .post(`/api/admin/shipping/${refundOrderId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ carrier: 'cj', trackingNumber: `TRK-REFUND-${Date.now()}` })
+          .expect(201);
+
+        const body = res.body as { carrier: string; trackingNumber: string };
+        expect(body.carrier).toBe('cj');
+        expect(body.trackingNumber).toBeDefined();
+      });
+
+      it('refund order pending → paid', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status: 'paid' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('paid');
+      });
+
+      it('refund order paid → preparing', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status: 'preparing' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('preparing');
+      });
+
+      it('refund order preparing → shipped', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status: 'shipped' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('shipped');
+      });
+
+      it('refund order shipped → delivered', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status: 'delivered' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('delivered');
+      });
+
+      it('refund order delivered → refund_requested', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status: 'refund_requested' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('refund_requested');
+      });
+
+      it('refund_requested → refunded', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status: 'refunded' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('refunded');
       });
     });
   });
