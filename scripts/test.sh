@@ -97,8 +97,24 @@ run_backend_unit() {
 
 run_backend_e2e() {
     start_test_db
-    echo -e "${BLUE}🔧 백엔드 E2E 테스트 실행...${NC}"
     cd "$BACKEND_DIR"
+
+    if [ -z "${TEST_DATABASE_URL:-}" ]; then
+        if [ -n "${MYSQL_ROOT_PASSWORD:-}" ]; then
+            TEST_DATABASE_URL="mysql://root:${MYSQL_ROOT_PASSWORD}@127.0.0.1:3308/commerce_test"
+            export TEST_DATABASE_URL
+            echo -e "${YELLOW}⚠️  TEST_DATABASE_URL 미설정 → 기본값(127.0.0.1:3308/commerce_test) 사용${NC}"
+        else
+            echo -e "${RED}❌ TEST_DATABASE_URL 또는 MYSQL_ROOT_PASSWORD가 필요합니다.${NC}"
+            echo -e "${YELLOW}   backend/.env 에 TEST_DATABASE_URL 설정을 권장합니다.${NC}"
+            exit 1
+        fi
+    fi
+
+    echo -e "${BLUE}🧱 테스트 DB 마이그레이션 적용...${NC}"
+    DATABASE_URL="${TEST_DATABASE_URL}" NODE_ENV=test npm run migration:run
+
+    echo -e "${BLUE}🔧 백엔드 E2E 테스트 실행...${NC}"
     npm run test:e2e
     cd "$PROJECT_ROOT"
     echo -e "${GREEN}✅ 백엔드 E2E 테스트 통과${NC}"
