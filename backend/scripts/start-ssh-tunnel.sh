@@ -34,6 +34,17 @@ SSH_KEY_PATH=${SSH_KEY_PATH:-$HOME/.ssh/okhwadang.pem}
 # Lightsail DB 엔드포인트 (미설정 시 EC2 localhost로 폴백)
 LIGHTSAIL_DB_HOST=${LIGHTSAIL_DB_HOST:-localhost}
 
+find_ssh_tunnel_pids() {
+    local candidates pid cmd
+    candidates=$(lsof -nP -tiTCP:${SSH_TUNNEL_LOCAL_PORT} -sTCP:LISTEN 2>/dev/null || true)
+    for pid in $candidates; do
+        cmd=$(ps -p "$pid" -o command= 2>/dev/null || true)
+        if [[ "$cmd" == *"ssh "* ]] && [[ "$cmd" == *"-L ${SSH_TUNNEL_LOCAL_PORT}:"* ]]; then
+            echo "$pid"
+        fi
+    done
+}
+
 if [ "$SSH_TUNNEL_ENABLED" != "true" ]; then
     echo -e "${YELLOW}⚠️  SSH_TUNNEL_ENABLED=true 로 설정되지 않았습니다${NC}"
     exit 1
@@ -49,11 +60,25 @@ if [ ! -f "$SSH_KEY_PATH" ]; then
     exit 1
 fi
 
-EXISTING_PID=$(lsof -ti:$SSH_TUNNEL_LOCAL_PORT 2>/dev/null || true)
-if [ -n "$EXISTING_PID" ]; then
-    echo -e "${YELLOW}⚠️  기존 터널 종료 중 (PID: $EXISTING_PID)${NC}"
-    kill $EXISTING_PID 2>/dev/null || true
+EXISTING_PIDS=$(find_ssh_tunnel_pids || true)
+if [ -n "$EXISTING_PIDS" ]; then
+    echo -e "${YELLOW}⚠️  기존 SSH 터널 종료 중 (PID: $(echo "$EXISTING_PIDS" | tr '\n' ' ' | xargs))${NC}"
+    while IFS= read -r pid; do
+        [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+    done <<< "$EXISTING_PIDS"
     sleep 1
+fi
+
+PORT_PIDS=$(lsof -nP -tiTCP:${SSH_TUNNEL_LOCAL_PORT} -sTCP:LISTEN 2>/dev/null || true)
+if [ -n "$PORT_PIDS" ]; then
+    echo -e "${RED}❌ 포트 ${SSH_TUNNEL_LOCAL_PORT} 이(가) 이미 다른 프로세스에서 사용 중입니다.${NC}"
+    echo -e "${YELLOW}   SSH 터널이 아닌 프로세스는 자동 종료하지 않습니다. 점유 프로세스 확인 후 다시 시도하세요.${NC}"
+    while IFS= read -r pid; do
+        [ -z "$pid" ] && continue
+        cmd=$(ps -p "$pid" -o command= 2>/dev/null || true)
+        echo -e "${YELLOW}   - PID ${pid}: ${cmd}${NC}"
+    done <<< "$PORT_PIDS"
+    exit 1
 fi
 
 echo -e "${BLUE}🔐 터널 시작: localhost:${SSH_TUNNEL_LOCAL_PORT} → ${SSH_TUNNEL_REMOTE_HOST}:${SSH_TUNNEL_REMOTE_PORT}${NC}"

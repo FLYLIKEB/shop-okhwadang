@@ -4,7 +4,7 @@
 
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
-| `BACKEND_URL` | `http://localhost:3000` | NestJS 백엔드 URL (next.config.ts 리라이트에서 사용) |
+| `BACKEND_URL` | `http://localhost:3000` | NestJS 백엔드 URL (`src/middleware.ts` 런타임 프록시와 서버 컴포넌트 fetch에서 사용) |
 
 ---
 
