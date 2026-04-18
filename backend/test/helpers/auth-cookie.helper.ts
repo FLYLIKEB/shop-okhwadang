@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import type { Response as SupertestResponse } from 'supertest';
+import { DataSource } from 'typeorm';
 import request from 'supertest';
 
 export interface AuthCookies {
@@ -58,9 +59,17 @@ export async function registerAndGetCookies(
     .send(payload)
     .expect(201);
 
+  const body = res.body as { user: { id: number } };
+  const dataSource = app.get(DataSource);
+
+  await dataSource.query(
+    'UPDATE users SET is_email_verified = 1, email_verified_at = NOW() WHERE id = ?',
+    [body.user.id],
+  );
+
   return {
     cookies: extractAuthCookies(res),
-    body: res.body as { user: { id: number } },
+    body,
   };
 }
 
