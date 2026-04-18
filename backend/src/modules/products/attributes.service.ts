@@ -97,8 +97,8 @@ export class AttributesService {
   }
 
   async deleteAttributeType(id: number): Promise<void> {
-    const type = await this.findAttributeTypeById(id);
-    await this.attributeTypeRepository.remove(type);
+    await this.findAttributeTypeById(id);
+    await this.attributeTypeRepository.delete({ id });
   }
 
   // ─── Product Attributes ────────────────────────────────────────────
@@ -183,7 +183,7 @@ export class AttributesService {
     if (!attr) {
       throw new NotFoundException(`ProductAttribute ID ${id} not found`);
     }
-    await this.productAttributeRepository.remove(attr);
+    await this.productAttributeRepository.delete({ id });
   }
 
   async deleteAttributesByProductId(productId: number): Promise<void> {
