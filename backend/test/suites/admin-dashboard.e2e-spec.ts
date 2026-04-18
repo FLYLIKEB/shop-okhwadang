@@ -1,6 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
 let dataSource: DataSource;
@@ -12,34 +18,28 @@ export function registerAdminDashboardSuite(getApp: () => INestApplication) {
     const password = 'Test1234!';
     const name = '대시보드관리자';
 
-    let adminToken: string;
-    let userToken: string;
+    let adminCookies: AuthCookies;
+    let userCookies: AuthCookies;
 
     beforeAll(async () => {
       app = getApp();
       dataSource = app.get(DataSource);
 
-      const adminRegRes = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: adminEmail, password, name });
-      const adminBody = adminRegRes.body as { accessToken?: string };
+      await registerAndGetCookies(app, { email: adminEmail, password, name });
 
       await dataSource.query(
         `UPDATE users SET role = 'admin' WHERE email = ?`,
         [adminEmail],
       );
 
-      const adminLoginRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: adminEmail, password });
-      const adminLoginBody = adminLoginRes.body as { accessToken?: string };
-      adminToken = adminLoginBody.accessToken ?? adminBody.accessToken ?? '';
+      adminCookies = await loginAndGetCookies(app, { email: adminEmail, password });
 
-      const userRegRes = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userEmail, password, name: '일반사용자' });
-      const userBody = userRegRes.body as { accessToken?: string };
-      userToken = userBody.accessToken ?? '';
+      const userReg = await registerAndGetCookies(app, {
+        email: userEmail,
+        password,
+        name: '일반사용자',
+      });
+      userCookies = userReg.cookies;
     });
 
     afterAll(async () => {
@@ -59,14 +59,14 @@ export function registerAdminDashboardSuite(getApp: () => INestApplication) {
       it('role=user → 403', () => {
         return request(app.getHttpServer())
           .get('/api/admin/dashboard')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .expect(403);
       });
 
       it('role=admin → 200 with dashboard data', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/admin/dashboard')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
 
         const body = res.body as Record<string, unknown>;
@@ -85,7 +85,7 @@ export function registerAdminDashboardSuite(getApp: () => INestApplication) {
       it('기간 필터 적용 (7d)', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/admin/dashboard?period=7d')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
 
         const body = res.body as { revenue_chart: Array<{ date: string }> };
@@ -95,7 +95,7 @@ export function registerAdminDashboardSuite(getApp: () => INestApplication) {
       it('커스텀 날짜 범위', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/admin/dashboard?startDate=2026-03-01&endDate=2026-03-10')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
 
         const body = res.body as { revenue_chart: Array<{ date: string }> };
@@ -105,14 +105,14 @@ export function registerAdminDashboardSuite(getApp: () => INestApplication) {
       it('365일 초과 범위 → 400', () => {
         return request(app.getHttpServer())
           .get('/api/admin/dashboard?startDate=2024-01-01&endDate=2026-03-01')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(400);
       });
 
       it('order_status_summary 구조 검증', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/admin/dashboard')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
 
         const body = res.body as { order_status_summary: Record<string, number> };

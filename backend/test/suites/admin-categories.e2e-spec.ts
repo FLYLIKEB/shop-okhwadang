@@ -2,14 +2,19 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
   describe('Admin Categories (e2e)', () => {
-    let adminToken: string;
-    let userToken: string;
+    let adminCookies: AuthCookies;
+    let userCookies: AuthCookies;
     let adminUserId: number;
     let regularUserId: number;
     let createdCategoryId: number;
@@ -39,16 +44,10 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
       regularUserId = userResult.insertId as number;
 
       // Login as admin
-      const adminLogin = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: adminEmail, password });
-      adminToken = (adminLogin.body as { accessToken: string }).accessToken;
+      adminCookies = await loginAndGetCookies(app, { email: adminEmail, password });
 
       // Login as regular user
-      const userLogin = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userEmail, password });
-      userToken = (userLogin.body as { accessToken: string }).accessToken;
+      userCookies = await loginAndGetCookies(app, { email: userEmail, password });
     });
 
     afterAll(async () => {
@@ -62,7 +61,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
       it('admin → 201, 카테고리 생성 성공', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ name: '테스트루트', slug: 'test-root-admin-e2e', sortOrder: 0 })
           .expect(201);
 
@@ -75,7 +74,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
       it('일반 user → 403', () => {
         return request(app.getHttpServer())
           .post('/api/categories')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ name: '일반유저카테고리', slug: 'user-cat-admin-e2e' })
           .expect(403);
       });
@@ -90,7 +89,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
       it('slug 중복 → 409', () => {
         return request(app.getHttpServer())
           .post('/api/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ name: '중복슬러그', slug: 'test-root-admin-e2e' })
           .expect(409);
       });
@@ -100,7 +99,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
       it('admin → 200, 이름 업데이트', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/categories/${createdCategoryId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ name: '업데이트된루트' })
           .expect(200);
 
@@ -114,13 +113,13 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
         // create child
         const childRes = await request(app.getHttpServer())
           .post('/api/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ name: '하위카테고리', slug: 'child-cat-admin-e2e', parentId: createdCategoryId });
         const childId = (childRes.body as { id: number }).id;
 
         await request(app.getHttpServer())
           .delete(`/api/categories/${createdCategoryId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(400);
 
         // cleanup child
@@ -130,7 +129,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
       it('삭제 성공 → 204', () => {
         return request(app.getHttpServer())
           .delete(`/api/categories/${createdCategoryId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(204);
       });
     });
@@ -139,11 +138,11 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
       it('admin → 204, sort_order 일괄 업데이트', async () => {
         const res1 = await request(app.getHttpServer())
           .post('/api/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ name: 'reorder1', slug: 'reorder1-admin-e2e', sortOrder: 0 });
         const res2 = await request(app.getHttpServer())
           .post('/api/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ name: 'reorder2', slug: 'reorder2-admin-e2e', sortOrder: 1 });
 
         const id1 = (res1.body as { id: number }).id;
@@ -151,7 +150,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
 
         await request(app.getHttpServer())
           .patch('/api/categories/reorder')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ orders: [{ id: id1, sortOrder: 10 }, { id: id2, sortOrder: 5 }] })
           .expect(204);
 
@@ -167,7 +166,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
         ]);
         const res = await request(app.getHttpServer())
           .post('/api/upload/category-image')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .attach('file', fakeImage, {
             filename: 'test.jpg',
             contentType: 'image/jpeg',
@@ -185,7 +184,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
         ]);
         await request(app.getHttpServer())
           .post('/api/upload/category-image')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .attach('file', fakeImage, {
             filename: 'test.jpg',
             contentType: 'image/jpeg',
@@ -211,7 +210,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
       it('admin → 업로드된 이미지 URL을 카테고리에 설정', async () => {
         const catRes = await request(app.getHttpServer())
           .post('/api/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ name: '이미지카테고리', slug: 'img-cat-admin-e2e', sortOrder: 0 });
         const catId = (catRes.body as { id: number }).id;
 
@@ -220,7 +219,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
         ]);
         const uploadRes = await request(app.getHttpServer())
           .post('/api/upload/category-image')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .attach('file', fakeImage, {
             filename: 'test.jpg',
             contentType: 'image/jpeg',
@@ -229,7 +228,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
 
         const updateRes = await request(app.getHttpServer())
           .patch(`/api/categories/${catId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ imageUrl })
           .expect(200);
 
