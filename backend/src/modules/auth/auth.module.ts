@@ -13,6 +13,7 @@ import { OAuthService } from './oauth.service';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { User } from '../users/entities/user.entity';
 import { UserAuthentication } from '../users/entities/user-authentication.entity';
+import { AuditLogModule } from '../audit-logs/audit-log.module';
 
 function getJwtPrivateKey(): string {
   if (process.env.JWT_PRIVATE_KEY) {
@@ -47,9 +48,10 @@ function getJwtPrivateKey(): string {
       },
     }),
     HttpModule,
+    AuditLogModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, OAuthService, JwtStrategy],
-  exports: [PassportModule, JwtModule],
+  exports: [PassportModule, JwtModule, AuditLogModule],
 })
 export class AuthModule {}

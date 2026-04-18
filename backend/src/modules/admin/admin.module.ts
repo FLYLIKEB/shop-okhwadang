@@ -13,9 +13,10 @@ import { Payment } from '../payments/entities/payment.entity';
 import { Shipping } from '../payments/entities/shipping.entity';
 import { User } from '../users/entities/user.entity';
 import { Product } from '../products/entities/product.entity';
+import { AuditLogModule } from '../audit-logs/audit-log.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, Payment, Shipping, User, Product])],
+  imports: [TypeOrmModule.forFeature([Order, Payment, Shipping, User, Product]), AuditLogModule],
   controllers: [AdminController, AdminDashboardController, AdminOrdersController, AdminMembersController],
   providers: [AdminService, AdminDashboardService, AdminOrdersService, AdminMembersService],
 })

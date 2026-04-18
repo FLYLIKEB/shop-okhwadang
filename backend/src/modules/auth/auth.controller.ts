@@ -84,8 +84,14 @@ export class AuthController {
   @ApiOperation({ summary: '로그인', description: '이메일/비밀번호로 로그인합니다. 성공 시 accessToken과 refreshToken이 쿠키에 저장됩니다.' })
   @ApiResponse({ status: 200, description: '로그인 성공' })
   @ApiResponse({ status: 401, description: '이메일 또는 비밀번호 오류' })
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, refreshToken, user } = await this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.ip ||
+      req.socket?.remoteAddress ||
+      null;
+    const userAgent = req.headers['user-agent'] ?? null;
+    const { accessToken, refreshToken, user } = await this.authService.login(dto, ip, userAgent);
     setAuthCookies(res, accessToken, refreshToken);
     return { user, accessToken, refreshToken };
   }

@@ -7,6 +7,7 @@ import { AuthService } from '../auth.service';
 import { User, UserRole } from '../../users/entities/user.entity';
 import { PasswordResetToken } from '../entities/password-reset-token.entity';
 import { NotificationService } from '../../notification/notification.service';
+import { AuditLogService } from '../../audit-logs/audit-log.service';
 
 const mockUserRepository = {
   findOne: jest.fn(),
@@ -29,6 +30,10 @@ const mockJwtService = {
 
 const mockNotificationService = {
   sendPasswordReset: jest.fn(),
+};
+
+const mockAuditLogService = {
+  log: jest.fn(),
 };
 
 function makeUser(overrides: Partial<User> = {}): User {
@@ -68,6 +73,7 @@ describe('AuthService', () => {
         },
         { provide: JwtService, useValue: mockJwtService },
         { provide: NotificationService, useValue: mockNotificationService },
+        { provide: AuditLogService, useValue: mockAuditLogService },
       ],
     }).compile();
 

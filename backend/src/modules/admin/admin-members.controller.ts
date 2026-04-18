@@ -7,6 +7,7 @@ import {
   Query,
   ParseIntPipe,
   Request,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,10 +18,13 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { AuditLog } from '../../common/decorators/audit-log.decorator';
+import { AuditLogInterceptor } from '../../common/interceptors/audit-log.interceptor';
 import { AdminMembersService } from './admin-members.service';
 import { AdminMembersQueryDto } from './dto/admin-members-query.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { UserRole } from '../users/entities/user.entity';
+import { AuditAction } from '../audit-logs/entities/audit-log.entity';
 
 interface RequestWithUser {
   user: { id: number; email: string; role: string };
@@ -47,6 +51,8 @@ export class AdminMembersController {
   }
 
   @Patch('members/:id')
+  @UseInterceptors(AuditLogInterceptor)
+  @AuditLog({ action: AuditAction.MEMBER_ROLE_CHANGE, resourceType: 'member' })
   @ApiCookieAuth()
   @ApiOperation({ summary: '회원 역할 수정', description: '회원의 역할을 수정합니다.' })
   @ApiResponse({ status: 200, description: '회원 역할 수정 성공' })
