@@ -2,13 +2,18 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 export function registerPagesSuite(getApp: () => INestApplication) {
   describe('Pages (e2e)', () => {
     let app: INestApplication;
     let dataSource: DataSource;
-    let adminToken: string;
-    let userToken: string;
+    let adminCookies: AuthCookies;
+    let userCookies: AuthCookies;
     let adminUserId: number;
     let regularUserId: number;
     let createdPageId: number;
@@ -36,15 +41,8 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       );
       regularUserId = userResult.insertId as number;
 
-      const adminLogin = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: adminEmail, password });
-      adminToken = (adminLogin.body as { accessToken: string }).accessToken;
-
-      const userLogin = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userEmail, password });
-      userToken = (userLogin.body as { accessToken: string }).accessToken;
+      adminCookies = await loginAndGetCookies(app, { email: adminEmail, password });
+      userCookies = await loginAndGetCookies(app, { email: userEmail, password });
     });
 
     afterAll(async () => {
@@ -59,7 +57,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('admin -> 201, 페이지 생성 성공', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/pages')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ slug: 'test-home-pages-e2e', title: '테스트 홈페이지' })
           .expect(201);
 
@@ -73,7 +71,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('일반 user -> 403', () => {
         return request(app.getHttpServer())
           .post('/api/pages')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ slug: 'user-page-pages-e2e', title: '유저페이지' })
           .expect(403);
       });
@@ -88,7 +86,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('slug 중복 -> 409', () => {
         return request(app.getHttpServer())
           .post('/api/pages')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ slug: 'test-home-pages-e2e', title: '중복' })
           .expect(409);
       });
@@ -99,7 +97,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
         // publish the page first
         await request(app.getHttpServer())
           .patch(`/api/pages/${createdPageId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ is_published: true });
 
         const res = await request(app.getHttpServer())
@@ -117,7 +115,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('admin -> 200, 페이지 수정', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/pages/${createdPageId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ title: '수정된 홈페이지' })
           .expect(200);
 
@@ -130,7 +128,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('공개 중인 페이지 삭제 -> 400', () => {
         return request(app.getHttpServer())
           .delete(`/api/pages/${createdPageId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(400);
       });
     });
@@ -157,12 +155,12 @@ export function registerPagesSuite(getApp: () => INestApplication) {
         // create unpublished page
         await request(app.getHttpServer())
           .post('/api/pages')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ slug: 'unpublished-pages-e2e', title: '비공개 페이지' });
 
         const res = await request(app.getHttpServer())
           .get('/api/admin/pages')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
 
         const body = res.body as Array<{ slug: string }>;
@@ -172,7 +170,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('일반 user -> 403', () => {
         return request(app.getHttpServer())
           .get('/api/admin/pages')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .expect(403);
       });
     });
@@ -181,7 +179,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('admin -> 201, 블록 추가', async () => {
         const res = await request(app.getHttpServer())
           .post(`/api/pages/${createdPageId}/blocks`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             type: 'hero_banner',
             content: { title: '메인 배너', imageUrl: '/banner.jpg' },
@@ -197,7 +195,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('존재하지 않는 페이지 -> 404', () => {
         return request(app.getHttpServer())
           .post('/api/pages/999999/blocks')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ type: 'hero_banner', content: {} })
           .expect(404);
       });
@@ -205,7 +203,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('지원하지 않는 블록 타입 -> 400', () => {
         return request(app.getHttpServer())
           .post(`/api/pages/${createdPageId}/blocks`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ type: 'invalid_type', content: {} })
           .expect(400);
       });
@@ -215,7 +213,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('admin -> 200, 블록 수정', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/pages/${createdPageId}/blocks/${createdBlockId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ content: { title: '수정된 배너' } })
           .expect(200);
 
@@ -229,13 +227,13 @@ export function registerPagesSuite(getApp: () => INestApplication) {
         // add another block
         const res = await request(app.getHttpServer())
           .post(`/api/pages/${createdPageId}/blocks`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ type: 'text_content', content: { text: '본문' }, sort_order: 1 });
         const secondBlockId = (res.body as { id: number }).id;
 
         await request(app.getHttpServer())
           .patch(`/api/pages/${createdPageId}/blocks/reorder`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             orders: [
               { id: createdBlockId, sort_order: 1 },
@@ -250,7 +248,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('admin -> 204, 블록 삭제', () => {
         return request(app.getHttpServer())
           .delete(`/api/pages/${createdPageId}/blocks/${createdBlockId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(204);
       });
     });
@@ -259,12 +257,12 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       it('비공개 처리 후 삭제 -> 204', async () => {
         await request(app.getHttpServer())
           .patch(`/api/pages/${createdPageId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ is_published: false });
 
         await request(app.getHttpServer())
           .delete(`/api/pages/${createdPageId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(204);
       });
     });

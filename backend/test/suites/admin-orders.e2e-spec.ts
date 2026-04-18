@@ -1,14 +1,19 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerAdminOrdersSuite(getApp: () => INestApplication) {
   describe('Admin Orders (e2e)', () => {
-    let adminToken: string;
-    let userToken: string;
+    let adminCookies: AuthCookies;
+    let userCookies: AuthCookies;
     let orderId: number;
     let refundOrderId: number;
     let productId: number;
@@ -19,7 +24,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
     async function createOrder(): Promise<number> {
       const orderRes = await request(app.getHttpServer())
         .post('/api/orders')
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', cookieHeader(userCookies))
         .send({
           items: [{ productId, quantity: 1 }],
           recipientName: '테스트',
@@ -39,24 +44,25 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         .post('/api/auth/register')
         .send({ email: adminEmail, password: 'Test1234!', name: '주문관리자' });
       await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
-      const adminRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: adminEmail, password: 'Test1234!' });
-      adminToken = (adminRes.body as { accessToken: string }).accessToken;
+      adminCookies = await loginAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+      });
 
       // Register user
       await request(app.getHttpServer())
         .post('/api/auth/register')
         .send({ email: userEmail, password: 'Test1234!', name: '일반유저' });
-      const userRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userEmail, password: 'Test1234!' });
-      userToken = (userRes.body as { accessToken: string }).accessToken;
+      userCookies = await loginAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+      });
+
       // Create product for order
       const slug = `admin-orders-test-product-${Date.now()}`;
       const productRes = await request(app.getHttpServer())
         .post('/api/products')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Cookie', cookieHeader(adminCookies))
         .send({ name: '주문테스트상품', slug, price: 10000, stock: 100, status: 'active' });
       productId = (productRes.body as { id: number }).id;
 
@@ -68,7 +74,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('admin → 200 주문 목록 조회', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/admin/orders')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
 
         const body = res.body as { items: unknown[]; total: number; page: number; limit: number };
@@ -80,7 +86,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('일반 user → 403 거부', async () => {
         await request(app.getHttpServer())
           .get('/api/admin/orders')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .expect(403);
       });
 
@@ -93,7 +99,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('상태 필터 → 200', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/admin/orders?status=pending')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
 
         const body = res.body as { items: { status: string }[] };
@@ -107,7 +113,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('pending → paid 상태 변경', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'paid' })
           .expect(200);
 
@@ -118,7 +124,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('paid → preparing 상태 변경', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'preparing' })
           .expect(200);
 
@@ -129,7 +135,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('preparing → shipped: 운송장 없으면 400', async () => {
         await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'shipped' })
           .expect(400);
       });
@@ -138,7 +144,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         // preparing → pending is not allowed
         await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'pending' })
           .expect(400);
       });
@@ -146,7 +152,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('일반 user → 403', async () => {
         await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ status: 'paid' })
           .expect(403);
       });
@@ -156,7 +162,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('운송장 등록 → 201', async () => {
         const res = await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ carrier: 'cj', trackingNumber: `TRK-${Date.now()}` })
           .expect(201);
 
@@ -168,7 +174,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('운송장 중복 등록 → 409', async () => {
         await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ carrier: 'cj', trackingNumber: `TRK-DUP-${Date.now()}` })
           .expect(409);
       });
@@ -176,7 +182,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('일반 user → 403', async () => {
         await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ carrier: 'cj', trackingNumber: 'TRK-USER' })
           .expect(403);
       });
@@ -186,7 +192,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('preparing → shipped (운송장 등록 후)', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'shipped' })
           .expect(200);
 
@@ -197,7 +203,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('shipped → delivered', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'delivered' })
           .expect(200);
 
@@ -208,7 +214,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('delivered → completed', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'completed' })
           .expect(200);
 
@@ -219,7 +225,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('completed → paid: 전이 불가', async () => {
         await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'paid' })
           .expect(400);
       });
@@ -229,7 +235,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('refund order 운송장 등록 → 201', async () => {
         const res = await request(app.getHttpServer())
           .post(`/api/admin/shipping/${refundOrderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ carrier: 'cj', trackingNumber: `TRK-REFUND-${Date.now()}` })
           .expect(201);
 
@@ -241,7 +247,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('refund order pending → paid', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'paid' })
           .expect(200);
 
@@ -252,7 +258,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('refund order paid → preparing', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'preparing' })
           .expect(200);
 
@@ -263,7 +269,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('refund order preparing → shipped', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'shipped' })
           .expect(200);
 
@@ -274,7 +280,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('refund order shipped → delivered', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'delivered' })
           .expect(200);
 
@@ -285,7 +291,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('refund order delivered → refund_requested', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'refund_requested' })
           .expect(200);
 
@@ -296,7 +302,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('refund_requested → refunded', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'refunded' })
           .expect(200);
 

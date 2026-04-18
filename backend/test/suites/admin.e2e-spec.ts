@@ -1,6 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
 let dataSource: DataSource;
@@ -12,8 +18,8 @@ export function registerAdminSuite(getApp: () => INestApplication) {
     const password = 'Test1234!';
     const name = '테스트관리자';
 
-    let adminToken: string;
-    let userToken: string;
+    let adminCookies: AuthCookies;
+    let userCookies: AuthCookies;
 
     beforeAll(async () => {
       app = getApp();
@@ -31,29 +37,25 @@ export function registerAdminSuite(getApp: () => INestApplication) {
         [userEmail, name],
       );
 
-      // Login as admin
-      const adminRegRes = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: `new-${adminEmail}`, password, name });
-      const adminBody = adminRegRes.body as { accessToken?: string };
-      if (adminBody.accessToken) {
-        // Update role to admin
-        await dataSource.query(
-          `UPDATE users SET role = 'admin' WHERE email = ?`,
-          [`new-${adminEmail}`],
-        );
-        // Re-login to get fresh token with admin role - using direct token
-        adminToken = adminBody.accessToken;
-      }
+      // Register a new admin user via API and promote to admin
+      const adminReg = await registerAndGetCookies(app, {
+        email: `new-${adminEmail}`,
+        password,
+        name,
+      });
+      adminCookies = adminReg.cookies;
+      await dataSource.query(
+        `UPDATE users SET role = 'admin' WHERE email = ?`,
+        [`new-${adminEmail}`],
+      );
 
-      // Login as regular user
-      const userRegRes = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: `new-${userEmail}`, password, name });
-      const userBody = userRegRes.body as { accessToken?: string };
-      if (userBody.accessToken) {
-        userToken = userBody.accessToken;
-      }
+      // Register regular user via API
+      const userReg = await registerAndGetCookies(app, {
+        email: `new-${userEmail}`,
+        password,
+        name,
+      });
+      userCookies = userReg.cookies;
     });
 
     afterAll(async () => {
@@ -73,31 +75,20 @@ export function registerAdminSuite(getApp: () => INestApplication) {
       it('role=user → 403', () => {
         return request(app.getHttpServer())
           .get('/api/admin/dashboard')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .expect(403);
       });
 
       it('role=admin → 200', async () => {
-        // Update the newly created user to admin role and get a valid token
-        await dataSource.query(
-          `UPDATE users SET role = 'admin' WHERE email = ?`,
-          [`new-${adminEmail}`],
-        );
-
-        // Login again to get token with admin role reflected via JWT
-        // Note: JWT role is embedded at sign time, so we need a fresh login
-        const loginRes = await request(app.getHttpServer())
-          .post('/api/auth/login')
-          .send({ email: `new-${adminEmail}`, password });
-
-        const loginBody = loginRes.body as { accessToken?: string };
-        if (loginBody.accessToken) {
-          adminToken = loginBody.accessToken;
-        }
+        // Re-login to get fresh cookies with admin role in JWT
+        adminCookies = await loginAndGetCookies(app, {
+          email: `new-${adminEmail}`,
+          password,
+        });
 
         return request(app.getHttpServer())
           .get('/api/admin/dashboard')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
       });
     });
