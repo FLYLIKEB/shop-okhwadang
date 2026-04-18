@@ -12,6 +12,7 @@ import { DataSource } from 'typeorm';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { NotificationModule } from '../src/modules/notification/notification.module';
 import { MockEmailAdapter } from '../src/modules/notification/adapters/mock.adapter';
+import { CacheModule } from '../src/modules/cache/cache.module';
 
 process.env.JWT_SECRET ??= 'test-secret-key-for-e2e-tests';
 process.env.FRONTEND_URL ??= 'http://localhost:5173';
@@ -62,6 +63,7 @@ process.env.DATABASE_URL = process.env.TEST_DATABASE_URL ?? process.env.DATABASE
       },
     ]),
     NotificationModule,
+    CacheModule,
     AuthModule,
   ],
   providers: [
@@ -85,7 +87,10 @@ describe('Auth password reset flow (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AuthPasswordResetTestModule],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.use(cookieParser());

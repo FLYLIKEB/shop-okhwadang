@@ -3,7 +3,6 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
-import { ScheduleModule } from '@nestjs/schedule';
 import * as fs from 'fs';
 import * as path from 'path';
 import type ms from 'ms';
@@ -51,7 +50,6 @@ function getJwtPrivateKey(): string {
         algorithm: 'RS256',
       },
     }),
-    ScheduleModule,
     HttpModule,
     AuditLogModule,
   ],
