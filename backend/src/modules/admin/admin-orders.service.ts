@@ -3,10 +3,13 @@ import {
   ConflictException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
+import { OrderItem } from '../orders/entities/order-item.entity';
 import { Payment } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
+import { Product } from '../products/entities/product.entity';
+import { ProductOption } from '../products/entities/product-option.entity';
 import { PaymentsService } from '../payments/payments.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
@@ -37,6 +40,7 @@ export class AdminOrdersService {
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
     private readonly paymentsService: PaymentsService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAll(query: AdminOrderQueryDto): Promise<PaginatedResult<Order>> {
@@ -97,7 +101,27 @@ export class AdminOrdersService {
       }
     }
 
-    await this.orderRepository.update(orderId, { status: nextStatus });
+    const isStockRestoreNeeded =
+      nextStatus === OrderStatus.CANCELLED || nextStatus === OrderStatus.REFUNDED;
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(Order, orderId, { status: nextStatus });
+
+      if (isStockRestoreNeeded) {
+        const items = await manager.find(OrderItem, {
+          where: { orderId },
+          relations: ['product', 'option'],
+        });
+
+        for (const item of items) {
+          await manager.increment(Product, { id: item.productId }, 'stock', item.quantity);
+
+          if (item.productOptionId !== null) {
+            await manager.increment(ProductOption, { id: item.productOptionId }, 'stock', item.quantity);
+          }
+        }
+      }
+    });
 
     this.logger.log(`Order #${orderId} status changed: ${currentStatus} → ${nextStatus}`);
 
