@@ -2,6 +2,7 @@ import {
   Injectable,
   BadGatewayException,
   BadRequestException,
+  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
@@ -16,7 +17,6 @@ import {
   UserAuthentication,
   OAuthProvider,
 } from '../users/entities/user-authentication.entity';
-import { findOrThrow } from '../../common/utils/repository.util';
 
 export interface OAuthAuthResponse {
   accessToken: string;
@@ -75,19 +75,22 @@ export class OAuthService {
       const userRepo = manager.getRepository(User);
       const authRepo = manager.getRepository(UserAuthentication);
 
-      // 1. 사용자 조회
-      const user = await findOrThrow(
-        userRepo,
-        { id: userId } as FindOptionsWhere<User>,
-        '사용자를 찾을 수 없습니다.',
-      );
+      // 1. user row에 pessimistic_write 락 → 동일 사용자의 동시 disconnect 직렬화
+      const user = await userRepo.findOne({
+        where: { id: userId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!user) {
+        throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      }
 
       // 2. 해당 OAuth 연결 레코드 조회
-      await findOrThrow(
-        authRepo,
-        { userId, provider } as FindOptionsWhere<UserAuthentication>,
-        `연결된 ${provider} 계정을 찾을 수 없습니다.`,
-      );
+      const targetAuth = await authRepo.findOne({
+        where: { userId, provider } as FindOptionsWhere<UserAuthentication>,
+      });
+      if (!targetAuth) {
+        throw new NotFoundException(`연결된 ${provider} 계정을 찾을 수 없습니다.`);
+      }
 
       // 3. 마지막 인증 수단 검증 (트랜잭션 내 재조회로 TOCTOU 방지)
       const hasLocalPassword = Boolean(user.password);

@@ -246,6 +246,12 @@ describe('OAuthService', () => {
 
       await expect(service.disconnect(1, OAuthProvider.KAKAO)).resolves.toBeUndefined();
       expect(mockDataSource.transaction).toHaveBeenCalled();
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          lock: { mode: 'pessimistic_write' },
+        }),
+      );
       expect(mockUserAuthRepository.delete).toHaveBeenCalledWith({ userId: 1, provider: OAuthProvider.KAKAO });
     });
 
