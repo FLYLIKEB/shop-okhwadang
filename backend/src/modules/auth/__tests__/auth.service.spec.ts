@@ -233,6 +233,28 @@ describe('AuthService', () => {
 
       await expect(service.refresh('invalid.token')).rejects.toThrow(UnauthorizedException);
     });
+
+    it('비활성화된 사용자의 유효한 refresh token → UnauthorizedException', async () => {
+      const rawRefresh = 'mock-token';
+      const hashedRefresh = await bcrypt.hash(rawRefresh, 10);
+      mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user', tokenType: 'refresh' });
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ isActive: false, refreshToken: hashedRefresh }));
+
+      await expect(service.refresh(rawRefresh)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('활성화된 사용자의 유효한 refresh token → 정상 토큰 발급 (regression)', async () => {
+      const rawRefresh = 'mock-token';
+      const hashedRefresh = await bcrypt.hash(rawRefresh, 10);
+      mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user', tokenType: 'refresh' });
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ isActive: true, refreshToken: hashedRefresh }));
+      mockUserRepository.update.mockResolvedValue(undefined);
+
+      const result = await service.refresh(rawRefresh);
+
+      expect(result).toHaveProperty('accessToken');
+      expect(result).toHaveProperty('refreshToken');
+    });
   });
 
   describe('forgotPassword', () => {
