@@ -36,7 +36,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                   aria-disabled={isSoldout}
                   onClick={() => onSelect(option.id)}
                   className={cn(
-                    'rounded-md border px-3 py-1.5 text-sm transition-all',
+                    'rounded-md border px-3 py-1.5 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                     isSelected
                       ? 'ring-2 ring-foreground bg-foreground text-background border-foreground'
                       : 'border-border bg-background hover:border-foreground',

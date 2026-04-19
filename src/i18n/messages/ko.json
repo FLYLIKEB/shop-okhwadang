@@ -197,7 +197,8 @@
       "active": "판매중",
       "soldout": "품절",
       "hidden": "숨김"
-    }
+    },
+    "lowStock": "{count}개 남음"
   },
   "cart": {
     "title": "장바구니",

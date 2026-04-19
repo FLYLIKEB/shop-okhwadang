@@ -197,7 +197,8 @@
       "active": "On Sale",
       "soldout": "Sold Out",
       "hidden": "Hidden"
-    }
+    },
+    "lowStock": "Only {count} left"
   },
   "cart": {
     "title": "Cart",
