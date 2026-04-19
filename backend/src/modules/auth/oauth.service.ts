@@ -4,8 +4,8 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -66,30 +66,41 @@ export class OAuthService {
     private readonly userAuthRepository: Repository<UserAuthentication>,
     private readonly jwtService: JwtService,
     private readonly httpService: HttpService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   async disconnect(userId: number, provider: OAuthProvider): Promise<void> {
-    // 1. 사용자 조회
-    const user = await findOrThrow(this.userRepository, { id: userId } as never, '사용자를 찾을 수 없습니다.');
+    await this.dataSource.transaction(async (manager) => {
+      const userRepo = manager.getRepository(User);
+      const authRepo = manager.getRepository(UserAuthentication);
 
-    // 2. 해당 OAuth 연결 레코드 조회
-    await findOrThrow(
-      this.userAuthRepository,
-      { userId, provider } as never,
-      `연결된 ${provider} 계정을 찾을 수 없습니다.`,
-    );
+      // 1. 사용자 조회
+      const user = await findOrThrow(
+        userRepo,
+        { id: userId } as FindOptionsWhere<User>,
+        '사용자를 찾을 수 없습니다.',
+      );
 
-    // 3. 마지막 인증 수단 검증: 로컬 비밀번호 없음 + 남은 OAuth 1개(해제하면 0개)
-    const hasLocalPassword = Boolean(user.password);
-    const oauthCount = await this.userAuthRepository.count({ where: { userId } });
-    if (!hasLocalPassword && oauthCount <= 1) {
-      throw new BadRequestException('마지막 인증 수단은 해제할 수 없습니다.');
-    }
+      // 2. 해당 OAuth 연결 레코드 조회
+      await findOrThrow(
+        authRepo,
+        { userId, provider } as FindOptionsWhere<UserAuthentication>,
+        `연결된 ${provider} 계정을 찾을 수 없습니다.`,
+      );
 
-    // 4. 로컬 레코드 삭제 (OAuth access token 미저장 → provider revoke 생략)
-    await this.userAuthRepository.delete({ userId, provider } as never);
+      // 3. 마지막 인증 수단 검증 (트랜잭션 내 재조회로 TOCTOU 방지)
+      const hasLocalPassword = Boolean(user.password);
+      const oauthCount = await authRepo.count({ where: { userId } });
+      if (!hasLocalPassword && oauthCount <= 1) {
+        throw new BadRequestException('마지막 인증 수단은 해제할 수 없습니다.');
+      }
 
-    // 5. 감사 로그
+      // 4. 로컬 레코드 삭제 (OAuth access token 미저장 → provider revoke 생략)
+      await authRepo.delete({ userId, provider } as FindOptionsWhere<UserAuthentication>);
+    });
+
+    // 5. 감사 로그 (트랜잭션 커밋 이후 기록)
     this.logger.log(
       JSON.stringify({ event: 'oauth_disconnect', userId, provider }),
     );

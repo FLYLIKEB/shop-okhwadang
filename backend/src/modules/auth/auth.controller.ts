@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseEnumPipe,
   UseGuards,
   Res,
   Req,
@@ -263,7 +264,7 @@ export class AuthController {
   @ApiResponse({ status: 404, description: '연결된 OAuth 계정을 찾을 수 없습니다.' })
   async disconnectOAuth(
     @CurrentUser() user: JwtUser,
-    @Param('provider') provider: OAuthProvider,
+    @Param('provider', new ParseEnumPipe(OAuthProvider)) provider: OAuthProvider,
   ): Promise<void> {
     await this.oauthService.disconnect(user.id, provider);
   }
