@@ -37,7 +37,7 @@ export class OrdersService {
 
   private generateOrderNumber(): string {
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const random = randomBytes(4).toString('base64url').slice(0, 5).toUpperCase();
+    const random = randomBytes(4).toString('hex').toUpperCase().slice(0, 5);
     return `ORD-${date}-${random}`;
   }
 
