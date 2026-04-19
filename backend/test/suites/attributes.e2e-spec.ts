@@ -1,11 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import {
   AuthCookies,
   cookieHeader,
   loginAndGetCookies,
+  registerAndGetCookies,
 } from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
@@ -26,13 +26,15 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       app = getApp();
       dataSource = app.get(DataSource);
 
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const adminResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '속성관리자', 'admin')`,
-        [adminEmail, hashedPassword],
-      );
-      adminUserId = adminResult.insertId as number;
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password,
+        name: '속성관리자',
+      });
+      await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
       adminCookies = await loginAndGetCookies(app, { email: adminEmail, password });
+      const adminRow = await dataSource.query('SELECT id FROM users WHERE email = ?', [adminEmail]);
+      adminUserId = Number((adminRow[0] as { id: number }).id);
 
       const catResult = await dataSource.query(`
         INSERT INTO categories (name, slug, is_active, sort_order)
@@ -133,7 +135,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
     describe('GET /api/attributes/types/:code/values', () => {
       it('200 — 속성의 가능한 값 목록 반환', () => {
         return request(app.getHttpServer())
-          .get('/api/attributes/types/code/test_attr/values')
+          .get('/api/attributes/types/test_attr/values')
           .expect(200)
           .expect((res) => {
             expect(Array.isArray(res.body)).toBe(true);
@@ -249,19 +251,36 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
 
     describe('DELETE /api/attributes/products/:id', () => {
       it('204 — 상품 속성 삭제', async () => {
+        const createTypeResult = await request(app.getHttpServer())
+          .post('/api/attributes/types')
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({
+            code: 'delete_attr',
+            name: 'Delete Attr',
+          })
+          .expect(201);
+
+        const deleteAttributeTypeId = Number((createTypeResult.body as { id: number | string }).id);
+
         const createResult = await request(app.getHttpServer())
           .post('/api/attributes/products')
           .set('Cookie', cookieHeader(adminCookies))
           .send({
             productId,
-            attributeTypeId,
+            attributeTypeId: deleteAttributeTypeId,
             value: 'to_delete',
-          });
+          })
+          .expect(201);
 
-        const attrId = createResult.body.id;
+        const attrId = Number((createResult.body as { id: number | string }).id);
 
-        return request(app.getHttpServer())
+        await request(app.getHttpServer())
           .delete(`/api/attributes/products/${attrId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .expect(204);
+
+        await request(app.getHttpServer())
+          .delete(`/api/attributes/types/${deleteAttributeTypeId}`)
           .set('Cookie', cookieHeader(adminCookies))
           .expect(204);
       });

@@ -1,11 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import {
   AuthCookies,
   cookieHeader,
   loginAndGetCookies,
+  registerAndGetCookies,
 } from '../helpers/auth-cookie.helper';
 
 export function registerNavigationSuite(getApp: () => INestApplication) {
@@ -27,22 +27,24 @@ export function registerNavigationSuite(getApp: () => INestApplication) {
       app = getApp();
       dataSource = app.get(DataSource);
 
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      const adminResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '네비관리자', 'admin')`,
-        [adminEmail, hashedPassword],
-      );
-      adminUserId = adminResult.insertId as number;
-
-      const userResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '일반유저', 'user')`,
-        [userEmail, hashedPassword],
-      );
-      regularUserId = userResult.insertId as number;
-
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password,
+        name: '네비관리자',
+      });
+      await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
       adminCookies = await loginAndGetCookies(app, { email: adminEmail, password });
+      const adminRow = await dataSource.query('SELECT id FROM users WHERE email = ?', [adminEmail]);
+      adminUserId = Number((adminRow[0] as { id: number }).id);
+
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password,
+        name: '일반유저',
+      });
       userCookies = await loginAndGetCookies(app, { email: userEmail, password });
+      const userRow = await dataSource.query('SELECT id FROM users WHERE email = ?', [userEmail]);
+      regularUserId = Number((userRow[0] as { id: number }).id);
     });
 
     afterAll(async () => {

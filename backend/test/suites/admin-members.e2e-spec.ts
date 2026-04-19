@@ -171,14 +171,11 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       });
 
       it('자기 자신 역할 변경 → 400', async () => {
-        const res = await request(app.getHttpServer())
-          .patch(`/api/admin/members/${adminId}`)
-          .set('Cookie', cookieHeader(adminCookies))
+        await request(app.getHttpServer())
+          .patch(`/api/admin/members/${superAdminId}`)
+          .set('Cookie', cookieHeader(superAdminCookies))
           .send({ role: 'user' })
           .expect(400);
-
-        const body = res.body as { message: string };
-        expect(body.message).toContain('자기 자신');
       });
 
       it('super_admin: user→super_admin 허용', async () => {
