@@ -1,12 +1,15 @@
 import {
   Injectable, BadRequestException,
-  ConflictException, Logger,
+  ConflictException, Logger, NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { Payment } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
+import { Product } from '../products/entities/product.entity';
+import { ProductOption } from '../products/entities/product-option.entity';
+import { PointHistory } from '../coupons/entities/point-history.entity';
 import { PaymentsService } from '../payments/payments.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
@@ -72,7 +75,13 @@ export class AdminOrdersService {
   }
 
   async updateStatus(orderId: number, nextStatus: OrderStatus): Promise<Order | null> {
-    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ['items', 'user'],
+    });
+    if (!order) {
+      throw new NotFoundException('주문을 찾을 수 없습니다.');
+    }
 
     const currentStatus = order.status;
     const allowed = ALLOWED_ORDER_TRANSITIONS[currentStatus] ?? [];
@@ -97,6 +106,13 @@ export class AdminOrdersService {
       }
     }
 
+    await this.orderRepository.manager.transaction(async (manager) => {
+      if (this.shouldRestoreStockAndPoints(currentStatus, nextStatus)) {
+        await this.restoreStock(manager, order);
+        await this.restorePoints(manager, order);
+      }
+    });
+
     await this.orderRepository.update(orderId, { status: nextStatus });
 
     this.logger.log(`Order #${orderId} status changed: ${currentStatus} → ${nextStatus}`);
@@ -104,6 +120,42 @@ export class AdminOrdersService {
     return this.orderRepository.findOne({
       where: { id: orderId },
       relations: ['items', 'user'],
+    });
+  }
+
+  private shouldRestoreStockAndPoints(currentStatus: OrderStatus, nextStatus: OrderStatus): boolean {
+    const restoreTargets = new Set<OrderStatus>([OrderStatus.CANCELLED, OrderStatus.REFUNDED]);
+    return !restoreTargets.has(currentStatus) && restoreTargets.has(nextStatus);
+  }
+
+  private async restoreStock(manager: EntityManager, order: Order): Promise<void> {
+    for (const item of order.items ?? []) {
+      await manager.increment(Product, { id: item.productId }, 'stock', item.quantity);
+      if (item.productOptionId) {
+        await manager.increment(ProductOption, { id: item.productOptionId }, 'stock', item.quantity);
+      }
+    }
+  }
+
+  private async restorePoints(manager: EntityManager, order: Order): Promise<void> {
+    if (!order.pointsUsed || order.pointsUsed <= 0) {
+      return;
+    }
+
+    const latest = await manager.findOne(PointHistory, {
+      where: { userId: order.userId },
+      order: { createdAt: 'DESC', id: 'DESC' },
+    });
+    const currentBalance = latest?.balance ?? 0;
+    const restoredBalance = currentBalance + order.pointsUsed;
+
+    await manager.save(PointHistory, {
+      userId: order.userId,
+      type: 'admin_adjust',
+      amount: order.pointsUsed,
+      balance: restoredBalance,
+      orderId: Number(order.id),
+      description: `주문 ${order.orderNumber} 취소/환불로 인한 적립금 복구`,
     });
   }
 
