@@ -1243,7 +1243,12 @@ export const inquiriesApi = {
 };
 
 export const adminInquiriesApi = {
-  getAll: () => apiClient.get<Inquiry[]>('/admin/inquiries'),
+  getAll: async (page = 1, limit = 50) => {
+    const response = await apiClient.get<PaginatedResponse<Inquiry>>('/admin/inquiries', {
+      params: { page, limit },
+    });
+    return response.items;
+  },
   answer: (id: number, answer: string) =>
     apiClient.post<Inquiry>(`/admin/inquiries/${id}/answer`, { answer }),
 };

@@ -11,13 +11,13 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Public } from '../../common/decorators/public.decorator';
 import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Public } from '../../common/decorators';
 import { AttributesService } from './attributes.service';
 import { CreateAttributeTypeDto, UpdateAttributeTypeDto } from './dto/attribute-type.dto';
 import { CreateProductAttributeDto, UpdateProductAttributeDto, SetProductAttributesDto } from './dto/product-attribute.dto';

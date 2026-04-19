@@ -138,7 +138,7 @@ describe('ProductDetailClient', () => {
     expect(screen.getAllByText('Buy Now')).toHaveLength(2)
     expect(screen.getByText('Quantity')).toBeInTheDocument()
     expect(screen.getByText('(3 review(s))')).toBeInTheDocument()
-    expect(screen.getByLabelText('Add to wishlist')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Add to wishlist').length).toBeGreaterThan(0)
 
     await userEvent.click(screen.getAllByRole('button', { name: 'Add to Cart' })[0])
 

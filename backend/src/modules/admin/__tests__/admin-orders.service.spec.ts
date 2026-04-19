@@ -8,6 +8,13 @@ import { Shipping } from '../../payments/entities/shipping.entity';
 import { PaymentsService } from '../../payments/payments.service';
 
 function createMockRepository() {
+  const transactionManager = {
+    increment: jest.fn(),
+    findOne: jest.fn(),
+    save: jest.fn(),
+    update: jest.fn(),
+  };
+
   return {
     findOne: jest.fn(),
     find: jest.fn(),
@@ -23,6 +30,9 @@ function createMockRepository() {
       take: jest.fn().mockReturnThis(),
       getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
     })),
+    manager: {
+      transaction: jest.fn(async (cb: (manager: typeof transactionManager) => Promise<void>) => cb(transactionManager)),
+    },
   };
 }
 

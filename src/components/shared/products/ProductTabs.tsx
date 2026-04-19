@@ -30,7 +30,7 @@ export default function ProductTabs({ description, descriptionImages, productId 
 
   return (
     <div className="mt-8">
-      <div className="flex justify-center md:justify-start border-b border-border sticky top-14 z-30 bg-background">
+      <div className="flex justify-center md:justify-start border-b border-border sticky top-88 z-30 bg-background">
         {TABS.map((tab) => (
           <button
             key={tab}

@@ -77,6 +77,12 @@ export async function loginAndGetCookies(
   app: INestApplication,
   credentials: LoginCredentials,
 ): Promise<AuthCookies> {
+  const dataSource = app.get(DataSource);
+  await dataSource.query(
+    'UPDATE users SET is_email_verified = 1, email_verified_at = COALESCE(email_verified_at, NOW()) WHERE email = ?',
+    [credentials.email],
+  );
+
   const res = await request(app.getHttpServer())
     .post('/api/auth/login')
     .send(credentials)

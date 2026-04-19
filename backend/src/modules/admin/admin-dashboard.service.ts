@@ -14,6 +14,8 @@ interface KpiData {
   new_members_today: number;
   new_members_diff_pct: number;
   total_product_views: number;
+  deletion_pending_count: number;
+  deletion_completed_count: number;
 }
 
 interface RevenueChartItem {
@@ -139,7 +141,7 @@ export class AdminDashboardService {
 
     const excludedStatuses = [OrderStatus.CANCELLED, OrderStatus.REFUNDED];
 
-    const [todayAgg, yesterdayAgg, todayMembers, yesterdayMembers, viewCountResult] =
+    const [todayAgg, yesterdayAgg, todayMembers, yesterdayMembers, viewCountResult, deletionPendingCount, deletionCompletedCount] =
       await Promise.all([
         this.orderRepository
           .createQueryBuilder('o')
@@ -165,6 +167,15 @@ export class AdminDashboardService {
           .createQueryBuilder('product')
           .select('SUM(product.viewCount)', 'total')
           .getRawOne() as Promise<{ total: string | null }>,
+        this.userRepository
+          .createQueryBuilder('user')
+          .where('user.deletionScheduledAt IS NOT NULL')
+          .andWhere('user.deletedAt IS NULL')
+          .getCount(),
+        this.userRepository
+          .createQueryBuilder('user')
+          .where('user.deletedAt IS NOT NULL')
+          .getCount(),
       ]);
 
     const todayRevenue = Number(todayAgg?.revenue ?? 0);
@@ -183,6 +194,8 @@ export class AdminDashboardService {
       new_members_today: todayMembers,
       new_members_diff_pct: this.calcDiffPct(todayMembers, yesterdayMembers),
       total_product_views: Number(viewCountResult?.total ?? 0),
+      deletion_pending_count: deletionPendingCount,
+      deletion_completed_count: deletionCompletedCount,
     };
   }
 

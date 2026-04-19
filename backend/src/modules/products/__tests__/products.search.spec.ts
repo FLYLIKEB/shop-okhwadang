@@ -102,7 +102,7 @@ describe('ProductsService — Search', () => {
         },
         {
           provide: getDataSourceToken(),
-          useValue: {} as DataSource,
+          useValue: { transaction: jest.fn() } as unknown as DataSource,
         },
       ],
     }).compile();

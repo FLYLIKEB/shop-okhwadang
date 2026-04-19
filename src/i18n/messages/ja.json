@@ -192,7 +192,8 @@
       "active": "販売中",
       "soldout": "在庫切れ",
       "hidden": "非表示"
-    }
+    },
+    "lowStock": "残り{count}点"
   },
   "cart": {
     "title": "カート",

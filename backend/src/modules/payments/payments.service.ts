@@ -292,7 +292,74 @@ export class PaymentsService {
     if (!this.gateway.verifyWebhook(payload, signature)) {
       throw new UnauthorizedException('웹훅 서명 검증 실패');
     }
-    const safe = { orderId: (payload as Record<string, unknown>)?.orderId, status: (payload as Record<string, unknown>)?.status, type: (payload as Record<string, unknown>)?.type };
+    const safe = {
+      orderId: (payload as Record<string, unknown>)?.orderId,
+      status: (payload as Record<string, unknown>)?.status,
+      type: (payload as Record<string, unknown>)?.type,
+    };
     this.logger.log(`Webhook received: ${JSON.stringify(safe)}`);
+
+    const parsedOrderId = Number(safe.orderId);
+    if (!Number.isFinite(parsedOrderId) || parsedOrderId <= 0) {
+      this.logger.warn('Webhook ignored: invalid orderId');
+      return;
+    }
+
+    const normalized = String(
+      (payload as Record<string, unknown>)?.eventType
+      ?? safe.status
+      ?? safe.type
+      ?? '',
+    ).toUpperCase();
+
+    if (!normalized) {
+      this.logger.warn(`Webhook ignored: unknown event for orderId=${parsedOrderId}`);
+      return;
+    }
+
+    const payment = await this.paymentRepository.findOne({ where: { orderId: parsedOrderId } });
+    if (!payment) {
+      this.logger.warn(`Webhook ignored: payment not found (orderId=${parsedOrderId})`);
+      return;
+    }
+
+    if (
+      normalized.includes('DONE')
+      || normalized.includes('PAID')
+      || normalized.includes('CONFIRM')
+    ) {
+      await this.dataSource.transaction(async (manager) => {
+        await manager.update(Payment, payment.id, {
+          status: PaymentStatus.CONFIRMED,
+          paidAt: payment.paidAt ?? new Date(),
+          rawResponse: payload as object,
+        });
+        await manager.update(Order, parsedOrderId, { status: OrderStatus.PAID });
+      });
+      return;
+    }
+
+    if (normalized.includes('REFUND')) {
+      await this.dataSource.transaction(async (manager) => {
+        await manager.update(Payment, payment.id, {
+          status: PaymentStatus.REFUNDED,
+          cancelledAt: new Date(),
+          rawResponse: payload as object,
+        });
+        await manager.update(Order, parsedOrderId, { status: OrderStatus.REFUNDED });
+      });
+      return;
+    }
+
+    if (normalized.includes('CANCEL')) {
+      await this.dataSource.transaction(async (manager) => {
+        await manager.update(Payment, payment.id, {
+          status: PaymentStatus.CANCELLED,
+          cancelledAt: new Date(),
+          rawResponse: payload as object,
+        });
+        await manager.update(Order, parsedOrderId, { status: OrderStatus.CANCELLED });
+      });
+    }
   }
 }
