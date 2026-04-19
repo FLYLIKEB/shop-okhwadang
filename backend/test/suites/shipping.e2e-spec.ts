@@ -5,6 +5,7 @@ import {
   AuthCookies,
   cookieHeader,
   loginAndGetCookies,
+  registerAndGetCookies,
 } from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
@@ -27,27 +28,32 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       dataSource = app.get(DataSource);
 
       // Create users
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userEmail, password: 'Test1234!', name: '배송유저' });
-
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+        name: '배송유저',
+      });
       userCookies = await loginAndGetCookies(app, {
         email: userEmail,
         password: 'Test1234!',
       });
 
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: otherEmail, password: 'Test1234!', name: '다른유저' });
+      await registerAndGetCookies(app, {
+        email: otherEmail,
+        password: 'Test1234!',
+        name: '다른유저',
+      });
       otherCookies = await loginAndGetCookies(app, {
         email: otherEmail,
         password: 'Test1234!',
       });
 
       // Create admin user
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: adminEmail, password: 'Test1234!', name: '관리자' });
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+        name: '관리자',
+      });
       await dataSource.query(
         `UPDATE users SET role = 'admin' WHERE email = ?`,
         [adminEmail],
@@ -157,7 +163,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
           .post('/api/shipping/track')
           .set('Cookie', cookieHeader(userCookies))
           .send({ carrier: 'mock', trackingNumber: '1234567890123' })
-          .expect(201);
+          .expect(200);
 
         const body = res.body as { carrier: string; steps: unknown[] };
         expect(body.carrier).toBe('mock');

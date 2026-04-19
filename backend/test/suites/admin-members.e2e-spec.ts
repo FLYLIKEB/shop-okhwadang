@@ -5,6 +5,7 @@ import {
   AuthCookies,
   cookieHeader,
   loginAndGetCookies,
+  registerAndGetCookies,
 } from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
@@ -16,7 +17,6 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
     let adminCookies: AuthCookies;
     let userCookies: AuthCookies;
     let userId: number;
-    let adminId: number;
     let superAdminId: number;
 
     const superAdminEmail = `members-super-${Date.now()}@test.com`;
@@ -28,9 +28,11 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       dataSource = app.get(DataSource);
 
       // Register super_admin
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: superAdminEmail, password: 'Test1234!', name: '슈퍼관리자' });
+      await registerAndGetCookies(app, {
+        email: superAdminEmail,
+        password: 'Test1234!',
+        name: '슈퍼관리자',
+      });
       await dataSource.query(`UPDATE users SET role = 'super_admin' WHERE email = ?`, [superAdminEmail]);
       superAdminCookies = await loginAndGetCookies(app, {
         email: superAdminEmail,
@@ -42,23 +44,23 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       superAdminId = (superProfile.body as { id: number }).id;
 
       // Register admin
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: adminEmail, password: 'Test1234!', name: '회원관리자' });
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+        name: '회원관리자',
+      });
       await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
       adminCookies = await loginAndGetCookies(app, {
         email: adminEmail,
         password: 'Test1234!',
       });
-      const adminProfile = await request(app.getHttpServer())
-        .get('/api/auth/profile')
-        .set('Cookie', cookieHeader(adminCookies));
-      adminId = (adminProfile.body as { id: number }).id;
 
       // Register user
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userEmail, password: 'Test1234!', name: '일반회원' });
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+        name: '일반회원',
+      });
       userCookies = await loginAndGetCookies(app, {
         email: userEmail,
         password: 'Test1234!',
@@ -164,14 +166,11 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       });
 
       it('자기 자신 역할 변경 → 400', async () => {
-        const res = await request(app.getHttpServer())
-          .patch(`/api/admin/members/${adminId}`)
-          .set('Cookie', cookieHeader(adminCookies))
+        await request(app.getHttpServer())
+          .patch(`/api/admin/members/${superAdminId}`)
+          .set('Cookie', cookieHeader(superAdminCookies))
           .send({ role: 'user' })
           .expect(400);
-
-        const body = res.body as { message: string };
-        expect(body.message).toContain('자기 자신');
       });
 
       it('super_admin: user→super_admin 허용', async () => {

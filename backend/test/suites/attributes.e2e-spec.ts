@@ -1,6 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
 let dataSource: DataSource;
@@ -10,10 +16,25 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
     let categoryId: number;
     let productId: number;
     let attributeTypeId: number;
+    let adminCookies: AuthCookies;
+    let adminUserId: number;
+
+    const adminEmail = `admin-attr-e2e-${Date.now()}@test.com`;
+    const password = 'Test1234!';
 
     beforeAll(async () => {
       app = getApp();
       dataSource = app.get(DataSource);
+
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password,
+        name: '속성관리자',
+      });
+      await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
+      adminCookies = await loginAndGetCookies(app, { email: adminEmail, password });
+      const adminRow = await dataSource.query('SELECT id FROM users WHERE email = ?', [adminEmail]);
+      adminUserId = Number((adminRow[0] as { id: number }).id);
 
       const catResult = await dataSource.query(`
         INSERT INTO categories (name, slug, is_active, sort_order)
@@ -40,6 +61,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       await dataSource.query(`DELETE FROM products WHERE slug = 'test-product-attr'`);
       await dataSource.query(`DELETE FROM attribute_types WHERE code = 'test_attr'`);
       await dataSource.query(`DELETE FROM categories WHERE slug = 'test-category-attr'`);
+      await dataSource.query('DELETE FROM users WHERE id = ?', [adminUserId]);
       await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
     });
 
@@ -113,7 +135,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
     describe('GET /api/attributes/types/:code/values', () => {
       it('200 — 속성의 가능한 값 목록 반환', () => {
         return request(app.getHttpServer())
-          .get('/api/attributes/types/code/test_attr/values')
+          .get('/api/attributes/types/test_attr/values')
           .expect(200)
           .expect((res) => {
             expect(Array.isArray(res.body)).toBe(true);
@@ -127,7 +149,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('201 — 속성 유형 생성', () => {
         return request(app.getHttpServer())
           .post('/api/attributes/types')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             code: 'new_test_attr',
             name: 'New Test',
@@ -144,7 +166,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('400 — 중복 코드', () => {
         return request(app.getHttpServer())
           .post('/api/attributes/types')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             code: 'new_test_attr',
             name: 'Duplicate Test',
@@ -157,7 +179,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 속성 유형 수정', () => {
         return request(app.getHttpServer())
           .patch(`/api/attributes/types/${attributeTypeId}`)
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             name: 'Updated Test',
           })
@@ -183,7 +205,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('201 — 상품 속성 생성', () => {
         return request(app.getHttpServer())
           .post('/api/attributes/products')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             productId,
             attributeTypeId,
@@ -202,7 +224,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 상품 속성 일괄 설정', () => {
         return request(app.getHttpServer())
           .post(`/api/attributes/products/${productId}/set`)
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             attributes: [
               { attributeTypeId, value: 'val2', displayValue: '값2' },
@@ -221,7 +243,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('404 — 존재하지 않는 속성 ID', () => {
         return request(app.getHttpServer())
           .patch('/api/attributes/products/999999')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ value: 'updated' })
           .expect(404);
       });
@@ -229,20 +251,37 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
 
     describe('DELETE /api/attributes/products/:id', () => {
       it('204 — 상품 속성 삭제', async () => {
+        const createTypeResult = await request(app.getHttpServer())
+          .post('/api/attributes/types')
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({
+            code: 'delete_attr',
+            name: 'Delete Attr',
+          })
+          .expect(201);
+
+        const deleteAttributeTypeId = Number((createTypeResult.body as { id: number | string }).id);
+
         const createResult = await request(app.getHttpServer())
           .post('/api/attributes/products')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             productId,
-            attributeTypeId,
+            attributeTypeId: deleteAttributeTypeId,
             value: 'to_delete',
-          });
+          })
+          .expect(201);
 
-        const attrId = createResult.body.id;
+        const attrId = Number((createResult.body as { id: number | string }).id);
 
-        return request(app.getHttpServer())
+        await request(app.getHttpServer())
           .delete(`/api/attributes/products/${attrId}`)
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
+          .expect(204);
+
+        await request(app.getHttpServer())
+          .delete(`/api/attributes/types/${deleteAttributeTypeId}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(204);
       });
     });
@@ -251,7 +290,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('204 — 속성 유형 삭제', async () => {
         const createResult = await request(app.getHttpServer())
           .post('/api/attributes/types')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             code: 'to_delete_type',
             name: 'To Delete',
@@ -261,7 +300,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
 
         return request(app.getHttpServer())
           .delete(`/api/attributes/types/${typeId}`)
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(204);
       });
     });
@@ -270,7 +309,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 속성 필터로 상품 조회 (attrs 파라미터)', async () => {
         await request(app.getHttpServer())
           .post('/api/attributes/products')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             productId,
             attributeTypeId,
@@ -288,7 +327,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 여러 속성 필터 (comma-separated)', async () => {
         await request(app.getHttpServer())
           .post('/api/attributes/products')
-          .set('Cookie', ['access_token=admin_token'])
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             productId,
             attributeTypeId,
