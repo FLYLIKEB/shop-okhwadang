@@ -72,4 +72,16 @@ export class AdminMembersController {
       req.user.role as UserRole,
     );
   }
+
+  @Patch('members/:id/unlock')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '회원 잠금 해제', description: '로그인 실패 잠금을 수동 해제합니다.' })
+  @ApiResponse({ status: 200, description: '잠금 해제 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiResponse({ status: 404, description: '회원을 찾을 수 없음' })
+  @ApiParam({ name: 'id', type: Number, description: '회원 ID' })
+  unlockMember(@Param('id', ParseIntPipe) id: number) {
+    return this.adminMembersService.unlockAccount(id);
+  }
 }

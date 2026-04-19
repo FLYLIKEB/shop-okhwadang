@@ -12,6 +12,7 @@ import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
+import { RequestAccountDeletionDto } from './dto/request-account-deletion.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 interface AuthUser {
@@ -76,5 +77,15 @@ export class UsersController {
   @ApiParam({ name: 'id', type: Number, description: '배송지 ID' })
   deleteAddress(@CurrentUser() user: AuthUser, @Param('id', ParseIntPipe) id: number) {
     return this.usersService.deleteAddress(user.id, id);
+  }
+
+  @Post('me/request-deletion')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '회원 탈퇴 요청', description: '비밀번호 재확인 후 탈퇴 예약을 생성합니다.' })
+  @ApiResponse({ status: 201, description: '탈퇴 요청 성공' })
+  @ApiResponse({ status: 400, description: '비밀번호 불일치 또는 요청 불가 상태' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  requestDeletion(@CurrentUser() user: AuthUser, @Body() dto: RequestAccountDeletionDto) {
+    return this.usersService.requestAccountDeletion(user.id, dto.password);
   }
 }

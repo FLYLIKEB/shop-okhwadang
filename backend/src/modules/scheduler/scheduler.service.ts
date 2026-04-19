@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, LessThan } from 'typeorm';
+import { createHash } from 'crypto';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { OrderItem } from '../orders/entities/order-item.entity';
 import { Product } from '../products/entities/product.entity';
@@ -9,6 +10,7 @@ import { ProductOption } from '../products/entities/product-option.entity';
 import { Coupon } from '../coupons/entities/coupon.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { User } from '../users/entities/user.entity';
+import { UserAddress } from '../users/entities/user-address.entity';
 import { NotificationService } from '../notification/notification.service';
 import { SettingsService } from '../settings/settings.service';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -323,6 +325,79 @@ export class SchedulerService {
       this.logger.error(`[cron:point-expiry] Error: ${String(err)}`);
     } finally {
       await this.releaseLock(lockName);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_4AM)
+  async handleScheduledAccountDeletion(): Promise<void> {
+    const lockName = 'cron:account-deletion';
+    if (!(await this.acquireLock(lockName, 55))) {
+      this.logger.debug(`[${lockName}] Skipped - another instance holds the lock`);
+      return;
+    }
+
+    try {
+      const now = new Date();
+      const targets = await this.userRepo
+        .createQueryBuilder('user')
+        .where('user.deletionScheduledAt IS NOT NULL')
+        .andWhere('user.deletionScheduledAt <= :now', { now })
+        .andWhere('user.deletedAt IS NULL')
+        .getMany();
+
+      if (targets.length === 0) {
+        this.logger.debug('[cron:account-deletion] No scheduled accounts to anonymize');
+        return;
+      }
+
+      this.logger.log(`[cron:account-deletion] Processing ${targets.length} account(s)`);
+
+      for (const user of targets) {
+        await this.anonymizeUser(user);
+      }
+
+      this.logger.log(`[cron:account-deletion] Completed ${targets.length} account(s)`);
+    } catch (err) {
+      this.logger.error(`[cron:account-deletion] Error: ${String(err)}`);
+    } finally {
+      await this.releaseLock(lockName);
+    }
+  }
+
+  private buildDeletionHash(userId: number, source: string): string {
+    return createHash('sha256')
+      .update(`${userId}:${source}:${Date.now()}`)
+      .digest('hex')
+      .slice(0, 16);
+  }
+
+  private async anonymizeUser(user: User): Promise<void> {
+    const hash = this.buildDeletionHash(Number(user.id), user.email);
+    const originalEmail = user.email;
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(User, Number(user.id), {
+        name: `탈퇴회원-${hash.slice(0, 8)}`,
+        email: `deleted+${Number(user.id)}.${hash}@okhwadang.local`,
+        phone: `deleted-${hash.slice(0, 12)}`,
+        password: null,
+        refreshToken: null,
+        isActive: false,
+        isEmailVerified: false,
+        emailVerifiedAt: null,
+        deletedAt: new Date(),
+      });
+
+      await manager.delete(UserAddress, { userId: Number(user.id) });
+    });
+
+    if (originalEmail) {
+      void this.notificationService.sendEmail({
+        to: originalEmail,
+        subject: '[옥화당] 회원 탈퇴 처리 완료 안내',
+        text: '요청하신 회원 탈퇴가 완료되었습니다. 개인정보는 익명화되어 보관됩니다.',
+        html: '<p>요청하신 회원 탈퇴가 완료되었습니다.</p><p>개인정보는 익명화되어 보관됩니다.</p>',
+      });
     }
   }
 

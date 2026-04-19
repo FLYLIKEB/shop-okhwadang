@@ -16,6 +16,7 @@ function createMockQueryBuilder(overrides: Record<string, unknown> = {}) {
     orderBy: jest.fn().mockReturnThis(),
     getRawOne: jest.fn().mockResolvedValue({ revenue: '0', count: '0', total: '0' }),
     getRawMany: jest.fn().mockResolvedValue([]),
+    getCount: jest.fn().mockResolvedValue(0),
   };
   Object.assign(qb, overrides);
   return qb;
@@ -74,6 +75,8 @@ describe('AdminDashboardService', () => {
         new_members_today: 0,
         new_members_diff_pct: 0,
         total_product_views: 0,
+        deletion_pending_count: 0,
+        deletion_completed_count: 0,
       });
     });
 

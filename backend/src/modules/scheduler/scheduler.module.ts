@@ -7,13 +7,14 @@ import { ProductOption } from '../products/entities/product-option.entity';
 import { Coupon } from '../coupons/entities/coupon.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { User } from '../users/entities/user.entity';
+import { UserAddress } from '../users/entities/user-address.entity';
 import { SchedulerService } from './scheduler.service';
 import { SettingsModule } from '../settings/settings.module';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, Product, ProductOption, Coupon, PointHistory, User]),
+    TypeOrmModule.forFeature([Order, OrderItem, Product, ProductOption, Coupon, PointHistory, User, UserAddress]),
     SettingsModule,
     NotificationModule,
   ],
