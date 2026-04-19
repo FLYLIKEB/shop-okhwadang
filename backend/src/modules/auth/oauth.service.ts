@@ -1,10 +1,12 @@
 import {
   Injectable,
   BadGatewayException,
+  BadRequestException,
+  NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -64,7 +66,48 @@ export class OAuthService {
     private readonly userAuthRepository: Repository<UserAuthentication>,
     private readonly jwtService: JwtService,
     private readonly httpService: HttpService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
+
+  async disconnect(userId: number, provider: OAuthProvider): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      const userRepo = manager.getRepository(User);
+      const authRepo = manager.getRepository(UserAuthentication);
+
+      // 1. user row에 pessimistic_write 락 → 동일 사용자의 동시 disconnect 직렬화
+      const user = await userRepo.findOne({
+        where: { id: userId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!user) {
+        throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      }
+
+      // 2. 해당 OAuth 연결 레코드 조회
+      const targetAuth = await authRepo.findOne({
+        where: { userId, provider } as FindOptionsWhere<UserAuthentication>,
+      });
+      if (!targetAuth) {
+        throw new NotFoundException(`연결된 ${provider} 계정을 찾을 수 없습니다.`);
+      }
+
+      // 3. 마지막 인증 수단 검증 (트랜잭션 내 재조회로 TOCTOU 방지)
+      const hasLocalPassword = Boolean(user.password);
+      const oauthCount = await authRepo.count({ where: { userId } });
+      if (!hasLocalPassword && oauthCount <= 1) {
+        throw new BadRequestException('마지막 인증 수단은 해제할 수 없습니다.');
+      }
+
+      // 4. 로컬 레코드 삭제 (OAuth access token 미저장 → provider revoke 생략)
+      await authRepo.delete({ userId, provider } as FindOptionsWhere<UserAuthentication>);
+    });
+
+    // 5. 감사 로그 (트랜잭션 커밋 이후 기록)
+    this.logger.log(
+      JSON.stringify({ event: 'oauth_disconnect', userId, provider }),
+    );
+  }
 
   async handleKakao(code: string): Promise<OAuthAuthResponse> {
     const accessToken = await this.exchangeKakaoToken(code);
