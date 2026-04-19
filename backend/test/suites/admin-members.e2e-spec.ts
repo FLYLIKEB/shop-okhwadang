@@ -17,7 +17,6 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
     let adminCookies: AuthCookies;
     let userCookies: AuthCookies;
     let userId: number;
-    let adminId: number;
     let superAdminId: number;
 
     const superAdminEmail = `members-super-${Date.now()}@test.com`;
@@ -55,10 +54,6 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
         email: adminEmail,
         password: 'Test1234!',
       });
-      const adminProfile = await request(app.getHttpServer())
-        .get('/api/auth/profile')
-        .set('Cookie', cookieHeader(adminCookies));
-      adminId = (adminProfile.body as { id: number }).id;
 
       // Register user
       await registerAndGetCookies(app, {
