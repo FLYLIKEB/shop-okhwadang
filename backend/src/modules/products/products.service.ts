@@ -496,7 +496,7 @@ export class ProductsService {
   ): Promise<(Product & { rating: number; reviewCount: number })[]> {
     if (!ids || ids.length === 0) return [];
 
-    const cacheKey = `products:bulk:${ids.sort().join(',')}`;
+    const cacheKey = `products:bulk:${[...ids].sort().join(',')}`;
     const cached = await this.cacheService.get<
       (Product & { rating: number; reviewCount: number })[]
     >(cacheKey);
