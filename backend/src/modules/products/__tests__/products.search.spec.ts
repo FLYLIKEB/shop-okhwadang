@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { SelectQueryBuilder, QueryFailedError } from 'typeorm';
+import { DataSource, SelectQueryBuilder, QueryFailedError } from 'typeorm';
 import { ProductsService } from '../products.service';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
@@ -99,6 +99,10 @@ describe('ProductsService — Search', () => {
         {
           provide: CacheService,
           useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: getDataSourceToken(),
+          useValue: {} as DataSource,
         },
       ],
     }).compile();
