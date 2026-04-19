@@ -51,18 +51,18 @@ import { RolesGuard } from './common/guards/roles.guard';
     ThrottlerModule.forRoot([
       {
         name: 'global',
-        ttl: 60000,
-        limit: process.env.NODE_ENV === 'test' ? 10000 : 200,
+        ttl: Number(process.env.THROTTLE_GLOBAL_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_GLOBAL_LIMIT ?? 200),
       },
       {
         name: 'auth',
-        ttl: 60000,
-        limit: process.env.NODE_ENV === 'test' ? 10000 : 30,
+        ttl: Number(process.env.THROTTLE_AUTH_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_AUTH_LIMIT ?? 30),
       },
       {
         name: 'forgotPassword',
-        ttl: 60000,
-        limit: process.env.NODE_ENV === 'test' ? 10000 : 1,
+        ttl: Number(process.env.THROTTLE_FORGOT_PASSWORD_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_FORGOT_PASSWORD_LIMIT ?? 1),
         getTracker: (req) => {
           const rawEmail =
             typeof req.body === 'object' && req.body !== null && 'email' in req.body
