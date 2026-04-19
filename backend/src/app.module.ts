@@ -52,17 +52,17 @@ import { RolesGuard } from './common/guards/roles.guard';
       {
         name: 'global',
         ttl: 60000,
-        limit: 200,
+        limit: process.env.NODE_ENV === 'test' ? 10000 : 200,
       },
       {
         name: 'auth',
         ttl: 60000,
-        limit: 30,
+        limit: process.env.NODE_ENV === 'test' ? 10000 : 30,
       },
       {
         name: 'forgotPassword',
         ttl: 60000,
-        limit: 1,
+        limit: process.env.NODE_ENV === 'test' ? 10000 : 1,
         getTracker: (req) => {
           const rawEmail =
             typeof req.body === 'object' && req.body !== null && 'email' in req.body
