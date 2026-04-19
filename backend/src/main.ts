@@ -29,6 +29,11 @@ async function bootstrap() {
   app.use(helmet());
   app.use(cookieParser());
 
+  // Nginx/Vercel/CloudFront 등 프록시 뒤에서 X-Forwarded-For 의 첫 IP 를 req.ip 로 인식.
+  // ThrottlerGuard 가 진짜 클라이언트 IP 기준으로 동작하도록 보장.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (httpAdapter.getInstance() as any).set('trust proxy', 1);
+
   app.setGlobalPrefix('api');
 
   const frontendUrl = process.env.FRONTEND_URL;
