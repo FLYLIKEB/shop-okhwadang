@@ -325,7 +325,7 @@ export class AuthService implements OnModuleInit {
     }
 
     const user = await this.userRepository.findOne({ where: { id: payload.sub } });
-    if (!user || !user.refreshToken) {
+    if (!user || !user.isActive || !user.refreshToken) {
       throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
     }
 
