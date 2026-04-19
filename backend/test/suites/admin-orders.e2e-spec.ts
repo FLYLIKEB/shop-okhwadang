@@ -32,8 +32,9 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
           recipientPhone: '010-1234-5678',
           zipcode: '12345',
           address: '서울시 강남구',
-        });
-      return (orderRes.body as { id: number }).id;
+        })
+        .expect(201);
+      return Number((orderRes.body as { id: number | string }).id);
     }
 
     beforeAll(async () => {
@@ -63,13 +64,11 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         password: 'Test1234!',
       });
 
-      // Create product for order
-      const slug = `admin-orders-test-product-${Date.now()}`;
-      const productRes = await request(app.getHttpServer())
-        .post('/api/products')
-        .set('Cookie', cookieHeader(adminCookies))
-        .send({ name: '주문테스트상품', slug, price: 10000, stock: 100, status: 'active' });
-      productId = (productRes.body as { id: number }).id;
+      const productResult = await dataSource.query(`
+        INSERT INTO products (name, slug, price, sale_price, stock, status)
+        VALUES (?, ?, 10000, 10000, 100, 'active')
+      `, ['주문테스트상품', `admin-orders-test-product-${Date.now()}`]);
+      productId = Number((productResult as { insertId: number }).insertId);
 
       orderId = await createOrder();
       refundOrderId = await createOrder();
@@ -168,11 +167,11 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         const res = await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ carrier: 'cj', trackingNumber: `TRK-${Date.now()}` })
+          .send({ carrier: 'mock', trackingNumber: `TRK-${Date.now()}` })
           .expect(201);
 
         const body = res.body as { carrier: string; trackingNumber: string };
-        expect(body.carrier).toBe('cj');
+        expect(body.carrier).toBe('mock');
         expect(body.trackingNumber).toBeDefined();
       });
 
@@ -180,7 +179,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ carrier: 'cj', trackingNumber: `TRK-DUP-${Date.now()}` })
+          .send({ carrier: 'mock', trackingNumber: `TRK-DUP-${Date.now()}` })
           .expect(409);
       });
 
@@ -188,7 +187,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
           .set('Cookie', cookieHeader(userCookies))
-          .send({ carrier: 'cj', trackingNumber: 'TRK-USER' })
+          .send({ carrier: 'mock', trackingNumber: 'TRK-USER' })
           .expect(403);
       });
     });
@@ -241,11 +240,11 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         const res = await request(app.getHttpServer())
           .post(`/api/admin/shipping/${refundOrderId}`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ carrier: 'cj', trackingNumber: `TRK-REFUND-${Date.now()}` })
+          .send({ carrier: 'mock', trackingNumber: `TRK-REFUND-${Date.now()}` })
           .expect(201);
 
         const body = res.body as { carrier: string; trackingNumber: string };
-        expect(body.carrier).toBe('cj');
+        expect(body.carrier).toBe('mock');
         expect(body.trackingNumber).toBeDefined();
       });
 
