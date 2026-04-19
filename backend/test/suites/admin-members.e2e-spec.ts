@@ -5,6 +5,7 @@ import {
   AuthCookies,
   cookieHeader,
   loginAndGetCookies,
+  registerAndGetCookies,
 } from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
@@ -28,9 +29,11 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       dataSource = app.get(DataSource);
 
       // Register super_admin
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: superAdminEmail, password: 'Test1234!', name: '슈퍼관리자' });
+      await registerAndGetCookies(app, {
+        email: superAdminEmail,
+        password: 'Test1234!',
+        name: '슈퍼관리자',
+      });
       await dataSource.query(`UPDATE users SET role = 'super_admin' WHERE email = ?`, [superAdminEmail]);
       superAdminCookies = await loginAndGetCookies(app, {
         email: superAdminEmail,
@@ -42,9 +45,11 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       superAdminId = (superProfile.body as { id: number }).id;
 
       // Register admin
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: adminEmail, password: 'Test1234!', name: '회원관리자' });
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+        name: '회원관리자',
+      });
       await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
       adminCookies = await loginAndGetCookies(app, {
         email: adminEmail,
@@ -56,9 +61,11 @@ export function registerAdminMembersSuite(getApp: () => INestApplication) {
       adminId = (adminProfile.body as { id: number }).id;
 
       // Register user
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userEmail, password: 'Test1234!', name: '일반회원' });
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+        name: '일반회원',
+      });
       userCookies = await loginAndGetCookies(app, {
         email: userEmail,
         password: 'Test1234!',

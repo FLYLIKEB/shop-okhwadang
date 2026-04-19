@@ -5,6 +5,7 @@ import {
   AuthCookies,
   cookieHeader,
   loginAndGetCookies,
+  registerAndGetCookies,
 } from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
@@ -40,9 +41,11 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       dataSource = app.get(DataSource);
 
       // Register admin
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: adminEmail, password: 'Test1234!', name: '주문관리자' });
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+        name: '주문관리자',
+      });
       await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
       adminCookies = await loginAndGetCookies(app, {
         email: adminEmail,
@@ -50,9 +53,11 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       });
 
       // Register user
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userEmail, password: 'Test1234!', name: '일반유저' });
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+        name: '일반유저',
+      });
       userCookies = await loginAndGetCookies(app, {
         email: userEmail,
         password: 'Test1234!',
