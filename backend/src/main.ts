@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { assertEnv } from './config/env-validator';
+import { resolveTrustProxy } from './config/trust-proxy';
 
 // 프로덕션 환경에서 필수 env 키 사전 검증 — 누락 시 명확한 에러 메시지와 함께 종료
 assertEnv();
@@ -28,6 +29,14 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(cookieParser());
+
+  // Nginx/Vercel/CloudFront 등 프록시 뒤에서 X-Forwarded-For 의 첫 IP 를 req.ip 로 인식.
+  // ThrottlerGuard 가 진짜 클라이언트 IP 기준으로 동작하도록 보장.
+  // TRUST_PROXY 환경변수로 hop count 제어 (ex. CloudFront+Nginx 2단이면 2).
+  // 기본값: production=1, 그 외 0 (직접 노출된 dev 환경에서 X-Forwarded-For 스푸핑 차단).
+  const trustProxy = resolveTrustProxy(process.env.TRUST_PROXY, process.env.NODE_ENV);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (httpAdapter.getInstance() as any).set('trust proxy', trustProxy);
 
   app.setGlobalPrefix('api');
 
