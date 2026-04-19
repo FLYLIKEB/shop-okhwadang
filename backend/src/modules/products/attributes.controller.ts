@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Public } from '../../common/decorators/public.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -31,6 +32,7 @@ export class AttributesController {
   // ─── Attribute Types ───────────────────────────────────────────────
 
   @Get('types')
+  @Public()
   @ApiOperation({ summary: '모든 속성 유형 조회' })
   @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en, ja, zh)' })
   async findAllTypes(@Query('locale') locale?: string): Promise<AttributeType[]> {
@@ -38,6 +40,7 @@ export class AttributesController {
   }
 
   @Get('types/filterable')
+  @Public()
   @ApiOperation({ summary: '필터 가능한 속성 유형만 조회' })
   @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en, ja, zh)' })
   async findFilterableTypes(@Query('locale') locale?: string): Promise<AttributeType[]> {
@@ -45,6 +48,7 @@ export class AttributesController {
   }
 
   @Get('types/:id')
+  @Public()
   @ApiOperation({ summary: '속성 유형 상세 조회' })
   @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en, ja, zh)' })
   async findTypeById(
@@ -55,6 +59,7 @@ export class AttributesController {
   }
 
   @Get('types/code/:code')
+  @Public()
   @ApiOperation({ summary: '속성 유형 코드로 조회' })
   @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en, ja, zh)' })
   async findTypeByCode(
@@ -65,6 +70,7 @@ export class AttributesController {
   }
 
   @Get('types/:code/values')
+  @Public()
   @ApiOperation({ summary: '특정 타입의 가능한 값 목록 조회' })
   async getTypeValues(@Param('code') code: string): Promise<string[]> {
     return this.attributesService.getAttributeValuesByTypeCode(code);
@@ -98,6 +104,7 @@ export class AttributesController {
   // ─── Product Attributes ─────────────────────────────────────────────
 
   @Get('products/:productId')
+  @Public()
   @ApiOperation({ summary: '상품 속성 조회' })
   async findByProductId(@Param('productId', ParseIntPipe) productId: number): Promise<ProductAttribute[]> {
     return this.attributesService.findAttributesByProductId(productId);
