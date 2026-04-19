@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import * as fs from 'fs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from './modules/health/health.module';
@@ -34,6 +34,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
 
 @Module({
   imports: [
@@ -115,7 +116,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     // DO NOT reorder — RolesGuard requires request.user populated by JwtAuthGuard
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: UserAwareThrottlerGuard,
     },
     {
       provide: APP_GUARD,
