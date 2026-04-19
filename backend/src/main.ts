@@ -14,6 +14,7 @@ assertEnv();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
+  app.enableShutdownHooks();
 
   // TypeORM returns bigint columns as strings; convert numeric strings to numbers in JSON responses
   const httpAdapter = app.getHttpAdapter();
@@ -70,6 +71,24 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');
   logger.log(`Application running on port ${port}`);
+
+  const gracefulShutdown = async (signal: string) => {
+    logger.log(`Received ${signal}. Starting graceful shutdown...`);
+    const closeWithTimeout = Promise.race([
+      app.close(),
+      new Promise((resolve) => setTimeout(resolve, 30_000)),
+    ]);
+
+    await closeWithTimeout;
+    logger.log('Graceful shutdown completed.');
+  };
+
+  process.on('SIGTERM', () => {
+    void gracefulShutdown('SIGTERM');
+  });
+  process.on('SIGINT', () => {
+    void gracefulShutdown('SIGINT');
+  });
 }
 
 bootstrap();

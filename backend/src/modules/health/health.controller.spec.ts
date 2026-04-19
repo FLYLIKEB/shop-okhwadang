@@ -14,6 +14,8 @@ describe('HealthController', () => {
           provide: HealthService,
           useValue: {
             check: jest.fn(),
+            liveness: jest.fn(),
+            readiness: jest.fn(),
           },
         },
       ],
@@ -28,7 +30,7 @@ describe('HealthController', () => {
   });
 
   it('should return health status when DB is connected', async () => {
-    const result = { status: 'ok', db: 'connected', uptime: 123.456, timestamp: '2026-03-25T00:00:00.000Z' };
+    const result = { status: 'ok', db: 'connected', storage: 'skipped' as const, uptime: 123.456, timestamp: '2026-03-25T00:00:00.000Z' };
     jest.spyOn(service, 'check').mockResolvedValue(result);
 
     expect(await controller.check()).toEqual(result);

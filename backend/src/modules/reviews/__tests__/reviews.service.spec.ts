@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ReviewsService } from '../reviews.service';
 import { Review } from '../entities/review.entity';
-import { DataSource } from 'typeorm';
+import { OrderItem } from '../../orders/entities/order-item.entity';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
@@ -30,8 +30,8 @@ describe('ReviewsService', () => {
     remove: jest.fn(),
   };
 
-  const mockDataSource = {
-    query: jest.fn(),
+  const mockOrderItemRepo = {
+    createQueryBuilder: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -39,7 +39,7 @@ describe('ReviewsService', () => {
       providers: [
         ReviewsService,
         { provide: getRepositoryToken(Review), useValue: mockRepo },
-        { provide: DataSource, useValue: mockDataSource },
+        { provide: getRepositoryToken(OrderItem), useValue: mockOrderItemRepo },
       ],
     }).compile();
 
@@ -101,11 +101,18 @@ describe('ReviewsService', () => {
 
   describe('create', () => {
     it('should create a review', async () => {
-      mockDataSource.query.mockResolvedValue([{ id: 22 }]);
-      mockRepo.findOne.mockResolvedValueOnce(null); // no duplicate
+      const orderItemQb = {
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue({ id: 22 }),
+      };
+      mockOrderItemRepo.createQueryBuilder.mockReturnValue(orderItemQb);
+      mockRepo.findOne.mockResolvedValueOnce(null);
       mockRepo.create.mockReturnValue(mockReview);
       mockRepo.save.mockResolvedValue(mockReview);
-      mockRepo.findOne.mockResolvedValueOnce(mockReview); // reload
+      mockRepo.findOne.mockResolvedValueOnce(mockReview);
 
       const result = await service.create(10, {
         productId: 5,
@@ -120,7 +127,14 @@ describe('ReviewsService', () => {
     });
 
     it('should throw BadRequestException for unpurchased product', async () => {
-      mockDataSource.query.mockResolvedValue([]);
+      const orderItemQb = {
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      };
+      mockOrderItemRepo.createQueryBuilder.mockReturnValue(orderItemQb);
 
       await expect(
         service.create(10, { productId: 5, orderItemId: 22, rating: 5 }),
@@ -128,7 +142,14 @@ describe('ReviewsService', () => {
     });
 
     it('should throw ConflictException for duplicate review', async () => {
-      mockDataSource.query.mockResolvedValue([{ id: 22 }]);
+      const orderItemQb = {
+        innerJoin: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue({ id: 22 }),
+      };
+      mockOrderItemRepo.createQueryBuilder.mockReturnValue(orderItemQb);
       mockRepo.findOne.mockResolvedValue(mockReview);
 
       await expect(

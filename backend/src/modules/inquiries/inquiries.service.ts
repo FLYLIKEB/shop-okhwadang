@@ -8,9 +8,11 @@ import { Inquiry, InquiryStatus } from './entities/inquiry.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AnswerInquiryDto } from './dto/answer-inquiry.dto';
+import { AdminInquiryQueryDto } from './dto/admin-inquiry-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { NotificationService } from '../notification/notification.service';
+import { PaginatedResult, paginate } from '../../common/utils/pagination.util';
 
 @Injectable()
 export class InquiriesService {
@@ -49,10 +51,15 @@ export class InquiriesService {
     return saved;
   }
 
-  async findAllForAdmin(): Promise<Inquiry[]> {
-    return this.inquiryRepo.find({
-      relations: ['user'],
-      order: { createdAt: 'DESC' },
+  async findAllForAdmin(query: AdminInquiryQueryDto = {}): Promise<PaginatedResult<Inquiry>> {
+    const qb = this.inquiryRepo
+      .createQueryBuilder('inquiry')
+      .leftJoinAndSelect('inquiry.user', 'user')
+      .orderBy('inquiry.createdAt', 'DESC');
+
+    return paginate(qb, {
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     });
   }
 

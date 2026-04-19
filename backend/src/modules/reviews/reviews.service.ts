@@ -6,8 +6,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
+import { OrderItem } from '../orders/entities/order-item.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
@@ -47,7 +48,8 @@ export class ReviewsService {
   constructor(
     @InjectRepository(Review)
     private readonly reviewRepo: Repository<Review>,
-    private readonly dataSource: DataSource,
+    @InjectRepository(OrderItem)
+    private readonly orderItemRepo: Repository<OrderItem>,
   ) {}
 
   private maskUserName(name: string): string {
@@ -143,12 +145,14 @@ export class ReviewsService {
 
   async create(userId: number, dto: CreateReviewDto): Promise<ReviewResponse> {
     // Verify purchase: check if order_item belongs to user
-    const [orderItem] = await this.dataSource.query(
-      `SELECT oi.id FROM order_items oi
-       JOIN orders o ON o.id = oi.order_id
-       WHERE oi.id = ? AND o.user_id = ? AND oi.product_id = ?`,
-      [dto.orderItemId, userId, dto.productId],
-    ) as Array<{ id: number }>;
+    const orderItem = await this.orderItemRepo
+      .createQueryBuilder('orderItem')
+      .innerJoin('orderItem.order', 'order')
+      .where('orderItem.id = :orderItemId', { orderItemId: dto.orderItemId })
+      .andWhere('order.userId = :userId', { userId })
+      .andWhere('orderItem.productId = :productId', { productId: dto.productId })
+      .select('orderItem.id')
+      .getOne();
 
     if (!orderItem) {
       throw new BadRequestException('구매한 상품만 리뷰 작성 가능합니다.');
