@@ -306,9 +306,14 @@ export class ProductsService {
     locale?: string,
     cacheKey?: string,
   ) {
-    const { status } = query;
+    const { status, q } = query;
 
     const likeQb = this.buildBaseQueryBuilder(isAdmin, status as ProductStatus | undefined);
+
+    if (q) {
+      likeQb.andWhere('product.name LIKE :q', { q: `%${q}%` });
+    }
+
     this.applyFiltersAndSort(likeQb, query, categoryIds, attrTypeIdMap);
 
     return this.executeFindAll(likeQb, page, limit, sort, locale, cacheKey);
