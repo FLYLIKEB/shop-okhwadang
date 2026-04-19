@@ -47,7 +47,12 @@ export function registerNavigationSuite(getApp: () => INestApplication) {
 
     afterAll(async () => {
       await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
-      await dataSource.query(`DELETE FROM navigation_items WHERE id IN (?, ?)`, [createdItemId, childItemId].filter(Boolean));
+      if (childItemId) {
+        await dataSource.query('DELETE FROM navigation_items WHERE id = ?', [childItemId]);
+      }
+      if (createdItemId) {
+        await dataSource.query('DELETE FROM navigation_items WHERE id = ?', [createdItemId]);
+      }
       await dataSource.query('DELETE FROM users WHERE id IN (?, ?)', [adminUserId, regularUserId]);
       await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
     });
