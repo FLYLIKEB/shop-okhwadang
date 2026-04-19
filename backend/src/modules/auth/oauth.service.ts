@@ -1,6 +1,7 @@
 import {
   Injectable,
   BadGatewayException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,6 +16,7 @@ import {
   UserAuthentication,
   OAuthProvider,
 } from '../users/entities/user-authentication.entity';
+import { findOrThrow } from '../../common/utils/repository.util';
 
 export interface OAuthAuthResponse {
   accessToken: string;
@@ -65,6 +67,33 @@ export class OAuthService {
     private readonly jwtService: JwtService,
     private readonly httpService: HttpService,
   ) {}
+
+  async disconnect(userId: number, provider: OAuthProvider): Promise<void> {
+    // 1. 사용자 조회
+    const user = await findOrThrow(this.userRepository, { id: userId } as never, '사용자를 찾을 수 없습니다.');
+
+    // 2. 해당 OAuth 연결 레코드 조회
+    await findOrThrow(
+      this.userAuthRepository,
+      { userId, provider } as never,
+      `연결된 ${provider} 계정을 찾을 수 없습니다.`,
+    );
+
+    // 3. 마지막 인증 수단 검증: 로컬 비밀번호 없음 + 남은 OAuth 1개(해제하면 0개)
+    const hasLocalPassword = Boolean(user.password);
+    const oauthCount = await this.userAuthRepository.count({ where: { userId } });
+    if (!hasLocalPassword && oauthCount <= 1) {
+      throw new BadRequestException('마지막 인증 수단은 해제할 수 없습니다.');
+    }
+
+    // 4. 로컬 레코드 삭제 (OAuth access token 미저장 → provider revoke 생략)
+    await this.userAuthRepository.delete({ userId, provider } as never);
+
+    // 5. 감사 로그
+    this.logger.log(
+      JSON.stringify({ event: 'oauth_disconnect', userId, provider }),
+    );
+  }
 
   async handleKakao(code: string): Promise<OAuthAuthResponse> {
     const accessToken = await this.exchangeKakaoToken(code);

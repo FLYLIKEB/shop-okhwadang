@@ -2,20 +2,23 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   HttpCode,
   HttpStatus,
+  Param,
   UseGuards,
   Res,
   Req,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth, ApiParam } from '@nestjs/swagger';
 import type { Request, Response, CookieOptions } from 'express';
 import { AuthService } from './auth.service';
 import { OAuthService } from './oauth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
+import { OAuthProvider } from '../users/entities/user-authentication.entity';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
@@ -246,5 +249,22 @@ export class AuthController {
     const { accessToken, refreshToken, user } = await this.oauthService.handleGoogle(dto.code);
     setAuthCookies(res, accessToken, refreshToken);
     return { user };
+  }
+
+  @Delete('oauth/:provider')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'OAuth 연결 해제', description: '현재 사용자의 특정 OAuth 제공사 연결을 해제합니다. 마지막 인증 수단인 경우 해제가 거부됩니다.' })
+  @ApiParam({ name: 'provider', enum: OAuthProvider, description: 'OAuth 제공사 (kakao | google)' })
+  @ApiResponse({ status: 204, description: 'OAuth 연결 해제 성공' })
+  @ApiResponse({ status: 400, description: '마지막 인증 수단은 해제할 수 없습니다.' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 404, description: '연결된 OAuth 계정을 찾을 수 없습니다.' })
+  async disconnectOAuth(
+    @CurrentUser() user: JwtUser,
+    @Param('provider') provider: OAuthProvider,
+  ): Promise<void> {
+    await this.oauthService.disconnect(user.id, provider);
   }
 }

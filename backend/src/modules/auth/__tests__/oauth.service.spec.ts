@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
-import { BadGatewayException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { OAuthService } from '../oauth.service';
@@ -20,6 +20,8 @@ const mockUserAuthRepository = {
   findOne: jest.fn(),
   create: jest.fn(),
   save: jest.fn(),
+  count: jest.fn(),
+  delete: jest.fn(),
 };
 
 const mockJwtService = {
@@ -213,6 +215,66 @@ describe('OAuthService', () => {
       expect(result.isNewUser).toBe(false);
       expect(result.user.email).toBe('same@email.com');
       expect(mockUserRepository.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('disconnect', () => {
+    it('로컬 비밀번호 있음 + OAuth 2개 → 1개 해제 성공', async () => {
+      const user = makeUser({ id: 1, password: 'hashed-pw' });
+      mockUserRepository.findOne.mockResolvedValue(user);
+      mockUserAuthRepository.findOne.mockResolvedValue(makeUserAuth({ userId: 1, provider: OAuthProvider.KAKAO }));
+      mockUserAuthRepository.count.mockResolvedValue(2);
+      mockUserAuthRepository.delete.mockResolvedValue({ affected: 1 });
+
+      await expect(service.disconnect(1, OAuthProvider.KAKAO)).resolves.toBeUndefined();
+      expect(mockUserAuthRepository.delete).toHaveBeenCalledWith({ userId: 1, provider: OAuthProvider.KAKAO });
+    });
+
+    it('로컬 비밀번호 없음 + OAuth 2개 → 1개 해제 성공 (남은 1개)', async () => {
+      const user = makeUser({ id: 1, password: null });
+      mockUserRepository.findOne.mockResolvedValue(user);
+      mockUserAuthRepository.findOne.mockResolvedValue(makeUserAuth({ userId: 1, provider: OAuthProvider.KAKAO }));
+      mockUserAuthRepository.count.mockResolvedValue(2);
+      mockUserAuthRepository.delete.mockResolvedValue({ affected: 1 });
+
+      await expect(service.disconnect(1, OAuthProvider.KAKAO)).resolves.toBeUndefined();
+      expect(mockUserAuthRepository.delete).toHaveBeenCalledWith({ userId: 1, provider: OAuthProvider.KAKAO });
+    });
+
+    it('로컬 비밀번호 없음 + OAuth 1개 → 해제 거부 (400)', async () => {
+      const user = makeUser({ id: 1, password: null });
+      mockUserRepository.findOne.mockResolvedValue(user);
+      mockUserAuthRepository.findOne.mockResolvedValue(makeUserAuth({ userId: 1, provider: OAuthProvider.KAKAO }));
+      mockUserAuthRepository.count.mockResolvedValue(1);
+
+      await expect(service.disconnect(1, OAuthProvider.KAKAO)).rejects.toThrow(BadRequestException);
+      expect(mockUserAuthRepository.delete).not.toHaveBeenCalled();
+    });
+
+    it('로컬 비밀번호 있음 + OAuth 1개 → 해제 성공 (로컬 로그인 가능)', async () => {
+      const user = makeUser({ id: 1, password: 'hashed-pw' });
+      mockUserRepository.findOne.mockResolvedValue(user);
+      mockUserAuthRepository.findOne.mockResolvedValue(makeUserAuth({ userId: 1, provider: OAuthProvider.KAKAO }));
+      mockUserAuthRepository.count.mockResolvedValue(1);
+      mockUserAuthRepository.delete.mockResolvedValue({ affected: 1 });
+
+      await expect(service.disconnect(1, OAuthProvider.KAKAO)).resolves.toBeUndefined();
+      expect(mockUserAuthRepository.delete).toHaveBeenCalledWith({ userId: 1, provider: OAuthProvider.KAKAO });
+    });
+
+    it('존재하지 않는 provider → 404 NotFoundException', async () => {
+      const user = makeUser({ id: 1, password: 'hashed-pw' });
+      mockUserRepository.findOne.mockResolvedValue(user);
+      mockUserAuthRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.disconnect(1, OAuthProvider.GOOGLE)).rejects.toThrow(NotFoundException);
+      expect(mockUserAuthRepository.delete).not.toHaveBeenCalled();
+    });
+
+    it('사용자가 존재하지 않으면 404 NotFoundException', async () => {
+      mockUserRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.disconnect(99, OAuthProvider.KAKAO)).rejects.toThrow(NotFoundException);
     });
   });
 
