@@ -81,7 +81,7 @@ export class AdminMembersService {
     requesterId: number,
     requesterRole: UserRole,
   ): Promise<SafeUser> {
-    if (targetId === requesterId) {
+    if (Number(targetId) === Number(requesterId)) {
       throw new BadRequestException('자기 자신의 역할은 변경할 수 없습니다.');
     }
 

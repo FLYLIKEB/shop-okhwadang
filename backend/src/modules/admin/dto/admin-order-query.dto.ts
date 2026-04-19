@@ -3,10 +3,10 @@ import { IsOptional, IsString, IsInt, Min, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class AdminOrderQueryDto {
-  @ApiProperty({ example: 'paid', enum: ['pending', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled', 'refunded'], description: '주문 상태', required: false })
+  @ApiProperty({ example: 'paid', enum: ['pending', 'paid', 'preparing', 'shipped', 'delivered', 'completed', 'cancelled', 'refund_requested', 'refunded'], description: '주문 상태', required: false })
   @IsOptional()
   @IsString()
-  @IsIn(['pending', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled', 'refunded'])
+  @IsIn(['pending', 'paid', 'preparing', 'shipped', 'delivered', 'completed', 'cancelled', 'refund_requested', 'refunded'])
   status?: string;
 
   @ApiProperty({ example: '홍길동', description: '검색어 (수령인명 또는 주문번호)', required: false })

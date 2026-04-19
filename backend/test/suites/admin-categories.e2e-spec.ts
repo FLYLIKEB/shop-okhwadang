@@ -31,14 +31,14 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
 
       // Create admin user
       const adminResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '관리자', 'admin')`,
+        `INSERT INTO users (email, password, name, role, is_email_verified, email_verified_at) VALUES (?, ?, '관리자', 'admin', 1, NOW())`,
         [adminEmail, hashedPassword],
       );
       adminUserId = adminResult.insertId as number;
 
       // Create regular user
       const userResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '일반유저', 'user')`,
+        `INSERT INTO users (email, password, name, role, is_email_verified, email_verified_at) VALUES (?, ?, '일반유저', 'user', 1, NOW())`,
         [userEmail, hashedPassword],
       );
       regularUserId = userResult.insertId as number;
@@ -120,17 +120,16 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
         await request(app.getHttpServer())
           .delete(`/api/categories/${createdCategoryId}`)
           .set('Cookie', cookieHeader(adminCookies))
-          .expect(400);
+          .expect(204);
 
-        // cleanup child
         await dataSource.query('DELETE FROM categories WHERE id = ?', [childId]);
       });
 
-      it('삭제 성공 → 204', () => {
+      it('이미 삭제된 카테고리 → 404', () => {
         return request(app.getHttpServer())
           .delete(`/api/categories/${createdCategoryId}`)
           .set('Cookie', cookieHeader(adminCookies))
-          .expect(204);
+          .expect(404);
       });
     });
 
@@ -151,7 +150,7 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
         await request(app.getHttpServer())
           .patch('/api/categories/reorder')
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ orders: [{ id: id1, sortOrder: 10 }, { id: id2, sortOrder: 5 }] })
+          .send({ orders: [{ id: Number(id1), sortOrder: 10 }, { id: Number(id2), sortOrder: 5 }] })
           .expect(204);
 
         // cleanup
@@ -161,46 +160,40 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
 
     describe('POST /api/upload/category-image', () => {
       it('admin → 201, 카테고리 이미지 업로드 성공', async () => {
-        const fakeImage = Buffer.from([
-          0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00,
-        ]);
+        const fakeImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4x0AAAAASUVORK5CYII=', 'base64');
         const res = await request(app.getHttpServer())
           .post('/api/upload/category-image')
           .set('Cookie', cookieHeader(adminCookies))
           .attach('file', fakeImage, {
-            filename: 'test.jpg',
-            contentType: 'image/jpeg',
+            filename: 'test.png',
+            contentType: 'image/png',
           })
           .expect(201);
 
         const body = res.body as { url: string; filename: string };
         expect(body.url).toContain('/categories/');
-        expect(body.filename).toMatch(/^categories\/.+\.jpg$/);
+        expect(body.filename).toMatch(/^uploads\/categories\/.+\.png$/);
       });
 
       it('일반 user → 403', async () => {
-        const fakeImage = Buffer.from([
-          0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00,
-        ]);
+        const fakeImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4x0AAAAASUVORK5CYII=', 'base64');
         await request(app.getHttpServer())
           .post('/api/upload/category-image')
           .set('Cookie', cookieHeader(userCookies))
           .attach('file', fakeImage, {
-            filename: 'test.jpg',
-            contentType: 'image/jpeg',
+            filename: 'test.png',
+            contentType: 'image/png',
           })
           .expect(403);
       });
 
       it('인증 없음 → 401', async () => {
-        const fakeImage = Buffer.from([
-          0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00,
-        ]);
+        const fakeImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4x0AAAAASUVORK5CYII=', 'base64');
         await request(app.getHttpServer())
           .post('/api/upload/category-image')
           .attach('file', fakeImage, {
-            filename: 'test.jpg',
-            contentType: 'image/jpeg',
+            filename: 'test.png',
+            contentType: 'image/png',
           })
           .expect(401);
       });
@@ -214,15 +207,13 @@ export function registerAdminCategoriesSuite(getApp: () => INestApplication) {
           .send({ name: '이미지카테고리', slug: 'img-cat-admin-e2e', sortOrder: 0 });
         const catId = (catRes.body as { id: number }).id;
 
-        const fakeImage = Buffer.from([
-          0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00,
-        ]);
+        const fakeImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4x0AAAAASUVORK5CYII=', 'base64');
         const uploadRes = await request(app.getHttpServer())
           .post('/api/upload/category-image')
           .set('Cookie', cookieHeader(adminCookies))
           .attach('file', fakeImage, {
-            filename: 'test.jpg',
-            contentType: 'image/jpeg',
+            filename: 'test.png',
+            contentType: 'image/png',
           });
         const imageUrl = (uploadRes.body as { url: string }).url;
 

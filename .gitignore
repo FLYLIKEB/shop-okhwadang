@@ -12,6 +12,7 @@ next-env.d.ts
 backend/.env
 backend/.env.production
 backend/.env.secrets
+backend/uploads/
 *.pem
 *.key
 

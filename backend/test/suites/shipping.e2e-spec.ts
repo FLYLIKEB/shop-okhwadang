@@ -165,7 +165,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
           .post('/api/shipping/track')
           .set('Cookie', cookieHeader(userCookies))
           .send({ carrier: 'mock', trackingNumber: '1234567890123' })
-          .expect(201);
+          .expect(200);
 
         const body = res.body as { carrier: string; steps: unknown[] };
         expect(body.carrier).toBe('mock');

@@ -64,6 +64,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 모든 속성 유형 반환', () => {
         return request(app.getHttpServer())
           .get('/api/attributes/types')
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200)
           .expect((res) => {
             expect(Array.isArray(res.body)).toBe(true);
@@ -73,6 +74,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('test_attr 타입이 존재', () => {
         return request(app.getHttpServer())
           .get('/api/attributes/types')
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200)
           .expect((res) => {
             const testType = (res.body as Array<{ code: string }>).find(
@@ -87,6 +89,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 필터 가능한 속성 유형만 반환', () => {
         return request(app.getHttpServer())
           .get('/api/attributes/types/filterable')
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200)
           .expect((res) => {
             expect(Array.isArray(res.body)).toBe(true);
@@ -102,6 +105,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 존재하는 ID로 조회', () => {
         return request(app.getHttpServer())
           .get(`/api/attributes/types/${attributeTypeId}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200)
           .expect((res) => {
             expect(res.body.id).toBe(attributeTypeId);
@@ -112,6 +116,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('404 — 존재하지 않는 ID', () => {
         return request(app.getHttpServer())
           .get('/api/attributes/types/999999')
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(404);
       });
     });
@@ -120,6 +125,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 코드로 조회', () => {
         return request(app.getHttpServer())
           .get('/api/attributes/types/code/test_attr')
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200)
           .expect((res) => {
             expect(res.body.code).toBe('test_attr');
@@ -130,7 +136,8 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
     describe('GET /api/attributes/types/:code/values', () => {
       it('200 — 속성의 가능한 값 목록 반환', () => {
         return request(app.getHttpServer())
-          .get('/api/attributes/types/code/test_attr/values')
+          .get('/api/attributes/types/test_attr/values')
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200)
           .expect((res) => {
             expect(Array.isArray(res.body)).toBe(true);
@@ -146,7 +153,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
           .post('/api/attributes/types')
           .set('Cookie', cookieHeader(adminCookies))
           .send({
-            code: 'new_test_attr',
+            code: `new_test_attr_${Date.now()}`,
             name: 'New Test',
             nameKo: '새 테스트',
             inputType: 'text',
@@ -154,7 +161,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
           })
           .expect(201)
           .expect((res) => {
-            expect(res.body.code).toBe('new_test_attr');
+            expect(res.body.code).toMatch(/^new_test_attr_/);
           });
       });
 
@@ -163,7 +170,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
           .post('/api/attributes/types')
           .set('Cookie', cookieHeader(adminCookies))
           .send({
-            code: 'new_test_attr',
+            code: 'test_attr',
             name: 'Duplicate Test',
           })
           .expect(409);
@@ -189,6 +196,7 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
       it('200 — 상품 속성 조회 (빈 배열)', () => {
         return request(app.getHttpServer())
           .get(`/api/attributes/products/${productId}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200)
           .expect((res) => {
             expect(Array.isArray(res.body)).toBe(true);
@@ -247,15 +255,16 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
     describe('DELETE /api/attributes/products/:id', () => {
       it('204 — 상품 속성 삭제', async () => {
         const createResult = await request(app.getHttpServer())
-          .post('/api/attributes/products')
+          .post(`/api/attributes/products/${productId}/set`)
           .set('Cookie', cookieHeader(adminCookies))
           .send({
-            productId,
-            attributeTypeId,
-            value: 'to_delete',
-          });
+            attributes: [
+              { attributeTypeId, value: 'to_delete', displayValue: 'to_delete' },
+            ],
+          })
+          .expect(200);
 
-        const attrId = createResult.body.id;
+        const attrId = createResult.body[0].id;
 
         return request(app.getHttpServer())
           .delete(`/api/attributes/products/${attrId}`)
@@ -286,13 +295,14 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
     describe('GET /api/products with attrs filter', () => {
       it('200 — 속성 필터로 상품 조회 (attrs 파라미터)', async () => {
         await request(app.getHttpServer())
-          .post('/api/attributes/products')
+          .post(`/api/attributes/products/${productId}/set`)
           .set('Cookie', cookieHeader(adminCookies))
           .send({
-            productId,
-            attributeTypeId,
-            value: 'filter_test',
-          });
+            attributes: [
+              { attributeTypeId, value: 'filter_test', displayValue: 'filter_test' },
+            ],
+          })
+          .expect(200);
 
         return request(app.getHttpServer())
           .get(`/api/products?attrs=test_attr:filter_test`)
@@ -304,13 +314,14 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
 
       it('200 — 여러 속성 필터 (comma-separated)', async () => {
         await request(app.getHttpServer())
-          .post('/api/attributes/products')
+          .post(`/api/attributes/products/${productId}/set`)
           .set('Cookie', cookieHeader(adminCookies))
           .send({
-            productId,
-            attributeTypeId,
-            value: 'multi_test',
-          });
+            attributes: [
+              { attributeTypeId, value: 'multi_test', displayValue: 'multi_test' },
+            ],
+          })
+          .expect(200);
 
         return request(app.getHttpServer())
           .get(`/api/products?attrs=test_attr:multi_test`)

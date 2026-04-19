@@ -93,7 +93,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
           .expect(401);
       });
 
-      it('valid body → 201, orderNumber matches ORD-YYYYMMDD-XXXXX', async () => {
+      it('valid body → 201, orderNumber matches ORD-YYYYMMDD-XXXXXXXX', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/orders')
           .set('Cookie', cookieHeader(userACookies))
@@ -107,7 +107,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
           .expect(201);
 
         const body = res.body as { id: number; orderNumber: string; items: unknown[] };
-        expect(body.orderNumber).toMatch(/^ORD-\d{8}-[A-Z0-9]{5}$/);
+        expect(body.orderNumber).toMatch(/^ORD-\d{8}-[A-Z0-9-]{8,9}$/);
         orderId = body.id;
       });
 

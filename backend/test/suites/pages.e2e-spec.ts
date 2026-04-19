@@ -30,13 +30,13 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const adminResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '페이지관리자', 'admin')`,
+        `INSERT INTO users (email, password, name, role, is_email_verified, email_verified_at) VALUES (?, ?, '페이지관리자', 'admin', 1, NOW())`,
         [adminEmail, hashedPassword],
       );
       adminUserId = adminResult.insertId as number;
 
       const userResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '일반유저', 'user')`,
+        `INSERT INTO users (email, password, name, role, is_email_verified, email_verified_at) VALUES (?, ?, '일반유저', 'user', 1, NOW())`,
         [userEmail, hashedPassword],
       );
       regularUserId = userResult.insertId as number;
@@ -236,8 +236,8 @@ export function registerPagesSuite(getApp: () => INestApplication) {
           .set('Cookie', cookieHeader(adminCookies))
           .send({
             orders: [
-              { id: createdBlockId, sort_order: 1 },
-              { id: secondBlockId, sort_order: 0 },
+              { id: Number(createdBlockId), sort_order: 1 },
+              { id: Number(secondBlockId), sort_order: 0 },
             ],
           })
           .expect(204);

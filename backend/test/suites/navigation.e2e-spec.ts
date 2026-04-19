@@ -30,13 +30,13 @@ export function registerNavigationSuite(getApp: () => INestApplication) {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const adminResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '네비관리자', 'admin')`,
+        `INSERT INTO users (email, password, name, role, is_email_verified, email_verified_at) VALUES (?, ?, '네비관리자', 'admin', 1, NOW())`,
         [adminEmail, hashedPassword],
       );
       adminUserId = adminResult.insertId as number;
 
       const userResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '일반유저', 'user')`,
+        `INSERT INTO users (email, password, name, role, is_email_verified, email_verified_at) VALUES (?, ?, '일반유저', 'user', 1, NOW())`,
         [userEmail, hashedPassword],
       );
       regularUserId = userResult.insertId as number;
@@ -47,7 +47,7 @@ export function registerNavigationSuite(getApp: () => INestApplication) {
 
     afterAll(async () => {
       await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
-      await dataSource.query(`DELETE FROM navigation_items WHERE id IN (?, ?)`, [createdItemId, childItemId].filter(Boolean));
+      await dataSource.query(`DELETE FROM navigation_items WHERE id IN (?, ?)`, [createdItemId || 0, childItemId || 0]);
       await dataSource.query('DELETE FROM users WHERE id IN (?, ?)', [adminUserId, regularUserId]);
       await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
     });

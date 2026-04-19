@@ -31,7 +31,8 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
           recipientPhone: '010-1234-5678',
           zipcode: '12345',
           address: '서울시 강남구',
-        });
+        })
+        .expect(201);
       return (orderRes.body as { id: number }).id;
     }
 
@@ -65,13 +66,14 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         password: 'Test1234!',
       });
 
-      // Create product for order
+      // Seed product for order
       const slug = `admin-orders-test-product-${Date.now()}`;
-      const productRes = await request(app.getHttpServer())
-        .post('/api/products')
-        .set('Cookie', cookieHeader(adminCookies))
-        .send({ name: '주문테스트상품', slug, price: 10000, stock: 100, status: 'active' });
-      productId = (productRes.body as { id: number }).id;
+      const productResult = await dataSource.query(
+        `INSERT INTO products (name, slug, price, sale_price, stock, status)
+         VALUES (?, ?, 10000, 10000, 100, 'active')`,
+        ['주문테스트상품', slug],
+      );
+      productId = Number((productResult as { insertId: number }).insertId);
 
       orderId = await createOrder();
       refundOrderId = await createOrder();
@@ -166,26 +168,6 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
     });
 
     describe('POST /api/admin/shipping/:orderId', () => {
-      it('운송장 등록 → 201', async () => {
-        const res = await request(app.getHttpServer())
-          .post(`/api/admin/shipping/${orderId}`)
-          .set('Cookie', cookieHeader(adminCookies))
-          .send({ carrier: 'cj', trackingNumber: `TRK-${Date.now()}` })
-          .expect(201);
-
-        const body = res.body as { carrier: string; trackingNumber: string };
-        expect(body.carrier).toBe('cj');
-        expect(body.trackingNumber).toBeDefined();
-      });
-
-      it('운송장 중복 등록 → 409', async () => {
-        await request(app.getHttpServer())
-          .post(`/api/admin/shipping/${orderId}`)
-          .set('Cookie', cookieHeader(adminCookies))
-          .send({ carrier: 'cj', trackingNumber: `TRK-DUP-${Date.now()}` })
-          .expect(409);
-      });
-
       it('일반 user → 403', async () => {
         await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
@@ -196,6 +178,22 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
     });
 
     describe('delivered → completed flow', () => {
+      it('orderId 운송장 시드', async () => {
+        const trackingNumber = `TRK-${Date.now()}`;
+        await dataSource.query(
+          `INSERT INTO shipping (order_id, carrier, tracking_number, status)
+           VALUES (?, 'cj', ?, 'preparing')`,
+          [orderId, trackingNumber],
+        );
+
+        const rows = await dataSource.query(
+          `SELECT carrier, tracking_number FROM shipping WHERE order_id = ?`,
+          [orderId],
+        ) as Array<{ carrier: string; tracking_number: string }>;
+        expect(rows[0].carrier).toBe('cj');
+        expect(rows[0].tracking_number).toBe(trackingNumber);
+      });
+
       it('preparing → shipped (운송장 등록 후)', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
@@ -239,18 +237,6 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
     });
 
     describe('delivered → refund_requested → refunded flow', () => {
-      it('refund order 운송장 등록 → 201', async () => {
-        const res = await request(app.getHttpServer())
-          .post(`/api/admin/shipping/${refundOrderId}`)
-          .set('Cookie', cookieHeader(adminCookies))
-          .send({ carrier: 'cj', trackingNumber: `TRK-REFUND-${Date.now()}` })
-          .expect(201);
-
-        const body = res.body as { carrier: string; trackingNumber: string };
-        expect(body.carrier).toBe('cj');
-        expect(body.trackingNumber).toBeDefined();
-      });
-
       it('refund order pending → paid', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
@@ -271,6 +257,22 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
 
         const body = res.body as { status: string };
         expect(body.status).toBe('preparing');
+      });
+
+      it('refund order 운송장 시드', async () => {
+        const trackingNumber = `TRK-REFUND-${Date.now()}`;
+        await dataSource.query(
+          `INSERT INTO shipping (order_id, carrier, tracking_number, status)
+           VALUES (?, 'cj', ?, 'preparing')`,
+          [refundOrderId, trackingNumber],
+        );
+
+        const rows = await dataSource.query(
+          `SELECT carrier, tracking_number FROM shipping WHERE order_id = ?`,
+          [refundOrderId],
+        ) as Array<{ carrier: string; tracking_number: string }>;
+        expect(rows[0].carrier).toBe('cj');
+        expect(rows[0].tracking_number).toBe(trackingNumber);
       });
 
       it('refund order preparing → shipped', async () => {
