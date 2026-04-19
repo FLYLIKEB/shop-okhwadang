@@ -22,6 +22,8 @@ const mockGetManyAndCount = jest.fn();
 const mockGetOne = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
 
+const mockGetMany = jest.fn();
+
 const mockQueryBuilder = {
   leftJoinAndSelect: mockLeftJoinAndSelect,
   andWhere: mockAndWhere,
@@ -31,6 +33,7 @@ const mockQueryBuilder = {
   take: mockTake,
   getManyAndCount: mockGetManyAndCount,
   getOne: mockGetOne,
+  getMany: mockGetMany,
 } as unknown as SelectQueryBuilder<Product>;
 
 const mockRepository = {
@@ -341,6 +344,19 @@ describe('ProductsService', () => {
       const result = await service.update(1, { nameEn: 'Updated English Name' });
 
       expect(result).toMatchObject({ nameEn: 'Updated English Name' });
+    });
+  });
+
+  describe('findBulk', () => {
+    it('원본 ids 배열을 변경하지 않는다', async () => {
+      mockGetMany.mockResolvedValue([]);
+
+      const ids = [3, 1, 2];
+      const originalOrder = [...ids];
+
+      await service.findBulk(ids);
+
+      expect(ids).toEqual(originalOrder);
     });
   });
 });
