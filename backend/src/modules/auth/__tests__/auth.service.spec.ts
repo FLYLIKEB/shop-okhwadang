@@ -178,6 +178,18 @@ describe('AuthService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
+    it('비활성 계정 로그인 시 password 검증 없이 즉시 ForbiddenException (failedLoginAttempts 증가 없음)', async () => {
+      const hashed = await bcrypt.hash('Test1234!', 10);
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed, isActive: false }));
+
+      await expect(
+        service.login({ email: 'test@example.com', password: 'Test1234!' }),
+      ).rejects.toThrow(ForbiddenException);
+
+      // password 검증 실패 시에만 호출되는 userRepository.update가 호출되지 않아야 함
+      expect(mockUserRepository.update).not.toHaveBeenCalled();
+    });
+
     it('로그인 성공 시 refreshToken을 DB에 해싱 저장', async () => {
       const hashed = await bcrypt.hash('Test1234!', 10);
       mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed, isEmailVerified: true }));

@@ -171,6 +171,10 @@ export class AuthService implements OnModuleInit {
       );
     }
 
+    if (!user.isActive) {
+      throw new ForbiddenException('비활성화된 계정입니다.');
+    }
+
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) {
       const now = new Date();
@@ -259,10 +263,6 @@ export class AuthService implements OnModuleInit {
         userAgent: userAgent ?? null,
       });
       throw new UnauthorizedException('비밀번호가 올바르지 않습니다.');
-    }
-
-    if (!user.isActive) {
-      throw new ForbiddenException('비활성화된 계정입니다.');
     }
 
     if (!user.isEmailVerified) {
