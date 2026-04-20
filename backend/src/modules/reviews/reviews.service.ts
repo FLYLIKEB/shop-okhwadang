@@ -6,15 +6,23 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
 import { OrderItem } from '../orders/entities/order-item.entity';
+import { OrderStatus } from '../orders/entities/order.entity';
+import { PointHistory } from '../coupons/entities/point-history.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { paginate } from '../../common/utils/pagination.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
+import { SettingsService } from '../settings/settings.service';
+
+const REVIEW_POINT_REWARD_KEY = 'review_point_reward';
+const PHOTO_REVIEW_BONUS_KEY = 'photo_review_bonus';
+const DEFAULT_REVIEW_POINT_REWARD = 100;
+const DEFAULT_PHOTO_REVIEW_BONUS = 0;
 
 export interface ReviewResponse {
   id: number;
@@ -50,6 +58,10 @@ export class ReviewsService {
     private readonly reviewRepo: Repository<Review>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepo: Repository<OrderItem>,
+    @InjectRepository(PointHistory)
+    private readonly pointHistoryRepo: Repository<PointHistory>,
+    private readonly settingsService: SettingsService,
+    private readonly dataSource: DataSource,
   ) {}
 
   private maskUserName(name: string): string {
@@ -144,42 +156,77 @@ export class ReviewsService {
   }
 
   async create(userId: number, dto: CreateReviewDto): Promise<ReviewResponse> {
-    // Verify purchase: check if order_item belongs to user
-    const orderItem = await this.orderItemRepo
-      .createQueryBuilder('orderItem')
-      .innerJoin('orderItem.order', 'order')
-      .where('orderItem.id = :orderItemId', { orderItemId: dto.orderItemId })
-      .andWhere('order.userId = :userId', { userId })
-      .andWhere('orderItem.productId = :productId', { productId: dto.productId })
-      .select('orderItem.id')
-      .getOne();
+    const [reward, bonus] = await Promise.all([
+      this.settingsService.getNumber(REVIEW_POINT_REWARD_KEY, DEFAULT_REVIEW_POINT_REWARD),
+      this.settingsService.getNumber(PHOTO_REVIEW_BONUS_KEY, DEFAULT_PHOTO_REVIEW_BONUS),
+    ]);
 
-    if (!orderItem) {
-      throw new BadRequestException('구매한 상품만 리뷰 작성 가능합니다.');
-    }
+    const result = await this.dataSource.transaction(async (manager) => {
+      // Verify purchase and load order status in one query
+      const orderItem = await manager
+        .createQueryBuilder(OrderItem, 'orderItem')
+        .innerJoinAndSelect('orderItem.order', 'order')
+        .where('orderItem.id = :orderItemId', { orderItemId: dto.orderItemId })
+        .andWhere('order.userId = :userId', { userId })
+        .andWhere('orderItem.productId = :productId', { productId: dto.productId })
+        .getOne();
 
-    // Check duplicate
-    const existing = await this.reviewRepo.findOne({
-      where: { orderItemId: dto.orderItemId },
+      if (!orderItem) {
+        throw new BadRequestException('구매한 상품만 리뷰 작성 가능합니다.');
+      }
+
+      // Block review on refunded or cancelled orders
+      const blockedStatuses: OrderStatus[] = [OrderStatus.REFUNDED, OrderStatus.CANCELLED];
+      if (blockedStatuses.includes(orderItem.order.status)) {
+        throw new BadRequestException('환불되거나 취소된 주문은 리뷰할 수 없습니다.');
+      }
+
+      // Check duplicate (unique constraint is at DB level too, but check here for friendly message)
+      const existing = await manager.findOne(Review, {
+        where: { orderItemId: dto.orderItemId },
+      });
+      if (existing) {
+        throw new ConflictException('이미 리뷰를 작성한 주문 항목입니다.');
+      }
+
+      const review = manager.create(Review, {
+        userId,
+        productId: dto.productId,
+        orderItemId: dto.orderItemId,
+        rating: dto.rating,
+        content: dto.content ?? null,
+        imageUrls: dto.imageUrls ?? null,
+      });
+
+      const saved = await manager.save(Review, review);
+
+      // Award points
+      const isPhotoReview = Array.isArray(dto.imageUrls) && dto.imageUrls.length > 0;
+      const earnAmount = reward + (isPhotoReview ? bonus : 0);
+
+      if (earnAmount > 0) {
+        const currentBalance = await this.getBalanceInTx(manager, userId);
+        const newBalance = currentBalance + earnAmount;
+
+        const pointEntry = manager.create(PointHistory, {
+          userId,
+          type: 'earn' as const,
+          amount: earnAmount,
+          balance: newBalance,
+          description: `리뷰 포인트 적립 (review_id:${saved.id})`,
+          orderId: null,
+          expiresAt: null,
+        });
+        await manager.save(PointHistory, pointEntry);
+      }
+
+      return saved;
     });
-    if (existing) {
-      throw new ConflictException('이미 리뷰를 작성한 상품입니다.');
-    }
 
-    const review = this.reviewRepo.create({
-      userId,
-      productId: dto.productId,
-      orderItemId: dto.orderItemId,
-      rating: dto.rating,
-      content: dto.content ?? null,
-      imageUrls: dto.imageUrls ?? null,
-    });
-
-    const saved = await this.reviewRepo.save(review);
-    this.logger.log(`Review created: id=${saved.id}, userId=${userId}, productId=${dto.productId}`);
+    this.logger.log(`Review created: id=${result.id}, userId=${userId}, productId=${dto.productId}`);
 
     // Reload with user
-    const loaded = await findOrThrow(this.reviewRepo, { id: saved.id }, '리뷰를 찾을 수 없습니다.', ['user']);
+    const loaded = await findOrThrow(this.reviewRepo, { id: result.id }, '리뷰를 찾을 수 없습니다.', ['user']);
 
     return this.toResponse(loaded);
   }
@@ -204,7 +251,49 @@ export class ReviewsService {
       throw new ForbiddenException('권한이 없습니다.');
     }
 
-    await this.reviewRepo.remove(review);
+    await this.dataSource.transaction(async (manager) => {
+      // Revoke points — find the original EARN entry for this review
+      const earnEntry = await manager.findOne(PointHistory, {
+        where: { description: `리뷰 포인트 적립 (review_id:${id})`, type: 'earn' },
+      });
+
+      if (earnEntry) {
+        // Check if already revoked (spend entry exists for this review)
+        const alreadyRevoked = await manager.findOne(PointHistory, {
+          where: { description: `리뷰 포인트 환수 (review_id:${id})`, type: 'spend' },
+        });
+
+        if (!alreadyRevoked) {
+          const currentBalance = await this.getBalanceInTx(manager, Number(review.userId));
+          const newBalance = currentBalance - earnEntry.amount;
+
+          const revokeEntry = manager.create(PointHistory, {
+            userId: Number(review.userId),
+            type: 'spend' as const,
+            amount: earnEntry.amount,
+            balance: newBalance,
+            description: `리뷰 포인트 환수 (review_id:${id})`,
+            orderId: null,
+            expiresAt: null,
+          });
+          await manager.save(PointHistory, revokeEntry);
+        }
+      }
+
+      await manager.remove(Review, review);
+    });
+
     this.logger.log(`Review deleted: id=${id}, by userId=${userId}`);
+  }
+
+  private async getBalanceInTx(
+    manager: EntityManager,
+    userId: number,
+  ): Promise<number> {
+    const latest = await manager.findOne(PointHistory, {
+      where: { userId },
+      order: { createdAt: 'DESC', id: 'DESC' },
+    });
+    return latest ? latest.balance : 0;
   }
 }
