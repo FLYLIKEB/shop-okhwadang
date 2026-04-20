@@ -20,6 +20,7 @@ import { registerPagesSuite } from './suites/pages.e2e-spec';
 import { registerNavigationSuite } from './suites/navigation.e2e-spec';
 import { registerReviewsSuite } from './suites/reviews.e2e-spec';
 import { registerAttributesSuite } from './suites/attributes.e2e-spec';
+import { registerInquiriesSuite } from './suites/inquiries.e2e-spec';
 
 describe('App (e2e)', () => {
   let app: INestApplication;
@@ -78,4 +79,5 @@ describe('App (e2e)', () => {
   registerNavigationSuite(() => app);
   registerReviewsSuite(() => app);
   registerAttributesSuite(() => app);
+  registerInquiriesSuite(() => app);
 });

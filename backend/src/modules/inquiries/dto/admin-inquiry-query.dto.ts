@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class AdminInquiryQueryDto {
   @ApiPropertyOptional({ description: '페이지 번호', example: 1, default: 1 })
@@ -17,4 +17,10 @@ export class AdminInquiryQueryDto {
   @Min(1, { message: 'limit은 1 이상이어야 합니다.' })
   @Max(100, { message: 'limit은 100 이하여야 합니다.' })
   limit?: number;
+
+  @ApiPropertyOptional({ description: '미확인 답변만 조회 (답변 있음 + 고객 미확인)', example: true })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @IsBoolean({ message: 'unread는 boolean이어야 합니다.' })
+  unread?: boolean;
 }
