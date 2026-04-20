@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { journalsApi, type Journal, JournalCategory } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
+import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import { cn } from '@/components/ui/utils';
 
 interface JournalPreviewContent {
@@ -85,31 +85,16 @@ function JournalCard({ journal, index }: { journal: Journal; index: number }) {
 export default function JournalPreviewBlock({ content }: Props) {
   const tCommon = useTranslations('common');
   const { title, limit = 6, category, more_href, prefetched_journals } = content;
-  const [journals, setJournals] = useState<Journal[]>(prefetched_journals ?? []);
-  const [loading, setLoading] = useState(!prefetched_journals);
   const { ref, visible } = useScrollAnimation<HTMLElement>();
 
-  useEffect(() => {
-    if (prefetched_journals && prefetched_journals.length > 0) return;
-
-    let cancelled = false;
-
-    async function fetchJournals() {
-      try {
-        const data = await journalsApi.getAll(category);
-        if (!cancelled) {
-          setJournals(data.slice(0, limit));
-        }
-      } catch {
-        // Silently fail
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchJournals();
-    return () => { cancelled = true; };
-  }, [category, limit, prefetched_journals]);
+  const { data: journals, loading } = useBlockData<Journal>({
+    prefetched: prefetched_journals,
+    fetch: async () => {
+      const data = await journalsApi.getAll(category);
+      return data.slice(0, limit);
+    },
+    deps: [category, limit],
+  });
 
   if (loading) {
     return (
