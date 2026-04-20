@@ -4,7 +4,7 @@ vi.mock('next-intl/middleware', () => ({
   default: () => (req: { url: string }) => new Response(null, { status: 200, headers: { location: req.url } }),
 }));
 vi.mock('@/i18n/routing', () => ({
-  routing: { locales: ['ko', 'en', 'ja', 'zh'], defaultLocale: 'ko' },
+  routing: { locales: ['ko', 'en'], defaultLocale: 'ko' },
 }));
 
 vi.mock('@/middleware', () => {
@@ -20,7 +20,7 @@ vi.mock('@/middleware', () => {
     }
   };
 
-  const localePattern = new RegExp(`^/(ko|en|ja|zh)(/.*)?$`);
+  const localePattern = new RegExp(`^/(ko|en)(/.*)?$`);
 
   return {
     __esModule: true,
@@ -235,14 +235,6 @@ describe('middleware', () => {
     const location = res.headers.get('location');
     expect(location).toContain('/en/login');
     expect(location).toContain('redirect=%2Fen%2Fcheckout');
-  });
-
-  it('redirects locale-prefixed /ja/my to /ja/login', async () => {
-    const req = makeRequest('/ja/my');
-    const res = await middleware(req);
-    expect(res.status).toBe(307);
-    const location = res.headers.get('location');
-    expect(location).toContain('/ja/login');
   });
 
   it('passes through locale-prefixed admin when token has admin role', async () => {

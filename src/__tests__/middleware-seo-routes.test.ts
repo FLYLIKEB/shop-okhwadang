@@ -12,7 +12,7 @@ vi.mock('next-intl/middleware', () => ({
 }));
 
 vi.mock('@/i18n/routing', () => ({
-  routing: { locales: ['ko', 'en', 'ja', 'zh'], defaultLocale: 'ko' },
+  routing: { locales: ['ko', 'en'], defaultLocale: 'ko' },
 }));
 
 import { middleware } from '@/middleware';

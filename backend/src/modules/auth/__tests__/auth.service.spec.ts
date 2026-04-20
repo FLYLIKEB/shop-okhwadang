@@ -10,6 +10,7 @@ import { VerificationToken } from '../entities/verification-token.entity';
 import { NotificationService } from '../../notification/notification.service';
 import { AuditLogService } from '../../audit-logs/audit-log.service';
 import { TokenBlacklistService } from '../token-blacklist.service';
+import { AuthEventEmitter } from '../auth-event.emitter';
 
 const mockUserRepository = {
   findOne: jest.fn(),
@@ -60,6 +61,9 @@ function makeUser(overrides: Partial<User> = {}): User {
     name: '홍길동',
     phone: null,
     role: UserRole.USER,
+    tier: 'Bronze',
+    tierAccumulatedAmount: 0,
+    tierEvaluatedAt: null,
     isActive: true,
     isEmailVerified: false,
     emailVerifiedAt: null,
@@ -101,6 +105,7 @@ describe('AuthService', () => {
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: AuditLogService, useValue: mockAuditLogService },
         { provide: TokenBlacklistService, useValue: mockTokenBlacklistService },
+        { provide: AuthEventEmitter, useValue: { emitUserRegistered: jest.fn() } },
       ],
     }).compile();
 

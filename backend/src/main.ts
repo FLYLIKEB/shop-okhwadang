@@ -1,13 +1,17 @@
 import 'reflect-metadata';
 import 'dotenv/config';
+import * as Sentry from '@sentry/node';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger, BadRequestException } from '@nestjs/common';
+import { ValidationPipe, Logger, BadRequestException, RequestMethod } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { assertEnv } from './config/env-validator';
 import { resolveTrustProxy } from './config/trust-proxy';
+import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
+import { redactSensitiveFields } from './common/utils/redaction.util';
 
 // 프로덕션 환경에서 필수 env 키 사전 검증 — 누락 시 명확한 에러 메시지와 함께 종료
 assertEnv();
@@ -16,6 +20,28 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
   app.enableShutdownHooks();
+
+  const sentryDsn = process.env.SENTRY_DSN?.trim();
+  if (sentryDsn) {
+    const tracesSampleRate = Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? '0.1');
+    Sentry.init({
+      dsn: sentryDsn,
+      environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
+      release: process.env.SENTRY_RELEASE || process.env.GIT_COMMIT_SHA,
+      tracesSampleRate: Number.isFinite(tracesSampleRate) ? tracesSampleRate : 0.1,
+      sendDefaultPii: false,
+      beforeSend(event) {
+        const redacted = redactSensitiveFields(event as unknown as Record<string, unknown>);
+        if (!redacted) {
+          return event;
+        }
+        return redacted as unknown as typeof event;
+      },
+    });
+
+    app.useGlobalFilters(new SentryExceptionFilter(app.get(HttpAdapterHost)));
+    logger.log('Sentry error monitoring enabled');
+  }
 
   // TypeORM returns bigint columns as strings; convert numeric strings to numbers in JSON responses
   const httpAdapter = app.getHttpAdapter();
@@ -38,7 +64,12 @@ async function bootstrap() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (httpAdapter.getInstance() as any).set('trust proxy', trustProxy);
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: [
+      { path: 'sitemap.xml', method: RequestMethod.GET },
+      { path: 'robots.txt', method: RequestMethod.GET },
+    ],
+  });
 
   const frontendUrl = process.env.FRONTEND_URL;
   if (!frontendUrl) {
@@ -83,6 +114,7 @@ async function bootstrap() {
 
   const gracefulShutdown = async (signal: string) => {
     logger.log(`Received ${signal}. Starting graceful shutdown...`);
+    await Sentry.close(2000);
     const closeWithTimeout = Promise.race([
       app.close(),
       new Promise((resolve) => setTimeout(resolve, 30_000)),

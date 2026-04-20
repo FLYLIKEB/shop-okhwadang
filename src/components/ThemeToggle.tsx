@@ -1,9 +1,9 @@
 'use client';
 
 import { Moon, Sun } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
-import { useTheme } from '@/contexts/ThemeContext';
+import { getDefaultThemeForLocale, useTheme } from '@/contexts/ThemeContext';
 
 interface ThemeToggleProps {
   className?: string;
@@ -17,8 +17,14 @@ interface ThemeToggleProps {
  * - aria-label/title은 next-intl `header.themeToggle*` 키에서 조회
  */
 export default function ThemeToggle({ className, iconClassName }: ThemeToggleProps) {
+  const locale = useLocale();
   const { theme, toggleTheme } = useTheme();
   const t = useTranslations('header');
+
+  if (getDefaultThemeForLocale(locale) === 'light') {
+    return null;
+  }
+
   const label = theme === 'dark' ? t('themeToggleToLight') : t('themeToggleToDark');
 
   return (

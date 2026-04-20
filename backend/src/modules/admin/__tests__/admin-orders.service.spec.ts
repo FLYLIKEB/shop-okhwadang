@@ -7,6 +7,7 @@ import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { Shipping } from '../../payments/entities/shipping.entity';
 import { PaymentsService } from '../../payments/payments.service';
+import { MembershipService } from '../../membership/membership.service';
 
 function createMockRepository() {
   const transactionManager = {
@@ -74,6 +75,7 @@ describe('AdminOrdersService', () => {
         { provide: getRepositoryToken(Shipping), useValue: shippingRepo },
         { provide: PaymentsService, useValue: paymentsService },
         { provide: DataSource, useValue: dataSource },
+        { provide: MembershipService, useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 

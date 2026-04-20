@@ -18,6 +18,7 @@ import { findOrThrow } from '../../common/utils/repository.util';
 import { paginate } from '../../common/utils/pagination.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { SettingsService } from '../settings/settings.service';
+import { addOneYear } from '../points/points.service';
 
 const REVIEW_POINT_REWARD_KEY = 'review_point_reward';
 const PHOTO_REVIEW_BONUS_KEY = 'photo_review_bonus';
@@ -215,7 +216,9 @@ export class ReviewsService {
           balance: newBalance,
           description: `리뷰 포인트 적립 (review_id:${saved.id})`,
           orderId: null,
-          expiresAt: null,
+          relatedEntityType: 'review' as const,
+          relatedEntityId: Number(saved.id),
+          expiresAt: addOneYear(new Date()),
         });
         await manager.save(PointHistory, pointEntry);
       }
@@ -254,13 +257,23 @@ export class ReviewsService {
     await this.dataSource.transaction(async (manager) => {
       // Revoke points — find the original EARN entry for this review
       const earnEntry = await manager.findOne(PointHistory, {
-        where: { description: `리뷰 포인트 적립 (review_id:${id})`, type: 'earn' },
+        where: {
+          userId: Number(review.userId),
+          relatedEntityType: 'review',
+          relatedEntityId: id,
+          type: 'earn',
+        },
       });
 
       if (earnEntry) {
         // Check if already revoked (spend entry exists for this review)
         const alreadyRevoked = await manager.findOne(PointHistory, {
-          where: { description: `리뷰 포인트 환수 (review_id:${id})`, type: 'spend' },
+          where: {
+            userId: Number(review.userId),
+            relatedEntityType: 'review',
+            relatedEntityId: id,
+            type: 'spend',
+          },
         });
 
         if (!alreadyRevoked) {
@@ -274,6 +287,8 @@ export class ReviewsService {
             balance: newBalance,
             description: `리뷰 포인트 환수 (review_id:${id})`,
             orderId: null,
+            relatedEntityType: 'review' as const,
+            relatedEntityId: id,
             expiresAt: null,
           });
           await manager.save(PointHistory, revokeEntry);

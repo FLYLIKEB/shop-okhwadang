@@ -34,6 +34,15 @@ export class User {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role!: UserRole;
 
+  @Column({ type: 'varchar', length: 50, default: 'Bronze' })
+  tier!: string;
+
+  @Column({ name: 'tier_accumulated_amount', type: 'decimal', precision: 14, scale: 2, default: 0 })
+  tierAccumulatedAmount!: number;
+
+  @Column({ name: 'tier_evaluated_at', type: 'datetime', nullable: true })
+  tierEvaluatedAt!: Date | null;
+
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;
 

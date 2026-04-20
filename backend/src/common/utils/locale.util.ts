@@ -1,15 +1,11 @@
 const LOCALE_SUFFIX_MAP: Record<string, string> = {
   ko: 'Ko',
   en: 'En',
-  ja: 'Ja',
-  zh: 'Zh',
 };
 
 const LOCALE_SNAKE_SUFFIX_MAP: Record<string, string> = {
   ko: 'ko',
   en: 'en',
-  ja: 'ja',
-  zh: 'zh',
 };
 
 const MAX_CONTENT_DEPTH = 16;
@@ -42,7 +38,7 @@ export function applyLocale<T>(
 
 /**
  * JSON content 객체의 다국어 필드를 locale에 맞게 매핑한다.
- * content에 `title_en`, `title_ja`가 있으면 title 을 덮어쓴다.
+ * content에 `title_en`이 있으면 title 을 덮어쓴다.
  * 배열(slides 등)은 재귀적으로 처리.
  *
  * 안전장치:

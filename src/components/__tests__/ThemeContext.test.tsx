@@ -1,5 +1,6 @@
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
+import type { ReactNode } from 'react';
 import { ThemeProvider, useTheme, THEME_STORAGE_KEY } from '@/contexts/ThemeContext';
 
 function ThemeDisplay() {
@@ -12,6 +13,10 @@ function ThemeDisplay() {
       <button onClick={() => setTheme('dark')}>set-dark</button>
     </div>
   );
+}
+
+function TestThemeProvider({ locale, children }: { locale: string; children: ReactNode }) {
+  return <ThemeProvider locale={locale}>{children}</ThemeProvider>;
 }
 
 describe('ThemeContext', () => {
@@ -40,7 +45,7 @@ describe('ThemeContext', () => {
     expect(document.documentElement.dataset.theme).toBe('light');
   });
 
-  it('localStorage 값이 있으면 로케일 기본값보다 우선한다', () => {
+  it('ko 로케일은 localStorage 값을 반영한다', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'light');
     render(
       <ThemeProvider locale="ko">
@@ -48,6 +53,17 @@ describe('ThemeContext', () => {
       </ThemeProvider>,
     );
     expect(screen.getByTestId('theme').textContent).toBe('light');
+  });
+
+  it('en 로케일은 localStorage에 dark가 있어도 light로 고정된다', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    render(
+      <ThemeProvider locale="en">
+        <ThemeDisplay />
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId('theme').textContent).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
   });
 
   it('localStorage 값이 잘못된 경우 로케일 기본값으로 폴백', () => {
@@ -96,5 +112,25 @@ describe('ThemeContext', () => {
     expect(screen.getByTestId('theme').textContent).toBe('dark');
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('locale이 ko에서 en으로 바뀌면 theme가 light로 재동기화된다', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    const { rerender } = render(
+      <TestThemeProvider locale="ko">
+        <ThemeDisplay />
+      </TestThemeProvider>,
+    );
+
+    expect(screen.getByTestId('theme').textContent).toBe('dark');
+
+    rerender(
+      <TestThemeProvider locale="en">
+        <ThemeDisplay />
+      </TestThemeProvider>,
+    );
+
+    expect(screen.getByTestId('theme').textContent).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
   });
 });

@@ -8,12 +8,18 @@ import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { User } from '../users/entities/user.entity';
 import { MockShippingAdapter } from './adapters/mock-shipping.adapter';
-import { CarrierCode, TrackingResult } from './interfaces/shipping-provider.interface';
+import { CjShippingAdapter } from './adapters/cj-shipping.adapter';
+import {
+  CarrierCode,
+  ShippingProvider,
+  TrackingResult,
+} from './interfaces/shipping-provider.interface';
 import { RegisterTrackingDto } from './dto/register-tracking.dto';
 import { TrackShipmentDto } from './dto/track-shipment.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { NotificationService } from '../notification/notification.service';
+import { ShippingFeeCalculatorService, ShippingFeeQuote } from './services/shipping-fee-calculator.service';
 
 const ALLOWED_TRANSITIONS: Record<ShippingStatus, ShippingStatus[]> = {
   [ShippingStatus.PAYMENT_CONFIRMED]: [ShippingStatus.PREPARING],
@@ -27,7 +33,7 @@ const ALLOWED_TRANSITIONS: Record<ShippingStatus, ShippingStatus[]> = {
 @Injectable()
 export class ShippingService {
   private readonly logger = new Logger(ShippingService.name);
-  private readonly mockAdapter: MockShippingAdapter;
+  private readonly trackingCache = new Map<string, TrackingResult>();
 
   constructor(
     @InjectRepository(Shipping)
@@ -37,9 +43,10 @@ export class ShippingService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly notificationService: NotificationService,
-  ) {
-    this.mockAdapter = new MockShippingAdapter();
-  }
+    private readonly mockAdapter: MockShippingAdapter,
+    private readonly cjAdapter: CjShippingAdapter,
+    private readonly shippingFeeCalculator: ShippingFeeCalculatorService,
+  ) {}
 
   async getByOrderId(orderId: number, userId: number): Promise<{
     id: number;
@@ -59,9 +66,9 @@ export class ShippingService {
     let tracking: TrackingResult | null = null;
     if (shipping.trackingNumber) {
       try {
-        tracking = await this.mockAdapter.getTrackingStatus(
+        tracking = await this.getTrackingWithStaleFallback(
           shipping.trackingNumber,
-          shipping.carrier as CarrierCode,
+          (shipping.carrier as CarrierCode) ?? 'mock',
         );
       } catch (err) {
         this.logger.warn(`Carrier API error for orderId=${orderId}: ${String(err)}`);
@@ -87,7 +94,7 @@ export class ShippingService {
     steps: unknown[];
   }> {
     try {
-      const result = await this.mockAdapter.getTrackingStatus(dto.trackingNumber, dto.carrier);
+      const result = await this.getTrackingWithStaleFallback(dto.trackingNumber, dto.carrier);
       return {
         carrier: dto.carrier,
         trackingNumber: dto.trackingNumber,
@@ -106,7 +113,8 @@ export class ShippingService {
 
     this.validateTransition(shipping.status, ShippingStatus.PREPARING);
 
-    await this.mockAdapter.registerTrackingNumber(String(orderId), dto.trackingNumber);
+    const provider = this.resolveProvider(dto.carrier);
+    await provider.registerTrackingNumber(String(orderId), dto.trackingNumber);
 
     await this.shippingRepository.update(shipping.id, {
       carrier: dto.carrier,
@@ -125,6 +133,10 @@ export class ShippingService {
     );
 
     return this.shippingRepository.findOne({ where: { orderId } });
+  }
+
+  async quote(subtotal: number, zipcode: string): Promise<ShippingFeeQuote> {
+    return this.shippingFeeCalculator.calculate(subtotal, zipcode);
   }
 
   private async notifyShippingUpdate(
@@ -152,6 +164,42 @@ export class ShippingService {
     const allowed = ALLOWED_TRANSITIONS[current] ?? [];
     if (!allowed.includes(next)) {
       throw new BadRequestException('유효하지 않은 배송 상태 변경입니다.');
+    }
+  }
+
+  private resolveProvider(carrier: CarrierCode): ShippingProvider {
+    switch (carrier) {
+      case 'cj':
+        return this.cjAdapter;
+      case 'hanjin':
+      case 'lotte':
+      case 'mock':
+      default:
+        return this.mockAdapter;
+    }
+  }
+
+  private async getTrackingWithStaleFallback(
+    trackingNumber: string,
+    carrier: CarrierCode,
+  ): Promise<TrackingResult> {
+    const cacheKey = `${carrier}:${trackingNumber}`;
+    const provider = this.resolveProvider(carrier);
+
+    try {
+      const result = await provider.getTrackingStatus(trackingNumber, carrier);
+      this.trackingCache.set(cacheKey, result);
+      return result;
+    } catch (err) {
+      const stale = this.trackingCache.get(cacheKey);
+      if (stale) {
+        this.logger.warn(
+          `Carrier lookup failed; serving stale cache for ${cacheKey}: ${String(err)}`,
+        );
+        return stale;
+      }
+
+      throw err;
     }
   }
 }

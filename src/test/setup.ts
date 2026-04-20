@@ -1,7 +1,12 @@
 /// <reference types="vitest/globals" />
 import '@testing-library/jest-dom';
+import React from 'react';
 import { vi } from 'vitest';
 import { afterEach } from 'vitest';
+
+vi.mock('next/image', () => ({
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => React.createElement('img', props),
+}));
 
 // jsdom does not implement window.matchMedia — provide a stub so tests can spy on it
 Object.defineProperty(window, 'matchMedia', {

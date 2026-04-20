@@ -31,6 +31,8 @@ bash scripts/test.sh backend         # BE unit only
 bash scripts/test.sh e2e             # BE E2E (test MySQL on :3308 자동 기동)
 bash scripts/test.sh all             # FE + BE unit + E2E
 bash scripts/test-stop.sh            # Stop test MySQL + cleanup workers
+npm run test:rtk                     # RTK 필터를 거친 테스트 실행
+npm run review:graph                 # Code Review Graph 변경 영향 분석
 cd backend && docker compose up -d   # Dev MySQL (127.0.0.1:3307)
 cd backend && docker compose down -v # Reset dev DB
 ```
@@ -38,7 +40,7 @@ cd backend && docker compose down -v # Reset dev DB
 ## Issue Tracker
 * Phase 0-7 (Setup → MVP → Core → Payment → Admin → CMS → Polish → Ops)
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Latest merged PR: #558
+* Latest merged PR: #585
 
 ## Rules Reference
 | Subject | File |

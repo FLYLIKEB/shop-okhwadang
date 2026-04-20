@@ -12,7 +12,7 @@ export default defineConfig({
     pool: 'forks',
     maxWorkers: 1,
     fileParallelism: false,
-    exclude: ['backend/**', 'node_modules/**', '.next/**', '.claude/**'],
+    exclude: ['backend/**', 'node_modules/**', '.next/**', '.claude/**', '.codex/**', '.worktrees/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary'],

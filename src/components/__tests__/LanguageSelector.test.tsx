@@ -1,20 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import LanguageSelector from '@/components/shared/LanguageSelector';
 
-const mockReplace = vi.fn();
-let mockPathname = '/';
 let mockLocale = 'ko';
-const mockNextPush = vi.fn();
-const mockNextReplace = vi.fn();
-const mockNextBack = vi.fn();
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockNextPush, replace: mockNextReplace, back: mockNextBack }),
-  usePathname: () => mockPathname,
-  useSearchParams: () => new URLSearchParams(),
-}));
+let openMock: ReturnType<typeof vi.fn>;
 
 vi.mock('@/hooks/useUrlModal', async () => {
   const React = await import('react');
@@ -28,10 +18,6 @@ vi.mock('@/hooks/useUrlModal', async () => {
   };
 });
 
-vi.mock('@/i18n/navigation', () => ({
-  useRouter: () => ({ replace: mockReplace }),
-  usePathname: () => mockPathname,
-}));
 
 const translations: Record<string, string> = {
   'header.languageSelector': '언어 선택',
@@ -47,11 +33,15 @@ vi.mock('next-intl', () => ({
 }));
 
 beforeEach(() => {
-  mockReplace.mockClear();
-  mockPathname = '/';
   mockLocale = 'ko';
-  // Reset document.cookie
+  openMock = vi.fn();
+  vi.stubGlobal('open', openMock);
+  window.history.replaceState({}, '', 'http://localhost:3000/ko');
   document.cookie = 'NEXT_LOCALE=; max-age=0; path=/';
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe('LanguageSelector', () => {
@@ -68,41 +58,49 @@ describe('LanguageSelector', () => {
     expect(screen.getByRole('listbox', { name: '언어 목록' })).toBeInTheDocument();
   });
 
-  it('shows all 4 language options', async () => {
+  it('shows ko and en language options', async () => {
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
     expect(screen.getByText('English')).toBeInTheDocument();
-    expect(screen.getByText('日本語')).toBeInTheDocument();
-    expect(screen.getByText('中文')).toBeInTheDocument();
+    expect(screen.queryByText('日本語')).not.toBeInTheDocument();
+    expect(screen.queryByText('中文')).not.toBeInTheDocument();
     expect(screen.getAllByText('한국어').length).toBeGreaterThan(0);
   });
 
-  it('selecting a different language calls router.replace and closes dropdown', async () => {
+  it('selecting a different language navigates to the localized path and closes dropdown', async () => {
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
     await user.click(screen.getByText('English'));
-    expect(mockReplace).toHaveBeenCalledWith('/', { locale: 'en' });
+    expect(openMock).toHaveBeenCalledWith('/en', '_self');
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
-  it('selecting current locale does not call router.replace', async () => {
+  it('keeps the current pathname when switching language', async () => {
+    window.history.replaceState({}, '', 'http://localhost:3000/ko/products/123?language=1#details');
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
-    // Click 한국어 (current locale is 'ko')
+    await user.click(screen.getByText('English'));
+    expect(openMock).toHaveBeenCalledWith('/en/products/123#details', '_self');
+  });
+
+  it('selecting current locale does not navigate', async () => {
+    const user = userEvent.setup();
+    render(<LanguageSelector />);
+    await user.click(screen.getByRole('button', { name: '언어 선택' }));
     const options = screen.getAllByText('한국어');
     await user.click(options[options.length - 1]);
-    expect(mockReplace).not.toHaveBeenCalled();
+    expect(openMock).not.toHaveBeenCalled();
   });
 
   it('sets NEXT_LOCALE cookie on language change', async () => {
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
-    await user.click(screen.getByText('日本語'));
-    expect(document.cookie).toContain('NEXT_LOCALE=ja');
+    await user.click(screen.getByText('English'));
+    expect(document.cookie).toContain('NEXT_LOCALE=en');
   });
 
   it('closes dropdown on Escape key', async () => {

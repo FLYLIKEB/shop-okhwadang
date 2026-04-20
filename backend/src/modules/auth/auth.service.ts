@@ -26,6 +26,8 @@ import { NotificationService } from '../notification/notification.service';
 import { AuditLogService } from '../audit-logs/audit-log.service';
 import { AuditAction } from '../audit-logs/entities/audit-log.entity';
 import { TokenBlacklistService } from './token-blacklist.service';
+import { AuthEventEmitter } from './auth-event.emitter';
+import { UserRegisteredEvent } from './events/user-registered.event';
 
 const LOCK_LEVEL_1_ATTEMPTS = 5;
 const LOCK_LEVEL_2_ATTEMPTS = 10;
@@ -83,6 +85,7 @@ export class AuthService implements OnModuleInit {
     private readonly notificationService: NotificationService,
     private readonly auditLogService: AuditLogService,
     private readonly tokenBlacklistService: TokenBlacklistService,
+    private readonly authEventEmitter: AuthEventEmitter,
   ) {}
 
   onModuleInit() {
@@ -116,6 +119,8 @@ export class AuthService implements OnModuleInit {
       isEmailVerified: false,
     });
     await this.userRepository.save(user);
+
+    this.authEventEmitter.emitUserRegistered(new UserRegisteredEvent(Number(user.id), user.email));
 
     await this.createVerificationTokenAndSendEmail(user);
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
-import { useRouter, usePathname } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import { useUrlModal } from '@/hooks/useUrlModal';
@@ -17,8 +16,6 @@ interface LangOption {
 const LANG_OPTIONS: LangOption[] = [
   { locale: 'ko', flag: '🇰🇷', label: '한국어' },
   { locale: 'en', flag: '🇺🇸', label: 'English' },
-  { locale: 'ja', flag: '🇯🇵', label: '日本語' },
-  { locale: 'zh', flag: '🇨🇳', label: '中文' },
 ];
 
 interface LanguageSelectorProps {
@@ -27,9 +24,27 @@ interface LanguageSelectorProps {
   compact?: boolean;
 }
 
+function getLocalizedHref(nextLocale: Locale): string {
+  if (typeof window === 'undefined') {
+    return `/${nextLocale}`;
+  }
+
+  const url = new URL(window.location.href);
+  const segments = url.pathname.split('/').filter(Boolean);
+
+  if (segments.length > 0 && routing.locales.includes(segments[0] as Locale)) {
+    segments[0] = nextLocale;
+  } else {
+    segments.unshift(nextLocale);
+  }
+
+  url.pathname = `/${segments.join('/')}`;
+  url.searchParams.delete('language');
+
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 export default function LanguageSelector({ className, compact = false }: LanguageSelectorProps) {
-  const router = useRouter();
-  const pathname = usePathname();
   const currentLocale = useLocale() as Locale;
   const t = useTranslations('header');
   const [isOpen, setIsOpen] = useUrlModal('language');
@@ -40,9 +55,8 @@ export default function LanguageSelector({ className, compact = false }: Languag
   const handleSelect = (locale: Locale) => {
     setIsOpen(false);
     if (locale === currentLocale) return;
-    // Save to cookie (NEXT_LOCALE) — next-intl reads this automatically
     document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-    router.replace(pathname, { locale });
+    window.open(getLocalizedHref(locale), '_self');
   };
 
   // Close on outside click
