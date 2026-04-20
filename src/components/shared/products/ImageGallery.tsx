@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { cn } from '@/components/ui/utils'
 import { ZoomIn } from 'lucide-react'
 import { useLightboxInteraction } from '@/components/shared/hooks/useLightboxInteraction'
+import { useUrlQueryState } from '@/hooks/useUrlModal'
 import LightboxOverlay from './LightboxOverlay'
 import ThumbnailStrip from './ThumbnailStrip'
 
@@ -61,7 +62,8 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
-  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const { value: lightboxParam, setValue: setLightboxParam, close: closeLightboxParam } = useUrlQueryState('lightbox')
+  const lightboxOpen = lightboxParam !== null
   const mainImageRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const thumbnailRef = useRef<HTMLDivElement>(null)
@@ -93,23 +95,50 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
     scrollTimeoutId.current = setTimeout(() => { isScrolling.current = false }, 350)
   }, [])
 
+  useEffect(() => {
+    if (lightboxParam === null) {
+      return
+    }
+
+    if (images.length === 0) {
+      closeLightboxParam('replace')
+      return
+    }
+
+    const parsedIndex = Number(lightboxParam)
+    if (!Number.isInteger(parsedIndex)) {
+      closeLightboxParam('replace')
+      return
+    }
+
+    const safeIndex = Math.min(Math.max(parsedIndex, 0), Math.max(images.length - 1, 0))
+    if (safeIndex !== parsedIndex) {
+      setLightboxParam(String(safeIndex), 'replace')
+      return
+    }
+
+    setSelectedIndex((prev) => (prev === safeIndex ? prev : safeIndex))
+  }, [closeLightboxParam, images.length, lightboxParam, setLightboxParam])
+
   const goPrev = useCallback(() => {
     resetLightboxState()
     setSelectedIndex((i) => {
       const next = i === 0 ? images.length - 1 : i - 1
       scrollToIndex(next)
+      setLightboxParam(String(next), 'replace')
       return next
     })
-  }, [images.length, resetLightboxState, scrollToIndex])
+  }, [images.length, resetLightboxState, scrollToIndex, setLightboxParam])
 
   const goNext = useCallback(() => {
     resetLightboxState()
     setSelectedIndex((i) => {
       const next = i === images.length - 1 ? 0 : i + 1
       scrollToIndex(next)
+      setLightboxParam(String(next), 'replace')
       return next
     })
-  }, [images.length, resetLightboxState, scrollToIndex])
+  }, [images.length, resetLightboxState, scrollToIndex, setLightboxParam])
 
   // Sync selectedIndex from scroll position
   useEffect(() => {
@@ -137,23 +166,29 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
   const handleSelectIndex = useCallback((index: number) => {
     setSelectedIndex(index)
     scrollToIndex(index)
-  }, [scrollToIndex])
+    if (lightboxOpen) {
+      setLightboxParam(String(index), 'replace')
+    }
+  }, [lightboxOpen, scrollToIndex, setLightboxParam])
 
   const closeLightbox = useCallback(() => {
-    setLightboxOpen(false)
+    closeLightboxParam()
     resetLightboxState()
-  }, [resetLightboxState])
+  }, [closeLightboxParam, resetLightboxState])
 
   useEffect(() => {
     if (!lightboxOpen) return
     function onKey(e: KeyboardEvent) {
       if (e.key === 'ArrowLeft') goPrev()
       if (e.key === 'ArrowRight') goNext()
-      if (e.key === 'Escape') { setLightboxOpen(false); resetLightboxState() }
+      if (e.key === 'Escape') {
+        closeLightboxParam()
+        resetLightboxState()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [lightboxOpen, goPrev, goNext, resetLightboxState])
+  }, [closeLightboxParam, goPrev, goNext, lightboxOpen, resetLightboxState])
 
   useEffect(() => () => cancelAnimationFrame(rafId.current), [])
 
@@ -228,11 +263,11 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
                 onMouseEnter={() => setIsZoomed(true)}
                 onMouseLeave={() => setIsZoomed(false)}
                 onMouseMove={index === selectedIndex ? handleMouseMove : undefined}
-                onClick={() => setLightboxOpen(true)}
+                onClick={() => setLightboxParam(String(index), 'push')}
                 role="button"
                 tabIndex={index === selectedIndex ? 0 : -1}
                 aria-label={`이미지 ${index + 1} 확대해서 보기`}
-                onKeyDown={(e) => e.key === 'Enter' && setLightboxOpen(true)}
+                onKeyDown={(e) => e.key === 'Enter' && setLightboxParam(String(index), 'push')}
               >
                 <Image
                   src={image.url}

@@ -6,7 +6,21 @@ const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+  usePathname: () => '/search',
+  useSearchParams: () => new URLSearchParams(),
 }));
+
+vi.mock('@/hooks/useUrlModal', async () => {
+  const React = await import('react');
+  return {
+    useUrlModal: () => {
+      const [isOpen, setIsOpenState] = React.useState(false);
+      const setOpen = (open: boolean) => setIsOpenState(open);
+      const close = () => setIsOpenState(false);
+      return [isOpen, setOpen, close] as const;
+    },
+  };
+});
 
 vi.mock('@/components/shared/hooks/useAutocomplete', () => ({
   useAutocomplete: vi.fn(() => ({ suggestions: [], isLoading: false })),

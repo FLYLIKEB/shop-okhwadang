@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
+import { useUrlModal } from '@/hooks/useUrlModal';
 import CategoryTree from './CategoryTree';
 import PriceRangeFilter from './PriceRangeFilter';
 import ClayTypeFilter from './ClayTypeFilter';
@@ -47,7 +48,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations('product.filter');
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useUrlModal('filters');
 
   const categoryIdParam = searchParams.get('categoryId');
   const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : undefined;
@@ -164,7 +165,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
       <div className="md:hidden">
         <button
           type="button"
-          onClick={() => setMobileOpen((prev) => !prev)}
+          onClick={() => setMobileOpen(!mobileOpen)}
           className={cn(
             'rounded-md border border-input bg-background px-3 py-1.5 text-sm',
             'transition-colors hover:bg-accent',

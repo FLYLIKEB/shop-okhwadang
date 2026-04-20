@@ -14,6 +14,7 @@ import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { RequestAccountDeletionDto } from './dto/request-account-deletion.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 
 interface AuthUser {
   id: number;
@@ -24,7 +25,10 @@ interface AuthUser {
 @ApiTags('사용자')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly restockAlertsService: RestockAlertsService,
+  ) {}
 
   @Patch('me')
   @ApiCookieAuth()
@@ -42,6 +46,15 @@ export class UsersController {
   @ApiResponse({ status: 401, description: '인증 필요' })
   getAddresses(@CurrentUser() user: AuthUser) {
     return this.usersService.getAddresses(user.id);
+  }
+
+  @Get('me/restock-alerts')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '내 재입고 알림 목록 조회', description: '현재 사용자가 신청한 재입고 알림 목록을 조회합니다.' })
+  @ApiResponse({ status: 200, description: '재입고 알림 목록 조회 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  getRestockAlerts(@CurrentUser() user: AuthUser) {
+    return this.restockAlertsService.findUserAlerts(user.id);
   }
 
   @Post('me/addresses')

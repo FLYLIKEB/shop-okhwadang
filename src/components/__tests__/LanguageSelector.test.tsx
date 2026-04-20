@@ -6,6 +6,27 @@ import LanguageSelector from '@/components/shared/LanguageSelector';
 const mockReplace = vi.fn();
 let mockPathname = '/';
 let mockLocale = 'ko';
+const mockNextPush = vi.fn();
+const mockNextReplace = vi.fn();
+const mockNextBack = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockNextPush, replace: mockNextReplace, back: mockNextBack }),
+  usePathname: () => mockPathname,
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock('@/hooks/useUrlModal', async () => {
+  const React = await import('react');
+  return {
+    useUrlModal: () => {
+      const [isOpen, setIsOpenState] = React.useState(false);
+      const setOpen = (open: boolean) => setIsOpenState(open);
+      const close = () => setIsOpenState(false);
+      return [isOpen, setOpen, close] as const;
+    },
+  };
+});
 
 vi.mock('@/i18n/navigation', () => ({
   useRouter: () => ({ replace: mockReplace }),

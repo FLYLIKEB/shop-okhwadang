@@ -3,6 +3,30 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
 import ImageGallery from '@/components/shared/products/ImageGallery'
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  usePathname: () => '/products/1',
+  useSearchParams: () => new URLSearchParams(),
+}))
+
+vi.mock('@/hooks/useUrlModal', async () => {
+  const React = await import('react')
+  return {
+    useUrlModal: () => {
+      const [isOpen, setIsOpenState] = React.useState(false)
+      const setOpen = (open: boolean) => setIsOpenState(open)
+      const close = () => setIsOpenState(false)
+      return [isOpen, setOpen, close] as const
+    },
+    useUrlQueryState: () => {
+      const [value, setValueState] = React.useState<string | null>(null)
+      const setValue = (nextValue: string | null) => setValueState(nextValue)
+      const close = () => setValueState(null)
+      return { value, setValue, close }
+    },
+  }
+})
+
 vi.mock('next/image', () => ({
   // eslint-disable-next-line @next/next/no-img-element
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,

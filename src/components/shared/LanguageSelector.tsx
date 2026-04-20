@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
+import { useUrlModal } from '@/hooks/useUrlModal';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
 
@@ -31,7 +32,7 @@ export default function LanguageSelector({ className, compact = false }: Languag
   const pathname = usePathname();
   const currentLocale = useLocale() as Locale;
   const t = useTranslations('header');
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useUrlModal('language');
   const containerRef = useRef<HTMLDivElement>(null);
 
   const current = LANG_OPTIONS.find((o) => o.locale === currentLocale) ?? LANG_OPTIONS[0];
@@ -48,14 +49,14 @@ export default function LanguageSelector({ className, compact = false }: Languag
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        setIsOpen(false, 'replace');
       }
     };
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+  }, [isOpen, setIsOpen]);
 
   // Close on Escape
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function LanguageSelector({ className, compact = false }: Languag
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [setIsOpen]);
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
@@ -73,7 +74,7 @@ export default function LanguageSelector({ className, compact = false }: Languag
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={t('languageSelector')}
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm',

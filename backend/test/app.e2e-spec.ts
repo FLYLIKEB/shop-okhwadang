@@ -23,6 +23,9 @@ import { registerReviewsSuite } from './suites/reviews.e2e-spec';
 import { registerAttributesSuite } from './suites/attributes.e2e-spec';
 import { registerInquiriesSuite } from './suites/inquiries.e2e-spec';
 import { registerRefundsSuite } from './suites/refunds.e2e-spec';
+import { registerCmsModulesSuite } from './suites/cms-modules.e2e-spec';
+import { registerCommerceModulesSuite } from './suites/commerce-modules.e2e-spec';
+import { registerRestockAlertsSuite } from './suites/restock-alerts.e2e-spec';
 
 describe('App (e2e)', () => {
   let app: INestApplication;
@@ -87,4 +90,7 @@ describe('App (e2e)', () => {
   registerAttributesSuite(() => app);
   registerInquiriesSuite(() => app);
   registerRefundsSuite(() => app);
+  registerCmsModulesSuite(() => app);
+  registerCommerceModulesSuite(() => app);
+  registerRestockAlertsSuite(() => app);
 });
