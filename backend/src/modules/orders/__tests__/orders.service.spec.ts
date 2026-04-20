@@ -9,6 +9,7 @@ import { CreateOrderDto } from '../dto/create-order.dto';
 import { PointsService } from '../../points/points.service';
 import { NotificationService } from '../../notification/notification.service';
 import { CouponsService } from '../../coupons/coupons.service';
+import { ShippingFeeCalculatorService } from '../../shipping/services/shipping-fee-calculator.service';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -42,6 +43,19 @@ const mockCouponsService = {
   useCoupon: jest.fn(),
 };
 
+const mockShippingFeeCalculator = {
+  calculate: jest.fn().mockResolvedValue({
+    subtotal: 0,
+    zipcode: '12345',
+    shippingFee: 0,
+    isFreeShipping: true,
+    isRemoteArea: false,
+    threshold: 50000,
+    baseFee: 3000,
+    remoteAreaSurcharge: 3000,
+  }),
+};
+
 describe('OrdersService', () => {
   let service: OrdersService;
 
@@ -58,6 +72,7 @@ describe('OrdersService', () => {
         { provide: PointsService, useValue: mockPointsService },
         { provide: NotificationService, useValue: { sendOrderConfirmed: jest.fn() } },
         { provide: CouponsService, useValue: mockCouponsService },
+        { provide: ShippingFeeCalculatorService, useValue: mockShippingFeeCalculator },
       ],
     }).compile();
 

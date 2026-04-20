@@ -17,6 +17,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
     let userCookies: AuthCookies;
     let productId: number;
     let orderId: number;
+    let orderAmount: number;
 
     const userEmail = `payments-user-${Date.now()}@test.com`;
     const otherEmail = `payments-other-${Date.now()}@test.com`;
@@ -67,6 +68,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         });
       if (orderRes.status !== 201) throw new Error(`Create order failed: ${orderRes.status} ${JSON.stringify(orderRes.body)}`);
       orderId = Number((orderRes.body as { id: number }).id);
+      orderAmount = Number((orderRes.body as { totalAmount: number | string }).totalAmount);
     });
 
     afterAll(async () => {
@@ -113,7 +115,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         const body = res.body as { clientKey: string; orderId: number; amount: number };
         expect(body.clientKey).toBeDefined();
         expect(body.orderId).toBe(orderId);
-        expect(body.amount).toBe(30000);
+        expect(body.amount).toBe(orderAmount);
       });
     });
 
@@ -122,7 +124,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         const res = await request(app.getHttpServer())
           .post('/api/payments/confirm')
           .set('Cookie', cookieHeader(userCookies))
-          .send({ orderId, paymentKey: 'pay_mock_key', amount: 30000 })
+          .send({ orderId, paymentKey: 'pay_mock_key', amount: orderAmount })
           .expect((r) => {
             if (r.status !== 200 && r.status !== 201) throw new Error(`Expected 200/201 got ${r.status}: ${JSON.stringify(r.body)}`);
           });
@@ -181,7 +183,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         return request(app.getHttpServer())
           .post('/api/payments/confirm')
           .set('Cookie', cookieHeader(userCookies))
-          .send({ orderId, paymentKey: 'pay_mock_key', amount: 30000 })
+          .send({ orderId, paymentKey: 'pay_mock_key', amount: orderAmount })
           .expect(409);
       });
     });

@@ -17,6 +17,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
     let otherCookies: AuthCookies;
     let adminCookies: AuthCookies;
     let orderId: number;
+    let orderAmount: number;
     let productId: number;
 
     const userEmail = `shipping-user-${Date.now()}@test.com`;
@@ -83,6 +84,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
         });
       if (orderRes.status !== 201) throw new Error(`Create order failed: ${orderRes.status} ${JSON.stringify(orderRes.body)}`);
       orderId = Number((orderRes.body as { id: number }).id);
+      orderAmount = Number((orderRes.body as { totalAmount: number | string }).totalAmount);
 
       // Confirm payment to auto-create shipping record
       await request(app.getHttpServer())
@@ -93,7 +95,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/payments/confirm')
         .set('Cookie', cookieHeader(userCookies))
-        .send({ orderId, paymentKey: 'mock_key_123', amount: 10000 });
+        .send({ orderId, paymentKey: 'mock_key_123', amount: orderAmount });
     });
 
     afterAll(async () => {

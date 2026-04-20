@@ -9,6 +9,8 @@ import {
 import { ShippingService } from './shipping.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TrackShipmentDto } from './dto/track-shipment.dto';
+import { ShippingQuoteDto } from './dto/shipping-quote.dto';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('배송')
 @Controller('shipping')
@@ -36,5 +38,13 @@ export class ShippingController {
   track(@Body() dto: TrackShipmentDto) {
     return this.shippingService.track(dto);
   }
-}
 
+  @Post('quote')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '배송비 사전 견적', description: '체크아웃 전에 배송비를 계산합니다.' })
+  @ApiResponse({ status: 200, description: '배송비 견적 성공' })
+  quote(@Body() dto: ShippingQuoteDto) {
+    return this.shippingService.quote(dto.subtotal, dto.zipcode);
+  }
+}

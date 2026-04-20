@@ -17,6 +17,7 @@ export function registerRefundsSuite(getApp: () => INestApplication) {
     let userCookies: AuthCookies;
     let productId: number;
     let orderId: number;
+    let orderAmount: number;
 
     const adminEmail = `refunds-admin-${Date.now()}@test.com`;
     const userEmail = `refunds-user-${Date.now()}@test.com`;
@@ -68,6 +69,7 @@ export function registerRefundsSuite(getApp: () => INestApplication) {
         })
         .expect(201);
       orderId = Number((orderRes.body as { id: number }).id);
+      orderAmount = Number((orderRes.body as { totalAmount: number | string }).totalAmount);
 
       // Prepare payment
       await request(app.getHttpServer())
@@ -79,7 +81,7 @@ export function registerRefundsSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/payments/confirm')
         .set('Cookie', cookieHeader(userCookies))
-        .send({ orderId, paymentKey: 'pay_mock_refund_test', amount: 30000 })
+        .send({ orderId, paymentKey: 'pay_mock_refund_test', amount: orderAmount })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201)
             throw new Error(`Confirm failed: ${r.status} ${JSON.stringify(r.body)}`);

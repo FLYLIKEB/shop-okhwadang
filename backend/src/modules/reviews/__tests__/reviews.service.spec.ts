@@ -281,7 +281,14 @@ describe('ReviewsService', () => {
     it('should delete own review and revoke points', async () => {
       mockRepo.findOne.mockResolvedValue({ ...mockReview });
 
-      const earnEntry = { id: 99, amount: 100, type: 'earn', description: '리뷰 포인트 적립 (review_id:1)' };
+      const earnEntry = {
+        id: 99,
+        amount: 100,
+        type: 'earn',
+        description: '리뷰 포인트 적립 (review_id:1)',
+        relatedEntityType: 'review',
+        relatedEntityId: 1,
+      };
       mockManager.findOne
         .mockResolvedValueOnce(earnEntry) // earn entry
         .mockResolvedValueOnce(null)      // no existing revoke
@@ -301,11 +308,59 @@ describe('ReviewsService', () => {
       expect((revokeSave![1] as { amount: number }).amount).toBe(100);
     });
 
+    it('should revoke based on relatedEntity columns even when description format changes', async () => {
+      mockRepo.findOne.mockResolvedValue({ ...mockReview });
+
+      const earnEntry = {
+        id: 199,
+        amount: 100,
+        type: 'earn',
+        description: 'LEGACY_FORMAT',
+        relatedEntityType: 'review',
+        relatedEntityId: 1,
+      };
+      mockManager.findOne
+        .mockResolvedValueOnce(earnEntry)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
+      mockManager.save.mockResolvedValue({});
+      mockManager.remove.mockResolvedValue(undefined);
+
+      await expect(service.remove(1, 10, 'user')).resolves.not.toThrow();
+
+      expect(mockManager.findOne).toHaveBeenNthCalledWith(
+        1,
+        PointHistory,
+        expect.objectContaining({
+          where: expect.objectContaining({
+            relatedEntityType: 'review',
+            relatedEntityId: 1,
+            type: 'earn',
+          }),
+        }),
+      );
+    });
+
     it('should not double-revoke points if already revoked', async () => {
       mockRepo.findOne.mockResolvedValue({ ...mockReview });
 
-      const earnEntry = { id: 99, amount: 100, type: 'earn', description: '리뷰 포인트 적립 (review_id:1)' };
-      const spendEntry = { id: 100, amount: 100, type: 'spend', description: '리뷰 포인트 환수 (review_id:1)' };
+      const earnEntry = {
+        id: 99,
+        amount: 100,
+        type: 'earn',
+        description: '리뷰 포인트 적립 (review_id:1)',
+        relatedEntityType: 'review',
+        relatedEntityId: 1,
+      };
+      const spendEntry = {
+        id: 100,
+        amount: 100,
+        type: 'spend',
+        description: '리뷰 포인트 환수 (review_id:1)',
+        relatedEntityType: 'review',
+        relatedEntityId: 1,
+      };
       mockManager.findOne
         .mockResolvedValueOnce(earnEntry)  // earn entry found
         .mockResolvedValueOnce(spendEntry); // already revoked
