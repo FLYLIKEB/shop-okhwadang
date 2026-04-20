@@ -13,11 +13,14 @@ export default function SafeHtml({ html, className, style }: SafeHtmlProps) {
   const [clean, setClean] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      import('dompurify').then((mod) => {
-        setClean(mod.default.sanitize(html));
-      });
+    if (typeof window === 'undefined') {
+      return;
     }
+
+    import('dompurify').then((mod) => {
+      const DOMPurify = mod.default ?? mod;
+      setClean(typeof DOMPurify.sanitize === 'function' ? DOMPurify.sanitize(html) : html);
+    });
   }, [html]);
 
   if (!clean) return <div className={className} style={style} suppressHydrationWarning />;
