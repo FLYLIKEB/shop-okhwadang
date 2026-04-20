@@ -11,6 +11,7 @@ import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { PaymentsService } from '../payments/payments.service';
+import { MembershipService } from '../membership/membership.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
@@ -40,6 +41,7 @@ export class AdminOrdersService {
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
     private readonly paymentsService: PaymentsService,
+    private readonly membershipService: MembershipService,
   ) {}
 
   async findAll(query: AdminOrderQueryDto): Promise<PaginatedResult<Order>> {
@@ -114,6 +116,12 @@ export class AdminOrdersService {
     });
 
     await this.orderRepository.update(orderId, { status: nextStatus });
+
+    if (nextStatus === OrderStatus.COMPLETED) {
+      const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
+      void this.membershipService.incrementAccumulatedAmount(order.userId, completedAmount)
+        .catch((err) => this.logger.warn(`Failed to increment tier amount for user ${order.userId}: ${String(err)}`));
+    }
 
     this.logger.log(`Order #${orderId} status changed: ${currentStatus} → ${nextStatus}`);
 

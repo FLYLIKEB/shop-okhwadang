@@ -17,12 +17,14 @@ import { User } from '../users/entities/user.entity';
 import { Product } from '../products/entities/product.entity';
 import { PaymentsModule } from '../payments/payments.module';
 import { AuditLogModule } from '../audit-logs/audit-log.module';
+import { MembershipModule } from '../membership/membership.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, Payment, Shipping, User, Product]),
     PaymentsModule,
     AuditLogModule,
+    MembershipModule,
   ],
   controllers: [AdminController, AdminDashboardController, AdminOrdersController, AdminMembersController, AdminExportController],
   providers: [AdminService, AdminDashboardService, AdminOrdersService, AdminMembersService, AdminExportService],

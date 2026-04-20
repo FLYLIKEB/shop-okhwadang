@@ -15,6 +15,7 @@ import { RecentlyViewedProduct } from '../products/entities/recently-viewed-prod
 import { NotificationService } from '../notification/notification.service';
 import { SettingsService } from '../settings/settings.service';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { MembershipService } from '../membership/membership.service';
 
 @Injectable()
 export class SchedulerService {
@@ -41,6 +42,7 @@ export class SchedulerService {
     private readonly dataSource: DataSource,
     private readonly notificationService: NotificationService,
     private readonly settingsService: SettingsService,
+    private readonly membershipService: MembershipService,
   ) {}
 
   private async acquireLock(lockName: string, ttlMinutes: number): Promise<boolean> {
@@ -193,6 +195,10 @@ export class SchedulerService {
 
       for (const order of deliveredOrders) {
         await this.orderRepo.update(order.id, { status: OrderStatus.COMPLETED });
+
+        const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
+        void this.membershipService.incrementAccumulatedAmount(order.userId, completedAmount)
+          .catch((err) => this.logger.warn(`Failed to increment tier amount for user ${order.userId}: ${String(err)}`));
 
         if (order.user?.email) {
           this.notificationService
@@ -507,6 +513,25 @@ export class SchedulerService {
       }
     } catch (err) {
       this.logger.error(`[cron:recently-viewed-cleanup] Error: ${String(err)}`);
+    } finally {
+      await this.releaseLock(lockName);
+    }
+  }
+
+  @Cron('0 3 1 * *') // 01st of every month at 03:00
+  async handleMonthlyTierEvaluation(): Promise<void> {
+    const lockName = 'cron:monthly-tier-evaluation';
+    if (!(await this.acquireLock(lockName, 55))) {
+      this.logger.debug(`[${lockName}] Skipped - another instance holds the lock`);
+      return;
+    }
+
+    try {
+      this.logger.log('[cron:monthly-tier-evaluation] Starting tier re-evaluation');
+      await this.membershipService.evaluateAllUserTiers();
+      this.logger.log('[cron:monthly-tier-evaluation] Completed tier re-evaluation');
+    } catch (err) {
+      this.logger.error(`[cron:monthly-tier-evaluation] Error: ${String(err)}`);
     } finally {
       await this.releaseLock(lockName);
     }
