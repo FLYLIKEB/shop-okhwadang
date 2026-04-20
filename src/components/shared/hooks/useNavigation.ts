@@ -1,26 +1,68 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { navigationApi } from '@/lib/api';
 import type { NavigationItem } from '@/lib/api';
 
-const STATIC_GNB: NavigationItem[] = [
-  { id: 0, group: 'gnb', label: '상품목록', url: '/products', sort_order: 0, is_active: true, parent_id: null, children: [] },
-  { id: -1, group: 'gnb', label: '장인', url: '/artist', sort_order: 1, is_active: true, parent_id: null, children: [] },
-  { id: -2, group: 'gnb', label: 'Archive', url: '/archive', sort_order: 2, is_active: true, parent_id: null, children: [] },
-];
+function buildStaticGnb(t: (key: string) => string): NavigationItem[] {
+  return [
+    {
+      id: 0,
+      group: 'gnb',
+      label: t('products'),
+      url: '/products',
+      sort_order: 0,
+      is_active: true,
+      parent_id: null,
+      children: [],
+    },
+    {
+      id: -1,
+      group: 'gnb',
+      label: t('artist'),
+      url: '/artist',
+      sort_order: 1,
+      is_active: true,
+      parent_id: null,
+      children: [],
+    },
+    {
+      id: -2,
+      group: 'gnb',
+      label: t('archive'),
+      url: '/archive',
+      sort_order: 2,
+      is_active: true,
+      parent_id: null,
+      children: [],
+    },
+  ];
+}
 
-const STATIC_FOOTER: NavigationItem[] = [];
-const STATIC_SIDEBAR: NavigationItem[] = [];
-
-const STATIC_MAP: Record<string, NavigationItem[]> = {
-  gnb: STATIC_GNB,
-  footer: STATIC_FOOTER,
-  sidebar: STATIC_SIDEBAR,
-};
+const EMPTY_NAV: NavigationItem[] = [];
 
 export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
-  const [items, setItems] = useState<NavigationItem[]>(STATIC_MAP[group] ?? []);
+  const tNav = useTranslations('nav');
+  const locale = useLocale();
+  const productLabel = tNav('products');
+  const artistLabel = tNav('artist');
+  const archiveLabel = tNav('archive');
+
+  const fallback = useMemo<NavigationItem[]>(() => {
+    if (group === 'gnb') {
+      return buildStaticGnb((key) => {
+        if (key === 'products') return productLabel;
+        if (key === 'artist') return artistLabel;
+        if (key === 'archive') return archiveLabel;
+        return key;
+      });
+    }
+
+    return EMPTY_NAV;
+  }, [archiveLabel, artistLabel, group, productLabel]);
+
+  const [items, setItems] = useState<NavigationItem[]>(fallback);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,13 +70,14 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
 
     async function load() {
       try {
-        const data = await navigationApi.getByGroup(group);
+        const data = await navigationApi.getByGroup(group, locale);
+
         if (!cancelled) {
-          setItems(data.length > 0 ? data : (STATIC_MAP[group] ?? []));
+          setItems(data.length > 0 ? data : fallback);
         }
       } catch {
         if (!cancelled) {
-          setItems(STATIC_MAP[group] ?? []);
+          setItems(fallback);
         }
       } finally {
         if (!cancelled) {
@@ -43,13 +86,14 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
       }
     }
 
-    setItems(STATIC_MAP[group] ?? []);
+    setItems(fallback);
     setLoading(true);
-    load();
+    void load();
+
     return () => {
       cancelled = true;
     };
-  }, [group]);
+  }, [fallback, group, locale]);
 
   return { items, loading };
 }
