@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Payment } from './entities/payment.entity';
+import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order } from '../orders/entities/order.entity';
 import { User } from '../users/entities/user.entity';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
+import { AdminOrderRefundsController } from './admin-order-refunds.controller';
 import { MockPaymentAdapter } from './adapters/mock.adapter';
 import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
@@ -55,8 +57,8 @@ const gatewayProviders = [
 ];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, Shipping, Order, User])],
-  controllers: [PaymentsController],
+  imports: [TypeOrmModule.forFeature([Payment, Refund, Shipping, Order, User])],
+  controllers: [PaymentsController, AdminOrderRefundsController],
   providers: [...gatewayProviders, PaymentsService],
   exports: [PaymentsService],
 })

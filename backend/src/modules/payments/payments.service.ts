@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Payment, PaymentStatus, PaymentGatewayType, PaymentMethod } from './entities/payment.entity';
+import { Refund, RefundStatus } from './entities/refund.entity';
 import { Shipping, ShippingStatus } from './entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { User } from '../users/entities/user.entity';
@@ -13,6 +14,7 @@ import { PaymentGateway } from './interfaces/payment-gateway.interface';
 import { PreparePaymentDto } from './dto/prepare-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import { CancelPaymentDto } from './dto/cancel-payment.dto';
+import { CreateRefundDto } from './dto/create-refund.dto';
 import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { resolveGatewayByLocale } from './payments.module';
@@ -29,6 +31,8 @@ export class PaymentsService {
   constructor(
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
+    @InjectRepository(Refund)
+    private readonly refundRepository: Repository<Refund>,
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(Shipping)
@@ -265,6 +269,100 @@ export class PaymentsService {
       cancelledAt: result.cancelledAt,
       cancelReason: reason,
     };
+  }
+
+  async partialRefund(orderId: number, dto: CreateRefundDto): Promise<Refund> {
+    // Phase 1: lock payment + validate + create pending Refund
+    let refund = await this.dataSource.transaction(async (manager) => {
+      const payment = await manager.findOne(Payment, {
+        where: { orderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!payment) {
+        throw new BadRequestException('결제 정보를 찾을 수 없습니다.');
+      }
+      if (payment.status !== PaymentStatus.CONFIRMED && payment.status !== PaymentStatus.PARTIAL_CANCELLED) {
+        throw new BadRequestException('환불 가능한 상태가 아닙니다.');
+      }
+      if (!payment.paymentKey) {
+        throw new BadRequestException('결제 키가 없습니다.');
+      }
+
+      // Validate remaining refundable amount
+      const completedRefundsResult = await manager
+        .createQueryBuilder(Refund, 'r')
+        .select('COALESCE(SUM(r.amount), 0)', 'total')
+        .where('r.paymentId = :paymentId AND r.status = :status', {
+          paymentId: payment.id,
+          status: RefundStatus.COMPLETED,
+        })
+        .getRawOne<{ total: string }>();
+      const alreadyRefunded = Number(completedRefundsResult?.total ?? 0);
+      const remaining = Number(payment.amount) - alreadyRefunded;
+      if (dto.amount > remaining) {
+        throw new BadRequestException(
+          `환불 가능 금액(${remaining}원)을 초과했습니다.`,
+        );
+      }
+
+      const pendingRefund = manager.create(Refund, {
+        paymentId: Number(payment.id),
+        orderItemId: null,
+        amount: dto.amount,
+        reason: dto.reason,
+        status: RefundStatus.PENDING,
+        gatewayRefundId: null,
+      });
+      return manager.save(Refund, pendingRefund);
+    });
+
+    // Phase 2: call gateway outside transaction
+    const payment = await findOrThrow(this.paymentRepository, { orderId }, '결제 정보를 찾을 수 없습니다.');
+    const cancelGateway = this.resolveGatewayByType(payment.gateway);
+
+    try {
+      const result = await cancelGateway.partialCancel({
+        paymentKey: payment.paymentKey!,
+        cancelAmount: dto.amount,
+        cancelReason: dto.reason,
+      });
+
+      // Phase 3: update Refund + Payment status
+      await this.dataSource.transaction(async (manager) => {
+        await manager.update(Refund, refund.id, {
+          status: RefundStatus.COMPLETED,
+          gatewayRefundId: result.refundId,
+        });
+
+        const completedRefundsResult = await manager
+          .createQueryBuilder(Refund, 'r')
+          .select('COALESCE(SUM(r.amount), 0)', 'total')
+          .where('r.paymentId = :paymentId AND r.status = :status', {
+            paymentId: payment.id,
+            status: RefundStatus.COMPLETED,
+          })
+          .getRawOne<{ total: string }>();
+        const totalRefunded = Number(completedRefundsResult?.total ?? 0) + dto.amount;
+
+        const newPaymentStatus =
+          totalRefunded >= Number(payment.amount)
+            ? PaymentStatus.REFUNDED
+            : PaymentStatus.PARTIAL_CANCELLED;
+
+        await manager.update(Payment, payment.id, { status: newPaymentStatus });
+      });
+
+      refund = await findOrThrow(this.refundRepository, { id: refund.id }, '환불 정보를 찾을 수 없습니다.');
+
+      // TODO(#481, #483): 재고 복구/포인트 환수 연계
+    } catch (err) {
+      if (err instanceof BadRequestException) throw err;
+      await this.refundRepository.update(refund.id, { status: RefundStatus.FAILED });
+      this.logger.error(`partialRefund failed: orderId=${orderId}, refundId=${refund.id}, error=${String(err)}`);
+      throw new InternalServerErrorException('부분 환불 처리에 실패했습니다.');
+    }
+
+    return refund;
   }
 
   private async notifyPaymentConfirmed(

@@ -16,9 +16,22 @@ export interface CancelResult {
   rawResponse: object;
 }
 
+export interface PartialCancelParams {
+  paymentKey: string;
+  cancelAmount: number;
+  cancelReason: string;
+}
+
+export interface PartialCancelResult {
+  refundId: string;
+  cancelledAt: Date;
+  rawResponse: object;
+}
+
 export interface PaymentGateway {
   prepare(orderId: string, amount: number): Promise<PrepareResult>;
   confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult>;
   cancel(paymentKey: string, reason: string): Promise<CancelResult>;
+  partialCancel(params: PartialCancelParams): Promise<PartialCancelResult>;
   verifyWebhook(payload: unknown, signature: string): boolean;
 }
