@@ -39,7 +39,7 @@ interface ProductsPageProps {
 
 export default async function ProductsPage({ params, searchParams }: ProductsPageProps) {
   const { locale } = await params;
-  const safeLocale = (['ko', 'en', 'ja', 'zh'].includes(locale) ? locale : 'ko') as Locale;
+  const safeLocale = (['ko', 'en'].includes(locale) ? locale : 'ko') as Locale;
   const sp = await searchParams;
   const t = await getTranslations({ locale: safeLocale, namespace: 'product' });
 

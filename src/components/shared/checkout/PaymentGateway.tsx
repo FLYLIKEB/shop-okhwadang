@@ -86,7 +86,7 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
   },
 );
 
-// ─── Stripe Payment Element (en / ja / zh) ────────────────────────────────────
+// ─── Stripe Payment Element (en) ──────────────────────────────────────────────
 
 const StripePaymentGateway = forwardRef<
   PaymentGatewayHandle,
@@ -113,8 +113,6 @@ const StripePaymentGateway = forwardRef<
 
     const stripeLocaleMap: Record<string, string> = {
       en: 'en',
-      ja: 'ja',
-      zh: 'zh',
     };
     const stripeLocale = stripeLocaleMap[locale] ?? 'auto';
 

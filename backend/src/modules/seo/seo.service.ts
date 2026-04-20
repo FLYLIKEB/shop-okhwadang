@@ -10,7 +10,7 @@ interface SitemapItem {
   updatedAt: Date;
 }
 
-const LOCALES = ['ko', 'en', 'ja', 'zh'] as const;
+const LOCALES = ['ko', 'en'] as const;
 
 @Injectable()
 export class SeoService {
