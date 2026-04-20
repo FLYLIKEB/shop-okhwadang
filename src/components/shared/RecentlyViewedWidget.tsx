@@ -4,11 +4,12 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed';
+import { useUrlModal } from '@/hooks/useUrlModal';
 import { formatCurrency } from '@/utils/currency';
 
 export default function RecentlyViewedWidget() {
   const { items } = useRecentlyViewed();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useUrlModal('recentlyViewed');
   const [isHidden, setIsHidden] = useState(false);
 
   if (isHidden || items.length === 0) return null;
@@ -62,7 +63,7 @@ export default function RecentlyViewedWidget() {
 
       <div className="flex items-center gap-1">
         <button
-          onClick={() => setIsOpen((v) => !v)}
+          onClick={() => setIsOpen(!isOpen)}
           className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background shadow-md hover:bg-muted transition-colors"
           aria-label="최근 본 상품"
         >

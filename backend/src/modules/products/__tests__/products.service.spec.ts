@@ -12,6 +12,7 @@ import { AttributeType } from '../entities/attribute-type.entity';
 import { ProductAttribute } from '../entities/product-attribute.entity';
 import { ProductSort } from '../dto/query-products.dto';
 import { CacheService } from '../../cache/cache.service';
+import { RestockAlertsService } from '../../restock-alerts/restock-alerts.service';
 
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockAndWhere = jest.fn().mockReturnThis();
@@ -102,6 +103,10 @@ describe('ProductsService', () => {
         {
           provide: CacheService,
           useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined), delPattern: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: RestockAlertsService,
+          useValue: { processProductRestock: jest.fn().mockResolvedValue(undefined) },
         },
         {
           provide: getDataSourceToken(),

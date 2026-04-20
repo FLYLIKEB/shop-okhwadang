@@ -6,6 +6,7 @@ import { Search, X, Clock, TrendingUp } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { useAutocomplete } from '@/components/shared/hooks/useAutocomplete';
 import { useRecentSearches } from '@/components/shared/hooks/useRecentSearches';
+import { useUrlModal } from '@/hooks/useUrlModal';
 import { searchApi } from '@/lib/api';
 
 interface SearchInputProps {
@@ -16,7 +17,7 @@ interface SearchInputProps {
 export default function SearchInput({ className, placeholder = '상품 검색...' }: SearchInputProps) {
   const router = useRouter();
   const [value, setValue] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useUrlModal('searchDropdown');
   const [popularKeywords, setPopularKeywords] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,17 +29,17 @@ export default function SearchInput({ className, placeholder = '상품 검색...
     searchApi.getPopular()
       .then((data) => setPopularKeywords(data.keywords))
       .catch(() => setPopularKeywords([]));
-  }, []);
+  }, [setIsOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        setIsOpen(false, 'replace');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [setIsOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,7 +61,7 @@ export default function SearchInput({ className, placeholder = '상품 검색...
       setIsOpen(false);
       router.push(`/search?q=${encodeURIComponent(trimmed)}`);
     },
-    [value, addSearch, router],
+    [value, addSearch, router, setIsOpen],
   );
 
   const handleSelectItem = useCallback(
@@ -69,7 +70,7 @@ export default function SearchInput({ className, placeholder = '상품 검색...
       setIsOpen(false);
       router.push(`/search?q=${encodeURIComponent(name)}`);
     },
-    [addSearch, router],
+    [addSearch, router, setIsOpen],
   );
 
   const showAutocomplete = isOpen && value.length >= 2 && (suggestions.length > 0 || isLoading);
@@ -88,7 +89,7 @@ export default function SearchInput({ className, placeholder = '상품 검색...
           name="search"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => setIsOpen(true, isOpen ? 'replace' : 'push')}
           placeholder={placeholder}
           aria-label="상품 검색"
           className={cn(

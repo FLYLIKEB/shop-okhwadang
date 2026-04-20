@@ -308,13 +308,14 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
     describe('GET /api/products with attrs filter', () => {
       it('200 — 속성 필터로 상품 조회 (attrs 파라미터)', async () => {
         await request(app.getHttpServer())
-          .post('/api/attributes/products')
+          .post(`/api/attributes/products/${productId}/set`)
           .set('Cookie', cookieHeader(adminCookies))
           .send({
-            productId,
-            attributeTypeId,
-            value: 'filter_test',
-          });
+            attributes: [
+              { attributeTypeId, value: 'filter_test', displayValue: 'filter_test' },
+            ],
+          })
+          .expect(200);
 
         return request(app.getHttpServer())
           .get(`/api/products?attrs=test_attr:filter_test`)
@@ -326,13 +327,14 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
 
       it('200 — 여러 속성 필터 (comma-separated)', async () => {
         await request(app.getHttpServer())
-          .post('/api/attributes/products')
+          .post(`/api/attributes/products/${productId}/set`)
           .set('Cookie', cookieHeader(adminCookies))
           .send({
-            productId,
-            attributeTypeId,
-            value: 'multi_test',
-          });
+            attributes: [
+              { attributeTypeId, value: 'multi_test', displayValue: 'multi_test' },
+            ],
+          })
+          .expect(200);
 
         return request(app.getHttpServer())
           .get(`/api/products?attrs=test_attr:multi_test`)

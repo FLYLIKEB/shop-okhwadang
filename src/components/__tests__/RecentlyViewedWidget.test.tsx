@@ -16,7 +16,20 @@ vi.mock('next/image', () => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
 }));
+
+vi.mock('@/hooks/useUrlModal', async () => {
+  const React = await import('react');
+  return {
+    useUrlModal: () => {
+      const [isOpen, setIsOpenState] = React.useState(false);
+      const setOpen = (open: boolean) => setIsOpenState(open);
+      const close = () => setIsOpenState(false);
+      return [isOpen, setOpen, close] as const;
+    },
+  };
+});
 
 beforeEach(() => {
   mockUseRecentlyViewed.mockClear();

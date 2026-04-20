@@ -12,6 +12,7 @@ import { AttributeType } from '../entities/attribute-type.entity';
 import { ProductAttribute } from '../entities/product-attribute.entity';
 import { ProductSort } from '../dto/query-products.dto';
 import { CacheService } from '../../cache/cache.service';
+import { RestockAlertsService } from '../../restock-alerts/restock-alerts.service';
 
 function makeFulltextError(): QueryFailedError {
   const err = new QueryFailedError(
@@ -99,6 +100,10 @@ describe('ProductsService — Search', () => {
         {
           provide: CacheService,
           useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: RestockAlertsService,
+          useValue: { processProductRestock: jest.fn().mockResolvedValue(undefined) },
         },
         {
           provide: getDataSourceToken(),

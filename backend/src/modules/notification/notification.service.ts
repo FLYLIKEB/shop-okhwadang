@@ -6,12 +6,14 @@ import {
   renderOrderConfirmed,
   renderPaymentConfirmed,
   renderPasswordReset,
+  renderRestockAlert,
   renderShippingUpdate,
   type EmailVerificationContext,
   type InquiryAnsweredContext,
   type OrderConfirmedContext,
   type PaymentConfirmedContext,
   type PasswordResetContext,
+  type RestockAlertContext,
   type ShippingUpdateContext,
 } from './templates/render';
 
@@ -73,6 +75,11 @@ export class NotificationService {
 
   async sendEmailVerification(to: string, context: EmailVerificationContext): Promise<void> {
     const rendered = renderEmailVerification(context);
+    await this.sendEmail({ to, ...rendered });
+  }
+
+  async sendRestockAlert(to: string, context: RestockAlertContext): Promise<void> {
+    const rendered = renderRestockAlert(context);
     await this.sendEmail({ to, ...rendered });
   }
 }
