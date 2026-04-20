@@ -30,6 +30,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { CreateRestockAlertDto } from '../restock-alerts/dto/create-restock-alert.dto';
+import { RecentlyViewedService } from './recently-viewed.service';
 
 interface RequestWithUser {
   user?: { id: number; email: string; role: string };
@@ -41,6 +42,7 @@ export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,
     private readonly restockAlertsService: RestockAlertsService,
+    private readonly recentlyViewedService: RecentlyViewedService,
   ) {}
 
   @Get()
@@ -83,13 +85,21 @@ export class ProductsController {
   @ApiResponse({ status: 404, description: '상품을 찾을 수 없음' })
   @ApiParam({ name: 'id', type: Number, description: '상품 ID' })
   @ApiQuery({ name: 'locale', required: false, type: String, description: ' locale (ko/en)' })
-  findOne(
+  async findOne(
     @Param('id', ParseIntPipe) id: number,
     @Query('locale') locale: string | undefined,
     @Request() req: RequestWithUser,
   ) {
     const isAdmin = req.user?.role === 'admin';
-    return this.productsService.findOne(id, isAdmin, locale);
+    const result = await this.productsService.findOne(id, isAdmin, locale);
+
+    if (req.user?.id) {
+      this.recentlyViewedService
+        .upsert(req.user.id, id)
+        .catch(() => undefined);
+    }
+
+    return result;
   }
 
   @Post()

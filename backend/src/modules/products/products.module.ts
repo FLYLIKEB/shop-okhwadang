@@ -11,11 +11,13 @@ import { ProductAttribute } from './entities/product-attribute.entity';
 import { ProductsService } from './products.service';
 import { CategoriesService } from './categories.service';
 import { AttributesService } from './attributes.service';
+import { RecentlyViewedService } from './recently-viewed.service';
 import { ProductsController } from './products.controller';
 import { CategoriesController } from './categories.controller';
 import { AttributesController } from './attributes.controller';
 import { CacheModule } from '../cache/cache.module';
 import { RestockAlertsModule } from '../restock-alerts/restock-alerts.module';
+import { RecentlyViewedProduct } from './entities/recently-viewed-product.entity';
 
 @Module({
   imports: [
@@ -28,12 +30,13 @@ import { RestockAlertsModule } from '../restock-alerts/restock-alerts.module';
       Review,
       AttributeType,
       ProductAttribute,
+      RecentlyViewedProduct,
     ]),
     CacheModule,
     RestockAlertsModule,
   ],
-  providers: [ProductsService, CategoriesService, AttributesService],
+  providers: [ProductsService, CategoriesService, AttributesService, RecentlyViewedService],
   controllers: [ProductsController, CategoriesController, AttributesController],
-  exports: [ProductsService, CategoriesService, AttributesService],
+  exports: [ProductsService, CategoriesService, AttributesService, RecentlyViewedService],
 })
 export class ProductsModule {}
