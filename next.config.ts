@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
           "script-src 'self' 'unsafe-inline' https://js.tosspayments.com https://js.sandbox.tosspayments.com https://static.cloudflareinsights.com",
           "object-src 'none'",
           "base-uri 'self'",
-          "img-src 'self' data: https://images.unsplash.com https://*.amazonaws.com https://cdn.ockhwadang.com https://ockhwadang.com https://i.pinimg.com https://m.cbw.co.kr https://gdimg.gmarket.co.kr https://cdn-optimized.imweb.me",
+          "img-src 'self' data: https://images.unsplash.com https://*.amazonaws.com https://*.cloudfront.net https://cdn.ockhwadang.com https://ockhwadang.com https://i.pinimg.com https://m.cbw.co.kr https://gdimg.gmarket.co.kr https://cdn-optimized.imweb.me",
           "font-src 'self' https://fonts.gstatic.com",
           "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://cloudflareinsights.com",
         ].join('; ') + ';' },
