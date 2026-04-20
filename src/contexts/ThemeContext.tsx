@@ -30,8 +30,12 @@ export function getDefaultThemeForLocale(locale: string): Theme {
 }
 
 export function getInitialTheme(locale: string): Theme {
+  const defaultTheme = getDefaultThemeForLocale(locale);
   if (typeof window === 'undefined') {
-    return getDefaultThemeForLocale(locale);
+    return defaultTheme;
+  }
+  if (defaultTheme === 'light') {
+    return 'light';
   }
   try {
     const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -39,7 +43,7 @@ export function getInitialTheme(locale: string): Theme {
   } catch {
     // localStorage unavailable (e.g. private mode) — fall back to locale default
   }
-  return getDefaultThemeForLocale(locale);
+  return defaultTheme;
 }
 
 interface ThemeProviderProps {
@@ -49,6 +53,10 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children, locale }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() => getInitialTheme(locale));
+
+  useEffect(() => {
+    setThemeState(getInitialTheme(locale));
+  }, [locale]);
 
   // Sync dataset on mount and whenever theme changes
   useEffect(() => {
