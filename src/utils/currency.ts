@@ -1,11 +1,9 @@
-export type Currency = 'KRW' | 'USD' | 'JPY' | 'CNY';
-export type Locale = 'ko' | 'en' | 'ja' | 'zh';
+export type Currency = 'KRW' | 'USD';
+export type Locale = 'ko' | 'en';
 
 /** KRW 기준 환율 (1 단위 외화 = N KRW) */
 const DEFAULT_RATES: Record<Exclude<Currency, 'KRW'>, number> = {
   USD: 1350,
-  JPY: 9,
-  CNY: 190,
 };
 
 function getExchangeRates(): Record<Exclude<Currency, 'KRW'>, number> {
@@ -20,8 +18,6 @@ function getExchangeRates(): Record<Exclude<Currency, 'KRW'>, number> {
     const parsed = JSON.parse(envRaw) as Partial<Record<Exclude<Currency, 'KRW'>, number>>;
     return {
       USD: parsed.USD ?? DEFAULT_RATES.USD,
-      JPY: parsed.JPY ?? DEFAULT_RATES.JPY,
-      CNY: parsed.CNY ?? DEFAULT_RATES.CNY,
     };
   } catch {
     return DEFAULT_RATES;
@@ -31,15 +27,11 @@ function getExchangeRates(): Record<Exclude<Currency, 'KRW'>, number> {
 const LOCALE_TO_CURRENCY: Record<Locale, Currency> = {
   ko: 'KRW',
   en: 'USD',
-  ja: 'JPY',
-  zh: 'CNY',
 };
 
 const CURRENCY_FORMAT: Record<Currency, { locale: string; currency: string }> = {
   KRW: { locale: 'ko-KR', currency: 'KRW' },
   USD: { locale: 'en-US', currency: 'USD' },
-  JPY: { locale: 'ja-JP', currency: 'JPY' },
-  CNY: { locale: 'zh-CN', currency: 'CNY' },
 };
 
 /**
@@ -93,7 +85,7 @@ export function formatCurrency(
   return new Intl.NumberFormat(intlLocale, {
     style: 'currency',
     currency: intlCurrency,
-    maximumFractionDigits: currency === 'KRW' || currency === 'JPY' ? 0 : 2,
-    minimumFractionDigits: currency === 'KRW' || currency === 'JPY' ? 0 : 2,
+    maximumFractionDigits: currency === 'KRW' ? 0 : 2,
+    minimumFractionDigits: currency === 'KRW' ? 0 : 2,
   }).format(converted);
 }

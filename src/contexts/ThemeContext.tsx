@@ -13,8 +13,6 @@ export interface ThemeContextValue {
 export const DEFAULT_THEME_BY_LOCALE: Record<string, Theme> = {
   ko: 'dark',
   en: 'light',
-  ja: 'light',
-  zh: 'light',
 };
 
 export const THEME_STORAGE_KEY = 'theme';

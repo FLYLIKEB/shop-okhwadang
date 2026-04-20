@@ -34,7 +34,7 @@ export class CategoriesController {
   @Get()
   @Public()
   @ApiOperation({ summary: '카테고리 트리 조회', description: '활성화된 카테고리 트리 구조를 조회합니다.' })
-  @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko/en/ja/zh)', example: 'en' })
+  @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko/en)', example: 'en' })
   @ApiResponse({ status: 200, description: '카테고리 트리 조회 성공' })
   findTree(@Query('locale') locale?: string) {
     return this.categoriesService.findTree(locale);
@@ -44,7 +44,7 @@ export class CategoriesController {
   @Roles('admin', 'super_admin')
   @ApiCookieAuth()
   @ApiOperation({ summary: '전체 카테고리 목록 조회', description: '비활성화된 카테고리를 포함한 전체 카테고리 목록을 조회합니다.' })
-  @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko/en/ja/zh)', example: 'en' })
+  @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko/en)', example: 'en' })
   @ApiResponse({ status: 200, description: '전체 카테고리 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })

@@ -42,7 +42,7 @@ vi.mock('@/contexts/CartContext', () => ({
 
 // ---- i18n/routing ----
 vi.mock('@/i18n/routing', () => ({
-  routing: { locales: ['ko', 'en', 'ja', 'zh'], defaultLocale: 'ko' },
+  routing: { locales: ['ko', 'en'], defaultLocale: 'ko' },
 }));
 
 // ---- PaymentGateway ----

@@ -16,8 +16,6 @@ interface LangOption {
 const LANG_OPTIONS: LangOption[] = [
   { locale: 'ko', flag: '🇰🇷', label: '한국어' },
   { locale: 'en', flag: '🇺🇸', label: 'English' },
-  { locale: 'ja', flag: '🇯🇵', label: '日本語' },
-  { locale: 'zh', flag: '🇨🇳', label: '中文' },
 ];
 
 interface LanguageSelectorProps {

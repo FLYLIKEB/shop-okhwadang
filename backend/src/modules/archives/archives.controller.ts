@@ -12,7 +12,7 @@ export class ArchivesController {
   @Get()
   @ApiOperation({ summary: '전체 아카이브 조회', description: '이ilo 유형, 공정 단계, 작가 정보를 모두 조회합니다.' })
   @ApiResponse({ status: 200, description: '아카이브 목록 조회 성공' })
-  @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en, ja, zh)' })
+  @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
   async getAll(@Query('locale') locale?: string) {
     const [niloTypes, processSteps, artists] = await Promise.all([
       this.archivesService.findAllNiloTypes(locale),

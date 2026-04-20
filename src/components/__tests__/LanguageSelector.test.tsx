@@ -58,13 +58,13 @@ describe('LanguageSelector', () => {
     expect(screen.getByRole('listbox', { name: '언어 목록' })).toBeInTheDocument();
   });
 
-  it('shows all 4 language options', async () => {
+  it('shows ko and en language options', async () => {
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
     expect(screen.getByText('English')).toBeInTheDocument();
-    expect(screen.getByText('日本語')).toBeInTheDocument();
-    expect(screen.getByText('中文')).toBeInTheDocument();
+    expect(screen.queryByText('日本語')).not.toBeInTheDocument();
+    expect(screen.queryByText('中文')).not.toBeInTheDocument();
     expect(screen.getAllByText('한국어').length).toBeGreaterThan(0);
   });
 
@@ -99,8 +99,8 @@ describe('LanguageSelector', () => {
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
-    await user.click(screen.getByText('日本語'));
-    expect(document.cookie).toContain('NEXT_LOCALE=ja');
+    await user.click(screen.getByText('English'));
+    expect(document.cookie).toContain('NEXT_LOCALE=en');
   });
 
   it('closes dropdown on Escape key', async () => {

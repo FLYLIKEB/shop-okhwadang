@@ -74,9 +74,9 @@ export class QueryProductsDto {
   @IsString()
   attrs?: string;
 
-  @ApiProperty({ example: 'ko', description: '언어 (ko, en, ja, zh)', required: false })
+  @ApiProperty({ example: 'ko', description: '언어 (ko, en)', required: false })
   @IsOptional()
   @IsString()
-  @IsIn(['ko', 'en', 'ja', 'zh'])
+  @IsIn(['ko', 'en'])
   locale?: string;
 }
