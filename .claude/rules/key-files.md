@@ -6,6 +6,12 @@
 - **Auth Context**: `src/contexts/AuthContext.tsx`
 - **Cart Context**: `src/contexts/CartContext.tsx`
 
+## Tooling
+
+- **RTK Wrapper**: `scripts/setup-rtk.sh`
+- **Review Graph Wrapper**: `scripts/review-graph.sh`
+- **Review Graph Hook**: `.claude/hooks/inject-review-graph.sh`
+
 ## Documentation
 
 - **Product Overview**: `docs/project/PRODUCT_OVERVIEW.md`
