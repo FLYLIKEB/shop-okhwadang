@@ -1,9 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { ReviewsService } from '../reviews.service';
 import { Review } from '../entities/review.entity';
 import { OrderItem } from '../../orders/entities/order-item.entity';
+import { PointHistory } from '../../coupons/entities/point-history.entity';
+import { SettingsService } from '../../settings/settings.service';
+import { OrderStatus } from '../../orders/entities/order.entity';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
@@ -22,6 +26,12 @@ describe('ReviewsService', () => {
     user: { name: '홍길동' },
   };
 
+  const mockOrderItem = {
+    id: 22,
+    productId: 5,
+    order: { userId: 10, status: OrderStatus.DELIVERED },
+  };
+
   const mockRepo = {
     createQueryBuilder: jest.fn(),
     findOne: jest.fn(),
@@ -34,17 +44,50 @@ describe('ReviewsService', () => {
     createQueryBuilder: jest.fn(),
   };
 
+  const mockPointHistoryRepo = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
+  const mockSettingsService = {
+    getNumber: jest.fn(),
+  };
+
+  // Manager used inside dataSource.transaction
+  const mockManager = {
+    createQueryBuilder: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+  };
+
+  const mockDataSource = {
+    transaction: jest.fn((cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager)),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReviewsService,
         { provide: getRepositoryToken(Review), useValue: mockRepo },
         { provide: getRepositoryToken(OrderItem), useValue: mockOrderItemRepo },
+        { provide: getRepositoryToken(PointHistory), useValue: mockPointHistoryRepo },
+        { provide: SettingsService, useValue: mockSettingsService },
+        { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
 
     service = module.get<ReviewsService>(ReviewsService);
     jest.clearAllMocks();
+
+    // Default settings: reward=100, bonus=0
+    mockSettingsService.getNumber.mockImplementation((key: string, def: number) => {
+      if (key === 'review_point_reward') return Promise.resolve(100);
+      if (key === 'photo_review_bonus') return Promise.resolve(0);
+      return Promise.resolve(def);
+    });
   });
 
   describe('findAll', () => {
@@ -100,18 +143,26 @@ describe('ReviewsService', () => {
   });
 
   describe('create', () => {
-    it('should create a review', async () => {
-      const orderItemQb = {
-        innerJoin: jest.fn().mockReturnThis(),
+    function setupOrderItemQb(result: unknown) {
+      const qb = {
+        innerJoinAndSelect: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue({ id: 22 }),
+        getOne: jest.fn().mockResolvedValue(result),
       };
-      mockOrderItemRepo.createQueryBuilder.mockReturnValue(orderItemQb);
-      mockRepo.findOne.mockResolvedValueOnce(null);
-      mockRepo.create.mockReturnValue(mockReview);
-      mockRepo.save.mockResolvedValue(mockReview);
+      mockManager.createQueryBuilder.mockReturnValue(qb);
+      return qb;
+    }
+
+    it('should create a review and award points', async () => {
+      setupOrderItemQb(mockOrderItem);
+      mockManager.findOne.mockResolvedValueOnce(null); // no duplicate review
+      mockManager.findOne.mockResolvedValueOnce(null); // no existing point balance
+      mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
+      mockManager.save.mockImplementation((_entity: unknown, data: unknown) => Promise.resolve({ ...mockReview, ...(data as object) }));
+
+      // reload with user
       mockRepo.findOne.mockResolvedValueOnce(mockReview);
 
       const result = await service.create(10, {
@@ -119,22 +170,75 @@ describe('ReviewsService', () => {
         orderItemId: 22,
         rating: 5,
         content: '정말 좋아요',
-        imageUrls: ['https://cdn.example.com/review/abc.webp'],
+        imageUrls: [],
       });
 
       expect(result.id).toBe(1);
       expect(result.userName).toBe('홍**');
+      // Point earn should be created (reward=100, no images so no bonus)
+      const saveCalls = mockManager.save.mock.calls;
+      const pointSave = saveCalls.find((call: unknown[]) => {
+        const data = call[1] as { type?: string };
+        return data?.type === 'earn';
+      });
+      expect(pointSave).toBeDefined();
+      expect((pointSave![1] as { amount: number }).amount).toBe(100);
+    });
+
+    it('should award photo bonus when images are present', async () => {
+      mockSettingsService.getNumber.mockImplementation((key: string) => {
+        if (key === 'review_point_reward') return Promise.resolve(100);
+        if (key === 'photo_review_bonus') return Promise.resolve(50);
+        return Promise.resolve(0);
+      });
+
+      setupOrderItemQb(mockOrderItem);
+      mockManager.findOne.mockResolvedValueOnce(null);
+      mockManager.findOne.mockResolvedValueOnce(null);
+      mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
+      mockManager.save.mockImplementation((_entity: unknown, data: unknown) => Promise.resolve({ ...mockReview, ...(data as object) }));
+      mockRepo.findOne.mockResolvedValueOnce(mockReview);
+
+      await service.create(10, {
+        productId: 5,
+        orderItemId: 22,
+        rating: 5,
+        imageUrls: ['https://cdn.example.com/review/abc.webp'],
+      });
+
+      const saveCalls = mockManager.save.mock.calls;
+      const pointSave = saveCalls.find((call: unknown[]) => {
+        const data = call[1] as { type?: string };
+        return data?.type === 'earn';
+      });
+      expect(pointSave).toBeDefined();
+      expect((pointSave![1] as { amount: number }).amount).toBe(150); // 100 + 50 bonus
     });
 
     it('should throw BadRequestException for unpurchased product', async () => {
-      const orderItemQb = {
-        innerJoin: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(null),
-      };
-      mockOrderItemRepo.createQueryBuilder.mockReturnValue(orderItemQb);
+      setupOrderItemQb(null);
+
+      await expect(
+        service.create(10, { productId: 5, orderItemId: 22, rating: 5 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException for REFUNDED order', async () => {
+      setupOrderItemQb({
+        ...mockOrderItem,
+        order: { userId: 10, status: OrderStatus.REFUNDED },
+      });
+
+      await expect(
+        service.create(10, { productId: 5, orderItemId: 22, rating: 5 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException for CANCELLED order', async () => {
+      setupOrderItemQb({
+        ...mockOrderItem,
+        order: { userId: 10, status: OrderStatus.CANCELLED },
+      });
 
       await expect(
         service.create(10, { productId: 5, orderItemId: 22, rating: 5 }),
@@ -142,15 +246,8 @@ describe('ReviewsService', () => {
     });
 
     it('should throw ConflictException for duplicate review', async () => {
-      const orderItemQb = {
-        innerJoin: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue({ id: 22 }),
-      };
-      mockOrderItemRepo.createQueryBuilder.mockReturnValue(orderItemQb);
-      mockRepo.findOne.mockResolvedValue(mockReview);
+      setupOrderItemQb(mockOrderItem);
+      mockManager.findOne.mockResolvedValueOnce(mockReview); // duplicate
 
       await expect(
         service.create(10, { productId: 5, orderItemId: 22, rating: 5 }),
@@ -181,16 +278,54 @@ describe('ReviewsService', () => {
   });
 
   describe('remove', () => {
-    it('should delete own review', async () => {
+    it('should delete own review and revoke points', async () => {
       mockRepo.findOne.mockResolvedValue({ ...mockReview });
-      mockRepo.remove.mockResolvedValue(undefined);
+
+      const earnEntry = { id: 99, amount: 100, type: 'earn', description: '리뷰 포인트 적립 (review_id:1)' };
+      mockManager.findOne
+        .mockResolvedValueOnce(earnEntry) // earn entry
+        .mockResolvedValueOnce(null)      // no existing revoke
+        .mockResolvedValueOnce(null);     // current balance (no prior history)
+      mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
+      mockManager.save.mockResolvedValue({});
+      mockManager.remove.mockResolvedValue(undefined);
 
       await expect(service.remove(1, 10, 'user')).resolves.not.toThrow();
+
+      const saveCalls = mockManager.save.mock.calls;
+      const revokeSave = saveCalls.find((call: unknown[]) => {
+        const data = call[1] as { type?: string };
+        return data?.type === 'spend';
+      });
+      expect(revokeSave).toBeDefined();
+      expect((revokeSave![1] as { amount: number }).amount).toBe(100);
+    });
+
+    it('should not double-revoke points if already revoked', async () => {
+      mockRepo.findOne.mockResolvedValue({ ...mockReview });
+
+      const earnEntry = { id: 99, amount: 100, type: 'earn', description: '리뷰 포인트 적립 (review_id:1)' };
+      const spendEntry = { id: 100, amount: 100, type: 'spend', description: '리뷰 포인트 환수 (review_id:1)' };
+      mockManager.findOne
+        .mockResolvedValueOnce(earnEntry)  // earn entry found
+        .mockResolvedValueOnce(spendEntry); // already revoked
+      mockManager.remove.mockResolvedValue(undefined);
+
+      await expect(service.remove(1, 10, 'user')).resolves.not.toThrow();
+
+      // No spend entry should be saved
+      const saveCalls = mockManager.save.mock.calls;
+      const revokeSave = saveCalls.find((call: unknown[]) => {
+        const data = call[1] as { type?: string };
+        return data?.type === 'spend';
+      });
+      expect(revokeSave).toBeUndefined();
     });
 
     it('should allow admin to delete any review', async () => {
       mockRepo.findOne.mockResolvedValue({ ...mockReview, userId: 99 });
-      mockRepo.remove.mockResolvedValue(undefined);
+      mockManager.findOne.mockResolvedValue(null); // no earn entry
+      mockManager.remove.mockResolvedValue(undefined);
 
       await expect(service.remove(1, 10, 'admin')).resolves.not.toThrow();
     });
