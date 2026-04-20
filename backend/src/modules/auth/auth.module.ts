@@ -17,6 +17,7 @@ import { VerificationToken } from './entities/verification-token.entity';
 import { User } from '../users/entities/user.entity';
 import { UserAuthentication } from '../users/entities/user-authentication.entity';
 import { AuditLogModule } from '../audit-logs/audit-log.module';
+import { AuthEventsModule } from './auth-events.module';
 
 function getJwtPrivateKey(): string {
   if (process.env.JWT_PRIVATE_KEY) {
@@ -52,9 +53,10 @@ function getJwtPrivateKey(): string {
     }),
     HttpModule,
     AuditLogModule,
+    AuthEventsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, OAuthService, JwtStrategy, TokenBlacklistService],
-  exports: [PassportModule, JwtModule, AuditLogModule],
+  exports: [PassportModule, JwtModule, AuditLogModule, AuthEventsModule],
 })
 export class AuthModule {}

@@ -9,6 +9,7 @@ import { OrdersController } from './orders.controller';
 import { PointsModule } from '../points/points.module';
 import { CouponsModule } from '../coupons/coupons.module';
 import { ShippingModule } from '../shipping/shipping.module';
+import { OrderEventsModule } from './order-events.module';
 
 @Module({
   imports: [
@@ -16,9 +17,10 @@ import { ShippingModule } from '../shipping/shipping.module';
     PointsModule,
     CouponsModule,
     ShippingModule,
+    OrderEventsModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService],
-  exports: [OrdersService],
+  exports: [OrdersService, OrderEventsModule],
 })
 export class OrdersModule {}
