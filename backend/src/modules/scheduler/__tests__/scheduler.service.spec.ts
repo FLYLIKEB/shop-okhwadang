@@ -12,6 +12,7 @@ import { User } from '../../users/entities/user.entity';
 import { RecentlyViewedProduct } from '../../products/entities/recently-viewed-product.entity';
 import { NotificationService } from '../../notification/notification.service';
 import { SettingsService } from '../../settings/settings.service';
+import { MembershipService } from '../../membership/membership.service';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -108,6 +109,7 @@ describe('SchedulerService', () => {
         { provide: DataSource, useValue: mockDataSource },
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: SettingsService, useValue: mockSettingsService },
+        { provide: MembershipService, useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined), evaluateAllUserTiers: jest.fn().mockResolvedValue(undefined) } },
       ],
     }).compile();
 

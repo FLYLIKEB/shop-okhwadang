@@ -12,12 +12,14 @@ import { RecentlyViewedProduct } from '../products/entities/recently-viewed-prod
 import { SchedulerService } from './scheduler.service';
 import { SettingsModule } from '../settings/settings.module';
 import { NotificationModule } from '../notification/notification.module';
+import { MembershipModule } from '../membership/membership.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, OrderItem, Product, ProductOption, Coupon, PointHistory, User, UserAddress, RecentlyViewedProduct]),
     SettingsModule,
     NotificationModule,
+    MembershipModule,
   ],
   providers: [SchedulerService],
   exports: [SchedulerService],
