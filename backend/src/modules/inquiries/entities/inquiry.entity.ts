@@ -48,6 +48,9 @@ export class Inquiry {
   @Column({ name: 'answered_at', type: 'datetime', nullable: true })
   answeredAt!: Date | null;
 
+  @Column({ name: 'customer_read_at', type: 'datetime', nullable: true })
+  customerReadAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

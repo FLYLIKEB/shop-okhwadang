@@ -36,6 +36,12 @@ export class InquiriesService {
   async findOne(id: number, userId: number): Promise<Inquiry> {
     const inquiry = await findOrThrow(this.inquiryRepo, { id }, '문의를 찾을 수 없습니다.');
     assertOwnership(inquiry.userId, userId, '권한이 없습니다.');
+
+    if (inquiry.answeredAt && !inquiry.customerReadAt) {
+      inquiry.customerReadAt = new Date();
+      await this.inquiryRepo.save(inquiry);
+    }
+
     return inquiry;
   }
 
@@ -57,6 +63,11 @@ export class InquiriesService {
       .leftJoinAndSelect('inquiry.user', 'user')
       .orderBy('inquiry.createdAt', 'DESC');
 
+    if (query.unread) {
+      qb.andWhere('inquiry.answeredAt IS NOT NULL')
+        .andWhere('inquiry.customerReadAt IS NULL');
+    }
+
     return paginate(qb, {
       page: query.page ?? 1,
       limit: query.limit ?? 20,
@@ -65,13 +76,17 @@ export class InquiriesService {
 
   async answerInquiry(id: number, dto: AnswerInquiryDto): Promise<Inquiry> {
     const inquiry = await findOrThrow(this.inquiryRepo, { id }, '문의를 찾을 수 없습니다.');
+    const isFirstAnswer = !inquiry.answeredAt;
+
     inquiry.answer = dto.answer;
     inquiry.status = InquiryStatus.ANSWERED;
     inquiry.answeredAt = new Date();
     const saved = await this.inquiryRepo.save(inquiry);
     this.logger.log(`Inquiry answered: id=${id}`);
 
-    void this.notifyInquiryAnswered(saved.userId, saved.title, saved.answer ?? '');
+    if (isFirstAnswer) {
+      void this.notifyInquiryAnswered(saved.userId, saved.title, saved.answer ?? '');
+    }
 
     return saved;
   }
