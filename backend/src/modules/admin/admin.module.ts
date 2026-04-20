@@ -8,6 +8,8 @@ import { AdminOrdersController } from './admin-orders.controller';
 import { AdminOrdersService } from './admin-orders.service';
 import { AdminMembersController } from './admin-members.controller';
 import { AdminMembersService } from './admin-members.service';
+import { AdminExportController } from './admin-export.controller';
+import { AdminExportService } from './admin-export.service';
 import { Order } from '../orders/entities/order.entity';
 import { Payment } from '../payments/entities/payment.entity';
 import { Shipping } from '../payments/entities/shipping.entity';
@@ -22,7 +24,7 @@ import { AuditLogModule } from '../audit-logs/audit-log.module';
     PaymentsModule,
     AuditLogModule,
   ],
-  controllers: [AdminController, AdminDashboardController, AdminOrdersController, AdminMembersController],
-  providers: [AdminService, AdminDashboardService, AdminOrdersService, AdminMembersService],
+  controllers: [AdminController, AdminDashboardController, AdminOrdersController, AdminMembersController, AdminExportController],
+  providers: [AdminService, AdminDashboardService, AdminOrdersService, AdminMembersService, AdminExportService],
 })
 export class AdminModule {}
