@@ -10,6 +10,7 @@ import { PointsService } from '../../points/points.service';
 import { NotificationService } from '../../notification/notification.service';
 import { CouponsService } from '../../coupons/coupons.service';
 import { ShippingFeeCalculatorService } from '../../shipping/services/shipping-fee-calculator.service';
+import { OrderEventEmitter } from '../order-event.emitter';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -32,6 +33,7 @@ const mockDataSource = {
 
 const mockOrderRepository = {
   createQueryBuilder: jest.fn(),
+  count: jest.fn().mockResolvedValue(1),
 };
 
 const mockPointsService = {
@@ -73,6 +75,7 @@ describe('OrdersService', () => {
         { provide: NotificationService, useValue: { sendOrderConfirmed: jest.fn() } },
         { provide: CouponsService, useValue: mockCouponsService },
         { provide: ShippingFeeCalculatorService, useValue: mockShippingFeeCalculator },
+        { provide: OrderEventEmitter, useValue: { emitOrderCompleted: jest.fn() } },
       ],
     }).compile();
 
