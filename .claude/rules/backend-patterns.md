@@ -8,6 +8,11 @@ NestJS-specific patterns and utilities. Complements `backend/CLAUDE.md`.
 - **Shipping**: `ShippingProvider` interface → `MockShippingAdapter`. CarrierCode type supports `'mock' | 'cj' | 'hanjin' | 'lotte'`. Selected by env.
 - **Storage**: `local` / `s3`. Selected by `STORAGE_PROVIDER` env.
 
+## Payment Gateway Selection
+
+- Locale-based gateway choice in `prepare()` must be persisted to `payment.gateway`, and all later operations (`confirm`, `cancel`, `partialRefund`) must resolve the adapter from the stored `payment.gateway` value — never from the default injected gateway.
+- `PaymentGatewayType.INICIS` is currently used as the persisted placeholder for the Stripe adapter. If a real Inicis integration is added later, introduce a distinct enum value and migrate existing data instead of overloading runtime resolution logic.
+
 ## API Documentation (Swagger/OpenAPI)
 
 - **Swagger UI**: `GET /api/docs`
