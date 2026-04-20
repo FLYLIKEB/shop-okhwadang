@@ -3,13 +3,14 @@ import {
   ConflictException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { OrderItem } from '../orders/entities/order-item.entity';
 import { Payment } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
 import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
+import { PointHistory } from '../coupons/entities/point-history.entity';
 import { PaymentsService } from '../payments/payments.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
@@ -76,7 +77,12 @@ export class AdminOrdersService {
   }
 
   async updateStatus(orderId: number, nextStatus: OrderStatus): Promise<Order | null> {
-    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
+    const order = await findOrThrow(
+      this.orderRepository,
+      { id: orderId },
+      '주문을 찾을 수 없습니다.',
+      ['items', 'user'],
+    );
 
     const currentStatus = order.status;
     const allowed = ALLOWED_ORDER_TRANSITIONS[currentStatus] ?? [];
@@ -101,25 +107,12 @@ export class AdminOrdersService {
       }
     }
 
-    const isStockRestoreNeeded =
-      nextStatus === OrderStatus.CANCELLED || nextStatus === OrderStatus.REFUNDED;
-
     await this.dataSource.transaction(async (manager) => {
       await manager.update(Order, orderId, { status: nextStatus });
 
-      if (isStockRestoreNeeded) {
-        const items = await manager.find(OrderItem, {
-          where: { orderId },
-          relations: ['product', 'option'],
-        });
-
-        for (const item of items) {
-          await manager.increment(Product, { id: item.productId }, 'stock', item.quantity);
-
-          if (item.productOptionId !== null) {
-            await manager.increment(ProductOption, { id: item.productOptionId }, 'stock', item.quantity);
-          }
-        }
+      if (this.shouldRestoreStockAndPoints(currentStatus, nextStatus)) {
+        await this.restoreStock(manager, orderId);
+        await this.restorePoints(manager, order);
       }
     });
 
@@ -128,6 +121,47 @@ export class AdminOrdersService {
     return this.orderRepository.findOne({
       where: { id: orderId },
       relations: ['items', 'user'],
+    });
+  }
+
+  private shouldRestoreStockAndPoints(currentStatus: OrderStatus, nextStatus: OrderStatus): boolean {
+    const restoreTargets = new Set<OrderStatus>([OrderStatus.CANCELLED, OrderStatus.REFUNDED]);
+    return !restoreTargets.has(currentStatus) && restoreTargets.has(nextStatus);
+  }
+
+  private async restoreStock(manager: EntityManager, orderId: number): Promise<void> {
+    const items = await manager.find(OrderItem, {
+      where: { orderId },
+      relations: ['product', 'option'],
+    });
+
+    for (const item of items) {
+      await manager.increment(Product, { id: item.productId }, 'stock', item.quantity);
+      if (item.productOptionId !== null) {
+        await manager.increment(ProductOption, { id: item.productOptionId }, 'stock', item.quantity);
+      }
+    }
+  }
+
+  private async restorePoints(manager: EntityManager, order: Order): Promise<void> {
+    if (!order.pointsUsed || order.pointsUsed <= 0) {
+      return;
+    }
+
+    const latest = await manager.findOne(PointHistory, {
+      where: { userId: order.userId },
+      order: { createdAt: 'DESC', id: 'DESC' },
+    });
+    const currentBalance = latest?.balance ?? 0;
+    const restoredBalance = currentBalance + order.pointsUsed;
+
+    await manager.save(PointHistory, {
+      userId: order.userId,
+      type: 'admin_adjust',
+      amount: order.pointsUsed,
+      balance: restoredBalance,
+      orderId: Number(order.id),
+      description: `주문 ${order.orderNumber} 취소/환불로 인한 적립금 복구`,
     });
   }
 

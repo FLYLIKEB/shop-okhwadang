@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { SelectQueryBuilder, QueryFailedError } from 'typeorm';
+import { DataSource, SelectQueryBuilder, QueryFailedError } from 'typeorm';
 import { ProductsService } from '../products.service';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
@@ -12,6 +12,7 @@ import { AttributeType } from '../entities/attribute-type.entity';
 import { ProductAttribute } from '../entities/product-attribute.entity';
 import { ProductSort } from '../dto/query-products.dto';
 import { CacheService } from '../../cache/cache.service';
+import { RestockAlertsService } from '../../restock-alerts/restock-alerts.service';
 
 function makeFulltextError(): QueryFailedError {
   const err = new QueryFailedError(
@@ -99,6 +100,14 @@ describe('ProductsService — Search', () => {
         {
           provide: CacheService,
           useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: RestockAlertsService,
+          useValue: { processProductRestock: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: getDataSourceToken(),
+          useValue: { transaction: jest.fn() } as unknown as DataSource,
         },
       ],
     }).compile();
@@ -255,6 +264,28 @@ describe('ProductsService — Search', () => {
       });
 
       expect(mockOrderBy).toHaveBeenCalledWith('product.price', 'DESC');
+    });
+
+    it('FULLTEXT 실패(errno 1191) 후 LIKE 폴백에서도 검색어 조건이 유지됨', async () => {
+      mockGetManyAndCount
+        .mockRejectedValueOnce(makeFulltextError())
+        .mockResolvedValue([[], 0]);
+
+      await service.findAll({ q: '보이차' });
+
+      // LIKE 폴백 경로의 andWhere 호출에 검색어 LIKE 조건이 포함되어야 함
+      expect(mockAndWhere).toHaveBeenCalledWith('product.name LIKE :q', { q: '%보이차%' });
+    });
+
+    it('q 없이 LIKE 폴백 경로 진입 시 LIKE 조건 추가 안 함 (q 길이 1인 경우)', async () => {
+      // q가 1글자면 FULLTEXT가 아닌 LIKE 경로가 바로 사용되고, 폴백이 아니라 정상 경로로 처리
+      // 이 케이스는 findAll에서 직접 LIKE 경로를 탄다 (q.length < 2)
+      mockGetManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({ q: '차' });
+
+      // 단글자 q → 직접 LIKE 조건 (FULLTEXT 아님)
+      expect(mockAndWhere).toHaveBeenCalledWith('product.name LIKE :q', { q: '%차%' });
     });
   });
 });

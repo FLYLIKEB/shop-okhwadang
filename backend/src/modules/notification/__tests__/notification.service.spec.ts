@@ -7,6 +7,7 @@ import {
   renderOrderConfirmed,
   renderPaymentConfirmed,
   renderPasswordReset,
+  renderRestockAlert,
   renderShippingUpdate,
 } from '../templates/render';
 
@@ -98,6 +99,17 @@ describe('render helpers', () => {
     expect(email.text).toContain('https://example.com/reset-password?token=abc123');
     expect(email.html).toContain('href="https://example.com/reset-password?token=abc123"');
   });
+
+  it('renders restock alert email with product URL', () => {
+    const email = renderRestockAlert({
+      recipientName: '홍길동',
+      productName: '서시호',
+      productUrl: 'https://example.com/products/xishi',
+    });
+    expect(email.subject).toContain('재입고');
+    expect(email.text).toContain('https://example.com/products/xishi');
+    expect(email.html).toContain('href="https://example.com/products/xishi"');
+  });
 });
 
 describe('NotificationService', () => {
@@ -166,5 +178,18 @@ describe('NotificationService', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].subject).toContain('비밀번호 재설정');
     expect(sent[0].text).toContain('abc123');
+  });
+
+  it('sends restock alert email via the provider', async () => {
+    await service.sendRestockAlert('user@example.com', {
+      recipientName: '홍길동',
+      productName: '서시호',
+      productUrl: 'https://example.com/products/xishi',
+    });
+
+    const sent = mockAdapter.getSent();
+    expect(sent).toHaveLength(1);
+    expect(sent[0].subject).toContain('재입고');
+    expect(sent[0].text).toContain('xishi');
   });
 });

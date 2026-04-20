@@ -192,7 +192,8 @@
       "active": "在售",
       "soldout": "缺货",
       "hidden": "已隐藏"
-    }
+    },
+    "lowStock": "仅剩 {count} 件"
   },
   "cart": {
     "title": "购物车",

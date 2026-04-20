@@ -1,11 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import {
   AuthCookies,
   cookieHeader,
   loginAndGetCookies,
+  registerAndGetCookies,
 } from '../helpers/auth-cookie.helper';
 
 export function registerPagesSuite(getApp: () => INestApplication) {
@@ -27,24 +27,25 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       app = getApp();
       dataSource = app.get(DataSource);
 
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      const adminResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '페이지관리자', 'admin')`,
-        [adminEmail, hashedPassword],
-      );
-      adminUserId = adminResult.insertId as number;
-
-      const userResult = await dataSource.query(
-        `INSERT INTO users (email, password, name, role) VALUES (?, ?, '일반유저', 'user')`,
-        [userEmail, hashedPassword],
-      );
-      regularUserId = userResult.insertId as number;
-
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password,
+        name: '페이지관리자',
+      });
+      await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
       adminCookies = await loginAndGetCookies(app, { email: adminEmail, password });
-      userCookies = await loginAndGetCookies(app, { email: userEmail, password });
-    });
+      const adminRow = await dataSource.query('SELECT id FROM users WHERE email = ?', [adminEmail]);
+      adminUserId = Number((adminRow[0] as { id: number }).id);
 
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password,
+        name: '일반유저',
+      });
+      userCookies = await loginAndGetCookies(app, { email: userEmail, password });
+      const userRow = await dataSource.query('SELECT id FROM users WHERE email = ?', [userEmail]);
+      regularUserId = Number((userRow[0] as { id: number }).id);
+    });
     afterAll(async () => {
       await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
       await dataSource.query(`DELETE FROM page_blocks WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE '%-pages-e2e')`);
@@ -229,14 +230,14 @@ export function registerPagesSuite(getApp: () => INestApplication) {
           .post(`/api/pages/${createdPageId}/blocks`)
           .set('Cookie', cookieHeader(adminCookies))
           .send({ type: 'text_content', content: { text: '본문' }, sort_order: 1 });
-        const secondBlockId = (res.body as { id: number }).id;
+        const secondBlockId = Number((res.body as { id: number | string }).id);
 
         await request(app.getHttpServer())
           .patch(`/api/pages/${createdPageId}/blocks/reorder`)
           .set('Cookie', cookieHeader(adminCookies))
           .send({
             orders: [
-              { id: createdBlockId, sort_order: 1 },
+              { id: Number(createdBlockId), sort_order: 1 },
               { id: secondBlockId, sort_order: 0 },
             ],
           })

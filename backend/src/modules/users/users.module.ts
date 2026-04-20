@@ -4,9 +4,10 @@ import { User } from './entities/user.entity';
 import { UserAddress } from './entities/user-address.entity';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
+import { RestockAlertsModule } from '../restock-alerts/restock-alerts.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserAddress])],
+  imports: [TypeOrmModule.forFeature([User, UserAddress]), RestockAlertsModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

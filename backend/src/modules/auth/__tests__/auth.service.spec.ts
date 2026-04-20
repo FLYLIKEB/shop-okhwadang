@@ -65,7 +65,11 @@ function makeUser(overrides: Partial<User> = {}): User {
     emailVerifiedAt: null,
     refreshToken: null,
     failedLoginAttempts: 0,
+    lastFailedLoginAt: null,
     lockedUntil: null,
+    deletionRequestedAt: null,
+    deletionScheduledAt: null,
+    deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -174,6 +178,18 @@ describe('AuthService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
+    it('비활성 계정 로그인 시 password 검증 없이 즉시 ForbiddenException (failedLoginAttempts 증가 없음)', async () => {
+      const hashed = await bcrypt.hash('Test1234!', 10);
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed, isActive: false }));
+
+      await expect(
+        service.login({ email: 'test@example.com', password: 'Test1234!' }),
+      ).rejects.toThrow(ForbiddenException);
+
+      // password 검증 실패 시에만 호출되는 userRepository.update가 호출되지 않아야 함
+      expect(mockUserRepository.update).not.toHaveBeenCalled();
+    });
+
     it('로그인 성공 시 refreshToken을 DB에 해싱 저장', async () => {
       const hashed = await bcrypt.hash('Test1234!', 10);
       mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed, isEmailVerified: true }));
@@ -216,6 +232,28 @@ describe('AuthService', () => {
       mockJwtService.verify.mockImplementationOnce(() => { throw new Error('invalid'); });
 
       await expect(service.refresh('invalid.token')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('비활성화된 사용자의 유효한 refresh token → UnauthorizedException', async () => {
+      const rawRefresh = 'mock-token';
+      const hashedRefresh = await bcrypt.hash(rawRefresh, 10);
+      mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user', tokenType: 'refresh' });
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ isActive: false, refreshToken: hashedRefresh }));
+
+      await expect(service.refresh(rawRefresh)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('활성화된 사용자의 유효한 refresh token → 정상 토큰 발급 (regression)', async () => {
+      const rawRefresh = 'mock-token';
+      const hashedRefresh = await bcrypt.hash(rawRefresh, 10);
+      mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user', tokenType: 'refresh' });
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ isActive: true, refreshToken: hashedRefresh }));
+      mockUserRepository.update.mockResolvedValue(undefined);
+
+      const result = await service.refresh(rawRefresh);
+
+      expect(result).toHaveProperty('accessToken');
+      expect(result).toHaveProperty('refreshToken');
     });
   });
 

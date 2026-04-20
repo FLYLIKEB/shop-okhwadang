@@ -27,8 +27,11 @@ import { AuditLogService } from '../audit-logs/audit-log.service';
 import { AuditAction } from '../audit-logs/entities/audit-log.entity';
 import { TokenBlacklistService } from './token-blacklist.service';
 
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
+const LOCK_LEVEL_1_ATTEMPTS = 5;
+const LOCK_LEVEL_2_ATTEMPTS = 10;
+const LOCK_LEVEL_3_ATTEMPTS = 15;
+const LOCKOUT_LEVEL_1_MS = 15 * 60 * 1000;
+const LOCKOUT_LEVEL_2_MS = 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 const EMAIL_VERIFICATION_TTL_MIN = 15;
 const EMAIL_VERIFICATION_TTL_MS = EMAIL_VERIFICATION_TTL_MIN * 60 * 1000;
@@ -150,6 +153,16 @@ export class AuthService implements OnModuleInit {
       );
     }
 
+    if (user.deletionScheduledAt && !user.deletedAt) {
+      throw new ForbiddenException(
+        `탈퇴 예약된 계정입니다. ${user.deletionScheduledAt.toISOString()} 이전 로그인으로 복구를 원하시면 고객센터에 문의해 주세요.`,
+      );
+    }
+
+    if (user.failedLoginAttempts >= LOCK_LEVEL_3_ATTEMPTS) {
+      throw new ForbiddenException('보안 정책에 의해 계정이 잠겼습니다. 관리자에게 잠금 해제를 요청해 주세요.');
+    }
+
     if (user.lockedUntil && user.lockedUntil > new Date()) {
       const remainingMs = user.lockedUntil.getTime() - Date.now();
       const remainingSec = Math.ceil(remainingMs / 1000);
@@ -158,22 +171,84 @@ export class AuthService implements OnModuleInit {
       );
     }
 
+    if (!user.isActive) {
+      throw new ForbiddenException('비활성화된 계정입니다.');
+    }
+
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) {
+      const now = new Date();
       const attempts = user.failedLoginAttempts + 1;
-      if (attempts >= MAX_LOGIN_ATTEMPTS) {
-        const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
+
+      if (attempts >= LOCK_LEVEL_3_ATTEMPTS) {
         await this.userRepository.update(user.id, {
           failedLoginAttempts: attempts,
+          lastFailedLoginAt: now,
+          lockedUntil: null,
+        });
+        await this.auditLogService.log({
+          actorId: user.id,
+          actorRole: user.role,
+          action: AuditAction.LOGIN_FAILURE,
+          resourceType: 'auth',
+          beforeJson: { email: dto.email },
+          afterJson: { reason: 'account_locked_manual', attempts },
+          ip: ip ?? null,
+          userAgent: userAgent ?? null,
+        });
+        this.logger.warn(`Account permanently locked until admin unlock: ${dto.email}`);
+        throw new ForbiddenException('연속 로그인 실패로 계정이 잠겼습니다. 관리자에게 잠금 해제를 요청해 주세요.');
+      }
+
+      if (attempts >= LOCK_LEVEL_2_ATTEMPTS) {
+        const lockedUntil = new Date(Date.now() + LOCKOUT_LEVEL_2_MS);
+        await this.userRepository.update(user.id, {
+          failedLoginAttempts: attempts,
+          lastFailedLoginAt: now,
           lockedUntil,
         });
-        this.logger.warn(`Account locked due to failed login attempts: ${dto.email}`);
+        await this.auditLogService.log({
+          actorId: user.id,
+          actorRole: user.role,
+          action: AuditAction.LOGIN_FAILURE,
+          resourceType: 'auth',
+          beforeJson: { email: dto.email },
+          afterJson: { reason: 'account_locked_1h', attempts, lockedUntil: lockedUntil.toISOString() },
+          ip: ip ?? null,
+          userAgent: userAgent ?? null,
+        });
+        this.logger.warn(`Account locked (1h) due to failed login attempts: ${dto.email}`);
         throw new ForbiddenException(
-          `연속 로그인 실패로 계정이 잠겼습니다. ${Math.ceil(LOCKOUT_DURATION_MS / 1000)}초 후 다시 시도하세요.`,
+          `연속 로그인 실패로 계정이 잠겼습니다. ${Math.ceil(LOCKOUT_LEVEL_2_MS / 1000)}초 후 다시 시도하세요.`,
         );
       }
+
+      if (attempts >= LOCK_LEVEL_1_ATTEMPTS) {
+        const lockedUntil = new Date(Date.now() + LOCKOUT_LEVEL_1_MS);
+        await this.userRepository.update(user.id, {
+          failedLoginAttempts: attempts,
+          lastFailedLoginAt: now,
+          lockedUntil,
+        });
+        await this.auditLogService.log({
+          actorId: user.id,
+          actorRole: user.role,
+          action: AuditAction.LOGIN_FAILURE,
+          resourceType: 'auth',
+          beforeJson: { email: dto.email },
+          afterJson: { reason: 'account_locked_15m', attempts, lockedUntil: lockedUntil.toISOString() },
+          ip: ip ?? null,
+          userAgent: userAgent ?? null,
+        });
+        this.logger.warn(`Account locked (15m) due to failed login attempts: ${dto.email}`);
+        throw new ForbiddenException(
+          `연속 로그인 실패로 계정이 잠겼습니다. ${Math.ceil(LOCKOUT_LEVEL_1_MS / 1000)}초 후 다시 시도하세요.`,
+        );
+      }
+
       await this.userRepository.update(user.id, {
         failedLoginAttempts: attempts,
+        lastFailedLoginAt: now,
       });
       const delaySec = Math.pow(2, attempts);
       await this.delay(delaySec * 1000);
@@ -190,10 +265,6 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('비밀번호가 올바르지 않습니다.');
     }
 
-    if (!user.isActive) {
-      throw new ForbiddenException('비활성화된 계정입니다.');
-    }
-
     if (!user.isEmailVerified) {
       throw new ForbiddenException('이메일 인증이 필요합니다. 인증 메일을 확인해 주세요.');
     }
@@ -201,6 +272,7 @@ export class AuthService implements OnModuleInit {
     if (user.failedLoginAttempts > 0 || user.lockedUntil) {
       await this.userRepository.update(user.id, {
         failedLoginAttempts: 0,
+        lastFailedLoginAt: null,
         lockedUntil: null,
       });
     }
@@ -253,7 +325,7 @@ export class AuthService implements OnModuleInit {
     }
 
     const user = await this.userRepository.findOne({ where: { id: payload.sub } });
-    if (!user || !user.refreshToken) {
+    if (!user || !user.isActive || !user.refreshToken) {
       throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
     }
 
@@ -332,6 +404,7 @@ export class AuthService implements OnModuleInit {
       password: hashedPassword,
       refreshToken: null,
       failedLoginAttempts: 0,
+      lastFailedLoginAt: null,
       lockedUntil: null,
     });
 

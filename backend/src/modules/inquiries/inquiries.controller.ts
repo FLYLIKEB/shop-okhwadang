@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Request,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,6 +18,7 @@ import {
 import { InquiriesService } from './inquiries.service';
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AnswerInquiryDto } from './dto/answer-inquiry.dto';
+import { AdminInquiryQueryDto } from './dto/admin-inquiry-query.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 
 interface JwtUser {
@@ -75,8 +77,8 @@ export class AdminInquiriesController {
   @ApiResponse({ status: 200, description: '문의 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
-  findAll() {
-    return this.inquiriesService.findAllForAdmin();
+  findAll(@Query() query: AdminInquiryQueryDto) {
+    return this.inquiriesService.findAllForAdmin(query);
   }
 
   @Post(':id/answer')

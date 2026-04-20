@@ -7,3 +7,6 @@ process.env.NODE_ENV = 'test';
 process.env.FRONTEND_URL = 'http://localhost:5173';
 process.env.PAYMENT_GATEWAY = 'mock';
 process.env.STORAGE_PROVIDER = 'local';
+process.env.THROTTLE_GLOBAL_LIMIT = '10000';
+process.env.THROTTLE_AUTH_LIMIT = '10000';
+process.env.THROTTLE_FORGOT_PASSWORD_LIMIT = '10000';

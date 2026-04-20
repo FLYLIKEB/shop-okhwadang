@@ -44,6 +44,14 @@ export class SettingsService {
     return map;
   }
 
+  async getNumber(key: string, defaultValue: number): Promise<number> {
+    const map = await this.getMap();
+    const raw = map[key];
+    if (raw === undefined || raw === null) return defaultValue;
+    const parsed = parseInt(raw, 10);
+    return isNaN(parsed) ? defaultValue : parsed;
+  }
+
   async bulkUpdate(items: SettingItemDto[]): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       const invalidKeys: string[] = [];

@@ -8,9 +8,11 @@ import { Inquiry, InquiryStatus } from './entities/inquiry.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AnswerInquiryDto } from './dto/answer-inquiry.dto';
+import { AdminInquiryQueryDto } from './dto/admin-inquiry-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { NotificationService } from '../notification/notification.service';
+import { PaginatedResult, paginate } from '../../common/utils/pagination.util';
 
 @Injectable()
 export class InquiriesService {
@@ -34,6 +36,12 @@ export class InquiriesService {
   async findOne(id: number, userId: number): Promise<Inquiry> {
     const inquiry = await findOrThrow(this.inquiryRepo, { id }, '문의를 찾을 수 없습니다.');
     assertOwnership(inquiry.userId, userId, '권한이 없습니다.');
+
+    if (inquiry.answeredAt && !inquiry.customerReadAt) {
+      inquiry.customerReadAt = new Date();
+      await this.inquiryRepo.save(inquiry);
+    }
+
     return inquiry;
   }
 
@@ -49,22 +57,37 @@ export class InquiriesService {
     return saved;
   }
 
-  async findAllForAdmin(): Promise<Inquiry[]> {
-    return this.inquiryRepo.find({
-      relations: ['user'],
-      order: { createdAt: 'DESC' },
+  async findAllForAdmin(query: AdminInquiryQueryDto = {}): Promise<PaginatedResult<Inquiry>> {
+    const qb = this.inquiryRepo
+      .createQueryBuilder('inquiry')
+      .leftJoinAndSelect('inquiry.user', 'user')
+      .orderBy('inquiry.createdAt', 'DESC');
+
+    if (query.unread) {
+      qb.andWhere('inquiry.answeredAt IS NOT NULL')
+        .andWhere('inquiry.customerReadAt IS NULL');
+    }
+
+    return paginate(qb, {
+      page: query.page ?? 1,
+      limit: query.limit ?? 20,
     });
   }
 
   async answerInquiry(id: number, dto: AnswerInquiryDto): Promise<Inquiry> {
     const inquiry = await findOrThrow(this.inquiryRepo, { id }, '문의를 찾을 수 없습니다.');
+    const isFirstAnswer = !inquiry.answeredAt;
+
     inquiry.answer = dto.answer;
     inquiry.status = InquiryStatus.ANSWERED;
     inquiry.answeredAt = new Date();
+    inquiry.customerReadAt = null;  // 재답변 시 고객이 다시 읽도록
     const saved = await this.inquiryRepo.save(inquiry);
     this.logger.log(`Inquiry answered: id=${id}`);
 
-    void this.notifyInquiryAnswered(saved.userId, saved.title, saved.answer ?? '');
+    if (isFirstAnswer) {
+      void this.notifyInquiryAnswered(saved.userId, saved.title, saved.answer ?? '');
+    }
 
     return saved;
   }

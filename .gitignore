@@ -48,4 +48,11 @@ marketing.md
 .vercel
 docs/infrastructure/s3-cloudfront-cdn.md
 .omx/
-.codex/
+.codex/*
+!.codex/agents/
+!.codex/agents/**
+!.codex/skills/
+!.codex/skills/**
+.codex/skills/.system/**
+!.codex/prompts/
+!.codex/prompts/**

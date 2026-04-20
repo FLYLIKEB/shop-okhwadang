@@ -27,8 +27,7 @@ process.env.DATABASE_URL = process.env.TEST_DATABASE_URL ?? process.env.DATABASE
       url: process.env.DATABASE_URL,
       charset: 'utf8mb4',
       autoLoadEntities: true,
-      synchronize: true,
-      dropSchema: true,
+      synchronize: false,
     }),
     ThrottlerModule.forRoot([
       {
@@ -123,6 +122,14 @@ describe('Auth password reset flow (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dataSource.query('DELETE FROM password_reset_tokens WHERE user_id IN (SELECT id FROM users WHERE email IN (?, ?))', [
+      forgotPasswordEmail,
+      tokenReuseEmail,
+    ]);
+    await dataSource.query('DELETE FROM users WHERE email IN (?, ?)', [
+      forgotPasswordEmail,
+      tokenReuseEmail,
+    ]);
     await app.close();
   });
 

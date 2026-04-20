@@ -25,6 +25,7 @@ export default function QuantitySelector({
         aria-label="수량 감소"
         className={cn(
           'flex items-center justify-center h-9 w-9 shrink-0 border-r border-border transition-colors text-muted-foreground hover:bg-muted',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent',
         )}
       >
@@ -42,6 +43,7 @@ export default function QuantitySelector({
         aria-label="수량 증가"
         className={cn(
           'flex items-center justify-center h-9 w-9 shrink-0 border-l border-border transition-colors text-muted-foreground hover:bg-muted',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent',
         )}
       >

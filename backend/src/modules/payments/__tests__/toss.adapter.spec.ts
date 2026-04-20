@@ -106,4 +106,79 @@ describe('TossPaymentAdapter', () => {
       expect(result.orderId).toBe('ORDER-123');
     });
   });
+
+  describe('partialCancel', () => {
+    it('Toss 응답의 transactionKey를 refundId로 반환', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          cancels: [
+            {
+              canceledAt: '2026-01-01T00:00:00.000Z',
+              cancelAmount: 5000,
+              transactionKey: 'toss-txn-key-abc123',
+            },
+          ],
+        }),
+      });
+
+      const result = await adapter.partialCancel({
+        paymentKey: 'pk123',
+        cancelAmount: 5000,
+        cancelReason: '부분 환불',
+      });
+
+      expect(result.refundId).toBe('toss-txn-key-abc123');
+      expect(result.cancelledAt).toBeInstanceOf(Date);
+    });
+
+    it('cancels 배열 마지막 항목의 transactionKey 사용', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          cancels: [
+            { canceledAt: '2026-01-01T00:00:00.000Z', cancelAmount: 3000, transactionKey: 'first-key' },
+            { canceledAt: '2026-01-02T00:00:00.000Z', cancelAmount: 5000, transactionKey: 'last-key' },
+          ],
+        }),
+      });
+
+      const result = await adapter.partialCancel({
+        paymentKey: 'pk123',
+        cancelAmount: 5000,
+        cancelReason: '부분 환불',
+      });
+
+      expect(result.refundId).toBe('last-key');
+    });
+
+    it('transactionKey 없으면 toss- 폴백 ID 사용', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          cancels: [{ canceledAt: '2026-01-01T00:00:00.000Z', cancelAmount: 5000 }],
+        }),
+      });
+
+      const result = await adapter.partialCancel({
+        paymentKey: 'pk123',
+        cancelAmount: 5000,
+        cancelReason: '부분 환불',
+      });
+
+      expect(result.refundId).toMatch(/^toss-pk123-\d+$/);
+    });
+
+    it('Toss API 실패 → BadGatewayException', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ code: 'INVALID_REQUEST' }),
+      });
+
+      await expect(
+        adapter.partialCancel({ paymentKey: 'pk123', cancelAmount: 5000, cancelReason: '환불' }),
+      ).rejects.toThrow(BadGatewayException);
+    });
+  });
 });

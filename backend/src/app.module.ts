@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import * as fs from 'fs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from './modules/health/health.module';
@@ -34,6 +34,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
 
 @Module({
   imports: [
@@ -51,18 +52,18 @@ import { RolesGuard } from './common/guards/roles.guard';
     ThrottlerModule.forRoot([
       {
         name: 'global',
-        ttl: 60000,
-        limit: 200,
+        ttl: Number(process.env.THROTTLE_GLOBAL_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_GLOBAL_LIMIT ?? 200),
       },
       {
         name: 'auth',
-        ttl: 60000,
-        limit: 30,
+        ttl: Number(process.env.THROTTLE_AUTH_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_AUTH_LIMIT ?? 30),
       },
       {
         name: 'forgotPassword',
-        ttl: 60000,
-        limit: 1,
+        ttl: Number(process.env.THROTTLE_FORGOT_PASSWORD_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_FORGOT_PASSWORD_LIMIT ?? 1),
         getTracker: (req) => {
           const rawEmail =
             typeof req.body === 'object' && req.body !== null && 'email' in req.body
@@ -115,7 +116,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     // DO NOT reorder — RolesGuard requires request.user populated by JwtAuthGuard
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: UserAwareThrottlerGuard,
     },
     {
       provide: APP_GUARD,

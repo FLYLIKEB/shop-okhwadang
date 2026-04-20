@@ -30,9 +30,10 @@ describe('HealthService', () => {
   });
 
   it('should return ok when DB is connected', async () => {
-    const result = await service.check();
+    const result = await service.readiness();
     expect(result.status).toBe('ok');
     expect(result.db).toBe('connected');
+    expect(result.storage).toBeDefined();
     expect(result.uptime).toBeDefined();
     expect(typeof result.uptime).toBe('number');
     expect(result.timestamp).toBeDefined();

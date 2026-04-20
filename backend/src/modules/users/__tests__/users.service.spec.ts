@@ -61,7 +61,11 @@ describe('UsersService', () => {
         password: 'hashed',
         refreshToken: 'token',
         failedLoginAttempts: 0,
+        lastFailedLoginAt: null,
         lockedUntil: null,
+        deletionRequestedAt: null,
+        deletionScheduledAt: null,
+        deletedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

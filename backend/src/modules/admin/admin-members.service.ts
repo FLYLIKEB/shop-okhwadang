@@ -18,6 +18,9 @@ export interface SafeUser {
   phone: string | null;
   role: UserRole;
   isActive: boolean;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
+  lastFailedLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +33,9 @@ function toSafeUser(user: User): SafeUser {
     phone: user.phone,
     role: user.role,
     isActive: user.isActive,
+    failedLoginAttempts: user.failedLoginAttempts,
+    lockedUntil: user.lockedUntil,
+    lastFailedLoginAt: user.lastFailedLoginAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -116,6 +122,21 @@ export class AdminMembersService {
     this.logger.log(
       `Member #${targetId} role changed: ${target.role} → ${newRole} by #${requesterId}`,
     );
+
+    const updated = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
+    return toSafeUser(updated);
+  }
+
+  async unlockAccount(targetId: number): Promise<SafeUser> {
+    await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
+
+    await this.userRepository.update(targetId, {
+      failedLoginAttempts: 0,
+      lastFailedLoginAt: null,
+      lockedUntil: null,
+    });
+
+    this.logger.log(`Member #${targetId} login lock reset by admin`);
 
     const updated = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
     return toSafeUser(updated);

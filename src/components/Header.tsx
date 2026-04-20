@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useSlidePanel } from '@/hooks/useSlidePanel';
+import { useUrlModal } from '@/hooks/useUrlModal';
 import { useScrollLogoContext } from '@/contexts/ScrollLogoContext';
 import type { NavigationItem } from '@/lib/api';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -472,8 +473,8 @@ export default function Header() {
   const { items: navItems } = useNavigation('gnb');
   const { items: sidebarItems } = useNavigation('sidebar');
   const [query, setQuery] = useState('');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useUrlModal('menu');
+  const [isSearchOpen, setIsSearchOpen] = useUrlModal('search');
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollLogo = useScrollLogoContext();
   const menuPanel = useSlidePanel(isMenuOpen);
@@ -485,7 +486,7 @@ export default function Header() {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [setIsMenuOpen, setIsSearchOpen]);
 
   useEffect(() => {
     document.body.classList.toggle('overflow-hidden', isMenuOpen);
@@ -535,7 +536,7 @@ export default function Header() {
           {/* 햄버거 (mobile) */}
           <button
             type="button"
-            onClick={() => { setIsMenuOpen((p) => !p); setIsSearchOpen(false); }}
+            onClick={() => { setIsMenuOpen(!isMenuOpen); setIsSearchOpen(false); }}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? tNav('closeMenu') : tNav('openMenu')}
@@ -596,7 +597,7 @@ export default function Header() {
           <div className="md:hidden flex items-center gap-1">
             <button
               type="button"
-              onClick={() => { setIsSearchOpen((p) => !p); setIsMenuOpen(false); }}
+              onClick={() => { setIsSearchOpen(!isSearchOpen); setIsMenuOpen(false); }}
               aria-label={isSearchOpen ? t('searchClose') : t('searchOpen')}
               aria-expanded={isSearchOpen}
               className="p-2 text-muted-foreground hover:text-foreground transition-colors"

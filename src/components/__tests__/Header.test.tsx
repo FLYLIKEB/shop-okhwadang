@@ -10,7 +10,20 @@ let mockPathname = '/';
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, back: mockBack }),
   usePathname: () => mockPathname,
+  useSearchParams: () => new URLSearchParams(),
 }));
+
+vi.mock('@/hooks/useUrlModal', async () => {
+  const React = await import('react');
+  return {
+    useUrlModal: () => {
+      const [isOpen, setIsOpenState] = React.useState(false);
+      const setOpen = (open: boolean) => setIsOpenState(open);
+      const close = () => setIsOpenState(false);
+      return [isOpen, setOpen, close] as const;
+    },
+  };
+});
 
 vi.mock('@/i18n/navigation', () => ({
   Link: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (

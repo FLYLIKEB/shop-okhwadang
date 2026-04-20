@@ -44,6 +44,14 @@ export interface EmailVerificationContext {
   locale?: 'ko' | 'en';
 }
 
+export interface RestockAlertContext {
+  recipientName: string;
+  productName: string;
+  productUrl: string;
+  optionLabel?: string;
+  locale?: 'ko' | 'en';
+}
+
 export interface RenderedEmail {
   subject: string;
   html: string;
@@ -123,5 +131,18 @@ export function renderEmailVerification(ctx: EmailVerificationContext): Rendered
     ? `${ctx.recipientName}님, 아래 링크를 클릭하여 이메일 인증을 완료해 주세요. 링크는 ${ctx.expiresInMinutes}분 후 만료됩니다.\n\n${ctx.verificationUrl}`
     : `Hi ${ctx.recipientName}, click the link below to verify your email address. The link expires in ${ctx.expiresInMinutes} minutes.\n\n${ctx.verificationUrl}`;
   const html = `<div><h2>${escapeHtml(subject)}</h2><p>${escapeHtml(text).replace(/\n/g, '<br>')}</p><p><a href="${escapeHtml(ctx.verificationUrl)}">${escapeHtml(ctx.verificationUrl)}</a></p></div>`;
+  return { subject, html, text };
+}
+
+export function renderRestockAlert(ctx: RestockAlertContext): RenderedEmail {
+  const isKo = (ctx.locale ?? 'ko') === 'ko';
+  const optionSuffix = ctx.optionLabel ? (isKo ? ` (${ctx.optionLabel})` : ` (${ctx.optionLabel})`) : '';
+  const subject = isKo
+    ? `[옥화당] 재입고 알림 — ${ctx.productName}${optionSuffix}`
+    : `[Okhwadang] Restock alert — ${ctx.productName}${optionSuffix}`;
+  const text = isKo
+    ? `${ctx.recipientName}님, 기다리시던 ${ctx.productName}${optionSuffix} 상품이 재입고되었습니다.\n\n상품 보기: ${ctx.productUrl}`
+    : `Hi ${ctx.recipientName}, ${ctx.productName}${optionSuffix} is back in stock.\n\nView product: ${ctx.productUrl}`;
+  const html = `<div><h2>${escapeHtml(subject)}</h2><p>${escapeHtml(text).replace(/\n/g, '<br>')}</p><p><a href="${escapeHtml(ctx.productUrl)}">${escapeHtml(ctx.productUrl)}</a></p></div>`;
   return { subject, html, text };
 }

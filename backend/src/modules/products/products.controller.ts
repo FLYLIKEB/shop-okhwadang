@@ -27,6 +27,9 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { BulkProductsDto } from './dto/bulk-products.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
+import { CreateRestockAlertDto } from '../restock-alerts/dto/create-restock-alert.dto';
 
 interface RequestWithUser {
   user?: { id: number; email: string; role: string };
@@ -35,7 +38,10 @@ interface RequestWithUser {
 @ApiTags('상품')
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly restockAlertsService: RestockAlertsService,
+  ) {}
 
   @Get()
   @Public()
@@ -95,6 +101,21 @@ export class ProductsController {
   @ApiResponse({ status: 403, description: '권한 없음' })
   create(@Body() dto: CreateProductDto) {
     return this.productsService.create(dto);
+  }
+
+  @Post(':id/restock-alert')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '재입고 알림 신청', description: '품절된 상품 또는 옵션의 재입고 알림을 신청합니다.' })
+  @ApiResponse({ status: 201, description: '재입고 알림 신청 성공' })
+  @ApiResponse({ status: 400, description: '이미 재고가 있거나 잘못된 요청' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 404, description: '상품 또는 옵션을 찾을 수 없음' })
+  subscribeRestockAlert(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: RequestWithUser['user'],
+    @Body() dto: CreateRestockAlertDto,
+  ) {
+    return this.restockAlertsService.createAlert(user!.id, id, dto);
   }
 
   @Patch(':id')

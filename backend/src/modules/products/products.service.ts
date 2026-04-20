@@ -19,6 +19,7 @@ import { QueryProductsDto, ProductSort } from './dto/query-products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CacheService } from '../cache/cache.service';
+import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { applyLocale } from '../../common/utils/locale.util';
 import { paginate } from '../../common/utils/pagination.util';
@@ -46,6 +47,7 @@ export class ProductsService {
     @InjectRepository(ProductAttribute)
     private readonly productAttributeRepository: Repository<ProductAttribute>,
     private readonly cacheService: CacheService,
+    private readonly restockAlertsService: RestockAlertsService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
   ) {}
@@ -306,9 +308,14 @@ export class ProductsService {
     locale?: string,
     cacheKey?: string,
   ) {
-    const { status } = query;
+    const { status, q } = query;
 
     const likeQb = this.buildBaseQueryBuilder(isAdmin, status as ProductStatus | undefined);
+
+    if (q) {
+      likeQb.andWhere('product.name LIKE :q', { q: `%${q}%` });
+    }
+
     this.applyFiltersAndSort(likeQb, query, categoryIds, attrTypeIdMap);
 
     return this.executeFindAll(likeQb, page, limit, sort, locale, cacheKey);
@@ -421,6 +428,7 @@ export class ProductsService {
   async update(id: number, dto: UpdateProductDto): Promise<Product> {
     const { images, detailImages, ...productData } = dto;
     const product = await this.findById(id);
+    const previousStock = product.stock;
     Object.assign(product, productData);
 
     try {
@@ -466,6 +474,9 @@ export class ProductsService {
         this.cacheService.del(`products:detail:${id}`),
         this.cacheService.delPattern('products:list:*'),
       ]);
+      if (dto.stock !== undefined) {
+        await this.restockAlertsService.processProductRestock(id, previousStock, saved.stock);
+      }
       return saved;
     } catch (err) {
       if (
@@ -496,7 +507,7 @@ export class ProductsService {
   ): Promise<(Product & { rating: number; reviewCount: number })[]> {
     if (!ids || ids.length === 0) return [];
 
-    const cacheKey = `products:bulk:${ids.sort().join(',')}`;
+    const cacheKey = `products:bulk:${[...ids].sort().join(',')}`;
     const cached = await this.cacheService.get<
       (Product & { rating: number; reviewCount: number })[]
     >(cacheKey);

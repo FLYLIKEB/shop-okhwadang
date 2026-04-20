@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
+import { useUrlModal } from '@/hooks/useUrlModal';
 import PriceRangeFilter from './PriceRangeFilter';
 import TeapotShapeFilter from './TeapotShapeFilter';
 import type { Category, Collection } from '@/lib/api';
@@ -45,7 +45,7 @@ export default function MobileFilterBar({ categories, shapeCollections }: Mobile
   const searchParams = useSearchParams();
   const t = useTranslations('product.filter');
   const tCommon = useTranslations('common');
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useUrlModal('filters');
 
   const categoryIdParam = searchParams.get('categoryId');
   const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : undefined;

@@ -8,8 +8,21 @@ let mockSearchParamsString = '';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+  usePathname: () => '/products',
   useSearchParams: () => new URLSearchParams(mockSearchParamsString),
 }));
+
+vi.mock('@/hooks/useUrlModal', async () => {
+  const React = await import('react');
+  return {
+    useUrlModal: () => {
+      const [isOpen, setIsOpenState] = React.useState(false);
+      const setOpen = (open: boolean) => setIsOpenState(open);
+      const close = () => setIsOpenState(false);
+      return [isOpen, setOpen, close] as const;
+    },
+  };
+});
 
 const translations: Record<string, string> = {
   'product.filter.label': '필터',
