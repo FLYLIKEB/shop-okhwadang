@@ -112,7 +112,7 @@ export default async function LocaleLayout({
   // 클라이언트의 FOUC 스크립트가 localStorage 에 저장된 사용자 선호가 있으면 즉시 덮어씀.
   const initialTheme = safeLocale === 'ko' ? 'dark' : 'light';
 
-  const foucScript = "(function(){try{var s=localStorage.getItem('theme');if(s==='dark'||s==='light'){document.documentElement.dataset.theme=s;}}catch(e){}})();";
+  const foucScript = `(function(){try{var d='${initialTheme}';var s=localStorage.getItem('theme');document.documentElement.dataset.theme=d==='light'?'light':(s==='dark'||s==='light'?s:d);}catch(e){document.documentElement.dataset.theme='${initialTheme}';}})();`;
 
   return (
     <html lang={safeLocale} data-theme={initialTheme} suppressHydrationWarning>

@@ -46,13 +46,17 @@ vi.mock('next-intl', async (importOriginal) => {
   };
 });
 
-vi.mock('@/contexts/ThemeContext', () => ({
-  useTheme: () => ({
-    theme: 'dark',
-    setTheme: vi.fn(),
-    toggleTheme: vi.fn(),
-  }),
-}));
+vi.mock('@/contexts/ThemeContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/contexts/ThemeContext')>();
+  return {
+    ...actual,
+    useTheme: () => ({
+      theme: 'dark',
+      setTheme: vi.fn(),
+      toggleTheme: vi.fn(),
+    }),
+  };
+});
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
