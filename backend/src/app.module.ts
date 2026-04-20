@@ -64,6 +64,10 @@ import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.gu
         name: 'forgotPassword',
         ttl: Number(process.env.THROTTLE_FORGOT_PASSWORD_TTL ?? 60000),
         limit: Number(process.env.THROTTLE_FORGOT_PASSWORD_LIMIT ?? 1),
+        skipIf: (context) => {
+          const req = context.switchToHttp().getRequest<{ method?: string; originalUrl?: string }>();
+          return !(req.method === 'POST' && String(req.originalUrl ?? '').startsWith('/api/auth/forgot-password'));
+        },
         getTracker: (req) => {
           const rawEmail =
             typeof req.body === 'object' && req.body !== null && 'email' in req.body
