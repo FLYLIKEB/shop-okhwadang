@@ -1,13 +1,12 @@
 import {
   Injectable, BadRequestException, ConflictException,
-  Logger, Inject, InternalServerErrorException,
-  UnauthorizedException,
+  Logger, Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Payment, PaymentStatus, PaymentGatewayType, PaymentMethod } from './entities/payment.entity';
-import { Refund, RefundStatus } from './entities/refund.entity';
-import { Shipping, ShippingStatus } from './entities/shipping.entity';
+import { Refund } from './entities/refund.entity';
+import { Shipping } from './entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { User } from '../users/entities/user.entity';
 import { PaymentGateway } from './interfaces/payment-gateway.interface';
@@ -21,12 +20,18 @@ import { resolveGatewayByLocale } from './payments.module';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { NotificationService } from '../notification/notification.service';
+import { PaymentConfirmationService } from './services/payment-confirmation.service';
+import { PaymentRefundService } from './services/payment-refund.service';
+import { PaymentWebhookService } from './services/payment-webhook.service';
 
 const DEFAULT_CARRIER = process.env.DEFAULT_CARRIER || 'mock';
 
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
+  private readonly paymentConfirmationService: PaymentConfirmationService;
+  private readonly paymentRefundService: PaymentRefundService;
+  private readonly paymentWebhookService: PaymentWebhookService;
 
   constructor(
     @InjectRepository(Payment)
@@ -45,7 +50,32 @@ export class PaymentsService {
     private readonly stripeAdapter: StripePaymentAdapter,
     private readonly notificationService: NotificationService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) {
+    this.paymentConfirmationService = new PaymentConfirmationService({
+      paymentRepository: this.paymentRepository,
+      orderRepository: this.orderRepository,
+      shippingRepository: this.shippingRepository,
+      userRepository: this.userRepository,
+      dataSource: this.dataSource,
+      notificationService: this.notificationService,
+      resolveGatewayByType: (gatewayType) => this.resolveGatewayByType(gatewayType),
+      logger: this.logger,
+      defaultCarrier: DEFAULT_CARRIER,
+    });
+    this.paymentRefundService = new PaymentRefundService({
+      paymentRepository: this.paymentRepository,
+      refundRepository: this.refundRepository,
+      dataSource: this.dataSource,
+      resolveGatewayByType: (gatewayType) => this.resolveGatewayByType(gatewayType),
+      logger: this.logger,
+    });
+    this.paymentWebhookService = new PaymentWebhookService({
+      gateway: this.gateway,
+      paymentRepository: this.paymentRepository,
+      dataSource: this.dataSource,
+      logger: this.logger,
+    });
+  }
 
   private resolveGateway(locale?: string): PaymentGateway {
     if (!locale) return this.gateway;
@@ -138,69 +168,7 @@ export class PaymentsService {
     amount: number;
     paidAt: Date;
   }> {
-    const payment = await findOrThrow(this.paymentRepository, { orderId: dto.orderId }, '결제 정보를 찾을 수 없습니다.', ['order']);
-    assertOwnership(payment.order.userId, userId);
-
-    if (payment.status === PaymentStatus.CONFIRMED) {
-      throw new ConflictException('이미 승인된 결제입니다.');
-    }
-    if (payment.status !== PaymentStatus.PENDING) {
-      throw new BadRequestException('결제 승인이 불가능한 상태입니다.');
-    }
-
-    if (Number(payment.order.totalAmount) !== Number(dto.amount)) {
-      throw new BadRequestException('결제 금액이 일치하지 않습니다.');
-    }
-
-    try {
-      const confirmGateway = this.resolveGatewayByType(payment.gateway);
-      const result = await confirmGateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
-
-      await this.dataSource.transaction(async (manager) => {
-        await manager.update(Payment, payment.id, {
-          status: PaymentStatus.CONFIRMED,
-          paymentKey: dto.paymentKey,
-          method: result.method as PaymentMethod,
-          paidAt: new Date(),
-          rawResponse: result.rawResponse as object,
-        });
-
-        await manager.update(Order, dto.orderId, { status: OrderStatus.PAID });
-
-        const existing = await manager.findOne(Shipping, { where: { orderId: dto.orderId } });
-        if (!existing) {
-          await manager.save(Shipping, {
-            orderId: dto.orderId,
-            carrier: DEFAULT_CARRIER,
-            status: ShippingStatus.PAYMENT_CONFIRMED,
-          });
-        }
-      });
-
-      this.logger.log(`Payment confirmed: orderId=${dto.orderId}`);
-
-      void this.notifyPaymentConfirmed(
-        payment.order.userId,
-        payment.order.orderNumber,
-        payment.order.recipientName,
-        Number(payment.amount),
-        result.method,
-      );
-
-      return {
-        paymentId: Number(payment.id),
-        orderId: dto.orderId,
-        orderNumber: payment.order.orderNumber,
-        status: PaymentStatus.CONFIRMED,
-        method: result.method,
-        amount: Number(payment.amount),
-        paidAt: new Date(),
-      };
-    } catch (err) {
-      await this.paymentRepository.update(payment.id, { status: PaymentStatus.FAILED });
-      if (err instanceof ConflictException || err instanceof BadRequestException) throw err;
-      throw new InternalServerErrorException('결제 승인에 실패했습니다.');
-    }
+    return this.paymentConfirmationService.confirm(dto, userId);
   }
 
   async cancel(dto: CancelPaymentDto, userId: number): Promise<{
@@ -272,206 +240,10 @@ export class PaymentsService {
   }
 
   async partialRefund(orderId: number, dto: CreateRefundDto): Promise<Refund> {
-    // Phase 1: lock payment + validate + create pending Refund
-    let refund = await this.dataSource.transaction(async (manager) => {
-      const payment = await manager.findOne(Payment, {
-        where: { orderId },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!payment) {
-        throw new BadRequestException('결제 정보를 찾을 수 없습니다.');
-      }
-      if (payment.status !== PaymentStatus.CONFIRMED && payment.status !== PaymentStatus.PARTIAL_CANCELLED) {
-        throw new BadRequestException('환불 가능한 상태가 아닙니다.');
-      }
-      if (!payment.paymentKey) {
-        throw new BadRequestException('결제 키가 없습니다.');
-      }
-
-      // Validate remaining refundable amount
-      const completedRefundsResult = await manager
-        .createQueryBuilder(Refund, 'r')
-        .select('COALESCE(SUM(r.amount), 0)', 'total')
-        .where('r.paymentId = :paymentId AND r.status = :status', {
-          paymentId: payment.id,
-          status: RefundStatus.COMPLETED,
-        })
-        .getRawOne<{ total: string }>();
-      const alreadyRefunded = Number(completedRefundsResult?.total ?? 0);
-      const remaining = Number(payment.amount) - alreadyRefunded;
-      if (dto.amount > remaining) {
-        throw new BadRequestException(
-          `환불 가능 금액(${remaining}원)을 초과했습니다.`,
-        );
-      }
-
-      const pendingRefund = manager.create(Refund, {
-        paymentId: Number(payment.id),
-        orderItemId: null,
-        amount: dto.amount,
-        reason: dto.reason,
-        status: RefundStatus.PENDING,
-        gatewayRefundId: null,
-      });
-      return manager.save(Refund, pendingRefund);
-    });
-
-    // Phase 2: call gateway outside transaction
-    const payment = await findOrThrow(this.paymentRepository, { orderId }, '결제 정보를 찾을 수 없습니다.');
-    const cancelGateway = this.resolveGatewayByType(payment.gateway);
-
-    let gatewayResult: { refundId: string };
-    try {
-      gatewayResult = await cancelGateway.partialCancel({
-        paymentKey: payment.paymentKey!,
-        cancelAmount: dto.amount,
-        cancelReason: dto.reason,
-      });
-    } catch (err) {
-      await this.refundRepository.update(refund.id, { status: RefundStatus.FAILED });
-      this.logger.error(`partialRefund gateway failed: orderId=${orderId}, refundId=${refund.id}, error=${String(err)}`);
-      if (err instanceof BadRequestException) throw err;
-      throw new InternalServerErrorException('환불 처리에 실패했습니다.');
-    }
-
-    // Phase 3: DB sync of gateway success
-    try {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.update(Refund, refund.id, {
-          status: RefundStatus.COMPLETED,
-          gatewayRefundId: gatewayResult.refundId,
-        });
-
-        // SUM already includes current refund (updated to COMPLETED above)
-        const completedRefundsResult = await manager
-          .createQueryBuilder(Refund, 'r')
-          .select('COALESCE(SUM(r.amount), 0)', 'total')
-          .where('r.paymentId = :paymentId AND r.status = :status', {
-            paymentId: payment.id,
-            status: RefundStatus.COMPLETED,
-          })
-          .getRawOne<{ total: string }>();
-        const totalRefunded = Number(completedRefundsResult?.total ?? 0);
-
-        if (totalRefunded >= Number(payment.amount)) {
-          await manager.update(Payment, payment.id, { status: PaymentStatus.REFUNDED });
-          await manager.update(Order, payment.orderId, { status: OrderStatus.REFUNDED });
-        } else {
-          await manager.update(Payment, payment.id, { status: PaymentStatus.PARTIAL_CANCELLED });
-        }
-      });
-    } catch (err) {
-      this.logger.error({
-        event: 'refund_db_sync_failed',
-        orderId,
-        refundId: refund.id,
-        gatewayRefundId: gatewayResult.refundId,
-        amount: dto.amount,
-        error: err instanceof Error ? err.message : String(err),
-      }, 'Gateway refund succeeded but DB sync failed - manual reconciliation required');
-      throw new InternalServerErrorException('환불이 처리됐으나 시스템 반영에 실패했습니다. 운영팀에 문의하세요.');
-    }
-
-    refund = await findOrThrow(this.refundRepository, { id: refund.id }, '환불 정보를 찾을 수 없습니다.');
-
-    // TODO(#481, #483): 재고 복구/포인트 환수 연계
-
-    return refund;
-  }
-
-  private async notifyPaymentConfirmed(
-    userId: number,
-    orderNumber: string,
-    recipientName: string,
-    amount: number,
-    method: string,
-  ): Promise<void> {
-    try {
-      const user = await this.userRepository.findOne({ where: { id: userId } });
-      if (!user?.email) return;
-      await this.notificationService.sendPaymentConfirmed(user.email, {
-        recipientName,
-        orderNumber,
-        amount,
-        method,
-      });
-    } catch (err) {
-      this.logger.warn(`Payment confirmation email failed: ${String(err)}`);
-    }
+    return this.paymentRefundService.partialRefund(orderId, dto);
   }
 
   async handleWebhook(payload: unknown, signature: string): Promise<void> {
-    if (!this.gateway.verifyWebhook(payload, signature)) {
-      throw new UnauthorizedException('웹훅 서명 검증 실패');
-    }
-    const safe = {
-      orderId: (payload as Record<string, unknown>)?.orderId,
-      status: (payload as Record<string, unknown>)?.status,
-      type: (payload as Record<string, unknown>)?.type,
-    };
-    this.logger.log(`Webhook received: ${JSON.stringify(safe)}`);
-
-    const parsedOrderId = Number(safe.orderId);
-    if (!Number.isFinite(parsedOrderId) || parsedOrderId <= 0) {
-      this.logger.warn('Webhook ignored: invalid orderId');
-      return;
-    }
-
-    const normalized = String(
-      (payload as Record<string, unknown>)?.eventType
-      ?? safe.status
-      ?? safe.type
-      ?? '',
-    ).toUpperCase();
-
-    if (!normalized) {
-      this.logger.warn(`Webhook ignored: unknown event for orderId=${parsedOrderId}`);
-      return;
-    }
-
-    const payment = await this.paymentRepository.findOne({ where: { orderId: parsedOrderId } });
-    if (!payment) {
-      this.logger.warn(`Webhook ignored: payment not found (orderId=${parsedOrderId})`);
-      return;
-    }
-
-    if (
-      normalized.includes('DONE')
-      || normalized.includes('PAID')
-      || normalized.includes('CONFIRM')
-    ) {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.update(Payment, payment.id, {
-          status: PaymentStatus.CONFIRMED,
-          paidAt: payment.paidAt ?? new Date(),
-          rawResponse: payload as object,
-        });
-        await manager.update(Order, parsedOrderId, { status: OrderStatus.PAID });
-      });
-      return;
-    }
-
-    if (normalized.includes('REFUND')) {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.update(Payment, payment.id, {
-          status: PaymentStatus.REFUNDED,
-          cancelledAt: new Date(),
-          rawResponse: payload as object,
-        });
-        await manager.update(Order, parsedOrderId, { status: OrderStatus.REFUNDED });
-      });
-      return;
-    }
-
-    if (normalized.includes('CANCEL')) {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.update(Payment, payment.id, {
-          status: PaymentStatus.CANCELLED,
-          cancelledAt: new Date(),
-          rawResponse: payload as object,
-        });
-        await manager.update(Order, parsedOrderId, { status: OrderStatus.CANCELLED });
-      });
-    }
+    return this.paymentWebhookService.handleWebhook(payload, signature);
   }
 }

@@ -11,6 +11,9 @@ import { NotificationService } from '../../notification/notification.service';
 import { AuditLogService } from '../../audit-logs/audit-log.service';
 import { TokenBlacklistService } from '../token-blacklist.service';
 import { AuthEventEmitter } from '../auth-event.emitter';
+import { TokenIssuerService } from '../services/token-issuer.service';
+import { AuthLoginPolicyService } from '../services/auth-login-policy.service';
+import { AuthAuditService } from '../services/auth-audit.service';
 
 const mockUserRepository = {
   findOne: jest.fn(),
@@ -51,6 +54,26 @@ const mockTokenBlacklistService = {
   addToBlacklist: jest.fn(),
   isBlacklisted: jest.fn(),
   revokeAllUserTokens: jest.fn(),
+};
+
+const mockTokenIssuerService = {
+  issueAndPersistRefresh: jest.fn().mockResolvedValue({
+    accessToken: 'mock-access-token',
+    refreshToken: 'mock-refresh-token',
+  }),
+};
+
+const mockAuthLoginPolicyService = {
+  assertNotLocked: jest.fn(),
+  handlePasswordMismatch: jest.fn(async () => {
+    throw new UnauthorizedException('비밀번호가 올바르지 않습니다.');
+  }),
+};
+
+const mockAuthAuditService = {
+  logUserNotFound: jest.fn(),
+  logLoginFailure: jest.fn(),
+  logLoginSuccess: jest.fn(),
 };
 
 function makeUser(overrides: Partial<User> = {}): User {
@@ -102,6 +125,9 @@ describe('AuthService', () => {
           useValue: mockVerificationTokenRepository,
         },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: TokenIssuerService, useValue: mockTokenIssuerService },
+        { provide: AuthLoginPolicyService, useValue: mockAuthLoginPolicyService },
+        { provide: AuthAuditService, useValue: mockAuthAuditService },
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: AuditLogService, useValue: mockAuditLogService },
         { provide: TokenBlacklistService, useValue: mockTokenBlacklistService },
@@ -198,15 +224,15 @@ describe('AuthService', () => {
     it('로그인 성공 시 refreshToken을 DB에 해싱 저장', async () => {
       const hashed = await bcrypt.hash('Test1234!', 10);
       mockUserRepository.findOne.mockResolvedValue(makeUser({ password: hashed, isEmailVerified: true }));
-      mockUserRepository.update.mockResolvedValue(undefined);
+      mockTokenIssuerService.issueAndPersistRefresh.mockResolvedValue({
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      });
 
       await service.login({ email: 'test@example.com', password: 'Test1234!' });
 
-      expect(mockUserRepository.update).toHaveBeenCalledWith(
-        1,
-        expect.objectContaining({
-          refreshToken: expect.stringMatching(/^\$2b\$/),
-        }),
+      expect(mockTokenIssuerService.issueAndPersistRefresh).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 1, email: 'test@example.com' }),
       );
     });
   });
@@ -217,7 +243,10 @@ describe('AuthService', () => {
       const hashedRefresh = await bcrypt.hash(rawRefresh, 10);
       mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user', tokenType: 'refresh' });
       mockUserRepository.findOne.mockResolvedValue(makeUser({ refreshToken: hashedRefresh }));
-      mockUserRepository.update.mockResolvedValue(undefined);
+      mockTokenIssuerService.issueAndPersistRefresh.mockResolvedValue({
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      });
 
       const result = await service.refresh(rawRefresh);
 
@@ -253,7 +282,10 @@ describe('AuthService', () => {
       const hashedRefresh = await bcrypt.hash(rawRefresh, 10);
       mockJwtService.verify.mockReturnValueOnce({ sub: 1, email: 'test@example.com', role: 'user', tokenType: 'refresh' });
       mockUserRepository.findOne.mockResolvedValue(makeUser({ isActive: true, refreshToken: hashedRefresh }));
-      mockUserRepository.update.mockResolvedValue(undefined);
+      mockTokenIssuerService.issueAndPersistRefresh.mockResolvedValue({
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      });
 
       const result = await service.refresh(rawRefresh);
 
@@ -475,7 +507,10 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(
         makeUser({ password: hashed, isEmailVerified: true }),
       );
-      mockUserRepository.update.mockResolvedValue(undefined);
+      mockTokenIssuerService.issueAndPersistRefresh.mockResolvedValue({
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      });
 
       const result = await service.login({ email: 'test@example.com', password: 'Test1234!' });
 

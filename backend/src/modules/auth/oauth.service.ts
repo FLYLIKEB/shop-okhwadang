@@ -7,16 +7,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import * as bcrypt from 'bcrypt';
-import type ms from 'ms';
 import { User, UserRole } from '../users/entities/user.entity';
 import {
   UserAuthentication,
   OAuthProvider,
 } from '../users/entities/user-authentication.entity';
+import { TokenIssuerService } from './services/token-issuer.service';
 
 export interface OAuthAuthResponse {
   accessToken: string;
@@ -64,7 +62,7 @@ export class OAuthService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(UserAuthentication)
     private readonly userAuthRepository: Repository<UserAuthentication>,
-    private readonly jwtService: JwtService,
+    private readonly tokenIssuerService: TokenIssuerService,
     private readonly httpService: HttpService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
@@ -124,7 +122,7 @@ export class OAuthService {
       name,
     );
 
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.tokenIssuerService.issueAndPersistRefresh(user);
     this.logger.log(`Kakao login: userId=${user.id} isNewUser=${isNewUser}`);
     return { ...tokens, user: { id: user.id, email: user.email, name: user.name, role: user.role }, isNewUser };
   }
@@ -140,7 +138,7 @@ export class OAuthService {
       userInfo.name,
     );
 
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.tokenIssuerService.issueAndPersistRefresh(user);
     this.logger.log(`Google login: userId=${user.id} isNewUser=${isNewUser}`);
     return { ...tokens, user: { id: user.id, email: user.email, name: user.name, role: user.role }, isNewUser };
   }
@@ -266,22 +264,5 @@ export class OAuthService {
     } catch {
       throw new BadGatewayException('소셜 로그인 서비스에 일시적 문제가 발생했습니다.');
     }
-  }
-
-  private async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: user.id, email: user.email, role: user.role };
-    const accessToken = this.jwtService.sign({ ...payload, tokenType: 'access' });
-    const refreshExpiresIn = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as ms.StringValue;
-    const refreshToken = this.jwtService.sign(
-      { ...payload, tokenType: 'refresh' },
-      {
-        secret: process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET,
-        expiresIn: refreshExpiresIn,
-        algorithm: 'HS256',
-      },
-    );
-    const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-    await this.userRepository.update(user.id, { refreshToken: hashedRefresh });
-    return { accessToken, refreshToken };
   }
 }

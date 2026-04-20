@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
 import { HttpService } from '@nestjs/axios';
 import { BadGatewayException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
@@ -9,6 +8,7 @@ import { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { OAuthService } from '../oauth.service';
 import { User, UserRole } from '../../users/entities/user.entity';
 import { UserAuthentication, OAuthProvider } from '../../users/entities/user-authentication.entity';
+import { TokenIssuerService } from '../services/token-issuer.service';
 
 const mockUserRepository = {
   findOne: jest.fn(),
@@ -29,13 +29,16 @@ const mockDataSource = {
   transaction: jest.fn(),
 };
 
-const mockJwtService = {
-  sign: jest.fn().mockReturnValue('mock-token'),
-};
-
 const mockHttpService = {
   post: jest.fn(),
   get: jest.fn(),
+};
+
+const mockTokenIssuerService = {
+  issueAndPersistRefresh: jest.fn().mockResolvedValue({
+    accessToken: 'mock-access-token',
+    refreshToken: 'mock-refresh-token',
+  }),
 };
 
 function makeAxiosResponse<T>(data: T): AxiosResponse<T> {
@@ -111,7 +114,7 @@ describe('OAuthService', () => {
         OAuthService,
         { provide: getRepositoryToken(User), useValue: mockUserRepository },
         { provide: getRepositoryToken(UserAuthentication), useValue: mockUserAuthRepository },
-        { provide: JwtService, useValue: mockJwtService },
+        { provide: TokenIssuerService, useValue: mockTokenIssuerService },
         { provide: HttpService, useValue: mockHttpService },
         { provide: DataSource, useValue: mockDataSource },
       ],
@@ -142,7 +145,7 @@ describe('OAuthService', () => {
       const result = await service.handleKakao('auth-code');
 
       expect(result.isNewUser).toBe(true);
-      expect(result.accessToken).toBe('mock-token');
+      expect(result.accessToken).toBe('mock-access-token');
       expect(result.user.email).toBe('new@kakao.com');
     });
 
@@ -312,41 +315,30 @@ describe('OAuthService', () => {
     });
   });
 
-  describe('generateTokens', () => {
-    it('accessToken payload에 tokenType: access 포함', async () => {
-      const user = makeUser({ id: 1, email: 'test@example.com', role: UserRole.USER });
-      const signCalls: { payload: Record<string, unknown> }[] = [];
-      mockJwtService.sign.mockImplementation((payload: Record<string, unknown>) => {
-        signCalls.push({ payload });
-        return 'mock-token';
-      });
+  describe('token issuing integration', () => {
+    it('OAuth 로그인 시 TokenIssuerService를 통해 토큰 발급', async () => {
+      mockHttpService.post.mockReturnValue(
+        of(makeAxiosResponse({ access_token: 'kakao-access-token' })),
+      );
+      mockHttpService.get.mockReturnValue(
+        of(makeAxiosResponse({
+          id: 12345,
+          kakao_account: { email: 'existing@kakao.com', profile: { nickname: '기존유저' } },
+        })),
+      );
+      const existingUser = makeUser({ id: 1, email: 'existing@kakao.com', name: '기존유저' });
+      mockUserAuthRepository.findOne.mockResolvedValue(
+        makeUserAuth({ user: existingUser, userId: 1 }),
+      );
 
-      // Access private method via prototype
-      const generateTokens = (service as unknown as { generateTokens: (user: User) => Promise<{ accessToken: string; refreshToken: string }> }).generateTokens.bind(service);
-      await generateTokens(user);
+      await service.handleKakao('auth-code');
 
-      // First sign call should be access token with tokenType: 'access'
-      const accessTokenCall = signCalls[0];
-      expect(accessTokenCall.payload).toHaveProperty('tokenType', 'access');
-      expect(accessTokenCall.payload).toHaveProperty('sub', user.id);
-      expect(accessTokenCall.payload).toHaveProperty('email', user.email);
-      expect(accessTokenCall.payload).toHaveProperty('role', user.role);
-    });
-
-    it('refreshToken payload에 tokenType: refresh 포함', async () => {
-      const user = makeUser({ id: 1, email: 'test@example.com', role: UserRole.USER });
-      const signCalls: { payload: Record<string, unknown> }[] = [];
-      mockJwtService.sign.mockImplementation((payload: Record<string, unknown>) => {
-        signCalls.push({ payload });
-        return 'mock-token';
-      });
-
-      const generateTokens = (service as unknown as { generateTokens: (user: User) => Promise<{ accessToken: string; refreshToken: string }> }).generateTokens.bind(service);
-      await generateTokens(user);
-
-      // Second sign call should be refresh token with tokenType: 'refresh'
-      const refreshTokenCall = signCalls[1];
-      expect(refreshTokenCall.payload).toHaveProperty('tokenType', 'refresh');
+      expect(mockTokenIssuerService.issueAndPersistRefresh).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 1,
+          email: 'existing@kakao.com',
+        }),
+      );
     });
   });
 });

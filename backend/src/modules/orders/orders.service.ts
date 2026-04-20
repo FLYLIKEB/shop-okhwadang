@@ -2,7 +2,7 @@ import {
   Injectable, NotFoundException, BadRequestException, Logger,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
@@ -21,6 +21,18 @@ import { CalculateDiscountDto } from '../coupons/dto/calculate-discount.dto';
 import { ShippingFeeCalculatorService } from '../shipping/services/shipping-fee-calculator.service';
 import { OrderEventEmitter } from './order-event.emitter';
 import { OrderCompletedEvent } from './events/order-completed.event';
+
+interface OrderItemBuildResult {
+  orderItems: Partial<OrderItem>[];
+  subtotalAmount: number;
+}
+
+interface OrderPriceResult {
+  discountAmount: number;
+  discountedAmount: number;
+  shippingFee: number;
+  totalPayable: number;
+}
 
 @Injectable()
 export class OrdersService {
@@ -58,156 +70,33 @@ export class OrdersService {
     await queryRunner.startTransaction();
 
     try {
-      if (pointsToUse > 0) {
-        const latest = await queryRunner.manager.getRepository(PointHistory).findOne({
-          where: { userId },
-          order: { createdAt: 'DESC', id: 'DESC' },
-        });
-        const balance = latest ? latest.balance : 0;
-        if (pointsToUse > balance) {
-          throw new BadRequestException('적립금이 부족합니다.');
-        }
-      }
+      await this.ensureSufficientPoints(queryRunner.manager, userId, pointsToUse);
 
-      const orderItems: Partial<OrderItem>[] = [];
-      let subtotalAmount = 0;
-
-      for (const item of dto.items) {
-        const product = await queryRunner.manager
-          .createQueryBuilder(Product, 'product')
-          .setLock('pessimistic_write')
-          .where('product.id = :id', { id: item.productId })
-          .getOne();
-
-        if (!product) {
-          throw new NotFoundException(`상품을 찾을 수 없습니다. (id: ${item.productId})`);
-        }
-
-        let optionName: string | null = null;
-        let priceAdjustment = 0;
-
-        if (item.productOptionId != null) {
-          const option = await queryRunner.manager
-            .createQueryBuilder(ProductOption, 'option')
-            .setLock('pessimistic_write')
-            .where('option.id = :id', { id: item.productOptionId })
-            .getOne();
-
-          if (!option || Number(option.productId) !== Number(item.productId)) {
-            throw new BadRequestException('해당 상품의 옵션을 찾을 수 없습니다.');
-          }
-
-          if (option.stock < item.quantity) {
-            throw new BadRequestException(
-              `재고가 부족합니다. (${product.name} - ${option.name}: ${option.value}: ${option.stock}개 남음)`,
-            );
-          }
-
-          optionName = `${option.name}: ${option.value}`;
-          priceAdjustment = Number(option.priceAdjustment);
-
-          await queryRunner.manager.update(ProductOption, option.id, {
-            stock: option.stock - item.quantity,
-          });
-        } else {
-          if (product.stock < item.quantity) {
-            throw new BadRequestException(
-              `재고가 부족합니다. (${product.name}: ${product.stock}개 남음)`,
-            );
-          }
-        }
-
-        await queryRunner.manager.update(Product, product.id, {
-          stock: product.stock - item.quantity,
-        });
-
-        const unitPrice = Number(product.salePrice ?? product.price) + priceAdjustment;
-        const subtotal = unitPrice * item.quantity;
-        subtotalAmount += subtotal;
-
-        orderItems.push({
-          productId: Number(item.productId),
-          productOptionId: item.productOptionId ?? null,
-          productName: product.name,
-          optionName,
-          price: unitPrice,
-          quantity: item.quantity,
-        });
-      }
-
-      let discountAmount = 0;
-      let discountedAmount = subtotalAmount;
-
-      if (dto.userCouponId || pointsToUse > 0) {
-        const calculateDto: CalculateDiscountDto = {
-          orderAmount: subtotalAmount,
-          userCouponId: dto.userCouponId,
-          pointsToUse,
-        };
-        const discountResult = await this.couponsService.calculate(userId, calculateDto);
-        discountAmount = discountResult.couponDiscount;
-        discountedAmount = discountResult.finalAmount;
-      }
-
-      const shippingQuote = await this.shippingFeeCalculator.calculate(subtotalAmount, dto.zipcode);
-      const totalPayable = discountedAmount + shippingQuote.shippingFee;
-
-      const order = queryRunner.manager.create(Order, {
-        userId,
-        orderNumber: this.generateOrderNumber(),
-        status: OrderStatus.PENDING,
-        totalAmount: totalPayable,
-        discountAmount,
-        shippingFee: shippingQuote.shippingFee,
-        recipientName: dto.recipientName,
-        recipientPhone: dto.recipientPhone,
-        zipcode: dto.zipcode,
-        address: dto.address,
-        addressDetail: dto.addressDetail ?? null,
-        memo: dto.memo ?? null,
-        pointsUsed: pointsToUse,
-      });
-      const savedOrder = await queryRunner.manager.save(Order, order);
-
-      if (dto.userCouponId) {
-        await this.couponsService.useCoupon(dto.userCouponId, userId, Number(savedOrder.id));
-      }
-
-      if (pointsToUse > 0) {
-        await this.pointsService.deductFifo(
-          queryRunner.manager,
-          userId,
-          pointsToUse,
-          `주문 사용 (${savedOrder.orderNumber})`,
-          Number(savedOrder.id),
-        );
-      }
-
-      const itemEntities = orderItems.map((item) =>
-        queryRunner.manager.create(OrderItem, { ...item, orderId: Number(savedOrder.id) }),
+      const { orderItems, subtotalAmount } = await this.validateAndReserveStock(
+        queryRunner.manager,
+        dto,
       );
-      await queryRunner.manager.save(OrderItem, itemEntities);
-
-      await queryRunner.manager
-        .createQueryBuilder()
-        .delete()
-        .from(CartItem)
-        .where('userId = :userId', { userId })
-        .andWhere('productId IN (:...productIds)', {
-          productIds: dto.items.map((i) => i.productId),
-        })
-        .execute();
+      const pricing = await this.calculateDiscountAndShipping(userId, dto, subtotalAmount, pointsToUse);
+      const savedOrder = await this.persistOrder(
+        queryRunner.manager,
+        userId,
+        dto,
+        pointsToUse,
+        pricing,
+      );
+      await this.applyCouponAndPoints(queryRunner.manager, userId, dto, pointsToUse, savedOrder);
+      await this.saveOrderItems(queryRunner.manager, orderItems, Number(savedOrder.id));
+      await this.clearCartItems(queryRunner.manager, userId, dto);
 
       await queryRunner.commitTransaction();
       this.logger.log(`Order created: ${savedOrder.orderNumber} userId=${userId}`);
 
-      const priorOrderCount = await this.orderRepository.count({ where: { userId } });
-      const isFirstPurchase = priorOrderCount <= 1;
-      this.orderEventEmitter.emitOrderCompleted(
-        new OrderCompletedEvent(userId, Number(savedOrder.id), savedOrder.orderNumber, isFirstPurchase),
+      await this.postCommitActions(
+        userId,
+        savedOrder,
+        pricing.totalPayable,
+        dto.recipientName,
       );
-
-      void this.notifyOrderCreated(userId, savedOrder.orderNumber, totalPayable, dto.recipientName);
 
       return this.findOne(Number(savedOrder.id), userId);
     } catch (err) {
@@ -216,6 +105,215 @@ export class OrdersService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private async ensureSufficientPoints(
+    manager: EntityManager,
+    userId: number,
+    pointsToUse: number,
+  ): Promise<void> {
+    if (pointsToUse <= 0) return;
+
+    const latest = await manager.getRepository(PointHistory).findOne({
+      where: { userId },
+      order: { createdAt: 'DESC', id: 'DESC' },
+    });
+    const balance = latest ? latest.balance : 0;
+    if (pointsToUse > balance) {
+      throw new BadRequestException('적립금이 부족합니다.');
+    }
+  }
+
+  private async validateAndReserveStock(
+    manager: EntityManager,
+    dto: CreateOrderDto,
+  ): Promise<OrderItemBuildResult> {
+    const orderItems: Partial<OrderItem>[] = [];
+    let subtotalAmount = 0;
+
+    for (const item of dto.items) {
+      const product = await manager
+        .createQueryBuilder(Product, 'product')
+        .setLock('pessimistic_write')
+        .where('product.id = :id', { id: item.productId })
+        .getOne();
+
+      if (!product) {
+        throw new NotFoundException(`상품을 찾을 수 없습니다. (id: ${item.productId})`);
+      }
+
+      let optionName: string | null = null;
+      let priceAdjustment = 0;
+
+      if (item.productOptionId != null) {
+        const option = await manager
+          .createQueryBuilder(ProductOption, 'option')
+          .setLock('pessimistic_write')
+          .where('option.id = :id', { id: item.productOptionId })
+          .getOne();
+
+        if (!option || Number(option.productId) !== Number(item.productId)) {
+          throw new BadRequestException('해당 상품의 옵션을 찾을 수 없습니다.');
+        }
+
+        if (option.stock < item.quantity) {
+          throw new BadRequestException(
+            `재고가 부족합니다. (${product.name} - ${option.name}: ${option.value}: ${option.stock}개 남음)`,
+          );
+        }
+
+        optionName = `${option.name}: ${option.value}`;
+        priceAdjustment = Number(option.priceAdjustment);
+
+        await manager.update(ProductOption, option.id, {
+          stock: option.stock - item.quantity,
+        });
+      } else if (product.stock < item.quantity) {
+        throw new BadRequestException(
+          `재고가 부족합니다. (${product.name}: ${product.stock}개 남음)`,
+        );
+      }
+
+      await manager.update(Product, product.id, {
+        stock: product.stock - item.quantity,
+      });
+
+      const unitPrice = Number(product.salePrice ?? product.price) + priceAdjustment;
+      const subtotal = unitPrice * item.quantity;
+      subtotalAmount += subtotal;
+
+      orderItems.push({
+        productId: Number(item.productId),
+        productOptionId: item.productOptionId ?? null,
+        productName: product.name,
+        optionName,
+        price: unitPrice,
+        quantity: item.quantity,
+      });
+    }
+
+    return { orderItems, subtotalAmount };
+  }
+
+  private async calculateDiscountAndShipping(
+    userId: number,
+    dto: CreateOrderDto,
+    subtotalAmount: number,
+    pointsToUse: number,
+  ): Promise<OrderPriceResult> {
+    let discountAmount = 0;
+    let discountedAmount = subtotalAmount;
+
+    if (dto.userCouponId || pointsToUse > 0) {
+      const calculateDto: CalculateDiscountDto = {
+        orderAmount: subtotalAmount,
+        userCouponId: dto.userCouponId,
+        pointsToUse,
+      };
+      const discountResult = await this.couponsService.calculate(userId, calculateDto);
+      discountAmount = discountResult.couponDiscount;
+      discountedAmount = discountResult.finalAmount;
+    }
+
+    const shippingQuote = await this.shippingFeeCalculator.calculate(subtotalAmount, dto.zipcode);
+    const shippingFee = shippingQuote.shippingFee;
+    const totalPayable = discountedAmount + shippingFee;
+
+    return {
+      discountAmount,
+      discountedAmount,
+      shippingFee,
+      totalPayable,
+    };
+  }
+
+  private async persistOrder(
+    manager: EntityManager,
+    userId: number,
+    dto: CreateOrderDto,
+    pointsToUse: number,
+    pricing: OrderPriceResult,
+  ): Promise<Order> {
+    const order = manager.create(Order, {
+      userId,
+      orderNumber: this.generateOrderNumber(),
+      status: OrderStatus.PENDING,
+      totalAmount: pricing.totalPayable,
+      discountAmount: pricing.discountAmount,
+      shippingFee: pricing.shippingFee,
+      recipientName: dto.recipientName,
+      recipientPhone: dto.recipientPhone,
+      zipcode: dto.zipcode,
+      address: dto.address,
+      addressDetail: dto.addressDetail ?? null,
+      memo: dto.memo ?? null,
+      pointsUsed: pointsToUse,
+    });
+    return manager.save(Order, order);
+  }
+
+  private async applyCouponAndPoints(
+    manager: EntityManager,
+    userId: number,
+    dto: CreateOrderDto,
+    pointsToUse: number,
+    savedOrder: Order,
+  ): Promise<void> {
+    if (dto.userCouponId) {
+      await this.couponsService.useCoupon(dto.userCouponId, userId, Number(savedOrder.id));
+    }
+
+    if (pointsToUse > 0) {
+      await this.pointsService.deductFifo(
+        manager,
+        userId,
+        pointsToUse,
+        `주문 사용 (${savedOrder.orderNumber})`,
+        Number(savedOrder.id),
+      );
+    }
+  }
+
+  private async saveOrderItems(
+    manager: EntityManager,
+    orderItems: Partial<OrderItem>[],
+    orderId: number,
+  ): Promise<void> {
+    const itemEntities = orderItems.map((item) =>
+      manager.create(OrderItem, { ...item, orderId }),
+    );
+    await manager.save(OrderItem, itemEntities);
+  }
+
+  private async clearCartItems(
+    manager: EntityManager,
+    userId: number,
+    dto: CreateOrderDto,
+  ): Promise<void> {
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from(CartItem)
+      .where('userId = :userId', { userId })
+      .andWhere('productId IN (:...productIds)', {
+        productIds: dto.items.map((i) => i.productId),
+      })
+      .execute();
+  }
+
+  private async postCommitActions(
+    userId: number,
+    savedOrder: Order,
+    totalPayable: number,
+    recipientName: string,
+  ): Promise<void> {
+    const priorOrderCount = await this.orderRepository.count({ where: { userId } });
+    const isFirstPurchase = priorOrderCount <= 1;
+    this.orderEventEmitter.emitOrderCompleted(
+      new OrderCompletedEvent(userId, Number(savedOrder.id), savedOrder.orderNumber, isFirstPurchase),
+    );
+
+    void this.notifyOrderCreated(userId, savedOrder.orderNumber, totalPayable, recipientName);
   }
 
   async findAll(userId: number, page = 1, limit = 10): Promise<PaginatedResult<Order>> {
