@@ -11,6 +11,7 @@ import { Coupon } from '../coupons/entities/coupon.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { User } from '../users/entities/user.entity';
 import { UserAddress } from '../users/entities/user-address.entity';
+import { RecentlyViewedProduct } from '../products/entities/recently-viewed-product.entity';
 import { NotificationService } from '../notification/notification.service';
 import { SettingsService } from '../settings/settings.service';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -34,6 +35,8 @@ export class SchedulerService {
     private readonly pointHistoryRepo: Repository<PointHistory>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(RecentlyViewedProduct)
+    private readonly recentlyViewedRepo: Repository<RecentlyViewedProduct>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly notificationService: NotificationService,
@@ -398,6 +401,37 @@ export class SchedulerService {
         text: '요청하신 회원 탈퇴가 완료되었습니다. 개인정보는 익명화되어 보관됩니다.',
         html: '<p>요청하신 회원 탈퇴가 완료되었습니다.</p><p>개인정보는 익명화되어 보관됩니다.</p>',
       });
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async handleRecentlyViewedCleanup(): Promise<void> {
+    const lockName = 'cron:recently-viewed-cleanup';
+    if (!(await this.acquireLock(lockName, 55))) {
+      this.logger.debug(`[${lockName}] Skipped - another instance holds the lock`);
+      return;
+    }
+
+    try {
+      const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+      const result = await this.recentlyViewedRepo
+        .createQueryBuilder()
+        .delete()
+        .from(RecentlyViewedProduct)
+        .where('viewed_at < :cutoff', { cutoff })
+        .execute();
+
+      const deleted = result.affected ?? 0;
+      if (deleted > 0) {
+        this.logger.log(`[cron:recently-viewed-cleanup] Deleted ${deleted} records older than 90 days`);
+      } else {
+        this.logger.debug('[cron:recently-viewed-cleanup] No old records to delete');
+      }
+    } catch (err) {
+      this.logger.error(`[cron:recently-viewed-cleanup] Error: ${String(err)}`);
+    } finally {
+      await this.releaseLock(lockName);
     }
   }
 

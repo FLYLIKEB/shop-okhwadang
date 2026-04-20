@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe,
+  Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -7,6 +7,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiCookieAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -15,6 +16,7 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 import { RequestAccountDeletionDto } from './dto/request-account-deletion.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
+import { RecentlyViewedService } from '../products/recently-viewed.service';
 
 interface AuthUser {
   id: number;
@@ -28,6 +30,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly restockAlertsService: RestockAlertsService,
+    private readonly recentlyViewedService: RecentlyViewedService,
   ) {}
 
   @Patch('me')
@@ -55,6 +58,20 @@ export class UsersController {
   @ApiResponse({ status: 401, description: '인증 필요' })
   getRestockAlerts(@CurrentUser() user: AuthUser) {
     return this.restockAlertsService.findUserAlerts(user.id);
+  }
+
+  @Get('me/recently-viewed')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '최근 본 상품 목록 조회', description: '현재 사용자가 최근 열람한 상품 목록을 조회합니다.' })
+  @ApiResponse({ status: 200, description: '최근 본 상품 목록 조회 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: '조회 개수 (기본값: 20, 최대: 100)' })
+  getRecentlyViewed(
+    @CurrentUser() user: AuthUser,
+    @Query('limit') limit?: string,
+  ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 20;
+    return this.recentlyViewedService.findAll(user.id, parsedLimit);
   }
 
   @Post('me/addresses')

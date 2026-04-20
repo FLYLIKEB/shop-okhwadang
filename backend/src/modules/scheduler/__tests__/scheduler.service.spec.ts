@@ -9,6 +9,7 @@ import { ProductOption } from '../../products/entities/product-option.entity';
 import { Coupon } from '../../coupons/entities/coupon.entity';
 import { PointHistory } from '../../coupons/entities/point-history.entity';
 import { User } from '../../users/entities/user.entity';
+import { RecentlyViewedProduct } from '../../products/entities/recently-viewed-product.entity';
 import { NotificationService } from '../../notification/notification.service';
 import { SettingsService } from '../../settings/settings.service';
 
@@ -72,6 +73,10 @@ const mockUserRepo = {
   findOne: jest.fn(),
 };
 
+const mockRecentlyViewedRepo = {
+  createQueryBuilder: jest.fn(),
+};
+
 const mockNotificationService = {
   sendEmail: jest.fn(),
   sendOrderConfirmed: jest.fn(),
@@ -99,6 +104,7 @@ describe('SchedulerService', () => {
         { provide: getRepositoryToken(Coupon), useValue: mockCouponRepo },
         { provide: getRepositoryToken(PointHistory), useValue: mockPointHistoryRepo },
         { provide: getRepositoryToken(User), useValue: mockUserRepo },
+        { provide: getRepositoryToken(RecentlyViewedProduct), useValue: mockRecentlyViewedRepo },
         { provide: DataSource, useValue: mockDataSource },
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: SettingsService, useValue: mockSettingsService },
