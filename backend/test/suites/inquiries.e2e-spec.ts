@@ -27,7 +27,7 @@ export function registerInquiriesSuite(getApp: () => INestApplication) {
       app = getApp();
       dataSource = app.get(DataSource);
 
-      // Insert users directly to avoid hitting auth rate-limit in throttle-active test env
+      // Insert users directly to avoid hitting registration rate-limit in throttle-active test env
       await dataSource.query(
         `INSERT INTO users (email, password, name, role, is_email_verified, email_verified_at, created_at, updated_at) VALUES (?, ?, '문의테스터', 'user', 1, NOW(), NOW(), NOW())`,
         [userEmail, TEST_PASSWORD_HASH],

@@ -81,6 +81,7 @@ export class InquiriesService {
     inquiry.answer = dto.answer;
     inquiry.status = InquiryStatus.ANSWERED;
     inquiry.answeredAt = new Date();
+    inquiry.customerReadAt = null;  // 재답변 시 고객이 다시 읽도록
     const saved = await this.inquiryRepo.save(inquiry);
     this.logger.log(`Inquiry answered: id=${id}`);
 

@@ -158,6 +158,29 @@ describe('InquiriesService', () => {
 
       expect(mockNotificationService.sendInquiryAnswered).not.toHaveBeenCalled();
     });
+
+    it('재답변 시 customerReadAt을 null로 초기화하여 고객이 다시 읽도록 한다', async () => {
+      const inquiry = {
+        id: 1,
+        userId: 10,
+        title: '문의',
+        status: InquiryStatus.ANSWERED,
+        answer: '이전 답변',
+        answeredAt: new Date('2026-01-01'),
+        customerReadAt: new Date('2026-01-02'),  // 이미 읽음
+      } as Inquiry;
+      repo.findOne.mockResolvedValue(inquiry);
+      repo.save.mockResolvedValue({ ...inquiry, answer: '수정된 답변', customerReadAt: null } as never);
+
+      await service.answerInquiry(1, { answer: '수정된 답변' });
+
+      expect(repo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          answer: '수정된 답변',
+          customerReadAt: null,
+        }),
+      );
+    });
   });
 
   describe('findAllForAdmin', () => {
