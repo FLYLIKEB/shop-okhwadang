@@ -18,6 +18,7 @@ import { findOrThrow } from '../../common/utils/repository.util';
 import { paginate } from '../../common/utils/pagination.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { SettingsService } from '../settings/settings.service';
+import { addOneYear } from '../points/points.service';
 
 const REVIEW_POINT_REWARD_KEY = 'review_point_reward';
 const PHOTO_REVIEW_BONUS_KEY = 'photo_review_bonus';
@@ -217,7 +218,7 @@ export class ReviewsService {
           orderId: null,
           relatedEntityType: 'review' as const,
           relatedEntityId: Number(saved.id),
-          expiresAt: null,
+          expiresAt: addOneYear(new Date()),
         });
         await manager.save(PointHistory, pointEntry);
       }

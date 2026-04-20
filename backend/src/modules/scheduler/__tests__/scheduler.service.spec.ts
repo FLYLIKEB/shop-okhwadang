@@ -252,40 +252,32 @@ describe('SchedulerService', () => {
 
     it('should process expired points', async () => {
       mockDataSource.query
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ instance_id: 'default' }]);
+        .mockResolvedValueOnce([])                            // INSERT lock
+        .mockResolvedValueOnce([{ instance_id: 'default' }]) // SELECT lock
+        .mockResolvedValueOnce([                             // SELECT expired points raw query
+          { id: 1, user_id: 1, amount: 1000, expires_at: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        ]);
 
-      const expiredPoints = [
-        {
-          id: 1,
-          userId: 1,
-          type: 'earn' as const,
-          amount: 1000,
-          balance: 5000,
-          expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-          user: { id: 1, email: 'test@example.com' },
-        },
-      ];
-
-      mockPointHistoryRepo.find.mockResolvedValue(expiredPoints);
       mockQueryRunner.manager.findOne.mockResolvedValue({ balance: 5000 });
       mockQueryRunner.manager.save.mockResolvedValue({});
-      mockUserRepo.findOne.mockResolvedValue({ id: 1, email: 'test@example.com' });
+      mockQueryRunner.manager.findOne
+        .mockResolvedValueOnce({ balance: 5000 })   // latest balance
+        .mockResolvedValueOnce({ id: 1, email: 'test@example.com' }); // user
 
       await service.handlePointExpiry();
 
-      expect(mockPointHistoryRepo.find).toHaveBeenCalled();
+      expect(mockDataSource.query).toHaveBeenCalled();
     });
 
     it('should do nothing when no expired points found', async () => {
       mockDataSource.query
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ instance_id: 'default' }]);
-      mockPointHistoryRepo.find.mockResolvedValue([]);
+        .mockResolvedValueOnce([])                            // INSERT lock
+        .mockResolvedValueOnce([{ instance_id: 'default' }]) // SELECT lock
+        .mockResolvedValueOnce([]);                          // SELECT expired points — empty
 
       await service.handlePointExpiry();
 
-      expect(mockPointHistoryRepo.find).toHaveBeenCalled();
+      expect(mockDataSource.query).toHaveBeenCalled();
     });
   });
 

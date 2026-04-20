@@ -171,21 +171,13 @@ export class OrdersService {
       }
 
       if (pointsToUse > 0) {
-        const latestPoint = await queryRunner.manager.getRepository(PointHistory).findOne({
-          where: { userId },
-          order: { createdAt: 'DESC', id: 'DESC' },
-        });
-        const currentBalance = latestPoint ? latestPoint.balance : 0;
-        const newBalance = currentBalance - pointsToUse;
-        const pointHistory = queryRunner.manager.create(PointHistory, {
+        await this.pointsService.deductFifo(
+          queryRunner.manager,
           userId,
-          type: 'spend',
-          amount: -pointsToUse,
-          balance: newBalance,
-          orderId: Number(savedOrder.id),
-          description: `주문 사용 (${savedOrder.orderNumber})`,
-        });
-        await queryRunner.manager.save(PointHistory, pointHistory);
+          pointsToUse,
+          `주문 사용 (${savedOrder.orderNumber})`,
+          Number(savedOrder.id),
+        );
       }
 
       const itemEntities = orderItems.map((item) =>
