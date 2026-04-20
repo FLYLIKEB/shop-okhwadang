@@ -426,6 +426,79 @@ describe('PaymentsService', () => {
       await expect(service.partialRefund(1, { amount: 10000, reason: '환불' })).rejects.toThrow(InternalServerErrorException);
       expect(mockRefundRepo.update).toHaveBeenCalledWith(expect.anything(), { status: RefundStatus.FAILED });
     });
+
+    it('[CRITICAL] 부분 환불 2회 누적 — totalRefunded 이중 계산 없이 정확히 누적', async () => {
+      // 총 10000원 결제, 5000 1차 환불 후 SUM=5000 → PARTIAL_CANCELLED
+      // 5000 2차 환불 후 SUM=10000 → REFUNDED + Order REFUNDED
+      const totalPayment = makePayment({
+        id: 100,
+        orderId: 1,
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pay_abc',
+        amount: 10000,
+        gateway: PaymentGatewayType.MOCK,
+      });
+
+      // Phase 1 manager (create pending refund)
+      const phase1Manager = makeRefundManager({
+        findOne: jest.fn().mockResolvedValue(totalPayment),
+        createQueryBuilder: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          getRawOne: jest.fn().mockResolvedValue({ total: '5000' }),
+        }),
+      });
+
+      // Phase 3 manager: after updating refund to COMPLETED, SUM returns 10000
+      const phase3Manager = makeTransactionManager({
+        update: jest.fn().mockResolvedValue({}),
+        createQueryBuilder: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          getRawOne: jest.fn().mockResolvedValue({ total: '10000' }),
+        }),
+      });
+
+      mockDataSource.transaction
+        .mockImplementationOnce(async (fn: (m: typeof phase1Manager) => Promise<unknown>) => fn(phase1Manager))
+        .mockImplementationOnce(async (fn: (m: typeof phase3Manager) => Promise<unknown>) => fn(phase3Manager));
+
+      mockPaymentRepo.findOne.mockResolvedValue(totalPayment);
+      mockRefundRepo.findOne.mockResolvedValue({
+        id: 2, paymentId: 100, amount: 5000, status: RefundStatus.COMPLETED, reason: '2차 환불',
+      });
+      mockDefaultGateway.partialCancel.mockResolvedValue({
+        refundId: 'mock-refund-456',
+        cancelledAt: new Date(),
+        rawResponse: { mock: true },
+      });
+
+      await service.partialRefund(1, { amount: 5000, reason: '2차 환불' });
+
+      // Phase 3 must update Payment to REFUNDED and Order to REFUNDED
+      expect(phase3Manager.update).toHaveBeenCalledWith(Payment, totalPayment.id, { status: PaymentStatus.REFUNDED });
+      expect(phase3Manager.update).toHaveBeenCalledWith(Order, totalPayment.orderId, { status: OrderStatus.REFUNDED });
+    });
+
+    it('[HIGH] Phase 3 DB 실패 — gateway 성공 후 DB 동기화 실패 시 Refund를 FAILED로 마킹하지 않음', async () => {
+      const refundManager = makeRefundManager();
+      mockDataSource.transaction
+        .mockImplementationOnce(async (fn: (m: typeof refundManager) => Promise<unknown>) => fn(refundManager))
+        .mockImplementationOnce(async () => { throw new Error('DB 오류'); });
+
+      mockPaymentRepo.findOne.mockResolvedValue(confirmedPayment);
+      mockDefaultGateway.partialCancel.mockResolvedValue({
+        refundId: 'mock-refund-789',
+        cancelledAt: new Date(),
+        rawResponse: { mock: true },
+      });
+      mockRefundRepo.update.mockResolvedValue({});
+
+      await expect(service.partialRefund(1, { amount: 10000, reason: '환불' })).rejects.toThrow(InternalServerErrorException);
+
+      // Refund must NOT be marked FAILED — gateway already processed the refund
+      expect(mockRefundRepo.update).not.toHaveBeenCalledWith(expect.anything(), { status: RefundStatus.FAILED });
+    });
   });
 
   describe('cancel()', () => {

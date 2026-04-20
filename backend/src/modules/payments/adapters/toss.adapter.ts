@@ -117,11 +117,15 @@ export class TossPaymentAdapter implements PaymentGateway {
     }
 
     const body = (await response.json()) as Record<string, unknown>;
-    const cancels = body.cancels as Array<{ canceledAt?: string }> | undefined;
+    const cancels = body.cancels as Array<{ canceledAt?: string; transactionKey?: string }> | undefined;
+    const lastCancel = Array.isArray(cancels) ? cancels[cancels.length - 1] : null;
+    const refundId = typeof lastCancel?.transactionKey === 'string'
+      ? lastCancel.transactionKey
+      : `toss-${params.paymentKey}-${Date.now()}`;
 
     return {
-      refundId: `toss-${params.paymentKey}-${Date.now()}`,
-      cancelledAt: new Date(cancels?.[0]?.canceledAt ?? Date.now()),
+      refundId,
+      cancelledAt: new Date(lastCancel?.canceledAt ?? Date.now()),
       rawResponse: body as object,
     };
   }

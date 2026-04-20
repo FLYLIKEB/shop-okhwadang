@@ -320,20 +320,29 @@ export class PaymentsService {
     const payment = await findOrThrow(this.paymentRepository, { orderId }, '결제 정보를 찾을 수 없습니다.');
     const cancelGateway = this.resolveGatewayByType(payment.gateway);
 
+    let gatewayResult: { refundId: string };
     try {
-      const result = await cancelGateway.partialCancel({
+      gatewayResult = await cancelGateway.partialCancel({
         paymentKey: payment.paymentKey!,
         cancelAmount: dto.amount,
         cancelReason: dto.reason,
       });
+    } catch (err) {
+      await this.refundRepository.update(refund.id, { status: RefundStatus.FAILED });
+      this.logger.error(`partialRefund gateway failed: orderId=${orderId}, refundId=${refund.id}, error=${String(err)}`);
+      if (err instanceof BadRequestException) throw err;
+      throw new InternalServerErrorException('환불 처리에 실패했습니다.');
+    }
 
-      // Phase 3: update Refund + Payment status
+    // Phase 3: DB sync of gateway success
+    try {
       await this.dataSource.transaction(async (manager) => {
         await manager.update(Refund, refund.id, {
           status: RefundStatus.COMPLETED,
-          gatewayRefundId: result.refundId,
+          gatewayRefundId: gatewayResult.refundId,
         });
 
+        // SUM already includes current refund (updated to COMPLETED above)
         const completedRefundsResult = await manager
           .createQueryBuilder(Refund, 'r')
           .select('COALESCE(SUM(r.amount), 0)', 'total')
@@ -342,25 +351,30 @@ export class PaymentsService {
             status: RefundStatus.COMPLETED,
           })
           .getRawOne<{ total: string }>();
-        const totalRefunded = Number(completedRefundsResult?.total ?? 0) + dto.amount;
+        const totalRefunded = Number(completedRefundsResult?.total ?? 0);
 
-        const newPaymentStatus =
-          totalRefunded >= Number(payment.amount)
-            ? PaymentStatus.REFUNDED
-            : PaymentStatus.PARTIAL_CANCELLED;
-
-        await manager.update(Payment, payment.id, { status: newPaymentStatus });
+        if (totalRefunded >= Number(payment.amount)) {
+          await manager.update(Payment, payment.id, { status: PaymentStatus.REFUNDED });
+          await manager.update(Order, payment.orderId, { status: OrderStatus.REFUNDED });
+        } else {
+          await manager.update(Payment, payment.id, { status: PaymentStatus.PARTIAL_CANCELLED });
+        }
       });
-
-      refund = await findOrThrow(this.refundRepository, { id: refund.id }, '환불 정보를 찾을 수 없습니다.');
-
-      // TODO(#481, #483): 재고 복구/포인트 환수 연계
     } catch (err) {
-      if (err instanceof BadRequestException) throw err;
-      await this.refundRepository.update(refund.id, { status: RefundStatus.FAILED });
-      this.logger.error(`partialRefund failed: orderId=${orderId}, refundId=${refund.id}, error=${String(err)}`);
-      throw new InternalServerErrorException('부분 환불 처리에 실패했습니다.');
+      this.logger.error({
+        event: 'refund_db_sync_failed',
+        orderId,
+        refundId: refund.id,
+        gatewayRefundId: gatewayResult.refundId,
+        amount: dto.amount,
+        error: err instanceof Error ? err.message : String(err),
+      }, 'Gateway refund succeeded but DB sync failed - manual reconciliation required');
+      throw new InternalServerErrorException('환불이 처리됐으나 시스템 반영에 실패했습니다. 운영팀에 문의하세요.');
     }
+
+    refund = await findOrThrow(this.refundRepository, { id: refund.id }, '환불 정보를 찾을 수 없습니다.');
+
+    // TODO(#481, #483): 재고 복구/포인트 환수 연계
 
     return refund;
   }

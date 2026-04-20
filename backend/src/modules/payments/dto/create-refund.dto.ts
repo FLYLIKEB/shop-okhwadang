@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsInt, IsString, MaxLength, Min, IsArray, IsOptional,
+  IsInt, IsString, MaxLength, Min,
 } from 'class-validator';
 
 export class CreateRefundDto {
@@ -13,14 +13,4 @@ export class CreateRefundDto {
   @IsString()
   @MaxLength(500)
   reason!: string;
-
-  @ApiPropertyOptional({
-    example: [1, 2],
-    description: '환불 대상 주문 항목 ID 목록 (null이면 전체)',
-    type: [Number],
-  })
-  @IsArray()
-  @IsOptional()
-  @IsInt({ each: true })
-  orderItemIds?: number[];
 }
