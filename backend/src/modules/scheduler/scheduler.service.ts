@@ -255,13 +255,25 @@ export class SchedulerService {
     try {
       const now = new Date();
 
-      const expiredPoints = await this.pointHistoryRepo.find({
-        where: {
-          expiresAt: LessThan(now),
-          type: 'earn',
-        },
-        relations: { user: true },
-      });
+      // Only process earn entries that have expired and have NOT yet had an expire record created.
+      // We use a subquery to exclude users where an expire record already covers this expiry window.
+      const expiredPoints = await this.dataSource.query<
+        Array<{ id: number; user_id: number; amount: number; expires_at: string }>
+      >(
+        `SELECT ph.id, ph.user_id, ph.amount, ph.expires_at
+         FROM point_history ph
+         WHERE ph.type = 'earn'
+           AND ph.expires_at IS NOT NULL
+           AND ph.expires_at < ?
+           AND NOT EXISTS (
+             SELECT 1 FROM point_history ex
+             WHERE ex.user_id = ph.user_id
+               AND ex.type = 'expire'
+               AND ex.description = '포인트 만료'
+               AND DATE(ex.created_at) = DATE(?)
+           )`,
+        [now, now],
+      );
 
       if (expiredPoints.length === 0) {
         this.logger.debug('[cron:point-expiry] No expired points to process');
@@ -272,8 +284,9 @@ export class SchedulerService {
 
       const userExpiredMap = new Map<number, number>();
       for (const ph of expiredPoints) {
-        const current = userExpiredMap.get(ph.userId) || 0;
-        userExpiredMap.set(ph.userId, current + ph.amount);
+        const uid = Number(ph.user_id);
+        const current = userExpiredMap.get(uid) || 0;
+        userExpiredMap.set(uid, current + Number(ph.amount));
       }
 
       for (const [userId, totalExpired] of userExpiredMap) {
@@ -326,6 +339,70 @@ export class SchedulerService {
       this.logger.log(`[cron:point-expiry] Completed processing ${expiredPoints.length} expired point records`);
     } catch (err) {
       this.logger.error(`[cron:point-expiry] Error: ${String(err)}`);
+    } finally {
+      await this.releaseLock(lockName);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async handlePointExpiryNotification(): Promise<void> {
+    const lockName = 'cron:point-expiry-notification';
+    if (!(await this.acquireLock(lockName, 55))) {
+      this.logger.debug(`[${lockName}] Skipped - another instance holds the lock`);
+      return;
+    }
+
+    try {
+      const now = new Date();
+
+      for (const daysAhead of [30, 7]) {
+        const windowStart = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+        const windowEnd = new Date(windowStart.getTime() + 24 * 60 * 60 * 1000);
+
+        const expiringEntries = await this.dataSource.query<
+          Array<{ user_id: number; total_amount: string; email: string | null; name: string | null }>
+        >(
+          `SELECT ph.user_id, SUM(ph.amount) AS total_amount, u.email, u.name
+           FROM point_history ph
+           JOIN users u ON u.id = ph.user_id
+           WHERE ph.type = 'earn'
+             AND ph.expires_at >= ?
+             AND ph.expires_at < ?
+           GROUP BY ph.user_id, u.email, u.name
+           HAVING SUM(ph.amount) > 0`,
+          [windowStart, windowEnd],
+        );
+
+        if (expiringEntries.length === 0) {
+          this.logger.debug(`[cron:point-expiry-notification] No points expiring in ${daysAhead} days`);
+          continue;
+        }
+
+        this.logger.log(
+          `[cron:point-expiry-notification] Sending ${daysAhead}-day expiry notifications to ${expiringEntries.length} users`,
+        );
+
+        for (const entry of expiringEntries) {
+          if (!entry.email) continue;
+          const amount = Number(entry.total_amount);
+          const expiryDateStr = windowStart.toLocaleDateString('ko-KR');
+
+          this.notificationService
+            .sendEmail({
+              to: entry.email,
+              subject: `[옥화당] 포인트 만료 ${daysAhead}일 전 안내`,
+              text: `안녕하세요${entry.name ? ` ${entry.name}` : ''}님. 보유하신 포인트 ${amount.toLocaleString()}원이 ${expiryDateStr}에 만료될 예정입니다.`,
+              html: `<p>안녕하세요${entry.name ? ` <strong>${entry.name}</strong>` : ''}님.</p><p>보유하신 포인트 <strong>${amount.toLocaleString()}원</strong>이 <strong>${expiryDateStr}</strong>에 만료될 예정입니다.</p><p>포인트를 사용하여 혜택을 누려보세요.</p>`,
+            })
+            .catch((err) =>
+              this.logger.warn(`Failed to send point expiry notification email: ${String(err)}`),
+            );
+        }
+      }
+
+      this.logger.log('[cron:point-expiry-notification] Completed');
+    } catch (err) {
+      this.logger.error(`[cron:point-expiry-notification] Error: ${String(err)}`);
     } finally {
       await this.releaseLock(lockName);
     }
