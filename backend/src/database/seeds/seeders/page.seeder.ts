@@ -12,6 +12,20 @@ export class PageSeeder extends Seeder {
   async run(): Promise<void> {
     const repo = this.dataSource.getRepository(Page);
     const inserted = await this.upsert(repo, pages as unknown as Partial<Page>[], (p) => p.slug);
-    console.log(`✓ Pages: ${inserted} inserted, ${pages.length - inserted} existing`);
+
+    let updated = 0;
+    for (const page of pages) {
+      const result = await repo.update(
+        { slug: page.slug },
+        {
+          title: page.title,
+          template: page.template,
+          is_published: page.isPublished,
+        },
+      );
+      updated += result.affected ?? 0;
+    }
+
+    console.log(`✓ Pages: ${inserted} inserted, ${updated - inserted} updated, ${pages.length - updated} unchanged`);
   }
 }

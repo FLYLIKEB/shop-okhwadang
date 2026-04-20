@@ -7,7 +7,7 @@ BACKEND_DIR="$SCRIPT_DIR/../backend"
 DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-3307}"
 DB_USER="${DB_USER:-root}"
-DB_PASS="${DB_PASS:-changeme_root_password}"
+DB_PASS="${DB_PASS:-okhwadang_local_root_2024}"
 DB_NAME="${DB_NAME:-commerce}"
 
 # typeorm.config.ts는 DATABASE_URL을 LOCAL_DATABASE_URL보다 우선 사용하고,
