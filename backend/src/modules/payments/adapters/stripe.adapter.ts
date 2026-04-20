@@ -7,6 +7,8 @@ import {
   PrepareResult,
   ConfirmResult,
   CancelResult,
+  PartialCancelParams,
+  PartialCancelResult,
 } from '../interfaces/payment-gateway.interface';
 
 @Injectable()
@@ -108,6 +110,28 @@ export class StripePaymentAdapter implements PaymentGateway {
         `Stripe cancel failed: paymentKey=${paymentKey}, error=${String(err)}`,
       );
       throw new BadGatewayException('Stripe API 취소 오류');
+    }
+  }
+
+  async partialCancel(params: PartialCancelParams): Promise<PartialCancelResult> {
+    try {
+      const refund = await this.ensureStripe().refunds.create({
+        payment_intent: params.paymentKey,
+        amount: params.cancelAmount,
+        reason: 'requested_by_customer',
+        metadata: { reason: params.cancelReason },
+      });
+
+      return {
+        refundId: refund.id,
+        cancelledAt: new Date((refund.created ?? Date.now() / 1000) * 1000),
+        rawResponse: refund as unknown as object,
+      };
+    } catch (err) {
+      this.logger.error(
+        `Stripe partialCancel failed: paymentKey=${params.paymentKey}, error=${String(err)}`,
+      );
+      throw new BadGatewayException('Stripe API 부분 취소 오류');
     }
   }
 

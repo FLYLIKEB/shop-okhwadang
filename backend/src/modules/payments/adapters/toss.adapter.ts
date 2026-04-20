@@ -6,6 +6,8 @@ import {
   PrepareResult,
   ConfirmResult,
   CancelResult,
+  PartialCancelParams,
+  PartialCancelResult,
 } from '../interfaces/payment-gateway.interface';
 
 @Injectable()
@@ -86,6 +88,44 @@ export class TossPaymentAdapter implements PaymentGateway {
 
     return {
       cancelledAt: new Date(cancels?.[0]?.canceledAt ?? Date.now()),
+      rawResponse: body as object,
+    };
+  }
+
+  async partialCancel(params: PartialCancelParams): Promise<PartialCancelResult> {
+    const response = await fetch(
+      `https://api.tosspayments.com/v1/payments/${params.paymentKey}/cancel`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: this.authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cancelReason: params.cancelReason,
+          cancelAmount: params.cancelAmount,
+        }),
+        signal: AbortSignal.timeout(8000),
+      },
+    );
+
+    if (!response.ok) {
+      this.logger.error(
+        `Toss partialCancel failed: status=${response.status}, paymentKey=${params.paymentKey}`,
+      );
+      throw new BadGatewayException('토스 API 부분 취소 오류');
+    }
+
+    const body = (await response.json()) as Record<string, unknown>;
+    const cancels = body.cancels as Array<{ canceledAt?: string; transactionKey?: string }> | undefined;
+    const lastCancel = Array.isArray(cancels) ? cancels[cancels.length - 1] : null;
+    const refundId = typeof lastCancel?.transactionKey === 'string'
+      ? lastCancel.transactionKey
+      : `toss-${params.paymentKey}-${Date.now()}`;
+
+    return {
+      refundId,
+      cancelledAt: new Date(lastCancel?.canceledAt ?? Date.now()),
       rawResponse: body as object,
     };
   }

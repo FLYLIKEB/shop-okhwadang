@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PaymentGateway, PrepareResult, ConfirmResult, CancelResult } from '../interfaces/payment-gateway.interface';
+import {
+  PaymentGateway, PrepareResult, ConfirmResult, CancelResult,
+  PartialCancelParams, PartialCancelResult,
+} from '../interfaces/payment-gateway.interface';
 
 export const MOCK_TEST_SIGNATURE = 'mock-test-signature';
 
@@ -28,6 +31,14 @@ export class MockPaymentAdapter implements PaymentGateway {
 
   async cancel(paymentKey: string, reason: string): Promise<CancelResult> {
     return { cancelledAt: new Date(), rawResponse: { mock: true, reason, paymentKey } as object };
+  }
+
+  async partialCancel(params: PartialCancelParams): Promise<PartialCancelResult> {
+    return {
+      refundId: `mock-refund-${Date.now()}`,
+      cancelledAt: new Date(),
+      rawResponse: { mock: true, ...params } as object,
+    };
   }
 
   verifyWebhook(_payload: unknown, signature: string): boolean {

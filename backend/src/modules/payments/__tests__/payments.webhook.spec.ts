@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { PaymentsService } from '../payments.service';
 import { Payment } from '../entities/payment.entity';
+import { Refund } from '../entities/refund.entity';
 import { Order } from '../../orders/entities/order.entity';
 import { Shipping } from '../entities/shipping.entity';
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
@@ -31,6 +32,7 @@ describe('PaymentsService — webhook', () => {
       providers: [
         PaymentsService,
         { provide: getRepositoryToken(Payment), useValue: mockRepo },
+        { provide: getRepositoryToken(Refund), useValue: mockRepo },
         { provide: getRepositoryToken(Order), useValue: mockRepo },
         { provide: getRepositoryToken(Shipping), useValue: mockRepo },
         { provide: getRepositoryToken(User), useValue: mockRepo },
