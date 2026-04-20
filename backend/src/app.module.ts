@@ -32,6 +32,7 @@ import { JournalModule } from './modules/journal/journal.module';
 import { PointsModule } from './modules/points/points.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
+import { SeoModule } from './modules/seo/seo.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
@@ -114,6 +115,7 @@ import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.gu
     PointsModule,
     NotificationModule,
     SchedulerModule,
+    SeoModule,
   ],
   providers: [
     // Guard execution order: ThrottlerGuard → JwtAuthGuard → RolesGuard

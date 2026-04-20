@@ -6,6 +6,9 @@ import { Shipping, ShippingStatus } from '../../payments/entities/shipping.entit
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { User } from '../../users/entities/user.entity';
 import { NotificationService } from '../../notification/notification.service';
+import { MockShippingAdapter } from '../adapters/mock-shipping.adapter';
+import { CjShippingAdapter } from '../adapters/cj-shipping.adapter';
+import { ShippingFeeCalculatorService } from '../services/shipping-fee-calculator.service';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({ id: 1, userId: 10, status: OrderStatus.PAID, ...overrides } as unknown as Order);
@@ -33,6 +36,35 @@ describe('ShippingService', () => {
     findOne: jest.fn(),
     update: jest.fn(),
   };
+  const mockAdapter = {
+    registerTrackingNumber: jest.fn(),
+    getTrackingStatus: jest.fn().mockImplementation((trackingNumber: string) =>
+      Promise.resolve({
+        trackingNumber,
+        status: 'in_transit',
+        steps: [{ status: 'in_transit', description: '배송 중', timestamp: new Date().toISOString() }],
+      })),
+  };
+  const mockCjAdapter = {
+    registerTrackingNumber: jest.fn(),
+    getTrackingStatus: jest.fn().mockResolvedValue({
+      trackingNumber: '12345',
+      status: 'in_transit',
+      steps: [{ status: 'in_transit', description: '배송 중', timestamp: new Date().toISOString() }],
+    }),
+  };
+  const mockCalculator = {
+    calculate: jest.fn().mockResolvedValue({
+      subtotal: 10000,
+      zipcode: '12345',
+      shippingFee: 3000,
+      isFreeShipping: false,
+      isRemoteArea: false,
+      threshold: 50000,
+      baseFee: 3000,
+      remoteAreaSurcharge: 3000,
+    }),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -43,6 +75,9 @@ describe('ShippingService', () => {
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
         { provide: getRepositoryToken(User), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
         { provide: NotificationService, useValue: { sendShippingUpdate: jest.fn() } },
+        { provide: MockShippingAdapter, useValue: mockAdapter },
+        { provide: CjShippingAdapter, useValue: mockCjAdapter },
+        { provide: ShippingFeeCalculatorService, useValue: mockCalculator },
       ],
     }).compile();
     service = module.get<ShippingService>(ShippingService);
@@ -180,6 +215,15 @@ describe('ShippingService', () => {
       expect(result.trackingNumber).toBe('12345');
       expect(result.status).toBe('in_transit');
       expect(Array.isArray(result.steps)).toBe(true);
+    });
+  });
+
+  describe('quote', () => {
+    it('subtotal + zipcode로 배송비를 계산한다', async () => {
+      const result = await service.quote(10000, '12345');
+
+      expect(mockCalculator.calculate).toHaveBeenCalledWith(10000, '12345');
+      expect(result.shippingFee).toBe(3000);
     });
   });
 });

@@ -18,6 +18,7 @@ import { PointsService } from '../points/points.service';
 import { NotificationService } from '../notification/notification.service';
 import { CouponsService } from '../coupons/coupons.service';
 import { CalculateDiscountDto } from '../coupons/dto/calculate-discount.dto';
+import { ShippingFeeCalculatorService } from '../shipping/services/shipping-fee-calculator.service';
 
 @Injectable()
 export class OrdersService {
@@ -33,6 +34,7 @@ export class OrdersService {
     private readonly pointsService: PointsService,
     private readonly notificationService: NotificationService,
     private readonly couponsService: CouponsService,
+    private readonly shippingFeeCalculator: ShippingFeeCalculatorService,
   ) {}
 
   private generateOrderNumber(): string {
@@ -65,7 +67,7 @@ export class OrdersService {
       }
 
       const orderItems: Partial<OrderItem>[] = [];
-      let totalAmount = 0;
+      let subtotalAmount = 0;
 
       for (const item of dto.items) {
         const product = await queryRunner.manager
@@ -118,7 +120,7 @@ export class OrdersService {
 
         const unitPrice = Number(product.salePrice ?? product.price) + priceAdjustment;
         const subtotal = unitPrice * item.quantity;
-        totalAmount += subtotal;
+        subtotalAmount += subtotal;
 
         orderItems.push({
           productId: Number(item.productId),
@@ -131,24 +133,29 @@ export class OrdersService {
       }
 
       let discountAmount = 0;
-      if (dto.userCouponId) {
+      let discountedAmount = subtotalAmount;
+
+      if (dto.userCouponId || pointsToUse > 0) {
         const calculateDto: CalculateDiscountDto = {
-          orderAmount: totalAmount,
+          orderAmount: subtotalAmount,
           userCouponId: dto.userCouponId,
           pointsToUse,
         };
         const discountResult = await this.couponsService.calculate(userId, calculateDto);
         discountAmount = discountResult.couponDiscount;
-        totalAmount = discountResult.finalAmount;
+        discountedAmount = discountResult.finalAmount;
       }
+
+      const shippingQuote = await this.shippingFeeCalculator.calculate(subtotalAmount, dto.zipcode);
+      const totalPayable = discountedAmount + shippingQuote.shippingFee;
 
       const order = queryRunner.manager.create(Order, {
         userId,
         orderNumber: this.generateOrderNumber(),
         status: OrderStatus.PENDING,
-        totalAmount,
+        totalAmount: totalPayable,
         discountAmount,
-        shippingFee: 0,
+        shippingFee: shippingQuote.shippingFee,
         recipientName: dto.recipientName,
         recipientPhone: dto.recipientPhone,
         zipcode: dto.zipcode,
@@ -199,7 +206,7 @@ export class OrdersService {
       await queryRunner.commitTransaction();
       this.logger.log(`Order created: ${savedOrder.orderNumber} userId=${userId}`);
 
-      void this.notifyOrderCreated(userId, savedOrder.orderNumber, totalAmount, dto.recipientName);
+      void this.notifyOrderCreated(userId, savedOrder.orderNumber, totalPayable, dto.recipientName);
 
       return this.findOne(Number(savedOrder.id), userId);
     } catch (err) {

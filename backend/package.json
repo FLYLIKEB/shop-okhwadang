@@ -40,6 +40,7 @@
     "@nestjs/swagger": "^11.2.6",
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/typeorm": "^11.0.0",
+    "@sentry/node": "^10.49.0",
     "@types/bcrypt": "^6.0.0",
     "@types/multer": "^2.1.0",
     "axios": "^1.13.6",

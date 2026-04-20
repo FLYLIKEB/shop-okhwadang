@@ -2,6 +2,8 @@ export const SENSITIVE_FIELDS = [
   'password',
   'token',
   'authorization',
+  'cookie',
+  'set-cookie',
   'creditcard',
   'credit_card',
   'cvv',

@@ -6,11 +6,14 @@ import { User } from '../users/entities/user.entity';
 import { ShippingService } from './shipping.service';
 import { ShippingController } from './shipping.controller';
 import { MockShippingAdapter } from './adapters/mock-shipping.adapter';
+import { CjShippingAdapter } from './adapters/cj-shipping.adapter';
+import { ShippingFeeCalculatorService } from './services/shipping-fee-calculator.service';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Shipping, Order, User])],
+  imports: [TypeOrmModule.forFeature([Shipping, Order, User]), SettingsModule],
   controllers: [ShippingController],
-  providers: [ShippingService, MockShippingAdapter],
-  exports: [ShippingService],
+  providers: [ShippingService, ShippingFeeCalculatorService, MockShippingAdapter, CjShippingAdapter],
+  exports: [ShippingService, ShippingFeeCalculatorService],
 })
 export class ShippingModule {}
