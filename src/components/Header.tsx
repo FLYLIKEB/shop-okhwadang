@@ -155,6 +155,7 @@ interface MobileMenuFooterProps {
 
 function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: MobileMenuFooterProps) {
   const t = useTranslations('header');
+  const orderTrackingHref = isAuthenticated ? '/my/orders' : '/login?redirect=/my/orders';
   return (
     <div className="px-4 py-4 border-t border-border shrink-0">
       <div className="flex flex-col gap-1">
@@ -179,7 +180,7 @@ function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: 
               <LogIn className="h-4 w-4" />
               {t('login')}
             </Link>
-            <Link href="/signup" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+            <Link href="/register" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
               <UserPlus className="h-4 w-4" />
               {t('createAccount')}
             </Link>
@@ -189,7 +190,7 @@ function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: 
           <MessageSquare className="h-4 w-4" />
           {t('contact')}
         </Link>
-        <Link href="/order-tracking" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+        <Link href={orderTrackingHref} onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
           <Package className="h-4 w-4" />
           {t('orderTracking')}
         </Link>
