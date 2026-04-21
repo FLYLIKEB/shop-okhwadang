@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { NotificationService, EMAIL_PROVIDER_TOKEN } from './notification.service';
+import { NotificationDispatchHelper } from './notification-dispatch.helper';
 import { MockEmailAdapter } from './adapters/mock.adapter';
 import { ResendEmailAdapter } from './adapters/resend.adapter';
 import { SesEmailAdapter } from './adapters/ses.adapter';
@@ -43,7 +44,8 @@ export function resolveNotificationProvider(config: NotificationConfig): string 
       inject: [NOTIFICATION_CONFIG, MockEmailAdapter, ResendEmailAdapter, SesEmailAdapter],
     },
     NotificationService,
+    NotificationDispatchHelper,
   ],
-  exports: [NotificationService],
+  exports: [NotificationService, NotificationDispatchHelper],
 })
 export class NotificationModule {}

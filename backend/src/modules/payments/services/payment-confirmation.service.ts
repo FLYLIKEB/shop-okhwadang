@@ -9,9 +9,9 @@ import { ConfirmPaymentDto } from '../dto/confirm-payment.dto';
 import { Payment, PaymentMethod, PaymentStatus, PaymentGatewayType } from '../entities/payment.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Shipping, ShippingStatus } from '../entities/shipping.entity';
-import { User } from '../../users/entities/user.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { NotificationService } from '../../notification/notification.service';
+import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { assertOwnership } from '../../../common/utils/ownership.util';
 import { findOrThrow } from '../../../common/utils/repository.util';
 
@@ -21,9 +21,9 @@ interface PaymentConfirmationDependencies {
   paymentRepository: Repository<Payment>;
   orderRepository: Repository<Order>;
   shippingRepository: Repository<Shipping>;
-  userRepository: Repository<User>;
   dataSource: DataSource;
   notificationService: NotificationService;
+  notificationDispatchHelper: NotificationDispatchHelper;
   resolveGatewayByType: ResolveGatewayByType;
   logger: Logger;
   defaultCarrier: string;
@@ -96,6 +96,7 @@ export class PaymentConfirmationService {
 
       void this.notifyPaymentConfirmed(
         payment.order.userId,
+        dto.orderId,
         payment.order.orderNumber,
         payment.order.recipientName,
         Number(payment.amount),
@@ -120,23 +121,25 @@ export class PaymentConfirmationService {
 
   private async notifyPaymentConfirmed(
     userId: number,
+    orderId: number,
     orderNumber: string,
     recipientName: string,
     amount: number,
     method: string,
   ): Promise<void> {
-    try {
-      const user = await this.deps.userRepository.findOne({ where: { id: userId } });
-      if (!user?.email) return;
-      await this.deps.notificationService.sendPaymentConfirmed(user.email, {
-        recipientName,
-        orderNumber,
-        amount,
-        method,
-      });
-    } catch (err) {
-      this.deps.logger.warn(`Payment confirmation email failed: ${String(err)}`);
-    }
+    await this.deps.notificationDispatchHelper.dispatch({
+      event: 'payment.confirmed',
+      userId,
+      resourceId: orderId,
+      mode: 'fire-and-forget',
+      logger: this.deps.logger,
+      send: (recipient) =>
+        this.deps.notificationService.sendPaymentConfirmed(recipient.email, {
+          recipientName,
+          orderNumber,
+          amount,
+          method,
+        }),
+    });
   }
 }
-

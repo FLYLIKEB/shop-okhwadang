@@ -4,8 +4,8 @@ import { NotFoundException, BadRequestException, ForbiddenException } from '@nes
 import { ShippingService } from '../shipping.service';
 import { Shipping, ShippingStatus } from '../../payments/entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
-import { User } from '../../users/entities/user.entity';
 import { NotificationService } from '../../notification/notification.service';
+import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { MockShippingAdapter } from '../adapters/mock-shipping.adapter';
 import { CjShippingAdapter } from '../adapters/cj-shipping.adapter';
 import { ShippingFeeCalculatorService } from '../services/shipping-fee-calculator.service';
@@ -73,8 +73,8 @@ describe('ShippingService', () => {
         ShippingService,
         { provide: getRepositoryToken(Shipping), useValue: mockShippingRepo },
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
-        { provide: getRepositoryToken(User), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
         { provide: NotificationService, useValue: { sendShippingUpdate: jest.fn() } },
+        { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: MockShippingAdapter, useValue: mockAdapter },
         { provide: CjShippingAdapter, useValue: mockCjAdapter },
         { provide: ShippingFeeCalculatorService, useValue: mockCalculator },

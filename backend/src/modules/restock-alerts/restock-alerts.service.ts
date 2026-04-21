@@ -8,8 +8,8 @@ import { IsNull, Repository } from 'typeorm';
 import { RestockAlert } from './entities/restock-alert.entity';
 import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
-import { User } from '../users/entities/user.entity';
 import { NotificationService } from '../notification/notification.service';
+import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { CreateRestockAlertDto } from './dto/create-restock-alert.dto';
 
@@ -20,13 +20,12 @@ export class RestockAlertsService {
   constructor(
     @InjectRepository(RestockAlert)
     private readonly restockAlertRepository: Repository<RestockAlert>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
     @InjectRepository(ProductOption)
     private readonly productOptionRepository: Repository<ProductOption>,
     private readonly notificationService: NotificationService,
+    private readonly notificationDispatchHelper: NotificationDispatchHelper,
   ) {}
 
   async createAlert(userId: number, productId: number, dto: CreateRestockAlertDto): Promise<RestockAlert> {
@@ -93,7 +92,7 @@ export class RestockAlertsService {
         productOptionId: IsNull(),
         notifiedAt: IsNull(),
       },
-      relations: ['user', 'product'],
+      relations: ['product'],
       order: { createdAt: 'ASC' },
     });
 
@@ -102,10 +101,18 @@ export class RestockAlertsService {
     }
 
     for (const alert of alerts) {
-      await this.notificationService.sendRestockAlert(alert.user.email, {
-        recipientName: alert.user.name,
-        productName: alert.product.name,
-        productUrl: this.buildProductUrl(alert.product.slug),
+      await this.notificationDispatchHelper.dispatch({
+        event: 'restock.alert',
+        userId: alert.userId,
+        resourceId: Number(alert.id),
+        mode: 'await',
+        logger: this.logger,
+        send: (recipient) =>
+          this.notificationService.sendRestockAlert(recipient.email, {
+            recipientName: recipient.name,
+            productName: alert.product.name,
+            productUrl: this.buildProductUrl(alert.product.slug),
+          }),
       });
       alert.notifiedAt = new Date();
       await this.restockAlertRepository.save(alert);

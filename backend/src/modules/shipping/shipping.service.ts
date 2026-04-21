@@ -6,7 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
-import { User } from '../users/entities/user.entity';
 import { MockShippingAdapter } from './adapters/mock-shipping.adapter';
 import { CjShippingAdapter } from './adapters/cj-shipping.adapter';
 import {
@@ -19,6 +18,7 @@ import { TrackShipmentDto } from './dto/track-shipment.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { NotificationService } from '../notification/notification.service';
+import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { ShippingFeeCalculatorService, ShippingFeeQuote } from './services/shipping-fee-calculator.service';
 import { assertShippingStatusTransition } from './policies/shipping-status-transition.policy';
 
@@ -32,9 +32,8 @@ export class ShippingService {
     private readonly shippingRepository: Repository<Shipping>,
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     private readonly notificationService: NotificationService,
+    private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly mockAdapter: MockShippingAdapter,
     private readonly cjAdapter: CjShippingAdapter,
     private readonly shippingFeeCalculator: ShippingFeeCalculatorService,
@@ -118,6 +117,7 @@ export class ShippingService {
 
     void this.notifyShippingUpdate(
       order.userId,
+      orderId,
       order.orderNumber,
       order.recipientName,
       dto.carrier,
@@ -133,23 +133,26 @@ export class ShippingService {
 
   private async notifyShippingUpdate(
     userId: number,
+    orderId: number,
     orderNumber: string,
     recipientName: string,
     carrier: string,
     trackingNumber: string,
   ): Promise<void> {
-    try {
-      const user = await this.userRepository.findOne({ where: { id: userId } });
-      if (!user?.email) return;
-      await this.notificationService.sendShippingUpdate(user.email, {
-        recipientName,
-        orderNumber,
-        carrier,
-        trackingNumber,
-      });
-    } catch (err) {
-      this.logger.warn(`Shipping update email failed: ${String(err)}`);
-    }
+    await this.notificationDispatchHelper.dispatch({
+      event: 'shipping.updated',
+      userId,
+      resourceId: orderId,
+      mode: 'fire-and-forget',
+      logger: this.logger,
+      send: (recipient) =>
+        this.notificationService.sendShippingUpdate(recipient.email, {
+          recipientName,
+          orderNumber,
+          carrier,
+          trackingNumber,
+        }),
+    });
   }
 
   validateTransition(current: ShippingStatus, next: ShippingStatus): void {

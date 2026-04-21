@@ -10,12 +10,12 @@ import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
-import { User } from '../users/entities/user.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { PointsService } from '../points/points.service';
 import { NotificationService } from '../notification/notification.service';
+import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { CouponsService } from '../coupons/coupons.service';
 import { CalculateDiscountDto } from '../coupons/dto/calculate-discount.dto';
 import { ShippingFeeCalculatorService } from '../shipping/services/shipping-fee-calculator.service';
@@ -41,12 +41,11 @@ export class OrdersService {
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly pointsService: PointsService,
     private readonly notificationService: NotificationService,
+    private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly couponsService: CouponsService,
     private readonly shippingFeeCalculator: ShippingFeeCalculatorService,
     private readonly orderEventEmitter: OrderEventEmitter,
@@ -313,7 +312,13 @@ export class OrdersService {
       new OrderCompletedEvent(userId, Number(savedOrder.id), savedOrder.orderNumber, isFirstPurchase),
     );
 
-    void this.notifyOrderCreated(userId, savedOrder.orderNumber, totalPayable, recipientName);
+    void this.notifyOrderCreated(
+      userId,
+      Number(savedOrder.id),
+      savedOrder.orderNumber,
+      totalPayable,
+      recipientName,
+    );
   }
 
   async findAll(userId: number, page = 1, limit = 10): Promise<PaginatedResult<Order>> {
@@ -344,20 +349,23 @@ export class OrdersService {
 
   private async notifyOrderCreated(
     userId: number,
+    orderId: number,
     orderNumber: string,
     totalAmount: number,
     recipientName: string,
   ): Promise<void> {
-    try {
-      const user = await this.userRepository.findOne({ where: { id: userId } });
-      if (!user?.email) return;
-      await this.notificationService.sendOrderConfirmed(user.email, {
-        recipientName,
-        orderNumber,
-        totalAmount,
-      });
-    } catch (err) {
-      this.logger.warn(`Order confirmation email failed: ${String(err)}`);
-    }
+    await this.notificationDispatchHelper.dispatch({
+      event: 'order.confirmed',
+      userId,
+      resourceId: orderId,
+      mode: 'fire-and-forget',
+      logger: this.logger,
+      send: (recipient) =>
+        this.notificationService.sendOrderConfirmed(recipient.email, {
+          recipientName,
+          orderNumber,
+          totalAmount,
+        }),
+    });
   }
 }
