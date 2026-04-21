@@ -25,11 +25,11 @@ export default function MobileBottomNavWrapper({ visible = true }: MobileBottomN
         if (cancelled) return;
 
         const setting = data.find((item) => item.key === 'mobile_bottom_nav_visible');
-        setClientVisible(setting ? setting.value === 'true' : true);
+        setClientVisible(setting ? setting.value === 'true' : false);
       })
       .catch(() => {
         if (!cancelled) {
-          setClientVisible(true);
+          setClientVisible(false);
         }
       });
 

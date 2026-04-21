@@ -117,7 +117,7 @@ export default async function LocaleLayout({
 
   const themeStyle = await getThemeStyle(settingsMap);
 
-  const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible !== 'false';
+  const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible === 'true';
 
   // SSR 단계에서 data-theme 기본값을 locale 기반으로 설정 — hydration mismatch 방지.
   // 클라이언트의 FOUC 스크립트가 localStorage 에 저장된 사용자 선호가 있으면 즉시 덮어씀.

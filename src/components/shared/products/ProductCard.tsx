@@ -190,7 +190,7 @@ function ProductCard({
             onClick={handleAddToCart}
             disabled={isCartLoading}
             className={cn(
-              'mt-auto flex w-full items-center justify-center gap-2 border border-border py-2',
+              'mt-auto flex w-full items-center justify-center gap-2 border border-divider-soft py-2',
               'typo-button text-foreground transition-colors',
               'hover:bg-foreground hover:text-background disabled:cursor-not-allowed',
             )}

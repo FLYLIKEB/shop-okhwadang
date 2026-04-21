@@ -50,13 +50,27 @@ describe('MobileBottomNavWrapper', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('설정 조회 실패 시 기본값으로 렌더링한다', async () => {
-    mockGetAll.mockRejectedValue(new Error('network'));
+  it('설정이 없으면 기본값으로 숨긴다', async () => {
+    mockGetAll.mockResolvedValue([]);
 
-    render(<MobileBottomNavWrapper />);
+    const { container } = render(<MobileBottomNavWrapper />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('mobile-bottom-nav')).toBeInTheDocument();
+      expect(mockGetAll).toHaveBeenCalledWith('general');
     });
+
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('설정 조회 실패 시 기본값으로 숨긴다', async () => {
+    mockGetAll.mockRejectedValue(new Error('network'));
+
+    const { container } = render(<MobileBottomNavWrapper />);
+
+    await waitFor(() => {
+      expect(mockGetAll).toHaveBeenCalledWith('general');
+    });
+
+    expect(container.firstChild).toBeNull();
   });
 });
