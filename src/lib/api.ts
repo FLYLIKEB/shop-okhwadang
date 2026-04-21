@@ -222,7 +222,14 @@ class ApiClient {
     }
 
     if (response.status === 403) {
-      throw new Error('접근 권한이 없습니다.');
+      const error = await response.json().catch(() => ({ message: '접근 권한이 없습니다.' }));
+      const message = Array.isArray(error.message)
+        ? error.message.join(', ')
+        : (error.message || '접근 권한이 없습니다.');
+      if (message === 'Forbidden') {
+        throw new Error('접근 권한이 없습니다.');
+      }
+      throw new Error(message);
     }
 
     if (!response.ok) {

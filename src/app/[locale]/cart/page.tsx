@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
@@ -19,6 +19,8 @@ import { cn } from '@/components/ui/utils';
 export default function CartPage() {
   const t = useTranslations('cart');
   const router = useRouter();
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'ko';
   const { isVisible: isNavVisible } = useMobileNav();
   const { isAuthenticated } = useAuth();
   const { items, isLoading, updateQuantity, removeItem } = useCart();
@@ -69,7 +71,7 @@ export default function CartPage() {
     }
     const selectedItems = items.filter((item) => selectedIds.has(item.id));
     sessionStorage.setItem(SESSION_KEYS.CHECKOUT_ITEMS, JSON.stringify(selectedItems));
-    router.push('/checkout');
+    router.push(`/${locale}/checkout`);
   };
 
   if (!isAuthenticated) {
@@ -78,7 +80,7 @@ export default function CartPage() {
         <EmptyState
           title={t('requireLogin')}
           description={t('requireLoginDescription')}
-          action={{ label: t('loginAction'), onClick: () => router.push('/login') }}
+          action={{ label: t('loginAction'), onClick: () => router.push(`/${locale}/login`) }}
         />
       </div>
     );
@@ -105,7 +107,7 @@ export default function CartPage() {
         <EmptyState
           title={t('empty')}
           description={t('emptyDescription')}
-          action={{ label: t('continueShopping'), onClick: () => router.push('/products') }}
+          action={{ label: t('continueShopping'), onClick: () => router.push(`/${locale}/products`) }}
         />
       </div>
     );

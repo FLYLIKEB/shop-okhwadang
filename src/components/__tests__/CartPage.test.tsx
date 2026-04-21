@@ -35,6 +35,7 @@ vi.mock('next-intl', () => ({
 const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+  useParams: () => ({ locale: 'ko' }),
 }));
 
 // ---- sonner ----
