@@ -194,9 +194,9 @@ function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: 
           {t('orderTracking')}
         </Link>
       </div>
-      <div className="mt-4">
-        <LanguageSelector />
-        <ThemeToggle className="-ml-2 mt-1" />
+      <div className="mt-4 flex items-center justify-between">
+        <LanguageSelector variant="inline" />
+        <ThemeToggle />
       </div>
     </div>
   );
