@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 import Stripe from 'stripe';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BadGatewayException } from '@nestjs/common';
 import {
   PaymentGateway,
@@ -10,14 +10,22 @@ import {
   PartialCancelParams,
   PartialCancelResult,
 } from '../interfaces/payment-gateway.interface';
+import { PAYMENT_CONFIG, PaymentConfig } from '../../../config/payment.config';
 
 @Injectable()
 export class StripePaymentAdapter implements PaymentGateway {
   private readonly logger = new Logger(StripePaymentAdapter.name);
   private readonly stripe: Stripe | null;
+  private readonly publishableKey: string;
+  private readonly webhookSecret: string;
 
-  constructor() {
-    const secretKey = process.env.STRIPE_SECRET_KEY;
+  constructor(
+    @Inject(PAYMENT_CONFIG)
+    config: PaymentConfig,
+  ) {
+    const secretKey = config.stripe.secretKey;
+    this.publishableKey = config.stripe.publishableKey;
+    this.webhookSecret = config.stripe.webhookSecret;
     if (secretKey) {
       this.stripe = new Stripe(secretKey);
     } else {
@@ -31,14 +39,6 @@ export class StripePaymentAdapter implements PaymentGateway {
       throw new BadGatewayException('Stripe is not configured');
     }
     return this.stripe;
-  }
-
-  private get publishableKey(): string {
-    return process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
-  }
-
-  private get webhookSecret(): string {
-    return process.env.STRIPE_WEBHOOK_SECRET ?? '';
   }
 
   async prepare(orderId: string, amount: number): Promise<PrepareResult> {

@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { JwtStrategy } from './jwt.strategy';
 import { User } from '../../users/entities/user.entity';
 import { TokenBlacklistService } from '../token-blacklist.service';
+import { createAuthConfig } from '../../../config/auth.config';
 
 const mockUserRepository = {
   findOne: jest.fn(),
@@ -18,18 +19,19 @@ describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
 
   beforeEach(() => {
-    process.env.JWT_SECRET = 'test-secret';
-    process.env.JWT_PUBLIC_KEY = 'test-public-key';
     jest.clearAllMocks();
 
     strategy = new JwtStrategy(
       mockUserRepository as unknown as Repository<User>,
       mockTokenBlacklistService as unknown as TokenBlacklistService,
+      createAuthConfig({
+        NODE_ENV: 'development',
+        JWT_SECRET: 'test-secret',
+        JWT_PRIVATE_KEY: 'test-private-key',
+        JWT_PUBLIC_KEY: 'test-public-key',
+        FRONTEND_URL: 'https://frontend.test',
+      }),
     );
-  });
-
-  afterEach(() => {
-    delete process.env.JWT_PUBLIC_KEY;
   });
 
   describe('validate()', () => {

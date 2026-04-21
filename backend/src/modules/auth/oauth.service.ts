@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
   Logger,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
@@ -15,6 +16,7 @@ import {
   OAuthProvider,
 } from '../users/entities/user-authentication.entity';
 import { TokenIssuerService } from './services/token-issuer.service';
+import { AUTH_CONFIG, AuthConfig } from '../../config/auth.config';
 
 export interface OAuthAuthResponse {
   accessToken: string;
@@ -66,6 +68,8 @@ export class OAuthService {
     private readonly httpService: HttpService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    @Inject(AUTH_CONFIG)
+    private readonly authConfig: AuthConfig,
   ) {}
 
   async disconnect(userId: number, provider: OAuthProvider): Promise<void> {
@@ -198,9 +202,9 @@ export class OAuthService {
     try {
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
-        client_id: process.env.KAKAO_CLIENT_ID ?? '',
-        client_secret: process.env.KAKAO_CLIENT_SECRET ?? '',
-        redirect_uri: process.env.KAKAO_REDIRECT_URI ?? '',
+        client_id: this.authConfig.oauth.kakao.clientId,
+        client_secret: this.authConfig.oauth.kakao.clientSecret,
+        redirect_uri: this.authConfig.oauth.kakao.redirectUri,
         code,
       });
 
@@ -234,9 +238,9 @@ export class OAuthService {
     try {
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
-        client_id: process.env.GOOGLE_CLIENT_ID ?? '',
-        client_secret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI ?? '',
+        client_id: this.authConfig.oauth.google.clientId,
+        client_secret: this.authConfig.oauth.google.clientSecret,
+        redirect_uri: this.authConfig.oauth.google.redirectUri,
         code,
       });
 

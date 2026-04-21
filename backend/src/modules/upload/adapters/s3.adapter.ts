@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { StorageAdapter, UploadedFile } from '../interfaces/storage.interface';
+import { STORAGE_CONFIG, StorageConfig } from '../../../config/storage.config';
 
 @Injectable()
 export class S3StorageAdapter implements StorageAdapter {
@@ -14,16 +15,19 @@ export class S3StorageAdapter implements StorageAdapter {
   private readonly region: string;
   private readonly cdnUrl: string | null;
 
-  constructor() {
-    this.bucket = process.env.AWS_S3_BUCKET_NAME ?? '';
-    this.region = process.env.AWS_REGION ?? 'ap-northeast-2';
-    this.cdnUrl = process.env.AWS_CDN_URL ?? null;
+  constructor(
+    @Inject(STORAGE_CONFIG)
+    config: StorageConfig,
+  ) {
+    this.bucket = config.s3.bucket;
+    this.region = config.s3.region;
+    this.cdnUrl = config.s3.cdnUrl;
 
     this.client = new S3Client({
       region: this.region,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
+        accessKeyId: config.s3.accessKeyId,
+        secretAccessKey: config.s3.secretAccessKey,
       },
     });
 

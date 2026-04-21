@@ -1,5 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EmailMessage, EmailProvider, EmailSendResult } from '../interfaces/email-provider.interface';
+import {
+  NOTIFICATION_CONFIG,
+  NotificationConfig,
+} from '../../../config/notification.config';
 
 @Injectable()
 export class ResendEmailAdapter implements EmailProvider {
@@ -7,9 +11,12 @@ export class ResendEmailAdapter implements EmailProvider {
   private readonly apiKey: string;
   private readonly fromAddress: string;
 
-  constructor() {
-    this.apiKey = process.env.RESEND_API_KEY ?? '';
-    this.fromAddress = process.env.EMAIL_FROM ?? 'no-reply@okhwadang.com';
+  constructor(
+    @Inject(NOTIFICATION_CONFIG)
+    config: NotificationConfig,
+  ) {
+    this.apiKey = config.resend.apiKey;
+    this.fromAddress = config.resend.fromAddress;
     if (!this.apiKey) {
       this.logger.warn('RESEND_API_KEY not set — ResendEmailAdapter will fail on send.');
     }
