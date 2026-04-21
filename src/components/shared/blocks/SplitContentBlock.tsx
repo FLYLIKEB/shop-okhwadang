@@ -52,8 +52,8 @@ export default function SplitContentBlock({ content }: Props) {
     <div ref={sectionRef} className={cn(bgClass)}>
       <div
         className={cn(
-          'mx-auto flex flex-col justify-center',
-          isLarge ? 'max-w-3xl px-12 py-24 lg:px-20 lg:py-32' : isCompact ? 'max-w-2xl px-8 py-16 lg:px-14 lg:py-24' : 'max-w-xl px-10 py-20 lg:px-16 lg:py-28'
+          'mx-auto flex flex-col justify-center w-full',
+          isLarge ? 'max-w-5xl px-8 py-24 md:px-16 lg:px-24 lg:py-32' : isCompact ? 'max-w-4xl px-8 py-16 md:px-12 lg:px-20 lg:py-24' : 'max-w-4xl px-8 py-20 md:px-12 lg:px-20 lg:py-28'
         )}
       >
         {subtitle && (
