@@ -18,17 +18,16 @@ import { User } from '../users/entities/user.entity';
 import { UserAuthentication } from '../users/entities/user-authentication.entity';
 import { AuditLogModule } from '../audit-logs/audit-log.module';
 import { AuthEventsModule } from './auth-events.module';
-import {
-  AUTH_CONFIG,
-  AuthConfig,
-  authConfigProvider,
-} from '../../config/auth.config';
+import { AUTH_CONFIG, AuthConfig } from '../../config/auth.config';
+import { AuthConfigModule } from '../../config/auth-config.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserAuthentication, PasswordResetToken, TokenBlacklist, VerificationToken]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
+    AuthConfigModule,
     JwtModule.registerAsync({
+      imports: [AuthConfigModule],
       inject: [AUTH_CONFIG],
       useFactory: (authConfig: AuthConfig) => ({
         privateKey: authConfig.jwt.privateKey,
@@ -44,7 +43,6 @@ import {
   ],
   controllers: [AuthController],
   providers: [
-    authConfigProvider,
     AuthService,
     OAuthService,
     TokenIssuerService,
