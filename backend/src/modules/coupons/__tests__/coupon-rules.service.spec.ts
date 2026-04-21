@@ -9,6 +9,7 @@ import { MembershipEventEmitter } from '../../membership/membership-event.emitte
 import { AuthEventEmitter } from '../../auth/auth-event.emitter';
 import { OrderEventEmitter } from '../../orders/order-event.emitter';
 import { User } from '../../users/entities/user.entity';
+import { SchedulerLockService } from '../../../common/services/scheduler-lock.service';
 
 const makeCouponRule = (overrides: Partial<CouponRule> = {}): CouponRule =>
   Object.assign(new CouponRule(), {
@@ -57,8 +58,18 @@ describe('CouponRulesService', () => {
     query: jest.fn(),
   };
 
+  const mockSchedulerLockService = {
+    runWithLock: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockSchedulerLockService.runWithLock.mockImplementation(
+      async (
+        _policy: { lockName: string; ttlMinutes: number },
+        task: () => Promise<void>,
+      ) => task(),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -70,6 +81,7 @@ describe('CouponRulesService', () => {
         { provide: AuthEventEmitter, useValue: mockAuthEvents },
         { provide: OrderEventEmitter, useValue: mockOrderEvents },
         { provide: DataSource, useValue: mockDataSource },
+        { provide: SchedulerLockService, useValue: mockSchedulerLockService },
       ],
     }).compile();
 

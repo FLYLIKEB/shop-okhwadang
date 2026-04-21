@@ -15,6 +15,7 @@ import { MembershipEventEmitter } from '../membership/membership-event.emitter';
 import { AuthEventEmitter } from '../auth/auth-event.emitter';
 import { OrderEventEmitter } from '../orders/order-event.emitter';
 import { User } from '../users/entities/user.entity';
+import { SchedulerLockService } from '../../common/services/scheduler-lock.service';
 
 @Injectable()
 export class CouponRulesService implements OnModuleInit {
@@ -30,6 +31,7 @@ export class CouponRulesService implements OnModuleInit {
     private readonly authEvents: AuthEventEmitter,
     private readonly orderEvents: OrderEventEmitter,
     private readonly dataSource: DataSource,
+    private readonly schedulerLockService: SchedulerLockService,
   ) {}
 
   onModuleInit(): void {
@@ -105,14 +107,9 @@ export class CouponRulesService implements OnModuleInit {
   // Birthday coupon batch — runs daily at midnight
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleBirthdayCoupons(): Promise<void> {
-    const lockName = 'cron:birthday-coupons';
-    const acquired = await this.acquireLock(lockName, 55);
-    if (!acquired) {
-      this.logger.debug(`[${lockName}] Skipped - another instance holds the lock`);
-      return;
-    }
-
-    try {
+    await this.schedulerLockService.runWithLock(
+      { lockName: 'cron:birthday-coupons', ttlMinutes: 55 },
+      async () => {
       const rules = await this.couponRuleRepo.find({
         where: { trigger: CouponRuleTrigger.BIRTHDAY, active: true },
       });
@@ -156,11 +153,8 @@ export class CouponRulesService implements OnModuleInit {
       }
 
       this.logger.log(`[cron:birthday-coupons] Completed for ${birthdayUsers.length} users`);
-    } catch (err) {
-      this.logger.error(`[cron:birthday-coupons] Error: ${String(err)}`);
-    } finally {
-      await this.releaseLock(lockName);
-    }
+      },
+    );
   }
 
   // Admin CRUD
@@ -207,43 +201,5 @@ export class CouponRulesService implements OnModuleInit {
     await this.couponRuleRepo.remove(rule);
     this.logger.log(`CouponRule deleted: id=${id}`);
     return { message: '삭제되었습니다.' };
-  }
-
-  private async acquireLock(lockName: string, ttlMinutes: number): Promise<boolean> {
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + ttlMinutes * 60 * 1000);
-
-    try {
-      await this.dataSource.query(
-        `INSERT INTO scheduler_locks (lock_name, instance_id, acquired_at, expires_at)
-         VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           acquired_at = IF(expires_at <= NOW(), VALUES(acquired_at), acquired_at),
-           expires_at = IF(expires_at <= NOW(), VALUES(expires_at), expires_at),
-           instance_id = IF(expires_at <= NOW(), VALUES(instance_id), instance_id)`,
-        [lockName, process.env.INSTANCE_ID || 'default', now, expiresAt],
-      );
-
-      const lock = await this.dataSource.query(
-        `SELECT instance_id FROM scheduler_locks WHERE lock_name = ? AND expires_at > NOW()`,
-        [lockName],
-      );
-
-      return lock.length > 0 && lock[0].instance_id === (process.env.INSTANCE_ID || 'default');
-    } catch (err) {
-      this.logger.error(`Failed to acquire lock ${lockName}: ${String(err)}`);
-      return false;
-    }
-  }
-
-  private async releaseLock(lockName: string): Promise<void> {
-    try {
-      await this.dataSource.query(
-        `DELETE FROM scheduler_locks WHERE lock_name = ? AND instance_id = ?`,
-        [lockName, process.env.INSTANCE_ID || 'default'],
-      );
-    } catch (err) {
-      this.logger.error(`Failed to release lock ${lockName}: ${String(err)}`);
-    }
   }
 }

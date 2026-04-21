@@ -13,6 +13,7 @@ import { SchedulerService } from './scheduler.service';
 import { SettingsModule } from '../settings/settings.module';
 import { NotificationModule } from '../notification/notification.module';
 import { MembershipModule } from '../membership/membership.module';
+import { SchedulerLockService } from '../../common/services/scheduler-lock.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { MembershipModule } from '../membership/membership.module';
     NotificationModule,
     MembershipModule,
   ],
-  providers: [SchedulerService],
+  providers: [SchedulerService, SchedulerLockService],
   exports: [SchedulerService],
 })
 export class SchedulerModule {}
