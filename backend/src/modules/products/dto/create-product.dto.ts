@@ -102,7 +102,7 @@ export class CreateProductDto {
   @IsBoolean({ message: '추천 상품 여부는 불리언이어야 합니다.' })
   isFeatured?: boolean;
 
-  @ApiPropertyOptional({ example: 'Okhwadang Pu-erh Tea', description: '상품명 (영문)' })
+  @ApiPropertyOptional({ example: 'Ockhwadang Pu-erh Tea', description: '상품명 (영문)' })
   @IsOptional()
   @IsString({ message: '영문 상품명은 문자열이어야 합니다.' })
   @MaxLength(255, { message: '영문 상품명은 최대 255자까지 입력 가능합니다.' })

@@ -32,9 +32,9 @@ export class UpsertRemainingPageBlockEnFields1777200000000 implements MigrationI
     const splitBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 6 AND type = 'split_content' LIMIT 1`);
     if (splitBlock.length > 0) {
       const content = splitBlock[0].content;
-      content.title_en = 'The Okhwadang Story';
+      content.title_en = 'The Ockhwadang Story';
       content.subtitle_en = 'Our Story';
-      content.description_en = 'Okhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/>To carry the spirit of <strong>600 years of Zisha ceramic tradition</strong> and the depth of ancient-tree pu-erh, we import <strong>directly from the source</strong> without middlemen.';
+      content.description_en = 'Ockhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/>To carry the spirit of <strong>600 years of Zisha ceramic tradition</strong> and the depth of ancient-tree pu-erh, we import <strong>directly from the source</strong> without middlemen.';
       content.cta_text_en = 'Learn More';
       await updateBlockContent(splitBlock[0].id, content);
     }
@@ -88,7 +88,7 @@ export class UpsertRemainingPageBlockEnFields1777200000000 implements MigrationI
     const exhText1 = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 7 AND type = 'text_content' ORDER BY sort_order LIMIT 1`);
     if (exhText1.length > 0) {
       const content = exhText1[0].content;
-      content.html_en = '<h2>From Yixing Masters to Okhwadang</h2><p>Introducing limited-edition Zhuni teapots crafted with Zhuni clay from Fujian Province. Experience the exquisite crimson glaze and intricate details that only master craftsmen can achieve. This exhibition features a curated selection of Xishi, Zhuxing, and Shipiao Zhuni teapots in various forms.</p>';
+      content.html_en = '<h2>From Yixing Masters to Ockhwadang</h2><p>Introducing limited-edition Zhuni teapots crafted with Zhuni clay from Fujian Province. Experience the exquisite crimson glaze and intricate details that only master craftsmen can achieve. This exhibition features a curated selection of Xishi, Zhuxing, and Shipiao Zhuni teapots in various forms.</p>';
       await updateBlockContent(exhText1[0].id, content);
     }
 
@@ -103,7 +103,7 @@ export class UpsertRemainingPageBlockEnFields1777200000000 implements MigrationI
     if (exhPromoBlock.length > 0) {
       const content = exhPromoBlock[0].content;
       content.title_en = 'Beginner Tea Set 14% Off';
-      content.subtitle_en = 'Okhwadang starter set — 280,000 won → 240,000 won';
+      content.subtitle_en = 'Ockhwadang starter set — 280,000 won → 240,000 won';
       content.cta_text_en = 'View Deals';
       await updateBlockContent(exhPromoBlock[0].id, content);
     }
@@ -125,9 +125,9 @@ export class UpsertRemainingPageBlockEnFields1777200000000 implements MigrationI
     const aboutSplitBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 8 AND type = 'split_content' LIMIT 1`);
     if (aboutSplitBlock.length > 0) {
       const content = aboutSplitBlock[0].content;
-      content.title_en = 'Okhwadang';
+      content.title_en = 'Ockhwadang';
       content.subtitle_en = 'Teapot · Pu-erh · Tea Accessories';
-      content.description_en = 'Okhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/><strong>600 years of tradition</strong> in Zisha ceramics and ancient-tree pu-erh, delivered directly from the source without middlemen.<br/><br/>Every detail of your tea experience matters to us. That is the Okhwadang way.';
+      content.description_en = 'Ockhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/><strong>600 years of tradition</strong> in Zisha ceramics and ancient-tree pu-erh, delivered directly from the source without middlemen.<br/><br/>Every detail of your tea experience matters to us. That is the Ockhwadang way.';
       content.cta_text_en = 'Our Story';
       await updateBlockContent(aboutSplitBlock[0].id, content);
     }
@@ -158,14 +158,14 @@ export class UpsertRemainingPageBlockEnFields1777200000000 implements MigrationI
     const contactBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 9 AND type = 'text_content' LIMIT 1`);
     if (contactBlock.length > 0) {
       const content = contactBlock[0].content;
-      content.html_en = '<h1>Contact Us</h1><p>If you have any questions about Okhwadang, please reach out using the form below.<br/>We will respond within 1-2 business days.</p><p><strong>Business Hours</strong>: Mon-Fri 10:00 ~ 18:00 (Lunch 12:00 ~ 13:00)<br/><strong>Email</strong>: help@ockhwadang.com</p>';
+      content.html_en = '<h1>Contact Us</h1><p>If you have any questions about Ockhwadang, please reach out using the form below.<br/>We will respond within 1-2 business days.</p><p><strong>Business Hours</strong>: Mon-Fri 10:00 ~ 18:00 (Lunch 12:00 ~ 13:00)<br/><strong>Email</strong>: help@ockhwadang.com</p>';
       await updateBlockContent(contactBlock[0].id, content);
     }
 
     const shippingBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 2 AND type = 'text_content' LIMIT 1`);
     if (shippingBlock.length > 0) {
       const content = shippingBlock[0].content;
-      content.html_en = '<h2>Shipping Information</h2><p>Okhwadang ships orders within 2-3 business days after order confirmation. (Excluding weekends and holidays)</p><h3>Shipping Costs</h3><ul><li><strong>Standard Shipping:</strong> 3,000 KRW (additional fees may apply for remote areas)</li><li><strong>Free Shipping:</strong> Orders over 50,000 KRW</li><li><strong>Carrier:</strong> CJ Korea Express</li><li><strong>Tracking:</strong> Available on your order details page.</li></ul><h3>Delivery Time</h3><ul><li><strong>Seoul/Gyeonggi:</strong> 1-2 days</li><li><strong>Other areas:</strong> 2-3 days</li><li><strong>Remote areas:</strong> 3-5 days</li></ul><p>Please contact customer service if you experience any shipping delays or issues.</p>';
+      content.html_en = '<h2>Shipping Information</h2><p>Ockhwadang ships orders within 2-3 business days after order confirmation. (Excluding weekends and holidays)</p><h3>Shipping Costs</h3><ul><li><strong>Standard Shipping:</strong> 3,000 KRW (additional fees may apply for remote areas)</li><li><strong>Free Shipping:</strong> Orders over 50,000 KRW</li><li><strong>Carrier:</strong> CJ Korea Express</li><li><strong>Tracking:</strong> Available on your order details page.</li></ul><h3>Delivery Time</h3><ul><li><strong>Seoul/Gyeonggi:</strong> 1-2 days</li><li><strong>Other areas:</strong> 2-3 days</li><li><strong>Remote areas:</strong> 3-5 days</li></ul><p>Please contact customer service if you experience any shipping delays or issues.</p>';
       await updateBlockContent(shippingBlock[0].id, content);
     }
 
@@ -179,14 +179,14 @@ export class UpsertRemainingPageBlockEnFields1777200000000 implements MigrationI
     const termsBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 4 AND type = 'text_content' LIMIT 1`);
     if (termsBlock.length > 0) {
       const content = termsBlock[0].content;
-      content.html_en = '<h2>Terms of Service</h2><p>These terms govern your use of the Okhwadang online shopping service ("Service"). By using the Service, you agree to these terms.</p><h3>Article 1 (Purpose)</h3><p>These terms establish general conditions for using the online shopping service provided by Okhwadang ("Company").</p><h3>Article 2 (Formation of Agreement)</h3><p>A service agreement is formed when the user agrees to the service terms and begins using the Service.</p><h3>Article 3 (Service Provision and Changes)</h3><p>The Company may change service content, hours, or suspend the Service with prior notice.</p><h3>Article 4 (Payments)</h3><p>Payment for services can be made through payment methods designated by the Company, including card payments and bank transfers.</p><h3>Article 5 (Refunds)</h3><p>Payment cancellations and refunds can be requested within 7 days of receiving the product, subject to the Company\'s refund policy.</p><h3>Article 6 (Liability)</h3><p>The Company shall diligently fulfill its duty of care in providing services but is not liable for service interruptions due to force majeure.</p><h3>Article 7 (Dispute Resolution)</h3><p>Disputes related to service use shall be resolved through the Company\'s customer service. If no agreement is reached, legal action may be taken in the appropriate court.</p>';
+      content.html_en = '<h2>Terms of Service</h2><p>These terms govern your use of the Ockhwadang online shopping service ("Service"). By using the Service, you agree to these terms.</p><h3>Article 1 (Purpose)</h3><p>These terms establish general conditions for using the online shopping service provided by Ockhwadang ("Company").</p><h3>Article 2 (Formation of Agreement)</h3><p>A service agreement is formed when the user agrees to the service terms and begins using the Service.</p><h3>Article 3 (Service Provision and Changes)</h3><p>The Company may change service content, hours, or suspend the Service with prior notice.</p><h3>Article 4 (Payments)</h3><p>Payment for services can be made through payment methods designated by the Company, including card payments and bank transfers.</p><h3>Article 5 (Refunds)</h3><p>Payment cancellations and refunds can be requested within 7 days of receiving the product, subject to the Company\'s refund policy.</p><h3>Article 6 (Liability)</h3><p>The Company shall diligently fulfill its duty of care in providing services but is not liable for service interruptions due to force majeure.</p><h3>Article 7 (Dispute Resolution)</h3><p>Disputes related to service use shall be resolved through the Company\'s customer service. If no agreement is reached, legal action may be taken in the appropriate court.</p>';
       await updateBlockContent(termsBlock[0].id, content);
     }
 
     const privacyBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 5 AND type = 'text_content' LIMIT 1`);
     if (privacyBlock.length > 0) {
       const content = privacyBlock[0].content;
-      content.html_en = '<h2>Privacy Policy</h2><p>Okhwadang ("Company") treats your personal information with care and complies with relevant laws including the Act on Promotion of Information and Communications Network Utilization and Information Protection.</p><h3>1. Personal Information Collected</h3><ul><li><strong>Required:</strong> Name, email, phone, address</li><li><strong>Optional:</strong> Date of birth, gender (at registration)</li><li><strong>Auto-collected:</strong> IP address, cookies, visit history</li></ul><h3>2. Purpose of Collection and Use</h3><p>Collected personal information is used for service provision, contract fulfillment, customer management, marketing, and advertising.</p><h3>3. Retention Period</h3><p>Your personal information is retained until account deletion. Some information may be retained per legal requirements. (Contract fulfillment: 5 years, Consumer disputes: 3 years)</p><h3>4. Third-Party Sharing</h3><p>The Company does not share your personal information with third parties without your consent, except as required by law or for essential service provision.</p><h3>5. User Rights</h3><p>You have rights to access, correct, delete, or request suspension of processing of your personal information. Contact our customer service anytime to exercise these rights.</p><h3>6. Privacy Officer</h3><p>Officer: Okhwadang Customer Center | Email: help@okhwandang.com</p>';
+      content.html_en = '<h2>Privacy Policy</h2><p>Okhwadang ("Company") treats your personal information with care and complies with relevant laws including the Act on Promotion of Information and Communications Network Utilization and Information Protection.</p><h3>1. Personal Information Collected</h3><ul><li><strong>Required:</strong> Name, email, phone, address</li><li><strong>Optional:</strong> Date of birth, gender (at registration)</li><li><strong>Auto-collected:</strong> IP address, cookies, visit history</li></ul><h3>2. Purpose of Collection and Use</h3><p>Collected personal information is used for service provision, contract fulfillment, customer management, marketing, and advertising.</p><h3>3. Retention Period</h3><p>Your personal information is retained until account deletion. Some information may be retained per legal requirements. (Contract fulfillment: 5 years, Consumer disputes: 3 years)</p><h3>4. Third-Party Sharing</h3><p>The Company does not share your personal information with third parties without your consent, except as required by law or for essential service provision.</p><h3>5. User Rights</h3><p>You have rights to access, correct, delete, or request suspension of processing of your personal information. Contact our customer service anytime to exercise these rights.</p><h3>6. Privacy Officer</h3><p>Officer: Ockhwadang Customer Center | Email: help@okhwandang.com</p>';
       await updateBlockContent(privacyBlock[0].id, content);
     }
   }

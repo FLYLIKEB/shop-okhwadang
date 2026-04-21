@@ -89,7 +89,7 @@
     "customerService": "Customer Service",
     "company": "Company",
     "shop": "Shop",
-    "okhwadang": "Okhwadang",
+    "okhwadang": "Ockhwadang",
     "tagline": "Yixing Teapots · Pu-erh Tea · Tea Ware",
     "specialty": "Specialty Store",
     "support": "Customer Support",
@@ -102,7 +102,7 @@
     "collection": "Collection",
     "archive": "Archive",
     "journal": "Journal",
-    "copyright": "© {year} Okhwadang. All rights reserved."
+    "copyright": "© {year} Ockhwadang. All rights reserved."
   },
   "auth": {
     "email": "Email",
@@ -589,7 +589,7 @@
       "pages": "Pages",
       "theme": "Theme",
       "settings": "Settings",
-      "shopName": "Okhwadang",
+      "shopName": "Ockhwadang",
       "adminPanel": "Admin Panel",
       "backToShop": "Back to Shop"
     },
@@ -634,7 +634,7 @@
     "adminPages": "Page Management"
   },
   "home": {
-    "metaTitle": "Okhwadang — Official Store",
+    "metaTitle": "Ockhwadang — Official Store",
     "metaDescription": "Discover a curated selection of Yixing teapots, pu-erh tea and tea ware.",
     "featuredProducts": "Featured Products",
     "popularProducts": "Popular Products",
@@ -643,7 +643,7 @@
     "promoCta": "Shop Now",
     "hero": {
       "bannerLabel": "Main banner",
-      "primaryLabel": "Okhwadang Tea Room",
+      "primaryLabel": "Ockhwadang Tea Room",
       "prevSlide": "Previous slide",
       "nextSlide": "Next slide",
       "goToSlide": "Go to slide {index}"
@@ -701,7 +701,7 @@
   "collectionPage": {
     "metaTitle": "Collection — Curated by Clay & Form",
     "metaDescription": "Explore Yixing teapots by clay and form. Zhuni · Duani · Zini · Heini · Qingshuini · Luni collections and curated shapes including Xi Shi, Shibiao, Inwang, Dezhong, and Flat.",
-    "metaOgTitle": "Collection — Okhwadang",
+    "metaOgTitle": "Collection — Ockhwadang",
     "metaOgDescription": "Yixing teapots curated by clay and form.",
     "heroEyebrow": "Collection",
     "heroTitle": "Curated by Clay & Form",
@@ -722,7 +722,7 @@
   "journalPage": {
     "heroEyebrow": "Journal",
     "heroTitle": "Stories of Tea, Clay, and People",
-    "heroDesc": "The depth of tea culture, how to care for your teapot, artful tea settings, and news from Okhwadang — for those who love tea."
+    "heroDesc": "The depth of tea culture, how to care for your teapot, artful tea settings, and news from Ockhwadang — for those who love tea."
   },
   "nav": {
     "products": "Products",

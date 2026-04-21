@@ -36,10 +36,10 @@ export class AddSiteSettingsValueEn1777000000000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO \`site_settings\` (\`setting_key\`, \`value\`, \`value_en\`, \`group\`, \`label\`, \`input_type\`, \`options\`, \`default_value\`, \`sort_order\`)
       VALUES
-        ('brand_name',        '옥화당',                 'Okhwadang',                            'brand', '브랜드명',       'text', NULL, '옥화당',                 100),
+        ('brand_name',        '옥화당',                 'Ockhwadang',                            'brand', '브랜드명',       'text', NULL, '옥화당',                 100),
         ('brand_tagline',     '자연을 담은 그릇',        'Vessels that hold nature',             'brand', '브랜드 태그라인', 'text', NULL, '자연을 담은 그릇',        101),
-        ('footer_copyright',  '© 2026 옥화당. All rights reserved.', '© 2026 Okhwadang. All rights reserved.', 'brand', '푸터 저작권',    'text', NULL, '© 2026 옥화당. All rights reserved.', 102),
-        ('logo_alt',          '옥화당 로고',             'Okhwadang Logo',                       'brand', '로고 alt 텍스트', 'text', NULL, '옥화당 로고',            103)
+        ('footer_copyright',  '© 2026 옥화당. All rights reserved.', '© 2026 Ockhwadang. All rights reserved.', 'brand', '푸터 저작권',    'text', NULL, '© 2026 옥화당. All rights reserved.', 102),
+        ('logo_alt',          '옥화당 로고',             'Ockhwadang Logo',                       'brand', '로고 alt 텍스트', 'text', NULL, '옥화당 로고',            103)
       ON DUPLICATE KEY UPDATE
         \`value_en\` = VALUES(\`value_en\`)
     `);

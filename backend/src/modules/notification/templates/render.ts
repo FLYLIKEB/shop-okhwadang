@@ -66,7 +66,7 @@ export function renderOrderConfirmed(ctx: OrderConfirmedContext): RenderedEmail 
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? `[옥화당] 주문이 접수되었습니다 (${ctx.orderNumber})`
-    : `[Okhwadang] Order received (${ctx.orderNumber})`;
+    : `[Ockhwadang] Order received (${ctx.orderNumber})`;
   const text = isKo
     ? `${ctx.recipientName}님, 주문 ${ctx.orderNumber}이(가) 접수되었습니다. 결제금액: ${formatKRW(ctx.totalAmount)}`
     : `Hi ${ctx.recipientName}, your order ${ctx.orderNumber} has been received. Total: ${formatKRW(ctx.totalAmount)}`;
@@ -78,7 +78,7 @@ export function renderPaymentConfirmed(ctx: PaymentConfirmedContext): RenderedEm
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? `[옥화당] 결제가 완료되었습니다 (${ctx.orderNumber})`
-    : `[Okhwadang] Payment confirmed (${ctx.orderNumber})`;
+    : `[Ockhwadang] Payment confirmed (${ctx.orderNumber})`;
   const text = isKo
     ? `${ctx.recipientName}님, 주문 ${ctx.orderNumber}의 결제(${ctx.method})가 완료되었습니다. 금액: ${formatKRW(ctx.amount)}`
     : `Hi ${ctx.recipientName}, payment for order ${ctx.orderNumber} via ${ctx.method} is confirmed. Amount: ${formatKRW(ctx.amount)}`;
@@ -90,7 +90,7 @@ export function renderShippingUpdate(ctx: ShippingUpdateContext): RenderedEmail 
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? `[옥화당] 배송이 시작되었습니다 (${ctx.orderNumber})`
-    : `[Okhwadang] Shipment started (${ctx.orderNumber})`;
+    : `[Ockhwadang] Shipment started (${ctx.orderNumber})`;
   const text = isKo
     ? `${ctx.recipientName}님, 주문 ${ctx.orderNumber}이(가) 발송되었습니다. 택배사: ${ctx.carrier}, 송장번호: ${ctx.trackingNumber}`
     : `Hi ${ctx.recipientName}, order ${ctx.orderNumber} has shipped. Carrier: ${ctx.carrier}, Tracking: ${ctx.trackingNumber}`;
@@ -102,7 +102,7 @@ export function renderInquiryAnswered(ctx: InquiryAnsweredContext): RenderedEmai
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? `[옥화당] 문의에 답변이 등록되었습니다`
-    : `[Okhwadang] Your inquiry has been answered`;
+    : `[Ockhwadang] Your inquiry has been answered`;
   const text = isKo
     ? `${ctx.recipientName}님, 문의하신 "${ctx.inquiryTitle}"에 답변이 등록되었습니다.\n\n${ctx.answer}`
     : `Hi ${ctx.recipientName}, your inquiry "${ctx.inquiryTitle}" has been answered.\n\n${ctx.answer}`;
@@ -114,7 +114,7 @@ export function renderPasswordReset(ctx: PasswordResetContext): RenderedEmail {
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? '[옥화당] 비밀번호 재설정 안내'
-    : '[Okhwadang] Reset your password';
+    : '[Ockhwadang] Reset your password';
   const text = isKo
     ? `${ctx.recipientName}님, 아래 링크에서 비밀번호를 재설정해 주세요. 링크는 ${ctx.expiresInMinutes}분 후 만료됩니다.\n\n${ctx.resetUrl}`
     : `Hi ${ctx.recipientName}, use the link below to reset your password. It expires in ${ctx.expiresInMinutes} minutes.\n\n${ctx.resetUrl}`;
@@ -126,7 +126,7 @@ export function renderEmailVerification(ctx: EmailVerificationContext): Rendered
   const isKo = (ctx.locale ?? 'ko') === 'ko';
   const subject = isKo
     ? '[옥화당] 이메일 인증을 완료해 주세요'
-    : '[Okhwadang] Please verify your email';
+    : '[Ockhwadang] Please verify your email';
   const text = isKo
     ? `${ctx.recipientName}님, 아래 링크를 클릭하여 이메일 인증을 완료해 주세요. 링크는 ${ctx.expiresInMinutes}분 후 만료됩니다.\n\n${ctx.verificationUrl}`
     : `Hi ${ctx.recipientName}, click the link below to verify your email address. The link expires in ${ctx.expiresInMinutes} minutes.\n\n${ctx.verificationUrl}`;
@@ -139,7 +139,7 @@ export function renderRestockAlert(ctx: RestockAlertContext): RenderedEmail {
   const optionSuffix = ctx.optionLabel ? (isKo ? ` (${ctx.optionLabel})` : ` (${ctx.optionLabel})`) : '';
   const subject = isKo
     ? `[옥화당] 재입고 알림 — ${ctx.productName}${optionSuffix}`
-    : `[Okhwadang] Restock alert — ${ctx.productName}${optionSuffix}`;
+    : `[Ockhwadang] Restock alert — ${ctx.productName}${optionSuffix}`;
   const text = isKo
     ? `${ctx.recipientName}님, 기다리시던 ${ctx.productName}${optionSuffix} 상품이 재입고되었습니다.\n\n상품 보기: ${ctx.productUrl}`
     : `Hi ${ctx.recipientName}, ${ctx.productName}${optionSuffix} is back in stock.\n\nView product: ${ctx.productUrl}`;

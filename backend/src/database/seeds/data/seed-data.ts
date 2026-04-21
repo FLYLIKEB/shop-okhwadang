@@ -942,18 +942,16 @@ export const navigationItems: SeedNavigationItem[] = [
   { id: 19, group: 'sidebar', label: '기획전', url: '/p/exhibition', sort_order: 10, is_active: true, parent_id: null },
 
   // Footer
-  { id: 20, group: 'footer', label: '고객센터', url: '/pages/support', sort_order: 0, is_active: true, parent_id: null },
-  { id: 21, group: 'footer', label: '자주 묻는 질문', url: '/faq', sort_order: 1, is_active: true, parent_id: null },
-  { id: 22, group: 'footer', label: '배송 안내', url: '/pages/shipping', sort_order: 2, is_active: true, parent_id: null },
-  { id: 23, group: 'footer', label: '반품 및 교환', url: '/pages/returns', sort_order: 3, is_active: true, parent_id: null },
-  { id: 24, group: 'footer', label: '이용약관', url: '/pages/terms', sort_order: 4, is_active: true, parent_id: null },
-  { id: 25, group: 'footer', label: '개인정보처리방침', url: '/pages/privacy', sort_order: 5, is_active: true, parent_id: null },
-  { id: 30, group: 'footer', label: 'Terms of Service', url: '/pages/terms-en', sort_order: 10, is_active: true, parent_id: null },
-  { id: 31, group: 'footer', label: 'Privacy Policy', url: '/pages/privacy-en', sort_order: 11, is_active: true, parent_id: null },
-  { id: 26, group: 'footer', label: '전체 상품', url: '/products', sort_order: 6, is_active: true, parent_id: null },
-  { id: 27, group: 'footer', label: '컬렉션', url: '/collection', sort_order: 7, is_active: true, parent_id: null },
-  { id: 28, group: 'footer', label: 'Archive', url: '/archive', sort_order: 8, is_active: true, parent_id: null },
-  { id: 29, group: 'footer', label: '저널', url: '/journal', sort_order: 9, is_active: true, parent_id: null },
+  { id: 20, group: 'footer', label: '고객센터', labelEn: 'Customer Support', url: '/pages/support', sort_order: 0, is_active: true, parent_id: null },
+  { id: 21, group: 'footer', label: '자주 묻는 질문', labelEn: 'FAQ', url: '/faq', sort_order: 1, is_active: true, parent_id: null },
+  { id: 22, group: 'footer', label: '배송 안내', labelEn: 'Shipping Info', url: '/pages/shipping', sort_order: 2, is_active: true, parent_id: null },
+  { id: 23, group: 'footer', label: '반품 및 교환', labelEn: 'Returns & Exchanges', url: '/pages/returns', sort_order: 3, is_active: true, parent_id: null },
+  { id: 24, group: 'footer', label: '이용약관', labelEn: 'Terms of Service', url: '/pages/terms', sort_order: 4, is_active: true, parent_id: null },
+  { id: 25, group: 'footer', label: '개인정보처리방침', labelEn: 'Privacy Policy', url: '/pages/privacy', sort_order: 5, is_active: true, parent_id: null },
+  { id: 26, group: 'footer', label: '전체 상품', labelEn: 'All Products', url: '/products', sort_order: 6, is_active: true, parent_id: null },
+  { id: 27, group: 'footer', label: '컬렉션', labelEn: 'Collection', url: '/collection', sort_order: 7, is_active: true, parent_id: null },
+  { id: 28, group: 'footer', label: 'Archive', labelEn: 'Archive', url: '/archive', sort_order: 8, is_active: true, parent_id: null },
+  { id: 29, group: 'footer', label: '저널', labelEn: 'Journal', url: '/journal', sort_order: 9, is_active: true, parent_id: null },
 ];
 
 // ============================================================
@@ -1492,11 +1490,11 @@ export const pageBlocks: SeedPageBlock[] = JSON.parse(JSON.stringify([
     type: 'split_content',
     content: {
       title: '옥화당(玉花堂) 이야기',
-      title_en: 'The Okhwadang Story',
+      title_en: 'The Ockhwadang Story',
       subtitle: 'Our Story',
       subtitle_en: 'Our Story',
       description: '옥화당은 중국 의흥(宜興)과 운남(雲南)의 장인들과 직접 교류하며 엄선한 <strong>자사호·보이차·다구</strong>를 국내에 소개하는 전문 D2C 쇼핑몰입니다.<br/><br/><strong>600년 역사</strong>의 자사 도예 문화와 고수차(古樹茶)의 깊은 향미를 그대로 전달하기 위해, 중간 유통 없이 <strong>산지 직수입</strong>을 원칙으로 합니다.',
-      description_en: 'Okhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/>To carry the spirit of <strong>600 years of Zisha ceramic tradition</strong> and the depth of ancient-tree pu-erh, we import <strong>directly from the source</strong> without middlemen.',
+      description_en: 'Ockhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/>To carry the spirit of <strong>600 years of Zisha ceramic tradition</strong> and the depth of ancient-tree pu-erh, we import <strong>directly from the source</strong> without middlemen.',
       cta_text: '브랜드 소개 보기',
       cta_text_en: 'Learn More',
       cta_url: '/p/about',

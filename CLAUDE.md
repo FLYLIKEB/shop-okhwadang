@@ -40,7 +40,7 @@ cd backend && docker compose down -v # Reset dev DB
 ## Issue Tracker
 * Phase 0-7 (Setup → MVP → Core → Payment → Admin → CMS → Polish → Ops)
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Latest merged PR: #585
+* Latest merged PR: #609
 
 ## Rules Reference
 | Subject | File |
