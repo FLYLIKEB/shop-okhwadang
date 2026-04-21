@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl';
+import { cn } from '@/components/ui/utils';
 import { calcDiscount, formatCurrency, type Locale } from '@/utils/currency';
 
 interface PriceDisplayProps {
@@ -6,33 +7,39 @@ interface PriceDisplayProps {
   salePrice: number | null;
   size?: 'sm' | 'md' | 'lg';
   locale?: Locale;
+  className?: string;
 }
 
-export default function PriceDisplay({ price, salePrice, size = 'sm', locale = 'ko' }: PriceDisplayProps) {
+export default function PriceDisplay({
+  price,
+  salePrice,
+  size = 'sm',
+  locale = 'ko',
+  className,
+}: PriceDisplayProps) {
   const t = useTranslations('product');
-  const discountClass = size === 'lg' ? 'text-sm font-bold' : 'text-xs font-bold';
-  const priceClass = size === 'lg' ? 'text-2xl font-bold' : 'text-sm font-bold';
-  const originalClass = size === 'lg' ? 'text-sm' : 'text-xs';
+  const priceClass = size === 'lg' ? 'typo-price-lg' : 'typo-price';
+  const isOnSale = salePrice !== null && salePrice < price;
 
-  if (salePrice !== null && salePrice < price) {
+  if (isOnSale) {
     return (
-      <div className="min-h-[2.75rem] flex flex-col justify-center">
-        <div className="flex items-baseline gap-1.5 flex-wrap leading-none">
-          <span className={`${priceClass} text-foreground`}>{formatCurrency(salePrice, locale)}</span>
-          <span className={`${discountClass} text-destructive`}>
+      <div className={cn('flex flex-col gap-0.5', className)}>
+        <span className="typo-price-original">{formatCurrency(price, locale)}</span>
+        <div className="flex items-baseline gap-1.5">
+          <span className={cn(priceClass, 'text-foreground')}>
+            {formatCurrency(salePrice, locale)}
+          </span>
+          <span className="typo-price-discount text-destructive">
             {t('discountOff', { percent: calcDiscount(price, salePrice) })}
           </span>
         </div>
-        <span className={`${originalClass} text-muted-foreground line-through leading-none`}>
-          {formatCurrency(price, locale)}
-        </span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[2.75rem] flex flex-col justify-center items-start">
-      <span className={`${priceClass} text-foreground`}>{formatCurrency(price, locale)}</span>
+    <div className={cn('flex flex-col', className)}>
+      <span className={cn(priceClass, 'text-foreground')}>{formatCurrency(price, locale)}</span>
     </div>
   );
 }

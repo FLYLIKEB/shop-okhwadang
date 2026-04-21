@@ -70,6 +70,7 @@ function ProductCard({
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
   const clayTagClass = categoryName ? getClayTagClass(categoryName) : null;
+  const hasRating = rating !== undefined && reviewCount !== undefined && reviewCount > 0;
 
   const { addItem } = useCart();
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
@@ -93,7 +94,7 @@ function ProductCard({
         isSoldout && 'opacity-60',
       )}
     >
-      {/* ── 이미지 영역 ── */}
+      {/* ── 이미지 영역 — 오버레이 액션은 hover 시에만 노출 ── */}
       <div className="relative aspect-square overflow-hidden bg-secondary rounded-md">
         {thumbnail ? (
           <Image
@@ -117,12 +118,17 @@ function ProductCard({
         )}
 
         {categoryName && (
-          <span className={cn('absolute left-2 bottom-2 z-10 px-2 py-0.5 rounded-sm tag-clay', clayTagClass ?? 'tag-generic')}>
+          <span
+            className={cn(
+              'absolute left-2 bottom-2 z-10 px-2 py-0.5 rounded-sm tag-clay',
+              clayTagClass ?? 'tag-generic',
+            )}
+          >
             {categoryName}
           </span>
         )}
 
-        {/* 찜하기 버튼 — 우상단 */}
+        {/* 찜하기 — 모바일: 항상 노출 / 데스크톱: hover 또는 찜한 상태에서만 */}
         <button
           type="button"
           aria-label={isWishlisted ? tWishlist('toggleOff') : tWishlist('toggleOn')}
@@ -131,52 +137,62 @@ function ProductCard({
             handleToggleWishlist(e);
           }}
           disabled={isWishlistLoading}
-          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm disabled:cursor-not-allowed transition-colors hover:bg-background/80"
+          className={cn(
+            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full',
+            'bg-background/70 backdrop-blur-sm transition-opacity hover:bg-background/90',
+            'disabled:cursor-not-allowed',
+            'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100',
+            isWishlisted && 'md:opacity-100',
+          )}
         >
           <Heart
             className={cn(
-              'h-3.5 w-3.5 transition-colors',
-              isWishlisted ? 'fill-foreground text-foreground' : 'text-foreground/60',
+              'h-4 w-4 transition-colors',
+              isWishlisted ? 'fill-foreground text-foreground' : 'text-foreground/70',
             )}
           />
         </button>
       </div>
 
-      {/* ── 정보 영역 — 공방 도면 스타일 ── */}
-      <div className="mt-2.5 flex flex-1 flex-col gap-1">
-        <p className="typo-title line-clamp-2 leading-snug min-h-10 shrink-0">{name}</p>
+      {/* ── 정보 영역 — 상품명 > 가격 > 메타 위계 ── */}
+      <div className="mt-3 flex flex-1 flex-col gap-1.5">
+        {/* 1순위: 상품명 */}
+        <p className="typo-title line-clamp-2 text-foreground min-h-[2.75rem]">{name}</p>
 
-        {/* 리뷰 */}
-        <div className="flex items-center gap-1.5 h-4 shrink-0">
-          {rating !== undefined && (
-            <>
+        {/* 2순위: 가격 */}
+        <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
+
+        {/* 3순위: 리뷰·설명 — 낮은 대비로 보조 */}
+        <div className="mt-0.5 flex flex-col gap-1">
+          {hasRating && (
+            <div className="flex items-center gap-1.5">
               <StarRating rating={rating} size="sm" interactive={false} />
-              <span className="font-mono text-xs leading-none text-muted-foreground">{rating.toFixed(1)}</span>
-              {reviewCount !== undefined && reviewCount > 0 && (
-                <span className="font-mono text-xs text-muted-foreground leading-none">({reviewCount})</span>
-              )}
-            </>
+              <span className="font-mono text-xs leading-none text-muted-foreground">
+                {rating.toFixed(1)}
+              </span>
+              <span className="font-mono text-xs leading-none text-muted-foreground">
+                ({reviewCount})
+              </span>
+            </div>
+          )}
+
+          {shortDescription && (
+            <p className="line-clamp-1 text-xs text-muted-foreground leading-relaxed">
+              {shortDescription}
+            </p>
           )}
         </div>
 
-        {shortDescription && (
-          <p className="line-clamp-2 text-xs text-muted-foreground leading-relaxed">{shortDescription}</p>
-        )}
-
-        {/* 구분선 */}
-        <div className="pt-2 mt-auto">
-          <hr className="border-border" />
-        </div>
-
-        <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
-
+        {/* 장바구니 담기 — 메타 아래 고정, hover 시 foreground 대비 강화 */}
         {!isSoldout && (
           <button
             type="button"
             onClick={handleAddToCart}
             disabled={isCartLoading}
             className={cn(
-              'flex w-full items-center justify-center gap-2 border border-border py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed shrink-0 font-mono tracking-wide',
+              'mt-auto flex w-full items-center justify-center gap-2 border border-border py-2',
+              'typo-button text-foreground transition-colors',
+              'hover:bg-foreground hover:text-background disabled:cursor-not-allowed',
             )}
           >
             <ShoppingCart className="h-3.5 w-3.5" />
