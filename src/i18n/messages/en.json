@@ -57,6 +57,10 @@
     "myPage": "My Page",
     "home": "Home"
   },
+  "announcementBar": {
+    "prev": "Previous announcement",
+    "next": "Next announcement"
+  },
   "header": {
     "searchPlaceholder": "Search products...",
     "searchLabel": "Search products",

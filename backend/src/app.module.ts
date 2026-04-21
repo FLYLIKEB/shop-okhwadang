@@ -34,6 +34,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { SeoModule } from './modules/seo/seo.module';
 import { MembershipModule } from './modules/membership/membership.module';
+import { AnnouncementBarsModule } from './modules/announcement-bars/announcement-bars.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
@@ -118,6 +119,7 @@ import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.gu
     SchedulerModule,
     SeoModule,
     MembershipModule,
+    AnnouncementBarsModule,
   ],
   providers: [
     // Guard execution order: ThrottlerGuard → JwtAuthGuard → RolesGuard

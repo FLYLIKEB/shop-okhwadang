@@ -132,7 +132,7 @@ export default async function LocaleLayout({
           <Providers locale={safeLocale}>
             <MobileNavProvider initialVisible={mobileBottomNavVisible}>
               <div className="flex min-h-screen flex-col">
-              <AnnouncementBar />
+              <AnnouncementBar locale={safeLocale} />
               <Header />
               <main id="main-content" className="flex-1 pb-16 md:pb-0">{children}</main>
               <Footer />

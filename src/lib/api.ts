@@ -953,9 +953,25 @@ export interface NavigationItem {
   children: NavigationItem[];
 }
 
+export interface AnnouncementBarItem {
+  id: number;
+  message: string;
+  message_en: string | null;
+  href: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export const navigationApi = {
   getByGroup: (group: 'gnb' | 'sidebar' | 'footer', locale?: string) =>
     apiClient.get<NavigationItem[]>(`/navigation?group=${group}${locale ? `&locale=${locale}` : ''}`),
+};
+
+export const announcementBarsApi = {
+  getActive: (locale?: string) =>
+    apiClient.get<AnnouncementBarItem[]>(locale ? `/announcement-bars?locale=${locale}` : '/announcement-bars'),
 };
 
 export const adminNavigationApi = {
@@ -969,6 +985,26 @@ export const adminNavigationApi = {
     apiClient.delete<void>(`/navigation/${id}`),
   reorder: (orders: Array<{ id: number; sort_order: number }>) =>
     apiClient.patch<void>('/navigation/reorder', { orders }),
+};
+
+export interface CreateAnnouncementBarData {
+  message: string;
+  message_en?: string | null;
+  href?: string | null;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export const adminAnnouncementBarsApi = {
+  getAll: () => apiClient.get<AnnouncementBarItem[]>('/admin/announcement-bars'),
+  create: (data: CreateAnnouncementBarData) =>
+    apiClient.post<AnnouncementBarItem>('/admin/announcement-bars', data),
+  update: (id: number, data: Partial<CreateAnnouncementBarData>) =>
+    apiClient.patch<AnnouncementBarItem>(`/admin/announcement-bars/${id}`, data),
+  remove: (id: number) =>
+    apiClient.delete<void>(`/admin/announcement-bars/${id}`),
+  reorder: (orders: Array<{ id: number; sort_order: number }>) =>
+    apiClient.patch<void>('/admin/announcement-bars/reorder', { orders }),
 };
 
 export interface ReviewItem {

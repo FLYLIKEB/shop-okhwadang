@@ -79,5 +79,6 @@ describe('AdminSidebar', () => {
     fireEvent.click(screen.getByText('CMS'));
     expect(screen.getByText('페이지관리')).toBeInTheDocument();
     expect(screen.getByText('네비게이션관리')).toBeInTheDocument();
+    expect(screen.getByText('안내바관리')).toBeInTheDocument();
   });
 });
