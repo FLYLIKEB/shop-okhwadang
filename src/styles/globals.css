@@ -190,6 +190,38 @@
   line-height: var(--line-height-compact);
 }
 
+/* ── 가격 타이포 토큰 — 상품 카드/상세에서 공통 사용 ── */
+@utility typo-price {
+  font-size: 1.0625rem;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-family: var(--font-body);
+}
+
+@utility typo-price-lg {
+  font-size: 1.5rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  font-family: var(--font-body);
+}
+
+@utility typo-price-original {
+  font-size: 0.75rem;
+  line-height: 1.1;
+  font-weight: 400;
+  color: var(--color-muted-foreground);
+  text-decoration: line-through;
+}
+
+@utility typo-price-discount {
+  font-size: 0.75rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 /* ── Base styles ───────────────────────────────────────────────── */
 body {
   font-family: var(--font-body);
