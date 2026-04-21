@@ -262,11 +262,11 @@ export default function CheckoutPage({
 
       <div
         className={cn(
-          'mobile-sticky-cta fixed left-0 right-0 z-50 border-t bg-background p-4 md:hidden',
-          isNavVisible ? 'bottom-16' : 'bottom-0',
+          'mobile-sticky-cta fixed z-50 border-t border-border bg-background md:hidden',
+          isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
         )}
       >
-        <div className="layout-container p-0">
+        <div className="mobile-sticky-inner">
           <div className="mb-2 flex items-end justify-between">
             <span className="text-xs text-muted-foreground">{t('total')}</span>
             <span className="typo-title">{formatCurrency(grandTotal, locale)}</span>

@@ -155,7 +155,25 @@
 
 /* ── Mobile sticky CTA safe-area support ──────────────────────── */
 .mobile-sticky-cta {
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  padding-top: 0.75rem;
+  padding-inline: 1rem;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+.mobile-sticky-inner {
+  width: 100%;
+  max-width: var(--layout-max-width);
+  margin-inline: auto;
+}
+
+.mobile-sticky-cta--bottom {
+  bottom: 0;
+}
+
+.mobile-sticky-cta--above-nav {
+  bottom: calc(3.5rem + env(safe-area-inset-bottom));
 }
 
 /* ── Layout utilities ──────────────────────────────────────────── */
