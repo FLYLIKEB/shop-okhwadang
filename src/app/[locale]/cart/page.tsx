@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import * as Accordion from '@radix-ui/react-accordion';
+import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
@@ -196,6 +197,7 @@ export default function CartPage() {
                         {t('total')} · {formatCurrency(grandTotal)}
                       </p>
                     </div>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </Accordion.Trigger>
                 </Accordion.Header>
                 <Accordion.Content className="overflow-hidden border-t border-divider-soft data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
