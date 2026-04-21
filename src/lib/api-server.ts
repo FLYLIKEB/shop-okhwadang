@@ -88,3 +88,22 @@ export function fetchSettings(group?: string, locale?: string) {
 export function fetchSettingsMap(locale?: string) {
   return fetchFromBackend<Record<string, string>>('/settings/map', locale ? { locale } : undefined);
 }
+
+export interface AnnouncementBarItem {
+  id: number;
+  message: string;
+  message_en: string | null;
+  href: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchAnnouncementBars(locale?: string): Promise<AnnouncementBarItem[]> {
+  try {
+    return await fetchFromBackend<AnnouncementBarItem[]>('/announcement-bars', locale ? { locale } : undefined);
+  } catch {
+    return [];
+  }
+}

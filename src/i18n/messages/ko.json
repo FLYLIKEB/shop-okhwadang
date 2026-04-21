@@ -57,6 +57,10 @@
     "myPage": "마이",
     "home": "홈"
   },
+  "announcementBar": {
+    "prev": "이전 공지",
+    "next": "다음 공지"
+  },
   "header": {
     "searchPlaceholder": "상품 검색...",
     "searchLabel": "상품 검색",

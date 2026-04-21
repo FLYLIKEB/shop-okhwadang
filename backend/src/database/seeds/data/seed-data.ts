@@ -957,6 +957,27 @@ export const navigationItems: SeedNavigationItem[] = [
 ];
 
 // ============================================================
+// 공지 바 (AnnouncementBar)
+// ============================================================
+export interface SeedAnnouncementBar {
+  message: string;
+  message_en: string | null;
+  href: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export const announcementBars: SeedAnnouncementBar[] = [
+  {
+    message: '아직 작업중인 쇼핑몰이며, 모든 것들은 더미 데이터입니다',
+    message_en: 'This shop is still under construction. All data shown is for demo purposes only.',
+    href: null,
+    sort_order: 0,
+    is_active: true,
+  },
+];
+
+// ============================================================
 // 배너 (Banner)
 // ============================================================
 export interface SeedBanner {

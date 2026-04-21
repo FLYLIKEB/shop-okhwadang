@@ -23,6 +23,7 @@ TRUNCATE TABLE products;
 TRUNCATE TABLE attribute_types;
 TRUNCATE TABLE categories;
 TRUNCATE TABLE navigation_items;
+TRUNCATE TABLE announcement_bars;
 TRUNCATE TABLE banners;
 TRUNCATE TABLE promotions;
 TRUNCATE TABLE notices;
@@ -543,7 +544,13 @@ INSERT INTO navigation_items (id, `group`, label, url, sort_order, is_active, pa
 (29, 'footer', '저널',           '/journal',        9, 1, NULL);
 
 -- ============================================================
--- 7. 배너
+-- 7. 공지 바
+-- ============================================================
+INSERT INTO announcement_bars (message, message_en, href, sort_order, is_active) VALUES
+('아직 작업중인 쇼핑몰이며, 모든 것들은 더미 데이터입니다', 'This shop is still under construction. All data shown is for demo purposes only.', NULL, 0, 1);
+
+-- ============================================================
+-- 8. 배너
 -- ============================================================
 INSERT INTO banners (title, image_url, link_url, sort_order, is_active, starts_at, ends_at) VALUES
 ('봄 기획전 — <b>주니 신작</b> 입고', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '/p/spring-2026', 0, 1, '2026-03-01 00:00:00', '2026-04-30 23:59:59'),
@@ -551,7 +558,7 @@ INSERT INTO banners (title, image_url, link_url, sort_order, is_active, starts_a
 ('입문 다도구 세트 — <b>14% 특가</b> 240,000원', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/okhwadang-starter-tea-set', 2, 1, NULL, NULL);
 
 -- ============================================================
--- 8. 프로모션
+-- 9. 프로모션
 -- ============================================================
 INSERT INTO promotions (title, description, type, starts_at, ends_at, is_active, discount_rate, image_url) VALUES
 ('봄 기획전 — 주니 신작', '<b>복건 주니(朱泥)</b> 신작 자사호 선착순 특가. <b>주니 서시호·주형호·석표호</b> 한정 수량 입고. 재고 소진 시 조기 마감될 수 있습니다.', 'exhibition', '2026-03-29 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
@@ -559,7 +566,7 @@ INSERT INTO promotions (title, description, type, starts_at, ends_at, is_active,
 ('보이차 입문 이벤트', '<b>대익 7572 숙병</b> 구매 시 <b>대나무 차도구 5종 세트</b> 증정. 차도구(차칙·차침·차협·차루·차침)가 모두 포함된 입문 필수 세트.', 'event', '2026-04-01 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png');
 
 -- ============================================================
--- 9. 공지사항
+-- 10. 공지사항
 -- ============================================================
 INSERT INTO notices (title, content, is_pinned, is_published) VALUES
 ('옥화당 오픈 안내', '안녕하세요. 자사호·보이차·다구 전문 D2C 쇼핑몰 옥화당(玉花堂)이 정식 오픈하였습니다.\n앞으로 좋은 자사호와 보이차를 직접 소개해 드리겠습니다.', 1, 1),
