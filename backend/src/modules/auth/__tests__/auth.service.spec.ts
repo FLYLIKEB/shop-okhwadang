@@ -14,6 +14,7 @@ import { AuthEventEmitter } from '../auth-event.emitter';
 import { TokenIssuerService } from '../services/token-issuer.service';
 import { AuthLoginPolicyService } from '../services/auth-login-policy.service';
 import { AuthAuditService } from '../services/auth-audit.service';
+import { AUTH_CONFIG, AuthConfig, createAuthConfig } from '../../../config/auth.config';
 
 const mockUserRepository = {
   findOne: jest.fn(),
@@ -105,13 +106,18 @@ function makeUser(overrides: Partial<User> = {}): User {
 
 describe('AuthService', () => {
   let service: AuthService;
-  let originalFrontendUrl: string | undefined;
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    originalFrontendUrl = process.env.FRONTEND_URL;
-    process.env.FRONTEND_URL = 'https://frontend.test';
+  const buildAuthConfig = (overrides: NodeJS.ProcessEnv = {}): AuthConfig =>
+    createAuthConfig({
+      NODE_ENV: 'development',
+      JWT_SECRET: 'jwt-secret',
+      JWT_PRIVATE_KEY: 'private-key',
+      JWT_PUBLIC_KEY: 'public-key',
+      FRONTEND_URL: 'https://frontend.test',
+      ...overrides,
+    });
 
+  const createService = async (authConfig: AuthConfig): Promise<AuthService> => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -132,19 +138,16 @@ describe('AuthService', () => {
         { provide: AuditLogService, useValue: mockAuditLogService },
         { provide: TokenBlacklistService, useValue: mockTokenBlacklistService },
         { provide: AuthEventEmitter, useValue: { emitUserRegistered: jest.fn() } },
+        { provide: AUTH_CONFIG, useValue: authConfig },
       ],
     }).compile();
 
-    service = module.get<AuthService>(AuthService);
-  });
+    return module.get<AuthService>(AuthService);
+  };
 
-  afterEach(() => {
-    if (originalFrontendUrl === undefined) {
-      delete process.env.FRONTEND_URL;
-      return;
-    }
-
-    process.env.FRONTEND_URL = originalFrontendUrl;
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    service = await createService(buildAuthConfig());
   });
 
   describe('register', () => {
@@ -409,9 +412,6 @@ describe('AuthService', () => {
 
   describe('onModuleInit (JWT_REFRESH_SECRET warning)', () => {
     it('JWT_REFRESH_SECRET 미설정 시 시작 경고 로그 출력', () => {
-      const originalRefreshSecret = process.env.JWT_REFRESH_SECRET;
-      delete process.env.JWT_REFRESH_SECRET;
-
       const warnSpy = jest.spyOn(service['logger'], 'warn');
 
       service.onModuleInit();
@@ -419,12 +419,14 @@ describe('AuthService', () => {
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining('JWT_REFRESH_SECRET is not set'),
       );
-
-      process.env.JWT_REFRESH_SECRET = originalRefreshSecret;
     });
 
-    it('JWT_REFRESH_SECRET 설정 시 경고 로그 미출력', () => {
-      process.env.JWT_REFRESH_SECRET = 'separate-refresh-secret';
+    it('JWT_REFRESH_SECRET 설정 시 경고 로그 미출력', async () => {
+      service = await createService(
+        buildAuthConfig({
+          JWT_REFRESH_SECRET: 'separate-refresh-secret',
+        }),
+      );
 
       const warnSpy = jest.spyOn(service['logger'], 'warn');
 
@@ -433,8 +435,6 @@ describe('AuthService', () => {
       expect(warnSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('JWT_REFRESH_SECRET is not set'),
       );
-
-      delete process.env.JWT_REFRESH_SECRET;
     });
   });
 

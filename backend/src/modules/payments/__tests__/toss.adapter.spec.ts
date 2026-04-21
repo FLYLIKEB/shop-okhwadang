@@ -1,5 +1,6 @@
 import { BadGatewayException } from '@nestjs/common';
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
+import { createPaymentConfig } from '../../../config/payment.config';
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -8,7 +9,14 @@ describe('TossPaymentAdapter', () => {
   let adapter: TossPaymentAdapter;
 
   beforeEach(() => {
-    adapter = new TossPaymentAdapter();
+    adapter = new TossPaymentAdapter(
+      createPaymentConfig({
+        NODE_ENV: 'development',
+        PAYMENT_GATEWAY: 'toss',
+        TOSS_SECRET_KEY: 'test_secret',
+        TOSS_CLIENT_KEY: 'test_ck_abc',
+      }),
+    );
     jest.clearAllMocks();
   });
 
@@ -78,7 +86,6 @@ describe('TossPaymentAdapter', () => {
 
   describe('verifyWebhook', () => {
     it('올바른 서명 → true', () => {
-      process.env.TOSS_SECRET_KEY = 'test_secret';
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const crypto = require('crypto');
       const payload = { eventType: 'PAYMENT_STATUS_CHANGED' };
@@ -91,7 +98,6 @@ describe('TossPaymentAdapter', () => {
     });
 
     it('잘못된 서명 → false', () => {
-      process.env.TOSS_SECRET_KEY = 'test_secret';
       expect(adapter.verifyWebhook({ event: 'test' }, 'wrong_signature')).toBe(
         false,
       );
@@ -100,7 +106,6 @@ describe('TossPaymentAdapter', () => {
 
   describe('prepare', () => {
     it('clientKey 반환', async () => {
-      process.env.TOSS_CLIENT_KEY = 'test_ck_abc';
       const result = await adapter.prepare('ORDER-123', 50000);
       expect(result.clientKey).toBe('test_ck_abc');
       expect(result.orderId).toBe('ORDER-123');

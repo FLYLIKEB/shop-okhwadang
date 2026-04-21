@@ -1,4 +1,5 @@
 import {
+  Inject,
   Controller,
   Post,
   Get,
@@ -29,6 +30,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { JwtService } from '@nestjs/jwt';
+import { AUTH_CONFIG, AuthConfig } from '../../config/auth.config';
 
 interface JwtUser {
   id: number;
@@ -40,29 +42,29 @@ interface JwtUser {
 const ACCESS_TOKEN_MAX_AGE = 60 * 60 * 1000;
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
-function getBaseOptions(): CookieOptions {
+function getBaseOptions(secure: boolean): CookieOptions {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure,
     sameSite: 'strict',
   };
 }
 
-function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
+function setAuthCookies(res: Response, accessToken: string, refreshToken: string, secure: boolean): void {
   res.cookie('accessToken', accessToken, {
-    ...getBaseOptions(),
+    ...getBaseOptions(secure),
     maxAge: ACCESS_TOKEN_MAX_AGE,
   });
   res.cookie('refreshToken', refreshToken, {
-    ...getBaseOptions(),
+    ...getBaseOptions(secure),
     maxAge: REFRESH_TOKEN_MAX_AGE,
     path: '/api/auth/refresh',
   });
 }
 
-function clearAuthCookies(res: Response): void {
-  res.clearCookie('accessToken', getBaseOptions());
-  res.clearCookie('refreshToken', { ...getBaseOptions(), path: '/api/auth/refresh' });
+function clearAuthCookies(res: Response, secure: boolean): void {
+  res.clearCookie('accessToken', getBaseOptions(secure));
+  res.clearCookie('refreshToken', { ...getBaseOptions(secure), path: '/api/auth/refresh' });
 }
 
 @Throttle({ auth: { limit: 30, ttl: 60000 } })
@@ -74,6 +76,8 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly oauthService: OAuthService,
     private readonly jwtService: JwtService,
+    @Inject(AUTH_CONFIG)
+    private readonly authConfig: AuthConfig,
   ) {}
 
   @Post('register')
@@ -83,7 +87,7 @@ export class AuthController {
   @ApiResponse({ status: 400, description: '입력값 오류 또는 이미 존재하는 이메일' })
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken, user } = await this.authService.register(dto);
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, this.authConfig.cookie.secure);
     return { user, accessToken, refreshToken };
   }
 
@@ -101,7 +105,7 @@ export class AuthController {
       null;
     const userAgent = req.headers['user-agent'] ?? null;
     const { accessToken, refreshToken, user } = await this.authService.login(dto, ip, userAgent);
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, this.authConfig.cookie.secure);
     return { user, accessToken, refreshToken };
   }
 
@@ -190,7 +194,7 @@ export class AuthController {
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const rawRefreshToken = (req.cookies as Record<string, string | undefined>)?.refreshToken ?? '';
     const { accessToken, refreshToken } = await this.authService.refresh(rawRefreshToken);
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, this.authConfig.cookie.secure);
     return { message: '토큰이 갱신되었습니다.' };
   }
 
@@ -208,12 +212,12 @@ export class AuthController {
       if (decoded?.jti && decoded?.exp) {
         const expiresAt = new Date(decoded.exp * 1000);
         await this.authService.logout(user.id, decoded.jti, expiresAt);
-        clearAuthCookies(res);
+        clearAuthCookies(res, this.authConfig.cookie.secure);
         return;
       }
     }
     await this.authService.logoutAll(user.id);
-    clearAuthCookies(res);
+    clearAuthCookies(res, this.authConfig.cookie.secure);
   }
 
   @Post('logout-all')
@@ -225,7 +229,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: '인증 필요' })
   async logoutAll(@CurrentUser() user: JwtUser, @Res({ passthrough: true }) res: Response) {
     await this.authService.logoutAll(user.id);
-    clearAuthCookies(res);
+    clearAuthCookies(res, this.authConfig.cookie.secure);
   }
 
   @Post('kakao')
@@ -236,7 +240,7 @@ export class AuthController {
   @ApiResponse({ status: 400, description: '유효하지 않은 인가 코드' })
   async kakaoLogin(@Body() dto: OAuthCallbackDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken, user } = await this.oauthService.handleKakao(dto.code);
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, this.authConfig.cookie.secure);
     return { user };
   }
 
@@ -248,7 +252,7 @@ export class AuthController {
   @ApiResponse({ status: 400, description: '유효하지 않은 인가 코드' })
   async googleLogin(@Body() dto: OAuthCallbackDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken, user } = await this.oauthService.handleGoogle(dto.code);
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, this.authConfig.cookie.secure);
     return { user };
   }
 

@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   BadRequestException,
   PayloadTooLargeException,
@@ -17,6 +18,10 @@ import {
   MAX_UPLOAD_IMAGE_HEIGHT,
   MAX_UPLOAD_IMAGE_WIDTH,
 } from './upload.constants';
+import {
+  STORAGE_CONFIG,
+  StorageConfig,
+} from '../../config/storage.config';
 
 @Injectable()
 export class UploadService {
@@ -24,11 +29,13 @@ export class UploadService {
   private readonly adapter: StorageAdapter;
 
   constructor(
+    @Inject(STORAGE_CONFIG)
+    storageConfig: StorageConfig,
     localAdapter: LocalStorageAdapter,
     mockAdapter: MockStorageAdapter,
     s3Adapter: S3StorageAdapter,
   ) {
-    const provider = process.env.STORAGE_PROVIDER ?? 'local';
+    const provider = storageConfig.provider;
     switch (provider) {
       case 's3':
         this.adapter = s3Adapter;

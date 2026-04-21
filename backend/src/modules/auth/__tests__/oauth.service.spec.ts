@@ -9,6 +9,7 @@ import { OAuthService } from '../oauth.service';
 import { User, UserRole } from '../../users/entities/user.entity';
 import { UserAuthentication, OAuthProvider } from '../../users/entities/user-authentication.entity';
 import { TokenIssuerService } from '../services/token-issuer.service';
+import { AUTH_CONFIG, createAuthConfig } from '../../../config/auth.config';
 
 const mockUserRepository = {
   findOne: jest.fn(),
@@ -117,6 +118,22 @@ describe('OAuthService', () => {
         { provide: TokenIssuerService, useValue: mockTokenIssuerService },
         { provide: HttpService, useValue: mockHttpService },
         { provide: DataSource, useValue: mockDataSource },
+        {
+          provide: AUTH_CONFIG,
+          useValue: createAuthConfig({
+            NODE_ENV: 'development',
+            JWT_SECRET: 'jwt-secret',
+            JWT_PRIVATE_KEY: 'private-key',
+            JWT_PUBLIC_KEY: 'public-key',
+            FRONTEND_URL: 'https://frontend.test',
+            KAKAO_CLIENT_ID: 'kakao-client-id',
+            KAKAO_CLIENT_SECRET: 'kakao-secret',
+            KAKAO_REDIRECT_URI: 'https://frontend.test/auth/kakao/callback',
+            GOOGLE_CLIENT_ID: 'google-client-id',
+            GOOGLE_CLIENT_SECRET: 'google-secret',
+            GOOGLE_REDIRECT_URI: 'https://frontend.test/auth/google/callback',
+          }),
+        },
       ],
     }).compile();
 

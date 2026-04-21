@@ -6,6 +6,7 @@ import {
   BadRequestException,
   Logger,
   OnModuleInit,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
@@ -28,6 +29,7 @@ import { UserRegisteredEvent } from './events/user-registered.event';
 import { TokenIssuerService } from './services/token-issuer.service';
 import { AuthLoginPolicyService } from './services/auth-login-policy.service';
 import { AuthAuditService } from './services/auth-audit.service';
+import { AUTH_CONFIG, AuthConfig } from '../../config/auth.config';
 
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 const EMAIL_VERIFICATION_TTL_MIN = 15;
@@ -83,11 +85,13 @@ export class AuthService implements OnModuleInit {
     private readonly notificationService: NotificationService,
     private readonly tokenBlacklistService: TokenBlacklistService,
     private readonly authEventEmitter: AuthEventEmitter,
+    @Inject(AUTH_CONFIG)
+    private readonly authConfig: AuthConfig,
   ) {}
 
   onModuleInit() {
-    if (!process.env.JWT_REFRESH_SECRET) {
-      if (process.env.NODE_ENV === 'production') {
+    if (!this.authConfig.jwt.refreshSecret) {
+      if (this.authConfig.nodeEnv === 'production') {
         throw new Error('JWT_REFRESH_SECRET must be set in production');
       }
       this.logger.warn(
@@ -198,7 +202,7 @@ export class AuthService implements OnModuleInit {
     let payload: { sub: number; email: string; role: string; tokenType?: string };
     try {
       payload = this.jwtService.verify(rawRefreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET,
+        secret: this.authConfig.jwt.refreshSecret ?? this.authConfig.jwt.secret,
         algorithms: ['HS256'],
       });
     } catch {
@@ -390,12 +394,7 @@ export class AuthService implements OnModuleInit {
   }
 
   private buildPasswordResetUrl(token: string): string {
-    const baseUrl = process.env.FRONTEND_URL;
-    if (!baseUrl) {
-      throw new Error('FRONTEND_URL environment variable is required');
-    }
-
-    const url = new URL('/reset-password', baseUrl);
+    const url = new URL('/reset-password', this.authConfig.frontend.baseUrl);
     url.searchParams.set('token', token);
     return url.toString();
   }
@@ -405,12 +404,7 @@ export class AuthService implements OnModuleInit {
   }
 
   private buildEmailVerificationUrl(token: string): string {
-    const baseUrl = process.env.FRONTEND_URL;
-    if (!baseUrl) {
-      throw new Error('FRONTEND_URL environment variable is required');
-    }
-
-    const url = new URL('/verify-email', baseUrl);
+    const url = new URL('/verify-email', this.authConfig.frontend.baseUrl);
     url.searchParams.set('token', token);
     return url.toString();
   }

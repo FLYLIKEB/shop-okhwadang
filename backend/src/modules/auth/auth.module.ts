@@ -3,9 +3,6 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
-import * as fs from 'fs';
-import * as path from 'path';
-import type ms from 'ms';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -21,38 +18,24 @@ import { User } from '../users/entities/user.entity';
 import { UserAuthentication } from '../users/entities/user-authentication.entity';
 import { AuditLogModule } from '../audit-logs/audit-log.module';
 import { AuthEventsModule } from './auth-events.module';
-
-function getJwtPrivateKey(): string {
-  if (process.env.JWT_PRIVATE_KEY) {
-    return process.env.JWT_PRIVATE_KEY;
-  }
-  if (process.env.JWT_PRIVATE_KEY_FILE && fs.existsSync(process.env.JWT_PRIVATE_KEY_FILE)) {
-    return fs.readFileSync(process.env.JWT_PRIVATE_KEY_FILE, 'utf-8');
-  }
-  const possiblePaths = [
-    path.resolve(process.cwd(), 'keys', 'jwt-private.pem'),
-    path.resolve(process.cwd(), '..', 'keys', 'jwt-private.pem'),
-    path.resolve(__dirname, '..', '..', 'keys', 'jwt-private.pem'),
-    path.resolve(__dirname, '..', '..', '..', 'keys', 'jwt-private.pem'),
-  ];
-  for (const keyPath of possiblePaths) {
-    if (fs.existsSync(keyPath)) {
-      return fs.readFileSync(keyPath, 'utf-8');
-    }
-  }
-  throw new Error('JWT_PRIVATE_KEY environment variable or keys/jwt-private.pem file is required');
-}
+import { AUTH_CONFIG, AuthConfig } from '../../config/auth.config';
+import { AuthConfigModule } from '../../config/auth-config.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserAuthentication, PasswordResetToken, TokenBlacklist, VerificationToken]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      privateKey: getJwtPrivateKey(),
-      signOptions: {
-        expiresIn: (process.env.JWT_EXPIRES_IN ?? '1h') as ms.StringValue,
-        algorithm: 'RS256',
-      },
+    AuthConfigModule,
+    JwtModule.registerAsync({
+      imports: [AuthConfigModule],
+      inject: [AUTH_CONFIG],
+      useFactory: (authConfig: AuthConfig) => ({
+        privateKey: authConfig.jwt.privateKey,
+        signOptions: {
+          expiresIn: authConfig.jwt.expiresIn,
+          algorithm: 'RS256',
+        },
+      }),
     }),
     HttpModule,
     AuditLogModule,
