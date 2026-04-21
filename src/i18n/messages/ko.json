@@ -220,7 +220,12 @@
     "orderSelected": "선택 상품 주문하기",
     "selectItemsToOrder": "주문할 상품을 선택해주세요.",
     "noImage": "No image",
-    "removeItem": "{name} 삭제"
+    "removeItem": "{name} 삭제",
+    "loginAction": "로그인",
+    "continueShopping": "쇼핑 계속하기",
+    "freeShipping": "무료",
+    "freeShippingUnlocked": "무료배송이 적용되었습니다.",
+    "freeShippingRemaining": "{amount} 더 담으면 무료배송"
   },
   "checkout": {
     "title": "주문 / 결제",
@@ -263,7 +268,16 @@
       "phoneInvalid": "올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)",
       "zipcodeInvalid": "우편번호는 5자리 숫자로 입력해주세요.",
       "addressRequired": "주소를 입력해주세요."
-    }
+    },
+    "flow": {
+      "shipping": "배송 정보",
+      "payment": "결제 수단",
+      "complete": "결제 완료"
+    },
+    "paymentMethodHint": "주문 정보 입력 후 결제 수단이 표시됩니다.",
+    "freeShipping": "무료",
+    "freeShippingUnlocked": "무료배송이 적용되었습니다.",
+    "freeShippingRemaining": "{amount} 더 담으면 무료배송"
   },
   "order": {
     "orderHistory": "주문 내역",

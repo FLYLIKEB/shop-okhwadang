@@ -220,7 +220,12 @@
     "orderSelected": "Order Selected Items",
     "selectItemsToOrder": "Please select items to order.",
     "noImage": "No image",
-    "removeItem": "Remove {name}"
+    "removeItem": "Remove {name}",
+    "loginAction": "Log in",
+    "continueShopping": "Continue shopping",
+    "freeShipping": "Free",
+    "freeShippingUnlocked": "Free shipping is now applied.",
+    "freeShippingRemaining": "Add {amount} more for free shipping"
   },
   "checkout": {
     "title": "Order / Payment",
@@ -263,7 +268,16 @@
       "phoneInvalid": "Please enter a valid phone number. (e.g. 010-1234-5678)",
       "zipcodeInvalid": "ZIP code must be 5 digits.",
       "addressRequired": "Please enter your address."
-    }
+    },
+    "flow": {
+      "shipping": "Shipping info",
+      "payment": "Payment",
+      "complete": "Done"
+    },
+    "paymentMethodHint": "Payment methods appear after shipping info is complete.",
+    "freeShipping": "Free",
+    "freeShippingUnlocked": "Free shipping is now applied.",
+    "freeShippingRemaining": "Add {amount} more for free shipping"
   },
   "order": {
     "orderHistory": "Order History",

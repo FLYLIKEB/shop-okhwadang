@@ -8,6 +8,47 @@ import type { CartItem, UserAddress } from '@/lib/api';
 
 const makeParams = () => Promise.resolve({ locale: 'ko' as const });
 
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => {
+    const dict: Record<string, string> = {
+      title: '주문 / 결제',
+      shippingInfo: '배송 정보',
+      loadingAddresses: '주소 불러오는 중...',
+      noSavedAddress: '저장된 배송지가 없습니다.',
+      addAddress: '배송지 추가',
+      manualEntry: '직접 입력',
+      recipientName: '받는 분 이름',
+      phone: '연락처',
+      zipcode: '우편번호',
+      address: '주소',
+      addressDetail: '상세 주소',
+      shippingMemo: '배송 메모',
+      paymentMethod: '결제 수단',
+      paymentMethodHint: '주문 정보 입력 후 결제 수단이 표시됩니다.',
+      couponPoints: '쿠폰 / 적립금',
+      couponPointsComingSoon: '쿠폰/적립금 적용은 추후 지원 예정입니다.',
+      orderItems: '주문 상품',
+      productAmount: '상품 금액',
+      shippingFee: '배송비',
+      total: '합계',
+      pay: '결제하기',
+      loadAddressError: '저장된 주소를 불러오는데 실패했습니다.',
+      freeShipping: '무료',
+      freeShippingUnlocked: '무료배송이 적용되었습니다.',
+      freeShippingRemaining: '무료배송 임계',
+      'flow.shipping': '배송 정보',
+      'flow.payment': '결제 수단',
+      'flow.complete': '결제 완료',
+      'steps.idle': '결제하기',
+      'steps.creating_order': '주문 생성 중...',
+      'steps.preparing_payment': '결제 준비 중...',
+      'steps.confirming_payment': '결제 확인 중...',
+      'steps.success': '완료',
+    };
+    return dict[key] ?? key;
+  },
+}));
+
 // ---- next/navigation ----
 const mockReplace = vi.fn();
 const mockPush = vi.fn();
@@ -38,6 +79,10 @@ vi.mock('@/contexts/CartContext', () => ({
   }),
   CartContext: {},
   CartProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/contexts/MobileNavContext', () => ({
+  useMobileNav: () => ({ isVisible: false }),
 }));
 
 // ---- i18n/routing ----
@@ -112,7 +157,7 @@ describe('CheckoutPage', () => {
     await user.type(screen.getByLabelText(/연락처/), '01012345678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');
     await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
-    await user.click(screen.getByRole('button', { name: '결제하기' }));
+    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
       expect(ordersApi.create).not.toHaveBeenCalled();
@@ -146,7 +191,7 @@ describe('CheckoutPage', () => {
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');
     await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
-    await user.click(screen.getByRole('button', { name: '결제하기' }));
+    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/ko/order/complete?orderId=1&orderNumber=ORD-001');

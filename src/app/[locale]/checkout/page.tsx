@@ -1,10 +1,14 @@
 'use client';
 
-import { useState, useEffect, use, useRef } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useMobileNav } from '@/contexts/MobileNavContext';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/components/ui/utils';
 import type { CartItem, PreparePaymentResponse, UserAddress } from '@/lib/api';
 import { usersApi } from '@/lib/api';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
@@ -14,24 +18,15 @@ import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/c
 import { AddressSelectorSection } from '@/components/shared/checkout/AddressSelectorSection';
 import { OrderSummarySection } from '@/components/shared/checkout/OrderSummarySection';
 import {
-  ShippingFormSection,
-  PhoneInputSection,
-  ZipcodeInputSection,
-  AddressInputSection,
   AddressDetailInputSection,
+  AddressInputSection,
   MemoInputSection,
+  PhoneInputSection,
+  ShippingFormSection,
+  ZipcodeInputSection,
 } from '@/components/shared/checkout/ShippingFormSection';
 import { useCheckout, type PaymentStep } from '@/components/shared/hooks/useCheckout';
-
-// Re-exported for type usage
-
-const STEP_LABELS: Record<PaymentStep, string> = {
-  idle: '결제하기',
-  creating_order: '주문 생성 중...',
-  preparing_payment: '결제 준비 중...',
-  confirming_payment: '결제 확인 중...',
-  success: '완료',
-};
+import { formatCurrency } from '@/utils/currency';
 
 export interface ShippingForm {
   recipientName: string;
@@ -55,7 +50,9 @@ export default function CheckoutPage({
   params: Promise<{ locale: Locale }>;
 }) {
   const { locale } = use(params);
+  const t = useTranslations('checkout');
   const router = useRouter();
+  const { isVisible: isNavVisible } = useMobileNav();
   const { isAuthenticated, isLoading } = useAuth();
   const { refetch } = useCart();
 
@@ -63,7 +60,7 @@ export default function CheckoutPage({
   const [step, setStep] = useState<PaymentStep>('idle');
   const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
-  const [currentOrderNumber, setCurrentOrderNumber] = useState<string>('');
+  const [currentOrderNumber, setCurrentOrderNumber] = useState('');
   const [form, setForm] = useState<ShippingForm>({
     recipientName: '',
     recipientPhone: '',
@@ -81,6 +78,14 @@ export default function CheckoutPage({
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
   const shippingFee = totalAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const grandTotal = totalAmount + shippingFee;
+
+  const stepLabels: Record<PaymentStep, string> = {
+    idle: t('steps.idle'),
+    creating_order: t('steps.creating_order'),
+    preparing_payment: t('steps.preparing_payment'),
+    confirming_payment: t('steps.confirming_payment'),
+    success: t('steps.success'),
+  };
 
   const fillFormFromAddress = (addr: UserAddress) => {
     setForm({
@@ -120,7 +125,8 @@ export default function CheckoutPage({
     if (isLoading || !isAuthenticated) return;
 
     setAddressLoading(true);
-    usersApi.getAddresses()
+    usersApi
+      .getAddresses()
       .then((result) => {
         setAddresses(result);
         const defaultAddr = result.find((a) => a.isDefault);
@@ -133,7 +139,7 @@ export default function CheckoutPage({
         }
       })
       .catch(() => {
-        toast.error('저장된 주소를 불러오는데 실패했습니다.');
+        toast.error(t('loadAddressError'));
       })
       .finally(() => {
         setAddressLoading(false);
@@ -179,69 +185,97 @@ export default function CheckoutPage({
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-6 typo-h1">주문 / 결제</h1>
+    <div className="layout-container layout-page pb-24 md:pb-8">
+      <h1 className="typo-h1">{t('title')}</h1>
 
-      <form onSubmit={handleSubmit}>
+      <ol className="mt-4 flex items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground md:max-w-xl">
+        <li className="rounded-full bg-primary px-2.5 py-1 text-primary-foreground">{t('flow.shipping')}</li>
+        <span aria-hidden>→</span>
+        <li className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">{t('flow.payment')}</li>
+        <span aria-hidden>→</span>
+        <li className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">{t('flow.complete')}</li>
+      </ol>
+
+      <form id="checkout-form" onSubmit={handleSubmit} className="mt-6">
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <section className="rounded-lg border p-6 space-y-4">
-              <h2 className="typo-h3">배송 정보</h2>
+          <div className="layout-stack-md lg:col-span-2">
+            <section className="rounded-lg border p-6">
+              <h2 className="typo-h3">{t('shippingInfo')}</h2>
 
-              <AddressSelectorSection
-                addresses={addresses}
-                selectedAddressId={selectedAddressId}
-                addressLoading={addressLoading}
-                onSelect={handleAddressSelect}
-                locale={locale}
-              />
-
-              <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
-              <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
-              <ZipcodeInputSection form={form} errors={errors} onChange={handleChange} />
-              <AddressInputSection form={form} errors={errors} onChange={handleChange} />
-              <AddressDetailInputSection form={form} onChange={handleChange} />
-              <MemoInputSection form={form} onChange={handleChange} />
-            </section>
-
-            <section className="rounded-lg border p-6 space-y-4">
-              <h2 className="typo-h3">결제 수단</h2>
-              {prepareResult ? (
-                <PaymentGateway
-                  ref={paymentRef}
-                  prepareResult={prepareResult}
-                  orderId={currentOrderId!}
-                  orderNumber={currentOrderNumber}
-                  amount={grandTotal}
+              <div className="mt-4 layout-stack-md">
+                <AddressSelectorSection
+                  addresses={addresses}
+                  selectedAddressId={selectedAddressId}
+                  addressLoading={addressLoading}
+                  onSelect={handleAddressSelect}
                   locale={locale}
-                  onError={handlePaymentError}
                 />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  주문 정보 입력 후 결제 수단이 표시됩니다.
-                </p>
-              )}
+
+                <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
+                <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
+                <ZipcodeInputSection form={form} errors={errors} onChange={handleChange} />
+                <AddressInputSection form={form} errors={errors} onChange={handleChange} />
+                <AddressDetailInputSection form={form} onChange={handleChange} />
+                <MemoInputSection form={form} onChange={handleChange} />
+              </div>
             </section>
 
-            <section className="rounded-lg border p-6 space-y-2 opacity-50">
-              <h2 className="typo-h3">쿠폰 / 적립금</h2>
-              <p className="text-sm text-muted-foreground">쿠폰/적립금 적용은 추후 지원 예정입니다.</p>
+            <section className="rounded-lg border p-6">
+              <h2 className="typo-h3">{t('paymentMethod')}</h2>
+              <div className="mt-4">
+                {prepareResult ? (
+                  <PaymentGateway
+                    ref={paymentRef}
+                    prepareResult={prepareResult}
+                    orderId={currentOrderId!}
+                    orderNumber={currentOrderNumber}
+                    amount={grandTotal}
+                    locale={locale}
+                    onError={handlePaymentError}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t('paymentMethodHint')}</p>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-lg border p-6 opacity-70">
+              <h2 className="typo-h3">{t('couponPoints')}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{t('couponPointsComingSoon')}</p>
             </section>
           </div>
 
-          <div className="space-y-4">
+          <div className="layout-stack-md">
             <OrderSummarySection checkoutItems={checkoutItems} locale={locale} />
-
-            <button
-              type="submit"
-              disabled={step !== 'idle'}
-              className="w-full rounded-md bg-foreground py-3 typo-button text-background hover:opacity-90 transition-opacity disabled:opacity-40"
-            >
-              {STEP_LABELS[step]}
-            </button>
+            <div className="hidden rounded-lg border border-border p-4 lg:block">
+              <div className="mb-2 flex items-end justify-between">
+                <span className="text-sm text-muted-foreground">{t('total')}</span>
+                <span className="typo-h2">{formatCurrency(grandTotal, locale)}</span>
+              </div>
+              <Button type="submit" disabled={step !== 'idle'} className="w-full">
+                {stepLabels[step]}
+              </Button>
+            </div>
           </div>
         </div>
       </form>
+
+      <div
+        className={cn(
+          'fixed left-0 right-0 z-50 border-t bg-background p-4 md:hidden',
+          isNavVisible ? 'bottom-14' : 'bottom-0',
+        )}
+      >
+        <div className="layout-container p-0">
+          <div className="mb-2 flex items-end justify-between">
+            <span className="text-xs text-muted-foreground">{t('total')}</span>
+            <span className="typo-title">{formatCurrency(grandTotal, locale)}</span>
+          </div>
+          <Button type="submit" form="checkout-form" className="w-full" disabled={step !== 'idle'}>
+            {stepLabels[step]}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

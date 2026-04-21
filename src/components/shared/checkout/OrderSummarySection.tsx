@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { CartItem } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import type { Locale } from '@/i18n/routing';
@@ -10,50 +11,64 @@ interface OrderSummarySectionProps {
   locale: Locale;
 }
 
-export function OrderSummarySection({
-  checkoutItems,
-  locale,
-}: OrderSummarySectionProps) {
+export function OrderSummarySection({ checkoutItems, locale }: OrderSummarySectionProps) {
+  const t = useTranslations('checkout');
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
   const shippingFee = totalAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const grandTotal = totalAmount + shippingFee;
+  const remainingForFreeShipping = Math.max(FREE_SHIPPING_THRESHOLD - totalAmount, 0);
+  const freeShippingProgress = Math.min((totalAmount / FREE_SHIPPING_THRESHOLD) * 100, 100);
 
   return (
-    <section className="rounded-lg border p-6 space-y-4 lg:sticky lg:top-24">
-      <h2 className="typo-h3">주문 상품</h2>
+    <section className="rounded-lg border p-6 lg:sticky lg:top-24">
+      <h2 className="typo-h3">{t('orderItems')}</h2>
 
-      <ul className="divide-y text-sm">
+      <ul className="mt-4 divide-y text-sm">
         {checkoutItems.map((item) => (
-          <li key={item.id} className="py-3 space-y-0.5">
+          <li key={item.id} className="space-y-0.5 py-3">
             <p className="font-medium">{item.product.name}</p>
             {item.option && (
-              <p className="text-muted-foreground text-xs">
+              <p className="text-xs text-muted-foreground">
                 {item.option.name}: {item.option.value}
               </p>
             )}
             <p className="text-muted-foreground">
-              {formatCurrency(item.unitPrice, locale)} × {item.quantity}개 ={' '}
-              {formatCurrency(item.subtotal, locale)}
+              {formatCurrency(item.unitPrice, locale)} × {item.quantity} = {formatCurrency(item.subtotal, locale)}
             </p>
           </li>
         ))}
       </ul>
 
-      <div className="border-t pt-4 space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">상품 금액</span>
-          <span>{formatCurrency(totalAmount, locale)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">배송비</span>
-          <span>{shippingFee === 0 ? '무료' : formatCurrency(shippingFee, locale)}</span>
+      <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+        <p className="text-xs text-muted-foreground">
+          {remainingForFreeShipping === 0
+            ? t('freeShippingUnlocked')
+            : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping, locale) })}
+        </p>
+        <div className="mt-2 h-1.5 w-full rounded-full bg-background">
+          <div
+            className="h-full rounded-full bg-primary transition-[width] duration-300"
+            style={{ width: `${freeShippingProgress}%` }}
+            aria-hidden
+          />
         </div>
       </div>
 
-      <div className="border-t pt-4">
-        <div className="flex justify-between typo-h3">
-          <span>합계</span>
-          <span>{formatCurrency(grandTotal, locale)}</span>
+      <div className="mt-4 border-t pt-4 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t('productAmount')}</span>
+          <span>{formatCurrency(totalAmount, locale)}</span>
+        </div>
+        <div className="mt-2 flex justify-between">
+          <span className="text-muted-foreground">{t('shippingFee')}</span>
+          <span>{shippingFee === 0 ? t('freeShipping') : formatCurrency(shippingFee, locale)}</span>
+        </div>
+      </div>
+
+      <div className="mt-4 border-t pt-4">
+        <div className="flex items-end justify-between">
+          <span className="typo-title">{t('total')}</span>
+          <span className="typo-h2">{formatCurrency(grandTotal, locale)}</span>
         </div>
       </div>
     </section>

@@ -94,6 +94,19 @@
   --radius-md: var(--db-radius-md, 0.25rem);
   --radius-lg: var(--db-radius-lg, 0.5rem);
 
+  /* ── Layout rhythm tokens ── */
+  --layout-max-width: 80rem; /* 1280px */
+  --layout-page-y: 2rem;
+  --layout-section-y: 1.5rem;
+  --layout-grid-gap: 1.5rem;
+  --layout-text-max: 42rem;
+
+  /* ── Admin density / contrast tokens ── */
+  --admin-header-bg: color-mix(in srgb, var(--color-muted) 55%, var(--color-background));
+  --admin-row-hover: color-mix(in srgb, var(--color-muted) 40%, transparent);
+  --admin-row-height: 2.875rem;
+  --admin-row-height-compact: 2.5rem;
+
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
   --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
@@ -121,7 +134,55 @@
     --font-size-heading-3: 1.25rem;  /* 20px desktop */
     --font-size-title: 1.125rem;     /* 18px desktop */
     --font-size-heading-0: 3rem;     /* 48px desktop - hero only */
+    --layout-page-y: 2.5rem;
+    --layout-section-y: 2rem;
+    --layout-grid-gap: 2rem;
   }
+}
+
+/* ── Layout utilities ──────────────────────────────────────────── */
+@utility layout-container {
+  width: 100%;
+  max-width: var(--layout-max-width);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@utility layout-page {
+  padding-block: var(--layout-page-y);
+}
+
+@utility layout-section {
+  padding-block: var(--layout-section-y);
+}
+
+@utility layout-stack-md {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-grid-gap);
+}
+
+@utility text-readable {
+  max-width: var(--layout-text-max);
+}
+
+/* ── Admin utilities ───────────────────────────────────────────── */
+@utility admin-surface {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-card);
+}
+
+@utility admin-table-head {
+  background: var(--admin-header-bg);
+}
+
+@utility admin-row {
+  min-height: var(--admin-row-height);
+}
+
+@utility admin-row-compact {
+  min-height: var(--admin-row-height-compact);
 }
 
 /* ── Typography utility classes ────────────────────────────────── */
@@ -317,6 +378,21 @@ h3 {
 .animate-fade-in-up {
   opacity: 0;
   animation: fadeInUp 0.7s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── Lightbox animation ──────────────────────────────────────────── */
