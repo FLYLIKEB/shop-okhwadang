@@ -29,7 +29,7 @@ export default function SearchInput({ className, placeholder = '상품 검색...
     searchApi.getPopular()
       .then((data) => setPopularKeywords(data.keywords))
       .catch(() => setPopularKeywords([]));
-  }, [setIsOpen]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -50,7 +50,7 @@ export default function SearchInput({ className, placeholder = '상품 검색...
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [setIsOpen]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {

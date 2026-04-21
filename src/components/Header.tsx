@@ -241,12 +241,16 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
   const menuItems = sidebarItems.length > 0 ? sidebarItems : navItems;
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const current = history.length > 0 ? history[history.length - 1] : { title: t('menuLabel'), items: menuItems };
+  const resetAndRun = (callback: () => void) => {
+    setHistory([]);
+    callback();
+  };
 
   const handleItemClick = (item: NavigationItem) => {
     if (item.children && item.children.length > 0) {
       setHistory(h => [...h, { title: item.label, items: item.children }]);
     } else {
-      closeAndResetForNavigation();
+      handleNavigateClose();
     }
   };
 
@@ -254,37 +258,31 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
     setHistory(h => h.slice(0, -1));
   };
 
-  const closeAndReset = () => {
-    setHistory([]);
-    onClose();
-  };
+  const handleMenuClose = () => resetAndRun(onClose);
 
-  const closeAndResetForNavigation = () => {
-    setHistory([]);
-    onNavigate();
-  };
+  const handleNavigateClose = () => resetAndRun(onNavigate);
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
-      <MobileMenuBackdrop visible={visible} onClose={closeAndReset} />
+      <MobileMenuBackdrop visible={visible} onClose={handleMenuClose} />
       <MobileMenuNav visible={visible}>
         <MobileMenuHeader
           historyLength={history.length}
           currentTitle={current.title}
-          onClose={closeAndReset}
+          onClose={handleMenuClose}
           onBack={handleBack}
         />
         <MobileMenuContent
           items={current.items}
           history={history}
           onItemClick={handleItemClick}
-          onLinkClick={closeAndResetForNavigation}
+          onLinkClick={handleNavigateClose}
         />
         <MobileMenuFooter
           isAuthenticated={isAuthenticated}
           userName={userName}
           onLogout={onLogout}
-          onLinkClick={closeAndResetForNavigation}
+          onLinkClick={handleNavigateClose}
         />
       </MobileMenuNav>
     </div>

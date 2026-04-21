@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UseCarouselProgressOptions {
   scrollRef: React.RefObject<HTMLDivElement | null>;
@@ -32,9 +32,7 @@ export function useCarouselProgress({ scrollRef }: UseCarouselProgressOptions): 
       el.removeEventListener('scroll', updateProgress);
       ro.disconnect();
     };
-  // scrollRef.current가 바뀔 때도 재등록
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scrollRef.current, updateProgress]);
+  }, [scrollRef, updateProgress]);
 
   return { progress, updateProgress };
 }

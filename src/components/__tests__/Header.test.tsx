@@ -33,8 +33,17 @@ vi.mock('@/hooks/useUrlModal', async () => {
 });
 
 vi.mock('@/i18n/navigation', () => ({
-  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-    <a href={href} {...props}>{children}</a>
+  Link: ({ href, children, onClick, ...props }: { href: string; children: React.ReactNode; onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void; [key: string]: unknown }) => (
+    <a
+      href={href}
+      onClick={(e) => {
+        e.preventDefault();
+        onClick?.(e);
+      }}
+      {...props}
+    >
+      {children}
+    </a>
   ),
   useRouter: () => ({ push: mockPush, back: mockBack }),
   usePathname: () => mockPathname,
@@ -145,6 +154,7 @@ describe('Header', () => {
     const mobileNav = screen.getByRole('navigation', { name: '모바일 메뉴' });
     const productLink = mobileNav.querySelector('a[href="/products"]')!;
     await user.click(productLink);
+    expect(mockSetOpen).toHaveBeenCalledWith('menu', false, 'replace');
     await waitFor(() => {
       expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
     });
@@ -155,7 +165,7 @@ describe('Header', () => {
     render(<Header />);
     await user.click(screen.getByRole('button', { name: '메뉴 열기' }));
     const mobileNav = screen.getByRole('navigation', { name: '모바일 메뉴' });
-    const loginLink = mobileNav.querySelector('a[href=\"/login\"]')!;
+    const loginLink = mobileNav.querySelector('a[href="/login"]')!;
     await user.click(loginLink);
 
     expect(mockSetOpen).toHaveBeenCalledWith('menu', false, 'replace');

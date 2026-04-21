@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
@@ -14,6 +15,9 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 const PAGE_LIMIT = 10;
 
 export default function OrdersPage() {
+  const t = useTranslations('order');
+  const tMy = useTranslations('myPage');
+  const locale = useLocale();
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [total, setTotal] = useState(0);
@@ -28,8 +32,8 @@ export default function OrdersPage() {
       setTotal(res.total);
     },
     {
-      errorMessage: '주문 내역을 불러오지 못했습니다.',
-      onError: (err) => setError(handleApiError(err, '주문 내역을 불러오지 못했습니다.')),
+      errorMessage: tMy('loadOrdersError'),
+      onError: (err) => setError(handleApiError(err, tMy('loadOrdersError'))),
     },
   );
 
@@ -53,10 +57,10 @@ export default function OrdersPage() {
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6 flex items-center gap-2">
         <Link href="/my" className="text-sm text-muted-foreground hover:underline">
-          마이페이지
+          {tMy('title')}
         </Link>
         <span className="text-muted-foreground">/</span>
-        <h1 className="text-xl font-bold">주문 내역</h1>
+        <h1 className="text-xl font-bold">{t('orderHistory')}</h1>
       </div>
 
       {loading ? (
@@ -72,17 +76,17 @@ export default function OrdersPage() {
             onClick={() => void fetchOrders()}
             className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 transition-opacity"
           >
-            다시 시도
+            {tMy('retry')}
           </button>
         </div>
       ) : orders.length === 0 ? (
         <div className="rounded-lg border p-12 text-center">
-          <p className="text-muted-foreground">주문 내역이 없습니다.</p>
+          <p className="text-muted-foreground">{t('noOrders')}</p>
           <Link
             href="/products"
             className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 transition-opacity"
           >
-            쇼핑 계속하기
+            {t('noOrdersAction')}
           </Link>
         </div>
       ) : (
@@ -102,10 +106,11 @@ export default function OrdersPage() {
                       </div>
                       <p className="text-sm truncate">
                         {order.items[0]?.productName}
-                        {order.items.length > 1 && ` 외 ${order.items.length - 1}개`}
+                        {order.items.length > 1 &&
+                          tMy('additionalItems', { count: order.items.length - 1 })}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(order.createdAt).toLocaleDateString('ko-KR', {
+                        {new Date(order.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR', {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric',
@@ -128,7 +133,7 @@ export default function OrdersPage() {
                 disabled={page === 1}
                 className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
               >
-                이전
+                {tMy('previousPage')}
               </button>
               <span className="flex items-center px-3 text-sm">
                 {page} / {totalPages}
@@ -138,7 +143,7 @@ export default function OrdersPage() {
                 disabled={page === totalPages}
                 className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
               >
-                다음
+                {tMy('nextPage')}
               </button>
             </div>
           )}

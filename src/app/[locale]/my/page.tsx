@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
-import { ORDER_STATUS_LABELS } from '@/constants/status';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { formatCurrency } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
@@ -23,16 +23,19 @@ import {
 } from 'lucide-react';
 
 const QUICK_LINKS = [
-  { href: '/my/orders', label: '주문 내역', icon: Package },
-  { href: '/my/wishlist', label: '위시리스트', icon: Heart },
-  { href: '/my/profile', label: '회원정보', icon: User },
-  { href: '/my/address', label: '배송지 관리', icon: MapPin },
-  { href: '/my/coupons', label: '쿠폰함', icon: Ticket },
-  { href: '/my/recently-viewed', label: '최근 본 상품', icon: Eye },
-  { href: '/my/inquiries', label: '1:1 문의', icon: MessageSquare },
-];
+  { href: '/my/orders', key: 'orderHistory', icon: Package },
+  { href: '/my/wishlist', key: 'wishlist', icon: Heart },
+  { href: '/my/profile', key: 'profile', icon: User },
+  { href: '/my/address', key: 'addressManagement', icon: MapPin },
+  { href: '/my/coupons', key: 'coupons', icon: Ticket },
+  { href: '/my/recently-viewed', key: 'recentlyViewed', icon: Eye },
+  { href: '/my/inquiries', key: 'inquiries', icon: MessageSquare },
+] as const;
 
 export default function MyPage() {
+  const t = useTranslations('myPage');
+  const tOrder = useTranslations('order');
+  const locale = useLocale();
   const { isAuthenticated, isLoading } = useRequireAuth();
   const { user } = useAuth();
   const [recentOrders, setRecentOrders] = useState<OrderResponse[]>([]);
@@ -44,11 +47,11 @@ export default function MyPage() {
       .getList({ page: 1, limit: 3 })
       .then((res) => setRecentOrders(res.items))
       .catch((err: unknown) => {
-        toast.error(handleApiError(err, '주문 내역을 불러올 수 없습니다.'));
+        toast.error(handleApiError(err, t('loadOrdersError')));
         setRecentOrders([]);
       })
       .finally(() => setOrdersLoading(false));
-  }, [isAuthenticated]);
+  }, [isAuthenticated, t]);
 
   if (isLoading || !user) {
     return (
@@ -60,7 +63,7 @@ export default function MyPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="typo-h1 mb-10">마이페이지</h1>
+      <h1 className="typo-h1 mb-10">{t('title')}</h1>
 
       {/* User info */}
       <section className="mb-10 border-b border-border pb-8">
@@ -76,7 +79,7 @@ export default function MyPage() {
             href="/my/profile"
             className="typo-button border border-border rounded-md px-4 py-2 text-foreground hover:bg-muted transition-colors"
           >
-            수정
+            {t('edit')}
           </Link>
         </div>
       </section>
@@ -84,14 +87,14 @@ export default function MyPage() {
       {/* Quick links */}
       <section className="mb-10">
         <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4 border border-border rounded-md overflow-hidden">
-          {QUICK_LINKS.map(({ href, label, icon: Icon }) => (
+          {QUICK_LINKS.map(({ href, key, icon: Icon }) => (
             <Link
               key={href}
               href={href}
               className="flex flex-col items-center gap-2.5 bg-background py-6 typo-body-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
               <Icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-              {label}
+              {t(key)}
             </Link>
           ))}
         </div>
@@ -100,12 +103,12 @@ export default function MyPage() {
       {/* Recent orders */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="typo-h3">최근 주문</h2>
+          <h2 className="typo-h3">{tOrder('recentOrders')}</h2>
           <Link
             href="/my/orders"
             className="typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
           >
-            전체 보기
+            {t('viewAll')}
             <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -118,7 +121,7 @@ export default function MyPage() {
           </div>
         ) : recentOrders.length === 0 ? (
           <p className="typo-body-sm text-muted-foreground py-8 text-center">
-            주문 내역이 없습니다.
+            {tOrder('noOrders')}
           </p>
         ) : (
           <ul className="divide-y divide-border">
@@ -132,9 +135,10 @@ export default function MyPage() {
                     <p className="typo-body-sm font-medium">{order.orderNumber}</p>
                     <p className="typo-label text-muted-foreground mt-0.5">
                       {order.items[0]?.productName}
-                      {order.items.length > 1 && ` 외 ${order.items.length - 1}개`}
+                      {order.items.length > 1 &&
+                        t('additionalItems', { count: order.items.length - 1 })}
                       {' · '}
-                      {new Date(order.createdAt).toLocaleDateString('ko-KR')}
+                      {new Date(order.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
                     </p>
                   </div>
                   <div className="text-right shrink-0 ml-4">
@@ -142,7 +146,7 @@ export default function MyPage() {
                       {formatCurrency(Number(order.totalAmount))}
                     </p>
                     <p className="typo-label text-muted-foreground mt-0.5">
-                      {ORDER_STATUS_LABELS[order.status] ?? order.status}
+                      {tOrder.has(`status.${order.status}`) ? tOrder(`status.${order.status}`) : order.status}
                     </p>
                   </div>
                 </Link>

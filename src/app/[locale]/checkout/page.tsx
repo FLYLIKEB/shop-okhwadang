@@ -144,7 +144,7 @@ export default function CheckoutPage({
       .finally(() => {
         setAddressLoading(false);
       });
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, t]);
 
   const handleAddressSelect = (id: number | 'manual') => {
     setSelectedAddressId(id);

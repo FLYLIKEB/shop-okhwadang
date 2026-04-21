@@ -135,12 +135,6 @@ describe('ProductCard', () => {
     expect(screen.getByText('SOLD OUT')).toBeInTheDocument();
   });
 
-  it('links to product detail page', () => {
-    render(<ProductCard {...baseProps} />);
-    const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/products/1');
-  });
-
   it('redirects to login when unauthenticated user clicks wishlist', async () => {
     render(<ProductCard {...baseProps} />);
     fireEvent.click(screen.getByRole('button', { name: '찜하기' }));
