@@ -124,7 +124,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           className={cn(
             'absolute left-2 top-1/2 -translate-y-1/2 z-10',
             'flex items-center justify-center',
-            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 shadow-sm',
+            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-divider-soft shadow-sm',
             'transition-opacity duration-200',
             canScrollLeft ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',
           )}
@@ -165,7 +165,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           className={cn(
             'absolute right-2 top-1/2 -translate-y-1/2 z-10',
             'flex items-center justify-center',
-            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 shadow-sm',
+            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-divider-soft shadow-sm',
             'transition-opacity duration-200',
             canScrollRight ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',
           )}

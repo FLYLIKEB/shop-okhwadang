@@ -131,7 +131,7 @@ export default function CategoryNavBlock({ content }: Props) {
             >
               {clayColor && (
                 <span
-                  className="w-8 h-8 rounded-full border border-border/50 shadow-sm transition-transform duration-300 group-hover:scale-110"
+                  className="w-8 h-8 rounded-full border border-divider-soft shadow-sm transition-transform duration-300 group-hover:scale-110"
                   style={{ backgroundColor: clayColor }}
                   aria-hidden="true"
                 />

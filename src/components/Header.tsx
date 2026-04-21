@@ -624,7 +624,7 @@ export default function Header() {
         </div>
 
         {/* Bottom row — GNB 전폭 균등 분할 */}
-        <div className="hidden md:block border-t border-border/50">
+        <div className="hidden md:block border-t border-divider-soft">
           <div className="flex h-12 items-stretch justify-between px-4 md:px-20">
             <DesktopNav items={navItems} fullWidth />
           </div>

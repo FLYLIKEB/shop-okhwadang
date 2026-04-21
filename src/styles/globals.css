@@ -106,6 +106,7 @@
   --admin-row-hover: color-mix(in srgb, var(--color-muted) 40%, transparent);
   --admin-row-height: 2.875rem;
   --admin-row-height-compact: 2.5rem;
+  --divider-soft: color-mix(in srgb, var(--color-border) 40%, transparent);
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
@@ -225,6 +226,10 @@ body.overflow-hidden .mobile-sticky-cta {
 
 @utility admin-row-compact {
   min-height: var(--admin-row-height-compact);
+}
+
+@utility border-divider-soft {
+  border-color: var(--divider-soft);
 }
 
 /* ── Typography utility classes ────────────────────────────────── */

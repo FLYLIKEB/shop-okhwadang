@@ -27,7 +27,7 @@ const CartItemRowComponent = memo(function CartItemRow({
     item.product.images.find((img) => img.isThumbnail) ?? item.product.images[0];
 
   return (
-    <div className={cn('flex items-start gap-4 py-4 border-b last:border-b-0', selected && 'bg-muted/30')}>
+    <div className={cn('flex items-start gap-4 border-b border-divider-soft py-4 last:border-b-0', selected && 'bg-muted/20')}>
       <input
         type="checkbox"
         checked={selected}
@@ -36,7 +36,7 @@ const CartItemRowComponent = memo(function CartItemRow({
         className="mt-1 h-4 w-4 rounded border-input accent-foreground"
       />
 
-      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border bg-muted">
+      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border border-divider-soft bg-muted">
         {thumbnail ? (
           <Image
             src={thumbnail.url}

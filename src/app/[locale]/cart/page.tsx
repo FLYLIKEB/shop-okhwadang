@@ -162,7 +162,7 @@ export default function CartPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between border-b border-border/40 pb-3">
+          <div className="mb-3 flex items-center justify-between border-b border-divider-soft pb-3">
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -187,7 +187,7 @@ export default function CartPage() {
           ))}
 
           <section className="mt-6 md:hidden">
-            <Accordion.Root type="single" collapsible className="rounded-lg border border-border/40">
+            <Accordion.Root type="single" collapsible className="rounded-lg border border-divider-soft">
               <Accordion.Item value="summary">
                 <Accordion.Header>
                   <Accordion.Trigger className="group flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted/30">
@@ -200,7 +200,7 @@ export default function CartPage() {
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </Accordion.Trigger>
                 </Accordion.Header>
-                <Accordion.Content className="overflow-hidden border-t border-border/40 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                <Accordion.Content className="overflow-hidden border-t border-divider-soft data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                   <div className="p-4">{orderSummaryContent}</div>
                 </Accordion.Content>
               </Accordion.Item>
@@ -208,7 +208,7 @@ export default function CartPage() {
           </section>
         </div>
 
-        <aside className="hidden h-fit rounded-lg border border-border/40 p-6 lg:sticky lg:top-24 lg:block">
+        <aside className="hidden h-fit rounded-lg border border-divider-soft p-6 lg:sticky lg:top-24 lg:block">
           <h2 className="typo-h3">{t('orderSummary')}</h2>
           <div className="mt-4">{orderSummaryContent}</div>
 
