@@ -143,11 +143,17 @@ describe('UploadService', () => {
     it('MIME 검증 실패 — gif 거부', async () => {
       const file = makeFile({ mimetype: 'image/gif', originalname: 'anim.gif' });
       await expect(service.uploadCategoryImage(file)).rejects.toThrow(BadRequestException);
+      await expect(service.uploadCategoryImage(file)).rejects.toThrow(
+        '허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)',
+      );
     });
 
     it('파일 크기 초과 — 5MB 이상 거부', async () => {
       const file = makeFile({ size: 6 * 1024 * 1024 });
       await expect(service.uploadCategoryImage(file)).rejects.toThrow(PayloadTooLargeException);
+      await expect(service.uploadCategoryImage(file)).rejects.toThrow(
+        '파일 크기는 5MB를 초과할 수 없습니다.',
+      );
     });
 
     it('UUID 재명명 확인 — 원본 파일명과 다름', async () => {

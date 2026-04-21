@@ -11,11 +11,12 @@ import { StorageAdapter, UploadedFile } from './interfaces/storage.interface';
 import { LocalStorageAdapter } from './adapters/local.adapter';
 import { MockStorageAdapter } from './adapters/mock.adapter';
 import { S3StorageAdapter } from './adapters/s3.adapter';
-
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-const MAX_WIDTH = 1920;
-const MAX_HEIGHT = 1920;
+import {
+  ALLOWED_IMAGE_MIME_TYPES,
+  MAX_UPLOAD_FILE_SIZE_BYTES,
+  MAX_UPLOAD_IMAGE_HEIGHT,
+  MAX_UPLOAD_IMAGE_WIDTH,
+} from './upload.constants';
 
 @Injectable()
 export class UploadService {
@@ -41,60 +42,64 @@ export class UploadService {
     this.logger.log(`StorageAdapter: ${provider}`);
   }
 
-  async uploadImage(file: Express.Multer.File): Promise<UploadedFile> {
-    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-      throw new BadRequestException(
-        `허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)`,
-      );
-    }
-
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      throw new PayloadTooLargeException('파일 크기는 5MB를 초과할 수 없습니다.');
-    }
-
-    const detectedMime = detectMimeFromMagicBytes(file.buffer);
-    if (!detectedMime || !ALLOWED_MIME_TYPES.includes(detectedMime)) {
-      throw new BadRequestException('허용되지 않는 이미지 형식입니다.');
-    }
-
-    const ext = path.extname(file.originalname).toLowerCase() || `.${file.mimetype.split('/')[1]}`;
-    const filename = `${randomUUID()}${ext}`;
-
-    const resized = await sharp(file.buffer)
-      .resize(MAX_WIDTH, MAX_HEIGHT, { fit: 'inside', withoutEnlargement: true })
-      .toBuffer();
-
-    return this.adapter.save(filename, resized, file.mimetype);
+  uploadImage(file: Express.Multer.File): Promise<UploadedFile> {
+    return this.uploadWithPipeline(file, (filename, buffer, mimetype) =>
+      this.adapter.save(filename, buffer, mimetype),
+    );
   }
 
-  async uploadCategoryImage(file: Express.Multer.File): Promise<UploadedFile> {
-    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+  uploadCategoryImage(file: Express.Multer.File): Promise<UploadedFile> {
+    return this.uploadWithPipeline(file, (filename, buffer, mimetype) =>
+      this.adapter.saveCategoryImage(filename, buffer, mimetype),
+    );
+  }
+
+  private async uploadWithPipeline(
+    file: Express.Multer.File,
+    save: (filename: string, buffer: Buffer, mimetype: string) => Promise<UploadedFile>,
+  ): Promise<UploadedFile> {
+    this.validateFile(file);
+
+    const ext =
+      path.extname(file.originalname).toLowerCase() ||
+      `.${file.mimetype.split('/')[1]}`;
+    const filename = `${randomUUID()}${ext}`;
+
+    const resized = await sharp(file.buffer)
+      .resize(MAX_UPLOAD_IMAGE_WIDTH, MAX_UPLOAD_IMAGE_HEIGHT, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .toBuffer();
+
+    return save(filename, resized, file.mimetype);
+  }
+
+  private validateFile(file: Express.Multer.File): void {
+    if (!isAllowedImageMimeType(file.mimetype)) {
       throw new BadRequestException(
-        `허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)`,
+        '허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)',
       );
     }
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
+    if (file.size > MAX_UPLOAD_FILE_SIZE_BYTES) {
       throw new PayloadTooLargeException('파일 크기는 5MB를 초과할 수 없습니다.');
     }
 
     const detectedMime = detectMimeFromMagicBytes(file.buffer);
-    if (!detectedMime || !ALLOWED_MIME_TYPES.includes(detectedMime)) {
+    if (!detectedMime || !isAllowedImageMimeType(detectedMime)) {
       throw new BadRequestException('허용되지 않는 이미지 형식입니다.');
     }
-
-    const ext = path.extname(file.originalname).toLowerCase() || `.${file.mimetype.split('/')[1]}`;
-    const filename = `${randomUUID()}${ext}`;
-
-    const resized = await sharp(file.buffer)
-      .resize(MAX_WIDTH, MAX_HEIGHT, { fit: 'inside', withoutEnlargement: true })
-      .toBuffer();
-
-    return this.adapter.saveCategoryImage(filename, resized, file.mimetype);
   }
 }
 
-function detectMimeFromMagicBytes(buffer: Buffer): string | null {
+function isAllowedImageMimeType(mimeType: string): mimeType is (typeof ALLOWED_IMAGE_MIME_TYPES)[number] {
+  return ALLOWED_IMAGE_MIME_TYPES.some((allowedType) => allowedType === mimeType);
+}
+
+function detectMimeFromMagicBytes(
+  buffer: Buffer,
+): (typeof ALLOWED_IMAGE_MIME_TYPES)[number] | null {
   if (buffer.length < 4) return null;
 
   // JPEG: FF D8 FF
@@ -103,15 +108,26 @@ function detectMimeFromMagicBytes(buffer: Buffer): string | null {
   }
 
   // PNG: 89 50 4E 47
-  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  ) {
     return 'image/png';
   }
 
   // WebP: RIFF....WEBP
   if (
     buffer.length >= 12 &&
-    buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
-    buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46 &&
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x45 &&
+    buffer[10] === 0x42 &&
+    buffer[11] === 0x50
   ) {
     return 'image/webp';
   }
