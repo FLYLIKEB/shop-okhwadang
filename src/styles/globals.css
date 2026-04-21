@@ -176,6 +176,12 @@
   bottom: calc(3.5rem + env(safe-area-inset-bottom));
 }
 
+/* 모바일 메뉴/사이드바 오버레이 열림 상태에서는 CTA 바 숨김 */
+body.overflow-hidden .mobile-sticky-cta {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ── Layout utilities ──────────────────────────────────────────── */
 @utility layout-container {
   width: 100%;
