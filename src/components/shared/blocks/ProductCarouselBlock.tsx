@@ -82,7 +82,7 @@ export default function ProductCarouselBlock({ content }: Props) {
 
   if (loading) {
     return (
-      <section className="py-12">
+      <section className="py-16 md:py-24">
         {title && <h2 className="font-semibold mb-8 text-center">{title}</h2>}
         <div className="flex gap-10 overflow-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -99,7 +99,7 @@ export default function ProductCarouselBlock({ content }: Props) {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-12">
+    <section className="py-16 md:py-24">
       <div className="mb-8">
         {title && <h2 className="font-semibold text-center">{title}</h2>}
         {category_id && (

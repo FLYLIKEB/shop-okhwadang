@@ -48,7 +48,7 @@ export default function ProductGridBlock({ content }: Props) {
 
   if (loading) {
     return (
-      <section className="py-12">
+      <section className="py-16 md:py-24">
         {title && <h2 className="font-semibold mb-8 text-center">{title}</h2>}
         <div className={cn('grid gap-10', gridCols)}>
           {Array.from({ length: limit || 4 }).map((_, i) => (

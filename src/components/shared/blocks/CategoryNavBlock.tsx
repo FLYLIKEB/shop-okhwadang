@@ -101,7 +101,7 @@ export default function CategoryNavBlock({ content }: Props) {
 
   if (template === 'image') {
     return (
-      <nav ref={ref} className="py-12">
+      <nav ref={ref} className="py-16 md:py-24">
         {title && <h2 className="text-2xl font-medium mb-8 text-center">{title}</h2>}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {categories.map((cat) => (
@@ -113,7 +113,7 @@ export default function CategoryNavBlock({ content }: Props) {
   }
 
   return (
-    <nav ref={ref} className="py-12 border-t border-border">
+    <nav ref={ref} className="py-16 md:py-24 border-t border-border">
       {title && <h2 className="text-2xl font-medium mb-8 text-center">{title}</h2>}
       <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
         {categories.map((cat, i) => {
