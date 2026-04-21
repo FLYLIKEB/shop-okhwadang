@@ -1,6 +1,5 @@
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
-import { CreateAddressDto } from '../modules/users/dto/create-address.dto';
 import { UpdateAddressDto } from '../modules/users/dto/update-address.dto';
 import { CreateCategoryDto } from '../modules/products/dto/create-category.dto';
 import { UpdateCategoryDto } from '../modules/products/dto/update-category.dto';
