@@ -1,3 +1,8 @@
+import {
+  emitGlobalLoadingEvent,
+  GLOBAL_LOADING_END_EVENT,
+  GLOBAL_LOADING_START_EVENT,
+} from '@/constants/global-loading';
 const API_BASE = '/api';
 
 // Auth endpoints that must not trigger token refresh on 401 (would cause infinite loops)
@@ -187,23 +192,10 @@ class ApiClient {
     const { headers: optionHeaders, ...restFetchOptions } = fetchOptions ?? {};
     const isFormData = restFetchOptions.body instanceof FormData;
     const defaultHeaders: Record<string, string> = isFormData ? {} : { 'Content-Type': 'application/json' };
-    const response = await fetch(url, {
-      ...restFetchOptions,
-      credentials: 'include',
-      headers: {
-        ...defaultHeaders,
-        ...(optionHeaders as Record<string, string> | undefined),
-      },
-    });
+    emitGlobalLoadingEvent(GLOBAL_LOADING_START_EVENT);
 
-    if (response.status === 401) {
-      if (AUTH_SKIP_REFRESH.has(endpoint)) {
-        const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
-        throw new Error(error.message || `HTTP ${response.status}`);
-      }
-      await _ensureTokenRefreshed();
-      // Retry original request after token refresh
-      const retryResponse = await fetch(url, {
+    try {
+      const response = await fetch(url, {
         ...restFetchOptions,
         credentials: 'include',
         headers: {
@@ -211,39 +203,58 @@ class ApiClient {
           ...(optionHeaders as Record<string, string> | undefined),
         },
       });
-      if (!retryResponse.ok) {
-        const error = await retryResponse.json().catch(() => ({ message: '오류가 발생했습니다.' }));
-        throw new Error(error.message || `HTTP ${retryResponse.status}`);
+
+      if (response.status === 401) {
+        if (AUTH_SKIP_REFRESH.has(endpoint)) {
+          const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
+          throw new Error(error.message || `HTTP ${response.status}`);
+        }
+        await _ensureTokenRefreshed();
+        // Retry original request after token refresh
+        const retryResponse = await fetch(url, {
+          ...restFetchOptions,
+          credentials: 'include',
+          headers: {
+            ...defaultHeaders,
+            ...(optionHeaders as Record<string, string> | undefined),
+          },
+        });
+        if (!retryResponse.ok) {
+          const error = await retryResponse.json().catch(() => ({ message: '오류가 발생했습니다.' }));
+          throw new Error(error.message || `HTTP ${retryResponse.status}`);
+        }
+        if (retryResponse.status === 204 || retryResponse.headers.get('content-length') === '0') {
+          return undefined as T;
+        }
+        return retryResponse.json() as Promise<T>;
       }
-      if (retryResponse.status === 204 || retryResponse.headers.get('content-length') === '0') {
+
+      if (response.status === 403) {
+        const error = await response.json().catch(() => ({ message: '접근 권한이 없습니다.' }));
+        const message = Array.isArray(error.message)
+          ? error.message.join(', ')
+          : (error.message || '접근 권한이 없습니다.');
+        if (message === 'Forbidden') {
+          throw new Error('접근 권한이 없습니다.');
+        }
+        throw new Error(message);
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
+        const message = Array.isArray(error.message)
+          ? error.message.join(', ')
+          : (error.message || `HTTP ${response.status}`);
+        throw new Error(message);
+      }
+
+      if (response.status === 204 || response.headers.get('content-length') === '0') {
         return undefined as T;
       }
-      return retryResponse.json() as Promise<T>;
+      return response.json() as Promise<T>;
+    } finally {
+      emitGlobalLoadingEvent(GLOBAL_LOADING_END_EVENT);
     }
-
-    if (response.status === 403) {
-      const error = await response.json().catch(() => ({ message: '접근 권한이 없습니다.' }));
-      const message = Array.isArray(error.message)
-        ? error.message.join(', ')
-        : (error.message || '접근 권한이 없습니다.');
-      if (message === 'Forbidden') {
-        throw new Error('접근 권한이 없습니다.');
-      }
-      throw new Error(message);
-    }
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
-      const message = Array.isArray(error.message)
-        ? error.message.join(', ')
-        : (error.message || `HTTP ${response.status}`);
-      throw new Error(message);
-    }
-
-    if (response.status === 204 || response.headers.get('content-length') === '0') {
-      return undefined as T;
-    }
-    return response.json() as Promise<T>;
   }
 
   get<T>(endpoint: string, options?: RequestOptions) {

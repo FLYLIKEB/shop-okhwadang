@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
+import { useGlobalLoading } from '@/contexts/GlobalLoadingContext';
 
 interface UseAsyncActionOptions {
   onSuccess?: () => void;
@@ -16,6 +17,7 @@ export function useAsyncAction<T, A = void>(
   options: UseAsyncActionOptions = {},
 ) {
   const [isLoading, setIsLoading] = useState(false);
+  const { startLoading, stopLoading } = useGlobalLoading();
   const fnRef = useRef(fn);
   fnRef.current = fn;
   const optRef = useRef(options);
@@ -23,6 +25,7 @@ export function useAsyncAction<T, A = void>(
 
   const execute = useCallback(async (arg: A) => {
     setIsLoading(true);
+    startLoading();
     try {
       const result = await fnRef.current(arg);
       if (optRef.current.successMessage) {
@@ -37,8 +40,9 @@ export function useAsyncAction<T, A = void>(
       throw err;
     } finally {
       setIsLoading(false);
+      stopLoading();
     }
-  }, []);
+  }, [startLoading, stopLoading]);
 
   return { execute, isLoading };
 }
