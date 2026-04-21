@@ -13,25 +13,25 @@ html[data-theme="light"] {
   /* shadcn/ui 호환 시맨틱 토큰 */
   --color-primary: var(--db-color-primary, #1B3A4B);
   --color-primary-foreground: var(--db-color-primary-foreground, #ffffff);
-  --color-secondary: var(--db-color-secondary, #F5F3EF);
+  --color-secondary: var(--db-color-secondary, #F2F0EC);
   --color-secondary-foreground: var(--db-color-secondary-foreground, #1a1a1a);
   --color-destructive: var(--db-color-destructive, #b91c1c);
   --color-destructive-foreground: var(--db-color-destructive-foreground, #ffffff);
-  --color-muted: var(--db-color-muted, #F5F3EF);
+  --color-muted: var(--db-color-muted, #F2F0EC);
   --color-muted-foreground: var(--db-color-muted-foreground, #525252);
-  --color-accent: var(--db-color-accent, #F5F3EF);
+  --color-accent: var(--db-color-accent, #F2F0EC);
   --color-accent-foreground: var(--db-color-accent-foreground, #1a1a1a);
-  --color-background: var(--db-color-background, #ffffff);
+  --color-background: var(--db-color-background, #FAF9F7);
   --color-foreground: var(--db-color-foreground, #1a1a1a);
-  --color-card: var(--db-color-card, #ffffff);
+  --color-card: var(--db-color-card, #FAF9F7);
   --color-card-foreground: var(--db-color-card-foreground, #1a1a1a);
-  --color-border: var(--db-color-border, #e8e4de);
-  --color-input: var(--db-color-input, #e8e4de);
+  --color-border: var(--db-color-border, #E5E1DB);
+  --color-input: var(--db-color-input, #E5E1DB);
   --color-ring: var(--db-color-ring, #1B3A4B);
 
   /* 브랜드 확장 토큰 */
   --color-zuni: #1B3A4B;
   --color-tea: #4A6741;
   --color-danni: #C9B8A3;
-  --color-surface: #F5F3EF;
+  --color-surface: #F2F0EC;
 }
