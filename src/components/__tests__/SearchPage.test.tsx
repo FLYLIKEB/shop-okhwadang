@@ -7,6 +7,7 @@ let mockSearchParams = new URLSearchParams('q=shoes');
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
   useSearchParams: () => mockSearchParams,
+  usePathname: () => '/search',
 }));
 
 const translations: Record<string, string> = {

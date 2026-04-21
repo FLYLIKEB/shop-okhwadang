@@ -1,8 +1,8 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
+import { useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
 import type { Category } from '@/lib/api';
 
 interface CategoryFilterSidebarProps {
@@ -10,21 +10,12 @@ interface CategoryFilterSidebarProps {
 }
 
 export default function CategoryFilterSidebar({ categories }: CategoryFilterSidebarProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useTranslations('product.filter');
   const tCommon = useTranslations('common');
-  const activeCategoryId = searchParams.get('categoryId');
+  const { categoryId, updateQuery } = useCatalogQueryParams();
 
-  const handleSelect = (categoryId: number | null) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (categoryId === null) {
-      params.delete('categoryId');
-    } else {
-      params.set('categoryId', String(categoryId));
-    }
-    params.delete('page');
-    router.push(`/products?${params.toString()}`);
+  const handleSelect = (nextCategoryId: number | undefined) => {
+    updateQuery({ categoryId: nextCategoryId });
   };
 
   return (
@@ -34,10 +25,10 @@ export default function CategoryFilterSidebar({ categories }: CategoryFilterSide
         <li>
           <button
             type="button"
-            onClick={() => handleSelect(null)}
+            onClick={() => handleSelect(undefined)}
             className={cn(
               'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
-              activeCategoryId === null
+              categoryId === undefined
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground',
             )}
@@ -52,7 +43,7 @@ export default function CategoryFilterSidebar({ categories }: CategoryFilterSide
               onClick={() => handleSelect(category.id)}
               className={cn(
                 'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
-                activeCategoryId === String(category.id)
+                categoryId === category.id
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground',
               )}
@@ -68,7 +59,7 @@ export default function CategoryFilterSidebar({ categories }: CategoryFilterSide
                       onClick={() => handleSelect(child.id)}
                       className={cn(
                         'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
-                        activeCategoryId === String(child.id)
+                        categoryId === child.id
                           ? 'bg-primary text-primary-foreground'
                           : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                       )}

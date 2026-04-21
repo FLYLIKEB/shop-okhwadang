@@ -1,8 +1,8 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
+import { useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
 import type { ProductSort } from '@/lib/api';
 
 const SORT_VALUES: { value: ProductSort; labelKey: 'latest' | 'priceAsc' | 'priceDesc' | 'popular' }[] = [
@@ -13,16 +13,12 @@ const SORT_VALUES: { value: ProductSort; labelKey: 'latest' | 'priceAsc' | 'pric
 ];
 
 export default function SortDropdown() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useTranslations('product.sort');
-  const current = (searchParams.get('sort') as ProductSort) ?? 'latest';
+  const { sort, updateQuery } = useCatalogQueryParams();
+  const current = (sort as ProductSort) ?? 'latest';
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('sort', e.target.value);
-    params.delete('page');
-    router.push(`/products?${params.toString()}`);
+    updateQuery({ sort: e.target.value });
   };
 
   return (

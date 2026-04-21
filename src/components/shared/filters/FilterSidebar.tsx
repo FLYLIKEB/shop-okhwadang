@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import { useUrlModal } from '@/hooks/useUrlModal';
+import { buildAttrs, useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
 import CategoryTree from './CategoryTree';
 import PriceRangeFilter from './PriceRangeFilter';
 import ClayTypeFilter from './ClayTypeFilter';
@@ -18,98 +18,52 @@ interface FilterSidebarProps {
   shapeCollections: Collection[];
 }
 
-function parseAttrsParam(attrs: string | null): Map<string, string> {
-  const result = new Map<string, string>();
-  if (!attrs) return result;
-  const pairs = attrs.split(',');
-  for (const pair of pairs) {
-    const [code, value] = pair.split(':');
-    if (code && value) {
-      result.set(code.trim(), value.trim());
-    }
-  }
-  return result;
-}
-
-function buildAttrsParam(current: Map<string, string>, key: string, value: string | undefined): string | undefined {
-  const next = new Map(current);
-  if (value === undefined) {
-    next.delete(key);
-  } else {
-    next.set(key, value);
-  }
-  if (next.size === 0) return undefined;
-  return Array.from(next.entries())
-    .map(([k, v]) => `${k}:${v}`)
-    .join(',');
-}
-
 export default function FilterSidebar({ categories, clayCollections, shapeCollections }: FilterSidebarProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useTranslations('product.filter');
   const [mobileOpen, setMobileOpen] = useUrlModal('filters');
+  const {
+    attrs,
+    categoryId,
+    priceMin,
+    priceMax,
+    updateQuery,
+    resetQuery,
+  } = useCatalogQueryParams();
 
-  const categoryIdParam = searchParams.get('categoryId');
-  const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : undefined;
-  const priceMin = searchParams.get('price_min') ? Number(searchParams.get('price_min')) : undefined;
-  const priceMax = searchParams.get('price_max') ? Number(searchParams.get('price_max')) : undefined;
-
-  const attrsParam = searchParams.get('attrs');
-  const parsedAttrs = parseAttrsParam(attrsParam);
-  const selectedClayType = parsedAttrs.get('clay_type');
-  const selectedShape = parsedAttrs.get('teapot_shape');
+  const selectedClayType = attrs.get('clay_type');
+  const selectedShape = attrs.get('teapot_shape');
 
   const hasActiveFilters =
-    selectedCategoryId !== undefined ||
+    categoryId !== undefined ||
     priceMin !== undefined ||
     priceMax !== undefined ||
     selectedClayType !== undefined ||
     selectedShape !== undefined;
 
-  const updateParams = useCallback((updates: Record<string, string | undefined>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(updates)) {
-      if (value === undefined) {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    }
-    params.delete('page');
-    router.push(`/products?${params.toString()}`);
-  }, [searchParams, router]);
-
   const handleCategorySelect = useCallback((id: number | undefined) => {
-    updateParams({ categoryId: id !== undefined ? String(id) : undefined });
-  }, [updateParams]);
+    updateQuery({ categoryId: id });
+  }, [updateQuery]);
 
   const handlePriceChange = useCallback((min?: number, max?: number) => {
-    updateParams({
-      price_min: min !== undefined ? String(min) : undefined,
-      price_max: max !== undefined ? String(max) : undefined,
+    updateQuery({
+      price_min: min,
+      price_max: max,
     });
-  }, [updateParams]);
+  }, [updateQuery]);
 
   const handleClayTypeSelect = useCallback((value: string | undefined) => {
-    const newAttrs = buildAttrsParam(parsedAttrs, 'clay_type', value);
-    updateParams({ attrs: newAttrs });
-  }, [parsedAttrs, updateParams]);
+    const nextAttrs = buildAttrs(attrs, 'clay_type', value);
+    updateQuery({ attrs: nextAttrs });
+  }, [attrs, updateQuery]);
 
   const handleShapeSelect = useCallback((value: string | undefined) => {
-    const newAttrs = buildAttrsParam(parsedAttrs, 'teapot_shape', value);
-    updateParams({ attrs: newAttrs });
-  }, [parsedAttrs, updateParams]);
+    const nextAttrs = buildAttrs(attrs, 'teapot_shape', value);
+    updateQuery({ attrs: nextAttrs });
+  }, [attrs, updateQuery]);
 
   const handleReset = useCallback(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('categoryId');
-    params.delete('price_min');
-    params.delete('price_max');
-    params.delete('attrs');
-    params.delete('page');
-    router.push(`/products?${params.toString()}`);
-  }, [searchParams, router]);
+    resetQuery(['categoryId', 'price_min', 'price_max', 'attrs']);
+  }, [resetQuery]);
 
   const sidebarContent = (
     <aside aria-label={t('filterLabel')} className="flex flex-col">
@@ -126,10 +80,10 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
         )}
       </div>
 
-      <FilterSection title={t('category')} defaultOpen={selectedCategoryId !== undefined}>
+      <FilterSection title={t('category')} defaultOpen={categoryId !== undefined}>
         <CategoryTree
           categories={categories}
-          selectedId={selectedCategoryId}
+          selectedId={categoryId}
           onSelect={handleCategorySelect}
         />
       </FilterSection>
