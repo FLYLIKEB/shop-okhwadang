@@ -26,7 +26,7 @@ export default function ProductCarouselBlock({ content }: Props) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { progress } = useCarouselProgress({ scrollRef });
+  const { progress, updateProgress } = useCarouselProgress({ scrollRef });
 
   const cardWidth = template === 'large' ? 288 : 224;
   const gap = 24;
@@ -68,6 +68,10 @@ export default function ProductCarouselBlock({ content }: Props) {
       ro.disconnect();
     };
   }, [products, updateScrollState]);
+
+  useEffect(() => {
+    if (!loading) updateProgress();
+  }, [loading, updateProgress]);
 
   function handleScroll(direction: 'left' | 'right') {
     const el = scrollRef.current;

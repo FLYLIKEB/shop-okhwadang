@@ -9,7 +9,7 @@ interface CarouselProgressBarProps {
 
 export default function CarouselProgressBar({ progress, className }: CarouselProgressBarProps) {
   return (
-    <div className={cn('relative h-px bg-border/40 overflow-hidden', className)}>
+    <div className={cn('relative h-0.5 bg-border/40 overflow-hidden', className)}>
       <div
         className="absolute inset-y-0 left-0 bg-foreground/40 transition-[width] duration-150 ease-out"
         style={{ width: `${Math.round(progress * 100)}%` }}

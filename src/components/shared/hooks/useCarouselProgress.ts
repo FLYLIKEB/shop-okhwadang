@@ -32,7 +32,9 @@ export function useCarouselProgress({ scrollRef }: UseCarouselProgressOptions): 
       el.removeEventListener('scroll', updateProgress);
       ro.disconnect();
     };
-  }, [scrollRef, updateProgress]);
+  // scrollRef.current가 바뀔 때도 재등록
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollRef.current, updateProgress]);
 
   return { progress, updateProgress };
 }
