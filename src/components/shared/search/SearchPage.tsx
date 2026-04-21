@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/shared/EmptyState';
@@ -9,6 +9,7 @@ import ProductCard from '@/components/shared/products/ProductCard';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { productsApi, type Product, type ProductSort } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
 
 const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
   { value: 'latest', label: '최신순' },
@@ -20,15 +21,18 @@ const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
 const LIMIT = 20;
 
 export default function SearchPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const {
+    q,
+    sort,
+    page,
+    categoryId,
+    priceMin,
+    priceMax,
+    updateQuery,
+  } = useCatalogQueryParams();
+  const tProduct = useTranslations('product');
 
-  const q = searchParams.get('q') ?? '';
-  const sort = (searchParams.get('sort') as ProductSort) ?? 'latest';
-  const categoryId = searchParams.get('categoryId') ? Number(searchParams.get('categoryId')) : undefined;
-  const page = searchParams.get('page') ? Number(searchParams.get('page')) : 1;
-  const priceMin = searchParams.get('price_min') ? Number(searchParams.get('price_min')) : undefined;
-  const priceMax = searchParams.get('price_max') ? Number(searchParams.get('price_max')) : undefined;
+  const activeSort = (sort as ProductSort) ?? 'latest';
 
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
@@ -36,27 +40,11 @@ export default function SearchPage() {
   const [priceMinInput, setPriceMinInput] = useState(priceMin?.toString() ?? '');
   const [priceMaxInput, setPriceMaxInput] = useState(priceMax?.toString() ?? '');
 
-  const updateParams = useCallback(
-    (updates: Record<string, string | undefined>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, value] of Object.entries(updates)) {
-        if (value !== undefined && value !== '') {
-          params.set(key, value);
-        } else {
-          params.delete(key);
-        }
-      }
-      params.delete('page');
-      router.push(`/search?${params.toString()}`);
-    },
-    [searchParams, router],
-  );
-
   const { execute: loadProducts, isLoading } = useAsyncAction(
     async () => {
       const data = await productsApi.getList({
         q: q || undefined,
-        sort,
+        sort: activeSort,
         categoryId,
         price_min: priceMin,
         price_max: priceMax,
@@ -71,14 +59,14 @@ export default function SearchPage() {
 
   useEffect(() => {
     void loadProducts();
-  }, [q, sort, categoryId, priceMin, priceMax, page, loadProducts]);
+  }, [q, activeSort, categoryId, priceMin, priceMax, page, loadProducts]);
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateParams({ sort: e.target.value });
+    updateQuery({ sort: e.target.value });
   };
 
   const handlePriceApply = () => {
-    updateParams({
+    updateQuery({
       price_min: priceMinInput || undefined,
       price_max: priceMaxInput || undefined,
     });
@@ -86,20 +74,18 @@ export default function SearchPage() {
 
   const hasMore = page * LIMIT < total;
 
-  const handleLoadMore = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('page', String(page + 1));
-    router.push(`/search?${params.toString()}`);
-  };
+  const handleLoadMore = useCallback(() => {
+    updateQuery({ page: page + 1 }, { resetPage: false });
+  }, [page, updateQuery]);
 
   return (
     <div className="mx-auto max-w-8xl px-4 py-8">
       <div className="mb-6 flex flex-col gap-2">
         <h1 className="text-xl font-bold text-foreground">
-          {q ? `"${q}" 검색 결과` : '전체 상품'}
+          {q ? tProduct('searchResults', { query: q }) : tProduct('productList')}
         </h1>
         {!isLoading && (
-          <p className="text-sm text-muted-foreground">총 {total.toLocaleString()}개 상품</p>
+          <p className="text-sm text-muted-foreground">{tProduct('totalItems', { count: total.toLocaleString() })}</p>
         )}
       </div>
 
@@ -110,7 +96,7 @@ export default function SearchPage() {
           </label>
           <select
             id="sort-select"
-            value={sort}
+            value={activeSort}
             onChange={handleSortChange}
             aria-label="정렬 기준"
             className={cn(
