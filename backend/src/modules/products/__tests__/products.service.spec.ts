@@ -3,6 +3,8 @@ import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { SelectQueryBuilder } from 'typeorm';
 import { ProductsService } from '../products.service';
+import { ProductQueryService } from '../product-query.service';
+import { ProductCommandService } from '../product-command.service';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
 import { ProductImage } from '../entities/product-image.entity';
@@ -63,6 +65,8 @@ describe('ProductsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductsService,
+        ProductQueryService,
+        ProductCommandService,
         {
           provide: getRepositoryToken(Product),
           useValue: mockRepository,
