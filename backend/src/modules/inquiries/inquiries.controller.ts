@@ -15,6 +15,7 @@ import {
   ApiParam,
   ApiCookieAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { InquiriesService } from './inquiries.service';
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AnswerInquiryDto } from './dto/answer-inquiry.dto';
@@ -32,10 +33,21 @@ export class InquiriesController {
   constructor(private readonly inquiriesService: InquiriesService) {}
 
   @Get()
+  @Throttle({
+    global: {
+      limit: 300,
+      ttl: 60000,
+    },
+    auth: {
+      limit: 300,
+      ttl: 60000,
+    },
+  })
   @ApiCookieAuth()
   @ApiOperation({ summary: '내 문의 목록 조회', description: '현재 사용자의 1:1 문의 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '문의 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 429, description: '요청 과다' })
   findAll(@Request() req: { user: JwtUser }) {
     return this.inquiriesService.findAllByUser(req.user.id);
   }
