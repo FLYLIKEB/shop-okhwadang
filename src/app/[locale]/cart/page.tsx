@@ -112,7 +112,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="layout-container layout-page pb-24 md:pb-8">
+    <div className="layout-container layout-page pb-36 md:pb-8">
       <h1 className="typo-h1">{t('title')}</h1>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -190,8 +190,8 @@ export default function CartPage() {
 
       <div
         className={cn(
-          'fixed left-0 right-0 z-50 border-t bg-background p-4 md:hidden',
-          isNavVisible ? 'bottom-14' : 'bottom-0',
+          'mobile-sticky-cta fixed left-0 right-0 z-50 border-t bg-background p-4 md:hidden',
+          isNavVisible ? 'bottom-16' : 'bottom-0',
         )}
       >
         <div className="layout-container p-0">

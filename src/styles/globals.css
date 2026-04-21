@@ -140,6 +140,24 @@
   }
 }
 
+/* ── Hero height utility (token-backed, non-arbitrary) ────────── */
+.hero-banner-height {
+  height: max(var(--size-hero-sm), 28rem);
+  min-height: 28rem;
+}
+
+@media (min-width: 768px) {
+  .hero-banner-height {
+    height: max(var(--size-hero-md), var(--size-hero-min-md));
+    min-height: var(--size-hero-min-md);
+  }
+}
+
+/* ── Mobile sticky CTA safe-area support ──────────────────────── */
+.mobile-sticky-cta {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
 /* ── Layout utilities ──────────────────────────────────────────── */
 @utility layout-container {
   width: 100%;

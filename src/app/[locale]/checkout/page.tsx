@@ -185,10 +185,10 @@ export default function CheckoutPage({
   }
 
   return (
-    <div className="layout-container layout-page pb-24 md:pb-8">
+    <div className="layout-container layout-page pb-36 md:pb-8">
       <h1 className="typo-h1">{t('title')}</h1>
 
-      <ol className="mt-4 flex items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground md:max-w-xl">
+      <ol className="mt-4 flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground md:max-w-xl">
         <li className="rounded-full bg-primary px-2.5 py-1 text-primary-foreground">{t('flow.shipping')}</li>
         <span aria-hidden>→</span>
         <li className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">{t('flow.payment')}</li>
@@ -262,8 +262,8 @@ export default function CheckoutPage({
 
       <div
         className={cn(
-          'fixed left-0 right-0 z-50 border-t bg-background p-4 md:hidden',
-          isNavVisible ? 'bottom-14' : 'bottom-0',
+          'mobile-sticky-cta fixed left-0 right-0 z-50 border-t bg-background p-4 md:hidden',
+          isNavVisible ? 'bottom-16' : 'bottom-0',
         )}
       >
         <div className="layout-container p-0">
