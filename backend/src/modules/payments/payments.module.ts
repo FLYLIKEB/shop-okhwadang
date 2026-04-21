@@ -11,18 +11,14 @@ import { AdminOrderRefundsController } from './admin-order-refunds.controller';
 import { MockPaymentAdapter } from './adapters/mock.adapter';
 import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
+import {
+  PAYMENT_CONFIG,
+  PaymentConfig,
+  paymentConfigProvider,
+} from '../../config/payment.config';
 
-export function resolvePaymentGateway(): string {
-  const gateway = process.env.PAYMENT_GATEWAY ?? 'mock';
-  if (
-    process.env.NODE_ENV === 'production' &&
-    (gateway === 'mock' || !process.env.PAYMENT_GATEWAY)
-  ) {
-    throw new Error(
-      'Mock payment gateway는 프로덕션에서 사용할 수 없습니다. PAYMENT_GATEWAY 환경변수를 설정하세요.',
-    );
-  }
-  return gateway;
+export function resolvePaymentGateway(config: PaymentConfig): string {
+  return config.gateway;
 }
 
 /**
@@ -35,25 +31,32 @@ export function resolveGatewayByLocale(locale: string): string {
 }
 
 const gatewayProviders = [
+  paymentConfigProvider,
+  MockPaymentAdapter,
+  TossPaymentAdapter,
+  StripePaymentAdapter,
   {
     provide: 'PaymentGateway',
-    useFactory: () => {
-      const gateway = resolvePaymentGateway();
+    useFactory: (
+      config: PaymentConfig,
+      mock: MockPaymentAdapter,
+      toss: TossPaymentAdapter,
+      stripe: StripePaymentAdapter,
+    ) => {
+      const gateway = resolvePaymentGateway(config);
       switch (gateway) {
         case 'toss':
-          return new TossPaymentAdapter();
+          return toss;
         case 'stripe':
-          return new StripePaymentAdapter();
+          return stripe;
         case 'mock':
-          return new MockPaymentAdapter();
+          return mock;
         default:
           throw new Error(`Unknown PAYMENT_GATEWAY: ${gateway}`);
       }
     },
+    inject: [PAYMENT_CONFIG, MockPaymentAdapter, TossPaymentAdapter, StripePaymentAdapter],
   },
-  MockPaymentAdapter,
-  TossPaymentAdapter,
-  StripePaymentAdapter,
 ];
 
 @Module({

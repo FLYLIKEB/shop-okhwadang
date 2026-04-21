@@ -1,13 +1,12 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import * as fs from 'fs';
-import * as path from 'path';
 import type { Request } from 'express';
 import { User } from '../../users/entities/user.entity';
 import { TokenBlacklistService } from '../token-blacklist.service';
+import { AUTH_CONFIG, AuthConfig } from '../../../config/auth.config';
 
 export interface JwtPayload {
   sub: number;
@@ -24,20 +23,6 @@ function cookieExtractor(req: Request): string | null {
   return null;
 }
 
-function getJwtPublicKey(): string {
-  if (process.env.JWT_PUBLIC_KEY) {
-    return process.env.JWT_PUBLIC_KEY;
-  }
-  if (process.env.JWT_PUBLIC_KEY_FILE && fs.existsSync(process.env.JWT_PUBLIC_KEY_FILE)) {
-    return fs.readFileSync(process.env.JWT_PUBLIC_KEY_FILE, 'utf-8');
-  }
-  const keyPath = path.resolve(process.cwd(), 'keys', 'jwt-public.pem');
-  if (fs.existsSync(keyPath)) {
-    return fs.readFileSync(keyPath, 'utf-8');
-  }
-  throw new Error('JWT_PUBLIC_KEY environment variable or keys/jwt-public.pem file is required');
-}
-
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly logger = new Logger(JwtStrategy.name);
@@ -46,6 +31,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly tokenBlacklistService: TokenBlacklistService,
+    @Inject(AUTH_CONFIG)
+    authConfig: AuthConfig,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
@@ -53,7 +40,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
-      secretOrKey: getJwtPublicKey(),
+      secretOrKey: authConfig.jwt.publicKey,
       algorithms: ['RS256'],
       passReqToCallback: false,
     });
