@@ -53,8 +53,8 @@ function renderNavLinks(items: NavigationItem[]) {
 
 export default function Footer() {
   const t = useTranslations('footer');
-  const { items: footerItems } = useNavigation('footer');
-  const hasCmsData = footerItems.length > 0;
+  const { items: footerItems, loading } = useNavigation('footer');
+  const hasCmsData = !loading && footerItems.length > 0;
   const rootItems = hasCmsData ? footerItems.filter((item) => item.parent_id === null) : [];
 
   const socialLabels: Record<'instagram' | 'naver', string> = {
@@ -62,77 +62,28 @@ export default function Footer() {
     naver: 'Naver Smart Store',
   };
 
-  const fallbackLinks = {
-    customerService: [
-      { id: -1, label: t('support'), url: '/pages/support' },
-      { id: -2, label: t('faq'), url: '/faq' },
-      { id: -3, label: t('shipping'), url: '/pages/shipping' },
-      { id: -4, label: t('returns'), url: '/pages/returns' },
-    ],
-    company: [
-      { id: -5, label: t('terms'), url: '/pages/terms' },
-      { id: -6, label: t('privacy'), url: '/pages/privacy' },
-    ],
-    shop: [
-      { id: -7, label: t('allProducts'), url: '/products' },
-      { id: -8, label: t('collection'), url: '/collection' },
-      { id: -9, label: t('archive'), url: '/archive' },
-      { id: -10, label: t('journal'), url: '/journal' },
-    ],
-  };
-
   return (
     <footer className="bg-card border-t border-border mt-auto">
       <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className={`grid grid-cols-2 md:grid-cols-4 gap-8 transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
           <div>
             <p className="text-sm font-medium text-foreground mb-4">{t('customerService')}</p>
             <nav className="flex flex-col gap-2">
-              {hasCmsData
-                ? renderNavLinks(rootItems.slice(0, 4))
-                : fallbackLinks.customerService.map((link) => (
-                  <Link
-                    key={link.id}
-                    href={link.url}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+              {renderNavLinks(rootItems.slice(0, 4))}
             </nav>
           </div>
 
           <div>
             <p className="text-sm font-medium text-foreground mb-4">{t('company')}</p>
             <nav className="flex flex-col gap-2">
-              {hasCmsData
-                ? renderNavLinks(rootItems.slice(4, 6))
-                : fallbackLinks.company.map((link) => (
-                  <Link
-                    key={link.id}
-                    href={link.url}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+              {renderNavLinks(rootItems.slice(4, 6))}
             </nav>
           </div>
 
           <div>
             <p className="text-sm font-medium text-foreground mb-4">{t('shop')}</p>
             <nav className="flex flex-col gap-2">
-              {hasCmsData
-                ? renderNavLinks(rootItems.slice(6, 10))
-                : fallbackLinks.shop.map((link) => (
-                  <Link
-                    key={link.id}
-                    href={link.url}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+              {renderNavLinks(rootItems.slice(6, 10))}
             </nav>
           </div>
 
