@@ -1,108 +1,49 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { cn } from '@/components/ui/utils';
+import { useTranslations } from 'next-intl';
 import { TEAPOT_IMAGES } from '@/lib/teapot-images';
 import { journalsApi, type Journal, JournalCategory } from '@/lib/api';
+import { handleApiError } from '@/utils/error';
+import SegmentedOptionGroup from '@/components/shared/ui/SegmentedOptionGroup';
+import JournalCard from '@/components/shared/journal/JournalCard';
+import { getJournalCategoryMessageKey } from '@/components/shared/journal/journalCategory';
 
-const CATEGORY_LABELS: Record<JournalCategory, string> = {
-  [JournalCategory.CULTURE]: '다문화',
-  [JournalCategory.USAGE]: '사용법',
-  [JournalCategory.TABLE_SETTING]: '찻자리 세팅',
-  [JournalCategory.NEWS]: '소식',
-};
+const ALL_CATEGORY = 'ALL';
+type JournalCategoryFilter = JournalCategory | typeof ALL_CATEGORY;
 
 function CategoryFilter({
   selected,
   onSelect,
 }: {
-  selected: JournalCategory | null;
-  onSelect: (cat: JournalCategory | null) => void;
+  selected: JournalCategoryFilter;
+  onSelect: (category: JournalCategory | null) => void;
 }) {
-  return (
-    <div role="group" aria-label="카테고리 필터" className="flex flex-wrap gap-2 justify-center">
-      <button
-        onClick={() => onSelect(null)}
-        aria-pressed={selected === null}
-        className={cn(
-          'px-4 py-1.5 rounded-full text-sm font-medium transition-colors',
-          selected === null
-            ? 'bg-foreground text-background'
-            : 'bg-muted text-muted-foreground hover:text-foreground',
-        )}
-      >
-        전체
-      </button>
-      {Object.values(JournalCategory).map((cat) => (
-        <button
-          key={cat}
-          onClick={() => onSelect(cat)}
-          aria-pressed={selected === cat}
-          className={cn(
-            'px-4 py-1.5 rounded-full text-sm font-medium transition-colors',
-            selected === cat
-              ? 'bg-foreground text-background'
-              : 'bg-muted text-muted-foreground hover:text-foreground',
-          )}
-        >
-          {CATEGORY_LABELS[cat]}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function JournalCard({ journal, index }: { journal: Journal; index: number }) {
-  const img = TEAPOT_IMAGES[index % TEAPOT_IMAGES.length];
+  const tCommon = useTranslations('common');
+  const tCategory = useTranslations('journalCategories');
 
   return (
-    <Link
-      href={`/journal/${journal.slug}`}
-      className="group block bg-background overflow-hidden transition-shadow hover:shadow-lg"
-    >
-      <div className="relative h-48 bg-muted overflow-hidden">
-        {journal.coverImageUrl ? (
-          <Image
-            src={journal.coverImageUrl}
-            alt={journal.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        ) : (
-          <Image
-            src={img.src}
-            alt={journal.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        )}
-      </div>
-      <div className="p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-            {CATEGORY_LABELS[journal.category]}
-          </span>
-          <span className="text-xs text-muted-foreground">·</span>
-          <span className="text-xs text-muted-foreground">{journal.readTime ?? ''}</span>
-        </div>
-        <h3 className="font-display typo-h3 text-foreground mb-1 group-hover:underline">
-          {journal.title}
-        </h3>
-        <p className="text-xs text-muted-foreground mb-3">{journal.subtitle ?? ''}</p>
-        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-          {journal.summary ?? ''}
-        </p>
-        <time className="block mt-4 text-xs text-muted-foreground">{journal.date}</time>
-      </div>
-    </Link>
+    <SegmentedOptionGroup
+      items={[
+        { label: tCommon('all'), value: ALL_CATEGORY },
+        ...Object.values(JournalCategory).map((category) => ({
+          label: tCategory(getJournalCategoryMessageKey(category)),
+          value: category,
+        })),
+      ]}
+      value={selected}
+      onToggle={(value) => onSelect(value === ALL_CATEGORY ? null : value)}
+      ariaLabel="카테고리 필터"
+      className="justify-center"
+      size="sm"
+      radius="full"
+      tone="inverted"
+    />
   );
 }
 
 export default function JournalListClient() {
+  const tCategory = useTranslations('journalCategories');
   const [journals, setJournals] = useState<Journal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,17 +55,18 @@ export default function JournalListClient() {
         setLoading(true);
         const data = await journalsApi.getAll();
         setJournals(data);
-      } catch {
-        setError('저널 목록을 불러오지 못했습니다.');
+      } catch (err) {
+        setError(handleApiError(err, '저널 목록을 불러오지 못했습니다.'));
       } finally {
         setLoading(false);
       }
     }
+
     void loadJournals();
   }, []);
 
   const filtered = selectedCategory
-    ? journals.filter((j) => j.category === selectedCategory)
+    ? journals.filter((journal) => journal.category === selectedCategory)
     : journals;
 
   if (loading) {
@@ -142,7 +84,7 @@ export default function JournalListClient() {
   return (
     <>
       <div className="mb-12">
-        <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
+        <CategoryFilter selected={selectedCategory ?? ALL_CATEGORY} onSelect={setSelectedCategory} />
       </div>
 
       {filtered.length === 0 ? (
@@ -151,8 +93,14 @@ export default function JournalListClient() {
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((journal, i) => (
-            <JournalCard key={journal.id} journal={journal} index={i} />
+          {filtered.map((journal, index) => (
+            <JournalCard
+              key={journal.id}
+              journal={journal}
+              fallbackImageUrl={TEAPOT_IMAGES[index % TEAPOT_IMAGES.length].src}
+              categoryLabel={tCategory(getJournalCategoryMessageKey(journal.category))}
+              variant="list"
+            />
           ))}
         </div>
       )}

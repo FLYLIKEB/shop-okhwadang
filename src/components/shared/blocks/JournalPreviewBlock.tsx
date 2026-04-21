@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { journalsApi, type Journal, JournalCategory } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
+import JournalCard from '@/components/shared/journal/JournalCard';
+import { getJournalCategoryMessageKey } from '@/components/shared/journal/journalCategory';
 import { cn } from '@/components/ui/utils';
 
 interface JournalPreviewContent {
@@ -21,69 +22,15 @@ interface Props {
   content: JournalPreviewContent;
 }
 
-const CATEGORY_KEY_MAP: Record<JournalCategory, string> = {
-  [JournalCategory.CULTURE]: 'culture',
-  [JournalCategory.USAGE]: 'usage',
-  [JournalCategory.TABLE_SETTING]: 'tableSetting',
-  [JournalCategory.NEWS]: 'news',
-};
-
-function JournalCard({ journal, index }: { journal: Journal; index: number }) {
-  const tCat = useTranslations('journalCategories');
-  const imgSources = [
-    'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
-    'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
-    'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png',
-  ];
-  const img = imgSources[index % imgSources.length];
-
-  return (
-    <Link
-      href={`/journal/${journal.slug}`}
-      className="group block bg-background overflow-hidden transition-shadow hover:shadow-lg"
-    >
-      <div className="relative h-48 bg-muted overflow-hidden">
-        {journal.coverImageUrl ? (
-          <Image
-            src={journal.coverImageUrl}
-            alt={journal.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        ) : (
-          <Image
-            src={img}
-            alt={journal.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        )}
-      </div>
-      <div className="p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-            {tCat(CATEGORY_KEY_MAP[journal.category])}
-          </span>
-          <span className="text-xs text-muted-foreground">·</span>
-          <span className="text-xs text-muted-foreground">{journal.readTime ?? ''}</span>
-        </div>
-        <h3 className="font-display text-lg text-foreground mb-1 group-hover:underline">
-          {journal.title}
-        </h3>
-        <p className="text-xs text-muted-foreground mb-3">{journal.subtitle ?? ''}</p>
-        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-          {journal.summary ?? ''}
-        </p>
-        <time className="block mt-4 text-xs text-muted-foreground">{journal.date}</time>
-      </div>
-    </Link>
-  );
-}
+const PREVIEW_FALLBACK_IMAGES = [
+  'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
+  'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
+  'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png',
+] as const;
 
 export default function JournalPreviewBlock({ content }: Props) {
   const tCommon = useTranslations('common');
+  const tCategory = useTranslations('journalCategories');
   const { title, limit = 6, category, more_href, prefetched_journals } = content;
   const { ref, visible } = useScrollAnimation<HTMLElement>();
 
@@ -101,8 +48,8 @@ export default function JournalPreviewBlock({ content }: Props) {
       <section className="py-16 md:py-24">
         {title && <h2 className="text-2xl font-medium mb-8">{title}</h2>}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: limit }).map((_, i) => (
-            <div key={i} className="rounded-lg overflow-hidden">
+          {Array.from({ length: limit }).map((_, index) => (
+            <div key={index} className="rounded-lg overflow-hidden">
               <div className="h-48 bg-muted animate-pulse" />
               <div className="p-5 space-y-2">
                 <div className="h-3 w-16 bg-muted rounded animate-pulse" />
@@ -138,16 +85,21 @@ export default function JournalPreviewBlock({ content }: Props) {
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {journals.map((journal, i) => (
+        {journals.map((journal, index) => (
           <div
             key={journal.id}
             className={cn(
               'transition-all duration-600 ease-out',
               visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
             )}
-            style={{ transitionDelay: visible ? `${i * 100}ms` : undefined }}
+            style={{ transitionDelay: visible ? `${index * 100}ms` : undefined }}
           >
-            <JournalCard journal={journal} index={i} />
+            <JournalCard
+              journal={journal}
+              fallbackImageUrl={PREVIEW_FALLBACK_IMAGES[index % PREVIEW_FALLBACK_IMAGES.length]}
+              categoryLabel={tCategory(getJournalCategoryMessageKey(journal.category))}
+              variant="preview"
+            />
           </div>
         ))}
       </div>

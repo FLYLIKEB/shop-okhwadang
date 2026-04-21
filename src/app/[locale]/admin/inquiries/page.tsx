@@ -4,24 +4,36 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { useAdminListPage } from '@/components/shared/hooks/useAdminListPage';
 import { adminInquiriesApi } from '@/lib/api';
 import type { Inquiry } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { InquiryStatusBadge } from '@/components/shared/admin/StatusBadge';
-import { cn } from '@/components/ui/utils';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 
-type StatusFilter = 'all' | 'pending' | 'answered';
+type InquiryStatusFilter = 'all' | 'pending' | 'answered';
+
+const STATUS_FILTERS = [
+  { label: '전체', value: 'all' },
+  { label: '미답변', value: 'pending' },
+  { label: '답변완료', value: 'answered' },
+] as const;
 
 export default function AdminInquiriesPage() {
   const { isAdmin } = useAdminGuard();
 
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [filter, setFilter] = useState<StatusFilter>('all');
   const [openId, setOpenId] = useState<number | null>(null);
   const [answerText, setAnswerText] = useState('');
   const [answering, setAnswering] = useState(false);
+  const { filters, setFilter } = useAdminListPage({
+    initialFilters: {
+      status: 'all' as InquiryStatusFilter,
+    },
+  });
 
   const { execute: loadInquiries, isLoading } = useAsyncAction(
     async () => {
@@ -35,19 +47,20 @@ export default function AdminInquiriesPage() {
     if (isAdmin) void loadInquiries();
   }, [isAdmin, loadInquiries]);
 
-  const filtered = filter === 'all'
+  const filtered = filters.status === 'all'
     ? inquiries
-    : inquiries.filter((i) => i.status === filter);
+    : inquiries.filter((inquiry) => inquiry.status === filters.status);
 
   const handleAnswer = async (id: number) => {
     if (!answerText.trim()) {
       toast.error('답변 내용을 입력해주세요.');
       return;
     }
+
     setAnswering(true);
     try {
       const updated = await adminInquiriesApi.answer(id, answerText.trim());
-      setInquiries((prev) => prev.map((i) => (i.id === id ? updated : i)));
+      setInquiries((prev) => prev.map((inquiry) => (inquiry.id === id ? updated : inquiry)));
       setAnswerText('');
       setOpenId(null);
       toast.success('답변이 등록되었습니다.');
@@ -62,42 +75,34 @@ export default function AdminInquiriesPage() {
     return (
       <div className="space-y-4">
         <h1 className="typo-h1">문의 관리</h1>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <SkeletonBox key={i} className="h-14 rounded-lg" />
+        {Array.from({ length: 5 }).map((_, index) => (
+          <SkeletonBox key={index} className="h-14 rounded-lg" />
         ))}
       </div>
     );
   }
 
-  const pendingCount = inquiries.filter((i) => i.status === 'pending').length;
+  const pendingCount = inquiries.filter((inquiry) => inquiry.status === 'pending').length;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="typo-h1">문의 관리</h1>
-        {pendingCount > 0 && (
-          <span className="text-sm font-medium text-red-600">
-            미답변 {pendingCount}건
-          </span>
-        )}
-      </div>
+      <AdminPageHeader
+        title="문의 관리"
+        titleClassName="typo-h1"
+        meta={pendingCount > 0 ? (
+          <span className="text-sm font-medium text-red-600">미답변 {pendingCount}건</span>
+        ) : undefined}
+      />
 
-      <div className="flex gap-2">
-        {(['all', 'pending', 'answered'] as StatusFilter[]).map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={cn(
-              'px-3 py-1.5 text-sm rounded-lg border transition-colors',
-              filter === s
-                ? 'bg-foreground text-background border-foreground'
-                : 'border-input text-muted-foreground hover:bg-muted',
-            )}
-          >
-            {s === 'all' ? '전체' : s === 'pending' ? '미답변' : '답변완료'}
-          </button>
-        ))}
-      </div>
+      <AdminFilterChips
+        items={STATUS_FILTERS}
+        value={filters.status}
+        onToggle={(value) => setFilter('status', value as InquiryStatusFilter)}
+        ariaLabel="문의 상태 필터"
+        tone="inverted"
+        radius="md"
+        size="sm"
+      />
 
       {filtered.length === 0 ? (
         <p className="text-sm text-muted-foreground py-8 text-center">문의가 없습니다.</p>
@@ -147,7 +152,7 @@ export default function AdminInquiriesPage() {
                         <p className="text-xs font-semibold text-muted-foreground mb-1">답변</p>
                         <textarea
                           value={answerText}
-                          onChange={(e) => setAnswerText(e.target.value)}
+                          onChange={(event) => setAnswerText(event.target.value)}
                           rows={4}
                           placeholder="답변을 입력하세요..."
                           className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"

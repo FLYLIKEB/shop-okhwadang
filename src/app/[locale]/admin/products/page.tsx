@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
+import { useAdminListPage } from '@/components/shared/hooks/useAdminListPage';
 import { adminProductsApi } from '@/lib/api';
 import type { Product } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
-import AdminPagination from '@/components/shared/admin/AdminPagination';
 import { ProductStatusBadge } from '@/components/shared/admin/StatusBadge';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
+import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '임시저장',
@@ -18,14 +21,25 @@ const STATUS_LABELS: Record<string, string> = {
   hidden: '숨김',
 };
 
+const STATUS_FILTERS = [
+  { label: '전체', value: '' },
+  { label: '판매중', value: 'active' },
+  { label: '임시저장', value: 'draft' },
+  { label: '품절', value: 'soldout' },
+  { label: '숨김', value: 'hidden' },
+] as const;
+
 const PAGE_SIZE = 20;
 
 export default function AdminProductsPage() {
   const { isAdmin } = useAdminGuard();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState('');
+  const { page, setPage, filters, setFilter } = useAdminListPage({
+    initialFilters: {
+      status: '',
+    },
+  });
 
   const { execute: fetchProducts, isLoading: loading } = useAsyncAction(
     async () => {
@@ -33,7 +47,8 @@ export default function AdminProductsPage() {
         page,
         limit: PAGE_SIZE,
       };
-      if (statusFilter) params.status = statusFilter;
+      if (filters.status) params.status = filters.status;
+
       const res = await adminProductsApi.getList(params);
       setProducts(res.items);
       setTotal(res.total);
@@ -43,7 +58,8 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     if (isAdmin) void fetchProducts();
-  }, [isAdmin, page, statusFilter, fetchProducts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, page, filters.status]);
 
   const { execute: toggleStatus } = useAsyncAction(
     async (product: Product) => {
@@ -73,49 +89,36 @@ export default function AdminProductsPage() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">상품 관리</h1>
-        <Link
-          href="/admin/products/new"
-          className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
-        >
-          + 상품 등록
-        </Link>
-      </div>
-
-      {/* 필터 */}
-      <div className="mb-4 flex gap-2">
-        {[
-          { label: '전체', value: '' },
-          { label: '판매중', value: 'active' },
-          { label: '임시저장', value: 'draft' },
-          { label: '품절', value: 'soldout' },
-          { label: '숨김', value: 'hidden' },
-        ].map((f) => (
-          <button
-            key={f.value}
-            onClick={() => {
-              setStatusFilter(f.value);
-              setPage(1);
-            }}
-            className={`rounded-full px-3 py-1 text-sm ${
-              statusFilter === f.value
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary hover:bg-secondary/80'
-            }`}
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
+      <AdminPageHeader
+        title="상품 관리"
+        action={(
+          <Link
+            href="/admin/products/new"
+            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
           >
-            {f.label}
-          </button>
-        ))}
-      </div>
+            + 상품 등록
+          </Link>
+        )}
+      />
 
-      {/* 테이블 */}
-      {loading ? (
-        <p className="py-8 text-center text-muted-foreground">불러오는 중...</p>
-      ) : products.length === 0 ? (
-        <p className="py-8 text-center text-muted-foreground">상품이 없습니다.</p>
-      ) : (
+      <AdminFilterChips
+        items={STATUS_FILTERS}
+        value={filters.status}
+        onToggle={(value) => setFilter('status', value)}
+        ariaLabel="상품 상태 필터"
+        size="sm"
+      />
+
+      <PaginatedAdminTableShell
+        loading={loading}
+        loadingMessage="불러오는 중..."
+        isEmpty={products.length === 0}
+        emptyMessage="상품이 없습니다."
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      >
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
             <thead className="bg-secondary">
@@ -129,31 +132,31 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {products.map((p) => (
-                <tr key={p.id} className="hover:bg-secondary/30">
-                  <td className="px-4 py-3 text-muted-foreground">{p.id}</td>
-                  <td className="px-4 py-3 font-medium">{p.name}</td>
-                  <td className="px-4 py-3">{formatCurrency(p.price)}</td>
+              {products.map((product) => (
+                <tr key={product.id} className="hover:bg-secondary/30">
+                  <td className="px-4 py-3 text-muted-foreground">{product.id}</td>
+                  <td className="px-4 py-3 font-medium">{product.name}</td>
+                  <td className="px-4 py-3">{formatCurrency(product.price)}</td>
                   <td className="px-4 py-3">
-                    <ProductStatusBadge status={p.status as 'active' | 'soldout' | 'draft' | 'hidden'} />
+                    <ProductStatusBadge status={product.status as 'active' | 'soldout' | 'draft' | 'hidden'} />
                   </td>
-                  <td className="px-4 py-3">{p.isFeatured ? '✓' : '-'}</td>
+                  <td className="px-4 py-3">{product.isFeatured ? '✓' : '-'}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
                       <button
-                        onClick={() => void handleToggleStatus(p)}
+                        onClick={() => void handleToggleStatus(product)}
                         className="rounded border px-2 py-1 text-xs hover:bg-secondary"
                       >
-                        {p.status === 'active' ? '숨기기' : '노출'}
+                        {product.status === 'active' ? '숨기기' : '노출'}
                       </button>
                       <Link
-                        href={`/admin/products/${p.id}/edit`}
+                        href={`/admin/products/${product.id}/edit`}
                         className="rounded border px-2 py-1 text-xs hover:bg-secondary"
                       >
                         수정
                       </Link>
                       <button
-                        onClick={() => void handleDelete(p)}
+                        onClick={() => void handleDelete(product)}
                         className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
                       >
                         삭제
@@ -165,10 +168,7 @@ export default function AdminProductsPage() {
             </tbody>
           </table>
         </div>
-      )}
-
-      {/* 페이지네이션 */}
-      <AdminPagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+      </PaginatedAdminTableShell>
     </div>
   );
 }
