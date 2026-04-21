@@ -55,7 +55,8 @@
     "archive": "Archive",
     "journal": "Journal",
     "myPage": "My Page",
-    "home": "Home"
+    "home": "Home",
+    "cart": "Cart"
   },
   "announcementBar": {
     "prev": "Previous announcement",
