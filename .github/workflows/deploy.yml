@@ -16,7 +16,7 @@ jobs:
     name: Deploy Backend to EC2
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Node.js 설정
         uses: actions/setup-node@v4
