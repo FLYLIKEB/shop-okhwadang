@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { productsApi } from '@/lib/api';
 import type { Product, ProductCarouselContent } from '@/lib/api';
 import ProductCard from '@/components/shared/products/ProductCard';
+import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import { cn } from '@/components/ui/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -20,8 +21,6 @@ export default function ProductCarouselBlock({ content }: Props) {
   const t = useTranslations('product');
   const tCommon = useTranslations('common');
   const { product_ids, category_id, sort, limit, template, title } = content;
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -29,30 +28,21 @@ export default function ProductCarouselBlock({ content }: Props) {
   const cardWidth = template === 'large' ? 288 : 224;
   const gap = 24;
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchProducts() {
-      try {
-        if (product_ids && product_ids.length > 0) {
-          const results = await productsApi.getBulk(product_ids.slice(0, limit), locale);
-          if (!cancelled) setProducts(results);
-        } else if (category_id) {
-          const res = await productsApi.getList({ categoryId: category_id, sort, limit, locale });
-          if (!cancelled) setProducts(res.items);
-        } else {
-          const res = await productsApi.getList({ sort, limit, locale });
-          if (!cancelled) setProducts(res.items);
-        }
-      } catch {
-      } finally {
-        if (!cancelled) setLoading(false);
+  const { data: products, loading } = useBlockData<Product>({
+    prefetched: null,
+    fetch: async () => {
+      if (product_ids && product_ids.length > 0) {
+        return productsApi.getBulk(product_ids.slice(0, limit), locale);
+      } else if (category_id) {
+        const res = await productsApi.getList({ categoryId: category_id, sort, limit, locale });
+        return res.items;
+      } else {
+        const res = await productsApi.getList({ sort, limit, locale });
+        return res.items;
       }
-    }
-
-    fetchProducts();
-    return () => { cancelled = true; };
-  }, [product_ids, category_id, sort, limit, locale]);
+    },
+    deps: [product_ids, category_id, sort, limit, locale],
+  });
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { categoriesApi } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
+import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import type { Category, CategoryNavContent } from '@/lib/api';
 
 /* ── 니료(泥料) 컬러 매핑 — 카테고리 slug으로 매칭 ── */
@@ -64,35 +65,18 @@ interface Props {
 
 export default function CategoryNavBlock({ content }: Props) {
   const { title, category_ids = [], template, prefetched_categories } = content;
-  const [categories, setCategories] = useState<Category[]>(prefetched_categories ?? []);
-  const [loading, setLoading] = useState(!prefetched_categories);
   const { ref, visible } = useScrollAnimation<HTMLElement>();
 
-  useEffect(() => {
-    if (prefetched_categories && prefetched_categories.length > 0) return;
-
-    let cancelled = false;
-
-    async function fetchCategories() {
-      try {
-        const all = await categoriesApi.getTree();
-        if (!cancelled) {
-          if (category_ids.length > 0) {
-            setCategories(all.filter((c) => category_ids.includes(c.id)));
-          } else {
-            setCategories(all.filter((c) => c.parentId === null));
-          }
-        }
-      } catch (err) {
-        void err;
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchCategories();
-    return () => { cancelled = true; };
-  }, [category_ids, prefetched_categories]);
+  const { data: categories, loading } = useBlockData<Category>({
+    prefetched: prefetched_categories,
+    fetch: async () => {
+      const all = await categoriesApi.getTree();
+      return category_ids.length > 0
+        ? all.filter((c) => category_ids.includes(c.id))
+        : all.filter((c) => c.parentId === null);
+    },
+    deps: [category_ids],
+  });
 
   if (loading) {
     return (
