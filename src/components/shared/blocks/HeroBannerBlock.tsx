@@ -73,10 +73,11 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                   fill
                   className={cn(
                     'object-cover object-center',
-                    slideIndex === selectedIndex && 'animate-kenburns',
+                    slideIndex === selectedIndex && !slide.image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns',
                   )}
                   priority={slideIndex === 0}
                   sizes="100vw"
+                  unoptimized={slide.image_url.toLowerCase().endsWith('.gif')}
                 />
               )}
 
@@ -245,9 +246,10 @@ export default function HeroBannerBlock({ content }: Props) {
             src={image_url}
             alt={title}
             fill
-            className="object-cover object-center animate-kenburns"
+            className={cn('object-cover object-center', !image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns')}
             priority
             sizes="100vw"
+            unoptimized={image_url.toLowerCase().endsWith('.gif')}
           />
         )}
         {image_url && <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />}
