@@ -48,6 +48,11 @@ See `.claude/rules/security.md`. Backend additions:
 - Unit: `npm run build && npm run test`
 - E2E: `npm run test:e2e` — **required for entity/migration/DB changes**
 
+## Migration
+- 로컬: `LOCAL_DATABASE_URL=$(grep LOCAL_DATABASE_URL .env | cut -d= -f2-) npm run migration:run`
+- 원격: `bash scripts/remote-migration.sh` (EC2 SSH 경유 자동 실행)
+- 상태 확인: `LOCAL_DATABASE_URL=... npm run migration:show`
+
 ## Key Directories
 ```
 src/modules/     # Feature modules

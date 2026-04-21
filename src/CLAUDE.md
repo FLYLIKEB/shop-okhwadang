@@ -31,6 +31,7 @@ Next.js 15 (App Router) + React 19 + TS + TailwindCSS v4. Inherits root CLAUDE.m
 
 ## Testing
 - `npm run build && npm run test:run` before push
+- Build only: `npm run build`
 - Test runner: Vitest
 - Single test: `npx vitest run src/components/some/SingleTest.test.tsx`
 - With filter: `npx vitest run --reporter=verbose --testNamePattern="test name"`

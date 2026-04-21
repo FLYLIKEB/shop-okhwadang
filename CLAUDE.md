@@ -35,12 +35,19 @@ npm run test:rtk                     # RTK 필터를 거친 테스트 실행
 npm run review:graph                 # Code Review Graph 변경 영향 분석
 cd backend && docker compose up -d   # Dev MySQL (127.0.0.1:3307)
 cd backend && docker compose down -v # Reset dev DB
+bash scripts/remote-migration.sh     # 원격(프로덕션) DB 마이그레이션
+bash scripts/remote-logs.sh          # EC2 백엔드 로그 조회
 ```
+
+## Worktree Policy
+* 기능 브랜치 작업은 반드시 `git worktree add` 로 워크트리를 생성해서 진행
+* 워크트리 경로: `../shop-okhwadang-<branch-name>`
+* 머지 후 `git worktree remove` + `git branch -D` 로 정리
 
 ## Issue Tracker
 * Phase 0-7 (Setup → MVP → Core → Payment → Admin → CMS → Polish → Ops)
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Latest merged PR: #609
+* Latest merged PR: #639
 
 ## Rules Reference
 | Subject | File |
