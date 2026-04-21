@@ -1207,6 +1207,8 @@ export interface SeedUser {
   phone: string | null;
   role: UserRole;
   isActive: boolean;
+  isEmailVerified?: boolean;
+  emailVerifiedAt?: Date | null;
 }
 
 export const users: SeedUser[] = [
@@ -1254,6 +1256,8 @@ export const users: SeedUser[] = [
     phone: null,
     role: 'admin',
     isActive: true,
+    isEmailVerified: true,
+    emailVerifiedAt: new Date('2026-04-21T00:00:00'),
   },
 ];
 
