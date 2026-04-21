@@ -113,6 +113,47 @@ export default function CartPage() {
     );
   }
 
+  const orderSummaryContent = (
+    <>
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t('selectedItems')}</span>
+          <span>{selectedIds.size}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t('productAmount')}</span>
+          <span className="typo-price">{formatCurrency(selectedTotal)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t('shippingFee')}</span>
+          <span className="typo-price">{selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee)}</span>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+        <p className="text-xs text-muted-foreground">
+          {remainingForFreeShipping === 0
+            ? t('freeShippingUnlocked')
+            : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping) })}
+        </p>
+        <div className="mt-2 h-1.5 w-full rounded-full bg-background">
+          <div
+            className="h-full rounded-full bg-primary transition-[width] duration-300"
+            style={{ width: `${freeShippingProgress}%` }}
+            aria-hidden
+          />
+        </div>
+      </div>
+
+      <div className="mt-4 border-t pt-4">
+        <div className="flex items-end justify-between">
+          <span className="typo-title">{t('total')}</span>
+          <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal)}</span>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="layout-container layout-page pb-36 md:pb-8">
       <h1 className="typo-h1">{t('title')}</h1>
@@ -142,47 +183,16 @@ export default function CartPage() {
               onRemove={handleRemove}
             />
           ))}
+
+          <section className="mt-6 rounded-lg border p-4 md:hidden">
+            <h2 className="typo-h3">{t('orderSummary')}</h2>
+            <div className="mt-4">{orderSummaryContent}</div>
+          </section>
         </div>
 
         <aside className="hidden h-fit rounded-lg border p-6 lg:sticky lg:top-24 lg:block">
           <h2 className="typo-h3">{t('orderSummary')}</h2>
-
-          <div className="mt-4 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t('selectedItems')}</span>
-              <span>{selectedIds.size}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t('productAmount')}</span>
-              <span className="typo-price">{formatCurrency(selectedTotal)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t('shippingFee')}</span>
-              <span className="typo-price">{selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee)}</span>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
-            <p className="text-xs text-muted-foreground">
-              {remainingForFreeShipping === 0
-                ? t('freeShippingUnlocked')
-                : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping) })}
-            </p>
-            <div className="mt-2 h-1.5 w-full rounded-full bg-background">
-              <div
-                className="h-full rounded-full bg-primary transition-[width] duration-300"
-                style={{ width: `${freeShippingProgress}%` }}
-                aria-hidden
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 border-t pt-4">
-            <div className="flex items-end justify-between">
-              <span className="typo-title">{t('total')}</span>
-              <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal)}</span>
-            </div>
-          </div>
+          <div className="mt-4">{orderSummaryContent}</div>
 
           <Button type="button" className="mt-4 w-full" onClick={handleOrder}>
             {t('orderSelected')}

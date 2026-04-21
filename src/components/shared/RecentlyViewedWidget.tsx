@@ -3,21 +3,30 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed';
 import { useUrlModal } from '@/hooks/useUrlModal';
 import { formatCurrency } from '@/utils/currency';
+import { cn } from '@/components/ui/utils';
 
 export default function RecentlyViewedWidget() {
   const { items } = useRecentlyViewed();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useUrlModal('recentlyViewed');
   const [isHidden, setIsHidden] = useState(false);
 
   if (isHidden || items.length === 0) return null;
 
   const preview = items.slice(0, 3);
+  const hasMobileBottomCta = /\/(cart|checkout)(\/|$)/.test(pathname ?? '');
 
   return (
-    <div className="fixed bottom-20 right-4 z-50 flex flex-col items-end gap-2">
+    <div
+      className={cn(
+        'fixed right-4 z-50 flex flex-col items-end gap-2 md:bottom-20',
+        hasMobileBottomCta ? 'bottom-40' : 'bottom-20',
+      )}
+    >
       {isOpen && (
         <div className="flex flex-col gap-1 rounded-lg border bg-background shadow-lg p-2">
           {preview.map((item) => (

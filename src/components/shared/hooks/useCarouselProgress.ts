@@ -32,7 +32,7 @@ export function useCarouselProgress({ scrollRef }: UseCarouselProgressOptions): 
       el.removeEventListener('scroll', updateProgress);
       ro.disconnect();
     };
-  }, [scrollRef, updateProgress]);
+  });
 
   return { progress, updateProgress };
 }

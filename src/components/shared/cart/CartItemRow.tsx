@@ -60,7 +60,7 @@ const CartItemRowComponent = memo(function CartItemRow({
         )}
         <p className="typo-price text-foreground">{formatCurrency(item.unitPrice)}</p>
 
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="mt-2 flex flex-wrap items-center gap-2 md:hidden">
           <QuantitySelector
             quantity={item.quantity}
             maxQuantity={99}
@@ -79,6 +79,26 @@ const CartItemRowComponent = memo(function CartItemRow({
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
+      </div>
+
+      <div className="hidden shrink-0 flex-col items-end gap-1.5 md:flex">
+        <QuantitySelector
+          quantity={item.quantity}
+          maxQuantity={99}
+          onIncrease={() => onQuantityChange(item.id, item.quantity + 1)}
+          onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
+        />
+
+        <p className="typo-price mt-0.5 text-foreground">{formatCurrency(item.subtotal)}</p>
+
+        <button
+          type="button"
+          onClick={() => onRemove(item.id)}
+          aria-label={`${item.product.name} 삭제`}
+          className="text-muted-foreground transition-colors hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );
