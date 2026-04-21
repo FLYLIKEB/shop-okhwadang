@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
 import { categoriesApi } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
@@ -66,16 +67,18 @@ interface Props {
 export default function CategoryNavBlock({ content }: Props) {
   const { title, category_ids = [], template, prefetched_categories } = content;
   const { ref, visible } = useScrollAnimation<HTMLElement>();
+  const params = useParams();
+  const locale = params.locale as string;
 
   const { data: categories, loading } = useBlockData<Category>({
     prefetched: prefetched_categories,
     fetch: async () => {
-      const all = await categoriesApi.getTree();
+      const all = await categoriesApi.getTree(locale);
       return category_ids.length > 0
         ? all.filter((c) => category_ids.includes(c.id))
         : all.filter((c) => c.parentId === null);
     },
-    deps: [category_ids],
+    deps: [category_ids, locale],
   });
 
   if (loading) {
