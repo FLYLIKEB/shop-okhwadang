@@ -7,6 +7,7 @@ import { User } from '../../users/entities/user.entity';
 import { NotificationService } from '../../notification/notification.service';
 import { SettingsService } from '../../settings/settings.service';
 import { MembershipService } from '../../membership/membership.service';
+import { canOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
 
 interface OrderSchedulerJobDependencies {
   orderRepo: Repository<Order>;
@@ -61,6 +62,13 @@ export class OrderSchedulerJob {
     this.deps.logger.log(`[cron:delivered-order-confirm] Confirming ${deliveredOrders.length} delivered orders`);
 
     for (const order of deliveredOrders) {
+      if (!canOrderStatusTransition(order.status, OrderStatus.COMPLETED)) {
+        this.deps.logger.warn(
+          `[cron:delivered-order-confirm] transition blocked: ${order.status} → ${OrderStatus.COMPLETED} (order=${order.orderNumber})`,
+        );
+        continue;
+      }
+
       await this.deps.orderRepo.update(order.id, { status: OrderStatus.COMPLETED });
 
       const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
@@ -83,6 +91,13 @@ export class OrderSchedulerJob {
   }
 
   private async cancelOrderAndRestoreStock(order: Order): Promise<void> {
+    if (!canOrderStatusTransition(order.status, OrderStatus.CANCELLED)) {
+      this.deps.logger.warn(
+        `[cron:pending-order-cancel] transition blocked: ${order.status} → ${OrderStatus.CANCELLED} (order=${order.orderNumber})`,
+      );
+      return;
+    }
+
     const queryRunner = this.deps.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

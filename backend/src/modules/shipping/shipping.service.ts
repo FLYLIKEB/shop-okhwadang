@@ -20,15 +20,7 @@ import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { NotificationService } from '../notification/notification.service';
 import { ShippingFeeCalculatorService, ShippingFeeQuote } from './services/shipping-fee-calculator.service';
-
-const ALLOWED_TRANSITIONS: Record<ShippingStatus, ShippingStatus[]> = {
-  [ShippingStatus.PAYMENT_CONFIRMED]: [ShippingStatus.PREPARING],
-  [ShippingStatus.PREPARING]: [ShippingStatus.SHIPPED, ShippingStatus.FAILED],
-  [ShippingStatus.SHIPPED]: [ShippingStatus.IN_TRANSIT, ShippingStatus.FAILED],
-  [ShippingStatus.IN_TRANSIT]: [ShippingStatus.DELIVERED, ShippingStatus.FAILED],
-  [ShippingStatus.DELIVERED]: [],
-  [ShippingStatus.FAILED]: [],
-};
+import { assertShippingStatusTransition } from './policies/shipping-status-transition.policy';
 
 @Injectable()
 export class ShippingService {
@@ -161,10 +153,7 @@ export class ShippingService {
   }
 
   validateTransition(current: ShippingStatus, next: ShippingStatus): void {
-    const allowed = ALLOWED_TRANSITIONS[current] ?? [];
-    if (!allowed.includes(next)) {
-      throw new BadRequestException('유효하지 않은 배송 상태 변경입니다.');
-    }
+    assertShippingStatusTransition(current, next);
   }
 
   private resolveProvider(carrier: CarrierCode): ShippingProvider {
