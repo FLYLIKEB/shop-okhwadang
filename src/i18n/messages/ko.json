@@ -55,7 +55,8 @@
     "archive": "Archive",
     "journal": "Journal",
     "myPage": "마이",
-    "home": "홈"
+    "home": "홈",
+    "cart": "장바구니"
   },
   "announcementBar": {
     "prev": "이전 공지",

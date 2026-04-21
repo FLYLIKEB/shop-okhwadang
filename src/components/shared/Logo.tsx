@@ -14,6 +14,7 @@ export default function Logo({ variant = 'header', className }: LogoProps) {
       src="/logo-okhwadang.png"
       alt="옥화당"
       {...size}
+      style={{ height: 'auto' }}
       className={`object-contain ${variant === 'hero' ? 'brightness-0 invert' : ''} ${className ?? ''}`}
       priority
     />

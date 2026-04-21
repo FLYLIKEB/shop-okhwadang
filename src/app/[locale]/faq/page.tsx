@@ -44,8 +44,8 @@ export default function FaqPage() {
             className={cn(
               'px-4 py-1.5 rounded-full typo-button border transition-colors',
               activeCategory === cat
-                ? 'bg-black text-white border-black'
-                : 'border-gray-300 text-gray-600 hover:border-gray-500',
+                ? 'bg-foreground text-background border-foreground'
+                : 'border-border text-muted-foreground hover:border-foreground',
             )}
           >
             {cat}
@@ -62,17 +62,17 @@ export default function FaqPage() {
       ) : (faqs?.length ?? 0) === 0 ? (
         <EmptyState title="해당 카테고리의 FAQ가 없습니다." />
       ) : (
-        <Accordion.Root type="single" collapsible className="divide-y divide-gray-200 border-t border-b">
+        <Accordion.Root type="single" collapsible className="divide-y divide-border border-t border-b">
           {faqs.map((faq) => (
             <Accordion.Item key={faq.id} value={String(faq.id)}>
               <Accordion.Header>
-                <Accordion.Trigger className="flex items-center justify-between w-full px-2 py-4 text-left typo-h3 text-gray-800 hover:bg-gray-50 transition-colors">
+                <Accordion.Trigger className="flex items-center justify-between w-full px-2 py-4 text-left typo-h3 text-foreground hover:bg-muted transition-colors">
                   <span>{faq.question}</span>
-                  <span className="faq-arrow ml-4 shrink-0 text-gray-400 transition-transform duration-200">▼</span>
+                  <span className="faq-arrow ml-4 shrink-0 text-muted-foreground transition-transform duration-200">▼</span>
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                <div className="px-2 pb-4 typo-body text-gray-600 bg-gray-50">
+                <div className="px-2 pb-4 typo-body text-muted-foreground bg-muted">
                   {faq.answer}
                 </div>
               </Accordion.Content>

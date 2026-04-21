@@ -13,7 +13,27 @@
       "Bash(kill 26829 26899 35680 35849 60719 60814)",
       "Bash(pkill -f \"/Users/jwp/Documents/programming/shop/shop-okhwadang-pr410/node_modules/.bin/vitest run\")",
       "Bash(pkill -f \"/Users/jwp/Documents/programming/shop/shop-okhwadang-pr410/node_modules/.bin/next build\")",
+      "Bash(gh repo *)",
+      "Bash(cargo search *)",
+      "Bash(brew install rtk)",
+      "Bash(/Users/jwp/Documents/programming/shop/shop-okhwadang/scripts/venv/bin/pip install code-review-graph)",
+      "Bash(bash scripts/setup-rtk.sh:*)",
+      "Bash(bash scripts/review-graph.sh:*)",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__new_page"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/jwp/Documents/programming/shop/shop-okhwadang/.claude/hooks/inject-review-graph.sh",
+            "timeout": 10,
+            "statusMessage": "Review graph 컨텍스트 로딩 중..."
+          }
+        ]
+      }
     ]
   }
 }

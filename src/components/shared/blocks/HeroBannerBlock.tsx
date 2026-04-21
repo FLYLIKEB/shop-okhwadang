@@ -73,10 +73,11 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                   fill
                   className={cn(
                     'object-cover object-center',
-                    slideIndex === selectedIndex && 'animate-kenburns',
+                    slideIndex === selectedIndex && !slide.image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns',
                   )}
                   priority={slideIndex === 0}
                   sizes="100vw"
+                  unoptimized={slide.image_url.toLowerCase().endsWith('.gif')}
                 />
               )}
 
@@ -133,7 +134,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               type="button"
               onClick={scrollPrev}
               aria-label={t('prevSlide')}
-              className="absolute left-6 md:left-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+              className="absolute left-2 md:left-12 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors p-3 md:p-2"
             >
               <ChevronLeft className="h-7 w-7" />
             </button>
@@ -141,7 +142,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               type="button"
               onClick={scrollNext}
               aria-label={t('nextSlide')}
-              className="absolute right-6 md:right-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+              className="absolute right-2 md:right-12 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors p-3 md:p-2"
             >
               <ChevronRight className="h-7 w-7" />
             </button>
@@ -245,9 +246,10 @@ export default function HeroBannerBlock({ content }: Props) {
             src={image_url}
             alt={title}
             fill
-            className="object-cover object-center animate-kenburns"
+            className={cn('object-cover object-center', !image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns')}
             priority
             sizes="100vw"
+            unoptimized={image_url.toLowerCase().endsWith('.gif')}
           />
         )}
         {image_url && <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />}

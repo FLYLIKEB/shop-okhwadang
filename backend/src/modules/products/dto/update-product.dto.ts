@@ -67,7 +67,7 @@ export class UpdateProductDto {
   @IsBoolean()
   isFeatured?: boolean;
 
-  @ApiPropertyOptional({ example: 'Okhwadang Pu-erh Tea', description: '상품명 (영문)' })
+  @ApiPropertyOptional({ example: 'Ockhwadang Pu-erh Tea', description: '상품명 (영문)' })
   @IsOptional()
   @IsString()
   @MaxLength(255)

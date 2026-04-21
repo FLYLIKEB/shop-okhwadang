@@ -15,7 +15,7 @@ export class SettingItemDto {
   @MaxLength(1000)
   value?: string;
 
-  @ApiPropertyOptional({ example: 'Okhwadang', description: '영문 설정 값' })
+  @ApiPropertyOptional({ example: 'Ockhwadang', description: '영문 설정 값' })
   @IsOptional()
   @IsString()
   @MaxLength(1000)

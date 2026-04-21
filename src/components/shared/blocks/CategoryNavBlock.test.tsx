@@ -18,6 +18,10 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('next/navigation', () => ({
+  useParams: () => ({ locale: 'ko' }),
+}));
+
 vi.mock('@/lib/api', () => ({
   categoriesApi: {
     getTree: vi.fn(),

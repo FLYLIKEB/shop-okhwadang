@@ -54,7 +54,7 @@ describe('render helpers', () => {
       method: 'card',
       locale: 'en',
     });
-    expect(email.subject).toContain('Okhwadang');
+    expect(email.subject).toContain('Ockhwadang');
     expect(email.text).toContain('Alice');
   });
 

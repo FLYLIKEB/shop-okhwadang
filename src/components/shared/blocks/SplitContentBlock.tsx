@@ -46,21 +46,21 @@ export default function SplitContentBlock({ content }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const bgClass = use_alternate_bg ? 'bg-[--color-surface]' : 'bg-background';
+  const bgClass = use_alternate_bg ? 'bg-muted' : 'bg-background';
 
   return (
     <div ref={sectionRef} className={cn(bgClass)}>
       <div
         className={cn(
-          'mx-auto flex flex-col justify-center',
-          isLarge ? 'max-w-3xl px-12 py-20 lg:px-20' : isCompact ? 'max-w-2xl px-8 py-14 lg:px-14' : 'max-w-xl px-10 py-16 lg:px-16'
+          'mx-auto flex flex-col justify-center w-full',
+          isLarge ? 'max-w-5xl px-8 py-24 md:px-16 lg:px-24 lg:py-32' : isCompact ? 'max-w-4xl px-8 py-16 md:px-12 lg:px-20 lg:py-24' : 'max-w-4xl px-8 py-20 md:px-12 lg:px-20 lg:py-28'
         )}
       >
         {subtitle && (
           <p
             className={cn(
-              'animate-fade-in-up typo-label uppercase tracking-[0.2em] text-muted-foreground',
-              isLarge ? 'mb-5' : 'mb-4',
+              'animate-fade-in-up typo-body-sm font-display uppercase tracking-[0.2em] text-muted-foreground',
+              isLarge ? 'mb-6' : 'mb-5',
               isVisible ? 'opacity-100' : 'opacity-0'
             )}
             style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}
@@ -70,7 +70,7 @@ export default function SplitContentBlock({ content }: Props) {
         )}
         <h2
           className={cn(
-            'animate-fade-in-up font-display text-foreground',
+            'animate-fade-in-up font-display text-foreground leading-snug',
             isLarge
               ? 'text-3xl lg:text-4xl'
               : isCompact
@@ -86,8 +86,8 @@ export default function SplitContentBlock({ content }: Props) {
           <SafeHtml
             html={description}
             className={cn(
-              'animate-fade-in-up typo-body text-muted-foreground prose max-w-none',
-              isLarge ? 'mt-5' : 'mt-4',
+              'animate-fade-in-up typo-body text-muted-foreground prose max-w-none leading-relaxed',
+              isLarge ? 'mt-8' : 'mt-6',
               isVisible ? 'opacity-100' : 'opacity-0'
             )}
             style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
@@ -105,7 +105,7 @@ export default function SplitContentBlock({ content }: Props) {
               href={isSafeUrl(cta_url) ? cta_url : '#'}
               className={cn(
                 'group inline-flex items-center gap-2 font-medium text-foreground',
-                isLarge ? 'mt-8 text-sm' : 'mt-6 text-sm'
+                isLarge ? 'mt-10 text-sm' : 'mt-8 text-sm'
               )}
             >
               <span className="relative">

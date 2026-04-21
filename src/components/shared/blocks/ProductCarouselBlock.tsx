@@ -8,6 +8,8 @@ import { productsApi } from '@/lib/api';
 import type { Product, ProductCarouselContent } from '@/lib/api';
 import ProductCard from '@/components/shared/products/ProductCard';
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
+import { useCarouselProgress } from '@/components/shared/hooks/useCarouselProgress';
+import CarouselProgressBar from '@/components/shared/common/CarouselProgressBar';
 import { cn } from '@/components/ui/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -24,6 +26,7 @@ export default function ProductCarouselBlock({ content }: Props) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { progress, updateProgress } = useCarouselProgress({ scrollRef });
 
   const cardWidth = template === 'large' ? 288 : 224;
   const gap = 24;
@@ -66,6 +69,10 @@ export default function ProductCarouselBlock({ content }: Props) {
     };
   }, [products, updateScrollState]);
 
+  useEffect(() => {
+    if (!loading) updateProgress();
+  }, [loading, updateProgress]);
+
   function handleScroll(direction: 'left' | 'right') {
     const el = scrollRef.current;
     if (!el) return;
@@ -75,7 +82,7 @@ export default function ProductCarouselBlock({ content }: Props) {
 
   if (loading) {
     return (
-      <section className="py-12">
+      <section className="py-16 md:py-24">
         {title && <h2 className="font-semibold mb-8 text-center">{title}</h2>}
         <div className="flex gap-10 overflow-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -92,7 +99,7 @@ export default function ProductCarouselBlock({ content }: Props) {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-12">
+    <section className="py-16 md:py-24">
       <div className="mb-8">
         {title && <h2 className="font-semibold text-center">{title}</h2>}
         {category_id && (
@@ -166,6 +173,8 @@ export default function ProductCarouselBlock({ content }: Props) {
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
+
+      <CarouselProgressBar progress={progress} className="mt-4 mx-4 md:mx-4 xl:mx-8" />
     </section>
   );
 }

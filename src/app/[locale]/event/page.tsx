@@ -87,10 +87,10 @@ export default function EventPage() {
                 <li key={promo.id}>
                   <Link
                     href={`/event/${promo.id}`}
-                    className="flex gap-4 items-start p-4 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white"
+                    className="flex gap-4 items-start p-4 border border-border rounded-xl hover:shadow-md transition-shadow bg-card"
                   >
                     {promo.imageUrl && (
-                      <div className="shrink-0 w-24 h-24 relative rounded-lg overflow-hidden bg-gray-100">
+                      <div className="shrink-0 w-24 h-24 relative rounded-lg overflow-hidden bg-muted">
                         <Image
                           src={promo.imageUrl}
                           alt={promo.title}
@@ -101,13 +101,13 @@ export default function EventPage() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{promo.title}</p>
+                      <p className="font-medium text-foreground truncate">{promo.title}</p>
                       {promo.description && (
-                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                           {promo.description}
                         </p>
                       )}
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-400">
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         {promo.discountRate && (
                           <span className="text-red-500 font-bold">{promo.discountRate}% 할인</span>
                         )}

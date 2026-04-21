@@ -32,6 +32,15 @@ Reusable components (ImageGallery, ProductList, etc.) must accept:
 - Typography: use `typo-h1`, `typo-h2`, `typo-body`, `typo-label`, `typo-button` utility classes — no raw `text-*` size overrides on headings. Font families: `font-display-ko` (Korean display), `font-body` (body text)
 - Scroll logo: HeroBanner wraps content in `<ScrollLogoProvider>`. Use `useScrollLogoTransition({ heroRef })` to get `heroLogoStyle` / `headerLogoStyle` / `progress` / `isHeroVisible` — do not duplicate scroll logic inline
 
+## CMS Block Hooks
+
+All CMS block components (`*Block.tsx`) must use these shared hooks — do not inline equivalent logic.
+
+- **`useBlockData<T>({ prefetched, fetch, deps })`** (`components/shared/hooks/useBlockData.ts`) — SSR prefetch-first data fetching for blocks. Uses `prefetched` data when available; falls back to client-side `fetch()` on mount. Returns `{ data: T[], loading: boolean }`. Network errors are silently swallowed (non-fatal for CMS blocks).
+- **`useScrollAnimation<El>()`** (`components/shared/hooks/useScrollAnimation.ts`) — IntersectionObserver-based scroll visibility. Returns `{ ref, visible }`. Apply `opacity`/`translateY` transitions gated on `visible` for staggered reveal.
+
+When an enum needs i18n display, define a `CATEGORY_KEY_MAP: Record<EnumType, string>` constant mapping enum values to translation keys, then call `t(CATEGORY_KEY_MAP[value])` — never inline string literals or switch statements for this mapping.
+
 ## Admin Patterns
 
 - `useAdminGuard()` (`hooks/useAdminGuard.ts`) — admin role check + redirect to `/`. Returns `{ user, isLoading, isAdmin }`. Always use `isAdmin` to gate data loading; never inline `user.role === 'admin'` checks.
@@ -52,6 +61,8 @@ hooks/useAdminGuard.ts          # Admin role guard (redirect + isAdmin flag)
 hooks/useFormModal.ts           # Form modal state/submit boilerplate
 hooks/useAsyncAction.ts         # Async loading/error state management hook
 hooks/useScrollLogoTransition.ts # Hero scroll → header logo crossfade
+components/shared/hooks/useBlockData.ts  # CMS block SSR-prefetch + client fallback data fetching
+components/shared/hooks/useScrollAnimation.ts # IntersectionObserver scroll reveal for CMS blocks
 contexts/ScrollLogoContext.tsx  # Context for scroll logo state — wrap hero sections with ScrollLogoProvider
 components/admin/AdminTable.tsx # Common admin table shell
 components/admin/StatusBadge.tsx # Active/inactive status badge

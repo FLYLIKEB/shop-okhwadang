@@ -62,20 +62,20 @@
   /* ── shadcn/ui 호환 토큰 — light theme as :root default, dark theme in tokens-dark.css ── */
   --color-primary: #1B3A4B;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #F5F3EF;
+  --color-secondary: #F2F0EC;
   --color-secondary-foreground: #1a1a1a;
   --color-destructive: #b91c1c;
   --color-destructive-foreground: #ffffff;
-  --color-muted: #F5F3EF;
+  --color-muted: #F2F0EC;
   --color-muted-foreground: #525252;
-  --color-accent: #F5F3EF;
+  --color-accent: #F2F0EC;
   --color-accent-foreground: #1a1a1a;
-  --color-background: #ffffff;
+  --color-background: #FAF9F7;
   --color-foreground: #1a1a1a;
-  --color-card: #ffffff;
+  --color-card: #FAF9F7;
   --color-card-foreground: #1a1a1a;
-  --color-border: #e8e4de;
-  --color-input: #e8e4de;
+  --color-border: #E5E1DB;
+  --color-input: #E5E1DB;
   --color-ring: #1B3A4B;
 
   /* ── 니료(泥料) 악센트 토큰 — 카테고리 필터·배지 등 UI 악센트용 ── */
@@ -86,7 +86,7 @@
   --color-chunsuni: #3D6B6B;
   --color-nokni: #4A6741;
   --color-tea: #4A6741;
-  --color-surface: #F5F3EF;
+  --color-surface: #F2F0EC;
 }
 
 @theme inline {

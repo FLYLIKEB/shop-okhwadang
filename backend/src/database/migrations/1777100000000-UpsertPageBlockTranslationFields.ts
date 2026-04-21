@@ -30,9 +30,9 @@ export class UpsertPageBlockTranslationFields1777100000000 implements MigrationI
     const splitBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 1 AND type = 'split_content' LIMIT 1`);
     if (splitBlock.length > 0) {
       const content = splitBlock[0].content;
-      content.title_en = 'The Okhwadang Story';
+      content.title_en = 'The Ockhwadang Story';
       content.subtitle_en = 'Our Story';
-      content.description_en = 'Okhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/>To carry the spirit of <strong>600 years of Zisha ceramic tradition</strong> and the depth of ancient-tree pu-erh, we import <strong>directly from the source</strong> without middlemen.';
+      content.description_en = 'Ockhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/>To carry the spirit of <strong>600 years of Zisha ceramic tradition</strong> and the depth of ancient-tree pu-erh, we import <strong>directly from the source</strong> without middlemen.';
       content.cta_text_en = 'Learn More';
       await updateBlockContent(splitBlock[0].id, content);
     }
@@ -87,7 +87,7 @@ export class UpsertPageBlockTranslationFields1777100000000 implements MigrationI
     if (exhPromoBlock.length > 0) {
       const content = exhPromoBlock[0].content;
       content.title_en = 'Beginner Tea Set 14% Off';
-      content.subtitle_en = 'Okhwadang starter set — 280,000 won → 240,000 won';
+      content.subtitle_en = 'Ockhwadang starter set — 280,000 won → 240,000 won';
       content.cta_text_en = 'View Deals';
       await updateBlockContent(exhPromoBlock[0].id, content);
     }
@@ -116,9 +116,9 @@ export class UpsertPageBlockTranslationFields1777100000000 implements MigrationI
     const aboutBlock = await query(`SELECT id, content FROM \`page_blocks\` WHERE page_id = 3 AND type = 'split_content' LIMIT 1`);
     if (aboutBlock.length > 0) {
       const content = aboutBlock[0].content;
-      content.title_en = 'Okhwadang';
+      content.title_en = 'Ockhwadang';
       content.subtitle_en = 'JISAHO · Pu-erh · Tea Accessories';
-      content.description_en = 'Okhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/><strong>600 years of tradition</strong> in Zisha ceramics and ancient-tree pu-erh, delivered directly from the source without middlemen.<br/><br/>Every detail of your tea experience matters to us. That is the Okhwadang way.';
+      content.description_en = 'Ockhwadang works directly with artisans in Yixing and Yunnan to curate <strong>Zisha teapots, pu-erh tea, and tea ware</strong>.<br/><br/><strong>600 years of tradition</strong> in Zisha ceramics and ancient-tree pu-erh, delivered directly from the source without middlemen.<br/><br/>Every detail of your tea experience matters to us. That is the Ockhwadang way.';
       content.cta_text_en = 'Our Story';
       await updateBlockContent(aboutBlock[0].id, content);
     }
