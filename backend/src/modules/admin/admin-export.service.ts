@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
 import { Response } from 'express';
 import * as ExcelJS from 'exceljs';
 import { stringify } from 'csv-stringify';
@@ -8,6 +8,20 @@ import { Order } from '../orders/entities/order.entity';
 import { User } from '../users/entities/user.entity';
 import { Product } from '../products/entities/product.entity';
 import { ExportQueryDto } from './dto/export-query.dto';
+
+const EXPORT_BATCH_SIZE = 500;
+
+type ExportRow = Record<string, string | number | boolean | null>;
+
+interface ExportPipelineOptions<T extends ObjectLiteral> {
+  format: 'csv' | 'xlsx';
+  filenamePrefix: string;
+  sheetName: string;
+  headerRow: string[];
+  columns: string[];
+  queryBuilder: SelectQueryBuilder<T>;
+  mapRow: (entity: T) => ExportRow;
+}
 
 function maskEmail(email: string): string {
   const [local, domain] = email.split('@');
@@ -49,75 +63,15 @@ export class AdminExportService {
       qb.andWhere('order.createdAt <= :to', { to: `${query.to} 23:59:59` });
     }
 
-    const filename = `orders_${Date.now()}`;
-
-    if (format === 'xlsx') {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}.xlsx"`);
-
-      const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({ stream: res });
-      const sheet = workbook.addWorksheet('주문');
-      sheet.addRow(['ID', '주문번호', '상태', '수령인', '전화번호', '우편번호', '주소', '총금액', '할인금액', '배송비', '회원이메일', '생성일']);
-
-      const batchSize = 500;
-      let skip = 0;
-      while (true) {
-        const rows = await qb.skip(skip).take(batchSize).getMany();
-        if (rows.length === 0) break;
-        for (const o of rows) {
-          const phone = isMask ? maskPhone(o.recipientPhone) : o.recipientPhone;
-          const email = isMask && o.user?.email ? maskEmail(o.user.email) : (o.user?.email ?? '');
-          sheet.addRow([
-            o.id, o.orderNumber, o.status, o.recipientName,
-            phone, o.zipcode, o.address,
-            o.totalAmount, o.discountAmount, o.shippingFee,
-            email, o.createdAt.toISOString(),
-          ]);
-        }
-        skip += batchSize;
-        if (rows.length < batchSize) break;
-      }
-
-      await workbook.commit();
-    } else {
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
-
-      const stringifier = stringify({
-        header: true,
-        columns: ['id', 'orderNumber', 'status', 'recipientName', 'recipientPhone', 'zipcode', 'address', 'totalAmount', 'discountAmount', 'shippingFee', 'userEmail', 'createdAt'],
-      });
-      stringifier.pipe(res);
-
-      const batchSize = 500;
-      let skip = 0;
-      while (true) {
-        const rows = await qb.skip(skip).take(batchSize).getMany();
-        if (rows.length === 0) break;
-        for (const o of rows) {
-          const phone = isMask ? maskPhone(o.recipientPhone) : o.recipientPhone;
-          const email = isMask && o.user?.email ? maskEmail(o.user.email) : (o.user?.email ?? '');
-          stringifier.write({
-            id: o.id,
-            orderNumber: o.orderNumber,
-            status: o.status,
-            recipientName: o.recipientName,
-            recipientPhone: phone,
-            zipcode: o.zipcode,
-            address: o.address,
-            totalAmount: o.totalAmount,
-            discountAmount: o.discountAmount,
-            shippingFee: o.shippingFee,
-            userEmail: email,
-            createdAt: o.createdAt.toISOString(),
-          });
-        }
-        skip += batchSize;
-        if (rows.length < batchSize) break;
-      }
-
-      stringifier.end();
-    }
+    await this.exportWithPipeline(res, {
+      format,
+      filenamePrefix: 'orders',
+      sheetName: '주문',
+      headerRow: ['ID', '주문번호', '상태', '수령인', '전화번호', '우편번호', '주소', '총금액', '할인금액', '배송비', '회원이메일', '생성일'],
+      columns: ['id', 'orderNumber', 'status', 'recipientName', 'recipientPhone', 'zipcode', 'address', 'totalAmount', 'discountAmount', 'shippingFee', 'userEmail', 'createdAt'],
+      queryBuilder: qb,
+      mapRow: (order) => this.mapOrderRow(order, isMask),
+    });
 
     this.logger.log(`Orders exported: format=${format}, mask=${isMask}`);
   }
@@ -130,65 +84,15 @@ export class AdminExportService {
       .createQueryBuilder('user')
       .orderBy('user.createdAt', 'ASC');
 
-    const filename = `members_${Date.now()}`;
-
-    if (format === 'xlsx') {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}.xlsx"`);
-
-      const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({ stream: res });
-      const sheet = workbook.addWorksheet('회원');
-      sheet.addRow(['ID', '이메일', '이름', '전화번호', '역할', '활성여부', '생성일']);
-
-      const batchSize = 500;
-      let skip = 0;
-      while (true) {
-        const rows = await qb.skip(skip).take(batchSize).getMany();
-        if (rows.length === 0) break;
-        for (const u of rows) {
-          const email = isMask ? maskEmail(u.email) : u.email;
-          const phone = isMask && u.phone ? maskPhone(u.phone) : (u.phone ?? '');
-          sheet.addRow([u.id, email, u.name, phone, u.role, u.isActive, u.createdAt.toISOString()]);
-        }
-        skip += batchSize;
-        if (rows.length < batchSize) break;
-      }
-
-      await workbook.commit();
-    } else {
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
-
-      const stringifier = stringify({
-        header: true,
-        columns: ['id', 'email', 'name', 'phone', 'role', 'isActive', 'createdAt'],
-      });
-      stringifier.pipe(res);
-
-      const batchSize = 500;
-      let skip = 0;
-      while (true) {
-        const rows = await qb.skip(skip).take(batchSize).getMany();
-        if (rows.length === 0) break;
-        for (const u of rows) {
-          const email = isMask ? maskEmail(u.email) : u.email;
-          const phone = isMask && u.phone ? maskPhone(u.phone) : (u.phone ?? '');
-          stringifier.write({
-            id: u.id,
-            email,
-            name: u.name,
-            phone,
-            role: u.role,
-            isActive: u.isActive,
-            createdAt: u.createdAt.toISOString(),
-          });
-        }
-        skip += batchSize;
-        if (rows.length < batchSize) break;
-      }
-
-      stringifier.end();
-    }
+    await this.exportWithPipeline(res, {
+      format,
+      filenamePrefix: 'members',
+      sheetName: '회원',
+      headerRow: ['ID', '이메일', '이름', '전화번호', '역할', '활성여부', '생성일'],
+      columns: ['id', 'email', 'name', 'phone', 'role', 'isActive', 'createdAt'],
+      queryBuilder: qb,
+      mapRow: (user) => this.mapMemberRow(user, isMask),
+    });
 
     this.logger.log(`Members exported: format=${format}, mask=${isMask}`);
   }
@@ -200,67 +104,140 @@ export class AdminExportService {
       .createQueryBuilder('product')
       .orderBy('product.createdAt', 'ASC');
 
-    const filename = `products_${Date.now()}`;
-
-    if (format === 'xlsx') {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}.xlsx"`);
-
-      const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({ stream: res });
-      const sheet = workbook.addWorksheet('상품');
-      sheet.addRow(['ID', 'SKU', '이름', '가격', '판매가', '재고', '상태', '추천여부', '생성일']);
-
-      const batchSize = 500;
-      let skip = 0;
-      while (true) {
-        const rows = await qb.skip(skip).take(batchSize).getMany();
-        if (rows.length === 0) break;
-        for (const p of rows) {
-          sheet.addRow([
-            p.id, p.sku ?? '', p.name, p.price, p.salePrice ?? '',
-            p.stock, p.status, p.isFeatured, p.createdAt.toISOString(),
-          ]);
-        }
-        skip += batchSize;
-        if (rows.length < batchSize) break;
-      }
-
-      await workbook.commit();
-    } else {
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
-
-      const stringifier = stringify({
-        header: true,
-        columns: ['id', 'sku', 'name', 'price', 'salePrice', 'stock', 'status', 'isFeatured', 'createdAt'],
-      });
-      stringifier.pipe(res);
-
-      const batchSize = 500;
-      let skip = 0;
-      while (true) {
-        const rows = await qb.skip(skip).take(batchSize).getMany();
-        if (rows.length === 0) break;
-        for (const p of rows) {
-          stringifier.write({
-            id: p.id,
-            sku: p.sku ?? '',
-            name: p.name,
-            price: p.price,
-            salePrice: p.salePrice ?? '',
-            stock: p.stock,
-            status: p.status,
-            isFeatured: p.isFeatured,
-            createdAt: p.createdAt.toISOString(),
-          });
-        }
-        skip += batchSize;
-        if (rows.length < batchSize) break;
-      }
-
-      stringifier.end();
-    }
+    await this.exportWithPipeline(res, {
+      format,
+      filenamePrefix: 'products',
+      sheetName: '상품',
+      headerRow: ['ID', 'SKU', '이름', '가격', '판매가', '재고', '상태', '추천여부', '생성일'],
+      columns: ['id', 'sku', 'name', 'price', 'salePrice', 'stock', 'status', 'isFeatured', 'createdAt'],
+      queryBuilder: qb,
+      mapRow: (product) => this.mapProductRow(product),
+    });
 
     this.logger.log(`Products exported: format=${format}`);
+  }
+
+  private async exportWithPipeline<T extends ObjectLiteral>(res: Response, options: ExportPipelineOptions<T>): Promise<void> {
+    const filename = `${options.filenamePrefix}_${Date.now()}`;
+    if (options.format === 'xlsx') {
+      await this.streamAsXlsx(res, filename, options);
+      return;
+    }
+
+    await this.streamAsCsv(res, filename, options);
+  }
+
+  private async streamAsCsv<T extends ObjectLiteral>(
+    res: Response,
+    filename: string,
+    options: ExportPipelineOptions<T>,
+  ): Promise<void> {
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
+
+    const stringifier = stringify({
+      header: true,
+      columns: options.columns,
+    });
+    stringifier.pipe(res);
+
+    await this.iterateInBatches(options.queryBuilder, EXPORT_BATCH_SIZE, async (row) => {
+      stringifier.write(options.mapRow(row));
+    });
+
+    stringifier.end();
+  }
+
+  private async streamAsXlsx<T extends ObjectLiteral>(
+    res: Response,
+    filename: string,
+    options: ExportPipelineOptions<T>,
+  ): Promise<void> {
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.xlsx"`);
+
+    const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({ stream: res });
+    const sheet = workbook.addWorksheet(options.sheetName);
+    sheet.addRow(options.headerRow);
+
+    await this.iterateInBatches(options.queryBuilder, EXPORT_BATCH_SIZE, async (row) => {
+      const rowData = options.mapRow(row);
+      sheet.addRow(options.columns.map((column) => rowData[column]));
+    });
+
+    await workbook.commit();
+  }
+
+  private async iterateInBatches<T extends ObjectLiteral>(
+    qb: SelectQueryBuilder<T>,
+    batchSize: number,
+    handler: (row: T) => Promise<void> | void,
+  ): Promise<void> {
+    let skip = 0;
+
+    while (true) {
+      const rows = await qb.skip(skip).take(batchSize).getMany();
+      if (rows.length === 0) {
+        break;
+      }
+
+      for (const row of rows) {
+        await handler(row);
+      }
+
+      skip += batchSize;
+      if (rows.length < batchSize) {
+        break;
+      }
+    }
+  }
+
+  private mapOrderRow(order: Order, isMask: boolean): ExportRow {
+    const phone = isMask ? maskPhone(order.recipientPhone) : order.recipientPhone;
+    const email = isMask && order.user?.email ? maskEmail(order.user.email) : (order.user?.email ?? '');
+
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      recipientName: order.recipientName,
+      recipientPhone: phone,
+      zipcode: order.zipcode,
+      address: order.address,
+      totalAmount: order.totalAmount,
+      discountAmount: order.discountAmount,
+      shippingFee: order.shippingFee,
+      userEmail: email,
+      createdAt: order.createdAt.toISOString(),
+    };
+  }
+
+  private mapMemberRow(user: User, isMask: boolean): ExportRow {
+    const email = isMask ? maskEmail(user.email) : user.email;
+    const phone = isMask && user.phone ? maskPhone(user.phone) : (user.phone ?? '');
+
+    return {
+      id: user.id,
+      email,
+      name: user.name,
+      phone,
+      role: user.role,
+      isActive: user.isActive,
+      createdAt: user.createdAt.toISOString(),
+    };
+  }
+
+  private mapProductRow(product: Product): ExportRow {
+    return {
+      id: product.id,
+      sku: product.sku ?? '',
+      name: product.name,
+      price: product.price,
+      salePrice: product.salePrice ?? '',
+      stock: product.stock,
+      status: product.status,
+      isFeatured: product.isFeatured,
+      createdAt: product.createdAt.toISOString(),
+    };
   }
 }
