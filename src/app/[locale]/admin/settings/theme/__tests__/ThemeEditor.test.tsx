@@ -32,6 +32,7 @@ const makeSetting = (overrides: Partial<SiteSetting> = {}): SiteSetting => ({
   id: 1,
   key: 'primary_color',
   value: '#000000',
+  valueEn: null,
   group: 'color',
   label: 'Primary Color',
   inputType: 'color',
@@ -67,7 +68,8 @@ describe('ThemeEditor', () => {
 
   it('renders tabs', () => {
     render(<ThemeEditor initialSettings={[]} />);
-    expect(screen.getByText('색상')).toBeInTheDocument();
+    expect(screen.getByText('라이트 색상')).toBeInTheDocument();
+    expect(screen.getByText('다크 색상')).toBeInTheDocument();
     expect(screen.getByText('타이포그래피')).toBeInTheDocument();
     expect(screen.getByText('간격')).toBeInTheDocument();
     expect(screen.getByText('모서리')).toBeInTheDocument();
@@ -116,7 +118,7 @@ describe('ThemeEditor', () => {
 
   it('renders preview panel', () => {
     render(<ThemeEditor initialSettings={[]} />);
-    expect(screen.getByText('라이브 프리뷰')).toBeInTheDocument();
+    expect(screen.getByText(/라이브 프리뷰/)).toBeInTheDocument();
     expect(screen.getByText('Primary 버튼')).toBeInTheDocument();
   });
 });
