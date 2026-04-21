@@ -1,7 +1,11 @@
 import type { NextConfig } from 'next';
+import createBundleAnalyzer from '@next/bundle-analyzer';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+const withBundleAnalyzer = createBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
 
 const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
@@ -16,6 +20,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'gdimg.gmarket.co.kr' },
       { protocol: 'https', hostname: 'cdn-optimized.imweb.me' },
       { protocol: 'https', hostname: '*.cloudfront.net' },
+      { protocol: 'http', hostname: 'localhost' },
+      { protocol: 'http', hostname: '127.0.0.1' },
     ],
   },
   async rewrites() {
@@ -45,4 +51,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+export default withBundleAnalyzer(withNextIntl(nextConfig));

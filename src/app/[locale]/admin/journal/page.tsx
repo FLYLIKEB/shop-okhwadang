@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -73,8 +74,13 @@ function JournalRow({
     <tr className="border-b border-border hover:bg-muted/50 transition-colors">
       <td className="py-3 px-4">
         {journal.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={journal.coverImageUrl} alt="" className="w-12 h-12 rounded object-cover" />
+          <Image
+            src={journal.coverImageUrl}
+            alt={journal.title}
+            width={48}
+            height={48}
+            className="h-12 w-12 rounded object-cover"
+          />
         ) : (
           <div className="w-12 h-12 rounded bg-muted" />
         )}

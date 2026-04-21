@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { DraftBlock } from '@/components/shared/admin/page-editor/SortableBlockItem';
 
 // --- Preview block renderers ---
@@ -10,8 +11,13 @@ function PreviewHeroBanner({ content }: { content: Record<string, unknown> }) {
   return (
     <div className="relative flex min-h-48 items-center justify-center overflow-hidden rounded-lg bg-gray-200">
       {imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <Image
+          src={imageUrl}
+          alt={title || '히어로 배너 이미지'}
+          fill
+          sizes="(max-width: 1024px) 100vw, 640px"
+          className="object-cover"
+        />
       )}
       <div className="relative z-10 text-center">
         {title && <h2 className="text-2xl font-bold drop-shadow">{title}</h2>}
@@ -93,8 +99,13 @@ function PreviewPromotionBanner({ content }: { content: Record<string, unknown> 
   return (
     <div className="relative flex min-h-32 items-center justify-between overflow-hidden rounded-lg bg-orange-50 px-6">
       {imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />
+        <Image
+          src={imageUrl}
+          alt={title || '프로모션 배너 이미지'}
+          fill
+          sizes="(max-width: 1024px) 100vw, 640px"
+          className="object-cover opacity-30"
+        />
       )}
       <div className="relative z-10">
         {title && <h3 className="text-lg font-bold text-orange-900">{title}</h3>}

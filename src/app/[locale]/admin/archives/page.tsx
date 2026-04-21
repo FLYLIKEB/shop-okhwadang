@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -96,8 +97,13 @@ function SortableArtistRow({ item, onEdit, onDelete }: SortableArtistRowProps) {
       </td>
       <td className="py-3 px-4">
         {item.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded object-cover" />
+          <Image
+            src={item.imageUrl}
+            alt={item.name}
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded object-cover"
+          />
         ) : (
           <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-muted-foreground">
             {item.name.slice(0, 1)}
@@ -678,8 +684,13 @@ export default function AdminArchivesPage() {
                   <>
                     <td className="py-3 px-4">
                       {(activeItem as Artist).imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={(activeItem as Artist).imageUrl!} alt="" className="w-10 h-10 rounded object-cover" />
+                        <Image
+                          src={(activeItem as Artist).imageUrl!}
+                          alt={(activeItem as Artist).name}
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 rounded object-cover"
+                        />
                       ) : (
                         <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">{(activeItem as Artist).name.slice(0, 1)}</div>
                       )}
