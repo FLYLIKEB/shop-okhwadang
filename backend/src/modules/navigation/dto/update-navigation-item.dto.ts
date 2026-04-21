@@ -21,7 +21,7 @@ export class UpdateNavigationItemDto {
   @MaxLength(100)
   label?: string;
 
-  @ApiProperty({ example: '/products', description: '链接 URL', required: false })
+  @ApiProperty({ example: '/products', description: '링크 URL', required: false })
   @IsOptional()
   @IsString()
   @MaxLength(500)

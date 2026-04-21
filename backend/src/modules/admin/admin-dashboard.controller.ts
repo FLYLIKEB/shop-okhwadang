@@ -20,7 +20,7 @@ export class AdminDashboardController {
 
   @Get('dashboard')
   @ApiCookieAuth()
-  @ApiOperation({ summary: '대시보드 데이터 조회', description: '대시보드에 표시할统计数据를 조회합니다.' })
+  @ApiOperation({ summary: '대시보드 데이터 조회', description: '대시보드에 표시할 통계 데이터를 조회합니다.' })
   @ApiResponse({ status: 200, description: '대시보드 데이터 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
