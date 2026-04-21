@@ -56,3 +56,7 @@ docs/infrastructure/s3-cloudfront-cdn.md
 .codex/skills/.system/**
 !.codex/prompts/
 !.codex/prompts/**
+
+# Git worktrees
+.worktrees/
+.claude/worktrees/
