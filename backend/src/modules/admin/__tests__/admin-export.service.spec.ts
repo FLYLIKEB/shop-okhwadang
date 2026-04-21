@@ -129,6 +129,33 @@ describe('AdminExportService', () => {
       await service.exportOrders({ format: 'csv', from: '2024-01-01', to: '2024-12-31' }, res as unknown as import('express').Response);
       expect(orderRepo._qb.andWhere).toHaveBeenCalledTimes(2);
     });
+
+    it('should iterate in batches when first batch is full', async () => {
+      const fullBatch = Array.from({ length: 500 }, (_, index) => ({
+        id: index + 1,
+        orderNumber: `ORD-${index + 1}`,
+        status: 'paid',
+        recipientName: '홍길동',
+        recipientPhone: '010-1111-2222',
+        zipcode: '12345',
+        address: '서울',
+        totalAmount: 10000,
+        discountAmount: 0,
+        shippingFee: 0,
+        user: { email: 'test@example.com' },
+        createdAt: new Date('2024-01-01'),
+      }));
+
+      orderRepo._qb.getMany
+        .mockResolvedValueOnce(fullBatch)
+        .mockResolvedValueOnce([]);
+      const res = makeRes();
+
+      await service.exportOrders({ format: 'csv' }, res as unknown as import('express').Response);
+
+      expect(orderRepo._qb.skip).toHaveBeenNthCalledWith(1, 0);
+      expect(orderRepo._qb.skip).toHaveBeenNthCalledWith(2, 500);
+    });
   });
 
   describe('exportMembers (CSV)', () => {
