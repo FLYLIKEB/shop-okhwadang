@@ -66,7 +66,7 @@
     "concurrently": "^9.1.2",
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.5.15",
-    "globals": "^17.4.0",
+    "globals": "^17.5.0",
     "jsdom": "^26.0.0",
     "tailwindcss": "^4.1.1",
     "typescript": "~5.7.0",
