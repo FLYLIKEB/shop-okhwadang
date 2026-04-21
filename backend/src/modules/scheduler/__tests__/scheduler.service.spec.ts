@@ -13,6 +13,7 @@ import { RecentlyViewedProduct } from '../../products/entities/recently-viewed-p
 import { NotificationService } from '../../notification/notification.service';
 import { SettingsService } from '../../settings/settings.service';
 import { MembershipService } from '../../membership/membership.service';
+import { SchedulerLockService } from '../../../common/services/scheduler-lock.service';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -87,6 +88,10 @@ const mockSettingsService = {
   getMap: jest.fn(),
 };
 
+const mockSchedulerLockService = {
+  runWithLock: jest.fn(),
+};
+
 describe('SchedulerService', () => {
   let service: SchedulerService;
 
@@ -94,6 +99,12 @@ describe('SchedulerService', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunner);
+    mockSchedulerLockService.runWithLock.mockImplementation(
+      async (
+        _policy: { lockName: string; ttlMinutes: number },
+        task: () => Promise<void>,
+      ) => task(),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -110,6 +121,7 @@ describe('SchedulerService', () => {
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: MembershipService, useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined), evaluateAllUserTiers: jest.fn().mockResolvedValue(undefined) } },
+        { provide: SchedulerLockService, useValue: mockSchedulerLockService },
       ],
     }).compile();
 
@@ -122,7 +134,7 @@ describe('SchedulerService', () => {
 
   describe('handlePendingOrderCancellation', () => {
     it('should skip when another instance holds lock', async () => {
-      mockDataSource.query.mockResolvedValue([{ instance_id: 'other-instance' }]);
+      mockSchedulerLockService.runWithLock.mockResolvedValueOnce(undefined);
 
       await service.handlePendingOrderCancellation();
 
@@ -130,9 +142,6 @@ describe('SchedulerService', () => {
     });
 
     it('should cancel pending orders older than configured interval', async () => {
-      mockDataSource.query
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ instance_id: 'default' }]);
       mockSettingsService.getMap.mockResolvedValue({ scheduler_pending_cancel_hours: '24' });
 
       const oldPendingOrder = {
@@ -153,13 +162,13 @@ describe('SchedulerService', () => {
       await service.handlePendingOrderCancellation();
 
       expect(mockOrderRepo.find).toHaveBeenCalled();
-      expect(mockDataSource.query).toHaveBeenCalled();
+      expect(mockSchedulerLockService.runWithLock).toHaveBeenCalledWith(
+        { lockName: 'cron:pending-order-cancel', ttlMinutes: 55 },
+        expect.any(Function),
+      );
     });
 
     it('should do nothing when no pending orders found', async () => {
-      mockDataSource.query
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ instance_id: 'default' }]);
       mockSettingsService.getMap.mockResolvedValue({ scheduler_pending_cancel_hours: '24' });
       mockOrderRepo.find.mockResolvedValue([]);
 
@@ -171,7 +180,7 @@ describe('SchedulerService', () => {
 
   describe('handleDeliveredOrderAutoConfirm', () => {
     it('should skip when another instance holds lock', async () => {
-      mockDataSource.query.mockResolvedValue([{ instance_id: 'other-instance' }]);
+      mockSchedulerLockService.runWithLock.mockResolvedValueOnce(undefined);
 
       await service.handleDeliveredOrderAutoConfirm();
 
@@ -179,9 +188,6 @@ describe('SchedulerService', () => {
     });
 
     it('should confirm delivered orders older than configured interval', async () => {
-      mockDataSource.query
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ instance_id: 'default' }]);
       mockSettingsService.getMap.mockResolvedValue({ scheduler_delivered_confirm_days: '7' });
 
       const oldDeliveredOrder = {
@@ -207,9 +213,6 @@ describe('SchedulerService', () => {
     });
 
     it('should do nothing when no delivered orders found', async () => {
-      mockDataSource.query
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ instance_id: 'default' }]);
       mockSettingsService.getMap.mockResolvedValue({ scheduler_delivered_confirm_days: '7' });
       mockOrderRepo.find.mockResolvedValue([]);
 
@@ -221,7 +224,7 @@ describe('SchedulerService', () => {
 
   describe('handleCouponExpiry', () => {
     it('should skip when another instance holds lock', async () => {
-      mockDataSource.query.mockResolvedValue([{ instance_id: 'other-instance' }]);
+      mockSchedulerLockService.runWithLock.mockResolvedValueOnce(undefined);
 
       await service.handleCouponExpiry();
 
@@ -251,7 +254,7 @@ describe('SchedulerService', () => {
 
   describe('handlePointExpiry', () => {
     it('should skip when another instance holds lock', async () => {
-      mockDataSource.query.mockResolvedValue([{ instance_id: 'other-instance' }]);
+      mockSchedulerLockService.runWithLock.mockResolvedValueOnce(undefined);
 
       await service.handlePointExpiry();
 
@@ -260,8 +263,6 @@ describe('SchedulerService', () => {
 
     it('should process expired points', async () => {
       mockDataSource.query
-        .mockResolvedValueOnce([])                            // INSERT lock
-        .mockResolvedValueOnce([{ instance_id: 'default' }]) // SELECT lock
         .mockResolvedValueOnce([                             // SELECT expired points raw query
           { id: 1, user_id: 1, amount: 1000, expires_at: new Date(Date.now() - 24 * 60 * 60 * 1000) },
         ]);
@@ -279,9 +280,7 @@ describe('SchedulerService', () => {
 
     it('should do nothing when no expired points found', async () => {
       mockDataSource.query
-        .mockResolvedValueOnce([])                            // INSERT lock
-        .mockResolvedValueOnce([{ instance_id: 'default' }]) // SELECT lock
-        .mockResolvedValueOnce([]);                          // SELECT expired points — empty
+        .mockResolvedValueOnce([]); // SELECT expired points — empty
 
       await service.handlePointExpiry();
 

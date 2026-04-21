@@ -13,6 +13,7 @@ import { MembershipModule } from '../membership/membership.module';
 import { AuthEventsModule } from '../auth/auth-events.module';
 import { OrderEventsModule } from '../orders/order-events.module';
 import { User } from '../users/entities/user.entity';
+import { SchedulerLockService } from '../../common/services/scheduler-lock.service';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { User } from '../users/entities/user.entity';
     OrderEventsModule,
   ],
   controllers: [CouponsController, AdminCouponsController, AdminCouponRulesController],
-  providers: [CouponsService, CouponRulesService],
+  providers: [CouponsService, CouponRulesService, SchedulerLockService],
   exports: [CouponsService, CouponRulesService],
 })
 export class CouponsModule {}
