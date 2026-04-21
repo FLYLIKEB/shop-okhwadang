@@ -4,8 +4,8 @@ import { Repository } from 'typeorm';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InquiriesService } from '../inquiries.service';
 import { Inquiry, InquiryType, InquiryStatus } from '../entities/inquiry.entity';
-import { User } from '../../users/entities/user.entity';
 import { NotificationService } from '../../notification/notification.service';
+import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 
 const mockRepo = () => ({
   createQueryBuilder: jest.fn(),
@@ -18,19 +18,19 @@ const mockRepo = () => ({
 describe('InquiriesService', () => {
   let service: InquiriesService;
   let repo: jest.Mocked<Repository<Inquiry>>;
-  let mockUserRepo: { findOne: jest.Mock };
   let mockNotificationService: { sendInquiryAnswered: jest.Mock };
+  let mockNotificationDispatchHelper: { dispatch: jest.Mock };
 
   beforeEach(async () => {
-    mockUserRepo = { findOne: jest.fn().mockResolvedValue(null) };
     mockNotificationService = { sendInquiryAnswered: jest.fn().mockResolvedValue(undefined) };
+    mockNotificationDispatchHelper = { dispatch: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InquiriesService,
         { provide: getRepositoryToken(Inquiry), useFactory: mockRepo },
-        { provide: getRepositoryToken(User), useValue: mockUserRepo },
         { provide: NotificationService, useValue: mockNotificationService },
+        { provide: NotificationDispatchHelper, useValue: mockNotificationDispatchHelper },
       ],
     }).compile();
 
@@ -129,15 +129,16 @@ describe('InquiriesService', () => {
       const savedInquiry = { ...inquiry, status: InquiryStatus.ANSWERED, answer: '답변', answeredAt: new Date() } as Inquiry;
       repo.findOne.mockResolvedValue(inquiry);
       repo.save.mockResolvedValue(savedInquiry as never);
-      mockUserRepo.findOne.mockResolvedValue({ id: 10, email: 'user@test.com', name: '홍길동' });
 
       await service.answerInquiry(1, { answer: '답변' });
 
-      // fire-and-forget이므로 비동기 완료 대기
-      await new Promise<void>(resolve => setTimeout(resolve, 10));
-      expect(mockNotificationService.sendInquiryAnswered).toHaveBeenCalledWith(
-        'user@test.com',
-        expect.objectContaining({ inquiryTitle: '문의', answer: '답변' }),
+      expect(mockNotificationDispatchHelper.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'inquiry.answered',
+          userId: 10,
+          resourceId: 1,
+          mode: 'fire-and-forget',
+        }),
       );
     });
 
@@ -154,9 +155,8 @@ describe('InquiriesService', () => {
       repo.save.mockResolvedValue({ ...inquiry, answer: '수정 답변' } as never);
 
       await service.answerInquiry(1, { answer: '수정 답변' });
-      await new Promise<void>(resolve => setTimeout(resolve, 10));
 
-      expect(mockNotificationService.sendInquiryAnswered).not.toHaveBeenCalled();
+      expect(mockNotificationDispatchHelper.dispatch).not.toHaveBeenCalled();
     });
 
     it('재답변 시 customerReadAt을 null로 초기화하여 고객이 다시 읽도록 한다', async () => {

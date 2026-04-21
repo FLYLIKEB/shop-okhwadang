@@ -4,10 +4,10 @@ import { DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { OrdersService } from '../orders.service';
 import { Order, OrderStatus } from '../entities/order.entity';
-import { User } from '../../users/entities/user.entity';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { PointsService } from '../../points/points.service';
 import { NotificationService } from '../../notification/notification.service';
+import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { CouponsService } from '../../coupons/coupons.service';
 import { ShippingFeeCalculatorService } from '../../shipping/services/shipping-fee-calculator.service';
 import { OrderEventEmitter } from '../order-event.emitter';
@@ -69,10 +69,10 @@ describe('OrdersService', () => {
       providers: [
         OrdersService,
         { provide: getRepositoryToken(Order), useValue: mockOrderRepository },
-        { provide: getRepositoryToken(User), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
         { provide: DataSource, useValue: mockDataSource },
         { provide: PointsService, useValue: mockPointsService },
         { provide: NotificationService, useValue: { sendOrderConfirmed: jest.fn() } },
+        { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: CouponsService, useValue: mockCouponsService },
         { provide: ShippingFeeCalculatorService, useValue: mockShippingFeeCalculator },
         { provide: OrderEventEmitter, useValue: { emitOrderCompleted: jest.fn() } },

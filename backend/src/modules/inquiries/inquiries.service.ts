@@ -5,13 +5,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Inquiry, InquiryStatus } from './entities/inquiry.entity';
-import { User } from '../users/entities/user.entity';
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AnswerInquiryDto } from './dto/answer-inquiry.dto';
 import { AdminInquiryQueryDto } from './dto/admin-inquiry-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { NotificationService } from '../notification/notification.service';
+import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { PaginatedResult, paginate } from '../../common/utils/pagination.util';
 
 @Injectable()
@@ -21,9 +21,8 @@ export class InquiriesService {
   constructor(
     @InjectRepository(Inquiry)
     private readonly inquiryRepo: Repository<Inquiry>,
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
     private readonly notificationService: NotificationService,
+    private readonly notificationDispatchHelper: NotificationDispatchHelper,
   ) {}
 
   async findAllByUser(userId: number): Promise<Inquiry[]> {
@@ -86,27 +85,30 @@ export class InquiriesService {
     this.logger.log(`Inquiry answered: id=${id}`);
 
     if (isFirstAnswer) {
-      void this.notifyInquiryAnswered(saved.userId, saved.title, saved.answer ?? '');
+      void this.notifyInquiryAnswered(id, saved.userId, saved.title, saved.answer ?? '');
     }
 
     return saved;
   }
 
   private async notifyInquiryAnswered(
+    inquiryId: number,
     userId: number,
     inquiryTitle: string,
     answer: string,
   ): Promise<void> {
-    try {
-      const user = await this.userRepo.findOne({ where: { id: userId } });
-      if (!user?.email) return;
-      await this.notificationService.sendInquiryAnswered(user.email, {
-        recipientName: user.name,
-        inquiryTitle,
-        answer,
-      });
-    } catch (err) {
-      this.logger.warn(`Inquiry answered email failed: ${String(err)}`);
-    }
+    await this.notificationDispatchHelper.dispatch({
+      event: 'inquiry.answered',
+      userId,
+      resourceId: inquiryId,
+      mode: 'fire-and-forget',
+      logger: this.logger,
+      send: (recipient) =>
+        this.notificationService.sendInquiryAnswered(recipient.email, {
+          recipientName: recipient.name,
+          inquiryTitle,
+          answer,
+        }),
+    });
   }
 }

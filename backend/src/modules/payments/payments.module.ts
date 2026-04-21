@@ -4,7 +4,6 @@ import { Payment } from './entities/payment.entity';
 import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order } from '../orders/entities/order.entity';
-import { User } from '../users/entities/user.entity';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { AdminOrderRefundsController } from './admin-order-refunds.controller';
@@ -57,7 +56,7 @@ const gatewayProviders = [
 ];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, Refund, Shipping, Order, User])],
+  imports: [TypeOrmModule.forFeature([Payment, Refund, Shipping, Order])],
   controllers: [PaymentsController, AdminOrderRefundsController],
   providers: [...gatewayProviders, PaymentsService],
   exports: [PaymentsService],

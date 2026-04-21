@@ -7,11 +7,11 @@ import { Payment, PaymentStatus, PaymentMethod, PaymentGatewayType } from '../en
 import { Refund, RefundStatus } from '../entities/refund.entity';
 import { Shipping } from '../entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
-import { User } from '../../users/entities/user.entity';
 import { MockPaymentAdapter, MOCK_TEST_SIGNATURE } from '../adapters/mock.adapter';
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import { NotificationService } from '../../notification/notification.service';
+import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({
@@ -149,11 +149,11 @@ describe('PaymentsService', () => {
         { provide: getRepositoryToken(Refund), useValue: mockRefundRepo },
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
         { provide: getRepositoryToken(Shipping), useValue: mockShippingRepo },
-        { provide: getRepositoryToken(User), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
         { provide: 'PaymentGateway', useValue: mockDefaultGateway },
         { provide: TossPaymentAdapter, useValue: mockTossAdapter },
         { provide: StripePaymentAdapter, useValue: mockStripeAdapter },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
+        { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();

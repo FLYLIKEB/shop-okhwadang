@@ -8,7 +8,6 @@ import { Payment, PaymentStatus, PaymentGatewayType, PaymentMethod } from './ent
 import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
-import { User } from '../users/entities/user.entity';
 import { PaymentGateway } from './interfaces/payment-gateway.interface';
 import { PreparePaymentDto } from './dto/prepare-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
@@ -20,6 +19,7 @@ import { resolveGatewayByLocale } from './payments.module';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { NotificationService } from '../notification/notification.service';
+import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { PaymentConfirmationService } from './services/payment-confirmation.service';
 import { PaymentRefundService } from './services/payment-refund.service';
 import { PaymentWebhookService } from './services/payment-webhook.service';
@@ -42,22 +42,21 @@ export class PaymentsService {
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     @Inject('PaymentGateway')
     private readonly gateway: PaymentGateway,
     private readonly tossAdapter: TossPaymentAdapter,
     private readonly stripeAdapter: StripePaymentAdapter,
     private readonly notificationService: NotificationService,
+    private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly dataSource: DataSource,
   ) {
     this.paymentConfirmationService = new PaymentConfirmationService({
       paymentRepository: this.paymentRepository,
       orderRepository: this.orderRepository,
       shippingRepository: this.shippingRepository,
-      userRepository: this.userRepository,
       dataSource: this.dataSource,
       notificationService: this.notificationService,
+      notificationDispatchHelper: this.notificationDispatchHelper,
       resolveGatewayByType: (gatewayType) => this.resolveGatewayByType(gatewayType),
       logger: this.logger,
       defaultCarrier: DEFAULT_CARRIER,

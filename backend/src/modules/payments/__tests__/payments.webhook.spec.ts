@@ -9,8 +9,8 @@ import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Shipping } from '../entities/shipping.entity';
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
-import { User } from '../../users/entities/user.entity';
 import { NotificationService } from '../../notification/notification.service';
+import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 
 describe('PaymentsService — webhook', () => {
   let service: PaymentsService;
@@ -47,11 +47,11 @@ describe('PaymentsService — webhook', () => {
         { provide: getRepositoryToken(Refund), useValue: mockRepo },
         { provide: getRepositoryToken(Order), useValue: mockRepo },
         { provide: getRepositoryToken(Shipping), useValue: mockRepo },
-        { provide: getRepositoryToken(User), useValue: mockRepo },
         { provide: 'PaymentGateway', useValue: mockGateway },
         { provide: TossPaymentAdapter, useValue: mockGateway },
         { provide: StripePaymentAdapter, useValue: mockGateway },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
+        { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
