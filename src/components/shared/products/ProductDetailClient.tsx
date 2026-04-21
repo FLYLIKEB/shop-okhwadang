@@ -364,7 +364,12 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
 
       {/* Tabs */}
       <div className="layout-container p-0">
-        <ProductTabs description={product.description} descriptionImages={descriptionImages} productId={Number(product.id)} />
+        <ProductTabs
+          description={product.description}
+          descriptionImages={descriptionImages}
+          productId={Number(product.id)}
+          locale={locale}
+        />
       </div>
 
       {/* Mobile fixed bottom action bar — sits above MobileBottomNav (z-50, ~56px tall) */}
