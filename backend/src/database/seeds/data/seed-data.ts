@@ -879,6 +879,7 @@ export interface SeedNavigationItem {
   id: number;
   group: 'gnb' | 'sidebar' | 'footer';
   label: string;
+  labelEn?: string;
   url: string;
   sort_order: number;
   is_active: boolean;
