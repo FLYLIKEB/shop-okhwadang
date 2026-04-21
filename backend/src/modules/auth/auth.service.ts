@@ -11,8 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { createHash, randomBytes, randomUUID } from 'crypto';
-import type ms from 'ms';
+import { createHash, randomBytes } from 'crypto';
 import { User } from '../users/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -23,17 +22,13 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { VerificationToken } from './entities/verification-token.entity';
 import { NotificationService } from '../notification/notification.service';
-import { AuditLogService } from '../audit-logs/audit-log.service';
-import { AuditAction } from '../audit-logs/entities/audit-log.entity';
 import { TokenBlacklistService } from './token-blacklist.service';
 import { AuthEventEmitter } from './auth-event.emitter';
 import { UserRegisteredEvent } from './events/user-registered.event';
+import { TokenIssuerService } from './services/token-issuer.service';
+import { AuthLoginPolicyService } from './services/auth-login-policy.service';
+import { AuthAuditService } from './services/auth-audit.service';
 
-const LOCK_LEVEL_1_ATTEMPTS = 5;
-const LOCK_LEVEL_2_ATTEMPTS = 10;
-const LOCK_LEVEL_3_ATTEMPTS = 15;
-const LOCKOUT_LEVEL_1_MS = 15 * 60 * 1000;
-const LOCKOUT_LEVEL_2_MS = 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 const EMAIL_VERIFICATION_TTL_MIN = 15;
 const EMAIL_VERIFICATION_TTL_MS = EMAIL_VERIFICATION_TTL_MIN * 60 * 1000;
@@ -82,8 +77,10 @@ export class AuthService implements OnModuleInit {
     @InjectRepository(VerificationToken)
     private readonly verificationTokenRepository: Repository<VerificationToken>,
     private readonly jwtService: JwtService,
+    private readonly tokenIssuerService: TokenIssuerService,
+    private readonly authLoginPolicyService: AuthLoginPolicyService,
+    private readonly authAuditService: AuthAuditService,
     private readonly notificationService: NotificationService,
-    private readonly auditLogService: AuditLogService,
     private readonly tokenBlacklistService: TokenBlacklistService,
     private readonly authEventEmitter: AuthEventEmitter,
   ) {}
@@ -124,9 +121,7 @@ export class AuthService implements OnModuleInit {
 
     await this.createVerificationTokenAndSendEmail(user);
 
-    const tokens = this.generateTokens(user);
-    const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
-    await this.userRepository.update(user.id, { refreshToken: hashedRefresh });
+    const tokens = await this.tokenIssuerService.issueAndPersistRefresh(user);
 
     this.logger.log(`User registered: ${dto.email}`);
     return {
@@ -140,16 +135,7 @@ export class AuthService implements OnModuleInit {
       where: { email: dto.email },
     });
     if (!user) {
-      await this.auditLogService.log({
-        actorId: 0,
-        actorRole: 'anonymous',
-        action: AuditAction.LOGIN_FAILURE,
-        resourceType: 'auth',
-        beforeJson: { email: dto.email },
-        afterJson: { reason: 'user_not_found' },
-        ip: ip ?? null,
-        userAgent: userAgent ?? null,
-      });
+      await this.authAuditService.logUserNotFound(dto.email, ip, userAgent);
       throw new UnauthorizedException('가입되지 않은 이메일입니다.');
     }
     if (!user.password) {
@@ -164,17 +150,7 @@ export class AuthService implements OnModuleInit {
       );
     }
 
-    if (user.failedLoginAttempts >= LOCK_LEVEL_3_ATTEMPTS) {
-      throw new ForbiddenException('보안 정책에 의해 계정이 잠겼습니다. 관리자에게 잠금 해제를 요청해 주세요.');
-    }
-
-    if (user.lockedUntil && user.lockedUntil > new Date()) {
-      const remainingMs = user.lockedUntil.getTime() - Date.now();
-      const remainingSec = Math.ceil(remainingMs / 1000);
-      throw new ForbiddenException(
-        `계정이 잠겼습니다. ${remainingSec}초 후 다시 시도하세요.`,
-      );
-    }
+    this.authLoginPolicyService.assertNotLocked(user);
 
     if (!user.isActive) {
       throw new ForbiddenException('비활성화된 계정입니다.');
@@ -182,92 +158,7 @@ export class AuthService implements OnModuleInit {
 
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) {
-      const now = new Date();
-      const attempts = user.failedLoginAttempts + 1;
-
-      if (attempts >= LOCK_LEVEL_3_ATTEMPTS) {
-        await this.userRepository.update(user.id, {
-          failedLoginAttempts: attempts,
-          lastFailedLoginAt: now,
-          lockedUntil: null,
-        });
-        await this.auditLogService.log({
-          actorId: user.id,
-          actorRole: user.role,
-          action: AuditAction.LOGIN_FAILURE,
-          resourceType: 'auth',
-          beforeJson: { email: dto.email },
-          afterJson: { reason: 'account_locked_manual', attempts },
-          ip: ip ?? null,
-          userAgent: userAgent ?? null,
-        });
-        this.logger.warn(`Account permanently locked until admin unlock: ${dto.email}`);
-        throw new ForbiddenException('연속 로그인 실패로 계정이 잠겼습니다. 관리자에게 잠금 해제를 요청해 주세요.');
-      }
-
-      if (attempts >= LOCK_LEVEL_2_ATTEMPTS) {
-        const lockedUntil = new Date(Date.now() + LOCKOUT_LEVEL_2_MS);
-        await this.userRepository.update(user.id, {
-          failedLoginAttempts: attempts,
-          lastFailedLoginAt: now,
-          lockedUntil,
-        });
-        await this.auditLogService.log({
-          actorId: user.id,
-          actorRole: user.role,
-          action: AuditAction.LOGIN_FAILURE,
-          resourceType: 'auth',
-          beforeJson: { email: dto.email },
-          afterJson: { reason: 'account_locked_1h', attempts, lockedUntil: lockedUntil.toISOString() },
-          ip: ip ?? null,
-          userAgent: userAgent ?? null,
-        });
-        this.logger.warn(`Account locked (1h) due to failed login attempts: ${dto.email}`);
-        throw new ForbiddenException(
-          `연속 로그인 실패로 계정이 잠겼습니다. ${Math.ceil(LOCKOUT_LEVEL_2_MS / 1000)}초 후 다시 시도하세요.`,
-        );
-      }
-
-      if (attempts >= LOCK_LEVEL_1_ATTEMPTS) {
-        const lockedUntil = new Date(Date.now() + LOCKOUT_LEVEL_1_MS);
-        await this.userRepository.update(user.id, {
-          failedLoginAttempts: attempts,
-          lastFailedLoginAt: now,
-          lockedUntil,
-        });
-        await this.auditLogService.log({
-          actorId: user.id,
-          actorRole: user.role,
-          action: AuditAction.LOGIN_FAILURE,
-          resourceType: 'auth',
-          beforeJson: { email: dto.email },
-          afterJson: { reason: 'account_locked_15m', attempts, lockedUntil: lockedUntil.toISOString() },
-          ip: ip ?? null,
-          userAgent: userAgent ?? null,
-        });
-        this.logger.warn(`Account locked (15m) due to failed login attempts: ${dto.email}`);
-        throw new ForbiddenException(
-          `연속 로그인 실패로 계정이 잠겼습니다. ${Math.ceil(LOCKOUT_LEVEL_1_MS / 1000)}초 후 다시 시도하세요.`,
-        );
-      }
-
-      await this.userRepository.update(user.id, {
-        failedLoginAttempts: attempts,
-        lastFailedLoginAt: now,
-      });
-      const delaySec = Math.pow(2, attempts);
-      await this.delay(delaySec * 1000);
-      await this.auditLogService.log({
-        actorId: user.id,
-        actorRole: user.role,
-        action: AuditAction.LOGIN_FAILURE,
-        resourceType: 'auth',
-        beforeJson: { email: dto.email },
-        afterJson: { reason: 'invalid_password', attempts },
-        ip: ip ?? null,
-        userAgent: userAgent ?? null,
-      });
-      throw new UnauthorizedException('비밀번호가 올바르지 않습니다.');
+      await this.authLoginPolicyService.handlePasswordMismatch(user, dto.email, ip, userAgent);
     }
 
     if (!user.isEmailVerified) {
@@ -282,21 +173,10 @@ export class AuthService implements OnModuleInit {
       });
     }
 
-    const tokens = this.generateTokens(user);
-    const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
-    await this.userRepository.update(user.id, { refreshToken: hashedRefresh });
+    const tokens = await this.tokenIssuerService.issueAndPersistRefresh(user);
 
     this.logger.log(`User logged in: ${dto.email}`);
-    await this.auditLogService.log({
-      actorId: user.id,
-      actorRole: user.role,
-      action: AuditAction.LOGIN_SUCCESS,
-      resourceType: 'auth',
-      beforeJson: { email: dto.email },
-      afterJson: { userId: user.id },
-      ip: ip ?? null,
-      userAgent: userAgent ?? null,
-    });
+    await this.authAuditService.logLoginSuccess(user, dto.email, ip, userAgent);
     return {
       ...tokens,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
@@ -339,9 +219,7 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
     }
 
-    const tokens = this.generateTokens(user);
-    const hashedRefresh = await bcrypt.hash(tokens.refreshToken, 10);
-    await this.userRepository.update(user.id, { refreshToken: hashedRefresh });
+    const tokens = await this.tokenIssuerService.issueAndPersistRefresh(user);
 
     this.logger.log(`Tokens refreshed for user: ${user.email}`);
     return tokens;
@@ -505,29 +383,6 @@ export class AuthService implements OnModuleInit {
       verificationUrl: this.buildEmailVerificationUrl(rawToken),
       expiresInMinutes: EMAIL_VERIFICATION_TTL_MIN,
     });
-  }
-
-  private generateTokens(user: User): TokenPair {
-    const payload = { sub: user.id, email: user.email, role: user.role };
-    const jti = randomUUID();
-    // accessToken includes tokenType: 'access' and jti (JWT ID) for blacklist tracking
-    const accessToken = this.jwtService.sign({ ...payload, tokenType: 'access', jti });
-    // refreshToken uses longer expiry; cast to ms.StringValue required by jsonwebtoken types
-    const refreshExpiresIn = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as ms.StringValue;
-    const refreshSecret = process.env.JWT_REFRESH_SECRET;
-    const refreshToken = this.jwtService.sign(
-      { ...payload, tokenType: 'refresh' },
-      {
-        secret: refreshSecret ?? process.env.JWT_SECRET,
-        expiresIn: refreshExpiresIn,
-        algorithm: 'HS256',
-      },
-    );
-    return { accessToken, refreshToken };
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private hashPasswordResetToken(token: string): string {

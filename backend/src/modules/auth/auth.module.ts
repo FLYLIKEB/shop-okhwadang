@@ -10,6 +10,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { OAuthService } from './oauth.service';
+import { TokenIssuerService } from './services/token-issuer.service';
+import { AuthAuditService } from './services/auth-audit.service';
+import { AuthLoginPolicyService } from './services/auth-login-policy.service';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { TokenBlacklist } from './entities/token-blacklist.entity';
 import { TokenBlacklistService } from './token-blacklist.service';
@@ -56,7 +59,15 @@ function getJwtPrivateKey(): string {
     AuthEventsModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, OAuthService, JwtStrategy, TokenBlacklistService],
+  providers: [
+    AuthService,
+    OAuthService,
+    TokenIssuerService,
+    AuthAuditService,
+    AuthLoginPolicyService,
+    JwtStrategy,
+    TokenBlacklistService,
+  ],
   exports: [PassportModule, JwtModule, AuditLogModule, AuthEventsModule],
 })
 export class AuthModule {}
