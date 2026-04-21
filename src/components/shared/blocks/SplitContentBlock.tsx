@@ -59,7 +59,7 @@ export default function SplitContentBlock({ content }: Props) {
         {subtitle && (
           <p
             className={cn(
-              'animate-fade-in-up typo-label uppercase tracking-[0.2em] text-muted-foreground',
+              'animate-fade-in-up typo-body-sm font-display uppercase tracking-[0.2em] text-muted-foreground',
               isLarge ? 'mb-6' : 'mb-5',
               isVisible ? 'opacity-100' : 'opacity-0'
             )}
