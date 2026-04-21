@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useTransition } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { Globe } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { useUrlModal } from '@/hooks/useUrlModal';
@@ -47,14 +48,16 @@ function getLocalizedHref(nextLocale: Locale): string {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
-function switchLocale(locale: Locale, currentLocale: Locale) {
+function switchLocale(locale: Locale, currentLocale: Locale, onNavigate: (href: string) => void) {
   if (locale === currentLocale) return;
   document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-  window.open(getLocalizedHref(locale), '_self');
+  onNavigate(getLocalizedHref(locale));
 }
 
 /** 모바일 사이드바용 — 세그먼트 버튼, 드롭다운 없음 */
 function InlineLanguageSelector({ className }: { className?: string }) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
   const currentLocale = useLocale() as Locale;
   const t = useTranslations('header');
 
@@ -68,7 +71,11 @@ function InlineLanguageSelector({ className }: { className?: string }) {
             <button
               key={option.locale}
               type="button"
-              onClick={() => switchLocale(option.locale, currentLocale)}
+              onClick={() => {
+                startTransition(() => {
+                  switchLocale(option.locale, currentLocale, (href) => router.replace(href));
+                });
+              }}
               aria-pressed={isSelected}
               aria-label={option.label}
               className={cn(
@@ -90,6 +97,8 @@ function InlineLanguageSelector({ className }: { className?: string }) {
 
 /** 데스크탑용 드롭다운 언어 전환 */
 function DropdownLanguageSelector({ className, compact = false }: { className?: string; compact?: boolean }) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
   const currentLocale = useLocale() as Locale;
   const t = useTranslations('header');
   const [isOpen, setIsOpen] = useUrlModal('language');
@@ -99,7 +108,9 @@ function DropdownLanguageSelector({ className, compact = false }: { className?: 
 
   const handleSelect = (locale: Locale) => {
     setIsOpen(false);
-    switchLocale(locale, currentLocale);
+    startTransition(() => {
+      switchLocale(locale, currentLocale, (href) => router.replace(href));
+    });
   };
 
   useEffect(() => {
