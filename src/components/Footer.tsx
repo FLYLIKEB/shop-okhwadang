@@ -63,7 +63,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-card border-t border-border mt-auto">
+    <footer className="mt-auto border-t border-divider-soft bg-card">
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className={`grid grid-cols-2 md:grid-cols-4 gap-8 transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
           <div>
@@ -111,7 +111,7 @@ export default function Footer() {
         </div>
 
         {/* 공방 서명/낙관 영역 */}
-        <div className="mt-12 pt-8 border-t border-dashed border-border">
+        <div className="mt-12 border-t border-dashed border-divider-soft pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <span className="font-display text-lg text-muted-foreground/50">玉華堂</span>
             <div className="font-mono text-xs text-muted-foreground text-center md:text-right space-y-0.5 tracking-wide">
