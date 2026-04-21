@@ -106,7 +106,7 @@
   --admin-row-hover: color-mix(in srgb, var(--color-muted) 40%, transparent);
   --admin-row-height: 2.875rem;
   --admin-row-height-compact: 2.5rem;
-  --divider-soft: color-mix(in srgb, var(--color-border) 34%, transparent);
+  --divider-soft: color-mix(in srgb, var(--color-border) 52%, transparent);
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
