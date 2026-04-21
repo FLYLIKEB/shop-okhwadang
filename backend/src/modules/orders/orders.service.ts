@@ -21,6 +21,7 @@ import { CalculateDiscountDto } from '../coupons/dto/calculate-discount.dto';
 import { ShippingFeeCalculatorService } from '../shipping/services/shipping-fee-calculator.service';
 import { OrderEventEmitter } from './order-event.emitter';
 import { OrderCompletedEvent } from './events/order-completed.event';
+import { applyLocale } from '../../common/utils/locale.util';
 
 interface OrderItemBuildResult {
   orderItems: Partial<OrderItem>[];
@@ -321,20 +322,34 @@ export class OrdersService {
     );
   }
 
-  async findAll(userId: number, page = 1, limit = 10): Promise<PaginatedResult<Order>> {
+  async findAll(
+    userId: number,
+    page = 1,
+    limit = 10,
+    locale?: string,
+  ): Promise<PaginatedResult<Order>> {
     const qb = this.orderRepository
       .createQueryBuilder('order')
+      .leftJoinAndSelect('order.items', 'item')
+      .leftJoinAndSelect('item.product', 'product')
+      .leftJoinAndSelect('item.option', 'option')
       .loadRelationCountAndMap('order.itemCount', 'order.items')
       .where('order.userId = :userId', { userId })
       .orderBy('order.createdAt', 'DESC');
 
-    return paginate(qb, { page, limit });
+    const paged = await paginate(qb, { page, limit });
+    return {
+      ...paged,
+      items: paged.items.map((order) => this.localizeOrder(order, locale)),
+    };
   }
 
-  async findOne(id: number, userId: number): Promise<Order> {
+  async findOne(id: number, userId: number, locale?: string): Promise<Order> {
     const order = await this.orderRepository
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.items', 'item')
+      .leftJoinAndSelect('item.product', 'product')
+      .leftJoinAndSelect('item.option', 'option')
       .where('order.id = :id', { id })
       .getOne();
 
@@ -344,7 +359,34 @@ export class OrdersService {
 
     assertOwnership(order.userId, userId);
 
-    return order;
+    return this.localizeOrder(order, locale);
+  }
+
+  private localizeOrder(order: Order, locale?: string): Order {
+    if (!locale || locale === 'ko') {
+      return order;
+    }
+
+    const localizedItems = order.items?.map((item) => {
+      const localizedProduct = item.product
+        ? applyLocale(item.product, locale, ['name'])
+        : item.product;
+      const localizedOption = item.option
+        ? applyLocale(item.option, locale, ['name', 'value'])
+        : item.option;
+
+      return {
+        ...item,
+        product: localizedProduct,
+        option: localizedOption,
+        productName: localizedProduct?.name || item.productName,
+        optionName: localizedOption
+          ? `${localizedOption.name}: ${localizedOption.value}`
+          : item.optionName,
+      };
+    });
+
+    return { ...order, items: localizedItems ?? [] };
   }
 
   private async notifyOrderCreated(

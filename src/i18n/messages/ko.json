@@ -298,7 +298,8 @@
       "delivered": "배송완료",
       "cancelled": "주문취소",
       "refunded": "환불완료",
-      "refund_requested": "환불요청"
+      "refund_requested": "환불요청",
+      "completed": "주문완료"
     }
   },
   "orderComplete": {
@@ -315,7 +316,14 @@
     "noRecentOrders": "주문 내역이 없습니다.",
     "myOrders": "주문 내역",
     "previousPage": "이전",
-    "nextPage": "다음"
+    "nextPage": "다음",
+    "profile": "회원정보",
+    "inquiries": "1:1 문의",
+    "edit": "수정",
+    "viewAll": "전체 보기",
+    "loadOrdersError": "주문 내역을 불러올 수 없습니다.",
+    "retry": "다시 시도",
+    "additionalItems": " 외 {count}개"
   },
   "profile": {
     "title": "회원정보 수정",
@@ -363,7 +371,10 @@
       "phoneInvalid": "올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)",
       "zipcodeInvalid": "우편번호는 5자리 숫자로 입력해주세요.",
       "addressRequired": "주소를 입력해주세요."
-    }
+    },
+    "loadError": "배송지를 불러오지 못했습니다.",
+    "saveError": "오류가 발생했습니다.",
+    "deleteError": "삭제 중 오류가 발생했습니다."
   },
   "review": {
     "title": "리뷰 작성",
@@ -632,11 +643,20 @@
     "removeSuccess": "위시리스트에서 제거되었습니다.",
     "loginRequired": "로그인이 필요합니다.",
     "noItems": "위시리스트가 비었습니다.",
-    "noItemsDescription": "마음에 드는 상품을 위시리스트에 담아보세요."
+    "noItemsDescription": "마음에 드는 상품을 위시리스트에 담아보세요.",
+    "title": "위시리스트",
+    "goShopping": "쇼핑하러 가기",
+    "noProductInfo": "상품 정보 없음",
+    "loadError": "위시리스트를 불러오지 못했습니다.",
+    "removeError": "삭제에 실패했습니다.",
+    "addCartSuccess": "장바구니에 추가되었습니다.",
+    "addCartError": "장바구니 추가에 실패했습니다."
   },
   "recentlyViewed": {
     "title": "최근 본 상품",
-    "noItems": "최근 본 상품이 없습니다."
+    "noItems": "최근 본 상품이 없습니다.",
+    "clearAll": "전체 삭제",
+    "clearSuccess": "최근 본 상품이 삭제되었습니다."
   },
   "payment": {
     "successTitle": "결제 완료",
@@ -777,5 +797,77 @@
     "hours": "시간",
     "minutes": "분",
     "seconds": "초"
+  },
+  "myCoupons": {
+    "title": "쿠폰함",
+    "pointBalance": "보유 적립금",
+    "loadError": "쿠폰 목록을 불러오지 못했습니다.",
+    "tab": {
+      "available": "사용 가능",
+      "used": "사용 완료",
+      "expired": "만료"
+    },
+    "discountPercent": "{value}% 할인",
+    "discountPercentWithMax": "{value}% 할인 (최대 {max})",
+    "discountFixed": "{value} 할인",
+    "minOrderAmount": "{amount} 이상 구매 시 사용 가능",
+    "expiresAt": "유효기간",
+    "emptyByTab": "{status} 쿠폰이 없습니다."
+  },
+  "myInquiries": {
+    "title": "1:1 문의",
+    "newInquiry": "문의하기",
+    "empty": "문의 내역이 없습니다.",
+    "content": "문의 내용",
+    "answer": "답변",
+    "loadError": "문의 내역을 불러오지 못했습니다.",
+    "types": {
+      "product": "상품",
+      "delivery": "배송",
+      "payment": "결제",
+      "exchange": "교환/반품",
+      "other": "기타"
+    }
+  },
+  "myInquiryForm": {
+    "title": "문의하기",
+    "type": "문의 유형",
+    "subject": "제목",
+    "subjectPlaceholder": "문의 제목을 입력해주세요",
+    "content": "내용",
+    "contentPlaceholder": "문의 내용을 자세히 입력해주세요",
+    "cancel": "취소",
+    "submitting": "접수 중...",
+    "submit": "문의 접수",
+    "submitSuccess": "문의가 접수되었습니다.",
+    "submitError": "문의 접수에 실패했습니다.",
+    "validation": {
+      "titleContentRequired": "제목과 내용을 입력해주세요."
+    },
+    "types": {
+      "product": "상품",
+      "delivery": "배송",
+      "payment": "결제",
+      "exchange": "교환/반품",
+      "other": "기타"
+    }
+  },
+  "orderDetail": {
+    "notFound": "주문을 찾을 수 없습니다.",
+    "backToOrders": "주문 목록으로",
+    "shippingStatus": "배송 현황",
+    "orderItems": "주문 상품",
+    "quantity": "{count}개",
+    "paymentSummary": "결제 금액",
+    "productAmount": "상품 금액",
+    "discountAmount": "할인 금액",
+    "shippingFee": "배송비",
+    "freeShipping": "무료",
+    "total": "합계",
+    "shippingAddress": "배송지 정보",
+    "recipient": "받는 분",
+    "phone": "연락처",
+    "address": "주소",
+    "deliveryMemo": "배송 메모"
   }
 }

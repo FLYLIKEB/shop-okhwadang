@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { wishlistApi, cartApi } from '@/lib/api';
 import type { WishlistItem } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
@@ -14,6 +15,9 @@ import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 
 export default function WishlistPage() {
+  const t = useTranslations('wishlist');
+  const tProduct = useTranslations('product');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [items, setItems] = useState<WishlistItem[]>([]);
@@ -23,7 +27,7 @@ export default function WishlistPage() {
       const res = await wishlistApi.getList();
       setItems(res.data);
     },
-    { errorMessage: '위시리스트를 불러오지 못했습니다.' },
+    { errorMessage: t('loadError') },
   );
 
   useEffect(() => {
@@ -36,14 +40,14 @@ export default function WishlistPage() {
       await wishlistApi.remove(wishlistId);
       setItems((prev) => prev.filter((item) => item.id !== wishlistId));
     },
-    { successMessage: '위시리스트에서 삭제되었습니다.', errorMessage: '삭제에 실패했습니다.' },
+    { successMessage: t('removeSuccess'), errorMessage: t('removeError') },
   );
 
   const { execute: addToCartAction } = useAsyncAction(
     async (productId: number) => {
       await cartApi.add({ productId, productOptionId: null, quantity: 1 });
     },
-    { successMessage: '장바구니에 추가되었습니다.', errorMessage: '장바구니 추가에 실패했습니다.' },
+    { successMessage: t('addCartSuccess'), errorMessage: t('addCartError') },
   );
 
   const handleRemove = (wishlistId: number) => { void removeItem(wishlistId); };
@@ -59,7 +63,7 @@ export default function WishlistPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 typo-h1">위시리스트</h1>
+      <h1 className="mb-6 typo-h1">{t('title')}</h1>
 
       {dataLoading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
@@ -69,9 +73,9 @@ export default function WishlistPage() {
         </div>
       ) : items.length === 0 ? (
         <EmptyState
-          title="위시리스트가 비어 있습니다"
-          description="마음에 드는 상품을 위시리스트에 추가해보세요."
-          action={{ label: '쇼핑하러 가기', onClick: () => router.push('/products') }}
+          title={t('noItems')}
+          description={t('noItemsDescription')}
+          action={{ label: t('goShopping'), onClick: () => router.push('/products') }}
         />
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
@@ -101,7 +105,7 @@ export default function WishlistPage() {
                     {isSoldout && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                         <span className="rounded-md bg-black/70 px-3 py-1 text-sm font-semibold text-white">
-                          품절
+                          {tProduct('soldout')}
                         </span>
                       </div>
                     )}
@@ -110,7 +114,7 @@ export default function WishlistPage() {
 
                 <div className="flex flex-1 flex-col gap-2 p-3">
                   <Link href={`/products/${item.productId}`} className="line-clamp-2 text-sm font-medium hover:underline">
-                    {product?.name ?? '상품 정보 없음'}
+                    {product?.name ?? t('noProductInfo')}
                   </Link>
                   {product && (
                     <div className="mt-auto">
@@ -129,14 +133,14 @@ export default function WishlistPage() {
                           : 'hover:bg-primary hover:text-primary-foreground',
                       )}
                     >
-                      장바구니 담기
+                      {tProduct('addToCart')}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleRemove(item.id)}
                       className="rounded-md border px-2 py-1.5 text-xs font-medium text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
                     >
-                      삭제
+                      {tCommon('delete')}
                     </button>
                   </div>
                 </div>

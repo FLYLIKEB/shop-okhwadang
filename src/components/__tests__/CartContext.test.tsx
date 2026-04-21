@@ -7,6 +7,10 @@ import type { AuthContextValue } from '@/contexts/AuthContext';
 import type { CartResponse, CartItem } from '@/lib/api';
 import { ReactNode } from 'react';
 
+vi.mock('next-intl', () => ({
+  useLocale: () => 'ko',
+}));
+
 vi.mock('@/lib/api', () => ({
   cartApi: {
     getList: vi.fn(),
@@ -112,6 +116,7 @@ describe('CartContext', () => {
       expect(screen.getByTestId('count').textContent).toBe('2');
     });
     expect(cartApi.getList).toHaveBeenCalledTimes(1);
+    expect(cartApi.getList).toHaveBeenCalledWith({ params: { locale: 'ko' } });
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
   });
 
@@ -144,6 +149,7 @@ describe('CartContext', () => {
     });
     expect(cartApi.add).toHaveBeenCalledWith(
       { productId: 10, productOptionId: null, quantity: 2 },
+      { params: { locale: 'ko' } },
     );
   });
 

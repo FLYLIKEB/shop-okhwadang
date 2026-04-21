@@ -11,6 +11,7 @@ import {
   ReactNode,
 } from 'react';
 import { toast } from 'sonner';
+import { useLocale } from 'next-intl';
 import { cartApi, CartItem, CartResponse } from '@/lib/api';
 import { useAuth } from './AuthContext';
 import { handleApiError } from '@/utils/error';
@@ -78,6 +79,7 @@ function guestCartToCartResponse(items: GuestCartItem[]): CartResponse {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const locale = useLocale();
   const { isAuthenticated } = useAuth();
   const [cartData, setCartData] = useState<CartResponse>({
     items: [],
@@ -94,14 +96,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(true);
     try {
-      const data = await cartApi.getList();
+      const data = await cartApi.getList({ params: { locale } });
       setCartData(data);
     } catch {
       // silent — cart load failure should not block the UI
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, locale]);
 
   useEffect(() => {
     let mounted = true;
@@ -124,7 +126,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       setIsLoading(true);
       try {
-        const data = await cartApi.getList();
+        const data = await cartApi.getList({ params: { locale } });
         if (mounted) setCartData(data);
       } catch {
         // silent
@@ -136,7 +138,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, locale]);
 
   const addItem = useCallback(
     async (params: AddCartItemParams) => {
@@ -154,10 +156,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCartData(guestCartToCartResponse(guestItems));
         return;
       }
-      const data = await cartApi.add(params);
+      const data = await cartApi.add(params, { params: { locale } });
       setCartData(data);
     },
-    [isAuthenticated],
+    [isAuthenticated, locale],
   );
 
   const updateQuantity = useCallback(

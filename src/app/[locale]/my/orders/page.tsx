@@ -27,7 +27,7 @@ export default function OrdersPage() {
   const { execute: fetchOrders, isLoading: loading } = useAsyncAction(
     async () => {
       setError(null);
-      const res = await ordersApi.getList({ page, limit: PAGE_LIMIT });
+      const res = await ordersApi.getList({ page, limit: PAGE_LIMIT, locale });
       setOrders(res.items);
       setTotal(res.total);
     },
@@ -41,7 +41,7 @@ export default function OrdersPage() {
     if (!isAuthenticated) return;
     void fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, page]);
+  }, [isAuthenticated, locale, page]);
 
   const totalPages = Math.ceil(total / PAGE_LIMIT);
 

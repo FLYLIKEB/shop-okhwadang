@@ -10,6 +10,11 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace }),
 }));
 
+vi.mock('next-intl', () => ({
+  useLocale: () => 'ko',
+  useTranslations: () => (key: string) => key,
+}));
+
 vi.mock('@/lib/api', () => ({
   ordersApi: {
     getList: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, limit: 3 }),
@@ -82,7 +87,7 @@ describe('MyPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText('주문 내역').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('orderHistory').length).toBeGreaterThan(0);
     });
   });
 });

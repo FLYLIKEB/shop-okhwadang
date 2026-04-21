@@ -3,34 +3,36 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed';
 import EmptyState from '@/components/shared/EmptyState';
 import { formatCurrency } from '@/utils/currency';
 
 export default function RecentlyViewedPage() {
+  const t = useTranslations('recentlyViewed');
   const { items, clear } = useRecentlyViewed();
 
   const handleClear = () => {
     clear();
-    toast.success('최근 본 상품이 삭제되었습니다.');
+    toast.success(t('clearSuccess'));
   };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">최근 본 상품</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         {items.length > 0 && (
           <button
             onClick={handleClear}
             className="text-sm text-muted-foreground hover:text-destructive transition-colors"
           >
-            전체 삭제
+            {t('clearAll')}
           </button>
         )}
       </div>
 
       {items.length === 0 ? (
-        <EmptyState title="최근 본 상품이 없습니다." />
+        <EmptyState title={t('noItems')} />
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {items.map((item) => (

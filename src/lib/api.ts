@@ -419,7 +419,7 @@ export const ordersApi = {
     apiClient.post<OrderResponse>('/orders', body, options),
   getById: (id: number, options?: RequestOptions) =>
     apiClient.get<OrderResponse>(`/orders/${id}`, options),
-  getList: (params?: { page?: number; limit?: number }, options?: RequestOptions) =>
+  getList: (params?: { page?: number; limit?: number; locale?: string }, options?: RequestOptions) =>
     apiClient.get<PaginatedResponse<OrderResponse>>('/orders', { ...options, params }),
 };
 

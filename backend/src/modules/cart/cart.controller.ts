@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -42,8 +43,8 @@ export class CartController {
   @ApiOperation({ summary: '장바구니 목록 조회', description: '현재 사용자의 장바구니 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '장바구니 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  findAll(@CurrentUser() user: AuthUser) {
-    return this.cartService.findAll(user.id);
+  findAll(@CurrentUser() user: AuthUser, @Query('locale') locale?: string) {
+    return this.cartService.findAll(user.id, locale);
   }
 
   @Post()
@@ -52,8 +53,8 @@ export class CartController {
   @ApiOperation({ summary: '장바구니에 상품 추가', description: '장바구니에 새로운 상품을 추가합니다.' })
   @ApiResponse({ status: 201, description: '장바구니에 상품 추가 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  add(@CurrentUser() user: AuthUser, @Body() dto: AddToCartDto) {
-    return this.cartService.add(user.id, dto);
+  add(@CurrentUser() user: AuthUser, @Body() dto: AddToCartDto, @Query('locale') locale?: string) {
+    return this.cartService.add(user.id, dto, locale);
   }
 
   @Post('validate')

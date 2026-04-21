@@ -298,7 +298,8 @@
       "delivered": "Delivered",
       "cancelled": "Cancelled",
       "refunded": "Refunded",
-      "refund_requested": "Refund Requested"
+      "refund_requested": "Refund Requested",
+      "completed": "Completed"
     }
   },
   "orderComplete": {
@@ -315,7 +316,14 @@
     "noRecentOrders": "No orders yet.",
     "myOrders": "My Orders",
     "previousPage": "Previous",
-    "nextPage": "Next"
+    "nextPage": "Next",
+    "profile": "Profile",
+    "inquiries": "1:1 Inquiries",
+    "edit": "Edit",
+    "viewAll": "View all",
+    "loadOrdersError": "Failed to load order history.",
+    "retry": "Retry",
+    "additionalItems": ", +{count} more"
   },
   "profile": {
     "title": "Edit Profile",
@@ -363,7 +371,10 @@
       "phoneInvalid": "Please enter a valid phone number. (e.g. 010-1234-5678)",
       "zipcodeInvalid": "ZIP code must be 5 digits.",
       "addressRequired": "Please enter your address."
-    }
+    },
+    "loadError": "Failed to load addresses.",
+    "saveError": "An error occurred.",
+    "deleteError": "An error occurred while deleting."
   },
   "review": {
     "title": "Write a Review",
@@ -632,11 +643,20 @@
     "removeSuccess": "Removed from wishlist.",
     "loginRequired": "Please log in.",
     "noItems": "Your wishlist is empty.",
-    "noItemsDescription": "Add items you love to your wishlist."
+    "noItemsDescription": "Add items you love to your wishlist.",
+    "title": "Wishlist",
+    "goShopping": "Go shopping",
+    "noProductInfo": "Product unavailable",
+    "loadError": "Failed to load wishlist.",
+    "removeError": "Failed to remove item.",
+    "addCartSuccess": "Added to cart.",
+    "addCartError": "Failed to add to cart."
   },
   "recentlyViewed": {
     "title": "Recently Viewed",
-    "noItems": "No recently viewed items."
+    "noItems": "No recently viewed items.",
+    "clearAll": "Clear all",
+    "clearSuccess": "Recently viewed items cleared."
   },
   "payment": {
     "successTitle": "Payment Complete",
@@ -777,5 +797,77 @@
     "hours": "Hours",
     "minutes": "Minutes",
     "seconds": "Seconds"
+  },
+  "myCoupons": {
+    "title": "Coupons",
+    "pointBalance": "Point Balance",
+    "loadError": "Failed to load coupons.",
+    "tab": {
+      "available": "Available",
+      "used": "Used",
+      "expired": "Expired"
+    },
+    "discountPercent": "{value}% off",
+    "discountPercentWithMax": "{value}% off (max {max})",
+    "discountFixed": "{value} off",
+    "minOrderAmount": "Valid on orders over {amount}",
+    "expiresAt": "Expires",
+    "emptyByTab": "No {status} coupons."
+  },
+  "myInquiries": {
+    "title": "1:1 Inquiries",
+    "newInquiry": "New inquiry",
+    "empty": "No inquiries yet.",
+    "content": "Inquiry",
+    "answer": "Answer",
+    "loadError": "Failed to load inquiries.",
+    "types": {
+      "product": "Product",
+      "delivery": "Delivery",
+      "payment": "Payment",
+      "exchange": "Exchange/Return",
+      "other": "Other"
+    }
+  },
+  "myInquiryForm": {
+    "title": "New Inquiry",
+    "type": "Inquiry Type",
+    "subject": "Subject",
+    "subjectPlaceholder": "Enter inquiry subject",
+    "content": "Content",
+    "contentPlaceholder": "Please provide details of your inquiry",
+    "cancel": "Cancel",
+    "submitting": "Submitting...",
+    "submit": "Submit Inquiry",
+    "submitSuccess": "Inquiry submitted.",
+    "submitError": "Failed to submit inquiry.",
+    "validation": {
+      "titleContentRequired": "Please enter both subject and content."
+    },
+    "types": {
+      "product": "Product",
+      "delivery": "Delivery",
+      "payment": "Payment",
+      "exchange": "Exchange/Return",
+      "other": "Other"
+    }
+  },
+  "orderDetail": {
+    "notFound": "Order not found.",
+    "backToOrders": "Back to orders",
+    "shippingStatus": "Shipping Status",
+    "orderItems": "Order Items",
+    "quantity": "{count} qty",
+    "paymentSummary": "Payment Summary",
+    "productAmount": "Product Amount",
+    "discountAmount": "Discount",
+    "shippingFee": "Shipping Fee",
+    "freeShipping": "Free",
+    "total": "Total",
+    "shippingAddress": "Shipping Address",
+    "recipient": "Recipient",
+    "phone": "Phone",
+    "address": "Address",
+    "deliveryMemo": "Delivery Memo"
   }
 }

@@ -377,13 +377,28 @@ describe('OrdersService', () => {
   });
 
   describe('findAll()', () => {
-    it('returns paginated user orders without loading full item relations', async () => {
+    it('returns paginated user orders with localized item names when locale is en', async () => {
       const mockOrders = [
-        { id: 1, userId: 1, orderNumber: 'ORD-1', itemCount: 2 },
-        { id: 2, userId: 1, orderNumber: 'ORD-2', itemCount: 1 },
+        {
+          id: 1,
+          userId: 1,
+          orderNumber: 'ORD-1',
+          itemCount: 2,
+          items: [
+            {
+              id: 11,
+              productName: '한글상품명',
+              optionName: '옵션: 기본',
+              product: { name: '한글상품명', nameEn: 'English Name' },
+              option: { name: '옵션', nameEn: 'Option', value: '기본', valueEn: 'Default' },
+            },
+          ],
+        },
+        { id: 2, userId: 1, orderNumber: 'ORD-2', itemCount: 1, items: [] },
       ] as unknown as Order[];
 
       const mockQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
         loadRelationCountAndMap: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
@@ -393,13 +408,15 @@ describe('OrdersService', () => {
       };
       mockOrderRepository.createQueryBuilder.mockReturnValue(mockQb);
 
-      const result = await service.findAll(1, 1, 10);
+      const result = await service.findAll(1, 1, 10, 'en');
       expect(result.items).toHaveLength(2);
       expect(result.total).toBe(2);
       expect(result.page).toBe(1);
       expect(result.limit).toBe(10);
-      // must use loadRelationCountAndMap, not leftJoinAndSelect
+      expect(mockQb.leftJoinAndSelect).toHaveBeenCalled();
       expect(mockQb.loadRelationCountAndMap).toHaveBeenCalledWith('order.itemCount', 'order.items');
+      expect(result.items[0]?.items[0]?.productName).toBe('English Name');
+      expect(result.items[0]?.items[0]?.optionName).toBe('Option: Default');
     });
   });
 

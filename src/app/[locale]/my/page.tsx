@@ -44,14 +44,14 @@ export default function MyPage() {
   useEffect(() => {
     if (!isAuthenticated) return;
     ordersApi
-      .getList({ page: 1, limit: 3 })
+      .getList({ page: 1, limit: 3, locale })
       .then((res) => setRecentOrders(res.items))
       .catch((err: unknown) => {
         toast.error(handleApiError(err, t('loadOrdersError')));
         setRecentOrders([]);
       })
       .finally(() => setOrdersLoading(false));
-  }, [isAuthenticated, t]);
+  }, [isAuthenticated, locale, t]);
 
   if (isLoading || !user) {
     return (

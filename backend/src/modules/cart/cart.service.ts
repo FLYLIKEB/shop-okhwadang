@@ -17,6 +17,7 @@ import {
 } from './dto/validate-cart.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
+import { applyLocale } from '../../common/utils/locale.util';
 
 export interface CartItemWithPrice {
   id: number;
@@ -50,7 +51,7 @@ export class CartService {
     private readonly productOptionRepository: Repository<ProductOption>,
   ) {}
 
-  async findAll(userId: number): Promise<CartResponse> {
+  async findAll(userId: number, locale?: string): Promise<CartResponse> {
     const items = await this.cartItemRepository
       .createQueryBuilder('cartItem')
       .leftJoinAndSelect('cartItem.product', 'product')
@@ -80,8 +81,8 @@ export class CartService {
         quantity: item.quantity,
         unitPrice,
         subtotal,
-        product: item.product,
-        option: item.option,
+        product: applyLocale(item.product, locale, ['name']),
+        option: item.option ? applyLocale(item.option, locale, ['name', 'value']) : null,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       };
@@ -99,7 +100,7 @@ export class CartService {
     return { items: itemsWithPrice, totalAmount, itemCount };
   }
 
-  async add(userId: number, dto: AddToCartDto): Promise<CartResponse> {
+  async add(userId: number, dto: AddToCartDto, locale?: string): Promise<CartResponse> {
     await findOrThrow(this.productRepository, { id: dto.productId }, '상품을 찾을 수 없습니다.');
 
     if (dto.productOptionId != null) {
@@ -142,7 +143,7 @@ export class CartService {
       );
     }
 
-    return this.findAll(userId);
+    return this.findAll(userId, locale);
   }
 
   async updateQuantity(

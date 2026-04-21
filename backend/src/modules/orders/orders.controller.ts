@@ -40,12 +40,14 @@ export class OrdersController {
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: '페이지 번호' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 개수' })
+  @ApiQuery({ name: 'locale', required: false, type: String, description: '로케일 (ko/en)' })
   findAll(
     @CurrentUser() user: AuthUser,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('locale') locale?: string,
   ) {
-    return this.ordersService.findAll(user.id, page, Math.min(limit, 50));
+    return this.ordersService.findAll(user.id, page, Math.min(limit, 50), locale);
   }
 
   @Get(':id')
@@ -55,7 +57,12 @@ export class OrdersController {
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 404, description: '주문을 찾을 수 없음' })
   @ApiParam({ name: 'id', type: Number, description: '주문 ID' })
-  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
-    return this.ordersService.findOne(id, user.id);
+  @ApiQuery({ name: 'locale', required: false, type: String, description: '로케일 (ko/en)' })
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+    @Query('locale') locale?: string,
+  ) {
+    return this.ordersService.findOne(id, user.id, locale);
   }
 }

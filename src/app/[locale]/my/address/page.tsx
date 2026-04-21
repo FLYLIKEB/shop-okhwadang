@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { handleApiError } from '@/utils/error';
 import { usersApi } from '@/lib/api';
 import type { UserAddress, CreateAddressData } from '@/lib/api';
@@ -37,18 +38,20 @@ interface FormErrors {
   address?: string;
 }
 
-function validateForm(form: AddressForm): FormErrors {
+function validateForm(form: AddressForm, t: (key: string) => string): FormErrors {
   const errors: FormErrors = {};
-  if (!form.recipientName.trim()) errors.recipientName = '받는 분 이름을 입력해주세요.';
+  if (!form.recipientName.trim()) errors.recipientName = t('validation.recipientNameRequired');
   if (!/^01[0-9]-\d{3,4}-\d{4}$/.test(form.phone)) {
-    errors.phone = '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)';
+    errors.phone = t('validation.phoneInvalid');
   }
-  if (!/^\d{5}$/.test(form.zipcode)) errors.zipcode = '우편번호는 5자리 숫자로 입력해주세요.';
-  if (!form.address.trim()) errors.address = '주소를 입력해주세요.';
+  if (!/^\d{5}$/.test(form.zipcode)) errors.zipcode = t('validation.zipcodeInvalid');
+  if (!form.address.trim()) errors.address = t('validation.addressRequired');
   return errors;
 }
 
 export default function AddressPage() {
+  const t = useTranslations('address');
+  const tMy = useTranslations('myPage');
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -65,8 +68,8 @@ export default function AddressPage() {
       setAddresses(data);
     },
     {
-      errorMessage: '배송지를 불러오지 못했습니다.',
-      onError: (err) => setError(handleApiError(err, '배송지를 불러오지 못했습니다.')),
+      errorMessage: t('loadError'),
+      onError: (err) => setError(handleApiError(err, t('loadError'))),
     },
   );
 
@@ -115,7 +118,7 @@ export default function AddressPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errors = validateForm(form);
+    const errors = validateForm(form, t);
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       return;
@@ -141,7 +144,7 @@ export default function AddressPage() {
           );
           return list;
         });
-        toast.success('배송지가 수정되었습니다.');
+        toast.success(t('updateSuccess'));
       } else {
         const created = await usersApi.createAddress(data);
         setAddresses((prev) => {
@@ -150,24 +153,24 @@ export default function AddressPage() {
             : [...prev];
           return [...list, created];
         });
-        toast.success('배송지가 추가되었습니다.');
+        toast.success(t('addSuccess'));
       }
       handleCancel();
     } catch (err) {
-      toast.error(handleApiError(err, '오류가 발생했습니다.'));
+      toast.error(handleApiError(err, t('saveError')));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('배송지를 삭제하시겠습니까?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
     try {
       await usersApi.deleteAddress(id);
       setAddresses((prev) => prev.filter((a) => a.id !== id));
-      toast.success('배송지가 삭제되었습니다.');
+      toast.success(t('deleteSuccess'));
     } catch (err) {
-      toast.error(handleApiError(err, '삭제 중 오류가 발생했습니다.'));
+      toast.error(handleApiError(err, t('deleteError')));
     }
   };
 
@@ -177,9 +180,9 @@ export default function AddressPage() {
       setAddresses((prev) =>
         prev.map((a) => (a.id === id ? updated : { ...a, isDefault: false })),
       );
-      toast.success('기본 배송지로 설정되었습니다.');
+      toast.success(t('setDefaultSuccess'));
     } catch (err) {
-      toast.error(handleApiError(err, '오류가 발생했습니다.'));
+      toast.error(handleApiError(err, t('saveError')));
     }
   };
 
@@ -195,10 +198,10 @@ export default function AddressPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="mb-6 flex items-center gap-2">
         <Link href="/my" className="text-sm text-muted-foreground hover:underline">
-          마이페이지
+          {tMy('title')}
         </Link>
         <span className="text-muted-foreground">/</span>
-        <h1 className="typo-h2">배송지 관리</h1>
+        <h1 className="typo-h2">{t('title')}</h1>
       </div>
 
       {loading ? (
@@ -214,14 +217,14 @@ export default function AddressPage() {
             onClick={() => void fetchAddresses()}
             className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 transition-opacity"
           >
-            다시 시도
+            {tMy('retry')}
           </button>
         </div>
       ) : (
         <>
           {addresses.length === 0 && !showForm && (
             <div className="mb-4 rounded-lg border p-8 text-center">
-              <p className="text-muted-foreground">저장된 배송지가 없습니다.</p>
+              <p className="text-muted-foreground">{t('noSavedAddresses')}</p>
             </div>
           )}
 
@@ -240,7 +243,7 @@ export default function AddressPage() {
                         )}
                         {addr.isDefault && (
                           <span className="rounded-full bg-foreground px-2 py-0.5 text-xs text-background">
-                            기본
+                            {t('defaultBadge')}
                           </span>
                         )}
                       </div>
@@ -256,20 +259,20 @@ export default function AddressPage() {
                           onClick={() => handleSetDefault(addr.id)}
                           className="rounded border px-2 py-1 text-xs hover:bg-muted transition-colors"
                         >
-                          기본 설정
+                          {t('setDefault')}
                         </button>
                       )}
                       <button
                         onClick={() => openEdit(addr)}
                         className="rounded border px-2 py-1 text-xs hover:bg-muted transition-colors"
                       >
-                        수정
+                        {t('edit')}
                       </button>
                       <button
                         onClick={() => handleDelete(addr.id)}
                         className="rounded border px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
                       >
-                        삭제
+                        {t('delete')}
                       </button>
                     </div>
                   </div>
@@ -283,7 +286,7 @@ export default function AddressPage() {
               onClick={openCreate}
               className="w-full rounded-lg border-2 border-dashed py-3 text-sm text-muted-foreground hover:border-foreground/40 hover:text-foreground transition-colors"
             >
-              + 배송지 추가
+              {t('addAddress')}
             </button>
           )}
 
@@ -293,16 +296,16 @@ export default function AddressPage() {
               className="rounded-lg border p-6 space-y-4 bg-muted/20"
             >
               <h2 className="text-base font-semibold">
-                {editingId !== null ? '배송지 수정' : '새 배송지'}
+                {editingId !== null ? t('editAddress') : t('newAddress')}
               </h2>
 
               {[
-                { id: 'recipientName', label: '받는 분', placeholder: '홍길동', required: true },
-                { id: 'phone', label: '전화번호', placeholder: '010-1234-5678', required: true },
-                { id: 'zipcode', label: '우편번호', placeholder: '12345', required: true },
-                { id: 'address', label: '주소', placeholder: '서울특별시 강남구 테헤란로 123', required: true },
-                { id: 'addressDetail', label: '상세 주소', placeholder: '동/호수 등', required: false },
-                { id: 'label', label: '라벨', placeholder: '집, 회사 등', required: false },
+                { id: 'recipientName', label: t('recipientName'), placeholder: t('recipientName'), required: true },
+                { id: 'phone', label: t('phone'), placeholder: '010-1234-5678', required: true },
+                { id: 'zipcode', label: t('zipcode'), placeholder: '12345', required: true },
+                { id: 'address', label: t('address'), placeholder: t('address'), required: true },
+                { id: 'addressDetail', label: t('addressDetail'), placeholder: t('addressDetail'), required: false },
+                { id: 'label', label: t('label'), placeholder: t('labelPlaceholder'), required: false },
               ].map(({ id, label, placeholder, required }) => (
                 <div key={id} className="space-y-1">
                   <label htmlFor={id} className="text-sm font-medium">
@@ -331,7 +334,7 @@ export default function AddressPage() {
                   onChange={handleChange}
                   className="accent-foreground"
                 />
-                기본 배송지로 설정
+                {t('setAsDefault')}
               </label>
 
               <div className="flex gap-2 pt-1">
@@ -340,14 +343,14 @@ export default function AddressPage() {
                   disabled={submitting}
                   className="flex-1 rounded-md bg-foreground py-2 text-sm font-semibold text-background hover:opacity-90 transition-opacity disabled:opacity-40"
                 >
-                  {submitting ? '저장 중...' : '저장'}
+                  {submitting ? t('saving') : t('save')}
                 </button>
                 <button
                   type="button"
                   onClick={handleCancel}
                   className="flex-1 rounded-md border py-2 text-sm font-medium hover:bg-muted transition-colors"
                 >
-                  취소
+                  {t('cancel')}
                 </button>
               </div>
             </form>

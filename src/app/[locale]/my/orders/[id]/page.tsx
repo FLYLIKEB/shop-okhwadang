@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
-import { ORDER_STATUS_LABELS } from '@/constants/status';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import ShippingTimeline from '@/components/shared/ShippingTimeline';
 
@@ -17,6 +16,7 @@ const STATUS_TIMELINE = ['pending', 'paid', 'preparing', 'shipped', 'delivered']
 
 export default function OrderDetailPage() {
   const params = useParams();
+  const locale = useLocale();
   const tOrder = useTranslations('order');
   const tMy = useTranslations('myPage');
   const t = useTranslations('orderDetail');
@@ -31,7 +31,7 @@ export default function OrderDetailPage() {
         setNotFound(true);
         return;
       }
-      const res = await ordersApi.getById(id);
+      const res = await ordersApi.getById(id, { params: { locale } });
       setOrder(res);
     },
     { onError: () => setNotFound(true) },
@@ -41,7 +41,7 @@ export default function OrderDetailPage() {
     if (!isAuthenticated) return;
     void loadOrder();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, params.id]);
+  }, [isAuthenticated, locale, params.id]);
 
   if (isLoading || loading) {
     return (
