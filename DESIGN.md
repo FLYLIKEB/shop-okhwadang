@@ -153,6 +153,23 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 | `md:` | 768px+ | Tablet |
 | `lg:` | 1024px+ | Desktop |
 
+## Spacing
+
+### Section Vertical Padding (CMS Blocks)
+
+| Context | Mobile | Desktop |
+|---------|--------|---------|
+| CMS block sections (`py-*`) | `py-16` (64px) | `md:py-24` (96px) |
+| Text content block (`my-*`) | `my-12` (48px) | `md:my-20` (80px) |
+
+All CMS block `<section>` elements must use `py-16 md:py-24` — never `py-12`.
+
+### Section Header Margin
+
+| Element | Class |
+|---------|-------|
+| Block title → content gap | `mb-8` |
+
 ## Layout Patterns
 
 ```
