@@ -4,34 +4,32 @@ import { NotificationDispatchHelper } from './notification-dispatch.helper';
 import { MockEmailAdapter } from './adapters/mock.adapter';
 import { ResendEmailAdapter } from './adapters/resend.adapter';
 import { SesEmailAdapter } from './adapters/ses.adapter';
+import {
+  NotificationConfig,
+  NOTIFICATION_CONFIG,
+  notificationConfigProvider,
+} from '../../config/notification.config';
 
-export function resolveNotificationProvider(): string {
-  const provider = process.env.NOTIFICATION_PROVIDER ?? 'mock';
-  if (
-    process.env.NODE_ENV === 'production' &&
-    (provider === 'mock' || !process.env.NOTIFICATION_PROVIDER)
-  ) {
-    throw new Error(
-      'Mock notification provider는 프로덕션에서 사용할 수 없습니다. NOTIFICATION_PROVIDER 환경변수를 설정하세요.',
-    );
-  }
-  return provider;
+export function resolveNotificationProvider(config: NotificationConfig): string {
+  return config.provider;
 }
 
 @Global()
 @Module({
   providers: [
+    notificationConfigProvider,
     MockEmailAdapter,
     ResendEmailAdapter,
     SesEmailAdapter,
     {
       provide: EMAIL_PROVIDER_TOKEN,
       useFactory: (
+        config: NotificationConfig,
         mock: MockEmailAdapter,
         resend: ResendEmailAdapter,
         ses: SesEmailAdapter,
       ) => {
-        const name = resolveNotificationProvider();
+        const name = resolveNotificationProvider(config);
         switch (name) {
           case 'resend':
             return resend;
@@ -43,7 +41,7 @@ export function resolveNotificationProvider(): string {
             throw new Error(`Unknown NOTIFICATION_PROVIDER: ${name}`);
         }
       },
-      inject: [MockEmailAdapter, ResendEmailAdapter, SesEmailAdapter],
+      inject: [NOTIFICATION_CONFIG, MockEmailAdapter, ResendEmailAdapter, SesEmailAdapter],
     },
     NotificationService,
     NotificationDispatchHelper,

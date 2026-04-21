@@ -23,8 +23,7 @@ import { NotificationDispatchHelper } from '../notification/notification-dispatc
 import { PaymentConfirmationService } from './services/payment-confirmation.service';
 import { PaymentRefundService } from './services/payment-refund.service';
 import { PaymentWebhookService } from './services/payment-webhook.service';
-
-const DEFAULT_CARRIER = process.env.DEFAULT_CARRIER || 'mock';
+import { PAYMENT_CONFIG, PaymentConfig } from '../../config/payment.config';
 
 @Injectable()
 export class PaymentsService {
@@ -44,6 +43,8 @@ export class PaymentsService {
     private readonly shippingRepository: Repository<Shipping>,
     @Inject('PaymentGateway')
     private readonly gateway: PaymentGateway,
+    @Inject(PAYMENT_CONFIG)
+    private readonly paymentConfig: PaymentConfig,
     private readonly tossAdapter: TossPaymentAdapter,
     private readonly stripeAdapter: StripePaymentAdapter,
     private readonly notificationService: NotificationService,
@@ -59,7 +60,7 @@ export class PaymentsService {
       notificationDispatchHelper: this.notificationDispatchHelper,
       resolveGatewayByType: (gatewayType) => this.resolveGatewayByType(gatewayType),
       logger: this.logger,
-      defaultCarrier: DEFAULT_CARRIER,
+      defaultCarrier: this.paymentConfig.defaultCarrier,
     });
     this.paymentRefundService = new PaymentRefundService({
       paymentRepository: this.paymentRepository,

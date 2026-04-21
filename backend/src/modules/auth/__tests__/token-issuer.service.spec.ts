@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User, UserRole } from '../../users/entities/user.entity';
 import { TokenIssuerService } from '../services/token-issuer.service';
+import { AUTH_CONFIG, createAuthConfig } from '../../../config/auth.config';
 
 const mockUserRepository = {
   update: jest.fn(),
@@ -57,6 +58,18 @@ describe('TokenIssuerService', () => {
         TokenIssuerService,
         { provide: JwtService, useValue: mockJwtService },
         { provide: getRepositoryToken(User), useValue: mockUserRepository },
+        {
+          provide: AUTH_CONFIG,
+          useValue: createAuthConfig({
+            NODE_ENV: 'development',
+            JWT_SECRET: 'jwt-secret',
+            JWT_PRIVATE_KEY: 'private-key',
+            JWT_PUBLIC_KEY: 'public-key',
+            FRONTEND_URL: 'https://frontend.test',
+            JWT_REFRESH_SECRET: 'refresh-secret',
+            JWT_REFRESH_EXPIRES_IN: '7d',
+          }),
+        },
       ],
     }).compile();
 
@@ -112,4 +125,3 @@ describe('TokenIssuerService', () => {
     expect(await bcrypt.compare('refresh-token', updatedPayload.refreshToken)).toBe(true);
   });
 });
-

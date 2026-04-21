@@ -1,4 +1,5 @@
 import { BadGatewayException } from '@nestjs/common';
+import { createPaymentConfig } from '../../../config/payment.config';
 
 // Shared mock refs — assigned after mock module loads
 const mocks = {
@@ -26,15 +27,19 @@ describe('StripePaymentAdapter', () => {
   let adapter: StripePaymentAdapter;
 
   beforeEach(() => {
-    process.env.STRIPE_SECRET_KEY = 'sk_test_secret';
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = 'pk_test_publishable';
-    process.env.STRIPE_WEBHOOK_SECRET = 'test_webhook_secret';
-
     mocks.paymentIntentsCreate.mockReset();
     mocks.paymentIntentsRetrieve.mockReset();
     mocks.refundsCreate.mockReset();
 
-    adapter = new StripePaymentAdapter();
+    adapter = new StripePaymentAdapter(
+      createPaymentConfig({
+        NODE_ENV: 'development',
+        PAYMENT_GATEWAY: 'stripe',
+        STRIPE_SECRET_KEY: 'sk_test_secret',
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_publishable',
+        STRIPE_WEBHOOK_SECRET: 'test_webhook_secret',
+      }),
+    );
   });
 
   describe('prepare', () => {

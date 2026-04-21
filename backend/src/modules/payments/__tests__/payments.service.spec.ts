@@ -12,6 +12,8 @@ import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
+import { PAYMENT_CONFIG, createPaymentConfig } from '../../../config/payment.config';
+import { User } from '../../users/entities/user.entity';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({
@@ -149,6 +151,15 @@ describe('PaymentsService', () => {
         { provide: getRepositoryToken(Refund), useValue: mockRefundRepo },
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
         { provide: getRepositoryToken(Shipping), useValue: mockShippingRepo },
+        { provide: getRepositoryToken(User), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
+        {
+          provide: PAYMENT_CONFIG,
+          useValue: createPaymentConfig({
+            NODE_ENV: 'development',
+            PAYMENT_GATEWAY: 'mock',
+            DEFAULT_CARRIER: 'mock',
+          }),
+        },
         { provide: 'PaymentGateway', useValue: mockDefaultGateway },
         { provide: TossPaymentAdapter, useValue: mockTossAdapter },
         { provide: StripePaymentAdapter, useValue: mockStripeAdapter },

@@ -4,9 +4,7 @@ import { UploadService } from '../upload.service';
 import { LocalStorageAdapter } from '../adapters/local.adapter';
 import { MockStorageAdapter } from '../adapters/mock.adapter';
 import { S3StorageAdapter } from '../adapters/s3.adapter';
-
-// Use mock adapter in tests
-process.env.STORAGE_PROVIDER = 'mock';
+import { STORAGE_CONFIG, createStorageConfig } from '../../../config/storage.config';
 
 // Real JPEG magic bytes: FF D8 FF
 const JPEG_MAGIC = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00]);
@@ -51,6 +49,10 @@ describe('UploadService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        {
+          provide: STORAGE_CONFIG,
+          useValue: createStorageConfig({ STORAGE_PROVIDER: 'mock' }),
+        },
         UploadService,
         LocalStorageAdapter,
         MockStorageAdapter,

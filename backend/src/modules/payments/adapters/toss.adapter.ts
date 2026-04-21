@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BadGatewayException } from '@nestjs/common';
 import {
   PaymentGateway,
@@ -9,17 +9,20 @@ import {
   PartialCancelParams,
   PartialCancelResult,
 } from '../interfaces/payment-gateway.interface';
+import { PAYMENT_CONFIG, PaymentConfig } from '../../../config/payment.config';
 
 @Injectable()
 export class TossPaymentAdapter implements PaymentGateway {
   private readonly logger = new Logger(TossPaymentAdapter.name);
+  private readonly secretKey: string;
+  private readonly clientKey: string;
 
-  private get secretKey(): string {
-    return process.env.TOSS_SECRET_KEY ?? '';
-  }
-
-  private get clientKey(): string {
-    return process.env.TOSS_CLIENT_KEY ?? '';
+  constructor(
+    @Inject(PAYMENT_CONFIG)
+    config: PaymentConfig,
+  ) {
+    this.secretKey = config.toss.secretKey;
+    this.clientKey = config.toss.clientKey;
   }
 
   private get authHeader(): string {
