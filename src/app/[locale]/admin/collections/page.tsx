@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -116,8 +117,13 @@ function SortableCollectionRow({ collection, onEdit, onDelete }: SortableCollect
       </td>
       <td className="py-3 px-4">
         {collection.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={collection.imageUrl} alt="" className="w-10 h-10 rounded object-cover" />
+          <Image
+            src={collection.imageUrl}
+            alt={collection.name}
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded object-cover"
+          />
         )}
       </td>
       <td className="py-3 px-4 text-sm">
