@@ -147,17 +147,26 @@ export async function middleware(request: NextRequest) {
     // Forward request to backend
     const headers = new Headers();
     request.headers.forEach((value, key) => {
-      if (!['host', 'connection'].includes(key.toLowerCase())) {
+      if (!['host', 'connection', 'content-length'].includes(key.toLowerCase())) {
         headers.set(key, value);
       }
     });
 
+    const method = request.method.toUpperCase();
+
     try {
-      const response = await fetch(url, {
-        method: request.method,
+      const init: RequestInit = {
+        method,
         headers,
-        body: request.body,
         redirect: 'follow',
+      };
+
+      if (method !== 'GET' && method !== 'HEAD') {
+        init.body = await request.arrayBuffer();
+      }
+
+      const response = await fetch(url, {
+        ...init,
       });
 
       const data = await response.arrayBuffer();
