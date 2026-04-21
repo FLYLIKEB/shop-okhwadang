@@ -12,6 +12,7 @@ import FormInput from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
 import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { StatusBadge } from '@/components/shared/admin/StatusBadge';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import ProductImageUploader from '@/components/shared/admin/ProductImageUploader';
 import { GripVertical } from 'lucide-react';
 import { useAdminDndSensors } from '@/components/shared/hooks/useDndSensors';
@@ -443,15 +444,17 @@ export default function AdminCollectionsPage() {
       onDragEnd={handleDragEnd}
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">컬렉션 관리</h1>
-          <button
-            onClick={handleOpenCreate}
-            className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-          >
-            + 컬렉션 추가
-          </button>
-        </div>
+        <AdminPageHeader
+          title="컬렉션 관리"
+          action={(
+            <button
+              onClick={handleOpenCreate}
+              className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
+            >
+              + 컬렉션 추가
+            </button>
+          )}
+        />
 
         <div className="space-y-8">
           <CollectionSection

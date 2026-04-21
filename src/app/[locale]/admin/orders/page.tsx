@@ -3,11 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
+import { useAdminListPage } from '@/components/shared/hooks/useAdminListPage';
 import { adminOrdersApi } from '@/lib/api';
 import type { AdminOrder } from '@/lib/api';
 import { AdminOrdersTable } from '@/components/shared/admin/AdminOrdersTable';
 import { ShippingModal } from '@/components/shared/admin/ShippingModal';
-import AdminPagination from '@/components/shared/admin/AdminPagination';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
+import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
+import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 
 const STATUS_FILTERS = [
   { label: '전체', value: '' },
@@ -18,7 +22,7 @@ const STATUS_FILTERS = [
   { label: '배송완료', value: 'delivered' },
   { label: '주문취소', value: 'cancelled' },
   { label: '환불완료', value: 'refunded' },
-];
+] as const;
 
 const PAGE_SIZE = 20;
 
@@ -26,13 +30,23 @@ export default function AdminOrdersPage() {
   const { isAdmin } = useAdminGuard();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState('');
-  const [keyword, setKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [shippingOrder, setShippingOrder] = useState<AdminOrder | null>(null);
+  const {
+    page,
+    setPage,
+    keyword,
+    searchInput,
+    setSearchInput,
+    filters,
+    setFilter,
+    submitSearch,
+  } = useAdminListPage({
+    initialFilters: {
+      status: '',
+      startDate: '',
+      endDate: '',
+    },
+  });
 
   const { execute: fetchOrders, isLoading: loading } = useAsyncAction(
     async () => {
@@ -40,10 +54,10 @@ export default function AdminOrdersPage() {
         page,
         limit: PAGE_SIZE,
       };
-      if (statusFilter) params.status = statusFilter;
+      if (filters.status) params.status = filters.status;
       if (keyword) params.keyword = keyword;
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
 
       const res = await adminOrdersApi.getList(params);
       setOrders(res.items);
@@ -55,13 +69,7 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     if (isAdmin) void fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, page, statusFilter, keyword, startDate, endDate]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setKeyword(searchInput);
-    setPage(1);
-  };
+  }, [isAdmin, page, filters.status, filters.startDate, filters.endDate, keyword]);
 
   const handleShippingSuccess = () => {
     setShippingOrder(null);
@@ -71,85 +79,56 @@ export default function AdminOrdersPage() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">주문 관리</h1>
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
+      <AdminPageHeader title="주문 관리" />
 
-      {/* 필터 */}
-      <div className="mb-4 flex flex-wrap gap-2">
-        {STATUS_FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => {
-              setStatusFilter(f.value);
-              setPage(1);
-            }}
-            className={`rounded-full px-3 py-1 text-sm ${
-              statusFilter === f.value
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary hover:bg-secondary/80'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      <AdminFilterChips
+        items={STATUS_FILTERS}
+        value={filters.status}
+        onToggle={(value) => setFilter('status', value)}
+        ariaLabel="주문 상태 필터"
+        size="sm"
+      />
 
-      {/* 검색 & 날짜 필터 */}
-      <div className="mb-4 flex flex-wrap items-end gap-4">
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="주문번호, 수령인, 이메일 검색"
-            className="rounded-lg border bg-background px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
-          >
-            검색
-          </button>
-        </form>
+      <div className="flex flex-wrap items-end gap-4">
+        <AdminSearchForm
+          value={searchInput}
+          onChange={setSearchInput}
+          onSubmit={submitSearch}
+          placeholder="주문번호, 수령인, 이메일 검색"
+        />
 
         <div className="flex items-center gap-2">
           <input
             type="date"
-            value={startDate}
-            onChange={(e) => {
-              setStartDate(e.target.value);
-              setPage(1);
-            }}
+            value={filters.startDate}
+            onChange={(event) => setFilter('startDate', event.target.value)}
             className="rounded-lg border bg-background px-3 py-2 text-sm"
           />
           <span className="text-sm text-muted-foreground">~</span>
           <input
             type="date"
-            value={endDate}
-            onChange={(e) => {
-              setEndDate(e.target.value);
-              setPage(1);
-            }}
+            value={filters.endDate}
+            onChange={(event) => setFilter('endDate', event.target.value)}
             className="rounded-lg border bg-background px-3 py-2 text-sm"
           />
         </div>
       </div>
 
-      {/* 테이블 */}
-      {loading ? (
-        <p className="py-8 text-center text-muted-foreground">불러오는 중...</p>
-      ) : (
+      <PaginatedAdminTableShell
+        loading={loading}
+        loadingMessage="불러오는 중..."
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      >
         <AdminOrdersTable
           orders={orders}
           onStatusChange={() => void fetchOrders()}
           onShippingRegister={(order) => setShippingOrder(order)}
         />
-      )}
+      </PaginatedAdminTableShell>
 
-      {/* 페이지네이션 */}
-      <AdminPagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-
-      {/* 운송장 등록 모달 */}
       {shippingOrder && (
         <ShippingModal
           orderId={shippingOrder.id}

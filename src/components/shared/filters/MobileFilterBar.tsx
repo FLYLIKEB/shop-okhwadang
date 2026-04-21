@@ -1,9 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { cn } from '@/components/ui/utils';
 import { useUrlModal } from '@/hooks/useUrlModal';
 import { buildAttrs, useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
+import SegmentedOptionGroup from '@/components/shared/ui/SegmentedOptionGroup';
 import PriceRangeFilter from './PriceRangeFilter';
 import TeapotShapeFilter from './TeapotShapeFilter';
 import type { Category, Collection } from '@/lib/api';
@@ -30,11 +30,19 @@ export default function MobileFilterBar({ categories, shapeCollections }: Mobile
   const selectedShape = attrs.get('teapot_shape');
 
   const rootCategories = categories.filter((category) => category.parentId === null);
+  const categoryItems = [
+    { label: tCommon('all'), value: -1 },
+    ...rootCategories.map((category) => ({
+      label: category.name,
+      value: Number(category.id),
+    })),
+  ];
 
   const isRootActive = (cat: Category): boolean => {
     if (categoryId === Number(cat.id)) return true;
     return (cat.children ?? []).some((child) => Number(child.id) === categoryId);
   };
+  const activeRootCategory = rootCategories.find(isRootActive);
 
   const handleCategorySelect = (id: number | undefined) => {
     updateQuery({ categoryId: id });
@@ -60,35 +68,17 @@ export default function MobileFilterBar({ categories, shapeCollections }: Mobile
   return (
     <div className="md:hidden">
       <div className="flex items-center gap-2 border-b border-border pb-3">
-        <div className="flex flex-1 gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <button
-            type="button"
-            onClick={() => handleCategorySelect(undefined)}
-            className={cn(
-              'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              categoryId === undefined
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-background text-muted-foreground',
-            )}
-          >
-            {tCommon('all')}
-          </button>
-          {rootCategories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => handleCategorySelect(Number(cat.id))}
-              className={cn(
-                'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                isRootActive(cat)
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-background text-muted-foreground',
-              )}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
+        <SegmentedOptionGroup
+          items={categoryItems}
+          value={activeRootCategory ? Number(activeRootCategory.id) : -1}
+          onToggle={(value) => handleCategorySelect(value === -1 ? undefined : value)}
+          ariaLabel="카테고리 필터"
+          className="flex-1 flex-nowrap gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          itemClassName="shrink-0"
+          size="xs"
+          radius="full"
+          tone="primary"
+        />
       </div>
 
       {filterOpen && (
