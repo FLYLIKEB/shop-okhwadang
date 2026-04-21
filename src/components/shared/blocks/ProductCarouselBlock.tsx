@@ -8,6 +8,8 @@ import { productsApi } from '@/lib/api';
 import type { Product, ProductCarouselContent } from '@/lib/api';
 import ProductCard from '@/components/shared/products/ProductCard';
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
+import { useCarouselProgress } from '@/components/shared/hooks/useCarouselProgress';
+import CarouselProgressBar from '@/components/shared/common/CarouselProgressBar';
 import { cn } from '@/components/ui/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -24,6 +26,7 @@ export default function ProductCarouselBlock({ content }: Props) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { progress } = useCarouselProgress({ scrollRef });
 
   const cardWidth = template === 'large' ? 288 : 224;
   const gap = 24;
@@ -166,6 +169,8 @@ export default function ProductCarouselBlock({ content }: Props) {
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
+
+      <CarouselProgressBar progress={progress} className="mt-4 mx-4 md:mx-4 xl:mx-8" />
     </section>
   );
 }
