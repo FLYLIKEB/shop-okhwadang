@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 
 const mockPush = vi.fn();
 const mockBack = vi.fn();
+const mockSetOpen = vi.fn();
 let mockPathname = '/';
 
 vi.mock('next/navigation', () => ({
@@ -16,10 +17,16 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/hooks/useUrlModal', async () => {
   const React = await import('react');
   return {
-    useUrlModal: () => {
+    useUrlModal: (key: string) => {
       const [isOpen, setIsOpenState] = React.useState(false);
-      const setOpen = (open: boolean) => setIsOpenState(open);
-      const close = () => setIsOpenState(false);
+      const setOpen = (open: boolean, history?: 'auto' | 'push' | 'replace') => {
+        mockSetOpen(key, open, history);
+        setIsOpenState(open);
+      };
+      const close = (history?: 'auto' | 'replace') => {
+        mockSetOpen(key, false, history);
+        setIsOpenState(false);
+      };
       return [isOpen, setOpen, close] as const;
     },
   };
@@ -74,6 +81,7 @@ vi.mock('@/contexts/CartContext', () => ({
 beforeEach(() => {
   mockPush.mockClear();
   mockBack.mockClear();
+  mockSetOpen.mockClear();
   mockPathname = '/';
   mockUseCart.mockReturnValue({ itemCount: 0 });
 });
@@ -140,6 +148,17 @@ describe('Header', () => {
     await waitFor(() => {
       expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
     });
+  });
+
+  it('mobile account link click closes menu with replace mode', async () => {
+    const user = userEvent.setup();
+    render(<Header />);
+    await user.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    const mobileNav = screen.getByRole('navigation', { name: '모바일 메뉴' });
+    const loginLink = mobileNav.querySelector('a[href=\"/login\"]')!;
+    await user.click(loginLink);
+
+    expect(mockSetOpen).toHaveBeenCalledWith('menu', false, 'replace');
   });
 
   it('Escape key → mobile menu closes', async () => {

@@ -157,7 +157,7 @@ function ProductCard({
       {/* ── 정보 영역 — 상품명 > 가격 > 메타 위계 ── */}
       <div className="mt-3 flex flex-1 flex-col gap-1.5">
         {/* 1순위: 상품명 */}
-        <p className="typo-title line-clamp-2 text-foreground min-h-[2.75rem]">{name}</p>
+        <p className="typo-title line-clamp-3 break-words leading-snug text-foreground min-h-[3.75rem] md:min-h-[4.25rem]">{name}</p>
 
         {/* 2순위: 가격 */}
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />

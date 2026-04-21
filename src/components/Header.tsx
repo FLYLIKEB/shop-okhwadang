@@ -48,6 +48,7 @@ interface MobileMenuProps {
   sidebarItems: NavigationItem[];
   visible: boolean;
   onClose: () => void;
+  onNavigate: () => void;
   onLogout: () => void;
 }
 
@@ -235,7 +236,7 @@ function MobileMenuNav({ visible, children }: { visible: boolean; children: Reac
   );
 }
 
-function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible, onClose, onLogout }: MobileMenuProps) {
+function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible, onClose, onNavigate, onLogout }: MobileMenuProps) {
   const t = useTranslations('header');
   const menuItems = sidebarItems.length > 0 ? sidebarItems : navItems;
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -245,7 +246,7 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
     if (item.children && item.children.length > 0) {
       setHistory(h => [...h, { title: item.label, items: item.children }]);
     } else {
-      closeAndReset();
+      closeAndResetForNavigation();
     }
   };
 
@@ -256,6 +257,11 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
   const closeAndReset = () => {
     setHistory([]);
     onClose();
+  };
+
+  const closeAndResetForNavigation = () => {
+    setHistory([]);
+    onNavigate();
   };
 
   return (
@@ -272,13 +278,13 @@ function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible
           items={current.items}
           history={history}
           onItemClick={handleItemClick}
-          onLinkClick={closeAndReset}
+          onLinkClick={closeAndResetForNavigation}
         />
         <MobileMenuFooter
           isAuthenticated={isAuthenticated}
           userName={userName}
           onLogout={onLogout}
-          onLinkClick={closeAndReset}
+          onLinkClick={closeAndResetForNavigation}
         />
       </MobileMenuNav>
     </div>
@@ -637,6 +643,7 @@ export default function Header() {
           sidebarItems={sidebarItems}
           visible={menuPanel.visible}
           onClose={() => setIsMenuOpen(false)}
+          onNavigate={() => setIsMenuOpen(false, 'replace')}
           onLogout={() => void logout()}
         />
       )}
