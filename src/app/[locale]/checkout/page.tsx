@@ -86,6 +86,7 @@ export default function CheckoutPage({
     confirming_payment: t('steps.confirming_payment'),
     success: t('steps.success'),
   };
+  const loadAddressErrorMessage = t('loadAddressError');
 
   const fillFormFromAddress = (addr: UserAddress) => {
     setForm({
@@ -139,12 +140,12 @@ export default function CheckoutPage({
         }
       })
       .catch(() => {
-        toast.error(t('loadAddressError'));
+        toast.error(loadAddressErrorMessage);
       })
       .finally(() => {
         setAddressLoading(false);
       });
-  }, [isAuthenticated, isLoading, t]);
+  }, [isAuthenticated, isLoading, loadAddressErrorMessage]);
 
   const handleAddressSelect = (id: number | 'manual') => {
     setSelectedAddressId(id);

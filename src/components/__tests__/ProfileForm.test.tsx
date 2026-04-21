@@ -5,6 +5,28 @@ import ProfilePage from '@/app/[locale]/my/profile/page';
 import { AuthContext } from '@/contexts/AuthContext';
 import type { AuthContextValue } from '@/contexts/AuthContext';
 
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace: string) => (key: string) => {
+    const dict: Record<string, Record<string, string>> = {
+      myPage: { title: '마이페이지' },
+      profile: {
+        title: '회원정보',
+        email: '이메일',
+        emailReadOnly: '이메일은 변경할 수 없습니다.',
+        name: '이름',
+        phone: '전화번호',
+        save: '저장하기',
+        saving: '저장 중...',
+        updateSuccess: '회원정보가 수정되었습니다.',
+        updateError: '회원정보 수정에 실패했습니다.',
+        'validation.nameRequired': '이름은 필수입니다.',
+        'validation.phoneInvalid': '전화번호 형식이 올바르지 않습니다.',
+      },
+    };
+    return dict[namespace]?.[key] ?? key;
+  },
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn() }),
 }));
