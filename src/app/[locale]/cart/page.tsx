@@ -1,19 +1,25 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMobileNav } from '@/contexts/MobileNavContext';
+import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/shared/EmptyState';
 import CartItemRow from '@/components/shared/cart/CartItemRow';
 import { formatCurrency } from '@/utils/currency';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
 import { SESSION_KEYS } from '@/constants/storage';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { cn } from '@/components/ui/utils';
 
 export default function CartPage() {
+  const t = useTranslations('cart');
   const router = useRouter();
+  const { isVisible: isNavVisible } = useMobileNav();
   const { isAuthenticated } = useAuth();
   const { items, isLoading, updateQuantity, removeItem } = useCart();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -27,6 +33,12 @@ export default function CartPage() {
         .reduce((sum, item) => sum + item.subtotal, 0),
     [items, selectedIds],
   );
+
+  const selectedShippingFee =
+    selectedTotal >= FREE_SHIPPING_THRESHOLD || selectedTotal === 0 ? 0 : SHIPPING_FEE;
+  const grandTotal = selectedTotal + selectedShippingFee;
+  const remainingForFreeShipping = Math.max(FREE_SHIPPING_THRESHOLD - selectedTotal, 0);
+  const freeShippingProgress = Math.min((selectedTotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
 
   const handleSelectAll = (checked: boolean) => {
     setSelectedIds(checked ? new Set(items.map((i) => i.id)) : new Set());
@@ -52,7 +64,7 @@ export default function CartPage() {
 
   const handleOrder = () => {
     if (selectedIds.size === 0) {
-      toast.warning('주문할 상품을 선택해주세요.');
+      toast.warning(t('selectItemsToOrder'));
       return;
     }
     const selectedItems = items.filter((item) => selectedIds.has(item.id));
@@ -62,11 +74,11 @@ export default function CartPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12">
+      <div className="layout-container layout-page">
         <EmptyState
-          title="로그인이 필요합니다"
-          description="장바구니를 이용하려면 로그인해주세요."
-          action={{ label: '로그인', onClick: () => router.push('/login') }}
+          title={t('requireLogin')}
+          description={t('requireLoginDescription')}
+          action={{ label: t('loginAction'), onClick: () => router.push('/login') }}
         />
       </div>
     );
@@ -74,9 +86,9 @@ export default function CartPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12">
+      <div className="layout-container layout-page">
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-4">
+          <div className="space-y-4 lg:col-span-2">
             {[1, 2, 3].map((i) => (
               <SkeletonBox key={i} height="h-24" />
             ))}
@@ -89,88 +101,107 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12">
+      <div className="layout-container layout-page">
         <EmptyState
-          title="장바구니가 비었습니다"
-          description="마음에 드는 상품을 장바구니에 담아보세요."
-          action={{ label: '쇼핑 계속하기', onClick: () => router.push('/products') }}
+          title={t('empty')}
+          description={t('emptyDescription')}
+          action={{ label: t('continueShopping'), onClick: () => router.push('/products') }}
         />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="mb-6 typo-h1">장바구니</h1>
+    <div className="layout-container layout-page pb-24 md:pb-8">
+      <h1 className="typo-h1">{t('title')}</h1>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Item list */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="mb-3 flex items-center justify-between border-b pb-3">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={(e) => handleSelectAll(e.target.checked)}
-                aria-label="전체 선택"
+                aria-label={t('selectAll')}
                 className="h-4 w-4 rounded border-input accent-foreground"
               />
-              전체 선택 ({selectedIds.size}/{items.length})
+              {t('selectAll')} ({selectedIds.size}/{items.length})
             </label>
           </div>
 
-          <div>
-            {items.map((item) => (
-              <CartItemRow
-                key={item.id}
-                item={item}
-                selected={selectedIds.has(item.id)}
-                onSelect={handleSelect}
-                onQuantityChange={updateQuantity}
-                onRemove={handleRemove}
-              />
-            ))}
-          </div>
+          {items.map((item) => (
+            <CartItemRow
+              key={item.id}
+              item={item}
+              selected={selectedIds.has(item.id)}
+              onSelect={handleSelect}
+              onQuantityChange={updateQuantity}
+              onRemove={handleRemove}
+            />
+          ))}
         </div>
 
-        {/* Summary */}
-        <div className="h-fit rounded-lg border p-6 space-y-4 lg:sticky lg:top-24">
-          <h2 className="font-semibold text-lg">주문 요약</h2>
+        <aside className="hidden h-fit rounded-lg border p-6 lg:sticky lg:top-24 lg:block">
+          <h2 className="typo-h3">{t('orderSummary')}</h2>
 
-          <div className="space-y-2 text-sm">
+          <div className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">선택 상품</span>
-              <span>{selectedIds.size}개</span>
+              <span className="text-muted-foreground">{t('selectedItems')}</span>
+              <span>{selectedIds.size}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">상품 금액</span>
+              <span className="text-muted-foreground">{t('productAmount')}</span>
               <span>{formatCurrency(selectedTotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">배송비</span>
-              <span>{selectedTotal >= FREE_SHIPPING_THRESHOLD ? '무료' : formatCurrency(SHIPPING_FEE)}</span>
+              <span className="text-muted-foreground">{t('shippingFee')}</span>
+              <span>{selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee)}</span>
             </div>
           </div>
 
-          <div className="border-t pt-4">
-            <div className="flex justify-between font-bold">
-              <span>합계</span>
-              <span>
-                {formatCurrency(
-                  selectedTotal +
-                  (selectedTotal >= FREE_SHIPPING_THRESHOLD || selectedTotal === 0 ? 0 : SHIPPING_FEE)
-                )}
-              </span>
+          <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+            <p className="text-xs text-muted-foreground">
+              {remainingForFreeShipping === 0
+                ? t('freeShippingUnlocked')
+                : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping) })}
+            </p>
+            <div className="mt-2 h-1.5 w-full rounded-full bg-background">
+              <div
+                className="h-full rounded-full bg-primary transition-[width] duration-300"
+                style={{ width: `${freeShippingProgress}%` }}
+                aria-hidden
+              />
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleOrder}
-            className="w-full rounded-md bg-foreground py-3 text-sm font-semibold text-background hover:opacity-90 transition-opacity disabled:opacity-40"
-          >
-            선택 상품 주문하기
-          </button>
+          <div className="mt-4 border-t pt-4">
+            <div className="flex items-end justify-between">
+              <span className="typo-title">{t('total')}</span>
+              <span className="typo-h2">{formatCurrency(grandTotal)}</span>
+            </div>
+          </div>
+
+          <Button type="button" className="mt-4 w-full" onClick={handleOrder}>
+            {t('orderSelected')}
+          </Button>
+        </aside>
+      </div>
+
+      <div
+        className={cn(
+          'fixed left-0 right-0 z-50 border-t bg-background p-4 md:hidden',
+          isNavVisible ? 'bottom-14' : 'bottom-0',
+        )}
+      >
+        <div className="layout-container p-0">
+          <div className="mb-2 flex items-end justify-between">
+            <p className="text-xs text-muted-foreground">{t('total')}</p>
+            <p className="typo-title">{formatCurrency(grandTotal)}</p>
+          </div>
+          <Button type="button" className="w-full" onClick={handleOrder}>
+            {t('orderSelected')}
+          </Button>
         </div>
       </div>
     </div>

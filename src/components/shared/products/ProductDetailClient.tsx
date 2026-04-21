@@ -170,7 +170,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
   }, [product.options.length, selectedOptionId, buyNow, t, focusOptionSection])
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">
+    <div className="layout-container layout-page pb-24 md:pb-8">
       {/* 갤러리 + 정보 영역 */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.2fr_1fr]">
         {/* Left: Image gallery */}
@@ -363,7 +363,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
       </div>
 
       {/* Tabs */}
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="layout-container p-0">
         <ProductTabs description={product.description} descriptionImages={descriptionImages} productId={Number(product.id)} />
       </div>
 

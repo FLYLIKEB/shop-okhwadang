@@ -81,7 +81,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     : null;
 
   return (
-    <div className="mx-auto max-w-7xl px-4">
+    <div className="layout-container layout-page">
       <Breadcrumb category={selectedCategory} />
 
       {selectedCategory && (

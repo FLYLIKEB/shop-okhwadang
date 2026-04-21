@@ -2,14 +2,14 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/components/ui/utils';
 
 const statusBadgeVariants = cva(
-  'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold',
+  'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold',
   {
     variants: {
       color: {
-        green: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-        red: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-        yellow: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
-        secondary: 'bg-secondary text-muted-foreground',
+        green: 'border-emerald-200 bg-emerald-100/70 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
+        red: 'border-red-200 bg-red-100/70 text-red-800 dark:border-red-700 dark:bg-red-900/40 dark:text-red-200',
+        yellow: 'border-amber-200 bg-amber-100/70 text-amber-800 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200',
+        secondary: 'border-border bg-muted/70 text-muted-foreground',
       },
     },
     defaultVariants: {
@@ -26,9 +26,11 @@ interface ActiveStatusBadgeProps extends VariantProps<typeof statusBadgeVariants
 }
 
 export function StatusBadge({ isActive, className }: ActiveStatusBadgeProps) {
+  const active = isActive;
   return (
-    <span className={cn(statusBadgeVariants({ color: isActive ? 'green' : 'red' }), className)}>
-      {isActive ? '활성' : '비활성'}
+    <span className={cn(statusBadgeVariants({ color: active ? 'green' : 'red' }), className)}>
+      <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', active ? 'bg-emerald-600' : 'bg-red-600')} />
+      {active ? '활성' : '비활성'}
     </span>
   );
 }
@@ -61,6 +63,16 @@ export function ProductStatusBadge({ status, className }: ProductStatusBadgeProp
   const label = PRODUCT_STATUS_LABELS[status] ?? status;
   return (
     <span className={cn(statusBadgeVariants({ color }), className)}>
+      <span
+        aria-hidden
+        className={cn(
+          'h-1.5 w-1.5 rounded-full',
+          color === 'green' && 'bg-emerald-600',
+          color === 'red' && 'bg-red-600',
+          color === 'yellow' && 'bg-amber-600',
+          color === 'secondary' && 'bg-muted-foreground/70',
+        )}
+      />
       {label}
     </span>
   );
@@ -82,6 +94,7 @@ export function InquiryStatusBadge({ status, context = 'admin', className }: Inq
   const pendingLabel = context === 'my' ? '접수' : '미답변';
   return (
     <span className={cn(statusBadgeVariants({ color: isAnswered ? 'green' : 'yellow' }), className)}>
+      <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', isAnswered ? 'bg-emerald-600' : 'bg-amber-600')} />
       {isAnswered ? '답변완료' : pendingLabel}
     </span>
   );

@@ -8,22 +8,32 @@ interface AdminTableProps {
   children: React.ReactNode;
   emptyMessage?: string;
   isEmpty?: boolean;
+  density?: 'regular' | 'compact';
 }
 
-export function AdminTable({ columns, children, emptyMessage = '데이터가 없습니다.', isEmpty }: AdminTableProps) {
+export function AdminTable({
+  columns,
+  children,
+  emptyMessage = '데이터가 없습니다.',
+  isEmpty,
+  density = 'regular',
+}: AdminTableProps) {
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="admin-surface overflow-hidden">
       <table className="w-full">
-        <thead className="bg-muted/50">
-          <tr className="text-left text-xs text-muted-foreground uppercase">
+        <thead className="admin-table-head">
+          <tr className="text-left text-xs text-muted-foreground uppercase tracking-wide">
             {columns.map((col, i) => (
-              <th key={i} className={`py-3 px-4${col.width ? ` ${col.width}` : ''}`}>
+              <th
+                key={i}
+                className={`${density === 'compact' ? 'admin-row-compact' : 'admin-row'} border-b border-border px-4 py-3${col.width ? ` ${col.width}` : ''}`}
+              >
                 {col.label}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-border">
           {isEmpty ? (
             <tr>
               <td colSpan={columns.length} className="py-8 text-center text-sm text-muted-foreground">

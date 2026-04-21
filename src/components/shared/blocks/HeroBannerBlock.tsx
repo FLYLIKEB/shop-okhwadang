@@ -62,7 +62,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               key={slideIndex}
               className={cn(
                 'relative min-w-full flex items-center justify-center overflow-hidden',
-                'h-[40svh] min-h-[25rem] md:h-[680px]',
+                'h-size-hero-sm min-h-size-hero-min md:h-size-hero-md',
               )}
               style={{ backgroundColor: slide.bg_color ?? '#2A2520' }}
             >
@@ -76,6 +76,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                     slideIndex === selectedIndex && !slide.image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns',
                   )}
                   priority={slideIndex === 0}
+                  fetchPriority={slideIndex === 0 ? 'high' : 'auto'}
                   sizes="100vw"
                   unoptimized={slide.image_url.toLowerCase().endsWith('.gif')}
                 />
@@ -240,7 +241,7 @@ export default function HeroBannerBlock({ content }: Props) {
 
   return (
     <ScrollLogoProvider value={scrollLogoContextValue}>
-      <section ref={sectionRef} className="relative flex h-[40svh] min-h-[25rem] md:h-[680px] items-center justify-center overflow-hidden bg-neutral-900">
+      <section ref={sectionRef} className="relative flex h-size-hero-sm min-h-size-hero-min md:h-size-hero-md items-center justify-center overflow-hidden bg-neutral-900">
         {image_url && (
           <Image
             src={image_url}
@@ -248,6 +249,7 @@ export default function HeroBannerBlock({ content }: Props) {
             fill
             className={cn('object-cover object-center', !image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns')}
             priority
+            fetchPriority="high"
             sizes="100vw"
             unoptimized={image_url.toLowerCase().endsWith('.gif')}
           />
