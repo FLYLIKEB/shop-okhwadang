@@ -153,7 +153,7 @@ export class CreateProductDto {
   @MaxLength(500, { message: '중문 짧은 설명은 최대 500자까지 입력 가능합니다.' })
   shortDescriptionZh?: string;
 
-  @ApiPropertyOptional({ example: '주니', description: '니료(泥料) 종류' })
+  @ApiPropertyOptional({ example: '주니', description: '니료 종류' })
   @IsOptional()
   @IsString({ message: '니료 종류는 문자열이어야 합니다.' })
   @MaxLength(50, { message: '니료 종류는 최대 50자까지 입력 가능합니다.' })

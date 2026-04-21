@@ -35,9 +35,9 @@ export class PagesController {
 
   @Get()
   @Public()
-  @ApiOperation({ summary: '公開ページ 목록 조회', description: '公開中のページ 목록을 조회합니다.' })
-  @ApiResponse({ status: 200, description: 'ページ一覧 조회 성공' })
-  @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en)' })
+  @ApiOperation({ summary: '공개 페이지 목록 조회', description: '공개 중인 페이지 목록을 조회합니다.' })
+  @ApiResponse({ status: 200, description: '페이지 목록 조회 성공' })
+  @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
   findAllPublished(@Query('locale') locale?: string) {
     return this.pagesService.findAllPublished(locale);
   }
@@ -48,7 +48,7 @@ export class PagesController {
   @ApiResponse({ status: 200, description: '페이지 상세 조회 성공' })
   @ApiResponse({ status: 404, description: '페이지를 찾을 수 없음' })
   @ApiParam({ name: 'slug', type: String, description: '페이지 슬러그' })
-  @ApiQuery({ name: 'locale', required: false, description: '言語コード (ko, en)' })
+  @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
   findBySlug(@Param('slug') slug: string, @Query('locale') locale?: string) {
     return this.pagesService.findBySlug(slug, locale);
   }

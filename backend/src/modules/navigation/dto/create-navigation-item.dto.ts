@@ -19,7 +19,7 @@ export class CreateNavigationItemDto {
   @MaxLength(100)
   label!: string;
 
-  @ApiProperty({ example: '/products', description: '链接 URL' })
+  @ApiProperty({ example: '/products', description: '링크 URL' })
   @IsString()
   @MaxLength(500)
   url!: string;

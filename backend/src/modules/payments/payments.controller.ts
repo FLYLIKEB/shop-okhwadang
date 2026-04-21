@@ -21,7 +21,7 @@ export class PaymentsController {
 
   @Post('prepare')
   @ApiCookieAuth()
-  @ApiOperation({ summary: '결제 준비', description: '결제를 위한 사전准备工作을 수행합니다.' })
+  @ApiOperation({ summary: '결제 준비', description: '결제를 위한 사전 준비 작업을 수행합니다.' })
   @ApiResponse({ status: 201, description: '결제 준비 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   prepare(@Body() dto: PreparePaymentDto, @CurrentUser() user: { id: number }) {

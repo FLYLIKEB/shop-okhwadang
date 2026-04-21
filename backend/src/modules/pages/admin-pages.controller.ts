@@ -16,7 +16,7 @@ export class AdminPagesController {
 
   @Get()
   @ApiCookieAuth()
-  @ApiOperation({ summary: '전체 페이지 목록 조회', description: '모든 페이지를 조회합니다. (비公開 포함)' })
+  @ApiOperation({ summary: '전체 페이지 목록 조회', description: '모든 페이지를 조회합니다. (비공개 포함)' })
   @ApiResponse({ status: 200, description: '페이지 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })

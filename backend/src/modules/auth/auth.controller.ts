@@ -157,7 +157,7 @@ export class AuthController {
   @Throttle({ resendVerification: { limit: 3, ttl: 60000 } })
   @ApiOperation({
     summary: '인증 이메일 재발송',
-    description: '이메일 인증을 다시 요청합니다. 1분間に最大3回まで.',
+    description: '이메일 인증을 다시 요청합니다. 1분에 최대 3회까지 요청할 수 있습니다.',
   })
   @ApiResponse({ status: 200, description: '인증 이메일 발송 처리 완료' })
   @ApiResponse({ status: 429, description: '너무 많은 요청' })

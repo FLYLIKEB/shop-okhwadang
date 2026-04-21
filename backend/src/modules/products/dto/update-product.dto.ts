@@ -118,7 +118,7 @@ export class UpdateProductDto {
   @MaxLength(500)
   shortDescriptionZh?: string;
 
-  @ApiPropertyOptional({ example: '주니', description: '니료(泥料) 종류' })
+  @ApiPropertyOptional({ example: '주니', description: '니료 종류' })
   @IsOptional()
   @IsString()
   @MaxLength(50)

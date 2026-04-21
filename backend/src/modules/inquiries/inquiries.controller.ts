@@ -73,7 +73,7 @@ export class AdminInquiriesController {
 
   @Get()
   @ApiCookieAuth()
-  @ApiOperation({ summary: '전체 문의 목록 조회', description: '모든用户的 1:1 문의 목록을 조회합니다.' })
+  @ApiOperation({ summary: '전체 문의 목록 조회', description: '모든 사용자의 1:1 문의 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '문의 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
