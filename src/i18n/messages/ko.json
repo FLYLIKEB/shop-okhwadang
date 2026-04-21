@@ -184,6 +184,10 @@
       "priceDesc": "가격높은순",
       "popular": "인기순"
     },
+    "view": {
+      "grid": "그리드 보기",
+      "list": "리스트 보기"
+    },
     "filter": {
       "label": "필터",
       "openFilter": "필터 열기",

@@ -184,6 +184,10 @@
       "priceDesc": "Price: High to Low",
       "popular": "Most Popular"
     },
+    "view": {
+      "grid": "Grid view",
+      "list": "List view"
+    },
     "filter": {
       "label": "Filter",
       "openFilter": "Open Filter",

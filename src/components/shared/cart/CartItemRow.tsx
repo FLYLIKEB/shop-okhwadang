@@ -52,9 +52,9 @@ const CartItemRowComponent = memo(function CartItemRow({
       </div>
 
       <div className="flex flex-1 flex-col gap-1 min-w-0">
-        <p className="truncate text-sm font-medium">{item.product.name}</p>
+        <p className="text-sm font-medium leading-snug whitespace-normal break-all md:break-words">{item.product.name}</p>
         {item.option && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground break-all md:break-words">
             {item.option.name}: {item.option.value}
           </p>
         )}
