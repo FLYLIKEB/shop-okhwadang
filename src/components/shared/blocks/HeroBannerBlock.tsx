@@ -134,7 +134,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               type="button"
               onClick={scrollPrev}
               aria-label={t('prevSlide')}
-              className="absolute left-6 md:left-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+              className="absolute left-6 md:left-12 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors p-2"
             >
               <ChevronLeft className="h-7 w-7" />
             </button>
@@ -142,7 +142,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               type="button"
               onClick={scrollNext}
               aria-label={t('nextSlide')}
-              className="absolute right-6 md:right-12 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors py-6"
+              className="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center text-white/70 hover:text-white transition-colors p-2"
             >
               <ChevronRight className="h-7 w-7" />
             </button>
