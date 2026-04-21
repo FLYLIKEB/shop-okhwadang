@@ -171,12 +171,34 @@
     "noProducts": "No products found",
     "noProductsDescription": "No products are listed yet.",
     "noSearchResults": "No results found for \"{query}\".",
-    "tabs": {
-      "details": "Details",
-      "reviews": "Reviews",
-      "inquiry": "Inquiry",
-      "comingSoon": "Coming soon."
-    },
+  "tabs": {
+    "details": "Details",
+    "reviews": "Reviews",
+    "inquiry": "Inquiry",
+    "comingSoon": "Coming soon.",
+    "detailsImageAlt": "Detail image {index}",
+    "inquiryPanel": {
+      "loginRequiredTitle": "Login required.",
+      "loginRequiredDescription": "Please log in to submit an inquiry.",
+      "loginAction": "Go to login",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Enter the inquiry title",
+      "contentLabel": "Content",
+      "contentPlaceholder": "Please describe your inquiry",
+      "submit": "Submit inquiry",
+      "submitting": "Submitting...",
+      "submitSuccess": "Your inquiry has been submitted.",
+      "submitError": "Failed to submit inquiry.",
+      "validation": "Please enter both title and content.",
+      "listTitle": "My inquiries",
+      "loading": "Loading inquiries...",
+      "empty": "No inquiries yet.",
+      "loadError": "Failed to load inquiries.",
+      "statusAnswered": "Answered",
+      "statusPending": "Received",
+      "answerLabel": "Answer"
+    }
+  },
     "sort": {
       "label": "Sort by",
       "latest": "Newest",
