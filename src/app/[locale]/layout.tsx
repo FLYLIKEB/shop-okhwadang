@@ -62,14 +62,24 @@ async function getThemeStyle(map: Record<string, string> | null): Promise<string
     return false;
   }
 
-  const vars = Object.entries(map)
-    .filter(([k, v]) => isValidCssValue(k, String(v)))
-    .map(([k, v]) => {
-      const safeKey = k.replace(/[^a-zA-Z0-9_-]/g, '');
-      return `--db-${safeKey.replace(/_/g, '-')}: ${String(v).trim()}`;
-    })
-    .join('; ');
-  return vars ? `:root { ${vars} }` : '';
+  const lightVars: string[] = [];
+  const darkVars: string[] = [];
+
+  for (const [k, v] of Object.entries(map)) {
+    if (!isValidCssValue(k, String(v))) continue;
+    const safeKey = k.replace(/[^a-zA-Z0-9_-]/g, '');
+    const cssVar = `--db-${safeKey.replace(/_/g, '-')}: ${String(v).trim()}`;
+    if (k.startsWith('color_dark_')) {
+      darkVars.push(cssVar);
+    } else {
+      lightVars.push(cssVar);
+    }
+  }
+
+  const parts: string[] = [];
+  if (lightVars.length > 0) parts.push(`:root { ${lightVars.join('; ')} }`);
+  if (darkVars.length > 0) parts.push(`[data-theme="dark"] { ${darkVars.join('; ')} }`);
+  return parts.join('\n');
 }
 
 async function getSettingsMap(locale?: string): Promise<Record<string, string> | null> {
