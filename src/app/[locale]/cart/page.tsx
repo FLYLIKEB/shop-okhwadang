@@ -152,11 +152,11 @@ export default function CartPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('productAmount')}</span>
-              <span>{formatCurrency(selectedTotal)}</span>
+              <span className="typo-price">{formatCurrency(selectedTotal)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('shippingFee')}</span>
-              <span>{selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee)}</span>
+              <span className="typo-price">{selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee)}</span>
             </div>
           </div>
 
@@ -178,7 +178,7 @@ export default function CartPage() {
           <div className="mt-4 border-t pt-4">
             <div className="flex items-end justify-between">
               <span className="typo-title">{t('total')}</span>
-              <span className="typo-h2">{formatCurrency(grandTotal)}</span>
+              <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal)}</span>
             </div>
           </div>
 
@@ -197,7 +197,7 @@ export default function CartPage() {
         <div className="mobile-sticky-inner">
           <div className="mb-2 flex items-end justify-between">
             <p className="text-xs text-muted-foreground">{t('total')}</p>
-            <p className="typo-title">{formatCurrency(grandTotal)}</p>
+            <p className="typo-price text-foreground">{formatCurrency(grandTotal)}</p>
           </div>
           <Button type="button" className="w-full" onClick={handleOrder}>
             {t('orderSelected')}

@@ -57,18 +57,18 @@ export function OrderSummarySection({ checkoutItems, locale }: OrderSummarySecti
       <div className="mt-4 border-t pt-4 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t('productAmount')}</span>
-          <span>{formatCurrency(totalAmount, locale)}</span>
+          <span className="typo-price">{formatCurrency(totalAmount, locale)}</span>
         </div>
         <div className="mt-2 flex justify-between">
           <span className="text-muted-foreground">{t('shippingFee')}</span>
-          <span>{shippingFee === 0 ? t('freeShipping') : formatCurrency(shippingFee, locale)}</span>
+          <span className="typo-price">{shippingFee === 0 ? t('freeShipping') : formatCurrency(shippingFee, locale)}</span>
         </div>
       </div>
 
       <div className="mt-4 border-t pt-4">
         <div className="flex items-end justify-between">
           <span className="typo-title">{t('total')}</span>
-          <span className="typo-h2">{formatCurrency(grandTotal, locale)}</span>
+          <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
         </div>
       </div>
     </section>

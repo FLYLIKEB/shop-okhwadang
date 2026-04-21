@@ -58,7 +58,7 @@ const CartItemRowComponent = memo(function CartItemRow({
             {item.option.name}: {item.option.value}
           </p>
         )}
-        <p className="text-sm font-semibold font-mono">{formatCurrency(item.unitPrice)}</p>
+        <p className="typo-price text-foreground">{formatCurrency(item.unitPrice)}</p>
       </div>
 
       <div className="flex flex-col items-end gap-2 shrink-0">
@@ -69,7 +69,7 @@ const CartItemRowComponent = memo(function CartItemRow({
           onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
         />
 
-        <p className="text-sm font-bold font-mono">{formatCurrency(item.subtotal)}</p>
+        <p className="typo-price text-foreground">{formatCurrency(item.subtotal)}</p>
 
         <button
           type="button"

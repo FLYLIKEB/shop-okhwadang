@@ -250,7 +250,7 @@ export default function CheckoutPage({
             <div className="hidden rounded-lg border border-border p-4 lg:block">
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
-                <span className="typo-h2">{formatCurrency(grandTotal, locale)}</span>
+                <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
               </div>
               <Button type="submit" disabled={step !== 'idle'} className="w-full">
                 {stepLabels[step]}
@@ -269,7 +269,7 @@ export default function CheckoutPage({
         <div className="mobile-sticky-inner">
           <div className="mb-2 flex items-end justify-between">
             <span className="text-xs text-muted-foreground">{t('total')}</span>
-            <span className="typo-title">{formatCurrency(grandTotal, locale)}</span>
+            <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
           </div>
           <Button type="submit" form="checkout-form" className="w-full" disabled={step !== 'idle'}>
             {stepLabels[step]}

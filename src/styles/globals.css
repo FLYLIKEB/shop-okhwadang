@@ -297,17 +297,19 @@ body.overflow-hidden .mobile-sticky-cta {
 @utility typo-price {
   font-size: 1.0625rem;
   line-height: 1.15;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
   font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
 }
 
 @utility typo-price-lg {
   font-size: 1.5rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.015em;
   font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
 }
 
 @utility typo-price-original {
