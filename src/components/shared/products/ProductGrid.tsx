@@ -32,8 +32,8 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+      <div className="mt-8 mb-4 flex items-center justify-between">
+        <p className="typo-body-sm text-muted-foreground">
           {t.rich('totalItems', {
             count: total,
             strong: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
