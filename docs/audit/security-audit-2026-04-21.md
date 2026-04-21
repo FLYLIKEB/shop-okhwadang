@@ -1,6 +1,6 @@
 # Security Audit Snapshot (2026-04-21)
 
-대상 이슈: #612, #613, #614, #617
+대상 이슈: #612, #613, #614, #615, #617
 
 ## #612 인증·인가·접근 제어
 
@@ -36,6 +36,29 @@
 ### 우선순위 제안
 - P1: AI 입력 보안 정책/필터/로깅 경로 문서화 및 테스트
 - P2: 서버 변수명에서 `NEXT_PUBLIC_*` 네이밍 분리
+
+## #615 코드 위생·의존성 취약점·심층 방어
+
+### 확인 결과
+- 프로덕션 경로 TODO 제거
+  - `backend/src/modules/payments/services/payment-refund.service.ts`의 부분 환불 경로에서 남아 있던 임시 TODO를 제거했다.
+  - 부분 환불은 주문 전체 취소가 아니므로 재고 복구/포인트 환수를 수행하지 않으며, 주문 전체 취소·환불 시 복구 로직은 `AdminOrdersService.updateStatus` 경로에서 처리된다는 점을 명시했다.
+- 프론트엔드 직접 의존성 취약점 패치
+  - `next` → `^15.5.15`
+  - `next-intl` → `^4.9.1`
+  - `dompurify` → `^3.4.0`
+  - `@next/bundle-analyzer`, `eslint-config-next`도 Next.js 버전에 맞춰 상향했다.
+- 백엔드 직접 의존성 취약점 패치
+  - `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`, `@nestjs/testing` → `^11.1.19`
+  - `@nestjs/swagger` → `^11.3.2` (`lodash@4.18.1` 경로까지 함께 정리됨)
+  - `axios` → `^1.15.0`
+  - `backend/package.json`의 `overrides`에 `follow-redirects`를 고정해 남아 있던 전이 의존성 advisory를 제거했다.
+- 의존성 자동화 추가
+  - `.github/dependabot.yml`을 추가해 루트 npm, `backend` npm, GitHub Actions를 주간 점검하도록 설정했다.
+
+### 잔여 과제
+- 인프라 계층의 방어 심층화 항목은 저장소 밖 운영 설정 확인이 필요하다.
+- 향후 `npm audit` 결과에 새 간접 의존성 취약점이 다시 나타나면 상위 패키지 상향 또는 `overrides` 검토가 필요하다.
 
 ## #617 IMDS SSRF 노출
 

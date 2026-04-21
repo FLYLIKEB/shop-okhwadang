@@ -131,7 +131,8 @@ export class PaymentRefundService {
 
     refund = await findOrThrow(this.deps.refundRepository, { id: refund.id }, '환불 정보를 찾을 수 없습니다.');
 
-    // TODO(#481, #483): 재고 복구/포인트 환수 연계
+    // 부분 환불은 주문 전체 취소가 아니므로 재고 복구/포인트 환수를 수행하지 않는다.
+    // 주문 전체 취소·환불 시 재고/포인트 복구는 AdminOrdersService.updateStatus → restoreStock/restorePoints 에서 처리한다.
 
     return refund;
   }
