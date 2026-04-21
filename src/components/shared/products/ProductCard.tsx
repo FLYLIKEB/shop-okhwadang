@@ -158,7 +158,6 @@ function ProductCard({
       <div className="mt-3 flex flex-1 flex-col gap-1.5">
         {/* 1순위: 상품명 */}
         <p className="typo-title line-clamp-2 text-foreground min-h-[2.75rem]">{name}</p>
-        <hr className="border-border" />
 
         {/* 2순위: 가격 */}
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
