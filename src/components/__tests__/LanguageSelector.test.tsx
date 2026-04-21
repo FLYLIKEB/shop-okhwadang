@@ -45,10 +45,10 @@ afterEach(() => {
 });
 
 describe('LanguageSelector', () => {
-  it('renders current language flag and label', () => {
+  it('renders trigger button with current locale shortLabel (KO)', () => {
     render(<LanguageSelector />);
     expect(screen.getByRole('button', { name: '언어 선택' })).toBeInTheDocument();
-    expect(screen.getByText('한국어')).toBeInTheDocument();
+    expect(screen.getByText('KO')).toBeInTheDocument();
   });
 
   it('opens dropdown on button click', async () => {
@@ -58,14 +58,14 @@ describe('LanguageSelector', () => {
     expect(screen.getByRole('listbox', { name: '언어 목록' })).toBeInTheDocument();
   });
 
-  it('shows ko and en language options', async () => {
+  it('shows ko and en language options in dropdown', async () => {
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
+    expect(screen.getByText('한국어')).toBeInTheDocument();
     expect(screen.getByText('English')).toBeInTheDocument();
     expect(screen.queryByText('日本語')).not.toBeInTheDocument();
     expect(screen.queryByText('中文')).not.toBeInTheDocument();
-    expect(screen.getAllByText('한국어').length).toBeGreaterThan(0);
   });
 
   it('selecting a different language navigates to the localized path and closes dropdown', async () => {
@@ -90,8 +90,7 @@ describe('LanguageSelector', () => {
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
-    const options = screen.getAllByText('한국어');
-    await user.click(options[options.length - 1]);
+    await user.click(screen.getByText('한국어'));
     expect(openMock).not.toHaveBeenCalled();
   });
 
@@ -126,16 +125,36 @@ describe('LanguageSelector', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
-  it('compact mode shows only flag (no label)', () => {
+  it('compact mode hides the shortLabel text', () => {
     render(<LanguageSelector compact />);
-    // label is not rendered
-    expect(screen.queryByText('한국어')).not.toBeInTheDocument();
+    expect(screen.queryByText('KO')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '언어 선택' })).toBeInTheDocument();
   });
 
-  it('shows English as current language when locale is en', () => {
+  it('shows EN as trigger label when locale is en', () => {
     mockLocale = 'en';
     render(<LanguageSelector />);
-    expect(screen.getByText('English')).toBeInTheDocument();
+    expect(screen.getByText('EN')).toBeInTheDocument();
+  });
+
+  it('inline variant renders segment buttons without dropdown', () => {
+    render(<LanguageSelector variant="inline" />);
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '한국어' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'English' })).toBeInTheDocument();
+  });
+
+  it('inline variant switches locale on button click', async () => {
+    const user = userEvent.setup();
+    render(<LanguageSelector variant="inline" />);
+    await user.click(screen.getByRole('button', { name: 'English' }));
+    expect(openMock).toHaveBeenCalledWith('/en', '_self');
+  });
+
+  it('inline variant does not navigate when clicking current locale', async () => {
+    const user = userEvent.setup();
+    render(<LanguageSelector variant="inline" />);
+    await user.click(screen.getByRole('button', { name: '한국어' }));
+    expect(openMock).not.toHaveBeenCalled();
   });
 });
