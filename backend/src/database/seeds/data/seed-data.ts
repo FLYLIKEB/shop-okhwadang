@@ -1596,8 +1596,8 @@ export const pageBlocks: SeedPageBlock[] = JSON.parse(JSON.stringify([
     pageSlug: 'home',
     type: 'category_nav',
     content: {
-      title: '상품 카테고리',
-      title_en: 'Shop by Category',
+      title: '옥화당의 제품들',
+      title_en: "Okhwadang's Products",
       template: 'image',
       category_ids: [1, 2, 3, 4],
     },

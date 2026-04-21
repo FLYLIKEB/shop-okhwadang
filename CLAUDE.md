@@ -33,21 +33,29 @@ bash scripts/test.sh all             # FE + BE unit + E2E
 bash scripts/test-stop.sh            # Stop test MySQL + cleanup workers
 npm run test:rtk                     # RTK 필터를 거친 테스트 실행
 npm run review:graph                 # Code Review Graph 변경 영향 분석
+make bootstrap                       # 워크트리 선행 준비 (deps/venv/env)
+make verify                          # 워크트리 선행 준비 + FE/BE 기본 검증
+make up                              # 워크트리 선행 준비 + 로컬 서버 시작
 cd backend && docker compose up -d   # Dev MySQL (127.0.0.1:3307)
 cd backend && docker compose down -v # Reset dev DB
 bash scripts/remote-migration.sh     # 원격(프로덕션) DB 마이그레이션
 bash scripts/remote-logs.sh          # EC2 백엔드 로그 조회
+bash scripts/setup-git-hooks.sh      # post-checkout hook 활성화 (새 워크트리 첫 체크아웃 시 bootstrap 자동 실행)
 ```
 
 ## Worktree Policy
 * 기능 브랜치 작업은 반드시 `git worktree add` 로 워크트리를 생성해서 진행
 * 워크트리 경로: `../shop-okhwadang-<branch-name>`
+* 워크트리 생성 직후 `bash scripts/setup-git-hooks.sh` 1회 실행 후, 첫 체크아웃 자동 bootstrap 또는 `make bootstrap` 수동 실행
+* `make bootstrap` - 워크트리 의존성 install + 필수 초기 데이터 준비까지 수행
+* 빌드/테스트/서버 실행 전 `make bootstrap` 선행 (`make verify`, `make up` 포함)
+* 워크트리에서 `nest: command not found` 또는 홈 렌더 실패 시 `make bootstrap` 누락을 먼저 의심
 * 머지 후 `git worktree remove` + `git branch -D` 로 정리
 
 ## Issue Tracker
 * Phase 0-7 (Setup → MVP → Core → Payment → Admin → CMS → Polish → Ops)
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Latest merged PR: #639
+* Latest merged PR: #641
 
 ## Rules Reference
 | Subject | File |

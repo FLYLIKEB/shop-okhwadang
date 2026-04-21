@@ -61,6 +61,10 @@ shop-okhwadang/
 ## 시작하기
 
 ```bash
+# (권장) 워크트리 최초 진입 시 부트스트랩 + Git hook 설정
+bash scripts/setup-git-hooks.sh
+make bootstrap
+
 # 풀스택 로컬 개발 (SSH Tunnel + Backend + Frontend)
 bash scripts/start-local.sh
 
@@ -80,6 +84,21 @@ cd backend && npm run test:e2e
 cd backend && docker compose up -d
 cd backend && docker compose down -v   # DB 초기화
 ```
+
+### 워크트리 안정화 루틴
+
+```bash
+# 의존성/venv/code-review-graph/.env 선행 준비
+make bootstrap
+
+# 선행 준비 + FE/BE 기본 검증
+make verify
+
+# 선행 준비 후 로컬 서버 시작
+make up
+```
+
+- `post-checkout` hook 이 설정되어 있으면 (`bash scripts/setup-git-hooks.sh`) 새 워크트리 첫 체크아웃 시 bootstrap이 자동 실행됩니다.
 
 ### Claude Code에서 Codex (Vibe Proxy) 사용
 

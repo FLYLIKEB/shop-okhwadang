@@ -485,3 +485,10 @@ Mode lifecycle requirements:
 ## Setup
 
 Execute `omx setup` to install all components. Execute `omx doctor` to verify installation.
+
+## Personal Skills
+
+- **show-prompts**: 모든 AI 도구(Claude Code, Codex, Hermes, OpenCode)의 과거 프롬프트를 `~/Desktop/prompts.txt`로 내보냅니다.
+  ```bash
+  bash ~/.claude/scripts/show-prompts.sh
+  ```

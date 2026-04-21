@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [ "${CI:-}" = "true" ] || [ "${OMX_SKIP_BOOTSTRAP_HOOK:-}" = "1" ]; then
+  exit 0
+fi
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -z "$PROJECT_ROOT" ]; then
+  exit 0
+fi
+
+BOOTSTRAP_SCRIPT="$PROJECT_ROOT/scripts/worktree-bootstrap.sh"
+SENTINEL_FILE="$PROJECT_ROOT/.omx/.worktree_bootstrap_done"
+
+if [ ! -x "$BOOTSTRAP_SCRIPT" ]; then
+  exit 0
+fi
+
+if [ -f "$SENTINEL_FILE" ]; then
+  exit 0
+fi
+
+echo "[post-checkout] 첫 체크아웃 감지: worktree bootstrap 실행"
+if ! bash "$BOOTSTRAP_SCRIPT"; then
+  echo "[post-checkout] bootstrap 실패: 수동 실행 필요 (bash scripts/worktree-bootstrap.sh)" >&2
+fi
