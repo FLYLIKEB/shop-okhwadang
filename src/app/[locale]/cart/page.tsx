@@ -147,7 +147,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="mt-4 border-t pt-4">
+      <div className="mt-4 border-t border-divider-soft pt-4">
         <div className="flex items-end justify-between">
           <span className="typo-title">{t('total')}</span>
           <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal)}</span>
@@ -220,7 +220,7 @@ export default function CartPage() {
 
       <div
         className={cn(
-          'mobile-sticky-cta fixed z-40 border-t border-border bg-background md:hidden',
+          'mobile-sticky-cta fixed z-40 border-t border-divider-soft bg-background md:hidden',
           isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
         )}
       >
