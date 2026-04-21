@@ -51,7 +51,7 @@ const CartItemRowComponent = memo(function CartItemRow({
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium leading-snug whitespace-normal break-all md:break-words">{item.product.name}</p>
         {item.option && (
           <p className="text-xs text-muted-foreground break-all md:break-words">
@@ -59,26 +59,26 @@ const CartItemRowComponent = memo(function CartItemRow({
           </p>
         )}
         <p className="typo-price text-foreground">{formatCurrency(item.unitPrice)}</p>
-      </div>
 
-      <div className="flex flex-col items-end gap-2 shrink-0">
-        <QuantitySelector
-          quantity={item.quantity}
-          maxQuantity={99}
-          onIncrease={() => onQuantityChange(item.id, item.quantity + 1)}
-          onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
-        />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <QuantitySelector
+            quantity={item.quantity}
+            maxQuantity={99}
+            onIncrease={() => onQuantityChange(item.id, item.quantity + 1)}
+            onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
+          />
 
-        <p className="typo-price text-foreground">{formatCurrency(item.subtotal)}</p>
+          <p className="typo-price text-foreground">{formatCurrency(item.subtotal)}</p>
 
-        <button
-          type="button"
-          onClick={() => onRemove(item.id)}
-          aria-label={`${item.product.name} 삭제`}
-          className="text-muted-foreground hover:text-destructive transition-colors"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+          <button
+            type="button"
+            onClick={() => onRemove(item.id)}
+            aria-label={`${item.product.name} 삭제`}
+            className="ml-auto text-muted-foreground transition-colors hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
