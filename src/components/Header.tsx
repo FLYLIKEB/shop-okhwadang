@@ -71,7 +71,7 @@ function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: Mobi
   const tHeader = useTranslations('header');
   return (
     <>
-      <div className="flex items-center px-4 h-14 border-b border-border shrink-0">
+      <div className="flex items-center px-4 h-14 border-b border-divider-soft shrink-0">
         <button
           type="button"
           onClick={onClose}
@@ -85,7 +85,7 @@ function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: Mobi
         </Link>
       </div>
       {historyLength > 0 && (
-        <div className="flex items-center px-4 h-12 border-b border-border shrink-0">
+        <div className="flex items-center px-4 h-12 border-b border-divider-soft shrink-0">
           <button
             type="button"
             onClick={onBack}
@@ -158,7 +158,7 @@ function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: 
   const t = useTranslations('header');
   const orderTrackingHref = isAuthenticated ? '/my/orders' : '/login?redirect=/my/orders';
   return (
-    <div className="px-4 py-4 border-t border-border shrink-0">
+    <div className="px-4 py-4 border-t border-divider-soft shrink-0">
       <div className="flex flex-col gap-1">
         {isAuthenticated ? (
           <>
@@ -347,7 +347,7 @@ function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
         role="search"
         aria-label={t('searchLabel')}
       >
-        <form onSubmit={handleSubmit} className="flex items-center gap-3 px-4 py-3 border-b border-border">
+        <form onSubmit={handleSubmit} className="flex items-center gap-3 px-4 py-3 border-b border-divider-soft">
           <Search className="h-5 w-5 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}
@@ -428,7 +428,7 @@ function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
 
       {hasChildren && (
         <div
-          className="fixed left-0 right-0 z-50 bg-background border-b border-border shadow-md"
+          className="fixed left-0 right-0 z-50 bg-background border-b border-divider-soft shadow-md"
           style={{ top: 'var(--header-bottom)' }}
           onMouseEnter={() => setHoveredId(hoveredId)}
           onMouseLeave={() => setHoveredId(null)}
@@ -532,7 +532,7 @@ export default function Header() {
       <header ref={headerRef} className={cn(
         'sticky top-0 z-50 transition-all duration-300 ease-in-out',
         isScrolled
-          ? 'bg-background/85 backdrop-blur-lg border-b border-border shadow-sm'
+          ? 'bg-background/85 backdrop-blur-lg border-b border-divider-soft shadow-sm'
           : 'bg-background border-b border-transparent',
       )}>
         {/* 2줄 헤더 — top: 로고/검색/액션 · bottom: GNB 전폭 균등 */}
@@ -569,7 +569,7 @@ export default function Header() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
               aria-label={t('searchLabel')}
-              className="w-full border-b border-muted-foreground/30 bg-transparent pl-1 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
+              className="w-full border-b border-divider-soft bg-transparent pl-1 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
             />
             <button type="submit" aria-label={t('searchButton')} className="absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
               <Search className="h-4 w-4" />

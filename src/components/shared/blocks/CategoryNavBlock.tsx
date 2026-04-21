@@ -83,7 +83,7 @@ export default function CategoryNavBlock({ content }: Props) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px bg-divider-soft sm:grid-cols-4">
         {Array.from({ length: category_ids.length || 4 }).map((_, i) => (
           <div key={i} className="bg-background px-6 py-8">
             <div className="animate-pulse">
@@ -113,9 +113,9 @@ export default function CategoryNavBlock({ content }: Props) {
   }
 
   return (
-    <nav ref={ref} className="py-16 md:py-24 border-t border-border">
+    <nav ref={ref} className="py-16 md:py-24 border-t border-divider-soft">
       {title && <h2 className="text-2xl font-medium mb-8 text-center">{title}</h2>}
-      <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px bg-divider-soft sm:grid-cols-4">
         {categories.map((cat, i) => {
           const clayColor = getClayColor(cat.slug);
           return (

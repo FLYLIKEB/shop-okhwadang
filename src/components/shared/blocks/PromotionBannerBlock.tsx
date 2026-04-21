@@ -19,7 +19,7 @@ export default function PromotionBannerBlock({ content }: Props) {
 
   if (template === 'timer') {
     return (
-      <section className="py-16 md:py-24 border-y border-border text-center">
+      <section className="py-16 md:py-24 border-y border-divider-soft text-center">
         <p className="text-sm tracking-widest text-[#B8976A] uppercase mb-3">{t('limitedTime')}</p>
         <h2 className="text-2xl font-display font-medium">{title}</h2>
         {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
@@ -38,7 +38,7 @@ export default function PromotionBannerBlock({ content }: Props) {
 
   if (template === 'card') {
     return (
-      <section className="flex overflow-hidden border border-border">
+      <section className="flex overflow-hidden border border-divider-soft">
         {image_url && (
           <div className="relative hidden w-48 md:block bg-muted">
             <Image src={image_url} alt={title} fill className="object-cover" />
@@ -61,7 +61,7 @@ export default function PromotionBannerBlock({ content }: Props) {
   }
 
   return (
-    <section ref={ref} className="relative overflow-hidden py-16 md:py-24 border-t border-b border-border">
+    <section ref={ref} className="relative overflow-hidden py-16 md:py-24 border-t border-b border-divider-soft">
       {image_url && (
         <Image src={image_url} alt={title} fill className="object-cover opacity-20" />
       )}

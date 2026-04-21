@@ -232,6 +232,10 @@ body.overflow-hidden .mobile-sticky-cta {
   border-color: var(--divider-soft);
 }
 
+@utility bg-divider-soft {
+  background-color: var(--divider-soft);
+}
+
 /* ── Typography utility classes ────────────────────────────────── */
 @utility typo-h0 {
   font-size: var(--font-size-heading-0, 2rem);

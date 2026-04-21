@@ -10,9 +10,9 @@ export default function TextContentBlock({ content }: Props) {
 
   return (
     <section className="my-12 md:my-20">
-      <hr className="border-border" />
+      <hr className="border-divider-soft" />
       <SafeHtml html={html} className="prose max-w-none py-6" style={{ textAlign }} />
-      <hr className="border-border" />
+      <hr className="border-divider-soft" />
     </section>
   );
 }
