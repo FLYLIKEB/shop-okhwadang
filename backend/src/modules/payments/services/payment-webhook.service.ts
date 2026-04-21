@@ -4,6 +4,7 @@ import { Payment, PaymentStatus } from '../entities/payment.entity';
 import { Order } from '../../orders/entities/order.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { PAYMENT_WEBHOOK_TRANSITIONS } from './payment-webhook-transition.policy';
+import { canOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
 
 interface PaymentWebhookDependencies {
   gateway: PaymentGateway;
@@ -58,6 +59,23 @@ export class PaymentWebhookService {
     }
 
     await this.deps.dataSource.transaction(async (manager) => {
+      const order = await manager.findOne(Order, { where: { id: parsedOrderId } });
+      if (!order) {
+        this.deps.logger.warn(`Webhook ignored: order not found (orderId=${parsedOrderId})`);
+        return;
+      }
+
+      if (
+        !canOrderStatusTransition(order.status, matchedTransition.orderStatus, {
+          allowSameStatus: true,
+        })
+      ) {
+        this.deps.logger.warn(
+          `Webhook ignored: blocked transition ${order.status} → ${matchedTransition.orderStatus} (orderId=${parsedOrderId})`,
+        );
+        return;
+      }
+
       await manager.update(Payment, payment.id, {
         status: matchedTransition.paymentStatus as PaymentStatus,
         paidAt: matchedTransition.setPaidAt ? payment.paidAt ?? new Date() : payment.paidAt,
@@ -68,4 +86,3 @@ export class PaymentWebhookService {
     });
   }
 }
-

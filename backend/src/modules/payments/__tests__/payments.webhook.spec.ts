@@ -3,9 +3,9 @@ import { UnauthorizedException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { PaymentsService } from '../payments.service';
-import { Payment } from '../entities/payment.entity';
+import { Payment, PaymentStatus } from '../entities/payment.entity';
 import { Refund } from '../entities/refund.entity';
-import { Order } from '../../orders/entities/order.entity';
+import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Shipping } from '../entities/shipping.entity';
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
@@ -26,8 +26,20 @@ describe('PaymentsService — webhook', () => {
     save: jest.fn(),
     update: jest.fn(),
   };
+  const mockWebhookManager = {
+    findOne: jest.fn(),
+    update: jest.fn(),
+  };
+  const mockDataSource = {
+    transaction: jest.fn(
+      async (
+        fn: (manager: typeof mockWebhookManager) => Promise<unknown>,
+      ) => fn(mockWebhookManager),
+    ),
+  };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
@@ -40,7 +52,7 @@ describe('PaymentsService — webhook', () => {
         { provide: TossPaymentAdapter, useValue: mockGateway },
         { provide: StripePaymentAdapter, useValue: mockGateway },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
-        { provide: DataSource, useValue: { transaction: jest.fn() } },
+        { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
 
@@ -93,5 +105,36 @@ describe('PaymentsService — webhook', () => {
     const logArg: string = logSpy.mock.calls[0][0] as string;
     const logged = JSON.parse(logArg.replace('Webhook received: ', '')) as Record<string, unknown>;
     expect(Object.keys(logged)).toEqual(['orderId', 'status', 'type']);
+  });
+
+  it('허용 전이(pending → paid)면 payment/order 상태를 함께 갱신한다', async () => {
+    mockGateway.verifyWebhook.mockReturnValue(true);
+    mockRepo.findOne.mockResolvedValue({ id: 10, orderId: 7, paidAt: null });
+    mockWebhookManager.findOne.mockResolvedValue({ id: 7, status: 'pending' });
+
+    await service.handleWebhook({ orderId: 7, status: 'DONE' }, 'valid_sig');
+
+    expect(mockWebhookManager.update).toHaveBeenCalledWith(
+      Payment,
+      10,
+      expect.objectContaining({ status: PaymentStatus.CONFIRMED }),
+    );
+    expect(mockWebhookManager.update).toHaveBeenCalledWith(
+      Order,
+      7,
+      { status: OrderStatus.PAID },
+    );
+  });
+
+  it('차단 전이(delivered → paid)면 상태 업데이트를 수행하지 않는다', async () => {
+    mockGateway.verifyWebhook.mockReturnValue(true);
+    mockRepo.findOne.mockResolvedValue({ id: 10, orderId: 7, paidAt: null });
+    mockWebhookManager.findOne.mockResolvedValue({ id: 7, status: 'delivered' });
+
+    await expect(
+      service.handleWebhook({ orderId: 7, status: 'DONE' }, 'valid_sig'),
+    ).resolves.not.toThrow();
+
+    expect(mockWebhookManager.update).not.toHaveBeenCalled();
   });
 });

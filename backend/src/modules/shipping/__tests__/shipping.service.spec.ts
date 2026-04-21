@@ -111,7 +111,11 @@ describe('ShippingService', () => {
     it('DELIVERED → PREPARING 역방향 전이 → BadRequestException(유효하지 않은 배송 상태 변경입니다.)', () => {
       expect(() =>
         service.validateTransition(ShippingStatus.DELIVERED, ShippingStatus.PREPARING),
-      ).toThrow(new BadRequestException('유효하지 않은 배송 상태 변경입니다.'));
+      ).toThrow(
+        new BadRequestException(
+          '상태 전이가 허용되지 않습니다: delivered → preparing',
+        ),
+      );
     });
 
     it('shipped → preparing 역방향 전이 → BadRequestException', () => {
@@ -187,7 +191,9 @@ describe('ShippingService', () => {
         makeShipping({ status: ShippingStatus.PREPARING }),
       );
       await expect(service.registerTracking(1, dto)).rejects.toThrow(
-        new BadRequestException('유효하지 않은 배송 상태 변경입니다.'),
+        new BadRequestException(
+          '상태 전이가 허용되지 않습니다: preparing → preparing',
+        ),
       );
     });
 

@@ -16,18 +16,7 @@ import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
-
-const ALLOWED_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.PENDING]: [OrderStatus.PAID],
-  [OrderStatus.PAID]: [OrderStatus.PREPARING, OrderStatus.CANCELLED, OrderStatus.REFUNDED],
-  [OrderStatus.PREPARING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED, OrderStatus.REFUNDED],
-  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.REFUNDED],
-  [OrderStatus.DELIVERED]: [OrderStatus.COMPLETED, OrderStatus.REFUND_REQUESTED],
-  [OrderStatus.COMPLETED]: [],
-  [OrderStatus.CANCELLED]: [],
-  [OrderStatus.REFUND_REQUESTED]: [OrderStatus.REFUNDED],
-  [OrderStatus.REFUNDED]: [],
-};
+import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 
 @Injectable()
 export class AdminOrdersService {
@@ -86,13 +75,7 @@ export class AdminOrdersService {
     }
 
     const currentStatus = order.status;
-    const allowed = ALLOWED_ORDER_TRANSITIONS[currentStatus] ?? [];
-
-    if (!allowed.includes(nextStatus)) {
-      throw new BadRequestException(
-        `상태 전이가 허용되지 않습니다: ${currentStatus} → ${nextStatus}`,
-      );
-    }
+    assertOrderStatusTransition(currentStatus, nextStatus);
 
     if (nextStatus === OrderStatus.SHIPPED) {
       const shipping = await this.shippingRepository.findOne({ where: { orderId } });
