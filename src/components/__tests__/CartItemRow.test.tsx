@@ -46,9 +46,9 @@ describe('CartItemRow', () => {
       />,
     );
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
-    expect(screen.getByText('₩15,000')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('₩30,000')).toBeInTheDocument();
+    expect(screen.getAllByText('₩15,000')).toHaveLength(1);
+    expect(screen.getAllByText('2')).toHaveLength(2);
+    expect(screen.getAllByText('₩30,000')).toHaveLength(2);
   });
 
   it('renders option text when option is provided', () => {
@@ -93,7 +93,7 @@ describe('CartItemRow', () => {
         onRemove={vi.fn()}
       />,
     );
-    await user.click(screen.getByRole('button', { name: '수량 증가' }));
+    await user.click(screen.getAllByRole('button', { name: '수량 증가' })[0]);
     expect(onQuantityChange).toHaveBeenCalledWith(1, 3);
   });
 
@@ -110,7 +110,7 @@ describe('CartItemRow', () => {
         onRemove={vi.fn()}
       />,
     );
-    const decreaseBtn = screen.getByRole('button', { name: '수량 감소' });
+    const decreaseBtn = screen.getAllByRole('button', { name: '수량 감소' })[0];
     expect(decreaseBtn).toBeDisabled();
     await user.click(decreaseBtn);
     expect(onQuantityChange).not.toHaveBeenCalled();
@@ -128,7 +128,7 @@ describe('CartItemRow', () => {
         onRemove={onRemove}
       />,
     );
-    await user.click(screen.getByRole('button', { name: '테스트 상품 삭제' }));
+    await user.click(screen.getAllByRole('button', { name: '테스트 상품 삭제' })[0]);
     expect(onRemove).toHaveBeenCalledWith(1);
   });
 });
