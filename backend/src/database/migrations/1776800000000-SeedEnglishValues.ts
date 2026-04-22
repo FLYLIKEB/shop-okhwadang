@@ -10,7 +10,7 @@ export class SeedEnglishValues1776800000000 implements MigrationInterface {
       UPDATE \`promotions\` SET \`title_en\` = 'Spring Collection — New Jooni Teapots', \`description_en\` = 'New Fuchun Jooni (Zhuni) teapots at special prices. Limited quantities of Jooni Seosiho, Juxingho, and Sebyo. May close early when stock runs out.' WHERE \`id\` = 1
     `);
     await query(`
-      UPDATE \`promotions\` SET \`title_en\` = 'Beginner Set 14% Time Sale', \`description_en\` = 'Okhwandang beginner tea set at special price. 280,000 won → 240,000 won (40,000 won discount). Complete set with teapot + dáwǎn + dábàn + chá dōujù.' WHERE \`id\` = 2
+      UPDATE \`promotions\` SET \`title_en\` = 'Beginner Set 14% Time Sale', \`description_en\` = 'Okhwadang beginner tea set at special price. 280,000 won → 240,000 won (40,000 won discount). Complete set with teapot + dáwǎn + dábàn + chá dōujù.' WHERE \`id\` = 2
     `);
     await query(`
       UPDATE \`promotions\` SET \`title_en\` = 'Boischa Intro Event', \`description_en\` = 'Purchase Daek 7572 aged shucha and get bamboo tea set (5 items). Includes chaceol, chachim, chahyeop, charu, chachim.' WHERE \`id\` = 3
