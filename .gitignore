@@ -60,3 +60,6 @@ docs/infrastructure/s3-cloudfront-cdn.md
 # Git worktrees
 .worktrees/
 .claude/worktrees/
+.claude/settings.local.json
+.claude/skills/*
+.sisyphus/*.local.md
