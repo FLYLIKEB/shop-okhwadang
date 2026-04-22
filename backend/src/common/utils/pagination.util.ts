@@ -16,7 +16,7 @@ export async function paginate<T extends ObjectLiteral>(
   pagination: { page?: number; limit?: number },
 ): Promise<PaginatedResult<T>> {
   const page = pagination.page ?? 1;
-  const limit = pagination.limit ?? 20;
+  const limit = Math.min(Math.max(1, pagination.limit ?? 20), 100);
 
   const [items, total] = await qb
     .skip((page - 1) * limit)

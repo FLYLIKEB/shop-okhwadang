@@ -44,7 +44,7 @@ describe('AuditLogInterceptor', () => {
           params: { id: '123' },
           ip: '192.168.1.1',
           headers: { 'user-agent': 'Mozilla/5.0' },
-          connection: { remoteAddress: '192.168.1.1' },
+          socket: { remoteAddress: '192.168.1.1' },
         }),
       }),
       getHandler: () => ({}),
@@ -118,7 +118,7 @@ describe('AuditLogInterceptor', () => {
     });
   });
 
-  it('should extract ip from x-forwarded-for header', (done) => {
+  it('should prefer request.ip over x-forwarded-for header', (done) => {
     mockReflector.get.mockReturnValue({
       action: AuditAction.LOGIN_FAILURE,
       resourceType: 'auth',
@@ -133,7 +133,7 @@ describe('AuditLogInterceptor', () => {
         'user-agent': 'Test Agent',
       },
       ip: '127.0.0.1',
-      connection: { remoteAddress: '192.168.1.1' },
+      socket: { remoteAddress: '192.168.1.1' },
     };
 
     const context = {
@@ -151,7 +151,47 @@ describe('AuditLogInterceptor', () => {
       next: () => {
         expect(auditLogService.log).toHaveBeenCalledWith(
           expect.objectContaining({
-            ip: '10.0.0.1',
+            ip: '127.0.0.1',
+          }),
+        );
+        done();
+      },
+    });
+  });
+
+  it('should fall back to socket remoteAddress when request.ip is missing', (done) => {
+    mockReflector.get.mockReturnValue({
+      action: AuditAction.LOGIN_FAILURE,
+      resourceType: 'auth',
+    });
+
+    const reqWithoutIp = {
+      user: { id: 0, role: 'anonymous' },
+      body: { email: 'test@example.com' },
+      params: {},
+      headers: {
+        'x-forwarded-for': '10.0.0.1, 192.168.1.1',
+        'user-agent': 'Test Agent',
+      },
+      socket: { remoteAddress: '192.168.1.1' },
+    };
+
+    const context = {
+      switchToHttp: () => ({
+        getRequest: () => reqWithoutIp,
+      }),
+      getHandler: () => ({}),
+      getParamTypes: () => [],
+    } as unknown as ExecutionContext;
+
+    const handler = createMockCallHandler(null);
+    auditLogService.log.mockResolvedValue({ id: 1 } as never);
+
+    interceptor.intercept(context, handler).subscribe({
+      next: () => {
+        expect(auditLogService.log).toHaveBeenCalledWith(
+          expect.objectContaining({
+            ip: '192.168.1.1',
           }),
         );
         done();

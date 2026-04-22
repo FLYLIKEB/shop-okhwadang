@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, Min, IsIn, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsInt, Max, Min, IsIn, IsBoolean } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export class AdminMembersQueryDto {
@@ -36,5 +36,6 @@ export class AdminMembersQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100, { message: 'limit은 100 이하여야 합니다.' })
   limit?: number = 20;
 }
