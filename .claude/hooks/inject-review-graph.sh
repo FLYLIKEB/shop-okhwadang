@@ -7,7 +7,7 @@ PROMPT=$(echo "$INPUT" | jq -r '.prompt // ""')
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPT="$PROJECT_ROOT/scripts/review-graph.sh"
 
-if ! echo "$PROMPT" | grep -qiE '(code review|review|pr\s*#?|!\d+|pull request)'; then
+if ! echo "$PROMPT" | grep -qiE '(^|[^[:alnum:]_])(code review|review|pr[[:space:]]*#?[0-9]+|![0-9]+|pull request)([^[:alnum:]_]|$)'; then
   exit 0
 fi
 
