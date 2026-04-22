@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class UnifyCardAndBackgroundColor1776000000000 implements MigrationInterface {
-  name = 'UnifyCardAndBackgroundColor1776000000000';
+export class UnifyCardAndBackgroundColor1776000000001 implements MigrationInterface {
+  name = 'UnifyCardAndBackgroundColor1776000000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // color_card를 color_background와 동일하게 통일 (#FDFCF9)

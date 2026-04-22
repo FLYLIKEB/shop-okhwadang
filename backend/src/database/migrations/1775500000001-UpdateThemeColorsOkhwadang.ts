@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class UpdateThemeColorsOkhwandang1775500000000 implements MigrationInterface {
-  name = 'UpdateThemeColorsOkhwandang1775500000000';
+export class UpdateThemeColorsOkhwadang1775500000001 implements MigrationInterface {
+  name = 'UpdateThemeColorsOkhwadang1775500000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
