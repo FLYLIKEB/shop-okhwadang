@@ -53,16 +53,13 @@ export class AuditLogInterceptor implements NestInterceptor {
         params?: Record<string, string>;
         ip?: string;
         headers?: Record<string, string | string[] | undefined>;
-        connection?: { remoteAddress?: string };
+        socket?: { remoteAddress?: string };
       }>();
       const user = request.user;
       const actorId = user?.id ?? 0;
       const actorRole = user?.role ?? 'anonymous';
 
-      const xForwardedFor = request.headers?.['x-forwarded-for'];
-      const ip = typeof xForwardedFor === 'string'
-        ? xForwardedFor.split(',')[0].trim()
-        : request.ip ?? request.connection?.remoteAddress ?? null;
+      const ip = request.ip ?? request.socket?.remoteAddress ?? null;
       const userAgent = request.headers?.['user-agent'] ?? null;
 
       const resourceId = request.params?.id ? parseInt(request.params.id, 10) || null : null;

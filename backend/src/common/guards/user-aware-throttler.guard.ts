@@ -8,10 +8,8 @@ import * as jwt from 'jsonwebtoken';
  * 트래커 키를 분리한다.
  *
  * APP_GUARD 순서상 ThrottlerGuard 가 JwtAuthGuard 보다 먼저 실행되므로
- * req.user 는 아직 비어있다. accessToken 쿠키가 있으면 직접 디코드해
- * 트래커 키로만 사용한다 (verify 는 JwtAuthGuard 가 담당). 토큰이
- * 위조되어도 트래커 버킷 분리는 악영향이 없고, 실제 인증은 뒤의
- * JwtAuthGuard 에서 거부된다.
+ * req.user 는 아직 비어있다. accessToken 쿠키가 있으면 서명 검증 후
+ * sub 를 트래커 키로만 사용한다. 검증에 실패하면 ip 버킷으로 폴백한다.
  */
 @Injectable()
 export class UserAwareThrottlerGuard extends ThrottlerGuard {
@@ -48,7 +46,10 @@ export class UserAwareThrottlerGuard extends ThrottlerGuard {
 
   private decodeSub(token: string): number | string | undefined {
     try {
-      const payload = jwt.decode(token);
+      const secret = process.env.JWT_SECRET?.trim();
+      if (!secret) return undefined;
+
+      const payload = jwt.verify(token, secret);
       if (!payload || typeof payload !== 'object') return undefined;
       // refresh 토큰은 tracker 버킷을 access 와 섞지 않도록 거부
       if ((payload as { tokenType?: string }).tokenType === 'refresh') return undefined;
