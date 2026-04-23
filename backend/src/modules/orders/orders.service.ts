@@ -293,7 +293,7 @@ export class OrdersService {
     savedOrder: Order,
   ): Promise<void> {
     if (dto.userCouponId) {
-      await this.couponsService.useCoupon(dto.userCouponId, userId, Number(savedOrder.id));
+      await this.couponsService.useCoupon(dto.userCouponId, userId, Number(savedOrder.id), manager);
     }
 
     if (pointsToUse > 0) {
@@ -342,26 +342,30 @@ export class OrdersService {
     userId: number,
     payload: OrderPostCommitPayload,
   ): Promise<void> {
-    const { savedOrder, totalPayable, recipientName } = payload;
+    try {
+      const { savedOrder, totalPayable, recipientName } = payload;
 
-    const priorOrderCount = await this.orderRepository.count({ where: { userId } });
-    const isFirstPurchase = priorOrderCount <= 1;
-    this.orderEventEmitter.emitOrderCompleted(
-      new OrderCompletedEvent(
+      const priorOrderCount = await this.orderRepository.count({ where: { userId } });
+      const isFirstPurchase = priorOrderCount <= 1;
+      this.orderEventEmitter.emitOrderCompleted(
+        new OrderCompletedEvent(
+          userId,
+          Number(savedOrder.id),
+          savedOrder.orderNumber,
+          isFirstPurchase,
+        ),
+      );
+
+      void this.notifyOrderCreated(
         userId,
         Number(savedOrder.id),
         savedOrder.orderNumber,
-        isFirstPurchase,
-      ),
-    );
-
-    void this.notifyOrderCreated(
-      userId,
-      Number(savedOrder.id),
-      savedOrder.orderNumber,
-      totalPayable,
-      recipientName,
-    );
+        totalPayable,
+        recipientName,
+      );
+    } catch (err) {
+      this.logger.error('주문 post-commit 처리 실패 (주문 자체는 이미 커밋됨)', err as Error);
+    }
   }
 
   async findAll(

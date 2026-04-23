@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { Coupon } from './entities/coupon.entity';
 import { UserCoupon } from './entities/user-coupon.entity';
 import { PointHistory } from './entities/point-history.entity';
@@ -251,9 +251,14 @@ export class CouponsService {
     });
   }
 
-  async useCoupon(userCouponId: number, userId: number, orderId: number): Promise<void> {
-    await this.dataSource.transaction(async (manager) => {
-      const uc = await manager.findOne(UserCoupon, {
+  async useCoupon(
+    userCouponId: number,
+    userId: number,
+    orderId: number,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const run = async (m: EntityManager) => {
+      const uc = await m.findOne(UserCoupon, {
         where: { id: userCouponId },
         relations: ['coupon'],
         lock: { mode: 'pessimistic_write' },
@@ -275,7 +280,13 @@ export class CouponsService {
       uc.status = 'used';
       uc.usedAt = now;
       uc.orderId = orderId;
-      await manager.save(UserCoupon, uc);
-    });
+      await m.save(UserCoupon, uc);
+    };
+
+    if (manager) {
+      await run(manager);
+    } else {
+      await this.dataSource.transaction(run);
+    }
   }
 }
