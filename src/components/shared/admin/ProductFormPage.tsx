@@ -8,6 +8,7 @@ import { adminProductsApi } from '@/lib/api';
 import type { ProductDetail } from '@/lib/api';
 import MultiImageUploader from './MultiImageUploader';
 import ProductOptionsEditor, { type ProductOptionDraft } from './ProductOptionsEditor';
+import { CheckboxField, SelectField, TextAreaField, TextField } from './FormField';
 
 interface GalleryImage {
   url: string;
@@ -52,8 +53,6 @@ const STATUS_OPTIONS = [
   { value: 'soldout', label: '품절' },
   { value: 'hidden', label: '숨김' },
 ] as const;
-
-const INPUT_CLASS = 'w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary';
 
 type Setter = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) => void;
 
@@ -102,51 +101,33 @@ function BasicInfoSection({
     <section className="space-y-4">
       <h2 className="text-sm font-semibold">기본 정보</h2>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">상품명 *</label>
-        <input
-          type="text"
-          value={form.name}
-          onChange={(e) => set('name', e.target.value)}
-          placeholder="상품명을 입력하세요"
-          required
-          className={INPUT_CLASS}
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">슬러그 *</label>
-        <input
-          type="text"
-          value={form.slug}
-          onChange={(e) => set('slug', e.target.value)}
-          placeholder="url-friendly-slug"
-          required
-          className={INPUT_CLASS}
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">짧은 설명</label>
-        <input
-          type="text"
-          value={form.shortDescription}
-          onChange={(e) => set('shortDescription', e.target.value)}
-          placeholder="상품 요약 설명"
-          className={INPUT_CLASS}
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">상세 설명</label>
-        <textarea
-          value={form.description}
-          onChange={(e) => set('description', e.target.value)}
-          rows={5}
-          placeholder="상품 상세 설명"
-          className={INPUT_CLASS}
-        />
-      </div>
+      <TextField
+        label="상품명"
+        required
+        value={form.name}
+        onChange={(v) => set('name', v)}
+        placeholder="상품명을 입력하세요"
+      />
+      <TextField
+        label="슬러그"
+        required
+        value={form.slug}
+        onChange={(v) => set('slug', v)}
+        placeholder="url-friendly-slug"
+      />
+      <TextField
+        label="짧은 설명"
+        value={form.shortDescription}
+        onChange={(v) => set('shortDescription', v)}
+        placeholder="상품 요약 설명"
+      />
+      <TextAreaField
+        label="상세 설명"
+        value={form.description}
+        onChange={(v) => set('description', v)}
+        rows={5}
+        placeholder="상품 상세 설명"
+      />
     </section>
   );
 }
@@ -163,70 +144,44 @@ function MultilingualSection({
       <h2 className="text-sm font-semibold">다국어 정보</h2>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div>
-          <label className="mb-1 block text-sm font-medium">상품명 (영어)</label>
-          <input
-            type="text"
-            value={form.nameEn}
-            onChange={(e) => set('nameEn', e.target.value)}
-            placeholder="Product name in English"
-            className={INPUT_CLASS}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">상품명 (일본어)</label>
-          <input
-            type="text"
-            value={form.nameJa}
-            onChange={(e) => set('nameJa', e.target.value)}
-            placeholder="日本語の商品名"
-            className={INPUT_CLASS}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">상품명 (중국어)</label>
-          <input
-            type="text"
-            value={form.nameZh}
-            onChange={(e) => set('nameZh', e.target.value)}
-            placeholder="中文商品名称"
-            className={INPUT_CLASS}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">상세 설명 (영어)</label>
-        <textarea
-          value={form.descriptionEn}
-          onChange={(e) => set('descriptionEn', e.target.value)}
-          rows={3}
-          placeholder="Product description in English"
-          className={INPUT_CLASS}
+        <TextField
+          label="상품명 (영어)"
+          value={form.nameEn}
+          onChange={(v) => set('nameEn', v)}
+          placeholder="Product name in English"
+        />
+        <TextField
+          label="상품명 (일본어)"
+          value={form.nameJa}
+          onChange={(v) => set('nameJa', v)}
+          placeholder="日本語の商品名"
+        />
+        <TextField
+          label="상품명 (중국어)"
+          value={form.nameZh}
+          onChange={(v) => set('nameZh', v)}
+          placeholder="中文商品名称"
         />
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">상세 설명 (일본어)</label>
-        <textarea
-          value={form.descriptionJa}
-          onChange={(e) => set('descriptionJa', e.target.value)}
-          rows={3}
-          placeholder="日本語の商品説明"
-          className={INPUT_CLASS}
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium">상세 설명 (중국어)</label>
-        <textarea
-          value={form.descriptionZh}
-          onChange={(e) => set('descriptionZh', e.target.value)}
-          rows={3}
-          placeholder="中文商品描述"
-          className={INPUT_CLASS}
-        />
-      </div>
+      <TextAreaField
+        label="상세 설명 (영어)"
+        value={form.descriptionEn}
+        onChange={(v) => set('descriptionEn', v)}
+        placeholder="Product description in English"
+      />
+      <TextAreaField
+        label="상세 설명 (일본어)"
+        value={form.descriptionJa}
+        onChange={(v) => set('descriptionJa', v)}
+        placeholder="日本語の商品説明"
+      />
+      <TextAreaField
+        label="상세 설명 (중국어)"
+        value={form.descriptionZh}
+        onChange={(v) => set('descriptionZh', v)}
+        placeholder="中文商品描述"
+      />
     </section>
   );
 }
@@ -243,50 +198,37 @@ function PricingSection({
       <h2 className="text-sm font-semibold">가격 / 재고</h2>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">판매가 (원) *</label>
-          <input
-            type="number"
-            value={form.price}
-            onChange={(e) => set('price', e.target.value)}
-            min={1}
-            required
-            className={INPUT_CLASS}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">할인가 (원)</label>
-          <input
-            type="number"
-            value={form.salePrice}
-            onChange={(e) => set('salePrice', e.target.value)}
-            min={0}
-            className={INPUT_CLASS}
-          />
-        </div>
+        <TextField
+          label="판매가 (원)"
+          required
+          type="number"
+          value={form.price}
+          onChange={(v) => set('price', v)}
+          min={1}
+        />
+        <TextField
+          label="할인가 (원)"
+          type="number"
+          value={form.salePrice}
+          onChange={(v) => set('salePrice', v)}
+          min={0}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">재고</label>
-          <input
-            type="number"
-            value={form.stock}
-            onChange={(e) => set('stock', e.target.value)}
-            min={0}
-            className={INPUT_CLASS}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">SKU</label>
-          <input
-            type="text"
-            value={form.sku}
-            onChange={(e) => set('sku', e.target.value)}
-            placeholder="재고 관리 코드"
-            className={INPUT_CLASS}
-          />
-        </div>
+        <TextField
+          label="재고"
+          type="number"
+          value={form.stock}
+          onChange={(v) => set('stock', v)}
+          min={0}
+        />
+        <TextField
+          label="SKU"
+          value={form.sku}
+          onChange={(v) => set('sku', v)}
+          placeholder="재고 관리 코드"
+        />
       </div>
     </section>
   );
@@ -303,30 +245,18 @@ function VisibilitySection({
     <section className="space-y-4">
       <h2 className="text-sm font-semibold">노출 설정</h2>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">상태</label>
-        <select
-          value={form.status}
-          onChange={(e) => set('status', e.target.value as ProductFormData['status'])}
-          className={INPUT_CLASS}
-        >
-          {STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SelectField
+        label="상태"
+        value={form.status}
+        onChange={(v) => set('status', v)}
+        options={STATUS_OPTIONS}
+      />
 
-      <label className="flex cursor-pointer items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={form.isFeatured}
-          onChange={(e) => set('isFeatured', e.target.checked)}
-          className="h-4 w-4"
-        />
-        추천 상품으로 표시
-      </label>
+      <CheckboxField
+        label="추천 상품으로 표시"
+        checked={form.isFeatured}
+        onChange={(v) => set('isFeatured', v)}
+      />
     </section>
   );
 }
