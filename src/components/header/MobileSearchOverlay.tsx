@@ -25,14 +25,6 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
@@ -58,7 +50,7 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
           'md:hidden fixed left-0 right-0 z-[46] bg-background/95 backdrop-blur-md shadow-md transition-[opacity,transform] duration-200 ease-in-out',
           isOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-2',
         )}
-        style={{ top: '48px' }}
+        style={{ top: 'var(--header-bottom)' }}
         role="search"
         aria-label={t('searchLabel')}
       >

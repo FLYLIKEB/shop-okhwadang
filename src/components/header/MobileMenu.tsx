@@ -230,7 +230,7 @@ export function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, 
   const handleNavigateClose = () => resetAndRun(onNavigate);
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div id="mobile-menu" className="fixed inset-0 z-50 lg:hidden">
       <MobileMenuBackdrop visible={visible} onClose={handleMenuClose} />
       <MobileMenuNav visible={visible}>
         <MobileMenuHeader
