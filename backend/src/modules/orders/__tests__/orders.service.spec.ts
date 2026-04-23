@@ -12,23 +12,19 @@ import { CouponsService } from '../../coupons/coupons.service';
 import { ShippingFeeCalculatorService } from '../../shipping/services/shipping-fee-calculator.service';
 import { OrderEventEmitter } from '../order-event.emitter';
 
-const mockQueryRunner = {
-  connect: jest.fn(),
-  startTransaction: jest.fn(),
-  commitTransaction: jest.fn(),
-  rollbackTransaction: jest.fn(),
-  release: jest.fn(),
-  manager: {
-    createQueryBuilder: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    update: jest.fn(),
-    getRepository: jest.fn(),
-  },
+// Manager used inside dataSource.transaction — same shape as the previous queryRunner.manager mock
+const mockManager = {
+  createQueryBuilder: jest.fn(),
+  create: jest.fn(),
+  save: jest.fn(),
+  update: jest.fn(),
+  getRepository: jest.fn(),
 };
 
 const mockDataSource = {
-  createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+  transaction: jest.fn(
+    (cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager),
+  ),
 };
 
 const mockOrderRepository = {
@@ -63,7 +59,9 @@ describe('OrdersService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunner);
+    mockDataSource.transaction.mockImplementation(
+      (cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -102,16 +100,16 @@ describe('OrdersService', () => {
         items: [],
       } as unknown as Order;
 
-      // Setup queryRunner.manager.createQueryBuilder chain for product
+      // Setup manager.createQueryBuilder chain for product
       const mockQb = {
         setLock: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         getOne: jest.fn().mockResolvedValue(mockProduct),
       };
-      mockQueryRunner.manager.createQueryBuilder.mockReturnValue(mockQb);
-      mockQueryRunner.manager.update.mockResolvedValue({});
-      mockQueryRunner.manager.create.mockReturnValue(mockSavedOrder);
-      mockQueryRunner.manager.save.mockResolvedValue(mockSavedOrder);
+      mockManager.createQueryBuilder.mockReturnValue(mockQb);
+      mockManager.update.mockResolvedValue({});
+      mockManager.create.mockReturnValue(mockSavedOrder);
+      mockManager.save.mockResolvedValue(mockSavedOrder);
 
       // Mock delete query builder for cart cleanup
       const mockDeleteQb = {
@@ -122,7 +120,7 @@ describe('OrdersService', () => {
         execute: jest.fn().mockResolvedValue({}),
       };
       // createQueryBuilder called: product fetch + cart delete
-      mockQueryRunner.manager.createQueryBuilder
+      mockManager.createQueryBuilder
         .mockReturnValueOnce(mockQb)       // product
         .mockReturnValueOnce(mockDeleteQb); // cart delete
 
@@ -136,7 +134,7 @@ describe('OrdersService', () => {
 
       const result = await service.create(1, dto);
       expect(result).toBeDefined();
-      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -150,9 +148,11 @@ describe('OrdersService', () => {
         address: '서울시',
       };
       await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
+      // Pre-flight validation fires before the transaction is opened
+      expect(mockDataSource.transaction).not.toHaveBeenCalled();
     });
 
-    it('insufficient stock → BadRequestException + rollback', async () => {
+    it('insufficient stock → BadRequestException (transaction rolls back)', async () => {
       const dto: CreateOrderDto = {
         items: [{ productId: 1, quantity: 100 }],
         recipientName: '홍길동',
@@ -167,13 +167,13 @@ describe('OrdersService', () => {
         where: jest.fn().mockReturnThis(),
         getOne: jest.fn().mockResolvedValue(mockProduct),
       };
-      mockQueryRunner.manager.createQueryBuilder.mockReturnValue(mockQb);
+      mockManager.createQueryBuilder.mockReturnValue(mockQb);
 
       await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
-      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     });
 
-    it('product not found → NotFoundException + rollback', async () => {
+    it('product not found → NotFoundException (transaction rolls back)', async () => {
       const dto: CreateOrderDto = {
         items: [{ productId: 999, quantity: 1 }],
         recipientName: '홍길동',
@@ -187,13 +187,13 @@ describe('OrdersService', () => {
         where: jest.fn().mockReturnThis(),
         getOne: jest.fn().mockResolvedValue(null),
       };
-      mockQueryRunner.manager.createQueryBuilder.mockReturnValue(mockQb);
+      mockManager.createQueryBuilder.mockReturnValue(mockQb);
 
       await expect(service.create(1, dto)).rejects.toThrow(NotFoundException);
-      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     });
 
-    it('insufficient points inside transaction → BadRequestException + rollback', async () => {
+    it('insufficient points inside transaction → BadRequestException (transaction rolls back)', async () => {
       const dto: CreateOrderDto = {
         items: [{ productId: 1, quantity: 1 }],
         recipientName: '홍길동',
@@ -203,14 +203,14 @@ describe('OrdersService', () => {
         pointsUsed: 5000,
       };
 
-      // point balance check uses queryRunner.manager.getRepository (inside transaction)
+      // point balance check uses manager.getRepository (inside transaction)
       const mockPointRepo = {
         findOne: jest.fn().mockResolvedValue({ balance: 1000 }),
       };
-      mockQueryRunner.manager.getRepository.mockReturnValue(mockPointRepo);
+      mockManager.getRepository.mockReturnValue(mockPointRepo);
 
       await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
-      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     });
 
     it('valid dto → creates order, deducts stock, clears cart', async () => {
@@ -246,12 +246,12 @@ describe('OrdersService', () => {
         execute: jest.fn().mockResolvedValue({}),
       };
 
-      mockQueryRunner.manager.createQueryBuilder
+      mockManager.createQueryBuilder
         .mockReturnValueOnce(mockProductQb)
         .mockReturnValueOnce(mockDeleteQb);
-      mockQueryRunner.manager.update.mockResolvedValue({});
-      mockQueryRunner.manager.create.mockReturnValue(mockSavedOrder);
-      mockQueryRunner.manager.save
+      mockManager.update.mockResolvedValue({});
+      mockManager.create.mockReturnValue(mockSavedOrder);
+      mockManager.save
         .mockResolvedValueOnce(mockSavedOrder)
         .mockResolvedValue([]);
 
@@ -264,12 +264,12 @@ describe('OrdersService', () => {
 
       const result = await service.create(1, dto);
       expect(result).toBe(mockSavedOrder);
-      expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(
+      expect(mockManager.update).toHaveBeenCalledWith(
         expect.anything(),
         mockProduct.id,
         { stock: mockProduct.stock - dto.items[0].quantity },
       );
-      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
       expect(mockDeleteQb.execute).toHaveBeenCalled();
     });
 
@@ -308,12 +308,12 @@ describe('OrdersService', () => {
         execute: jest.fn().mockResolvedValue({}),
       };
 
-      mockQueryRunner.manager.createQueryBuilder
+      mockManager.createQueryBuilder
         .mockReturnValueOnce(mockProductQb)
         .mockReturnValueOnce(mockDeleteQb);
-      mockQueryRunner.manager.update.mockResolvedValue({});
-      mockQueryRunner.manager.create.mockReturnValue(mockSavedOrder);
-      mockQueryRunner.manager.save
+      mockManager.update.mockResolvedValue({});
+      mockManager.create.mockReturnValue(mockSavedOrder);
+      mockManager.save
         .mockResolvedValueOnce(mockSavedOrder)
         .mockResolvedValue([]);
 
@@ -344,14 +344,14 @@ describe('OrdersService', () => {
       });
       expect(mockCouponsService.useCoupon).toHaveBeenCalledWith(10, 1, 42);
       // discountAmount should be set in the created order
-      expect(mockQueryRunner.manager.create).toHaveBeenCalledWith(
+      expect(mockManager.create).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ discountAmount: 2000 }),
       );
-      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     });
 
-    it('userCouponId but coupon calculate throws → BadRequestException + rollback', async () => {
+    it('userCouponId but coupon calculate throws → BadRequestException (transaction rolls back)', async () => {
       const dto: CreateOrderDto = {
         items: [{ productId: 1, quantity: 1 }],
         recipientName: '홍길동',
@@ -367,12 +367,12 @@ describe('OrdersService', () => {
         where: jest.fn().mockReturnThis(),
         getOne: jest.fn().mockResolvedValue(mockProduct),
       };
-      mockQueryRunner.manager.createQueryBuilder.mockReturnValue(mockQb);
+      mockManager.createQueryBuilder.mockReturnValue(mockQb);
 
       mockCouponsService.calculate.mockRejectedValue(new BadRequestException('만료된 쿠폰입니다.'));
 
       await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
-      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     });
   });
 
