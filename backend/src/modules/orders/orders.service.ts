@@ -35,6 +35,16 @@ interface OrderPriceResult {
   totalPayable: number;
 }
 
+/**
+ * 트랜잭션 내부에서 준비된, post-commit 후처리에 필요한 페이로드.
+ * 트랜잭션 커밋 이후 알림/이벤트 디스패치 단계로 넘겨진다.
+ */
+interface OrderPostCommitPayload {
+  savedOrder: Order;
+  totalPayable: number;
+  recipientName: string;
+}
+
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
@@ -58,53 +68,76 @@ export class OrdersService {
     return `ORD-${date}-${random}`;
   }
 
+  /**
+   * 주문 생성 오케스트레이션.
+   *
+   * 단계:
+   *   1) pre-flight 검증 (트랜잭션 외부에서 처리 가능한 입력 검증)
+   *   2) 트랜잭션 블록 — 재고 차감, 가격 계산, 주문/아이템 저장, 쿠폰/포인트 사용, 카트 정리
+   *   3) post-commit 후처리 — 이벤트 발행 / 알림 디스패치 (실패가 주문에 영향 주면 안 됨)
+   *
+   * DB write 순서는 절대 변경되지 않는다:
+   *   - product/option stock UPDATE → order INSERT → coupon/point UPDATE → order_items INSERT → cart DELETE
+   */
   async create(userId: number, dto: CreateOrderDto): Promise<Order> {
-    if (!dto.items || dto.items.length === 0) {
-      throw new BadRequestException('주문 항목이 없습니다.');
-    }
+    this.assertCreatePayload(dto);
 
     const pointsToUse = dto.pointsUsed ?? 0;
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    // --- 1) 트랜잭션 블록: 모든 DB write 는 이 안에서만 일어난다 ---
+    const postCommit = await this.dataSource.transaction(async (manager) => {
+      return this.runCreateOrderTransaction(manager, userId, dto, pointsToUse);
+    });
 
-    try {
-      await this.ensureSufficientPoints(queryRunner.manager, userId, pointsToUse);
+    this.logger.log(
+      `Order created: ${postCommit.savedOrder.orderNumber} userId=${userId}`,
+    );
 
-      const { orderItems, subtotalAmount } = await this.validateAndReserveStock(
-        queryRunner.manager,
-        dto,
-      );
-      const pricing = await this.calculateDiscountAndShipping(userId, dto, subtotalAmount, pointsToUse);
-      const savedOrder = await this.persistOrder(
-        queryRunner.manager,
-        userId,
-        dto,
-        pointsToUse,
-        pricing,
-      );
-      await this.applyCouponAndPoints(queryRunner.manager, userId, dto, pointsToUse, savedOrder);
-      await this.saveOrderItems(queryRunner.manager, orderItems, Number(savedOrder.id));
-      await this.clearCartItems(queryRunner.manager, userId, dto);
+    // --- 2) post-commit side effects: 커밋 이후에만 실행되어야 함 ---
+    await this.dispatchPostCommitEffects(userId, postCommit);
 
-      await queryRunner.commitTransaction();
-      this.logger.log(`Order created: ${savedOrder.orderNumber} userId=${userId}`);
+    return this.findOne(Number(postCommit.savedOrder.id), userId);
+  }
 
-      await this.postCommitActions(
-        userId,
-        savedOrder,
-        pricing.totalPayable,
-        dto.recipientName,
-      );
-
-      return this.findOne(Number(savedOrder.id), userId);
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
+  /**
+   * 트랜잭션 외부에서 수행 가능한 입력 검증.
+   */
+  private assertCreatePayload(dto: CreateOrderDto): void {
+    if (!dto.items || dto.items.length === 0) {
+      throw new BadRequestException('주문 항목이 없습니다.');
     }
+  }
+
+  /**
+   * 트랜잭션 내부 로직의 전체 순서를 담당. DB write 순서를 보장하기 위해 의도적으로 순차 실행.
+   */
+  private async runCreateOrderTransaction(
+    manager: EntityManager,
+    userId: number,
+    dto: CreateOrderDto,
+    pointsToUse: number,
+  ): Promise<OrderPostCommitPayload> {
+    await this.ensureSufficientPoints(manager, userId, pointsToUse);
+
+    const { orderItems, subtotalAmount } = await this.validateAndReserveStock(manager, dto);
+
+    const pricing = await this.calculateDiscountAndShipping(
+      userId,
+      dto,
+      subtotalAmount,
+      pointsToUse,
+    );
+
+    const savedOrder = await this.persistOrder(manager, userId, dto, pointsToUse, pricing);
+    await this.applyCouponAndPoints(manager, userId, dto, pointsToUse, savedOrder);
+    await this.saveOrderItems(manager, orderItems, Number(savedOrder.id));
+    await this.clearCartItems(manager, userId, dto);
+
+    return {
+      savedOrder,
+      totalPayable: pricing.totalPayable,
+      recipientName: dto.recipientName,
+    };
   }
 
   private async ensureSufficientPoints(
@@ -260,7 +293,7 @@ export class OrdersService {
     savedOrder: Order,
   ): Promise<void> {
     if (dto.userCouponId) {
-      await this.couponsService.useCoupon(dto.userCouponId, userId, Number(savedOrder.id));
+      await this.couponsService.useCoupon(dto.userCouponId, userId, Number(savedOrder.id), manager);
     }
 
     if (pointsToUse > 0) {
@@ -301,25 +334,38 @@ export class OrdersService {
       .execute();
   }
 
-  private async postCommitActions(
+  /**
+   * 트랜잭션 커밋 이후 실행되어야 하는 side effect.
+   * 여기서의 실패는 주문 자체를 롤백하지 않는다.
+   */
+  private async dispatchPostCommitEffects(
     userId: number,
-    savedOrder: Order,
-    totalPayable: number,
-    recipientName: string,
+    payload: OrderPostCommitPayload,
   ): Promise<void> {
-    const priorOrderCount = await this.orderRepository.count({ where: { userId } });
-    const isFirstPurchase = priorOrderCount <= 1;
-    this.orderEventEmitter.emitOrderCompleted(
-      new OrderCompletedEvent(userId, Number(savedOrder.id), savedOrder.orderNumber, isFirstPurchase),
-    );
+    try {
+      const { savedOrder, totalPayable, recipientName } = payload;
 
-    void this.notifyOrderCreated(
-      userId,
-      Number(savedOrder.id),
-      savedOrder.orderNumber,
-      totalPayable,
-      recipientName,
-    );
+      const priorOrderCount = await this.orderRepository.count({ where: { userId } });
+      const isFirstPurchase = priorOrderCount <= 1;
+      this.orderEventEmitter.emitOrderCompleted(
+        new OrderCompletedEvent(
+          userId,
+          Number(savedOrder.id),
+          savedOrder.orderNumber,
+          isFirstPurchase,
+        ),
+      );
+
+      void this.notifyOrderCreated(
+        userId,
+        Number(savedOrder.id),
+        savedOrder.orderNumber,
+        totalPayable,
+        recipientName,
+      );
+    } catch (err) {
+      this.logger.error('주문 post-commit 처리 실패 (주문 자체는 이미 커밋됨)', err as Error);
+    }
   }
 
   async findAll(
