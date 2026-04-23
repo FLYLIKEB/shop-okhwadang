@@ -50,20 +50,16 @@ export class UploadService {
   }
 
   uploadImage(file: Express.Multer.File): Promise<UploadedFile> {
-    return this.uploadWithPipeline(file, (filename, buffer, mimetype) =>
-      this.adapter.save(filename, buffer, mimetype),
-    );
+    return this.uploadWithPipeline(file, 'save');
   }
 
   uploadCategoryImage(file: Express.Multer.File): Promise<UploadedFile> {
-    return this.uploadWithPipeline(file, (filename, buffer, mimetype) =>
-      this.adapter.saveCategoryImage(filename, buffer, mimetype),
-    );
+    return this.uploadWithPipeline(file, 'saveCategoryImage');
   }
 
   private async uploadWithPipeline(
     file: Express.Multer.File,
-    save: (filename: string, buffer: Buffer, mimetype: string) => Promise<UploadedFile>,
+    saveMethod: 'save' | 'saveCategoryImage',
   ): Promise<UploadedFile> {
     this.validateFile(file);
 
@@ -79,7 +75,7 @@ export class UploadService {
       })
       .toBuffer();
 
-    return save(filename, resized, file.mimetype);
+    return this.adapter[saveMethod](filename, resized, file.mimetype);
   }
 
   private validateFile(file: Express.Multer.File): void {
