@@ -51,7 +51,7 @@ vi.mock('@/i18n/navigation', () => ({
 
 vi.mock('next-intl', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next-intl')>();
-  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, Record<string, string>>;
+  const messages = (await import('@/i18n/messages/ko.json')).default as unknown as Record<string, Record<string, string>>;
   return {
     ...actual,
     useLocale: () => 'ko',

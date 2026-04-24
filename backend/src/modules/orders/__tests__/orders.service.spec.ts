@@ -342,7 +342,7 @@ describe('OrdersService', () => {
         userCouponId: 10,
         pointsToUse: 0,
       });
-      expect(mockCouponsService.useCoupon).toHaveBeenCalledWith(10, 1, 42);
+      expect(mockCouponsService.useCoupon).toHaveBeenCalledWith(10, 1, 42, mockManager);
       // discountAmount should be set in the created order
       expect(mockManager.create).toHaveBeenCalledWith(
         expect.anything(),

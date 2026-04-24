@@ -55,7 +55,21 @@ describe('SEO', () => {
     it('includes product routes', async () => {
       mockFetchProducts.mockResolvedValue({
         items: [
-          { id: 1, name: 'Test Product', slug: 'test', price: 10000, salePrice: null, status: 'active', isFeatured: false, viewCount: 0, category: null, images: [] },
+          {
+            id: 1,
+            name: 'Test Product',
+            slug: 'test',
+            price: 10000,
+            salePrice: null,
+            shortDescription: null,
+            rating: 0,
+            reviewCount: 0,
+            status: 'active',
+            isFeatured: false,
+            viewCount: 0,
+            category: null,
+            images: [],
+          },
         ],
         total: 1,
         page: 1,
@@ -87,7 +101,10 @@ describe('SEO', () => {
         salePrice: 25000,
         stock: 10,
         sku: 'TEST-001',
-        images: [{ id: 1, url: '/images/test.jpg', alt: 'Test', sortOrder: 0, isThumbnail: true }],
+        images: [{ id: 1, url: '/images/test.jpg', alt: 'Test', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
+        detailImages: [],
+        rating: 0,
+        reviewCount: 0,
         slug: 'test-product',
         status: 'active' as const,
         isFeatured: false,
@@ -156,7 +173,10 @@ describe('SEO', () => {
         salePrice: null,
         stock: 10,
         sku: 'TEST-001',
-        images: [{ id: 1, url: '/images/test.jpg', alt: 'Test', sortOrder: 0, isThumbnail: true }],
+        images: [{ id: 1, url: '/images/test.jpg', alt: 'Test', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
+        detailImages: [],
+        rating: 0,
+        reviewCount: 0,
         slug: 'test-product',
         status: 'active',
         isFeatured: false,
@@ -179,7 +199,7 @@ describe('SEO', () => {
       mockFetchProduct.mockResolvedValue(null);
 
       const { generateMetadata } = await import('@/app/[locale]/products/[id]/page');
-      const metadata = await generateMetadata({ params: Promise.resolve({ id: '999' }) });
+      const metadata = await generateMetadata({ params: Promise.resolve({ id: '999', locale: 'ko' }) });
 
       expect(metadata.title).toBe('상품을 찾을 수 없습니다');
     });

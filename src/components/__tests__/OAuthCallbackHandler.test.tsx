@@ -24,7 +24,7 @@ vi.mock('sonner', () => ({
 import { toast } from 'sonner';
 
 describe('OAuthCallbackHandler', () => {
-  const mockApiMethod = vi.fn<[string, string | null], Promise<AuthTokenResponse>>();
+  const mockApiMethod = vi.fn<(code: string, state: string | null) => Promise<AuthTokenResponse>>();
 
   beforeEach(() => {
     vi.clearAllMocks();

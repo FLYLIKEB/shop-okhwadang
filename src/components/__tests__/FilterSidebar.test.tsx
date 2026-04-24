@@ -1,7 +1,7 @@
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Category, Collection } from '@/lib/api';
+import { CollectionType, type Category, type Collection } from '@/lib/api';
 
 const mockPush = vi.fn();
 let mockSearchParamsString = '';
@@ -49,13 +49,13 @@ vi.mock('next-intl', () => ({
 }));
 
 const mockCategories: Category[] = [
-  { id: 1, name: '의류', slug: 'clothing', parentId: null, children: [] },
-  { id: 2, name: '신발', slug: 'shoes', parentId: null, children: [] },
+  { id: 1, name: '의류', slug: 'clothing', parentId: null, imageUrl: null, children: [] },
+  { id: 2, name: '신발', slug: 'shoes', parentId: null, imageUrl: null, children: [] },
 ];
 
 const mockCollections: Collection[] = [
-  { id: 1, type: 'clay' as const, name: 'Sin Zhi', nameKo: '신치', color: null, description: null, imageUrl: null, productUrl: '', sortOrder: 0, isActive: true },
-  { id: 2, type: 'clay' as const, name: 'Jook Jin', nameKo: '죽전', color: null, description: null, imageUrl: null, productUrl: '', sortOrder: 1, isActive: true },
+  { id: 1, type: CollectionType.CLAY, name: 'Sin Zhi', nameKo: '신치', color: null, description: null, imageUrl: null, productUrl: '', sortOrder: 0, isActive: true },
+  { id: 2, type: CollectionType.CLAY, name: 'Jook Jin', nameKo: '죽전', color: null, description: null, imageUrl: null, productUrl: '', sortOrder: 1, isActive: true },
 ];
 
 describe('FilterSidebar', () => {

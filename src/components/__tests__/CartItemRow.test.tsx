@@ -26,7 +26,7 @@ const baseItem: CartItem = {
     price: 15000,
     salePrice: null,
     status: 'active',
-    images: [{ id: 1, url: '/img/test.jpg', alt: '썸네일', sortOrder: 0, isThumbnail: true }],
+    images: [{ id: 1, url: '/img/test.jpg', alt: '썸네일', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
   },
   option: null,
 };

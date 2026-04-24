@@ -136,18 +136,20 @@ vi.mock('next/image', () => ({
 const sampleProducts: Product[] = [
   {
     id: 1, name: '테스트 상품 1', slug: 'test-1', price: 20000, salePrice: null,
+    shortDescription: null, rating: 0, reviewCount: 0,
     status: 'active', isFeatured: true, viewCount: 10, category: null, images: [],
   },
   {
     id: 2, name: '테스트 상품 2', slug: 'test-2', price: 30000, salePrice: 25000,
+    shortDescription: null, rating: 0, reviewCount: 0,
     status: 'active', isFeatured: true, viewCount: 20, category: null, images: [],
   },
 ];
 
 const sampleCategories: Category[] = [
-  { id: 1, name: '상의', slug: 'top', parentId: null, description: '' },
-  { id: 2, name: '하의', slug: 'bottom', parentId: null, description: '' },
-  { id: 3, name: '아우터', slug: 'outer', parentId: null, description: '' },
+  { id: 1, name: '상의', slug: 'top', parentId: null, imageUrl: null, description: '' },
+  { id: 2, name: '하의', slug: 'bottom', parentId: null, imageUrl: null, description: '' },
+  { id: 3, name: '아우터', slug: 'outer', parentId: null, imageUrl: null, description: '' },
 ];
 
 describe('HeroBannerBlock (slider)', () => {
