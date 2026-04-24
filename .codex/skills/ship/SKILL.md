@@ -1,11 +1,13 @@
 ---
-name: ship
-description: End-to-end issue delivery workflow for this repository using Codex/OMX conventions.
+name: project-ship
+description: Project-specific end-to-end issue delivery workflow for okhwadang using Codex/OMX conventions. Use `$project-ship` when this repository's GitHub issue workflow should override the user-level `$ship` skill.
 ---
 
-# Ship
+# Project Ship
 
-Use this skill when the user wants a GitHub issue taken from implementation through verification, PR, and merge workflow.
+Use `$project-ship` when the user wants an okhwadang GitHub issue taken from implementation through verification, PR, and merge workflow.
+
+This project-local skill intentionally avoids the generic `ship` name because a user-level `$ship` skill also exists. Keep the names distinct so skill routing is deterministic.
 
 ## Scope
 

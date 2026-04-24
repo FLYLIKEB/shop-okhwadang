@@ -223,6 +223,7 @@ Rules:
 - `$name` — invoke a workflow skill
 - `/skills` — browse available skills
 - Prefer skill invocation and keyword routing as the primary user-facing workflow surface
+- Use `$project-ship` for this repository's issue delivery workflow. The generic `$ship` name is reserved for the user-level skill to avoid project/user skill collisions.
 </invocation_conventions>
 
 <model_routing>
@@ -254,7 +255,7 @@ Specialists remain available through the role catalog and native child-agent sur
 When the user message contains a mapped keyword, activate the corresponding skill immediately.
 Do not ask for confirmation.
 
-Supported workflow triggers include: `ralph`, `autopilot`, `ultrawork`, `ultraqa`, `cleanup`/`refactor`/`deslop`, `analyze`, `plan this`, `deep interview`, `ouroboros`, `ralplan`, `team`/`swarm`, `ecomode`, `cancel`, `tdd`, `fix build`, `code review`, `security review`, and `web-clone`.
+Keyword routing is implemented primarily by native `UserPromptSubmit` hooks and the generated OMX keyword registry shipped with oh-my-codex; do not duplicate that table here. This application repo's `src/hooks/` directory is for frontend React hooks, not OMX prompt-routing hooks.
 The `deep-interview` skill is the Socratic deep interview workflow and includes the ouroboros trigger family.
 
 | Keyword(s) | Skill | Action |
@@ -263,6 +264,7 @@ Runtime availability gate:
 - Treat `autopilot`, `ralph`, `ultrawork`, `ultraqa`, `team`/`swarm`, and `ecomode` as **OMX runtime workflows**, not generic prompt aliases.
 - Auto-activate those runtime workflows only when the current session is actually running under OMX CLI/runtime (for example, launched via `omx`, with OMX session overlay/runtime state available, or when the user explicitly asks to run `omx ...` in the shell).
 - In Codex App or plain Codex sessions without OMX runtime, do **not** treat those keywords alone as activation. Explain that they require OMX CLI runtime support, and continue with the nearest App-safe surface (`deep-interview`, `ralplan`, `plan`, or native subagents) unless the user explicitly wants you to launch OMX from the shell.
+- Runtime-only skills should declare `runtime: true` in their `SKILL.md` frontmatter. Non-runtime surfaces may be loaded in plain Codex/App sessions, but runtime-only surfaces must pass the availability gate above before activation.
 
 | Keyword(s) | Skill | Action |
 |-------------|-------|--------|
@@ -464,6 +466,8 @@ Do not cancel while recoverable work remains.
 ---
 
 <state_management>
+Hooks own normal skill-active and workflow-state persistence under `.omx/state/`.
+
 OMX persists runtime state under `.omx/`:
 - `.omx/state/` — mode state
 - `.omx/notepad.md` — session notes
@@ -478,7 +482,14 @@ Mode lifecycle requirements:
 - Update state on phase or iteration change.
 - Mark inactive with `completed_at` on completion.
 - Clear state on cancel/abort cleanup.
+- SessionStart cleanup should prune inactive `skill-active-state.json` entries whose `active_skills` list is empty, and stale entries for skills no longer installed.
 </state_management>
+
+<generated_surface_ownership>
+`.codex/agents/*.toml` is the source of truth for native child-agent role contracts.
+`.codex/prompts/*.md` is a generated compatibility surface for prompt-style invocation.
+When changing a role contract, update the agent TOML first and regenerate or synchronize the matching prompt file; do not hand-edit only one side.
+</generated_surface_ownership>
 
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: cancel
 description: "[OMX] Cancel any active OMX mode (autopilot, ralph, ultrawork, ecomode, ultraqa, swarm, ultrapilot, pipeline, team)"
+runtime: true
 ---
 
 # Cancel Skill

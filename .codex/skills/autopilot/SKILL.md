@@ -1,6 +1,7 @@
 ---
 name: autopilot
 description: "[OMX] Full autonomous execution from idea to working code"
+runtime: true
 ---
 
 <Purpose>
