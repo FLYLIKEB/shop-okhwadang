@@ -22,9 +22,10 @@ const mockCategories: Category[] = [
     slug: 'clothing',
     parentId: null,
     children: [
-      { id: 11, name: '상의', slug: 'tops', parentId: 1 },
-      { id: 12, name: '하의', slug: 'bottoms', parentId: 1 },
+      { id: 11, name: '상의', slug: 'tops', parentId: 1, imageUrl: null },
+      { id: 12, name: '하의', slug: 'bottoms', parentId: 1, imageUrl: null },
     ],
+    imageUrl: null,
   },
   {
     id: 2,
@@ -32,6 +33,7 @@ const mockCategories: Category[] = [
     slug: 'shoes',
     parentId: null,
     children: [],
+    imageUrl: null,
   },
 ];
 

@@ -29,9 +29,9 @@ vi.mock('@/lib/api', () => ({
 }));
 
 const mockCategories: Category[] = [
-  { id: 1, name: '자사호', slug: 'teapot', description: null, parentId: null },
-  { id: 2, name: '보이차', slug: 'puerh-tea', description: null, parentId: null },
-  { id: 3, name: '다구', slug: 'tea-ware', description: null, parentId: null },
+  { id: 1, name: '자사호', slug: 'teapot', description: null, parentId: null, imageUrl: null },
+  { id: 2, name: '보이차', slug: 'puerh-tea', description: null, parentId: null, imageUrl: null },
+  { id: 3, name: '다구', slug: 'tea-ware', description: null, parentId: null, imageUrl: null },
 ];
 
 describe('CategoryNavBlock', () => {

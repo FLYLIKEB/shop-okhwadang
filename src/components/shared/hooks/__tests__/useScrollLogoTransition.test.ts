@@ -12,7 +12,6 @@ vi.mock('embla-carousel-react', () => ({
 const createMockElement = (rect: DOMRect): HTMLElement => {
   const el = document.createElement('div');
   el.getBoundingClientRect = vi.fn(() => rect);
-  el.style = {};
   Object.defineProperty(el, 'style', {
     value: {
       transform: '',

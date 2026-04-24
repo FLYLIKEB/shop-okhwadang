@@ -24,7 +24,6 @@ vi.mock('@/lib/api', () => ({
 function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue {
   return {
     user: null,
-    token: null,
     isAuthenticated: false,
     isLoading: false,
     login: vi.fn(),

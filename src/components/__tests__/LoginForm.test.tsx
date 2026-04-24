@@ -17,7 +17,6 @@ vi.mock('sonner', () => ({
 function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue {
   return {
     user: null,
-    token: null,
     isAuthenticated: false,
     isLoading: false,
     login: vi.fn(),
@@ -25,6 +24,7 @@ function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue 
     register: vi.fn(),
     loginWithKakao: vi.fn(),
     loginWithGoogle: vi.fn(),
+    updateUser: vi.fn(),
     ...overrides,
   };
 }

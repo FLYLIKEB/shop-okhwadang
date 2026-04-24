@@ -84,7 +84,7 @@ describe('AuthContext', () => {
     vi.mocked(authApi.me)
       .mockRejectedValueOnce(new Error('Unauthorized'))
       .mockResolvedValueOnce(mockUser);
-    vi.mocked(authApi.refresh).mockResolvedValue({});
+    vi.mocked(authApi.refresh).mockResolvedValue({ message: 'refreshed' });
     renderWithProvider(<AuthDisplay />);
     await waitFor(() => {
       expect(screen.getByTestId('user').textContent).toBe('test@example.com');

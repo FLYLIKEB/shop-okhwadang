@@ -77,9 +77,12 @@ describe('ProductFormPage', () => {
         images: [],
         description: null,
         shortDescription: null,
+        rating: 0,
+        reviewCount: 0,
         stock: 0,
         sku: null,
         options: [],
+        detailImages: [],
       });
 
       render(<ProductFormPage mode="create" />);

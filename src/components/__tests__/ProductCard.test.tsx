@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { toast } from 'sonner';
 import { wishlistApi } from '@/lib/api';
 import ProductCard from '@/components/shared/products/ProductCard';
+import type { AuthContextValue } from '@/contexts/AuthContext';
 
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
@@ -31,7 +32,7 @@ vi.mock('@/contexts/CartContext', () => ({
 const mockUseAuth = vi.fn(() => ({
   isAuthenticated: false,
   isLoading: false,
-  user: null,
+  user: null as AuthContextValue['user'],
   logout: vi.fn(),
 }));
 vi.mock('@/contexts/AuthContext', () => ({
@@ -77,7 +78,7 @@ describe('ProductCard', () => {
     price: 29000,
     salePrice: null,
     status: 'active' as const,
-    images: [{ id: 1, url: '/img/test.jpg', alt: null, sortOrder: 0, isThumbnail: true }],
+    images: [{ id: 1, url: '/img/test.jpg', alt: null, sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
   };
 
   beforeEach(() => {
@@ -148,7 +149,7 @@ describe('ProductCard', () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
-      user: { id: 1 },
+      user: { id: 1, email: 'test@example.com', name: '테스터', role: 'user' },
       logout: vi.fn(),
     });
     vi.mocked(wishlistApi.add).mockResolvedValue({ id: 10, productId: 1, createdAt: '' });
