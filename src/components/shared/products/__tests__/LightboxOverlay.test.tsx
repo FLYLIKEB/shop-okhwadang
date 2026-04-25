@@ -123,7 +123,6 @@ describe('LightboxOverlay', () => {
     expect(props.handleLightboxMouseUp).toHaveBeenCalled();
   });
 });
-
 describe('useLightboxInteraction', () => {
   it('초기 상태: zoomed=false, pan={0,0}', () => {
     const { result } = renderHook(() => useLightboxInteraction());
@@ -210,4 +209,3 @@ describe('useLightboxInteraction', () => {
     expect(result.current.lightboxPan).toEqual({ x: 100, y: -100 });
   });
 });
-
