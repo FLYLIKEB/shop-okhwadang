@@ -1,7 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { JwtStrategy } from './jwt.strategy';
-import { User } from '../../users/entities/user.entity';
+import { User, UserRole } from '../../users/entities/user.entity';
 import { TokenBlacklistService } from '../token-blacklist.service';
 import { createAuthConfig } from '../../../config/auth.config';
 
@@ -17,6 +17,12 @@ const mockTokenBlacklistService = {
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
+  const activeUser = {
+    id: 1,
+    email: 'test@test.com',
+    role: UserRole.USER,
+    isActive: true,
+  } as User;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -36,7 +42,7 @@ describe('JwtStrategy', () => {
 
   describe('validate()', () => {
     it('should return user object for valid access token payload without tokenType', async () => {
-      mockUserRepository.findOne.mockResolvedValue({ id: 1, isActive: true } as User);
+      mockUserRepository.findOne.mockResolvedValue(activeUser);
       mockTokenBlacklistService.isBlacklisted.mockResolvedValue(false);
       const payload = { sub: 1, email: 'test@test.com', role: 'user' };
       const result = await strategy.validate(payload);
@@ -44,7 +50,7 @@ describe('JwtStrategy', () => {
     });
 
     it('should return user object for payload with tokenType: access', async () => {
-      mockUserRepository.findOne.mockResolvedValue({ id: 1, isActive: true } as User);
+      mockUserRepository.findOne.mockResolvedValue(activeUser);
       mockTokenBlacklistService.isBlacklisted.mockResolvedValue(false);
       const payload = { sub: 1, email: 'test@test.com', role: 'user', tokenType: 'access' };
       const result = await strategy.validate(payload);
@@ -89,14 +95,14 @@ describe('JwtStrategy', () => {
     });
 
     it('should not check blacklist when jti is absent', async () => {
-      mockUserRepository.findOne.mockResolvedValue({ id: 1, isActive: true } as User);
+      mockUserRepository.findOne.mockResolvedValue(activeUser);
       const payload = { sub: 1, email: 'test@test.com', role: 'user', tokenType: 'access' };
       await strategy.validate(payload);
       expect(mockTokenBlacklistService.isBlacklisted).not.toHaveBeenCalled();
     });
 
     it('should check blacklist and return user with jti when token is not blacklisted', async () => {
-      mockUserRepository.findOne.mockResolvedValue({ id: 1, isActive: true } as User);
+      mockUserRepository.findOne.mockResolvedValue(activeUser);
       mockTokenBlacklistService.isBlacklisted.mockResolvedValue(false);
       const payload = { sub: 1, email: 'test@test.com', role: 'user', tokenType: 'access', jti: 'valid-jti' };
       const result = await strategy.validate(payload);

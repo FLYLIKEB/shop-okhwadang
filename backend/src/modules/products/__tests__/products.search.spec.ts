@@ -28,6 +28,7 @@ function makeFulltextError(): QueryFailedError {
 
 const mockSelect = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
+const mockAddOrderBy = jest.fn().mockReturnThis();
 const mockAndWhere = jest.fn().mockReturnThis();
 const mockSkip = jest.fn().mockReturnThis();
 const mockTake = jest.fn().mockReturnThis();
@@ -45,6 +46,7 @@ const mockQueryBuilder = {
   andWhere: mockAndWhere,
   where: mockWhere,
   orderBy: mockOrderBy,
+  addOrderBy: mockAddOrderBy,
   skip: mockSkip,
   take: mockTake,
   limit: mockLimit,

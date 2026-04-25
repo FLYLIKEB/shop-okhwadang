@@ -1,6 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { RequestWithAuthUser } from '../interfaces/auth-user.interface';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -13,7 +14,7 @@ export class RolesGuard implements CanActivate {
     ]);
     if (!requiredRoles || requiredRoles.length === 0) return true;
 
-    const { user } = context.switchToHttp().getRequest<{ user?: { role: string } }>();
+    const { user } = context.switchToHttp().getRequest<RequestWithAuthUser>();
     if (!user) return false;
     // super_admin has all privileges
     if (user.role === 'super_admin') return true;

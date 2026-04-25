@@ -59,6 +59,12 @@ export interface PointHistoryItem {
   createdAt: Date;
 }
 
+export interface IssueCouponBatchResult {
+  couponId: number;
+  issued: boolean;
+  reason?: string;
+}
+
 export interface PointsResponse {
   balance: number;
   history: PointHistoryItem[];
@@ -216,39 +222,68 @@ export class CouponsService {
   }
 
   async issueCoupon(dto: IssueCouponDto): Promise<UserCoupon> {
-    return await this.dataSource.transaction(async (manager) => {
-      const coupon = await manager.findOne(Coupon, {
-        where: { id: dto.couponId },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (!coupon) {
-        throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
-      }
-      if (!coupon.isActive) {
-        throw new BadRequestException('비활성화된 쿠폰입니다.');
-      }
-      if (coupon.totalQuantity != null && coupon.issuedCount >= coupon.totalQuantity) {
-        throw new BadRequestException('발급 수량이 소진된 쿠폰입니다.');
-      }
-
-      const existing = await manager.findOne(UserCoupon, {
-        where: { userId: dto.userId, couponId: dto.couponId },
-      });
-      if (existing) {
-        throw new BadRequestException('이미 발급된 쿠폰입니다.');
-      }
-
-      const uc = manager.create(UserCoupon, {
-        userId: dto.userId,
-        couponId: dto.couponId,
-        status: 'available',
-      });
-      const saved = await manager.save(UserCoupon, uc);
-      await manager.increment(Coupon, { id: dto.couponId }, 'issuedCount', 1);
-      this.logger.log(`Coupon issued: couponId=${dto.couponId}, userId=${dto.userId}`);
-      return saved;
+    return this.dataSource.transaction(async (manager) => {
+      return this.issueCouponInTx(manager, dto);
     });
+  }
+
+  async issueCouponsForUser(
+    userId: number,
+    couponIds: number[],
+  ): Promise<IssueCouponBatchResult[]> {
+    return this.dataSource.transaction(async (manager) => {
+      const results: IssueCouponBatchResult[] = [];
+      for (const couponId of couponIds) {
+        try {
+          await this.issueCouponInTx(manager, { userId, couponId });
+          results.push({ couponId, issued: true });
+        } catch (err) {
+          results.push({
+            couponId,
+            issued: false,
+            reason: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+      return results;
+    });
+  }
+
+  private async issueCouponInTx(
+    manager: EntityManager,
+    dto: IssueCouponDto,
+  ): Promise<UserCoupon> {
+    const coupon = await manager.findOne(Coupon, {
+      where: { id: dto.couponId },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (!coupon) {
+      throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
+    }
+    if (!coupon.isActive) {
+      throw new BadRequestException('비활성화된 쿠폰입니다.');
+    }
+    if (coupon.totalQuantity != null && coupon.issuedCount >= coupon.totalQuantity) {
+      throw new BadRequestException('발급 수량이 소진된 쿠폰입니다.');
+    }
+
+    const existing = await manager.findOne(UserCoupon, {
+      where: { userId: dto.userId, couponId: dto.couponId },
+    });
+    if (existing) {
+      throw new BadRequestException('이미 발급된 쿠폰입니다.');
+    }
+
+    const uc = manager.create(UserCoupon, {
+      userId: dto.userId,
+      couponId: dto.couponId,
+      status: 'available',
+    });
+    const saved = await manager.save(UserCoupon, uc);
+    await manager.increment(Coupon, { id: dto.couponId }, 'issuedCount', 1);
+    this.logger.log(`Coupon issued: couponId=${dto.couponId}, userId=${dto.userId}`);
+    return saved;
   }
 
   async useCoupon(

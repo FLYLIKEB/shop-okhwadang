@@ -9,7 +9,6 @@ import { OrderItem } from './entities/order-item.entity';
 import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
-import { PointHistory } from '../coupons/entities/point-history.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
@@ -147,11 +146,7 @@ export class OrdersService {
   ): Promise<void> {
     if (pointsToUse <= 0) return;
 
-    const latest = await manager.getRepository(PointHistory).findOne({
-      where: { userId },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
-    const balance = latest ? latest.balance : 0;
+    const balance = await this.pointsService.getRunningBalanceInTx(manager, userId);
     if (pointsToUse > balance) {
       throw new BadRequestException('적립금이 부족합니다.');
     }

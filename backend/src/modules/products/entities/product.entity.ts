@@ -27,6 +27,8 @@ export enum ProductStatus {
 @Index(['categoryId'])
 @Index(['status'])
 @Index(['isFeatured'])
+@Index(['reviewCount'])
+@Index(['avgRating'])
 export class Product {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: number;
@@ -97,6 +99,12 @@ export class Product {
 
   @Column({ name: 'view_count', default: 0 })
   viewCount!: number;
+
+  @Column({ name: 'review_count', type: 'int', unsigned: true, default: 0 })
+  reviewCount!: number;
+
+  @Column({ name: 'avg_rating', type: 'decimal', precision: 3, scale: 2, default: 0 })
+  avgRating!: number;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

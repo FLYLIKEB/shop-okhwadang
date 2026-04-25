@@ -2,12 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
 import { MembershipService } from './membership.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-
-interface AuthUser {
-  id: number;
-  email: string;
-  role: string;
-}
+import { AuthUser } from '../../common/interfaces/auth-user.interface';
 
 @ApiTags('사용자 - 회원 등급')
 @Controller('users')

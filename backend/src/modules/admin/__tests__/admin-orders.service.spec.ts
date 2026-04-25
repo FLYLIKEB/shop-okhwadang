@@ -8,6 +8,7 @@ import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { Shipping } from '../../payments/entities/shipping.entity';
 import { PaymentsService } from '../../payments/payments.service';
 import { MembershipService } from '../../membership/membership.service';
+import { PointsService } from '../../points/points.service';
 
 function createMockRepository() {
   const transactionManager = {
@@ -54,6 +55,7 @@ describe('AdminOrdersService', () => {
   let paymentsService: jest.Mocked<PaymentsService>;
   let dataSource: jest.Mocked<DataSource>;
   let mockManager: ReturnType<typeof createMockManager>;
+  let pointsService: jest.Mocked<PointsService>;
 
   beforeEach(async () => {
     orderRepo = createMockRepository();
@@ -63,6 +65,9 @@ describe('AdminOrdersService', () => {
     paymentsService = {
       cancelAdmin: jest.fn(),
     } as unknown as jest.Mocked<PaymentsService>;
+    pointsService = {
+      getRunningBalanceInTx: jest.fn().mockResolvedValue(0),
+    } as unknown as jest.Mocked<PointsService>;
     dataSource = {
       transaction: jest.fn().mockImplementation((cb: (manager: unknown) => Promise<unknown>) => cb(mockManager)),
     } as unknown as jest.Mocked<DataSource>;
@@ -76,6 +81,7 @@ describe('AdminOrdersService', () => {
         { provide: PaymentsService, useValue: paymentsService },
         { provide: DataSource, useValue: dataSource },
         { provide: MembershipService, useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined) } },
+        { provide: PointsService, useValue: pointsService },
       ],
     }).compile();
 

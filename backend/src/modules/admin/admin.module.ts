@@ -18,6 +18,7 @@ import { Product } from '../products/entities/product.entity';
 import { PaymentsModule } from '../payments/payments.module';
 import { AuditLogModule } from '../audit-logs/audit-log.module';
 import { MembershipModule } from '../membership/membership.module';
+import { PointsModule } from '../points/points.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MembershipModule } from '../membership/membership.module';
     PaymentsModule,
     AuditLogModule,
     MembershipModule,
+    PointsModule,
   ],
   controllers: [AdminController, AdminDashboardController, AdminOrdersController, AdminMembersController, AdminExportController],
   providers: [AdminService, AdminDashboardService, AdminOrdersService, AdminMembersService, AdminExportService],

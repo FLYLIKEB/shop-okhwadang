@@ -20,11 +20,7 @@ import { CalculateDiscountDto } from './dto/calculate-discount.dto';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { IssueCouponDto } from './dto/issue-coupon.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
-
-interface JwtUser {
-  id: number;
-  role: string;
-}
+import { AuthenticatedRequestWithAuthUser } from '../../common/interfaces/auth-user.interface';
 
 @ApiTags('쿠폰')
 @Controller('coupons')
@@ -38,7 +34,7 @@ export class CouponsController {
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiQuery({ name: 'status', required: false, type: String, description: '쿠폰 상태 (available/used/expired)' })
   findAll(
-    @Request() req: { user: JwtUser },
+    @Request() req: AuthenticatedRequestWithAuthUser,
     @Query('status') status?: string,
   ) {
     return this.couponsService.findAll(req.user.id, status);
@@ -51,7 +47,7 @@ export class CouponsController {
   @ApiResponse({ status: 200, description: '할인 금액 계산 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   calculate(
-    @Request() req: { user: JwtUser },
+    @Request() req: AuthenticatedRequestWithAuthUser,
     @Body() dto: CalculateDiscountDto,
   ) {
     return this.couponsService.calculate(req.user.id, dto);
@@ -62,7 +58,7 @@ export class CouponsController {
   @ApiOperation({ summary: '쿠폰 포인트 조회', description: '현재 사용자의 쿠폰 포인트를 조회합니다.' })
   @ApiResponse({ status: 200, description: '쿠폰 포인트 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  getPoints(@Request() req: { user: JwtUser }) {
+  getPoints(@Request() req: AuthenticatedRequestWithAuthUser) {
     return this.couponsService.getPoints(req.user.id);
   }
 }

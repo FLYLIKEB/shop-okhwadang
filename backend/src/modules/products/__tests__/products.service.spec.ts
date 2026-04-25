@@ -17,6 +17,7 @@ import { CacheService } from '../../cache/cache.service';
 import { RestockAlertsService } from '../../restock-alerts/restock-alerts.service';
 
 const mockOrderBy = jest.fn().mockReturnThis();
+const mockAddOrderBy = jest.fn().mockReturnThis();
 const mockAndWhere = jest.fn().mockReturnThis();
 const mockSkip = jest.fn().mockReturnThis();
 const mockTake = jest.fn().mockReturnThis();
@@ -32,6 +33,7 @@ const mockQueryBuilder = {
   andWhere: mockAndWhere,
   where: mockWhere,
   orderBy: mockOrderBy,
+  addOrderBy: mockAddOrderBy,
   skip: mockSkip,
   take: mockTake,
   getManyAndCount: mockGetManyAndCount,

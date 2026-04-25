@@ -8,6 +8,7 @@ import { OrderItem } from '../../orders/entities/order-item.entity';
 import { PointHistory } from '../../coupons/entities/point-history.entity';
 import { SettingsService } from '../../settings/settings.service';
 import { OrderStatus } from '../../orders/entities/order.entity';
+import { PointsService } from '../../points/points.service';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
@@ -54,6 +55,10 @@ describe('ReviewsService', () => {
     getNumber: jest.fn(),
   };
 
+  const mockPointsService = {
+    getRunningBalanceInTx: jest.fn(),
+  };
+
   // Manager used inside dataSource.transaction
   const mockManager = {
     createQueryBuilder: jest.fn(),
@@ -61,6 +66,7 @@ describe('ReviewsService', () => {
     create: jest.fn(),
     save: jest.fn(),
     remove: jest.fn(),
+    query: jest.fn(),
   };
 
   const mockDataSource = {
@@ -76,11 +82,18 @@ describe('ReviewsService', () => {
         { provide: getRepositoryToken(PointHistory), useValue: mockPointHistoryRepo },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: DataSource, useValue: mockDataSource },
+        { provide: PointsService, useValue: mockPointsService },
       ],
     }).compile();
 
     service = module.get<ReviewsService>(ReviewsService);
     jest.clearAllMocks();
+    mockManager.findOne.mockReset();
+    mockManager.create.mockReset();
+    mockManager.save.mockReset();
+    mockManager.remove.mockReset();
+    mockManager.query.mockReset();
+    mockPointsService.getRunningBalanceInTx.mockResolvedValue(0);
 
     // Default settings: reward=100, bonus=0
     mockSettingsService.getNumber.mockImplementation((key: string, def: number) => {
@@ -291,8 +304,7 @@ describe('ReviewsService', () => {
       };
       mockManager.findOne
         .mockResolvedValueOnce(earnEntry) // earn entry
-        .mockResolvedValueOnce(null)      // no existing revoke
-        .mockResolvedValueOnce(null);     // current balance (no prior history)
+        .mockResolvedValueOnce(null);     // no existing revoke
       mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
       mockManager.save.mockResolvedValue({});
       mockManager.remove.mockResolvedValue(undefined);
@@ -321,7 +333,6 @@ describe('ReviewsService', () => {
       };
       mockManager.findOne
         .mockResolvedValueOnce(earnEntry)
-        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
       mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
       mockManager.save.mockResolvedValue({});

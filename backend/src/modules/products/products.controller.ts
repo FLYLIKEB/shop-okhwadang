@@ -28,13 +28,10 @@ import { BulkProductsDto } from './dto/bulk-products.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequestWithAuthUser } from '../../common/interfaces/auth-user.interface';
 import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { CreateRestockAlertDto } from '../restock-alerts/dto/create-restock-alert.dto';
 import { RecentlyViewedService } from './recently-viewed.service';
-
-interface RequestWithUser {
-  user?: { id: number; email: string; role: string };
-}
 
 @ApiTags('상품')
 @Controller('products')
@@ -53,7 +50,7 @@ export class ProductsController {
   @ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 개수' })
   @ApiQuery({ name: 'categoryId', required: false, type: Number, description: '카테고리 ID' })
   @ApiQuery({ name: 'search', required: false, type: String, description: '검색어' })
-  findAll(@Query() query: QueryProductsDto, @Request() req: RequestWithUser) {
+  findAll(@Query() query: QueryProductsDto, @Request() req: RequestWithAuthUser) {
     const isAdmin = req.user?.role === 'admin';
     return this.productsService.findAll(query, isAdmin);
   }
@@ -73,7 +70,7 @@ export class ProductsController {
   @ApiOperation({ summary: '상품 벌크 조회', description: '여러 상품 ID로 상품 목록을 한 번에 조회합니다.' })
   @ApiResponse({ status: 200, description: '상품 목록 조회 성공' })
   @ApiResponse({ status: 400, description: '잘못된 요청' })
-  bulkLookup(@Body() dto: BulkProductsDto, @Request() req: RequestWithUser) {
+  bulkLookup(@Body() dto: BulkProductsDto, @Request() req: RequestWithAuthUser) {
     const isAdmin = req.user?.role === 'admin';
     return this.productsService.findBulk(dto.ids, isAdmin);
   }
@@ -88,7 +85,7 @@ export class ProductsController {
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @Query('locale') locale: string | undefined,
-    @Request() req: RequestWithUser,
+    @Request() req: RequestWithAuthUser,
   ) {
     const isAdmin = req.user?.role === 'admin';
     const result = await this.productsService.findOne(id, isAdmin, locale);
@@ -122,7 +119,7 @@ export class ProductsController {
   @ApiResponse({ status: 404, description: '상품 또는 옵션을 찾을 수 없음' })
   subscribeRestockAlert(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: RequestWithUser['user'],
+    @CurrentUser() user: RequestWithAuthUser['user'],
     @Body() dto: CreateRestockAlertDto,
   ) {
     return this.restockAlertsService.createAlert(user!.id, id, dto);

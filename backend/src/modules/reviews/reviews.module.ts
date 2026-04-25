@@ -7,12 +7,14 @@ import { ReviewsController } from './reviews.controller';
 import { ReviewsService } from './reviews.service';
 import { UploadModule } from '../upload/upload.module';
 import { SettingsModule } from '../settings/settings.module';
+import { PointsModule } from '../points/points.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Review, OrderItem, PointHistory]),
     UploadModule,
     SettingsModule,
+    PointsModule,
   ],
   controllers: [ReviewsController],
   providers: [ReviewsService],

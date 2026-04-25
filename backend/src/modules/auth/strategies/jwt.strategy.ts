@@ -7,6 +7,7 @@ import type { Request } from 'express';
 import { User } from '../../users/entities/user.entity';
 import { TokenBlacklistService } from '../token-blacklist.service';
 import { AUTH_CONFIG, AuthConfig } from '../../../config/auth.config';
+import { AuthUser } from '../../../common/interfaces/auth-user.interface';
 
 export interface JwtPayload {
   sub: number;
@@ -46,7 +47,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload) {
+  async validate(payload: JwtPayload): Promise<AuthUser> {
     if (payload.tokenType === 'refresh') {
       throw new UnauthorizedException('Refresh tokens cannot be used for API access');
     }
@@ -64,6 +65,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('비활성화된 계정입니다.');
     }
 
-    return { id: payload.sub, email: payload.email, role: payload.role, jti: payload.jti };
+    return { id: payload.sub, email: user.email, role: user.role, jti: payload.jti };
   }
 }

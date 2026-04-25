@@ -25,12 +25,7 @@ import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartQuantityDto } from './dto/update-cart-quantity.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-
-interface AuthUser {
-  id: number;
-  email: string;
-  role: string;
-}
+import { AuthUser } from '../../common/interfaces/auth-user.interface';
 
 @ApiTags('장바구니')
 @Controller('cart')
