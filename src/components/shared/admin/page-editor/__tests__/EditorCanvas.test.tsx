@@ -1,8 +1,50 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import EditorCanvas from '@/components/shared/admin/page-editor/EditorCanvas';
 import type { DraftBlock } from '@/components/shared/admin/page-editor/SortableBlockItem';
+
+vi.mock('@dnd-kit/core', async (importActual) => {
+  const actual = await importActual<typeof import('@dnd-kit/core')>();
+  return {
+    ...actual,
+    DndContext: ({
+      children,
+      onDragEnd,
+    }: {
+      children: ReactNode;
+      onDragEnd?: (event: { active: { id: number }; over: { id: number } | null }) => void;
+    }) => (
+      <div>
+        <button type="button" onClick={() => onDragEnd?.({ active: { id: 1 }, over: { id: 2 } })}>
+          reorder 1 over 2
+        </button>
+        <button type="button" onClick={() => onDragEnd?.({ active: { id: 1 }, over: { id: 1 } })}>
+          reorder same
+        </button>
+        <button type="button" onClick={() => onDragEnd?.({ active: { id: 1 }, over: null })}>
+          reorder no target
+        </button>
+        {children}
+      </div>
+    ),
+  };
+});
+
+vi.mock('@dnd-kit/sortable', () => ({
+  SortableContext: ({ children }: { children: ReactNode }) => <>{children}</>,
+  verticalListSortingStrategy: vi.fn(),
+  sortableKeyboardCoordinates: vi.fn(),
+  useSortable: () => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: vi.fn(),
+    transform: null,
+    transition: undefined,
+    isDragging: false,
+  }),
+}));
 
 const blocks: DraftBlock[] = [
   {
@@ -166,5 +208,40 @@ describe('EditorCanvas', () => {
       />,
     );
     expect(screen.getByRole('button', { name: '표시' })).toBeInTheDocument();
+  });
+
+  it('드래그 종료 시 active/over id가 다르면 onReorder(activeId, overId)를 호출', async () => {
+    const onReorder = vi.fn();
+    render(
+      <EditorCanvas
+        blocks={blocks}
+        selectedBlockId={null}
+        onSelectBlock={vi.fn()}
+        onDeleteBlock={vi.fn()}
+        onToggleVisibility={vi.fn()}
+        onReorder={onReorder}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'reorder 1 over 2' }));
+    expect(onReorder).toHaveBeenCalledWith(1, 2);
+  });
+
+  it('드래그 종료 시 타겟이 없거나 같은 블록이면 onReorder를 호출하지 않음', async () => {
+    const onReorder = vi.fn();
+    render(
+      <EditorCanvas
+        blocks={blocks}
+        selectedBlockId={null}
+        onSelectBlock={vi.fn()}
+        onDeleteBlock={vi.fn()}
+        onToggleVisibility={vi.fn()}
+        onReorder={onReorder}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'reorder same' }));
+    await userEvent.click(screen.getByRole('button', { name: 'reorder no target' }));
+    expect(onReorder).not.toHaveBeenCalled();
   });
 });
