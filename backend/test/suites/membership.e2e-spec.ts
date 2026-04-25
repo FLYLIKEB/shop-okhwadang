@@ -151,9 +151,43 @@ export function registerMembershipSuite(getApp: () => INestApplication) {
         const body = res.body as { pointRate: number | string };
         expect(Number(body.pointRate)).toBe(3);
       });
+
+      it('없는 ID 수정 → 404', async () => {
+        await request(app.getHttpServer())
+          .patch('/api/admin/membership-tiers/999999')
+          .set('Cookie', adminCookies)
+          .send({ pointRate: 4 })
+          .expect(404);
+      });
     });
 
     describe('GET /api/users/me/tier', () => {
+      it('누적 금액 기준 현재/다음 등급 정보를 반환', async () => {
+        await dataSource.query(
+          'UPDATE users SET tier = ?, tier_accumulated_amount = ?, tier_evaluated_at = NOW() WHERE id = ?',
+          [tierName, 100000, userUserId],
+        );
+
+        const res = await request(app.getHttpServer())
+          .get('/api/users/me/tier')
+          .set('Cookie', userCookies)
+          .expect(200);
+
+        const body = res.body as {
+          tier: string;
+          tierAccumulatedAmount: number;
+          tierDetails: { id: number; name: string };
+          nextTier: { name: string; minAmount: number | string };
+          amountToNextTier: number;
+        };
+        expect(body.tier).toBe(tierName);
+        expect(Number(body.tierAccumulatedAmount)).toBe(100000);
+        expect(Number(body.tierDetails.id)).toBe(createdTierIds[0]);
+        expect(body.nextTier.name).toBe('Silver');
+        expect(Number(body.nextTier.minAmount)).toBe(300000);
+        expect(Number(body.amountToNextTier)).toBe(200000);
+      });
+
       it('인증된 사용자 → 200, tier 정보 반환', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/users/me/tier')

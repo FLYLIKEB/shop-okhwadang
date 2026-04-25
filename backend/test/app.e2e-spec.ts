@@ -27,6 +27,7 @@ import { registerCmsModulesSuite } from './suites/cms-modules.e2e-spec';
 import { registerCommerceModulesSuite } from './suites/commerce-modules.e2e-spec';
 import { registerRestockAlertsSuite } from './suites/restock-alerts.e2e-spec';
 import { registerAnnouncementBarsSuite } from './suites/announcement-bars.e2e-spec';
+import { registerAuditLogsSuite } from './suites/audit-logs.e2e-spec';
 import { registerMembershipSuite } from './suites/membership.e2e-spec';
 import { registerSeoSuite } from './suites/seo.e2e-spec';
 
@@ -97,6 +98,7 @@ describe('App (e2e)', () => {
   registerCommerceModulesSuite(() => app);
   registerRestockAlertsSuite(() => app);
   registerAnnouncementBarsSuite(() => app);
+  registerAuditLogsSuite(() => app);
   registerMembershipSuite(() => app);
   registerSeoSuite(() => app);
 });
