@@ -10,7 +10,7 @@
 | Backend | NestJS + TypeORM + MySQL | Controller → Service → Entity |
 | DB | MySQL 8.0 (Docker) | TypeORM Migration CLI |
 | 인증 | JWT + OAuth (카카오/구글) | ChaLog 동일 |
-| 결제 | 토스페이먼츠 (기본) | 어댑터 패턴 |
+| 결제 | 국내: 네이버페이/KG이니시스/토스페이먼츠, 글로벌: Stripe | 어댑터 패턴 |
 | 배송 | 택배사 API | 어댑터 패턴 |
 | 캐시 | In-memory (CacheService, Map+TTL) | 설정/상품 핫 데이터 |
 | 스토리지 | S3 호환 (R2 등) | 이미지/미디어 |
