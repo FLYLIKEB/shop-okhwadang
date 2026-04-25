@@ -385,8 +385,13 @@ export class ProductQueryService {
         qb.orderBy('product.viewCount', 'DESC');
         break;
       case ProductSort.REVIEW_COUNT:
+        qb.orderBy('product.reviewCount', 'DESC')
+          .addOrderBy('product.createdAt', 'DESC');
+        break;
       case ProductSort.RATING:
-        qb.orderBy('product.createdAt', 'DESC');
+        qb.orderBy('product.avgRating', 'DESC')
+          .addOrderBy('product.reviewCount', 'DESC')
+          .addOrderBy('product.createdAt', 'DESC');
         break;
       default:
         qb.orderBy('product.createdAt', 'DESC');
@@ -408,15 +413,7 @@ export class ProductQueryService {
     const statsMap = await this.getReviewStats(
       localizedItems.map((product) => Number(product.id)),
     );
-    let itemsWithStats = this.applyReviewStats(localizedItems, statsMap);
-
-    if (sort === ProductSort.REVIEW_COUNT) {
-      itemsWithStats = itemsWithStats.sort(
-        (left, right) => right.reviewCount - left.reviewCount,
-      );
-    } else if (sort === ProductSort.RATING) {
-      itemsWithStats = itemsWithStats.sort((left, right) => right.rating - left.rating);
-    }
+    const itemsWithStats = this.applyReviewStats(localizedItems, statsMap);
 
     const result = { ...paged, items: itemsWithStats };
     if (cacheKey) {

@@ -17,6 +17,8 @@ import { OrderEventEmitter } from '../orders/order-event.emitter';
 import { User } from '../users/entities/user.entity';
 import { SchedulerLockService } from '../../common/services/scheduler-lock.service';
 
+const BIRTHDAY_COUPON_USER_BATCH_SIZE = 20;
+
 @Injectable()
 export class CouponRulesService implements OnModuleInit {
   private readonly logger = new Logger(CouponRulesService.name);
@@ -71,23 +73,11 @@ export class CouponRulesService implements OnModuleInit {
       where: { trigger, active: true },
     });
 
-    for (const rule of rules) {
-      if (!this.matchesConditions(rule, context)) {
-        continue;
-      }
+    const matchingCouponIds = rules
+      .filter((rule) => this.matchesConditions(rule, context))
+      .map((rule) => Number(rule.couponTemplateId));
 
-      try {
-        await this.couponsService.issueCoupon({ userId, couponId: Number(rule.couponTemplateId) });
-        this.logger.log(
-          `[${trigger}] Issued couponTemplateId=${rule.couponTemplateId} to userId=${userId}`,
-        );
-      } catch (err) {
-        // BadRequestException for duplicate issues is expected — skip silently
-        this.logger.debug(
-          `[${trigger}] Skipped couponTemplateId=${rule.couponTemplateId} for userId=${userId}: ${String(err)}`,
-        );
-      }
-    }
+    await this.issueCouponsForUser(trigger, userId, matchingCouponIds);
   }
 
   private matchesConditions(rule: CouponRule, context: Record<string, unknown>): boolean {
@@ -139,17 +129,14 @@ export class CouponRulesService implements OnModuleInit {
         `[cron:birthday-coupons] Processing ${birthdayUsers.length} users with birthday on ${month}/${day}`,
       );
 
-      for (const { id: userId } of birthdayUsers) {
-        for (const rule of rules) {
-          try {
-            await this.couponsService.issueCoupon({ userId, couponId: Number(rule.couponTemplateId) });
-            this.logger.log(`[cron:birthday-coupons] Issued couponTemplateId=${rule.couponTemplateId} to userId=${userId}`);
-          } catch (err) {
-            this.logger.debug(
-              `[cron:birthday-coupons] Skipped couponTemplateId=${rule.couponTemplateId} for userId=${userId}: ${String(err)}`,
-            );
-          }
-        }
+      const couponIds = rules.map((rule) => Number(rule.couponTemplateId));
+      for (let index = 0; index < birthdayUsers.length; index += BIRTHDAY_COUPON_USER_BATCH_SIZE) {
+        const chunk = birthdayUsers.slice(index, index + BIRTHDAY_COUPON_USER_BATCH_SIZE);
+        await Promise.allSettled(
+          chunk.map(({ id: userId }) =>
+            this.issueCouponsForUser('cron:birthday-coupons', userId, couponIds),
+          ),
+        );
       }
 
       this.logger.log(`[cron:birthday-coupons] Completed for ${birthdayUsers.length} users`);
@@ -201,5 +188,28 @@ export class CouponRulesService implements OnModuleInit {
     await this.couponRuleRepo.remove(rule);
     this.logger.log(`CouponRule deleted: id=${id}`);
     return { message: '삭제되었습니다.' };
+  }
+
+  private async issueCouponsForUser(
+    trigger: string,
+    userId: number,
+    couponIds: number[],
+  ): Promise<void> {
+    if (couponIds.length === 0) {
+      return;
+    }
+
+    const results = await this.couponsService.issueCouponsForUser(userId, couponIds);
+    for (const result of results) {
+      if (result.issued) {
+        this.logger.log(
+          `[${trigger}] Issued couponTemplateId=${result.couponId} to userId=${userId}`,
+        );
+      } else {
+        this.logger.debug(
+          `[${trigger}] Skipped couponTemplateId=${result.couponId} for userId=${userId}: ${result.reason ?? 'unknown error'}`,
+        );
+      }
+    }
   }
 }

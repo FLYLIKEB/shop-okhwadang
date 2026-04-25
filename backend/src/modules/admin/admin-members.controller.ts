@@ -25,10 +25,7 @@ import { AdminMembersQueryDto } from './dto/admin-members-query.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { UserRole } from '../users/entities/user.entity';
 import { AuditAction } from '../audit-logs/entities/audit-log.entity';
-
-interface RequestWithUser {
-  user: { id: number; email: string; role: string };
-}
+import { AuthenticatedRequestWithAuthUser } from '../../common/interfaces/auth-user.interface';
 
 @ApiTags('관리자 - 회원')
 @Controller('admin')
@@ -63,7 +60,7 @@ export class AdminMembersController {
   updateRole(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateMemberRoleDto,
-    @Request() req: RequestWithUser,
+    @Request() req: AuthenticatedRequestWithAuthUser,
   ) {
     return this.adminMembersService.updateRole(
       id,

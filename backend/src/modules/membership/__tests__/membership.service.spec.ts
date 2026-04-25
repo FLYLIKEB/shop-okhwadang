@@ -176,7 +176,10 @@ describe('MembershipService', () => {
 
       await service.evaluateAllUserTiers();
 
-      expect(mockUserRepo.update).toHaveBeenCalledWith(1, expect.objectContaining({ tier: 'Silver' }));
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        { id: expect.any(Object) },
+        expect.objectContaining({ tier: 'Silver' }),
+      );
       expect(mockEventEmitter.emitTierUpgraded).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 1, previousTier: 'Bronze', newTier: 'Silver' }),
       );
@@ -193,6 +196,10 @@ describe('MembershipService', () => {
       await service.evaluateAllUserTiers();
 
       expect(mockEventEmitter.emitTierUpgraded).not.toHaveBeenCalled();
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        { id: expect.any(Object) },
+        expect.objectContaining({ tierEvaluatedAt: expect.any(Date) }),
+      );
     });
 
     it('should do nothing when no tiers configured', async () => {

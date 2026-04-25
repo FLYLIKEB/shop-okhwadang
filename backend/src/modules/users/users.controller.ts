@@ -15,14 +15,9 @@ import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { RequestAccountDeletionDto } from './dto/request-account-deletion.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { RecentlyViewedService } from '../products/recently-viewed.service';
-
-interface AuthUser {
-  id: number;
-  email: string;
-  role: string;
-}
 
 @ApiTags('사용자')
 @Controller('users')

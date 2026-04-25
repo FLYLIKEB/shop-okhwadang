@@ -34,6 +34,7 @@ const mockOrderRepository = {
 
 const mockPointsService = {
   getUserPointBalance: jest.fn(),
+  getRunningBalanceInTx: jest.fn(),
 };
 
 const mockCouponsService = {
@@ -208,6 +209,12 @@ describe('OrdersService', () => {
         findOne: jest.fn().mockResolvedValue({ balance: 1000 }),
       };
       mockManager.getRepository.mockReturnValue(mockPointRepo);
+      mockPointsService.getRunningBalanceInTx.mockResolvedValue(1000);
+      mockManager.createQueryBuilder.mockReturnValue({
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue({ id: 1, price: 10000, salePrice: null, stock: 5 }),
+      });
 
       await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
       expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);

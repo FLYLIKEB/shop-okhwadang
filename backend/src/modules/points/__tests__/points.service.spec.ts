@@ -102,6 +102,34 @@ describe('PointsService', () => {
     });
   });
 
+  describe('getRunningBalanceInTx', () => {
+    it('should return latest running balance', async () => {
+      mockEntityManager.findOne.mockResolvedValue({ balance: 2500 });
+
+      const balance = await service.getRunningBalanceInTx(
+        mockEntityManager as unknown as EntityManager,
+        1,
+      );
+
+      expect(balance).toBe(2500);
+      expect(mockEntityManager.findOne).toHaveBeenCalledWith(PointHistory, {
+        where: { userId: 1 },
+        order: { createdAt: 'DESC', id: 'DESC' },
+      });
+    });
+
+    it('should return 0 when latest running balance does not exist', async () => {
+      mockEntityManager.findOne.mockResolvedValue(null);
+
+      const balance = await service.getRunningBalanceInTx(
+        mockEntityManager as unknown as EntityManager,
+        1,
+      );
+
+      expect(balance).toBe(0);
+    });
+  });
+
   describe('deductFifo', () => {
     it('should create a spend record with correct balance and return new balance', async () => {
       mockEntityManager.findOne.mockResolvedValue({ balance: 5000 });

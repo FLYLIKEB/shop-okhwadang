@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { MembershipTier } from './entities/membership-tier.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateMembershipTierDto } from './dto/create-membership-tier.dto';
@@ -21,6 +21,8 @@ export interface UserTierInfo {
   nextTier: MembershipTier | null;
   amountToNextTier: number | null;
 }
+
+const USER_TIER_BATCH_SIZE = 500;
 
 @Injectable()
 export class MembershipService {
@@ -125,10 +127,22 @@ export class MembershipService {
       return;
     }
 
-    const users = await this.userRepo.find({ where: { isActive: true } });
+    const users = await this.userRepo.find({
+      select: {
+        id: true,
+        tier: true,
+        tierAccumulatedAmount: true,
+        isActive: true,
+      },
+      where: { isActive: true },
+    });
     this.logger.log(`[membership:cron] Evaluating tiers for ${users.length} users`);
 
     let upgradedCount = 0;
+    const evaluatedAt = new Date();
+    const unchangedUserIds: number[] = [];
+    const tierUpdates = new Map<string, number[]>();
+    const upgradeEvents: TierUpgradedEvent[] = [];
 
     for (const user of users) {
       const accumulated = Number(user.tierAccumulatedAmount);
@@ -139,10 +153,11 @@ export class MembershipService {
       const previousTier = user.tier;
 
       if (appropriateTier.name !== previousTier) {
-        await this.userRepo.update(user.id, {
-          tier: appropriateTier.name,
-          tierEvaluatedAt: new Date(),
-        });
+        const bucket =
+          tierUpdates.get(appropriateTier.name) ??
+          [];
+        bucket.push(user.id);
+        tierUpdates.set(appropriateTier.name, bucket);
 
         // Determine if this is an upgrade (new tier has higher minAmount than previous)
         const previousTierData = tiers.find((t) => t.name === previousTier);
@@ -151,7 +166,7 @@ export class MembershipService {
           Number(newTierData.minAmount) > Number(previousTierData?.minAmount ?? 0);
 
         if (isUpgrade) {
-          this.membershipEvents.emitTierUpgraded(
+          upgradeEvents.push(
             new TierUpgradedEvent(Number(user.id), previousTier, appropriateTier.name),
           );
           upgradedCount++;
@@ -160,10 +175,31 @@ export class MembershipService {
           );
         }
       } else {
-        await this.userRepo.update(user.id, { tierEvaluatedAt: new Date() });
+        unchangedUserIds.push(user.id);
       }
     }
 
+    await this.updateUsersInChunks(unchangedUserIds, { tierEvaluatedAt: evaluatedAt });
+    for (const [tier, userIds] of tierUpdates) {
+      await this.updateUsersInChunks(userIds, { tier, tierEvaluatedAt: evaluatedAt });
+    }
+
+    for (const event of upgradeEvents) {
+      this.membershipEvents.emitTierUpgraded(event);
+    }
+
     this.logger.log(`[membership:cron] Evaluation complete. Upgraded: ${upgradedCount}/${users.length}`);
+  }
+
+  private async updateUsersInChunks(
+    userIds: number[],
+    values: Partial<Pick<User, 'tier' | 'tierEvaluatedAt'>>,
+  ): Promise<void> {
+    for (let index = 0; index < userIds.length; index += USER_TIER_BATCH_SIZE) {
+      const chunk = userIds.slice(index, index + USER_TIER_BATCH_SIZE);
+      if (chunk.length > 0) {
+        await this.userRepo.update({ id: In(chunk) }, values);
+      }
+    }
   }
 }

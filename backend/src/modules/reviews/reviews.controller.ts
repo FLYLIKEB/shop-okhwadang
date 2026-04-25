@@ -30,12 +30,8 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
 import { Public } from '../../common/decorators/public.decorator';
+import { AuthenticatedRequestWithAuthUser } from '../../common/interfaces/auth-user.interface';
 import { UploadService } from '../upload/upload.service';
-
-interface JwtUser {
-  id: number;
-  role: string;
-}
 
 const REVIEW_ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const REVIEW_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -65,7 +61,7 @@ export class ReviewsController {
   @ApiResponse({ status: 201, description: '후기 생성 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   create(
-    @Request() req: { user: JwtUser },
+    @Request() req: AuthenticatedRequestWithAuthUser,
     @Body() dto: CreateReviewDto,
   ) {
     return this.reviewsService.create(req.user.id, dto);
@@ -116,7 +112,7 @@ export class ReviewsController {
   @ApiParam({ name: 'id', type: Number, description: '후기 ID' })
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req: { user: JwtUser },
+    @Request() req: AuthenticatedRequestWithAuthUser,
     @Body() dto: UpdateReviewDto,
   ) {
     return this.reviewsService.update(id, req.user.id, dto);
@@ -132,7 +128,7 @@ export class ReviewsController {
   @ApiParam({ name: 'id', type: Number, description: '후기 ID' })
   remove(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req: { user: JwtUser },
+    @Request() req: AuthenticatedRequestWithAuthUser,
   ) {
     return this.reviewsService.remove(id, req.user.id, req.user.role);
   }

@@ -20,11 +20,7 @@ import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AnswerInquiryDto } from './dto/answer-inquiry.dto';
 import { AdminInquiryQueryDto } from './dto/admin-inquiry-query.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
-
-interface JwtUser {
-  id: number;
-  role: string;
-}
+import { AuthenticatedRequestWithAuthUser } from '../../common/interfaces/auth-user.interface';
 
 @ApiTags('1:1 문의')
 @Controller('inquiries')
@@ -36,7 +32,7 @@ export class InquiriesController {
   @ApiOperation({ summary: '내 문의 목록 조회', description: '현재 사용자의 1:1 문의 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '문의 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  findAll(@Request() req: { user: JwtUser }) {
+  findAll(@Request() req: AuthenticatedRequestWithAuthUser) {
     return this.inquiriesService.findAllByUser(req.user.id);
   }
 
@@ -45,7 +41,7 @@ export class InquiriesController {
   @ApiOperation({ summary: '1:1 문의 생성', description: '새로운 1:1 문의를 생성합니다.' })
   @ApiResponse({ status: 201, description: '문의 생성 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  create(@Request() req: { user: JwtUser }, @Body() dto: CreateInquiryDto) {
+  create(@Request() req: AuthenticatedRequestWithAuthUser, @Body() dto: CreateInquiryDto) {
     return this.inquiriesService.create(req.user.id, dto);
   }
 
@@ -59,7 +55,7 @@ export class InquiriesController {
   @ApiParam({ name: 'id', type: Number, description: '문의 ID' })
   findOne(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req: { user: JwtUser },
+    @Request() req: AuthenticatedRequestWithAuthUser,
   ) {
     return this.inquiriesService.findOne(id, req.user.id);
   }

@@ -31,13 +31,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { JwtService } from '@nestjs/jwt';
 import { AUTH_CONFIG, AuthConfig } from '../../config/auth.config';
-
-interface JwtUser {
-  id: number;
-  email: string;
-  role: string;
-  jti?: string;
-}
+import { AuthUser } from '../../common/interfaces/auth-user.interface';
 
 const ACCESS_TOKEN_MAX_AGE = 60 * 60 * 1000;
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
@@ -171,7 +165,7 @@ export class AuthController {
   @ApiOperation({ summary: '프로필 조회', description: '현재 로그인한 사용자의 프로필 정보를 조회합니다.' })
   @ApiResponse({ status: 200, description: '프로필 정보' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  getProfile(@CurrentUser() user: JwtUser) {
+  getProfile(@CurrentUser() user: AuthUser) {
     return this.authService.getProfile(user.id);
   }
 
@@ -181,7 +175,7 @@ export class AuthController {
   @ApiOperation({ summary: '현재 사용자 조회', description: '현재 로그인한 사용자의 정보를 반환합니다. (profile과 동일)' })
   @ApiResponse({ status: 200, description: '사용자 정보' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  getMe(@CurrentUser() user: JwtUser) {
+  getMe(@CurrentUser() user: AuthUser) {
     return this.authService.getProfile(user.id);
   }
 
@@ -205,7 +199,7 @@ export class AuthController {
   @ApiOperation({ summary: '로그아웃', description: '현재 세션을 종료하고 토큰을 무효화합니다. 인증 쿠키가 삭제됩니다.' })
   @ApiResponse({ status: 204, description: '로그아웃 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  async logout(@CurrentUser() user: JwtUser, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
+  async logout(@CurrentUser() user: AuthUser, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
     const rawAccessToken = (req.cookies as Record<string, string | undefined>)?.accessToken ?? '';
     if (rawAccessToken) {
       const decoded = this.jwtService.decode(rawAccessToken) as { jti?: string; exp?: number } | null;
@@ -227,7 +221,7 @@ export class AuthController {
   @ApiOperation({ summary: '모든 기기 로그아웃', description: '해당 사용자의 모든 토큰을 무효화합니다. 모든 기기에서 로그아웃됩니다.' })
   @ApiResponse({ status: 204, description: '모든 기기 로그아웃 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  async logoutAll(@CurrentUser() user: JwtUser, @Res({ passthrough: true }) res: Response) {
+  async logoutAll(@CurrentUser() user: AuthUser, @Res({ passthrough: true }) res: Response) {
     await this.authService.logoutAll(user.id);
     clearAuthCookies(res, this.authConfig.cookie.secure);
   }
@@ -267,7 +261,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 404, description: '연결된 OAuth 계정을 찾을 수 없습니다.' })
   async disconnectOAuth(
-    @CurrentUser() user: JwtUser,
+    @CurrentUser() user: AuthUser,
     @Param('provider', new ParseEnumPipe(OAuthProvider)) provider: OAuthProvider,
   ): Promise<void> {
     await this.oauthService.disconnect(user.id, provider);

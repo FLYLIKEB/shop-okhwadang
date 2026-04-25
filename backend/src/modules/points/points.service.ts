@@ -56,6 +56,18 @@ export class PointsService {
     return parseInt(result?.total ?? '0', 10);
   }
 
+  async getRunningBalanceInTx(
+    manager: EntityManager,
+    userId: number,
+  ): Promise<number> {
+    const latestEntry = await manager.findOne(PointHistory, {
+      where: { userId },
+      order: { createdAt: 'DESC', id: 'DESC' },
+    });
+
+    return latestEntry ? latestEntry.balance : 0;
+  }
+
   /**
    * Deducts `amount` points using FIFO (earliest-expiring earn entries consumed first).
    * Creates a single 'spend' PointHistory record within the provided transaction manager.
@@ -72,12 +84,7 @@ export class PointsService {
     description: string,
     orderId: number | null = null,
   ): Promise<number> {
-    // Get the latest running balance
-    const latestEntry = await manager.findOne(PointHistory, {
-      where: { userId },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
-    const currentBalance = latestEntry?.balance ?? 0;
+    const currentBalance = await this.getRunningBalanceInTx(manager, userId);
     const newBalance = currentBalance - amount;
 
     await manager.save(PointHistory, {

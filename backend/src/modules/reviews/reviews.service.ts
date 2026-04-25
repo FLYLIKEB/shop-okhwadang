@@ -18,7 +18,7 @@ import { findOrThrow } from '../../common/utils/repository.util';
 import { paginate } from '../../common/utils/pagination.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { SettingsService } from '../settings/settings.service';
-import { addOneYear } from '../points/points.service';
+import { PointsService, addOneYear } from '../points/points.service';
 
 const REVIEW_POINT_REWARD_KEY = 'review_point_reward';
 const PHOTO_REVIEW_BONUS_KEY = 'photo_review_bonus';
@@ -63,6 +63,7 @@ export class ReviewsService {
     private readonly pointHistoryRepo: Repository<PointHistory>,
     private readonly settingsService: SettingsService,
     private readonly dataSource: DataSource,
+    private readonly pointsService: PointsService,
   ) {}
 
   private maskUserName(name: string): string {
@@ -206,7 +207,7 @@ export class ReviewsService {
       const earnAmount = reward + (isPhotoReview ? bonus : 0);
 
       if (earnAmount > 0) {
-        const currentBalance = await this.getBalanceInTx(manager, userId);
+        const currentBalance = await this.pointsService.getRunningBalanceInTx(manager, userId);
         const newBalance = currentBalance + earnAmount;
 
         const pointEntry = manager.create(PointHistory, {
@@ -223,6 +224,7 @@ export class ReviewsService {
         await manager.save(PointHistory, pointEntry);
       }
 
+      await this.refreshProductReviewStats(manager, dto.productId);
       return saved;
     });
 
@@ -244,6 +246,9 @@ export class ReviewsService {
     if (dto.imageUrls !== undefined) review.imageUrls = dto.imageUrls ?? null;
 
     const saved = await this.reviewRepo.save(review);
+    await this.dataSource.transaction((manager) =>
+      this.refreshProductReviewStats(manager, Number(saved.productId)),
+    );
     return this.toResponse(saved);
   }
 
@@ -277,7 +282,10 @@ export class ReviewsService {
         });
 
         if (!alreadyRevoked) {
-          const currentBalance = await this.getBalanceInTx(manager, Number(review.userId));
+          const currentBalance = await this.pointsService.getRunningBalanceInTx(
+            manager,
+            Number(review.userId),
+          );
           const newBalance = currentBalance - earnEntry.amount;
 
           const revokeEntry = manager.create(PointHistory, {
@@ -296,19 +304,28 @@ export class ReviewsService {
       }
 
       await manager.remove(Review, review);
+      await this.refreshProductReviewStats(manager, Number(review.productId));
     });
 
     this.logger.log(`Review deleted: id=${id}, by userId=${userId}`);
   }
 
-  private async getBalanceInTx(
+  private async refreshProductReviewStats(
     manager: EntityManager,
-    userId: number,
-  ): Promise<number> {
-    const latest = await manager.findOne(PointHistory, {
-      where: { userId },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
-    return latest ? latest.balance : 0;
+    productId: number,
+  ): Promise<void> {
+    await manager.query(
+      `UPDATE products p
+       LEFT JOIN (
+         SELECT product_id, COUNT(*) AS review_count, COALESCE(AVG(rating), 0) AS avg_rating
+         FROM reviews
+         WHERE product_id = ? AND is_visible = 1
+         GROUP BY product_id
+       ) rs ON rs.product_id = p.id
+       SET p.review_count = COALESCE(rs.review_count, 0),
+           p.avg_rating = COALESCE(rs.avg_rating, 0)
+       WHERE p.id = ?`,
+      [productId, productId],
+    );
   }
 }

@@ -13,6 +13,7 @@ import { ProductOption } from '../products/entities/product-option.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { PaymentsService } from '../payments/payments.service';
 import { MembershipService } from '../membership/membership.service';
+import { PointsService } from '../points/points.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
@@ -33,6 +34,7 @@ export class AdminOrdersService {
     private readonly paymentsService: PaymentsService,
     private readonly dataSource: DataSource,
     private readonly membershipService: MembershipService,
+    private readonly pointsService: PointsService,
   ) {}
 
   async findAll(query: AdminOrderQueryDto): Promise<PaginatedResult<Order>> {
@@ -138,11 +140,10 @@ export class AdminOrdersService {
       return;
     }
 
-    const latest = await manager.findOne(PointHistory, {
-      where: { userId: order.userId },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
-    const currentBalance = latest?.balance ?? 0;
+    const currentBalance = await this.pointsService.getRunningBalanceInTx(
+      manager,
+      order.userId,
+    );
     const restoredBalance = currentBalance + order.pointsUsed;
 
     await manager.save(PointHistory, {

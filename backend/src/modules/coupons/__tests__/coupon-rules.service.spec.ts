@@ -40,6 +40,7 @@ describe('CouponRulesService', () => {
 
   const mockCouponsService = {
     issueCoupon: jest.fn(),
+    issueCouponsForUser: jest.fn(),
   };
 
   const mockMembershipEvents = {
@@ -189,19 +190,22 @@ describe('CouponRulesService', () => {
     it('issues coupons for all matching active rules', async () => {
       const rules = [makeCouponRule({ couponTemplateId: 10 }), makeCouponRule({ id: 2, couponTemplateId: 20 })];
       mockCouponRuleRepo.find.mockResolvedValue(rules);
-      mockCouponsService.issueCoupon.mockResolvedValue({});
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([
+        { couponId: 10, issued: true },
+        { couponId: 20, issued: true },
+      ]);
 
       await service.applyRulesForUser(CouponRuleTrigger.SIGNUP, 42);
 
-      expect(mockCouponsService.issueCoupon).toHaveBeenCalledTimes(2);
-      expect(mockCouponsService.issueCoupon).toHaveBeenCalledWith({ userId: 42, couponId: 10 });
-      expect(mockCouponsService.issueCoupon).toHaveBeenCalledWith({ userId: 42, couponId: 20 });
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(42, [10, 20]);
     });
 
     it('skips duplicate coupon issue errors silently', async () => {
       const rules = [makeCouponRule()];
       mockCouponRuleRepo.find.mockResolvedValue(rules);
-      mockCouponsService.issueCoupon.mockRejectedValue(new Error('이미 발급된 쿠폰입니다.'));
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([
+        { couponId: 10, issued: false, reason: '이미 발급된 쿠폰입니다.' },
+      ]);
 
       await expect(service.applyRulesForUser(CouponRuleTrigger.SIGNUP, 42)).resolves.not.toThrow();
     });
@@ -209,7 +213,7 @@ describe('CouponRulesService', () => {
     it('does nothing if no active rules', async () => {
       mockCouponRuleRepo.find.mockResolvedValue([]);
       await service.applyRulesForUser(CouponRuleTrigger.SIGNUP, 42);
-      expect(mockCouponsService.issueCoupon).not.toHaveBeenCalled();
+      expect(mockCouponsService.issueCouponsForUser).not.toHaveBeenCalled();
     });
   });
 
@@ -220,11 +224,11 @@ describe('CouponRulesService', () => {
         conditionsJson: { minTier: 'Silver' },
       });
       mockCouponRuleRepo.find.mockResolvedValue([rule]);
-      mockCouponsService.issueCoupon.mockResolvedValue({});
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([{ couponId: 10, issued: true }]);
 
       await service.applyRulesForUser(CouponRuleTrigger.TIER_UP, 1, { newTier: 'Gold' });
 
-      expect(mockCouponsService.issueCoupon).toHaveBeenCalled();
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalled();
     });
 
     it('tier_up rule with minTier condition skips when newTier < minTier', async () => {
@@ -236,17 +240,17 @@ describe('CouponRulesService', () => {
 
       await service.applyRulesForUser(CouponRuleTrigger.TIER_UP, 1, { newTier: 'Silver' });
 
-      expect(mockCouponsService.issueCoupon).not.toHaveBeenCalled();
+      expect(mockCouponsService.issueCouponsForUser).not.toHaveBeenCalled();
     });
 
     it('rule with null conditionsJson always matches', async () => {
       const rule = makeCouponRule({ conditionsJson: null });
       mockCouponRuleRepo.find.mockResolvedValue([rule]);
-      mockCouponsService.issueCoupon.mockResolvedValue({});
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([{ couponId: 10, issued: true }]);
 
       await service.applyRulesForUser(CouponRuleTrigger.SIGNUP, 1);
 
-      expect(mockCouponsService.issueCoupon).toHaveBeenCalled();
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalled();
     });
   });
 });

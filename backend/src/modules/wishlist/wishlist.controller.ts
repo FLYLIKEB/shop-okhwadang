@@ -21,11 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { WishlistService } from './wishlist.service';
 import { CreateWishlistDto } from './dto/create-wishlist.dto';
-
-interface JwtUser {
-  id: number;
-  role: string;
-}
+import { AuthenticatedRequestWithAuthUser } from '../../common/interfaces/auth-user.interface';
 
 @ApiTags('위시리스트')
 @Controller('wishlist')
@@ -37,7 +33,7 @@ export class WishlistController {
   @ApiOperation({ summary: '위시리스트 목록 조회', description: '현재 사용자의 위시리스트 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '위시리스트 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  findAll(@Request() req: { user: JwtUser }) {
+  findAll(@Request() req: AuthenticatedRequestWithAuthUser) {
     return this.wishlistService.findAll(req.user.id);
   }
 
@@ -48,7 +44,7 @@ export class WishlistController {
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiQuery({ name: 'productId', type: Number, description: '상품 ID' })
   check(
-    @Request() req: { user: JwtUser },
+    @Request() req: AuthenticatedRequestWithAuthUser,
     @Query('productId', ParseIntPipe) productId: number,
   ) {
     return this.wishlistService.check(req.user.id, productId);
@@ -60,7 +56,7 @@ export class WishlistController {
   @ApiResponse({ status: 201, description: '위시리스트에 상품 추가 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   create(
-    @Request() req: { user: JwtUser },
+    @Request() req: AuthenticatedRequestWithAuthUser,
     @Body() dto: CreateWishlistDto,
   ) {
     return this.wishlistService.create(req.user.id, dto);
@@ -76,7 +72,7 @@ export class WishlistController {
   @ApiParam({ name: 'id', type: Number, description: '위시리스트 ID' })
   remove(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req: { user: JwtUser },
+    @Request() req: AuthenticatedRequestWithAuthUser,
   ) {
     return this.wishlistService.remove(id, req.user.id);
   }
