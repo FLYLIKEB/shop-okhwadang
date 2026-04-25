@@ -26,6 +26,7 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
     const categorySlug = `commerce-category-${unique}`;
     const productSlug = `commerce-product-${unique}`;
     const couponCode = `COUPON${unique}`;
+    const expiredCouponCode = `COUPON${unique}EXP`;
 
     let adminCookies: string[];
     let userCookies: string[];
@@ -75,15 +76,20 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
     });
 
     afterAll(async () => {
+      await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
+      await dataSource.query('DELETE FROM point_history WHERE user_id = ?', [userId]);
+      await dataSource.query('DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = ?)', [userId]);
+      await dataSource.query('DELETE FROM orders WHERE user_id = ?', [userId]);
       await dataSource.query('DELETE FROM user_addresses WHERE user_id = ?', [userId]);
       await dataSource.query('DELETE FROM wishlist WHERE product_id = ?', [productId]);
       await dataSource.query('DELETE FROM user_coupons WHERE user_id = ?', [userId]);
-      await dataSource.query('DELETE FROM coupons WHERE code = ?', [couponCode]);
+      await dataSource.query('DELETE FROM coupons WHERE code IN (?, ?)', [couponCode, expiredCouponCode]);
       await dataSource.query('DELETE FROM product_images WHERE product_id = ?', [productId]);
       await dataSource.query('DELETE FROM product_options WHERE product_id = ?', [productId]);
       await dataSource.query('DELETE FROM products WHERE id = ?', [productId]);
       await dataSource.query('DELETE FROM categories WHERE id = ?', [categoryId]);
       await dataSource.query('DELETE FROM users WHERE id IN (?, ?)', [adminUserId, userId]);
+      await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
     });
 
     it('wishlist supports create/check/list/delete for a user', async () => {
@@ -164,12 +170,87 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/coupons/calculate')
         .set('Cookie', userCookies)
+        .send({ orderAmount: 5000, userCouponId })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .post('/api/coupons/calculate')
+        .set('Cookie', userCookies)
+        .send({ orderAmount: 15000, pointsToUse: 1 })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .post('/api/coupons/calculate')
+        .set('Cookie', userCookies)
         .send({ orderAmount: 15000, userCouponId })
         .expect(200)
         .expect((res) => {
           expect((res.body as { couponDiscount: number }).couponDiscount).toBe(3000);
           expect((res.body as { totalPayable: number }).totalPayable).toBe(15000);
         });
+
+      const expiredCouponRes = await request(app.getHttpServer())
+        .post('/api/admin/coupons')
+        .set('Cookie', adminCookies)
+        .send({
+          code: expiredCouponCode,
+          name: `만료쿠폰-${unique}`,
+          type: 'fixed',
+          value: 1000,
+          startsAt: '2020-01-01T00:00:00.000Z',
+          expiresAt: '2020-01-02T00:00:00.000Z',
+          isActive: true,
+        })
+        .expect(201);
+      const expiredCouponId = Number((expiredCouponRes.body as { id: number }).id);
+
+      const expiredIssueRes = await request(app.getHttpServer())
+        .post('/api/admin/coupons/issue')
+        .set('Cookie', adminCookies)
+        .send({ couponId: expiredCouponId, userId })
+        .expect(201);
+      const expiredUserCouponId = Number((expiredIssueRes.body as { id: number }).id);
+
+      await request(app.getHttpServer())
+        .post('/api/coupons/calculate')
+        .set('Cookie', userCookies)
+        .send({ orderAmount: 15000, userCouponId: expiredUserCouponId })
+        .expect(400);
+
+      const orderRes = await request(app.getHttpServer())
+        .post('/api/orders')
+        .set('Cookie', userCookies)
+        .send({
+          items: [{ productId, quantity: 1 }],
+          recipientName: '커머스 사용자',
+          recipientPhone: '010-1234-5678',
+          zipcode: '12345',
+          address: '서울특별시 강남구',
+          userCouponId,
+        })
+        .expect(201);
+
+      const orderId = Number((orderRes.body as { id: number }).id);
+      const usedCoupons = await dataSource.query(
+        `SELECT status, order_id FROM user_coupons WHERE id = ?`,
+        [userCouponId],
+      ) as Array<{ status: string; order_id: number }>;
+
+      expect(usedCoupons[0].status).toBe('used');
+      expect(Number(usedCoupons[0].order_id)).toBe(orderId);
+
+      await request(app.getHttpServer())
+        .post('/api/orders')
+        .set('Cookie', userCookies)
+        .send({
+          items: [{ productId, quantity: 1 }],
+          recipientName: '커머스 사용자',
+          recipientPhone: '010-1234-5678',
+          zipcode: '12345',
+          address: '서울특별시 강남구',
+          userCouponId,
+        })
+        .expect(400);
 
       await request(app.getHttpServer())
         .get('/api/coupons/points')

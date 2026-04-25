@@ -18,11 +18,12 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
     let orderId: number;
     let refundOrderId: number;
     let productId: number;
+    let userId: number;
 
     const adminEmail = `admin-orders-admin-${Date.now()}@test.com`;
     const userEmail = `admin-orders-user-${Date.now()}@test.com`;
 
-    async function createOrder(): Promise<number> {
+    async function createOrder(options: { pointsUsed?: number } = {}): Promise<number> {
       const orderRes = await request(app.getHttpServer())
         .post('/api/orders')
         .set('Cookie', cookieHeader(userCookies))
@@ -32,9 +33,26 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
           recipientPhone: '010-1234-5678',
           zipcode: '12345',
           address: '서울시 강남구',
+          ...(options.pointsUsed === undefined ? {} : { pointsUsed: options.pointsUsed }),
         })
         .expect(201);
       return Number((orderRes.body as { id: number | string }).id);
+    }
+
+    async function getProductStock(): Promise<number> {
+      const rows = await dataSource.query(
+        `SELECT stock FROM products WHERE id = ?`,
+        [productId],
+      ) as Array<{ stock: number }>;
+      return Number(rows[0].stock);
+    }
+
+    async function getLatestPointBalance(): Promise<{ balance: number; type: string }> {
+      const rows = await dataSource.query(
+        `SELECT balance, type FROM point_history WHERE user_id = ? ORDER BY id DESC LIMIT 1`,
+        [userId],
+      ) as Array<{ balance: number; type: string }>;
+      return { balance: Number(rows[0].balance), type: rows[0].type };
     }
 
     beforeAll(async () => {
@@ -59,6 +77,11 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         password: 'Test1234!',
         name: '일반유저',
       });
+      const userRows = await dataSource.query(
+        `SELECT id FROM users WHERE email = ?`,
+        [userEmail],
+      ) as Array<{ id: number }>;
+      userId = Number(userRows[0].id);
       userCookies = await loginAndGetCookies(app, {
         email: userEmail,
         password: 'Test1234!',
@@ -72,6 +95,17 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
 
       orderId = await createOrder();
       refundOrderId = await createOrder();
+    });
+
+    afterAll(async () => {
+      await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
+      await dataSource.query(`DELETE FROM point_history WHERE user_id = ?`, [userId]);
+      await dataSource.query(`DELETE FROM shipping WHERE order_id IN (SELECT id FROM orders WHERE user_id = ?)`, [userId]);
+      await dataSource.query(`DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = ?)`, [userId]);
+      await dataSource.query(`DELETE FROM orders WHERE user_id = ?`, [userId]);
+      await dataSource.query(`DELETE FROM products WHERE id = ?`, [productId]);
+      await dataSource.query(`DELETE FROM users WHERE email IN (?, ?)`, [adminEmail, userEmail]);
+      await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
     });
 
     describe('GET /api/admin/orders', () => {
@@ -162,6 +196,55 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       });
     });
 
+    describe('stock and point reversals', () => {
+      it('paid → cancelled restores reserved product stock', async () => {
+        const stockBeforeOrder = await getProductStock();
+        const cancelOrderId = await createOrder();
+
+        expect(await getProductStock()).toBe(stockBeforeOrder - 1);
+
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${cancelOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'paid' })
+          .expect(200);
+
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${cancelOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'cancelled' })
+          .expect(200);
+
+        expect(await getProductStock()).toBe(stockBeforeOrder);
+      });
+
+      it('paid → cancelled restores spent points', async () => {
+        await dataSource.query(
+          `INSERT INTO point_history (user_id, type, amount, balance, description, expires_at, related_entity_type)
+           VALUES (?, 'earn', 5000, 5000, '테스트 적립', DATE_ADD(NOW(), INTERVAL 30 DAY), 'order')`,
+          [userId],
+        );
+
+        const pointsOrderId = await createOrder({ pointsUsed: 2000 });
+
+        expect(await getLatestPointBalance()).toEqual({ balance: 3000, type: 'spend' });
+
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${pointsOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'paid' })
+          .expect(200);
+
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${pointsOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'cancelled' })
+          .expect(200);
+
+        expect(await getLatestPointBalance()).toEqual({ balance: 5000, type: 'admin_adjust' });
+      });
+    });
+
     describe('POST /api/admin/shipping/:orderId', () => {
       it('운송장 등록 → 201', async () => {
         const res = await request(app.getHttpServer())
@@ -202,6 +285,14 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
 
         const body = res.body as { status: string };
         expect(body.status).toBe('shipped');
+      });
+
+      it('shipped → cancelled: 전이 불가', async () => {
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${orderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'cancelled' })
+          .expect(400);
       });
 
       it('shipped → delivered', async () => {
@@ -304,6 +395,8 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       });
 
       it('refund_requested → refunded', async () => {
+        const stockBeforeRefund = await getProductStock();
+
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
           .set('Cookie', cookieHeader(adminCookies))
@@ -312,6 +405,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
 
         const body = res.body as { status: string };
         expect(body.status).toBe('refunded');
+        expect(await getProductStock()).toBe(stockBeforeRefund + 1);
       });
     });
   });

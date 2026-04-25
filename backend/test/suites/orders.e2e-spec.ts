@@ -17,6 +17,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
     let userACookies: AuthCookies;
     let userBCookies: AuthCookies;
     let productId: number;
+    let productOptionId: number;
     let orderId: number;
 
     const userAEmail = `orders-user-a-${Date.now()}@test.com`;
@@ -61,7 +62,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
          VALUES (?, '사이즈', 'M', 0, 3, 0)`,
         [productId],
       );
-      void (optResult as { insertId: number }).insertId;
+      productOptionId = (optResult as { insertId: number }).insertId;
     });
 
     afterAll(async () => {
@@ -119,6 +120,46 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
         expect(Number(rows[0].stock)).toBe(4); // started at 5, ordered 1
       });
 
+      it('option order decreases both product and option stock', async () => {
+        await request(app.getHttpServer())
+          .post('/api/orders')
+          .set('Cookie', cookieHeader(userACookies))
+          .send({
+            items: [{ productId, productOptionId, quantity: 2 }],
+            recipientName: '홍길동',
+            recipientPhone: '010-1234-5678',
+            zipcode: '12345',
+            address: '서울시 강남구',
+          })
+          .expect(201);
+
+        const products = await dataSource.query(
+          `SELECT stock FROM products WHERE id = ?`,
+          [productId],
+        ) as Array<{ stock: number }>;
+        const options = await dataSource.query(
+          `SELECT stock FROM product_options WHERE id = ?`,
+          [productOptionId],
+        ) as Array<{ stock: number }>;
+
+        expect(Number(products[0].stock)).toBe(2);
+        expect(Number(options[0].stock)).toBe(1);
+      });
+
+      it('option excess quantity → 400', () => {
+        return request(app.getHttpServer())
+          .post('/api/orders')
+          .set('Cookie', cookieHeader(userACookies))
+          .send({
+            items: [{ productId, productOptionId, quantity: 2 }],
+            recipientName: '홍길동',
+            recipientPhone: '010-1234-5678',
+            zipcode: '12345',
+            address: '서울시 강남구',
+          })
+          .expect(400);
+      });
+
       it('excess quantity → 400', () => {
         return request(app.getHttpServer())
           .post('/api/orders')
@@ -129,6 +170,21 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             recipientPhone: '010-1234-5678',
             zipcode: '12345',
             address: '서울시 강남구',
+          })
+          .expect(400);
+      });
+
+      it('insufficient points → 400', () => {
+        return request(app.getHttpServer())
+          .post('/api/orders')
+          .set('Cookie', cookieHeader(userACookies))
+          .send({
+            items: [{ productId, quantity: 1 }],
+            recipientName: '홍길동',
+            recipientPhone: '010-1234-5678',
+            zipcode: '12345',
+            address: '서울시 강남구',
+            pointsUsed: 1,
           })
           .expect(400);
       });
