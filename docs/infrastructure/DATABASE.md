@@ -243,7 +243,7 @@ erDiagram
 | `method` | `ENUM('card','bank_transfer','virtual_account','phone','mock')` | NOT NULL | |
 | `amount` | `DECIMAL(12,2)` | NOT NULL | Verified server-side amount |
 | `status` | `ENUM('pending','confirmed','cancelled','partial_cancelled','refunded','failed')` | DEFAULT `'pending'` | |
-| `gateway` | `ENUM('mock','toss','inicis')` | NOT NULL | PG adapter used |
+| `gateway` | `ENUM('mock','toss','inicis')` | NOT NULL | PG adapter used. 현재 코드에서는 Stripe가 `inicis` placeholder로 저장되므로 `stripe` enum 추가 마이그레이션 필요 |
 | `paid_at` | `DATETIME` | NULL | Confirmation timestamp |
 | `cancelled_at` | `DATETIME` | NULL | |
 | `cancel_reason` | `VARCHAR(500)` | NULL | |
@@ -281,6 +281,8 @@ pending → failed
 ```
 payment_confirmed → preparing → shipped → in_transit → delivered
 ```
+
+실제 배송 정책에는 실패 상태(`failed`)가 포함된다. 상태 전이 문서와 DB enum은 코드 기준으로 동기화가 필요하다.
 
 ---
 
@@ -557,5 +559,6 @@ cd backend/scripts
 | `cart_items`, `wishlist` | Hard delete | No audit requirement |
 | `reviews` | Soft (`is_visible = false`) | Admin moderation |
 | `coupons` | Soft (`is_active = false`) | Historical reference |
+| `audit_logs` | Retain 3 years minimum | Admin/security/payment audit trail |
 | `product_images`, `product_options` | CASCADE with product | Owned by product |
 | `page_blocks` | CASCADE with page | Owned by page |

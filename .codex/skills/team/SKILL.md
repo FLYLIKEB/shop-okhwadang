@@ -1,6 +1,7 @@
 ---
 name: team
 description: "[OMX] N coordinated agents on shared task list using tmux-based orchestration"
+runtime: true
 ---
 
 # Team Skill

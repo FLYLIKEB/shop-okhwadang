@@ -29,10 +29,11 @@
 
 | 범위 | 제한 |
 |------|------|
-| 전역 | 1분당 10회 |
-| 인증 엔드포인트 | 1분당 5회 |
+| 전역 | 기본 1분당 200회 (`THROTTLE_GLOBAL_LIMIT`) |
+| 인증 엔드포인트 | 기본 1분당 30회 (`THROTTLE_AUTH_LIMIT`) |
+| 비밀번호 찾기 | 기본 1분당 1회, 이메일 기준 우선 제한 (`THROTTLE_FORGOT_PASSWORD_LIMIT`) |
 
-NestJS `ThrottlerModule` 사용.
+NestJS `ThrottlerModule`을 사용하며, 인증 사용자는 user id 기준, 비인증 사용자는 IP 기준으로 제한한다.
 
 ---
 
@@ -68,6 +69,17 @@ NestJS `ThrottlerModule` 사용.
 
 ---
 
+## 관리자 감사 로그
+
+- 관리자 주문/회원/상품/쿠폰/export 액션과 주요 인증 이벤트를 감사 로그로 기록한다.
+- 보관 기간은 기본 3년으로 한다. 법적 분쟁, 결제/환불 이슈, 보안 사고 조사 중인 로그는 종료 전까지 삭제하지 않는다.
+- 조회 권한은 `super_admin` 전용을 원칙으로 하고, 일반 `admin`은 감사 로그 전체 조회 권한을 갖지 않는다.
+- 로그에는 actor id, actor role, action, resource type/id, 변경 전후 JSON, IP, user-agent를 저장한다.
+- 개인정보와 시크릿은 저장 전 마스킹한다. 비밀번호, 토큰, API key, 결제 원문 중 민감 필드는 원문 저장 금지다.
+- export 로그는 다운로드 사유와 대상 범위를 남긴다.
+
+---
+
 ## 환경 변수 관리
 
 - `.env` 파일 `.gitignore`에 포함 — **절대 커밋 금지**
@@ -96,9 +108,10 @@ NestJS `ThrottlerModule` 사용.
 - [ ] `.env` 파일이 `.gitignore`에 포함됨
 - [ ] SSH 키가 `~/.ssh/`에 있음 (프로젝트 루트에 없음)
 - [ ] 환경변수로 시크릿 관리 (하드코딩 없음)
-- [ ] Rate limiting 설정됨
-- [ ] CORS 허용 Origin 설정됨
-- [ ] ValidationPipe 전역 적용됨
-- [ ] 결제 금액 서버 사이드 검증 구현됨
-- [ ] HTTPS 강제 (프로덕션)
-- [ ] 보안 헤더 설정 (Helmet 등)
+- [x] Rate limiting 설정됨
+- [x] CORS 허용 Origin 설정됨
+- [x] ValidationPipe 전역 적용됨
+- [x] 결제 금액 서버 사이드 검증 구현됨
+- [ ] HTTPS 강제 (프로덕션 인프라에서 확인)
+- [x] 보안 헤더 설정 (Helmet)
+- [x] 관리자 감사 로그 기본 구조 구현됨

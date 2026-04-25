@@ -1,6 +1,7 @@
 ---
 name: ultraqa
 description: "[OMX] QA cycling workflow - test, verify, fix, repeat until goal met"
+runtime: true
 ---
 
 # UltraQA Skill

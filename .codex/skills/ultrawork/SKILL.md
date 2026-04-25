@@ -1,6 +1,7 @@
 ---
 name: ultrawork
 description: "[OMX] Parallel execution engine for high-throughput task completion"
+runtime: true
 ---
 
 <Purpose>

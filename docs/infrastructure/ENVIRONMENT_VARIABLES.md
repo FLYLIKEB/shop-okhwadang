@@ -65,9 +65,12 @@
 
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
-| `PAYMENT_GATEWAY` | `mock` | PG 어댑터 선택 (`mock`/`toss`/`inicis`) |
+| `PAYMENT_GATEWAY` | `mock` | 현재 코드 기준 PG 어댑터 선택 (`mock`/`toss`/`stripe`). 국내 목표 지원 PG는 네이버페이/KG이니시스/토스페이먼츠, 글로벌은 Stripe |
 | `TOSS_SECRET_KEY` | — | 토스페이먼츠 시크릿 키 |
 | `TOSS_CLIENT_KEY` | — | 토스페이먼츠 클라이언트 키 |
+| `STRIPE_SECRET_KEY` | — | Stripe 시크릿 키 |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | — | Stripe 공개 키 |
+| `STRIPE_WEBHOOK_SECRET` | — | Stripe 웹훅 서명 키 |
 
 ### 스토리지
 
