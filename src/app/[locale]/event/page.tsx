@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { promotionsApi } from '@/lib/api';
 import type { Promotion } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -11,24 +12,31 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/shared/EmptyState';
 import CountdownTimer from '@/components/shared/home/CountdownTimer';
 
-const TYPE_LABELS: Record<Promotion['type'], string> = {
-  timesale: '타임세일',
-  exhibition: '기획전',
-  event: '이벤트',
+const TYPE_KEY_MAP: Record<Promotion['type'], string> = {
+  timesale: 'types.timesale',
+  exhibition: 'types.exhibition',
+  event: 'types.event',
 };
 
 const TYPE_ORDER: Promotion['type'][] = ['timesale', 'exhibition', 'event'];
 
+const DATE_LOCALE_MAP: Record<string, string> = {
+  ko: 'ko-KR',
+  en: 'en-US',
+};
+
 export default function EventPage() {
   const { locale } = useParams<{ locale: string }>();
+  const t = useTranslations('event');
   const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const dateLocale = DATE_LOCALE_MAP[locale] ?? locale;
 
   const { execute: loadPromotions, isLoading: loading } = useAsyncAction(
     async () => {
       const data = await promotionsApi.getList(locale);
       setPromotions(Array.isArray(data) ? data : []);
     },
-    { errorMessage: '이벤트 목록을 불러오지 못했습니다.' },
+    { errorMessage: t('errorLoad') },
   );
 
   useEffect(() => {
@@ -38,7 +46,7 @@ export default function EventPage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">이벤트/프로모션</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('title')}</h1>
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <SkeletonBox key={i} className="h-32 rounded-xl" />
@@ -51,8 +59,8 @@ export default function EventPage() {
   if (promotions.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">이벤트/프로모션</h1>
-        <EmptyState title="진행 중인 프로모션이 없습니다." />
+        <h1 className="text-2xl font-bold mb-6">{t('title')}</h1>
+        <EmptyState title={t('empty')} />
       </div>
     );
   }
@@ -67,7 +75,7 @@ export default function EventPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-8">이벤트/프로모션</h1>
+      <h1 className="text-2xl font-bold mb-8">{t('title')}</h1>
 
       {TYPE_ORDER.map((type) => {
         const items = grouped[type];
@@ -80,7 +88,7 @@ export default function EventPage() {
                   LIVE
                 </span>
               )}
-              {TYPE_LABELS[type]}
+              {t(TYPE_KEY_MAP[type])}
             </h2>
             <ul className="space-y-4">
               {items.map((promo) => (
@@ -109,14 +117,18 @@ export default function EventPage() {
                       )}
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         {promo.discountRate && (
-                          <span className="text-red-500 font-bold">{promo.discountRate}% 할인</span>
+                          <span className="text-red-500 font-bold">
+                            {t('discount', { percent: promo.discountRate })}
+                          </span>
                         )}
                         <span>
-                          {new Date(promo.endsAt).toLocaleDateString('ko-KR')} 까지
+                          {t('until', {
+                            date: new Date(promo.endsAt).toLocaleDateString(dateLocale),
+                          })}
                         </span>
                         {type === 'timesale' && (
                           <span className="flex items-center gap-1">
-                            남은 시간: <CountdownTimer endsAt={promo.endsAt} />
+                            {t('timeLeft')}: <CountdownTimer endsAt={promo.endsAt} />
                           </span>
                         )}
                       </div>
