@@ -27,6 +27,7 @@ describe('ReviewList', () => {
     data: [
       {
         id: 1,
+        source: 'internal' as const,
         userId: 10,
         userName: '홍**',
         productId: 5,
@@ -57,6 +58,33 @@ describe('ReviewList', () => {
       expect(screen.getByText('정말 좋아요')).toBeInTheDocument()
     })
     expect(screen.getByText('홍**')).toBeInTheDocument()
+  })
+
+
+  it('renders SmartStore source badge for external reviews', async () => {
+    mockGetByProduct.mockResolvedValue({
+      ...mockResponse,
+      data: [
+        {
+          ...mockResponse.data[0],
+          id: 9,
+          source: 'smartstore' as const,
+          externalReviewId: 'naver-1',
+          userName: '네**',
+          orderItemId: null,
+          content: '스마트스토어 후기',
+        },
+      ],
+      stats: { ...mockResponse.stats, totalCount: 2, externalCount: 1 },
+    })
+
+    render(<ReviewList productId={5} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('스마트스토어 후기')).toBeInTheDocument()
+    })
+    expect(screen.getByText('네이버 스마트스토어')).toBeInTheDocument()
+    expect(screen.getByText('네이버 스마트스토어 1개 포함')).toBeInTheDocument()
   })
 
   it('shows empty state when no reviews', async () => {

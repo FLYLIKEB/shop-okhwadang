@@ -2,10 +2,13 @@ import { apiClient, type UploadedFile } from './core';
 
 export interface ReviewItem {
   id: number;
+  source?: 'internal' | 'smartstore';
+  externalReviewId?: string | null;
+  externalProductId?: string | null;
   userId: number;
   userName: string;
   productId: number;
-  orderItemId: number;
+  orderItemId: number | null;
   rating: number;
   content: string | null;
   imageUrls: string[] | null;
@@ -17,6 +20,8 @@ export interface ReviewStats {
   averageRating: number;
   totalCount: number;
   distribution: Record<string, number>;
+  internalCount?: number;
+  externalCount?: number;
 }
 
 export interface ReviewListResponse {
@@ -36,7 +41,7 @@ export interface ReviewQueryParams {
 
 export interface CreateReviewData {
   productId: number;
-  orderItemId: number;
+  orderItemId: number | null;
   rating: number;
   content?: string | null;
   imageUrls?: string[];

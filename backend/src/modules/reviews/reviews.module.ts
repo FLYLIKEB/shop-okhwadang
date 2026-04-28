@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Review } from './entities/review.entity';
+import { ExternalReview } from './entities/external-review.entity';
 import { OrderItem } from '../orders/entities/order-item.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { ReviewsController } from './reviews.controller';
@@ -11,7 +12,7 @@ import { PointsModule } from '../points/points.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Review, OrderItem, PointHistory]),
+    TypeOrmModule.forFeature([Review, ExternalReview, OrderItem, PointHistory]),
     UploadModule,
     SettingsModule,
     PointsModule,

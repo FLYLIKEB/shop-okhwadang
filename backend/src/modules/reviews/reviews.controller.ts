@@ -29,7 +29,9 @@ import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
+import { ImportSmartStoreReviewsDto } from './dto/import-smartstore-reviews.dto';
 import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthenticatedRequestWithAuthUser } from '../../common/interfaces/auth-user.interface';
 import { UploadService } from '../upload/upload.service';
 
@@ -53,6 +55,21 @@ export class ReviewsController {
   @ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 개수' })
   findAll(@Query() query: ReviewQueryDto) {
     return this.reviewsService.findAll(query);
+  }
+
+  @Post('external/smartstore/import')
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: '스마트스토어 후기 수동 가져오기',
+    description:
+      '네이버 스마트스토어 후기를 운영자가 검증한 CSV/JSON 데이터로 수동 반영합니다. 크롤링하지 않고 원본 이미지 URL은 참조로만 저장합니다.',
+  })
+  @ApiResponse({ status: 201, description: '스마트스토어 후기 반영 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '관리자 권한 필요' })
+  importSmartStoreReviews(@Body() dto: ImportSmartStoreReviewsDto) {
+    return this.reviewsService.importSmartStoreReviews(dto);
   }
 
   @Post()

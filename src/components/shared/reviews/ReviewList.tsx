@@ -83,7 +83,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
       ) : (
         <div>
           {reviews.map((review) => (
-            <ReviewCard key={review.id} review={review} />
+            <ReviewCard key={`${review.source ?? 'internal'}-${review.id}`} review={review} />
           ))}
         </div>
       )}

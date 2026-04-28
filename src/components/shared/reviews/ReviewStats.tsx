@@ -12,6 +12,7 @@ interface ReviewStatsProps {
 const ReviewStatsComponent = memo(function ReviewStats({ stats }: ReviewStatsProps) {
   const t = useTranslations('review')
   const maxCount = Math.max(...Object.values(stats.distribution), 1)
+  const externalCount = stats.externalCount ?? 0
 
   return (
     <div className="flex flex-col items-center gap-4 rounded-lg border border-border p-4 sm:flex-row sm:gap-8">
@@ -24,6 +25,11 @@ const ReviewStatsComponent = memo(function ReviewStats({ stats }: ReviewStatsPro
         <span className="text-xs text-muted-foreground">
           {t('totalCount', { count: stats.totalCount })}
         </span>
+        {externalCount > 0 && (
+          <span className="text-[11px] text-muted-foreground">
+            네이버 스마트스토어 {externalCount}개 포함
+          </span>
+        )}
       </div>
 
       {/* Distribution */}

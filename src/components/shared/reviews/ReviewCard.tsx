@@ -18,12 +18,19 @@ const ReviewCardComponent = memo(function ReviewCard({ review }: ReviewCardProps
     day: 'numeric',
   })
 
+  const isSmartStoreReview = review.source === 'smartstore'
+
   return (
     <div className="border-b border-border py-4 last:border-b-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <StarRating rating={review.rating} size="sm" />
           <span className="text-sm font-medium text-foreground">{review.userName}</span>
+          {isSmartStoreReview && (
+            <span className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+              네이버 스마트스토어
+            </span>
+          )}
         </div>
         <time className="text-xs text-muted-foreground">{formattedDate}</time>
       </div>
