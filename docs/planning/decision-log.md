@@ -67,3 +67,7 @@ updated: 2026-04-25
 
 비밀번호, 토큰, API key, 결제 민감 원문, 개인정보 과다 노출 필드는 저장 전 마스킹한다.
 export 로그는 다운로드 사유와 대상 범위를 남긴다.
+
+## 2026-04-28 — ko/en locale policy enforcement
+
+Issue #724 finalized the public locale surface as Korean and English only. Japanese/Chinese legacy DB columns are retained for backward-compatible reads/migrations only and are deprecated; new DTOs, admin forms, settings updates, seed data, and locale query validation must not write ja/zh locale fields.

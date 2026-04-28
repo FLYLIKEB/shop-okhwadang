@@ -12,6 +12,7 @@ import {
   HttpStatus,
   BadRequestException,
 } from '@nestjs/common';
+import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 
 const VALID_GROUPS = ['gnb', 'sidebar', 'footer'] as const;
 type NavigationGroup = (typeof VALID_GROUPS)[number];
@@ -42,7 +43,7 @@ export class NavigationController {
   @ApiResponse({ status: 400, description: 'group 파라미터 필요' })
   @ApiQuery({ name: 'group', required: true, enum: ['gnb', 'sidebar', 'footer'], description: '네비게이션 그룹' })
   @ApiQuery({ name: 'locale', required: false, example: 'en', description: '언어 코드 (ko, en)' })
-  findByGroup(@Query('group') group?: string, @Query('locale') locale?: string) {
+  findByGroup(@Query('group') group?: string, @Query('locale', OptionalLocalePipe) locale?: string) {
     if (!group || !VALID_GROUPS.includes(group as NavigationGroup)) {
       throw new BadRequestException(
         `group 파라미터가 필요합니다. (${VALID_GROUPS.join(', ')})`,

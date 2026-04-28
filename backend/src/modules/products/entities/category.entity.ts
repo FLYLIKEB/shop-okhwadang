@@ -23,9 +23,11 @@ export class Category {
   nameEn!: string | null;
 
   @Column({ name: 'name_ja', type: 'varchar', length: 100, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   nameJa!: string | null;
 
   @Column({ name: 'name_zh', type: 'varchar', length: 100, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   nameZh!: string | null;
 
   @Column({ length: 100, unique: true })

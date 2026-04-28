@@ -43,9 +43,11 @@ export class Product {
   nameEn!: string | null;
 
   @Column({ name: 'name_ja', type: 'varchar', length: 255, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   nameJa!: string | null;
 
   @Column({ name: 'name_zh', type: 'varchar', length: 255, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   nameZh!: string | null;
 
   @Column({ length: 255, unique: true })
@@ -58,9 +60,11 @@ export class Product {
   descriptionEn!: string | null;
 
   @Column({ name: 'description_ja', type: 'text', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   descriptionJa!: string | null;
 
   @Column({ name: 'description_zh', type: 'text', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   descriptionZh!: string | null;
 
   @Column({ name: 'short_description', type: 'varchar', length: 500, nullable: true })
@@ -70,9 +74,11 @@ export class Product {
   shortDescriptionEn!: string | null;
 
   @Column({ name: 'short_description_ja', type: 'varchar', length: 500, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   shortDescriptionJa!: string | null;
 
   @Column({ name: 'short_description_zh', type: 'varchar', length: 500, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   shortDescriptionZh!: string | null;
 
   @Column({ type: 'decimal', precision: 12, scale: 2 })

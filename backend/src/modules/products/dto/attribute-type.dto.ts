@@ -34,18 +34,6 @@ export class CreateAttributeTypeDto {
   @MaxLength(100)
   nameEn?: string;
 
-  @ApiPropertyOptional({ example: '泥料', description: '중국어 이름' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  nameJa?: string;
-
-  @ApiPropertyOptional({ example: '泥料', description: '중국어 이름' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  nameZh?: string;
-
   @ApiPropertyOptional({ enum: AttributeInputType, default: AttributeInputType.TEXT, description: '입력 타입' })
   @IsOptional()
   @IsEnum(AttributeInputType)
@@ -98,18 +86,6 @@ export class UpdateAttributeTypeDto {
   @IsString()
   @MaxLength(100)
   nameEn?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  nameJa?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  nameZh?: string;
 
   @ApiPropertyOptional({ enum: AttributeInputType })
   @IsOptional()

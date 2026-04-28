@@ -21,9 +21,11 @@ export class Faq {
   questionEn!: string | null;
 
   @Column({ name: 'question_ja', type: 'varchar', length: 500, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   questionJa!: string | null;
 
   @Column({ name: 'question_zh', type: 'varchar', length: 500, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   questionZh!: string | null;
 
   @Column({ type: 'longtext' })
@@ -33,9 +35,11 @@ export class Faq {
   answerEn!: string | null;
 
   @Column({ name: 'answer_ja', type: 'longtext', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   answerJa!: string | null;
 
   @Column({ name: 'answer_zh', type: 'longtext', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   answerZh!: string | null;
 
   @Column({ name: 'sort_order', type: 'int', default: 0 })

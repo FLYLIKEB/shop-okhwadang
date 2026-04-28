@@ -108,50 +108,16 @@ export class CreateProductDto {
   @MaxLength(255, { message: '영문 상품명은 최대 255자까지 입력 가능합니다.' })
   nameEn?: string;
 
-  @ApiPropertyOptional({ example: '玉花堂 普洱茶', description: '상품명 (일본어)' })
-  @IsOptional()
-  @IsString({ message: '일본어 상품명은 문자열이어야 합니다.' })
-  @MaxLength(255, { message: '일본어 상품명은 최대 255자까지 입력 가능합니다.' })
-  nameJa?: string;
-
-  @ApiPropertyOptional({ example: '玉花堂 普洱茶', description: '상품명 (중문)' })
-  @IsOptional()
-  @IsString({ message: '중문 상품명은 문자열이어야 합니다.' })
-  @MaxLength(255, { message: '중문 상품명은 최대 255자까지 입력 가능합니다.' })
-  nameZh?: string;
-
   @ApiPropertyOptional({ example: 'Traditional pu-erh tea...', description: '상품 상세 설명 (영문)' })
   @IsOptional()
   @IsString({ message: '영문 설명은 문자열이어야 합니다.' })
   descriptionEn?: string;
-
-  @ApiPropertyOptional({ example: '伝統的な普洱茶...', description: '상품 상세 설명 (일본어)' })
-  @IsOptional()
-  @IsString({ message: '일본어 설명은 문자열이어야 합니다.' })
-  descriptionJa?: string;
-
-  @ApiPropertyOptional({ example: '传统普洱茶...', description: '상품 상세 설명 (중문)' })
-  @IsOptional()
-  @IsString({ message: '중문 설명은 문자열이어야 합니다.' })
-  descriptionZh?: string;
 
   @ApiPropertyOptional({ example: 'Smooth taste and deep aroma', description: '짧은 설명 (영문, 500자 이내)' })
   @IsOptional()
   @IsString({ message: '영문 짧은 설명은 문자열이어야 합니다.' })
   @MaxLength(500, { message: '영문 짧은 설명은 최대 500자까지 입력 가능합니다.' })
   shortDescriptionEn?: string;
-
-  @ApiPropertyOptional({ example: 'なめらかな味わい', description: '짧은 설명 (일본어, 500자 이내)' })
-  @IsOptional()
-  @IsString({ message: '일본어 짧은 설명은 문자열이어야 합니다.' })
-  @MaxLength(500, { message: '일본어 짧은 설명은 최대 500자까지 입력 가능합니다.' })
-  shortDescriptionJa?: string;
-
-  @ApiPropertyOptional({ example: '口感顺滑', description: '짧은 설명 (중문, 500자 이내)' })
-  @IsOptional()
-  @IsString({ message: '중문 짧은 설명은 문자열이어야 합니다.' })
-  @MaxLength(500, { message: '중문 짧은 설명은 최대 500자까지 입력 가능합니다.' })
-  shortDescriptionZh?: string;
 
   @ApiPropertyOptional({ example: '주니', description: '니료 종류' })
   @IsOptional()

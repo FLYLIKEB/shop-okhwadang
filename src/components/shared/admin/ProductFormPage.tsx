@@ -35,11 +35,7 @@ interface ProductFormData {
   detailImages: DetailImage[];
   options: ProductOptionDraft[];
   nameEn: string;
-  nameJa: string;
-  nameZh: string;
   descriptionEn: string;
-  descriptionJa: string;
-  descriptionZh: string;
 }
 
 interface ProductFormPageProps {
@@ -136,31 +132,19 @@ function MultilingualSection({
   form,
   set,
 }: {
-  form: Pick<ProductFormData, 'nameEn' | 'nameJa' | 'nameZh' | 'descriptionEn' | 'descriptionJa' | 'descriptionZh'>;
+  form: Pick<ProductFormData, 'nameEn' | 'descriptionEn'>;
   set: Setter;
 }) {
   return (
     <section className="space-y-4">
       <h2 className="text-sm font-semibold">다국어 정보</h2>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4">
         <TextField
           label="상품명 (영어)"
           value={form.nameEn}
           onChange={(v) => set('nameEn', v)}
           placeholder="Product name in English"
-        />
-        <TextField
-          label="상품명 (일본어)"
-          value={form.nameJa}
-          onChange={(v) => set('nameJa', v)}
-          placeholder="日本語の商品名"
-        />
-        <TextField
-          label="상품명 (중국어)"
-          value={form.nameZh}
-          onChange={(v) => set('nameZh', v)}
-          placeholder="中文商品名称"
         />
       </div>
 
@@ -169,18 +153,6 @@ function MultilingualSection({
         value={form.descriptionEn}
         onChange={(v) => set('descriptionEn', v)}
         placeholder="Product description in English"
-      />
-      <TextAreaField
-        label="상세 설명 (일본어)"
-        value={form.descriptionJa}
-        onChange={(v) => set('descriptionJa', v)}
-        placeholder="日本語の商品説明"
-      />
-      <TextAreaField
-        label="상세 설명 (중국어)"
-        value={form.descriptionZh}
-        onChange={(v) => set('descriptionZh', v)}
-        placeholder="中文商品描述"
       />
     </section>
   );
@@ -284,11 +256,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       stock: o.stock,
     })) ?? [],
     nameEn: '',
-    nameJa: '',
-    nameZh: '',
     descriptionEn: '',
-    descriptionJa: '',
-    descriptionZh: '',
   });
 
   const set = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) =>
@@ -324,11 +292,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         status: form.status,
         isFeatured: form.isFeatured,
         nameEn: form.nameEn.trim() || undefined,
-        nameJa: form.nameJa.trim() || undefined,
-        nameZh: form.nameZh.trim() || undefined,
         descriptionEn: form.descriptionEn.trim() || undefined,
-        descriptionJa: form.descriptionJa.trim() || undefined,
-        descriptionZh: form.descriptionZh.trim() || undefined,
         images: form.images.map((img, index) => ({
           url: img.url,
           alt: img.alt,

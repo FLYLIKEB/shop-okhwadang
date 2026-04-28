@@ -208,7 +208,7 @@ function NiloTypeFormModal({
       <h2 className="text-lg font-semibold mb-4">{initial ? '니로타입 수정' : '니로타입 추가'}</h2>
       <form onSubmit={(e) => handleSubmit(e, handleFormSubmit, onClose)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <FormInput label="이름 (中文)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="朱泥" required />
+          <FormInput label="이름" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="주니" required />
           <FormInput label="이름 (한글)" value={form.nameKo} onChange={(e) => setForm({ ...form, nameKo: e.target.value })} placeholder="주니" required />
         </div>
         <div>

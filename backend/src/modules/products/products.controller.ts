@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
   ApiTags,
   ApiOperation,
@@ -84,7 +85,7 @@ export class ProductsController {
   @ApiQuery({ name: 'locale', required: false, type: String, description: ' locale (ko/en)' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @Query('locale') locale: string | undefined,
+    @Query('locale', OptionalLocalePipe) locale: string | undefined,
     @Request() req: RequestWithAuthUser,
   ) {
     const isAdmin = req.user?.role === 'admin';

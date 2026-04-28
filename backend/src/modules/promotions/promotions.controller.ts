@@ -9,6 +9,7 @@ import {
   Query,
   ParseIntPipe,
 } from '@nestjs/common';
+import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
   ApiTags,
   ApiOperation,
@@ -33,7 +34,7 @@ export class PromotionsController {
   @ApiOperation({ summary: '활성 프로모션 목록 조회', description: '현재 활성화된 프로모션 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '프로모션 목록 조회 성공' })
   @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
-  findAll(@Query('locale') locale?: string) {
+  findAll(@Query('locale', OptionalLocalePipe) locale?: string) {
     return this.promotionsService.findAllActive(locale);
   }
 
@@ -44,7 +45,7 @@ export class PromotionsController {
   @ApiResponse({ status: 404, description: '프로모션을 찾을 수 없음' })
   @ApiParam({ name: 'id', type: Number, description: '프로모션 ID' })
   @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
-  findOne(@Param('id', ParseIntPipe) id: number, @Query('locale') locale?: string) {
+  findOne(@Param('id', ParseIntPipe) id: number, @Query('locale', OptionalLocalePipe) locale?: string) {
     return this.promotionsService.findOne(id, locale);
   }
 }
@@ -59,7 +60,7 @@ export class BannersController {
   @ApiOperation({ summary: '배너 목록 조회', description: '활성화된 배너 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '배너 목록 조회 성공' })
   @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
-  findAll(@Query('locale') locale?: string) {
+  findAll(@Query('locale', OptionalLocalePipe) locale?: string) {
     return this.promotionsService.findAllActiveBanners(locale);
   }
 }

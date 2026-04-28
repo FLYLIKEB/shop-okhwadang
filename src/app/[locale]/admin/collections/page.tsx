@@ -196,10 +196,10 @@ function CollectionFormModal({
 
         <div className="grid grid-cols-2 gap-4">
           <FormInput
-            label="이름 (中文)"
+            label="이름"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="朱泥"
+            placeholder="주니"
             required
           />
           <FormInput

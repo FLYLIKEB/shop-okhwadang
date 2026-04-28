@@ -32,9 +32,11 @@ export class AttributeType {
   nameEn!: string | null;
 
   @Column({ type: 'varchar', length: 100, name: 'name_ja', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   nameJa!: string | null;
 
   @Column({ type: 'varchar', length: 100, name: 'name_zh', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   nameZh!: string | null;
 
   @Column({

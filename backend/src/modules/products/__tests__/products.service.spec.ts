@@ -276,7 +276,7 @@ describe('ProductsService', () => {
       expect(result).toBe(created);
     });
 
-    it('다국어 필드 포함 생성 시 entity에 전달됨', async () => {
+    it('영어 번역 필드 포함 생성 시 entity에 전달됨', async () => {
       const created = { id: 2 } as Product;
       mockManager.create.mockReturnValue(created);
       mockManager.save.mockResolvedValue(created);
@@ -286,28 +286,16 @@ describe('ProductsService', () => {
         slug: 'pu-erh',
         price: 35000,
         nameEn: 'Pu-erh Tea',
-        nameJa: '普洱茶',
-        nameZh: '普洱茶',
         descriptionEn: 'Traditional pu-erh',
-        descriptionJa: '伝統的な普洱茶',
-        descriptionZh: '传统普洱茶',
         shortDescriptionEn: 'Smooth taste',
-        shortDescriptionJa: 'なめらかな味',
-        shortDescriptionZh: '口感顺滑',
       });
 
       expect(mockManager.create).toHaveBeenCalledWith(
         expect.any(Function),
         expect.objectContaining({
           nameEn: 'Pu-erh Tea',
-          nameJa: '普洱茶',
-          nameZh: '普洱茶',
           descriptionEn: 'Traditional pu-erh',
-          descriptionJa: '伝統的な普洱茶',
-          descriptionZh: '传统普洱茶',
           shortDescriptionEn: 'Smooth taste',
-          shortDescriptionJa: 'なめらかな味',
-          shortDescriptionZh: '口感顺滑',
         }),
       );
     });
@@ -334,19 +322,13 @@ describe('ProductsService', () => {
   });
 
   describe('update', () => {
-    it('다국어 필드 업데이트 시 entity에 반영됨', async () => {
+    it('영어 번역 필드 업데이트 시 entity에 반영됨', async () => {
       const existing = {
         id: 1,
         status: ProductStatus.ACTIVE,
         nameEn: null,
-        nameJa: null,
-        nameZh: null,
         descriptionEn: null,
-        descriptionJa: null,
-        descriptionZh: null,
         shortDescriptionEn: null,
-        shortDescriptionJa: null,
-        shortDescriptionZh: null,
       } as unknown as Product;
       mockRepository.findOne.mockResolvedValue(existing);
       const updated = { ...existing, nameEn: 'Updated English Name' };

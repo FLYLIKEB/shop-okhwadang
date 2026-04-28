@@ -19,11 +19,7 @@ export interface CreateProductData {
   status?: string;
   isFeatured?: boolean;
   nameEn?: string;
-  nameJa?: string;
-  nameZh?: string;
   descriptionEn?: string;
-  descriptionJa?: string;
-  descriptionZh?: string;
   images?: Array<{
     url: string;
     alt?: string;

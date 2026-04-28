@@ -73,50 +73,16 @@ export class UpdateProductDto {
   @MaxLength(255)
   nameEn?: string;
 
-  @ApiPropertyOptional({ example: '玉花堂 普洱茶', description: '상품명 (일본어)' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  nameJa?: string;
-
-  @ApiPropertyOptional({ example: '玉花堂 普洱茶', description: '상품명 (중문)' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  nameZh?: string;
-
   @ApiPropertyOptional({ example: 'Traditional pu-erh tea...', description: '상품 상세 설명 (영문)' })
   @IsOptional()
   @IsString()
   descriptionEn?: string;
-
-  @ApiPropertyOptional({ example: '伝統的な普洱茶...', description: '상품 상세 설명 (일본어)' })
-  @IsOptional()
-  @IsString()
-  descriptionJa?: string;
-
-  @ApiPropertyOptional({ example: '传统普洱茶...', description: '상품 상세 설명 (중문)' })
-  @IsOptional()
-  @IsString()
-  descriptionZh?: string;
 
   @ApiPropertyOptional({ example: 'Smooth taste and deep aroma', description: '짧은 설명 (영문, 500자 이내)' })
   @IsOptional()
   @IsString()
   @MaxLength(500)
   shortDescriptionEn?: string;
-
-  @ApiPropertyOptional({ example: 'なめらかな味わい', description: '짧은 설명 (일본어, 500자 이내)' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  shortDescriptionJa?: string;
-
-  @ApiPropertyOptional({ example: '口感顺滑', description: '짧은 설명 (중문, 500자 이내)' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  shortDescriptionZh?: string;
 
   @ApiPropertyOptional({ example: '주니', description: '니료 종류' })
   @IsOptional()
