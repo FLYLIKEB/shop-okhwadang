@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
   ApiTags,
   ApiOperation,
@@ -35,7 +36,7 @@ export class AttributesController {
   @Public()
   @ApiOperation({ summary: '모든 속성 유형 조회' })
   @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
-  async findAllTypes(@Query('locale') locale?: string): Promise<AttributeType[]> {
+  async findAllTypes(@Query('locale', OptionalLocalePipe) locale?: string): Promise<AttributeType[]> {
     return this.attributesService.findAllAttributeTypes(locale);
   }
 
@@ -43,7 +44,7 @@ export class AttributesController {
   @Public()
   @ApiOperation({ summary: '필터 가능한 속성 유형만 조회' })
   @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
-  async findFilterableTypes(@Query('locale') locale?: string): Promise<AttributeType[]> {
+  async findFilterableTypes(@Query('locale', OptionalLocalePipe) locale?: string): Promise<AttributeType[]> {
     return this.attributesService.getFilterableAttributes(locale);
   }
 
@@ -53,7 +54,7 @@ export class AttributesController {
   @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
   async findTypeById(
     @Param('id', ParseIntPipe) id: number,
-    @Query('locale') locale?: string,
+    @Query('locale', OptionalLocalePipe) locale?: string,
   ): Promise<AttributeType> {
     return this.attributesService.findAttributeTypeById(id, locale);
   }
@@ -64,7 +65,7 @@ export class AttributesController {
   @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
   async findTypeByCode(
     @Param('code') code: string,
-    @Query('locale') locale?: string,
+    @Query('locale', OptionalLocalePipe) locale?: string,
   ): Promise<AttributeType | null> {
     return this.attributesService.findAttributeTypeByCode(code, locale);
   }

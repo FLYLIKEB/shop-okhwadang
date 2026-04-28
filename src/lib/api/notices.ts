@@ -4,12 +4,8 @@ export interface Notice {
   id: number;
   title: string;
   titleEn: string | null;
-  titleJa: string | null;
-  titleZh: string | null;
   content: string;
   contentEn: string | null;
-  contentJa: string | null;
-  contentZh: string | null;
   isPinned: boolean;
   isPublished: boolean;
   viewCount: number;

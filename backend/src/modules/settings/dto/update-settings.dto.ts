@@ -21,17 +21,6 @@ export class SettingItemDto {
   @MaxLength(1000)
   valueEn?: string;
 
-  @ApiPropertyOptional({ example: '玉花堂', description: '일본어 설정 값' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  valueJa?: string;
-
-  @ApiPropertyOptional({ example: '玉花堂', description: '중국어 설정 값' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  valueZh?: string;
 }
 
 export class UpdateSettingsDto {

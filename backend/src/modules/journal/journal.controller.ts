@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
+import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { JournalService } from './journal.service';
 import { JournalCategory } from './entities/journal-entry.entity';
@@ -17,7 +18,7 @@ export class JournalController {
   @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko|en)' })
   async getAllJournals(
     @Query('category') category?: JournalCategory,
-    @Query('locale') locale?: string,
+    @Query('locale', OptionalLocalePipe) locale?: string,
   ) {
     return this.journalService.findAll(category, locale);
   }
@@ -30,7 +31,7 @@ export class JournalController {
   @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko|en)' })
   async getJournalBySlug(
     @Param('slug') slug: string,
-    @Query('locale') locale?: string,
+    @Query('locale', OptionalLocalePipe) locale?: string,
   ) {
     return this.journalService.findBySlug(slug, locale);
   }

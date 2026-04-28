@@ -1,6 +1,7 @@
 import {
   Controller, Get, Post, Param, Body, Query, ParseIntPipe, DefaultValuePipe,
 } from '@nestjs/common';
+import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
   ApiTags,
   ApiOperation,
@@ -40,7 +41,7 @@ export class OrdersController {
     @CurrentUser() user: AuthUser,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @Query('locale') locale?: string,
+    @Query('locale', OptionalLocalePipe) locale?: string,
   ) {
     return this.ordersService.findAll(user.id, page, Math.min(limit, 50), locale);
   }
@@ -56,7 +57,7 @@ export class OrdersController {
   findOne(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: AuthUser,
-    @Query('locale') locale?: string,
+    @Query('locale', OptionalLocalePipe) locale?: string,
   ) {
     return this.ordersService.findOne(id, user.id, locale);
   }

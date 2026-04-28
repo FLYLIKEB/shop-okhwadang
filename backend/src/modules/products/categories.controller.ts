@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
   ApiTags,
   ApiOperation,
@@ -36,7 +37,7 @@ export class CategoriesController {
   @ApiOperation({ summary: '카테고리 트리 조회', description: '활성화된 카테고리 트리 구조를 조회합니다.' })
   @ApiQuery({ name: 'locale', required: false, description: '로케일 (ko/en)', example: 'en' })
   @ApiResponse({ status: 200, description: '카테고리 트리 조회 성공' })
-  findTree(@Query('locale') locale?: string) {
+  findTree(@Query('locale', OptionalLocalePipe) locale?: string) {
     return this.categoriesService.findTree(locale);
   }
 
@@ -48,7 +49,7 @@ export class CategoriesController {
   @ApiResponse({ status: 200, description: '전체 카테고리 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
-  findAll(@Query('locale') locale?: string) {
+  findAll(@Query('locale', OptionalLocalePipe) locale?: string) {
     return this.categoriesService.findAll(locale);
   }
 

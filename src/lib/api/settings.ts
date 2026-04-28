@@ -5,8 +5,6 @@ export interface SiteSetting {
   key: string;
   value: string;
   valueEn?: string | null;
-  valueJa?: string | null;
-  valueZh?: string | null;
   group: string;
   label: string;
   inputType: string;
