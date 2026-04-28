@@ -4,6 +4,7 @@ import { BadRequestException, ConflictException, ForbiddenException, NotFoundExc
 import { DataSource } from 'typeorm';
 import { ReviewsService } from '../reviews.service';
 import { Review } from '../entities/review.entity';
+import { ExternalReview } from '../entities/external-review.entity';
 import { OrderItem } from '../../orders/entities/order-item.entity';
 import { PointHistory } from '../../coupons/entities/point-history.entity';
 import { SettingsService } from '../../settings/settings.service';
@@ -39,6 +40,13 @@ describe('ReviewsService', () => {
     create: jest.fn(),
     save: jest.fn(),
     remove: jest.fn(),
+  };
+
+  const mockExternalRepo = {
+    createQueryBuilder: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
   };
 
   const mockOrderItemRepo = {
@@ -78,6 +86,7 @@ describe('ReviewsService', () => {
       providers: [
         ReviewsService,
         { provide: getRepositoryToken(Review), useValue: mockRepo },
+        { provide: getRepositoryToken(ExternalReview), useValue: mockExternalRepo },
         { provide: getRepositoryToken(OrderItem), useValue: mockOrderItemRepo },
         { provide: getRepositoryToken(PointHistory), useValue: mockPointHistoryRepo },
         { provide: SettingsService, useValue: mockSettingsService },
@@ -93,6 +102,10 @@ describe('ReviewsService', () => {
     mockManager.save.mockReset();
     mockManager.remove.mockReset();
     mockManager.query.mockReset();
+    mockExternalRepo.createQueryBuilder.mockReset();
+    mockExternalRepo.findOne.mockReset();
+    mockExternalRepo.create.mockReset();
+    mockExternalRepo.save.mockReset();
     mockPointsService.getRunningBalanceInTx.mockResolvedValue(0);
 
     // Default settings: reward=100, bonus=0
@@ -120,7 +133,16 @@ describe('ReviewsService', () => {
         getRawOne: jest.fn().mockResolvedValue({ avg: '5.0', cnt: '1' }),
         getRawMany: jest.fn().mockResolvedValue([{ rating: 5, count: '1' }]),
       };
+      const externalQb = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+        getCount: jest.fn().mockResolvedValue(0),
+      };
       mockRepo.createQueryBuilder.mockReturnValue(qb);
+      mockExternalRepo.createQueryBuilder.mockReturnValue(externalQb);
 
       const result = await service.findAll({ productId: 5, sort: 'recent', page: 1, limit: 20 });
 
@@ -128,6 +150,8 @@ describe('ReviewsService', () => {
       expect(result.data[0].userName).toBe('홍**');
       expect(result.stats.averageRating).toBe(5);
       expect(result.stats.totalCount).toBe(1);
+      expect(result.stats.internalCount).toBe(1);
+      expect(result.stats.externalCount).toBe(0);
       expect(result.pagination).toEqual({ page: 1, limit: 20, total: 1 });
     });
 
@@ -147,11 +171,122 @@ describe('ReviewsService', () => {
         getRawOne: jest.fn().mockResolvedValue({ avg: null, cnt: '0' }),
         getRawMany: jest.fn().mockResolvedValue([]),
       };
+      const externalQb = {
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+        getCount: jest.fn().mockResolvedValue(0),
+      };
       mockRepo.createQueryBuilder.mockReturnValue(qb);
+      mockExternalRepo.createQueryBuilder.mockReturnValue(externalQb);
 
       await service.findAll({ sort: 'rating_high' });
 
       expect(qb.orderBy).toHaveBeenCalledWith('review.rating', 'DESC');
+    });
+
+    it('should merge SmartStore reviews into the product review list without internal average stats', async () => {
+      const internalReview = { ...mockReview, id: 1, rating: 4, createdAt: new Date('2026-03-01T12:00:00Z') };
+      const externalReview = {
+        id: 9,
+        productId: 5,
+        source: 'smartstore' as const,
+        externalReviewId: 'naver-1',
+        externalProductId: 'sp-1',
+        rating: 5,
+        content: '스마트스토어 후기',
+        imageUrls: ['https://example.com/naver.jpg'],
+        reviewerNameMasked: '네**',
+        isVisible: true,
+        reviewedAt: new Date('2026-03-02T12:00:00Z'),
+        lastSyncedAt: new Date('2026-03-03T12:00:00Z'),
+      };
+      const qb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[internalReview], 1]),
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawOne: jest.fn().mockResolvedValue({ avg: '4.0', cnt: '1' }),
+        getRawMany: jest.fn().mockResolvedValue([{ rating: 4, count: '1' }]),
+      };
+      const externalQb = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[externalReview], 1]),
+        getCount: jest.fn().mockResolvedValue(1),
+      };
+      mockRepo.createQueryBuilder.mockReturnValue(qb);
+      mockExternalRepo.createQueryBuilder.mockReturnValue(externalQb);
+
+      const result = await service.findAll({ productId: 5, sort: 'recent', page: 1, limit: 20 });
+
+      expect(result.data.map((review) => review.source)).toEqual(['smartstore', 'internal']);
+      expect(result.data[0]).toMatchObject({
+        source: 'smartstore',
+        externalReviewId: 'naver-1',
+        userName: '네**',
+        orderItemId: null,
+      });
+      expect(result.stats.averageRating).toBe(4);
+      expect(result.stats.totalCount).toBe(2);
+      expect(result.stats.internalCount).toBe(1);
+      expect(result.stats.externalCount).toBe(1);
+      expect(result.stats.distribution['5']).toBe(0);
+      expect(result.pagination.total).toBe(2);
+    });
+  });
+
+  describe('importSmartStoreReviews', () => {
+    it('should upsert SmartStore reviews by external review id', async () => {
+      mockExternalRepo.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 8, source: 'smartstore', externalReviewId: 'naver-2' });
+      mockExternalRepo.create.mockImplementation((data: Partial<ExternalReview>) => data);
+      mockExternalRepo.save.mockResolvedValue({});
+
+      const result = await service.importSmartStoreReviews({
+        productId: 5,
+        reviews: [
+          {
+            externalReviewId: 'naver-1',
+            externalProductId: 'sp-1',
+            rating: 5,
+            content: '좋아요',
+            imageUrls: ['https://example.com/review.jpg'],
+            reviewerNameMasked: '김**',
+            reviewedAt: '2026-04-28T09:00:00+09:00',
+          },
+          {
+            externalReviewId: 'naver-2',
+            rating: 4,
+            reviewedAt: '2026-04-27T09:00:00+09:00',
+            isVisible: false,
+          },
+        ],
+      });
+
+      expect(result).toMatchObject({ source: 'smartstore', received: 2, created: 1, updated: 1, hidden: 1 });
+      expect(mockExternalRepo.save).toHaveBeenCalledTimes(2);
+      expect(mockExternalRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+        productId: 5,
+        source: 'smartstore',
+        externalReviewId: 'naver-1',
+        externalProductId: 'sp-1',
+        reviewerNameMasked: '김**',
+      }));
+      expect(mockExternalRepo.save).toHaveBeenLastCalledWith(expect.objectContaining({
+        id: 8,
+        externalReviewId: 'naver-2',
+        isVisible: false,
+      }));
     });
   });
 

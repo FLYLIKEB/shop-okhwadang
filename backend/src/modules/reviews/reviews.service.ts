@@ -8,14 +8,15 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
+import { ExternalReview } from './entities/external-review.entity';
 import { OrderItem } from '../orders/entities/order-item.entity';
 import { OrderStatus } from '../orders/entities/order.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
+import { ImportSmartStoreReviewsDto } from './dto/import-smartstore-reviews.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
-import { paginate } from '../../common/utils/pagination.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { SettingsService } from '../settings/settings.service';
 import { PointsService, addOneYear } from '../points/points.service';
@@ -27,10 +28,13 @@ const DEFAULT_PHOTO_REVIEW_BONUS = 0;
 
 export interface ReviewResponse {
   id: number;
+  source: 'internal' | 'smartstore';
+  externalReviewId: string | null;
+  externalProductId: string | null;
   userId: number;
   userName: string;
   productId: number;
-  orderItemId: number;
+  orderItemId: number | null;
   rating: number;
   content: string | null;
   imageUrls: string[] | null;
@@ -42,12 +46,22 @@ export interface ReviewStats {
   averageRating: number;
   totalCount: number;
   distribution: Record<string, number>;
+  internalCount: number;
+  externalCount: number;
 }
 
 export interface ReviewListResult {
   data: ReviewResponse[];
   stats: ReviewStats;
   pagination: { page: number; limit: number; total: number };
+}
+
+export interface SmartStoreImportResult {
+  source: 'smartstore';
+  received: number;
+  created: number;
+  updated: number;
+  hidden: number;
 }
 
 @Injectable()
@@ -57,6 +71,8 @@ export class ReviewsService {
   constructor(
     @InjectRepository(Review)
     private readonly reviewRepo: Repository<Review>,
+    @InjectRepository(ExternalReview)
+    private readonly externalReviewRepo: Repository<ExternalReview>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepo: Repository<OrderItem>,
     @InjectRepository(PointHistory)
@@ -74,6 +90,9 @@ export class ReviewsService {
   private toResponse(review: Review & { user?: { name: string } }): ReviewResponse {
     return {
       id: Number(review.id),
+      source: 'internal',
+      externalReviewId: null,
+      externalProductId: null,
       userId: Number(review.userId),
       userName: this.maskUserName(review.user?.name ?? ''),
       productId: Number(review.productId),
@@ -86,38 +105,77 @@ export class ReviewsService {
     };
   }
 
+  private toExternalResponse(review: ExternalReview): ReviewResponse {
+    return {
+      id: Number(review.id),
+      source: 'smartstore',
+      externalReviewId: review.externalReviewId,
+      externalProductId: review.externalProductId,
+      userId: 0,
+      userName: review.reviewerNameMasked || '스마트스토어 구매자',
+      productId: Number(review.productId),
+      orderItemId: null,
+      rating: review.rating,
+      content: review.content,
+      imageUrls: review.imageUrls,
+      isVisible: review.isVisible,
+      createdAt: review.reviewedAt,
+    };
+  }
+
   async findAll(query: ReviewQueryDto): Promise<ReviewListResult> {
     const sort = query.sort ?? 'recent';
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
 
     const qb = this.reviewRepo
       .createQueryBuilder('review')
       .leftJoinAndSelect('review.user', 'user')
       .where('review.is_visible = :visible', { visible: true });
 
+    const externalQb = this.externalReviewRepo
+      .createQueryBuilder('externalReview')
+      .where('externalReview.is_visible = :visible', { visible: true });
+
     if (query.productId) {
       qb.andWhere('review.product_id = :productId', { productId: query.productId });
+      externalQb.andWhere('externalReview.product_id = :productId', { productId: query.productId });
     }
 
     switch (sort) {
       case 'rating_high':
         qb.orderBy('review.rating', 'DESC').addOrderBy('review.createdAt', 'DESC');
+        externalQb.orderBy('externalReview.rating', 'DESC').addOrderBy('externalReview.reviewedAt', 'DESC');
         break;
       case 'rating_low':
         qb.orderBy('review.rating', 'ASC').addOrderBy('review.createdAt', 'DESC');
+        externalQb.orderBy('externalReview.rating', 'ASC').addOrderBy('externalReview.reviewedAt', 'DESC');
         break;
       default:
         qb.orderBy('review.createdAt', 'DESC');
+        externalQb.orderBy('externalReview.reviewedAt', 'DESC');
     }
 
-    const { items: reviews, total, page, limit } = await paginate(qb, query);
-
+    const [internalReviews, internalTotal] = await qb.getManyAndCount();
+    const [externalReviews, externalTotal] = await externalQb.getManyAndCount();
     const stats = await this.getStats(query.productId);
+    const data = [
+      ...internalReviews.map((r) => this.toResponse(r)),
+      ...externalReviews.map((r) => this.toExternalResponse(r)),
+    ].sort((a, b) => this.compareReviews(a, b, sort));
+    const offset = (page - 1) * limit;
 
     return {
-      data: reviews.map((r) => this.toResponse(r)),
+      data: data.slice(offset, offset + limit),
       stats,
-      pagination: { page, limit, total },
+      pagination: { page, limit, total: internalTotal + externalTotal },
     };
+  }
+
+  private compareReviews(a: ReviewResponse, b: ReviewResponse, sort: ReviewQueryDto['sort']): number {
+    if (sort === 'rating_high' && b.rating !== a.rating) return b.rating - a.rating;
+    if (sort === 'rating_low' && a.rating !== b.rating) return a.rating - b.rating;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   }
 
   async getStats(productId?: number): Promise<ReviewStats> {
@@ -154,7 +212,65 @@ export class ReviewsService {
       distribution[String(row.rating)] = parseInt(row.count, 10);
     }
 
-    return { averageRating: avgRating, totalCount, distribution };
+    const externalQb = this.externalReviewRepo
+      .createQueryBuilder('externalReview')
+      .where('externalReview.is_visible = :visible', { visible: true });
+
+    if (productId) {
+      externalQb.andWhere('externalReview.product_id = :productId', { productId });
+    }
+
+    const externalCount = await externalQb.getCount();
+
+    return {
+      averageRating: avgRating,
+      totalCount: totalCount + externalCount,
+      distribution,
+      internalCount: totalCount,
+      externalCount,
+    };
+  }
+
+  async importSmartStoreReviews(dto: ImportSmartStoreReviewsDto): Promise<SmartStoreImportResult> {
+    let created = 0;
+    let updated = 0;
+    let hidden = 0;
+    const now = new Date();
+
+    for (const item of dto.reviews) {
+      const existing = await this.externalReviewRepo.findOne({
+        where: { source: 'smartstore', externalReviewId: item.externalReviewId },
+      });
+      const patch: Partial<ExternalReview> = {
+        productId: dto.productId,
+        source: 'smartstore',
+        externalReviewId: item.externalReviewId,
+        externalProductId: item.externalProductId ?? null,
+        rating: item.rating,
+        content: item.content ?? null,
+        imageUrls: item.imageUrls?.length ? item.imageUrls : null,
+        reviewerNameMasked: item.reviewerNameMasked?.trim() || '스마트스토어 구매자',
+        isVisible: item.isVisible ?? true,
+        reviewedAt: new Date(item.reviewedAt),
+        lastSyncedAt: now,
+      };
+
+      if (existing) {
+        await this.externalReviewRepo.save({ ...existing, ...patch });
+        updated += 1;
+      } else {
+        await this.externalReviewRepo.save(this.externalReviewRepo.create(patch));
+        created += 1;
+      }
+
+      if (patch.isVisible === false) hidden += 1;
+    }
+
+    this.logger.log(
+      `SmartStore reviews imported: productId=${dto.productId}, received=${dto.reviews.length}, created=${created}, updated=${updated}`,
+    );
+
+    return { source: 'smartstore', received: dto.reviews.length, created, updated, hidden };
   }
 
   async create(userId: number, dto: CreateReviewDto): Promise<ReviewResponse> {
