@@ -824,6 +824,22 @@
     "minutes": "Minutes",
     "seconds": "Seconds"
   },
+  "event": {
+    "title": "Events & Promotions",
+    "empty": "There are no active promotions.",
+    "notFound": "Promotion not found.",
+    "back": "Go back",
+    "list": "← Back to list",
+    "discount": "{percent}% off",
+    "until": "Until {date}",
+    "timeLeft": "Time left",
+    "errorLoad": "Failed to load events.",
+    "types": {
+      "timesale": "Time Sale",
+      "exhibition": "Exhibition",
+      "event": "Event"
+    }
+  },
   "myCoupons": {
     "title": "Coupons",
     "pointBalance": "Point Balance",

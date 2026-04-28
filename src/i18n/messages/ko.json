@@ -824,6 +824,22 @@
     "minutes": "분",
     "seconds": "초"
   },
+  "event": {
+    "title": "이벤트/프로모션",
+    "empty": "진행 중인 프로모션이 없습니다.",
+    "notFound": "프로모션을 찾을 수 없습니다.",
+    "back": "돌아가기",
+    "list": "← 목록으로",
+    "discount": "{percent}% 할인",
+    "until": "{date} 까지",
+    "timeLeft": "남은 시간",
+    "errorLoad": "이벤트 목록을 불러오지 못했습니다.",
+    "types": {
+      "timesale": "타임세일",
+      "exhibition": "기획전",
+      "event": "이벤트"
+    }
+  },
   "myCoupons": {
     "title": "쿠폰함",
     "pointBalance": "보유 적립금",
