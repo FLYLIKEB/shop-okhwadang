@@ -7,8 +7,25 @@ next-env.d.ts
 .env
 .env.local
 .env.*.local
+.env.production
+.env.secrets
+backend/.env
+backend/.env.production
+backend/.env.secrets
 *.pem
 *.key
+
+# Environment & secret backups (CRITICAL - never commit)
+*.backup
+*.bak
+*.old
+.env.backup
+backend/.env.backup
+*.orig
+
+# Agent tools (auto-generated, not project code)
+agent-monitor.html
+agent-tracker.cjs
 .DS_Store
 Thumbs.db
 *.log
@@ -28,3 +45,21 @@ coverage/
 *.tsbuildinfo
 .obsidian/
 marketing.md
+.vercel
+docs/infrastructure/s3-cloudfront-cdn.md
+.omx/
+.codex/*
+!.codex/agents/
+!.codex/agents/**
+!.codex/skills/
+!.codex/skills/**
+.codex/skills/.system/**
+!.codex/prompts/
+!.codex/prompts/**
+
+# Git worktrees
+.worktrees/
+.claude/worktrees/
+.claude/settings.local.json
+.claude/skills/*
+.sisyphus/*.local.md

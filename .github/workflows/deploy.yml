@@ -1,19 +1,118 @@
-name: Deploy
+name: Deploy Backend
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   deploy-backend:
-    name: Deploy Backend to Railway
-    runs-on: ubuntu-latest
+    name: Deploy Backend to EC2
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-      - name: Deploy to Railway
-        working-directory: backend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service commerce-demo --detach
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: EC2에 배포
+        run: |
+          set -e
+
+          cd /app/shop-okhwadang/shop-okhwadang/backend
+
+          # ------------------------------------------------------------------
+          # 1. 코드 동기화
+          # ------------------------------------------------------------------
+          git fetch origin main
+          git reset --hard origin/main
+
+          # ------------------------------------------------------------------
+          # 2. 환경변수 확인 — EC2 내부 .env / keys/ 를 신뢰한다.
+          #    (GitHub Secret 으로 덮어쓰지 않음. 로컬 수정은
+          #     scripts/remote-env-sync.sh push 로 반영)
+          # ------------------------------------------------------------------
+          [ -f .env ] || { echo "ERROR: backend/.env 가 원격에 없습니다. remote-env-sync.sh push 로 먼저 업로드하세요." >&2; exit 1; }
+          [ -f keys/jwt-private.pem ] || { echo "ERROR: keys/jwt-private.pem 가 원격에 없습니다." >&2; exit 1; }
+          [ -f keys/jwt-public.pem ] || { echo "ERROR: keys/jwt-public.pem 가 원격에 없습니다." >&2; exit 1; }
+          chmod 600 .env keys/jwt-private.pem keys/jwt-public.pem
+
+          # ------------------------------------------------------------------
+          # 2-1. 필수 env 키 존재 여부 사전 검증
+          #      .env.example 의 # REQUIRED 태그가 붙은 키를 파싱하여 확인.
+          #      누락 시 배포를 즉시 중단 — PM2 크래시 루프 방지.
+          # ------------------------------------------------------------------
+          REQUIRED_KEYS=$(grep -E '#[[:space:]]*REQUIRED' .env.example | grep -oE '^[A-Z_]+' || true)
+          MISSING_KEYS=""
+          for key in $REQUIRED_KEYS; do
+            if ! grep -qE "^${key}=.+" .env; then
+              MISSING_KEYS="${MISSING_KEYS} ${key}"
+            fi
+          done
+          if [ -n "$MISSING_KEYS" ]; then
+            echo "ERROR: backend/.env 에 다음 필수 키가 없거나 비어 있습니다:${MISSING_KEYS}" >&2
+            echo "       remote-env-sync.sh push 로 EC2 .env 를 업데이트한 후 재배포하세요." >&2
+            exit 1
+          fi
+          echo "필수 env 키 검증 통과"
+
+          # ------------------------------------------------------------------
+          # 3. 의존성 설치 및 빌드
+          # ------------------------------------------------------------------
+          npm ci
+          npm run build
+
+          # ------------------------------------------------------------------
+          # 4. 마이그레이션 실행
+          # ------------------------------------------------------------------
+          set -a
+          source .env
+          set +a
+
+          # 실패 시 배포 중지 (set -e 덕분에 자동으로 스크립트 중단)
+          NODE_ENV=production npm run migration:run:prod
+
+          # ------------------------------------------------------------------
+          # 5. 불필요한 devDependencies 정리 (디스크 절약)
+          # ------------------------------------------------------------------
+          npm prune --omit=dev
+
+          # ------------------------------------------------------------------
+          # 6. PM2 서비스 재시작
+          # ------------------------------------------------------------------
+          # 이미 실행 중인 프로세스면 restart, 없으면 start
+          if pm2 describe commerce > /dev/null 2>&1; then
+            pm2 restart commerce --update-env
+          else
+            pm2 start dist/main.js --name commerce
+          fi
+          pm2 save
+
+          # ------------------------------------------------------------------
+          # 7. 상태 확인 (烟雾测试)
+          # ------------------------------------------------------------------
+          # 앱이 완전히 기동될 때까지 최대 60초 대기 (10초 간격 6회)
+          for i in $(seq 1 6); do
+            sleep 10
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/health)
+            if [ "$STATUS" = "200" ]; then
+              echo "烟雾测试通过"
+              exit 0
+            fi
+            echo "尝试 $i/6: HTTP $STATUS — 10초 후 재시도..."
+          done
+
+          # 6회 시도 모두 실패
+          echo "烟雾测试 실패 (HTTP $STATUS)"
+          pm2 logs commerce --lines 30 --nostream
+          exit 1

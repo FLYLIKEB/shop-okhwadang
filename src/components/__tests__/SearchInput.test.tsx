@@ -6,13 +6,27 @@ const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+  usePathname: () => '/search',
+  useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock('@/hooks/useAutocomplete', () => ({
+vi.mock('@/hooks/useUrlModal', async () => {
+  const React = await import('react');
+  return {
+    useUrlModal: () => {
+      const [isOpen, setIsOpenState] = React.useState(false);
+      const setOpen = (open: boolean) => setIsOpenState(open);
+      const close = () => setIsOpenState(false);
+      return [isOpen, setOpen, close] as const;
+    },
+  };
+});
+
+vi.mock('@/components/shared/hooks/useAutocomplete', () => ({
   useAutocomplete: vi.fn(() => ({ suggestions: [], isLoading: false })),
 }));
 
-vi.mock('@/hooks/useRecentSearches', () => ({
+vi.mock('@/components/shared/hooks/useRecentSearches', () => ({
   useRecentSearches: vi.fn(() => ({
     recentSearches: ['sneakers', 'bags'],
     addSearch: vi.fn(),
@@ -43,7 +57,7 @@ describe('SearchInput', () => {
 
   it('shows recent searches on focus when input is empty', async () => {
     const user = userEvent.setup();
-    const { default: SearchInput } = await import('@/components/search/SearchInput');
+    const { default: SearchInput } = await import('@/components/shared/search/SearchInput');
     render(<SearchInput />);
 
     const input = screen.getByRole('searchbox');
@@ -58,7 +72,7 @@ describe('SearchInput', () => {
 
   it('ESC key closes the dropdown', async () => {
     const user = userEvent.setup();
-    const { default: SearchInput } = await import('@/components/search/SearchInput');
+    const { default: SearchInput } = await import('@/components/shared/search/SearchInput');
     render(<SearchInput />);
 
     const input = screen.getByRole('searchbox');
@@ -76,7 +90,7 @@ describe('SearchInput', () => {
   });
 
   it('shows autocomplete results when typing', async () => {
-    const { useAutocomplete } = await import('@/hooks/useAutocomplete');
+    const { useAutocomplete } = await import('@/components/shared/hooks/useAutocomplete');
     const mockedUseAutocomplete = vi.mocked(useAutocomplete);
     mockedUseAutocomplete.mockReturnValue({
       suggestions: [
@@ -87,7 +101,7 @@ describe('SearchInput', () => {
     });
 
     const user = userEvent.setup();
-    const { default: SearchInput } = await import('@/components/search/SearchInput');
+    const { default: SearchInput } = await import('@/components/shared/search/SearchInput');
     render(<SearchInput />);
 
     const input = screen.getByRole('searchbox');

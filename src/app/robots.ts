@@ -1,11 +1,10 @@
 import type { MetadataRoute } from 'next';
-
-const SITE_URL = process.env.SITE_URL ?? 'https://commerce-demo.vercel.app';
+import { SITE_URL } from '@/lib/site-url';
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: '*', allow: '/', disallow: ['/admin/', '/my/', '/checkout/'] },
+      { userAgent: '*', allow: '/', disallow: ['/admin/', '/my/', '/checkout/', '/api/'] },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
   };

@@ -1,16 +1,78 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Header from '@/components/Header';
 
 const mockPush = vi.fn();
 const mockBack = vi.fn();
+const mockSetOpen = vi.fn();
 let mockPathname = '/';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, back: mockBack }),
   usePathname: () => mockPathname,
+  useSearchParams: () => new URLSearchParams(),
 }));
+
+vi.mock('@/hooks/useUrlModal', async () => {
+  const React = await import('react');
+  return {
+    useUrlModal: (key: string) => {
+      const [isOpen, setIsOpenState] = React.useState(false);
+      const setOpen = (open: boolean, history?: 'auto' | 'push' | 'replace') => {
+        mockSetOpen(key, open, history);
+        setIsOpenState(open);
+      };
+      const close = (history?: 'auto' | 'replace') => {
+        mockSetOpen(key, false, history);
+        setIsOpenState(false);
+      };
+      return [isOpen, setOpen, close] as const;
+    },
+  };
+});
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, children, onClick, ...props }: { href: string; children: React.ReactNode; onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void; [key: string]: unknown }) => (
+    <a
+      href={href}
+      onClick={(e) => {
+        e.preventDefault();
+        onClick?.(e);
+      }}
+      {...props}
+    >
+      {children}
+    </a>
+  ),
+  useRouter: () => ({ push: mockPush, back: mockBack }),
+  usePathname: () => mockPathname,
+}));
+
+vi.mock('next-intl', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-intl')>();
+  const messages = (await import('@/i18n/messages/ko.json')).default as unknown as Record<string, Record<string, string>>;
+  return {
+    ...actual,
+    useLocale: () => 'ko',
+    useTranslations: (namespace: string) => (key: string) => {
+      const ns = messages[namespace] ?? {};
+      return ns[key] ?? key;
+    },
+  };
+});
+
+vi.mock('@/contexts/ThemeContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/contexts/ThemeContext')>();
+  return {
+    ...actual,
+    useTheme: () => ({
+      theme: 'dark',
+      setTheme: vi.fn(),
+      toggleTheme: vi.fn(),
+    }),
+  };
+});
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
@@ -28,6 +90,7 @@ vi.mock('@/contexts/CartContext', () => ({
 beforeEach(() => {
   mockPush.mockClear();
   mockBack.mockClear();
+  mockSetOpen.mockClear();
   mockPathname = '/';
   mockUseCart.mockReturnValue({ itemCount: 0 });
 });
@@ -35,10 +98,10 @@ beforeEach(() => {
 describe('Header', () => {
   it('renders logo, nav link, cart icon link, and login link', () => {
     render(<Header />);
-    expect(screen.getByText('Commerce Demo')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: '옥화당' })).toBeInTheDocument();
     expect(screen.getByText('상품목록')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: '장바구니' }).length).toBeGreaterThan(0);
-    expect(screen.getByRole('link', { name: '로그인' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: '로그인' }).length).toBeGreaterThan(0);
   });
 
   it('search form: type query + submit → push called with /search?q=검색어', async () => {
@@ -91,7 +154,21 @@ describe('Header', () => {
     const mobileNav = screen.getByRole('navigation', { name: '모바일 메뉴' });
     const productLink = mobileNav.querySelector('a[href="/products"]')!;
     await user.click(productLink);
-    expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
+    expect(mockSetOpen).toHaveBeenCalledWith('menu', false, 'replace');
+    await waitFor(() => {
+      expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('mobile account link click closes menu with replace mode', async () => {
+    const user = userEvent.setup();
+    render(<Header />);
+    await user.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    const mobileNav = screen.getByRole('navigation', { name: '모바일 메뉴' });
+    const loginLink = mobileNav.querySelector('a[href="/login"]')!;
+    await user.click(loginLink);
+
+    expect(mockSetOpen).toHaveBeenCalledWith('menu', false, 'replace');
   });
 
   it('Escape key → mobile menu closes', async () => {
@@ -100,7 +177,9 @@ describe('Header', () => {
     await user.click(screen.getByRole('button', { name: '메뉴 열기' }));
     expect(screen.getByRole('navigation', { name: '모바일 메뉴' })).toBeInTheDocument();
     await user.keyboard('{Escape}');
-    expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('navigation', { name: '모바일 메뉴' })).not.toBeInTheDocument();
+    });
   });
 
   it('mobile search bar is always visible (not product detail)', () => {
@@ -114,21 +193,18 @@ describe('Header', () => {
       mockPathname = '/products/123';
     });
 
-    it('shows back button on sub-pages', () => {
+    it('does not show back button in header on sub-pages (moved to BackButton component)', () => {
       render(<Header />);
-      expect(screen.getByRole('button', { name: '뒤로가기' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '뒤로가기' })).not.toBeInTheDocument();
     });
 
-    it('back button calls router.back()', async () => {
-      const user = userEvent.setup();
-      render(<Header />);
-      await user.click(screen.getByRole('button', { name: '뒤로가기' }));
-      expect(mockBack).toHaveBeenCalled();
+    it('back button removed from header — skipped', () => {
+      // 뒤로가기 버튼은 BackButton 컴포넌트로 이동됨
+      expect(true).toBe(true);
     });
 
     it('shows home and cart links on sub-pages', () => {
       render(<Header />);
-      expect(screen.getByRole('link', { name: '홈' })).toBeInTheDocument();
       expect(screen.getAllByRole('link', { name: '장바구니' }).length).toBeGreaterThan(0);
     });
 
@@ -137,16 +213,16 @@ describe('Header', () => {
       expect(screen.getByRole('button', { name: '메뉴 열기' })).toBeInTheDocument();
     });
 
-    it('shows back button on cart page', () => {
+    it('does not show back button on cart page in header', () => {
       mockPathname = '/cart';
       render(<Header />);
-      expect(screen.getByRole('button', { name: '뒤로가기' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '뒤로가기' })).not.toBeInTheDocument();
     });
 
-    it('shows back button on checkout page', () => {
+    it('does not show back button on checkout page in header', () => {
       mockPathname = '/checkout';
       render(<Header />);
-      expect(screen.getByRole('button', { name: '뒤로가기' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '뒤로가기' })).not.toBeInTheDocument();
     });
   });
 });

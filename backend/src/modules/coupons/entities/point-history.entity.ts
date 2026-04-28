@@ -30,8 +30,22 @@ export class PointHistory {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description!: string | null;
 
+  @Column({ name: 'expires_at', type: 'datetime', nullable: true })
+  expiresAt!: Date | null;
+
   @Column({ name: 'order_id', type: 'bigint', nullable: true })
   orderId!: number | null;
+
+  @Column({
+    name: 'related_entity_type',
+    type: 'enum',
+    enum: ['review', 'order', 'coupon', 'shipping', 'membership'],
+    nullable: true,
+  })
+  relatedEntityType!: 'review' | 'order' | 'coupon' | 'shipping' | 'membership' | null;
+
+  @Column({ name: 'related_entity_id', type: 'bigint', nullable: true })
+  relatedEntityId!: number | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

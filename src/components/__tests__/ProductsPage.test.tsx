@@ -10,9 +10,49 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/products',
 }));
 
+const translations: Record<string, string> = {
+  'product.view.grid': '그리드 보기',
+  'product.view.list': '리스트 보기',
+  'product.sort.label': '정렬 기준',
+  'product.sort.latest': '최신순',
+  'product.sort.priceAsc': '가격낮은순',
+  'product.sort.priceDesc': '가격높은순',
+  'product.sort.popular': '인기순',
+  'product.totalItems': '총 {count}개 상품',
+  'common.pagination.nav': '페이지네이션',
+  'common.pagination.prev': '이전',
+  'common.pagination.next': '다음',
+  'common.pagination.pageNumber': '페이지',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace?: string) => {
+    const t = (key: string, values?: Record<string, string | number>) => {
+      const fullKey = namespace ? `${namespace}.${key}` : key;
+      const template = translations[fullKey] ?? fullKey;
+      if (!values) return template;
+      return Object.entries(values).reduce(
+        (acc, [k, v]) => acc.replace(`{${k}}`, String(v)),
+        template,
+      );
+    };
+    t.rich = (key: string, values?: Record<string, unknown>) => {
+      const fullKey = namespace ? `${namespace}.${key}` : key;
+      const template = translations[fullKey] ?? fullKey;
+      if (!values) return template;
+      return Object.entries(values).reduce<string>(
+        (acc, [k, v]) => typeof v === 'function' ? acc.replace(`<${k}>`, '').replace(`</${k}>`, '') : acc.replace(`{${k}}`, String(v)),
+        template,
+      );
+    };
+    return t;
+  },
+}));
+
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
     const { fill, ...rest } = props;
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     return <img data-fill={fill ? 'true' : undefined} {...rest} />;
   },
 }));
@@ -29,7 +69,7 @@ describe('ViewToggle', () => {
   });
 
   it('defaults to grid view and switches to list on click', async () => {
-    const { default: ViewToggle } = await import('@/components/products/ViewToggle');
+    const { default: ViewToggle } = await import('@/components/shared/products/ViewToggle');
     const onChange = vi.fn();
     render(<ViewToggle value="grid" onChange={onChange} />);
 
@@ -47,7 +87,7 @@ describe('SortDropdown', () => {
   });
 
   it('updates URL with sort parameter on change', async () => {
-    const { default: SortDropdown } = await import('@/components/products/SortDropdown');
+    const { default: SortDropdown } = await import('@/components/shared/products/SortDropdown');
     render(<SortDropdown />);
 
     const select = screen.getByLabelText('정렬 기준');
@@ -63,7 +103,7 @@ describe('Pagination', () => {
   });
 
   it('renders page buttons and navigates on click', async () => {
-    const { default: Pagination } = await import('@/components/products/Pagination');
+    const { default: Pagination } = await import('@/components/shared/products/Pagination');
     render(<Pagination total={100} page={1} limit={20} />);
 
     const nextButton = screen.getByText('다음');
@@ -73,7 +113,7 @@ describe('Pagination', () => {
   });
 
   it('disables prev button on first page', async () => {
-    const { default: Pagination } = await import('@/components/products/Pagination');
+    const { default: Pagination } = await import('@/components/shared/products/Pagination');
     render(<Pagination total={100} page={1} limit={20} />);
 
     const prevButton = screen.getByText('이전');
@@ -81,7 +121,7 @@ describe('Pagination', () => {
   });
 
   it('does not render when total fits in one page', async () => {
-    const { default: Pagination } = await import('@/components/products/Pagination');
+    const { default: Pagination } = await import('@/components/shared/products/Pagination');
     const { container } = render(<Pagination total={10} page={1} limit={20} />);
     expect(container.innerHTML).toBe('');
   });

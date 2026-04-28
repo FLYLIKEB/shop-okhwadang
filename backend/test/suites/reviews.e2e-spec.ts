@@ -1,16 +1,24 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerReviewsSuite(getApp: () => INestApplication) {
   describe('Reviews (e2e)', () => {
-    let accessToken: string;
+    let authCookies: AuthCookies;
     let userId: number;
     let productId: number;
     let orderItemId: number;
+    let cancelledOrderItemId: number;
+    let refundedOrderItemId: number;
     let reviewId: number;
 
     beforeAll(async () => {
@@ -23,23 +31,37 @@ export function registerReviewsSuite(getApp: () => INestApplication) {
       );
       userId = userResult.insertId as number;
 
-      // Login to get token
+      // Try login first
       const loginRes = await request(app.getHttpServer())
         .post('/api/auth/login')
         .send({ email: 'review-test@e2e.com', password: 'Password1!' });
 
-      // If login fails due to password hash, create token directly via register
+      // If login fails due to password hash, create via register
       if (loginRes.status !== 200 && loginRes.status !== 201) {
         // Clean up and re-register
         await dataSource.query(`DELETE FROM users WHERE email = 'review-test@e2e.com'`);
-        const regRes = await request(app.getHttpServer())
-          .post('/api/auth/register')
-          .send({ email: 'review-test@e2e.com', password: 'Password1!', name: '리뷰테스터' });
-        accessToken = (regRes.body as { accessToken: string }).accessToken;
-        userId = (regRes.body as { user: { id: number } }).user.id;
+        const reg = await registerAndGetCookies(app, {
+          email: 'review-test@e2e.com',
+          password: 'Password1!',
+          name: '리뷰테스터',
+        });
+        authCookies = reg.cookies;
+        userId = reg.body.user.id;
       } else {
-        accessToken = (loginRes.body as { accessToken: string }).accessToken;
+        authCookies = await loginAndGetCookies(app, {
+          email: 'review-test@e2e.com',
+          password: 'Password1!',
+        });
       }
+
+      // Ensure review point settings exist
+      await dataSource.query(`
+        INSERT INTO site_settings (setting_key, value, \`group\`, label, input_type, default_value, sort_order)
+        VALUES
+          ('review_point_reward', '100', 'review', '리뷰 작성 포인트', 'number', '100', 200),
+          ('photo_review_bonus', '0', 'review', '포토 리뷰 추가 보상', 'number', '0', 201)
+        ON DUPLICATE KEY UPDATE setting_key = setting_key
+      `);
 
       // Create test product
       const prodResult = await dataSource.query(
@@ -47,7 +69,7 @@ export function registerReviewsSuite(getApp: () => INestApplication) {
       );
       productId = prodResult.insertId as number;
 
-      // Create test order + order_item
+      // Delivered order + order_item
       const orderResult = await dataSource.query(
         `INSERT INTO orders (user_id, order_number, status, total_amount, recipient_name, recipient_phone, zipcode, address)
          VALUES (?, 'ORD-REVIEW-E2E-001', 'delivered', 10000, '테스터', '010-0000-0000', '12345', '서울시 테스트구')`,
@@ -61,10 +83,41 @@ export function registerReviewsSuite(getApp: () => INestApplication) {
         [orderId, productId],
       );
       orderItemId = oiResult.insertId as number;
+
+      // Cancelled order + order_item
+      const cancelledOrderResult = await dataSource.query(
+        `INSERT INTO orders (user_id, order_number, status, total_amount, recipient_name, recipient_phone, zipcode, address)
+         VALUES (?, 'ORD-REVIEW-E2E-002', 'cancelled', 10000, '테스터', '010-0000-0000', '12345', '서울시 테스트구')`,
+        [userId],
+      );
+      const cancelledOrderId = cancelledOrderResult.insertId as number;
+
+      const cancelledOiResult = await dataSource.query(
+        `INSERT INTO order_items (order_id, product_id, product_name, price, quantity)
+         VALUES (?, ?, '리뷰테스트상품', 10000, 1)`,
+        [cancelledOrderId, productId],
+      );
+      cancelledOrderItemId = cancelledOiResult.insertId as number;
+
+      // Refunded order + order_item
+      const refundedOrderResult = await dataSource.query(
+        `INSERT INTO orders (user_id, order_number, status, total_amount, recipient_name, recipient_phone, zipcode, address)
+         VALUES (?, 'ORD-REVIEW-E2E-003', 'refunded', 10000, '테스터', '010-0000-0000', '12345', '서울시 테스트구')`,
+        [userId],
+      );
+      const refundedOrderId = refundedOrderResult.insertId as number;
+
+      const refundedOiResult = await dataSource.query(
+        `INSERT INTO order_items (order_id, product_id, product_name, price, quantity)
+         VALUES (?, ?, '리뷰테스트상품', 10000, 1)`,
+        [refundedOrderId, productId],
+      );
+      refundedOrderItemId = refundedOiResult.insertId as number;
     });
 
     afterAll(async () => {
       await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
+      await dataSource.query(`DELETE FROM point_history WHERE user_id = ?`, [userId]);
       await dataSource.query(`DELETE FROM reviews WHERE user_id = ?`, [userId]);
       await dataSource.query(`DELETE FROM order_items WHERE product_id = ?`, [productId]);
       await dataSource.query(`DELETE FROM orders WHERE user_id = ?`, [userId]);
@@ -96,10 +149,26 @@ export function registerReviewsSuite(getApp: () => INestApplication) {
           .expect(401);
       });
 
-      it('201 - 리뷰 작성 성공', async () => {
+      it('400 - 취소된 주문 리뷰 불가', () => {
+        return request(app.getHttpServer())
+          .post('/api/reviews')
+          .set('Cookie', cookieHeader(authCookies))
+          .send({ productId, orderItemId: cancelledOrderItemId, rating: 5, content: '취소된 주문' })
+          .expect(400);
+      });
+
+      it('400 - 환불된 주문 리뷰 불가', () => {
+        return request(app.getHttpServer())
+          .post('/api/reviews')
+          .set('Cookie', cookieHeader(authCookies))
+          .send({ productId, orderItemId: refundedOrderItemId, rating: 5, content: '환불된 주문' })
+          .expect(400);
+      });
+
+      it('201 - 리뷰 작성 성공 + 포인트 적립', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/reviews')
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Cookie', cookieHeader(authCookies))
           .send({ productId, orderItemId, rating: 5, content: '정말 좋은 상품입니다!' })
           .expect(201);
 
@@ -108,12 +177,21 @@ export function registerReviewsSuite(getApp: () => INestApplication) {
         expect(body.rating).toBe(5);
         expect(body.userName).toMatch(/^.{1}\*\*$/);
         reviewId = body.id;
+
+        // Verify point was awarded
+        const [pointRow] = await dataSource.query(
+          `SELECT * FROM point_history WHERE user_id = ? AND type = 'earn' ORDER BY id DESC LIMIT 1`,
+          [userId],
+        ) as Array<{ amount: number; balance: number; description: string }>;
+        expect(pointRow).toBeDefined();
+        expect(pointRow.amount).toBe(100);
+        expect(pointRow.description).toContain(`review_id:${reviewId}`);
       });
 
       it('409 - 중복 리뷰 작성', () => {
         return request(app.getHttpServer())
           .post('/api/reviews')
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Cookie', cookieHeader(authCookies))
           .send({ productId, orderItemId, rating: 4, content: '또 써볼까' })
           .expect(409);
       });
@@ -137,7 +215,7 @@ export function registerReviewsSuite(getApp: () => INestApplication) {
       it('200 - 리뷰 수정 성공', () => {
         return request(app.getHttpServer())
           .patch(`/api/reviews/${reviewId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Cookie', cookieHeader(authCookies))
           .send({ rating: 4, content: '수정된 리뷰' })
           .expect(200)
           .expect((res) => {
@@ -149,17 +227,26 @@ export function registerReviewsSuite(getApp: () => INestApplication) {
     });
 
     describe('DELETE /api/reviews/:id', () => {
-      it('200 - 리뷰 삭제 성공', () => {
-        return request(app.getHttpServer())
+      it('200 - 리뷰 삭제 성공 + 포인트 환수', async () => {
+        await request(app.getHttpServer())
           .delete(`/api/reviews/${reviewId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Cookie', cookieHeader(authCookies))
           .expect(200);
+
+        // Verify point was revoked
+        const [revokeRow] = await dataSource.query(
+          `SELECT * FROM point_history WHERE user_id = ? AND type = 'spend' ORDER BY id DESC LIMIT 1`,
+          [userId],
+        ) as Array<{ amount: number; description: string }>;
+        expect(revokeRow).toBeDefined();
+        expect(revokeRow.amount).toBe(100);
+        expect(revokeRow.description).toContain(`review_id:${reviewId}`);
       });
 
       it('404 - 이미 삭제된 리뷰', () => {
         return request(app.getHttpServer())
           .delete(`/api/reviews/${reviewId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Cookie', cookieHeader(authCookies))
           .expect(404);
       });
     });

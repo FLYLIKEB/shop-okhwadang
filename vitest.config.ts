@@ -8,8 +8,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
-    css: true,
-    exclude: ['backend/**', 'node_modules/**', '.next/**', '.claude/**'],
+    css: false,
+    pool: 'forks',
+    maxWorkers: 1,
+    fileParallelism: false,
+    exclude: ['backend/**', 'node_modules/**', '.next/**', '.claude/**', '.codex/**', '.worktrees/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary'],

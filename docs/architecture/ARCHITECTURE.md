@@ -10,11 +10,11 @@
 | Backend | NestJS + TypeORM + MySQL | Controller → Service → Entity |
 | DB | MySQL 8.0 (Docker) | TypeORM Migration CLI |
 | 인증 | JWT + OAuth (카카오/구글) | ChaLog 동일 |
-| 결제 | 토스페이먼츠 (기본) | 어댑터 패턴 |
+| 결제 | 국내: 네이버페이/KG이니시스/토스페이먼츠, 글로벌: Stripe | 어댑터 패턴 |
 | 배송 | 택배사 API | 어댑터 패턴 |
-| 캐시 | Redis | 상품 캐싱, 세션 |
+| 캐시 | In-memory (CacheService, Map+TTL) | 설정/상품 핫 데이터 |
 | 스토리지 | S3 호환 (R2 등) | 이미지/미디어 |
-| 인프라 | Docker Compose | MySQL, Redis 통합 관리 |
+| 인프라 | Docker Compose | 로컬 MySQL 관리 |
 | Node.js | 22.x | .nvmrc 고정 |
 
 ---
@@ -22,7 +22,7 @@
 ## 프로젝트 구조
 
 ```
-commerce-demo/
+shop-okhwadang/
 ├── src/                        # 프론트엔드 (Next.js 15 App Router)
 │   ├── app/                    # Next.js App Router
 │   │   ├── layout.tsx          # 루트 레이아웃
@@ -198,6 +198,6 @@ GET /api/health                  # 서버 및 DB 상태 확인
 
 ```
 클라이언트 → Vercel CDN (Static Files)
-          → Vercel Functions (api/proxy.ts) → AWS EC2 (NestJS :3000)
-                                            → Lightsail Docker MySQL :3306
+          → Vercel Functions (api/proxy.ts) → AWS EC2 t3.small (NestJS :3000)
+                                            → AWS Lightsail MySQL :3306
 ```

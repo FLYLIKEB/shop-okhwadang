@@ -1,40 +1,4 @@
-import {
-  IsString,
-  IsNumber,
-  IsOptional,
-  IsBoolean,
-  MaxLength,
-  Min,
-  Matches,
-} from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
+import { CreateCategoryDto } from './create-category.dto';
 
-export class UpdateCategoryDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  name?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  @Matches(/^[a-z0-9-]+$/, { message: 'slug는 영문 소문자, 숫자, 하이픈만 허용됩니다.' })
-  slug?: string;
-
-  @IsOptional()
-  @IsNumber()
-  parentId?: number | null;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  sortOrder?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  imageUrl?: string | null;
-}
+export class UpdateCategoryDto extends PartialType(CreateCategoryDto) {}

@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import MyPage from '@/app/my/page';
+import MyPage from '@/app/[locale]/my/page';
 import { AuthContext } from '@/contexts/AuthContext';
 import type { AuthContextValue } from '@/contexts/AuthContext';
 
@@ -8,6 +8,11 @@ const mockReplace = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace }),
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => 'ko',
+  useTranslations: () => (key: string) => key,
 }));
 
 vi.mock('@/lib/api', () => ({
@@ -19,7 +24,6 @@ vi.mock('@/lib/api', () => ({
 function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue {
   return {
     user: null,
-    token: null,
     isAuthenticated: false,
     isLoading: false,
     login: vi.fn(),
@@ -82,7 +86,7 @@ describe('MyPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText('주문 내역').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('orderHistory').length).toBeGreaterThan(0);
     });
   });
 });

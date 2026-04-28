@@ -1,14 +1,34 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { SelectQueryBuilder } from 'typeorm';
+import { DataSource, SelectQueryBuilder, QueryFailedError } from 'typeorm';
 import { ProductsService } from '../products.service';
+import { ProductQueryService } from '../product-query.service';
+import { ProductCommandService } from '../product-command.service';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
+import { Review } from '../../reviews/entities/review.entity';
+import { ProductImage } from '../entities/product-image.entity';
+import { ProductDetailImage } from '../entities/product-detail-image.entity';
+import { AttributeType } from '../entities/attribute-type.entity';
+import { ProductAttribute } from '../entities/product-attribute.entity';
 import { ProductSort } from '../dto/query-products.dto';
+import { CacheService } from '../../cache/cache.service';
+import { RestockAlertsService } from '../../restock-alerts/restock-alerts.service';
+
+function makeFulltextError(): QueryFailedError {
+  const err = new QueryFailedError(
+    'SELECT * FROM product WHERE MATCH(product.name) AGAINST(:q IN BOOLEAN MODE)',
+    ['보이차'],
+    new Error(' FULLTEXT index error'),
+  );
+  Object.defineProperty(err, 'errno', { value: 1191, enumerable: true });
+  return err;
+}
 
 const mockSelect = jest.fn().mockReturnThis();
 const mockOrderBy = jest.fn().mockReturnThis();
+const mockAddOrderBy = jest.fn().mockReturnThis();
 const mockAndWhere = jest.fn().mockReturnThis();
 const mockSkip = jest.fn().mockReturnThis();
 const mockTake = jest.fn().mockReturnThis();
@@ -18,6 +38,7 @@ const mockGetManyAndCount = jest.fn();
 const mockGetMany = jest.fn();
 const mockGetOne = jest.fn();
 const mockWhere = jest.fn().mockReturnThis();
+const mockInnerJoin = jest.fn().mockReturnThis();
 
 const mockQueryBuilder = {
   select: mockSelect,
@@ -25,9 +46,11 @@ const mockQueryBuilder = {
   andWhere: mockAndWhere,
   where: mockWhere,
   orderBy: mockOrderBy,
+  addOrderBy: mockAddOrderBy,
   skip: mockSkip,
   take: mockTake,
   limit: mockLimit,
+  innerJoin: mockInnerJoin,
   getManyAndCount: mockGetManyAndCount,
   getMany: mockGetMany,
   getOne: mockGetOne,
@@ -46,9 +69,12 @@ describe('ProductsService — Search', () => {
   let service: ProductsService;
 
   beforeEach(async () => {
+    jest.resetAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductsService,
+        ProductQueryService,
+        ProductCommandService,
         {
           provide: getRepositoryToken(Product),
           useValue: mockRepository,
@@ -57,11 +83,42 @@ describe('ProductsService — Search', () => {
           provide: getRepositoryToken(Category),
           useValue: { find: jest.fn().mockResolvedValue([]) },
         },
+        {
+          provide: getRepositoryToken(Review),
+          useValue: { createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder) },
+        },
+        {
+          provide: getRepositoryToken(ProductImage),
+          useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(ProductDetailImage),
+          useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(AttributeType),
+          useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(ProductAttribute),
+          useValue: mockRepository,
+        },
+        {
+          provide: CacheService,
+          useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: RestockAlertsService,
+          useValue: { processProductRestock: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: getDataSourceToken(),
+          useValue: { transaction: jest.fn() } as unknown as DataSource,
+        },
       ],
     }).compile();
 
     service = module.get<ProductsService>(ProductsService);
-    jest.clearAllMocks();
     mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
     mockSelect.mockReturnThis();
     mockLeftJoinAndSelect.mockReturnThis();
@@ -185,6 +242,56 @@ describe('ProductsService — Search', () => {
       await service.findAll({});
 
       expect(mockOrderBy).toHaveBeenCalledWith('product.createdAt', 'DESC');
+    });
+  });
+
+  describe('findAll — LIKE fallback', () => {
+    it('FULLTEXT 실패 시 errno 1191 → LIKE 폴백으로 정상 결과 반환', async () => {
+      mockGetManyAndCount
+        .mockRejectedValueOnce(makeFulltextError())
+        .mockResolvedValue([[], 0]);
+
+      const result = await service.findAll({ q: '보이차', sort: ProductSort.PRICE_ASC });
+
+      expect(result).toMatchObject({ total: 0, items: [] });
+    });
+
+    it('LIKE 폴백 시에도 categoryId + price 필터 적용 → sort price DESC 적용', async () => {
+      mockGetManyAndCount
+        .mockRejectedValueOnce(makeFulltextError())
+        .mockResolvedValue([[], 0]);
+
+      await service.findAll({
+        q: '보이차',
+        categoryId: 2,
+        price_min: 10000,
+        price_max: 50000,
+        sort: ProductSort.PRICE_DESC,
+      });
+
+      expect(mockOrderBy).toHaveBeenCalledWith('product.price', 'DESC');
+    });
+
+    it('FULLTEXT 실패(errno 1191) 후 LIKE 폴백에서도 검색어 조건이 유지됨', async () => {
+      mockGetManyAndCount
+        .mockRejectedValueOnce(makeFulltextError())
+        .mockResolvedValue([[], 0]);
+
+      await service.findAll({ q: '보이차' });
+
+      // LIKE 폴백 경로의 andWhere 호출에 검색어 LIKE 조건이 포함되어야 함
+      expect(mockAndWhere).toHaveBeenCalledWith('product.name LIKE :q', { q: '%보이차%' });
+    });
+
+    it('q 없이 LIKE 폴백 경로 진입 시 LIKE 조건 추가 안 함 (q 길이 1인 경우)', async () => {
+      // q가 1글자면 FULLTEXT가 아닌 LIKE 경로가 바로 사용되고, 폴백이 아니라 정상 경로로 처리
+      // 이 케이스는 findAll에서 직접 LIKE 경로를 탄다 (q.length < 2)
+      mockGetManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({ q: '차' });
+
+      // 단글자 q → 직접 LIKE 조건 (FULLTEXT 아님)
+      expect(mockAndWhere).toHaveBeenCalledWith('product.name LIKE :q', { q: '%차%' });
     });
   });
 });

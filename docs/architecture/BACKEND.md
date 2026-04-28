@@ -4,7 +4,7 @@
 
 - NestJS + TypeORM + MySQL 8.0
 - JWT (Access + Refresh Token) + OAuth (카카오/구글)
-- Docker Compose (MySQL, Redis)
+- Docker Compose (MySQL). 캐시는 백엔드 프로세스 내 in-memory `CacheService`
 
 ---
 
@@ -76,7 +76,7 @@ backend/src/
 - **RBAC**: 일반회원 / 관리자 / 슈퍼관리자
 - **OAuth**: 카카오, 구글 소셜 로그인
 - 비밀번호 **bcrypt** 해싱
-- Rate limiting (전역 1분 10회, 인증 1분 5회)
+- Rate limiting 기본값: 전역 1분 200회, 인증 1분 30회, 비밀번호 찾기 1분 1회. 운영값은 환경변수로 조정한다.
 
 ---
 
@@ -94,8 +94,10 @@ interface PaymentGateway {
 | 어댑터 | 용도 |
 |--------|------|
 | `MockAdapter` | 개발/테스트 환경 |
+| `NaverPayAdapter` | 네이버페이 (국내 필수 대상, 구현 필요) |
 | `TossAdapter` | 토스페이먼츠 |
-| `InicisAdapter` | KG이니시스 |
+| `InicisAdapter` | KG이니시스 (구현 필요) |
+| `StripeAdapter` | 글로벌 결제 |
 
 ### 결제 상태 머신
 
@@ -104,7 +106,8 @@ PENDING → CONFIRMED → PARTIAL_CANCELLED / CANCELLED / REFUNDED
 ```
 
 - 서버 사이드 금액 검증 필수
-- 환경변수로 어댑터 선택: `PAYMENT_GATEWAY=toss|inicis|mock`
+- 목표 정책: 국내 결제는 네이버페이, KG이니시스, 토스페이먼츠를 모두 지원하고 글로벌 결제는 Stripe를 우선 지원한다.
+- 현재 코드 기준 환경변수 선택지는 `PAYMENT_GATEWAY=mock|toss|stripe`다. 네이버페이/KG이니시스 어댑터와 `stripe` gateway enum 정리는 후속 구현이 필요하다.
 
 ---
 
@@ -143,6 +146,6 @@ PAYMENT_CONFIRMED → PREPARING → SHIPPED → IN_TRANSIT → DELIVERED
 ## 성능
 
 - 상품/게시글 목록: 커서 기반 페이지네이션
-- 상품 상세/목록: Redis 캐싱 (선택)
+- 상품 상세/목록: in-memory 캐싱 (`CacheService`, 선택)
 - DB 인덱싱 최적화
 - N+1 쿼리 방지 (TypeORM relations/queryBuilder)

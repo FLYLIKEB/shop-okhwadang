@@ -1,15 +1,29 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 import { ShippingService } from './shipping.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { RegisterTrackingDto } from './dto/register-tracking.dto';
 import { TrackShipmentDto } from './dto/track-shipment.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { ShippingQuoteDto } from './dto/shipping-quote.dto';
+import { Public } from '../../common/decorators/public.decorator';
 
+@ApiTags('배송')
 @Controller('shipping')
 export class ShippingController {
   constructor(private readonly shippingService: ShippingService) {}
 
   @Get(':orderId')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '주문 배송 조회', description: '특정 주문의 배송 정보를 조회합니다.' })
+  @ApiResponse({ status: 200, description: '배송 정보 조회 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 404, description: '배송 정보를 찾을 수 없음' })
+  @ApiParam({ name: 'orderId', type: Number, description: '주문 ID' })
   getByOrderId(
     @Param('orderId', ParseIntPipe) orderId: number,
     @CurrentUser() user: { id: number },
@@ -18,21 +32,19 @@ export class ShippingController {
   }
 
   @Post('track')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '배송 추적', description: '운송장 번호로 배송을 추적합니다.' })
+  @ApiResponse({ status: 200, description: '배송 추적 성공' })
   track(@Body() dto: TrackShipmentDto) {
     return this.shippingService.track(dto);
   }
-}
 
-@Controller('admin/shipping')
-export class AdminShippingController {
-  constructor(private readonly shippingService: ShippingService) {}
-
-  @Post(':orderId')
-  @Roles('admin', 'super_admin')
-  registerTracking(
-    @Param('orderId', ParseIntPipe) orderId: number,
-    @Body() dto: RegisterTrackingDto,
-  ) {
-    return this.shippingService.registerTracking(orderId, dto);
+  @Post('quote')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '배송비 사전 견적', description: '체크아웃 전에 배송비를 계산합니다.' })
+  @ApiResponse({ status: 200, description: '배송비 견적 성공' })
+  quote(@Body() dto: ShippingQuoteDto) {
+    return this.shippingService.quote(dto.subtotal, dto.zipcode);
   }
 }

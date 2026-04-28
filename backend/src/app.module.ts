@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import * as fs from 'fs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -24,8 +26,18 @@ import { FaqsModule } from './modules/faqs/faqs.module';
 import { InquiriesModule } from './modules/inquiries/inquiries.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { CollectionsModule } from './modules/collections/collections.module';
+import { ArchivesModule } from './modules/archives/archives.module';
+import { JournalModule } from './modules/journal/journal.module';
+import { PointsModule } from './modules/points/points.module';
+import { NotificationModule } from './modules/notification/notification.module';
+import { SchedulerModule } from './modules/scheduler/scheduler.module';
+import { SeoModule } from './modules/seo/seo.module';
+import { MembershipModule } from './modules/membership/membership.module';
+import { AnnouncementBarsModule } from './modules/announcement-bars/announcement-bars.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
 
 @Module({
   imports: [
@@ -33,24 +45,51 @@ import { RolesGuard } from './common/guards/roles.guard';
       type: 'mysql',
       url: process.env.DATABASE_URL || process.env.LOCAL_DATABASE_URL,
       charset: 'utf8mb4',
-      synchronize: process.env.DB_SYNCHRONIZE === 'true',
-      ssl: process.env.DB_SSL_ENABLED === 'true' ? { rejectUnauthorized: false } : false,
+      synchronize: process.env.NODE_ENV !== 'production' && process.env.DB_SYNCHRONIZE === 'true',
+      ssl: process.env.DB_SSL_ENABLED === 'true'
+        ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH!) }
+        : false,
       autoLoadEntities: true,
       migrations: ['dist/database/migrations/*.js'],
     }),
     ThrottlerModule.forRoot([
       {
         name: 'global',
-        ttl: 60000,
-        limit: 200,
+        ttl: Number(process.env.THROTTLE_GLOBAL_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_GLOBAL_LIMIT ?? 200),
       },
       {
         name: 'auth',
-        ttl: 60000,
-        limit: 30,
+        ttl: Number(process.env.THROTTLE_AUTH_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_AUTH_LIMIT ?? 30),
+      },
+      {
+        name: 'forgotPassword',
+        ttl: Number(process.env.THROTTLE_FORGOT_PASSWORD_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_FORGOT_PASSWORD_LIMIT ?? 1),
+        skipIf: (context) => {
+          const req = context.switchToHttp().getRequest<{ method?: string; originalUrl?: string }>();
+          return !(req.method === 'POST' && String(req.originalUrl ?? '').startsWith('/api/auth/forgot-password'));
+        },
+        getTracker: (req) => {
+          const rawEmail =
+            typeof req.body === 'object' && req.body !== null && 'email' in req.body
+              ? req.body.email
+              : undefined;
+
+          if (typeof rawEmail === 'string') {
+            const normalizedEmail = rawEmail.trim().toLowerCase();
+            if (normalizedEmail.length > 0) {
+              return `forgot-password:${normalizedEmail}`;
+            }
+          }
+
+          return `forgot-password:${req.ip}`;
+        },
       },
     ]),
     CacheModule,
+    ScheduleModule.forRoot(),
     AuthModule,
     HealthModule,
     ProductsModule,
@@ -72,13 +111,22 @@ import { RolesGuard } from './common/guards/roles.guard';
     InquiriesModule,
     PromotionsModule,
     SettingsModule,
+    CollectionsModule,
+    ArchivesModule,
+    JournalModule,
+    PointsModule,
+    NotificationModule,
+    SchedulerModule,
+    SeoModule,
+    MembershipModule,
+    AnnouncementBarsModule,
   ],
   providers: [
     // Guard execution order: ThrottlerGuard → JwtAuthGuard → RolesGuard
     // DO NOT reorder — RolesGuard requires request.user populated by JwtAuthGuard
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: UserAwareThrottlerGuard,
     },
     {
       provide: APP_GUARD,

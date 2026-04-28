@@ -1,30 +1,65 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import ProductCard from '@/components/products/ProductCard';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { toast } from 'sonner';
+import { wishlistApi } from '@/lib/api';
+import ProductCard from '@/components/shared/products/ProductCard';
+import type { AuthContextValue } from '@/contexts/AuthContext';
 
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
     const { fill, ...rest } = props;
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     return <img data-fill={fill ? 'true' : undefined} {...rest} />;
   },
 }));
 
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+    <a href={href} onClick={(e) => e.preventDefault()}>{children}</a>
   ),
 }));
 
+const mockRouterPush = vi.fn();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: mockRouterPush }),
 }));
 
+const mockAddItem = vi.fn();
+vi.mock('@/contexts/CartContext', () => ({
+  useCart: () => ({ addItem: mockAddItem, items: [], itemCount: 0, totalAmount: 0, isLoading: false }),
+}));
+
+const mockUseAuth = vi.fn(() => ({
+  isAuthenticated: false,
+  isLoading: false,
+  user: null as AuthContextValue['user'],
+  logout: vi.fn(),
+}));
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ isAuthenticated: false, isLoading: false, user: null, logout: vi.fn() }),
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+const translations: Record<string, string> = {
+  addToCart: '장바구니 담기',
+  addingToCart: '담는 중...',
+  discountOff: '{percent}% 할인',
+  toggleOn: '찜하기',
+  toggleOff: '찜 해제',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, values?: Record<string, string | number>) => {
+    const template = translations[key] ?? key;
+    if (!values) return template;
+    return Object.entries(values).reduce(
+      (acc, [k, v]) => acc.replace(`{${k}}`, String(v)),
+      template,
+    );
+  },
 }));
 
 vi.mock('@/lib/api', () => ({
@@ -43,25 +78,36 @@ describe('ProductCard', () => {
     price: 29000,
     salePrice: null,
     status: 'active' as const,
-    images: [{ id: 1, url: '/img/test.jpg', alt: null, sortOrder: 0, isThumbnail: true }],
+    images: [{ id: 1, url: '/img/test.jpg', alt: null, sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
   };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRouterPush.mockReset();
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+      isLoading: false,
+      user: null,
+      logout: vi.fn(),
+    });
+  });
 
   it('shows price only when no sale price', () => {
     render(<ProductCard {...baseProps} />);
-    expect(screen.getByText('29,000원')).toBeInTheDocument();
+    expect(screen.getByText('₩29,000')).toBeInTheDocument();
     expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
 
   it('shows sale price, original price strikethrough, and discount percentage', () => {
     render(<ProductCard {...baseProps} salePrice={24000} />);
-    expect(screen.getByText('24,000원')).toBeInTheDocument();
-    expect(screen.getByText('29,000원')).toBeInTheDocument();
-    expect(screen.getByText('17%')).toBeInTheDocument();
+    expect(screen.getByText('₩24,000')).toBeInTheDocument();
+    expect(screen.getByText('₩29,000')).toBeInTheDocument();
+    expect(screen.getByText('17% 할인')).toBeInTheDocument();
   });
 
   it('shows soldout badge when status is soldout', () => {
     render(<ProductCard {...baseProps} status="soldout" />);
-    expect(screen.getByText('품절')).toBeInTheDocument();
+    expect(screen.getByText('SOLD OUT')).toBeInTheDocument();
   });
 
   it('renders without crashing when images are empty', () => {
@@ -73,5 +119,45 @@ describe('ProductCard', () => {
     render(<ProductCard {...baseProps} />);
     const link = screen.getByRole('link');
     expect(link).toHaveAttribute('href', '/products/1');
+  });
+
+  it('shows wishlist button', () => {
+    render(<ProductCard {...baseProps} />);
+    expect(screen.getByRole('button', { name: '찜하기' })).toBeInTheDocument();
+  });
+
+  it('shows add to cart button for active product', () => {
+    render(<ProductCard {...baseProps} />);
+    expect(screen.getByRole('button', { name: '장바구니 담기' })).toBeInTheDocument();
+  });
+
+  it('shows soldout overlay when status is soldout', () => {
+    render(<ProductCard {...baseProps} status="soldout" />);
+    expect(screen.getByText('SOLD OUT')).toBeInTheDocument();
+  });
+
+  it('redirects to login when unauthenticated user clicks wishlist', async () => {
+    render(<ProductCard {...baseProps} />);
+    fireEvent.click(screen.getByRole('button', { name: '찜하기' }));
+    await waitFor(() => {
+      expect(mockRouterPush).toHaveBeenCalledWith('/login');
+    });
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('calls wishlistApi.add and shows toast on wishlist click when authenticated', async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+      user: { id: 1, email: 'test@example.com', name: '테스터', role: 'user' },
+      logout: vi.fn(),
+    });
+    vi.mocked(wishlistApi.add).mockResolvedValue({ id: 10, productId: 1, createdAt: '' });
+    render(<ProductCard {...baseProps} />);
+    fireEvent.click(screen.getByRole('button', { name: '찜하기' }));
+    await waitFor(() => {
+      expect(wishlistApi.add).toHaveBeenCalledWith(1);
+      expect(toast.success).toHaveBeenCalledWith('위시리스트에 추가되었습니다.');
+    });
   });
 });

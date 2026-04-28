@@ -15,6 +15,17 @@ export class SiteSetting {
   @Column('text')
   value!: string;
 
+  @Column({ name: 'value_en', type: 'text', nullable: true })
+  valueEn!: string | null;
+
+  @Column({ name: 'value_ja', type: 'text', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  valueJa!: string | null;
+
+  @Column({ name: 'value_zh', type: 'text', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  valueZh!: string | null;
+
   @Column({ length: 50 })
   group!: string;
 

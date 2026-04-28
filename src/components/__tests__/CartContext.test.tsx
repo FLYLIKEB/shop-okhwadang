@@ -7,6 +7,10 @@ import type { AuthContextValue } from '@/contexts/AuthContext';
 import type { CartResponse, CartItem } from '@/lib/api';
 import { ReactNode } from 'react';
 
+vi.mock('next-intl', () => ({
+  useLocale: () => 'ko',
+}));
+
 vi.mock('@/lib/api', () => ({
   cartApi: {
     getList: vi.fn(),
@@ -53,7 +57,6 @@ const mockCartResponse: CartResponse = {
 function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue {
   return {
     user: null,
-    token: null,
     isAuthenticated: false,
     isLoading: false,
     login: vi.fn(),
@@ -61,6 +64,7 @@ function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue 
     register: vi.fn(),
     loginWithKakao: vi.fn(),
     loginWithGoogle: vi.fn(),
+    updateUser: vi.fn(),
     ...overrides,
   };
 }
@@ -94,6 +98,11 @@ function AddItemButton({ params }: { params: Parameters<ReturnType<typeof useCar
   return <button onClick={() => addItem(params)}>add</button>;
 }
 
+function UpdateQtyButton({ id, quantity }: { id: number; quantity: number }) {
+  const { updateQuantity } = useCart();
+  return <button onClick={() => updateQuantity(id, quantity)}>update</button>;
+}
+
 function RemoveItemButton({ id }: { id: number }) {
   const { removeItem } = useCart();
   return <button onClick={() => removeItem(id)}>remove</button>;
@@ -102,22 +111,23 @@ function RemoveItemButton({ id }: { id: number }) {
 describe('CartContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it('fetches cart on mount when authenticated', async () => {
     vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
-    renderWithAuth(<CartDisplay />, makeAuthValue({ token: 'tok', isAuthenticated: true }));
+    renderWithAuth(<CartDisplay />, makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }));
 
     await waitFor(() => {
       expect(screen.getByTestId('count').textContent).toBe('2');
     });
     expect(cartApi.getList).toHaveBeenCalledTimes(1);
+    expect(cartApi.getList).toHaveBeenCalledWith({ params: { locale: 'ko' } });
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
   });
 
   it('does NOT call getList when not authenticated', async () => {
-    renderWithAuth(<CartDisplay />, makeAuthValue({ token: null, isAuthenticated: false }));
-    // give time for any accidental async calls
+    renderWithAuth(<CartDisplay />, makeAuthValue({ isAuthenticated: false }));
     await act(async () => {});
     expect(cartApi.getList).not.toHaveBeenCalled();
     expect(screen.getByTestId('count').textContent).toBe('0');
@@ -133,7 +143,7 @@ describe('CartContext', () => {
         <CartDisplay />
         <AddItemButton params={{ productId: 10, productOptionId: null, quantity: 2 }} />
       </>,
-      makeAuthValue({ token: 'tok', isAuthenticated: true }),
+      makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }),
     );
 
     await waitFor(() => expect(cartApi.getList).toHaveBeenCalled());
@@ -145,7 +155,7 @@ describe('CartContext', () => {
     });
     expect(cartApi.add).toHaveBeenCalledWith(
       { productId: 10, productOptionId: null, quantity: 2 },
-      { headers: { Authorization: 'Bearer tok' } },
+      { params: { locale: 'ko' } },
     );
   });
 
@@ -159,7 +169,7 @@ describe('CartContext', () => {
         <CartDisplay />
         <RemoveItemButton id={1} />
       </>,
-      makeAuthValue({ token: 'tok', isAuthenticated: true }),
+      makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }),
     );
 
     await waitFor(() => expect(screen.getByText('테스트 상품')).toBeInTheDocument());
@@ -169,7 +179,7 @@ describe('CartContext', () => {
     await waitFor(() => {
       expect(screen.queryByText('테스트 상품')).not.toBeInTheDocument();
     });
-    expect(cartApi.remove).toHaveBeenCalledWith(1, { headers: { Authorization: 'Bearer tok' } });
+    expect(cartApi.remove).toHaveBeenCalledWith(1);
   });
 
   it('updateQuantity applies optimistic update', async () => {
@@ -177,17 +187,12 @@ describe('CartContext', () => {
     vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
     vi.mocked(cartApi.updateQuantity).mockResolvedValue({ ...mockCartItem, quantity: 5, subtotal: 75000 });
 
-    function UpdateQtyButton() {
-      const { updateQuantity } = useCart();
-      return <button onClick={() => updateQuantity(1, 5)}>update</button>;
-    }
-
     renderWithAuth(
       <>
         <CartDisplay />
-        <UpdateQtyButton />
+        <UpdateQtyButton id={1} quantity={5} />
       </>,
-      makeAuthValue({ token: 'tok', isAuthenticated: true }),
+      makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }),
     );
 
     await waitFor(() => expect(cartApi.getList).toHaveBeenCalled());
@@ -198,8 +203,101 @@ describe('CartContext', () => {
       expect(cartApi.updateQuantity).toHaveBeenCalledWith(
         1,
         { quantity: 5 },
-        { headers: { Authorization: 'Bearer tok' } },
       );
     });
+  });
+
+  it('loads guest cart from localStorage without calling backend', async () => {
+    localStorage.setItem('guest_cart', JSON.stringify([{ productId: 10, productOptionId: null, quantity: 3 }]));
+
+    renderWithAuth(<CartDisplay />, makeAuthValue({ isAuthenticated: false }));
+
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('3'));
+    expect(cartApi.getList).not.toHaveBeenCalled();
+    expect(screen.getByTestId('total').textContent).toBe('0');
+  });
+
+  it('guest addItem merges identical product/option and persists localStorage', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('guest_cart', JSON.stringify([{ productId: 10, productOptionId: null, quantity: 1 }]));
+
+    renderWithAuth(
+      <>
+        <CartDisplay />
+        <AddItemButton params={{ productId: 10, productOptionId: null, quantity: 2 }} />
+      </>,
+      makeAuthValue({ isAuthenticated: false }),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'add' }));
+
+    expect(screen.getByTestId('count').textContent).toBe('3');
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
+      { productId: 10, productOptionId: null, quantity: 3 },
+    ]);
+    expect(cartApi.add).not.toHaveBeenCalled();
+  });
+
+  it('guest updateQuantity and removeItem update localStorage by negative guest id', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      'guest_cart',
+      JSON.stringify([
+        { productId: 10, productOptionId: null, quantity: 1 },
+        { productId: 11, productOptionId: 7, quantity: 2 },
+      ]),
+    );
+
+    renderWithAuth(
+      <>
+        <CartDisplay />
+        <UpdateQtyButton id={-1} quantity={4} />
+        <RemoveItemButton id={-2} />
+      </>,
+      makeAuthValue({ isAuthenticated: false }),
+    );
+
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('3'));
+    await user.click(screen.getByRole('button', { name: 'update' }));
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')[0].quantity).toBe(4);
+    expect(screen.getByTestId('count').textContent).toBe('6');
+
+    await user.click(screen.getByRole('button', { name: 'remove' }));
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
+      { productId: 10, productOptionId: null, quantity: 4 },
+    ]);
+    expect(screen.getByTestId('count').textContent).toBe('4');
+    expect(cartApi.updateQuantity).not.toHaveBeenCalled();
+    expect(cartApi.remove).not.toHaveBeenCalled();
+  });
+
+  it('merges guest cart into backend cart after auth transition and clears guest storage', async () => {
+    const authValue = makeAuthValue({ isAuthenticated: false });
+    localStorage.setItem('guest_cart', JSON.stringify([{ productId: 10, productOptionId: null, quantity: 2 }]));
+    vi.mocked(cartApi.add).mockResolvedValue(mockCartResponse);
+    vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
+
+    const { rerender } = render(
+      <AuthContext.Provider value={authValue}>
+        <CartProvider>
+          <CartDisplay />
+        </CartProvider>
+      </AuthContext.Provider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('2'));
+
+    rerender(
+      <AuthContext.Provider
+        value={makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } })}
+      >
+        <CartProvider>
+          <CartDisplay />
+        </CartProvider>
+      </AuthContext.Provider>,
+    );
+
+    await waitFor(() => expect(cartApi.add).toHaveBeenCalledWith({ productId: 10, productOptionId: null, quantity: 2 }));
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('2'));
+    expect(localStorage.getItem('guest_cart')).toBeNull();
   });
 });

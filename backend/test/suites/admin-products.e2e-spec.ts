@@ -1,15 +1,20 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import * as path from 'path';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerAdminProductsSuite(getApp: () => INestApplication) {
   describe('Admin Products (e2e)', () => {
-    let adminToken: string;
-    let userToken: string;
+    let adminCookies: AuthCookies;
+    let userCookies: AuthCookies;
     let createdProductId: number;
 
     const adminEmail = `admin-products-admin-${Date.now()}@test.com`;
@@ -20,23 +25,27 @@ export function registerAdminProductsSuite(getApp: () => INestApplication) {
       dataSource = app.get(DataSource);
 
       // Register admin user
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: adminEmail, password: 'Test1234!', name: '관리자' });
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+        name: '관리자',
+      });
       await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
-      const adminRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: adminEmail, password: 'Test1234!' });
-      adminToken = (adminRes.body as { accessToken: string }).accessToken;
+      adminCookies = await loginAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+      });
 
       // Register regular user
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userEmail, password: 'Test1234!', name: '일반유저' });
-      const userRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userEmail, password: 'Test1234!' });
-      userToken = (userRes.body as { accessToken: string }).accessToken;
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+        name: '일반유저',
+      });
+      userCookies = await loginAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+      });
     });
 
     describe('POST /api/products (admin)', () => {
@@ -44,7 +53,7 @@ export function registerAdminProductsSuite(getApp: () => INestApplication) {
         const slug = `test-product-admin-e2e-${Date.now()}`;
         const res = await request(app.getHttpServer())
           .post('/api/products')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({
             name: '어드민 테스트 상품',
             slug,
@@ -63,7 +72,7 @@ export function registerAdminProductsSuite(getApp: () => INestApplication) {
       it('일반 user → 403 거부', async () => {
         await request(app.getHttpServer())
           .post('/api/products')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({
             name: '일반유저상품',
             slug: `user-product-${Date.now()}`,
@@ -88,7 +97,7 @@ export function registerAdminProductsSuite(getApp: () => INestApplication) {
       it('admin → 200 상품 수정', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/products/${createdProductId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ name: '수정된 상품명', price: 20000 })
           .expect(200);
 
@@ -102,13 +111,13 @@ export function registerAdminProductsSuite(getApp: () => INestApplication) {
         const slug = `delete-test-${Date.now()}`;
         const createRes = await request(app.getHttpServer())
           .post('/api/products')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ name: '삭제테스트', slug, price: 1000 });
         const deleteId = (createRes.body as { id: number }).id;
 
         await request(app.getHttpServer())
           .delete(`/api/products/${deleteId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
       });
     });
@@ -118,7 +127,7 @@ export function registerAdminProductsSuite(getApp: () => INestApplication) {
         const gifBuffer = Buffer.from('GIF89a', 'ascii');
         await request(app.getHttpServer())
           .post('/api/upload/image')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .attach('file', gifBuffer, {
             filename: 'test.gif',
             contentType: 'image/gif',
@@ -130,7 +139,7 @@ export function registerAdminProductsSuite(getApp: () => INestApplication) {
         const buf = Buffer.from('fake');
         await request(app.getHttpServer())
           .post('/api/upload/image')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .attach('file', buf, {
             filename: 'test.jpg',
             contentType: 'image/jpeg',

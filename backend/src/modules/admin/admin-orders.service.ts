@@ -1,24 +1,24 @@
 import {
-  Injectable, NotFoundException, BadRequestException,
+  Injectable, BadRequestException,
   ConflictException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
-import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
+import { OrderItem } from '../orders/entities/order-item.entity';
+import { Payment } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
+import { Product } from '../products/entities/product.entity';
+import { ProductOption } from '../products/entities/product-option.entity';
+import { PointHistory } from '../coupons/entities/point-history.entity';
+import { PaymentsService } from '../payments/payments.service';
+import { MembershipService } from '../membership/membership.service';
+import { PointsService } from '../points/points.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
-
-const ALLOWED_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.PENDING]: [OrderStatus.PAID],
-  [OrderStatus.PAID]: [OrderStatus.PREPARING, OrderStatus.CANCELLED, OrderStatus.REFUNDED],
-  [OrderStatus.PREPARING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED, OrderStatus.REFUNDED],
-  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.REFUNDED],
-  [OrderStatus.DELIVERED]: [],
-  [OrderStatus.CANCELLED]: [],
-  [OrderStatus.REFUNDED]: [],
-};
+import { findOrThrow } from '../../common/utils/repository.util';
+import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
+import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 
 @Injectable()
 export class AdminOrdersService {
@@ -31,9 +31,13 @@ export class AdminOrdersService {
     private readonly paymentRepository: Repository<Payment>,
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
+    private readonly paymentsService: PaymentsService,
+    private readonly dataSource: DataSource,
+    private readonly membershipService: MembershipService,
+    private readonly pointsService: PointsService,
   ) {}
 
-  async findAll(query: AdminOrderQueryDto) {
+  async findAll(query: AdminOrderQueryDto): Promise<PaginatedResult<Order>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
 
@@ -62,27 +66,19 @@ export class AdminOrdersService {
       qb.andWhere('order.createdAt <= :endDate', { endDate: `${query.endDate} 23:59:59` });
     }
 
-    qb.skip((page - 1) * limit).take(limit);
-
-    const [items, total] = await qb.getManyAndCount();
-
-    return { items, total, page, limit };
+    return paginate(qb, { page, limit });
   }
 
-  async updateStatus(orderId: number, nextStatus: OrderStatus) {
-    const order = await this.orderRepository.findOne({ where: { id: orderId } });
-    if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
-    }
+  async updateStatus(orderId: number, nextStatus: OrderStatus): Promise<Order | null> {
+    const order = await findOrThrow(
+      this.orderRepository,
+      { id: orderId },
+      '주문을 찾을 수 없습니다.',
+      ['items', 'user'],
+    );
 
     const currentStatus = order.status;
-    const allowed = ALLOWED_ORDER_TRANSITIONS[currentStatus] ?? [];
-
-    if (!allowed.includes(nextStatus)) {
-      throw new BadRequestException(
-        `상태 전이가 허용되지 않습니다: ${currentStatus} → ${nextStatus}`,
-      );
-    }
+    assertOrderStatusTransition(currentStatus, nextStatus);
 
     if (nextStatus === OrderStatus.SHIPPED) {
       const shipping = await this.shippingRepository.findOne({ where: { orderId } });
@@ -94,16 +90,24 @@ export class AdminOrdersService {
     if (nextStatus === OrderStatus.REFUNDED) {
       const payment = await this.paymentRepository.findOne({ where: { orderId } });
       if (payment) {
-        await this.paymentRepository.update(payment.id, {
-          status: PaymentStatus.REFUNDED,
-          cancelledAt: new Date(),
-          cancelReason: '관리자 환불 처리',
-        });
+        await this.paymentsService.cancelAdmin(orderId, '관리자 환불 처리');
       }
     }
 
-    await this.orderRepository.update(orderId, { status: nextStatus });
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(Order, orderId, { status: nextStatus });
 
+      if (this.shouldRestoreStockAndPoints(currentStatus, nextStatus)) {
+        await this.restoreStock(manager, orderId);
+        await this.restorePoints(manager, order);
+      }
+    });
+
+    if (nextStatus === OrderStatus.COMPLETED) {
+      const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
+      void this.membershipService.incrementAccumulatedAmount(order.userId, completedAmount)
+        .catch((err) => this.logger.warn(`Failed to increment tier amount for user ${order.userId}: ${String(err)}`));
+    }
     this.logger.log(`Order #${orderId} status changed: ${currentStatus} → ${nextStatus}`);
 
     return this.orderRepository.findOne({
@@ -112,11 +116,48 @@ export class AdminOrdersService {
     });
   }
 
-  async registerShipping(orderId: number, dto: RegisterShippingDto) {
-    const order = await this.orderRepository.findOne({ where: { id: orderId } });
-    if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
+  private shouldRestoreStockAndPoints(currentStatus: OrderStatus, nextStatus: OrderStatus): boolean {
+    const restoreTargets = new Set<OrderStatus>([OrderStatus.CANCELLED, OrderStatus.REFUNDED]);
+    return !restoreTargets.has(currentStatus) && restoreTargets.has(nextStatus);
+  }
+
+  private async restoreStock(manager: EntityManager, orderId: number): Promise<void> {
+    const items = await manager.find(OrderItem, {
+      where: { orderId },
+      relations: ['product', 'option'],
+    });
+
+    for (const item of items) {
+      await manager.increment(Product, { id: item.productId }, 'stock', item.quantity);
+      if (item.productOptionId !== null) {
+        await manager.increment(ProductOption, { id: item.productOptionId }, 'stock', item.quantity);
+      }
     }
+  }
+
+  private async restorePoints(manager: EntityManager, order: Order): Promise<void> {
+    if (!order.pointsUsed || order.pointsUsed <= 0) {
+      return;
+    }
+
+    const currentBalance = await this.pointsService.getRunningBalanceInTx(
+      manager,
+      order.userId,
+    );
+    const restoredBalance = currentBalance + order.pointsUsed;
+
+    await manager.save(PointHistory, {
+      userId: order.userId,
+      type: 'admin_adjust',
+      amount: order.pointsUsed,
+      balance: restoredBalance,
+      orderId: Number(order.id),
+      description: `주문 ${order.orderNumber} 취소/환불로 인한 적립금 복구`,
+    });
+  }
+
+  async registerShipping(orderId: number, dto: RegisterShippingDto): Promise<Shipping | null> {
+    await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
 
     const existing = await this.shippingRepository.findOne({ where: { orderId } });
     if (existing && existing.trackingNumber) {

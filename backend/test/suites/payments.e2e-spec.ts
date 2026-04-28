@@ -2,15 +2,22 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
+
 let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerPaymentsSuite(getApp: () => INestApplication) {
   describe('Payments (e2e)', () => {
-    let userToken: string;
-    let otherToken: string;
+    let userCookies: AuthCookies;
     let productId: number;
     let orderId: number;
+    let orderAmount: number;
 
     const userEmail = `payments-user-${Date.now()}@test.com`;
     const otherEmail = `payments-other-${Date.now()}@test.com`;
@@ -20,25 +27,26 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       dataSource = app.get(DataSource);
 
       // Create main user
-      const reg = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userEmail, password: 'Test1234!', name: '결제유저' });
-      if (reg.status !== 201) throw new Error(`Register failed: ${reg.status} ${JSON.stringify(reg.body)}`);
-
-      const login = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userEmail, password: 'Test1234!' });
-      if (login.status !== 200) throw new Error(`Login failed: ${login.status} ${JSON.stringify(login.body)}`);
-      userToken = (login.body as { accessToken: string }).accessToken;
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+        name: '결제유저',
+      });
+      userCookies = await loginAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+      });
 
       // Create other user
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: otherEmail, password: 'Test1234!', name: '다른유저' });
-      const loginOther = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: otherEmail, password: 'Test1234!' });
-      otherToken = (loginOther.body as { accessToken: string }).accessToken;
+      await registerAndGetCookies(app, {
+        email: otherEmail,
+        password: 'Test1234!',
+        name: '다른유저',
+      });
+      await loginAndGetCookies(app, {
+        email: otherEmail,
+        password: 'Test1234!',
+      });
 
       // Seed product
       const prodResult = await dataSource.query(`
@@ -50,7 +58,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       // Create order
       const orderRes = await request(app.getHttpServer())
         .post('/api/orders')
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', cookieHeader(userCookies))
         .send({
           items: [{ productId, quantity: 1 }],
           recipientName: '홍길동',
@@ -60,6 +68,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         });
       if (orderRes.status !== 201) throw new Error(`Create order failed: ${orderRes.status} ${JSON.stringify(orderRes.body)}`);
       orderId = Number((orderRes.body as { id: number }).id);
+      orderAmount = Number((orderRes.body as { totalAmount: number | string }).totalAmount);
     });
 
     afterAll(async () => {
@@ -89,7 +98,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('invalid orderId → 404', () => {
         return request(app.getHttpServer())
           .post('/api/payments/prepare')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ orderId: 999999 })
           .expect(404);
       });
@@ -97,7 +106,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('valid → 200/201, has clientKey', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/payments/prepare')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ orderId })
           .expect((r) => {
             if (r.status !== 200 && r.status !== 201) throw new Error(`Expected 200/201 got ${r.status}: ${JSON.stringify(r.body)}`);
@@ -106,7 +115,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         const body = res.body as { clientKey: string; orderId: number; amount: number };
         expect(body.clientKey).toBeDefined();
         expect(body.orderId).toBe(orderId);
-        expect(body.amount).toBe(30000);
+        expect(body.amount).toBe(orderAmount);
       });
     });
 
@@ -114,8 +123,8 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('amount match → 200/201, status=confirmed', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/payments/confirm')
-          .set('Authorization', `Bearer ${userToken}`)
-          .send({ orderId, paymentKey: 'pay_mock_key', amount: 30000 })
+          .set('Cookie', cookieHeader(userCookies))
+          .send({ orderId, paymentKey: 'pay_mock_key', amount: orderAmount })
           .expect((r) => {
             if (r.status !== 200 && r.status !== 201) throw new Error(`Expected 200/201 got ${r.status}: ${JSON.stringify(r.body)}`);
           });
@@ -128,7 +137,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('after confirm: order.status should be paid', async () => {
         const res = await request(app.getHttpServer())
           .get(`/api/orders/${orderId}`)
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .expect(200);
 
         const body = res.body as { status: string };
@@ -140,7 +149,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         // The order is already confirmed so we'll get 409; create a separate order for mismatch test
         const orderRes = await request(app.getHttpServer())
           .post('/api/orders')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({
             items: [{ productId, quantity: 1 }],
             recipientName: '홍길동',
@@ -153,12 +162,12 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         // Prepare it first
         await request(app.getHttpServer())
           .post('/api/payments/prepare')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ orderId: mismatchOrderId });
 
         await request(app.getHttpServer())
           .post('/api/payments/confirm')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ orderId: mismatchOrderId, paymentKey: 'pay_mismatch', amount: 99999 })
           .expect(400);
 
@@ -173,8 +182,8 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('re-confirm (already confirmed) → 409', () => {
         return request(app.getHttpServer())
           .post('/api/payments/confirm')
-          .set('Authorization', `Bearer ${userToken}`)
-          .send({ orderId, paymentKey: 'pay_mock_key', amount: 30000 })
+          .set('Cookie', cookieHeader(userCookies))
+          .send({ orderId, paymentKey: 'pay_mock_key', amount: orderAmount })
           .expect(409);
       });
     });
@@ -183,7 +192,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('confirmed → 200/201, status=cancelled', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/payments/cancel')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ orderId, reason: '테스트 취소' })
           .expect((r) => {
             if (r.status !== 200 && r.status !== 201) throw new Error(`Expected 200/201 got ${r.status}: ${JSON.stringify(r.body)}`);
@@ -196,7 +205,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('after cancel → cancel again → 400', () => {
         return request(app.getHttpServer())
           .post('/api/payments/cancel')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ orderId, reason: '재취소' })
           .expect(400);
       });

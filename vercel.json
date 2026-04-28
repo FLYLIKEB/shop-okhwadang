@@ -1,0 +1,14 @@
+{
+  "framework": "nextjs",
+  "regions": ["icn1"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    }
+  ],
+  "buildCommand": "rm -rf .next && npm run build",
+  "outputDirectory": ".next"
+}

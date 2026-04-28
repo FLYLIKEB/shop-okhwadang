@@ -1,16 +1,24 @@
 import {
   Injectable,
   BadRequestException,
-  NotFoundException,
   ConflictException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
+import { Product } from './entities/product.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { ReorderCategoriesDto } from './dto/reorder-categories.dto';
+import { CacheService } from '../cache/cache.service';
+import { findOrThrow } from '../../common/utils/repository.util';
+import { buildTree } from '../../common/utils/tree.util';
+import { applyLocale } from '../../common/utils/locale.util';
+
+const LOCALIZED_FIELDS = ['name', 'description'];
+const CACHE_KEY_ALL = 'categories:all';
+const CACHE_TTL = 3600;
 
 export interface CategoryTree extends Omit<Category, 'children' | 'products'> {
   children: CategoryTree[];
@@ -23,64 +31,88 @@ export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
+    private readonly cacheService: CacheService,
   ) {}
 
-  async findTree(): Promise<CategoryTree[]> {
+  async findTree(locale?: string): Promise<CategoryTree[]> {
+    const cached = await this.cacheService.get<CategoryTree[]>(CACHE_KEY_ALL);
+    if (cached) {
+      return this.applyLocaleToTree(cached, locale);
+    }
+
     const all = await this.categoryRepository.find({
       where: { isActive: true },
       order: { sortOrder: 'ASC', id: 'ASC' },
     });
 
-    return this.buildTree(all);
+    const tree = this.buildTree(all);
+    await this.cacheService.set(CACHE_KEY_ALL, tree, CACHE_TTL);
+    return this.applyLocaleToTree(tree, locale);
   }
 
-  async findAll(): Promise<CategoryTree[]> {
+  async findAll(locale?: string): Promise<CategoryTree[]> {
+    const cached = await this.cacheService.get<CategoryTree[]>(CACHE_KEY_ALL);
+    if (cached) {
+      return this.applyLocaleToTree(cached, locale);
+    }
+
     const all = await this.categoryRepository.find({
       order: { sortOrder: 'ASC', id: 'ASC' },
     });
 
-    return this.buildTree(all);
+    const tree = this.buildTree(all);
+    await this.cacheService.set(CACHE_KEY_ALL, tree, CACHE_TTL);
+    return this.applyLocaleToTree(tree, locale);
   }
 
   private buildTree(categories: Category[]): CategoryTree[] {
-    const map = new Map<number, CategoryTree>();
-    const roots: CategoryTree[] = [];
-
-    for (const cat of categories) {
-      map.set(cat.id, { ...cat, children: [] });
-    }
-
-    for (const cat of categories) {
-      const node = map.get(cat.id)!;
-      if (cat.parentId === null) {
-        roots.push(node);
-      } else {
-        const parent = map.get(cat.parentId);
-        if (parent) {
-          parent.children.push(node);
-        } else {
-          roots.push(node);
-        }
-      }
-    }
-
-    return roots;
+    return buildTree(categories, 'id', 'parentId') as CategoryTree[];
   }
 
-  private async getDepth(parentId: number | null | undefined): Promise<number> {
-    if (!parentId) return 1;
+  private applyLocaleToTree(items: CategoryTree[], locale?: string): CategoryTree[] {
+    if (!locale || locale === 'ko') return items;
+    return items.map((item) => {
+      const localized = { ...applyLocale(item, locale, LOCALIZED_FIELDS) } as CategoryTree;
+      if (localized.children && localized.children.length) {
+        localized.children = this.applyLocaleToTree(localized.children, locale);
+      }
+      return localized;
+    });
+  }
+
+  /**
+   * Computes depth by traversing the parent chain in-memory.
+   * Loads all categories once, then walks up the map — no per-level DB query (N+1 fix).
+   */
+  private computeDepth(allCategories: Category[], targetId: number): number {
+    const map = new Map<number, Category>();
+    for (const cat of allCategories) {
+      map.set(cat.id, cat);
+    }
 
     let depth = 1;
-    let currentId: number | null = parentId;
+    let currentId: number | null | undefined = map.get(targetId)?.parentId;
 
-    while (currentId !== null) {
+    while (currentId !== null && currentId !== undefined) {
       depth++;
-      const parent = await this.categoryRepository.findOne({ where: { id: currentId } });
+      const parent = map.get(currentId);
       if (!parent) break;
       currentId = parent.parentId;
     }
 
     return depth;
+  }
+
+  private async getDepth(parentId: number | null | undefined): Promise<number> {
+    if (!parentId) return 1;
+
+    const all = await this.categoryRepository.find({
+      order: { sortOrder: 'ASC', id: 'ASC' },
+    });
+
+    return this.computeDepth(all, parentId);
   }
 
   async create(dto: CreateCategoryDto): Promise<Category> {
@@ -90,10 +122,7 @@ export class CategoriesService {
     }
 
     if (dto.parentId) {
-      const parent = await this.categoryRepository.findOne({ where: { id: dto.parentId } });
-      if (!parent) {
-        throw new NotFoundException(`부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
-      }
+      await findOrThrow(this.categoryRepository, { id: dto.parentId }, `부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
     }
 
     const existing = await this.categoryRepository.findOne({ where: { slug: dto.slug } });
@@ -110,14 +139,13 @@ export class CategoriesService {
       imageUrl: dto.imageUrl ?? null,
     });
 
-    return this.categoryRepository.save(category);
+    const saved = await this.categoryRepository.save(category);
+    await this.cacheService.del(CACHE_KEY_ALL);
+    return saved;
   }
 
   async update(id: number, dto: UpdateCategoryDto): Promise<Category> {
-    const category = await this.categoryRepository.findOne({ where: { id } });
-    if (!category) {
-      throw new NotFoundException(`카테고리(id: ${id})를 찾을 수 없습니다.`);
-    }
+    const category = await findOrThrow(this.categoryRepository, { id }, `카테고리(id: ${id})를 찾을 수 없습니다.`);
 
     if (dto.parentId !== undefined) {
       if (dto.parentId === id) {
@@ -125,10 +153,7 @@ export class CategoriesService {
       }
 
       if (dto.parentId) {
-        const parent = await this.categoryRepository.findOne({ where: { id: dto.parentId } });
-        if (!parent) {
-          throw new NotFoundException(`부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
-        }
+        await findOrThrow(this.categoryRepository, { id: dto.parentId }, `부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
 
         const depth = await this.getDepth(dto.parentId);
         if (depth >= 3) {
@@ -153,29 +178,26 @@ export class CategoriesService {
       ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl }),
     });
 
-    return this.categoryRepository.save(category);
+    const saved = await this.categoryRepository.save(category);
+    await this.cacheService.del(CACHE_KEY_ALL);
+    return saved;
   }
 
   async remove(id: number): Promise<void> {
-    const category = await this.categoryRepository.findOne({ where: { id } });
-    if (!category) {
-      throw new NotFoundException(`카테고리(id: ${id})를 찾을 수 없습니다.`);
-    }
+    const category = await findOrThrow(this.categoryRepository, { id }, `카테고리(id: ${id})를 찾을 수 없습니다.`);
 
     const childCount = await this.categoryRepository.count({ where: { parentId: id } });
     if (childCount > 0) {
       throw new BadRequestException('하위 카테고리가 있는 카테고리는 삭제할 수 없습니다.');
     }
 
-    const productCount = await this.categoryRepository.query(
-      'SELECT COUNT(*) as cnt FROM products WHERE category_id = ?',
-      [id],
-    ) as Array<{ cnt: string }>;
-    if (Number(productCount[0].cnt) > 0) {
+    const productCount = await this.productRepository.count({ where: { categoryId: id } });
+    if (productCount > 0) {
       throw new BadRequestException('연관된 상품이 있는 카테고리는 삭제할 수 없습니다.');
     }
 
     await this.categoryRepository.remove(category);
+    await this.cacheService.del(CACHE_KEY_ALL);
     this.logger.log(`Category(id: ${id}) deleted`);
   }
 
@@ -185,5 +207,6 @@ export class CategoriesService {
         this.categoryRepository.update(id, { sortOrder }),
       ),
     );
+    await this.cacheService.del(CACHE_KEY_ALL);
   }
 }

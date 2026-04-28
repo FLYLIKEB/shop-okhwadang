@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
-import OptionSelector from '@/components/products/OptionSelector'
+import OptionSelector from '@/components/shared/products/OptionSelector'
 import type { ProductOption } from '@/lib/api'
 
 const mockOptions: ProductOption[] = [

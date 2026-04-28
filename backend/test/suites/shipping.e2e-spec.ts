@@ -1,16 +1,23 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerShippingSuite(getApp: () => INestApplication) {
   describe('Shipping (e2e)', () => {
-    let userToken: string;
-    let otherToken: string;
-    let adminToken: string;
+    let userCookies: AuthCookies;
+    let otherCookies: AuthCookies;
+    let adminCookies: AuthCookies;
     let orderId: number;
+    let orderAmount: number;
     let productId: number;
 
     const userEmail = `shipping-user-${Date.now()}@test.com`;
@@ -22,35 +29,40 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       dataSource = app.get(DataSource);
 
       // Create users
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userEmail, password: 'Test1234!', name: '배송유저' });
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+        name: '배송유저',
+      });
+      userCookies = await loginAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+      });
 
-      const loginRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userEmail, password: 'Test1234!' });
-      userToken = (loginRes.body as { accessToken: string }).accessToken;
-
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: otherEmail, password: 'Test1234!', name: '다른유저' });
-      const otherRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: otherEmail, password: 'Test1234!' });
-      otherToken = (otherRes.body as { accessToken: string }).accessToken;
+      await registerAndGetCookies(app, {
+        email: otherEmail,
+        password: 'Test1234!',
+        name: '다른유저',
+      });
+      otherCookies = await loginAndGetCookies(app, {
+        email: otherEmail,
+        password: 'Test1234!',
+      });
 
       // Create admin user
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: adminEmail, password: 'Test1234!', name: '관리자' });
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+        name: '관리자',
+      });
       await dataSource.query(
         `UPDATE users SET role = 'admin' WHERE email = ?`,
         [adminEmail],
       );
-      const adminRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: adminEmail, password: 'Test1234!' });
-      adminToken = (adminRes.body as { accessToken: string }).accessToken;
+      adminCookies = await loginAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+      });
 
       // Seed product
       const prodResult = await dataSource.query(`
@@ -62,7 +74,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       // Create order
       const orderRes = await request(app.getHttpServer())
         .post('/api/orders')
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', cookieHeader(userCookies))
         .send({
           items: [{ productId, quantity: 1 }],
           recipientName: '홍길동',
@@ -72,17 +84,18 @@ export function registerShippingSuite(getApp: () => INestApplication) {
         });
       if (orderRes.status !== 201) throw new Error(`Create order failed: ${orderRes.status} ${JSON.stringify(orderRes.body)}`);
       orderId = Number((orderRes.body as { id: number }).id);
+      orderAmount = Number((orderRes.body as { totalAmount: number | string }).totalAmount);
 
       // Confirm payment to auto-create shipping record
       await request(app.getHttpServer())
         .post('/api/payments/prepare')
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', cookieHeader(userCookies))
         .send({ orderId });
 
       await request(app.getHttpServer())
         .post('/api/payments/confirm')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({ orderId, paymentKey: 'mock_key_123', amount: 10000 });
+        .set('Cookie', cookieHeader(userCookies))
+        .send({ orderId, paymentKey: 'mock_key_123', amount: orderAmount });
     });
 
     afterAll(async () => {
@@ -109,21 +122,21 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       it('타인의 orderId → 403 FORBIDDEN', () => {
         return request(app.getHttpServer())
           .get(`/api/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${otherToken}`)
+          .set('Cookie', cookieHeader(otherCookies))
           .expect(403);
       });
 
       it('존재하지 않는 orderId → 404', () => {
         return request(app.getHttpServer())
           .get('/api/shipping/99999999')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .expect(404);
       });
 
       it('valid JWT + 본인 orderId → 200, shipping 정보 반환', async () => {
         const res = await request(app.getHttpServer())
           .get(`/api/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .expect(200);
 
         const body = res.body as {
@@ -150,9 +163,9 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       it('유효한 carrier + trackingNumber → 200, steps 배열', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/shipping/track')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ carrier: 'mock', trackingNumber: '1234567890123' })
-          .expect(201);
+          .expect(200);
 
         const body = res.body as { carrier: string; steps: unknown[] };
         expect(body.carrier).toBe('mock');
@@ -163,7 +176,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       it('지원하지 않는 carrier → 400', () => {
         return request(app.getHttpServer())
           .post('/api/shipping/track')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ carrier: 'unknown_carrier', trackingNumber: '123' })
           .expect(400);
       });
@@ -173,7 +186,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       it('일반 사용자 → 403', () => {
         return request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ carrier: 'mock', trackingNumber: 'TRACK001' })
           .expect(403);
       });
@@ -181,7 +194,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       it('admin → 200, tracking_number 업데이트', async () => {
         const res = await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ carrier: 'mock', trackingNumber: 'TRACK001' })
           .expect(201);
 

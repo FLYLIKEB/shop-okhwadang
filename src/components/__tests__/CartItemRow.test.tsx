@@ -1,12 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
-import CartItemRow from '@/components/cart/CartItemRow';
+import CartItemRow from '@/components/shared/cart/CartItemRow';
 import { CartItem } from '@/lib/api';
 
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
     const { fill, ...rest } = props;
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     return <img data-fill={fill ? 'true' : undefined} {...(rest as React.ImgHTMLAttributes<HTMLImageElement>)} />;
   },
 }));
@@ -25,7 +26,7 @@ const baseItem: CartItem = {
     price: 15000,
     salePrice: null,
     status: 'active',
-    images: [{ id: 1, url: '/img/test.jpg', alt: '썸네일', sortOrder: 0, isThumbnail: true }],
+    images: [{ id: 1, url: '/img/test.jpg', alt: '썸네일', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
   },
   option: null,
 };
@@ -45,9 +46,9 @@ describe('CartItemRow', () => {
       />,
     );
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
-    expect(screen.getByText('15,000원')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('30,000원')).toBeInTheDocument();
+    expect(screen.getAllByText('₩15,000')).toHaveLength(1);
+    expect(screen.getAllByText('2')).toHaveLength(2);
+    expect(screen.getAllByText('₩30,000')).toHaveLength(2);
   });
 
   it('renders option text when option is provided', () => {
@@ -92,7 +93,7 @@ describe('CartItemRow', () => {
         onRemove={vi.fn()}
       />,
     );
-    await user.click(screen.getByRole('button', { name: '수량 증가' }));
+    await user.click(screen.getAllByRole('button', { name: '수량 증가' })[0]);
     expect(onQuantityChange).toHaveBeenCalledWith(1, 3);
   });
 
@@ -109,7 +110,7 @@ describe('CartItemRow', () => {
         onRemove={vi.fn()}
       />,
     );
-    const decreaseBtn = screen.getByRole('button', { name: '수량 감소' });
+    const decreaseBtn = screen.getAllByRole('button', { name: '수량 감소' })[0];
     expect(decreaseBtn).toBeDisabled();
     await user.click(decreaseBtn);
     expect(onQuantityChange).not.toHaveBeenCalled();
@@ -127,7 +128,7 @@ describe('CartItemRow', () => {
         onRemove={onRemove}
       />,
     );
-    await user.click(screen.getByRole('button', { name: '테스트 상품 삭제' }));
+    await user.click(screen.getAllByRole('button', { name: '테스트 상품 삭제' })[0]);
     expect(onRemove).toHaveBeenCalledWith(1);
   });
 });

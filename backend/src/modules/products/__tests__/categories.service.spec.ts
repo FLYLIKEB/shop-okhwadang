@@ -3,8 +3,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { CategoriesService } from '../categories.service';
 import { Category } from '../entities/category.entity';
+import { Product } from '../entities/product.entity';
+import { CacheService } from '../../cache/cache.service';
 
-const mockRepository = {
+const mockCategoryRepository = {
   find: jest.fn(),
   findOne: jest.fn(),
   count: jest.fn(),
@@ -12,24 +14,38 @@ const mockRepository = {
   save: jest.fn(),
   remove: jest.fn(),
   update: jest.fn(),
-  query: jest.fn(),
+};
+
+const mockProductRepository = {
+  count: jest.fn(),
+};
+
+const mockCacheService = {
+  get: jest.fn(),
+  set: jest.fn(),
+  del: jest.fn(),
+  delPattern: jest.fn(),
 };
 
 const makeCategory = (overrides: Partial<Category> = {}): Category => ({
   id: 1,
   name: '패션',
+  nameEn: null,
+  nameJa: null,
+  nameZh: null,
   slug: 'fashion',
   parentId: null,
   sortOrder: 0,
   isActive: true,
   imageUrl: null,
+  description: null,
   createdAt: new Date(),
   updatedAt: new Date(),
-  parent: null,
-  children: [],
-  products: [],
+  parent: null as never,
+  children: [] as never,
+  products: [] as never,
   ...overrides,
-});
+} as Category);
 
 describe('CategoriesService', () => {
   let service: CategoriesService;
@@ -38,10 +54,9 @@ describe('CategoriesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CategoriesService,
-        {
-          provide: getRepositoryToken(Category),
-          useValue: mockRepository,
-        },
+        { provide: getRepositoryToken(Category), useValue: mockCategoryRepository },
+        { provide: getRepositoryToken(Product), useValue: mockProductRepository },
+        { provide: CacheService, useValue: mockCacheService },
       ],
     }).compile();
 
@@ -50,93 +65,60 @@ describe('CategoriesService', () => {
   });
 
   describe('findTree', () => {
-    it('트리 구조 반환 — 루트와 자식 노드 계층화', async () => {
+    it('캐시 미스 → DB 조회 후 캐시 저장', async () => {
       const categories: Partial<Category>[] = [
-        {
-          id: 1,
-          name: '패션',
-          slug: 'fashion',
-          parentId: null,
-          sortOrder: 0,
-          isActive: true,
-          imageUrl: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: 2,
-          name: '남성',
-          slug: 'men',
-          parentId: 1,
-          sortOrder: 0,
-          isActive: true,
-          imageUrl: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: 3,
-          name: '여성',
-          slug: 'women',
-          parentId: 1,
-          sortOrder: 1,
-          isActive: true,
-          imageUrl: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        { id: 1, name: '패션', slug: 'fashion', parentId: null, sortOrder: 0, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
+        { id: 2, name: '남성', slug: 'men', parentId: 1, sortOrder: 0, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
+        { id: 3, name: '여성', slug: 'women', parentId: 1, sortOrder: 1, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
       ];
 
-      mockRepository.find.mockResolvedValue(categories);
+      mockCacheService.get.mockResolvedValue(null);
+      mockCategoryRepository.find.mockResolvedValue(categories);
 
       const result = await service.findTree();
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(1);
       expect(result[0].children).toHaveLength(2);
-      expect(result[0].children[0].id).toBe(2);
-      expect(result[0].children[1].id).toBe(3);
+      expect(mockCacheService.set).toHaveBeenCalledWith(
+        'categories:all',
+        expect.any(Array),
+        3600,
+      );
     });
 
-    it('is_active=false 카테고리 제외 확인 — find에 isActive:true 전달', async () => {
-      mockRepository.find.mockResolvedValue([]);
+    it('캐시 히트 → DB 조회 없이 캐시 데이터 반환', async () => {
+      const cached: Partial<Category>[] = [
+        { id: 1, name: '패션', slug: 'fashion', parentId: null, sortOrder: 0, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date(), children: [] },
+      ];
+
+      mockCacheService.get.mockResolvedValue(cached);
+
+      const result = await service.findTree();
+
+      expect(result).toHaveLength(1);
+      expect(mockCategoryRepository.find).not.toHaveBeenCalled();
+    });
+
+    it('is_active=false 카테고리 제외 — find에 isActive:true 전달', async () => {
+      mockCacheService.get.mockResolvedValue(null);
+      mockCategoryRepository.find.mockResolvedValue([]);
 
       await service.findTree();
 
-      expect(mockRepository.find).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { isActive: true },
-        }),
+      expect(mockCategoryRepository.find).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { isActive: true } }),
       );
     });
 
     it('여러 루트 카테고리 반환', async () => {
       const categories: Partial<Category>[] = [
-        {
-          id: 1,
-          name: '패션',
-          slug: 'fashion',
-          parentId: null,
-          sortOrder: 0,
-          isActive: true,
-          imageUrl: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: 2,
-          name: '전자기기',
-          slug: 'electronics',
-          parentId: null,
-          sortOrder: 1,
-          isActive: true,
-          imageUrl: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        { id: 1, name: '패션', slug: 'fashion', parentId: null, sortOrder: 0, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
+        { id: 2, name: '전자기기', slug: 'electronics', parentId: null, sortOrder: 1, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
       ];
 
-      mockRepository.find.mockResolvedValue(categories);
+      mockCacheService.get.mockResolvedValue(null);
+      mockCategoryRepository.find.mockResolvedValue(categories);
 
       const result = await service.findTree();
 
@@ -146,7 +128,8 @@ describe('CategoriesService', () => {
     });
 
     it('빈 카테고리 목록 → 빈 배열 반환', async () => {
-      mockRepository.find.mockResolvedValue([]);
+      mockCacheService.get.mockResolvedValue(null);
+      mockCategoryRepository.find.mockResolvedValue([]);
 
       const result = await service.findTree();
 
@@ -155,31 +138,26 @@ describe('CategoriesService', () => {
   });
 
   describe('create', () => {
-    it('루트 카테고리 생성 성공', async () => {
+    it('루트 카테고리 생성 성공 → 캐시 삭제', async () => {
       const cat = makeCategory();
-      mockRepository.findOne.mockResolvedValue(null); // no slug conflict
-      mockRepository.create.mockReturnValue(cat);
-      mockRepository.save.mockResolvedValue(cat);
+      mockCategoryRepository.findOne.mockResolvedValue(null);
+      mockCategoryRepository.create.mockReturnValue(cat);
+      mockCategoryRepository.save.mockResolvedValue(cat);
 
       const result = await service.create({ name: '패션', slug: 'fashion' });
 
       expect(result).toBe(cat);
-      expect(mockRepository.save).toHaveBeenCalled();
+      expect(mockCategoryRepository.save).toHaveBeenCalled();
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:all');
     });
 
     it('depth 4 시도 → BadRequestException', async () => {
-      // depth chain: child(4) → grandchild(3) → child(2) → root(1) → null
-      // parentId = 4, grandchild
       const grandchild = makeCategory({ id: 4, parentId: 3 });
       const child = makeCategory({ id: 3, parentId: 2 });
       const root = makeCategory({ id: 2, parentId: 1 });
       const level1 = makeCategory({ id: 1, parentId: null });
 
-      mockRepository.findOne
-        .mockResolvedValueOnce(grandchild) // getDepth: find parentId=4
-        .mockResolvedValueOnce(child)      // getDepth: find parentId=3
-        .mockResolvedValueOnce(root)       // getDepth: find parentId=2
-        .mockResolvedValueOnce(level1);    // getDepth: find parentId=1 (parentId=null → stop)
+      mockCategoryRepository.find.mockResolvedValueOnce([grandchild, child, root, level1]);
 
       await expect(
         service.create({ name: '4단계', slug: '4th-level', parentId: 4 }),
@@ -188,8 +166,7 @@ describe('CategoriesService', () => {
 
     it('slug 중복 → ConflictException', async () => {
       const cat = makeCategory();
-      // getDepth: parentId undefined → depth 1 (no findOne call for depth)
-      mockRepository.findOne.mockResolvedValue(cat); // slug conflict
+      mockCategoryRepository.findOne.mockResolvedValue(cat);
 
       await expect(
         service.create({ name: '패션', slug: 'fashion' }),
@@ -197,11 +174,8 @@ describe('CategoriesService', () => {
     });
 
     it('존재하지 않는 parentId → NotFoundException', async () => {
-      // getDepth calls findOne(parentId=99) → returns null (depth stays at 2, ok)
-      // then parent check: findOne → null
-      mockRepository.findOne
-        .mockResolvedValueOnce(null) // getDepth: parentId=99 not found
-        .mockResolvedValueOnce(null); // parent existence check
+      mockCategoryRepository.find.mockResolvedValue([makeCategory({ id: 99, parentId: null })]);
+      mockCategoryRepository.findOne.mockResolvedValue(null);
 
       await expect(
         service.create({ name: '테스트', slug: 'test', parentId: 99 }),
@@ -210,25 +184,26 @@ describe('CategoriesService', () => {
   });
 
   describe('update', () => {
-    it('카테고리 업데이트 성공', async () => {
+    it('카테고리 업데이트 성공 → 캐시 삭제', async () => {
       const cat = makeCategory();
-      mockRepository.findOne.mockResolvedValue(cat);
-      mockRepository.save.mockResolvedValue({ ...cat, name: '업데이트됨' });
+      mockCategoryRepository.findOne.mockResolvedValue(cat);
+      mockCategoryRepository.save.mockResolvedValue({ ...cat, name: '업데이트됨' });
 
       const result = await service.update(1, { name: '업데이트됨' });
 
       expect(result.name).toBe('업데이트됨');
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:all');
     });
 
     it('존재하지 않는 카테고리 → NotFoundException', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      mockCategoryRepository.findOne.mockResolvedValue(null);
 
       await expect(service.update(999, { name: '없음' })).rejects.toThrow(NotFoundException);
     });
 
     it('자기 자신을 부모로 설정 → BadRequestException', async () => {
       const cat = makeCategory({ id: 1 });
-      mockRepository.findOne.mockResolvedValue(cat);
+      mockCategoryRepository.findOne.mockResolvedValue(cat);
 
       await expect(service.update(1, { parentId: 1 })).rejects.toThrow(BadRequestException);
     });
@@ -237,48 +212,50 @@ describe('CategoriesService', () => {
   describe('remove', () => {
     it('하위 카테고리가 있는 경우 → BadRequestException', async () => {
       const cat = makeCategory();
-      mockRepository.findOne.mockResolvedValue(cat);
-      mockRepository.count.mockResolvedValue(2);
+      mockCategoryRepository.findOne.mockResolvedValue(cat);
+      mockCategoryRepository.count.mockResolvedValue(2);
 
       await expect(service.remove(1)).rejects.toThrow(BadRequestException);
     });
 
     it('연관 상품이 있는 경우 → BadRequestException', async () => {
       const cat = makeCategory();
-      mockRepository.findOne.mockResolvedValue(cat);
-      mockRepository.count.mockResolvedValue(0);
-      mockRepository.query.mockResolvedValue([{ cnt: '3' }]);
+      mockCategoryRepository.findOne.mockResolvedValue(cat);
+      mockCategoryRepository.count.mockResolvedValue(0);
+      mockProductRepository.count.mockResolvedValue(3);
 
       await expect(service.remove(1)).rejects.toThrow(BadRequestException);
     });
 
-    it('삭제 성공', async () => {
+    it('삭제 성공 → 캐시 삭제', async () => {
       const cat = makeCategory();
-      mockRepository.findOne.mockResolvedValue(cat);
-      mockRepository.count.mockResolvedValue(0);
-      mockRepository.query.mockResolvedValue([{ cnt: '0' }]);
-      mockRepository.remove.mockResolvedValue(cat);
+      mockCategoryRepository.findOne.mockResolvedValue(cat);
+      mockCategoryRepository.count.mockResolvedValue(0);
+      mockProductRepository.count.mockResolvedValue(0);
+      mockCategoryRepository.remove.mockResolvedValue(cat);
 
       await expect(service.remove(1)).resolves.toBeUndefined();
-      expect(mockRepository.remove).toHaveBeenCalledWith(cat);
+      expect(mockCategoryRepository.remove).toHaveBeenCalledWith(cat);
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:all');
     });
 
     it('존재하지 않는 카테고리 → NotFoundException', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      mockCategoryRepository.findOne.mockResolvedValue(null);
 
       await expect(service.remove(999)).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('reorder', () => {
-    it('순서 일괄 업데이트', async () => {
-      mockRepository.update.mockResolvedValue({ affected: 1 });
+    it('순서 일괄 업데이트 → 캐시 삭제', async () => {
+      mockCategoryRepository.update.mockResolvedValue({ affected: 1 });
 
       await service.reorder({ orders: [{ id: 1, sortOrder: 5 }, { id: 2, sortOrder: 10 }] });
 
-      expect(mockRepository.update).toHaveBeenCalledTimes(2);
-      expect(mockRepository.update).toHaveBeenCalledWith(1, { sortOrder: 5 });
-      expect(mockRepository.update).toHaveBeenCalledWith(2, { sortOrder: 10 });
+      expect(mockCategoryRepository.update).toHaveBeenCalledTimes(2);
+      expect(mockCategoryRepository.update).toHaveBeenCalledWith(1, { sortOrder: 5 });
+      expect(mockCategoryRepository.update).toHaveBeenCalledWith(2, { sortOrder: 10 });
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:all');
     });
   });
 });

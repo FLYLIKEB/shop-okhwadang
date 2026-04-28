@@ -1,0 +1,5845 @@
+{
+  "statistics": {
+    "detectionDate": "2026-04-20T09:13:08.926Z",
+    "formats": {
+      "typescript": {
+        "sources": {
+          "src/modules/upload/adapters/__tests__/local.adapter.spec.ts": {
+            "lines": 70,
+            "tokens": 733,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/wishlist/entities/wishlist.entity.ts": {
+            "lines": 34,
+            "tokens": 300,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/wishlist/__tests__/wishlist.service.spec.ts": {
+            "lines": 113,
+            "tokens": 1182,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/entities/user.entity.ts": {
+            "lines": 80,
+            "tokens": 830,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/entities/user-authentication.entity.ts": {
+            "lines": 40,
+            "tokens": 334,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/entities/user-address.entity.ts": {
+            "lines": 47,
+            "tokens": 408,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/dto/update-profile.dto.ts": {
+            "lines": 18,
+            "tokens": 177,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/dto/update-address.dto.ts": {
+            "lines": 45,
+            "tokens": 417,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 18,
+            "duplicatedTokens": 168,
+            "percentage": 40,
+            "percentageTokens": 40.29,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/dto/create-address.dto.ts": {
+            "lines": 45,
+            "tokens": 396,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 18,
+            "duplicatedTokens": 168,
+            "percentage": 40,
+            "percentageTokens": 42.42,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/__tests__/users.service.spec.ts": {
+            "lines": 157,
+            "tokens": 1510,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/upload/adapters/s3.adapter.ts": {
+            "lines": 70,
+            "tokens": 702,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/upload/adapters/mock.adapter.ts": {
+            "lines": 18,
+            "tokens": 171,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/upload/adapters/local.adapter.ts": {
+            "lines": 34,
+            "tokens": 462,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/upload/__tests__/upload.service.spec.ts": {
+            "lines": 175,
+            "tokens": 1914,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/utils/remote-area.util.ts": {
+            "lines": 11,
+            "tokens": 127,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/services/shipping-fee-calculator.service.ts": {
+            "lines": 48,
+            "tokens": 395,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/interfaces/shipping-provider.interface.ts": {
+            "lines": 18,
+            "tokens": 158,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/dto/track-shipment.dto.ts": {
+            "lines": 15,
+            "tokens": 170,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/dto/shipping-quote.dto.ts": {
+            "lines": 13,
+            "tokens": 130,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/dto/register-tracking.dto.ts": {
+            "lines": 15,
+            "tokens": 170,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/adapters/mock-shipping.adapter.ts": {
+            "lines": 19,
+            "tokens": 202,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/adapters/cj-shipping.adapter.ts": {
+            "lines": 67,
+            "tokens": 724,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/__tests__/shipping.service.spec.ts": {
+            "lines": 228,
+            "tokens": 2446,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/__tests__/shipping-fee-calculator.service.spec.ts": {
+            "lines": 51,
+            "tokens": 520,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/settings/entities/site-setting.entity.ts": {
+            "lines": 43,
+            "tokens": 397,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/settings/dto/update-settings.dto.ts": {
+            "lines": 42,
+            "tokens": 380,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/seo/__tests__/seo.service.spec.ts": {
+            "lines": 75,
+            "tokens": 759,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/scheduler/__tests__/scheduler.service.spec.ts": {
+            "lines": 316,
+            "tokens": 3061,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 13,
+            "duplicatedTokens": 117,
+            "percentage": 4.11,
+            "percentageTokens": 3.82,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/reviews/entities/review.entity.ts": {
+            "lines": 54,
+            "tokens": 492,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/reviews/dto/update-review.dto.ts": {
+            "lines": 22,
+            "tokens": 236,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/reviews/dto/review-query.dto.ts": {
+            "lines": 29,
+            "tokens": 325,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/reviews/dto/create-review.dto.ts": {
+            "lines": 29,
+            "tokens": 370,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/reviews/__tests__/reviews.service.spec.ts": {
+            "lines": 399,
+            "tokens": 4309,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/restock-alerts/entities/restock-alert.entity.ts": {
+            "lines": 47,
+            "tokens": 455,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/promotions/entities/promotion.entity.ts": {
+            "lines": 46,
+            "tokens": 470,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/promotions/entities/banner.entity.ts": {
+            "lines": 38,
+            "tokens": 392,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/promotions/dto/create-promotion.dto.ts": {
+            "lines": 102,
+            "tokens": 903,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/promotions/dto/create-banner.dto.ts": {
+            "lines": 89,
+            "tokens": 752,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 32,
+            "duplicatedTokens": 294,
+            "percentage": 35.96,
+            "percentageTokens": 39.1,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/promotions/__tests__/promotions.service.spec.ts": {
+            "lines": 222,
+            "tokens": 2396,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/entities/recently-viewed-product.entity.ts": {
+            "lines": 31,
+            "tokens": 268,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/entities/product.entity.ts": {
+            "lines": 127,
+            "tokens": 1328,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/entities/product-option.entity.ts": {
+            "lines": 49,
+            "tokens": 414,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/entities/product-image.entity.ts": {
+            "lines": 34,
+            "tokens": 292,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 16,
+            "duplicatedTokens": 157,
+            "percentage": 47.06,
+            "percentageTokens": 53.77,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/entities/product-detail-image.entity.ts": {
+            "lines": 34,
+            "tokens": 292,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 16,
+            "duplicatedTokens": 157,
+            "percentage": 47.06,
+            "percentageTokens": 53.77,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/entities/product-attribute.entity.ts": {
+            "lines": 49,
+            "tokens": 449,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/entities/category.entity.ts": {
+            "lines": 69,
+            "tokens": 667,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/entities/attribute-type.entity.ts": {
+            "lines": 67,
+            "tokens": 648,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/update-product.dto.ts": {
+            "lines": 145,
+            "tokens": 1327,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 16,
+            "duplicatedTokens": 152,
+            "percentage": 11.03,
+            "percentageTokens": 11.45,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/update-category.dto.ts": {
+            "lines": 46,
+            "tokens": 395,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 23,
+            "duplicatedTokens": 215,
+            "percentage": 50,
+            "percentageTokens": 54.43,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/reorder-categories.dto.ts": {
+            "lines": 21,
+            "tokens": 208,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/query-products.dto.ts": {
+            "lines": 81,
+            "tokens": 832,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/product-attribute.dto.ts": {
+            "lines": 80,
+            "tokens": 586,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/create-product.dto.ts": {
+            "lines": 180,
+            "tokens": 1924,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 16,
+            "duplicatedTokens": 152,
+            "percentage": 8.89,
+            "percentageTokens": 7.9,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/create-category.dto.ts": {
+            "lines": 44,
+            "tokens": 371,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 23,
+            "duplicatedTokens": 215,
+            "percentage": 52.27,
+            "percentageTokens": 57.95,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/bulk-products.dto.ts": {
+            "lines": 12,
+            "tokens": 153,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/batch-products.dto.ts": {
+            "lines": 12,
+            "tokens": 145,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/dto/attribute-type.dto.ts": {
+            "lines": 139,
+            "tokens": 998,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/__tests__/recently-viewed.service.spec.ts": {
+            "lines": 124,
+            "tokens": 1223,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/__tests__/products.service.spec.ts": {
+            "lines": 366,
+            "tokens": 3592,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/__tests__/products.search.spec.ts": {
+            "lines": 290,
+            "tokens": 2723,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/__tests__/categories.service.spec.ts": {
+            "lines": 260,
+            "tokens": 2971,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/points/__tests__/points.service.spec.ts": {
+            "lines": 178,
+            "tokens": 1533,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/interfaces/payment-gateway.interface.ts": {
+            "lines": 36,
+            "tokens": 275,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/entities/shipping.entity.ts": {
+            "lines": 51,
+            "tokens": 456,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/entities/refund.entity.ts": {
+            "lines": 50,
+            "tokens": 490,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/entities/payment.entity.ts": {
+            "lines": 86,
+            "tokens": 733,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/dto/webhook-payload.dto.ts": {
+            "lines": 51,
+            "tokens": 362,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/dto/prepare-payment.dto.ts": {
+            "lines": 12,
+            "tokens": 138,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/dto/create-refund.dto.ts": {
+            "lines": 15,
+            "tokens": 129,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/dto/confirm-payment.dto.ts": {
+            "lines": 16,
+            "tokens": 183,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/dto/cancel-payment.dto.ts": {
+            "lines": 13,
+            "tokens": 158,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/adapters/toss.adapter.ts": {
+            "lines": 141,
+            "tokens": 1311,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/adapters/stripe.adapter.ts": {
+            "lines": 153,
+            "tokens": 1367,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/adapters/mock.adapter.ts": {
+            "lines": 47,
+            "tokens": 442,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/__tests__/toss.adapter.spec.ts": {
+            "lines": 183,
+            "tokens": 1544,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/__tests__/stripe.adapter.spec.ts": {
+            "lines": 149,
+            "tokens": 1275,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/__tests__/payments.webhook.spec.ts": {
+            "lines": 96,
+            "tokens": 1108,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/__tests__/payments.webhook.dto.spec.ts": {
+            "lines": 84,
+            "tokens": 848,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/__tests__/payments.service.spec.ts": {
+            "lines": 540,
+            "tokens": 6171,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/__tests__/payments.module.spec.ts": {
+            "lines": 46,
+            "tokens": 379,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/__tests__/mock.adapter.spec.ts": {
+            "lines": 26,
+            "tokens": 252,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/entities/page.entity.ts": {
+            "lines": 53,
+            "tokens": 542,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 14,
+            "duplicatedTokens": 173,
+            "percentage": 26.42,
+            "percentageTokens": 31.92,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/entities/page-block.entity.ts": {
+            "lines": 40,
+            "tokens": 317,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/dto/update-page.dto.ts": {
+            "lines": 26,
+            "tokens": 252,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/dto/update-page-block.dto.ts": {
+            "lines": 24,
+            "tokens": 263,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/dto/reorder-blocks.dto.ts": {
+            "lines": 21,
+            "tokens": 208,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/dto/create-page.dto.ts": {
+            "lines": 24,
+            "tokens": 228,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/dto/create-page-block.dto.ts": {
+            "lines": 22,
+            "tokens": 239,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/__tests__/pages.service.spec.ts": {
+            "lines": 297,
+            "tokens": 3224,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/orders/entities/order.entity.ts": {
+            "lines": 78,
+            "tokens": 807,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/orders/entities/order-item.entity.ts": {
+            "lines": 46,
+            "tokens": 494,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/orders/dto/create-order.dto.ts": {
+            "lines": 77,
+            "tokens": 916,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/orders/__tests__/orders.service.spec.ts": {
+            "lines": 445,
+            "tokens": 4547,
+            "sources": 1,
+            "clones": 3,
+            "duplicatedLines": 65,
+            "duplicatedTokens": 611,
+            "percentage": 14.61,
+            "percentageTokens": 13.44,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notification/templates/sanitize.ts": {
+            "lines": 50,
+            "tokens": 403,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notification/templates/render.ts": {
+            "lines": 147,
+            "tokens": 1743,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notification/interfaces/email-provider.interface.ts": {
+            "lines": 14,
+            "tokens": 89,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notification/adapters/ses.adapter.ts": {
+            "lines": 22,
+            "tokens": 135,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notification/adapters/resend.adapter.ts": {
+            "lines": 47,
+            "tokens": 450,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notification/adapters/mock.adapter.ts": {
+            "lines": 25,
+            "tokens": 242,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notification/__tests__/notification.service.spec.ts": {
+            "lines": 194,
+            "tokens": 1741,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notices/entities/notice.entity.ts": {
+            "lines": 51,
+            "tokens": 526,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 14,
+            "duplicatedTokens": 173,
+            "percentage": 27.45,
+            "percentageTokens": 32.89,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notices/dto/update-notice.dto.ts": {
+            "lines": 27,
+            "tokens": 252,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notices/dto/create-notice.dto.ts": {
+            "lines": 24,
+            "tokens": 229,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notices/__tests__/notices.service.spec.ts": {
+            "lines": 67,
+            "tokens": 738,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/navigation/entities/navigation-item.entity.ts": {
+            "lines": 52,
+            "tokens": 467,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/navigation/dto/update-navigation-item.dto.ts": {
+            "lines": 44,
+            "tokens": 398,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 15,
+            "duplicatedTokens": 141,
+            "percentage": 34.09,
+            "percentageTokens": 35.43,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/navigation/dto/reorder-navigation.dto.ts": {
+            "lines": 21,
+            "tokens": 208,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/navigation/dto/create-navigation-item.dto.ts": {
+            "lines": 41,
+            "tokens": 362,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 15,
+            "duplicatedTokens": 141,
+            "percentage": 36.59,
+            "percentageTokens": 38.95,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/navigation/__tests__/navigation.service.spec.ts": {
+            "lines": 242,
+            "tokens": 3178,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/membership/events/tier-upgraded.event.ts": {
+            "lines": 17,
+            "tokens": 65,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/membership/entities/membership-tier.entity.ts": {
+            "lines": 33,
+            "tokens": 326,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/membership/dto/create-membership-tier.dto.ts": {
+            "lines": 29,
+            "tokens": 290,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/membership/__tests__/membership.service.spec.ts": {
+            "lines": 203,
+            "tokens": 2203,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/journal/entities/journal-entry.entity.ts": {
+            "lines": 69,
+            "tokens": 678,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/journal/dto/journal.dto.ts": {
+            "lines": 102,
+            "tokens": 982,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 52,
+            "duplicatedTokens": 490,
+            "percentage": 50.98,
+            "percentageTokens": 49.9,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/inquiries/entities/inquiry.entity.ts": {
+            "lines": 62,
+            "tokens": 519,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/inquiries/dto/create-inquiry.dto.ts": {
+            "lines": 19,
+            "tokens": 189,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/inquiries/dto/admin-inquiry-query.dto.ts": {
+            "lines": 25,
+            "tokens": 335,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/inquiries/__tests__/inquiries.service.spec.ts": {
+            "lines": 216,
+            "tokens": 2408,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/faqs/entities/faq.entity.ts": {
+            "lines": 51,
+            "tokens": 520,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/faqs/dto/update-faq.dto.ts": {
+            "lines": 35,
+            "tokens": 328,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/faqs/dto/faq-query.dto.ts": {
+            "lines": 13,
+            "tokens": 131,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/faqs/dto/create-faq.dto.ts": {
+            "lines": 31,
+            "tokens": 290,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/faqs/__tests__/faqs.service.spec.ts": {
+            "lines": 57,
+            "tokens": 612,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/entities/user-coupon.entity.ts": {
+            "lines": 46,
+            "tokens": 439,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/entities/point-history.entity.ts": {
+            "lines": 55,
+            "tokens": 532,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/entities/coupon.entity.ts": {
+            "lines": 49,
+            "tokens": 514,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/entities/coupon-rule.entity.ts": {
+            "lines": 47,
+            "tokens": 384,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/dto/update-coupon-rule.dto.ts": {
+            "lines": 29,
+            "tokens": 268,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/dto/issue-coupon.dto.ts": {
+            "lines": 13,
+            "tokens": 121,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/dto/create-coupon.dto.ts": {
+            "lines": 53,
+            "tokens": 524,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/dto/create-coupon-rule.dto.ts": {
+            "lines": 31,
+            "tokens": 267,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/dto/calculate-discount.dto.ts": {
+            "lines": 19,
+            "tokens": 183,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/__tests__/coupons.service.spec.ts": {
+            "lines": 313,
+            "tokens": 3657,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/__tests__/coupon-rules.service.spec.ts": {
+            "lines": 239,
+            "tokens": 2415,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/collections/entities/collection.entity.ts": {
+            "lines": 58,
+            "tokens": 541,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 33,
+            "duplicatedTokens": 315,
+            "percentage": 56.9,
+            "percentageTokens": 58.23,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/collections/dto/reorder.dto.ts": {
+            "lines": 21,
+            "tokens": 208,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 21,
+            "duplicatedTokens": 208,
+            "percentage": 100,
+            "percentageTokens": 100,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/collections/dto/collection.dto.ts": {
+            "lines": 93,
+            "tokens": 903,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 44,
+            "duplicatedTokens": 420,
+            "percentage": 47.31,
+            "percentageTokens": 46.51,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/collections/__tests__/reorder.dto.spec.ts": {
+            "lines": 49,
+            "tokens": 570,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 16,
+            "duplicatedTokens": 188,
+            "percentage": 32.65,
+            "percentageTokens": 32.98,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/cart/entities/cart-item.entity.ts": {
+            "lines": 49,
+            "tokens": 440,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/cart/dto/validate-cart.dto.ts": {
+            "lines": 42,
+            "tokens": 360,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/cart/dto/add-to-cart.dto.ts": {
+            "lines": 18,
+            "tokens": 193,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/cart/__tests__/cart.service.spec.ts": {
+            "lines": 345,
+            "tokens": 3464,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/cache/__tests__/cache.service.spec.ts": {
+            "lines": 46,
+            "tokens": 520,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/strategies/jwt.strategy.ts": {
+            "lines": 81,
+            "tokens": 792,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/strategies/jwt.strategy.spec.ts": {
+            "lines": 104,
+            "tokens": 1416,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/entities/verification-token.entity.ts": {
+            "lines": 36,
+            "tokens": 324,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 22,
+            "duplicatedTokens": 227,
+            "percentage": 61.11,
+            "percentageTokens": 70.06,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/entities/token-blacklist.entity.ts": {
+            "lines": 26,
+            "tokens": 222,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/entities/password-reset-token.entity.ts": {
+            "lines": 36,
+            "tokens": 324,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 22,
+            "duplicatedTokens": 227,
+            "percentage": 61.11,
+            "percentageTokens": 70.06,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/dto/reset-password.dto.ts": {
+            "lines": 17,
+            "tokens": 181,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/dto/register.dto.ts": {
+            "lines": 19,
+            "tokens": 244,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/dto/oauth-callback.dto.ts": {
+            "lines": 10,
+            "tokens": 82,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/dto/login.dto.ts": {
+            "lines": 12,
+            "tokens": 144,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/__tests__/token-blacklist.service.spec.ts": {
+            "lines": 160,
+            "tokens": 1418,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/__tests__/oauth.service.spec.ts": {
+            "lines": 351,
+            "tokens": 3813,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 22,
+            "duplicatedTokens": 147,
+            "percentage": 6.27,
+            "percentageTokens": 3.86,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/__tests__/auth.service.spec.ts": {
+            "lines": 590,
+            "tokens": 5681,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 24,
+            "duplicatedTokens": 334,
+            "percentage": 4.07,
+            "percentageTokens": 5.88,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/audit-logs/entities/audit-log.entity.ts": {
+            "lines": 71,
+            "tokens": 596,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/audit-logs/dto/audit-log-query.dto.ts": {
+            "lines": 62,
+            "tokens": 426,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/audit-logs/__tests__/redaction.util.spec.ts": {
+            "lines": 90,
+            "tokens": 1022,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/audit-logs/__tests__/audit-log.service.spec.ts": {
+            "lines": 210,
+            "tokens": 2066,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/archives/entities/archive.entity.ts": {
+            "lines": 144,
+            "tokens": 1441,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 33,
+            "duplicatedTokens": 315,
+            "percentage": 22.92,
+            "percentageTokens": 21.86,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/archives/dto/reorder.dto.ts": {
+            "lines": 21,
+            "tokens": 208,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 21,
+            "duplicatedTokens": 208,
+            "percentage": 100,
+            "percentageTokens": 100,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/archives/dto/archive.dto.ts": {
+            "lines": 218,
+            "tokens": 2008,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 28,
+            "duplicatedTokens": 260,
+            "percentage": 12.84,
+            "percentageTokens": 12.95,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/archives/__tests__/reorder.dto.spec.ts": {
+            "lines": 68,
+            "tokens": 807,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 16,
+            "duplicatedTokens": 188,
+            "percentage": 23.53,
+            "percentageTokens": 23.3,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/dto/register-shipping.dto.ts": {
+            "lines": 14,
+            "tokens": 157,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/dto/export-query.dto.ts": {
+            "lines": 30,
+            "tokens": 277,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/dto/dashboard-query.dto.ts": {
+            "lines": 18,
+            "tokens": 181,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/dto/admin-order-query.dto.ts": {
+            "lines": 39,
+            "tokens": 440,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 15,
+            "duplicatedTokens": 142,
+            "percentage": 38.46,
+            "percentageTokens": 32.27,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/dto/admin-members-query.dto.ts": {
+            "lines": 39,
+            "tokens": 433,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 15,
+            "duplicatedTokens": 142,
+            "percentage": 38.46,
+            "percentageTokens": 32.79,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/__tests__/admin-orders.service.spec.ts": {
+            "lines": 258,
+            "tokens": 3176,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 30,
+            "duplicatedTokens": 318,
+            "percentage": 11.63,
+            "percentageTokens": 10.01,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/__tests__/admin-members.service.spec.ts": {
+            "lines": 177,
+            "tokens": 2036,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 22,
+            "duplicatedTokens": 147,
+            "percentage": 12.43,
+            "percentageTokens": 7.22,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/__tests__/admin-export.service.spec.ts": {
+            "lines": 207,
+            "tokens": 2334,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 38,
+            "duplicatedTokens": 342,
+            "percentage": 18.36,
+            "percentageTokens": 14.65,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/__tests__/admin-dashboard.service.spec.ts": {
+            "lines": 239,
+            "tokens": 2588,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/user.seeder.ts": {
+            "lines": 16,
+            "tokens": 189,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/promotion.seeder.ts": {
+            "lines": 16,
+            "tokens": 199,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/product.seeder.ts": {
+            "lines": 16,
+            "tokens": 176,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/product-option.seeder.ts": {
+            "lines": 20,
+            "tokens": 228,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/product-image.seeder.ts": {
+            "lines": 20,
+            "tokens": 230,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/product-detail-image.seeder.ts": {
+            "lines": 20,
+            "tokens": 228,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/page.seeder.ts": {
+            "lines": 30,
+            "tokens": 305,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/page-block.seeder.ts": {
+            "lines": 47,
+            "tokens": 532,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/order.seeder.ts": {
+            "lines": 24,
+            "tokens": 384,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/notice.seeder.ts": {
+            "lines": 16,
+            "tokens": 189,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/navigation-item.seeder.ts": {
+            "lines": 16,
+            "tokens": 199,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/faq.seeder.ts": {
+            "lines": 16,
+            "tokens": 199,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/category.seeder.ts": {
+            "lines": 16,
+            "tokens": 176,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/seeders/banner.seeder.ts": {
+            "lines": 16,
+            "tokens": 199,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/base/seeder.ts": {
+            "lines": 24,
+            "tokens": 268,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/utils/__tests__/locale.util.spec.ts": {
+            "lines": 124,
+            "tokens": 1578,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/wishlist/wishlist.service.ts": {
+            "lines": 128,
+            "tokens": 1151,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/wishlist/wishlist.module.ts": {
+            "lines": 12,
+            "tokens": 124,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/wishlist/wishlist.controller.ts": {
+            "lines": 82,
+            "tokens": 791,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/users.service.ts": {
+            "lines": 148,
+            "tokens": 1644,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/users.module.ts": {
+            "lines": 15,
+            "tokens": 172,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/users/users.controller.ts": {
+            "lines": 120,
+            "tokens": 1427,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/upload/upload.service.ts": {
+            "lines": 119,
+            "tokens": 1180,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 46,
+            "duplicatedTokens": 504,
+            "percentage": 38.66,
+            "percentageTokens": 42.71,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/upload/upload.module.ts": {
+            "lines": 12,
+            "tokens": 130,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/upload/upload.controller.ts": {
+            "lines": 70,
+            "tokens": 636,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 26,
+            "duplicatedTokens": 260,
+            "percentage": 37.14,
+            "percentageTokens": 40.88,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/shipping.service.ts": {
+            "lines": 204,
+            "tokens": 1896,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/shipping.module.ts": {
+            "lines": 18,
+            "tokens": 223,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/shipping/shipping.controller.ts": {
+            "lines": 49,
+            "tokens": 543,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/settings/settings.service.ts": {
+            "lines": 86,
+            "tokens": 1064,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/settings/settings.service.spec.ts": {
+            "lines": 178,
+            "tokens": 2316,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/settings/settings.module.ts": {
+            "lines": 12,
+            "tokens": 130,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/settings/settings.controller.ts": {
+            "lines": 79,
+            "tokens": 852,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/seo/seo.service.ts": {
+            "lines": 130,
+            "tokens": 1295,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/seo/seo.module.ts": {
+            "lines": 13,
+            "tokens": 147,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/seo/seo.controller.ts": {
+            "lines": 29,
+            "tokens": 291,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/search/search.controller.ts": {
+            "lines": 16,
+            "tokens": 196,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/search/search.controller.spec.ts": {
+            "lines": 33,
+            "tokens": 328,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/scheduler/scheduler.service.ts": {
+            "lines": 548,
+            "tokens": 5220,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 39,
+            "duplicatedTokens": 335,
+            "percentage": 7.12,
+            "percentageTokens": 6.42,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/scheduler/scheduler.module.ts": {
+            "lines": 26,
+            "tokens": 286,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/reviews/reviews.service.ts": {
+            "lines": 313,
+            "tokens": 3138,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/reviews/reviews.module.ts": {
+            "lines": 20,
+            "tokens": 195,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/reviews/reviews.controller.ts": {
+            "lines": 138,
+            "tokens": 1401,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/restock-alerts/restock-alerts.service.ts": {
+            "lines": 124,
+            "tokens": 1162,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/restock-alerts/restock-alerts.module.ts": {
+            "lines": 13,
+            "tokens": 150,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/promotions/promotions.service.ts": {
+            "lines": 129,
+            "tokens": 1759,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/promotions/promotions.module.ts": {
+            "lines": 23,
+            "tokens": 171,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/promotions/promotions.controller.ts": {
+            "lines": 146,
+            "tokens": 1711,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/recently-viewed.service.ts": {
+            "lines": 98,
+            "tokens": 924,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/products.service.ts": {
+            "lines": 593,
+            "tokens": 6180,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/products.module.ts": {
+            "lines": 41,
+            "tokens": 393,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/products.controller.ts": {
+            "lines": 155,
+            "tokens": 1847,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/categories.service.ts": {
+            "lines": 211,
+            "tokens": 2304,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/categories.controller.ts": {
+            "lines": 103,
+            "tokens": 1169,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/attributes.service.ts": {
+            "lines": 244,
+            "tokens": 2743,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/products/attributes.controller.ts": {
+            "lines": 147,
+            "tokens": 1383,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/points/points.service.ts": {
+            "lines": 93,
+            "tokens": 677,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/points/points.module.ts": {
+            "lines": 10,
+            "tokens": 102,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/payments.service.ts": {
+            "lines": 476,
+            "tokens": 4703,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/payments.module.ts": {
+            "lines": 64,
+            "tokens": 532,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/payments.controller.ts": {
+            "lines": 63,
+            "tokens": 760,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/payments/admin-order-refunds.controller.ts": {
+            "lines": 32,
+            "tokens": 375,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/pages.service.ts": {
+            "lines": 153,
+            "tokens": 1549,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/pages.module.ts": {
+            "lines": 14,
+            "tokens": 156,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/pages.controller.ts": {
+            "lines": 161,
+            "tokens": 1966,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/pages/admin-pages.controller.ts": {
+            "lines": 25,
+            "tokens": 230,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/orders/orders.service.ts": {
+            "lines": 264,
+            "tokens": 2621,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/orders/orders.module.ts": {
+            "lines": 25,
+            "tokens": 248,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/orders/orders.controller.ts": {
+            "lines": 60,
+            "tokens": 708,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/orders/order-event.emitter.ts": {
+            "lines": 15,
+            "tokens": 145,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notification/notification.service.ts": {
+            "lines": 84,
+            "tokens": 763,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notification/notification.module.ts": {
+            "lines": 50,
+            "tokens": 374,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notices/notices.service.ts": {
+            "lines": 64,
+            "tokens": 747,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notices/notices.module.ts": {
+            "lines": 12,
+            "tokens": 130,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/notices/notices.controller.ts": {
+            "lines": 93,
+            "tokens": 1101,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/navigation/navigation.service.ts": {
+            "lines": 176,
+            "tokens": 1995,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/navigation/navigation.module.ts": {
+            "lines": 13,
+            "tokens": 140,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/navigation/navigation.controller.ts": {
+            "lines": 105,
+            "tokens": 1179,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/navigation/admin-navigation.controller.ts": {
+            "lines": 27,
+            "tokens": 296,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/membership/membership.service.ts": {
+            "lines": 168,
+            "tokens": 1797,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/membership/membership.module.ts": {
+            "lines": 15,
+            "tokens": 175,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/membership/membership.controller.ts": {
+            "lines": 24,
+            "tokens": 239,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/membership/membership-event.emitter.ts": {
+            "lines": 27,
+            "tokens": 147,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/membership/admin-membership.controller.ts": {
+            "lines": 63,
+            "tokens": 616,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/journal/journal.service.ts": {
+            "lines": 65,
+            "tokens": 718,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/journal/journal.module.ts": {
+            "lines": 13,
+            "tokens": 140,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/journal/journal.controller.ts": {
+            "lines": 36,
+            "tokens": 446,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/journal/admin-journal.controller.ts": {
+            "lines": 84,
+            "tokens": 895,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/inquiries/inquiries.service.ts": {
+            "lines": 111,
+            "tokens": 1096,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/inquiries/inquiries.module.ts": {
+            "lines": 13,
+            "tokens": 146,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/inquiries/inquiries.controller.ts": {
+            "lines": 94,
+            "tokens": 1015,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/health/health.service.ts": {
+            "lines": 65,
+            "tokens": 565,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/health/health.service.spec.ts": {
+            "lines": 46,
+            "tokens": 450,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/health/health.controller.ts": {
+            "lines": 37,
+            "tokens": 389,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/health/health.controller.spec.ts": {
+            "lines": 37,
+            "tokens": 361,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/faqs/faqs.service.ts": {
+            "lines": 68,
+            "tokens": 741,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/faqs/faqs.module.ts": {
+            "lines": 12,
+            "tokens": 130,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/faqs/faqs.controller.ts": {
+            "lines": 89,
+            "tokens": 960,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/coupons.service.ts": {
+            "lines": 280,
+            "tokens": 2699,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/coupons.module.ts": {
+            "lines": 28,
+            "tokens": 302,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/coupons.controller.ts": {
+            "lines": 94,
+            "tokens": 931,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/coupon-rules.service.ts": {
+            "lines": 248,
+            "tokens": 2493,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 39,
+            "duplicatedTokens": 335,
+            "percentage": 15.73,
+            "percentageTokens": 13.44,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/coupons/coupon-rules.controller.ts": {
+            "lines": 72,
+            "tokens": 659,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/collections/collections.service.ts": {
+            "lines": 64,
+            "tokens": 755,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/collections/collections.module.ts": {
+            "lines": 13,
+            "tokens": 140,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/collections/collections.controller.ts": {
+            "lines": 39,
+            "tokens": 518,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/collections/admin-collections.controller.ts": {
+            "lines": 99,
+            "tokens": 1120,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/cart/cart.service.ts": {
+            "lines": 220,
+            "tokens": 1928,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/cart/cart.module.ts": {
+            "lines": 15,
+            "tokens": 172,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/cart/cart.controller.ts": {
+            "lines": 107,
+            "tokens": 1009,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/cache/cache.service.ts": {
+            "lines": 41,
+            "tokens": 421,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/token-blacklist.service.ts": {
+            "lines": 83,
+            "tokens": 761,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/oauth.service.ts": {
+            "lines": 286,
+            "tokens": 2645,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/auth.service.ts": {
+            "lines": 561,
+            "tokens": 5573,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/auth.module.ts": {
+            "lines": 61,
+            "tokens": 688,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/auth.controller.ts": {
+            "lines": 270,
+            "tokens": 3232,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/auth/auth-event.emitter.ts": {
+            "lines": 15,
+            "tokens": 145,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/audit-logs/audit-log.service.ts": {
+            "lines": 106,
+            "tokens": 1258,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/audit-logs/audit-log.module.ts": {
+            "lines": 12,
+            "tokens": 124,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/audit-logs/audit-log.controller.ts": {
+            "lines": 41,
+            "tokens": 383,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/archives/archives.service.ts": {
+            "lines": 138,
+            "tokens": 1525,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/archives/archives.module.ts": {
+            "lines": 13,
+            "tokens": 152,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/archives/archives.controller.ts": {
+            "lines": 23,
+            "tokens": 282,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/archives/admin-archives.controller.ts": {
+            "lines": 236,
+            "tokens": 2889,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin.service.ts": {
+            "lines": 19,
+            "tokens": 116,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin.module.ts": {
+            "lines": 31,
+            "tokens": 363,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin.controller.ts": {
+            "lines": 10,
+            "tokens": 98,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin-orders.service.ts": {
+            "lines": 197,
+            "tokens": 2157,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin-orders.controller.ts": {
+            "lines": 75,
+            "tokens": 948,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin-members.service.ts": {
+            "lines": 143,
+            "tokens": 1226,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin-members.controller.ts": {
+            "lines": 86,
+            "tokens": 966,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin-export.service.ts": {
+            "lines": 265,
+            "tokens": 3034,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin-export.controller.ts": {
+            "lines": 71,
+            "tokens": 965,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin-dashboard.service.ts": {
+            "lines": 291,
+            "tokens": 2807,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/modules/admin/admin-dashboard.controller.ts": {
+            "lines": 30,
+            "tokens": 298,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/seeds/run-seed.ts": {
+            "lines": 57,
+            "tokens": 501,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1782600000000-CreateCouponRulesTable.ts": {
+            "lines": 26,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1782500000000-CreateRecentlyViewedProductsTable.ts": {
+            "lines": 23,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1782500000000-AddMembershipTierSystem.ts": {
+            "lines": 51,
+            "tokens": 154,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1782400000001-AddShippingPolicySettings.ts": {
+            "lines": 28,
+            "tokens": 119,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1782400000000-AddPointHistoryRelatedEntityColumns.ts": {
+            "lines": 39,
+            "tokens": 164,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1782300000000-CreateRestockAlertsTable.ts": {
+            "lines": 44,
+            "tokens": 174,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1782200000000-AddReviewPointSettings.ts": {
+            "lines": 20,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1782100000000-AddInquiryNotificationColumns.ts": {
+            "lines": 24,
+            "tokens": 187,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1782000000000-AddUserDeletionAndLoginFailureFields.ts": {
+            "lines": 32,
+            "tokens": 240,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1781500000000-CreateAuditLogsTable.ts": {
+            "lines": 37,
+            "tokens": 166,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1781000000002-AddSchedulerSiteSettings.ts": {
+            "lines": 18,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1781000000001-CreateSchedulerLocksTable.ts": {
+            "lines": 20,
+            "tokens": 114,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1781000000000-AddPointHistoryExpiresAt.ts": {
+            "lines": 18,
+            "tokens": 141,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1780000000001-CreateVerificationTokensTable.ts": {
+            "lines": 26,
+            "tokens": 178,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1780000000000-AddEmailVerificationFields.ts": {
+            "lines": 18,
+            "tokens": 141,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1778500000000-CreateTokenBlacklistTable.ts": {
+            "lines": 26,
+            "tokens": 178,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1778400000000-CreatePasswordResetTokensTable.ts": {
+            "lines": 26,
+            "tokens": 178,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1778400000000-AddOrderStatusCompletedAndRefundRequested.ts": {
+            "lines": 35,
+            "tokens": 135,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1778300000000-RemoveRemainingCjkAndBackfillLegacy.ts": {
+            "lines": 61,
+            "tokens": 355,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1778200000000-CollectionEnBackfillAndOverride.ts": {
+            "lines": 99,
+            "tokens": 949,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1778100000000-AddNiloCharacteristicsEn.ts": {
+            "lines": 49,
+            "tokens": 480,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 12,
+            "duplicatedTokens": 132,
+            "percentage": 24.49,
+            "percentageTokens": 27.5,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1778000000000-AddI18nColumnsAndBackfill.ts": {
+            "lines": 252,
+            "tokens": 1799,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 12,
+            "duplicatedTokens": 132,
+            "percentage": 4.76,
+            "percentageTokens": 7.34,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1777200000000-UpsertRemainingPageBlockEnFields.ts": {
+            "lines": 226,
+            "tokens": 2576,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 12,
+            "duplicatedTokens": 133,
+            "percentage": 5.31,
+            "percentageTokens": 5.16,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1777100000000-UpsertPageBlockTranslationFields.ts": {
+            "lines": 164,
+            "tokens": 1852,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 12,
+            "duplicatedTokens": 133,
+            "percentage": 7.32,
+            "percentageTokens": 7.18,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1777000000000-AddSiteSettingsValueEn.ts": {
+            "lines": 52,
+            "tokens": 344,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776900000000-SeedArchivesAndCollections.ts": {
+            "lines": 56,
+            "tokens": 212,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776800000000-SeedEnglishValues.ts": {
+            "lines": 92,
+            "tokens": 689,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776700000000-AddNiloTypesRegionEn.ts": {
+            "lines": 18,
+            "tokens": 163,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776656402451-AddRefundsTable.ts": {
+            "lines": 84,
+            "tokens": 341,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776600000000-AddEnglishColumns.ts": {
+            "lines": 218,
+            "tokens": 1695,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776500000000-RefactorToDynamicAttributes.ts": {
+            "lines": 81,
+            "tokens": 190,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776400000000-SeedCustomerServicePages.ts": {
+            "lines": 82,
+            "tokens": 613,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776300000000-CreateJournalEntriesTable.ts": {
+            "lines": 30,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776250000000-CreateArchivesTables.ts": {
+            "lines": 61,
+            "tokens": 155,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776200000000-AddClayTypeAndShapeToProducts.ts": {
+            "lines": 24,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776100000000-AddCollectionsTable.ts": {
+            "lines": 31,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1776000000000-AddProductDetailImagesTable.ts": {
+            "lines": 31,
+            "tokens": 120,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775900000000-UpdateThemeColorsMinimalLuxury.ts": {
+            "lines": 36,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775800000000-AddCmsI18nFields.ts": {
+            "lines": 198,
+            "tokens": 1547,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775700000000-AddProductI18nFields.ts": {
+            "lines": 99,
+            "tokens": 806,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775600000000-UpdateThemeColorsPremiumBW.ts": {
+            "lines": 74,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775500000000-UpdateThemeColorsOkhwandang.ts": {
+            "lines": 74,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775500000000-AddCategoryDescription.ts": {
+            "lines": 16,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775400000000-AddMissingThemeDefaults.ts": {
+            "lines": 34,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775300000000-CreateSiteSettingsTable.ts": {
+            "lines": 55,
+            "tokens": 121,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775250000000-AddNavigationIndexes.ts": {
+            "lines": 71,
+            "tokens": 459,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 19,
+            "duplicatedTokens": 157,
+            "percentage": 26.76,
+            "percentageTokens": 34.2,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775200000000-CreatePromotionsBannersTable.ts": {
+            "lines": 42,
+            "tokens": 132,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775100000000-AddPerformanceIndexes.ts": {
+            "lines": 104,
+            "tokens": 710,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 19,
+            "duplicatedTokens": 157,
+            "percentage": 18.27,
+            "percentageTokens": 22.11,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1775000000000-CreateNoticesFaqsInquiries.ts": {
+            "lines": 71,
+            "tokens": 279,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774900000000-CreateCouponsTable.ts": {
+            "lines": 93,
+            "tokens": 420,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774800000000-CreateWishlistTable.ts": {
+            "lines": 25,
+            "tokens": 109,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774700000000-AddNavigationItems.ts": {
+            "lines": 48,
+            "tokens": 263,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774600000000-AddPagesAndPageBlocks.ts": {
+            "lines": 78,
+            "tokens": 411,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774515000000-UpdateShippingAddInTransit.ts": {
+            "lines": 57,
+            "tokens": 380,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774510727813-AddProductNameFulltextIndex.ts": {
+            "lines": 27,
+            "tokens": 241,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774502521605-CreateUserAddressesTable.ts": {
+            "lines": 16,
+            "tokens": 142,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774500000000-AddReviewsTable.ts": {
+            "lines": 69,
+            "tokens": 427,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774499861060-CreateUserAuthenticationsTable.ts": {
+            "lines": 23,
+            "tokens": 162,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774425995915-AddPaymentsShippingTables.ts": {
+            "lines": 23,
+            "tokens": 219,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774425466051-AddOrdersTables.ts": {
+            "lines": 75,
+            "tokens": 791,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1774422597135-AddCartItemsTable.ts": {
+            "lines": 20,
+            "tokens": 186,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1745500000000-AddCategoryNameTranslations.ts": {
+            "lines": 67,
+            "tokens": 482,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1743360000000-AddLoginLockFields.ts": {
+            "lines": 18,
+            "tokens": 141,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1711234567890-AddProductsAndCategories.ts": {
+            "lines": 150,
+            "tokens": 446,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/migrations/1711100000000-CreateUsersTable.ts": {
+            "lines": 20,
+            "tokens": 146,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/config/__tests__/env-validator.spec.ts": {
+            "lines": 112,
+            "tokens": 1107,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/utils/tree.util.ts": {
+            "lines": 36,
+            "tokens": 342,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/utils/repository.util.ts": {
+            "lines": 20,
+            "tokens": 172,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/utils/reorder.util.ts": {
+            "lines": 18,
+            "tokens": 158,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/utils/redaction.util.ts": {
+            "lines": 36,
+            "tokens": 334,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/utils/pagination.util.ts": {
+            "lines": 26,
+            "tokens": 225,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/utils/ownership.util.ts": {
+            "lines": 14,
+            "tokens": 93,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/utils/locale.util.ts": {
+            "lines": 117,
+            "tokens": 1084,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/interceptors/logging.interceptor.ts": {
+            "lines": 66,
+            "tokens": 553,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/interceptors/logging.interceptor.spec.ts": {
+            "lines": 282,
+            "tokens": 2586,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/interceptors/audit-log.interceptor.ts": {
+            "lines": 98,
+            "tokens": 1068,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/interceptors/audit-log.interceptor.spec.ts": {
+            "lines": 160,
+            "tokens": 1495,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/guards/user-aware-throttler.guard.ts": {
+            "lines": 61,
+            "tokens": 639,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/guards/user-aware-throttler.guard.spec.ts": {
+            "lines": 70,
+            "tokens": 897,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/guards/roles.guard.ts": {
+            "lines": 21,
+            "tokens": 250,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/guards/roles.guard.spec.ts": {
+            "lines": 77,
+            "tokens": 770,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/guards/jwt-auth.guard.ts": {
+            "lines": 19,
+            "tokens": 178,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/guards/jwt-auth.guard.spec.ts": {
+            "lines": 68,
+            "tokens": 648,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/filters/sentry-exception.filter.ts": {
+            "lines": 43,
+            "tokens": 368,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/common/decorators/audit-log.decorator.ts": {
+            "lines": 13,
+            "tokens": 123,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/database/typeorm.config.ts": {
+            "lines": 15,
+            "tokens": 126,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/config/trust-proxy.ts": {
+            "lines": 17,
+            "tokens": 168,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/config/env-validator.ts": {
+            "lines": 82,
+            "tokens": 524,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/__tests__/validation-pipe-korean.spec.ts": {
+            "lines": 83,
+            "tokens": 924,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/__tests__/trust-proxy.spec.ts": {
+            "lines": 30,
+            "tokens": 356,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/main.ts": {
+            "lines": 134,
+            "tokens": 1313,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/app.module.ts": {
+            "lines": 138,
+            "tokens": 1298,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 33771,
+          "tokens": 331335,
+          "sources": 400,
+          "clones": 28,
+          "duplicatedLines": 512,
+          "duplicatedTokens": 4965,
+          "percentage": 1.52,
+          "percentageTokens": 1.5,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      }
+    },
+    "total": {
+      "lines": 33771,
+      "tokens": 331335,
+      "sources": 400,
+      "clones": 28,
+      "duplicatedLines": 512,
+      "duplicatedTokens": 4965,
+      "percentage": 1.52,
+      "percentageTokens": 1.5,
+      "newDuplicatedLines": 0,
+      "newClones": 0
+    }
+  },
+  "duplicates": [
+    {
+      "format": "typescript",
+      "lines": 19,
+      "fragment": ": string;\n\n  @ApiProperty({ example: '101동 101호', description: '상세 주소', required: false })\n  @IsOptional()\n  @IsString()\n  @MaxLength(255)\n  addressDetail?: string | null;\n\n  @ApiProperty({ example: '집', description: '주소지 레이블', required: false })\n  @IsOptional()\n  @IsString()\n  @MaxLength(50)\n  label?: string | null;\n\n  @ApiProperty({ example: true, description: '기본 주소지 여부', required: false })\n  @IsOptional()\n  @IsBoolean()\n  isDefault?: boolean;\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/users/dto/create-address.dto.ts",
+        "start": 28,
+        "end": 46,
+        "startLoc": {
+          "line": 28,
+          "column": 2,
+          "position": 228
+        },
+        "endLoc": {
+          "line": 46,
+          "column": 2,
+          "position": 396
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/users/dto/update-address.dto.ts",
+        "start": 28,
+        "end": 46,
+        "startLoc": {
+          "line": 28,
+          "column": 2,
+          "position": 249
+        },
+        "endLoc": {
+          "line": 46,
+          "column": 2,
+          "position": 417
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 17,
+      "fragment": ", description: '정렬 순서', required: false })\n  @IsInt()\n  @Min(0)\n  @IsOptional()\n  sortOrder?: number;\n\n  @ApiProperty({ example: true, description: '활성 상태', required: false })\n  @IsBoolean()\n  @IsOptional()\n  isActive?: boolean;\n\n  @ApiProperty({ example: '2024-06-01T00:00:00.000Z', description: '표시 시작 일시', required: false })\n  @IsDateString()\n  @IsOptional()\n  startsAt?: string;\n\n  @ApiProperty({ example: '2024-09-30T23:59:59.999Z'",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/promotions/dto/create-banner.dto.ts",
+        "start": 70,
+        "end": 86,
+        "startLoc": {
+          "line": 70,
+          "column": 2,
+          "position": 568
+        },
+        "endLoc": {
+          "line": 86,
+          "column": 27,
+          "position": 715
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/promotions/dto/create-banner.dto.ts",
+        "start": 30,
+        "end": 46,
+        "startLoc": {
+          "line": 30,
+          "column": 2,
+          "position": 209
+        },
+        "endLoc": {
+          "line": 46,
+          "column": 27,
+          "position": 356
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 17,
+      "fragment": "{\n  @PrimaryGeneratedColumn('increment', { type: 'bigint' })\n  id!: number;\n\n  @Column({ name: 'product_id', type: 'bigint' })\n  productId!: number;\n\n  @Column({ length: 500 })\n  url!: string;\n\n  @Column({ type: 'varchar', length: 255, nullable: true })\n  alt!: string | null;\n\n  @Column({ name: 'sort_order', default: 0 })\n  sortOrder!: number;\n\n  @Column({ name: 'is_active'",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/products/entities/product-detail-image.entity.ts",
+        "start": 11,
+        "end": 27,
+        "startLoc": {
+          "line": 11,
+          "column": 2,
+          "position": 57
+        },
+        "endLoc": {
+          "line": 27,
+          "column": 12,
+          "position": 214
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/products/entities/product-image.entity.ts",
+        "start": 11,
+        "end": 27,
+        "startLoc": {
+          "line": 11,
+          "column": 2,
+          "position": 57
+        },
+        "endLoc": {
+          "line": 27,
+          "column": 15,
+          "position": 214
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 17,
+      "fragment": ")\n  teapotShape?: string;\n\n  @ApiPropertyOptional({ type: [ProductImageInputDto], description: '갤러리 이미지 목록' })\n  @IsOptional()\n  @IsArray()\n  @ValidateNested({ each: true })\n  @Type(() => ProductImageInputDto)\n  images?: ProductImageInputDto[];\n\n  @ApiPropertyOptional({ type: [ProductDetailImageInputDto], description: '상품 상세 이미지 목록' })\n  @IsOptional()\n  @IsArray()\n  @ValidateNested({ each: true })\n  @Type(() => ProductDetailImageInputDto)\n  detailImages?: ProductDetailImageInputDto[];\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/products/dto/create-product.dto.ts",
+        "start": 165,
+        "end": 181,
+        "startLoc": {
+          "line": 165,
+          "column": 2,
+          "position": 1772
+        },
+        "endLoc": {
+          "line": 181,
+          "column": 2,
+          "position": 1924
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/products/dto/update-product.dto.ts",
+        "start": 130,
+        "end": 146,
+        "startLoc": {
+          "line": 130,
+          "column": 3,
+          "position": 1175
+        },
+        "endLoc": {
+          "line": 146,
+          "column": 2,
+          "position": 1327
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 24,
+      "fragment": ": string;\n\n  @ApiProperty({ example: null, description: '부모 카테고리 ID', required: false })\n  @IsOptional()\n  @IsNumber()\n  parentId?: number | null;\n\n  @ApiProperty({ example: 0, description: '정렬 순서', required: false })\n  @IsOptional()\n  @IsNumber()\n  @Min(0)\n  sortOrder?: number;\n\n  @ApiProperty({ example: true, description: '활성 상태', required: false })\n  @IsOptional()\n  @IsBoolean()\n  isActive?: boolean;\n\n  @ApiProperty({ example: 'https://example.com/category.jpg', description: '카테고리 이미지 URL', required: false })\n  @IsOptional()\n  @IsString()\n  @MaxLength(500)\n  imageUrl?: string | null;\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/products/dto/create-category.dto.ts",
+        "start": 22,
+        "end": 45,
+        "startLoc": {
+          "line": 22,
+          "column": 2,
+          "position": 156
+        },
+        "endLoc": {
+          "line": 45,
+          "column": 2,
+          "position": 371
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/products/dto/update-category.dto.ts",
+        "start": 24,
+        "end": 47,
+        "startLoc": {
+          "line": 24,
+          "column": 2,
+          "position": 180
+        },
+        "endLoc": {
+          "line": 47,
+          "column": 2,
+          "position": 395
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 14,
+      "fragment": ";\n\nconst mockQueryRunner = {\n  connect: jest.fn(),\n  startTransaction: jest.fn(),\n  commitTransaction: jest.fn(),\n  rollbackTransaction: jest.fn(),\n  release: jest.fn(),\n  manager: {\n    createQueryBuilder: jest.fn(),\n    create: jest.fn(),\n    save: jest.fn(),\n    update: jest.fn(),\n    getRepository",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/orders/__tests__/orders.service.spec.ts",
+        "start": 13,
+        "end": 26,
+        "startLoc": {
+          "line": 13,
+          "column": 25,
+          "position": 179
+        },
+        "endLoc": {
+          "line": 26,
+          "column": 14,
+          "position": 296
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/scheduler/__tests__/scheduler.service.spec.ts",
+        "start": 15,
+        "end": 28,
+        "startLoc": {
+          "line": 15,
+          "column": 38,
+          "position": 199
+        },
+        "endLoc": {
+          "line": 28,
+          "column": 8,
+          "position": 316
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 27,
+      "fragment": ",\n        items: [],\n      } as unknown as Order;\n\n      const mockProductQb = {\n        setLock: jest.fn().mockReturnThis(),\n        where: jest.fn().mockReturnThis(),\n        getOne: jest.fn().mockResolvedValue(mockProduct),\n      };\n      const mockDeleteQb = {\n        delete: jest.fn().mockReturnThis(),\n        from: jest.fn().mockReturnThis(),\n        where: jest.fn().mockReturnThis(),\n        andWhere: jest.fn().mockReturnThis(),\n        execute: jest.fn().mockResolvedValue({}),\n      };\n\n      mockQueryRunner.manager.createQueryBuilder\n        .mockReturnValueOnce(mockProductQb)\n        .mockReturnValueOnce(mockDeleteQb);\n      mockQueryRunner.manager.update.mockResolvedValue({});\n      mockQueryRunner.manager.create.mockReturnValue(mockSavedOrder);\n      mockQueryRunner.manager.save\n        .mockResolvedValueOnce(mockSavedOrder)\n        .mockResolvedValue([]);\n\n      // Mock couponsService.calculate to return discount",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/orders/__tests__/orders.service.spec.ts",
+        "start": 294,
+        "end": 320,
+        "startLoc": {
+          "line": 294,
+          "column": 5,
+          "position": 2920
+        },
+        "endLoc": {
+          "line": 320,
+          "column": 52,
+          "position": 3167
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/orders/__tests__/orders.service.spec.ts",
+        "start": 232,
+        "end": 258,
+        "startLoc": {
+          "line": 232,
+          "column": 6,
+          "position": 2296
+        },
+        "endLoc": {
+          "line": 258,
+          "column": 6,
+          "position": 2543
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 15,
+      "fragment": ";\n\n  @Column({ type: 'varchar', length: 255 })\n  title!: string;\n\n  @Column({ name: 'title_en', type: 'varchar', length: 255, nullable: true })\n  titleEn!: string | null;\n\n  @Column({ name: 'title_ja', type: 'varchar', length: 255, nullable: true })\n  titleJa!: string | null;\n\n  @Column({ name: 'title_zh', type: 'varchar', length: 255, nullable: true })\n  titleZh!: string | null;\n\n  @Column({ type",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/notices/entities/notice.entity.ts",
+        "start": 12,
+        "end": 26,
+        "startLoc": {
+          "line": 12,
+          "column": 7,
+          "position": 69
+        },
+        "endLoc": {
+          "line": 26,
+          "column": 5,
+          "position": 242
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/pages/entities/page.entity.ts",
+        "start": 17,
+        "end": 31,
+        "startLoc": {
+          "line": 17,
+          "column": 7,
+          "position": 121
+        },
+        "endLoc": {
+          "line": 31,
+          "column": 5,
+          "position": 294
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 16,
+      "fragment": ", description: '정렬 순서', required: false })\n  @IsOptional()\n  @IsInt()\n  @Min(0)\n  sort_order?: number;\n\n  @ApiProperty({ example: true, description: '활성 상태', required: false })\n  @IsOptional()\n  @IsBoolean()\n  is_active?: boolean;\n\n  @ApiProperty({ example: null, description: '부모 메뉴 ID', required: false })\n  @IsOptional()\n  @IsInt()\n  parent_id?: number | null;\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/navigation/dto/create-navigation-item.dto.ts",
+        "start": 27,
+        "end": 42,
+        "startLoc": {
+          "line": 27,
+          "column": 2,
+          "position": 221
+        },
+        "endLoc": {
+          "line": 42,
+          "column": 2,
+          "position": 362
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/navigation/dto/update-navigation-item.dto.ts",
+        "start": 30,
+        "end": 45,
+        "startLoc": {
+          "line": 30,
+          "column": 2,
+          "position": 257
+        },
+        "endLoc": {
+          "line": 45,
+          "column": 2,
+          "position": 398
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 27,
+      "fragment": ": string;\n\n  @ApiProperty({ example: '5분', description: '읽는 시간', required: false })\n  @IsOptional()\n  @IsString()\n  readTime?: string;\n\n  @ApiProperty({ example: '중국 차 도자기는 수천 년의 역사를 가지고 있습니다...', description: '요약', required: false })\n  @IsOptional()\n  @IsString()\n  summary?: string;\n\n  @ApiProperty({ example: ['첫 번째 단락...', '두 번째 단락...'], description: '본문 내용 (JSON 배열)', required: false })\n  @IsOptional()\n  @IsString()\n  content?: string;\n\n  @ApiProperty({ example: 'https://example.com/image.jpg', description: '커버 이미지 URL', required: false })\n  @IsOptional()\n  @IsString()\n  coverImageUrl?: string;\n\n  @ApiProperty({ example: true, description: '공개 여부', required: false })\n  @IsOptional()\n  @IsBoolean()\n  isPublished?: boolean;\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/journal/dto/journal.dto.ts",
+        "start": 77,
+        "end": 103,
+        "startLoc": {
+          "line": 77,
+          "column": 2,
+          "position": 737
+        },
+        "endLoc": {
+          "line": 103,
+          "column": 2,
+          "position": 982
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/journal/dto/journal.dto.ts",
+        "start": 25,
+        "end": 51,
+        "startLoc": {
+          "line": 25,
+          "column": 2,
+          "position": 245
+        },
+        "endLoc": {
+          "line": 51,
+          "column": 2,
+          "position": 490
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 23,
+      "fragment": ": string;\n\n  @ApiProperty({ example: '여름 컬렉션', description: '컬렉션 이름 (한국어)', required: false })\n  @IsOptional()\n  @IsString()\n  nameKo?: string;\n\n  @ApiProperty({ example: '#FF6B6B', description: '컬렉션 색상', required: false })\n  @IsOptional()\n  @IsString()\n  color?: string;\n\n  @ApiProperty({ example: 'Discover our summer teas', description: '컬렉션 설명', required: false })\n  @IsOptional()\n  @IsString()\n  description?: string;\n\n  @ApiProperty({ example: 'https://example.com/collection.jpg', description: '컬렉션 이미지 URL', required: false })\n  @IsOptional()\n  @IsString()\n  imageUrl?: string;\n\n  @ApiProperty({ example: '/products?collection=summer', description: '상품 목록 URL',",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/collections/dto/collection.dto.ts",
+        "start": 58,
+        "end": 80,
+        "startLoc": {
+          "line": 58,
+          "column": 2,
+          "position": 569
+        },
+        "endLoc": {
+          "line": 80,
+          "column": 2,
+          "position": 779
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/collections/dto/collection.dto.ts",
+        "start": 12,
+        "end": 34,
+        "startLoc": {
+          "line": 12,
+          "column": 2,
+          "position": 136
+        },
+        "endLoc": {
+          "line": 34,
+          "column": 2,
+          "position": 347
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 23,
+      "fragment": "{\n  @PrimaryGeneratedColumn('increment', { type: 'bigint' })\n  id!: number;\n\n  @ManyToOne(() => User, { onDelete: 'CASCADE' })\n  @JoinColumn({ name: 'user_id' })\n  user!: User;\n\n  @Column({ name: 'user_id', type: 'bigint' })\n  userId!: number;\n\n  @Column({ name: 'token_hash', type: 'varchar', length: 64 })\n  tokenHash!: string;\n\n  @Column({ name: 'expires_at', type: 'datetime' })\n  expiresAt!: Date;\n\n  @Column({ name: 'used_at', type: 'datetime', nullable: true })\n  usedAt!: Date | null;\n\n  @CreateDateColumn({ name: 'created_at' })\n  createdAt!: Date;\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/auth/entities/password-reset-token.entity.ts",
+        "start": 15,
+        "end": 37,
+        "startLoc": {
+          "line": 15,
+          "column": 2,
+          "position": 97
+        },
+        "endLoc": {
+          "line": 37,
+          "column": 2,
+          "position": 324
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/auth/entities/verification-token.entity.ts",
+        "start": 15,
+        "end": 37,
+        "startLoc": {
+          "line": 15,
+          "column": 2,
+          "position": 97
+        },
+        "endLoc": {
+          "line": 37,
+          "column": 2,
+          "position": 324
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 13,
+      "fragment": ", async () => {\n      mockUserRepository.findOne.mockResolvedValue(null);\n      const newUser = makeUser({ id: 2, email: 'new@example.com', name: '신규', isEmailVerified: false });\n      mockUserRepository.create.mockReturnValue(newUser);\n      mockUserRepository.save.mockResolvedValue(newUser);\n      mockUserRepository.update.mockResolvedValue(undefined);\n      mockVerificationTokenRepository.create.mockImplementation((value) => value);\n      mockVerificationTokenRepository.save.mockResolvedValue(undefined);\n      mockNotificationService.sendEmailVerification.mockResolvedValue(undefined);\n\n      await service.register({ email: 'new@example.com', password: 'Test1234!', name: '신규' });\n\n      expect(mockUserRepository",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/auth/__tests__/auth.service.spec.ts",
+        "start": 439,
+        "end": 451,
+        "startLoc": {
+          "line": 439,
+          "column": 35,
+          "position": 4243
+        },
+        "endLoc": {
+          "line": 451,
+          "column": 19,
+          "position": 4410
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/auth/__tests__/auth.service.spec.ts",
+        "start": 410,
+        "end": 422,
+        "startLoc": {
+          "line": 410,
+          "column": 17,
+          "position": 3959
+        },
+        "endLoc": {
+          "line": 422,
+          "column": 32,
+          "position": 4126
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 17,
+      "fragment": "| null;\n\n  @Column({ name: 'product_url', type: 'varchar', length: 500 })\n  productUrl!: string;\n\n  @Column({ name: 'sort_order', default: 0 })\n  sortOrder!: number;\n\n  @Column({ name: 'is_active', default: true })\n  isActive!: boolean;\n\n  @CreateDateColumn({ name: 'created_at' })\n  createdAt!: Date;\n\n  @UpdateDateColumn({ name: 'updated_at' })\n  updatedAt!: Date;\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/archives/entities/archive.entity.ts",
+        "start": 42,
+        "end": 58,
+        "startLoc": {
+          "line": 42,
+          "column": 2,
+          "position": 400
+        },
+        "endLoc": {
+          "line": 58,
+          "column": 2,
+          "position": 544
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/collections/entities/collection.entity.ts",
+        "start": 43,
+        "end": 59,
+        "startLoc": {
+          "line": 43,
+          "column": 2,
+          "position": 397
+        },
+        "endLoc": {
+          "line": 59,
+          "column": 2,
+          "position": 541
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 18,
+      "fragment": "type: 'varchar', length: 500, nullable: true })\n  imageUrl!: string | null;\n\n  @Column({ name: 'product_url', type: 'varchar', length: 500 })\n  productUrl!: string;\n\n  @Column({ name: 'sort_order', default: 0 })\n  sortOrder!: number;\n\n  @Column({ name: 'is_active', default: true })\n  isActive!: boolean;\n\n  @CreateDateColumn({ name: 'created_at' })\n  createdAt!: Date;\n\n  @UpdateDateColumn({ name: 'updated_at' })\n  updatedAt!: Date;\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/archives/entities/archive.entity.ts",
+        "start": 128,
+        "end": 145,
+        "startLoc": {
+          "line": 128,
+          "column": 2,
+          "position": 1270
+        },
+        "endLoc": {
+          "line": 145,
+          "column": 2,
+          "position": 1441
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/collections/entities/collection.entity.ts",
+        "start": 42,
+        "end": 59,
+        "startLoc": {
+          "line": 42,
+          "column": 2,
+          "position": 370
+        },
+        "endLoc": {
+          "line": 59,
+          "column": 2,
+          "position": 541
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 22,
+      "fragment": "import { ApiProperty } from '@nestjs/swagger';\nimport { IsArray, IsInt, ValidateNested, Min } from 'class-validator';\nimport { Type } from 'class-transformer';\n\nexport class ReorderItemDto {\n  @ApiProperty({ example: 1, description: 'ID' })\n  @IsInt()\n  id!: number;\n\n  @ApiProperty({ example: 0, description: '정렬 순서' })\n  @IsInt()\n  @Min(0)\n  sortOrder!: number;\n}\n\nexport class ReorderItemsDto {\n  @ApiProperty({ type: [ReorderItemDto], description: '정렬 순서 목록' })\n  @IsArray()\n  @ValidateNested({ each: true })\n  @Type(() => ReorderItemDto)\n  orders!: ReorderItemDto[];\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/archives/dto/reorder.dto.ts",
+        "start": 1,
+        "end": 22,
+        "startLoc": {
+          "line": 1,
+          "column": 1,
+          "position": 0
+        },
+        "endLoc": {
+          "line": 22,
+          "column": 2,
+          "position": 208
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/collections/dto/reorder.dto.ts",
+        "start": 1,
+        "end": 22,
+        "startLoc": {
+          "line": 1,
+          "column": 1,
+          "position": 0
+        },
+        "endLoc": {
+          "line": 22,
+          "column": 2,
+          "position": 208
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 15,
+      "fragment": ", description: '관련 상품 URL', required: false })\n  @IsOptional()\n  @IsString()\n  productUrl?: string;\n\n  @ApiProperty({ example: 1, description: '정렬 순서', required: false })\n  @IsOptional()\n  @IsNumber()\n  sortOrder?: number;\n\n  @ApiProperty({ example: true, description: '활성 상태', required: false })\n  @IsOptional()\n  @IsBoolean()\n  isActive?: boolean;\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/archives/dto/archive.dto.ts",
+        "start": 205,
+        "end": 219,
+        "startLoc": {
+          "line": 205,
+          "column": 32,
+          "position": 1878
+        },
+        "endLoc": {
+          "line": 219,
+          "column": 2,
+          "position": 2008
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/archives/dto/archive.dto.ts",
+        "start": 77,
+        "end": 91,
+        "startLoc": {
+          "line": 77,
+          "column": 21,
+          "position": 736
+        },
+        "endLoc": {
+          "line": 91,
+          "column": 2,
+          "position": 866
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 17,
+      "fragment": ", () => {\n  describe('ReorderItemDto', () => {\n    it('유효한 데이터로 통과', async () => {\n      const dto = new ReorderItemDto();\n      dto.id = 1;\n      dto.sortOrder = 0;\n      const errors = await validate(dto);\n      expect(errors).toHaveLength(0);\n    });\n\n    it('id가 정수가 아니면 실패', async () => {\n      const dto = new ReorderItemDto();\n      Reflect.set(dto, 'id', 'not-a-number');\n      dto.sortOrder = 0;\n      const errors = await validate(dto);\n      expect(errors.length).toBeGreaterThan(0);\n      expect",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/archives/__tests__/reorder.dto.spec.ts",
+        "start": 4,
+        "end": 20,
+        "startLoc": {
+          "line": 4,
+          "column": 14,
+          "position": 33
+        },
+        "endLoc": {
+          "line": 20,
+          "column": 7,
+          "position": 221
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/collections/__tests__/reorder.dto.spec.ts",
+        "start": 4,
+        "end": 20,
+        "startLoc": {
+          "line": 4,
+          "column": 28,
+          "position": 33
+        },
+        "endLoc": {
+          "line": 20,
+          "column": 2,
+          "position": 221
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 16,
+      "fragment": ";\n\n  @ApiProperty({ example: 1, description: '페이지 번호', required: false })\n  @IsOptional()\n  @Type(() => Number)\n  @IsInt()\n  @Min(1)\n  page?: number = 1;\n\n  @ApiProperty({ example: 20, description: '페이지당 개수', required: false })\n  @IsOptional()\n  @Type(() => Number)\n  @IsInt()\n  @Min(1)\n  limit?: number = 20;\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/admin/dto/admin-members-query.dto.ts",
+        "start": 25,
+        "end": 40,
+        "startLoc": {
+          "line": 25,
+          "column": 8,
+          "position": 291
+        },
+        "endLoc": {
+          "line": 40,
+          "column": 2,
+          "position": 433
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/admin/dto/admin-order-query.dto.ts",
+        "start": 25,
+        "end": 40,
+        "startLoc": {
+          "line": 25,
+          "column": 7,
+          "position": 298
+        },
+        "endLoc": {
+          "line": 40,
+          "column": 2,
+          "position": 440
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 16,
+      "fragment": "})\n        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });\n      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });\n      paymentsService.cancelAdmin.mockResolvedValue({\n        paymentId: 10,\n        status: PaymentStatus.REFUNDED,\n        cancelledAt: new Date(),\n        cancelReason: '관리자 환불 처리',\n      });\n      orderRepo.update.mockResolvedValue({ affected: 1 });\n\n      await service.updateStatus(1, OrderStatus.REFUNDED);\n      expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리');\n    });\n\n    it('completed → any: not allowed (terminal state)'",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/admin/__tests__/admin-orders.service.spec.ts",
+        "start": 189,
+        "end": 204,
+        "startLoc": {
+          "line": 189,
+          "column": 2,
+          "position": 2316
+        },
+        "endLoc": {
+          "line": 204,
+          "column": 48,
+          "position": 2475
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/admin/__tests__/admin-orders.service.spec.ts",
+        "start": 142,
+        "end": 157,
+        "startLoc": {
+          "line": 142,
+          "column": 2,
+          "position": 1725
+        },
+        "endLoc": {
+          "line": 157,
+          "column": 28,
+          "position": 1884
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 23,
+      "fragment": ",\n    phone: null,\n    role: UserRole.USER,\n    tier: 'Bronze',\n    tierAccumulatedAmount: 0,\n    tierEvaluatedAt: null,\n    isActive: true,\n    isEmailVerified: true,\n    emailVerifiedAt: new Date(),\n    refreshToken: null,\n    failedLoginAttempts: 0,\n    lastFailedLoginAt: null,\n    lockedUntil: null,\n    deletionRequestedAt: null,\n    deletionScheduledAt: null,\n    deletedAt: null,\n    createdAt: new Date(),\n    updatedAt: new Date(),\n    ...overrides,\n  };\n}\n\ndescribe",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/admin/__tests__/admin-members.service.spec.ts",
+        "start": 28,
+        "end": 50,
+        "startLoc": {
+          "line": 28,
+          "column": 6,
+          "position": 300
+        },
+        "endLoc": {
+          "line": 50,
+          "column": 9,
+          "position": 447
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/auth/__tests__/oauth.service.spec.ts",
+        "start": 56,
+        "end": 78,
+        "startLoc": {
+          "line": 56,
+          "column": 6,
+          "position": 510
+        },
+        "endLoc": {
+          "line": 78,
+          "column": 9,
+          "position": 657
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 20,
+      "fragment": ", async () => {\n      const fakeOrder = {\n        id: 1,\n        orderNumber: 'ORD-001',\n        status: 'paid',\n        recipientName: '홍길동',\n        recipientPhone: '010-1234-5678',\n        zipcode: '12345',\n        address: '서울',\n        totalAmount: 10000,\n        discountAmount: 0,\n        shippingFee: 0,\n        user: { email: 'test@example.com' },\n        createdAt: new Date('2024-01-01'),\n      };\n      orderRepo._qb.getMany\n        .mockResolvedValueOnce([fakeOrder])\n        .mockResolvedValue([]);\n      const res = makeRes();\n      await service.exportOrders({ format: 'csv' }",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/admin/__tests__/admin-export.service.spec.ts",
+        "start": 103,
+        "end": 122,
+        "startLoc": {
+          "line": 103,
+          "column": 39,
+          "position": 1167
+        },
+        "endLoc": {
+          "line": 122,
+          "column": 2,
+          "position": 1338
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/admin/__tests__/admin-export.service.spec.ts",
+        "start": 80,
+        "end": 99,
+        "startLoc": {
+          "line": 80,
+          "column": 45,
+          "position": 943
+        },
+        "endLoc": {
+          "line": 99,
+          "column": 2,
+          "position": 1113
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 24,
+      "fragment": "(file: Express.Multer.File): Promise<UploadedFile> {\n    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {\n      throw new BadRequestException(\n        `허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)`,\n      );\n    }\n\n    if (file.size > MAX_FILE_SIZE_BYTES) {\n      throw new PayloadTooLargeException('파일 크기는 5MB를 초과할 수 없습니다.');\n    }\n\n    const detectedMime = detectMimeFromMagicBytes(file.buffer);\n    if (!detectedMime || !ALLOWED_MIME_TYPES.includes(detectedMime)) {\n      throw new BadRequestException('허용되지 않는 이미지 형식입니다.');\n    }\n\n    const ext = path.extname(file.originalname).toLowerCase() || `.${file.mimetype.split('/')[1]}`;\n    const filename = `${randomUUID()}${ext}`;\n\n    const resized = await sharp(file.buffer)\n      .resize(MAX_WIDTH, MAX_HEIGHT, { fit: 'inside', withoutEnlargement: true })\n      .toBuffer();\n\n    return this.adapter.saveCategoryImage",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/upload/upload.service.ts",
+        "start": 70,
+        "end": 93,
+        "startLoc": {
+          "line": 70,
+          "column": 20,
+          "position": 629
+        },
+        "endLoc": {
+          "line": 93,
+          "column": 18,
+          "position": 881
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/upload/upload.service.ts",
+        "start": 44,
+        "end": 67,
+        "startLoc": {
+          "line": 44,
+          "column": 12,
+          "position": 355
+        },
+        "endLoc": {
+          "line": 67,
+          "column": 5,
+          "position": 607
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 14,
+      "fragment": "})\n  @ApiResponse({ status: 401, description: '인증 필요' })\n  @ApiResponse({ status: 403, description: '권한 없음' })\n  @ApiConsumes('multipart/form-data')\n  @ApiBody({\n    schema: {\n      type: 'object',\n      properties: {\n        file: { type: 'string', format: 'binary' },\n      },\n    },\n  })\n  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))\n  uploadCategoryImage",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/upload/upload.controller.ts",
+        "start": 53,
+        "end": 66,
+        "startLoc": {
+          "line": 53,
+          "column": 2,
+          "position": 460
+        },
+        "endLoc": {
+          "line": 66,
+          "column": 20,
+          "position": 590
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/upload/upload.controller.ts",
+        "start": 30,
+        "end": 43,
+        "startLoc": {
+          "line": 30,
+          "column": 2,
+          "position": 226
+        },
+        "endLoc": {
+          "line": 43,
+          "column": 12,
+          "position": 356
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 40,
+      "fragment": "}\n\n  private async acquireLock(lockName: string, ttlMinutes: number): Promise<boolean> {\n    const now = new Date();\n    const expiresAt = new Date(now.getTime() + ttlMinutes * 60 * 1000);\n\n    try {\n      await this.dataSource.query(\n        `INSERT INTO scheduler_locks (lock_name, instance_id, acquired_at, expires_at)\n         VALUES (?, ?, ?, ?)\n         ON DUPLICATE KEY UPDATE\n           acquired_at = IF(expires_at <= NOW(), VALUES(acquired_at), acquired_at),\n           expires_at = IF(expires_at <= NOW(), VALUES(expires_at), expires_at),\n           instance_id = IF(expires_at <= NOW(), VALUES(instance_id), instance_id)`,\n        [lockName, process.env.INSTANCE_ID || 'default', now, expiresAt],\n      );\n\n      const lock = await this.dataSource.query(\n        `SELECT instance_id FROM scheduler_locks WHERE lock_name = ? AND expires_at > NOW()`,\n        [lockName],\n      );\n\n      return lock.length > 0 && lock[0].instance_id === (process.env.INSTANCE_ID || 'default');\n    } catch (err) {\n      this.logger.error(`Failed to acquire lock ${lockName}: ${String(err)}`);\n      return false;\n    }\n  }\n\n  private async releaseLock(lockName: string): Promise<void> {\n    try {\n      await this.dataSource.query(\n        `DELETE FROM scheduler_locks WHERE lock_name = ? AND instance_id = ?`,\n        [lockName, process.env.INSTANCE_ID || 'default'],\n      );\n    } catch (err) {\n      this.logger.error(`Failed to release lock ${lockName}: ${String(err)}`);\n    }\n  }\n}",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/modules/coupons/coupon-rules.service.ts",
+        "start": 210,
+        "end": 249,
+        "startLoc": {
+          "line": 210,
+          "column": 3,
+          "position": 2158
+        },
+        "endLoc": {
+          "line": 249,
+          "column": 2,
+          "position": 2493
+        }
+      },
+      "secondFile": {
+        "name": "src/modules/scheduler/scheduler.service.ts",
+        "start": 46,
+        "end": 86,
+        "startLoc": {
+          "line": 46,
+          "column": 2,
+          "position": 509
+        },
+        "endLoc": {
+          "line": 86,
+          "column": 2,
+          "position": 846
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 13,
+      "fragment": ";\n\n  private async columnExists(queryRunner: QueryRunner, table: string, column: string): Promise<boolean> {\n    const rows = await queryRunner.query(\n      `SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS\n       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,\n      [table, column],\n    );\n    return (rows as Array<{ cnt: string | number }>)[0].cnt.toString() !== '0';\n  }\n\n  public async up(queryRunner: QueryRunner): Promise<void> {\n    // ===== 1. 컬럼 추가 =====",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/database/migrations/1778000000000-AddI18nColumnsAndBackfill.ts",
+        "start": 17,
+        "end": 29,
+        "startLoc": {
+          "line": 17,
+          "column": 41,
+          "position": 37
+        },
+        "endLoc": {
+          "line": 29,
+          "column": 24,
+          "position": 169
+        }
+      },
+      "secondFile": {
+        "name": "src/database/migrations/1778100000000-AddNiloCharacteristicsEn.ts",
+        "start": 9,
+        "end": 21,
+        "startLoc": {
+          "line": 9,
+          "column": 40,
+          "position": 37
+        },
+        "endLoc": {
+          "line": 21,
+          "column": 3,
+          "position": 169
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 13,
+      "fragment": ";\n\n  public async up(queryRunner: QueryRunner): Promise<void> {\n    const query = (sql: string) => queryRunner.query(sql);\n\n    const updateBlockContent = async (id: number, content: Record<string, unknown>): Promise<void> => {\n      await queryRunner.query(\n        `UPDATE \\`page_blocks\\` SET content = ? WHERE id = ?`,\n        [JSON.stringify(content), id],\n      );\n    };\n\n    const heroBlock = await query(`SELECT id, content FROM \\`page_blocks\\` WHERE page_id = 1 AND type = 'hero_banner' LIMIT 1`",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/database/migrations/1777100000000-UpsertPageBlockTranslationFields.ts",
+        "start": 4,
+        "end": 16,
+        "startLoc": {
+          "line": 4,
+          "column": 48,
+          "position": 35
+        },
+        "endLoc": {
+          "line": 16,
+          "column": 93,
+          "position": 168
+        }
+      },
+      "secondFile": {
+        "name": "src/database/migrations/1777200000000-UpsertRemainingPageBlockEnFields.ts",
+        "start": 4,
+        "end": 16,
+        "startLoc": {
+          "line": 4,
+          "column": 48,
+          "position": 35
+        },
+        "endLoc": {
+          "line": 16,
+          "column": 93,
+          "position": 168
+        }
+      }
+    },
+    {
+      "format": "typescript",
+      "lines": 20,
+      "fragment": "private async indexExists(\n    queryRunner: QueryRunner,\n    table: string,\n    indexName: string,\n  ): Promise<boolean> {\n    const [row] = await queryRunner.query(\n      `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1`,\n      [table, indexName],\n    );\n    return !!row;\n  }\n\n  private async createIndexIfNotExists(\n    queryRunner: QueryRunner,\n    table: string,\n    indexName: string,\n    column: string,\n  ): Promise<void> {\n    if (!(await this.indexExists(queryRunner, table, indexName))) {\n      // 컬럼이 스키마에 없을 수 있으므로(이전 마이그레이션/환경차),",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/database/migrations/1775100000000-AddPerformanceIndexes.ts",
+        "start": 20,
+        "end": 39,
+        "startLoc": {
+          "line": 20,
+          "column": 3,
+          "position": 124
+        },
+        "endLoc": {
+          "line": 39,
+          "column": 38,
+          "position": 281
+        }
+      },
+      "secondFile": {
+        "name": "src/database/migrations/1775250000000-AddNavigationIndexes.ts",
+        "start": 6,
+        "end": 25,
+        "startLoc": {
+          "line": 6,
+          "column": 3,
+          "position": 39
+        },
+        "endLoc": {
+          "line": 25,
+          "column": 6,
+          "position": 196
+        }
+      }
+    }
+  ]
+}

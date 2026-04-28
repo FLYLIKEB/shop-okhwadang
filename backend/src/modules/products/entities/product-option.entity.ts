@@ -18,8 +18,14 @@ export class ProductOption {
   @Column({ length: 100 })
   name!: string;
 
+  @Column({ name: 'name_en', type: 'varchar', length: 100, nullable: true })
+  nameEn!: string | null;
+
   @Column({ length: 100 })
   value!: string;
+
+  @Column({ name: 'value_en', type: 'varchar', length: 100, nullable: true })
+  valueEn!: string | null;
 
   @Column({
     name: 'price_adjustment',

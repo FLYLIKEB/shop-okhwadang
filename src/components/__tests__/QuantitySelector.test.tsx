@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
-import QuantitySelector from '@/components/products/QuantitySelector'
+import QuantitySelector from '@/components/shared/products/QuantitySelector'
 
 describe('QuantitySelector', () => {
   it('does not call onDecrease when quantity is 1', async () => {

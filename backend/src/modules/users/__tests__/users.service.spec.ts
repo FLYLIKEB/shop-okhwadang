@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { UsersService } from '../users.service';
-import { User } from '../entities/user.entity';
+import { User, UserRole } from '../entities/user.entity';
 import { UserAddress } from '../entities/user-address.entity';
 
 interface MockRepository {
@@ -54,10 +54,21 @@ describe('UsersService', () => {
         email: 'test@example.com',
         name: 'Test',
         phone: null,
-        role: 'user' as any,
+        role: UserRole.USER,
+        tier: 'Bronze',
+        tierAccumulatedAmount: 0,
+        tierEvaluatedAt: null,
         isActive: true,
+        isEmailVerified: true,
+        emailVerifiedAt: new Date(),
         password: 'hashed',
         refreshToken: 'token',
+        failedLoginAttempts: 0,
+        lastFailedLoginAt: null,
+        lockedUntil: null,
+        deletionRequestedAt: null,
+        deletionScheduledAt: null,
+        deletedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -68,7 +79,7 @@ describe('UsersService', () => {
 
       expect(result).not.toHaveProperty('password');
       expect(result).not.toHaveProperty('refreshToken');
-      expect((result as any).name).toBe('Updated');
+      expect(result.name).toBe('Updated');
     });
 
     it('throws NotFoundException if user not found', async () => {

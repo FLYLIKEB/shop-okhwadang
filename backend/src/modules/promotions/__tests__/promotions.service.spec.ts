@@ -133,7 +133,6 @@ describe('PromotionsService', () => {
 
   describe('findAllActiveBanners', () => {
     it('활성 배너 sort_order 정렬 반환', async () => {
-      const now = new Date();
       const mockBanners = [
         { id: 1, title: '배너1', isActive: true, sortOrder: 0, startsAt: null, endsAt: null },
         { id: 2, title: '배너2', isActive: true, sortOrder: 1, startsAt: null, endsAt: null },
@@ -159,6 +158,66 @@ describe('PromotionsService', () => {
 
       const result = await service.findAllActiveBanners();
       expect(result).toHaveLength(0);
+    });
+
+    it('locale=en 요청 시 titleEn 값으로 대체', async () => {
+      const mockBanners = [
+        { id: 1, title: '배너1', titleEn: 'Banner1', isActive: true, sortOrder: 0, startsAt: null, endsAt: null },
+      ] as Banner[];
+      bannerRepo.find.mockResolvedValue(mockBanners);
+
+      const result = await service.findAllActiveBanners('en');
+      expect(result[0].title).toBe('Banner1');
+    });
+
+    it('locale=en 이지만 titleEn null이면 한국어 유지', async () => {
+      const mockBanners = [
+        { id: 1, title: '배너1', titleEn: null, isActive: true, sortOrder: 0, startsAt: null, endsAt: null },
+      ] as Banner[];
+      bannerRepo.find.mockResolvedValue(mockBanners);
+
+      const result = await service.findAllActiveBanners('en');
+      expect(result[0].title).toBe('배너1');
+    });
+  });
+
+  describe('findAllActive - locale', () => {
+    it('locale=en 요청 시 titleEn 값으로 대체', async () => {
+      const now = new Date();
+      const mockPromotions = [
+        {
+          id: 1,
+          title: '타임세일',
+          titleEn: 'Time Sale',
+          type: 'timesale',
+          isActive: true,
+          startsAt: new Date(now.getTime() - 3600000),
+          endsAt: new Date(now.getTime() + 3600000),
+        },
+      ] as Promotion[];
+      promotionRepo.find.mockResolvedValue(mockPromotions);
+
+      const result = await service.findAllActive('en');
+      expect(result[0].title).toBe('Time Sale');
+    });
+
+    it('locale=en 이지만 titleEn null이면 한국어 유지', async () => {
+      const now = new Date();
+      const mockPromotions = [
+        {
+          id: 1,
+          title: '타임세일',
+          titleEn: null,
+          type: 'timesale',
+          isActive: true,
+          startsAt: new Date(now.getTime() - 3600000),
+          endsAt: new Date(now.getTime() + 3600000),
+        },
+      ] as Promotion[];
+      promotionRepo.find.mockResolvedValue(mockPromotions);
+
+      const result = await service.findAllActive('en');
+      expect(result[0].title).toBe('타임세일');
     });
   });
 });

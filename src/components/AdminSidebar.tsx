@@ -51,6 +51,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: '주문관리', href: '/admin/orders' },
       { label: '회원관리', href: '/admin/members' },
+      { label: '문의관리', href: '/admin/inquiries' },
     ],
   },
   {
@@ -59,6 +60,10 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: '페이지관리', href: '/admin/pages' },
       { label: '네비게이션관리', href: '/admin/navigation' },
+      { label: '안내바관리', href: '/admin/announcement-bars' },
+      { label: '컬렉션관리', href: '/admin/collections' },
+      { label: '저널관리', href: '/admin/journal' },
+      { label: '아카이브관리', href: '/admin/archives' },
     ],
   },
   {

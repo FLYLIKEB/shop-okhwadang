@@ -5,13 +5,16 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { Coupon } from './entities/coupon.entity';
 import { UserCoupon } from './entities/user-coupon.entity';
 import { PointHistory } from './entities/point-history.entity';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { CalculateDiscountDto } from './dto/calculate-discount.dto';
 import { IssueCouponDto } from './dto/issue-coupon.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
+import { assertOwnership } from '../../common/utils/ownership.util';
+import { PointsService } from '../points/points.service';
 
 export interface CouponResponse {
   id: number;
@@ -56,12 +59,19 @@ export interface PointHistoryItem {
   createdAt: Date;
 }
 
+export interface IssueCouponBatchResult {
+  couponId: number;
+  issued: boolean;
+  reason?: string;
+}
+
 export interface PointsResponse {
   balance: number;
   history: PointHistoryItem[];
 }
 
 const SHIPPING_FEE = 3000;
+const FREE_SHIPPING_THRESHOLD = 30000;
 
 @Injectable()
 export class CouponsService {
@@ -75,15 +85,8 @@ export class CouponsService {
     @InjectRepository(PointHistory)
     private readonly pointHistoryRepo: Repository<PointHistory>,
     private readonly dataSource: DataSource,
+    private readonly pointsService: PointsService,
   ) {}
-
-  private async getUserPointBalance(userId: number): Promise<number> {
-    const latest = await this.pointHistoryRepo.findOne({
-      where: { userId },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
-    return latest ? latest.balance : 0;
-  }
 
   private toResponse(uc: UserCoupon): CouponResponse {
     return {
@@ -124,7 +127,7 @@ export class CouponsService {
       order: { issuedAt: 'DESC' },
     });
 
-    const balance = await this.getUserPointBalance(userId);
+    const balance = await this.pointsService.getUserPointBalance(userId);
 
     return {
       coupons: userCoupons.map((uc) => this.toResponse(uc)),
@@ -138,14 +141,7 @@ export class CouponsService {
     let couponDiscount = 0;
 
     if (userCouponId) {
-      const uc = await this.userCouponRepo.findOne({
-        where: { id: userCouponId, userId },
-        relations: ['coupon'],
-      });
-
-      if (!uc) {
-        throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
-      }
+      const uc = await findOrThrow(this.userCouponRepo, { id: userCouponId, userId }, '쿠폰을 찾을 수 없습니다.', ['coupon']);
 
       const now = new Date();
       if (uc.coupon.expiresAt < now) {
@@ -163,7 +159,7 @@ export class CouponsService {
     }
 
     if (pointsToUse > 0) {
-      const balance = await this.getUserPointBalance(userId);
+      const balance = await this.pointsService.getUserPointBalance(userId);
       if (pointsToUse > balance) {
         throw new BadRequestException('적립금이 부족합니다.');
       }
@@ -171,7 +167,7 @@ export class CouponsService {
 
     const pointsDiscount = Math.min(pointsToUse, orderAmount - couponDiscount);
     const afterDiscount = Math.max(0, orderAmount - couponDiscount - pointsDiscount);
-    const shippingFee = afterDiscount >= 30000 ? 0 : SHIPPING_FEE;
+    const shippingFee = afterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
     const finalAmount = afterDiscount;
     const totalPayable = Math.max(0, finalAmount + shippingFee);
 
@@ -186,7 +182,7 @@ export class CouponsService {
   }
 
   async getPoints(userId: number): Promise<PointsResponse> {
-    const balance = await this.getUserPointBalance(userId);
+    const balance = await this.pointsService.getUserPointBalance(userId);
     const history = await this.pointHistoryRepo.find({
       where: { userId },
       order: { createdAt: 'DESC', id: 'DESC' },
@@ -226,7 +222,42 @@ export class CouponsService {
   }
 
   async issueCoupon(dto: IssueCouponDto): Promise<UserCoupon> {
-    const coupon = await this.couponRepo.findOne({ where: { id: dto.couponId } });
+    return this.dataSource.transaction(async (manager) => {
+      return this.issueCouponInTx(manager, dto);
+    });
+  }
+
+  async issueCouponsForUser(
+    userId: number,
+    couponIds: number[],
+  ): Promise<IssueCouponBatchResult[]> {
+    return this.dataSource.transaction(async (manager) => {
+      const results: IssueCouponBatchResult[] = [];
+      for (const couponId of couponIds) {
+        try {
+          await this.issueCouponInTx(manager, { userId, couponId });
+          results.push({ couponId, issued: true });
+        } catch (err) {
+          results.push({
+            couponId,
+            issued: false,
+            reason: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+      return results;
+    });
+  }
+
+  private async issueCouponInTx(
+    manager: EntityManager,
+    dto: IssueCouponDto,
+  ): Promise<UserCoupon> {
+    const coupon = await manager.findOne(Coupon, {
+      where: { id: dto.couponId },
+      lock: { mode: 'pessimistic_write' },
+    });
+
     if (!coupon) {
       throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
     }
@@ -237,29 +268,32 @@ export class CouponsService {
       throw new BadRequestException('발급 수량이 소진된 쿠폰입니다.');
     }
 
-    const existing = await this.userCouponRepo.findOne({
+    const existing = await manager.findOne(UserCoupon, {
       where: { userId: dto.userId, couponId: dto.couponId },
     });
     if (existing) {
       throw new BadRequestException('이미 발급된 쿠폰입니다.');
     }
 
-    return await this.dataSource.transaction(async (manager) => {
-      const uc = manager.create(UserCoupon, {
-        userId: dto.userId,
-        couponId: dto.couponId,
-        status: 'available',
-      });
-      const saved = await manager.save(UserCoupon, uc);
-      await manager.increment(Coupon, { id: dto.couponId }, 'issuedCount', 1);
-      this.logger.log(`Coupon issued: couponId=${dto.couponId}, userId=${dto.userId}`);
-      return saved;
+    const uc = manager.create(UserCoupon, {
+      userId: dto.userId,
+      couponId: dto.couponId,
+      status: 'available',
     });
+    const saved = await manager.save(UserCoupon, uc);
+    await manager.increment(Coupon, { id: dto.couponId }, 'issuedCount', 1);
+    this.logger.log(`Coupon issued: couponId=${dto.couponId}, userId=${dto.userId}`);
+    return saved;
   }
 
-  async useCoupon(userCouponId: number, userId: number, orderId: number): Promise<void> {
-    await this.dataSource.transaction(async (manager) => {
-      const uc = await manager.findOne(UserCoupon, {
+  async useCoupon(
+    userCouponId: number,
+    userId: number,
+    orderId: number,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const run = async (m: EntityManager) => {
+      const uc = await m.findOne(UserCoupon, {
         where: { id: userCouponId },
         relations: ['coupon'],
         lock: { mode: 'pessimistic_write' },
@@ -268,9 +302,7 @@ export class CouponsService {
       if (!uc) {
         throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
       }
-      if (Number(uc.userId) !== Number(userId)) {
-        throw new BadRequestException('권한이 없는 쿠폰입니다.');
-      }
+      assertOwnership(uc.userId, userId, '권한이 없는 쿠폰입니다.');
       if (uc.status !== 'available') {
         throw new BadRequestException('이미 사용된 쿠폰입니다.');
       }
@@ -283,7 +315,13 @@ export class CouponsService {
       uc.status = 'used';
       uc.usedAt = now;
       uc.orderId = orderId;
-      await manager.save(UserCoupon, uc);
-    });
+      await m.save(UserCoupon, uc);
+    };
+
+    if (manager) {
+      await run(manager);
+    } else {
+      await this.dataSource.transaction(run);
+    }
   }
 }

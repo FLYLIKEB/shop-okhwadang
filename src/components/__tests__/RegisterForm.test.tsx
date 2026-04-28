@@ -1,7 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import RegisterForm from '@/components/auth/RegisterForm';
+import RegisterForm from '@/components/shared/auth/RegisterForm';
 import { AuthContext } from '@/contexts/AuthContext';
 import type { AuthContextValue } from '@/contexts/AuthContext';
 
@@ -16,7 +16,6 @@ vi.mock('sonner', () => ({
 function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue {
   return {
     user: null,
-    token: null,
     isAuthenticated: false,
     isLoading: false,
     login: vi.fn(),
@@ -24,6 +23,7 @@ function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue 
     register: vi.fn(),
     loginWithKakao: vi.fn(),
     loginWithGoogle: vi.fn(),
+    updateUser: vi.fn(),
     ...overrides,
   };
 }
@@ -103,12 +103,12 @@ describe('RegisterForm', () => {
 
     await user.type(screen.getByLabelText('이름'), '홍길동');
     await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-    await user.type(screen.getByLabelText('비밀번호'), 'password1');
-    await user.type(screen.getByLabelText('비밀번호 확인'), 'password1');
+    await user.type(screen.getByLabelText('비밀번호'), 'password1!');
+    await user.type(screen.getByLabelText('비밀번호 확인'), 'password1!');
     await user.click(screen.getByRole('button', { name: '회원가입' }));
 
     await waitFor(() => {
-      expect(mockRegister).toHaveBeenCalledWith('test@example.com', 'password1', '홍길동');
+      expect(mockRegister).toHaveBeenCalledWith('test@example.com', 'password1!', '홍길동');
     });
   });
 });

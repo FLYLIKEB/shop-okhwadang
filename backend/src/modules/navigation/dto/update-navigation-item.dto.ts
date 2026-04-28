@@ -1,38 +1,4 @@
-import {
-  IsString,
-  IsEnum,
-  IsOptional,
-  IsBoolean,
-  IsInt,
-  Min,
-  MaxLength,
-} from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
+import { CreateNavigationItemDto } from './create-navigation-item.dto';
 
-export class UpdateNavigationItemDto {
-  @IsOptional()
-  @IsEnum(['gnb', 'sidebar', 'footer'])
-  group?: 'gnb' | 'sidebar' | 'footer';
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  label?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  url?: string;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  sort_order?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  is_active?: boolean;
-
-  @IsOptional()
-  @IsInt()
-  parent_id?: number | null;
-}
+export class UpdateNavigationItemDto extends PartialType(CreateNavigationItemDto) {}

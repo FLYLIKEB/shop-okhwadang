@@ -1,11 +1,12 @@
 import {
   Injectable,
-  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { Faq } from './entities/faq.entity';
+import { findOrThrow } from '../../common/utils/repository.util';
+import { applyLocale } from '../../common/utils/locale.util';
 import { CreateFaqDto } from './dto/create-faq.dto';
 import { UpdateFaqDto } from './dto/update-faq.dto';
 import { FaqQueryDto } from './dto/faq-query.dto';
@@ -19,13 +20,24 @@ export class FaqsService {
     private readonly faqRepo: Repository<Faq>,
   ) {}
 
+  private applyLocale(faq: Faq, locale?: string): Faq {
+    return applyLocale(faq, locale, ['question', 'answer']);
+  }
+
   async findAll(query: FaqQueryDto): Promise<Faq[]> {
-    const where: Partial<Faq> = { isPublished: true };
+    const where: FindOptionsWhere<Faq> = { isPublished: true };
     if (query.category) {
       where.category = query.category;
     }
-    return this.faqRepo.find({
+    const faqs = await this.faqRepo.find({
       where,
+      order: { sortOrder: 'ASC', createdAt: 'ASC' },
+    });
+    return faqs.map((f) => this.applyLocale(f, query.locale));
+  }
+
+  async findAllForAdmin(): Promise<Faq[]> {
+    return this.faqRepo.find({
       order: { sortOrder: 'ASC', createdAt: 'ASC' },
     });
   }
@@ -44,19 +56,13 @@ export class FaqsService {
   }
 
   async update(id: number, dto: UpdateFaqDto): Promise<Faq> {
-    const faq = await this.faqRepo.findOne({ where: { id } });
-    if (!faq) {
-      throw new NotFoundException('FAQ를 찾을 수 없습니다.');
-    }
+    const faq = await findOrThrow(this.faqRepo, { id }, 'FAQ를 찾을 수 없습니다.');
     Object.assign(faq, dto);
     return this.faqRepo.save(faq);
   }
 
   async remove(id: number): Promise<void> {
-    const faq = await this.faqRepo.findOne({ where: { id } });
-    if (!faq) {
-      throw new NotFoundException('FAQ를 찾을 수 없습니다.');
-    }
+    const faq = await findOrThrow(this.faqRepo, { id }, 'FAQ를 찾을 수 없습니다.');
     await this.faqRepo.remove(faq);
     this.logger.log(`FAQ deleted: id=${id}`);
   }

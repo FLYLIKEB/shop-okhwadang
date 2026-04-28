@@ -1,20 +1,20 @@
-# Commerce Demo
+# 옥화당 자사몰
 
-> 쇼핑몰에 들어갈 공통 기능을 정의하고, 다양한 쇼핑몰 외주에 **재사용 가능한 보일러플레이트**를 만든다.
-> 실제 PG 결제 연동과 배송 추적을 포함한 실무 수준의 완성된 구조를 갖추어
-> 새 프로젝트 시작 시 즉시 포크하여 커스터마이징할 수 있는 기반을 목표로 한다.
+> 자사호·보이차·다구 전문 브랜드 **옥화당**의 D2C 독립 쇼핑몰.
+> 스마트스토어에서 독립하여 브랜드 스토리텔링, 데이터 소유, 글로벌 판매를 실현한다.
 
-## 핵심 설계 원칙
+## 핵심 기능
 
-| 원칙 | 설명 |
+| 기능 | 설명 |
 |------|------|
-| **ChaLog 통일** | 기술 스택, 코드 스타일, Git 워크플로우, 배포 구조를 ChaLog와 맞춤 |
-| **템플릿 기반** | 모든 UI 조형 요소는 하드코딩이 아닌 템플릿으로 관리 |
-| **DB 드리븐 UI** | 카테고리, 사이드바, 네비게이션 등 프론트 구조를 DB로 관리 |
-| **반응형 우선** | 모든 화면이 데스크톱/모바일에서 깨지지 않는 flex 기반 UI |
-| **보안 우선** | 어드민, 인증, PG 연동 등 전 영역에 보안 고려 |
-| **Docker 기반 인프라** | MySQL, Redis 등 모든 서비스를 Docker Compose로 통합 관리 |
-| **재사용성** | 외주 프로젝트마다 포크하여 빠르게 커스터마이징 가능한 구조 |
+| **글로벌 스토어** | 한국어/영어 다국어, KRW/USD 결제 |
+| **작가·산지 스토리텔링** | 자사호별 작가 소개, 산지·흙·제작 과정 전용 페이지 |
+| **블록 빌더 어드민** | 코드 없이 메인 페이지 블록 조립, 테마 컬러 변경 |
+| **결제 어댑터** | 국내: 네이버페이·KG이니시스·토스페이먼츠 / 글로벌: Stripe |
+| **스마트스토어 리뷰 연동** | 별도 이슈로 분리하여 후속 구현 |
+| **인스타그램 쇼핑** | Instagram Shopping 연동 SNS 판매 |
+| **인플루언서 쿠폰** | 쿠폰 코드 발급·관리 |
+| **알림 발송** | 카카오톡/SMS 주문 알림 |
 
 ## 기술 스택
 
@@ -26,46 +26,50 @@
 | Backend | NestJS + TypeORM + MySQL | Controller → Service → Entity |
 | DB | MySQL 8.0 (Docker) | TypeORM Migration CLI |
 | 인증 | JWT + OAuth (카카오/구글) | |
-| 결제 | 토스페이먼츠 (기본) | 어댑터 패턴으로 PG 교체 가능 |
+| 결제 | 국내: 네이버페이 + KG이니시스 + 토스페이먼츠 / 글로벌: Stripe | 어댑터 패턴 |
 | 배송 | 택배사 API 연동 | 어댑터 패턴으로 택배사 교체 가능 |
-| 캐시 | Redis | 상품 캐싱, 세션 |
-| 스토리지 | S3 호환 (R2 등) | 이미지/미디어 |
-| 인프라 | Docker Compose | MySQL, Redis 로컬 통합 관리 |
-| FE 배포 | Vercel | Next.js SSR 자동 배포 |
-| BE 배포 | AWS EC2 + PM2 | |
-| DB 호스팅 | AWS Lightsail Docker MySQL | |
+| 캐시 | In-memory (CacheService) | 설정/상품 핫 데이터, TTL 기반 |
+| 스토리지 | AWS S3 + CloudFront | 이미지/미디어 CDN |
+| 인프라 | Docker Compose | 로컬 MySQL 관리 |
+| FE 배포 | Vercel Pro | Next.js SSR 자동 배포 |
+| BE 배포 | AWS EC2 t3.small + PM2 | Nginx (HTTP), HTTPS는 Cloudflare/Vercel 종료 |
+| DB 호스팅 | AWS Lightsail MySQL | 7일 자동 백업 |
 | 테스트 | Vitest (FE) + Jest E2E (BE) | |
 | Node.js | 22.x | .nvmrc로 고정 |
 
 ## 프로젝트 구조
 
 ```
-commerce-demo/
+shop-okhwadang/
 ├── src/                    # 프론트엔드 (Next.js 15 App Router)
 │   ├── app/                # Next.js App Router (layout, pages, route groups)
 │   ├── components/         # 재사용 UI
 │   ├── components/ui/      # shadcn/ui 래퍼 + cn()
 │   ├── lib/api.ts          # API 클라이언트
 │   ├── hooks/              # 커스텀 훅
-│   ├── contexts/           # React Context
+│   ├── contexts/           # React Context (Auth, Cart)
 │   ├── utils/              # 유틸리티
 │   ├── constants/          # 전역 상수
 │   └── styles/             # TailwindCSS v4 토큰
 ├── backend/                # 백엔드 (NestJS)
 │   └── src/modules/        # auth, users, products, orders, payments, shipping, admin...
-├── docs/                   # 문서
-├── .claude/rules/          # Claude 규칙
-└── scripts/                # 유틸리티 스크립트
+├── docs/                   # 기술 문서
+├── scripts/                # 유틸리티 스크립트
+└── .claude/rules/          # Claude AI 규칙
 ```
 
 ## 시작하기
 
 ```bash
-# 프론트엔드 개발 서버
-npm run dev
+# (권장) 워크트리 최초 진입 시 부트스트랩 + Git hook 설정
+bash scripts/setup-git-hooks.sh
+make bootstrap
 
 # 풀스택 로컬 개발 (SSH Tunnel + Backend + Frontend)
-npm run dev:local
+bash scripts/start-local.sh
+
+# 프론트엔드만 개발 서버
+npm run dev
 
 # 프론트엔드 빌드 + 테스트
 npm run build && npm run test:run
@@ -75,29 +79,69 @@ cd backend && npm run build && npm run test
 
 # 백엔드 E2E 테스트 (DB 스키마 변경 시 필수)
 cd backend && npm run test:e2e
+
+# MySQL 시작/정지
+cd backend && docker compose up -d
+cd backend && docker compose down -v   # DB 초기화
 ```
+
+### 워크트리 안정화 루틴
+
+```bash
+# 의존성/venv/code-review-graph/.env 선행 준비
+make bootstrap
+
+# 선행 준비 + FE/BE 기본 검증
+make verify
+
+# 선행 준비 후 로컬 서버 시작
+make up
+```
+
+- `post-checkout` hook 이 설정되어 있으면 (`bash scripts/setup-git-hooks.sh`) 새 워크트리 첫 체크아웃 시 bootstrap이 자동 실행됩니다.
+
+### Claude Code에서 Codex (Vibe Proxy) 사용
+
+```bash
+# 1) 자동 설정 파일 생성 + 연결 확인
+bash scripts/setup-codex-vibe.sh --check
+
+# 2) Codex 호출 (OMC)
+bash scripts/setup-codex-vibe.sh omc ask codex "간단한 테스트 응답만 해줘"
+
+# 3) 현재 셸에 환경변수 적용 후 직접 사용
+eval "$(bash scripts/setup-codex-vibe.sh --print-env | sed -n '/^export /p')"
+omc ask codex "리팩토링 포인트 3개만 알려줘"
+```
+
+- 설정 파일: `.env.codex.vibe.local` (최초 실행 시 자동 생성)
+- 기본 URL: `~/.cli-proxy-api/merged-config.yaml`의 `host/port` 자동 감지 (미감지 시 `http://127.0.0.1:8317`)
+- 기본 API Key: `dummy-not-used` (Vibe Proxy OpenAI 호환 모드)
 
 ## 배포 구조
 
 ```
-클라이언트 → Vercel CDN (Static Files)
-          → Vercel Functions (api/proxy.ts) → AWS EC2 (NestJS :3000)
-                                            → Lightsail Docker MySQL :3306
+클라이언트 → Vercel CDN (Next.js SSR)
+          → Vercel Functions (api/proxy.ts) → AWS EC2 t3.small (NestJS :3000)
+                                            → AWS Lightsail MySQL :3306
 ```
 
-## 구현 우선순위
+## 기술 문서
 
-| Phase | 내용 |
-|-------|------|
-| **Phase 1 (MVP)** | 메인, 상품 목록/상세, 장바구니, 주문/결제(Mock PG) |
-| **Phase 2 (Core)** | 회원 시스템, 검색, 카테고리 필터, 마이페이지 |
-| **Phase 3 (Payment)** | 실제 PG 연동, 배송 시스템 구축 |
-| **Phase 4 (Admin)** | 어드민 (상품/주문/배송/회원 관리) |
-| **Phase 5 (CMS)** | 템플릿 시스템, 동적 페이지/네비게이션 관리 |
-| **Phase 6 (Polish)** | 리뷰, 위시리스트, 쿠폰, 성능 최적화 |
-| **Phase 7 (Ops)** | CI/CD, 모니터링, 테스트 커버리지 |
+| 문서 | 경로 |
+|------|------|
+| 아키텍처 | [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) |
+| 백엔드 설계 | [`docs/architecture/BACKEND.md`](docs/architecture/BACKEND.md) |
+| 프론트엔드 설계 | [`docs/architecture/FRONTEND.md`](docs/architecture/FRONTEND.md) |
+| 서비스 기획서 | [`docs/project/PRODUCT_OVERVIEW.md`](docs/project/PRODUCT_OVERVIEW.md) |
+| 프로젝트 로드맵 | [`docs/project/ROADMAP.md`](docs/project/ROADMAP.md) |
+| 보안 가이드 | [`docs/project/SECURITY.md`](docs/project/SECURITY.md) |
+| Git 워크플로우 | [`docs/project/GIT_WORKFLOW.md`](docs/project/GIT_WORKFLOW.md) |
+| 배포 가이드 | [`docs/infrastructure/DEPLOYMENT.md`](docs/infrastructure/DEPLOYMENT.md) |
+| DB 스키마 | [`docs/infrastructure/DATABASE.md`](docs/infrastructure/DATABASE.md) |
+| Docker 설정 | [`docs/infrastructure/DOCKER.md`](docs/infrastructure/DOCKER.md) |
+| 환경 변수 | [`docs/infrastructure/ENVIRONMENT_VARIABLES.md`](docs/infrastructure/ENVIRONMENT_VARIABLES.md) |
 
-## 관련 문서
+## 관련 프로젝트
 
-- [상세 기획 (Issue #1)](https://github.com/FLYLIKEB/commerce-demo/issues/1)
-- [ChaLog (기술 스택 기준 프로젝트)](https://github.com/FLYLIKEB/ChaLog)
+- [ChaLog](https://github.com/FLYLIKEB/ChaLog) — 기술 스택 기준 프로젝트

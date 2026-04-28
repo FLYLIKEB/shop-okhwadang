@@ -11,8 +11,10 @@ import {
   ReactNode,
 } from 'react';
 import { toast } from 'sonner';
-import { cartApi, CartItem, CartResponse, RequestOptions } from '@/lib/api';
+import { useLocale } from 'next-intl';
+import { cartApi, CartItem, CartResponse } from '@/lib/api';
 import { useAuth } from './AuthContext';
+import { handleApiError } from '@/utils/error';
 
 const GUEST_CART_KEY = 'guest_cart';
 
@@ -60,7 +62,7 @@ function clearGuestCart(): void {
 
 function guestCartToCartResponse(items: GuestCartItem[]): CartResponse {
   const cartItems: CartItem[] = items.map((item, index) => ({
-    id: -(index + 1), // 음수 id로 서버 항목과 구분
+    id: -(index + 1),
     productId: item.productId,
     productOptionId: item.productOptionId,
     quantity: item.quantity,
@@ -77,7 +79,8 @@ function guestCartToCartResponse(items: GuestCartItem[]): CartResponse {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const { token, isAuthenticated } = useAuth();
+  const locale = useLocale();
+  const { isAuthenticated } = useAuth();
   const [cartData, setCartData] = useState<CartResponse>({
     items: [],
     totalAmount: 0,
@@ -86,65 +89,60 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const prevAuthRef = useRef<boolean | null>(null);
 
-  const authHeaders = useMemo<RequestOptions | undefined>(
-    () => (token ? { headers: { Authorization: `Bearer ${token}` } } : undefined),
-    [token],
-  );
-
   const fetchCart = useCallback(async () => {
-    if (!isAuthenticated || !token) {
+    if (!isAuthenticated) {
       setCartData(guestCartToCartResponse(loadGuestCart()));
       return;
     }
     setIsLoading(true);
     try {
-      const data = await cartApi.getList({ headers: { Authorization: `Bearer ${token}` } });
+      const data = await cartApi.getList({ params: { locale } });
       setCartData(data);
     } catch {
       // silent — cart load failure should not block the UI
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, locale]);
 
   useEffect(() => {
+    let mounted = true;
     const wasAuthenticated = prevAuthRef.current;
     prevAuthRef.current = isAuthenticated;
 
-    if (!isAuthenticated || !token) {
-      // 비로그인: 게스트 카트 표시
-      setCartData(guestCartToCartResponse(loadGuestCart()));
+    if (!isAuthenticated) {
+      if (mounted) setCartData(guestCartToCartResponse(loadGuestCart()));
       return;
     }
 
-    const headers: RequestOptions = { headers: { Authorization: `Bearer ${token}` } };
-
     void (async () => {
-      // 비로그인 → 로그인 전환 시 게스트 카트 병합
       if (wasAuthenticated === false) {
         const guestItems = loadGuestCart();
         if (guestItems.length > 0) {
-          await Promise.allSettled(guestItems.map((item) => cartApi.add(item, headers)));
+          await Promise.allSettled(guestItems.map((item) => cartApi.add(item)));
           clearGuestCart();
         }
       }
 
       setIsLoading(true);
       try {
-        const data = await cartApi.getList(headers);
-        setCartData(data);
+        const data = await cartApi.getList({ params: { locale } });
+        if (mounted) setCartData(data);
       } catch {
         // silent
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     })();
-  }, [isAuthenticated, token]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [isAuthenticated, locale]);
 
   const addItem = useCallback(
     async (params: AddCartItemParams) => {
-      if (!authHeaders) {
-        // 게스트: localStorage에 저장
+      if (!isAuthenticated) {
         const guestItems = loadGuestCart();
         const existing = guestItems.find(
           (i) => i.productId === params.productId && i.productOptionId === params.productOptionId,
@@ -158,16 +156,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCartData(guestCartToCartResponse(guestItems));
         return;
       }
-      const data = await cartApi.add(params, authHeaders);
+      const data = await cartApi.add(params, { params: { locale } });
       setCartData(data);
     },
-    [authHeaders],
+    [isAuthenticated, locale],
   );
 
   const updateQuantity = useCallback(
     async (id: number, quantity: number) => {
-      if (!authHeaders) {
-        // 게스트: localStorage 업데이트 (id는 음수 인덱스)
+      if (!isAuthenticated) {
         const guestItems = loadGuestCart();
         const index = -(id + 1);
         if (guestItems[index]) {
@@ -177,7 +174,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCartData(guestCartToCartResponse(guestItems));
         return;
       }
-      // optimistic update
       setCartData((prev) => ({
         ...prev,
         items: prev.items.map((item) =>
@@ -189,19 +185,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ),
       }));
       try {
-        await cartApi.updateQuantity(id, { quantity }, authHeaders);
-      } catch {
-        toast.error('수량 변경에 실패했습니다.');
-        await fetchCart(); // rollback
+        await cartApi.updateQuantity(id, { quantity });
+      } catch (err) {
+        toast.error(handleApiError(err, '수량 변경에 실패했습니다.'));
+        await fetchCart();
       }
     },
-    [authHeaders, fetchCart],
+    [isAuthenticated, fetchCart],
   );
 
   const removeItem = useCallback(
     async (id: number) => {
-      if (!authHeaders) {
-        // 게스트: localStorage에서 제거 (id는 음수 인덱스)
+      if (!isAuthenticated) {
         const guestItems = loadGuestCart();
         const index = -(id + 1);
         guestItems.splice(index, 1);
@@ -210,7 +205,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         toast.success('삭제되었습니다.');
         return;
       }
-      await cartApi.remove(id, authHeaders);
+      await cartApi.remove(id);
       setCartData((prev) => {
         const items = prev.items.filter((item) => item.id !== id);
         const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
@@ -219,22 +214,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
       toast.success('삭제되었습니다.');
     },
-    [authHeaders],
+    [isAuthenticated],
+  );
+
+  const value = useMemo(
+    () => ({
+      items: cartData.items,
+      itemCount: cartData.itemCount,
+      totalAmount: cartData.totalAmount,
+      isLoading,
+      addItem,
+      updateQuantity,
+      removeItem,
+      refetch: fetchCart,
+    }),
+    [cartData.items, cartData.itemCount, cartData.totalAmount, isLoading, addItem, updateQuantity, removeItem, fetchCart],
   );
 
   return (
-    <CartContext.Provider
-      value={{
-        items: cartData.items,
-        itemCount: cartData.itemCount,
-        totalAmount: cartData.totalAmount,
-        isLoading,
-        addItem,
-        updateQuantity,
-        removeItem,
-        refetch: fetchCart,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AdminLayout from '@/app/admin/layout';
+import AdminLayout from '@/app/[locale]/admin/layout';
 
 const mockReplace = vi.fn();
 
@@ -66,11 +66,19 @@ describe('AdminSidebar', () => {
     });
     render(<AdminLayout><span /></AdminLayout>);
     expect(screen.getByText('대시보드')).toBeInTheDocument();
+
+    // Nav groups are collapsed by default — open each to reveal children
+    fireEvent.click(screen.getByText('상품'));
     expect(screen.getByText('상품관리')).toBeInTheDocument();
     expect(screen.getByText('카테고리관리')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('운영'));
     expect(screen.getByText('주문관리')).toBeInTheDocument();
     expect(screen.getByText('회원관리')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('CMS'));
     expect(screen.getByText('페이지관리')).toBeInTheDocument();
     expect(screen.getByText('네비게이션관리')).toBeInTheDocument();
+    expect(screen.getByText('안내바관리')).toBeInTheDocument();
   });
 });

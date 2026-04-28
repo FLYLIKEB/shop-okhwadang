@@ -1,12 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import LoginForm from '@/components/auth/LoginForm';
+import LoginForm from '@/components/shared/auth/LoginForm';
 import { AuthContext } from '@/contexts/AuthContext';
 import type { AuthContextValue } from '@/contexts/AuthContext';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock('sonner', () => ({
@@ -16,7 +17,6 @@ vi.mock('sonner', () => ({
 function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue {
   return {
     user: null,
-    token: null,
     isAuthenticated: false,
     isLoading: false,
     login: vi.fn(),
@@ -24,6 +24,7 @@ function makeAuthValue(overrides?: Partial<AuthContextValue>): AuthContextValue 
     register: vi.fn(),
     loginWithKakao: vi.fn(),
     loginWithGoogle: vi.fn(),
+    updateUser: vi.fn(),
     ...overrides,
   };
 }

@@ -1,13 +1,16 @@
 import {
-  Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger,
+  Injectable, BadRequestException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { UserAddress } from './entities/user-address.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 const MAX_ADDRESSES = 10;
 
@@ -23,10 +26,7 @@ export class UsersService {
   ) {}
 
   async updateProfile(userId: number, dto: UpdateProfileDto): Promise<Omit<User, 'password' | 'refreshToken'>> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
-    }
+    const user = await findOrThrow(this.userRepository, { id: userId }, '사용자를 찾을 수 없습니다.');
 
     if (dto.name !== undefined) user.name = dto.name;
     if (dto.phone !== undefined) user.phone = dto.phone ?? null;
@@ -73,13 +73,8 @@ export class UsersService {
   }
 
   async updateAddress(userId: number, addressId: number, dto: UpdateAddressDto): Promise<UserAddress> {
-    const address = await this.addressRepository.findOne({ where: { id: addressId } });
-    if (!address) {
-      throw new NotFoundException('배송지를 찾을 수 없습니다.');
-    }
-    if (Number(address.userId) !== Number(userId)) {
-      throw new ForbiddenException('접근 권한이 없습니다.');
-    }
+    const address = await findOrThrow(this.addressRepository, { id: addressId }, '배송지를 찾을 수 없습니다.');
+    assertOwnership(address.userId, userId);
 
     if (dto.isDefault) {
       await this.addressRepository.update({ userId }, { isDefault: false });
@@ -101,16 +96,54 @@ export class UsersService {
   }
 
   async deleteAddress(userId: number, addressId: number): Promise<{ message: string }> {
-    const address = await this.addressRepository.findOne({ where: { id: addressId } });
-    if (!address) {
-      throw new NotFoundException('배송지를 찾을 수 없습니다.');
-    }
-    if (Number(address.userId) !== Number(userId)) {
-      throw new ForbiddenException('접근 권한이 없습니다.');
-    }
+    const address = await findOrThrow(this.addressRepository, { id: addressId }, '배송지를 찾을 수 없습니다.');
+    assertOwnership(address.userId, userId);
 
     await this.addressRepository.remove(address);
     this.logger.log(`Address deleted: userId=${userId} addressId=${addressId}`);
     return { message: '삭제되었습니다.' };
+  }
+
+  async requestAccountDeletion(
+    userId: number,
+    password: string,
+  ): Promise<{ message: string; scheduledAt: string }> {
+    const user = await findOrThrow(this.userRepository, { id: userId }, '사용자를 찾을 수 없습니다.');
+
+    if (user.deletedAt) {
+      throw new BadRequestException('이미 탈퇴 처리된 계정입니다.');
+    }
+
+    if (user.deletionScheduledAt) {
+      return {
+        message: '이미 탈퇴가 예약된 계정입니다.',
+        scheduledAt: user.deletionScheduledAt.toISOString(),
+      };
+    }
+
+    if (!user.password) {
+      throw new BadRequestException('비밀번호가 없는 소셜 계정은 고객센터를 통해 탈퇴 요청해 주세요.');
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      throw new BadRequestException('비밀번호가 올바르지 않습니다.');
+    }
+
+    const now = new Date();
+    const scheduledAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    await this.userRepository.update(userId, {
+      deletionRequestedAt: now,
+      deletionScheduledAt: scheduledAt,
+      refreshToken: null,
+    });
+
+    this.logger.log(`Account deletion requested: userId=${userId}, scheduledAt=${scheduledAt.toISOString()}`);
+
+    return {
+      message: '탈퇴 요청이 접수되었습니다. 30일 후 자동으로 계정이 익명화됩니다.',
+      scheduledAt: scheduledAt.toISOString(),
+    };
   }
 }

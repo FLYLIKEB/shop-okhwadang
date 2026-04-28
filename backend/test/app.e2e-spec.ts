@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ThrottlerGuard, ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
+import cookieParser from 'cookie-parser';
 import { AppModule } from '../src/app.module';
+import { UserAwareThrottlerGuard } from '../src/common/guards/user-aware-throttler.guard';
 import { registerAuthSuite } from './suites/auth.e2e-spec';
 import { registerCartSuite } from './suites/cart.e2e-spec';
 import { registerOrdersSuite } from './suites/orders.e2e-spec';
@@ -17,6 +20,16 @@ import { registerAdminDashboardSuite } from './suites/admin-dashboard.e2e-spec';
 import { registerPagesSuite } from './suites/pages.e2e-spec';
 import { registerNavigationSuite } from './suites/navigation.e2e-spec';
 import { registerReviewsSuite } from './suites/reviews.e2e-spec';
+import { registerAttributesSuite } from './suites/attributes.e2e-spec';
+import { registerInquiriesSuite } from './suites/inquiries.e2e-spec';
+import { registerRefundsSuite } from './suites/refunds.e2e-spec';
+import { registerCmsModulesSuite } from './suites/cms-modules.e2e-spec';
+import { registerCommerceModulesSuite } from './suites/commerce-modules.e2e-spec';
+import { registerRestockAlertsSuite } from './suites/restock-alerts.e2e-spec';
+import { registerAnnouncementBarsSuite } from './suites/announcement-bars.e2e-spec';
+import { registerAuditLogsSuite } from './suites/audit-logs.e2e-spec';
+import { registerMembershipSuite } from './suites/membership.e2e-spec';
+import { registerSeoSuite } from './suites/seo.e2e-spec';
 
 describe('App (e2e)', () => {
   let app: INestApplication;
@@ -24,9 +37,17 @@ describe('App (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(UserAwareThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .overrideProvider(ThrottlerStorage)
+      .useValue({ increment: async () => ({ totalHits: 1, timeToExpire: 0, isBlocked: false, timeToBlockExpire: 0 }), getRecord: async () => [] })
+      .compile();
 
     app = moduleFixture.createNestApplication();
+    app.use(cookieParser());
     app.setGlobalPrefix('api');
     app.useGlobalPipes(
       new ValidationPipe({
@@ -70,4 +91,14 @@ describe('App (e2e)', () => {
   registerPagesSuite(() => app);
   registerNavigationSuite(() => app);
   registerReviewsSuite(() => app);
+  registerAttributesSuite(() => app);
+  registerInquiriesSuite(() => app);
+  registerRefundsSuite(() => app);
+  registerCmsModulesSuite(() => app);
+  registerCommerceModulesSuite(() => app);
+  registerRestockAlertsSuite(() => app);
+  registerAnnouncementBarsSuite(() => app);
+  registerAuditLogsSuite(() => app);
+  registerMembershipSuite(() => app);
+  registerSeoSuite(() => app);
 });

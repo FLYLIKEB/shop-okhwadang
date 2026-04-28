@@ -1,19 +1,27 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import MobileBottomNav from '@/components/MobileBottomNav';
+import MobileBottomNav from '@/components/shared/MobileBottomNav';
 
 let mockPathname = '/';
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => mockPathname,
+const messages = {
+  home: '홈',
+  collection: '컬렉션',
+  archive: 'Archive',
+  cart: '장바구니',
+  myPage: '마이',
+  mobileBottomNav: '모바일 하단 네비게이션',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: keyof typeof messages) => messages[key] ?? key,
 }));
 
-vi.mock('next/link', () => ({
-  default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
   ),
+  usePathname: () => mockPathname,
 }));
 
 const mockUseCart = vi.fn();
@@ -30,10 +38,11 @@ describe('MobileBottomNav', () => {
   it('바텀 네비 렌더링 - 5개 탭 표시', () => {
     render(<MobileBottomNav />);
     expect(screen.getByRole('link', { name: '홈' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '검색' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '카테고리' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '컬렉션' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Archive' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '장바구니' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '마이' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: '모바일 하단 네비게이션' })).toBeInTheDocument();
   });
 
   it('현재 경로에 해당하는 탭 active 스타일', () => {

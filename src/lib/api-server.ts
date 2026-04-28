@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import type { ProductListResponse, ProductSort, Category, ProductDetail, Page } from '@/lib/api';
+import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, CollectionsResponse, ArchivesResponse, SiteSetting } from '@/lib/api';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
@@ -25,7 +25,7 @@ async function fetchFromBackend<T>(
   const response = await fetch(url, { cache: 'no-store' });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+    const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
     throw new Error(error.message || `HTTP ${response.status}`);
   }
 
@@ -41,6 +41,8 @@ export function fetchProducts(params?: {
   price_min?: number;
   price_max?: number;
   isFeatured?: boolean;
+  locale?: string;
+  attrs?: string;
 }) {
   return fetchFromBackend<ProductListResponse>(
     '/products',
@@ -48,22 +50,60 @@ export function fetchProducts(params?: {
   );
 }
 
-export function fetchCategories() {
-  return fetchFromBackend<Category[]>('/categories');
+export function fetchCategories(locale?: string) {
+  return fetchFromBackend<Category[]>('/categories', locale ? { locale } : undefined);
 }
 
-export const fetchProduct = cache(async (id: number): Promise<ProductDetail | null> => {
+export const fetchProduct = cache(async (id: number, locale?: string): Promise<ProductDetail | null> => {
   try {
-    return await fetchFromBackend<ProductDetail>(`/products/${id}`);
+    return await fetchFromBackend<ProductDetail>(`/products/${id}`, locale ? { locale } : undefined);
   } catch {
     return null;
   }
 });
 
-export async function fetchPage(slug: string): Promise<Page | null> {
+export async function fetchPage(slug: string, locale?: string): Promise<Page | null> {
   try {
-    return await fetchFromBackend<Page>(`/pages/${slug}`);
+    return await fetchFromBackend<Page>(`/pages/${slug}`, locale ? { locale } : undefined);
   } catch {
     return null;
+  }
+}
+
+export function fetchCollections(locale?: string) {
+  return fetchFromBackend<CollectionsResponse>('/collections', locale ? { locale } : undefined);
+}
+
+export function fetchArchives(locale?: string) {
+  return fetchFromBackend<ArchivesResponse>('/archives', locale ? { locale } : undefined);
+}
+
+export function fetchSettings(group?: string, locale?: string) {
+  const params: Record<string, string | undefined> = {};
+  if (group) params.group = group;
+  if (locale) params.locale = locale;
+  return fetchFromBackend<SiteSetting[]>('/settings', Object.keys(params).length ? params : undefined);
+}
+
+export function fetchSettingsMap(locale?: string) {
+  return fetchFromBackend<Record<string, string>>('/settings/map', locale ? { locale } : undefined);
+}
+
+export interface AnnouncementBarItem {
+  id: number;
+  message: string;
+  message_en: string | null;
+  href: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchAnnouncementBars(locale?: string): Promise<AnnouncementBarItem[]> {
+  try {
+    return await fetchFromBackend<AnnouncementBarItem[]>('/announcement-bars', locale ? { locale } : undefined);
+  } catch {
+    return [];
   }
 }

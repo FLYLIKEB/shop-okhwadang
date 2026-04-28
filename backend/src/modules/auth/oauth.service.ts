@@ -1,20 +1,22 @@
 import {
   Injectable,
   BadGatewayException,
+  BadRequestException,
+  NotFoundException,
   Logger,
+  Inject,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import * as bcrypt from 'bcrypt';
-import type ms from 'ms';
 import { User, UserRole } from '../users/entities/user.entity';
 import {
   UserAuthentication,
   OAuthProvider,
 } from '../users/entities/user-authentication.entity';
+import { TokenIssuerService } from './services/token-issuer.service';
+import { AUTH_CONFIG, AuthConfig } from '../../config/auth.config';
 
 export interface OAuthAuthResponse {
   accessToken: string;
@@ -62,9 +64,52 @@ export class OAuthService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(UserAuthentication)
     private readonly userAuthRepository: Repository<UserAuthentication>,
-    private readonly jwtService: JwtService,
+    private readonly tokenIssuerService: TokenIssuerService,
     private readonly httpService: HttpService,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
+    @Inject(AUTH_CONFIG)
+    private readonly authConfig: AuthConfig,
   ) {}
+
+  async disconnect(userId: number, provider: OAuthProvider): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      const userRepo = manager.getRepository(User);
+      const authRepo = manager.getRepository(UserAuthentication);
+
+      // 1. user row에 pessimistic_write 락 → 동일 사용자의 동시 disconnect 직렬화
+      const user = await userRepo.findOne({
+        where: { id: userId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!user) {
+        throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      }
+
+      // 2. 해당 OAuth 연결 레코드 조회
+      const targetAuth = await authRepo.findOne({
+        where: { userId, provider } as FindOptionsWhere<UserAuthentication>,
+      });
+      if (!targetAuth) {
+        throw new NotFoundException(`연결된 ${provider} 계정을 찾을 수 없습니다.`);
+      }
+
+      // 3. 마지막 인증 수단 검증 (트랜잭션 내 재조회로 TOCTOU 방지)
+      const hasLocalPassword = Boolean(user.password);
+      const oauthCount = await authRepo.count({ where: { userId } });
+      if (!hasLocalPassword && oauthCount <= 1) {
+        throw new BadRequestException('마지막 인증 수단은 해제할 수 없습니다.');
+      }
+
+      // 4. 로컬 레코드 삭제 (OAuth access token 미저장 → provider revoke 생략)
+      await authRepo.delete({ userId, provider } as FindOptionsWhere<UserAuthentication>);
+    });
+
+    // 5. 감사 로그 (트랜잭션 커밋 이후 기록)
+    this.logger.log(
+      JSON.stringify({ event: 'oauth_disconnect', userId, provider }),
+    );
+  }
 
   async handleKakao(code: string): Promise<OAuthAuthResponse> {
     const accessToken = await this.exchangeKakaoToken(code);
@@ -81,7 +126,7 @@ export class OAuthService {
       name,
     );
 
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.tokenIssuerService.issueAndPersistRefresh(user);
     this.logger.log(`Kakao login: userId=${user.id} isNewUser=${isNewUser}`);
     return { ...tokens, user: { id: user.id, email: user.email, name: user.name, role: user.role }, isNewUser };
   }
@@ -97,7 +142,7 @@ export class OAuthService {
       userInfo.name,
     );
 
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.tokenIssuerService.issueAndPersistRefresh(user);
     this.logger.log(`Google login: userId=${user.id} isNewUser=${isNewUser}`);
     return { ...tokens, user: { id: user.id, email: user.email, name: user.name, role: user.role }, isNewUser };
   }
@@ -157,9 +202,9 @@ export class OAuthService {
     try {
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
-        client_id: process.env.KAKAO_CLIENT_ID ?? '',
-        client_secret: process.env.KAKAO_CLIENT_SECRET ?? '',
-        redirect_uri: process.env.KAKAO_REDIRECT_URI ?? '',
+        client_id: this.authConfig.oauth.kakao.clientId,
+        client_secret: this.authConfig.oauth.kakao.clientSecret,
+        redirect_uri: this.authConfig.oauth.kakao.redirectUri,
         code,
       });
 
@@ -193,9 +238,9 @@ export class OAuthService {
     try {
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
-        client_id: process.env.GOOGLE_CLIENT_ID ?? '',
-        client_secret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI ?? '',
+        client_id: this.authConfig.oauth.google.clientId,
+        client_secret: this.authConfig.oauth.google.clientSecret,
+        redirect_uri: this.authConfig.oauth.google.redirectUri,
         code,
       });
 
@@ -223,21 +268,5 @@ export class OAuthService {
     } catch {
       throw new BadGatewayException('소셜 로그인 서비스에 일시적 문제가 발생했습니다.');
     }
-  }
-
-  private async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: user.id, email: user.email, role: user.role };
-    const accessToken = this.jwtService.sign(payload);
-    const refreshExpiresIn = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as ms.StringValue;
-    const refreshToken = this.jwtService.sign(
-      { ...payload, tokenType: 'refresh' },
-      {
-        secret: process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET,
-        expiresIn: refreshExpiresIn,
-      },
-    );
-    const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-    await this.userRepository.update(user.id, { refreshToken: hashedRefresh });
-    return { accessToken, refreshToken };
   }
 }

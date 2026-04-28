@@ -4,6 +4,11 @@ import { NotFoundException, BadRequestException, ForbiddenException } from '@nes
 import { ShippingService } from '../shipping.service';
 import { Shipping, ShippingStatus } from '../../payments/entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
+import { NotificationService } from '../../notification/notification.service';
+import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
+import { MockShippingAdapter } from '../adapters/mock-shipping.adapter';
+import { CjShippingAdapter } from '../adapters/cj-shipping.adapter';
+import { ShippingFeeCalculatorService } from '../services/shipping-fee-calculator.service';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({ id: 1, userId: 10, status: OrderStatus.PAID, ...overrides } as unknown as Order);
@@ -31,6 +36,35 @@ describe('ShippingService', () => {
     findOne: jest.fn(),
     update: jest.fn(),
   };
+  const mockAdapter = {
+    registerTrackingNumber: jest.fn(),
+    getTrackingStatus: jest.fn().mockImplementation((trackingNumber: string) =>
+      Promise.resolve({
+        trackingNumber,
+        status: 'in_transit',
+        steps: [{ status: 'in_transit', description: '배송 중', timestamp: new Date().toISOString() }],
+      })),
+  };
+  const mockCjAdapter = {
+    registerTrackingNumber: jest.fn(),
+    getTrackingStatus: jest.fn().mockResolvedValue({
+      trackingNumber: '12345',
+      status: 'in_transit',
+      steps: [{ status: 'in_transit', description: '배송 중', timestamp: new Date().toISOString() }],
+    }),
+  };
+  const mockCalculator = {
+    calculate: jest.fn().mockResolvedValue({
+      subtotal: 10000,
+      zipcode: '12345',
+      shippingFee: 3000,
+      isFreeShipping: false,
+      isRemoteArea: false,
+      threshold: 50000,
+      baseFee: 3000,
+      remoteAreaSurcharge: 3000,
+    }),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -39,6 +73,11 @@ describe('ShippingService', () => {
         ShippingService,
         { provide: getRepositoryToken(Shipping), useValue: mockShippingRepo },
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
+        { provide: NotificationService, useValue: { sendShippingUpdate: jest.fn() } },
+        { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
+        { provide: MockShippingAdapter, useValue: mockAdapter },
+        { provide: CjShippingAdapter, useValue: mockCjAdapter },
+        { provide: ShippingFeeCalculatorService, useValue: mockCalculator },
       ],
     }).compile();
     service = module.get<ShippingService>(ShippingService);
@@ -69,10 +108,14 @@ describe('ShippingService', () => {
       ).not.toThrow();
     });
 
-    it('DELIVERED → PREPARING 역방향 전이 → BadRequestException(INVALID_STATUS_TRANSITION)', () => {
+    it('DELIVERED → PREPARING 역방향 전이 → BadRequestException(유효하지 않은 배송 상태 변경입니다.)', () => {
       expect(() =>
         service.validateTransition(ShippingStatus.DELIVERED, ShippingStatus.PREPARING),
-      ).toThrow(BadRequestException);
+      ).toThrow(
+        new BadRequestException(
+          '상태 전이가 허용되지 않습니다: delivered → preparing',
+        ),
+      );
     });
 
     it('shipped → preparing 역방향 전이 → BadRequestException', () => {
@@ -83,20 +126,26 @@ describe('ShippingService', () => {
   });
 
   describe('getByOrderId', () => {
-    it('orderId 없음 → 404 SHIPPING_NOT_FOUND', async () => {
+    it('orderId 없음 → 404 배송 정보를 찾을 수 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(null);
-      await expect(service.getByOrderId(999, 10)).rejects.toThrow(NotFoundException);
+      await expect(service.getByOrderId(999, 10)).rejects.toThrow(
+        new NotFoundException('배송 정보를 찾을 수 없습니다.'),
+      );
     });
 
-    it('타인 주문 접근 → 403 FORBIDDEN', async () => {
+    it('타인 주문 접근 → 403 접근 권한이 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(makeOrder({ userId: 99 }));
-      await expect(service.getByOrderId(1, 10)).rejects.toThrow(ForbiddenException);
+      await expect(service.getByOrderId(1, 10)).rejects.toThrow(
+        new ForbiddenException('접근 권한이 없습니다.'),
+      );
     });
 
-    it('shipping 없음 → 404 SHIPPING_NOT_FOUND', async () => {
+    it('shipping 없음 → 404 배송 정보를 찾을 수 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(makeOrder());
       mockShippingRepo.findOne.mockResolvedValue(null);
-      await expect(service.getByOrderId(1, 10)).rejects.toThrow(NotFoundException);
+      await expect(service.getByOrderId(1, 10)).rejects.toThrow(
+        new NotFoundException('배송 정보를 찾을 수 없습니다.'),
+      );
     });
 
     it('tracking_number 없음 → tracking null 반환', async () => {
@@ -121,23 +170,31 @@ describe('ShippingService', () => {
   describe('registerTracking', () => {
     const dto = { carrier: 'mock' as const, trackingNumber: '9999999' };
 
-    it('주문 없음 → 404 ORDER_NOT_FOUND', async () => {
+    it('주문 없음 → 404 주문 정보를 찾을 수 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(null);
-      await expect(service.registerTracking(999, dto)).rejects.toThrow(NotFoundException);
+      await expect(service.registerTracking(999, dto)).rejects.toThrow(
+        new NotFoundException('주문 정보를 찾을 수 없습니다.'),
+      );
     });
 
-    it('shipping 없음 → 404 SHIPPING_NOT_FOUND', async () => {
+    it('shipping 없음 → 404 배송 정보를 찾을 수 없습니다.', async () => {
       mockOrderRepo.findOne.mockResolvedValue(makeOrder());
       mockShippingRepo.findOne.mockResolvedValueOnce(null);
-      await expect(service.registerTracking(1, dto)).rejects.toThrow(NotFoundException);
+      await expect(service.registerTracking(1, dto)).rejects.toThrow(
+        new NotFoundException('배송 정보를 찾을 수 없습니다.'),
+      );
     });
 
-    it('이미 preparing 상태에서 preparing 전이 시도 → BadRequestException', async () => {
+    it('이미 preparing 상태에서 preparing 전이 시도 → BadRequestException(유효하지 않은 배송 상태 변경입니다.)', async () => {
       mockOrderRepo.findOne.mockResolvedValue(makeOrder());
       mockShippingRepo.findOne.mockResolvedValueOnce(
         makeShipping({ status: ShippingStatus.PREPARING }),
       );
-      await expect(service.registerTracking(1, dto)).rejects.toThrow(BadRequestException);
+      await expect(service.registerTracking(1, dto)).rejects.toThrow(
+        new BadRequestException(
+          '상태 전이가 허용되지 않습니다: preparing → preparing',
+        ),
+      );
     });
 
     it('payment_confirmed 상태에서 운송장 등록 성공', async () => {
@@ -164,6 +221,15 @@ describe('ShippingService', () => {
       expect(result.trackingNumber).toBe('12345');
       expect(result.status).toBe('in_transit');
       expect(Array.isArray(result.steps)).toBe(true);
+    });
+  });
+
+  describe('quote', () => {
+    it('subtotal + zipcode로 배송비를 계산한다', async () => {
+      const result = await service.quote(10000, '12345');
+
+      expect(mockCalculator.calculate).toHaveBeenCalledWith(10000, '12345');
+      expect(result.shippingFee).toBe(3000);
     });
   });
 });

@@ -2,15 +2,22 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
+
 let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerOrdersSuite(getApp: () => INestApplication) {
   describe('Orders (e2e)', () => {
-    let userAToken: string;
-    let userBToken: string;
+    let userACookies: AuthCookies;
+    let userBCookies: AuthCookies;
     let productId: number;
-    let optionId: number;
+    let productOptionId: number;
     let orderId: number;
 
     const userAEmail = `orders-user-a-${Date.now()}@test.com`;
@@ -21,26 +28,26 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       dataSource = app.get(DataSource);
 
       // Create user A
-      const regA = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userAEmail, password: 'Test1234!', name: '주문유저A' });
-      if (regA.status !== 201) throw new Error(`Register A failed: ${regA.status} ${JSON.stringify(regA.body)}`);
-
-      const loginA = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userAEmail, password: 'Test1234!' });
-      if (loginA.status !== 200) throw new Error(`Login A failed: ${loginA.status} ${JSON.stringify(loginA.body)}`);
-      userAToken = (loginA.body as { accessToken: string }).accessToken;
+      await registerAndGetCookies(app, {
+        email: userAEmail,
+        password: 'Test1234!',
+        name: '주문유저A',
+      });
+      userACookies = await loginAndGetCookies(app, {
+        email: userAEmail,
+        password: 'Test1234!',
+      });
 
       // Create user B
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userBEmail, password: 'Test1234!', name: '주문유저B' });
-
-      const loginB = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userBEmail, password: 'Test1234!' });
-      userBToken = (loginB.body as { accessToken: string }).accessToken;
+      await registerAndGetCookies(app, {
+        email: userBEmail,
+        password: 'Test1234!',
+        name: '주문유저B',
+      });
+      userBCookies = await loginAndGetCookies(app, {
+        email: userBEmail,
+        password: 'Test1234!',
+      });
 
       // Seed product with stock=5
       const prodResult = await dataSource.query(`
@@ -55,7 +62,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
          VALUES (?, '사이즈', 'M', 0, 3, 0)`,
         [productId],
       );
-      optionId = (optResult as { insertId: number }).insertId;
+      productOptionId = (optResult as { insertId: number }).insertId;
     });
 
     afterAll(async () => {
@@ -90,7 +97,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('valid body → 201, orderNumber matches ORD-YYYYMMDD-XXXXX', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/orders')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .send({
             items: [{ productId, quantity: 1 }],
             recipientName: '홍길동',
@@ -113,10 +120,50 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
         expect(Number(rows[0].stock)).toBe(4); // started at 5, ordered 1
       });
 
+      it('option order decreases both product and option stock', async () => {
+        await request(app.getHttpServer())
+          .post('/api/orders')
+          .set('Cookie', cookieHeader(userACookies))
+          .send({
+            items: [{ productId, productOptionId, quantity: 2 }],
+            recipientName: '홍길동',
+            recipientPhone: '010-1234-5678',
+            zipcode: '12345',
+            address: '서울시 강남구',
+          })
+          .expect(201);
+
+        const products = await dataSource.query(
+          `SELECT stock FROM products WHERE id = ?`,
+          [productId],
+        ) as Array<{ stock: number }>;
+        const options = await dataSource.query(
+          `SELECT stock FROM product_options WHERE id = ?`,
+          [productOptionId],
+        ) as Array<{ stock: number }>;
+
+        expect(Number(products[0].stock)).toBe(2);
+        expect(Number(options[0].stock)).toBe(1);
+      });
+
+      it('option excess quantity → 400', () => {
+        return request(app.getHttpServer())
+          .post('/api/orders')
+          .set('Cookie', cookieHeader(userACookies))
+          .send({
+            items: [{ productId, productOptionId, quantity: 2 }],
+            recipientName: '홍길동',
+            recipientPhone: '010-1234-5678',
+            zipcode: '12345',
+            address: '서울시 강남구',
+          })
+          .expect(400);
+      });
+
       it('excess quantity → 400', () => {
         return request(app.getHttpServer())
           .post('/api/orders')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .send({
             items: [{ productId, quantity: 999 }],
             recipientName: '홍길동',
@@ -127,10 +174,25 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
           .expect(400);
       });
 
+      it('insufficient points → 400', () => {
+        return request(app.getHttpServer())
+          .post('/api/orders')
+          .set('Cookie', cookieHeader(userACookies))
+          .send({
+            items: [{ productId, quantity: 1 }],
+            recipientName: '홍길동',
+            recipientPhone: '010-1234-5678',
+            zipcode: '12345',
+            address: '서울시 강남구',
+            pointsUsed: 1,
+          })
+          .expect(400);
+      });
+
       it('empty items → 400', () => {
         return request(app.getHttpServer())
           .post('/api/orders')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .send({
             items: [],
             recipientName: '홍길동',
@@ -150,7 +212,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('user A → 200, includes created order', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/orders')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .expect(200);
 
         const body = res.body as { items: Array<{ id: number }>; total: number };
@@ -163,7 +225,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('user A → 200, has items array', async () => {
         const res = await request(app.getHttpServer())
           .get(`/api/orders/${orderId}`)
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .expect(200);
 
         const body = res.body as { id: number; items: unknown[] };
@@ -175,14 +237,14 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('user B for user A order → 403', () => {
         return request(app.getHttpServer())
           .get(`/api/orders/${orderId}`)
-          .set('Authorization', `Bearer ${userBToken}`)
+          .set('Cookie', cookieHeader(userBCookies))
           .expect(403);
       });
 
       it('non-existent id → 404', () => {
         return request(app.getHttpServer())
           .get('/api/orders/999999')
-          .set('Authorization', `Bearer ${userAToken}`)
+          .set('Cookie', cookieHeader(userACookies))
           .expect(404);
       });
     });

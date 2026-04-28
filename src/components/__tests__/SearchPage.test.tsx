@@ -7,10 +7,54 @@ let mockSearchParams = new URLSearchParams('q=shoes');
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
   useSearchParams: () => mockSearchParams,
+  usePathname: () => '/search',
+}));
+
+const translations: Record<string, string> = {
+  'product.view.grid': '그리드 보기',
+  'product.view.list': '리스트 보기',
+  'product.sort.label': '정렬 기준',
+  'product.sort.latest': '최신순',
+  'product.sort.priceAsc': '가격낮은순',
+  'product.sort.priceDesc': '가격높은순',
+  'product.sort.popular': '인기순',
+  'product.totalItems': '총 {count}개 상품',
+  'product.filter.priceMin': '최소 가격',
+  'product.filter.priceMax': '최대 가격',
+  'common.apply': '적용',
+  'common.all': '전체',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace?: string) => {
+    const t = (key: string, values?: Record<string, string | number>) => {
+      const fullKey = namespace ? `${namespace}.${key}` : key;
+      const template = translations[fullKey] ?? fullKey;
+      if (!values) return template;
+      return Object.entries(values).reduce(
+        (acc, [k, v]) => acc.replace(`{${k}}`, String(v)),
+        template,
+      );
+    };
+    t.rich = (key: string, values?: Record<string, unknown>) => {
+      const fullKey = namespace ? `${namespace}.${key}` : key;
+      const template = translations[fullKey] ?? fullKey;
+      if (!values) return template;
+      return Object.entries(values).reduce<string>(
+        (acc, [k, v]) => typeof v === 'function' ? acc.replace(`<${k}>`, '').replace(`</${k}>`, '') : acc.replace(`{${k}}`, String(v)),
+        template,
+      );
+    };
+    return t;
+  },
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ isAuthenticated: false, isLoading: false, user: null, logout: vi.fn() }),
+}));
+
+vi.mock('@/contexts/CartContext', () => ({
+  useCart: () => ({ addItem: vi.fn(), items: [], itemCount: 0, totalAmount: 0, isLoading: false }),
 }));
 
 vi.mock('sonner', () => ({
@@ -20,6 +64,7 @@ vi.mock('sonner', () => ({
 vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => {
     const { fill, ...rest } = props;
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
     return <img data-fill={fill ? 'true' : undefined} {...rest} />;
   },
 }));
@@ -70,7 +115,7 @@ describe('SearchPage', () => {
       limit: 20,
     });
 
-    const { default: SearchPage } = await import('@/components/search/SearchPage');
+    const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
     await waitFor(() => {
@@ -83,7 +128,7 @@ describe('SearchPage', () => {
   it('shows EmptyState when no results', async () => {
     mockGetList.mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 });
 
-    const { default: SearchPage } = await import('@/components/search/SearchPage');
+    const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
     await waitFor(() => {
@@ -100,7 +145,7 @@ describe('SearchPage', () => {
       limit: 20,
     });
 
-    const { default: SearchPage } = await import('@/components/search/SearchPage');
+    const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
     await waitFor(() => {
@@ -116,7 +161,7 @@ describe('SearchPage', () => {
   it('shows filter options (price inputs and apply button)', async () => {
     mockGetList.mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 });
 
-    const { default: SearchPage } = await import('@/components/search/SearchPage');
+    const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
     expect(screen.getByLabelText('최소 가격')).toBeInTheDocument();

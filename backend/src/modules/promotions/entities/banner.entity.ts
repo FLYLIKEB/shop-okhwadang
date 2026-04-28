@@ -13,6 +13,9 @@ export class Banner {
   @Column({ type: 'varchar', length: 255 })
   title!: string;
 
+  @Column({ name: 'title_en', type: 'varchar', length: 255, nullable: true })
+  titleEn!: string | null;
+
   @Column({ name: 'image_url', type: 'varchar', length: 500 })
   imageUrl!: string;
 

@@ -12,6 +12,9 @@ import {
 import { Category } from './category.entity';
 import { ProductOption } from './product-option.entity';
 import { ProductImage } from './product-image.entity';
+import { ProductDetailImage } from './product-detail-image.entity';
+import { Review } from '../../reviews/entities/review.entity';
+import { ProductAttribute } from './product-attribute.entity';
 
 export enum ProductStatus {
   DRAFT = 'draft',
@@ -24,6 +27,8 @@ export enum ProductStatus {
 @Index(['categoryId'])
 @Index(['status'])
 @Index(['isFeatured'])
+@Index(['reviewCount'])
+@Index(['avgRating'])
 export class Product {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: number;
@@ -34,14 +39,47 @@ export class Product {
   @Column({ length: 255 })
   name!: string;
 
+  @Column({ name: 'name_en', type: 'varchar', length: 255, nullable: true })
+  nameEn!: string | null;
+
+  @Column({ name: 'name_ja', type: 'varchar', length: 255, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  nameJa!: string | null;
+
+  @Column({ name: 'name_zh', type: 'varchar', length: 255, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  nameZh!: string | null;
+
   @Column({ length: 255, unique: true })
   slug!: string;
 
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
+  @Column({ name: 'description_en', type: 'text', nullable: true })
+  descriptionEn!: string | null;
+
+  @Column({ name: 'description_ja', type: 'text', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  descriptionJa!: string | null;
+
+  @Column({ name: 'description_zh', type: 'text', nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  descriptionZh!: string | null;
+
   @Column({ name: 'short_description', type: 'varchar', length: 500, nullable: true })
   shortDescription!: string | null;
+
+  @Column({ name: 'short_description_en', type: 'varchar', length: 500, nullable: true })
+  shortDescriptionEn!: string | null;
+
+  @Column({ name: 'short_description_ja', type: 'varchar', length: 500, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  shortDescriptionJa!: string | null;
+
+  @Column({ name: 'short_description_zh', type: 'varchar', length: 500, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  shortDescriptionZh!: string | null;
 
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   price!: number;
@@ -68,6 +106,12 @@ export class Product {
   @Column({ name: 'view_count', default: 0 })
   viewCount!: number;
 
+  @Column({ name: 'review_count', type: 'int', unsigned: true, default: 0 })
+  reviewCount!: number;
+
+  @Column({ name: 'avg_rating', type: 'decimal', precision: 3, scale: 2, default: 0 })
+  avgRating!: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
@@ -86,4 +130,13 @@ export class Product {
 
   @OneToMany(() => ProductImage, (image) => image.product)
   images!: ProductImage[];
+
+  @OneToMany(() => ProductDetailImage, (image) => image.product)
+  detailImages!: ProductDetailImage[];
+
+  @OneToMany(() => Review, (review) => review.product)
+  reviews!: Review[];
+
+  @OneToMany(() => ProductAttribute, (attr) => attr.product)
+  attributes!: ProductAttribute[];
 }

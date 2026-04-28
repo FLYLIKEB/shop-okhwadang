@@ -4,10 +4,17 @@ import { UploadService } from './upload.service';
 import { LocalStorageAdapter } from './adapters/local.adapter';
 import { MockStorageAdapter } from './adapters/mock.adapter';
 import { S3StorageAdapter } from './adapters/s3.adapter';
+import { storageConfigProvider } from '../../config/storage.config';
 
 @Module({
   controllers: [UploadController],
-  providers: [UploadService, LocalStorageAdapter, MockStorageAdapter, S3StorageAdapter],
+  providers: [
+    storageConfigProvider,
+    UploadService,
+    LocalStorageAdapter,
+    MockStorageAdapter,
+    S3StorageAdapter,
+  ],
   exports: [UploadService],
 })
 export class UploadModule {}

@@ -19,6 +19,17 @@ export class Category {
   @Column({ length: 100 })
   name!: string;
 
+  @Column({ name: 'name_en', type: 'varchar', length: 100, nullable: true })
+  nameEn!: string | null;
+
+  @Column({ name: 'name_ja', type: 'varchar', length: 100, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  nameJa!: string | null;
+
+  @Column({ name: 'name_zh', type: 'varchar', length: 100, nullable: true })
+  /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
+  nameZh!: string | null;
+
   @Column({ length: 100, unique: true })
   slug!: string;
 
@@ -33,6 +44,12 @@ export class Category {
 
   @Column({ name: 'image_url', type: 'varchar', length: 500, nullable: true })
   imageUrl!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  description!: string | null;
+
+  @Column({ name: 'description_en', type: 'text', nullable: true })
+  descriptionEn!: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

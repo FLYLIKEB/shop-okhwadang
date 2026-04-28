@@ -1,6 +1,5 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
   ForbiddenException,
   Logger,
@@ -9,6 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
 import { AdminMembersQueryDto } from './dto/admin-members-query.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
+import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 
 export interface SafeUser {
   id: number;
@@ -17,6 +18,9 @@ export interface SafeUser {
   phone: string | null;
   role: UserRole;
   isActive: boolean;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
+  lastFailedLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +33,9 @@ function toSafeUser(user: User): SafeUser {
     phone: user.phone,
     role: user.role,
     isActive: user.isActive,
+    failedLoginAttempts: user.failedLoginAttempts,
+    lockedUntil: user.lockedUntil,
+    lastFailedLoginAt: user.lastFailedLoginAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -43,7 +50,7 @@ export class AdminMembersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async findAll(query: AdminMembersQueryDto) {
+  async findAll(query: AdminMembersQueryDto): Promise<PaginatedResult<SafeUser>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
 
@@ -66,15 +73,11 @@ export class AdminMembersService {
       qb.andWhere('user.isActive = :isActive', { isActive: query.is_active });
     }
 
-    qb.skip((page - 1) * limit).take(limit);
-
-    const [users, total] = await qb.getManyAndCount();
+    const result = await paginate(qb, { page, limit });
 
     return {
-      items: users.map(toSafeUser),
-      total,
-      page,
-      limit,
+      ...result,
+      items: result.items.map(toSafeUser),
     };
   }
 
@@ -88,10 +91,7 @@ export class AdminMembersService {
       throw new BadRequestException('자기 자신의 역할은 변경할 수 없습니다.');
     }
 
-    const target = await this.userRepository.findOne({ where: { id: targetId } });
-    if (!target) {
-      throw new NotFoundException('회원을 찾을 수 없습니다.');
-    }
+    const target = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
 
     if (!target.isActive) {
       throw new BadRequestException('비활성 회원의 역할은 변경할 수 없습니다.');
@@ -123,7 +123,22 @@ export class AdminMembersService {
       `Member #${targetId} role changed: ${target.role} → ${newRole} by #${requesterId}`,
     );
 
-    const updated = await this.userRepository.findOne({ where: { id: targetId } });
-    return toSafeUser(updated!);
+    const updated = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
+    return toSafeUser(updated);
+  }
+
+  async unlockAccount(targetId: number): Promise<SafeUser> {
+    await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
+
+    await this.userRepository.update(targetId, {
+      failedLoginAttempts: 0,
+      lastFailedLoginAt: null,
+      lockedUntil: null,
+    });
+
+    this.logger.log(`Member #${targetId} login lock reset by admin`);
+
+    const updated = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
+    return toSafeUser(updated);
   }
 }

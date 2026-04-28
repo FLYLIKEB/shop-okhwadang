@@ -1,74 +1,118 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import {
+  AuthCookies,
+  cookieHeader,
+  loginAndGetCookies,
+  registerAndGetCookies,
+} from '../helpers/auth-cookie.helper';
 
 let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerAdminOrdersSuite(getApp: () => INestApplication) {
   describe('Admin Orders (e2e)', () => {
-    let adminToken: string;
-    let userToken: string;
-    let userId: number;
+    let adminCookies: AuthCookies;
+    let userCookies: AuthCookies;
     let orderId: number;
+    let refundOrderId: number;
+    let productId: number;
+    let userId: number;
 
     const adminEmail = `admin-orders-admin-${Date.now()}@test.com`;
     const userEmail = `admin-orders-user-${Date.now()}@test.com`;
 
-    beforeAll(async () => {
-      app = getApp();
-      dataSource = app.get(DataSource);
-
-      // Register admin
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: adminEmail, password: 'Test1234!', name: '주문관리자' });
-      await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
-      const adminRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: adminEmail, password: 'Test1234!' });
-      adminToken = (adminRes.body as { accessToken: string }).accessToken;
-
-      // Register user
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: userEmail, password: 'Test1234!', name: '일반유저' });
-      const userRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: userEmail, password: 'Test1234!' });
-      userToken = (userRes.body as { accessToken: string }).accessToken;
-      const userProfile = await request(app.getHttpServer())
-        .get('/api/auth/profile')
-        .set('Authorization', `Bearer ${userToken}`);
-      userId = (userProfile.body as { id: number }).id;
-
-      // Create product for order
-      const slug = `admin-orders-test-product-${Date.now()}`;
-      const productRes = await request(app.getHttpServer())
-        .post('/api/products')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({ name: '주문테스트상품', slug, price: 10000, stock: 100, status: 'active' });
-      const productId = (productRes.body as { id: number }).id;
-
-      // Create order
+    async function createOrder(options: { pointsUsed?: number } = {}): Promise<number> {
       const orderRes = await request(app.getHttpServer())
         .post('/api/orders')
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', cookieHeader(userCookies))
         .send({
           items: [{ productId, quantity: 1 }],
           recipientName: '테스트',
           recipientPhone: '010-1234-5678',
           zipcode: '12345',
           address: '서울시 강남구',
-        });
-      orderId = (orderRes.body as { id: number }).id;
+          ...(options.pointsUsed === undefined ? {} : { pointsUsed: options.pointsUsed }),
+        })
+        .expect(201);
+      return Number((orderRes.body as { id: number | string }).id);
+    }
+
+    async function getProductStock(): Promise<number> {
+      const rows = await dataSource.query(
+        `SELECT stock FROM products WHERE id = ?`,
+        [productId],
+      ) as Array<{ stock: number }>;
+      return Number(rows[0].stock);
+    }
+
+    async function getLatestPointBalance(): Promise<{ balance: number; type: string }> {
+      const rows = await dataSource.query(
+        `SELECT balance, type FROM point_history WHERE user_id = ? ORDER BY id DESC LIMIT 1`,
+        [userId],
+      ) as Array<{ balance: number; type: string }>;
+      return { balance: Number(rows[0].balance), type: rows[0].type };
+    }
+
+    beforeAll(async () => {
+      app = getApp();
+      dataSource = app.get(DataSource);
+
+      // Register admin
+      await registerAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+        name: '주문관리자',
+      });
+      await dataSource.query(`UPDATE users SET role = 'admin' WHERE email = ?`, [adminEmail]);
+      adminCookies = await loginAndGetCookies(app, {
+        email: adminEmail,
+        password: 'Test1234!',
+      });
+
+      // Register user
+      await registerAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+        name: '일반유저',
+      });
+      const userRows = await dataSource.query(
+        `SELECT id FROM users WHERE email = ?`,
+        [userEmail],
+      ) as Array<{ id: number }>;
+      userId = Number(userRows[0].id);
+      userCookies = await loginAndGetCookies(app, {
+        email: userEmail,
+        password: 'Test1234!',
+      });
+
+      const productResult = await dataSource.query(`
+        INSERT INTO products (name, slug, price, sale_price, stock, status)
+        VALUES (?, ?, 10000, 10000, 100, 'active')
+      `, ['주문테스트상품', `admin-orders-test-product-${Date.now()}`]);
+      productId = Number((productResult as { insertId: number }).insertId);
+
+      orderId = await createOrder();
+      refundOrderId = await createOrder();
+    });
+
+    afterAll(async () => {
+      await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
+      await dataSource.query(`DELETE FROM point_history WHERE user_id = ?`, [userId]);
+      await dataSource.query(`DELETE FROM shipping WHERE order_id IN (SELECT id FROM orders WHERE user_id = ?)`, [userId]);
+      await dataSource.query(`DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = ?)`, [userId]);
+      await dataSource.query(`DELETE FROM orders WHERE user_id = ?`, [userId]);
+      await dataSource.query(`DELETE FROM products WHERE id = ?`, [productId]);
+      await dataSource.query(`DELETE FROM users WHERE email IN (?, ?)`, [adminEmail, userEmail]);
+      await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
     });
 
     describe('GET /api/admin/orders', () => {
       it('admin → 200 주문 목록 조회', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/admin/orders')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
 
         const body = res.body as { items: unknown[]; total: number; page: number; limit: number };
@@ -80,7 +124,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('일반 user → 403 거부', async () => {
         await request(app.getHttpServer())
           .get('/api/admin/orders')
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .expect(403);
       });
 
@@ -93,7 +137,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('상태 필터 → 200', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/admin/orders?status=pending')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .expect(200);
 
         const body = res.body as { items: { status: string }[] };
@@ -107,7 +151,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('pending → paid 상태 변경', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'paid' })
           .expect(200);
 
@@ -118,7 +162,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('paid → preparing 상태 변경', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'preparing' })
           .expect(200);
 
@@ -129,7 +173,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('preparing → shipped: 운송장 없으면 400', async () => {
         await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'shipped' })
           .expect(400);
       });
@@ -138,7 +182,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         // preparing → pending is not allowed
         await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'pending' })
           .expect(400);
       });
@@ -146,9 +190,58 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('일반 user → 403', async () => {
         await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', cookieHeader(userCookies))
           .send({ status: 'paid' })
           .expect(403);
+      });
+    });
+
+    describe('stock and point reversals', () => {
+      it('paid → cancelled restores reserved product stock', async () => {
+        const stockBeforeOrder = await getProductStock();
+        const cancelOrderId = await createOrder();
+
+        expect(await getProductStock()).toBe(stockBeforeOrder - 1);
+
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${cancelOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'paid' })
+          .expect(200);
+
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${cancelOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'cancelled' })
+          .expect(200);
+
+        expect(await getProductStock()).toBe(stockBeforeOrder);
+      });
+
+      it('paid → cancelled restores spent points', async () => {
+        await dataSource.query(
+          `INSERT INTO point_history (user_id, type, amount, balance, description, expires_at, related_entity_type)
+           VALUES (?, 'earn', 5000, 5000, '테스트 적립', DATE_ADD(NOW(), INTERVAL 30 DAY), 'order')`,
+          [userId],
+        );
+
+        const pointsOrderId = await createOrder({ pointsUsed: 2000 });
+
+        expect(await getLatestPointBalance()).toEqual({ balance: 3000, type: 'spend' });
+
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${pointsOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'paid' })
+          .expect(200);
+
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${pointsOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'cancelled' })
+          .expect(200);
+
+        expect(await getLatestPointBalance()).toEqual({ balance: 5000, type: 'admin_adjust' });
       });
     });
 
@@ -156,37 +249,37 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       it('운송장 등록 → 201', async () => {
         const res = await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
-          .send({ carrier: 'cj', trackingNumber: `TRK-${Date.now()}` })
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ carrier: 'mock', trackingNumber: `TRK-${Date.now()}` })
           .expect(201);
 
         const body = res.body as { carrier: string; trackingNumber: string };
-        expect(body.carrier).toBe('cj');
+        expect(body.carrier).toBe('mock');
         expect(body.trackingNumber).toBeDefined();
       });
 
       it('운송장 중복 등록 → 409', async () => {
         await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
-          .send({ carrier: 'cj', trackingNumber: `TRK-DUP-${Date.now()}` })
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ carrier: 'mock', trackingNumber: `TRK-DUP-${Date.now()}` })
           .expect(409);
       });
 
       it('일반 user → 403', async () => {
         await request(app.getHttpServer())
           .post(`/api/admin/shipping/${orderId}`)
-          .set('Authorization', `Bearer ${userToken}`)
-          .send({ carrier: 'cj', trackingNumber: 'TRK-USER' })
+          .set('Cookie', cookieHeader(userCookies))
+          .send({ carrier: 'mock', trackingNumber: 'TRK-USER' })
           .expect(403);
       });
     });
 
-    describe('shipped → delivered flow', () => {
+    describe('delivered → completed flow', () => {
       it('preparing → shipped (운송장 등록 후)', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'shipped' })
           .expect(200);
 
@@ -194,10 +287,18 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         expect(body.status).toBe('shipped');
       });
 
+      it('shipped → cancelled: 전이 불가', async () => {
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${orderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'cancelled' })
+          .expect(400);
+      });
+
       it('shipped → delivered', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'delivered' })
           .expect(200);
 
@@ -205,12 +306,106 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
         expect(body.status).toBe('delivered');
       });
 
-      it('delivered → 최종 상태, 전이 불가', async () => {
+      it('delivered → completed', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${orderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'completed' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('completed');
+      });
+
+      it('completed → paid: 전이 불가', async () => {
         await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Cookie', cookieHeader(adminCookies))
           .send({ status: 'paid' })
           .expect(400);
+      });
+    });
+
+    describe('delivered → refund_requested → refunded flow', () => {
+      it('refund order 운송장 등록 → 201', async () => {
+        const res = await request(app.getHttpServer())
+          .post(`/api/admin/shipping/${refundOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ carrier: 'mock', trackingNumber: `TRK-REFUND-${Date.now()}` })
+          .expect(201);
+
+        const body = res.body as { carrier: string; trackingNumber: string };
+        expect(body.carrier).toBe('mock');
+        expect(body.trackingNumber).toBeDefined();
+      });
+
+      it('refund order pending → paid', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'paid' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('paid');
+      });
+
+      it('refund order paid → preparing', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'preparing' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('preparing');
+      });
+
+      it('refund order preparing → shipped', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'shipped' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('shipped');
+      });
+
+      it('refund order shipped → delivered', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'delivered' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('delivered');
+      });
+
+      it('refund order delivered → refund_requested', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'refund_requested' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('refund_requested');
+      });
+
+      it('refund_requested → refunded', async () => {
+        const stockBeforeRefund = await getProductStock();
+
+        const res = await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'refunded' })
+          .expect(200);
+
+        const body = res.body as { status: string };
+        expect(body.status).toBe('refunded');
+        expect(await getProductStock()).toBe(stockBeforeRefund + 1);
       });
     });
   });

@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, Not, In } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { User } from '../users/entities/user.entity';
 import { Product } from '../products/entities/product.entity';
@@ -14,6 +14,8 @@ interface KpiData {
   new_members_today: number;
   new_members_diff_pct: number;
   total_product_views: number;
+  deletion_pending_count: number;
+  deletion_completed_count: number;
 }
 
 interface RevenueChartItem {
@@ -139,20 +141,22 @@ export class AdminDashboardService {
 
     const excludedStatuses = [OrderStatus.CANCELLED, OrderStatus.REFUNDED];
 
-    const [todayOrders, yesterdayOrders, todayMembers, yesterdayMembers, viewCountResult] =
+    const [todayAgg, yesterdayAgg, todayMembers, yesterdayMembers, viewCountResult, deletionPendingCount, deletionCompletedCount] =
       await Promise.all([
-        this.orderRepository.find({
-          where: {
-            createdAt: Between(todayStart, todayEnd),
-            status: Not(In(excludedStatuses)),
-          },
-        }),
-        this.orderRepository.find({
-          where: {
-            createdAt: Between(yesterdayStart, yesterdayEnd),
-            status: Not(In(excludedStatuses)),
-          },
-        }),
+        this.orderRepository
+          .createQueryBuilder('o')
+          .select('COALESCE(SUM(o.totalAmount), 0)', 'revenue')
+          .addSelect('COUNT(*)', 'count')
+          .where('o.createdAt BETWEEN :start AND :end', { start: todayStart, end: todayEnd })
+          .andWhere('o.status NOT IN (:...statuses)', { statuses: excludedStatuses })
+          .getRawOne() as Promise<{ revenue: string; count: string }>,
+        this.orderRepository
+          .createQueryBuilder('o')
+          .select('COALESCE(SUM(o.totalAmount), 0)', 'revenue')
+          .addSelect('COUNT(*)', 'count')
+          .where('o.createdAt BETWEEN :start AND :end', { start: yesterdayStart, end: yesterdayEnd })
+          .andWhere('o.status NOT IN (:...statuses)', { statuses: excludedStatuses })
+          .getRawOne() as Promise<{ revenue: string; count: string }>,
         this.userRepository.count({
           where: { createdAt: Between(todayStart, todayEnd) },
         }),
@@ -163,19 +167,21 @@ export class AdminDashboardService {
           .createQueryBuilder('product')
           .select('SUM(product.viewCount)', 'total')
           .getRawOne() as Promise<{ total: string | null }>,
+        this.userRepository
+          .createQueryBuilder('user')
+          .where('user.deletionScheduledAt IS NOT NULL')
+          .andWhere('user.deletedAt IS NULL')
+          .getCount(),
+        this.userRepository
+          .createQueryBuilder('user')
+          .where('user.deletedAt IS NOT NULL')
+          .getCount(),
       ]);
 
-    const todayRevenue = todayOrders.reduce(
-      (sum, o) => sum + Number(o.totalAmount),
-      0,
-    );
-    const yesterdayRevenue = yesterdayOrders.reduce(
-      (sum, o) => sum + Number(o.totalAmount),
-      0,
-    );
-
-    const todayOrderCount = todayOrders.length;
-    const yesterdayOrderCount = yesterdayOrders.length;
+    const todayRevenue = Number(todayAgg?.revenue ?? 0);
+    const yesterdayRevenue = Number(yesterdayAgg?.revenue ?? 0);
+    const todayOrderCount = Number(todayAgg?.count ?? 0);
+    const yesterdayOrderCount = Number(yesterdayAgg?.count ?? 0);
 
     return {
       today_revenue: todayRevenue,
@@ -188,6 +194,8 @@ export class AdminDashboardService {
       new_members_today: todayMembers,
       new_members_diff_pct: this.calcDiffPct(todayMembers, yesterdayMembers),
       total_product_views: Number(viewCountResult?.total ?? 0),
+      deletion_pending_count: deletionPendingCount,
+      deletion_completed_count: deletionCompletedCount,
     };
   }
 
@@ -204,12 +212,15 @@ export class AdminDashboardService {
   ): Promise<RevenueChartItem[]> {
     const excludedStatuses = [OrderStatus.CANCELLED, OrderStatus.REFUNDED];
 
-    const orders = await this.orderRepository.find({
-      where: {
-        createdAt: Between(startDate, endDate),
-        status: Not(In(excludedStatuses)),
-      },
-    });
+    const rows = await this.orderRepository
+      .createQueryBuilder('o')
+      .select('DATE(o.createdAt)', 'date')
+      .addSelect('COALESCE(SUM(o.totalAmount), 0)', 'revenue')
+      .addSelect('COUNT(*)', 'count')
+      .where('o.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
+      .andWhere('o.status NOT IN (:...statuses)', { statuses: excludedStatuses })
+      .groupBy('DATE(o.createdAt)')
+      .getRawMany() as { date: string; revenue: string; count: string }[];
 
     const dailyMap = new Map<string, { revenue: number; count: number }>();
 
@@ -220,12 +231,11 @@ export class AdminDashboardService {
       current.setDate(current.getDate() + 1);
     }
 
-    for (const order of orders) {
-      const dateStr = new Date(order.createdAt).toISOString().split('T')[0];
-      const entry = dailyMap.get(dateStr);
-      if (entry) {
-        entry.revenue += Number(order.totalAmount);
-        entry.count += 1;
+    for (const row of rows) {
+      if (!row.date) continue;
+      const dateStr = typeof row.date === 'string' ? row.date.split('T')[0] : new Date(row.date).toISOString().split('T')[0];
+      if (dailyMap.has(dateStr)) {
+        dailyMap.set(dateStr, { revenue: Number(row.revenue), count: Number(row.count) });
       }
     }
 

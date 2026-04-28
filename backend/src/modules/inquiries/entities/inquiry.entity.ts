@@ -9,8 +9,18 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
-export type InquiryType = '상품' | '배송' | '결제' | '교환/반품' | '기타';
-export type InquiryStatus = 'pending' | 'answered';
+export enum InquiryType {
+  PRODUCT = '상품',
+  DELIVERY = '배송',
+  PAYMENT = '결제',
+  EXCHANGE_RETURN = '교환/반품',
+  OTHER = '기타',
+}
+
+export enum InquiryStatus {
+  PENDING = 'pending',
+  ANSWERED = 'answered',
+}
 
 @Entity('inquiries')
 export class Inquiry {
@@ -20,7 +30,7 @@ export class Inquiry {
   @Column({ name: 'user_id', type: 'bigint' })
   userId!: number;
 
-  @Column({ type: 'enum', enum: ['상품', '배송', '결제', '교환/반품', '기타'] })
+  @Column({ type: 'enum', enum: InquiryType })
   type!: InquiryType;
 
   @Column({ type: 'varchar', length: 255 })
@@ -29,7 +39,7 @@ export class Inquiry {
   @Column({ type: 'longtext' })
   content!: string;
 
-  @Column({ type: 'enum', enum: ['pending', 'answered'], default: 'pending' })
+  @Column({ type: 'enum', enum: InquiryStatus, default: InquiryStatus.PENDING })
   status!: InquiryStatus;
 
   @Column({ type: 'longtext', nullable: true })
@@ -37,6 +47,9 @@ export class Inquiry {
 
   @Column({ name: 'answered_at', type: 'datetime', nullable: true })
   answeredAt!: Date | null;
+
+  @Column({ name: 'customer_read_at', type: 'datetime', nullable: true })
+  customerReadAt!: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

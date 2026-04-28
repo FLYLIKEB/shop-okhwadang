@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useRecentSearches } from '@/hooks/useRecentSearches';
+import { useRecentSearches } from '@/components/shared/hooks/useRecentSearches';
 
 beforeEach(() => {
   localStorage.clear();

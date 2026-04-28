@@ -1,57 +1,42 @@
 import { Injectable, Logger } from '@nestjs/common';
-import Redis from 'ioredis';
+
+interface Entry {
+  value: unknown;
+  expiresAt: number;
+}
 
 @Injectable()
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
-  private client: Redis | null = null;
-
-  constructor() {
-    const redisUrl = process.env.REDIS_URL;
-    if (redisUrl) {
-      this.client = new Redis(redisUrl);
-      this.client.on('error', (err: Error) =>
-        this.logger.warn(`Redis error: ${err.message}`),
-      );
-    }
-  }
+  private readonly store = new Map<string, Entry>();
 
   async get<T>(key: string): Promise<T | null> {
-    if (!this.client) return null;
-    try {
-      const val = await this.client.get(key);
-      return val ? (JSON.parse(val) as T) : null;
-    } catch {
-      this.logger.warn(`Cache get failed for key: ${key}`);
+    const entry = this.store.get(key);
+    if (!entry) return null;
+    if (entry.expiresAt <= Date.now()) {
+      this.store.delete(key);
       return null;
     }
+    return entry.value as T;
   }
 
   async set(key: string, value: unknown, ttlSeconds: number): Promise<void> {
-    if (!this.client) return;
-    try {
-      await this.client.set(key, JSON.stringify(value), 'EX', ttlSeconds);
-    } catch {
-      this.logger.warn(`Cache set failed for key: ${key}`);
-    }
+    this.store.set(key, { value, expiresAt: Date.now() + ttlSeconds * 1000 });
   }
 
   async del(key: string): Promise<void> {
-    if (!this.client) return;
-    try {
-      await this.client.del(key);
-    } catch {
-      /* ignore */
-    }
+    this.store.delete(key);
   }
 
+  /**
+   * Deletes all keys matching the given glob pattern.
+   * Uses regex-based iteration over an in-memory Map — non-blocking, no Redis KEYS command.
+   * Resolves issue #328: replaced blocking Redis KEYS O(N) scan with non-blocking Map iteration.
+   */
   async delPattern(pattern: string): Promise<void> {
-    if (!this.client) return;
-    try {
-      const keys = await this.client.keys(pattern);
-      if (keys.length > 0) await this.client.del(...keys);
-    } catch {
-      this.logger.warn(`Cache delPattern failed: ${pattern}`);
+    const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$');
+    for (const key of this.store.keys()) {
+      if (regex.test(key)) this.store.delete(key);
     }
   }
 }

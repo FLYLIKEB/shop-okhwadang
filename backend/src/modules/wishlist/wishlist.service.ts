@@ -1,14 +1,14 @@
 import {
   Injectable,
   ConflictException,
-  NotFoundException,
-  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Wishlist } from './entities/wishlist.entity';
 import { CreateWishlistDto } from './dto/create-wishlist.dto';
+import { findOrThrow } from '../../common/utils/repository.util';
+import { assertOwnership } from '../../common/utils/ownership.util';
 
 export interface WishlistItemResponse {
   id: number;
@@ -119,15 +119,9 @@ export class WishlistService {
   }
 
   async remove(id: number, userId: number): Promise<void> {
-    const item = await this.wishlistRepo.findOne({ where: { id } });
+    const item = await findOrThrow(this.wishlistRepo, { id }, '위시리스트 항목을 찾을 수 없습니다.');
 
-    if (!item) {
-      throw new NotFoundException('위시리스트 항목을 찾을 수 없습니다.');
-    }
-
-    if (Number(item.userId) !== Number(userId)) {
-      throw new ForbiddenException('권한이 없습니다.');
-    }
+    assertOwnership(item.userId, userId, '권한이 없습니다.');
 
     await this.wishlistRepo.remove(item);
     this.logger.log(`Wishlist deleted: id=${id}, by userId=${userId}`);

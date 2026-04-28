@@ -29,7 +29,7 @@ vi.mock('sonner', () => ({
 }));
 
 // Import after mocks
-import WishlistButton from '@/components/WishlistButton';
+import WishlistButton from '@/components/shared/WishlistButton';
 
 describe('WishlistButton', () => {
   beforeEach(() => {

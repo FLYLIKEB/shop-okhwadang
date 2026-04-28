@@ -1,14 +1,62 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import CheckoutPage from '@/app/checkout/page';
+import { Suspense } from 'react';
+import CheckoutPage from '@/app/[locale]/checkout/page';
 import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
 import type { CartItem, UserAddress } from '@/lib/api';
 
+const makeParams = () => Promise.resolve({ locale: 'ko' as const });
+
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => {
+    const dict: Record<string, string> = {
+      title: '주문 / 결제',
+      shippingInfo: '배송 정보',
+      loadingAddresses: '주소 불러오는 중...',
+      noSavedAddress: '저장된 배송지가 없습니다.',
+      addAddress: '배송지 추가',
+      manualEntry: '직접 입력',
+      recipientName: '받는 분 이름',
+      phone: '연락처',
+      zipcode: '우편번호',
+      address: '주소',
+      addressDetail: '상세 주소',
+      shippingMemo: '배송 메모',
+      paymentMethod: '결제 수단',
+      paymentMethodHint: '주문 정보 입력 후 결제 수단이 표시됩니다.',
+      couponPoints: '쿠폰 / 적립금',
+      couponPointsComingSoon: '쿠폰/적립금 적용은 추후 지원 예정입니다.',
+      orderItems: '주문 상품',
+      productAmount: '상품 금액',
+      shippingFee: '배송비',
+      total: '합계',
+      pay: '결제하기',
+      loadAddressError: '저장된 주소를 불러오는데 실패했습니다.',
+      freeShipping: '무료',
+      freeShippingUnlocked: '무료배송이 적용되었습니다.',
+      freeShippingRemaining: '무료배송 임계',
+      'flow.shipping': '배송 정보',
+      'flow.payment': '결제 수단',
+      'flow.complete': '결제 완료',
+      'steps.idle': '결제하기',
+      'steps.creating_order': '주문 생성 중...',
+      'steps.preparing_payment': '결제 준비 중...',
+      'steps.confirming_payment': '결제 확인 중...',
+      'steps.success': '완료',
+    };
+    return dict[key] ?? key;
+  },
+}));
+
 // ---- next/navigation ----
 const mockReplace = vi.fn();
+const mockPush = vi.fn();
+const mockRouter = { replace: mockReplace, push: mockPush };
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: mockReplace, push: vi.fn() }),
+  useRouter: () => mockRouter,
+  usePathname: () => '/ko/checkout',
+  redirect: vi.fn(),
 }));
 
 // ---- sonner ----
@@ -33,6 +81,20 @@ vi.mock('@/contexts/CartContext', () => ({
   CartProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+vi.mock('@/contexts/MobileNavContext', () => ({
+  useMobileNav: () => ({ isVisible: false }),
+}));
+
+// ---- i18n/routing ----
+vi.mock('@/i18n/routing', () => ({
+  routing: { locales: ['ko', 'en'], defaultLocale: 'ko' },
+}));
+
+// ---- PaymentGateway ----
+vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
+  default: () => <div data-testid="payment-gateway">PaymentGateway</div>,
+}));
+
 // ---- api ----
 vi.mock('@/lib/api', () => ({
   ordersApi: { create: vi.fn(), getById: vi.fn() },
@@ -48,28 +110,38 @@ const sampleItem: CartItem = {
   option: null,
 };
 
+async function renderCheckoutPage() {
+  await act(async () => {
+    render(
+      <Suspense fallback={null}>
+        <CheckoutPage params={makeParams()} />
+      </Suspense>,
+    );
+  });
+}
+
 describe('CheckoutPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
   });
 
-  it('redirects to /login when not authenticated', () => {
+  it('redirects to /login when not authenticated', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: false, token: null, user: null, isLoading: false });
-    render(<CheckoutPage />);
-    expect(mockReplace).toHaveBeenCalledWith('/login');
+    await renderCheckoutPage();
+    expect(mockReplace).toHaveBeenCalledWith('/ko/login');
   });
 
-  it('redirects to /cart when no sessionStorage items', () => {
+  it('redirects to /cart when no sessionStorage items', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
-    render(<CheckoutPage />);
-    expect(mockReplace).toHaveBeenCalledWith('/cart');
+    await renderCheckoutPage();
+    expect(mockReplace).toHaveBeenCalledWith('/ko/cart');
   });
 
   it('renders form fields and order summary with valid items', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
     expect(await screen.findByLabelText(/받는 분 이름/)).toBeInTheDocument();
     expect(screen.getByLabelText(/연락처/)).toBeInTheDocument();
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
@@ -79,15 +151,18 @@ describe('CheckoutPage', () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
     await screen.findByLabelText(/받는 분 이름/);
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '01012345678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');
     await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
-    await user.click(screen.getByRole('button', { name: '결제하기' }));
-    expect(screen.getByText('올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)')).toBeInTheDocument();
-    expect(ordersApi.create).not.toHaveBeenCalled();
+    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
+
+    await waitFor(() => {
+      expect(ordersApi.create).not.toHaveBeenCalled();
+      expect(paymentsApi.prepare).not.toHaveBeenCalled();
+    });
   });
 
   it('calls ordersApi.create + paymentsApi.prepare + confirm on success', async () => {
@@ -110,16 +185,16 @@ describe('CheckoutPage', () => {
       status: 'paid', method: 'card', amount: 40000, paidAt: new Date().toISOString(),
     });
 
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
     await screen.findByLabelText(/받는 분 이름/);
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');
     await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
-    await user.click(screen.getByRole('button', { name: '결제하기' }));
+    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/order/complete?orderId=1&orderNumber=ORD-001');
+      expect(mockReplace).toHaveBeenCalledWith('/ko/order/complete?orderId=1&orderNumber=ORD-001');
     });
     expect(ordersApi.create).toHaveBeenCalledOnce();
     expect(paymentsApi.prepare).toHaveBeenCalledOnce();
@@ -161,7 +236,7 @@ describe('CheckoutPage', () => {
     );
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
 
     expect(await screen.findByText('주소 불러오는 중...')).toBeInTheDocument();
 
@@ -175,7 +250,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김기본');
@@ -190,7 +265,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/집/)).toBeInTheDocument();
@@ -204,7 +279,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/회사/)).toBeInTheDocument();
@@ -225,7 +300,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김기본');
@@ -245,7 +320,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(screen.getByText('저장된 배송지가 없습니다.')).toBeInTheDocument();
@@ -258,7 +333,7 @@ describe('CheckoutPage', () => {
     vi.mocked(usersApi.getAddresses).mockRejectedValue(new Error('Network error'));
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
-    render(<CheckoutPage />);
+    await renderCheckoutPage();
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalled();

@@ -4,13 +4,16 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   frontend:
     name: Frontend (lint + test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -34,32 +37,37 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
     env:
       NODE_ENV: test
       TEST_DATABASE_URL: mysql://root:testpassword@127.0.0.1:3306/commerce_test
-      JWT_SECRET: test-secret-key-for-ci
+      JWT_SECRET: ${{ secrets.TEST_JWT_SECRET || 'test-secret-key-for-ci' }}
       FRONTEND_URL: http://localhost:5173
-      REDIS_URL: redis://localhost:6379
       PAYMENT_GATEWAY: mock
       STORAGE_PROVIDER: local
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
       - run: cd backend && npm ci
+      - name: Write JWT RS256 keys for tests
+        env:
+          JWT_PRIVATE_KEY_SECRET: ${{ secrets.TEST_JWT_PRIVATE_KEY }}
+          JWT_PUBLIC_KEY_SECRET: ${{ secrets.TEST_JWT_PUBLIC_KEY }}
+        run: |
+          if [ -z "$JWT_PRIVATE_KEY_SECRET" ] || [ -z "$JWT_PUBLIC_KEY_SECRET" ]; then
+            echo "::error::TEST_JWT_PRIVATE_KEY / TEST_JWT_PUBLIC_KEY repository secrets are not set"
+            exit 1
+          fi
+          mkdir -p backend/keys
+          printf '%s' "$JWT_PRIVATE_KEY_SECRET" > backend/keys/jwt-private.pem
+          printf '%s' "$JWT_PUBLIC_KEY_SECRET" > backend/keys/jwt-public.pem
+          chmod 600 backend/keys/jwt-private.pem backend/keys/jwt-public.pem
       - run: cd backend && npm run lint
       - run: cd backend && npm run build
       - run: cd backend && npm run test
+      - name: Run migrations on test DB
+        run: cd backend && DATABASE_URL="$TEST_DATABASE_URL" npm run migration:run
       - run: cd backend && npm run test:e2e
