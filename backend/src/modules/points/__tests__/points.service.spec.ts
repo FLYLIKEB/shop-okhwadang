@@ -45,6 +45,14 @@ describe('PointsService', () => {
       const result = addOneYear(base);
       expect(result.getTime()).toBe(base.getTime() + 365 * 24 * 60 * 60 * 1000);
     });
+
+    // 정책 고정 (이슈 #726): 포인트 기본 만료는 적립일로부터 1년이다.
+    it('정책 고정: 1년 만료는 정확히 365일이며 다른 단위로 변경 불가', () => {
+      const base = new Date('2025-06-15T12:00:00.000Z');
+      const result = addOneYear(base);
+      const diffDays = (result.getTime() - base.getTime()) / (24 * 60 * 60 * 1000);
+      expect(diffDays).toBe(365);
+    });
   });
 
   describe('getUserPointBalance', () => {
@@ -75,6 +83,19 @@ describe('PointsService', () => {
       const balance = await service.getUserPointBalance(1);
 
       expect(balance).toBe(0);
+    });
+
+    // 정책 고정 (이슈 #726): 만료된 earn 항목은 잔액 계산에서 제외 (FIFO 의 전제)
+    it('정책 고정: earn 항목 중 expires_at 이 지난 것은 잔액에서 제외하는 SQL 가드를 갖는다', async () => {
+      mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '1000' });
+
+      await service.getUserPointBalance(1);
+
+      // 만료된 earn 은 합산 대상에서 빠져야 하므로 expires_at > now 가드가 SQL 에 있어야 한다.
+      expect(mockSelectQueryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining(`ph.type != 'earn' OR ph.expires_at IS NULL OR ph.expires_at > :now`),
+        expect.objectContaining({ now: expect.any(Date) }),
+      );
     });
   });
 
