@@ -9,6 +9,8 @@ import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Shipping } from '../entities/shipping.entity';
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
+import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
+import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
 import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { PAYMENT_CONFIG, createPaymentConfig } from '../../../config/payment.config';
@@ -59,6 +61,8 @@ describe('PaymentsService — webhook', () => {
         },
         { provide: TossPaymentAdapter, useValue: mockGateway },
         { provide: StripePaymentAdapter, useValue: mockGateway },
+        { provide: KGInicisPaymentAdapter, useValue: mockGateway },
+        { provide: NaverPayPaymentAdapter, useValue: mockGateway },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: DataSource, useValue: mockDataSource },

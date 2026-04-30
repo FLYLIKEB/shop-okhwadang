@@ -16,6 +16,8 @@ import { CancelPaymentDto } from './dto/cancel-payment.dto';
 import { CreateRefundDto } from './dto/create-refund.dto';
 import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
+import { KGInicisPaymentAdapter } from './adapters/inicis.adapter';
+import { NaverPayPaymentAdapter } from './adapters/naverpay.adapter';
 import { resolveGatewayByLocale } from './payments.module';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { findOrThrow } from '../../common/utils/repository.util';
@@ -48,6 +50,8 @@ export class PaymentsService {
     private readonly paymentConfig: PaymentConfig,
     private readonly tossAdapter: TossPaymentAdapter,
     private readonly stripeAdapter: StripePaymentAdapter,
+    private readonly inicisAdapter: KGInicisPaymentAdapter,
+    private readonly naverpayAdapter: NaverPayPaymentAdapter,
     private readonly notificationService: NotificationService,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly dataSource: DataSource,
@@ -83,6 +87,8 @@ export class PaymentsService {
     const name = resolveGatewayByLocale(locale);
     if (name === 'toss') return this.tossAdapter;
     if (name === 'stripe') return this.stripeAdapter;
+    if (name === 'inicis') return this.inicisAdapter;
+    if (name === 'naverpay') return this.naverpayAdapter;
     return this.gateway;
   }
 
@@ -93,9 +99,9 @@ export class PaymentsService {
       case PaymentGatewayType.STRIPE:
         return this.stripeAdapter;
       case PaymentGatewayType.INICIS:
-        // INICIS는 #721 국내 PG 어댑터 확장 이후 별도 어댑터로 분리될 예정.
-        // 그 전까지는 명시적으로 미지원으로 처리하여 잘못된 라우팅을 방지.
-        throw new BadRequestException('INICIS 게이트웨이는 아직 지원되지 않습니다. (#721 참고)');
+        return this.inicisAdapter;
+      case PaymentGatewayType.NAVERPAY:
+        return this.naverpayAdapter;
       case PaymentGatewayType.MOCK:
       default:
         return this.gateway;
@@ -110,6 +116,8 @@ export class PaymentsService {
         return PaymentGatewayType.STRIPE;
       case 'inicis':
         return PaymentGatewayType.INICIS;
+      case 'naverpay':
+        return PaymentGatewayType.NAVERPAY;
       case 'mock':
       default:
         return PaymentGatewayType.MOCK;
