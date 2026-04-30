@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException, ConflictException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { PaymentsService } from '../payments.service';
 import { Payment, PaymentStatus, PaymentMethod, PaymentGatewayType } from '../entities/payment.entity';
+import { PaymentWebhookEvent } from '../entities/payment-webhook-event.entity';
 import { Refund, RefundStatus } from '../entities/refund.entity';
 import { Shipping } from '../entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
@@ -172,6 +173,14 @@ describe('PaymentsService', () => {
         { provide: getRepositoryToken(Refund), useValue: mockRefundRepo },
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
         { provide: getRepositoryToken(Shipping), useValue: mockShippingRepo },
+        {
+          provide: getRepositoryToken(PaymentWebhookEvent),
+          useValue: {
+            create: jest.fn((e: object) => e),
+            save: jest.fn(async (e: object) => ({ id: 1, ...e })),
+            update: jest.fn().mockResolvedValue({}),
+          },
+        },
         { provide: getRepositoryToken(User), useValue: { findOne: jest.fn().mockResolvedValue(null) } },
         {
           provide: PAYMENT_CONFIG,

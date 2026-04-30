@@ -1,7 +1,8 @@
 import { Logger, UnauthorizedException } from '@nestjs/common';
 import { PaymentWebhookService } from './payment-webhook.service';
-import { Payment, PaymentStatus } from '../entities/payment.entity';
+import { Payment, PaymentStatus, PaymentGatewayType } from '../entities/payment.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
+import { PaymentWebhookResult } from '../entities/payment-webhook-event.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 
 const makeWebhookManager = (overrides: Record<string, jest.Mock> = {}) => ({
@@ -15,8 +16,14 @@ const makeWebhookManager = (overrides: Record<string, jest.Mock> = {}) => ({
 
 interface BuildArgs {
   gateway?: Partial<PaymentGateway>;
+  gatewayType?: PaymentGatewayType;
   paymentRepo?: { findOne?: jest.Mock };
   manager?: ReturnType<typeof makeWebhookManager>;
+  webhookEventRepo?: {
+    create?: jest.Mock;
+    save?: jest.Mock;
+    update?: jest.Mock;
+  };
 }
 
 const buildService = (args: BuildArgs = {}) => {
@@ -32,6 +39,13 @@ const buildService = (args: BuildArgs = {}) => {
     findOne: jest.fn(),
     ...args.paymentRepo,
   };
+  let savedEventCounter = 0;
+  const webhookEventRepo = {
+    create: jest.fn((entity: object) => entity),
+    save: jest.fn(async (entity: object) => ({ id: ++savedEventCounter, ...entity })),
+    update: jest.fn().mockResolvedValue({}),
+    ...args.webhookEventRepo,
+  };
   const manager = args.manager ?? makeWebhookManager();
   const transaction = jest.fn(
     async (fn: (m: typeof manager) => Promise<unknown>) => fn(manager),
@@ -41,12 +55,14 @@ const buildService = (args: BuildArgs = {}) => {
 
   const service = new PaymentWebhookService({
     gateway,
+    gatewayType: args.gatewayType ?? PaymentGatewayType.MOCK,
     paymentRepository: paymentRepo as never,
+    webhookEventRepository: webhookEventRepo as never,
     dataSource,
     logger,
   });
 
-  return { service, gateway, paymentRepo, manager, transaction, logger };
+  return { service, gateway, paymentRepo, webhookEventRepo, manager, transaction, logger };
 };
 
 describe('PaymentWebhookService', () => {
@@ -340,6 +356,115 @@ describe('PaymentWebhookService', () => {
       );
 
       expect(manager.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('멱등성 / 결과 추적 (issue #725)', () => {
+    it('성공 케이스: webhook event 가 SUCCESS 로 update 된다', async () => {
+      const manager = makeWebhookManager({
+        findOne: jest.fn().mockResolvedValue({ id: 7, status: 'pending' }),
+      });
+      const { service, gateway, paymentRepo, webhookEventRepo } = buildService({ manager });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7, paidAt: null });
+
+      await service.handleWebhook({ orderId: 7, status: 'DONE' }, 'valid_sig');
+
+      expect(webhookEventRepo.save).toHaveBeenCalledTimes(1);
+      expect(webhookEventRepo.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          result: PaymentWebhookResult.SUCCESS,
+          paymentId: 10,
+          orderId: 7,
+          processedAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('동일 eventId 재수신 → ER_DUP_ENTRY 잡고 IGNORED 반환 (DB 작업 없음)', async () => {
+      const dupErr = Object.assign(new Error('Duplicate entry'), { code: 'ER_DUP_ENTRY' });
+      const webhookEventRepo = {
+        create: jest.fn((e: object) => e),
+        save: jest.fn().mockRejectedValue(dupErr),
+        update: jest.fn().mockResolvedValue({}),
+      };
+      const { service, gateway, paymentRepo, transaction } = buildService({ webhookEventRepo });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+
+      await service.handleWebhook({ orderId: 7, status: 'DONE' }, 'valid_sig');
+
+      // 중복 차단 → 후속 처리 없음
+      expect(paymentRepo.findOne).not.toHaveBeenCalled();
+      expect(transaction).not.toHaveBeenCalled();
+      // events 테이블의 후속 update 도 호출되지 않음 (insert 자체가 실패했기 때문)
+      expect(webhookEventRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('처리 도중 예외 발생 → FAILED + errorMessage 기록', async () => {
+      const dbErr = new Error('DB connection lost');
+      const manager = makeWebhookManager({
+        findOne: jest.fn().mockRejectedValue(dbErr),
+      });
+      const { service, gateway, paymentRepo, webhookEventRepo } = buildService({ manager });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
+
+      await service.handleWebhook({ orderId: 7, status: 'DONE' }, 'valid_sig');
+
+      expect(webhookEventRepo.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          result: PaymentWebhookResult.FAILED,
+          errorMessage: 'DB connection lost',
+          processedAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('이미 CANCELLED 인 주문에 CANCEL 재수신 → SUCCESS (allowSameStatus update 가 수행됨)', async () => {
+      // allowSameStatus=true 정책상 update 가 한 번 호출되므로 SUCCESS.
+      // 재고 복구는 멱등성으로 막혀있음.
+      const manager = makeWebhookManager({
+        findOne: jest.fn().mockResolvedValue({ id: 7, status: OrderStatus.CANCELLED }),
+      });
+      const { service, gateway, paymentRepo, webhookEventRepo } = buildService({ manager });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
+
+      await service.handleWebhook({ orderId: 7, status: 'CANCELLED' }, 'valid_sig');
+
+      expect(webhookEventRepo.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ result: PaymentWebhookResult.SUCCESS }),
+      );
+      expect(manager.increment).not.toHaveBeenCalled();
+    });
+
+    it('차단 전이 → IGNORED 결과 기록', async () => {
+      const manager = makeWebhookManager({
+        findOne: jest.fn().mockResolvedValue({ id: 7, status: 'delivered' }),
+      });
+      const { service, gateway, paymentRepo, webhookEventRepo } = buildService({ manager });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
+
+      await service.handleWebhook({ orderId: 7, status: 'DONE' }, 'valid_sig');
+
+      expect(webhookEventRepo.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ result: PaymentWebhookResult.IGNORED }),
+      );
+    });
+
+    it('idempotency key 추출 실패 시 events 테이블에 insert 하지 않음 (return early)', async () => {
+      const { service, gateway, webhookEventRepo } = buildService();
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+
+      // MOCK gateway 에서 orderId / eventType 모두 비어있으면 키 추출 실패
+      await service.handleWebhook({}, 'valid_sig');
+
+      expect(webhookEventRepo.save).not.toHaveBeenCalled();
     });
   });
 

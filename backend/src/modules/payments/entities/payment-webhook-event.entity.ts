@@ -1,0 +1,82 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
+import { PaymentGatewayType } from './payment.entity';
+
+/**
+ * 웹훅 처리 결과 (issue #725)
+ *
+ * - SUCCESS: payment/order 상태 전이가 정상 완료
+ * - IGNORED: 멱등 재수신, 차단 전이, 알 수 없는 이벤트, payment 미존재 등 의도된 무시
+ * - FAILED: 처리 도중 예외 발생 (관리자 재처리 대상)
+ */
+export enum PaymentWebhookResult {
+  SUCCESS = 'success',
+  IGNORED = 'ignored',
+  FAILED = 'failed',
+}
+
+/**
+ * PG 웹훅 수신 이벤트 로그 (issue #725)
+ *
+ * 목적:
+ *   - 동일 (gateway, event_id) 조합 재수신 시 UNIQUE 제약으로 즉시 중복 차단 → 멱등성 보장
+ *   - 성공 / 무시 / 실패 결과를 운영자가 추적 (관측성)
+ *   - 실패한 웹훅은 raw_payload + error_message 가 보존되어 사후 재처리 가능
+ *
+ * Idempotency key (gateway 별):
+ *   - Toss: `eventId` 우선 → 없으면 `paymentKey + ':' + eventType` 폴백
+ *   - Stripe: `event.id`
+ *   - NaverPay: `paymentId` (취소면 `:cancel` suffix 로 cancel 이벤트 분리)
+ *   - KGInicis: `tid` (취소면 `:cancel` suffix)
+ *   - Mock: `orderId + ':' + eventType` (테스트/개발용)
+ */
+@Entity('payment_webhook_events')
+@Index('IDX_payment_webhook_events_gateway_event', ['gateway', 'eventId'], {
+  unique: true,
+})
+@Index('IDX_payment_webhook_events_received_at', ['receivedAt'])
+export class PaymentWebhookEvent {
+  @PrimaryGeneratedColumn('increment', { type: 'bigint' })
+  id!: number;
+
+  @Column({
+    type: 'enum',
+    enum: PaymentGatewayType,
+  })
+  gateway!: PaymentGatewayType;
+
+  @Column({ name: 'event_id', type: 'varchar', length: 255 })
+  eventId!: string;
+
+  @Column({ name: 'event_type', type: 'varchar', length: 64 })
+  eventType!: string;
+
+  @Column({ name: 'payment_id', type: 'bigint', nullable: true })
+  paymentId!: number | null;
+
+  @Column({ name: 'order_id', type: 'bigint', nullable: true })
+  orderId!: number | null;
+
+  @CreateDateColumn({ name: 'received_at' })
+  receivedAt!: Date;
+
+  @Column({ name: 'processed_at', type: 'datetime', nullable: true })
+  processedAt!: Date | null;
+
+  @Column({
+    type: 'enum',
+    enum: PaymentWebhookResult,
+  })
+  result!: PaymentWebhookResult;
+
+  @Column({ name: 'error_message', type: 'text', nullable: true })
+  errorMessage!: string | null;
+
+  @Column({ name: 'raw_payload', type: 'json', nullable: true })
+  rawPayload!: object | null;
+}
