@@ -552,18 +552,18 @@ INSERT INTO announcement_bars (message, message_en, href, sort_order, is_active)
 -- ============================================================
 -- 8. 배너
 -- ============================================================
-INSERT INTO banners (title, image_url, link_url, sort_order, is_active, starts_at, ends_at) VALUES
-('봄 기획전 — <b>주니 신작</b> 입고', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '/p/spring-2026', 0, 1, '2026-03-01 00:00:00', '2026-04-30 23:59:59'),
-('<b>반장 고수</b> 생병 2019년 한정 입고', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/banjang-gushu-2019-sheng', 1, 1, '2026-03-15 00:00:00', '2026-05-15 23:59:59'),
-('입문 다도구 세트 — <b>14% 특가</b> 240,000원', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/okhwadang-starter-tea-set', 2, 1, NULL, NULL);
+INSERT INTO banners (title, title_en, image_url, link_url, sort_order, is_active, starts_at, ends_at) VALUES
+('봄 기획전 — <b>주니 신작</b> 입고', 'Spring Collection — <b>New Zhuni Teapots</b>', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png', '/p/spring-2026', 0, 1, '2026-03-01 00:00:00', '2026-04-30 23:59:59'),
+('<b>반장 고수</b> 생병 2019년 한정 입고', '<b>Bangzhang Ancient Tree</b> Raw Pu-erh 2019 Limited Arrival', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/banjang-gushu-2019-sheng', 1, 1, '2026-03-15 00:00:00', '2026-05-15 23:59:59'),
+('입문 다도구 세트 — <b>14% 특가</b> 240,000원', 'Starter Tea Set — <b>14% Off</b> KRW 240,000', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png', '/products/okhwadang-starter-tea-set', 2, 1, NULL, NULL);
 
 -- ============================================================
 -- 9. 프로모션
 -- ============================================================
-INSERT INTO promotions (title, description, type, starts_at, ends_at, is_active, discount_rate, image_url) VALUES
-('봄 기획전 — 주니 신작', '<b>복건 주니(朱泥)</b> 신작 자사호 선착순 특가. <b>주니 서시호·주형호·석표호</b> 한정 수량 입고. 재고 소진 시 조기 마감될 수 있습니다.', 'exhibition', '2026-03-29 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
-('입문 세트 14% 타임세일', '<b>옥화당 입문 다도구 세트</b> 한정 수량 특가. <b>280,000원 → 240,000원</b> (40,000원 할인). 자사호+다완+다반+차도구 완전 구성.', 'timesale', '2026-03-29 09:00:00', '2026-04-05 23:59:59', 1, 14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
-('보이차 입문 이벤트', '<b>대익 7572 숙병</b> 구매 시 <b>대나무 차도구 5종 세트</b> 증정. 차도구(차칙·차침·차협·차루·차침)가 모두 포함된 입문 필수 세트.', 'event', '2026-04-01 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png');
+INSERT INTO promotions (title, title_en, description, description_en, type, starts_at, ends_at, is_active, discount_rate, image_url) VALUES
+('봄 기획전 — 주니 신작', 'Spring Collection — New Zhuni Teapots', '<b>복건 주니(朱泥)</b> 신작 자사호 선착순 특가. <b>주니 서시호·주형호·석표호</b> 한정 수량 입고. 재고 소진 시 조기 마감될 수 있습니다.', 'Limited spring pricing on new <b>Fujian Zhuni</b> Yixing teapots. Small quantities of <b>Zhuni Xishi, Zhuxing, and Shibiao</b> pieces are available and may sell out early.', 'exhibition', '2026-03-29 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+('입문 세트 14% 타임세일', 'Starter Tea Set 14% Time Sale', '<b>옥화당 입문 다도구 세트</b> 한정 수량 특가. <b>280,000원 → 240,000원</b> (40,000원 할인). 자사호+다완+다반+차도구 완전 구성.', 'Limited special price on the <b>Okhwadang starter tea set</b>. <b>KRW 280,000 → KRW 240,000</b> (KRW 40,000 off). Complete set with Yixing teapot, teacup, tea tray, and tea tools.', 'timesale', '2026-03-29 09:00:00', '2026-04-05 23:59:59', 1, 14, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
+('보이차 입문 이벤트', 'Pu-erh Tea Starter Event', '<b>대익 7572 숙병</b> 구매 시 <b>대나무 차도구 5종 세트</b> 증정. 차도구(차칙·차침·차협·차루·차침)가 모두 포함된 입문 필수 세트.', 'Receive a <b>five-piece bamboo tea tool set</b> with purchase of <b>Dayi 7572 ripe pu-erh cake</b>. Includes essential beginner tools such as tea scoop, needle, tongs, and funnel.', 'event', '2026-04-01 00:00:00', '2026-04-30 23:59:59', 1, NULL, 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png');
 
 -- ============================================================
 -- 10. 공지사항

@@ -1027,6 +1027,7 @@ export const announcementBars: SeedAnnouncementBar[] = [
 // ============================================================
 export interface SeedBanner {
   title: string;
+  titleEn: string;
   imageUrl: string;
   linkUrl: string;
   sortOrder: number;
@@ -1038,6 +1039,7 @@ export interface SeedBanner {
 export const banners: SeedBanner[] = [
   {
     title: '봄 기획전 — <b>주니 신작</b> 입고',
+    titleEn: 'Spring Collection — <b>New Zhuni Teapots</b>',
     imageUrl: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
     linkUrl: '/p/spring-2026',
     sortOrder: 0,
@@ -1047,6 +1049,7 @@ export const banners: SeedBanner[] = [
   },
   {
     title: '<b>반장 고수</b> 생병 2019년 한정 입고',
+    titleEn: '<b>Bangzhang Ancient Tree</b> Raw Pu-erh 2019 Limited Arrival',
     imageUrl: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
     linkUrl: '/products/banjang-gushu-2019-sheng',
     sortOrder: 1,
@@ -1056,6 +1059,7 @@ export const banners: SeedBanner[] = [
   },
   {
     title: '입문 다도구 세트 — <b>14% 특가</b> 240,000원',
+    titleEn: 'Starter Tea Set — <b>14% Off</b> KRW 240,000',
     imageUrl: 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
     linkUrl: '/products/okhwadang-starter-tea-set',
     sortOrder: 2,
@@ -1072,7 +1076,9 @@ type PromotionType = 'timesale' | 'exhibition' | 'event';
 
 export interface SeedPromotion {
   title: string;
+  titleEn: string;
   description: string;
+  descriptionEn: string;
   type: PromotionType;
   startsAt: Date;
   endsAt: Date;
@@ -1084,7 +1090,9 @@ export interface SeedPromotion {
 export const promotions: SeedPromotion[] = [
   {
     title: '봄 기획전 — 주니 신작',
+    titleEn: 'Spring Collection — New Zhuni Teapots',
     description: '<b>복건 주니(朱泥)</b> 신작 자사호 선착순 특가. <b>주니 서시호·주형호·석표호</b> 한정 수량 입고. 재고 소진 시 조기 마감될 수 있습니다.',
+    descriptionEn: 'Limited spring pricing on new <b>Fujian Zhuni</b> Yixing teapots. Small quantities of <b>Zhuni Xishi, Zhuxing, and Shibiao</b> pieces are available and may sell out early.',
     type: 'exhibition',
     startsAt: new Date('2026-03-29'),
     endsAt: new Date('2026-04-30'),
@@ -1094,7 +1102,9 @@ export const promotions: SeedPromotion[] = [
   },
   {
     title: '입문 세트 14% 타임세일',
+    titleEn: 'Starter Tea Set 14% Time Sale',
     description: '<b>옥화당 입문 다도구 세트</b> 한정 수량 특가. <b>280,000원 → 240,000원</b> (40,000원 할인). 자사호+다완+다반+차도구 완전 구성.',
+    descriptionEn: 'Limited special price on the <b>Okhwadang starter tea set</b>. <b>KRW 280,000 → KRW 240,000</b> (KRW 40,000 off). Complete set with Yixing teapot, teacup, tea tray, and tea tools.',
     type: 'timesale',
     startsAt: new Date('2026-03-29T09:00:00'),
     endsAt: new Date('2026-04-05T23:59:59'),
@@ -1104,7 +1114,9 @@ export const promotions: SeedPromotion[] = [
   },
   {
     title: '보이차 입문 이벤트',
+    titleEn: 'Pu-erh Tea Starter Event',
     description: '<b>대익 7572 숙병</b> 구매 시 <b>대나무 차도구 5종 세트</b> 증정. 차도구(차칙·차침·차협·차루·차침)가 모두 포함된 입문 필수 세트.',
+    descriptionEn: 'Receive a <b>five-piece bamboo tea tool set</b> with purchase of <b>Dayi 7572 ripe pu-erh cake</b>. Includes essential beginner tools such as tea scoop, needle, tongs, and funnel.',
     type: 'event',
     startsAt: new Date('2026-04-01'),
     endsAt: new Date('2026-04-30'),
