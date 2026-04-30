@@ -5,12 +5,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
-import { OrderItem } from '../orders/entities/order-item.entity';
 import { Payment } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
-import { Product } from '../products/entities/product.entity';
-import { ProductOption } from '../products/entities/product-option.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
+import { restoreOrderStock } from '../orders/order-stock.util';
 import { PaymentsService } from '../payments/payments.service';
 import { MembershipService } from '../membership/membership.service';
 import { PointsService } from '../points/points.service';
@@ -121,18 +119,12 @@ export class AdminOrdersService {
     return !restoreTargets.has(currentStatus) && restoreTargets.has(nextStatus);
   }
 
+  /**
+   * 재고 복구는 `restoreOrderStock` 유틸 (`orders/order-stock.util.ts`) 에 위임.
+   * 정책 및 멱등성 설명은 유틸 docstring 참고.
+   */
   private async restoreStock(manager: EntityManager, orderId: number): Promise<void> {
-    const items = await manager.find(OrderItem, {
-      where: { orderId },
-      relations: ['product', 'option'],
-    });
-
-    for (const item of items) {
-      await manager.increment(Product, { id: item.productId }, 'stock', item.quantity);
-      if (item.productOptionId !== null) {
-        await manager.increment(ProductOption, { id: item.productOptionId }, 'stock', item.quantity);
-      }
-    }
+    await restoreOrderStock(manager, orderId);
   }
 
   private async restorePoints(manager: EntityManager, order: Order): Promise<void> {

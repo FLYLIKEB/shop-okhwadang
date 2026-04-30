@@ -43,6 +43,9 @@ const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   findOne: jest.fn().mockResolvedValue(null),
   save: jest.fn().mockResolvedValue({}),
   create: jest.fn().mockImplementation((_entity: unknown, data: unknown) => data),
+  // 재고 복구 (issue #723) — restoreOrderStock 유틸이 manager.find / manager.increment 를 호출.
+  find: jest.fn().mockResolvedValue([]),
+  increment: jest.fn().mockResolvedValue({}),
   ...overrides,
 });
 
@@ -617,6 +620,34 @@ describe('PaymentsService', () => {
       expect(result.status).toBe(PaymentStatus.CANCELLED);
       expect(mockTossAdapter.cancel).toHaveBeenCalledWith('pay_toss_abc', '고객 요청');
       expect(mockDefaultGateway.cancel).not.toHaveBeenCalled();
+    });
+
+    it('사용자 cancel 시 재고 복구를 같은 트랜잭션에서 수행 (issue #723)', async () => {
+      const payment = makePayment({ status: PaymentStatus.CONFIRMED, paymentKey: 'pay_abc' });
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: new Date(), rawResponse: { mock: true } });
+
+      // 트랜잭션 매니저: 옵션이 있는 항목 1개 + 옵션 없는 항목 1개.
+      const items = [
+        { orderId: 1, productId: 11, productOptionId: 22, quantity: 3 },
+        { orderId: 1, productId: 12, productOptionId: null, quantity: 5 },
+      ];
+      const txManager = makeTransactionManager({
+        find: jest.fn().mockResolvedValue(items),
+        increment: jest.fn().mockResolvedValue({}),
+      });
+      mockDataSource.transaction.mockImplementationOnce(
+        async (fn: (m: typeof txManager) => Promise<unknown>) => fn(txManager),
+      );
+
+      await service.cancel({ orderId: 1 }, 10);
+
+      // 옵션 있는 항목: 옵션 재고만.
+      expect(txManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 22 }, 'stock', 3);
+      // 옵션 없는 항목: 상품 재고만.
+      expect(txManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 12 }, 'stock', 5);
+      // 옵션 있는 상품의 product.stock 은 건드리지 않음.
+      expect(txManager.increment).toHaveBeenCalledTimes(2);
     });
   });
 });

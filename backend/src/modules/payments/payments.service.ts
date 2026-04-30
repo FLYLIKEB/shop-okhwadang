@@ -8,6 +8,7 @@ import { Payment, PaymentStatus, PaymentGatewayType, PaymentMethod } from './ent
 import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
+import { restoreOrderStock } from '../orders/order-stock.util';
 import { PaymentGateway } from './interfaces/payment-gateway.interface';
 import { PreparePaymentDto } from './dto/prepare-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
@@ -190,14 +191,18 @@ export class PaymentsService {
     const cancelGateway = this.resolveGatewayByType(payment.gateway);
     const result = await cancelGateway.cancel(payment.paymentKey!, reason);
 
-    await this.paymentRepository.update(payment.id, {
-      status: PaymentStatus.CANCELLED,
-      cancelledAt: result.cancelledAt,
-      cancelReason: reason,
-      rawResponse: result.rawResponse as object,
+    // PG 취소 성공 후 결제 상태/주문 상태/재고 복구를 한 트랜잭션으로 묶는다.
+    // 재고 복구 정책 및 멱등성: `orders/order-stock.util.ts` 참고.
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(Payment, payment.id, {
+        status: PaymentStatus.CANCELLED,
+        cancelledAt: result.cancelledAt,
+        cancelReason: reason,
+        rawResponse: result.rawResponse as object,
+      });
+      await manager.update(Order, dto.orderId, { status: OrderStatus.CANCELLED });
+      await restoreOrderStock(manager, dto.orderId);
     });
-
-    await this.orderRepository.update(dto.orderId, { status: OrderStatus.CANCELLED });
 
     return {
       paymentId: Number(payment.id),

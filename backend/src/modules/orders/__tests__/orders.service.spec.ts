@@ -381,6 +381,178 @@ describe('OrdersService', () => {
       await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
       expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     });
+
+    // -------------------- 재고 정책 (issue #723) --------------------
+
+    it('옵션 있는 상품 주문: 옵션 재고만 차감되고 product.stock 은 건드리지 않는다', async () => {
+      const dto: CreateOrderDto = {
+        items: [{ productId: 1, productOptionId: 7, quantity: 2 }],
+        recipientName: '홍길동',
+        recipientPhone: '010-1234-5678',
+        zipcode: '12345',
+        address: '서울시',
+      };
+
+      const mockProduct = { id: 1, name: '옵션상품', price: 10000, salePrice: null, stock: 100 };
+      const mockOption = {
+        id: 7,
+        productId: 1,
+        name: '용량',
+        value: '100g',
+        priceAdjustment: 0,
+        stock: 5,
+      };
+      const mockSavedOrder = {
+        id: 50,
+        orderNumber: 'ORD-X',
+        userId: 1,
+        status: OrderStatus.PENDING,
+        items: [],
+      } as unknown as Order;
+
+      const productQb = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockProduct),
+      };
+      const optionQb = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockOption),
+      };
+      const deleteQb = {
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({}),
+      };
+      mockManager.createQueryBuilder
+        .mockReturnValueOnce(productQb)  // product fetch (lock)
+        .mockReturnValueOnce(optionQb)   // option fetch (lock)
+        .mockReturnValueOnce(deleteQb);  // cart delete
+      mockManager.update.mockResolvedValue({});
+      mockManager.create.mockReturnValue(mockSavedOrder);
+      mockManager.save.mockResolvedValue(mockSavedOrder);
+      const mockOrderQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockSavedOrder),
+      };
+      mockOrderRepository.createQueryBuilder.mockReturnValue(mockOrderQb);
+
+      await service.create(1, dto);
+
+      // 옵션 재고만 차감되어야 함.
+      const updateCalls = mockManager.update.mock.calls;
+      const optionStockDeductions = updateCalls.filter(
+        ([, id, payload]: [unknown, unknown, { stock?: number }]) =>
+          id === 7 && payload.stock === mockOption.stock - 2,
+      );
+      expect(optionStockDeductions).toHaveLength(1);
+
+      // product.stock 은 절대 차감되지 않아야 함.
+      const productStockDeductions = updateCalls.filter(
+        ([, id, payload]: [unknown, unknown, { stock?: number }]) =>
+          id === 1 && payload.stock !== undefined,
+      );
+      expect(productStockDeductions).toHaveLength(0);
+    });
+
+    it('옵션 없는 상품 주문: product.stock 만 원장으로 차감된다', async () => {
+      const dto: CreateOrderDto = {
+        items: [{ productId: 99, quantity: 4 }],
+        recipientName: '홍길동',
+        recipientPhone: '010-1234-5678',
+        zipcode: '12345',
+        address: '서울시',
+      };
+      const mockProduct = { id: 99, name: '단일상품', price: 5000, salePrice: null, stock: 10 };
+      const mockSavedOrder = {
+        id: 60, orderNumber: 'ORD-Y', userId: 1, status: OrderStatus.PENDING, items: [],
+      } as unknown as Order;
+      const productQb = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockProduct),
+      };
+      const deleteQb = {
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({}),
+      };
+      mockManager.createQueryBuilder
+        .mockReturnValueOnce(productQb)
+        .mockReturnValueOnce(deleteQb);
+      mockManager.update.mockResolvedValue({});
+      mockManager.create.mockReturnValue(mockSavedOrder);
+      mockManager.save.mockResolvedValue(mockSavedOrder);
+      mockOrderRepository.createQueryBuilder.mockReturnValue({
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockSavedOrder),
+      });
+
+      await service.create(1, dto);
+
+      // product.stock 차감 1회 정확히.
+      const updateCalls = mockManager.update.mock.calls;
+      const productStockDeductions = updateCalls.filter(
+        ([, id, payload]: [unknown, unknown, { stock?: number }]) =>
+          id === 99 && payload.stock === mockProduct.stock - 4,
+      );
+      expect(productStockDeductions).toHaveLength(1);
+    });
+
+    it('동시 주문 보호: product/option 조회 시 pessimistic_write 락을 건다', async () => {
+      const dto: CreateOrderDto = {
+        items: [{ productId: 1, productOptionId: 7, quantity: 1 }],
+        recipientName: '홍길동',
+        recipientPhone: '010-1234-5678',
+        zipcode: '12345',
+        address: '서울시',
+      };
+      const mockProduct = { id: 1, name: 'X', price: 1000, salePrice: null, stock: 10 };
+      const mockOption = { id: 7, productId: 1, name: 'a', value: 'b', priceAdjustment: 0, stock: 10 };
+      const mockSavedOrder = { id: 1, orderNumber: 'ORD', userId: 1, status: OrderStatus.PENDING, items: [] } as unknown as Order;
+      const productQb = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockProduct),
+      };
+      const optionQb = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockOption),
+      };
+      const deleteQb = {
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({}),
+      };
+      mockManager.createQueryBuilder
+        .mockReturnValueOnce(productQb)
+        .mockReturnValueOnce(optionQb)
+        .mockReturnValueOnce(deleteQb);
+      mockManager.update.mockResolvedValue({});
+      mockManager.create.mockReturnValue(mockSavedOrder);
+      mockManager.save.mockResolvedValue(mockSavedOrder);
+      mockOrderRepository.createQueryBuilder.mockReturnValue({
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockSavedOrder),
+      });
+
+      await service.create(1, dto);
+
+      // product / option 둘 다 pessimistic_write 락 호출.
+      expect(productQb.setLock).toHaveBeenCalledWith('pessimistic_write');
+      expect(optionQb.setLock).toHaveBeenCalledWith('pessimistic_write');
+    });
   });
 
   describe('findAll()', () => {
