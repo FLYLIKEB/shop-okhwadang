@@ -25,6 +25,7 @@ export enum PaymentGatewayType {
   MOCK = 'mock',
   TOSS = 'toss',
   INICIS = 'inicis',
+  STRIPE = 'stripe',
 }
 
 @Entity('payments')
