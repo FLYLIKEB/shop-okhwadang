@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { PaymentsService } from '../payments.service';
 import { Payment, PaymentStatus } from '../entities/payment.entity';
+import { PaymentWebhookEvent } from '../entities/payment-webhook-event.entity';
 import { Refund } from '../entities/refund.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Shipping } from '../entities/shipping.entity';
@@ -29,6 +30,11 @@ describe('PaymentsService — webhook', () => {
     save: jest.fn(),
     update: jest.fn(),
   };
+  const mockWebhookEventRepo = {
+    create: jest.fn((e: object) => e),
+    save: jest.fn(async (e: object) => ({ id: 1, ...e })),
+    update: jest.fn().mockResolvedValue({}),
+  };
   const mockWebhookManager = {
     findOne: jest.fn(),
     update: jest.fn(),
@@ -50,6 +56,7 @@ describe('PaymentsService — webhook', () => {
         { provide: getRepositoryToken(Refund), useValue: mockRepo },
         { provide: getRepositoryToken(Order), useValue: mockRepo },
         { provide: getRepositoryToken(Shipping), useValue: mockRepo },
+        { provide: getRepositoryToken(PaymentWebhookEvent), useValue: mockWebhookEventRepo },
         { provide: 'PaymentGateway', useValue: mockGateway },
         {
           provide: PAYMENT_CONFIG,

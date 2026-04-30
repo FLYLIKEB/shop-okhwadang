@@ -5,6 +5,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Payment, PaymentStatus, PaymentGatewayType, PaymentMethod } from './entities/payment.entity';
+import { PaymentWebhookEvent } from './entities/payment-webhook-event.entity';
 import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
@@ -44,6 +45,8 @@ export class PaymentsService {
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
+    @InjectRepository(PaymentWebhookEvent)
+    private readonly webhookEventRepository: Repository<PaymentWebhookEvent>,
     @Inject('PaymentGateway')
     private readonly gateway: PaymentGateway,
     @Inject(PAYMENT_CONFIG)
@@ -76,7 +79,9 @@ export class PaymentsService {
     });
     this.paymentWebhookService = new PaymentWebhookService({
       gateway: this.gateway,
+      gatewayType: this.gatewayNameToType(this.paymentConfig.gateway),
       paymentRepository: this.paymentRepository,
+      webhookEventRepository: this.webhookEventRepository,
       dataSource: this.dataSource,
       logger: this.logger,
     });
