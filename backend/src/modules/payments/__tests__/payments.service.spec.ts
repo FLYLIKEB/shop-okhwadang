@@ -436,6 +436,38 @@ describe('PaymentsService', () => {
       expect(result.status).toBe(RefundStatus.COMPLETED);
     });
 
+    it('payment.gateway=STRIPE → 부분 환불 시 Stripe adapter의 partialCancel()이 호출되어야 함 (#722)', async () => {
+      const stripePayment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pi_stripe_abc',
+        amount: 30000,
+        gateway: PaymentGatewayType.STRIPE,
+      });
+      const stripeManager = makeRefundManager({
+        findOne: jest.fn().mockResolvedValue(stripePayment),
+      });
+      mockDataSource.transaction
+        .mockImplementationOnce(async (fn: (m: typeof stripeManager) => Promise<unknown>) => fn(stripeManager))
+        .mockImplementationOnce(async (fn: (m: typeof stripeManager) => Promise<unknown>) => fn(stripeManager));
+
+      mockPaymentRepo.findOne.mockResolvedValue(stripePayment);
+      mockRefundRepo.findOne.mockResolvedValue({
+        id: 1, paymentId: 100, amount: 10000, status: RefundStatus.COMPLETED, reason: '부분 환불',
+      });
+
+      mockStripeAdapter.partialCancel.mockResolvedValue({
+        refundId: 're_stripe_123',
+        cancelledAt: new Date(),
+        rawResponse: { stripe: true },
+      });
+
+      const result = await service.partialRefund(1, { amount: 10000, reason: '부분 환불' });
+
+      expect(result.status).toBe(RefundStatus.COMPLETED);
+      expect(mockStripeAdapter.partialCancel).toHaveBeenCalled();
+      expect(mockDefaultGateway.partialCancel).not.toHaveBeenCalled();
+    });
+
     it('결제 CONFIRMED 아님 → BadRequestException', async () => {
       const pendingManager = makeRefundManager({
         findOne: jest.fn().mockResolvedValue(makePayment({ status: PaymentStatus.PENDING, paymentKey: 'pay_abc' })),

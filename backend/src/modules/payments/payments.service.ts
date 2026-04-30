@@ -94,7 +94,7 @@ export class PaymentsService {
       case PaymentGatewayType.INICIS:
         // INICIS는 #721 국내 PG 어댑터 확장 이후 별도 어댑터로 분리될 예정.
         // 그 전까지는 명시적으로 미지원으로 처리하여 잘못된 라우팅을 방지.
-        throw new Error('INICIS 게이트웨이는 아직 지원되지 않습니다. (#721 참고)');
+        throw new BadRequestException('INICIS 게이트웨이는 아직 지원되지 않습니다. (#721 참고)');
       case PaymentGatewayType.MOCK:
       default:
         return this.gateway;
