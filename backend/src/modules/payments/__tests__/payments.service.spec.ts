@@ -10,6 +10,8 @@ import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { MockPaymentAdapter, MOCK_TEST_SIGNATURE } from '../adapters/mock.adapter';
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
+import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
+import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
 import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { PAYMENT_CONFIG, createPaymentConfig } from '../../../config/payment.config';
@@ -141,6 +143,22 @@ describe('PaymentsService', () => {
     verifyWebhook: jest.fn(),
   };
 
+  const mockInicisAdapter = {
+    prepare: jest.fn(),
+    confirm: jest.fn(),
+    cancel: jest.fn(),
+    partialCancel: jest.fn(),
+    verifyWebhook: jest.fn(),
+  };
+
+  const mockNaverpayAdapter = {
+    prepare: jest.fn(),
+    confirm: jest.fn(),
+    cancel: jest.fn(),
+    partialCancel: jest.fn(),
+    verifyWebhook: jest.fn(),
+  };
+
   let mockDataSource: ReturnType<typeof makeDataSourceMock>;
 
   beforeEach(async () => {
@@ -166,6 +184,8 @@ describe('PaymentsService', () => {
         { provide: 'PaymentGateway', useValue: mockDefaultGateway },
         { provide: TossPaymentAdapter, useValue: mockTossAdapter },
         { provide: StripePaymentAdapter, useValue: mockStripeAdapter },
+        { provide: KGInicisPaymentAdapter, useValue: mockInicisAdapter },
+        { provide: NaverPayPaymentAdapter, useValue: mockNaverpayAdapter },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: DataSource, useValue: mockDataSource },

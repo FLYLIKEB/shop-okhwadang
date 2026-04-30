@@ -2,7 +2,7 @@ import { Provider } from '@nestjs/common';
 
 export const PAYMENT_CONFIG = Symbol('PAYMENT_CONFIG');
 
-export type PaymentGatewayName = 'mock' | 'toss' | 'stripe';
+export type PaymentGatewayName = 'mock' | 'toss' | 'stripe' | 'inicis' | 'naverpay';
 
 export interface PaymentConfig {
   nodeEnv: string;
@@ -17,10 +17,28 @@ export interface PaymentConfig {
     publishableKey: string;
     webhookSecret: string;
   };
+  inicis: {
+    mid: string;
+    signKey: string;
+    apiKey: string;
+    clientKey: string;
+  };
+  naverpay: {
+    partnerId: string;
+    clientId: string;
+    clientSecret: string;
+    chainId: string;
+  };
 }
 
 function isPaymentGatewayName(value: string): value is PaymentGatewayName {
-  return value === 'mock' || value === 'toss' || value === 'stripe';
+  return (
+    value === 'mock' ||
+    value === 'toss' ||
+    value === 'stripe' ||
+    value === 'inicis' ||
+    value === 'naverpay'
+  );
 }
 
 export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentConfig {
@@ -49,6 +67,18 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
       secretKey: env.STRIPE_SECRET_KEY ?? '',
       publishableKey: env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '',
       webhookSecret: env.STRIPE_WEBHOOK_SECRET ?? '',
+    },
+    inicis: {
+      mid: env.INICIS_MID ?? '',
+      signKey: env.INICIS_SIGN_KEY ?? '',
+      apiKey: env.INICIS_API_KEY ?? '',
+      clientKey: env.INICIS_CLIENT_KEY ?? '',
+    },
+    naverpay: {
+      partnerId: env.NAVERPAY_PARTNER_ID ?? '',
+      clientId: env.NAVERPAY_CLIENT_ID ?? '',
+      clientSecret: env.NAVERPAY_CLIENT_SECRET ?? '',
+      chainId: env.NAVERPAY_CHAIN_ID ?? '',
     },
   };
 }

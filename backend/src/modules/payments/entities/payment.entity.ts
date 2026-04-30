@@ -26,6 +26,7 @@ export enum PaymentGatewayType {
   TOSS = 'toss',
   INICIS = 'inicis',
   STRIPE = 'stripe',
+  NAVERPAY = 'naverpay',
 }
 
 @Entity('payments')
