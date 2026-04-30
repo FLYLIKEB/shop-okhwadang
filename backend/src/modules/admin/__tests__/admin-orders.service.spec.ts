@@ -215,7 +215,8 @@ describe('AdminOrdersService', () => {
       expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리');
     });
 
-    it('CANCELLED 전환 시 재고 복구', async () => {
+    it('CANCELLED 전환 시 재고 복구 (옵션 있는 항목은 옵션 재고만, 옵션 없는 항목은 상품 재고만)', async () => {
+      // 정책 (#723): 옵션이 있으면 옵션 재고만 원장으로 복구, 옵션이 없으면 상품 재고만 복구.
       const items = [
         { orderId: 1, productId: 10, productOptionId: 20, quantity: 3 },
         { orderId: 1, productId: 11, productOptionId: null, quantity: 2 },
@@ -228,14 +229,15 @@ describe('AdminOrdersService', () => {
       await service.updateStatus(1, OrderStatus.CANCELLED);
 
       expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
-      expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 10 }, 'stock', 3);
+      // 옵션이 있는 첫 번째 항목: 옵션 재고만 복구.
       expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 20 }, 'stock', 3);
+      // 옵션이 없는 두 번째 항목: 상품 재고만 복구.
       expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 11 }, 'stock', 2);
-      // item with no option should not restore option stock
-      expect(mockManager.increment).toHaveBeenCalledTimes(3);
+      // 정확히 두 번만 호출 — 옵션 상품의 product.stock 은 건드리지 않는다.
+      expect(mockManager.increment).toHaveBeenCalledTimes(2);
     });
 
-    it('REFUNDED 전환 시 재고 복구', async () => {
+    it('REFUNDED 전환 시 옵션 항목은 옵션 재고만 복구', async () => {
       const items = [
         { orderId: 1, productId: 5, productOptionId: 50, quantity: 1 },
       ];
@@ -253,9 +255,17 @@ describe('AdminOrdersService', () => {
 
       await service.updateStatus(1, OrderStatus.REFUNDED);
 
-      expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 5 }, 'stock', 1);
       expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 50 }, 'stock', 1);
-      expect(mockManager.increment).toHaveBeenCalledTimes(2);
+      expect(mockManager.increment).toHaveBeenCalledTimes(1);
+    });
+
+    it('이미 CANCELLED 상태인 주문은 재고 복구가 두 번 실행되지 않는다 (멱등성)', async () => {
+      // 상태 머신상 CANCELLED → 다른 상태 전이는 차단되므로 (terminal),
+      // 같은 환불 처리가 두 번 호출되어도 재고가 추가로 복구되지 않는 것을 보장.
+      orderRepo.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.CANCELLED });
+      await expect(service.updateStatus(1, OrderStatus.CANCELLED))
+        .rejects.toThrow(BadRequestException);
+      expect(mockManager.increment).not.toHaveBeenCalled();
     });
 
     it('completed → any: not allowed (terminal state)', async () => {

@@ -120,7 +120,15 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
         expect(Number(rows[0].stock)).toBe(4); // started at 5, ordered 1
       });
 
-      it('option order decreases both product and option stock', async () => {
+      it('option order: only option stock is decremented (product stock unchanged) — #723', async () => {
+        // 정책 (#723): 옵션이 있는 상품은 옵션 재고만 원장으로 차감.
+        // 상품 총 재고는 옵션 합산 집계가 아닌 무옵션 전용 원장이므로 옵션 주문 시 변하지 않는다.
+        const productStockBefore = await dataSource.query(
+          `SELECT stock FROM products WHERE id = ?`,
+          [productId],
+        ) as Array<{ stock: number }>;
+        const stockBefore = Number(productStockBefore[0].stock);
+
         await request(app.getHttpServer())
           .post('/api/orders')
           .set('Cookie', cookieHeader(userACookies))
@@ -142,7 +150,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
           [productOptionId],
         ) as Array<{ stock: number }>;
 
-        expect(Number(products[0].stock)).toBe(2);
+        expect(Number(products[0].stock)).toBe(stockBefore);
         expect(Number(options[0].stock)).toBe(1);
       });
 

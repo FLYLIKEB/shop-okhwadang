@@ -152,6 +152,16 @@ export class OrdersService {
     }
   }
 
+  /**
+   * 재고 정책 (issue #723):
+   *   - 옵션이 있는 상품: `product_option.stock` 만이 판매 가능 수량의 원장이다.
+   *     주문 시 옵션 재고만 차감하고, 상품 총 재고 (`product.stock`) 는 건드리지 않는다.
+   *     상품 총 재고는 옵션 합으로의 집계값/표시용이며, 옵션 재고와 동시 차감 시
+   *     이중 차감 버그가 발생한다.
+   *   - 옵션이 없는 상품: `product.stock` 이 원장이며, 그대로 차감한다.
+   *
+   *  취소·환불 시 복구도 동일한 분기를 사용한다 (AdminOrdersService.restoreStock 참고).
+   */
   private async validateAndReserveStock(
     manager: EntityManager,
     dto: CreateOrderDto,
@@ -193,18 +203,21 @@ export class OrdersService {
         optionName = `${option.name}: ${option.value}`;
         priceAdjustment = Number(option.priceAdjustment);
 
+        // 옵션 재고만 원장으로 차감. product.stock 은 건드리지 않는다.
         await manager.update(ProductOption, option.id, {
           stock: option.stock - item.quantity,
         });
-      } else if (product.stock < item.quantity) {
-        throw new BadRequestException(
-          `재고가 부족합니다. (${product.name}: ${product.stock}개 남음)`,
-        );
+      } else {
+        if (product.stock < item.quantity) {
+          throw new BadRequestException(
+            `재고가 부족합니다. (${product.name}: ${product.stock}개 남음)`,
+          );
+        }
+        // 옵션이 없는 상품만 product.stock 을 원장으로 차감.
+        await manager.update(Product, product.id, {
+          stock: product.stock - item.quantity,
+        });
       }
-
-      await manager.update(Product, product.id, {
-        stock: product.stock - item.quantity,
-      });
 
       const unitPrice = Number(product.salePrice ?? product.price) + priceAdjustment;
       const subtotal = unitPrice * item.quantity;

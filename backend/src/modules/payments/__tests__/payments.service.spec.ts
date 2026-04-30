@@ -43,6 +43,9 @@ const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   findOne: jest.fn().mockResolvedValue(null),
   save: jest.fn().mockResolvedValue({}),
   create: jest.fn().mockImplementation((_entity: unknown, data: unknown) => data),
+  // 재고 복구 (issue #723) — restoreOrderStock 유틸이 manager.find / manager.increment 를 호출.
+  find: jest.fn().mockResolvedValue([]),
+  increment: jest.fn().mockResolvedValue({}),
   ...overrides,
 });
 
@@ -268,20 +271,25 @@ describe('PaymentsService', () => {
         status: 'confirmed',
         rawResponse: { mock: true },
       });
-      mockPaymentRepo.update.mockResolvedValue({});
 
+      // 첫 번째 트랜잭션은 save 실패, 두 번째 (catch 블록의 FAILED 마킹+재고 복구) 는 정상 진행
       const failingManager = makeTransactionManager({
         save: jest.fn().mockRejectedValue(new Error('DB 오류 — shipping insert 실패')),
       });
-      mockDataSource.transaction.mockImplementation(
-        async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
-      );
+      const recoveryManager = makeTransactionManager();
+      mockDataSource.transaction
+        .mockImplementationOnce(
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+        )
+        .mockImplementationOnce(
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(recoveryManager),
+        );
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10),
       ).rejects.toThrow(InternalServerErrorException);
 
-      expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, { status: PaymentStatus.FAILED });
+      expect(recoveryManager.update).toHaveBeenCalledWith(Payment, payment.id, { status: PaymentStatus.FAILED });
     });
 
     it('amount mismatch → BadRequestException', async () => {
@@ -302,12 +310,38 @@ describe('PaymentsService', () => {
       const payment = makePayment();
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.confirm.mockRejectedValue(new Error('gateway error'));
-      mockPaymentRepo.update.mockResolvedValue({});
+
+      const recoveryManager = makeTransactionManager();
+      mockDataSource.transaction.mockImplementationOnce(
+        async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(recoveryManager),
+      );
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'fail_abc', amount: 30000 }, 10),
       ).rejects.toThrow('결제 승인에 실패했습니다.');
-      expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, { status: PaymentStatus.FAILED });
+      expect(recoveryManager.update).toHaveBeenCalledWith(Payment, payment.id, { status: PaymentStatus.FAILED });
+    });
+
+    it('gateway throws → order CANCELLED 마킹 + 재고 복구 (#723)', async () => {
+      const payment = makePayment();
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockDefaultGateway.confirm.mockRejectedValue(new Error('gateway error'));
+
+      const recoveryManager = makeTransactionManager({
+        find: jest.fn().mockResolvedValue([
+          { id: 11, orderId: 1, productId: 100, productOptionId: 200, quantity: 2 },
+        ]),
+      });
+      mockDataSource.transaction.mockImplementationOnce(
+        async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(recoveryManager),
+      );
+
+      await expect(
+        service.confirm({ orderId: 1, paymentKey: 'fail_abc', amount: 30000 }, 10),
+      ).rejects.toThrow('결제 승인에 실패했습니다.');
+
+      expect(recoveryManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
+      expect(recoveryManager.increment).toHaveBeenCalled();
     });
 
     it('locale=en prepare → payment.gateway 가 STRIPE 로 저장되어야 함 (#722)', async () => {
@@ -617,6 +651,34 @@ describe('PaymentsService', () => {
       expect(result.status).toBe(PaymentStatus.CANCELLED);
       expect(mockTossAdapter.cancel).toHaveBeenCalledWith('pay_toss_abc', '고객 요청');
       expect(mockDefaultGateway.cancel).not.toHaveBeenCalled();
+    });
+
+    it('사용자 cancel 시 재고 복구를 같은 트랜잭션에서 수행 (issue #723)', async () => {
+      const payment = makePayment({ status: PaymentStatus.CONFIRMED, paymentKey: 'pay_abc' });
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: new Date(), rawResponse: { mock: true } });
+
+      // 트랜잭션 매니저: 옵션이 있는 항목 1개 + 옵션 없는 항목 1개.
+      const items = [
+        { orderId: 1, productId: 11, productOptionId: 22, quantity: 3 },
+        { orderId: 1, productId: 12, productOptionId: null, quantity: 5 },
+      ];
+      const txManager = makeTransactionManager({
+        find: jest.fn().mockResolvedValue(items),
+        increment: jest.fn().mockResolvedValue({}),
+      });
+      mockDataSource.transaction.mockImplementationOnce(
+        async (fn: (m: typeof txManager) => Promise<unknown>) => fn(txManager),
+      );
+
+      await service.cancel({ orderId: 1 }, 10);
+
+      // 옵션 있는 항목: 옵션 재고만.
+      expect(txManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 22 }, 'stock', 3);
+      // 옵션 없는 항목: 상품 재고만.
+      expect(txManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 12 }, 'stock', 5);
+      // 옵션 있는 상품의 product.stock 은 건드리지 않음.
+      expect(txManager.increment).toHaveBeenCalledTimes(2);
     });
   });
 });

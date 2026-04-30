@@ -7,6 +7,9 @@ import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 const makeWebhookManager = (overrides: Record<string, jest.Mock> = {}) => ({
   findOne: jest.fn(),
   update: jest.fn().mockResolvedValue({}),
+  // 재고 복구 (issue #723) — restoreOrderStock 유틸이 manager.find / manager.increment 를 호출.
+  find: jest.fn().mockResolvedValue([]),
+  increment: jest.fn().mockResolvedValue({}),
   ...overrides,
 });
 
@@ -172,6 +175,46 @@ describe('PaymentWebhookService', () => {
       expect(manager.update).toHaveBeenCalledWith(Order, 7, {
         status: OrderStatus.REFUNDED,
       });
+    });
+
+    it('CANCEL 웹훅: 옵션 있는 항목 옵션 재고만 / 옵션 없는 항목 상품 재고만 복구 (issue #723)', async () => {
+      const items = [
+        { orderId: 7, productId: 11, productOptionId: 22, quantity: 3 },
+        { orderId: 7, productId: 12, productOptionId: null, quantity: 5 },
+      ];
+      const manager = makeWebhookManager({
+        findOne: jest.fn().mockResolvedValue({ id: 7, status: 'paid' }),
+        find: jest.fn().mockResolvedValue(items),
+      });
+      const { service, gateway, paymentRepo } = buildService({ manager });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7, paidAt: new Date(), cancelledAt: null });
+
+      await service.handleWebhook({ orderId: 7, status: 'CANCELLED' }, 'valid_sig');
+
+      expect(manager.increment).toHaveBeenCalledWith(expect.anything(), { id: 22 }, 'stock', 3);
+      expect(manager.increment).toHaveBeenCalledWith(expect.anything(), { id: 12 }, 'stock', 5);
+      expect(manager.increment).toHaveBeenCalledTimes(2);
+    });
+
+    it('이미 CANCELLED 인 주문에 CANCEL 웹훅 재수신 → 재고가 두 번 복구되지 않는다 (멱등성, issue #723)', async () => {
+      const items = [
+        { orderId: 7, productId: 11, productOptionId: 22, quantity: 3 },
+      ];
+      const manager = makeWebhookManager({
+        // 이미 cancelled 상태에서 CANCEL 웹훅이 재수신된 경우.
+        findOne: jest.fn().mockResolvedValue({ id: 7, status: OrderStatus.CANCELLED }),
+        find: jest.fn().mockResolvedValue(items),
+      });
+      const { service, gateway, paymentRepo } = buildService({ manager });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
+
+      await service.handleWebhook({ orderId: 7, status: 'CANCELLED' }, 'valid_sig');
+
+      // Payment/Order update 는 멱등(allowSameStatus)으로 호출될 수 있으나,
+      // restoreOrderStock 은 절대 호출되어선 안 된다.
+      expect(manager.increment).not.toHaveBeenCalled();
     });
 
     it('eventType 이 우선 매칭된다 (eventType > status > type)', async () => {

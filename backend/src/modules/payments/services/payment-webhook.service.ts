@@ -1,10 +1,11 @@
 import { UnauthorizedException, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Payment, PaymentStatus } from '../entities/payment.entity';
-import { Order } from '../../orders/entities/order.entity';
+import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { PAYMENT_WEBHOOK_TRANSITIONS } from './payment-webhook-transition.policy';
 import { canOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
+import { restoreOrderStock } from '../../orders/order-stock.util';
 
 interface PaymentWebhookDependencies {
   gateway: PaymentGateway;
@@ -83,6 +84,19 @@ export class PaymentWebhookService {
         rawResponse: payload as object,
       });
       await manager.update(Order, parsedOrderId, { status: matchedTransition.orderStatus });
+
+      // 재고 복구 정책 (issue #723):
+      // 취소·환불로 진입할 때만 한 번 복구. 이미 cancelled/refunded 였던 주문 (allowSameStatus 진입) 은
+      // 이중 복구를 막기 위해 스킵한다.
+      const isRestoreTarget =
+        matchedTransition.orderStatus === OrderStatus.CANCELLED
+        || matchedTransition.orderStatus === OrderStatus.REFUNDED;
+      const wasAlreadyTerminal =
+        order.status === OrderStatus.CANCELLED
+        || order.status === OrderStatus.REFUNDED;
+      if (isRestoreTarget && !wasAlreadyTerminal) {
+        await restoreOrderStock(manager, parsedOrderId);
+      }
     });
   }
 }
