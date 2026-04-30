@@ -48,6 +48,9 @@ const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   create: jest
     .fn()
     .mockImplementation((_entity: unknown, data: unknown) => data),
+  // 결제 승인 실패 catch 블록의 restoreOrderStock 호출용 (#723)
+  find: jest.fn().mockResolvedValue([]),
+  increment: jest.fn().mockResolvedValue({}),
   ...overrides,
 });
 
@@ -358,7 +361,7 @@ describe('PaymentConfirmationService', () => {
         findOne: jest.fn().mockResolvedValue(payment),
         update: jest.fn().mockResolvedValue({}),
       };
-      const { service, gateway } = buildService({ paymentRepo });
+      const { service, gateway, dataSource } = buildService({ paymentRepo });
       (gateway.confirm as jest.Mock).mockRejectedValue(
         new Error('gateway down'),
       );
@@ -366,7 +369,8 @@ describe('PaymentConfirmationService', () => {
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
       ).rejects.toThrow(InternalServerErrorException);
-      expect(paymentRepo.update).toHaveBeenCalledWith(payment.id, {
+      // #723: payment FAILED 마킹은 catch 블록의 새 트랜잭션에서 manager.update 로 수행
+      expect(dataSource._manager.update).toHaveBeenCalledWith(Payment, payment.id, {
         status: PaymentStatus.FAILED,
       });
     });
@@ -376,14 +380,30 @@ describe('PaymentConfirmationService', () => {
       const failingManager = makeTransactionManager({
         save: jest.fn().mockRejectedValue(new Error('shipping insert 실패')),
       });
-      const dataSource = makeDataSource(failingManager);
+      const recoveryManager = makeTransactionManager();
+      // 첫 번째 트랜잭션은 save 실패 (성공 path), 두 번째는 catch 블록 (FAILED 마킹 + 재고 복구)
+      const dataSource = {
+        transaction: jest
+          .fn()
+          .mockImplementationOnce(
+            async (
+              fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>,
+            ) => fn(failingManager),
+          )
+          .mockImplementationOnce(
+            async (
+              fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>,
+            ) => fn(recoveryManager),
+          ),
+        _manager: recoveryManager,
+      };
       const paymentRepo = {
         findOne: jest.fn().mockResolvedValue(payment),
         update: jest.fn().mockResolvedValue({}),
       };
       const { service, gateway } = buildService({
         paymentRepo,
-        dataSource,
+        dataSource: dataSource as ReturnType<typeof makeDataSource>,
       });
       (gateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pk',
@@ -396,7 +416,7 @@ describe('PaymentConfirmationService', () => {
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
       ).rejects.toThrow(InternalServerErrorException);
-      expect(paymentRepo.update).toHaveBeenCalledWith(payment.id, {
+      expect(recoveryManager.update).toHaveBeenCalledWith(Payment, payment.id, {
         status: PaymentStatus.FAILED,
       });
     });

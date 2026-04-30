@@ -131,8 +131,13 @@ export class PaymentRefundService {
 
     refund = await findOrThrow(this.deps.refundRepository, { id: refund.id }, '환불 정보를 찾을 수 없습니다.');
 
-    // 부분 환불은 주문 전체 취소가 아니므로 재고 복구/포인트 환수를 수행하지 않는다.
-    // 주문 전체 취소·환불 시 재고/포인트 복구는 AdminOrdersService.updateStatus → restoreStock/restorePoints 에서 처리한다.
+    // 부분 환불은 배송 완료 후 적용되며, 물리적 반품 없이 금액만 환불하므로 재고 복구 대상이 아니다 (#723).
+    // 포인트 환수도 동일 이유로 미적용.
+    // 주문 전체 취소·환불 시 재고/포인트 복구 진입점:
+    //   - AdminOrdersService.updateStatus → restoreStock / restorePoints
+    //   - PaymentsService.cancel (사용자 취소) → restoreOrderStock 직접 호출
+    //   - PaymentWebhookService.handleCancel (PG 웹훅) → restoreOrderStock 직접 호출
+    //   - PaymentConfirmationService.confirm catch 블록 (결제 승인 실패) → restoreOrderStock 직접 호출
 
     return refund;
   }

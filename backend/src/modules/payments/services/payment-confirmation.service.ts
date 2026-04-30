@@ -14,6 +14,7 @@ import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { assertOwnership } from '../../../common/utils/ownership.util';
 import { findOrThrow } from '../../../common/utils/repository.util';
+import { restoreOrderStock } from '../../orders/order-stock.util';
 
 type ResolveGatewayByType = (gatewayType: PaymentGatewayType) => PaymentGateway;
 
@@ -113,7 +114,13 @@ export class PaymentConfirmationService {
         paidAt: new Date(),
       };
     } catch (err) {
-      await this.deps.paymentRepository.update(payment.id, { status: PaymentStatus.FAILED });
+      // #723: 결제 승인 실패 시 payment를 FAILED로, order를 CANCELLED로 마킹하고
+      // 주문 생성 시 차감했던 재고를 복구한다. 같은 트랜잭션으로 묶어 부분 커밋 방지.
+      await this.deps.dataSource.transaction(async (manager) => {
+        await manager.update(Payment, payment.id, { status: PaymentStatus.FAILED });
+        await manager.update(Order, dto.orderId, { status: OrderStatus.CANCELLED });
+        await restoreOrderStock(manager, dto.orderId);
+      });
       if (err instanceof ConflictException || err instanceof BadRequestException) throw err;
       throw new InternalServerErrorException('결제 승인에 실패했습니다.');
     }
