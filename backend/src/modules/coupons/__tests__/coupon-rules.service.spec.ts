@@ -253,4 +253,108 @@ describe('CouponRulesService', () => {
       expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalled();
     });
   });
+
+  // 정책 고정 (이슈 #726): 자동 발급 트리거 4종 — 회원가입 / 첫 구매 / 생일 / 등급업
+  describe('자동 발급 트리거 핸들러', () => {
+    type Handler<T> = (event: T) => Promise<void>;
+
+    it('회원가입 이벤트는 SIGNUP 규칙을 적용한다', async () => {
+      let signupHandler: Handler<{ userId: number }> | undefined;
+      mockAuthEvents.onUserRegistered.mockImplementation((cb: Handler<{ userId: number }>) => {
+        signupHandler = cb;
+      });
+      mockCouponRuleRepo.find.mockResolvedValue([makeCouponRule({ trigger: CouponRuleTrigger.SIGNUP })]);
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([{ couponId: 10, issued: true }]);
+
+      service.onModuleInit();
+      expect(signupHandler).toBeDefined();
+      await signupHandler!({ userId: 100 });
+
+      expect(mockCouponRuleRepo.find).toHaveBeenCalledWith({
+        where: { trigger: CouponRuleTrigger.SIGNUP, active: true },
+      });
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(100, [10]);
+    });
+
+    it('첫 구매 이벤트(isFirstPurchase=true) 만 FIRST_PURCHASE 규칙을 적용한다', async () => {
+      let orderHandler: Handler<{ userId: number; isFirstPurchase: boolean }> | undefined;
+      mockOrderEvents.onOrderCompleted.mockImplementation(
+        (cb: Handler<{ userId: number; isFirstPurchase: boolean }>) => {
+          orderHandler = cb;
+        },
+      );
+      mockCouponRuleRepo.find.mockResolvedValue([
+        makeCouponRule({ trigger: CouponRuleTrigger.FIRST_PURCHASE, couponTemplateId: 21 }),
+      ]);
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([{ couponId: 21, issued: true }]);
+
+      service.onModuleInit();
+      expect(orderHandler).toBeDefined();
+
+      // 두 번째 이상 구매면 FIRST_PURCHASE 규칙은 적용되지 않는다.
+      await orderHandler!({ userId: 200, isFirstPurchase: false });
+      expect(mockCouponsService.issueCouponsForUser).not.toHaveBeenCalled();
+
+      // 첫 구매면 적용된다.
+      await orderHandler!({ userId: 200, isFirstPurchase: true });
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(200, [21]);
+    });
+
+    it('등급업 이벤트는 newTier 컨텍스트를 전달하며 TIER_UP 규칙을 적용한다', async () => {
+      let tierHandler: Handler<{ userId: number; newTier: string }> | undefined;
+      mockMembershipEvents.onTierUpgraded.mockImplementation(
+        (cb: Handler<{ userId: number; newTier: string }>) => {
+          tierHandler = cb;
+        },
+      );
+      mockCouponRuleRepo.find.mockResolvedValue([
+        makeCouponRule({ trigger: CouponRuleTrigger.TIER_UP, couponTemplateId: 31 }),
+      ]);
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([{ couponId: 31, issued: true }]);
+
+      service.onModuleInit();
+      expect(tierHandler).toBeDefined();
+      await tierHandler!({ userId: 300, newTier: 'Gold' });
+
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(300, [31]);
+    });
+
+    it('생일 cron 은 BIRTHDAY 트리거 규칙을 활성 회원에게만 적용한다', async () => {
+      const birthdayRule = makeCouponRule({
+        trigger: CouponRuleTrigger.BIRTHDAY,
+        couponTemplateId: 41,
+      });
+      mockCouponRuleRepo.find.mockResolvedValue([birthdayRule]);
+      mockDataSource.query.mockResolvedValue([{ id: 1 }, { id: 2 }]);
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([{ couponId: 41, issued: true }]);
+
+      await service.handleBirthdayCoupons();
+
+      expect(mockSchedulerLockService.runWithLock).toHaveBeenCalledWith(
+        expect.objectContaining({ lockName: 'cron:birthday-coupons' }),
+        expect.any(Function),
+      );
+      expect(mockCouponRuleRepo.find).toHaveBeenCalledWith({
+        where: { trigger: CouponRuleTrigger.BIRTHDAY, active: true },
+      });
+      // 활성/미삭제 회원만 조회해야 한다.
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        expect.stringContaining('is_active = 1 AND deleted_at IS NULL'),
+        expect.arrayContaining([expect.any(Number), expect.any(Number)]),
+      );
+      // 두 명의 사용자에게 각각 발급되어야 한다.
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledTimes(2);
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(1, [41]);
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(2, [41]);
+    });
+
+    it('생일 cron 은 활성 BIRTHDAY 규칙이 없으면 사용자 조회를 건너뛴다', async () => {
+      mockCouponRuleRepo.find.mockResolvedValue([]);
+
+      await service.handleBirthdayCoupons();
+
+      expect(mockDataSource.query).not.toHaveBeenCalled();
+      expect(mockCouponsService.issueCouponsForUser).not.toHaveBeenCalled();
+    });
+  });
 });

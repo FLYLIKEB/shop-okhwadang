@@ -35,7 +35,7 @@ updated: 2026-04-25
 | 결제 | 국내 네이버페이/KG이니시스/토스페이먼츠, 글로벌 Stripe, 서버 금액 검증, 상태 전이 서버 관리 | `BACKEND.md`, `SECURITY.md`, `DATABASE.md` |
 | 배송 | 배송사 어댑터, 운송장 등록, 상태 추적 | `BACKEND.md`, `PRODUCT_OVERVIEW.md` |
 | 리뷰 | 구매자 리뷰, 포토 리뷰, 리뷰 포인트, 스마트스토어 리뷰 연동은 별도 이슈 | `PRODUCT_OVERVIEW.md`, `DATABASE.md` |
-| 쿠폰/포인트 | 단일 쿠폰 + 포인트 동시 사용, 자동 발급 규칙, FIFO 차감 | `PRODUCT_OVERVIEW.md`, `DATABASE.md` |
+| 쿠폰/포인트 | 단일 쿠폰 + 포인트 동시 사용, 자동 발급 규칙, FIFO 차감 | `PRODUCT_OVERVIEW.md`, `DATABASE.md`, [[coupon-points-policy\|쿠폰·포인트 운영 정책]] |
 | 위시리스트 | 회원별 상품 저장 | `PRODUCT_OVERVIEW.md`, `DATABASE.md` |
 | 어드민 | 상품/주문/배송/회원/쿠폰/페이지/네비게이션 관리 | `PRODUCT_OVERVIEW.md`, `FRONTEND.md` |
 | CMS/블록 | 페이지를 블록 JSON으로 관리, 어드민 편집 후 프론트 동적 렌더링 | `FRONTEND.md`, `PRODUCT_OVERVIEW.md` |

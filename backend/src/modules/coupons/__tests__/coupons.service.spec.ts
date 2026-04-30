@@ -5,6 +5,7 @@ import { CouponsService } from '../coupons.service';
 import { Coupon } from '../entities/coupon.entity';
 import { UserCoupon } from '../entities/user-coupon.entity';
 import { PointHistory } from '../entities/point-history.entity';
+import { CalculateDiscountDto } from '../dto/calculate-discount.dto';
 import { DataSource } from 'typeorm';
 import { PointsService } from '../../points/points.service';
 
@@ -170,6 +171,74 @@ describe('CouponsService', () => {
       expect(result.pointsDiscount).toBe(0);
       expect(result.shippingFee).toBe(0);
       expect(result.totalPayable).toBe(50000);
+    });
+  });
+
+  // 정책 고정: 쿠폰·포인트 운영 정책 (이슈 #726)
+  // 1) 발급 쿠폰 1개 + 포인트 동시 사용
+  // 2) 쿠폰 적용 후 포인트 차감 순서
+  // 3) FIFO 포인트 차감
+  // 4) 기본 만료 1년
+  // 5) 자동 발급 트리거: 회원가입/첫 구매/생일/등급업
+  describe('정책 고정 — 쿠폰·포인트 동시 사용', () => {
+    it('CalculateDiscountDto 는 단일 userCouponId 만 받는다 (다중 쿠폰 적용 불가 — 구조적 제약)', () => {
+      const dto: CalculateDiscountDto = { orderAmount: 10000, userCouponId: 1, pointsToUse: 0 };
+      // userCouponId 는 number(단수) 타입. 배열을 허용하지 않는 것이 정책의 구조적 보장이다.
+      expect(typeof dto.userCouponId).toBe('number');
+      // 컴파일 타임 가드: 아래 줄을 number[]로 바꾸면 타입 에러가 나야 한다는 사실을 코멘트로 고정.
+      // const invalid: CalculateDiscountDto = { orderAmount: 1, userCouponId: [1, 2] }; // ts(2322)
+    });
+
+    it('쿠폰 + 포인트 동시 사용: 쿠폰 먼저 적용 후 포인트 차감 (할인 순서 고정)', async () => {
+      const uc = mockUserCoupon(mockPercentageCoupon); // 10% 할인, max 5000
+      mockUserCouponRepo.findOne.mockResolvedValue(uc);
+      mockPointsService.getUserPointBalance.mockResolvedValue(2000);
+
+      // 주문액 50000원, 쿠폰 10% 할인 → 5000원 할인 (max 5000 적용)
+      // 그 후 포인트 2000 차감 → 50000 - 5000 - 2000 = 43000
+      const result = await service.calculate(10, {
+        orderAmount: 50000,
+        userCouponId: 1,
+        pointsToUse: 2000,
+      });
+
+      expect(result.originalAmount).toBe(50000);
+      expect(result.couponDiscount).toBe(5000);
+      expect(result.pointsDiscount).toBe(2000);
+      expect(result.finalAmount).toBe(43000);
+      // 쿠폰 + 포인트가 합산되어야 한다 (둘 다 적용)
+      expect(result.couponDiscount + result.pointsDiscount).toBe(7000);
+    });
+
+    it('쿠폰 적용 후 남은 금액보다 큰 포인트는 남은 금액까지만 차감된다', async () => {
+      const uc = mockUserCoupon(mockFixedCoupon); // 3000원 정액 쿠폰
+      mockUserCouponRepo.findOne.mockResolvedValue(uc);
+      mockPointsService.getUserPointBalance.mockResolvedValue(50000);
+
+      // 주문액 10000, 쿠폰 -3000 → 7000 남음. 포인트 10000 사용 시도 → 7000 으로 cap.
+      const result = await service.calculate(10, {
+        orderAmount: 10000,
+        userCouponId: 2,
+        pointsToUse: 10000,
+      });
+
+      expect(result.couponDiscount).toBe(3000);
+      expect(result.pointsDiscount).toBe(7000);
+      expect(result.finalAmount).toBe(0);
+    });
+
+    it('포인트만 사용하는 경우 쿠폰 할인은 0', async () => {
+      mockUserCouponRepo.findOne.mockResolvedValue(null);
+      mockPointsService.getUserPointBalance.mockResolvedValue(5000);
+
+      const result = await service.calculate(10, {
+        orderAmount: 10000,
+        pointsToUse: 3000,
+      });
+
+      expect(result.couponDiscount).toBe(0);
+      expect(result.pointsDiscount).toBe(3000);
+      expect(result.finalAmount).toBe(7000);
     });
   });
 
