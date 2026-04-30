@@ -85,15 +85,16 @@ export class PaymentsService {
     return this.gateway;
   }
 
-  // NOTE: PaymentGatewayType enum에는 아직 STRIPE 값이 없어서 INICIS를 overseas 게이트웨이
-  // placeholder로 겸용 중 (stripe/inicis 문자열 → INICIS enum). 실제 Inicis 연동을 추가하려면
-  // enum에 STRIPE를 추가하고 마이그레이션으로 기존 INICIS 데이터를 재분류해야 한다. (#476 후속)
   private resolveGatewayByType(gatewayType: PaymentGatewayType): PaymentGateway {
     switch (gatewayType) {
       case PaymentGatewayType.TOSS:
         return this.tossAdapter;
+      case PaymentGatewayType.STRIPE:
+        return this.stripeAdapter;
       case PaymentGatewayType.INICIS:
-        return this.stripeAdapter; // 임시: INICIS enum이 stripe 어댑터를 의미함 (위 NOTE 참고)
+        // INICIS는 #721 국내 PG 어댑터 확장 이후 별도 어댑터로 분리될 예정.
+        // 그 전까지는 명시적으로 미지원으로 처리하여 잘못된 라우팅을 방지.
+        throw new BadRequestException('INICIS 게이트웨이는 아직 지원되지 않습니다. (#721 참고)');
       case PaymentGatewayType.MOCK:
       default:
         return this.gateway;
@@ -105,8 +106,9 @@ export class PaymentsService {
       case 'toss':
         return PaymentGatewayType.TOSS;
       case 'stripe':
+        return PaymentGatewayType.STRIPE;
       case 'inicis':
-        return PaymentGatewayType.INICIS; // 임시: stripe도 INICIS enum으로 저장 (위 NOTE 참고)
+        return PaymentGatewayType.INICIS;
       case 'mock':
       default:
         return PaymentGatewayType.MOCK;

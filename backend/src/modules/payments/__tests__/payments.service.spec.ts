@@ -310,6 +310,44 @@ describe('PaymentsService', () => {
       expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, { status: PaymentStatus.FAILED });
     });
 
+    it('locale=en prepare → payment.gateway 가 STRIPE 로 저장되어야 함 (#722)', async () => {
+      const order = makeOrder();
+      mockOrderRepo.findOne.mockResolvedValue(order);
+      mockPaymentRepo.findOne.mockResolvedValue(null);
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.STRIPE });
+      mockPaymentRepo.create.mockReturnValue(savedPayment);
+      mockPaymentRepo.save.mockResolvedValue(savedPayment);
+      mockStripeAdapter.prepare.mockResolvedValue({ clientKey: 'pi_secret_xyz', orderId: '1' });
+
+      const result = await service.prepare({ orderId: 1, locale: 'en' }, 10);
+
+      expect(result.gateway).toBe('stripe');
+      expect(mockPaymentRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ gateway: PaymentGatewayType.STRIPE }),
+      );
+      expect(mockPaymentRepo.create).not.toHaveBeenCalledWith(
+        expect.objectContaining({ gateway: PaymentGatewayType.INICIS }),
+      );
+    });
+
+    it('payment.gateway=STRIPE 로 저장된 결제는 cancel 시 Stripe adapter 가 사용되어야 함 (#722)', async () => {
+      const payment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pi_test',
+        gateway: PaymentGatewayType.STRIPE,
+      });
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockStripeAdapter.cancel.mockResolvedValue({ cancelledAt: new Date(), rawResponse: { stripe: true } });
+      mockPaymentRepo.update.mockResolvedValue({});
+      mockOrderRepo.update.mockResolvedValue({});
+
+      const result = await service.cancel({ orderId: 1 }, 10);
+
+      expect(result.status).toBe(PaymentStatus.CANCELLED);
+      expect(mockStripeAdapter.cancel).toHaveBeenCalledWith('pi_test', '고객 요청');
+      expect(mockDefaultGateway.cancel).not.toHaveBeenCalled();
+    });
+
     it('locale=ko prepare → confirm 시 Toss adapter의 confirm()이 호출되어야 함', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
@@ -396,6 +434,38 @@ describe('PaymentsService', () => {
 
       const result = await service.partialRefund(1, { amount: 10000, reason: '부분 환불' });
       expect(result.status).toBe(RefundStatus.COMPLETED);
+    });
+
+    it('payment.gateway=STRIPE → 부분 환불 시 Stripe adapter의 partialCancel()이 호출되어야 함 (#722)', async () => {
+      const stripePayment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pi_stripe_abc',
+        amount: 30000,
+        gateway: PaymentGatewayType.STRIPE,
+      });
+      const stripeManager = makeRefundManager({
+        findOne: jest.fn().mockResolvedValue(stripePayment),
+      });
+      mockDataSource.transaction
+        .mockImplementationOnce(async (fn: (m: typeof stripeManager) => Promise<unknown>) => fn(stripeManager))
+        .mockImplementationOnce(async (fn: (m: typeof stripeManager) => Promise<unknown>) => fn(stripeManager));
+
+      mockPaymentRepo.findOne.mockResolvedValue(stripePayment);
+      mockRefundRepo.findOne.mockResolvedValue({
+        id: 1, paymentId: 100, amount: 10000, status: RefundStatus.COMPLETED, reason: '부분 환불',
+      });
+
+      mockStripeAdapter.partialCancel.mockResolvedValue({
+        refundId: 're_stripe_123',
+        cancelledAt: new Date(),
+        rawResponse: { stripe: true },
+      });
+
+      const result = await service.partialRefund(1, { amount: 10000, reason: '부분 환불' });
+
+      expect(result.status).toBe(RefundStatus.COMPLETED);
+      expect(mockStripeAdapter.partialCancel).toHaveBeenCalled();
+      expect(mockDefaultGateway.partialCancel).not.toHaveBeenCalled();
     });
 
     it('결제 CONFIRMED 아님 → BadRequestException', async () => {
