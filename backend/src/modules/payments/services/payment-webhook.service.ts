@@ -79,7 +79,7 @@ export class PaymentWebhookService {
       throw err;
     }
 
-    // 2) 실제 처리. 결과는 finally 에서 events 테이블에 반영.
+    // 2) 실제 처리. 결과는 try/catch 종료 후 events 테이블에 반영.
     let result: PaymentWebhookResult = PaymentWebhookResult.IGNORED;
     let errorMessage: string | null = null;
     let resolvedPaymentId: number | null = null;
@@ -97,13 +97,22 @@ export class PaymentWebhookService {
       );
     }
 
-    await this.deps.webhookEventRepository.update(savedEvent.id, {
-      result,
-      processedAt: new Date(),
-      errorMessage,
-      paymentId: resolvedPaymentId,
-      orderId: resolvedOrderId,
-    });
+    // #725: audit row update 자체가 실패해도 PG 재시도를 유발하지 않도록 swallow.
+    // (audit INSERT 는 이미 커밋되었기 때문에, 여기서 throw 하면 PG 가 재시도하지만
+    // UNIQUE 제약으로 차단되어 영구적으로 IGNORED 상태로 남음.)
+    try {
+      await this.deps.webhookEventRepository.update(savedEvent.id, {
+        result,
+        processedAt: new Date(),
+        errorMessage,
+        paymentId: resolvedPaymentId,
+        orderId: resolvedOrderId,
+      });
+    } catch (updateErr) {
+      this.deps.logger.error(
+        `Webhook event audit row update failed: id=${savedEvent.id}, ${updateErr instanceof Error ? updateErr.message : String(updateErr)}`,
+      );
+    }
   }
 
   private async processWebhook(payload: unknown): Promise<{
