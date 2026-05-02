@@ -303,6 +303,42 @@ describe('BlockRenderer', () => {
     expect(screen.getByRole('timer')).toBeInTheDocument();
   });
 
+  it('renders PromotionBannerBlock timer from legacy expires_at content', () => {
+    const futureDate = new Date(Date.now() + 86400000).toISOString();
+    const blocks: PageBlock[] = [
+      makeBlock({
+        type: 'promotion_banner',
+        content: {
+          title: '레거시 타이머 프로모션',
+          template: 'timer',
+          expires_at: futureDate,
+        },
+      }),
+    ];
+    render(<BlockRenderer blocks={blocks} />);
+    expect(screen.getByText('레거시 타이머 프로모션')).toBeInTheDocument();
+    expect(screen.getByRole('timer')).toBeInTheDocument();
+  });
+
+  it('renders TextContentBlock highlight template with distinct styling', async () => {
+    const blocks: PageBlock[] = [
+      makeBlock({
+        type: 'text_content',
+        content: {
+          html: '<p>강조 텍스트</p>',
+          template: 'highlight',
+        },
+      }),
+    ];
+    const { container } = render(<BlockRenderer blocks={blocks} />);
+    await waitFor(() => {
+      expect(screen.getByText('강조 텍스트')).toBeInTheDocument();
+    });
+    const section = container.querySelector('section[data-template="highlight"]');
+    expect(section).toBeInTheDocument();
+    expect(section?.className).toContain('bg-primary/5');
+  });
+
   it('renders PromotionBannerBlock with card template', () => {
     const blocks: PageBlock[] = [
       makeBlock({

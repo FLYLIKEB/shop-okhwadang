@@ -219,6 +219,21 @@ describe('PagesService', () => {
       expect(result.type).toBe('hero_banner');
     });
 
+    it('저널 미리보기 블록을 생성한다', async () => {
+      const dto = { type: 'journal_preview', content: { title: '저널', limit: 3 } };
+      mockPageRepository.findOne.mockResolvedValue({ id: 1 });
+      mockBlockRepository.create.mockReturnValue({ id: 1, ...dto, page_id: 1 });
+      mockBlockRepository.save.mockResolvedValue({ id: 1, ...dto, page_id: 1 });
+
+      const result = await service.createBlock(1, dto);
+
+      expect(result.type).toBe('journal_preview');
+      expect(mockBlockRepository.create).toHaveBeenCalledWith({
+        ...dto,
+        page_id: 1,
+      });
+    });
+
     it('존재하지 않는 페이지 → NotFoundException', async () => {
       mockPageRepository.findOne.mockResolvedValue(null);
       await expect(

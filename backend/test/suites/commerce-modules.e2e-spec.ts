@@ -133,7 +133,7 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/admin/coupons')
         .set('Cookie', userCookies)
-        .send({ code: 'FAIL', name: '실패', type: 'fixed', value: 1000, startsAt: '2026-04-01T00:00:00.000Z', expiresAt: '2026-05-01T00:00:00.000Z' })
+        .send({ code: 'FAIL', name: '실패', type: 'fixed', value: 1000, startsAt: '2026-04-01T00:00:00.000Z', expiresAt: '2099-05-01T00:00:00.000Z' })
         .expect(403);
 
       const couponRes = await request(app.getHttpServer())
@@ -146,7 +146,7 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
           value: 3000,
           minOrderAmount: 10000,
           startsAt: '2026-04-01T00:00:00.000Z',
-          expiresAt: '2026-05-01T00:00:00.000Z',
+          expiresAt: '2099-05-01T00:00:00.000Z',
           isActive: true,
         })
         .expect(201);
