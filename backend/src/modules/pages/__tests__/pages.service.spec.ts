@@ -142,6 +142,39 @@ describe('PagesService', () => {
     });
   });
 
+  describe('findOneAdmin', () => {
+    it('비공개 페이지와 숨김 블록을 필터링하지 않고 sort_order 순서로 반환한다', async () => {
+      const page = {
+        id: 7,
+        slug: 'draft-page',
+        is_published: false,
+        blocks: [
+          { id: 1, is_visible: false, sort_order: 2 },
+          { id: 2, is_visible: true, sort_order: 0 },
+          { id: 3, is_visible: false, sort_order: 1 },
+        ],
+      };
+      mockPageRepository.findOne.mockResolvedValue(page);
+
+      const result = await service.findOneAdmin(7);
+
+      expect(mockPageRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 7 },
+        relations: ['blocks'],
+      });
+      expect(result.is_published).toBe(false);
+      expect(result.blocks).toHaveLength(3);
+      expect(result.blocks.map((block) => block.id)).toEqual([2, 3, 1]);
+      expect(result.blocks.filter((block) => !block.is_visible)).toHaveLength(2);
+    });
+
+    it('존재하지 않는 관리자 페이지 상세 → NotFoundException', async () => {
+      mockPageRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.findOneAdmin(999)).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('create', () => {
     it('페이지를 생성한다', async () => {
       const dto = { slug: 'new-page', title: '새 페이지' };

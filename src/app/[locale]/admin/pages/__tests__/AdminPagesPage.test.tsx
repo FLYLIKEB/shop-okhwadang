@@ -28,11 +28,12 @@ const mockAddBlock = vi.fn();
 const mockUpdateBlock = vi.fn();
 const mockDeleteBlock = vi.fn();
 const mockReorderBlocks = vi.fn();
-const mockGetBySlug = vi.fn();
+const mockGetById = vi.fn();
 
 vi.mock('@/lib/api', () => ({
   adminPagesApi: {
     getAll: (...args: unknown[]) => mockGetAll(...args),
+    getById: (...args: unknown[]) => mockGetById(...args),
     create: (...args: unknown[]) => mockCreate(...args),
     update: (...args: unknown[]) => mockUpdate(...args),
     remove: (...args: unknown[]) => mockRemove(...args),
@@ -40,9 +41,6 @@ vi.mock('@/lib/api', () => ({
     updateBlock: (...args: unknown[]) => mockUpdateBlock(...args),
     deleteBlock: (...args: unknown[]) => mockDeleteBlock(...args),
     reorderBlocks: (...args: unknown[]) => mockReorderBlocks(...args),
-  },
-  pagesApi: {
-    getBySlug: (...args: unknown[]) => mockGetBySlug(...args),
   },
 }));
 
@@ -66,7 +64,7 @@ describe('AdminPagesPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetAll.mockResolvedValue([mockPage]);
-    mockGetBySlug.mockResolvedValue(mockPage);
+    mockGetById.mockResolvedValue(mockPage);
     mockCreate.mockResolvedValue({ id: 2, title: '새 페이지', slug: 'new-page', is_published: false, blocks: [] });
     mockUpdate.mockResolvedValue(mockPage);
     mockAddBlock.mockResolvedValue({ id: 20, type: 'text_content', content: { html: '' }, sort_order: 0, is_visible: true });
@@ -95,7 +93,7 @@ describe('AdminPagesPage', () => {
     fireEvent.click(screen.getByText('메인 페이지'));
 
     await waitFor(() => {
-      expect(mockGetBySlug).toHaveBeenCalledWith('main');
+      expect(mockGetById).toHaveBeenCalledWith(1);
     });
 
     await waitFor(() => {
@@ -175,7 +173,7 @@ describe('AdminPagesPage', () => {
     expect(saveBtn).not.toBeDisabled();
 
     // Mock the reload after save
-    mockGetBySlug.mockResolvedValue({
+    mockGetById.mockResolvedValue({
       ...mockPage,
       blocks: [
         ...mockPage.blocks,
@@ -215,6 +213,93 @@ describe('AdminPagesPage', () => {
     });
 
     addSpy.mockRestore();
+  });
+
+  it('비공개 페이지 선택 시 관리자 상세 API로 숨김 블록까지 표시한다', async () => {
+    const draftPage = {
+      id: 2,
+      title: '비공개 페이지',
+      slug: 'draft-page',
+      is_published: false,
+      blocks: [],
+    };
+    const draftPageWithHiddenBlock = {
+      ...draftPage,
+      blocks: [
+        {
+          id: 30,
+          type: 'text_content' as const,
+          content: { html: '<p>숨김 블록</p>', template: 'default' },
+          sort_order: 0,
+          is_visible: false,
+        },
+      ],
+    };
+    mockGetAll.mockResolvedValue([draftPage]);
+    mockGetById.mockResolvedValue(draftPageWithHiddenBlock);
+
+    render(<AdminPagesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('비공개 페이지')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('비공개 페이지'));
+
+    await waitFor(() => {
+      expect(mockGetById).toHaveBeenCalledWith(2);
+    });
+    expect(screen.getAllByText('텍스트').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: '표시' })).toBeInTheDocument();
+  });
+
+  it('숨김 블록 저장 후 관리자 상세 API로 reload하여 dirty state를 초기화한다', async () => {
+    const hiddenPage = {
+      ...mockPage,
+      is_published: false,
+      blocks: [
+        {
+          id: 30,
+          type: 'text_content' as const,
+          content: { html: '<p>숨김 블록</p>', template: 'default' },
+          sort_order: 0,
+          is_visible: false,
+        },
+      ],
+    };
+    mockGetAll.mockResolvedValue([hiddenPage]);
+    mockGetById.mockResolvedValueOnce(hiddenPage).mockResolvedValueOnce({
+      ...hiddenPage,
+      blocks: [{ ...hiddenPage.blocks[0], is_visible: true }],
+    });
+    mockUpdateBlock.mockResolvedValue({ ...hiddenPage.blocks[0], is_visible: true });
+
+    render(<AdminPagesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('메인 페이지')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('메인 페이지'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '표시' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '표시' }));
+    fireEvent.click(screen.getByLabelText('저장'));
+
+    await waitFor(() => {
+      expect(mockUpdateBlock).toHaveBeenCalledWith(1, 30, expect.objectContaining({
+        is_visible: true,
+      }));
+    });
+    await waitFor(() => {
+      expect(mockGetById).toHaveBeenLastCalledWith(1);
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText('저장')).toBeDisabled();
+    });
   });
 
   it('미리보기 버튼 클릭 시 미리보기 모달이 표시된다', async () => {

@@ -64,10 +64,28 @@ export class PagesService {
   }
 
   async findAllAdmin(): Promise<Page[]> {
-    return this.pageRepository.find({
+    const pages = await this.pageRepository.find({
       relations: ['blocks'],
       order: { created_at: 'DESC' },
     });
+    return pages.map((page) => this.sortBlocks(page));
+  }
+
+  async findOneAdmin(id: number): Promise<Page> {
+    const page = await findOrThrow(
+      this.pageRepository,
+      { id },
+      '존재하지 않는 페이지입니다.',
+      ['blocks'],
+    );
+    return this.sortBlocks(page);
+  }
+
+  private sortBlocks(page: Page): Page {
+    if (page.blocks) {
+      page.blocks = [...page.blocks].sort((a, b) => a.sort_order - b.sort_order);
+    }
+    return page;
   }
 
   async create(dto: CreatePageDto): Promise<Page> {
