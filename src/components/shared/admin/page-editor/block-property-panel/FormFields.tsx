@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import { cn } from '@/components/ui/utils';
 
 interface StringFieldProps {
@@ -12,11 +13,14 @@ interface StringFieldProps {
 }
 
 export function StringField({ label, value, onChange, placeholder, multiline, onBlur }: StringFieldProps) {
+  const id = useId();
+
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
+      <label htmlFor={id} className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
       {multiline ? (
         <textarea
+          id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
@@ -26,6 +30,7 @@ export function StringField({ label, value, onChange, placeholder, multiline, on
         />
       ) : (
         <input
+          id={id}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -44,10 +49,13 @@ interface NumberFieldProps {
 }
 
 export function NumberField({ label, value, onChange }: NumberFieldProps) {
+  const id = useId();
+
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
+      <label htmlFor={id} className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
       <input
+        id={id}
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
@@ -73,11 +81,13 @@ interface SelectFieldProps {
 }
 
 export function SelectField({ label, value, options, onChange, hint }: SelectFieldProps) {
+  const id = useId();
   const selectedHint = hint ?? options.find((o) => o.value === value)?.hint;
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
+      <label htmlFor={id} className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
       <select
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-md border border-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"

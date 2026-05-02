@@ -24,6 +24,7 @@ const SUPPORTED_BLOCK_TYPES = [
   'text_content',
   'split_content',
   'brand_story',
+  'journal_preview',
 ];
 
 @Injectable()

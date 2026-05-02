@@ -75,6 +75,8 @@ export interface PromotionBannerContent {
   cta_url?: string;
   template: 'full-width' | 'card' | 'timer';
   end_date?: string;
+  /** @deprecated 기존 CMS 데이터 호환용. 새 저장 경로는 end_date 입니다. */
+  expires_at?: string;
 }
 
 export interface TextContentContent {

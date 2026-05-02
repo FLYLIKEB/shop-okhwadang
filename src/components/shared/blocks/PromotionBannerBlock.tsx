@@ -13,7 +13,8 @@ interface Props {
 }
 
 export default function PromotionBannerBlock({ content }: Props) {
-  const { title, subtitle, image_url, cta_text, cta_url, template, end_date } = content;
+  const { title, subtitle, image_url, cta_text, cta_url, template, end_date, expires_at } = content;
+  const countdownEndDate = end_date ?? expires_at;
   const { ref, visible } = useScrollAnimation<HTMLElement>();
   const t = useTranslations('promotion');
 
@@ -23,7 +24,7 @@ export default function PromotionBannerBlock({ content }: Props) {
         <p className="text-sm tracking-widest text-[#B8976A] uppercase mb-3">{t('limitedTime')}</p>
         <h2 className="text-2xl font-display font-medium">{title}</h2>
         {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
-        {end_date && <CountdownTimer endDate={end_date} />}
+        {countdownEndDate && <CountdownTimer endDate={countdownEndDate} />}
         {cta_text && cta_url && (
           <Link
             href={isSafeUrl(cta_url) ? cta_url : '#'}

@@ -10,6 +10,11 @@ interface PromotionBannerFieldsProps {
 
 export default function PromotionBannerFields({ content, onChange }: PromotionBannerFieldsProps) {
   const update = createContentUpdater(content, onChange);
+  const updateEndDate = (value: string) => {
+    const nextContent = { ...content };
+    delete nextContent.expires_at;
+    onChange({ ...nextContent, end_date: value });
+  };
 
   return (
     <>
@@ -21,7 +26,12 @@ export default function PromotionBannerFields({ content, onChange }: PromotionBa
       <StringField label="CTA 텍스트" value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
       <StringField label="CTA 텍스트 (EN)" value={(content.cta_text_en as string) ?? ''} onChange={(v) => update('cta_text_en', v)} placeholder="영문 CTA" />
       <StringField label="CTA URL" value={(content.cta_url as string) ?? ''} onChange={(v) => update('cta_url', v)} />
-      <StringField label="종료일" value={(content.expires_at as string) ?? ''} onChange={(v) => update('expires_at', v)} placeholder="YYYY-MM-DD" />
+      <StringField
+        label="종료일"
+        value={((content.end_date as string) ?? (content.expires_at as string)) ?? ''}
+        onChange={updateEndDate}
+        placeholder="YYYY-MM-DD"
+      />
       <SelectField
         label="템플릿"
         value={(content.template as string) ?? 'full-width'}
