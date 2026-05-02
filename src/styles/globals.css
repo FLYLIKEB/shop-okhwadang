@@ -31,17 +31,19 @@
   --font-size-heading-1: 1.5rem;   /* 24px mobile */
   --font-size-heading-2: 1.25rem;  /* 20px mobile */
   --font-size-heading-3: 1.125rem; /* 18px mobile */
-  --font-size-title: 1rem;         /* 16px mobile */
-  --font-size-body: 1rem;          /* 16px */
+  --font-size-title: var(--db-font-size-base, 1rem);         /* 16px mobile */
+  --font-size-body: var(--db-font-size-base, 1rem);          /* 16px */
   --font-size-body-sm: 0.875rem;   /* 14px */
   --font-size-label: 0.625rem;      /* 10px */
   --font-size-label-sm: 0.5625rem;  /* 9px */
   --font-size-button: 0.875rem;    /* 14px */
 
-  /* Typography — line-height scale */
+  /* Typography — line-height and weight scale */
   --line-height-heading: 1.25;
-  --line-height-body: 1.6;
+  --line-height-body: var(--db-line-height-base, 1.6);
   --line-height-compact: 1.1;
+  --font-weight-normal: var(--db-font-weight-normal, 400);
+  --font-weight-bold: var(--db-font-weight-bold, 600);
 }
 
 /* ── Default light theme colors in :root (for non-Korean locales) ── */
@@ -96,9 +98,14 @@
 
   /* ── Layout rhythm tokens ── */
   --layout-max-width: 80rem; /* 1280px */
-  --layout-page-y: 2rem;
-  --layout-section-y: 1.5rem;
-  --layout-grid-gap: 1.5rem;
+  --spacing-xs: var(--db-spacing-xs, 0.25rem);
+  --spacing-sm: var(--db-spacing-sm, 0.5rem);
+  --spacing-md: var(--db-spacing-md, 1rem);
+  --spacing-lg: var(--db-spacing-lg, 1.5rem);
+  --spacing-xl: var(--db-spacing-xl, 2rem);
+  --layout-page-y: var(--spacing-xl);
+  --layout-section-y: var(--spacing-lg);
+  --layout-grid-gap: var(--spacing-lg);
   --layout-text-max: 42rem;
 
   /* ── Admin density / contrast tokens ── */
@@ -110,7 +117,7 @@
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
-  --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-body: var(--db-font-family-base, 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif);
   --font-mono: 'DM Mono', 'Courier New', monospace;
 
   /* ── Height tokens for arbitrary value replacements ── */
@@ -133,11 +140,11 @@
     --font-size-heading-1: 2.25rem;  /* 36px desktop */
     --font-size-heading-2: 1.5rem;   /* 24px desktop */
     --font-size-heading-3: 1.25rem;  /* 20px desktop */
-    --font-size-title: 1.125rem;     /* 18px desktop */
+    --font-size-title: var(--db-font-size-base, 1.125rem);     /* 18px desktop */
     --font-size-heading-0: 3rem;     /* 48px desktop - hero only */
-    --layout-page-y: 2.5rem;
-    --layout-section-y: 2rem;
-    --layout-grid-gap: 2rem;
+    --layout-page-y: var(--spacing-xl, 2.5rem);
+    --layout-section-y: var(--spacing-xl, 2rem);
+    --layout-grid-gap: var(--spacing-xl, 2rem);
   }
 }
 
@@ -158,9 +165,9 @@
 .mobile-sticky-cta {
   left: 0;
   right: 0;
-  padding-top: 0.75rem;
-  padding-inline: 1rem;
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  padding-top: var(--spacing-sm);
+  padding-inline: var(--spacing-md);
+  padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom));
 }
 
 .mobile-sticky-inner {
@@ -188,7 +195,7 @@ body.overflow-hidden .mobile-sticky-cta {
   width: 100%;
   max-width: var(--layout-max-width);
   margin-inline: auto;
-  padding-inline: 1rem;
+  padding-inline: var(--spacing-md);
 }
 
 @utility layout-page {
@@ -240,34 +247,34 @@ body.overflow-hidden .mobile-sticky-cta {
 @utility typo-h0 {
   font-size: var(--font-size-heading-0, 2rem);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.02em;
 }
 
 @utility typo-h1 {
   font-size: var(--font-size-heading-1);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.02em;
 }
 
 @utility typo-h2 {
   font-size: var(--font-size-heading-2);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.01em;
 }
 
 @utility typo-h3 {
   font-size: var(--font-size-heading-3);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
 }
 
 @utility typo-title {
   font-size: var(--font-size-title);
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-compact);
 }
 
@@ -286,13 +293,13 @@ body.overflow-hidden .mobile-sticky-cta {
 @utility typo-label {
   font-size: var(--font-size-label);
   line-height: var(--line-height-compact);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
 }
 
 @utility typo-button {
   font-size: var(--font-size-button);
   line-height: var(--line-height-compact);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
 }
 
 @utility typo-title-sm {
@@ -306,7 +313,7 @@ body.overflow-hidden .mobile-sticky-cta {
 @utility typo-price {
   font-size: 1.0625rem;
   line-height: 1.15;
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.01em;
   font-family: var(--font-body);
   font-variant-numeric: tabular-nums;
@@ -315,7 +322,7 @@ body.overflow-hidden .mobile-sticky-cta {
 @utility typo-price-lg {
   font-size: 1.5rem;
   line-height: 1.1;
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.015em;
   font-family: var(--font-body);
   font-variant-numeric: tabular-nums;
@@ -324,7 +331,7 @@ body.overflow-hidden .mobile-sticky-cta {
 @utility typo-price-original {
   font-size: 0.75rem;
   line-height: 1.1;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   color: var(--color-muted-foreground);
   text-decoration: line-through;
 }
@@ -332,13 +339,14 @@ body.overflow-hidden .mobile-sticky-cta {
 @utility typo-price-discount {
   font-size: 0.75rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: var(--db-font-weight-bold, 700);
   letter-spacing: 0.02em;
 }
 
 /* ── Base styles ───────────────────────────────────────────────── */
 body {
   font-family: var(--font-body);
+  font-weight: var(--font-weight-normal);
   color: var(--color-foreground);
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
@@ -349,7 +357,7 @@ h1 {
   font-family: var(--font-display);
   font-size: var(--font-size-heading-1);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.02em;
 }
 
@@ -357,7 +365,7 @@ h2 {
   font-family: var(--font-display);
   font-size: var(--font-size-heading-2);
   line-height: var(--line-height-heading);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   letter-spacing: -0.01em;
 }
 
@@ -393,7 +401,7 @@ h3 {
 .spec-data {
   font-family: var(--font-mono);
   font-size: 0.875rem;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   letter-spacing: 0.025em;
 }
 
@@ -401,7 +409,7 @@ h3 {
 .data-label {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--color-muted-foreground);

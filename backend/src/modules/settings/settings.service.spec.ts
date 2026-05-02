@@ -166,9 +166,28 @@ describe('SettingsService', () => {
       await service.resetToDefaults();
       expect(mockDataSource.transaction).toHaveBeenCalled();
       expect(mockManager.query).toHaveBeenCalledWith(
-        'UPDATE site_settings SET value = default_value',
+        'UPDATE site_settings SET value = default_value, value_en = NULL, value_ja = NULL, value_zh = NULL',
       );
       expect(mockCache.delPattern).toHaveBeenCalledWith('settings:*');
+    });
+
+    it('should clear locale overrides so EN/legacy locales fall back to defaults', async () => {
+      const mockManager = {
+        query: jest.fn(),
+      };
+      mockDataSource.transaction.mockImplementation(async (cb: (m: unknown) => Promise<void>) => cb(mockManager));
+
+      await service.resetToDefaults();
+
+      expect(mockManager.query).toHaveBeenCalledWith(
+        expect.stringContaining('value_en = NULL'),
+      );
+      expect(mockManager.query).toHaveBeenCalledWith(
+        expect.stringContaining('value_ja = NULL'),
+      );
+      expect(mockManager.query).toHaveBeenCalledWith(
+        expect.stringContaining('value_zh = NULL'),
+      );
     });
 
     it('should propagate DB errors', async () => {
