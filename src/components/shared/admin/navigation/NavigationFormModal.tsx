@@ -7,6 +7,7 @@ import { GROUP_INFO, type NavGroup } from './navigationGroups';
 
 export interface NavigationFormData {
   label: string;
+  labelEn: string;
   url: string;
   group: NavGroup;
   parent_id: number | null;
@@ -32,13 +33,14 @@ export default function NavigationFormModal({
 }: NavigationFormModalProps) {
   const defaults: NavigationFormData = {
     label: '',
+    labelEn: '',
     url: '',
     group,
     parent_id: null,
     is_active: true,
   };
   const modalInitial: NavigationFormData | null = initial
-    ? { label: initial.label, url: initial.url, group, parent_id: initial.parent_id, is_active: initial.is_active }
+    ? { label: initial.label, labelEn: initial.labelEn ?? '', url: initial.url, group, parent_id: initial.parent_id, is_active: initial.is_active }
     : null;
   const { formData, setFormData, loading, handleSubmit } = useFormModal(defaults, modalInitial, open);
 
@@ -78,6 +80,22 @@ export default function NavigationFormModal({
               className="w-full rounded-md border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <p className="mt-1 text-xs text-muted-foreground">쇼핑몰 메뉴에 표시될 이름입니다.</p>
+          </div>
+
+          <div>
+            <label htmlFor="nav-label-en" className="mb-1 block text-sm font-medium">
+              영문 메뉴명
+            </label>
+            <input
+              id="nav-label-en"
+              type="text"
+              value={formData.labelEn}
+              onChange={(e) => setFormData({ ...formData, labelEn: e.target.value })}
+              maxLength={100}
+              placeholder="예: Products, Events, Customer Service"
+              className="w-full rounded-md border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">/en 화면에 표시될 이름입니다. 비워두면 기본 메뉴명이 표시됩니다.</p>
           </div>
 
           <div>

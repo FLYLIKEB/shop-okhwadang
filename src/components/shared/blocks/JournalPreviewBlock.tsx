@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { journalsApi, type Journal, JournalCategory } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
@@ -29,6 +29,7 @@ const PREVIEW_FALLBACK_IMAGES = [
 ] as const;
 
 export default function JournalPreviewBlock({ content }: Props) {
+  const locale = useLocale();
   const tCommon = useTranslations('common');
   const tCategory = useTranslations('journalCategories');
   const { title, limit = 6, category, more_href, prefetched_journals } = content;
@@ -37,10 +38,10 @@ export default function JournalPreviewBlock({ content }: Props) {
   const { data: journals, loading } = useBlockData<Journal>({
     prefetched: prefetched_journals,
     fetch: async () => {
-      const data = await journalsApi.getAll(category);
+      const data = await journalsApi.getAll(category, locale);
       return data.slice(0, limit);
     },
-    deps: [category, limit],
+    deps: [category, limit, locale],
   });
 
   if (loading) {

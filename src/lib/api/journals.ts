@@ -37,7 +37,10 @@ export interface CreateJournalData {
 }
 
 export const journalsApi = {
-  getAll: (category?: JournalCategory) =>
-    apiClient.get<Journal[]>('/journals', category ? { params: { category } } : undefined),
-  getBySlug: (slug: string) => apiClient.get<Journal>(`/journals/${slug}`),
+  getAll: (category?: JournalCategory, locale?: string) =>
+    apiClient.get<Journal[]>('/journals', {
+      params: { category, locale },
+    }),
+  getBySlug: (slug: string, locale?: string) =>
+    apiClient.get<Journal>(`/journals/${slug}`, { params: { locale } }),
 };

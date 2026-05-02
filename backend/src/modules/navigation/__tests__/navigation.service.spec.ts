@@ -134,13 +134,14 @@ describe('NavigationService', () => {
 
   describe('create', () => {
     it('네비게이션 항목을 생성한다', async () => {
-      const dto = { group: 'gnb' as const, label: '상품', url: '/products' };
+      const dto = { group: 'gnb' as const, label: '상품', labelEn: 'Products', url: '/products' };
       const created = { id: 1, ...dto, sort_order: 0, is_active: true, parent_id: null };
       mockRepository.create.mockReturnValue(created);
       mockRepository.save.mockResolvedValue(created);
 
       const result = await service.create(dto);
       expect(result).toEqual(created);
+      expect(mockRepository.create).toHaveBeenCalledWith(dto);
       expect(mockCacheService.delPattern).toHaveBeenCalledWith('navigation:active:*');
     });
 
@@ -177,10 +178,11 @@ describe('NavigationService', () => {
     it('네비게이션 항목을 수정한다', async () => {
       const item = { id: 1, group: 'gnb', label: '기존', url: '/old', parent_id: null };
       mockRepository.findOne.mockResolvedValue(item);
-      mockRepository.save.mockResolvedValue({ ...item, label: '수정됨' });
+      mockRepository.save.mockResolvedValue({ ...item, label: '수정됨', labelEn: 'Updated' });
 
-      const result = await service.update(1, { label: '수정됨' });
+      const result = await service.update(1, { label: '수정됨', labelEn: 'Updated' });
       expect(result.label).toBe('수정됨');
+      expect(result.labelEn).toBe('Updated');
       expect(mockCacheService.delPattern).toHaveBeenCalledWith('navigation:active:*');
     });
 

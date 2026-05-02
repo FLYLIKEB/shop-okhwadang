@@ -28,7 +28,7 @@ describe('useNavigation', () => {
 
   it('API에서 locale 포함 네비게이션 항목을 가져온다', async () => {
     const apiItems = [
-      { id: 1, group: 'gnb', label: 'API 상품', url: '/products', sort_order: 0, is_active: true, parent_id: null, children: [] },
+      { id: 1, group: 'gnb', label: 'API 상품', labelEn: 'API Products', url: '/products', sort_order: 0, is_active: true, parent_id: null, children: [] },
     ];
     mockGetByGroup.mockResolvedValue(apiItems);
 

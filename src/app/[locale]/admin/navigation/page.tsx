@@ -58,6 +58,7 @@ export default function AdminNavigationPage() {
 
   const handleCreate = async (data: {
     label: string;
+    labelEn?: string | null;
     url: string;
     group: NavGroup;
     parent_id: number | null;
@@ -74,6 +75,7 @@ export default function AdminNavigationPage() {
 
   const handleUpdate = async (id: number, data: {
     label?: string;
+    labelEn?: string | null;
     url?: string;
     is_active?: boolean;
     parent_id?: number | null;
