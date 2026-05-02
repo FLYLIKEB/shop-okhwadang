@@ -13,7 +13,7 @@ vi.mock('@/components/shared/admin/navigation/NavigationFormModal', () => ({
   }: {
     open: boolean;
     onClose: () => void;
-    onSubmit: (data: { label: string; url: string; parent_id: number | null; is_active: boolean }) => Promise<void>;
+    onSubmit: (data: { label: string; labelEn: string; url: string; parent_id: number | null; is_active: boolean }) => Promise<void>;
     initial: { id?: number } | null;
   }) =>
     open ? (
@@ -22,7 +22,7 @@ vi.mock('@/components/shared/admin/navigation/NavigationFormModal', () => ({
         <button
           type="button"
           onClick={() =>
-            void onSubmit({ label: '신규', url: '/new', parent_id: null, is_active: true })
+            void onSubmit({ label: '신규', labelEn: 'New', url: '/new', parent_id: null, is_active: true })
           }
         >
           mock-submit
@@ -58,11 +58,11 @@ vi.mock('@/components/shared/admin/navigation/SortableNavigationRow', () => ({
 }));
 
 const sampleItems: NavigationItem[] = [
-  { id: 1, group: 'gnb', label: '홈', url: '/', sort_order: 0, is_active: true, parent_id: null, children: [] },
-  { id: 2, group: 'gnb', label: '상품', url: '/products', sort_order: 1, is_active: true, parent_id: null, children: [
-    { id: 3, group: 'gnb', label: '신상품', url: '/products?new=1', sort_order: 0, is_active: true, parent_id: 2, children: [] },
+  { id: 1, group: 'gnb', label: '홈', labelEn: 'Home', url: '/', sort_order: 0, is_active: true, parent_id: null, children: [] },
+  { id: 2, group: 'gnb', label: '상품', labelEn: 'Products', url: '/products', sort_order: 1, is_active: true, parent_id: null, children: [
+    { id: 3, group: 'gnb', label: '신상품', labelEn: 'New Arrivals', url: '/products?new=1', sort_order: 0, is_active: true, parent_id: 2, children: [] },
   ] },
-  { id: 4, group: 'gnb', label: '이벤트', url: '/events', sort_order: 2, is_active: false, parent_id: null, children: [] },
+  { id: 4, group: 'gnb', label: '이벤트', labelEn: null, url: '/events', sort_order: 2, is_active: false, parent_id: null, children: [] },
 ];
 
 const baseHandlers = () => ({
@@ -114,6 +114,7 @@ describe('NavigationEditor', () => {
     await userEvent.click(screen.getByText('mock-submit'));
     expect(handlers.onCreate).toHaveBeenCalledWith({
       label: '신규',
+      labelEn: 'New',
       url: '/new',
       parent_id: null,
       is_active: true,
@@ -128,7 +129,7 @@ describe('NavigationEditor', () => {
     await userEvent.click(screen.getByText('mock-submit'));
     expect(handlers.onUpdate).toHaveBeenCalledWith(
       1,
-      expect.objectContaining({ label: '신규', url: '/new', parent_id: null, is_active: true }),
+      expect.objectContaining({ label: '신규', labelEn: 'New', url: '/new', parent_id: null, is_active: true }),
     );
   });
 

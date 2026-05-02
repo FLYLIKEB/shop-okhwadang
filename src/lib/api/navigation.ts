@@ -4,6 +4,7 @@ export interface NavigationItem {
   id: number;
   group: 'gnb' | 'sidebar' | 'footer';
   label: string;
+  labelEn: string | null;
   url: string;
   sort_order: number;
   is_active: boolean;
@@ -24,7 +25,7 @@ export interface AnnouncementBarItem {
 
 export const navigationApi = {
   getByGroup: (group: 'gnb' | 'sidebar' | 'footer', locale?: string) =>
-    apiClient.get<NavigationItem[]>(`/navigation?group=${group}${locale ? `&locale=${locale}` : ''}`),
+    apiClient.get<NavigationItem[]>('/navigation', { params: { group, locale } }),
 };
 
 export const announcementBarsApi = {

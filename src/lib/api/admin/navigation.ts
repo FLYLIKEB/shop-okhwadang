@@ -3,10 +3,10 @@ import type { NavigationItem, AnnouncementBarItem } from '../navigation';
 
 export const adminNavigationApi = {
   getByGroup: (group: 'gnb' | 'sidebar' | 'footer') =>
-    apiClient.get<NavigationItem[]>(`/admin/navigation?group=${group}`),
-  create: (data: { group: string; label: string; url: string; sort_order?: number; is_active?: boolean; parent_id?: number | null }) =>
+    apiClient.get<NavigationItem[]>('/admin/navigation', { params: { group } }),
+  create: (data: { group: string; label: string; labelEn?: string | null; url: string; sort_order?: number; is_active?: boolean; parent_id?: number | null }) =>
     apiClient.post<NavigationItem>('/navigation', data),
-  update: (id: number, data: { label?: string; url?: string; sort_order?: number; is_active?: boolean; parent_id?: number | null }) =>
+  update: (id: number, data: { label?: string; labelEn?: string | null; url?: string; sort_order?: number; is_active?: boolean; parent_id?: number | null }) =>
     apiClient.patch<NavigationItem>(`/navigation/${id}`, data),
   remove: (id: number) =>
     apiClient.delete<void>(`/navigation/${id}`),

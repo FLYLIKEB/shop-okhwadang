@@ -19,6 +19,12 @@ export class CreateNavigationItemDto {
   @MaxLength(100)
   label!: string;
 
+  @ApiProperty({ example: 'Products', description: '영문 메뉴 레이블', required: false, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  labelEn?: string | null;
+
   @ApiProperty({ example: '/products', description: '링크 URL' })
   @IsString()
   @MaxLength(500)

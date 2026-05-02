@@ -21,13 +21,16 @@ import NavigationPreview from './navigation/NavigationPreview';
 import SortableNavigationRow from './navigation/SortableNavigationRow';
 import NavigationFormModal, { type NavigationFormData } from './navigation/NavigationFormModal';
 
+type NavigationSubmitData = Omit<NavigationFormData, 'labelEn'> & { labelEn: string | null };
+
 interface NavigationEditorProps {
   group: NavGroup;
   items: NavigationItem[];
   onReload: () => Promise<void>;
-  onCreate: (data: NavigationFormData) => Promise<void>;
+  onCreate: (data: NavigationSubmitData) => Promise<void>;
   onUpdate: (id: number, data: {
     label?: string;
+    labelEn?: string | null;
     url?: string;
     is_active?: boolean;
     parent_id?: number | null;
@@ -102,12 +105,13 @@ export default function NavigationEditor({
     if (editTarget) {
       await onUpdate(Number(editTarget.id), {
         label: data.label,
+        labelEn: data.labelEn.trim() || null,
         url: data.url,
         parent_id: data.parent_id,
         is_active: data.is_active,
       });
     } else {
-      await onCreate(data);
+      await onCreate({ ...data, labelEn: data.labelEn.trim() || null });
     }
     await onReload();
   };
