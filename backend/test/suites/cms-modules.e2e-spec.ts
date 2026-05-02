@@ -287,7 +287,7 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
       const promotionRes = await request(app.getHttpServer())
         .post('/api/admin/promotions')
         .set('Cookie', adminCookies)
-        .send({ title: promotionTitle, type: 'event', startsAt: '2026-04-01T00:00:00.000Z', endsAt: '2026-05-01T00:00:00.000Z', isActive: true })
+        .send({ title: promotionTitle, type: 'event', startsAt: '2026-04-01T00:00:00.000Z', endsAt: '2099-05-01T00:00:00.000Z', isActive: true })
         .expect(201);
       promotionId = Number((promotionRes.body as { id: number }).id);
 

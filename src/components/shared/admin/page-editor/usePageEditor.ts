@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
-import { adminPagesApi, pagesApi } from '@/lib/api';
+import { adminPagesApi } from '@/lib/api';
 import type { Page, PageBlock } from '@/lib/api';
 import type { DraftState, DraftAction } from '@/components/shared/admin/page-editor/useDraftReducer';
 
@@ -39,7 +39,7 @@ export function usePageEditor({
         if (!confirmed) return;
       }
       try {
-        const fullPage = await pagesApi.getBySlug(page.slug);
+        const fullPage = await adminPagesApi.getById(page.id);
         setSelectedPage(fullPage);
         setSelectedBlockId(null);
         dispatch({ type: 'INIT', blocks: fullPage.blocks, title: fullPage.title, slug: fullPage.slug });
@@ -88,9 +88,11 @@ export function usePageEditor({
       const updated = await adminPagesApi.update(selectedPage.id, {
         is_published: !selectedPage.is_published,
       } as Partial<Page>);
-      setSelectedPage(updated);
+      const fullPage = await adminPagesApi.getById(updated.id);
+      setSelectedPage(fullPage);
+      dispatch({ type: 'INIT', blocks: fullPage.blocks, title: fullPage.title, slug: fullPage.slug });
       await loadPages();
-      toast.success(updated.is_published ? '페이지가 공개되었습니다.' : '페이지가 비공개로 전환되었습니다.');
+      toast.success(fullPage.is_published ? '페이지가 공개되었습니다.' : '페이지가 비공개로 전환되었습니다.');
     } catch (err) {
       toast.error(handleApiError(err, '상태 변경에 실패했습니다.'));
     }
@@ -146,22 +148,10 @@ export function usePageEditor({
 
       toast.success('저장되었습니다.');
 
-      // Reload the page data via admin API to avoid slug issues
-      const allPages = await adminPagesApi.getAll();
-      const reloadedMeta = allPages.find((p) => p.id === selectedPage.id);
-      if (reloadedMeta?.slug) {
-        const reloaded = await pagesApi.getBySlug(reloadedMeta.slug);
-        setSelectedPage(reloaded);
-        dispatch({ type: 'INIT', blocks: reloaded.blocks, title: reloaded.title, slug: reloaded.slug });
-      } else {
-        // fallback: clear dirty flags to prevent duplicate save
-        const cleanBlocks: PageBlock[] = draft.blocks
-          .filter((b) => !b._isNew || b.id > 0)
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          .map(({ _isNew, _isModified, ...b }) => b as PageBlock);
-        setSelectedPage((prev) => prev ? { ...prev, title: draft.title, slug: draft.slug } : prev);
-        dispatch({ type: 'INIT', blocks: cleanBlocks, title: draft.title, slug: draft.slug });
-      }
+      // Reload the page data via admin API so private pages and hidden blocks remain editable.
+      const reloaded = await adminPagesApi.getById(selectedPage.id);
+      setSelectedPage(reloaded);
+      dispatch({ type: 'INIT', blocks: reloaded.blocks, title: reloaded.title, slug: reloaded.slug });
       await loadPages();
     } catch (err) {
       toast.error(handleApiError(err, '저장에 실패했습니다.'));

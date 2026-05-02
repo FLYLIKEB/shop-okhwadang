@@ -16,6 +16,7 @@ export interface CreateBlockData {
 
 export const adminPagesApi = {
   getAll: () => apiClient.get<Page[]>('/admin/pages'),
+  getById: (id: number) => apiClient.get<Page>(`/admin/pages/${id}`),
   create: (data: CreatePageData) => apiClient.post<Page>('/pages', data),
   update: (id: number, data: Partial<Page>) =>
     apiClient.patch<Page>(`/pages/${id}`, data),
