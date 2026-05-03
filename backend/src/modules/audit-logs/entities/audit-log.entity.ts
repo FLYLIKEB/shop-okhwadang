@@ -67,6 +67,12 @@ export class AuditLog {
   @Column({ type: 'varchar', length: 500, nullable: true })
   userAgent!: string | null;
 
+  @Column({ type: 'boolean', default: false })
+  legalHold!: boolean;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  legalHoldReason!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 }

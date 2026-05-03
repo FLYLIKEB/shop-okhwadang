@@ -18,11 +18,13 @@ export function registerAuditLogsSuite(getApp: () => INestApplication) {
   describe('Audit logs (e2e)', () => {
     const unique = Date.now();
     const adminEmail = `audit-admin-${unique}@test.com`;
+    const superAdminEmail = `audit-super-admin-${unique}@test.com`;
     const userEmail = `audit-user-${unique}@test.com`;
     const createdUserIds: number[] = [];
     const createdAuditLogIds: number[] = [];
 
     let adminCookies: string[];
+    let superAdminCookies: string[];
     let userCookies: string[];
     let adminUserId: number;
 
@@ -40,6 +42,15 @@ export function registerAuditLogsSuite(getApp: () => INestApplication) {
       adminUserId = Number(adminInsert.insertId);
       createdUserIds.push(adminUserId);
       adminCookies = buildAccessCookie(jwtService, adminUserId, adminEmail, 'admin');
+
+      const superAdminInsert = await dataSource.query(
+        `INSERT INTO users (email, password, name, role, is_active, failed_login_attempts, is_email_verified, email_verified_at, created_at, updated_at)
+         VALUES (?, ?, ?, 'super_admin', 1, 0, 1, NOW(), NOW(), NOW())`,
+        [superAdminEmail, passwordHash, '최고 관리자'],
+      );
+      const superAdminUserId = Number(superAdminInsert.insertId);
+      createdUserIds.push(superAdminUserId);
+      superAdminCookies = buildAccessCookie(jwtService, superAdminUserId, superAdminEmail, 'super_admin');
 
       const userInsert = await dataSource.query(
         `INSERT INTO users (email, password, name, role, is_active, failed_login_attempts, is_email_verified, email_verified_at, created_at, updated_at)
@@ -79,11 +90,11 @@ export function registerAuditLogsSuite(getApp: () => INestApplication) {
     });
 
     describe('GET /api/admin/audit-logs', () => {
-      it('관리자 → 200 감사 로그 목록과 페이지네이션 반환', async () => {
+      it('super_admin → 200 감사 로그 목록과 페이지네이션 반환', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/admin/audit-logs')
           .query({ actorId: adminUserId, action: AuditAction.ORDER_STATUS_UPDATE, resourceType: 'order' })
-          .set('Cookie', adminCookies)
+          .set('Cookie', superAdminCookies)
           .expect(200);
 
         const body = res.body as {
@@ -103,6 +114,13 @@ export function registerAuditLogsSuite(getApp: () => INestApplication) {
         });
       });
 
+      it('일반 admin → 403', async () => {
+        await request(app.getHttpServer())
+          .get('/api/admin/audit-logs')
+          .set('Cookie', adminCookies)
+          .expect(403);
+      });
+
       it('일반 user → 403', async () => {
         await request(app.getHttpServer())
           .get('/api/admin/audit-logs')
@@ -120,7 +138,7 @@ export function registerAuditLogsSuite(getApp: () => INestApplication) {
         await request(app.getHttpServer())
           .get('/api/admin/audit-logs')
           .query({ action: 'NOT_A_REAL_ACTION' })
-          .set('Cookie', adminCookies)
+          .set('Cookie', superAdminCookies)
           .expect(400);
       });
     });

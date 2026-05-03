@@ -11,6 +11,7 @@ describe('AuditLogService', () => {
     save: jest.fn(),
     findAndCount: jest.fn(),
     find: jest.fn(),
+    delete: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -61,6 +62,8 @@ describe('AuditLogService', () => {
         afterJson: { status: 'paid' },
         ip: '192.168.1.1',
         userAgent: 'Mozilla/5.0',
+        legalHold: false,
+        legalHoldReason: null,
       });
       expect(mockRepository.save).toHaveBeenCalledWith(mockEntry);
       expect(result).toEqual(mockEntry);
@@ -86,6 +89,30 @@ describe('AuditLogService', () => {
         expect.objectContaining({ resourceId: null }),
       );
       expect(result.resourceId).toBeNull();
+    });
+
+    it('masks sensitive fields before saving direct audit logs', async () => {
+      const dto: CreateAuditLogDto = {
+        actorId: 1,
+        actorRole: 'admin',
+        action: AuditAction.LOGIN_FAILURE,
+        resourceType: 'auth',
+        beforeJson: { email: 'admin@example.com', password: 'plain', nested: { apiKey: 'secret-key' } },
+        afterJson: { token: 'jwt', reason: 'invalid_password' },
+      };
+
+      const mockEntry = { id: 1, ...dto, createdAt: new Date() };
+      mockRepository.create.mockReturnValue(mockEntry as AuditLog);
+      mockRepository.save.mockResolvedValue(mockEntry as AuditLog);
+
+      await service.log(dto);
+
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          beforeJson: { email: 'admin@example.com', password: '[REDACTED]', nested: { apiKey: '[REDACTED]' } },
+          afterJson: { token: '[REDACTED]', reason: 'invalid_password' },
+        }),
+      );
     });
   });
 
@@ -206,6 +233,22 @@ describe('AuditLogService', () => {
         take: 20,
       });
       expect(result).toEqual({ data: mockLogs, total: 2 });
+    });
+  });
+
+
+  describe('retention cleanup', () => {
+    it('deletes logs older than 3 years while preserving legal holds', async () => {
+      mockRepository.delete.mockResolvedValue({ affected: 3 });
+      const now = new Date('2026-05-03T00:00:00.000Z');
+
+      const result = await service.purgeExpiredLogs(now);
+
+      expect(mockRepository.delete).toHaveBeenCalledWith({
+        createdAt: expect.any(Object),
+        legalHold: false,
+      });
+      expect(result).toEqual({ deleted: 3, cutoff: new Date('2023-05-03T00:00:00.000Z') });
     });
   });
 });

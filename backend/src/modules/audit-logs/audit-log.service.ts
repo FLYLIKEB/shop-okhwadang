@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Repository, FindOptionsWhere, Between, LessThanOrEqual, LessThan, MoreThanOrEqual } from 'typeorm';
 import { AuditLog, AuditAction } from './entities/audit-log.entity';
+import { redactSensitiveFields } from '../../common/utils/redaction.util';
 
 export interface AuditLogQuery {
   actorId?: number;
@@ -26,6 +28,8 @@ export interface CreateAuditLogDto {
   afterJson?: Record<string, unknown> | null;
   ip?: string | null;
   userAgent?: string | null;
+  legalHold?: boolean;
+  legalHoldReason?: string | null;
 }
 
 @Injectable()
@@ -44,10 +48,12 @@ export class AuditLogService {
       action: dto.action,
       resourceType: dto.resourceType,
       resourceId: dto.resourceId ?? null,
-      beforeJson: dto.beforeJson ?? null,
-      afterJson: dto.afterJson ?? null,
+      beforeJson: redactSensitiveFields(dto.beforeJson ?? null),
+      afterJson: redactSensitiveFields(dto.afterJson ?? null),
       ip: dto.ip ?? null,
       userAgent: dto.userAgent ?? null,
+      legalHold: dto.legalHold ?? false,
+      legalHoldReason: dto.legalHoldReason ?? null,
     });
     const saved = await this.auditLogRepository.save(entry);
     this.logger.log(`Audit log created: ${dto.action} by ${dto.actorId} on ${dto.resourceType}`);
@@ -103,5 +109,23 @@ export class AuditLogService {
       take: limit,
     });
     return { data, total };
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async purgeExpiredLogsJob(): Promise<void> {
+    const { deleted, cutoff } = await this.purgeExpiredLogs();
+    this.logger.log(`Audit log retention cleanup completed: deleted=${deleted}, cutoff=${cutoff.toISOString()}`);
+  }
+
+  async purgeExpiredLogs(now = new Date()): Promise<{ deleted: number; cutoff: Date }> {
+    const cutoff = new Date(now);
+    cutoff.setFullYear(cutoff.getFullYear() - 3);
+
+    const result = await this.auditLogRepository.delete({
+      createdAt: LessThan(cutoff),
+      legalHold: false,
+    });
+
+    return { deleted: result.affected ?? 0, cutoff };
   }
 }

@@ -15,7 +15,7 @@ import { AuditLogQueryDto } from './dto/audit-log-query.dto';
 
 @ApiTags('관리자 - 감사 로그')
 @Controller('admin/audit-logs')
-@Roles('admin', 'super_admin')
+@Roles('super_admin')
 export class AuditLogController {
   constructor(private readonly auditLogService: AuditLogService) {}
 
