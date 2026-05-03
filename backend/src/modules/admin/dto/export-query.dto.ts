@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsIn } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsIn, MaxLength } from 'class-validator';
 
 export class ExportQueryDto {
   @ApiProperty({
@@ -28,4 +28,10 @@ export class ExportQueryDto {
   @IsString()
   @IsIn(['true', 'false'])
   mask?: string;
+
+  @ApiProperty({ example: '월말 정산 검증', description: '다운로드 사유(감사 로그 기록용)', required: true })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  reason?: string;
 }

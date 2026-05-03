@@ -50,6 +50,7 @@ export class AuditLogInterceptor implements NestInterceptor {
       const request = context.switchToHttp().getRequest<{
         user?: { id?: number; role?: string };
         body?: Record<string, unknown>;
+        query?: Record<string, unknown>;
         params?: Record<string, string>;
         ip?: string;
         headers?: Record<string, string | string[] | undefined>;
@@ -64,7 +65,10 @@ export class AuditLogInterceptor implements NestInterceptor {
 
       const resourceId = request.params?.id ? parseInt(request.params.id, 10) || null : null;
 
-      const beforeJson = error ? null : redactSensitiveFields(request.body ?? null);
+      const beforeJson = error ? null : redactSensitiveFields({
+        ...(request.query ?? {}),
+        ...(request.body ?? {}),
+      });
       const afterJson = error
         ? null
         : redactSensitiveFields(this.extractResponseData(responseBody));

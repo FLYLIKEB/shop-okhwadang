@@ -52,6 +52,27 @@ describe('AuditLogInterceptor', () => {
     } as unknown as ExecutionContext;
   }
 
+  function createMockExecutionContextWithQuery(
+    query: Record<string, unknown>,
+    user: { id: number; role: string } = { id: 1, role: 'admin' },
+  ): ExecutionContext {
+    return {
+      switchToHttp: () => ({
+        getRequest: () => ({
+          user,
+          query,
+          body: {},
+          params: {},
+          ip: '192.168.1.1',
+          headers: { 'user-agent': 'Mozilla/5.0' },
+          socket: { remoteAddress: '192.168.1.1' },
+        }),
+      }),
+      getHandler: () => ({}),
+      getParamTypes: () => [],
+    } as unknown as ExecutionContext;
+  }
+
   function createMockCallHandler(responseBody?: unknown): CallHandler {
     return {
       handle: () => of(responseBody),
@@ -198,4 +219,39 @@ describe('AuditLogInterceptor', () => {
       },
     });
   });
+  it('records export download reason and target scope in audit metadata', (done) => {
+    mockReflector.get.mockReturnValue({
+      action: AuditAction.EXPORT_ORDERS,
+      resourceType: 'order',
+    });
+    const context = createMockExecutionContextWithQuery({
+      reason: '월말 정산 검증',
+      from: '2026-04-01',
+      to: '2026-04-30',
+      format: 'csv',
+      mask: 'true',
+    });
+    const handler = createMockCallHandler(null);
+
+    auditLogService.log.mockResolvedValue({ id: 1 } as never);
+
+    interceptor.intercept(context, handler).subscribe({
+      next: () => {
+        expect(auditLogService.log).toHaveBeenCalledWith(
+          expect.objectContaining({
+            action: AuditAction.EXPORT_ORDERS,
+            beforeJson: expect.objectContaining({
+              reason: '월말 정산 검증',
+              from: '2026-04-01',
+              to: '2026-04-30',
+              format: 'csv',
+              mask: 'true',
+            }),
+          }),
+        );
+        done();
+      },
+    });
+  });
+
 });

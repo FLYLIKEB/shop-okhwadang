@@ -55,10 +55,10 @@ describe('redactSensitiveFields', () => {
     expect(result).toEqual({ user_password: '[REDACTED]', password_hash: '[REDACTED]' });
   });
 
-  it('should not recurse into arrays', () => {
+  it('should recurse into arrays', () => {
     const input = { users: [{ name: 'John', password: 'secret' }] };
     const result = redactSensitiveFields(input);
-    expect(result).toEqual({ users: [{ name: 'John', password: 'secret' }] });
+    expect(result).toEqual({ users: [{ name: 'John', password: '[REDACTED]' }] });
   });
 
   it('should handle mixed sensitive and non-sensitive fields', () => {
