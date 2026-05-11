@@ -22,10 +22,16 @@ export function useAsyncAction<T, A = void>(
   fnRef.current = fn;
   const optRef = useRef(options);
   optRef.current = options;
+  // 외부 컨텍스트(GlobalLoadingContext) 의 함수 reference 가 흔들려도 execute 가
+  // 매 렌더 새 reference 가 되어 useEffect deps 무한 루프를 유발하지 않도록 ref 로 격리.
+  const startLoadingRef = useRef(startLoading);
+  startLoadingRef.current = startLoading;
+  const stopLoadingRef = useRef(stopLoading);
+  stopLoadingRef.current = stopLoading;
 
   const execute = useCallback(async (arg: A) => {
     setIsLoading(true);
-    startLoading();
+    startLoadingRef.current();
     try {
       const result = await fnRef.current(arg);
       if (optRef.current.successMessage) {
@@ -40,9 +46,9 @@ export function useAsyncAction<T, A = void>(
       throw err;
     } finally {
       setIsLoading(false);
-      stopLoading();
+      stopLoadingRef.current();
     }
-  }, [startLoading, stopLoading]);
+  }, []);
 
   return { execute, isLoading };
 }

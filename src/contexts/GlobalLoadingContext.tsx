@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { GLOBAL_LOADING_END_EVENT, GLOBAL_LOADING_START_EVENT } from '@/constants/global-loading';
 
 interface GlobalLoadingContextValue {
@@ -39,12 +39,20 @@ export function GlobalLoadingProvider({ children }: GlobalLoadingProviderProps) 
     };
   }, []);
 
+  const startLoading = useCallback(() => {
+    setPendingCount((prev) => prev + 1);
+  }, []);
+
+  const stopLoading = useCallback(() => {
+    setPendingCount((prev) => Math.max(0, prev - 1));
+  }, []);
+
   const value = useMemo<GlobalLoadingContextValue>(() => ({
     pendingCount,
     isLoading: pendingCount > 0,
-    startLoading: () => setPendingCount((prev) => prev + 1),
-    stopLoading: () => setPendingCount((prev) => Math.max(0, prev - 1)),
-  }), [pendingCount]);
+    startLoading,
+    stopLoading,
+  }), [pendingCount, startLoading, stopLoading]);
 
   return <GlobalLoadingContext.Provider value={value}>{children}</GlobalLoadingContext.Provider>;
 }

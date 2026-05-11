@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -86,8 +86,18 @@ export default function ProductTabs({ description, descriptionImages, productId,
     })
   }, [description])
 
+  // 한 세션 동안 같은 (사용자, 탭 진입) 조건에서 중복 호출을 막는 가드.
+  // GlobalLoadingContext / useAsyncAction 의 reference 안정화로도 방어되지만,
+  // 향후 다른 외부 컨텍스트가 흔들릴 가능성에 대비한 다층 방어.
+  const inquiriesLoadedRef = useRef(false)
   useEffect(() => {
-    if (activeTab !== 'inquiry' || !isAuthenticated) return
+    if (!isAuthenticated) {
+      inquiriesLoadedRef.current = false
+      return
+    }
+    if (activeTab !== 'inquiry') return
+    if (inquiriesLoadedRef.current) return
+    inquiriesLoadedRef.current = true
     void loadInquiries(undefined)
   }, [activeTab, isAuthenticated, loadInquiries])
 

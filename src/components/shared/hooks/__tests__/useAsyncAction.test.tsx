@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
-import { GlobalLoadingProvider } from '@/contexts/GlobalLoadingContext';
+import { GlobalLoadingProvider, useGlobalLoading } from '@/contexts/GlobalLoadingContext';
 import { useAsyncAction } from '../useAsyncAction';
 
 vi.mock('sonner', () => ({
@@ -133,5 +133,41 @@ describe('useAsyncAction', () => {
     });
 
     expect(fn).toHaveBeenCalledWith({ id: 7 });
+  });
+
+  // 회귀 가드 (#755): execute reference 가 GlobalLoadingContext 의 pendingCount
+  // 변화에도 안정적이어야 한다. GlobalLoadingContext 가 pendingCount 변화에
+  // 따라 startLoading/stopLoading 함수를 새로 만들면 execute reference 가 변하고,
+  // 이를 effect deps 로 쓰는 컴포넌트(예: ProductTabs)에서 무한 렌더 루프 발생.
+  it('execute reference 는 GlobalLoading 활동 후에도 안정적이다 (#755 무한 루프 방지)', async () => {
+    const fn = vi.fn().mockResolvedValue('ok');
+
+    // 같은 Provider 안에서 두 훅을 함께 렌더 — 외부 startLoading 호출이
+    // pendingCount 를 흔들어도 execute reference 가 보존되는지 검증.
+    const { result } = renderHook(
+      () => {
+        const action = useAsyncAction(fn);
+        const loading = useGlobalLoading();
+        return { action, loading };
+      },
+      { wrapper },
+    );
+
+    const initialExecute = result.current.action.execute;
+
+    await act(async () => {
+      await result.current.action.execute(undefined);
+    });
+
+    expect(result.current.action.execute).toBe(initialExecute);
+
+    act(() => {
+      result.current.loading.startLoading();
+    });
+    act(() => {
+      result.current.loading.stopLoading();
+    });
+
+    expect(result.current.action.execute).toBe(initialExecute);
   });
 });
