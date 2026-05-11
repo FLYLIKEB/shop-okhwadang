@@ -6,6 +6,7 @@ import { cn } from '@/components/ui/utils';
 import { fetchArchives } from '@/lib/api-server';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { SectionHeading } from '@/components/shared/common/SectionHeading';
+import { sanitizeInlineHtml } from '@/lib/sanitize-inline-html';
 import type { NiloType, ProcessStep, Artist } from '@/lib/api';
 
 interface ArchivePageProps {
@@ -19,6 +20,20 @@ export async function generateMetadata({ params }: ArchivePageProps): Promise<Me
     title: t('metaTitle'),
     description: t('metaDescription'),
   };
+}
+
+function InlineHtmlText({
+  html,
+  className,
+}: {
+  html: string | null | undefined;
+  className: string;
+}) {
+  const sanitized = sanitizeInlineHtml(html);
+
+  if (!sanitized) return null;
+
+  return <div className={className} dangerouslySetInnerHTML={{ __html: sanitized }} />;
 }
 
 interface ArchiveStrings {
@@ -64,7 +79,10 @@ function NiloCard({
         </div>
         <h3 className="text-2xl font-bold text-foreground mb-1">{entry.nameKo}</h3>
         <p className="text-xs text-muted-foreground mb-4">{strings.niloRegionLabel}: {entry.region}</p>
-        <p className="text-sm text-foreground leading-relaxed mb-6">{entry.description}</p>
+        <InlineHtmlText
+          html={entry.description}
+          className="text-sm text-foreground leading-relaxed mb-6 [&_b]:font-semibold [&_strong]:font-semibold"
+        />
         <ul className="grid grid-cols-2 gap-2 mb-6">
           {entry.characteristics.map((c) => (
             <li key={c} className="text-xs text-muted-foreground border border-border rounded px-3 py-1.5">
@@ -95,7 +113,10 @@ function ProcessCard({ step: s }: { step: ProcessStep }) {
       <div className="pb-10">
         <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase mb-1">{s.description}</p>
         <h3 className="text-xl font-bold text-foreground mb-3">{s.title}</h3>
-        <p className="text-sm text-foreground leading-relaxed">{s.detail}</p>
+        <InlineHtmlText
+          html={s.detail}
+          className="text-sm text-foreground leading-relaxed [&_b]:font-semibold [&_strong]:font-semibold"
+        />
       </div>
     </article>
   );
@@ -139,7 +160,10 @@ function ArtistCard({
           {strings.artistRegionLabel}: {artist.region} · {strings.artistSpecialtyLabel}: {artist.specialty}
         </p>
         <blockquote className="border-l-2 border-foreground pl-4 mb-6">
-          <p className="text-sm text-foreground leading-relaxed italic">{artist.story}</p>
+          <InlineHtmlText
+            html={artist.story}
+            className="text-sm text-foreground leading-relaxed italic [&_b]:font-semibold [&_strong]:font-semibold"
+          />
         </blockquote>
         <Link
           href={artist.productUrl}
