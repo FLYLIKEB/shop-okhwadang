@@ -14,14 +14,14 @@ describe('runtime theme tokens', () => {
   });
 
   it('connects admin spacing settings to layout rhythm tokens', () => {
-    expect(globals).toContain('--spacing-xs: var(--db-spacing-xs');
-    expect(globals).toContain('--spacing-sm: var(--db-spacing-sm');
-    expect(globals).toContain('--spacing-md: var(--db-spacing-md');
-    expect(globals).toContain('--spacing-lg: var(--db-spacing-lg');
-    expect(globals).toContain('--spacing-xl: var(--db-spacing-xl');
-    expect(globals).toContain('--layout-page-y: var(--spacing-xl)');
-    expect(globals).toContain('--layout-section-y: var(--spacing-lg)');
-    expect(globals).toContain('--layout-grid-gap: var(--spacing-lg)');
-    expect(globals).toContain('padding-inline: var(--spacing-md)');
+    expect(globals).toContain('--layout-spacing-xs: var(--db-spacing-xs');
+    expect(globals).toContain('--layout-spacing-sm: var(--db-spacing-sm');
+    expect(globals).toContain('--layout-spacing-md: var(--db-spacing-md');
+    expect(globals).toContain('--layout-spacing-lg: var(--db-spacing-lg');
+    expect(globals).toContain('--layout-spacing-xl: var(--db-spacing-xl');
+    expect(globals).toContain('--layout-page-y: var(--layout-spacing-xl)');
+    expect(globals).toContain('--layout-section-y: var(--layout-spacing-lg)');
+    expect(globals).toContain('--layout-grid-gap: var(--layout-spacing-lg)');
+    expect(globals).toContain('padding-inline: var(--layout-spacing-md)');
   });
 });
