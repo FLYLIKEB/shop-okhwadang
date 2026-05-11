@@ -32,7 +32,7 @@ vi.mock('next-intl', () => ({
   },
 }));
 
-vi.mock('next/navigation', () => ({
+vi.mock('@/i18n/navigation', () => ({
   useRouter: () => ({
     replace: replaceMock,
   }),
@@ -73,22 +73,22 @@ describe('LanguageSelector', () => {
     expect(screen.queryByText('中文')).not.toBeInTheDocument();
   });
 
-  it('selecting a different language navigates to the localized path and closes dropdown', async () => {
+  it('selecting a different language navigates to the same internal path with locale option and closes dropdown', async () => {
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
     await user.click(screen.getByText('English'));
-    expect(replaceMock).toHaveBeenCalledWith('/en');
+    expect(replaceMock).toHaveBeenCalledWith('/', { locale: 'en' });
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
-  it('keeps the current pathname when switching language', async () => {
+  it('keeps the current internal pathname and hash when switching language', async () => {
     window.history.replaceState({}, '', 'http://localhost:3000/ko/products/123?language=1#details');
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
     await user.click(screen.getByText('English'));
-    expect(replaceMock).toHaveBeenCalledWith('/en/products/123#details');
+    expect(replaceMock).toHaveBeenCalledWith('/products/123#details', { locale: 'en' });
   });
 
   it('selecting current locale does not navigate', async () => {
@@ -153,7 +153,7 @@ describe('LanguageSelector', () => {
     const user = userEvent.setup();
     render(<LanguageSelector variant="inline" />);
     await user.click(screen.getByRole('button', { name: 'English' }));
-    expect(replaceMock).toHaveBeenCalledWith('/en');
+    expect(replaceMock).toHaveBeenCalledWith('/', { locale: 'en' });
   });
 
   it('inline variant does not navigate when clicking current locale', async () => {

@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useTransition } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { Globe } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { useUrlModal } from '@/hooks/useUrlModal';
@@ -31,27 +31,30 @@ interface LanguageSelectorProps {
   variant?: 'dropdown' | 'inline';
 }
 
-function getLocalizedHref(nextLocale: Locale): string {
-  if (typeof window === 'undefined') return `/${nextLocale}`;
+function getInternalHref(): string {
+  if (typeof window === 'undefined') return '/';
 
   const url = new URL(window.location.href);
   const segments = url.pathname.split('/').filter(Boolean);
 
   if (segments.length > 0 && routing.locales.includes(segments[0] as Locale)) {
-    segments[0] = nextLocale;
-  } else {
-    segments.unshift(nextLocale);
+    segments.shift();
   }
 
-  url.pathname = `/${segments.join('/')}`;
+  const pathname = `/${segments.join('/')}`;
+  url.pathname = pathname;
   url.searchParams.delete('language');
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
-function switchLocale(locale: Locale, currentLocale: Locale, onNavigate: (href: string) => void) {
+function switchLocale(
+  locale: Locale,
+  currentLocale: Locale,
+  onNavigate: (href: string, options: { locale: Locale }) => void,
+) {
   if (locale === currentLocale) return;
   document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-  onNavigate(getLocalizedHref(locale));
+  onNavigate(getInternalHref(), { locale });
 }
 
 /** 모바일 사이드바용 — 세그먼트 버튼, 드롭다운 없음 */
@@ -73,7 +76,7 @@ function InlineLanguageSelector({ className }: { className?: string }) {
               type="button"
               onClick={() => {
                 startTransition(() => {
-                  switchLocale(option.locale, currentLocale, (href) => router.replace(href));
+                  switchLocale(option.locale, currentLocale, (href, options) => router.replace(href, options));
                 });
               }}
               aria-pressed={isSelected}
@@ -107,9 +110,9 @@ function DropdownLanguageSelector({ className, compact = false }: { className?: 
   const current = LANG_OPTIONS.find((o) => o.locale === currentLocale) ?? LANG_OPTIONS[0];
 
   const handleSelect = (locale: Locale) => {
-    setIsOpen(false);
+    setIsOpen(false, 'replace');
     startTransition(() => {
-      switchLocale(locale, currentLocale, (href) => router.replace(href));
+      switchLocale(locale, currentLocale, (href, options) => router.replace(href, options));
     });
   };
 
