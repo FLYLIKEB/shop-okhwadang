@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { fetchCollections } from '@/lib/api-server';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { SectionHeading } from '@/components/shared/common/SectionHeading';
+import { sanitizeInlineHtml } from '@/lib/sanitize-inline-html';
 import type { Collection } from '@/lib/api';
 
 interface CollectionPageProps {
@@ -22,6 +23,19 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
       description: t('metaOgDescription'),
     },
   };
+}
+
+function CollectionDescription({ description }: { description: string | null }) {
+  const sanitized = sanitizeInlineHtml(description);
+
+  if (!sanitized) return null;
+
+  return (
+    <div
+      className="text-sm text-muted-foreground leading-relaxed [&_b]:font-semibold [&_strong]:font-semibold [&_b]:text-foreground [&_strong]:text-foreground"
+      dangerouslySetInnerHTML={{ __html: sanitized }}
+    />
+  );
 }
 
 function ClayCard({
@@ -59,9 +73,7 @@ function ClayCard({
         <h3 className="text-lg font-bold text-foreground mb-1">
           {displayName}
         </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {collection.description}
-        </p>
+        <CollectionDescription description={collection.description} />
         <span className="inline-block mt-4 text-xs font-medium text-foreground border-b border-foreground pb-0.5 group-hover:border-foreground/60 transition-colors">
           {cta}
         </span>
@@ -103,9 +115,7 @@ function ShapeCard({
         <h3 className="text-lg font-bold text-foreground mb-1">
           {collection.name}
         </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {collection.description}
-        </p>
+        <CollectionDescription description={collection.description} />
         <span className="inline-block mt-4 text-xs font-medium text-foreground border-b border-foreground pb-0.5 group-hover:border-foreground/60 transition-colors">
           {cta}
         </span>
