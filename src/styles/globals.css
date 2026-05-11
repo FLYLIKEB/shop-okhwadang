@@ -98,14 +98,14 @@
 
   /* ── Layout rhythm tokens ── */
   --layout-max-width: 80rem; /* 1280px */
-  --spacing-xs: var(--db-spacing-xs, 0.25rem);
-  --spacing-sm: var(--db-spacing-sm, 0.5rem);
-  --spacing-md: var(--db-spacing-md, 1rem);
-  --spacing-lg: var(--db-spacing-lg, 1.5rem);
-  --spacing-xl: var(--db-spacing-xl, 2rem);
-  --layout-page-y: var(--spacing-xl);
-  --layout-section-y: var(--spacing-lg);
-  --layout-grid-gap: var(--spacing-lg);
+  --layout-spacing-xs: var(--db-spacing-xs, 0.25rem);
+  --layout-spacing-sm: var(--db-spacing-sm, 0.5rem);
+  --layout-spacing-md: var(--db-spacing-md, 1rem);
+  --layout-spacing-lg: var(--db-spacing-lg, 1.5rem);
+  --layout-spacing-xl: var(--db-spacing-xl, 2rem);
+  --layout-page-y: var(--layout-spacing-xl);
+  --layout-section-y: var(--layout-spacing-lg);
+  --layout-grid-gap: var(--layout-spacing-lg);
   --layout-text-max: 42rem;
 
   /* ── Admin density / contrast tokens ── */
@@ -142,9 +142,9 @@
     --font-size-heading-3: 1.25rem;  /* 20px desktop */
     --font-size-title: var(--db-font-size-base, 1.125rem);     /* 18px desktop */
     --font-size-heading-0: 3rem;     /* 48px desktop - hero only */
-    --layout-page-y: var(--spacing-xl, 2.5rem);
-    --layout-section-y: var(--spacing-xl, 2rem);
-    --layout-grid-gap: var(--spacing-xl, 2rem);
+    --layout-page-y: var(--layout-spacing-xl, 2.5rem);
+    --layout-section-y: var(--layout-spacing-xl, 2rem);
+    --layout-grid-gap: var(--layout-spacing-xl, 2rem);
   }
 }
 
@@ -165,9 +165,9 @@
 .mobile-sticky-cta {
   left: 0;
   right: 0;
-  padding-top: var(--spacing-sm);
-  padding-inline: var(--spacing-md);
-  padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom));
+  padding-top: var(--layout-spacing-sm);
+  padding-inline: var(--layout-spacing-md);
+  padding-bottom: calc(var(--layout-spacing-sm) + env(safe-area-inset-bottom));
 }
 
 .mobile-sticky-inner {
@@ -195,7 +195,7 @@ body.overflow-hidden .mobile-sticky-cta {
   width: 100%;
   max-width: var(--layout-max-width);
   margin-inline: auto;
-  padding-inline: var(--spacing-md);
+  padding-inline: var(--layout-spacing-md);
 }
 
 @utility layout-page {
