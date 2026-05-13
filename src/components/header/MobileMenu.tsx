@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, User, LogOut, LogIn, UserPlus, MessageSquare, Package } from 'lucide-react';
+import { X, User, LogOut, LogIn, UserPlus, MessageSquare, Package, Shield } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/components/ui/utils';
@@ -13,6 +13,7 @@ import type { NavigationItem } from '@/lib/api';
 interface MobileMenuProps {
   isAuthenticated: boolean;
   userName?: string;
+  userRole?: string;
   navItems: NavigationItem[];
   sidebarItems: NavigationItem[];
   visible: boolean;
@@ -117,13 +118,15 @@ function MobileMenuContent({ items, history, onItemClick, onLinkClick }: MobileM
 interface MobileMenuFooterProps {
   isAuthenticated: boolean;
   userName?: string;
+  userRole?: string;
   onLogout: () => void;
   onLinkClick: () => void;
 }
 
-function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: MobileMenuFooterProps) {
+function MobileMenuFooter({ isAuthenticated, userName, userRole, onLogout, onLinkClick }: MobileMenuFooterProps) {
   const t = useTranslations('header');
   const orderTrackingHref = isAuthenticated ? '/my/orders' : '/login?redirect=/my/orders';
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
   return (
     <div className="px-4 py-4 border-t border-divider-soft shrink-0">
       <div className="flex flex-col gap-1">
@@ -162,6 +165,12 @@ function MobileMenuFooter({ isAuthenticated, userName, onLogout, onLinkClick }: 
           <Package className="h-4 w-4" />
           {t('orderTracking')}
         </Link>
+        {isAdmin && (
+          <Link href="/admin" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+            <Shield className="h-4 w-4" />
+            {t('adminPanel')}
+          </Link>
+        )}
       </div>
       <div className="mt-4 flex items-center justify-between">
         <LanguageSelector variant="inline" />
@@ -203,7 +212,7 @@ function MobileMenuNav({ visible, children }: { visible: boolean; children: Reac
   );
 }
 
-export function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, visible, onClose, onNavigate, onLogout }: MobileMenuProps) {
+export function MobileMenu({ isAuthenticated, userName, userRole, navItems, sidebarItems, visible, onClose, onNavigate, onLogout }: MobileMenuProps) {
   const t = useTranslations('header');
   const menuItems = sidebarItems.length > 0 ? sidebarItems : navItems;
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -248,6 +257,7 @@ export function MobileMenu({ isAuthenticated, userName, navItems, sidebarItems, 
         <MobileMenuFooter
           isAuthenticated={isAuthenticated}
           userName={userName}
+          userRole={userRole}
           onLogout={onLogout}
           onLinkClick={handleNavigateClose}
         />

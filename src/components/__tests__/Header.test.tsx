@@ -74,12 +74,9 @@ vi.mock('@/contexts/ThemeContext', async (importOriginal) => {
   };
 });
 
+const mockUseAuth = vi.fn();
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    isAuthenticated: false,
-    user: null,
-    logout: vi.fn(),
-  }),
+  useAuth: () => mockUseAuth(),
 }));
 
 const mockUseCart = vi.fn();
@@ -93,6 +90,11 @@ beforeEach(() => {
   mockSetOpen.mockClear();
   mockPathname = '/';
   mockUseCart.mockReturnValue({ itemCount: 0 });
+  mockUseAuth.mockReturnValue({
+    isAuthenticated: false,
+    user: null,
+    logout: vi.fn(),
+  });
 });
 
 describe('Header', () => {
@@ -169,6 +171,29 @@ describe('Header', () => {
     await user.click(loginLink);
 
     expect(mockSetOpen).toHaveBeenCalledWith('menu', false, 'replace');
+  });
+
+  it('shows admin link under order tracking for admin accounts in mobile menu', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { id: 1, email: 'admin@test.com', name: 'Admin', role: 'admin' },
+      logout: vi.fn(),
+    });
+
+    render(<Header />);
+    await user.click(screen.getByRole('button', { name: '메뉴 열기' }));
+
+    const mobileNav = screen.getByRole('navigation', { name: '모바일 메뉴' });
+    const orderTrackingLink = mobileNav.querySelector('a[href="/my/orders"]');
+    const adminLink = mobileNav.querySelector('a[href="/admin"]');
+
+    expect(orderTrackingLink).toBeInTheDocument();
+    expect(adminLink).toBeInTheDocument();
+    expect(adminLink).toHaveTextContent('관리자');
+
+    const links = Array.from(mobileNav.querySelectorAll('a[href]'));
+    expect(links.indexOf(orderTrackingLink!)).toBeLessThan(links.indexOf(adminLink!));
   });
 
   it('Escape key → mobile menu closes', async () => {
