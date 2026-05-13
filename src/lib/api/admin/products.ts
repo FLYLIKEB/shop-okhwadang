@@ -35,6 +35,31 @@ export interface CreateProductData {
 
 export type UpdateProductData = Partial<CreateProductData>;
 
+export type SmartStoreImportAction = 'create' | 'update' | 'skip';
+export type SmartStoreImportStatus = 'valid' | 'failed' | 'success';
+
+export interface SmartStoreProductImportRow {
+  rowNumber: number;
+  identifier: string | null;
+  productName: string | null;
+  action: SmartStoreImportAction;
+  status: SmartStoreImportStatus;
+  productId?: number;
+  errors: string[];
+}
+
+export interface SmartStoreProductImportResult {
+  summary: {
+    totalRows: number;
+    createCount: number;
+    updateCount: number;
+    skipCount: number;
+    successCount: number;
+    failureCount: number;
+  };
+  rows: SmartStoreProductImportRow[];
+}
+
 export const adminProductsApi = {
   getList: (params?: AdminProductsParams) =>
     apiClient.get<ProductListResponse>('/products', {
@@ -49,4 +74,8 @@ export const adminProductsApi = {
     apiClient.patch<ProductDetail>(`/products/${id}`, data),
   remove: (id: number) =>
     apiClient.delete<{ message: string }>(`/products/${id}`),
+  previewSmartStoreImport: (file: File) =>
+    apiClient.uploadFile<SmartStoreProductImportResult>('/products/imports/smartstore/preview', file),
+  commitSmartStoreImport: (file: File) =>
+    apiClient.uploadFile<SmartStoreProductImportResult>('/products/imports/smartstore/commit', file),
 };

@@ -171,34 +171,34 @@
     "noProducts": "상품이 없습니다",
     "noProductsDescription": "등록된 상품이 없습니다.",
     "noSearchResults": "\"{query}\"에 대한 검색 결과가 없습니다.",
-  "tabs": {
-    "details": "상세정보",
-    "reviews": "리뷰",
-    "inquiry": "문의",
-    "comingSoon": "준비 중입니다.",
-    "detailsImageAlt": "상세정보 이미지 {index}",
-    "inquiryPanel": {
-      "loginRequiredTitle": "로그인이 필요합니다.",
-      "loginRequiredDescription": "문의를 작성하려면 로그인해주세요.",
-      "loginAction": "로그인하기",
-      "titleLabel": "제목",
-      "titlePlaceholder": "문의 제목을 입력해주세요",
-      "contentLabel": "내용",
-      "contentPlaceholder": "문의 내용을 입력해주세요",
-      "submit": "문의 등록",
-      "submitting": "등록 중...",
-      "submitSuccess": "문의가 접수되었습니다.",
-      "submitError": "문의 등록에 실패했습니다.",
-      "validation": "제목과 내용을 입력해주세요.",
-      "listTitle": "내 문의 내역",
-      "loading": "문의 내역을 불러오는 중입니다.",
-      "empty": "등록된 문의가 없습니다.",
-      "loadError": "문의 내역을 불러오지 못했습니다.",
-      "statusAnswered": "답변완료",
-      "statusPending": "접수",
-      "answerLabel": "답변"
-    }
-  },
+    "tabs": {
+      "details": "상세정보",
+      "reviews": "리뷰",
+      "inquiry": "문의",
+      "comingSoon": "준비 중입니다.",
+      "detailsImageAlt": "상세정보 이미지 {index}",
+      "inquiryPanel": {
+        "loginRequiredTitle": "로그인이 필요합니다.",
+        "loginRequiredDescription": "문의를 작성하려면 로그인해주세요.",
+        "loginAction": "로그인하기",
+        "titleLabel": "제목",
+        "titlePlaceholder": "문의 제목을 입력해주세요",
+        "contentLabel": "내용",
+        "contentPlaceholder": "문의 내용을 입력해주세요",
+        "submit": "문의 등록",
+        "submitting": "등록 중...",
+        "submitSuccess": "문의가 접수되었습니다.",
+        "submitError": "문의 등록에 실패했습니다.",
+        "validation": "제목과 내용을 입력해주세요.",
+        "listTitle": "내 문의 내역",
+        "loading": "문의 내역을 불러오는 중입니다.",
+        "empty": "등록된 문의가 없습니다.",
+        "loadError": "문의 내역을 불러오지 못했습니다.",
+        "statusAnswered": "답변완료",
+        "statusPending": "접수",
+        "answerLabel": "답변"
+      }
+    },
     "sort": {
       "label": "정렬 기준",
       "latest": "최신순",
@@ -554,6 +554,47 @@
         "active": "판매중",
         "soldout": "품절",
         "hidden": "숨김"
+      },
+      "statusChanged": "상품이 {status}으로 변경되었습니다.",
+      "statusFilterAria": "상품 상태 필터",
+      "import": {
+        "title": "스마트스토어 상품 엑셀 가져오기",
+        "description": "스마트스토어에서 다운로드한 .xlsx 상품목록을 검증한 뒤 신규 상품을 추가하고 기존 SKU 상품을 수정합니다.",
+        "fileLabel": "스마트스토어 상품 엑셀 파일",
+        "previewButton": "업로드 미리보기",
+        "previewing": "검증 중...",
+        "commitButton": "자사몰에 반영",
+        "committing": "반영 중...",
+        "selectFileFirst": "먼저 스마트스토어 상품 엑셀 파일을 선택해 주세요.",
+        "previewSuccess": "스마트스토어 상품 엑셀을 검증했습니다.",
+        "previewError": "스마트스토어 상품 엑셀 검증에 실패했습니다.",
+        "commitSuccess": "스마트스토어 상품 엑셀을 자사몰에 반영했습니다.",
+        "commitError": "스마트스토어 상품 반영에 실패했습니다.",
+        "summary": {
+          "total": "전체 행",
+          "create": "신규",
+          "update": "수정",
+          "skip": "스킵",
+          "success": "성공",
+          "failure": "실패"
+        },
+        "previewColumns": {
+          "row": "행",
+          "identifier": "식별자",
+          "productName": "상품명",
+          "action": "작업",
+          "result": "결과"
+        },
+        "actions": {
+          "create": "신규 추가",
+          "update": "수정",
+          "skip": "스킵"
+        },
+        "status": {
+          "valid": "검증 완료",
+          "failed": "실패",
+          "success": "성공"
+        }
       }
     },
     "productForm": {

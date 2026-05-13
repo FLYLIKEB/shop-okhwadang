@@ -14,6 +14,7 @@ import { ProductCommandService } from './product-command.service';
 import { CategoriesService } from './categories.service';
 import { AttributesService } from './attributes.service';
 import { RecentlyViewedService } from './recently-viewed.service';
+import { SmartStoreProductImportService } from './smartstore-product-import.service';
 import { ProductsController } from './products.controller';
 import { CategoriesController } from './categories.controller';
 import { AttributesController } from './attributes.controller';
@@ -44,6 +45,7 @@ import { RecentlyViewedProduct } from './entities/recently-viewed-product.entity
     CategoriesService,
     AttributesService,
     RecentlyViewedService,
+    SmartStoreProductImportService,
   ],
   controllers: [ProductsController, CategoriesController, AttributesController],
   exports: [
@@ -53,6 +55,7 @@ import { RecentlyViewedProduct } from './entities/recently-viewed-product.entity
     CategoriesService,
     AttributesService,
     RecentlyViewedService,
+    SmartStoreProductImportService,
   ],
 })
 export class ProductsModule {}
