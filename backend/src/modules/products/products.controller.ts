@@ -11,6 +11,8 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
@@ -20,6 +22,8 @@ import {
   ApiParam,
   ApiQuery,
   ApiCookieAuth,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { QueryProductsDto } from './dto/query-products.dto';
@@ -33,6 +37,9 @@ import { RequestWithAuthUser } from '../../common/interfaces/auth-user.interface
 import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { CreateRestockAlertDto } from '../restock-alerts/dto/create-restock-alert.dto';
 import { RecentlyViewedService } from './recently-viewed.service';
+import { SmartStoreProductImportService } from './smartstore-product-import.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 @ApiTags('상품')
 @Controller('products')
@@ -41,6 +48,7 @@ export class ProductsController {
     private readonly productsService: ProductsService,
     private readonly restockAlertsService: RestockAlertsService,
     private readonly recentlyViewedService: RecentlyViewedService,
+    private readonly smartStoreProductImportService: SmartStoreProductImportService,
   ) {}
 
   @Get()
@@ -98,6 +106,43 @@ export class ProductsController {
     }
 
     return result;
+  }
+
+
+  @Post('imports/smartstore/preview')
+  @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '스마트스토어 상품 엑셀 미리보기', description: '스마트스토어 상품 엑셀 파일을 검증하고 생성/수정 예정 내역을 반환합니다.' })
+  @ApiResponse({ status: 201, description: '상품 가져오기 미리보기 성공' })
+  @ApiResponse({ status: 400, description: '잘못된 파일 또는 상품 데이터' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } })
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+  }))
+  previewSmartStoreImport(@UploadedFile() file: Express.Multer.File) {
+    return this.smartStoreProductImportService.preview(file);
+  }
+
+  @Post('imports/smartstore/commit')
+  @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '스마트스토어 상품 엑셀 반영', description: '검증된 스마트스토어 상품 엑셀 파일로 자사몰 상품을 생성하거나 수정합니다.' })
+  @ApiResponse({ status: 201, description: '상품 가져오기 반영 성공' })
+  @ApiResponse({ status: 400, description: '잘못된 파일 또는 상품 데이터' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } })
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+  }))
+  commitSmartStoreImport(@UploadedFile() file: Express.Multer.File) {
+    return this.smartStoreProductImportService.commit(file);
   }
 
   @Post()

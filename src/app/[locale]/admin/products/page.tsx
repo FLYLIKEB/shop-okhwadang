@@ -1,45 +1,52 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAdminListPage } from '@/components/shared/hooks/useAdminListPage';
 import { adminProductsApi } from '@/lib/api';
-import type { Product } from '@/lib/api';
+import type { Product, SmartStoreProductImportResult } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { ProductStatusBadge } from '@/components/shared/admin/StatusBadge';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: '임시저장',
-  active: '판매중',
-  soldout: '품절',
-  hidden: '숨김',
-};
-
-const STATUS_FILTERS = [
-  { label: '전체', value: '' },
-  { label: '판매중', value: 'active' },
-  { label: '임시저장', value: 'draft' },
-  { label: '품절', value: 'soldout' },
-  { label: '숨김', value: 'hidden' },
-] as const;
-
 const PAGE_SIZE = 20;
 
+type ProductStatus = 'active' | 'soldout' | 'draft' | 'hidden';
+
 export default function AdminProductsPage() {
+  const t = useTranslations('admin.products');
   const { isAdmin } = useAdminGuard();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
+  const [smartStoreFile, setSmartStoreFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<SmartStoreProductImportResult | null>(null);
+  const [importResult, setImportResult] = useState<SmartStoreProductImportResult | null>(null);
   const { page, setPage, filters, setFilter } = useAdminListPage({
     initialFilters: {
       status: '',
     },
   });
+
+  const statusLabels: Record<ProductStatus, string> = {
+    draft: t('status.draft'),
+    active: t('status.active'),
+    soldout: t('status.soldout'),
+    hidden: t('status.hidden'),
+  };
+
+  const statusFilters = [
+    { label: t('statusFilter.all'), value: '' },
+    { label: t('statusFilter.active'), value: 'active' },
+    { label: t('statusFilter.draft'), value: 'draft' },
+    { label: t('statusFilter.soldout'), value: 'soldout' },
+    { label: t('statusFilter.hidden'), value: 'hidden' },
+  ] as const;
 
   const { execute: fetchProducts, isLoading: loading } = useAsyncAction(
     async () => {
@@ -53,7 +60,7 @@ export default function AdminProductsPage() {
       setProducts(res.items);
       setTotal(res.total);
     },
-    { errorMessage: '상품 목록을 불러오지 못했습니다.' },
+    { errorMessage: t('loadError') },
   );
 
   useEffect(() => {
@@ -61,14 +68,33 @@ export default function AdminProductsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, page, filters.status]);
 
+  const { execute: previewSmartStoreImport, isLoading: previewingImport } = useAsyncAction(
+    async (file: File) => {
+      const result = await adminProductsApi.previewSmartStoreImport(file);
+      setImportPreview(result);
+      setImportResult(null);
+    },
+    { successMessage: t('import.previewSuccess'), errorMessage: t('import.previewError') },
+  );
+
+  const { execute: commitSmartStoreImport, isLoading: committingImport } = useAsyncAction(
+    async (file: File) => {
+      const result = await adminProductsApi.commitSmartStoreImport(file);
+      setImportResult(result);
+      setImportPreview(null);
+      void fetchProducts();
+    },
+    { successMessage: t('import.commitSuccess'), errorMessage: t('import.commitError') },
+  );
+
   const { execute: toggleStatus } = useAsyncAction(
     async (product: Product) => {
       const next = product.status === 'active' ? 'hidden' : 'active';
       await adminProductsApi.update(product.id, { status: next });
-      toast.success(`상품이 ${STATUS_LABELS[next]}으로 변경되었습니다.`);
+      toast.success(t('statusChanged', { status: statusLabels[next as ProductStatus] }));
       void fetchProducts();
     },
-    { errorMessage: '상태 변경에 실패했습니다.' },
+    { errorMessage: t('statusChangeError') },
   );
 
   const { execute: deleteProduct } = useAsyncAction(
@@ -76,45 +102,146 @@ export default function AdminProductsPage() {
       await adminProductsApi.remove(product.id);
       void fetchProducts();
     },
-    { successMessage: '상품이 삭제되었습니다.', errorMessage: '삭제에 실패했습니다.' },
+    { successMessage: t('deleteSuccess'), errorMessage: t('deleteError') },
   );
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setSmartStoreFile(file);
+    setImportPreview(null);
+    setImportResult(null);
+  };
+
+  const handlePreviewImport = () => {
+    if (!smartStoreFile) {
+      toast.error(t('import.selectFileFirst'));
+      return;
+    }
+    void previewSmartStoreImport(smartStoreFile);
+  };
+
+  const handleCommitImport = () => {
+    if (!smartStoreFile) {
+      toast.error(t('import.selectFileFirst'));
+      return;
+    }
+    void commitSmartStoreImport(smartStoreFile);
+  };
 
   const handleToggleStatus = (product: Product) => void toggleStatus(product);
 
   const handleDelete = (product: Product) => {
-    if (!window.confirm(`"${product.name}"을(를) 삭제하시겠습니까?`)) return;
+    if (!window.confirm(t('deleteConfirm', { name: product.name }))) return;
     void deleteProduct(product);
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const importSummary = importResult?.summary ?? importPreview?.summary;
+  const importRows = (importResult?.rows ?? importPreview?.rows ?? []).slice(0, 5);
+  const isImporting = previewingImport || committingImport;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
       <AdminPageHeader
-        title="상품 관리"
+        title={t('title')}
         action={(
           <Link
             href="/admin/products/new"
             className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
           >
-            + 상품 등록
+            {t('addProduct')}
           </Link>
         )}
       />
 
+      <section className="rounded-lg border bg-card p-4 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <h2 className="text-base font-semibold">{t('import.title')}</h2>
+            <p className="text-sm text-muted-foreground">{t('import.description')}</p>
+            <input
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={handleFileChange}
+              className="block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium"
+              aria-label={t('import.fileLabel')}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handlePreviewImport}
+              disabled={!smartStoreFile || isImporting}
+              className="rounded border px-4 py-2 text-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {previewingImport ? t('import.previewing') : t('import.previewButton')}
+            </button>
+            <button
+              type="button"
+              onClick={handleCommitImport}
+              disabled={!smartStoreFile || isImporting || !importPreview}
+              className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {committingImport ? t('import.committing') : t('import.commitButton')}
+            </button>
+          </div>
+        </div>
+
+        {importSummary && (
+          <div className="mt-4 space-y-3 rounded-lg bg-secondary/40 p-4 text-sm">
+            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+              <ImportSummaryItem label={t('import.summary.total')} value={importSummary.totalRows} />
+              <ImportSummaryItem label={t('import.summary.create')} value={importSummary.createCount} />
+              <ImportSummaryItem label={t('import.summary.update')} value={importSummary.updateCount} />
+              <ImportSummaryItem label={t('import.summary.skip')} value={importSummary.skipCount} />
+              <ImportSummaryItem label={t('import.summary.success')} value={importSummary.successCount} />
+              <ImportSummaryItem label={t('import.summary.failure')} value={importSummary.failureCount} />
+            </div>
+            {importRows.length > 0 && (
+              <div className="overflow-x-auto rounded border bg-background">
+                <table className="w-full text-xs">
+                  <thead className="bg-secondary">
+                    <tr>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.row')}</th>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.identifier')}</th>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.productName')}</th>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.action')}</th>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.result')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {importRows.map((row) => (
+                      <tr key={`${row.rowNumber}-${row.identifier ?? 'empty'}`}>
+                        <td className="px-3 py-2">{row.rowNumber}</td>
+                        <td className="px-3 py-2">{row.identifier ?? '-'}</td>
+                        <td className="px-3 py-2">{row.productName ?? '-'}</td>
+                        <td className="px-3 py-2">{t(`import.actions.${row.action}`)}</td>
+                        <td className="px-3 py-2">
+                          {row.errors.length > 0 ? row.errors.join(', ') : t(`import.status.${row.status}`)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
       <AdminFilterChips
-        items={STATUS_FILTERS}
+        items={statusFilters}
         value={filters.status}
         onToggle={(value) => setFilter('status', value)}
-        ariaLabel="상품 상태 필터"
+        ariaLabel={t('statusFilterAria')}
         size="sm"
       />
 
       <PaginatedAdminTableShell
         loading={loading}
-        loadingMessage="불러오는 중..."
+        loadingMessage={t('loading')}
         isEmpty={products.length === 0}
-        emptyMessage="상품이 없습니다."
+        emptyMessage={t('noProducts')}
         currentPage={page}
         totalPages={totalPages}
         onPageChange={setPage}
@@ -123,12 +250,12 @@ export default function AdminProductsPage() {
           <table className="w-full text-sm">
             <thead className="bg-secondary">
               <tr>
-                <th className="px-4 py-3 text-left">ID</th>
-                <th className="px-4 py-3 text-left">상품명</th>
-                <th className="px-4 py-3 text-left">가격</th>
-                <th className="px-4 py-3 text-left">상태</th>
-                <th className="px-4 py-3 text-left">추천</th>
-                <th className="px-4 py-3 text-right">액션</th>
+                <th className="px-4 py-3 text-left">{t('columns.id')}</th>
+                <th className="px-4 py-3 text-left">{t('columns.name')}</th>
+                <th className="px-4 py-3 text-left">{t('columns.price')}</th>
+                <th className="px-4 py-3 text-left">{t('columns.status')}</th>
+                <th className="px-4 py-3 text-left">{t('columns.featured')}</th>
+                <th className="px-4 py-3 text-right">{t('columns.action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -138,7 +265,7 @@ export default function AdminProductsPage() {
                   <td className="px-4 py-3 font-medium">{product.name}</td>
                   <td className="px-4 py-3">{formatCurrency(product.price)}</td>
                   <td className="px-4 py-3">
-                    <ProductStatusBadge status={product.status as 'active' | 'soldout' | 'draft' | 'hidden'} />
+                    <ProductStatusBadge status={product.status as ProductStatus} />
                   </td>
                   <td className="px-4 py-3">{product.isFeatured ? '✓' : '-'}</td>
                   <td className="px-4 py-3 text-right">
@@ -147,19 +274,19 @@ export default function AdminProductsPage() {
                         onClick={() => void handleToggleStatus(product)}
                         className="rounded border px-2 py-1 text-xs hover:bg-secondary"
                       >
-                        {product.status === 'active' ? '숨기기' : '노출'}
+                        {product.status === 'active' ? t('actions.hide') : t('actions.show')}
                       </button>
                       <Link
                         href={`/admin/products/${product.id}/edit`}
                         className="rounded border px-2 py-1 text-xs hover:bg-secondary"
                       >
-                        수정
+                        {t('actions.edit')}
                       </Link>
                       <button
                         onClick={() => void handleDelete(product)}
                         className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
                       >
-                        삭제
+                        {t('actions.delete')}
                       </button>
                     </div>
                   </td>
@@ -169,6 +296,15 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </PaginatedAdminTableShell>
+    </div>
+  );
+}
+
+function ImportSummaryItem({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded border bg-background p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-lg font-semibold">{value}</div>
     </div>
   );
 }

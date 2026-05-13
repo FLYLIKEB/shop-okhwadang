@@ -171,34 +171,34 @@
     "noProducts": "No products found",
     "noProductsDescription": "No products are listed yet.",
     "noSearchResults": "No results found for \"{query}\".",
-  "tabs": {
-    "details": "Details",
-    "reviews": "Reviews",
-    "inquiry": "Inquiry",
-    "comingSoon": "Coming soon.",
-    "detailsImageAlt": "Detail image {index}",
-    "inquiryPanel": {
-      "loginRequiredTitle": "Login required.",
-      "loginRequiredDescription": "Please log in to submit an inquiry.",
-      "loginAction": "Go to login",
-      "titleLabel": "Title",
-      "titlePlaceholder": "Enter the inquiry title",
-      "contentLabel": "Content",
-      "contentPlaceholder": "Please describe your inquiry",
-      "submit": "Submit inquiry",
-      "submitting": "Submitting...",
-      "submitSuccess": "Your inquiry has been submitted.",
-      "submitError": "Failed to submit inquiry.",
-      "validation": "Please enter both title and content.",
-      "listTitle": "My inquiries",
-      "loading": "Loading inquiries...",
-      "empty": "No inquiries yet.",
-      "loadError": "Failed to load inquiries.",
-      "statusAnswered": "Answered",
-      "statusPending": "Received",
-      "answerLabel": "Answer"
-    }
-  },
+    "tabs": {
+      "details": "Details",
+      "reviews": "Reviews",
+      "inquiry": "Inquiry",
+      "comingSoon": "Coming soon.",
+      "detailsImageAlt": "Detail image {index}",
+      "inquiryPanel": {
+        "loginRequiredTitle": "Login required.",
+        "loginRequiredDescription": "Please log in to submit an inquiry.",
+        "loginAction": "Go to login",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Enter the inquiry title",
+        "contentLabel": "Content",
+        "contentPlaceholder": "Please describe your inquiry",
+        "submit": "Submit inquiry",
+        "submitting": "Submitting...",
+        "submitSuccess": "Your inquiry has been submitted.",
+        "submitError": "Failed to submit inquiry.",
+        "validation": "Please enter both title and content.",
+        "listTitle": "My inquiries",
+        "loading": "Loading inquiries...",
+        "empty": "No inquiries yet.",
+        "loadError": "Failed to load inquiries.",
+        "statusAnswered": "Answered",
+        "statusPending": "Received",
+        "answerLabel": "Answer"
+      }
+    },
     "sort": {
       "label": "Sort by",
       "latest": "Newest",
@@ -554,6 +554,47 @@
         "active": "On Sale",
         "soldout": "Sold Out",
         "hidden": "Hidden"
+      },
+      "statusChanged": "Product changed to {status}.",
+      "statusFilterAria": "Product status filter",
+      "import": {
+        "title": "Import SmartStore Product Excel",
+        "description": "Validate a .xlsx product list downloaded from SmartStore, then create new products and update existing SKU matches.",
+        "fileLabel": "SmartStore product Excel file",
+        "previewButton": "Preview upload",
+        "previewing": "Validating...",
+        "commitButton": "Apply to store",
+        "committing": "Applying...",
+        "selectFileFirst": "Select a SmartStore product Excel file first.",
+        "previewSuccess": "SmartStore product Excel validated.",
+        "previewError": "Failed to validate SmartStore product Excel.",
+        "commitSuccess": "SmartStore product Excel applied to the store.",
+        "commitError": "Failed to apply SmartStore products.",
+        "summary": {
+          "total": "Rows",
+          "create": "New",
+          "update": "Updates",
+          "skip": "Skipped",
+          "success": "Succeeded",
+          "failure": "Failed"
+        },
+        "previewColumns": {
+          "row": "Row",
+          "identifier": "Identifier",
+          "productName": "Product",
+          "action": "Action",
+          "result": "Result"
+        },
+        "actions": {
+          "create": "Create",
+          "update": "Update",
+          "skip": "Skip"
+        },
+        "status": {
+          "valid": "Valid",
+          "failed": "Failed",
+          "success": "Success"
+        }
       }
     },
     "productForm": {
