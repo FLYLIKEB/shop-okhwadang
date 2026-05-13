@@ -168,6 +168,7 @@ export default function Header() {
         <MobileMenu
           isAuthenticated={isAuthenticated}
           userName={user?.name}
+          userRole={user?.role}
           navItems={navItems}
           sidebarItems={sidebarItems}
           visible={menuPanel.visible}
