@@ -27,6 +27,8 @@ export default function AdminProductsPage() {
   const [smartStoreFile, setSmartStoreFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<SmartStoreProductImportResult | null>(null);
   const [importResult, setImportResult] = useState<SmartStoreProductImportResult | null>(null);
+  const [showAllImportRows, setShowAllImportRows] = useState(false);
+  const [showFailedImportRowsOnly, setShowFailedImportRowsOnly] = useState(false);
   const { page, setPage, filters, setFilter } = useAdminListPage({
     initialFilters: {
       status: '',
@@ -110,6 +112,8 @@ export default function AdminProductsPage() {
     setSmartStoreFile(file);
     setImportPreview(null);
     setImportResult(null);
+    setShowAllImportRows(false);
+    setShowFailedImportRowsOnly(false);
   };
 
   const handlePreviewImport = () => {
@@ -137,7 +141,11 @@ export default function AdminProductsPage() {
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const importSummary = importResult?.summary ?? importPreview?.summary;
-  const importRows = (importResult?.rows ?? importPreview?.rows ?? []).slice(0, 5);
+  const allImportRows = importResult?.rows ?? importPreview?.rows ?? [];
+  const visibleImportRows = showFailedImportRowsOnly
+    ? allImportRows.filter((row) => row.status === 'failed')
+    : allImportRows;
+  const importRows = showAllImportRows ? visibleImportRows : visibleImportRows.slice(0, 5);
   const isImporting = previewingImport || committingImport;
 
   return (
@@ -159,6 +167,8 @@ export default function AdminProductsPage() {
           <div className="space-y-2">
             <h2 className="text-base font-semibold">{t('import.title')}</h2>
             <p className="text-sm text-muted-foreground">{t('import.description')}</p>
+            <p className="text-sm text-muted-foreground">{t('import.supportedFormats')}</p>
+            <p className="text-sm text-muted-foreground">{t('import.supportedScope')}</p>
             <input
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -198,8 +208,32 @@ export default function AdminProductsPage() {
               <ImportSummaryItem label={t('import.summary.failure')} value={importSummary.failureCount} />
             </div>
             {importRows.length > 0 && (
-              <div className="overflow-x-auto rounded border bg-background">
-                <table className="w-full text-xs">
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {visibleImportRows.length > 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllImportRows((value) => !value)}
+                      className="rounded border px-3 py-1 text-xs hover:bg-secondary"
+                    >
+                      {showAllImportRows ? t('import.showTopRows') : t('import.showAllRows', { count: visibleImportRows.length })}
+                    </button>
+                  )}
+                  {allImportRows.some((row) => row.status === 'failed') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowFailedImportRowsOnly((value) => !value);
+                        setShowAllImportRows(true);
+                      }}
+                      className="rounded border px-3 py-1 text-xs hover:bg-secondary"
+                    >
+                      {showFailedImportRowsOnly ? t('import.showAllResults') : t('import.showFailedRows')}
+                    </button>
+                  )}
+                </div>
+                <div className="overflow-x-auto rounded border bg-background">
+                  <table className="w-full text-xs">
                   <thead className="bg-secondary">
                     <tr>
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.row')}</th>
@@ -222,7 +256,8 @@ export default function AdminProductsPage() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               </div>
             )}
           </div>
