@@ -16,6 +16,7 @@ import { AttributesService } from './attributes.service';
 import { RecentlyViewedService } from './recently-viewed.service';
 import { SmartStoreProductImportService } from './smartstore-product-import.service';
 import { ProductsController } from './products.controller';
+import { AdminProductsController } from './admin-products.controller';
 import { CategoriesController } from './categories.controller';
 import { AttributesController } from './attributes.controller';
 import { CacheModule } from '../cache/cache.module';
@@ -47,7 +48,7 @@ import { RecentlyViewedProduct } from './entities/recently-viewed-product.entity
     RecentlyViewedService,
     SmartStoreProductImportService,
   ],
-  controllers: [ProductsController, CategoriesController, AttributesController],
+  controllers: [ProductsController, AdminProductsController, CategoriesController, AttributesController],
   exports: [
     ProductsService,
     ProductQueryService,
