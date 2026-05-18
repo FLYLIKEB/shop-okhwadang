@@ -62,11 +62,8 @@ export interface SmartStoreProductImportResult {
 
 export const adminProductsApi = {
   getList: (params?: AdminProductsParams) =>
-    apiClient.get<ProductListResponse>('/products', {
-      params: {
-        ...params,
-        // admin calls include all statuses
-      } as Record<string, string | number | undefined>,
+    apiClient.get<ProductListResponse>('/admin/products', {
+      params: params as Record<string, string | number | undefined>,
     }),
   create: (data: CreateProductData) =>
     apiClient.post<ProductDetail>('/products', data),
