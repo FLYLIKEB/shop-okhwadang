@@ -560,7 +560,9 @@
       "statusFilterAria": "Product status filter",
       "import": {
         "title": "Import SmartStore Product Excel",
-        "description": "Validate a .xlsx product list downloaded from SmartStore, then create new products and update existing SKU matches.",
+        "description": "Validate a SmartStore Excel file, then create new products and update existing SKU matches.",
+        "supportedFormats": "Supported formats: product-list export XLSX and bulk-edit XLSX (일괄수정 sheet).",
+        "supportedScope": "Initial scope: basic product fields only. Options, detail images, and additional-image expansion remain follow-up work.",
         "fileLabel": "SmartStore product Excel file",
         "previewButton": "Preview upload",
         "previewing": "Validating...",
@@ -571,6 +573,10 @@
         "previewError": "Failed to validate SmartStore product Excel.",
         "commitSuccess": "SmartStore product Excel applied to the store.",
         "commitError": "Failed to apply SmartStore products.",
+        "showAllRows": "Show all {count} rows",
+        "showTopRows": "Show top 5 rows",
+        "showFailedRows": "Show failed rows only",
+        "showAllResults": "Show all results",
         "summary": {
           "total": "Rows",
           "create": "New",

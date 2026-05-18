@@ -18,9 +18,9 @@ function createCommandServiceMock() {
   };
 }
 
-async function createWorkbookBuffer(rows: Array<Array<string | number>>) {
+async function createWorkbookBuffer(rows: Array<Array<string | number>>, sheetName = 'products') {
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('products');
+  const worksheet = workbook.addWorksheet(sheetName);
   rows.forEach((row) => worksheet.addRow(row));
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
@@ -135,6 +135,76 @@ describe('SmartStoreProductImportService', () => {
     expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
       sku: 'naver-98765',
       status: ProductStatus.SOLDOUT,
+    }));
+  });
+
+  it('parses SmartStore list-export headers including 상품번호(스마트스토어)', async () => {
+    const existing = { id: 7, sku: 'naver-98765', slug: 'old-product' } as Product;
+    const repository = createRepositoryMock([existing]);
+    const commandService = createCommandServiceMock();
+    const service = new SmartStoreProductImportService(
+      repository as never,
+      commandService as unknown as ProductCommandService,
+    );
+    const buffer = await createWorkbookBuffer([
+      ['상품번호(스마트스토어)', '상품명', '판매가', '재고수량', '판매상태', '전시상태'],
+      ['98765', '목록 다운로드 상품', 5000, 2, '판매중', '전시중'],
+    ]);
+
+    const result = await service.preview(createFile(buffer));
+
+    expect(result.summary).toMatchObject({ totalRows: 1, updateCount: 1 });
+    expect(result.rows[0]).toMatchObject({ identifier: 'naver-98765', action: 'update' });
+  });
+
+  it('skips SmartStore bulk-edit guide rows and ignores 상품상태 when mapping sales status', async () => {
+    const repository = createRepositoryMock([]);
+    const commandService = createCommandServiceMock();
+    const service = new SmartStoreProductImportService(
+      repository as never,
+      commandService as unknown as ProductCommandService,
+    );
+    const buffer = await createWorkbookBuffer([
+      ['기본정보', '기본정보', '가격정보', '상태정보', '상태정보', '상태정보'],
+      ['상품번호(스마트스토어)', '상품명', '판매가', '재고수량', '판매상태', '상품상태'],
+      ['필수', '필수', '필수', '선택', '선택', '선택'],
+      ['작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드'],
+      ['추가 안내', '추가 안내', '추가 안내', '추가 안내', '추가 안내', '추가 안내'],
+      ['111', '일괄수정 상품 A', 12000, 3, '판매중', '신상품'],
+      ['222', '일괄수정 상품 B', 15000, 0, '판매중', '중고상품'],
+    ], '일괄수정');
+
+    const result = await service.commit(createFile(buffer));
+
+    expect(result.summary).toMatchObject({ totalRows: 2, createCount: 2, successCount: 2, failureCount: 0 });
+    expect(result.rows.map((row) => row.rowNumber)).toEqual([6, 7]);
+    expect(commandService.create).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      sku: 'naver-111',
+      status: ProductStatus.ACTIVE,
+    }));
+    expect(commandService.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      sku: 'naver-222',
+      status: ProductStatus.SOLDOUT,
+    }));
+  });
+
+  it('uses 전시상태 and 판매상태 semantics without treating 상품상태 as a visibility alias', async () => {
+    const repository = createRepositoryMock([]);
+    const commandService = createCommandServiceMock();
+    const service = new SmartStoreProductImportService(
+      repository as never,
+      commandService as unknown as ProductCommandService,
+    );
+    const buffer = await createWorkbookBuffer([
+      ['상품번호', '상품명', '판매가', '재고수량', '상품상태', '전시상태'],
+      ['111', '숨김 상품', 12000, 3, '신상품', '전시중지'],
+    ]);
+
+    await service.commit(createFile(buffer));
+
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+      sku: 'naver-111',
+      status: ProductStatus.HIDDEN,
     }));
   });
 

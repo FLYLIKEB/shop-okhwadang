@@ -560,7 +560,9 @@
       "statusFilterAria": "상품 상태 필터",
       "import": {
         "title": "스마트스토어 상품 엑셀 가져오기",
-        "description": "스마트스토어에서 다운로드한 .xlsx 상품목록을 검증한 뒤 신규 상품을 추가하고 기존 SKU 상품을 수정합니다.",
+        "description": "스마트스토어에서 다운로드한 엑셀을 검증한 뒤 신규 상품을 추가하고 기존 SKU 상품을 수정합니다.",
+        "supportedFormats": "지원 포맷: 상품목록 다운로드형 XLSX, 일괄수정 XLSX(일괄수정 시트).",
+        "supportedScope": "1차 지원 범위: 기본 상품 필드만 반영합니다. 옵션, 상세 이미지, 추가 이미지 확장은 후속 과제입니다.",
         "fileLabel": "스마트스토어 상품 엑셀 파일",
         "previewButton": "업로드 미리보기",
         "previewing": "검증 중...",
@@ -571,6 +573,10 @@
         "previewError": "스마트스토어 상품 엑셀 검증에 실패했습니다.",
         "commitSuccess": "스마트스토어 상품 엑셀을 자사몰에 반영했습니다.",
         "commitError": "스마트스토어 상품 반영에 실패했습니다.",
+        "showAllRows": "전체 {count}행 보기",
+        "showTopRows": "상위 5행만 보기",
+        "showFailedRows": "실패 행만 보기",
+        "showAllResults": "전체 결과 보기",
         "summary": {
           "total": "전체 행",
           "create": "신규",

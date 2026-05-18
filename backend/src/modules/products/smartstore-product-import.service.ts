@@ -41,14 +41,25 @@ interface ParsedSmartStoreRow {
 
 const MAX_IMPORT_ROWS = 500;
 
+type SmartStoreImportFormat = 'smartstore-list-export' | 'smartstore-bulk-edit';
+
+interface SmartStoreWorkbookFormat {
+  kind: SmartStoreImportFormat;
+  worksheet: ExcelJS.Worksheet;
+  headerRowNumber: number;
+  dataStartRowNumber: number;
+}
+
 const HEADER_ALIASES = {
-  productNumber: ['상품번호', '스마트스토어 상품번호', '네이버상품번호', '상품 ID', '상품ID'],
+  productNumber: ['상품번호', '상품번호(스마트스토어)', '스마트스토어 상품번호', '네이버상품번호', '상품 ID', '상품ID'],
   sellerCode: ['판매자 상품코드', '판매자상품코드', '판매자 관리코드', '자체 상품코드', 'SKU', 'sku'],
   name: ['상품명', '상품 이름', '제품명'],
   price: ['판매가', '상품가격', '가격', '정상가'],
   salePrice: ['할인가', '즉시할인가', '할인 판매가'],
   stock: ['재고수량', '재고', '재고량'],
-  status: ['판매상태', '상품상태', '전시상태'],
+  salesStatus: ['판매상태'],
+  displayStatus: ['전시상태'],
+  productCondition: ['상품상태'],
   representativeImage: ['대표이미지', '대표 이미지', '대표이미지 URL', '대표 이미지 URL', '이미지 URL'],
   additionalImages: ['추가이미지', '추가 이미지', '추가이미지 URL', '추가 이미지 URL'],
   description: ['상세설명', '상품상세', '상품 상세', '상세페이지', '상세 HTML'],
@@ -151,25 +162,20 @@ export class SmartStoreProductImportService {
   private async parseWorkbook(buffer: Buffer): Promise<ParsedSmartStoreRow[]> {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer);
-    const worksheet = workbook.worksheets[0];
-    if (!worksheet) {
-      throw new BadRequestException('엑셀 파일에서 시트를 찾을 수 없습니다.');
-    }
-
-    const headerRowNumber = this.findHeaderRowNumber(worksheet);
-    const headerMap = this.buildHeaderMap(worksheet.getRow(headerRowNumber));
+    const format = this.detectFormat(workbook);
+    const headerMap = this.buildHeaderMap(format.worksheet.getRow(format.headerRowNumber));
     if (!headerMap.name || !headerMap.price) {
-      throw new BadRequestException('상품명과 판매가 컬럼을 찾을 수 없습니다. 스마트스토어 상품 엑셀 양식을 확인해 주세요.');
+      throw new BadRequestException('필수 컬럼을 찾을 수 없습니다: 상품명, 판매가. 지원 포맷은 스마트스토어 상품목록 다운로드형 또는 일괄수정 XLSX형입니다.');
     }
 
     const rows: ParsedSmartStoreRow[] = [];
-    const seenDataRows = worksheet.rowCount - headerRowNumber;
+    const seenDataRows = format.worksheet.rowCount - format.dataStartRowNumber + 1;
     if (seenDataRows > MAX_IMPORT_ROWS) {
       throw new BadRequestException(`한 번에 최대 ${MAX_IMPORT_ROWS}개 상품까지만 업로드할 수 있습니다.`);
     }
 
-    for (let rowNumber = headerRowNumber + 1; rowNumber <= worksheet.rowCount; rowNumber += 1) {
-      const row = worksheet.getRow(rowNumber);
+    for (let rowNumber = format.dataStartRowNumber; rowNumber <= format.worksheet.rowCount; rowNumber += 1) {
+      const row = format.worksheet.getRow(rowNumber);
       if (!row.hasValues) continue;
       const parsed = this.parseRow(row, rowNumber, headerMap);
       if (parsed.productName || parsed.identifier || parsed.errors.length > 0) {
@@ -184,14 +190,34 @@ export class SmartStoreProductImportService {
     return rows;
   }
 
-  private findHeaderRowNumber(worksheet: ExcelJS.Worksheet): number {
-    for (let rowNumber = 1; rowNumber <= Math.min(10, worksheet.rowCount); rowNumber += 1) {
-      const headerMap = this.buildHeaderMap(worksheet.getRow(rowNumber));
+  private detectFormat(workbook: ExcelJS.Workbook): SmartStoreWorkbookFormat {
+    const bulkEditSheet = workbook.worksheets.find((worksheet) => worksheet.name === '일괄수정');
+    if (bulkEditSheet) {
+      const headerMap = this.buildHeaderMap(bulkEditSheet.getRow(2));
       if (headerMap.name && headerMap.price) {
-        return rowNumber;
+        return {
+          kind: 'smartstore-bulk-edit',
+          worksheet: bulkEditSheet,
+          headerRowNumber: 2,
+          dataStartRowNumber: 6,
+        };
       }
     }
-    return 1;
+
+    const listExportSheet = workbook.worksheets[0];
+    if (listExportSheet) {
+      const headerMap = this.buildHeaderMap(listExportSheet.getRow(1));
+      if (headerMap.name && headerMap.price) {
+        return {
+          kind: 'smartstore-list-export',
+          worksheet: listExportSheet,
+          headerRowNumber: 1,
+          dataStartRowNumber: 2,
+        };
+      }
+    }
+
+    throw new BadRequestException('지원하지 않는 스마트스토어 엑셀 형식입니다. 상품목록 다운로드형 또는 일괄수정 XLSX형 파일을 업로드해 주세요.');
   }
 
   private buildHeaderMap(row: ExcelJS.Row): HeaderMap {
@@ -236,7 +262,11 @@ export class SmartStoreProductImportService {
           salePrice: salePrice ?? undefined,
           stock: stock ?? 0,
           sku: identifier,
-          status: this.mapStatus(this.getCell(row, headerMap.status), stock ?? 0),
+          status: this.mapStatus(
+            this.getCell(row, headerMap.salesStatus),
+            this.getCell(row, headerMap.displayStatus),
+            stock ?? 0,
+          ),
           shortDescription: this.getCell(row, headerMap.shortDescription) || undefined,
           description: this.getCell(row, headerMap.description) || undefined,
           images: this.buildImages(productName, representativeImage, additionalImages),
@@ -262,19 +292,19 @@ export class SmartStoreProductImportService {
     }));
   }
 
-  private mapStatus(rawStatus: string, stock: number): ProductStatus {
-    const normalized = rawStatus.replace(/\s/g, '').toLowerCase();
-    if (normalized.includes('판매중') || normalized.includes('active')) {
-      return stock === 0 ? ProductStatus.SOLDOUT : ProductStatus.ACTIVE;
+  private mapStatus(rawSalesStatus: string, rawDisplayStatus: string, stock: number): ProductStatus {
+    const normalized = `${rawSalesStatus} ${rawDisplayStatus}`.replace(/\s/g, '').toLowerCase();
+    if (normalized.includes('숨김') || normalized.includes('전시중지') || normalized.includes('판매중지') || normalized.includes('hidden')) {
+      return ProductStatus.HIDDEN;
     }
     if (normalized.includes('품절') || normalized.includes('soldout')) {
       return ProductStatus.SOLDOUT;
     }
-    if (normalized.includes('숨김') || normalized.includes('전시중지') || normalized.includes('판매중지') || normalized.includes('hidden')) {
-      return ProductStatus.HIDDEN;
-    }
     if (normalized.includes('임시') || normalized.includes('draft')) {
       return ProductStatus.DRAFT;
+    }
+    if (normalized.includes('판매중') || normalized.includes('active')) {
+      return stock === 0 ? ProductStatus.SOLDOUT : ProductStatus.ACTIVE;
     }
     return stock === 0 ? ProductStatus.SOLDOUT : ProductStatus.ACTIVE;
   }
