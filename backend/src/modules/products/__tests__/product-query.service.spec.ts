@@ -235,6 +235,17 @@ describe('ProductQueryService', () => {
         status: 'draft',
       });
     });
+
+    it('관리자가 status 없이 조회하면 전체 상태를 볼 수 있도록 status 조건을 추가하지 않음', async () => {
+      qb.getManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({}, true);
+
+      expect(qb.andWhere).not.toHaveBeenCalledWith(
+        'product.status = :status',
+        expect.anything(),
+      );
+    });
   });
 
   describe('findOne', () => {
