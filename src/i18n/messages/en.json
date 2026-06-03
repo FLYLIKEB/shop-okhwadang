@@ -304,7 +304,13 @@
     "paymentMethodHint": "Payment methods appear after shipping info is complete.",
     "freeShipping": "Free",
     "freeShippingUnlocked": "Free shipping is now applied.",
-    "freeShippingRemaining": "Add {amount} more for free shipping"
+    "freeShippingRemaining": "Add {amount} more for free shipping",
+    "paypalPayment": "PayPal",
+    "naverpayPayment": "Naver Pay",
+    "naverpayDomesticBadge": "Korea only",
+    "naverpayDomesticHint": "Naver Pay may fail for overseas users.",
+    "paypalRedirectHint": "You will be redirected to PayPal approval.",
+    "externalPaymentUnavailable": "Unable to open the payment page."
   },
   "order": {
     "orderHistory": "Order History",

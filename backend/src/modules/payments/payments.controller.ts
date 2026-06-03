@@ -56,9 +56,32 @@ export class PaymentsController {
   @ApiHeader({ name: 'toss-signature', description: 'Toss 서명', required: true })
   async webhook(
     @Body() dto: WebhookPayloadDto,
-    @Headers('toss-signature') signature: string,
+    @Headers() headers: Record<string, string | string[] | undefined>,
   ): Promise<{ received: boolean }> {
-    await this.paymentsService.handleWebhook(dto, signature);
+    await this.paymentsService.handleWebhook(dto, buildPaymentWebhookSignature(headers));
     return { received: true };
   }
+}
+
+function buildPaymentWebhookSignature(headers: Record<string, string | string[] | undefined>): string {
+  const tossSignature = getHeader(headers, 'toss-signature');
+  const paypalTransmissionSig = getHeader(headers, 'paypal-transmission-sig');
+
+  if (!paypalTransmissionSig) return tossSignature ?? '';
+
+  return JSON.stringify({
+    auth_algo: getHeader(headers, 'paypal-auth-algo'),
+    cert_url: getHeader(headers, 'paypal-cert-url'),
+    transmission_id: getHeader(headers, 'paypal-transmission-id'),
+    transmission_sig: paypalTransmissionSig,
+    transmission_time: getHeader(headers, 'paypal-transmission-time'),
+  });
+}
+
+function getHeader(
+  headers: Record<string, string | string[] | undefined>,
+  name: string,
+): string | undefined {
+  const value = headers[name] ?? headers[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value;
 }

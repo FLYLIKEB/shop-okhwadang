@@ -19,6 +19,7 @@ export enum PaymentMethod {
   VIRTUAL_ACCOUNT = 'virtual_account',
   PHONE = 'phone',
   MOCK = 'mock',
+  PAYPAL = 'paypal',
 }
 
 export enum PaymentGatewayType {
@@ -27,6 +28,7 @@ export enum PaymentGatewayType {
   INICIS = 'inicis',
   STRIPE = 'stripe',
   NAVERPAY = 'naverpay',
+  PAYPAL = 'paypal',
 }
 
 @Entity('payments')

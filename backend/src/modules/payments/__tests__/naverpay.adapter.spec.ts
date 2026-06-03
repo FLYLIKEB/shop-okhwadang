@@ -28,6 +28,10 @@ describe('NaverPayPaymentAdapter', () => {
 
       expect(result.clientKey).toBe('naverpay-test-client');
       expect(result.orderId).toBe('ORDER-NAVERPAY-1');
+      expect(result.gatewayPayload).toEqual({
+        chainId: 'naverpay-chain-id',
+        mode: 'development',
+      });
     });
   });
 

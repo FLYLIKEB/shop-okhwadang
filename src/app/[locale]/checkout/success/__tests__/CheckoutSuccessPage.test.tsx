@@ -148,6 +148,79 @@ describe('CheckoutSuccessPage', () => {
   });
 
   describe('결제 완료 후 동작', () => {
+
+    it('PayPal token + paypalPaymentContext가 있으면 token으로 결제 확인을 진행한다', async () => {
+      mockSearchParams.set('token', 'PAYPAL-ORDER-1');
+      sessionStorage.setItem('paypalPaymentContext', JSON.stringify(validPaymentContext));
+
+      mockConfirm.mockResolvedValue({
+        paymentId: 1,
+        orderId: 1,
+        orderNumber: 'ORD-001',
+        status: 'paid',
+        method: 'paypal',
+        amount: 40000,
+        paidAt: new Date().toISOString(),
+      });
+
+      await act(async () => {
+        render(<CheckoutSuccessPage params={makeParams()} />);
+      });
+
+      await waitFor(() => {
+        expect(mockConfirm).toHaveBeenCalledWith({
+          orderId: 1,
+          paymentKey: 'PAYPAL-ORDER-1',
+          amount: 40000,
+        });
+      });
+    });
+
+
+    it('NaverPay resultCode=Success + paymentId가 있으면 네이버페이 컨텍스트로 결제 확인을 진행한다', async () => {
+      mockSearchParams.set('resultCode', 'Success');
+      mockSearchParams.set('paymentId', 'NPAYMENT-1');
+      sessionStorage.setItem('naverpayPaymentContext', JSON.stringify(validPaymentContext));
+
+      mockConfirm.mockResolvedValue({
+        paymentId: 1,
+        orderId: 1,
+        orderNumber: 'ORD-001',
+        status: 'paid',
+        method: 'card',
+        amount: 40000,
+        paidAt: new Date().toISOString(),
+      });
+
+      await act(async () => {
+        render(<CheckoutSuccessPage params={makeParams()} />);
+      });
+
+      await waitFor(() => {
+        expect(mockConfirm).toHaveBeenCalledWith({
+          orderId: 1,
+          paymentKey: 'NPAYMENT-1',
+          amount: 40000,
+        });
+      });
+    });
+
+    it('NaverPay resultCode 실패는 결제 확인 없이 cart로 이동한다', async () => {
+      mockSearchParams.set('resultCode', 'UserCancel');
+      mockSearchParams.set('resultMessage', '사용자 취소');
+      sessionStorage.setItem('naverpayPaymentContext', JSON.stringify(validPaymentContext));
+
+      await act(async () => {
+        render(<CheckoutSuccessPage params={makeParams()} />);
+      });
+
+      await waitFor(() => {
+        expect(mockReplace).toHaveBeenCalledWith('/ko/cart');
+      });
+      expect(vi.mocked(toast.error)).toHaveBeenCalledWith('사용자 취소');
+      expect(mockConfirm).not.toHaveBeenCalled();
+    });
+
     it('결제 확인 성공 시 sessionStorageアイテムをクリア하고 order/complete页面로リ다이렉션한다', async () => {
       setupValidSearchParams();
       sessionStorage.setItem('tossPaymentContext', JSON.stringify(validPaymentContext));

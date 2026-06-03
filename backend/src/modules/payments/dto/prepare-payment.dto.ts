@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class PreparePaymentDto {
@@ -11,4 +11,14 @@ export class PreparePaymentDto {
   @IsString({ message: '로케일은 문자열이어야 합니다.' })
   @IsIn(['ko', 'en'], { message: '로케일은 ko 또는 en만 지원합니다.' })
   locale?: string;
+
+  @ApiPropertyOptional({
+    example: 'paypal',
+    enum: ['naverpay', 'paypal'],
+    description: '사용자가 명시적으로 선택한 결제 게이트웨이',
+  })
+  @IsOptional()
+  @IsString({ message: '결제 게이트웨이는 문자열이어야 합니다.' })
+  @IsIn(['naverpay', 'paypal'], { message: '결제 게이트웨이는 naverpay 또는 paypal만 지원합니다.' })
+  gateway?: 'naverpay' | 'paypal';
 }

@@ -2,12 +2,13 @@ import { Provider } from '@nestjs/common';
 
 export const PAYMENT_CONFIG = Symbol('PAYMENT_CONFIG');
 
-export type PaymentGatewayName = 'mock' | 'toss' | 'stripe' | 'inicis' | 'naverpay';
+export type PaymentGatewayName = 'mock' | 'toss' | 'stripe' | 'inicis' | 'naverpay' | 'paypal';
 
 export interface PaymentConfig {
   nodeEnv: string;
   gateway: PaymentGatewayName;
   defaultCarrier: string;
+  frontendUrl: string;
   toss: {
     secretKey: string;
     clientKey: string;
@@ -29,6 +30,12 @@ export interface PaymentConfig {
     clientSecret: string;
     chainId: string;
   };
+  paypal: {
+    clientId: string;
+    clientSecret: string;
+    webhookId: string;
+    apiBaseUrl: string;
+  };
 }
 
 function isPaymentGatewayName(value: string): value is PaymentGatewayName {
@@ -37,7 +44,8 @@ function isPaymentGatewayName(value: string): value is PaymentGatewayName {
     value === 'toss' ||
     value === 'stripe' ||
     value === 'inicis' ||
-    value === 'naverpay'
+    value === 'naverpay' ||
+    value === 'paypal'
   );
 }
 
@@ -59,6 +67,7 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
     nodeEnv,
     gateway,
     defaultCarrier: env.DEFAULT_CARRIER || 'mock',
+    frontendUrl: (env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/$/, ''),
     toss: {
       secretKey: env.TOSS_SECRET_KEY ?? '',
       clientKey: env.TOSS_CLIENT_KEY ?? '',
@@ -79,6 +88,15 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
       clientId: env.NAVERPAY_CLIENT_ID ?? '',
       clientSecret: env.NAVERPAY_CLIENT_SECRET ?? '',
       chainId: env.NAVERPAY_CHAIN_ID ?? '',
+    },
+    paypal: {
+      clientId: env.PAYPAL_CLIENT_ID ?? '',
+      clientSecret: env.PAYPAL_CLIENT_SECRET ?? '',
+      webhookId: env.PAYPAL_WEBHOOK_ID ?? '',
+      apiBaseUrl: (
+        env.PAYPAL_API_BASE_URL
+        ?? (nodeEnv === 'production' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com')
+      ).replace(/\/$/, ''),
     },
   };
 }

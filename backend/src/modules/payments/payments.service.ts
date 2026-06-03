@@ -19,7 +19,12 @@ import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from './adapters/inicis.adapter';
 import { NaverPayPaymentAdapter } from './adapters/naverpay.adapter';
-import { resolveGatewayByLocale } from './payments.module';
+import { PayPalPaymentAdapter } from './adapters/paypal.adapter';
+import {
+  getAvailableGatewaysByLocale,
+  isCheckoutGatewayName,
+  resolveGatewayByLocale,
+} from './payments.module';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { NotificationService } from '../notification/notification.service';
@@ -55,6 +60,7 @@ export class PaymentsService {
     private readonly stripeAdapter: StripePaymentAdapter,
     private readonly inicisAdapter: KGInicisPaymentAdapter,
     private readonly naverpayAdapter: NaverPayPaymentAdapter,
+    private readonly paypalAdapter: PayPalPaymentAdapter,
     private readonly notificationService: NotificationService,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly dataSource: DataSource,
@@ -87,13 +93,12 @@ export class PaymentsService {
     });
   }
 
-  private resolveGateway(locale?: string): PaymentGateway {
-    if (!locale) return this.gateway;
-    const name = resolveGatewayByLocale(locale);
+  private resolveGatewayByName(name: string): PaymentGateway {
     if (name === 'toss') return this.tossAdapter;
     if (name === 'stripe') return this.stripeAdapter;
     if (name === 'inicis') return this.inicisAdapter;
     if (name === 'naverpay') return this.naverpayAdapter;
+    if (name === 'paypal') return this.paypalAdapter;
     return this.gateway;
   }
 
@@ -107,6 +112,8 @@ export class PaymentsService {
         return this.inicisAdapter;
       case PaymentGatewayType.NAVERPAY:
         return this.naverpayAdapter;
+      case PaymentGatewayType.PAYPAL:
+        return this.paypalAdapter;
       case PaymentGatewayType.MOCK:
       default:
         return this.gateway;
@@ -123,6 +130,8 @@ export class PaymentsService {
         return PaymentGatewayType.INICIS;
       case 'naverpay':
         return PaymentGatewayType.NAVERPAY;
+      case 'paypal':
+        return PaymentGatewayType.PAYPAL;
       case 'mock':
       default:
         return PaymentGatewayType.MOCK;
@@ -136,6 +145,9 @@ export class PaymentsService {
     amount: number;
     gateway: string;
     clientKey: string;
+    availableGateways: string[];
+    redirectUrl?: string;
+    gatewayPayload?: Record<string, string | number | boolean>;
   }> {
     const order = await findOrThrow(this.orderRepository, { id: dto.orderId }, '주문을 찾을 수 없습니다.');
     assertOwnership(order.userId, userId);
@@ -143,8 +155,14 @@ export class PaymentsService {
       throw new ConflictException('이미 처리된 주문입니다.');
     }
 
-    const selectedGateway = this.resolveGateway(dto.locale);
-    const gatewayName = dto.locale ? resolveGatewayByLocale(dto.locale) : 'mock';
+    const locale = dto.locale ?? 'ko';
+    const availableGateways = getAvailableGatewaysByLocale(locale);
+    const gatewayName = dto.gateway && isCheckoutGatewayName(dto.gateway)
+      ? dto.gateway
+      : dto.locale
+        ? resolveGatewayByLocale(locale)
+        : this.paymentConfig.gateway;
+    const selectedGateway = this.resolveGatewayByName(gatewayName);
 
     let payment = await this.paymentRepository.findOne({ where: { orderId: dto.orderId } });
     if (!payment) {
@@ -163,7 +181,10 @@ export class PaymentsService {
       payment = await findOrThrow(this.paymentRepository, { id: payment.id }, '결제 정보를 찾을 수 없습니다.');
     }
 
-    const result = await selectedGateway.prepare(String(dto.orderId), Number(order.totalAmount));
+    const result = await selectedGateway.prepare(String(dto.orderId), Number(order.totalAmount), {
+      locale,
+      orderNumber: order.orderNumber,
+    });
 
     return {
       paymentId: Number(payment.id),
@@ -172,6 +193,9 @@ export class PaymentsService {
       amount: Number(order.totalAmount),
       gateway: gatewayName,
       clientKey: result.clientKey,
+      availableGateways,
+      ...(result.redirectUrl ? { redirectUrl: result.redirectUrl } : {}),
+      ...(result.gatewayPayload ? { gatewayPayload: result.gatewayPayload } : {}),
     };
   }
 

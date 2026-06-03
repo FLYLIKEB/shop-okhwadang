@@ -9,7 +9,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
-import type { CartItem, PreparePaymentResponse, UserAddress } from '@/lib/api';
+import type { CartItem, CheckoutGatewayName, PreparePaymentResponse, UserAddress } from '@/lib/api';
 import { usersApi } from '@/lib/api';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
 import { SESSION_KEYS } from '@/constants/storage';
@@ -59,6 +59,9 @@ export default function CheckoutPage({
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
   const [step, setStep] = useState<PaymentStep>('idle');
   const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
+  const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(
+    locale === 'ko' ? 'naverpay' : 'paypal',
+  );
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
   const [currentOrderNumber, setCurrentOrderNumber] = useState('');
   const [form, setForm] = useState<ShippingForm>({
@@ -87,6 +90,9 @@ export default function CheckoutPage({
     success: t('steps.success'),
   };
   const loadAddressErrorMessage = t('loadAddressError');
+  const gatewayOptions: CheckoutGatewayName[] = locale === 'ko'
+    ? ['naverpay', 'paypal']
+    : ['paypal', 'naverpay'];
 
   const fillFormFromAddress = (addr: UserAddress) => {
     setForm({
@@ -98,6 +104,10 @@ export default function CheckoutPage({
       memo: '',
     });
   };
+
+  useEffect(() => {
+    setSelectedGateway(locale === 'ko' ? 'naverpay' : 'paypal');
+  }, [locale]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -172,6 +182,7 @@ export default function CheckoutPage({
     locale,
     paymentRef,
     prepareResult,
+    selectedGateway,
     currentOrderId,
     currentOrderNumber,
     setStep,
@@ -235,7 +246,42 @@ export default function CheckoutPage({
                     onError={handlePaymentError}
                   />
                 ) : (
-                  <p className="text-sm text-muted-foreground">{t('paymentMethodHint')}</p>
+                  <div className="layout-stack-sm">
+                    <p className="typo-body-sm text-muted-foreground">{t('paymentMethodHint')}</p>
+                    <div className="grid gap-3 md:grid-cols-2" role="radiogroup" aria-label={t('paymentMethod')}>
+                      {gatewayOptions.map((gateway) => (
+                        <label
+                          key={gateway}
+                          className={cn(
+                            'flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-border p-3 transition-colors',
+                            selectedGateway === gateway ? 'bg-muted/40' : 'bg-background',
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="checkoutGateway"
+                            value={gateway}
+                            checked={selectedGateway === gateway}
+                            onChange={() => setSelectedGateway(gateway)}
+                            className="mt-1 accent-foreground"
+                          />
+                          <span className="layout-stack-xs">
+                            <span className="flex items-center gap-2 typo-body-sm text-foreground">
+                              {t(gateway === 'naverpay' ? 'naverpayPayment' : 'paypalPayment')}
+                              {gateway === 'naverpay' && (
+                                <span className="rounded-sm bg-muted px-2 py-0.5 typo-label text-muted-foreground" title={t('naverpayDomesticHint')}>
+                                  {t('naverpayDomesticBadge')}
+                                </span>
+                              )}
+                            </span>
+                            {gateway === 'naverpay' && (
+                              <span className="typo-label text-muted-foreground">{t('naverpayDomesticHint')}</span>
+                            )}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             </section>

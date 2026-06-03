@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/routing';
 import type { PreparePaymentResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
@@ -8,6 +9,76 @@ import { SESSION_KEYS } from '@/constants/storage';
 
 export interface PaymentGatewayHandle {
   confirm: () => Promise<void>;
+}
+
+
+type NaverPayMode = 'development' | 'production';
+
+interface NaverPayObject {
+  open: (params: {
+    merchantUserKey: string;
+    merchantPayKey: string;
+    productName: string;
+    totalPayAmount: number;
+    taxScopeAmount: number;
+    taxExScopeAmount: number;
+    returnUrl: string;
+  }) => void;
+}
+
+interface NaverPayNamespace {
+  Pay?: {
+    create: (config: {
+      mode: NaverPayMode;
+      payType: 'normal';
+      clientId: string;
+      chainId: string;
+    }) => NaverPayObject;
+  };
+}
+
+declare global {
+  interface Window {
+    Naver?: NaverPayNamespace;
+  }
+}
+
+const NAVERPAY_SDK_SRC = 'https://nsp.pay.naver.com/sdk/js/naverpay.min.js';
+let naverPaySdkPromise: Promise<void> | null = null;
+
+function loadNaverPaySdk(): Promise<void> {
+  if (window.Naver?.Pay) return Promise.resolve();
+  if (naverPaySdkPromise) return naverPaySdkPromise;
+
+  naverPaySdkPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${NAVERPAY_SDK_SRC}"]`);
+    const script = existing ?? document.createElement('script');
+    script.src = NAVERPAY_SDK_SRC;
+    script.async = true;
+    script.onload = () => {
+      if (window.Naver?.Pay) {
+        resolve();
+      } else {
+        naverPaySdkPromise = null;
+        reject(new Error('naverpay_sdk_init_failed'));
+      }
+    };
+    script.onerror = () => {
+      naverPaySdkPromise = null;
+      reject(new Error('naverpay_sdk_load_failed'));
+    };
+    if (!existing) document.body.appendChild(script);
+  });
+
+  return naverPaySdkPromise;
+}
+
+function getGatewayPayloadString(
+  prepareResult: PreparePaymentResponse,
+  key: string,
+): string | undefined {
+  const value = prepareResult.gatewayPayload?.[key];
+  return typeof value === 'string' ? value : undefined;
 }
 
 interface PaymentGatewayProps {
@@ -217,13 +288,112 @@ const MockPaymentGateway = forwardRef<PaymentGatewayHandle>(
   },
 );
 
+// ─── External redirect gateways (PayPal / NaverPay) ───────────────────────────
+
+const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
+  function ExternalRedirectGateway(
+    { prepareResult, orderId, orderNumber, amount, locale, onError },
+    ref,
+  ) {
+    const t = useTranslations('checkout');
+    const isNaverPay = prepareResult.gateway === 'naverpay';
+
+    useImperativeHandle(ref, () => ({
+      confirm: async () => {
+        if (prepareResult.gateway === 'naverpay') {
+          const chainId = getGatewayPayloadString(prepareResult, 'chainId');
+          const mode = getGatewayPayloadString(prepareResult, 'mode') === 'production'
+            ? 'production'
+            : 'development';
+
+          if (!prepareResult.clientKey || !chainId) {
+            onError(t('externalPaymentUnavailable'));
+            return;
+          }
+
+          sessionStorage.setItem(
+            SESSION_KEYS.NAVERPAY_CONTEXT,
+            JSON.stringify({ orderId, orderNumber, amount }),
+          );
+
+          try {
+            await loadNaverPaySdk();
+            const naverPay = window.Naver?.Pay?.create({
+              mode,
+              payType: 'normal',
+              clientId: prepareResult.clientKey,
+              chainId,
+            });
+            if (!naverPay) throw new Error('naverpay_sdk_init_failed');
+
+            naverPay.open({
+              merchantUserKey: `order_${orderId}`,
+              merchantPayKey: orderNumber,
+              productName: orderNumber,
+              totalPayAmount: amount,
+              taxScopeAmount: amount,
+              taxExScopeAmount: 0,
+              returnUrl: `${window.location.origin}/${locale}/checkout/success`,
+            });
+          } catch {
+            onError(t('externalPaymentUnavailable'));
+          }
+          return;
+        }
+
+        if (!prepareResult.redirectUrl) {
+          onError(t('externalPaymentUnavailable'));
+          return;
+        }
+
+        sessionStorage.setItem(
+          SESSION_KEYS.PAYPAL_CONTEXT,
+          JSON.stringify({ orderId, orderNumber, amount }),
+        );
+        window.location.assign(prepareResult.redirectUrl);
+      },
+    }));
+
+    return (
+      <label className="flex items-start gap-3 rounded-md border border-border p-3">
+        <input
+          type="radio"
+          name="paymentMethod"
+          value={prepareResult.gateway}
+          defaultChecked
+          readOnly
+          className="mt-1 accent-foreground"
+        />
+        <span className="layout-stack-xs">
+          <span className="flex items-center gap-2 typo-body-sm text-foreground">
+            {isNaverPay ? t('naverpayPayment') : t('paypalPayment')}
+            {isNaverPay && (
+              <span className="rounded-sm bg-muted px-2 py-0.5 typo-label text-muted-foreground" title={t('naverpayDomesticHint')}>
+                {t('naverpayDomesticBadge')}
+              </span>
+            )}
+          </span>
+          <span className="typo-label text-muted-foreground">
+            {isNaverPay ? t('naverpayDomesticHint') : t('paypalRedirectHint')}
+          </span>
+        </span>
+      </label>
+    );
+  },
+);
+
 // ─── Public component ─────────────────────────────────────────────────────────
 
 const PaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
   function PaymentGateway(props, ref) {
     const { prepareResult, locale } = props;
 
+    if (prepareResult.gateway === 'paypal' || prepareResult.gateway === 'naverpay') {
+      return <ExternalRedirectGateway ref={ref} {...props} />;
+    }
+
     const isToss =
+      prepareResult.gateway === 'toss' &&
       locale === 'ko' &&
       prepareResult.clientKey &&
       prepareResult.clientKey !== 'mock_client_key';

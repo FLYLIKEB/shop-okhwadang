@@ -83,6 +83,27 @@ describe('extractWebhookIdempotencyKey', () => {
     });
   });
 
+
+  describe('PayPal', () => {
+    it('webhook id + event_type 사용', () => {
+      const key = extractWebhookIdempotencyKey(
+        PaymentGatewayType.PAYPAL,
+        { id: 'WH-123', event_type: 'CHECKOUT.ORDER.APPROVED' },
+      );
+      expect(key).toEqual({
+        gateway: PaymentGatewayType.PAYPAL,
+        eventId: 'WH-123',
+        eventType: 'CHECKOUT.ORDER.APPROVED',
+      });
+    });
+
+    it('id 가 없으면 null', () => {
+      expect(
+        extractWebhookIdempotencyKey(PaymentGatewayType.PAYPAL, { event_type: 'PAYMENT.CAPTURE.COMPLETED' }),
+      ).toBeNull();
+    });
+  });
+
   describe('KGInicis', () => {
     it('tid + eventType 결합', () => {
       const key = extractWebhookIdempotencyKey(

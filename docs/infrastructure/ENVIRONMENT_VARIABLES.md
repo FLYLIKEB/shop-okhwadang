@@ -65,7 +65,7 @@
 
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
-| `PAYMENT_GATEWAY` | `mock` | 현재 코드 기준 PG 어댑터 선택 (`mock`/`toss`/`stripe`). 국내 목표 지원 PG는 네이버페이/KG이니시스/토스페이먼츠, 글로벌은 Stripe |
+| `PAYMENT_GATEWAY` | `mock` | PG 어댑터 선택 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`). `mock`은 프로덕션 차단 |
 | `TOSS_SECRET_KEY` | — | 토스페이먼츠 시크릿 키 |
 | `TOSS_CLIENT_KEY` | — | 토스페이먼츠 클라이언트 키 |
 | `STRIPE_SECRET_KEY` | — | Stripe 시크릿 키 |
@@ -137,3 +137,8 @@ backend/.env.example      # 키 목록 (커밋 O, 값 없음)
 ```
 
 > **`.env` 파일은 절대 커밋하지 않습니다.** `.env.example`에 키 목록만 기록합니다.
+
+| `PAYPAL_CLIENT_ID` | — | PayPal REST API client ID |
+| `PAYPAL_CLIENT_SECRET` | — | PayPal REST API client secret |
+| `PAYPAL_WEBHOOK_ID` | — | PayPal webhook signature verification ID |
+| `PAYPAL_API_BASE_URL` | sandbox/prod default | PayPal REST API base URL override |

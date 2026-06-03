@@ -17,17 +17,32 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
   const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
-    const paymentKey = searchParams.get('paymentKey');
+    const paypalToken = searchParams.get('token');
+    const naverPayResultCode = searchParams.get('resultCode');
+    const naverPayPaymentId = searchParams.get('paymentId');
+    const isNaverPayReturn = naverPayResultCode !== null || naverPayPaymentId !== null;
+    const paymentKey = paypalToken ?? naverPayPaymentId ?? searchParams.get('paymentKey');
     const tossOrderId = searchParams.get('orderId');
     const amountParam = searchParams.get('amount');
+    const contextKey = paypalToken
+      ? SESSION_KEYS.PAYPAL_CONTEXT
+      : isNaverPayReturn
+        ? SESSION_KEYS.NAVERPAY_CONTEXT
+        : SESSION_KEYS.TOSS_CONTEXT;
 
-    if (!paymentKey || !tossOrderId || !amountParam) {
+    if (isNaverPayReturn && naverPayResultCode !== 'Success') {
+      toast.error(searchParams.get('resultMessage') ?? '결제 정보가 올바르지 않습니다.');
+      router.replace(`/${locale}/cart`);
+      return;
+    }
+
+    if (!paymentKey || (!paypalToken && !isNaverPayReturn && (!tossOrderId || !amountParam))) {
       toast.error('결제 정보가 올바르지 않습니다.');
       router.replace(`/${locale}/cart`);
       return;
     }
 
-    const raw = sessionStorage.getItem(SESSION_KEYS.TOSS_CONTEXT);
+    const raw = sessionStorage.getItem(contextKey);
     if (!raw) {
       toast.error('결제 컨텍스트를 찾을 수 없습니다.');
       router.replace(`/${locale}/cart`);
@@ -40,11 +55,13 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
       amount: number;
     };
 
-    const amount = Number(amountParam);
-    if (amount !== ctx.amount) {
-      toast.error('결제 금액이 일치하지 않습니다.');
-      router.replace(`/${locale}/cart`);
-      return;
+    if (!paypalToken && !isNaverPayReturn) {
+      const amount = Number(amountParam);
+      if (amount !== ctx.amount) {
+        toast.error('결제 금액이 일치하지 않습니다.');
+        router.replace(`/${locale}/cart`);
+        return;
+      }
     }
 
     paymentsApi
@@ -53,6 +70,8 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
         toast.success('결제가 완료되었습니다.');
         sessionStorage.removeItem(SESSION_KEYS.CHECKOUT_ITEMS);
         sessionStorage.removeItem(SESSION_KEYS.TOSS_CONTEXT);
+        sessionStorage.removeItem(SESSION_KEYS.PAYPAL_CONTEXT);
+        sessionStorage.removeItem(SESSION_KEYS.NAVERPAY_CONTEXT);
         await refetch();
         router.replace(
           `/${locale}/order/complete?orderId=${ctx.orderId}&orderNumber=${ctx.orderNumber}`,

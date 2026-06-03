@@ -10,6 +10,7 @@ import { PaymentGatewayType } from '../entities/payment.entity';
  * - Stripe: `event.id` (예: `evt_xxx`). Stripe webhook 의 표준 필드.
  * - NaverPay: `paymentId` 이지만 cancel 이벤트와 confirm 이벤트가 같은 paymentId 를 공유할 수 있어
  *   `eventType` 을 함께 묶어 분리한다 (`naverpay-paymentId:CANCEL` 등).
+ * - PayPal: webhook `id` 와 `event_type` 을 사용한다.
  * - KGInicis: `tid` 와 `eventType` 결합 (취소 / 승인 분리).
  * - Mock: `orderId + ':' + eventType` (테스트 용도).
  *
@@ -28,7 +29,7 @@ export function extractWebhookIdempotencyKey(
   if (!isRecord(payload)) return null;
 
   const eventType = String(
-    payload.eventType ?? payload.status ?? payload.type ?? '',
+    payload.eventType ?? payload.event_type ?? payload.status ?? payload.type ?? '',
   ).toUpperCase();
 
   switch (gateway) {
@@ -49,6 +50,11 @@ export function extractWebhookIdempotencyKey(
       const paymentId = stringOf(payload.paymentId);
       if (!paymentId || !eventType) return null;
       return { gateway, eventId: `${paymentId}:${eventType}`, eventType };
+    }
+    case PaymentGatewayType.PAYPAL: {
+      const id = stringOf(payload.id);
+      if (!id || !eventType) return null;
+      return { gateway, eventId: id, eventType };
     }
     case PaymentGatewayType.INICIS: {
       const tid = stringOf(payload.tid);
