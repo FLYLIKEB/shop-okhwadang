@@ -52,7 +52,7 @@
     "openMenu": "메뉴 열기",
     "closeMenu": "메뉴 닫기",
     "collection": "컬렉션",
-    "archive": "Archive",
+    "archive": "아카이브",
     "journal": "Journal",
     "myPage": "마이",
     "home": "홈",
@@ -101,7 +101,7 @@
     "privacy": "개인정보처리방침",
     "allProducts": "전체 상품",
     "collection": "컬렉션",
-    "archive": "Archive",
+    "archive": "아카이브",
     "journal": "Journal",
     "copyright": "© {year} 옥화당. All rights reserved."
   },
@@ -841,7 +841,7 @@
   "nav": {
     "products": "상품목록",
     "artist": "장인",
-    "archive": "Archive",
+    "archive": "아카이브",
     "collection": "컬렉션",
     "journal": "Journal"
   },
