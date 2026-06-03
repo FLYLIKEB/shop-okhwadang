@@ -151,6 +151,21 @@ describe('CheckoutPage', () => {
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
   });
 
+  it('keeps desktop order summary and submit CTA inside the same sticky aside', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+
+    await renderCheckoutPage();
+
+    const orderSummaryHeading = await screen.findByText('주문 상품');
+    const desktopSummaryAside = orderSummaryHeading.closest('aside');
+
+    expect(desktopSummaryAside).not.toBeNull();
+    expect(desktopSummaryAside).toHaveClass('lg:sticky', 'lg:top-24', 'lg:self-start');
+    expect(desktopSummaryAside).toContainElement(screen.getByText('테스트 상품'));
+    expect(desktopSummaryAside).toContainElement(screen.getAllByRole('button', { name: '결제하기' })[0]);
+  });
+
   it('shows validation error for invalid phone on submit', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
