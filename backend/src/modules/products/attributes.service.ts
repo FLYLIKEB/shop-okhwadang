@@ -19,6 +19,10 @@ export class AttributesService {
   ) {}
 
   private applyLocaleToAttributeType(entity: AttributeType, locale?: string): AttributeType {
+    // ko 로케일: name 컬럼이 영문일 수 있으므로 nameKo 우선 적용
+    if (!locale || locale === 'ko') {
+      return entity.nameKo ? { ...entity, name: entity.nameKo } : entity;
+    }
     return applyLocale(entity, locale, ['name']);
   }
 
