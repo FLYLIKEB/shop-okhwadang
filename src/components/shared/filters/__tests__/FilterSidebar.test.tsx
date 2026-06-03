@@ -130,7 +130,7 @@ describe('FilterSidebar', () => {
 
   it('builds attrs for clay and shape filters and can reset active filters', async () => {
     useCatalogQueryParamsMock.mockReturnValue({
-      attrs: new Map([['clay_type', '자니']]),
+      attrs: new Map([['clay_type', 'zini']]),
       categoryId: 1,
       priceMin: 10000,
       priceMax: undefined,
@@ -144,7 +144,7 @@ describe('FilterSidebar', () => {
     expect(updateQueryMock).toHaveBeenCalledWith({ attrs: undefined });
 
     await userEvent.click(screen.getAllByRole('radio', { name: '원형' })[0]);
-    expect(updateQueryMock).toHaveBeenCalledWith({ attrs: 'clay_type:자니,teapot_shape:원형' });
+    expect(updateQueryMock).toHaveBeenCalledWith({ attrs: 'clay_type:zini,teapot_shape:round' });
 
     await userEvent.click(screen.getAllByRole('button', { name: '초기화' })[0]);
     expect(resetQueryMock).toHaveBeenCalledWith(['categoryId', 'price_min', 'price_max', 'attrs']);

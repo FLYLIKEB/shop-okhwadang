@@ -350,6 +350,7 @@ export class ProductQueryService {
       for (const [code, value] of attrFilters) {
         const typeId = attrTypeIdMap.get(code);
         if (typeId === undefined) {
+          this.logger.warn(`Unknown product attribute filter code skipped: ${code}`);
           continue;
         }
 

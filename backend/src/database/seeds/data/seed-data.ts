@@ -1362,18 +1362,18 @@ export interface SeedCollection {
 
 export const collections: SeedCollection[] = [
   // 니료별
-  { type: 'clay', name: 'junni', nameKo: '주니', color: '#8B4513', description: '주철질의 대표 니료로, 적색 내지 황갈색을 띱니다. 내열성과 보온성이 뛰어나며, 차의 풍미를 극대화합니다.', productUrl: '/products?clayType=junni', sortOrder: 1, isActive: true },
-  { type: 'clay', name: 'danji', nameKo: '단니', color: '#D4A574', description: '황토계열의 단단한 니료로, 밝은 황금빛을 띱니다. 은은한 향과 부드러운 맛을 표현하는 데 적합합니다.', productUrl: '/products?clayType=danji', sortOrder: 2, isActive: true },
-  { type: 'clay', name: 'jani', nameKo: '자니', color: '#2F4F4F', description: '청자질의 대표 니료로, 청록색 내지 암청색을 띱니다. 깊은 향과 시원한 맛을 자랑합니다.', productUrl: '/products?clayType=jani', sortOrder: 3, isActive: true },
-  { type: 'clay', name: 'heugni', nameKo: '흑니', color: '#1C1C1C', description: '흑색 도자기 전용 니료로, 검은색을 띱니다. 떫은맛을 줄이고 깊은 맛을내는 특성이 있습니다.', productUrl: '/products?clayType=heugni', sortOrder: 4, isActive: true },
-  { type: 'clay', name: 'cheongsu', nameKo: '청수니', color: '#4682B4', description: '청수(정선) 지역 특유의 청백색 니료입니다. 산뜻한 맛과 깨끗한 향이 특징입니다.', productUrl: '/products?clayType=cheongsu', sortOrder: 5, isActive: true },
-  { type: 'clay', name: 'nokni', nameKo: '녹니', color: '#556B2F', description: '녹토계열의 독특한 니료로, 녹색기를 띱니다. 건강과 풍미를 동시에 생각하는 이들에게 사랑받습니다.', productUrl: '/products?clayType=nokni', sortOrder: 6, isActive: true },
+  { type: 'clay', name: 'junni', nameKo: '주니', color: '#8B4513', description: '주철질의 대표 니료로, 적색 내지 황갈색을 띱니다. 내열성과 보온성이 뛰어나며, 차의 풍미를 극대화합니다.', productUrl: '/products?attrs=clay_type:junni', sortOrder: 1, isActive: true },
+  { type: 'clay', name: 'danji', nameKo: '단니', color: '#D4A574', description: '황토계열의 단단한 니료로, 밝은 황금빛을 띱니다. 은은한 향과 부드러운 맛을 표현하는 데 적합합니다.', productUrl: '/products?attrs=clay_type:danji', sortOrder: 2, isActive: true },
+  { type: 'clay', name: 'jani', nameKo: '자니', color: '#2F4F4F', description: '청자질의 대표 니료로, 청록색 내지 암청색을 띱니다. 깊은 향과 시원한 맛을 자랑합니다.', productUrl: '/products?attrs=clay_type:jani', sortOrder: 3, isActive: true },
+  { type: 'clay', name: 'heugni', nameKo: '흑니', color: '#1C1C1C', description: '흑색 도자기 전용 니료로, 검은색을 띱니다. 떫은맛을 줄이고 깊은 맛을내는 특성이 있습니다.', productUrl: '/products?attrs=clay_type:heugni', sortOrder: 4, isActive: true },
+  { type: 'clay', name: 'cheongsu', nameKo: '청수니', color: '#4682B4', description: '청수(정선) 지역 특유의 청백색 니료입니다. 산뜻한 맛과 깨끗한 향이 특징입니다.', productUrl: '/products?attrs=clay_type:cheongsu', sortOrder: 5, isActive: true },
+  { type: 'clay', name: 'nokni', nameKo: '녹니', color: '#556B2F', description: '녹토계열의 독특한 니료로, 녹색기를 띱니다. 건강과 풍미를 동시에 생각하는 이들에게 사랑받습니다.', productUrl: '/products?attrs=clay_type:nokni', sortOrder: 6, isActive: true },
   // 모양별
-  { type: 'shape', name: 'seoshi', nameKo: '서시', color: null, description: '평평하고 넓은 형태의 주전자. 뛰어난 안정감과 넓은 탕면으로 차의 풍미를 펼쳐줍니다.', productUrl: '/products?teapotShape=seoshi', sortOrder: 1, isActive: true },
-  { type: 'shape', name: 'seokpyo', nameKo: '석표', color: null, description: '곰방대 형태에서 영감을 받은 독특한 모양. 절제된 아름다움과 실용성을 겸비합니다.', productUrl: '/products?teapotShape=seokpyo', sortOrder: 2, isActive: true },
-  { type: 'shape', name: 'inwang', nameKo: '인왕', color: null, description: '인왕산의 기품을 담은 날카롭고 세련된 라인. 현대적 감각으로 재해석한 전통 형태입니다.', productUrl: '/products?teapotShape=inwang', sortOrder: 3, isActive: true },
-  { type: 'shape', name: 'deokjong', nameKo: '덕종', color: null, description: '고려 시대의 달인으로 유명한 덕종달인의 기법을 현대에 재현. 우아하고 정제된 실루엿입니다.', productUrl: '/products?teapotShape=deokjong', sortOrder: 4, isActive: true },
-  { type: 'shape', name: 'supeong', nameKo: '수평', color: null, description: '수평의 아름다운 곡선. 검소하고 담백한 아름다움으로 평온함을 선물합니다.', productUrl: '/products?teapotShape=supeong', sortOrder: 5, isActive: true },
+  { type: 'shape', name: 'seoshi', nameKo: '서시', color: null, description: '평평하고 넓은 형태의 주전자. 뛰어난 안정감과 넓은 탕면으로 차의 풍미를 펼쳐줍니다.', productUrl: '/products?attrs=teapot_shape:seoshi', sortOrder: 1, isActive: true },
+  { type: 'shape', name: 'seokpyo', nameKo: '석표', color: null, description: '곰방대 형태에서 영감을 받은 독특한 모양. 절제된 아름다움과 실용성을 겸비합니다.', productUrl: '/products?attrs=teapot_shape:seokpyo', sortOrder: 2, isActive: true },
+  { type: 'shape', name: 'inwang', nameKo: '인왕', color: null, description: '인왕산의 기품을 담은 날카롭고 세련된 라인. 현대적 감각으로 재해석한 전통 형태입니다.', productUrl: '/products?attrs=teapot_shape:inwang', sortOrder: 3, isActive: true },
+  { type: 'shape', name: 'deokjong', nameKo: '덕종', color: null, description: '고려 시대의 달인으로 유명한 덕종달인의 기법을 현대에 재현. 우아하고 정제된 실루엿입니다.', productUrl: '/products?attrs=teapot_shape:deokjong', sortOrder: 4, isActive: true },
+  { type: 'shape', name: 'supeong', nameKo: '수평', color: null, description: '수평의 아름다운 곡선. 검소하고 담백한 아름다움으로 평온함을 선물합니다.', productUrl: '/products?attrs=teapot_shape:supeong', sortOrder: 5, isActive: true },
 ];
 
 // ============================================================
