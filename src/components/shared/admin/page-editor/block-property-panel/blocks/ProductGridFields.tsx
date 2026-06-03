@@ -1,7 +1,8 @@
 'use client';
 
+import type { ProductSort } from '@/lib/api';
 import { NumberField, SelectField, StringField, createContentUpdater } from '../FormFields';
-import { PRODUCT_GRID_TEMPLATE_OPTIONS } from '../blockConfig';
+import { PRODUCT_GRID_TEMPLATE_OPTIONS, PRODUCT_SORT_OPTIONS } from '../blockConfig';
 import ProductCategoryPicker from '../ProductCategoryPicker';
 
 interface ProductGridFieldsProps {
@@ -22,6 +23,12 @@ export default function ProductGridFields({ content, onChange }: ProductGridFiel
         value={(content.template as string) ?? '3col'}
         options={PRODUCT_GRID_TEMPLATE_OPTIONS}
         onChange={(v) => update('template', v)}
+      />
+      <SelectField
+        label="정렬"
+        value={(content.sort as string) ?? 'latest'}
+        options={PRODUCT_SORT_OPTIONS}
+        onChange={(v) => update('sort', v as ProductSort)}
       />
       <ProductCategoryPicker content={content} onChange={onChange} />
     </>

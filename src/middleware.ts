@@ -9,14 +9,16 @@ const localePattern = new RegExp(`^/(${routing.locales.join('|')})(/.*)?$`);
 
 const ADMIN_ROLES = new Set(['admin', 'super_admin']);
 
+type AdminRoleCheckResult = 'admin' | 'not-admin' | 'unverified';
+
 export function resetPublicKeyCache(): void {
-  // No-op for backwards compatibility
+  testPublicKey = null;
 }
 
 let testPublicKey: string | null = null;
 
 export function setTestPublicKey(pem: string): void {
-  testPublicKey = pem;
+  testPublicKey = pem.trim() ? pem : null;
 }
 
 async function getPublicKey(): Promise<CryptoKey | null> {
@@ -55,6 +57,10 @@ async function getPublicKey(): Promise<CryptoKey | null> {
   );
 }
 
+function hasConfiguredPublicKey(): boolean {
+  return Boolean(testPublicKey ?? process.env.JWT_PUBLIC_KEY);
+}
+
 async function verifyRS256(token: string): Promise<Record<string, unknown> | null> {
   try {
     const parts = token.split('.');
@@ -89,10 +95,49 @@ async function verifyRS256(token: string): Promise<Record<string, unknown> | nul
   }
 }
 
-async function hasAdminRole(token: string): Promise<boolean> {
+async function hasAdminRoleByJwt(token: string): Promise<AdminRoleCheckResult> {
   const payload = await verifyRS256(token);
-  if (!payload) return false;
-  return typeof payload.role === 'string' && ADMIN_ROLES.has(payload.role);
+  if (!payload) return 'unverified';
+  return typeof payload.role === 'string' && ADMIN_ROLES.has(payload.role) ? 'admin' : 'not-admin';
+}
+
+function getBackendAuthMeUrl(): string | null {
+  const backendUrl = process.env.BACKEND_URL?.trim();
+  if (!backendUrl) return null;
+
+  const normalized = backendUrl.replace(/\/$/, '');
+  return normalized.endsWith('/api') ? `${normalized}/auth/me` : `${normalized}/api/auth/me`;
+}
+
+async function hasAdminRoleByBackend(cookieHeader: string | null): Promise<boolean> {
+  const url = getBackendAuthMeUrl();
+  if (!url || !cookieHeader) return false;
+
+  try {
+    const response = await fetch(url, {
+      headers: { cookie: cookieHeader },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) return false;
+
+    const profile = await response.json() as { role?: unknown };
+    return typeof profile.role === 'string' && ADMIN_ROLES.has(profile.role);
+  } catch {
+    return false;
+  }
+}
+
+async function hasAdminRole(token: string, cookieHeader: string | null): Promise<boolean> {
+  const jwtResult = await hasAdminRoleByJwt(token);
+  if (jwtResult === 'admin') return true;
+  if (jwtResult === 'not-admin' || hasConfiguredPublicKey()) return false;
+
+  // In local/Vercel deployments the Edge middleware may not have JWT_PUBLIC_KEY,
+  // while the backend still has the private/public key pair and can validate the
+  // httpOnly cookie. Fall back to the backend profile endpoint only when local
+  // verification is impossible, not when a configured key rejects the token.
+  return hasAdminRoleByBackend(cookieHeader);
 }
 
 export async function middleware(request: NextRequest) {
@@ -113,7 +158,7 @@ export async function middleware(request: NextRequest) {
       loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
       return NextResponse.redirect(loginUrl);
     }
-    if (!(await hasAdminRole(token))) {
+    if (!(await hasAdminRole(token, request.headers.get('cookie')))) {
       return NextResponse.redirect(new URL(`${localePrefix}/`, request.url));
     }
   }

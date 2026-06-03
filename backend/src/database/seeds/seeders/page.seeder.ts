@@ -21,6 +21,7 @@ export class PageSeeder extends Seeder {
           title: page.title,
           template: page.template,
           is_published: page.isPublished,
+          ...(page.titleEn !== undefined ? { titleEn: page.titleEn } : {}),
         },
       );
       updated += result.affected ?? 0;

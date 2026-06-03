@@ -937,7 +937,7 @@ export const navigationItems: SeedNavigationItem[] = [
   { id: 100, group: 'gnb', label: '홈', url: '/', sort_order: 0, is_active: true, parent_id: null },
   { id: 101, group: 'gnb', label: '자사호', url: '/products?categoryId=1', sort_order: 1, is_active: true, parent_id: null },
   { id: 102, group: 'gnb', label: '보이차·다구', url: '/products?categoryId=2', sort_order: 2, is_active: true, parent_id: null },
-  { id: 104, group: 'gnb', label: '베스트', url: '/products?sort=popular', sort_order: 3, is_active: true, parent_id: null },
+  { id: 104, group: 'gnb', label: '베스트', labelEn: 'Best Sellers', url: '/p/best', sort_order: 3, is_active: true, parent_id: null },
   { id: 108, group: 'gnb', label: '브랜드 소개', url: '/p/about', sort_order: 4, is_active: true, parent_id: null },
   { id: 109, group: 'gnb', label: '기획전', url: '/p/exhibition', sort_order: 5, is_active: true, parent_id: null },
 
@@ -1472,12 +1472,14 @@ export const artists: SeedArtist[] = [
 export interface SeedPage {
   slug: string;
   title: string;
+  titleEn?: string;
   template: string;
   isPublished: boolean;
 }
 
 export const pages: SeedPage[] = [
   { slug: 'home', title: '홈 메인 페이지', template: 'default', isPublished: true },
+  { slug: 'best', title: '베스트', titleEn: 'Best Sellers', template: 'default', isPublished: true },
   { slug: 'exhibition', title: '봄 기획전 — 주니 신작 입고', template: 'default', isPublished: true },
   { slug: 'about', title: '브랜드 소개', template: 'default', isPublished: true },
   { slug: 'contact', title: '문의하기', template: 'default', isPublished: true },
@@ -1630,6 +1632,33 @@ export const pageBlocks: SeedPageBlock[] = JSON.parse(JSON.stringify([
       more_href: '/journal',
     },
     sortOrder: 6,
+    isVisible: true,
+  },
+
+  // ── 베스트 페이지 ──
+  {
+    pageSlug: 'best',
+    type: 'text_content',
+    content: {
+      html: '<h1>베스트</h1><p>옥화당에서 가장 많은 사랑을 받은 상품을 모았습니다.</p>',
+      html_en: '<h1>Best Sellers</h1><p>Discover the most-loved pieces from Ockhwadang.</p>',
+      textAlign: 'center',
+      template: 'default',
+    },
+    sortOrder: 0,
+    isVisible: true,
+  },
+  {
+    pageSlug: 'best',
+    type: 'product_grid',
+    content: {
+      title: '베스트 상품',
+      title_en: 'Best Sellers',
+      sort: 'popular',
+      limit: 12,
+      template: '4col',
+    },
+    sortOrder: 1,
     isVisible: true,
   },
 

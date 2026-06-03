@@ -42,6 +42,7 @@ export interface ProductGridContent {
   product_ids?: number[];
   category_id?: number;
   auto?: boolean;
+  sort?: ProductSort;
   limit: number;
   template: '2col' | '3col' | '4col';
   title?: string;
