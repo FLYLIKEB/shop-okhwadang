@@ -77,6 +77,79 @@ vi.mock('@/lib/api', async () => {
     categoriesApi: {
       getTree: vi.fn().mockResolvedValue([]),
     },
+    archivesApi: {
+      getAll: vi.fn().mockResolvedValue({
+        niloTypes: [
+          {
+            id: 1,
+            name: 'Zhuni',
+            nameKo: '주니',
+            color: '#8b2f21',
+            region: '의흥',
+            description: '주니 설명',
+            characteristics: ['붉은 색'],
+            productUrl: '/products?clay=zhuni',
+            sortOrder: 0,
+            isActive: true,
+          },
+        ],
+        processSteps: [
+          {
+            id: 1,
+            step: 1,
+            title: '채토',
+            description: '산지에서 원토를 채굴',
+            detail: '채토 설명',
+          },
+        ],
+        artists: [
+          {
+            id: 1,
+            name: '진위명',
+            title: '국가급 공예미술사',
+            region: '의흥',
+            story: '장인 이야기',
+            specialty: '주니 서시호',
+            imageUrl: null,
+            productUrl: '/products?artist=jin',
+            sortOrder: 0,
+            isActive: true,
+          },
+        ],
+      }),
+    },
+    collectionsApi: {
+      getAll: vi.fn().mockResolvedValue({
+        clay: [
+          {
+            id: 1,
+            type: 'clay',
+            name: 'Zhuni',
+            nameKo: '주니',
+            color: '#8b2f21',
+            description: '주니 설명',
+            imageUrl: null,
+            productUrl: '/products?clay=zhuni',
+            sortOrder: 0,
+            isActive: true,
+          },
+        ],
+        shape: [
+          {
+            id: 2,
+            type: 'shape',
+            name: '서시',
+            nameKo: null,
+            color: null,
+            description: '서시 설명',
+            imageUrl: null,
+            productUrl: '/products?shape=xishi',
+            sortOrder: 1,
+            isActive: true,
+          },
+        ],
+      }),
+    },
   };
 });
 
@@ -149,6 +222,26 @@ describe('BlockRenderer', () => {
     ];
     render(<BlockRenderer blocks={blocks} />);
     expect(screen.getByText('프로모션 타이틀')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['archive_nilo', '보이차의 산지', '주니'],
+    ['archive_process', '제조 과정', '채토'],
+    ['archive_artist', '우리 장인들', '진위명'],
+    ['collection_clay', '다완 컬렉션', '주니'],
+    ['collection_shape', '형태 컬렉션', '서시'],
+  ] as const)('renders CMS section block type %s', async (type, title, itemText) => {
+    const blocks: PageBlock[] = [
+      makeBlock({
+        type,
+        content: { sectionTitle: title },
+      }),
+    ];
+
+    render(<BlockRenderer blocks={blocks} />);
+
+    expect(await screen.findByText(title)).toBeInTheDocument();
+    expect((await screen.findAllByText(itemText)).length).toBeGreaterThan(0);
   });
 
   it('renders UnknownBlock for unrecognized type in dev mode', () => {

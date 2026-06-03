@@ -7,6 +7,7 @@ import JournalPreviewFields from './block-property-panel/blocks/JournalPreviewFi
 import ProductCarouselFields from './block-property-panel/blocks/ProductCarouselFields';
 import ProductGridFields from './block-property-panel/blocks/ProductGridFields';
 import PromotionBannerFields from './block-property-panel/blocks/PromotionBannerFields';
+import SectionHeadingFields from './block-property-panel/blocks/SectionHeadingFields';
 import SplitContentFields from './block-property-panel/blocks/SplitContentFields';
 import TextContentFields from './block-property-panel/blocks/TextContentFields';
 import type { DraftBlock } from './SortableBlockItem';
@@ -48,6 +49,12 @@ export default function BlockPropertyPanel({ block, onUpdateContent }: BlockProp
         return <SplitContentFields content={block.content} onChange={handleChange} />;
       case 'journal_preview':
         return <JournalPreviewFields content={block.content} onChange={handleChange} />;
+      case 'archive_nilo':
+      case 'archive_process':
+      case 'archive_artist':
+      case 'collection_clay':
+      case 'collection_shape':
+        return <SectionHeadingFields content={block.content} onChange={handleChange} />;
     }
   };
 

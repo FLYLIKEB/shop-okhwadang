@@ -4,7 +4,21 @@ import type { Journal, JournalCategory } from './journals';
 
 export interface PageBlock {
   id: number;
-  type: 'hero_banner' | 'product_grid' | 'product_carousel' | 'category_nav' | 'promotion_banner' | 'text_content' | 'split_content' | 'brand_story' | 'journal_preview';
+  type:
+    | 'hero_banner'
+    | 'product_grid'
+    | 'product_carousel'
+    | 'category_nav'
+    | 'promotion_banner'
+    | 'text_content'
+    | 'split_content'
+    | 'brand_story'
+    | 'journal_preview'
+    | 'archive_nilo'
+    | 'archive_process'
+    | 'archive_artist'
+    | 'collection_clay'
+    | 'collection_shape';
   content: Record<string, unknown>;
   sort_order: number;
   is_visible: boolean;
@@ -29,12 +43,14 @@ export interface HeroBannerSlide {
 
 export interface HeroBannerContent {
   title: string;
+  eyebrow?: string;
   subtitle?: string;
   description?: string;
-  image_url: string;
+  image_url?: string;
   cta_text?: string;
   cta_url?: string;
-  template: 'slider' | 'fullscreen' | 'split';
+  bgColor?: 'foreground' | 'background' | 'muted' | string;
+  template: 'slider' | 'fullscreen' | 'split' | 'simple';
   slides?: HeroBannerSlide[];
 }
 
@@ -70,14 +86,22 @@ export interface CategoryNavContent {
 
 export interface PromotionBannerContent {
   title: string;
+  eyebrow?: string;
   subtitle?: string;
   image_url?: string;
   cta_text?: string;
   cta_url?: string;
-  template: 'full-width' | 'card' | 'timer';
+  bgColor?: 'foreground' | 'background' | 'muted' | string;
+  template: 'full-width' | 'full' | 'card' | 'timer';
   end_date?: string;
   /** @deprecated 기존 CMS 데이터 호환용. 새 저장 경로는 end_date 입니다. */
   expires_at?: string;
+}
+
+export interface SectionHeadingBlockContent {
+  sectionLabel?: string;
+  sectionTitle?: string;
+  sectionDesc?: string;
 }
 
 export interface TextContentContent {

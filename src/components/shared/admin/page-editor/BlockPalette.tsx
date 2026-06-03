@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft, BookOpen } from 'lucide-react';
+import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft, BookOpen, Mountain, Hammer, Users, Palette, Shapes } from 'lucide-react';
 import type { PageBlock } from '@/lib/api';
 
 type BlockType = PageBlock['type'];
@@ -71,6 +71,41 @@ const BLOCK_TYPES: BlockTypeCard[] = [
     detail: '최근 저널 글을卡片 형태로 미리볼 수 있는 블록입니다.\n제목, 표시 개수, 카테고리 필터를 설정할 수 있으며, "전체 보기" 링크를 연결할 수 있습니다.\n홈페이지 하단, 저널 섹션 전에 사용합니다.',
     icon: BookOpen,
   },
+  {
+    type: 'archive_nilo',
+    label: '닐로 (보이차 산지)',
+    description: '아카이브 · 닐로/니료 전체',
+    detail: '아카이브 페이지에서 닐로/니료 목록 전체를 렌더링합니다.\n실제 항목은 아카이브 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드할 수 있습니다.',
+    icon: Mountain,
+  },
+  {
+    type: 'archive_process',
+    label: '제조 과정',
+    description: '아카이브 · 제조 과정 전체',
+    detail: '아카이브 페이지에서 제조 과정 목록 전체를 렌더링합니다.\n실제 항목은 아카이브 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드할 수 있습니다.',
+    icon: Hammer,
+  },
+  {
+    type: 'archive_artist',
+    label: '장인',
+    description: '아카이브 · 장인 전체',
+    detail: '아카이브 페이지에서 장인 목록 전체를 렌더링합니다.\n실제 항목은 아카이브 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드할 수 있습니다.',
+    icon: Users,
+  },
+  {
+    type: 'collection_clay',
+    label: '흙 컬렉션',
+    description: '콜렉션 · 흙 타입 전체',
+    detail: '콜렉션 페이지에서 type=clay 컬렉션 목록 전체를 렌더링합니다.\n실제 항목은 컬렉션 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드할 수 있습니다.',
+    icon: Palette,
+  },
+  {
+    type: 'collection_shape',
+    label: '형태 컬렉션',
+    description: '콜렉션 · 형태 타입 전체',
+    detail: '콜렉션 페이지에서 type=shape 컬렉션 목록 전체를 렌더링합니다.\n실제 항목은 컬렉션 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드할 수 있습니다.',
+    icon: Shapes,
+  },
 ];
 
 interface BlockPaletteProps {
@@ -96,6 +131,12 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
       return { title: '', subtitle: '', description: '', cta_text: '', cta_url: '', template: 'default' };
     case 'journal_preview':
       return { title: '저널', limit: 6, more_href: '/journal' };
+    case 'archive_nilo':
+    case 'archive_process':
+    case 'archive_artist':
+    case 'collection_clay':
+    case 'collection_shape':
+      return { sectionLabel: '', sectionTitle: '', sectionDesc: '' };
   }
 }
 

@@ -267,6 +267,27 @@ describe('PagesService', () => {
       });
     });
 
+    it.each([
+      'archive_nilo',
+      'archive_process',
+      'archive_artist',
+      'collection_clay',
+      'collection_shape',
+    ])('아카이브/콜렉션 CMS 블록 타입 %s 생성을 허용한다', async (type) => {
+      const dto = { type, content: { sectionTitle: '섹션 제목' } };
+      mockPageRepository.findOne.mockResolvedValue({ id: 1 });
+      mockBlockRepository.create.mockReturnValue({ id: 1, ...dto, page_id: 1 });
+      mockBlockRepository.save.mockResolvedValue({ id: 1, ...dto, page_id: 1 });
+
+      const result = await service.createBlock(1, dto);
+
+      expect(result.type).toBe(type);
+      expect(mockBlockRepository.create).toHaveBeenCalledWith({
+        ...dto,
+        page_id: 1,
+      });
+    });
+
     it('존재하지 않는 페이지 → NotFoundException', async () => {
       mockPageRepository.findOne.mockResolvedValue(null);
       await expect(
