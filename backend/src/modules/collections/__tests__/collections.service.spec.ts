@@ -71,7 +71,7 @@ describe('CollectionsService', () => {
       expect(item.description).toBe('English desc');
     });
 
-    it('locale=ko 이면 원본 name/nameKo 를 그대로 반환한다', async () => {
+    it('locale=ko 이면 nameKo 를 우선 노출하고 원본 nameKo 값도 유지한다', async () => {
       repo.find.mockResolvedValue([
         {
           id: 1,
@@ -88,7 +88,7 @@ describe('CollectionsService', () => {
 
       const [item] = await service.findAllByType(CollectionType.CLAY, 'ko');
 
-      expect(item.name).toBe('진니');
+      expect(item.name).toBe('진니한글');
       expect(item.nameKo).toBe('진니한글');
     });
   });
