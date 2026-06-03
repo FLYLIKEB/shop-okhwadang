@@ -1,4 +1,4 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Suspense } from 'react';
@@ -25,6 +25,10 @@ vi.mock('next-intl', () => ({
       shippingMemo: '배송 메모',
       paymentMethod: '결제 수단',
       paymentMethodHint: '주문 정보 입력 후 결제 수단이 표시됩니다.',
+      paypalPayment: 'PayPal',
+      naverpayPayment: '네이버페이',
+      naverpayDomesticBadge: '국내 전용',
+      naverpayDomesticHint: '해외 사용자는 결제가 실패할 수 있습니다.',
       couponPoints: '쿠폰 / 적립금',
       couponPointsComingSoon: '쿠폰/적립금 적용은 추후 지원 예정입니다.',
       orderItems: '주문 상품',
@@ -153,10 +157,10 @@ describe('CheckoutPage', () => {
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
     await screen.findByLabelText(/받는 분 이름/);
-    await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
-    await user.type(screen.getByLabelText(/연락처/), '01012345678');
-    await user.type(screen.getByLabelText(/우편번호/), '12345');
-    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    fireEvent.change(screen.getByLabelText(/받는 분 이름/), { target: { value: '홍길동' } });
+    fireEvent.change(screen.getByLabelText(/연락처/), { target: { value: '01012345678' } });
+    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
@@ -178,7 +182,7 @@ describe('CheckoutPage', () => {
     });
     vi.mocked(paymentsApi.prepare).mockResolvedValue({
       paymentId: 1, orderId: 1, orderNumber: 'ORD-001',
-      amount: 40000, gateway: 'mock', clientKey: 'mock_client_key',
+      amount: 40000, gateway: 'mock', clientKey: 'mock_client_key', availableGateways: ['naverpay', 'paypal'],
     });
     vi.mocked(paymentsApi.confirm).mockResolvedValue({
       paymentId: 1, orderId: 1, orderNumber: 'ORD-001',
@@ -199,6 +203,40 @@ describe('CheckoutPage', () => {
     expect(ordersApi.create).toHaveBeenCalledOnce();
     expect(paymentsApi.prepare).toHaveBeenCalledOnce();
     expect(paymentsApi.confirm).toHaveBeenCalledOnce();
+  });
+
+
+
+  it('ko checkout은 네이버페이를 기본 선택하고 PayPal로 전환하면 prepare gateway=paypal 전달', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+
+    vi.mocked(ordersApi.create).mockResolvedValue({
+      id: 1, orderNumber: 'ORD-001', status: 'pending', totalAmount: 40000,
+      discountAmount: 0, shippingFee: 0, recipientName: '홍길동',
+      recipientPhone: '010-1234-5678', zipcode: '12345', address: '서울시',
+      addressDetail: null, memo: null, items: [], createdAt: new Date().toISOString(),
+    });
+    vi.mocked(paymentsApi.prepare).mockResolvedValue({
+      paymentId: 1, orderId: 1, orderNumber: 'ORD-001',
+      amount: 40000, gateway: 'paypal', clientKey: 'paypal-client',
+      redirectUrl: 'https://www.paypal.com/checkoutnow?token=PAYPAL-ORDER-1',
+      availableGateways: ['naverpay', 'paypal'],
+    });
+
+    await renderCheckoutPage();
+    expect(await screen.findByLabelText(/네이버페이/)).toBeChecked();
+    await user.click(screen.getByLabelText(/PayPal/));
+    await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
+    await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
+    await user.type(screen.getByLabelText(/우편번호/), '12345');
+    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
+
+    await waitFor(() => {
+      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 1, locale: 'ko', gateway: 'paypal' });
+    });
   });
 
   // ---- Address loading & selection tests ----

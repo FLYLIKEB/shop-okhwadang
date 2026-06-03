@@ -14,6 +14,7 @@ import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from './adapters/inicis.adapter';
 import { NaverPayPaymentAdapter } from './adapters/naverpay.adapter';
+import { PayPalPaymentAdapter } from './adapters/paypal.adapter';
 import {
   PAYMENT_CONFIG,
   PaymentConfig,
@@ -24,22 +25,25 @@ export function resolvePaymentGateway(config: PaymentConfig): string {
   return config.gateway;
 }
 
+export type CheckoutGatewayName = 'naverpay' | 'paypal';
+
 /**
- * 로케일 기반 결제 게이트웨이 선택 (#721)
+ * 로케일 기반 결제 게이트웨이 노출 정책 (#769)
  *
- * 정책 결정:
- * - 한국(ko): Toss Payments — 기본값. 사용자가 별도 PG 선택 시 controller 단계에서
- *   덮어쓰기 가능 (`/api/payments/prepare` body 의 명시적 gateway 필드는 추후 확장).
- *   국내 PG(toss / inicis / naverpay) 어댑터가 모두 등록되어 있으므로 Phase 2 에서
- *   사용자 선택 UI 만 추가하면 된다.
- * - 그 외 locale: Stripe (글로벌)
- *
- * 자율 판단 근거: issue #721 본문은 "사용자 선택 / 관리자 설정 / locale fallback 중 결정"
- * 을 자율 판단 항목으로 명시. 가장 작은 변화(=기존 ko→toss 매핑 유지)를 선택하고,
- * 국내 3 PG 어댑터를 미리 등록해 둠으로써 추후 사용자 선택 UI 추가가 비파괴적이도록 설계.
+ * 두 PG를 모두 제공하되 로케일별 ordering/default만 바꾼다.
+ * - ko: 네이버페이 기본, PayPal 추가 선택지
+ * - 그 외: PayPal 기본, 네이버페이 추가 선택지
  */
-export function resolveGatewayByLocale(locale: string): string {
-  return locale === 'ko' ? 'toss' : 'stripe';
+export function getAvailableGatewaysByLocale(locale: string): CheckoutGatewayName[] {
+  return locale === 'ko' ? ['naverpay', 'paypal'] : ['paypal', 'naverpay'];
+}
+
+export function resolveGatewayByLocale(locale: string): CheckoutGatewayName {
+  return getAvailableGatewaysByLocale(locale)[0];
+}
+
+export function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
+  return value === 'naverpay' || value === 'paypal';
 }
 
 const gatewayProviders = [
@@ -49,6 +53,7 @@ const gatewayProviders = [
   StripePaymentAdapter,
   KGInicisPaymentAdapter,
   NaverPayPaymentAdapter,
+  PayPalPaymentAdapter,
   {
     provide: 'PaymentGateway',
     useFactory: (
@@ -58,6 +63,7 @@ const gatewayProviders = [
       stripe: StripePaymentAdapter,
       inicis: KGInicisPaymentAdapter,
       naverpay: NaverPayPaymentAdapter,
+      paypal: PayPalPaymentAdapter,
     ) => {
       const gateway = resolvePaymentGateway(config);
       switch (gateway) {
@@ -69,6 +75,8 @@ const gatewayProviders = [
           return inicis;
         case 'naverpay':
           return naverpay;
+        case 'paypal':
+          return paypal;
         case 'mock':
           return mock;
         default:
@@ -82,6 +90,7 @@ const gatewayProviders = [
       StripePaymentAdapter,
       KGInicisPaymentAdapter,
       NaverPayPaymentAdapter,
+      PayPalPaymentAdapter,
     ],
   },
 ];

@@ -1,6 +1,13 @@
+export interface PrepareContext {
+  locale?: string;
+  orderNumber?: string;
+}
+
 export interface PrepareResult {
   clientKey: string;
   orderId: string;
+  redirectUrl?: string;
+  gatewayPayload?: Record<string, string | number | boolean>;
 }
 
 export interface ConfirmResult {
@@ -29,9 +36,9 @@ export interface PartialCancelResult {
 }
 
 export interface PaymentGateway {
-  prepare(orderId: string, amount: number): Promise<PrepareResult>;
+  prepare(orderId: string, amount: number, context?: PrepareContext): Promise<PrepareResult>;
   confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult>;
   cancel(paymentKey: string, reason: string): Promise<CancelResult>;
   partialCancel(params: PartialCancelParams): Promise<PartialCancelResult>;
-  verifyWebhook(payload: unknown, signature: string): boolean;
+  verifyWebhook(payload: unknown, signature: string): boolean | Promise<boolean>;
 }

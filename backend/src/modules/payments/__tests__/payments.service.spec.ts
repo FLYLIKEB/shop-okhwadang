@@ -13,6 +13,7 @@ import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
 import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
+import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
 import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { PAYMENT_CONFIG, createPaymentConfig } from '../../../config/payment.config';
@@ -160,6 +161,14 @@ describe('PaymentsService', () => {
     verifyWebhook: jest.fn(),
   };
 
+  const mockPaypalAdapter = {
+    prepare: jest.fn(),
+    confirm: jest.fn(),
+    cancel: jest.fn(),
+    partialCancel: jest.fn(),
+    verifyWebhook: jest.fn(),
+  };
+
   let mockDataSource: ReturnType<typeof makeDataSourceMock>;
 
   beforeEach(async () => {
@@ -195,6 +204,7 @@ describe('PaymentsService', () => {
         { provide: StripePaymentAdapter, useValue: mockStripeAdapter },
         { provide: KGInicisPaymentAdapter, useValue: mockInicisAdapter },
         { provide: NaverPayPaymentAdapter, useValue: mockNaverpayAdapter },
+        { provide: PayPalPaymentAdapter, useValue: mockPaypalAdapter },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: DataSource, useValue: mockDataSource },
@@ -232,6 +242,68 @@ describe('PaymentsService', () => {
     it('order status=paid → ConflictException', async () => {
       mockOrderRepo.findOne.mockResolvedValue(makeOrder({ status: OrderStatus.PAID }));
       await expect(service.prepare({ orderId: 1 }, 10)).rejects.toThrow(ConflictException);
+    });
+
+    it('locale=ko 기본 prepare → NAVERPAY 저장 + paypal 선택지 반환 (#769)', async () => {
+      const order = makeOrder();
+      mockOrderRepo.findOne.mockResolvedValue(order);
+      mockPaymentRepo.findOne.mockResolvedValue(null);
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.NAVERPAY });
+      mockPaymentRepo.create.mockReturnValue(savedPayment);
+      mockPaymentRepo.save.mockResolvedValue(savedPayment);
+      mockNaverpayAdapter.prepare.mockResolvedValue({ clientKey: 'naverpay-client', orderId: '1' });
+
+      const result = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
+
+      expect(result.gateway).toBe('naverpay');
+      expect(result.availableGateways).toEqual(['naverpay', 'paypal']);
+      expect(mockNaverpayAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
+      expect(mockPaymentRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ gateway: PaymentGatewayType.NAVERPAY }),
+      );
+    });
+
+    it('locale=en 기본 prepare → PAYPAL 저장 + naverpay 선택지 반환 (#769)', async () => {
+      const order = makeOrder();
+      mockOrderRepo.findOne.mockResolvedValue(order);
+      mockPaymentRepo.findOne.mockResolvedValue(null);
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.PAYPAL });
+      mockPaymentRepo.create.mockReturnValue(savedPayment);
+      mockPaymentRepo.save.mockResolvedValue(savedPayment);
+      mockPaypalAdapter.prepare.mockResolvedValue({
+        clientKey: 'paypal-client',
+        orderId: 'paypal-order-id',
+        redirectUrl: 'https://www.paypal.com/checkoutnow?token=paypal-order-id',
+      });
+
+      const result = await service.prepare({ orderId: 1, locale: 'en' }, 10);
+
+      expect(result.gateway).toBe('paypal');
+      expect(result.availableGateways).toEqual(['paypal', 'naverpay']);
+      expect(result.redirectUrl).toBe('https://www.paypal.com/checkoutnow?token=paypal-order-id');
+      expect(mockPaypalAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'en' }));
+      expect(mockPaymentRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ gateway: PaymentGatewayType.PAYPAL }),
+      );
+    });
+
+    it('명시적 gateway=paypal → locale=ko 에서도 PAYPAL 로 저장한다 (#769)', async () => {
+      const order = makeOrder();
+      mockOrderRepo.findOne.mockResolvedValue(order);
+      mockPaymentRepo.findOne.mockResolvedValue(null);
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.PAYPAL });
+      mockPaymentRepo.create.mockReturnValue(savedPayment);
+      mockPaymentRepo.save.mockResolvedValue(savedPayment);
+      mockPaypalAdapter.prepare.mockResolvedValue({ clientKey: 'paypal-client', orderId: 'paypal-order-id' });
+
+      const result = await service.prepare({ orderId: 1, locale: 'ko', gateway: 'paypal' }, 10);
+
+      expect(result.gateway).toBe('paypal');
+      expect(mockPaypalAdapter.prepare).toHaveBeenCalled();
+      expect(mockNaverpayAdapter.prepare).not.toHaveBeenCalled();
+      expect(mockPaymentRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ gateway: PaymentGatewayType.PAYPAL }),
+      );
     });
   });
 
@@ -373,20 +445,20 @@ describe('PaymentsService', () => {
       expect(recoveryManager.increment).toHaveBeenCalled();
     });
 
-    it('locale=en prepare → payment.gateway 가 STRIPE 로 저장되어야 함 (#722)', async () => {
+    it('locale=en prepare → payment.gateway 가 PAYPAL 로 저장되어야 함 (#769)', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
       mockPaymentRepo.findOne.mockResolvedValue(null);
-      const savedPayment = makePayment({ gateway: PaymentGatewayType.STRIPE });
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.PAYPAL });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockStripeAdapter.prepare.mockResolvedValue({ clientKey: 'pi_secret_xyz', orderId: '1' });
+      mockPaypalAdapter.prepare.mockResolvedValue({ clientKey: 'paypal-client', orderId: 'paypal-order-id' });
 
       const result = await service.prepare({ orderId: 1, locale: 'en' }, 10);
 
-      expect(result.gateway).toBe('stripe');
+      expect(result.gateway).toBe('paypal');
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: PaymentGatewayType.STRIPE }),
+        expect.objectContaining({ gateway: PaymentGatewayType.PAYPAL }),
       );
       expect(mockPaymentRepo.create).not.toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.INICIS }),
@@ -411,31 +483,31 @@ describe('PaymentsService', () => {
       expect(mockDefaultGateway.cancel).not.toHaveBeenCalled();
     });
 
-    it('locale=ko prepare → confirm 시 Toss adapter의 confirm()이 호출되어야 함', async () => {
+    it('locale=ko prepare → confirm 시 NaverPay adapter의 confirm()이 호출되어야 함', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
       mockPaymentRepo.findOne.mockResolvedValue(null);
-      const savedPayment = makePayment({ gateway: PaymentGatewayType.TOSS });
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.NAVERPAY });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockTossAdapter.prepare.mockResolvedValue({ clientKey: 'toss_client_key', orderId: '1' });
+      mockNaverpayAdapter.prepare.mockResolvedValue({ clientKey: 'naverpay_client_key', orderId: '1' });
 
       const prepareResult = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
-      expect(prepareResult.gateway).toBe('toss');
+      expect(prepareResult.gateway).toBe('naverpay');
 
-      const paymentForConfirm = makePayment({ gateway: PaymentGatewayType.TOSS });
+      const paymentForConfirm = makePayment({ gateway: PaymentGatewayType.NAVERPAY });
       mockPaymentRepo.findOne.mockResolvedValue(paymentForConfirm);
-      mockTossAdapter.confirm.mockResolvedValue({
-        paymentKey: 'pay_toss_abc',
+      mockNaverpayAdapter.confirm.mockResolvedValue({
+        paymentKey: 'pay_naverpay_abc',
         method: 'card',
         amount: 30000,
         status: 'confirmed',
-        rawResponse: { toss: true },
+        rawResponse: { naverpay: true },
       });
 
-      const confirmResult = await service.confirm({ orderId: 1, paymentKey: 'pay_toss_abc', amount: 30000 }, 10);
+      const confirmResult = await service.confirm({ orderId: 1, paymentKey: 'pay_naverpay_abc', amount: 30000 }, 10);
       expect(confirmResult.status).toBe(PaymentStatus.CONFIRMED);
-      expect(mockTossAdapter.confirm).toHaveBeenCalledWith('pay_toss_abc', 30000, 'ORD-20240101-ABCD1');
+      expect(mockNaverpayAdapter.confirm).toHaveBeenCalledWith('pay_naverpay_abc', 30000, 'ORD-20240101-ABCD1');
       expect(mockDefaultGateway.confirm).not.toHaveBeenCalled();
     });
   });

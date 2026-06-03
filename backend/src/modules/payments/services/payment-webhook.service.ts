@@ -40,7 +40,7 @@ export class PaymentWebhookService {
   constructor(private readonly deps: PaymentWebhookDependencies) {}
 
   async handleWebhook(payload: unknown, signature: string): Promise<void> {
-    if (!this.deps.gateway.verifyWebhook(payload, signature)) {
+    if (!(await this.deps.gateway.verifyWebhook(payload, signature))) {
       throw new UnauthorizedException('웹훅 서명 검증 실패');
     }
     const safe = {

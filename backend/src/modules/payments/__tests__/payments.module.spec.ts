@@ -1,4 +1,5 @@
 import { createPaymentConfig } from '../../../config/payment.config';
+import { getAvailableGatewaysByLocale, resolveGatewayByLocale } from '../payments.module';
 
 describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
   it('NODE_ENV=production, PAYMENT_GATEWAY=mock → 시작 실패', () => {
@@ -36,5 +37,36 @@ describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
       PAYMENT_GATEWAY: 'toss',
     });
     expect(config.gateway).toBe('toss');
+  });
+
+  it('PAYMENT_GATEWAY=paypal → PayPal 설정을 읽는다', () => {
+    const config = createPaymentConfig({
+      NODE_ENV: 'development',
+      PAYMENT_GATEWAY: 'paypal',
+      PAYPAL_CLIENT_ID: 'paypal-client',
+      PAYPAL_CLIENT_SECRET: 'paypal-secret',
+      PAYPAL_WEBHOOK_ID: 'paypal-webhook',
+    });
+
+    expect(config.gateway).toBe('paypal');
+    expect(config.paypal).toMatchObject({
+      clientId: 'paypal-client',
+      clientSecret: 'paypal-secret',
+      webhookId: 'paypal-webhook',
+      apiBaseUrl: 'https://api-m.sandbox.paypal.com',
+    });
+  });
+});
+
+describe('locale gateway policy — PayPal/NaverPay ordering', () => {
+  it('ko → naverpay default, paypal fallback', () => {
+    expect(resolveGatewayByLocale('ko')).toBe('naverpay');
+    expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'paypal']);
+  });
+
+  it('en and other locales → paypal default, naverpay fallback', () => {
+    expect(resolveGatewayByLocale('en')).toBe('paypal');
+    expect(resolveGatewayByLocale('ja')).toBe('paypal');
+    expect(getAvailableGatewaysByLocale('en')).toEqual(['paypal', 'naverpay']);
   });
 });

@@ -14,10 +14,10 @@ import { PAYMENT_CONFIG, PaymentConfig } from '../../../config/payment.config';
 /**
  * 네이버페이 결제 어댑터 (#721 국내 PG 어댑터 확장)
  *
- * 본 어댑터는 mock contract 수준으로, 실제 네이버페이 SDK 콜이 아닌
- * fetch 기반 HTTP 호출 형태만 잡아두었다. 실 도입 시 SDK 콜로 교체.
+ * 프론트엔드는 NaverPay javascript SDK로 결제창을 열고,
+ * 본 어댑터는 SDK에서 돌아온 paymentId 승인/취소 API를 담당한다.
  *
- * - prepare: clientKey(=clientId) 반환 (FE에서 NAVER Pay JS SDK 호출에 사용)
+ * - prepare: clientKey/chainId/mode 반환 (FE에서 NAVER Pay JS SDK 호출에 사용)
  * - confirm: 결제 승인 요청
  * - cancel / partialCancel: 결제 취소 / 부분 취소
  * - verifyWebhook: HMAC-SHA256 (clientSecret 기반)
@@ -29,6 +29,7 @@ export class NaverPayPaymentAdapter implements PaymentGateway {
   private readonly clientId: string;
   private readonly clientSecret: string;
   private readonly chainId: string;
+  private readonly mode: 'development' | 'production';
 
   constructor(
     @Inject(PAYMENT_CONFIG)
@@ -38,6 +39,7 @@ export class NaverPayPaymentAdapter implements PaymentGateway {
     this.clientId = config.naverpay.clientId;
     this.clientSecret = config.naverpay.clientSecret;
     this.chainId = config.naverpay.chainId;
+    this.mode = config.nodeEnv === 'production' ? 'production' : 'development';
   }
 
   private get authHeaders(): Record<string, string> {
@@ -50,7 +52,14 @@ export class NaverPayPaymentAdapter implements PaymentGateway {
   }
 
   async prepare(orderId: string, _amount: number): Promise<PrepareResult> {
-    return { clientKey: this.clientId, orderId };
+    return {
+      clientKey: this.clientId,
+      orderId,
+      gatewayPayload: {
+        chainId: this.chainId,
+        mode: this.mode,
+      },
+    };
   }
 
   async confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult> {

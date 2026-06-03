@@ -90,6 +90,7 @@ const mockOrder: OrderResponse = {
 interface OptionsState {
   step: PaymentStep;
   prepareResult: PreparePaymentResponse | null;
+  selectedGateway: 'naverpay' | 'paypal';
   currentOrderId: number | null;
   currentOrderNumber: string;
 }
@@ -100,6 +101,7 @@ function makeOptions(
   const state: OptionsState = {
     step: 'idle',
     prepareResult: null,
+    selectedGateway: 'naverpay',
     currentOrderId: null,
     currentOrderNumber: '',
   };
@@ -113,6 +115,7 @@ function makeOptions(
     locale: 'ko',
     paymentRef,
     prepareResult: state.prepareResult,
+    selectedGateway: state.selectedGateway,
     currentOrderId: state.currentOrderId,
     currentOrderNumber: state.currentOrderNumber,
     setStep: vi.fn((s: PaymentStep) => { state.step = s; }),
@@ -230,7 +233,7 @@ describe('useCheckout - Mock 결제 흐름', () => {
         zipcode: '12345',
       }),
     );
-    expect(mockPaymentsPrepare).toHaveBeenCalledWith({ orderId: mockOrder.id, locale: 'ko' });
+    expect(mockPaymentsPrepare).toHaveBeenCalledWith({ orderId: mockOrder.id, locale: 'ko', gateway: 'naverpay' });
     expect(mockPaymentsConfirm).toHaveBeenCalledWith({
       orderId: mockOrder.id,
       paymentKey: `mock-${mockOrder.orderNumber}`,
@@ -245,6 +248,71 @@ describe('useCheckout - Mock 결제 흐름', () => {
     expect(options.setStep).toHaveBeenCalledWith('preparing_payment');
     expect(options.setStep).toHaveBeenCalledWith('confirming_payment');
     expect(options.setStep).toHaveBeenCalledWith('success');
+  });
+});
+
+describe('useCheckout - PayPal 결제 흐름', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('selectedGateway=paypal 이면 prepare 요청에 gateway를 포함하고 redirect 대기 상태로 전환', async () => {
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 2,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      amount: 30000,
+      gateway: 'paypal',
+      clientKey: 'paypal-client',
+      redirectUrl: 'https://www.paypal.com/checkoutnow?token=PAYPAL-ORDER-1',
+      availableGateways: ['paypal', 'naverpay'],
+    };
+    mockOrdersCreate.mockResolvedValue(mockOrder);
+    mockPaymentsPrepare.mockResolvedValue(prepareResult);
+
+    const { options } = makeOptions({ locale: 'en', selectedGateway: 'paypal' });
+    const { result } = renderHook(() => useCheckout(options));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeFormEvent());
+    });
+
+    expect(mockPaymentsPrepare).toHaveBeenCalledWith({
+      orderId: mockOrder.id,
+      locale: 'en',
+      gateway: 'paypal',
+    });
+    expect(options.setPrepareResult).toHaveBeenCalledWith(prepareResult);
+    expect(options.setStep).toHaveBeenCalledWith('idle');
+    expect(mockPaymentsConfirm).not.toHaveBeenCalled();
+  });
+
+  it('이미 prepareResult(paypal) 상태에서 submit하면 paymentRef.confirm() 호출', async () => {
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 2,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      amount: 30000,
+      gateway: 'paypal',
+      clientKey: 'paypal-client',
+      redirectUrl: 'https://www.paypal.com/checkoutnow?token=PAYPAL-ORDER-1',
+      availableGateways: ['paypal', 'naverpay'],
+    };
+    const confirmSpy = vi.fn().mockResolvedValue(undefined);
+    const { options } = makeOptions({
+      prepareResult,
+      paymentRef: { current: { confirm: confirmSpy } },
+    });
+
+    const { result } = renderHook(() => useCheckout(options));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeFormEvent());
+    });
+
+    expect(options.setStep).toHaveBeenCalledWith('confirming_payment');
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(mockOrdersCreate).not.toHaveBeenCalled();
   });
 });
 

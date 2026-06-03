@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { SESSION_KEYS } from '@/constants/storage';
-import type { CartItem, PreparePaymentResponse } from '@/lib/api';
+import type { CartItem, CheckoutGatewayName, PreparePaymentResponse } from '@/lib/api';
 import { ordersApi, paymentsApi } from '@/lib/api';
 import type { Locale } from '@/i18n/routing';
 import type { ShippingForm, FormErrors } from '@/app/[locale]/checkout/page';
@@ -20,6 +20,7 @@ export interface UseCheckoutOptions {
   locale: Locale;
   paymentRef: React.RefObject<PaymentGatewayHandle | null>;
   prepareResult: PreparePaymentResponse | null;
+  selectedGateway: CheckoutGatewayName;
   currentOrderId: number | null;
   currentOrderNumber: string;
   setStep: (step: PaymentStep) => void;
@@ -39,7 +40,7 @@ export function useCheckout(options: UseCheckoutOptions) {
     options.setPrepareResult(null);
   }, [options]);
 
-  const handleStripeFlow = useCallback(async (): Promise<void> => {
+  const handlePreparedGatewayFlow = useCallback(async (): Promise<void> => {
     if (!options.prepareResult || !options.paymentRef.current) return;
 
     options.setStep('confirming_payment');
@@ -76,9 +77,12 @@ export function useCheckout(options: UseCheckoutOptions) {
   const handleSubmit = useCallback(async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
-    // If already prepared (Stripe), trigger stripe confirm
-    if (options.prepareResult && options.prepareResult.gateway === 'stripe') {
-      await handleStripeFlow();
+    // If already prepared for a user-action gateway, trigger its confirm/redirect step.
+    if (
+      options.prepareResult
+      && ['stripe', 'paypal', 'naverpay'].includes(options.prepareResult.gateway)
+    ) {
+      await handlePreparedGatewayFlow();
       return;
     }
 
@@ -119,11 +123,12 @@ export function useCheckout(options: UseCheckoutOptions) {
 
       options.setStep('preparing_payment');
       const result: PreparePaymentResponse = await paymentsApi.prepare(
-        { orderId: order.id, locale },
+        { orderId: order.id, locale, gateway: options.selectedGateway },
       );
 
       // Toss flow
       const isToss =
+        result.gateway === 'toss' &&
         locale === 'ko' &&
         result.clientKey &&
         result.clientKey !== 'mock_client_key';
@@ -148,13 +153,22 @@ export function useCheckout(options: UseCheckoutOptions) {
         return;
       }
 
+      if (result.gateway === 'paypal' || result.gateway === 'naverpay') {
+        options.setCurrentOrderId(order.id);
+        options.setCurrentOrderNumber(order.orderNumber);
+        options.setPrepareResult(result);
+        options.setStep('idle');
+        toast.info('결제 수단을 확인하고 결제하기를 눌러주세요.');
+        return;
+      }
+
       // Mock flow
       await handleMockFlow(order.id, order.orderNumber);
     } catch (err) {
       toast.error(handleApiError(err, '결제 중 오류가 발생했습니다.'));
       options.setStep('idle');
     }
-  }, [options, form, checkoutItems, locale, handleStripeFlow, handleTossFlow, handleMockFlow]);
+  }, [options, form, checkoutItems, locale, handlePreparedGatewayFlow, handleTossFlow, handleMockFlow]);
 
   return {
     handleSubmit,

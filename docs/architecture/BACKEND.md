@@ -107,7 +107,7 @@ PENDING → CONFIRMED → PARTIAL_CANCELLED / CANCELLED / REFUNDED
 
 - 서버 사이드 금액 검증 필수
 - 목표 정책: 국내 결제는 네이버페이, KG이니시스, 토스페이먼츠를 모두 지원하고 글로벌 결제는 Stripe를 우선 지원한다.
-- 현재 코드 기준 환경변수 선택지는 `PAYMENT_GATEWAY=mock|toss|stripe`다. 네이버페이/KG이니시스 어댑터와 `stripe` gateway enum 정리는 후속 구현이 필요하다.
+- 현재 코드 기준 환경변수 선택지는 `PAYMENT_GATEWAY=mock|toss|stripe|inicis|naverpay|paypal`다. 결제 준비 단계는 로케일별 기본값(ko=naverpay, 그 외=paypal)과 명시적 사용자 선택을 모두 지원한다.
 
 ---
 

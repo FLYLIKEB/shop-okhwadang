@@ -1,5 +1,7 @@
 import { apiClient, type RequestOptions } from './core';
 
+export type CheckoutGatewayName = 'naverpay' | 'paypal';
+
 export interface PreparePaymentResponse {
   paymentId: number;
   orderId: number;
@@ -7,6 +9,9 @@ export interface PreparePaymentResponse {
   amount: number;
   gateway: string;
   clientKey: string;
+  availableGateways?: string[];
+  redirectUrl?: string;
+  gatewayPayload?: Record<string, string | number | boolean>;
 }
 
 export interface ConfirmPaymentResponse {
@@ -20,7 +25,7 @@ export interface ConfirmPaymentResponse {
 }
 
 export const paymentsApi = {
-  prepare: (body: { orderId: number; locale?: string }, options?: RequestOptions) =>
+  prepare: (body: { orderId: number; locale?: string; gateway?: CheckoutGatewayName }, options?: RequestOptions) =>
     apiClient.post<PreparePaymentResponse>('/payments/prepare', body, options),
   confirm: (body: { orderId: number; paymentKey: string; amount: number }, options?: RequestOptions) =>
     apiClient.post<ConfirmPaymentResponse>('/payments/confirm', body, options),
