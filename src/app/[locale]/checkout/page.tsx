@@ -44,6 +44,18 @@ export interface FormErrors {
   address?: string;
 }
 
+function normalizeInputValue(value: unknown): string {
+  if (value == null) return '';
+  return String(value);
+}
+
+function normalizeZipcodeInputValue(value: unknown): string {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 0) {
+    return String(value).padStart(5, '0');
+  }
+  return normalizeInputValue(value);
+}
+
 export default function CheckoutPage({
   params,
 }: {
@@ -96,11 +108,11 @@ export default function CheckoutPage({
 
   const fillFormFromAddress = (addr: UserAddress) => {
     setForm({
-      recipientName: addr.recipientName,
-      recipientPhone: addr.phone,
-      zipcode: addr.zipcode,
-      address: addr.address,
-      addressDetail: addr.addressDetail ?? '',
+      recipientName: normalizeInputValue(addr.recipientName),
+      recipientPhone: normalizeInputValue(addr.phone),
+      zipcode: normalizeZipcodeInputValue(addr.zipcode),
+      address: normalizeInputValue(addr.address),
+      addressDetail: normalizeInputValue(addr.addressDetail),
       memo: '',
     });
   };

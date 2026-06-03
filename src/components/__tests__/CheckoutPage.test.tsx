@@ -314,6 +314,20 @@ describe('CheckoutPage', () => {
     expect(screen.getByLabelText(/상세 주소/)).toHaveValue('101호');
   });
 
+
+  it('숫자형 zipcode 주소도 문자열로 정규화해 폼에 채운다', async () => {
+    vi.mocked(usersApi.getAddresses).mockResolvedValue([
+      { ...defaultAddress, zipcode: 6000 as unknown as string } as UserAddress,
+    ]);
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+    await renderCheckoutPage();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/우편번호/)).toHaveValue('06000');
+    });
+  });
+
   it('shows address selection list when multiple addresses exist', async () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
