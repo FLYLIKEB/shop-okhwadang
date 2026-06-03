@@ -4,7 +4,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ProductDetailClient from '@/components/shared/products/ProductDetailClient';
 import type { ProductDetail } from '@/lib/api';
 
-const { pushMock, toastSuccessMock, toastErrorMock, addCartItemMock, wishlistAddMock, wishlistRemoveMock, wishlistCheckMock } = vi.hoisted(() => ({
+const {
+  pushMock,
+  toastSuccessMock,
+  toastErrorMock,
+  addCartItemMock,
+  wishlistAddMock,
+  wishlistRemoveMock,
+  wishlistCheckMock,
+  mockUseAuth,
+} = vi.hoisted(() => ({
   pushMock: vi.fn(),
   toastSuccessMock: vi.fn(),
   toastErrorMock: vi.fn(),
@@ -12,10 +21,12 @@ const { pushMock, toastSuccessMock, toastErrorMock, addCartItemMock, wishlistAdd
   wishlistAddMock: vi.fn(),
   wishlistRemoveMock: vi.fn(),
   wishlistCheckMock: vi.fn(),
+  mockUseAuth: vi.fn(() => ({ isAuthenticated: true, isLoading: false, user: { id: 1, email: 'test@example.com', name: '테스터', role: 'user' } })),
 }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock }),
+  usePathname: () => '/ko/products/1',
 }));
 
 vi.mock('next/link', () => ({
@@ -61,6 +72,10 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/contexts/CartContext', () => ({
   useCart: () => ({ addItem: addCartItemMock }),
+}));
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock('@/contexts/MobileNavContext', () => ({
@@ -184,6 +199,11 @@ describe('ProductDetailClient', () => {
     pushMock.mockReset();
     toastSuccessMock.mockReset();
     toastErrorMock.mockReset();
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+      user: { id: 1, email: 'test@example.com', name: '테스터', role: 'user' },
+    });
   });
 
   it('옵션 미선택 + 장바구니 담기 → 에러 토스트, addItem 호출 안 됨', async () => {
@@ -257,5 +277,23 @@ describe('ProductDetailClient', () => {
       expect(wishlistAddMock).toHaveBeenCalledWith(1);
     });
     expect(toastSuccessMock).toHaveBeenCalledWith('찜 추가됨');
+  });
+
+  it('비로그인 찜 클릭 → 로그인으로 리다이렉트하고 wishlist API를 호출하지 않음', async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+      isLoading: false,
+      user: null,
+    });
+
+    render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
+
+    expect(wishlistCheckMock).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getAllByLabelText('찜하기')[0]);
+
+    expect(pushMock).toHaveBeenCalledWith('/login?redirect=%2Fko%2Fproducts%2F1');
+    expect(wishlistAddMock).not.toHaveBeenCalled();
+    expect(wishlistRemoveMock).not.toHaveBeenCalled();
   });
 });

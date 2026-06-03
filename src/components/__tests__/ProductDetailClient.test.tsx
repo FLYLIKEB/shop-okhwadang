@@ -5,11 +5,12 @@ import ProductDetailClient from '@/components/shared/products/ProductDetailClien
 import type { ProductDetail } from '@/lib/api'
 import enMessages from '@/i18n/messages/en.json'
 
-const { pushMock, toastSuccessMock, toastErrorMock, addCartItemMock } = vi.hoisted(() => ({
+const { pushMock, toastSuccessMock, toastErrorMock, addCartItemMock, mockUseAuth } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   toastSuccessMock: vi.fn(),
   toastErrorMock: vi.fn(),
   addCartItemMock: vi.fn(),
+  mockUseAuth: vi.fn(() => ({ isAuthenticated: true, isLoading: false, user: { id: 1, email: 'test@example.com', name: 'Tester', role: 'user' } })),
 }))
 
 const getMessage = (path: string): string => {
@@ -26,6 +27,7 @@ const getMessage = (path: string): string => {
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock }),
+  usePathname: () => '/en/products/1',
 }))
 
 vi.mock('next/link', () => ({
@@ -57,6 +59,10 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/contexts/CartContext', () => ({
   useCart: () => ({ addItem: addCartItemMock }),
+}))
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => mockUseAuth(),
 }))
 
 vi.mock('@/contexts/MobileNavContext', () => ({
@@ -129,6 +135,11 @@ const product: ProductDetail = {
 describe('ProductDetailClient', () => {
   beforeEach(() => {
     addCartItemMock.mockResolvedValue(undefined)
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+      user: { id: 1, email: 'test@example.com', name: 'Tester', role: 'user' },
+    })
   })
 
   it('renders translated PDP labels and no banned arbitrary utility classes', async () => {

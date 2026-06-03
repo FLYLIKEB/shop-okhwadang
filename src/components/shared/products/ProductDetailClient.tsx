@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Heart } from 'lucide-react'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/shared/common/PriceDisplay'
 import type { ProductDetail, ProductOption, Collection } from '@/lib/api'
 import { wishlistApi } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 import { useCart } from '@/contexts/CartContext'
 import { useMobileNav } from '@/contexts/MobileNavContext'
 import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed'
@@ -49,7 +50,9 @@ interface ProductDetailClientProps {
 
 export default function ProductDetailClient({ product, locale = 'ko', clayCollections = [], shapeCollections = [] }: ProductDetailClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const t = useTranslations('product')
+  const { isAuthenticated } = useAuth()
   const { addItem } = useCart()
   const { addItem: addRecentlyViewed } = useRecentlyViewed()
   const { isVisible: isNavVisible } = useMobileNav()
@@ -71,6 +74,12 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
   }, [product.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setIsWishlisted(false)
+      setWishlistId(null)
+      return
+    }
+
     async function checkWishlist() {
       try {
         const res = await wishlistApi.check(Number(product.id))
@@ -79,7 +88,12 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
       } catch {}
     }
     void checkWishlist()
-  }, [product.id])
+  }, [isAuthenticated, product.id])
+
+  const loginHref = useMemo(() => {
+    if (!pathname) return '/login'
+    return `/login?redirect=${encodeURIComponent(pathname)}`
+  }, [pathname])
 
   const selectedOption: ProductOption | undefined = product.options.find(
     (o) => o.id === selectedOptionId,
@@ -158,8 +172,12 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
   }, [product.options.length, selectedOptionId, addToCart, t, focusOptionSection])
 
   const handleToggleWishlist = useCallback(() => {
+    if (!isAuthenticated) {
+      router.push(loginHref)
+      return
+    }
     void toggleWishlist()
-  }, [toggleWishlist])
+  }, [isAuthenticated, loginHref, router, toggleWishlist])
 
   const handleBuyNow = useCallback(() => {
     if (product.options.length > 0 && !selectedOptionId) {
