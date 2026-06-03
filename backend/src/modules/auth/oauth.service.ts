@@ -2,6 +2,7 @@ import {
   Injectable,
   BadGatewayException,
   BadRequestException,
+  InternalServerErrorException,
   NotFoundException,
   Logger,
   Inject,
@@ -71,6 +72,14 @@ export class OAuthService {
     @Inject(AUTH_CONFIG)
     private readonly authConfig: AuthConfig,
   ) {}
+
+  private requireOAuthConfigValue(value: string, envKey: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      throw new InternalServerErrorException(`${envKey} is required for OAuth login`);
+    }
+    return trimmed;
+  }
 
   async disconnect(userId: number, provider: OAuthProvider): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
@@ -200,11 +209,23 @@ export class OAuthService {
 
   private async exchangeKakaoToken(code: string): Promise<string> {
     try {
+      const clientId = this.requireOAuthConfigValue(
+        this.authConfig.oauth.kakao.clientId,
+        'KAKAO_CLIENT_ID',
+      );
+      const clientSecret = this.requireOAuthConfigValue(
+        this.authConfig.oauth.kakao.clientSecret,
+        'KAKAO_CLIENT_SECRET',
+      );
+      const redirectUri = this.requireOAuthConfigValue(
+        this.authConfig.oauth.kakao.redirectUri,
+        'KAKAO_REDIRECT_URI',
+      );
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
-        client_id: this.authConfig.oauth.kakao.clientId,
-        client_secret: this.authConfig.oauth.kakao.clientSecret,
-        redirect_uri: this.authConfig.oauth.kakao.redirectUri,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
         code,
       });
 
@@ -216,7 +237,10 @@ export class OAuthService {
         ),
       );
       return response.data.access_token;
-    } catch {
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) {
+        throw error;
+      }
       throw new BadGatewayException('소셜 로그인 서비스에 일시적 문제가 발생했습니다.');
     }
   }
@@ -236,11 +260,23 @@ export class OAuthService {
 
   private async exchangeGoogleToken(code: string): Promise<string> {
     try {
+      const clientId = this.requireOAuthConfigValue(
+        this.authConfig.oauth.google.clientId,
+        'GOOGLE_CLIENT_ID',
+      );
+      const clientSecret = this.requireOAuthConfigValue(
+        this.authConfig.oauth.google.clientSecret,
+        'GOOGLE_CLIENT_SECRET',
+      );
+      const redirectUri = this.requireOAuthConfigValue(
+        this.authConfig.oauth.google.redirectUri,
+        'GOOGLE_REDIRECT_URI',
+      );
       const params = new URLSearchParams({
         grant_type: 'authorization_code',
-        client_id: this.authConfig.oauth.google.clientId,
-        client_secret: this.authConfig.oauth.google.clientSecret,
-        redirect_uri: this.authConfig.oauth.google.redirectUri,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
         code,
       });
 
@@ -252,7 +288,10 @@ export class OAuthService {
         ),
       );
       return response.data.access_token;
-    } catch {
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) {
+        throw error;
+      }
       throw new BadGatewayException('소셜 로그인 서비스에 일시적 문제가 발생했습니다.');
     }
   }

@@ -31,6 +31,21 @@ describe('createAuthConfig', () => {
     ).toThrow('FRONTEND_URL environment variable is required');
   });
 
+
+  it('production에서 카카오 OAuth 필수 환경변수 누락 시 에러를 던진다', () => {
+    expect(() =>
+      createAuthConfig(
+        makeEnv({
+          NODE_ENV: 'production',
+          JWT_REFRESH_SECRET: 'refresh-secret',
+          KAKAO_CLIENT_ID: '',
+          KAKAO_CLIENT_SECRET: 'kakao-secret',
+          KAKAO_REDIRECT_URI: 'https://frontend.test/auth/kakao/callback',
+        }),
+      ),
+    ).toThrow('KAKAO_CLIENT_ID must be set in production');
+  });
+
   it('oauth/jwt 설정을 typed object로 반환한다', () => {
     const config = createAuthConfig(
       makeEnv({

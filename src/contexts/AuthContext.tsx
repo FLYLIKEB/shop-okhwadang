@@ -34,6 +34,55 @@ function generateState(): string {
   return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+interface OAuthAuthorizeUrlParams {
+  endpoint: string;
+  clientId: string | undefined;
+  clientIdEnvKey: string;
+  redirectUri: string | undefined;
+  redirectUriEnvKey: string;
+  state: string;
+  scope?: string;
+}
+
+function requireOAuthEnvValue(value: string | undefined, envKey: string): string {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    throw new Error(`${envKey} is required for OAuth login`);
+  }
+  return trimmed;
+}
+
+function encodeOAuthParams(params: Record<string, string>): string {
+  return Object.entries(params)
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join('&');
+}
+
+export function buildOAuthAuthorizeUrl({
+  endpoint,
+  clientId,
+  clientIdEnvKey,
+  redirectUri,
+  redirectUriEnvKey,
+  state,
+  scope,
+}: OAuthAuthorizeUrlParams): string {
+  const resolvedClientId = requireOAuthEnvValue(clientId, clientIdEnvKey);
+  const resolvedRedirectUri = requireOAuthEnvValue(redirectUri, redirectUriEnvKey);
+  const params: Record<string, string> = {
+    client_id: resolvedClientId,
+    redirect_uri: resolvedRedirectUri,
+    response_type: 'code',
+    state,
+  };
+
+  if (scope) {
+    params.scope = scope;
+  }
+
+  return `${endpoint}?${encodeOAuthParams(params)}`;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,10 +128,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithKakao = useCallback(() => {
     const state = generateState();
+    const url = buildOAuthAuthorizeUrl({
+      endpoint: 'https://kauth.kakao.com/oauth/authorize',
+      clientId: process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID,
+      clientIdEnvKey: 'NEXT_PUBLIC_KAKAO_CLIENT_ID',
+      redirectUri: process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI,
+      redirectUriEnvKey: 'NEXT_PUBLIC_KAKAO_REDIRECT_URI',
+      state,
+    });
     sessionStorage.setItem(SESSION_KEYS.OAUTH_STATE, state);
-    const clientId = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID ?? '';
-    const redirectUri = process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI ?? '';
-    const url = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
     redirectTo(url);
   }, []);
 
@@ -92,10 +146,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithGoogle = useCallback(() => {
     const state = generateState();
+    const url = buildOAuthAuthorizeUrl({
+      endpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      clientIdEnvKey: 'NEXT_PUBLIC_GOOGLE_CLIENT_ID',
+      redirectUri: process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI,
+      redirectUriEnvKey: 'NEXT_PUBLIC_GOOGLE_REDIRECT_URI',
+      state,
+      scope: 'openid email profile',
+    });
     sessionStorage.setItem(SESSION_KEYS.OAUTH_STATE, state);
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? '';
-    const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI ?? '';
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&state=${state}`;
     redirectTo(url);
   }, []);
 

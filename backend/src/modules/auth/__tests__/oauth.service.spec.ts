@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
-import { BadGatewayException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { OAuthService } from '../oauth.service';
@@ -186,6 +186,37 @@ describe('OAuthService', () => {
 
       expect(result.isNewUser).toBe(false);
       expect(result.user.email).toBe('existing@kakao.com');
+    });
+
+
+    it('카카오 OAuth 설정이 비어 있으면 provider 요청 전에 명시적 설정 오류를 던진다', async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          OAuthService,
+          { provide: getRepositoryToken(User), useValue: mockUserRepository },
+          { provide: getRepositoryToken(UserAuthentication), useValue: mockUserAuthRepository },
+          { provide: TokenIssuerService, useValue: mockTokenIssuerService },
+          { provide: HttpService, useValue: mockHttpService },
+          { provide: DataSource, useValue: mockDataSource },
+          {
+            provide: AUTH_CONFIG,
+            useValue: createAuthConfig({
+              NODE_ENV: 'development',
+              JWT_SECRET: 'jwt-secret',
+              JWT_PRIVATE_KEY: 'private-key',
+              JWT_PUBLIC_KEY: 'public-key',
+              FRONTEND_URL: 'https://frontend.test',
+              KAKAO_CLIENT_ID: '',
+              KAKAO_CLIENT_SECRET: 'kakao-secret',
+              KAKAO_REDIRECT_URI: 'https://frontend.test/auth/kakao/callback',
+            }),
+          },
+        ],
+      }).compile();
+      const misconfiguredService = module.get<OAuthService>(OAuthService);
+
+      await expect(misconfiguredService.handleKakao('auth-code')).rejects.toThrow(InternalServerErrorException);
+      expect(mockHttpService.post).not.toHaveBeenCalled();
     });
 
     it('카카오 provider API 오류 시 BadGatewayException', async () => {

@@ -123,6 +123,22 @@ function parseAllowedOrigins(frontendUrls: string | undefined): string[] {
     .filter((origin) => origin.length > 0);
 }
 
+function requireProductionEnvValue(
+  nodeEnv: string,
+  env: NodeJS.ProcessEnv,
+  key: string,
+): string {
+  const value = normalizeEnvValue(env[key]);
+  if (nodeEnv === 'production' && !value) {
+    throw new Error(`${key} must be set in production`);
+  }
+  return value ?? '';
+}
+
+function readOptionalEnvValue(env: NodeJS.ProcessEnv, key: string): string {
+  return normalizeEnvValue(env[key]) ?? '';
+}
+
 export function createAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig {
   const nodeEnv = env.NODE_ENV ?? 'development';
   const refreshSecret = normalizeEnvValue(env.JWT_REFRESH_SECRET);
@@ -155,14 +171,14 @@ export function createAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConf
     },
     oauth: {
       kakao: {
-        clientId: env.KAKAO_CLIENT_ID ?? '',
-        clientSecret: env.KAKAO_CLIENT_SECRET ?? '',
-        redirectUri: env.KAKAO_REDIRECT_URI ?? '',
+        clientId: requireProductionEnvValue(nodeEnv, env, 'KAKAO_CLIENT_ID'),
+        clientSecret: requireProductionEnvValue(nodeEnv, env, 'KAKAO_CLIENT_SECRET'),
+        redirectUri: requireProductionEnvValue(nodeEnv, env, 'KAKAO_REDIRECT_URI'),
       },
       google: {
-        clientId: env.GOOGLE_CLIENT_ID ?? '',
-        clientSecret: env.GOOGLE_CLIENT_SECRET ?? '',
-        redirectUri: env.GOOGLE_REDIRECT_URI ?? '',
+        clientId: readOptionalEnvValue(env, 'GOOGLE_CLIENT_ID'),
+        clientSecret: readOptionalEnvValue(env, 'GOOGLE_CLIENT_SECRET'),
+        redirectUri: readOptionalEnvValue(env, 'GOOGLE_REDIRECT_URI'),
       },
     },
   };
