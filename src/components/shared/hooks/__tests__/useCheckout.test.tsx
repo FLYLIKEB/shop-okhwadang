@@ -178,6 +178,41 @@ describe('useCheckout - 폼 검증', () => {
     expect(mockOrdersCreate).not.toHaveBeenCalled();
   });
 
+
+  it('우편번호가 숫자로 들어와도 문자열로 정규화해 주문 생성을 진행한다', async () => {
+    mockOrdersCreate.mockResolvedValue(mockOrder);
+    mockPaymentsPrepare.mockResolvedValue({
+      paymentId: 1,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      amount: 30000,
+      gateway: 'mock',
+      clientKey: 'mock_client_key',
+    } satisfies PreparePaymentResponse);
+    mockPaymentsConfirm.mockResolvedValue({
+      paymentId: 1,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      status: 'confirmed',
+      method: 'mock',
+      amount: 30000,
+      paidAt: '2026-04-25T00:00:00Z',
+    });
+
+    const { options } = makeOptions({
+      form: { ...validForm, zipcode: 12345 as unknown as string },
+    });
+    const { result } = renderHook(() => useCheckout(options));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeFormEvent());
+    });
+
+    expect(mockOrdersCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ zipcode: '12345' }),
+    );
+  });
+
   it('주소가 비어 있으면 주문 생성을 호출하지 않는다', async () => {
     const { options } = makeOptions({
       form: { ...validForm, address: '   ' },

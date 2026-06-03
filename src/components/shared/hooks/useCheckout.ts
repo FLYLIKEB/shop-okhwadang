@@ -30,6 +30,18 @@ export interface UseCheckoutOptions {
   refetch: () => Promise<void>;
 }
 
+function normalizeTextValue(value: unknown): string {
+  if (value == null) return '';
+  return String(value).trim();
+}
+
+function normalizeZipcodeValue(value: unknown): string {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 0) {
+    return String(value).padStart(5, '0');
+  }
+  return normalizeTextValue(value);
+}
+
 export function useCheckout(options: UseCheckoutOptions) {
   const { locale, grandTotal, refetch, form, checkoutItems } = options;
   const router = useRouter();
@@ -77,6 +89,13 @@ export function useCheckout(options: UseCheckoutOptions) {
   const handleSubmit = useCallback(async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
+    const recipientName = normalizeTextValue(form.recipientName);
+    const recipientPhone = normalizeTextValue(form.recipientPhone);
+    const zipcode = normalizeZipcodeValue(form.zipcode);
+    const address = normalizeTextValue(form.address);
+    const addressDetail = normalizeTextValue(form.addressDetail);
+    const memo = normalizeTextValue(form.memo);
+
     // If already prepared for a user-action gateway, trigger its confirm/redirect step.
     if (
       options.prepareResult
@@ -87,16 +106,16 @@ export function useCheckout(options: UseCheckoutOptions) {
     }
 
     const errors: FormErrors = {};
-    if (form.recipientName.trim().length < 2) {
+    if (recipientName.length < 2) {
       errors.recipientName = '이름은 2자 이상 입력해주세요.';
     }
-    if (!/^\d{3}-\d{3,4}-\d{4}$/.test(form.recipientPhone)) {
+    if (!/^\d{3}-\d{3,4}-\d{4}$/.test(recipientPhone)) {
       errors.recipientPhone = '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)';
     }
-    if (!/^\d{5}$/.test(form.zipcode)) {
+    if (!/^\d{5}$/.test(zipcode)) {
       errors.zipcode = '우편번호는 5자리 숫자로 입력해주세요.';
     }
-    if (form.address.trim().length === 0) {
+    if (address.length === 0) {
       errors.address = '주소를 입력해주세요.';
     }
     if (Object.keys(errors).length > 0) {
@@ -112,12 +131,12 @@ export function useCheckout(options: UseCheckoutOptions) {
             productOptionId: item.productOptionId,
             quantity: item.quantity,
           })),
-          recipientName: form.recipientName.trim(),
-          recipientPhone: form.recipientPhone.trim(),
-          zipcode: form.zipcode.trim(),
-          address: form.address.trim(),
-          addressDetail: form.addressDetail.trim() || null,
-          memo: form.memo.trim() || null,
+          recipientName,
+          recipientPhone,
+          zipcode,
+          address,
+          addressDetail: addressDetail || null,
+          memo: memo || null,
         },
       );
 
