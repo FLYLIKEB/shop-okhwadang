@@ -17,6 +17,9 @@ export const REQUIRED_PROD_ENV_KEYS = [
   'RESEND_API_KEY',
   'PAYMENT_GATEWAY',
   'STORAGE_PROVIDER',
+  'KAKAO_CLIENT_ID',
+  'KAKAO_CLIENT_SECRET',
+  'KAKAO_REDIRECT_URI',
 ] as const;
 
 export type RequiredEnvKey = (typeof REQUIRED_PROD_ENV_KEYS)[number];

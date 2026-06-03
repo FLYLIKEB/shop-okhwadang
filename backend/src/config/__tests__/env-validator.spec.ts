@@ -12,6 +12,9 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   RESEND_API_KEY: 're_abc123',
   PAYMENT_GATEWAY: 'toss',
   STORAGE_PROVIDER: 's3',
+  KAKAO_CLIENT_ID: 'kakao-client',
+  KAKAO_CLIENT_SECRET: 'kakao-secret',
+  KAKAO_REDIRECT_URI: 'https://ockhwadang.com/auth/kakao/callback',
 });
 
 describe('validateEnv', () => {

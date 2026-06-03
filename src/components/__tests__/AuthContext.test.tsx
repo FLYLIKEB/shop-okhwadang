@@ -1,6 +1,6 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { AuthProvider, buildOAuthAuthorizeUrl, useAuth } from '@/contexts/AuthContext';
 import type { AuthTokenResponse, AuthUser } from '@/lib/api';
 
 vi.mock('@/lib/api', () => ({
@@ -235,6 +235,20 @@ describe('AuthContext', () => {
 
     expect(screen.getByTestId('user').textContent).toBe('test@example.com');
     expect(screen.getByTestId('name').textContent).toBe('수정된 이름');
+  });
+
+
+  it('buildOAuthAuthorizeUrl throws before redirect when required public OAuth config is empty', () => {
+    expect(() =>
+      buildOAuthAuthorizeUrl({
+        endpoint: 'https://kauth.kakao.com/oauth/authorize',
+        clientId: '',
+        clientIdEnvKey: 'NEXT_PUBLIC_KAKAO_CLIENT_ID',
+        redirectUri: 'https://shop.test/auth/kakao/callback',
+        redirectUriEnvKey: 'NEXT_PUBLIC_KAKAO_REDIRECT_URI',
+        state: 'state-token',
+      }),
+    ).toThrow('NEXT_PUBLIC_KAKAO_CLIENT_ID is required for OAuth login');
   });
 
   it('loginWithKakao stores CSRF state and redirects to Kakao authorize URL', async () => {
