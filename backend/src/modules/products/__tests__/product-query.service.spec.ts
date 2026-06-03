@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
 import { ProductQueryService } from '../product-query.service';
 import { Product, ProductStatus } from '../entities/product.entity';
@@ -234,6 +234,35 @@ describe('ProductQueryService', () => {
       expect(qb.andWhere).toHaveBeenCalledWith('product.status = :status', {
         status: 'draft',
       });
+    });
+  });
+
+
+  describe('findAll - 속성 필터', () => {
+    it('attrs 값으로 product_attributes inner join 조건을 적용한다', async () => {
+      qb.getMany.mockResolvedValue([{ id: 1, code: 'clay_type' } as AttributeType]);
+      qb.getManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({ attrs: 'clay_type:junni' });
+
+      expect(qb.innerJoin).toHaveBeenCalledWith(
+        'product.attributes',
+        'pa_0',
+        'pa_0.attributeTypeId = :typeId0 AND pa_0.value = :attrValue0',
+        { typeId0: 1, attrValue0: 'junni' },
+      );
+    });
+
+    it('존재하지 않는 attrs code 는 경고 로그를 남기고 필터를 건너뛴다', async () => {
+      const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+      qb.getMany.mockResolvedValue([]);
+      qb.getManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({ attrs: 'missing_code:value' });
+
+      expect(qb.innerJoin).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith('Unknown product attribute filter code skipped: missing_code');
+      warnSpy.mockRestore();
     });
   });
 

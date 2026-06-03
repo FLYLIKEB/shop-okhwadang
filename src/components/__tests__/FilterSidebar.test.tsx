@@ -54,8 +54,8 @@ const mockCategories: Category[] = [
 ];
 
 const mockCollections: Collection[] = [
-  { id: 1, type: CollectionType.CLAY, name: 'Sin Zhi', nameKo: '신치', color: null, description: null, imageUrl: null, productUrl: '', sortOrder: 0, isActive: true },
-  { id: 2, type: CollectionType.CLAY, name: 'Jook Jin', nameKo: '죽전', color: null, description: null, imageUrl: null, productUrl: '', sortOrder: 1, isActive: true },
+  { id: 1, type: CollectionType.CLAY, name: 'Sin Zhi', nameKo: '신치', color: null, description: null, imageUrl: null, productUrl: '/products?attrs=clay_type:sin-zhi', sortOrder: 0, isActive: true },
+  { id: 2, type: CollectionType.CLAY, name: 'Jook Jin', nameKo: '죽전', color: null, description: null, imageUrl: null, productUrl: '/products?attrs=clay_type:jook-jin', sortOrder: 1, isActive: true },
 ];
 
 describe('FilterSidebar', () => {

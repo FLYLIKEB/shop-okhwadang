@@ -49,8 +49,8 @@ export class RefactorToDynamicAttributes1776500000000 implements MigrationInterf
     // 3. Insert default attribute types for the tea shop
     await queryRunner.query(`
       INSERT INTO \`attribute_types\` (\`code\`, \`name\`, \`name_ko\`, \`input_type\`, \`is_filterable\`, \`is_searchable\`, \`valid_values\`, \`sort_order\`) VALUES
-      ('clay_type', 'Clay Type', '니료', 'select', TRUE, FALSE, '["zhuni","zisha","duanni","heini","qinghuini"]', 1),
-      ('teapot_shape', 'Shape', '모양', 'select', TRUE, FALSE, '["zhuxing","shipiao","xishi","bianping"]', 2)
+      ('clay_type', 'Clay Type', '니료', 'select', TRUE, FALSE, '["junni","danji","jani","heugni","cheongsu","nokni"]', 1),
+      ('teapot_shape', 'Shape', '모양', 'select', TRUE, FALSE, '["seoshi","seokpyo","juhu","bianping","inwang","deokjong","supeong"]', 2)
     `);
 
     // 4. Drop old clay_type and teapot_shape columns from products

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { Collection } from '@/lib/api';
+import { getCollectionFilterValue } from '@/lib/collectionFilters';
 
 interface TeapotShapeFilterProps {
   collections: Collection[];
@@ -29,23 +30,26 @@ export default function TeapotShapeFilter({ collections, selected, onSelect }: T
           {tCommon('all')}
         </span>
       </label>
-      {collections.map((item) => (
-        <label key={item.id} className="flex cursor-pointer items-center gap-2">
-          <input
-            type="radio"
-            name="teapot-shape"
-            checked={selected === item.name}
-            onChange={() => onSelect(item.name)}
-            className="h-4 w-4 border-border accent-primary"
-          />
-          <span className={cn(
-            'text-sm transition-colors',
-            selected === item.name ? 'font-medium text-foreground' : 'text-muted-foreground',
-          )}>
-            {item.name}
-          </span>
-        </label>
-      ))}
+      {collections.map((item) => {
+        const filterValue = getCollectionFilterValue(item, 'teapot_shape');
+        return (
+          <label key={item.id} className="flex cursor-pointer items-center gap-2">
+            <input
+              type="radio"
+              name="teapot-shape"
+              checked={selected === filterValue}
+              onChange={() => onSelect(filterValue)}
+              className="h-4 w-4 border-border accent-primary"
+            />
+            <span className={cn(
+              'text-sm transition-colors',
+              selected === filterValue ? 'font-medium text-foreground' : 'text-muted-foreground',
+            )}>
+              {item.name}
+            </span>
+          </label>
+        );
+      })}
     </div>
   );
 }

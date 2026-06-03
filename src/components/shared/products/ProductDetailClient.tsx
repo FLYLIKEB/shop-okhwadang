@@ -21,11 +21,12 @@ import QuantitySelector from './QuantitySelector'
 import ProductTabs from './ProductTabs'
 import StarRating from '@/components/shared/reviews/StarRating'
 import { formatCurrency, type Locale } from '@/utils/currency'
+import { getCollectionFilterValue } from '@/lib/collectionFilters'
 
-function findCollectionLabel(collections: Collection[], name: string): string {
-  const found = collections.find((c) => c.name === name)
-  if (!found) return name
-  return found.name ?? name
+function findCollectionLabel(collections: Collection[], attrCode: string, value: string): string {
+  const found = collections.find((collection) => getCollectionFilterValue(collection, attrCode) === value)
+  if (!found) return value
+  return found.name ?? value
 }
 
 function getClayTagClass(value: string): string {
@@ -206,7 +207,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
                         getClayTagClass(attr.value),
                       )}
                     >
-                      {t('clay')}: {findCollectionLabel(clayCollections, attr.value)}
+                      {t('clay')}: {findCollectionLabel(clayCollections, 'clay_type', attr.value)}
                     </Link>
                   );
                 }
@@ -217,7 +218,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
                       href={`/products?attrs=teapot_shape:${encodeURIComponent(attr.value)}`}
                       className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-foreground/30"
                     >
-                      {t('shape')}: {findCollectionLabel(shapeCollections, attr.value)}
+                      {t('shape')}: {findCollectionLabel(shapeCollections, 'teapot_shape', attr.value)}
                     </Link>
                   );
                 }
