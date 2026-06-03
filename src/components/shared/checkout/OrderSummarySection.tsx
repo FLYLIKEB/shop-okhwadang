@@ -20,7 +20,7 @@ export function OrderSummarySection({ checkoutItems, locale }: OrderSummarySecti
   const freeShippingProgress = Math.min((totalAmount / FREE_SHIPPING_THRESHOLD) * 100, 100);
 
   return (
-    <section className="rounded-lg border p-6 lg:sticky lg:top-24">
+    <section className="rounded-lg border p-6">
       <h2 className="typo-h3">{t('orderItems')}</h2>
 
       <ul className="mt-4 divide-y text-sm">

@@ -292,7 +292,7 @@ export default function CheckoutPage({
             </section>
           </div>
 
-          <div className="layout-stack-md">
+          <aside className="layout-stack-md lg:sticky lg:top-24 lg:self-start">
             <OrderSummarySection checkoutItems={checkoutItems} locale={locale} />
             <div className="hidden rounded-lg border border-border p-4 lg:block">
               <div className="mb-2 flex items-end justify-between">
@@ -303,7 +303,7 @@ export default function CheckoutPage({
                 {stepLabels[step]}
               </Button>
             </div>
-          </div>
+          </aside>
         </div>
       </form>
 
