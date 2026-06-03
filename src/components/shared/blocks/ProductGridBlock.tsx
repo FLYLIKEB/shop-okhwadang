@@ -25,7 +25,7 @@ export default function ProductGridBlock({ content }: Props) {
   const params = useParams();
   const locale = params.locale as string;
   const t = useTranslations('common');
-  const { product_ids, category_id, auto, limit, template, title, more_href, prefetched_products } = content;
+  const { product_ids, category_id, auto, sort, limit, template, title, more_href, prefetched_products } = content;
   const { ref, visible } = useScrollAnimation<HTMLElement>();
 
   const { data: products, loading } = useBlockData<Product>({
@@ -34,14 +34,14 @@ export default function ProductGridBlock({ content }: Props) {
       if (product_ids && product_ids.length > 0) {
         return productsApi.getBulk(product_ids.slice(0, limit), locale);
       } else if (category_id) {
-        const res = await productsApi.getList({ categoryId: category_id, limit, locale });
+        const res = await productsApi.getList({ categoryId: category_id, sort, limit, locale });
         return res.items;
       } else {
-        const res = await productsApi.getList({ limit, locale });
+        const res = await productsApi.getList({ sort, limit, locale });
         return res.items;
       }
     },
-    deps: [product_ids, category_id, auto, limit, locale],
+    deps: [product_ids, category_id, auto, sort, limit, locale],
   });
 
   const gridCols = gridColsMap[template] ?? gridColsMap['4col'];

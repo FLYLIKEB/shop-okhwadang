@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ProductGridBlock from '@/components/shared/blocks/ProductGridBlock';
-import type { Product } from '@/lib/api';
+import { productsApi, type Product } from '@/lib/api';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -115,5 +115,27 @@ describe('ProductGridBlock', () => {
 
     const { container } = render(<ProductGridBlock content={content} />);
     expect(container.firstChild).toBeNull();
+  });
+
+  it('passes CMS sort setting when auto-loading products', async () => {
+    vi.mocked(productsApi.getList).mockResolvedValue({
+      items: mockProducts,
+      total: mockProducts.length,
+      page: 1,
+      limit: 12,
+    });
+
+    const content = {
+      limit: 12,
+      template: '4col' as const,
+      sort: 'popular' as const,
+      title: '베스트 상품',
+    };
+
+    render(<ProductGridBlock content={content} />);
+
+    await waitFor(() => {
+      expect(productsApi.getList).toHaveBeenCalledWith({ sort: 'popular', limit: 12, locale: 'ko' });
+    });
   });
 });
