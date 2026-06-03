@@ -212,7 +212,7 @@ describe('middleware', () => {
   });
 
   it('passes through public routes without cookie', async () => {
-    for (const path of ['/', '/products', '/login']) {
+    for (const path of ['/', '/products', '/products/1', '/ko/products/1', '/login']) {
       const req = makeRequest(path);
       const res = await middleware(req);
       expect(res.status).toBe(200);
