@@ -130,6 +130,21 @@ function PreviewTextContent({ content }: { content: Record<string, unknown> }) {
   return <p className="whitespace-pre-wrap text-sm" style={{ textAlign }}>{plainText}</p>;
 }
 
+function PreviewSectionHeadingBlock({ content, fallbackTitle }: { content: Record<string, unknown>; fallbackTitle: string }) {
+  const label = content.sectionLabel as string | undefined;
+  const title = (content.sectionTitle as string | undefined) || fallbackTitle;
+  const description = content.sectionDesc as string | undefined;
+
+  return (
+    <div className="rounded-lg border border-dashed bg-muted/40 p-4 text-center">
+      {label && <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>}
+      <h3 className="mt-1 text-base font-semibold">{title}</h3>
+      {description && <p className="mt-2 text-xs text-muted-foreground">{description}</p>}
+      <p className="mt-3 text-xs text-muted-foreground">실제 항목은 공개 API에서 자동으로 렌더링됩니다</p>
+    </div>
+  );
+}
+
 export const BLOCK_TYPE_LABELS: Record<string, string> = {
   hero_banner: '히어로 배너',
   product_grid: '상품 그리드',
@@ -137,6 +152,14 @@ export const BLOCK_TYPE_LABELS: Record<string, string> = {
   category_nav: '카테고리 내비',
   promotion_banner: '프로모션 배너',
   text_content: '텍스트',
+  split_content: '분할 콘텐츠',
+  brand_story: '브랜드 이야기',
+  journal_preview: '저널 미리보기',
+  archive_nilo: '닐로 (보이차 산지)',
+  archive_process: '제조 과정',
+  archive_artist: '장인',
+  collection_clay: '흙 컬렉션',
+  collection_shape: '형태 컬렉션',
 };
 
 export default function PreviewBlock({ block }: { block: DraftBlock }) {
@@ -153,5 +176,15 @@ export default function PreviewBlock({ block }: { block: DraftBlock }) {
       return <PreviewPromotionBanner content={block.content} />;
     case 'text_content':
       return <PreviewTextContent content={block.content} />;
+    case 'archive_nilo':
+      return <PreviewSectionHeadingBlock content={block.content} fallbackTitle="닐로 (보이차 산지)" />;
+    case 'archive_process':
+      return <PreviewSectionHeadingBlock content={block.content} fallbackTitle="제조 과정" />;
+    case 'archive_artist':
+      return <PreviewSectionHeadingBlock content={block.content} fallbackTitle="장인" />;
+    case 'collection_clay':
+      return <PreviewSectionHeadingBlock content={block.content} fallbackTitle="흙 컬렉션" />;
+    case 'collection_shape':
+      return <PreviewSectionHeadingBlock content={block.content} fallbackTitle="형태 컬렉션" />;
   }
 }

@@ -25,6 +25,11 @@ const SUPPORTED_BLOCK_TYPES = [
   'split_content',
   'brand_story',
   'journal_preview',
+  'archive_nilo',
+  'archive_process',
+  'archive_artist',
+  'collection_clay',
+  'collection_shape',
 ];
 
 @Injectable()

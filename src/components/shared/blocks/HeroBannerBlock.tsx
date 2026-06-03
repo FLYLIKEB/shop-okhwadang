@@ -169,7 +169,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
 }
 
 export default function HeroBannerBlock({ content }: Props) {
-  const { title, subtitle, description, image_url, cta_text, cta_url, template, slides } = content;
+  const { title, eyebrow, subtitle, description, image_url, cta_text, cta_url, template, slides, bgColor } = content;
   const sectionRef = useRef<HTMLElement>(null);
 
   const { heroLogoStyle, headerLogoStyle, progress, isHeroVisible } = useScrollLogoTransition({
@@ -196,6 +196,30 @@ export default function HeroBannerBlock({ content }: Props) {
       <ScrollLogoProvider value={scrollLogoContextValue}>
         <SliderHero slides={slides} description={description} sectionRef={sectionRef} />
       </ScrollLogoProvider>
+    );
+  }
+
+  if (template === 'simple') {
+    const isForeground = bgColor === 'foreground';
+    const backgroundClass = isForeground ? 'bg-foreground text-background' : bgColor === 'muted' ? 'bg-muted text-foreground' : 'bg-background text-foreground';
+    const eyebrowClass = isForeground ? 'text-background/60' : 'text-muted-foreground';
+    const descriptionClass = isForeground ? 'text-background/70' : 'text-muted-foreground';
+
+    return (
+      <section className={cn('py-20 px-4 text-center', backgroundClass)}>
+        {eyebrow && (
+          <p className={cn('text-xs font-semibold tracking-widest uppercase mb-3', eyebrowClass)}>
+            {eyebrow}
+          </p>
+        )}
+        <h1 className="font-display typo-h1 tracking-tight mb-4">{title}</h1>
+        {description && (
+          <SafeHtml
+            html={description}
+            className={cn('max-w-xl mx-auto text-sm leading-relaxed', descriptionClass)}
+          />
+        )}
+      </section>
     );
   }
 

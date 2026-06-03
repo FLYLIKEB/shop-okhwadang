@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function PromotionBannerBlock({ content }: Props) {
-  const { title, subtitle, image_url, cta_text, cta_url, template, end_date, expires_at } = content;
+  const { title, eyebrow, subtitle, image_url, cta_text, cta_url, template, end_date, expires_at, bgColor } = content;
   const countdownEndDate = end_date ?? expires_at;
   const { ref, visible } = useScrollAnimation<HTMLElement>();
   const t = useTranslations('promotion');
@@ -29,6 +29,35 @@ export default function PromotionBannerBlock({ content }: Props) {
           <Link
             href={isSafeUrl(cta_url) ? cta_url : '#'}
             className="mt-6 inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
+          >
+            {cta_text}
+          </Link>
+        )}
+      </section>
+    );
+  }
+
+  if (template === 'full') {
+    const backgroundClass = bgColor === 'muted' ? 'bg-muted' : bgColor === 'foreground' ? 'bg-foreground text-background' : 'bg-background';
+    const eyebrowClass = bgColor === 'foreground' ? 'text-background/70' : 'text-muted-foreground';
+    const titleClass = bgColor === 'foreground' ? 'text-background' : 'text-foreground';
+    const ctaClass = bgColor === 'foreground'
+      ? 'bg-background text-foreground'
+      : 'bg-foreground text-background';
+
+    return (
+      <section className={`py-16 px-4 text-center ${backgroundClass}`}>
+        <p className={`text-xs font-semibold tracking-widest uppercase mb-3 ${eyebrowClass}`}>
+          {eyebrow ?? t('specialOffer')}
+        </p>
+        <h2 className={`font-display typo-h2 mb-4 ${titleClass}`}>
+          {title}
+        </h2>
+        {subtitle && <p className={`mb-6 text-sm ${eyebrowClass}`}>{subtitle}</p>}
+        {cta_text && cta_url && (
+          <Link
+            href={isSafeUrl(cta_url) ? cta_url : '#'}
+            className={`inline-flex items-center gap-2 text-sm font-medium rounded px-6 py-3 hover:opacity-80 transition-opacity ${ctaClass}`}
           >
             {cta_text}
           </Link>

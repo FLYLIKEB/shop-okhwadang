@@ -144,6 +144,26 @@ export function registerPagesSuite(getApp: () => INestApplication) {
         expect(body.slug).toBe('test-home-pages-e2e');
       });
 
+      it.each([
+        ['archive', ['hero_banner', 'archive_nilo', 'archive_process', 'archive_artist', 'promotion_banner']],
+        ['collection', ['hero_banner', 'collection_clay', 'collection_shape', 'promotion_banner']],
+      ])('%s CMS 페이지는 locale=ko에서 초기 블록을 순서대로 반환한다', async (slug, types) => {
+        const res = await request(app.getHttpServer())
+          .get(`/api/pages/${slug}?locale=ko`)
+          .expect(200);
+
+        const body = res.body as {
+          slug: string;
+          blocks: Array<{ type: string; sort_order: number; content: Record<string, unknown> }>;
+        };
+        expect(body.slug).toBe(slug);
+        expect(body.blocks.map((block) => block.type)).toEqual(types);
+        expect(body.blocks.map((block) => block.sort_order)).toEqual(
+          [...body.blocks.map((block) => block.sort_order)].sort((a, b) => a - b),
+        );
+        expect(body.blocks[0].content.template).toBe('simple');
+      });
+
       it('존재하지 않는 slug -> 404', () => {
         return request(app.getHttpServer())
           .get('/api/pages/nonexistent-slug')

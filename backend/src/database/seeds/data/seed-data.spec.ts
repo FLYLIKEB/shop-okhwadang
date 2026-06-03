@@ -1,4 +1,4 @@
-import { banners, promotions } from './seed-data';
+import { banners, pageBlocks, pages, promotions } from './seed-data';
 
 function expectEnglish(value: string): void {
   expect(value).toEqual(expect.any(String));
@@ -22,5 +22,53 @@ describe('seed-data English promotion content', () => {
     for (const banner of banners) {
       expectEnglish(banner.titleEn);
     }
+  });
+});
+
+describe('archive/collection CMS page seed data', () => {
+  it('publishes archive and collection pages for CMS rendering', () => {
+    expect(pages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          slug: 'archive',
+          title: '아카이브',
+          titleEn: 'Archive',
+          isPublished: true,
+        }),
+        expect.objectContaining({
+          slug: 'collection',
+          title: '콜렉션',
+          titleEn: 'Collection',
+          isPublished: true,
+        }),
+      ]),
+    );
+  });
+
+  it('seeds archive body blocks between CMS-managed hero and CTA blocks', () => {
+    const archiveBlocks = pageBlocks
+      .filter((block) => block.pageSlug === 'archive')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+
+    expect(archiveBlocks.map((block) => `${block.sortOrder}:${block.type}`)).toEqual([
+      '-1:hero_banner',
+      '0:archive_nilo',
+      '1:archive_process',
+      '2:archive_artist',
+      '99:promotion_banner',
+    ]);
+  });
+
+  it('seeds collection body blocks between CMS-managed hero and CTA blocks', () => {
+    const collectionBlocks = pageBlocks
+      .filter((block) => block.pageSlug === 'collection')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+
+    expect(collectionBlocks.map((block) => `${block.sortOrder}:${block.type}`)).toEqual([
+      '-1:hero_banner',
+      '0:collection_clay',
+      '1:collection_shape',
+      '99:promotion_banner',
+    ]);
   });
 });

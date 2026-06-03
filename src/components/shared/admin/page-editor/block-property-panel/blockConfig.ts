@@ -11,6 +11,11 @@ export const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   split_content: '분할 콘텐츠',
   brand_story: '브랜드 이야기',
   journal_preview: '저널 미리보기',
+  archive_nilo: '닐로 (보이차 산지)',
+  archive_process: '제조 과정',
+  archive_artist: '장인',
+  collection_clay: '흙 컬렉션',
+  collection_shape: '형태 컬렉션',
 };
 
 export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
@@ -32,6 +37,16 @@ export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
     '브랜드 이야기 섹션입니다. 서브타이틀, 제목, 설명, CTA 버튼을 설정할 수 있습니다.',
   journal_preview:
     '저널 글을 카드 형태로 미리보기 합니다. 제목, 표시 개수, 전체 보기 링크를 설정할 수 있습니다.',
+  archive_nilo:
+    '아카이브 페이지의 닐로/니료 섹션입니다. 실제 항목은 아카이브 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드합니다.',
+  archive_process:
+    '아카이브 페이지의 제조 과정 섹션입니다. 실제 항목은 아카이브 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드합니다.',
+  archive_artist:
+    '아카이브 페이지의 장인 섹션입니다. 실제 항목은 아카이브 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드합니다.',
+  collection_clay:
+    '콜렉션 페이지의 흙 컬렉션 섹션입니다. 실제 항목은 컬렉션 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드합니다.',
+  collection_shape:
+    '콜렉션 페이지의 형태 컬렉션 섹션입니다. 실제 항목은 컬렉션 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드합니다.',
 };
 
 export const PRODUCT_SORT_OPTIONS: SelectOption[] = [
