@@ -106,6 +106,14 @@ describe('Header', () => {
     expect(screen.getAllByRole('link', { name: '로그인' }).length).toBeGreaterThan(0);
   });
 
+  it('renders search inputs without product-search placeholder copy', () => {
+    render(<Header />);
+
+    screen.getAllByRole('searchbox').forEach((input) => {
+      expect(input).not.toHaveAttribute('placeholder', '상품 검색...');
+    });
+  });
+
   it('search form: type query + submit → push called with /search?q=검색어', async () => {
     const user = userEvent.setup();
     render(<Header />);

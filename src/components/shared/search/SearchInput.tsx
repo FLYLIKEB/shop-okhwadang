@@ -14,7 +14,7 @@ interface SearchInputProps {
   placeholder?: string;
 }
 
-export default function SearchInput({ className, placeholder = '상품 검색...' }: SearchInputProps) {
+export default function SearchInput({ className, placeholder = '' }: SearchInputProps) {
   const router = useRouter();
   const [value, setValue] = useState('');
   const [isOpen, setIsOpen] = useUrlModal('searchDropdown');

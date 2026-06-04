@@ -68,6 +68,12 @@ describe('SearchInput', () => {
     });
   });
 
+  it('does not show product-search helper copy in the input placeholder', () => {
+    render(<SearchInput />);
+
+    expect(screen.getByLabelText('상품 검색')).toHaveAttribute('placeholder', '');
+  });
+
   it('submits a trimmed query, stores it, and navigates to search', async () => {
     render(<SearchInput />);
 

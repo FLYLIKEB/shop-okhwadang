@@ -63,7 +63,7 @@
     "next": "Next announcement"
   },
   "header": {
-    "searchPlaceholder": "Search products...",
+    "searchPlaceholder": "",
     "searchLabel": "Search products",
     "searchButton": "Search",
     "searchShort": "Search...",
