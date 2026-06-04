@@ -1,0 +1,149 @@
+name: Create Remote Test Product
+
+on:
+  workflow_dispatch:
+    inputs:
+      price:
+        description: 'Test product price in KRW'
+        required: true
+        default: '10'
+      stock:
+        description: 'Test product stock'
+        required: true
+        default: '100'
+      slug:
+        description: 'Stable product slug'
+        required: true
+        default: 'payment-test-10won'
+
+permissions:
+  contents: read
+
+jobs:
+  create-product:
+    name: Create or update payment test product
+    runs-on: self-hosted
+    steps:
+      - name: Upsert test product in production DB
+        env:
+          INPUT_PRICE: ${{ inputs.price }}
+          INPUT_STOCK: ${{ inputs.stock }}
+          INPUT_SLUG: ${{ inputs.slug }}
+        run: |
+          set -euo pipefail
+          cd /app/shop-okhwadang/shop-okhwadang/backend
+
+          node <<'NODE'
+          const fs = require('fs');
+          const mysql = require('mysql2/promise');
+
+          const price = Number(process.env.INPUT_PRICE || '10');
+          const stock = Number(process.env.INPUT_STOCK || '100');
+          const slug = String(process.env.INPUT_SLUG || 'payment-test-10won').trim();
+
+          if (!Number.isInteger(price) || price < 1) {
+            throw new Error(`Invalid price: ${process.env.INPUT_PRICE}`);
+          }
+          if (!Number.isInteger(stock) || stock < 0) {
+            throw new Error(`Invalid stock: ${process.env.INPUT_STOCK}`);
+          }
+          if (!/^[a-z0-9-]+$/.test(slug)) {
+            throw new Error(`Invalid slug: ${slug}`);
+          }
+
+          const envText = fs.readFileSync('.env', 'utf8');
+          const match = envText.match(/^DATABASE_URL=(.+)$/m);
+          if (!match) throw new Error('DATABASE_URL not found in backend/.env');
+
+          const url = new URL(match[1].trim());
+          const connection = await mysql.createConnection({
+            host: url.hostname,
+            port: Number(url.port || 3306),
+            user: decodeURIComponent(url.username),
+            password: decodeURIComponent(url.password),
+            database: url.pathname.replace(/^\//, ''),
+          });
+
+          const sku = slug.toUpperCase().replace(/-/g, '_');
+          const name = `결제 테스트 상품 ${price}원`;
+          const nameEn = `Payment test product KRW ${price}`;
+          const shortDescription = '원격 결제 테스트 전용 상품입니다.';
+          const shortDescriptionEn = 'Product for remote payment testing only.';
+          const description = `${price}원 결제 플로우 검증용 테스트 상품입니다. 실제 배송 상품이 아닙니다.`;
+          const descriptionEn = `Test product for validating the KRW ${price} payment flow. Not a real shippable product.`;
+          const imageUrl = '/logo-okhwadang.png';
+
+          await connection.beginTransaction();
+          try {
+            const [existingRows] = await connection.execute(
+              'SELECT id FROM products WHERE slug = ? OR sku = ? LIMIT 1',
+              [slug, sku],
+            );
+
+            let productId;
+            if (existingRows.length > 0) {
+              productId = Number(existingRows[0].id);
+              await connection.execute(
+                `UPDATE products
+                   SET category_id = NULL,
+                       name = ?, name_en = ?, name_ja = NULL, name_zh = NULL,
+                       slug = ?,
+                       description = ?, description_en = ?, description_ja = NULL, description_zh = NULL,
+                       short_description = ?, short_description_en = ?, short_description_ja = NULL, short_description_zh = NULL,
+                       price = ?, sale_price = NULL, stock = ?, sku = ?, status = 'active', is_featured = 0,
+                       updated_at = NOW()
+                 WHERE id = ?`,
+                [
+                  name, nameEn, slug,
+                  description, descriptionEn,
+                  shortDescription, shortDescriptionEn,
+                  price, stock, sku, productId,
+                ],
+              );
+            } else {
+              const [result] = await connection.execute(
+                `INSERT INTO products
+                   (category_id, name, name_en, name_ja, name_zh, slug,
+                    description, description_en, description_ja, description_zh,
+                    short_description, short_description_en, short_description_ja, short_description_zh,
+                    price, sale_price, stock, sku, status, is_featured,
+                    view_count, review_count, avg_rating, created_at, updated_at)
+                 VALUES
+                   (NULL, ?, ?, NULL, NULL, ?,
+                    ?, ?, NULL, NULL,
+                    ?, ?, NULL, NULL,
+                    ?, NULL, ?, ?, 'active', 0,
+                    0, 0, 0, NOW(), NOW())`,
+                [
+                  name, nameEn, slug,
+                  description, descriptionEn,
+                  shortDescription, shortDescriptionEn,
+                  price, stock, sku,
+                ],
+              );
+              productId = Number(result.insertId);
+            }
+
+            await connection.execute('DELETE FROM product_images WHERE product_id = ?', [productId]);
+            await connection.execute(
+              `INSERT INTO product_images (product_id, url, alt, sort_order, is_thumbnail)
+               VALUES (?, ?, ?, 0, 1)`,
+              [productId, imageUrl, name],
+            );
+
+            await connection.execute('DELETE FROM product_detail_images WHERE product_id = ?', [productId]);
+            await connection.execute(
+              `INSERT INTO product_detail_images (product_id, url, alt, sort_order, is_active)
+               VALUES (?, ?, ?, 0, 1)`,
+              [productId, imageUrl, name],
+            );
+
+            await connection.commit();
+            console.log(JSON.stringify({ productId, slug, sku, price, stock, status: 'active' }));
+          } catch (error) {
+            await connection.rollback();
+            throw error;
+          } finally {
+            await connection.end();
+          }
+          NODE
