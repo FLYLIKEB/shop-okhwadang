@@ -12,13 +12,20 @@ vi.mock('@/i18n/navigation', () => ({
 
 vi.mock('next-intl', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next-intl')>();
-  const messages = (await import('@/i18n/messages/ko.json')).default as unknown as Record<string, Record<string, string>>;
+  const messages = (await import('@/i18n/messages/ko.json')).default as unknown as Record<string, unknown>;
+  const resolvePath = (root: unknown, path: string): unknown =>
+    path.split('.').reduce<unknown>((acc, segment) => {
+      if (acc && typeof acc === 'object') {
+        return (acc as Record<string, unknown>)[segment];
+      }
+      return undefined;
+    }, root);
   return {
     ...actual,
     useLocale: () => 'ko',
     useTranslations: (namespace: string) => (key: string) => {
-      const ns = messages[namespace] ?? {};
-      return ns[key] ?? key;
+      const value = resolvePath(messages[namespace], key);
+      return typeof value === 'string' ? value : key;
     },
   };
 });
@@ -57,6 +64,17 @@ describe('Footer', () => {
   it('renders copyright text containing current year', () => {
     render(<Footer />);
     const year = new Date().getFullYear().toString();
-    expect(screen.getByText(new RegExp(year))).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`${year} OCKHWADANG`))
+    ).toBeInTheDocument();
+  });
+
+  it('renders required business information (상호·대표자·사업자번호·통신판매번호·소재지)', () => {
+    render(<Footer />);
+    expect(screen.getByText(/서로인터네셔널/)).toBeInTheDocument();
+    expect(screen.getByText(/권준현/)).toBeInTheDocument();
+    expect(screen.getByText(/131-72-05631/)).toBeInTheDocument();
+    expect(screen.getByText(/2026-서울강남-01632/)).toBeInTheDocument();
+    expect(screen.getByText(/역삼로 114/)).toBeInTheDocument();
   });
 });
