@@ -68,21 +68,21 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className={`grid grid-cols-2 md:grid-cols-4 gap-8 transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">{t('customerService')}</p>
+            <p className="typo-body font-semibold text-foreground mb-4">{t('customerService')}</p>
             <nav className="flex flex-col gap-2">
               {renderNavLinks(rootItems.slice(0, 4))}
             </nav>
           </div>
 
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">{t('company')}</p>
+            <p className="typo-body font-semibold text-foreground mb-4">{t('company')}</p>
             <nav className="flex flex-col gap-2">
               {renderNavLinks(rootItems.slice(4, 6))}
             </nav>
           </div>
 
           <div>
-            <p className="text-sm font-medium text-foreground mb-4">{t('shop')}</p>
+            <p className="typo-body font-semibold text-foreground mb-4">{t('shop')}</p>
             <nav className="flex flex-col gap-2">
               {renderNavLinks(rootItems.slice(6, 10))}
             </nav>
