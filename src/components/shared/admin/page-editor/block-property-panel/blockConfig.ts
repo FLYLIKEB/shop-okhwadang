@@ -16,6 +16,10 @@ export const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   archive_artist: '장인',
   collection_clay: '흙 컬렉션',
   collection_shape: '형태 컬렉션',
+  color_card_list: '색상 카드 리스트',
+  timeline_list: '타임라인',
+  person_card_list: '인물 카드',
+  image_card_grid: '이미지 카드 그리드',
 };
 
 export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
@@ -47,6 +51,14 @@ export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
     '콜렉션 페이지의 흙 컬렉션 섹션입니다. 실제 항목은 컬렉션 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드합니다.',
   collection_shape:
     '콜렉션 페이지의 형태 컬렉션 섹션입니다. 실제 항목은 컬렉션 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드합니다.',
+  color_card_list:
+    '색상 박스와 텍스트로 구성된 카드 리스트입니다. 2열 교차 또는 3열 그리드 레이아웃을 선택할 수 있습니다.',
+  timeline_list:
+    '수직 타임라인 형태의 단계별 콘텐츠입니다. 제조 과정, 히스토리 등에 적합합니다.',
+  person_card_list:
+    '인물 소개 카드 리스트입니다. 사진과 텍스트가 교차 배치됩니다.',
+  image_card_grid:
+    '이미지 카드를 격자로 배열합니다. 2~4열을 선택할 수 있습니다.',
 };
 
 export const PRODUCT_SORT_OPTIONS: SelectOption[] = [

@@ -2,14 +2,18 @@
 
 import { BLOCK_TYPE_DESCRIPTIONS, BLOCK_TYPE_LABELS } from './block-property-panel/blockConfig';
 import CategoryNavFields from './block-property-panel/blocks/CategoryNavFields';
+import ColorCardListFields from './block-property-panel/blocks/ColorCardListFields';
 import HeroBannerFields from './block-property-panel/blocks/HeroBannerFields';
+import ImageCardGridFields from './block-property-panel/blocks/ImageCardGridFields';
 import JournalPreviewFields from './block-property-panel/blocks/JournalPreviewFields';
+import PersonCardListFields from './block-property-panel/blocks/PersonCardListFields';
 import ProductCarouselFields from './block-property-panel/blocks/ProductCarouselFields';
 import ProductGridFields from './block-property-panel/blocks/ProductGridFields';
 import PromotionBannerFields from './block-property-panel/blocks/PromotionBannerFields';
 import SectionHeadingFields from './block-property-panel/blocks/SectionHeadingFields';
 import SplitContentFields from './block-property-panel/blocks/SplitContentFields';
 import TextContentFields from './block-property-panel/blocks/TextContentFields';
+import TimelineListFields from './block-property-panel/blocks/TimelineListFields';
 import type { DraftBlock } from './SortableBlockItem';
 
 interface BlockPropertyPanelProps {
@@ -55,6 +59,14 @@ export default function BlockPropertyPanel({ block, onUpdateContent }: BlockProp
       case 'collection_clay':
       case 'collection_shape':
         return <SectionHeadingFields content={block.content} onChange={handleChange} />;
+      case 'color_card_list':
+        return <ColorCardListFields content={block.content} onChange={handleChange} />;
+      case 'timeline_list':
+        return <TimelineListFields content={block.content} onChange={handleChange} />;
+      case 'person_card_list':
+        return <PersonCardListFields content={block.content} onChange={handleChange} />;
+      case 'image_card_grid':
+        return <ImageCardGridFields content={block.content} onChange={handleChange} />;
     }
   };
 

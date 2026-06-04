@@ -244,6 +244,34 @@ describe('BlockRenderer', () => {
     expect((await screen.findAllByText(itemText)).length).toBeGreaterThan(0);
   });
 
+
+  it.each([
+    [
+      'color_card_list',
+      { sectionTitle: '색상 카드', layout: 'grid-3', items: [{ id: 'c1', color: '#8b2f21', nameKo: '주니', nameEn: 'Zhuni', description: '<b>설명</b>', href: '/products', hrefLabel: '보기' }] },
+      '주니',
+    ],
+    [
+      'timeline_list',
+      { sectionTitle: '공정', items: [{ id: 't1', step: 1, label: '채토', title: '원토 채굴', description: '<b>채토 설명</b>' }] },
+      '원토 채굴',
+    ],
+    [
+      'person_card_list',
+      { sectionTitle: '장인', items: [{ id: 'p1', imageUrl: '', title: '명인', name: '진위명', story: '<b>이야기</b>' }] },
+      '진위명',
+    ],
+    [
+      'image_card_grid',
+      { sectionTitle: '형태', columns: 4, items: [{ id: 'i1', imageUrl: '', name: '서시', description: '<b>설명</b>' }] },
+      '서시',
+    ],
+  ] as const)('renders generic content-items block type %s', async (type, content, itemText) => {
+    render(<BlockRenderer blocks={[makeBlock({ type, content })]} />);
+
+    expect((await screen.findAllByText(itemText)).length).toBeGreaterThan(0);
+  });
+
   it('renders UnknownBlock for unrecognized type in dev mode', () => {
     const blocks: PageBlock[] = [
       makeBlock({

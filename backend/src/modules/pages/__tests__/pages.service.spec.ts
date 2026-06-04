@@ -205,6 +205,8 @@ describe('PagesService', () => {
       expect(result.title).toBe('수정됨');
     });
 
+
+
     it('존재하지 않는 페이지 → NotFoundException', async () => {
       mockPageRepository.findOne.mockResolvedValue(null);
       await expect(service.update(999, { title: 'x' })).rejects.toThrow(NotFoundException);
@@ -288,6 +290,40 @@ describe('PagesService', () => {
       });
     });
 
+
+
+    it.each([
+      ['color_card_list', { layout: 'alternating', items: [] }],
+      ['timeline_list', { items: [] }],
+      ['person_card_list', { items: [] }],
+      ['image_card_grid', { columns: 3, items: [] }],
+    ])('범용 CMS 블록 타입 %s 생성을 허용한다', async (type, content) => {
+      const dto = { type, content };
+      mockPageRepository.findOne.mockResolvedValue({ id: 1 });
+      mockBlockRepository.create.mockReturnValue({ id: 1, ...dto, page_id: 1 });
+      mockBlockRepository.save.mockResolvedValue({ id: 1, ...dto, page_id: 1 });
+
+      const result = await service.createBlock(1, dto);
+
+      expect(result.type).toBe(type);
+    });
+
+    it('범용 CMS 블록 content.items가 배열이 아니면 생성하지 않는다', async () => {
+      mockPageRepository.findOne.mockResolvedValue({ id: 1 });
+
+      await expect(
+        service.createBlock(1, { type: 'timeline_list', content: { sectionTitle: 'x' } }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('색상 카드 리스트 layout 값이 범위를 벗어나면 생성하지 않는다', async () => {
+      mockPageRepository.findOne.mockResolvedValue({ id: 1 });
+
+      await expect(
+        service.createBlock(1, { type: 'color_card_list', content: { layout: 'masonry', items: [] } }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
     it('존재하지 않는 페이지 → NotFoundException', async () => {
       mockPageRepository.findOne.mockResolvedValue(null);
       await expect(
@@ -311,6 +347,16 @@ describe('PagesService', () => {
 
       const result = await service.updateBlock(1, 1, { content: { title: 'Updated' } });
       expect(result.content).toEqual({ title: 'Updated' });
+    });
+
+
+
+    it('범용 CMS 블록으로 수정할 때 content.items를 검증한다', async () => {
+      mockBlockRepository.findOne.mockResolvedValue({ id: 1, page_id: 1, type: 'timeline_list', content: { items: [] } });
+
+      await expect(
+        service.updateBlock(1, 1, { content: { sectionTitle: 'items 없음' } }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('존재하지 않는 블록 → NotFoundException', async () => {

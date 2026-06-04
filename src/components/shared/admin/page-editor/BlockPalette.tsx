@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft, BookOpen, Mountain, Hammer, Users, Palette, Shapes } from 'lucide-react';
+import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft, BookOpen, Mountain, Hammer, Users, Palette, Shapes, Clock3, Images, Contact } from 'lucide-react';
 import type { PageBlock } from '@/lib/api';
 
 type BlockType = PageBlock['type'];
@@ -106,6 +106,35 @@ const BLOCK_TYPES: BlockTypeCard[] = [
     detail: '콜렉션 페이지에서 type=shape 컬렉션 목록 전체를 렌더링합니다.\n실제 항목은 컬렉션 API에서 불러오며, 섹션 라벨·제목·설명만 오버라이드할 수 있습니다.',
     icon: Shapes,
   },
+
+  {
+    type: 'color_card_list',
+    label: '색상 카드 리스트',
+    description: '색상 카드와 설명 항목',
+    detail: '색상 박스와 텍스트로 구성된 카드 리스트입니다. 2열 교차 또는 3열 그리드 레이아웃을 선택할 수 있습니다.',
+    icon: Palette,
+  },
+  {
+    type: 'timeline_list',
+    label: '타임라인',
+    description: '단계별 콘텐츠 목록',
+    detail: '제조 과정, 히스토리 등 단계별 콘텐츠를 수직 타임라인으로 표시합니다.',
+    icon: Clock3,
+  },
+  {
+    type: 'person_card_list',
+    label: '인물 카드',
+    description: '인물 소개 카드 목록',
+    detail: '인물 사진과 스토리를 교차 레이아웃으로 표시합니다.',
+    icon: Contact,
+  },
+  {
+    type: 'image_card_grid',
+    label: '이미지 카드 그리드',
+    description: '이미지 기반 카드 격자',
+    detail: '이미지 카드를 2~4열 그리드로 표시합니다.',
+    icon: Images,
+  },
 ];
 
 interface BlockPaletteProps {
@@ -137,6 +166,14 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
     case 'collection_clay':
     case 'collection_shape':
       return { sectionLabel: '', sectionTitle: '', sectionDesc: '' };
+    case 'color_card_list':
+      return { sectionLabel: '', sectionTitle: '', sectionDesc: '', layout: 'alternating', items: [] };
+    case 'timeline_list':
+      return { sectionLabel: '', sectionTitle: '', sectionDesc: '', items: [] };
+    case 'person_card_list':
+      return { sectionLabel: '', sectionTitle: '', sectionDesc: '', items: [] };
+    case 'image_card_grid':
+      return { sectionLabel: '', sectionTitle: '', sectionDesc: '', columns: 3, items: [] };
   }
 }
 

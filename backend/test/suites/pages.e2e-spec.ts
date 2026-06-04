@@ -145,8 +145,8 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       });
 
       it.each([
-        ['archive', ['hero_banner', 'archive_nilo', 'archive_process', 'archive_artist', 'promotion_banner']],
-        ['collection', ['hero_banner', 'collection_clay', 'collection_shape', 'promotion_banner']],
+        ['archive', ['hero_banner', 'color_card_list', 'timeline_list', 'person_card_list', 'promotion_banner']],
+        ['collection', ['hero_banner', 'color_card_list', 'image_card_grid', 'promotion_banner']],
       ])('%s CMS 페이지는 locale=ko에서 초기 블록을 순서대로 반환한다', async (slug, types) => {
         const res = await request(app.getHttpServer())
           .get(`/api/pages/${slug}?locale=ko`)
@@ -162,6 +162,10 @@ export function registerPagesSuite(getApp: () => INestApplication) {
           [...body.blocks.map((block) => block.sort_order)].sort((a, b) => a - b),
         );
         expect(body.blocks[0].content.template).toBe('simple');
+        for (const block of body.blocks.slice(1, -1)) {
+          expect(Array.isArray(block.content.items)).toBe(true);
+          expect((block.content.items as unknown[]).length).toBeGreaterThan(0);
+        }
       });
 
       it('존재하지 않는 slug -> 404', () => {
