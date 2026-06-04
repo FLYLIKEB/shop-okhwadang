@@ -290,6 +290,7 @@ export default function AdminProductsPage() {
                 <th className="px-4 py-3 text-left">{t('columns.price')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.status')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.featured')}</th>
+                <th className="px-4 py-3 text-left">{t('columns.freeShipping')}</th>
                 <th className="px-4 py-3 text-right">{t('columns.action')}</th>
               </tr>
             </thead>
@@ -303,6 +304,15 @@ export default function AdminProductsPage() {
                     <ProductStatusBadge status={product.status as ProductStatus} />
                   </td>
                   <td className="px-4 py-3">{product.isFeatured ? '✓' : '-'}</td>
+                  <td className="px-4 py-3">
+                    {product.isFreeShipping ? (
+                      <span className="inline-flex rounded-sm bg-foreground/85 px-2 py-0.5 text-xs text-background">
+                        {t('columns.freeShipping')}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
                       <button

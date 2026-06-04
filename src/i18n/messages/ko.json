@@ -231,7 +231,8 @@
       "soldout": "품절",
       "hidden": "숨김"
     },
-    "lowStock": "{count}개 남음"
+    "lowStock": "{count}개 남음",
+    "badgeFreeShipping": "무료배송"
   },
   "cart": {
     "title": "장바구니",
@@ -542,6 +543,7 @@
         "price": "가격",
         "status": "상태",
         "featured": "추천",
+        "freeShipping": "무료배송",
         "action": "액션"
       },
       "actions": {

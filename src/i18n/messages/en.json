@@ -231,7 +231,8 @@
       "soldout": "Sold Out",
       "hidden": "Hidden"
     },
-    "lowStock": "Only {count} left"
+    "lowStock": "Only {count} left",
+    "badgeFreeShipping": "Free Shipping"
   },
   "cart": {
     "title": "Cart",
@@ -542,6 +543,7 @@
         "price": "Price",
         "status": "Status",
         "featured": "Featured",
+        "freeShipping": "Free Shipping",
         "action": "Action"
       },
       "actions": {

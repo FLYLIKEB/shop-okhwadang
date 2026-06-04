@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
@@ -18,6 +19,7 @@ interface ProductListItemProps {
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   images: ProductImage[];
   isFeatured?: boolean;
+  isFreeShipping?: boolean;
   locale?: Locale;
 }
 
@@ -31,8 +33,10 @@ function ProductListItem({
   reviewCount,
   status,
   images,
+  isFreeShipping = false,
   locale = 'ko',
 }: ProductListItemProps) {
+  const t = useTranslations('product');
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
 
@@ -68,7 +72,14 @@ function ProductListItem({
 
       <div className="flex flex-1 flex-col justify-center gap-1">
         <p className="typo-title-sm line-clamp-1 text-card-foreground">{name}</p>
-        <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
+        <div className="flex items-center gap-2">
+          <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
+          {isFreeShipping && (
+            <span className="tag-clay rounded-sm bg-foreground/85 px-2 py-0.5 text-background">
+              {t('badgeFreeShipping')}
+            </span>
+          )}
+        </div>
         {rating !== undefined && (
           <div className="flex items-center gap-1.5">
             <StarRating rating={rating} size="sm" interactive={false} />

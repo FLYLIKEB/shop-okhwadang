@@ -26,6 +26,7 @@ interface ProductCardProps {
   locale?: Locale;
   priority?: boolean;
   categoryName?: string | null;
+  isFreeShipping?: boolean;
 }
 
 /** 카테고리명 → 니료 태그 CSS 클래스 매핑 */
@@ -64,6 +65,7 @@ function ProductCard({
   locale = 'ko',
   priority = false,
   categoryName,
+  isFreeShipping = false,
 }: ProductCardProps) {
   const t = useTranslations('product');
   const tWishlist = useTranslations('wishlist');
@@ -152,6 +154,12 @@ function ProductCard({
             )}
           />
         </button>
+
+        {isFreeShipping && (
+          <span className="tag-clay absolute bottom-2 right-2 z-10 rounded-sm bg-foreground/85 px-2 py-0.5 text-background backdrop-blur-sm">
+            {t('badgeFreeShipping')}
+          </span>
+        )}
       </div>
 
       {/* ── 정보 영역 — 상품명 > 가격 > 메타 위계 ── */}

@@ -61,6 +61,7 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
               images={product.images}
               locale={locale}
               categoryName={product.category?.name ?? null}
+              isFreeShipping={product.isFreeShipping}
             />
           ))}
         </div>
@@ -79,6 +80,7 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
               status={product.status}
               images={product.images}
               isFeatured={product.isFeatured}
+              isFreeShipping={product.isFreeShipping}
               locale={locale}
             />
           ))}
