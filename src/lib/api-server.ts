@@ -1,7 +1,27 @@
 import { cache } from 'react';
-import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, CollectionsResponse, ArchivesResponse, SiteSetting } from '@/lib/api';
+import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, SiteSetting } from '@/lib/api';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
+
+
+interface CollectionItem {
+  id: number;
+  type: 'clay' | 'shape';
+  name: string;
+  nameKo: string | null;
+  color: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  productUrl: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+interface CollectionsResponse {
+  clay: CollectionItem[];
+  shape: CollectionItem[];
+}
+
 
 async function fetchFromBackend<T>(
   endpoint: string,
@@ -74,9 +94,6 @@ export function fetchCollections(locale?: string) {
   return fetchFromBackend<CollectionsResponse>('/collections', locale ? { locale } : undefined);
 }
 
-export function fetchArchives(locale?: string) {
-  return fetchFromBackend<ArchivesResponse>('/archives', locale ? { locale } : undefined);
-}
 
 export function fetchSettings(group?: string, locale?: string) {
   const params: Record<string, string | undefined> = {};

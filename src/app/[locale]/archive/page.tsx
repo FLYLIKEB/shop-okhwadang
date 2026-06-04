@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
-import { withArchiveBlockPrefetch } from '@/components/shared/blocks/serverPrefetch';
 import { fetchPage } from '@/lib/api-server';
 import type { Page } from '@/lib/api';
 
@@ -31,7 +30,7 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
     );
   }
 
-  const blocks = await withArchiveBlockPrefetch((page as Page).blocks, locale);
+  const blocks = (page as Page).blocks;
 
   return (
     <div className="min-h-screen">

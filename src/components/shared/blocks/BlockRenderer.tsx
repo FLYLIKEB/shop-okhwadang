@@ -12,11 +12,6 @@ import PromotionBannerBlock from './PromotionBannerBlock';
 import TextContentBlock from './TextContentBlock';
 import SplitContentBlock from './SplitContentBlock';
 import JournalPreviewBlock from './JournalPreviewBlock';
-import ArchiveArtistBlock from './ArchiveArtistBlock';
-import ArchiveNiloBlock from './ArchiveNiloBlock';
-import ArchiveProcessBlock from './ArchiveProcessBlock';
-import CollectionClayBlock from './CollectionClayBlock';
-import CollectionShapeBlock from './CollectionShapeBlock';
 import ColorCardListBlock from './ColorCardListBlock';
 import TimelineListBlock from './TimelineListBlock';
 import PersonCardListBlock from './PersonCardListBlock';
@@ -35,11 +30,6 @@ const blockComponentMap: Record<string, BlockComponent> = {
   split_content: SplitContentBlock as unknown as BlockComponent,
   brand_story: SplitContentBlock as unknown as BlockComponent,
   journal_preview: JournalPreviewBlock as unknown as BlockComponent,
-  archive_nilo: ArchiveNiloBlock as unknown as BlockComponent,
-  archive_process: ArchiveProcessBlock as unknown as BlockComponent,
-  archive_artist: ArchiveArtistBlock as unknown as BlockComponent,
-  collection_clay: CollectionClayBlock as unknown as BlockComponent,
-  collection_shape: CollectionShapeBlock as unknown as BlockComponent,
   color_card_list: ColorCardListBlock as unknown as BlockComponent,
   timeline_list: TimelineListBlock as unknown as BlockComponent,
   person_card_list: PersonCardListBlock as unknown as BlockComponent,
