@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { Menu, X, Search, User, LogOut } from 'lucide-react';
+import { Menu, X, Search, User, LogOut, Shield } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,6 +35,7 @@ export default function Header() {
   const menuPanel = useSlidePanel(isMenuOpen);
   const headerRef = useRef<HTMLElement>(null);
   const { isScrolled } = useHeaderScroll(headerRef);
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
   // Global Escape: close menu + search
   useEffect(() => {
@@ -120,6 +121,12 @@ export default function Header() {
                 <button type="button" onClick={() => void logout()} aria-label={t('logout')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                   <LogOut className="h-5 w-5" />
                 </button>
+                {isAdmin && (
+                  <Link href="/admin" aria-label={t('adminPage')} className="ml-2 inline-flex items-center gap-2 rounded-md border border-primary bg-primary px-3 py-2 typo-button text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+                    <Shield className="h-4 w-4" />
+                    {t('adminPage')}
+                  </Link>
+                )}
               </>
             ) : (
               <Link href="/login" aria-label={t('login')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">

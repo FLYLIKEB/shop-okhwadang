@@ -173,6 +173,32 @@ describe('Header', () => {
     expect(mockSetOpen).toHaveBeenCalledWith('menu', false, 'replace');
   });
 
+  it('shows desktop admin button at the right end for admin accounts', () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { id: 1, email: 'admin@test.com', name: 'Admin', role: 'admin' },
+      logout: vi.fn(),
+    });
+
+    render(<Header />);
+
+    const adminLink = screen.getByRole('link', { name: '관리자 페이지' });
+    expect(adminLink).toHaveAttribute('href', '/admin');
+    expect(adminLink.parentElement?.lastElementChild).toBe(adminLink);
+  });
+
+  it('does not show desktop admin button for non-admin authenticated users', () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { id: 2, email: 'user@test.com', name: 'User', role: 'user' },
+      logout: vi.fn(),
+    });
+
+    render(<Header />);
+
+    expect(screen.queryByRole('link', { name: '관리자 페이지' })).not.toBeInTheDocument();
+  });
+
   it('shows admin link under order tracking for admin accounts in mobile menu', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({
