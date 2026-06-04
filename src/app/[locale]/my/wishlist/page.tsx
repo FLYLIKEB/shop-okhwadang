@@ -14,6 +14,50 @@ import { cn } from '@/components/ui/utils';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 
+interface WishlistProductImageProps {
+  thumbnail?: string;
+  name: string;
+  isSoldout: boolean;
+  soldoutLabel: string;
+}
+
+function WishlistProductImage({ thumbnail, name, isSoldout, soldoutLabel }: WishlistProductImageProps) {
+  const [hasImageError, setHasImageError] = useState(false);
+
+  return (
+    <div data-testid="wishlist-product-image-frame" className="relative aspect-square overflow-hidden bg-muted">
+      {thumbnail && !hasImageError ? (
+        <Image
+          src={thumbnail}
+          alt={name}
+          fill
+          sizes="(max-width: 768px) 50vw, 25vw"
+          className="object-cover"
+          loading="lazy"
+          onError={() => setHasImageError(true)}
+        />
+      ) : (
+        <div data-testid="wishlist-product-image-fallback" className="flex h-full w-full items-center justify-center bg-neutral-200">
+          <Image
+            src="/logo-okhwadang.png"
+            alt="옥화당"
+            width={120}
+            height={34}
+            className="object-contain opacity-70 grayscale"
+          />
+        </div>
+      )}
+      {isSoldout && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+          <span className="bg-black/70 px-3 py-1 text-sm font-semibold text-white">
+            {soldoutLabel}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WishlistPage() {
   const t = useTranslations('wishlist');
   const tProduct = useTranslations('product');
@@ -86,31 +130,14 @@ export default function WishlistPage() {
 
             return (
               <li key={item.id} className="flex flex-col overflow-hidden rounded-lg border border-border bg-card">
-                <div className="relative aspect-square overflow-hidden bg-muted">
-                  <Link href={`/products/${item.productId}`} className="block h-full w-full">
-                    {thumbnail ? (
-                      <Image
-                        src={thumbnail}
-                        alt={product?.name ?? ''}
-                        fill
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                        className="object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                        <span className="text-sm">No Image</span>
-                      </div>
-                    )}
-                    {isSoldout && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                        <span className="rounded-md bg-black/70 px-3 py-1 text-sm font-semibold text-white">
-                          {tProduct('soldout')}
-                        </span>
-                      </div>
-                    )}
-                  </Link>
-                </div>
+                <Link href={`/products/${item.productId}`} className="block">
+                  <WishlistProductImage
+                    thumbnail={thumbnail}
+                    name={product?.name ?? ''}
+                    isSoldout={isSoldout}
+                    soldoutLabel={tProduct('soldout')}
+                  />
+                </Link>
 
                 <div className="flex flex-1 flex-col gap-2 p-3">
                   <Link href={`/products/${item.productId}`} className="line-clamp-2 text-sm font-medium hover:underline">

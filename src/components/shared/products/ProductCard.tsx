@@ -77,6 +77,7 @@ function ProductCard({
   const { addItem } = useCart();
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
   const [isCartLoading, setIsCartLoading] = useState(false);
+  const [hasImageError, setHasImageError] = useState(false);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -97,8 +98,8 @@ function ProductCard({
       )}
     >
       {/* ── 이미지 영역 — 오버레이 액션은 hover 시에만 노출 ── */}
-      <div className="relative aspect-square overflow-hidden bg-secondary rounded-md">
-        {thumbnail ? (
+      <div data-testid="product-card-image-frame" className="relative aspect-square overflow-hidden bg-secondary">
+        {thumbnail && !hasImageError ? (
           <Image
             src={thumbnail}
             alt={name}
@@ -106,10 +107,17 @@ function ProductCard({
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             priority={priority}
+            onError={() => setHasImageError(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <span className="data-label">No Image</span>
+          <div data-testid="product-card-image-fallback" className="flex h-full w-full items-center justify-center bg-neutral-200">
+            <Image
+              src="/logo-okhwadang.png"
+              alt="옥화당"
+              width={120}
+              height={34}
+              className="object-contain opacity-70 grayscale"
+            />
           </div>
         )}
 
@@ -122,7 +130,7 @@ function ProductCard({
         {categoryName && (
           <span
             className={cn(
-              'absolute left-2 bottom-2 z-10 px-2 py-0.5 rounded-sm tag-clay',
+              'absolute left-2 bottom-2 z-10 px-2 py-0.5 tag-clay',
               clayTagClass ?? 'tag-generic',
             )}
           >
@@ -156,7 +164,7 @@ function ProductCard({
         </button>
 
         {isFreeShipping && (
-          <span className="tag-clay absolute bottom-2 right-2 z-10 rounded-sm bg-foreground/85 px-2 py-0.5 text-background backdrop-blur-sm">
+          <span className="tag-clay absolute bottom-2 right-2 z-10 bg-foreground/85 px-2 py-0.5 text-background backdrop-blur-sm">
             {t('badgeFreeShipping')}
           </span>
         )}

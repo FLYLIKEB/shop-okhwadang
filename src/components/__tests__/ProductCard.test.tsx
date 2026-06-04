@@ -110,9 +110,9 @@ describe('ProductCard', () => {
     expect(screen.getByText('SOLD OUT')).toBeInTheDocument();
   });
 
-  it('renders without crashing when images are empty', () => {
+  it('renders the Okhwadang logo fallback when images are empty', () => {
     render(<ProductCard {...baseProps} images={[]} />);
-    expect(screen.getByText('No Image')).toBeInTheDocument();
+    expect(screen.getByAltText('옥화당')).toHaveAttribute('src', '/logo-okhwadang.png');
   });
 
   it('links to the product detail page', () => {
