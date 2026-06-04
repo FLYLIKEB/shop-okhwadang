@@ -8,6 +8,7 @@ import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
+import { getHeaderNavigationLabel } from './navigationLabel';
 import type { NavigationItem } from '@/lib/api';
 
 interface MobileMenuProps {
@@ -65,7 +66,7 @@ function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: Mobi
             </svg>
           </button>
           <span className="typo-body-sm font-medium ml-3">
-            {currentTitle}
+            {getHeaderNavigationLabel(currentTitle)}
           </span>
         </div>
       )}
@@ -94,7 +95,7 @@ function MobileMenuContent({ items, history, onItemClick, onLinkClick }: MobileM
                 onClick={() => onItemClick(item)}
                 className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
               >
-                {item.label}
+                {getHeaderNavigationLabel(item.label)}
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
                   <path d="M6 4l4 4-4 4" />
                 </svg>
@@ -105,7 +106,7 @@ function MobileMenuContent({ items, history, onItemClick, onLinkClick }: MobileM
                 onClick={onLinkClick}
                 className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
               >
-                {item.label}
+                {getHeaderNavigationLabel(item.label)}
               </Link>
             )}
           </div>
@@ -224,7 +225,7 @@ export function MobileMenu({ isAuthenticated, userName, userRole, navItems, side
 
   const handleItemClick = (item: NavigationItem) => {
     if (item.children && item.children.length > 0) {
-      setHistory(h => [...h, { title: item.label, items: item.children }]);
+      setHistory(h => [...h, { title: getHeaderNavigationLabel(item.label), items: item.children }]);
     } else {
       handleNavigateClose();
     }
