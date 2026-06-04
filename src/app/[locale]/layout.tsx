@@ -113,19 +113,12 @@ export default async function LocaleLayout({
               <Footer />
               <MobileBottomNavWrapper visible={mobileBottomNavVisible} />
               <Toaster
-                position="top-right"
-                richColors
+                position="top-center"
                 closeButton
                 toastOptions={{
                   style: {
                     fontFamily: 'var(--font-body)',
                     borderRadius: 'var(--radius-md)',
-                  },
-                  classNames: {
-                    toast: 'bg-card border-border shadow-md',
-                    success: 'border-l-4 border-l-[--color-tea]',
-                    error: 'border-l-4 border-l-destructive',
-                    info: 'border-l-4 border-l-[--color-primary]',
                   },
                 }}
               />

@@ -530,15 +530,17 @@ h3 {
 
 [data-sonner-toast] {
   border-radius: var(--radius-md) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.06) !important;
   border: 1px solid var(--color-border) !important;
   background-color: var(--color-card) !important;
-  padding: 12px 16px !important;
+  padding: 14px 18px !important;
+  color: var(--color-foreground) !important;
 }
 
 [data-sonner-toast] [data-sonner-toast-title] {
   font-family: var(--font-body) !important;
   font-weight: 500;
+  font-size: 0.9375rem;
   color: var(--color-foreground) !important;
 }
 
@@ -548,20 +550,30 @@ h3 {
   color: var(--color-muted-foreground) !important;
 }
 
+/* Neutral accent stripe — muted, not vivid */
 [data-sonner-toast][data-type="success"] {
-  border-left: 4px solid var(--color-tea) !important;
+  border-left: 3px solid var(--color-tea) !important;
+  background-color: var(--color-card) !important;
 }
 
 [data-sonner-toast][data-type="error"] {
-  border-left: 4px solid var(--color-destructive) !important;
+  border-left: 3px solid var(--color-destructive) !important;
+  background-color: var(--color-card) !important;
 }
 
 [data-sonner-toast][data-type="info"] {
-  border-left: 4px solid var(--color-primary) !important;
+  border-left: 3px solid var(--color-primary) !important;
+  background-color: var(--color-card) !important;
 }
 
 [data-sonner-toast][data-type="warning"] {
-  border-left: 4px solid var(--color-danni) !important;
+  border-left: 3px solid var(--color-danni) !important;
+  background-color: var(--color-card) !important;
+}
+
+/* Smooth transition for sonner's built-in --y transform */
+[data-sonner-toast] {
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease !important;
 }
 
 /* ── Accordion animations ──────────────────────────────────────────── */
