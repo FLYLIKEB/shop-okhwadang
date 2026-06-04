@@ -4,6 +4,7 @@ import { handleApiError } from '@/utils/error';
 import { adminPagesApi } from '@/lib/api';
 import type { Page, PageBlock } from '@/lib/api';
 import type { DraftState, DraftAction } from '@/components/shared/admin/page-editor/useDraftReducer';
+import { toastMessage } from '@/utils/toastMessages';
 
 interface UsePageEditorOptions {
   draft: DraftState;
@@ -44,7 +45,7 @@ export function usePageEditor({
         setSelectedBlockId(null);
         dispatch({ type: 'INIT', blocks: fullPage.blocks, title: fullPage.title, slug: fullPage.slug });
       } catch {
-        toast.error('페이지를 불러오지 못했습니다.');
+        toast.error(toastMessage('pageLoadError'));
       }
     },
     [draft.hasChanges, dispatch, setSelectedPage, setSelectedBlockId],
@@ -53,12 +54,12 @@ export function usePageEditor({
   const handleCreatePage = async (title: string, slug: string) => {
     try {
       const newPage = await adminPagesApi.create({ title, slug });
-      toast.success('페이지가 생성되었습니다.');
+      toast.success(toastMessage('pageCreated'));
       await loadPages();
       setSelectedPage(newPage);
       dispatch({ type: 'INIT', blocks: [], title: newPage.title, slug: newPage.slug });
     } catch (err) {
-      toast.error(handleApiError(err, '생성에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('createError')));
     }
   };
 
@@ -68,13 +69,13 @@ export function usePageEditor({
     if (!confirmed) return;
     try {
       await adminPagesApi.remove(selectedPage.id);
-      toast.success('페이지가 삭제되었습니다.');
+      toast.success(toastMessage('pageDeleted'));
       setSelectedPage(null);
       setSelectedBlockId(null);
       dispatch({ type: 'INIT', blocks: [], title: '', slug: '' });
       await loadPages();
     } catch (err) {
-      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('deleteError')));
     }
   };
 
@@ -92,9 +93,9 @@ export function usePageEditor({
       setSelectedPage(fullPage);
       dispatch({ type: 'INIT', blocks: fullPage.blocks, title: fullPage.title, slug: fullPage.slug });
       await loadPages();
-      toast.success(fullPage.is_published ? '페이지가 공개되었습니다.' : '페이지가 비공개로 전환되었습니다.');
+      toast.success(toastMessage(fullPage.is_published ? 'pagePublished' : 'pageUnpublished'));
     } catch (err) {
-      toast.error(handleApiError(err, '상태 변경에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('statusChangeError')));
     }
   };
 
@@ -146,7 +147,7 @@ export function usePageEditor({
         } as Partial<Page>);
       }
 
-      toast.success('저장되었습니다.');
+      toast.success(toastMessage('saved'));
 
       // Reload the page data via admin API so private pages and hidden blocks remain editable.
       const reloaded = await adminPagesApi.getById(selectedPage.id);
@@ -154,7 +155,7 @@ export function usePageEditor({
       dispatch({ type: 'INIT', blocks: reloaded.blocks, title: reloaded.title, slug: reloaded.slug });
       await loadPages();
     } catch (err) {
-      toast.error(handleApiError(err, '저장에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('saveError')));
     } finally {
       setSaving(false);
     }

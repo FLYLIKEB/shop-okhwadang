@@ -30,6 +30,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { toastMessage } from '@/utils/toastMessages';
 
 const TYPE_LABELS: Record<CollectionType, string> = {
   [CollectionType.CLAY]: '니료',
@@ -355,10 +356,10 @@ export default function AdminCollectionsPage() {
   const handleSubmit = async (data: CreateCollectionData) => {
     if (editTarget) {
       await adminCollectionsApi.update(editTarget.id, data);
-      toast.success('컬렉션이 수정되었습니다.');
+      toast.success(toastMessage('collectionUpdated'));
     } else {
       await adminCollectionsApi.create(data);
-      toast.success('컬렉션이 추가되었습니다.');
+      toast.success(toastMessage('collectionCreated'));
     }
     await loadCollections();
   };

@@ -22,6 +22,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { toastMessage } from '@/utils/toastMessages';
 
 interface FlattenedCategory extends AdminCategory {
   depth: number;
@@ -89,10 +90,10 @@ export default function AdminCategoriesPage() {
   const handleSubmit = async (data: CreateCategoryData) => {
     if (editTarget) {
       await adminCategoriesApi.update(editTarget.id, data);
-      toast.success('카테고리가 수정되었습니다.');
+      toast.success(toastMessage('categoryUpdated'));
     } else {
       await adminCategoriesApi.create(data);
-      toast.success('카테고리가 추가되었습니다.');
+      toast.success(toastMessage('categoryCreated'));
     }
     await loadCategories();
   };
@@ -187,7 +188,7 @@ export default function AdminCategoriesPage() {
 
       if (!activeCategory || !overCategory) return;
       if (activeCategory.parentId !== overCategory.parentId) {
-        toast.error('같은 레벨에서만 순서를 변경할 수 있습니다.');
+        toast.error(toastMessage('sameLevelReorderOnly'));
         return;
       }
       if (activeId === overId) return;

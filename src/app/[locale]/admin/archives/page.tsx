@@ -37,6 +37,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { toastMessage } from '@/utils/toastMessages';
 
 type Tab = 'nilo' | 'process' | 'artist';
 
@@ -404,10 +405,10 @@ export default function AdminArchivesPage() {
   const handleNiloSubmit = async (data: CreateNiloTypeData) => {
     if (editNilo) {
       await adminArchivesApi.updateNiloType(editNilo.id, data);
-      toast.success('니로타입이 수정되었습니다.');
+      toast.success(toastMessage('clayTypeUpdated'));
     } else {
       await adminArchivesApi.createNiloType(data);
-      toast.success('니로타입이 추가되었습니다.');
+      toast.success(toastMessage('clayTypeCreated'));
     }
     await loadData();
   };
@@ -415,10 +416,10 @@ export default function AdminArchivesPage() {
   const handleProcessSubmit = async (data: CreateProcessStepData) => {
     if (editProcess) {
       await adminArchivesApi.updateProcessStep(editProcess.id, data);
-      toast.success('공정이 수정되었습니다.');
+      toast.success(toastMessage('processUpdated'));
     } else {
       await adminArchivesApi.createProcessStep(data);
-      toast.success('공정이 추가되었습니다.');
+      toast.success(toastMessage('processCreated'));
     }
     await loadData();
   };
@@ -426,10 +427,10 @@ export default function AdminArchivesPage() {
   const handleArtistSubmit = async (data: CreateArtistData) => {
     if (editArtist) {
       await adminArchivesApi.updateArtist(editArtist.id, data);
-      toast.success('아티스트가 수정되었습니다.');
+      toast.success(toastMessage('artistUpdated'));
     } else {
       await adminArchivesApi.createArtist(data);
-      toast.success('아티스트가 추가되었습니다.');
+      toast.success(toastMessage('artistCreated'));
     }
     await loadData();
   };

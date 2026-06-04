@@ -12,6 +12,7 @@ import Modal from '@/components/ui/Modal';
 import FormInput from '@/components/ui/FormInput';
 import { adminAnnouncementBarsApi, type AnnouncementBarItem, type CreateAnnouncementBarData } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { toastMessage } from '@/utils/toastMessages';
 
 const FORM_DEFAULTS: CreateAnnouncementBarData = {
   message: '',
@@ -77,7 +78,7 @@ export default function AdminAnnouncementBarsPage() {
 
   const handleSave = async () => {
     if (!formData.message?.trim()) {
-      toast.error('국문 메시지를 입력해주세요.');
+      toast.error(toastMessage('announcementMessageKoRequired'));
       return;
     }
 
@@ -93,16 +94,16 @@ export default function AdminAnnouncementBarsPage() {
       if (editingId == null) {
         const created = await adminAnnouncementBarsApi.create(payload);
         setItems((prev) => [...prev, created].sort((a, b) => a.sort_order - b.sort_order));
-        toast.success('안내 바가 생성되었습니다.');
+        toast.success(toastMessage('announcementCreated'));
       } else {
         const updated = await adminAnnouncementBarsApi.update(editingId, payload);
         setItems((prev) => prev.map((item) => (item.id === editingId ? updated : item)).sort((a, b) => a.sort_order - b.sort_order));
-        toast.success('안내 바가 수정되었습니다.');
+        toast.success(toastMessage('announcementUpdated'));
       }
 
       closeModal();
     } catch (error) {
-      toast.error(handleApiError(error, '안내 바 저장에 실패했습니다.'));
+      toast.error(handleApiError(error, toastMessage('announcementSaveError')));
     }
   };
 
@@ -112,9 +113,9 @@ export default function AdminAnnouncementBarsPage() {
     try {
       await adminAnnouncementBarsApi.remove(id);
       setItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success('안내 바가 삭제되었습니다.');
+      toast.success(toastMessage('announcementDeleted'));
     } catch (error) {
-      toast.error(handleApiError(error, '안내 바 삭제에 실패했습니다.'));
+      toast.error(handleApiError(error, toastMessage('announcementDeleteError')));
     }
   };
 
@@ -130,7 +131,7 @@ export default function AdminAnnouncementBarsPage() {
         })),
       );
     } catch (error) {
-      toast.error(handleApiError(error, '순서 변경에 실패했습니다.'));
+      toast.error(handleApiError(error, toastMessage('sortError')));
     }
   };
 
@@ -153,9 +154,9 @@ export default function AdminAnnouncementBarsPage() {
     try {
       const updated = await adminAnnouncementBarsApi.update(item.id, { is_active: !item.is_active });
       setItems((prev) => prev.map((prevItem) => (prevItem.id === item.id ? updated : prevItem)));
-      toast.success(`안내 바가 ${updated.is_active ? '활성화' : '비활성화'}되었습니다.`);
+      toast.success(toastMessage('announcementStatusChanged', { status: toastMessage(updated.is_active ? 'active' : 'inactive') }));
     } catch (error) {
-      toast.error(handleApiError(error, '상태 변경에 실패했습니다.'));
+      toast.error(handleApiError(error, toastMessage('statusChangeError')));
     }
   };
 

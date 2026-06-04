@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { AuthTokenResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { SESSION_KEYS } from '@/constants/storage';
+import { toastMessage } from '@/utils/toastMessages';
 
 interface OAuthCallbackHandlerProps {
   provider: 'kakao' | 'google';
@@ -22,13 +23,13 @@ export default function OAuthCallbackHandler({ provider, apiMethod }: OAuthCallb
     const storedState = sessionStorage.getItem(SESSION_KEYS.OAUTH_STATE);
 
     if (!code) {
-      toast.error('인증 코드가 없습니다.');
+      toast.error(toastMessage('oauthMissingCode'));
       router.replace('/login');
       return;
     }
 
     if (!state || !storedState || state !== storedState) {
-      toast.error('보안 검증에 실패했습니다. 다시 시도해 주세요.');
+      toast.error(toastMessage('oauthStateFailed'));
       router.replace('/login');
       return;
     }
@@ -37,11 +38,11 @@ export default function OAuthCallbackHandler({ provider, apiMethod }: OAuthCallb
 
     apiMethod(code, state)
       .then(() => {
-        toast.success(`${provider} 로그인되었습니다.`);
+        toast.success(toastMessage('oauthLoginSuccess', { provider }));
         window.location.href = '/';
       })
       .catch((err: unknown) => {
-        toast.error(handleApiError(err, `${provider} 로그인에 실패했습니다.`));
+        toast.error(handleApiError(err, toastMessage('oauthLoginError', { provider })));
         router.replace('/login');
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps

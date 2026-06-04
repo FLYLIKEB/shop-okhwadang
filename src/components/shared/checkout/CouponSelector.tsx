@@ -8,6 +8,7 @@ import { formatCurrency } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
+import { toastMessage } from '@/utils/toastMessages';
 
 interface CouponSelectorProps {
   orderAmount: number;
@@ -46,7 +47,7 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
       const result = await couponsApi.calculate({ orderAmount, userCouponId });
       onDiscountChange(result, userCouponId);
     } catch (err) {
-      toast.error(handleApiError(err, '쿠폰 할인 계산에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('couponDiscountError')));
       onDiscountChange(null, undefined);
       setSelectedId('');
     } finally {

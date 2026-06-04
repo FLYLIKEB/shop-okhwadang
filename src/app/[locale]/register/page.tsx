@@ -1,9 +1,17 @@
 import type { Metadata } from 'next';
 import RegisterForm from '@/components/shared/auth/RegisterForm';
 
-export const metadata: Metadata = {
-  title: '회원가입',
-};
+interface RegisterPageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({ params }: RegisterPageProps): Promise<Metadata> {
+  const { locale } = await params;
+
+  return {
+    title: locale === 'en' ? 'Sign up' : '회원가입',
+  };
+}
 
 export default function RegisterPage() {
   return (

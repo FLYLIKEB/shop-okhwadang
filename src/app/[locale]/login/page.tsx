@@ -2,9 +2,17 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import LoginForm from '@/components/shared/auth/LoginForm';
 
-export const metadata: Metadata = {
-  title: '로그인',
-};
+interface LoginPageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({ params }: LoginPageProps): Promise<Metadata> {
+  const { locale } = await params;
+
+  return {
+    title: locale === 'en' ? 'Login' : '로그인',
+  };
+}
 
 export default function LoginPage() {
   return (

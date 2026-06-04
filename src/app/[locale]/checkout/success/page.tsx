@@ -9,11 +9,14 @@ import { useCart } from '@/contexts/CartContext';
 import { paymentsApi } from '@/lib/api';
 import type { Locale } from '@/i18n/routing';
 import { SESSION_KEYS } from '@/constants/storage';
+import { toastMessage } from '@/utils/toastMessages';
+import { useTranslations } from 'next-intl';
 
 function CheckoutSuccessContent({ locale }: { locale: Locale }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refetch } = useCart();
+  const t = useTranslations('checkoutResult');
   const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
@@ -31,20 +34,20 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
         : SESSION_KEYS.TOSS_CONTEXT;
 
     if (isNaverPayReturn && naverPayResultCode !== 'Success') {
-      toast.error(searchParams.get('resultMessage') ?? '결제 정보가 올바르지 않습니다.');
+      toast.error(searchParams.get('resultMessage') ?? toastMessage('paymentInvalidInfo'));
       router.replace(`/${locale}/cart`);
       return;
     }
 
     if (!paymentKey || (!paypalToken && !isNaverPayReturn && (!tossOrderId || !amountParam))) {
-      toast.error('결제 정보가 올바르지 않습니다.');
+      toast.error(toastMessage('paymentInvalidInfo'));
       router.replace(`/${locale}/cart`);
       return;
     }
 
     const raw = sessionStorage.getItem(contextKey);
     if (!raw) {
-      toast.error('결제 컨텍스트를 찾을 수 없습니다.');
+      toast.error(toastMessage('paymentContextMissing'));
       router.replace(`/${locale}/cart`);
       return;
     }
@@ -58,7 +61,7 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
     if (!paypalToken && !isNaverPayReturn) {
       const amount = Number(amountParam);
       if (amount !== ctx.amount) {
-        toast.error('결제 금액이 일치하지 않습니다.');
+        toast.error(toastMessage('paymentAmountMismatch'));
         router.replace(`/${locale}/cart`);
         return;
       }
@@ -67,7 +70,7 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
     paymentsApi
       .confirm({ orderId: ctx.orderId, paymentKey, amount: ctx.amount })
       .then(async () => {
-        toast.success('결제가 완료되었습니다.');
+        toast.success(toastMessage('paymentComplete'));
         sessionStorage.removeItem(SESSION_KEYS.CHECKOUT_ITEMS);
         sessionStorage.removeItem(SESSION_KEYS.TOSS_CONTEXT);
         sessionStorage.removeItem(SESSION_KEYS.PAYPAL_CONTEXT);
@@ -78,7 +81,7 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
         );
       })
       .catch((err: unknown) => {
-        toast.error(handleApiError(err, '결제 확인 중 오류가 발생했습니다.'));
+        toast.error(handleApiError(err, toastMessage('paymentConfirmError')));
         setProcessing(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,15 +90,15 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
   if (!processing) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-4 text-xl font-bold text-destructive">결제 확인 실패</h1>
+        <h1 className="mb-4 text-xl font-bold text-destructive">{t('confirmFailedTitle')}</h1>
         <p className="mb-6 text-sm text-muted-foreground">
-          결제 확인 중 문제가 발생했습니다. 고객센터에 문의해주세요.
+          {t('confirmFailedDescription')}
         </p>
         <button
           onClick={() => router.replace(`/${locale}/cart`)}
           className="rounded-md bg-foreground px-6 py-2 text-sm font-semibold text-background hover:opacity-90 transition-opacity"
         >
-          장바구니로 돌아가기
+          {t('backToCart')}
         </button>
       </div>
     );
@@ -103,8 +106,8 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-16 text-center">
-      <h1 className="mb-4 text-xl font-bold">결제 처리 중...</h1>
-      <p className="text-sm text-muted-foreground">잠시만 기다려주세요.</p>
+      <h1 className="mb-4 text-xl font-bold">{t('processingTitle')}</h1>
+      <p className="text-sm text-muted-foreground">{t('processingDescription')}</p>
     </div>
   );
 }
@@ -120,8 +123,12 @@ export default function CheckoutSuccessPage({
     <Suspense
       fallback={
         <div className="mx-auto max-w-lg px-4 py-16 text-center">
-          <h1 className="mb-4 text-xl font-bold">결제 처리 중...</h1>
-          <p className="text-sm text-muted-foreground">잠시만 기다려주세요.</p>
+          <h1 className="mb-4 text-xl font-bold">
+            {locale === 'en' ? 'Processing payment...' : '결제 처리 중...'}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {locale === 'en' ? 'Please wait a moment.' : '잠시만 기다려주세요.'}
+          </p>
         </div>
       }
     >

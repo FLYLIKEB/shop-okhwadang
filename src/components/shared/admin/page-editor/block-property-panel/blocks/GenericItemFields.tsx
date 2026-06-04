@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { apiClient, type UploadedFile } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { NumberField, SelectField, StringField } from '../FormFields';
+import { toastMessage } from '@/utils/toastMessages';
 
 export interface EditableItem {
   id: string;
@@ -138,7 +139,7 @@ export function ImageUploadField({
     try {
       const uploaded = await apiClient.uploadFile<UploadedFile>('/upload/image', file);
       onChange(uploaded.url);
-      toast.success('이미지를 업로드했습니다');
+      toast.success(toastMessage('blockImageUploaded'));
     } catch (error) {
       toast.error(handleApiError(error));
     } finally {

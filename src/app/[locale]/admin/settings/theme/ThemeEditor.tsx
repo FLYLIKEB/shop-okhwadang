@@ -8,6 +8,7 @@ import { handleApiError } from '@/utils/error';
 import type { SiteSetting } from '@/lib/api';
 import { useUnsavedChanges } from '@/components/shared/hooks/useUnsavedChanges';
 import { cn } from '@/components/ui/utils';
+import { toastMessage } from '@/utils/toastMessages';
 
 const TABS = [
   { id: 'color',       label: '라이트 색상' },
@@ -260,10 +261,10 @@ export default function ThemeEditor({ initialSettings }: Props) {
       );
       setPendingChanges({});
       setPendingEnChanges({});
-      toast.success('테마 설정이 저장되었습니다.');
+      toast.success(toastMessage('themeSaved'));
       router.refresh();
     } catch (err) {
-      toast.error(handleApiError(err, '저장에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('saveError')));
     } finally {
       setSaving(false);
     }
@@ -287,10 +288,10 @@ export default function ThemeEditor({ initialSettings }: Props) {
           s.defaultValue,
         );
       });
-      toast.success('기본값으로 초기화되었습니다.');
+      toast.success(toastMessage('themeReset'));
       router.refresh();
     } catch (err) {
-      toast.error(handleApiError(err, '초기화에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('resetError')));
     } finally {
       setResetting(false);
     }

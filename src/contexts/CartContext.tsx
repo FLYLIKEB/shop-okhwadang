@@ -15,6 +15,7 @@ import { useLocale } from 'next-intl';
 import { cartApi, CartItem, CartResponse } from '@/lib/api';
 import { useAuth } from './AuthContext';
 import { handleApiError } from '@/utils/error';
+import { toastMessage } from '@/utils/toastMessages';
 
 const GUEST_CART_KEY = 'guest_cart';
 
@@ -187,7 +188,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         await cartApi.updateQuantity(id, { quantity });
       } catch (err) {
-        toast.error(handleApiError(err, '수량 변경에 실패했습니다.'));
+        toast.error(handleApiError(err, toastMessage('cartQuantityUpdateError')));
         await fetchCart();
       }
     },
@@ -202,7 +203,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         guestItems.splice(index, 1);
         saveGuestCart(guestItems);
         setCartData(guestCartToCartResponse(guestItems));
-        toast.success('삭제되었습니다.');
+        toast.success(toastMessage('deleted'));
         return;
       }
       await cartApi.remove(id);
@@ -212,7 +213,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
         return { items, totalAmount, itemCount };
       });
-      toast.success('삭제되었습니다.');
+      toast.success(toastMessage('deleted'));
     },
     [isAuthenticated],
   );

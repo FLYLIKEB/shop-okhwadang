@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminOrdersApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { toastMessage } from '@/utils/toastMessages';
 
 interface ShippingModalProps {
   orderId: number;
@@ -28,7 +29,7 @@ export function ShippingModal({ orderId, orderNumber, onClose, onSuccess }: Ship
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!trackingNumber.trim()) {
-      toast.error('운송장 번호를 입력해주세요.');
+      toast.error(toastMessage('trackingNumberRequired'));
       return;
     }
 
@@ -38,10 +39,10 @@ export function ShippingModal({ orderId, orderNumber, onClose, onSuccess }: Ship
         carrier,
         trackingNumber: trackingNumber.trim(),
       });
-      toast.success('운송장이 등록되었습니다.');
+      toast.success(toastMessage('trackingRegistered'));
       onSuccess();
     } catch (err) {
-      toast.error(handleApiError(err, '운송장 등록에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('trackingRegisterError')));
     } finally {
       setSubmitting(false);
     }

@@ -14,6 +14,7 @@ import Modal from '@/components/ui/Modal';
 import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { JournalStatusBadge } from '@/components/shared/admin/StatusBadge';
 import ProductImageUploader from '@/components/shared/admin/ProductImageUploader';
+import { toastMessage } from '@/utils/toastMessages';
 
 const CATEGORY_LABELS: Record<JournalCategory, string> = {
   [JournalCategory.CULTURE]: '다문화',
@@ -346,10 +347,10 @@ export default function AdminJournalPage() {
   const handleSubmit = async (data: CreateJournalData) => {
     if (editTarget) {
       await adminJournalsApi.update(editTarget.id, data);
-      toast.success('저널이 수정되었습니다.');
+      toast.success(toastMessage('journalUpdated'));
     } else {
       await adminJournalsApi.create(data);
-      toast.success('저널이 추가되었습니다.');
+      toast.success(toastMessage('journalCreated'));
     }
     await loadJournals();
   };
@@ -370,7 +371,7 @@ export default function AdminJournalPage() {
   const { execute: togglePublish } = useAsyncAction(
     async (journal: Journal) => {
       await adminJournalsApi.update(journal.id, { isPublished: !journal.isPublished });
-      toast.success(journal.isPublished ? '비공개로 변경되었습니다.' : '공개로 변경되었습니다.');
+      toast.success(toastMessage(journal.isPublished ? 'publishOff' : 'publishOn'));
       await loadJournals();
     },
     { errorMessage: '상태 변경에 실패했습니다.' },

@@ -6,15 +6,15 @@ import { fetchPage } from '@/lib/api-server';
 export const revalidate = 60;
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const page = await fetchPage(slug);
-  if (!page) return { title: '페이지를 찾을 수 없습니다' };
+  if (!page) return { title: locale === 'en' ? 'Page not found' : '페이지를 찾을 수 없습니다' };
   return {
-    title: `${page.title} | 옥화당`,
+    title: `${page.title} | ${locale === 'en' ? 'Okhwadang' : '옥화당'}`,
   };
 }
 

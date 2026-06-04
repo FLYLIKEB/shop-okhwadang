@@ -17,6 +17,7 @@ import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { StatusBadge } from '@/components/shared/admin/StatusBadge';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
+import { toastMessage } from '@/utils/toastMessages';
 
 const FAQ_CATEGORIES = ['배송', '결제', '교환/반품', '회원', '기타'] as const;
 
@@ -95,7 +96,7 @@ export default function AdminFaqsPage() {
 
   const handleSave = async () => {
     if (!formData.question.trim() || !formData.answer.trim()) {
-      toast.error('질문과 답변을 입력해주세요.');
+      toast.error(toastMessage('faqQuestionAnswerRequired'));
       return;
     }
 
@@ -103,15 +104,15 @@ export default function AdminFaqsPage() {
       if (editingId) {
         const updated = await adminFaqsApi.update(editingId, formData);
         setFaqs((prev) => prev.map((faq) => (faq.id === editingId ? updated : faq)));
-        toast.success('FAQ가 수정되었습니다.');
+        toast.success(toastMessage('faqUpdated'));
       } else {
         const created = await adminFaqsApi.create(formData);
         setFaqs((prev) => [...prev, created]);
-        toast.success('FAQ가 생성되었습니다.');
+        toast.success(toastMessage('faqCreated'));
       }
       close();
     } catch (err) {
-      toast.error(handleApiError(err, 'FAQ 저장에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('faqSaveError')));
     }
   };
 
@@ -121,9 +122,9 @@ export default function AdminFaqsPage() {
     try {
       await adminFaqsApi.remove(id);
       setFaqs((prev) => prev.filter((faq) => faq.id !== id));
-      toast.success('FAQ가 삭제되었습니다.');
+      toast.success(toastMessage('faqDeleted'));
     } catch (err) {
-      toast.error(handleApiError(err, 'FAQ 삭제에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('faqDeleteError')));
     }
   };
 
