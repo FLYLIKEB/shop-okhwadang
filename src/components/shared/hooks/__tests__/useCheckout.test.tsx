@@ -290,9 +290,10 @@ describe('useCheckout - Mock 결제 흐름', () => {
 describe('useCheckout - PayPal 결제 흐름', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
-  it('selectedGateway=paypal 이면 prepare 요청에 gateway를 포함하고 redirect 대기 상태로 전환', async () => {
+  it('selectedGateway=paypal 이면 prepare 요청에 gateway를 포함하고 첫 submit에서 redirect confirm을 예약', async () => {
     const prepareResult: PreparePaymentResponse = {
       paymentId: 2,
       orderId: mockOrder.id,
@@ -306,7 +307,13 @@ describe('useCheckout - PayPal 결제 흐름', () => {
     mockOrdersCreate.mockResolvedValue(mockOrder);
     mockPaymentsPrepare.mockResolvedValue(prepareResult);
 
-    const { options } = makeOptions({ locale: 'en', selectedGateway: 'paypal' });
+    vi.useFakeTimers();
+    const confirmSpy = vi.fn().mockResolvedValue(undefined);
+    const { options } = makeOptions({
+      locale: 'en',
+      selectedGateway: 'paypal',
+      paymentRef: { current: { confirm: confirmSpy } },
+    });
     const { result } = renderHook(() => useCheckout(options));
 
     await act(async () => {
@@ -319,7 +326,14 @@ describe('useCheckout - PayPal 결제 흐름', () => {
       gateway: 'paypal',
     });
     expect(options.setPrepareResult).toHaveBeenCalledWith(prepareResult);
-    expect(options.setStep).toHaveBeenCalledWith('idle');
+    expect(options.setStep).toHaveBeenCalledWith('confirming_payment');
+    expect(confirmSpy).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
     expect(mockPaymentsConfirm).not.toHaveBeenCalled();
   });
 

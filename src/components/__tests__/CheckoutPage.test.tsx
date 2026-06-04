@@ -1,12 +1,13 @@
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Suspense } from 'react';
+import { forwardRef, Suspense, useImperativeHandle } from 'react';
 import CheckoutPage from '@/app/[locale]/checkout/page';
 import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
 import type { CartItem, UserAddress } from '@/lib/api';
 
 const makeParams = () => Promise.resolve({ locale: 'ko' as const });
+const mockPaymentGatewayConfirm = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => {
@@ -65,7 +66,7 @@ vi.mock('next/navigation', () => ({
 
 // ---- sonner ----
 vi.mock('sonner', () => ({
-  toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn(), info: vi.fn() },
 }));
 
 // ---- contexts ----
@@ -96,7 +97,10 @@ vi.mock('@/i18n/routing', () => ({
 
 // ---- PaymentGateway ----
 vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
-  default: () => <div data-testid="payment-gateway">PaymentGateway</div>,
+  default: forwardRef(function MockPaymentGateway(_props: unknown, ref) {
+    useImperativeHandle(ref, () => ({ confirm: mockPaymentGatewayConfirm }));
+    return <div data-testid="payment-gateway">PaymentGateway</div>;
+  }),
 }));
 
 // ---- api ----
@@ -252,6 +256,11 @@ describe('CheckoutPage', () => {
 
     await waitFor(() => {
       expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 1, locale: 'ko', gateway: 'paypal' });
+      expect(screen.getByTestId('payment-gateway')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(mockPaymentGatewayConfirm).toHaveBeenCalledTimes(1);
     });
   });
 
