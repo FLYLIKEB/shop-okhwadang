@@ -50,10 +50,10 @@
 :root {
   --color-bg: #FAFAFA;
   --color-text: #1a1a1a;
-  --color-accent-zuni: #1B3A4B;
-  --color-accent-tea: #4A6741;
-  --color-brand-secondary: #D4C5B0;
-  --color-accent-danni: #C9B8A3;
+  --color-accent-zuni: #353535;
+  --color-accent-tea: #5E5E5E;
+  --color-brand-secondary: #C7C7C7;
+  --color-accent-danni: #BABABA;
 }
 
 /* 색상 토큰은 @theme (non-inline) — 유틸리티가 var(--color-*)로 생성되어야
@@ -62,33 +62,33 @@
    런타임에 CSS 변수를 바꿔도 색상이 변경되지 않음. */
 @theme {
   /* ── shadcn/ui 호환 토큰 — light theme as :root default, dark theme in tokens-dark.css ── */
-  --color-primary: #1B3A4B;
+  --color-primary: #353535;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #F2F0EC;
+  --color-secondary: #F0F0F0;
   --color-secondary-foreground: #1a1a1a;
-  --color-destructive: #b91c1c;
+  --color-destructive: #3D3D3D;
   --color-destructive-foreground: #ffffff;
-  --color-muted: #F2F0EC;
+  --color-muted: #F0F0F0;
   --color-muted-foreground: #525252;
-  --color-accent: #F2F0EC;
+  --color-accent: #F0F0F0;
   --color-accent-foreground: #1a1a1a;
-  --color-background: #FAF9F7;
+  --color-background: #F9F9F9;
   --color-foreground: #1a1a1a;
-  --color-card: #FAF9F7;
+  --color-card: #F9F9F9;
   --color-card-foreground: #1a1a1a;
-  --color-border: #E5E1DB;
-  --color-input: #E5E1DB;
-  --color-ring: #1B3A4B;
+  --color-border: #E1E1E1;
+  --color-input: #E1E1E1;
+  --color-ring: #353535;
 
   /* ── 니료(泥料) 악센트 토큰 — 카테고리 필터·배지 등 UI 악센트용 ── */
-  --color-zuni: #1B3A4B;
-  --color-danni: #C9B8A3;
-  --color-zini: #6B3A5C;
-  --color-heukni: #2A2520;
-  --color-chunsuni: #3D6B6B;
-  --color-nokni: #4A6741;
-  --color-tea: #4A6741;
-  --color-surface: #F2F0EC;
+  --color-zuni: #353535;
+  --color-danni: #BABABA;
+  --color-zini: #474747;
+  --color-heukni: #262626;
+  --color-chunsuni: #616161;
+  --color-nokni: #5E5E5E;
+  --color-tea: #5E5E5E;
+  --color-surface: #F0F0F0;
 }
 
 @theme inline {
@@ -385,12 +385,12 @@ h3 {
 }
 
 .tag-zuni  { background-color: var(--color-zuni);     color: #ffffff; }
-.tag-danni { background-color: var(--color-danni);    color: #1C1710; }
+.tag-danni { background-color: var(--color-danni);    color: #181818; }
 .tag-zini  { background-color: var(--color-zini);     color: #ffffff; }
-.tag-heukni    { background-color: var(--color-heukni);    color: #F8F5F0; }
+.tag-heukni    { background-color: var(--color-heukni);    color: #F5F5F5; }
 .tag-chunsuni  { background-color: var(--color-chunsuni);  color: #ffffff; }
 .tag-nokni { background-color: var(--color-nokni);    color: #ffffff; }
-.tag-generic { background-color: #6B5B4F; color: #ffffff; }
+.tag-generic { background-color: #5E5E5E; color: #ffffff; }
 
 /* ── 디스플레이 타이틀 ──────────────────────────────────────────── */
 .font-display {
