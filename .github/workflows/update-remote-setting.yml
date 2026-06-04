@@ -1,0 +1,114 @@
+name: Update Remote Site Setting
+
+on:
+  workflow_dispatch:
+    inputs:
+      key:
+        description: 'site_settings.setting_key'
+        required: true
+      value:
+        description: 'site_settings.value'
+        required: true
+      group:
+        description: 'site_settings.group'
+        required: true
+        default: 'shipping'
+      label:
+        description: 'site_settings.label'
+        required: true
+        default: '설정'
+      input_type:
+        description: 'site_settings.input_type'
+        required: true
+        default: 'text'
+      default_value:
+        description: 'site_settings.default_value'
+        required: true
+        default: ''
+      sort_order:
+        description: 'site_settings.sort_order'
+        required: true
+        default: '999'
+
+permissions:
+  contents: read
+
+jobs:
+  update-setting:
+    name: Upsert production site setting
+    runs-on: self-hosted
+    steps:
+      - name: Upsert setting in production DB
+        env:
+          SETTING_KEY: ${{ inputs.key }}
+          SETTING_VALUE: ${{ inputs.value }}
+          SETTING_GROUP: ${{ inputs.group }}
+          SETTING_LABEL: ${{ inputs.label }}
+          SETTING_INPUT_TYPE: ${{ inputs.input_type }}
+          SETTING_DEFAULT_VALUE: ${{ inputs.default_value }}
+          SETTING_SORT_ORDER: ${{ inputs.sort_order }}
+        run: |
+          set -euo pipefail
+          cd /app/shop-okhwadang/shop-okhwadang/backend
+
+          node <<'NODE'
+          (async () => {
+            const fs = require('fs');
+            const mysql = require('mysql2/promise');
+
+            const key = String(process.env.SETTING_KEY || '').trim();
+            const value = String(process.env.SETTING_VALUE ?? '');
+            const group = String(process.env.SETTING_GROUP || '').trim();
+            const label = String(process.env.SETTING_LABEL || '').trim();
+            const inputType = String(process.env.SETTING_INPUT_TYPE || 'text').trim();
+            const defaultValue = String(process.env.SETTING_DEFAULT_VALUE ?? '');
+            const sortOrder = Number(process.env.SETTING_SORT_ORDER || '999');
+
+            if (!/^[a-z0-9_:-]+$/i.test(key)) throw new Error(`Invalid setting key: ${key}`);
+            if (!group || group.length > 50) throw new Error(`Invalid setting group: ${group}`);
+            if (!label || label.length > 100) throw new Error(`Invalid setting label: ${label}`);
+            if (!inputType || inputType.length > 20) throw new Error(`Invalid input type: ${inputType}`);
+            if (!Number.isInteger(sortOrder)) throw new Error(`Invalid sort order: ${process.env.SETTING_SORT_ORDER}`);
+
+            const envText = fs.readFileSync('.env', 'utf8');
+            const match = envText.match(/^DATABASE_URL=(.+)$/m);
+            if (!match) throw new Error('DATABASE_URL not found in backend/.env');
+
+            const url = new URL(match[1].trim());
+            const connection = await mysql.createConnection({
+              host: url.hostname,
+              port: Number(url.port || 3306),
+              user: decodeURIComponent(url.username),
+              password: decodeURIComponent(url.password),
+              database: url.pathname.replace(/^\//, ''),
+            });
+
+            try {
+              await connection.execute(
+                `INSERT INTO site_settings
+                   (setting_key, value, value_en, value_ja, value_zh, \`group\`, label, input_type, options, default_value, sort_order)
+                 VALUES
+                   (?, ?, NULL, NULL, NULL, ?, ?, ?, NULL, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                   value = VALUES(value),
+                   \`group\` = VALUES(\`group\`),
+                   label = VALUES(label),
+                   input_type = VALUES(input_type),
+                   default_value = VALUES(default_value),
+                   sort_order = VALUES(sort_order)`,
+                [key, value, group, label, inputType, defaultValue, sortOrder],
+              );
+
+              const [rows] = await connection.execute(
+                'SELECT setting_key, value, `group`, label, input_type, default_value, sort_order FROM site_settings WHERE setting_key = ?',
+                [key],
+              );
+              console.log(JSON.stringify(rows[0] || null));
+            } finally {
+              await connection.end();
+            }
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
