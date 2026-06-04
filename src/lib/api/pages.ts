@@ -18,7 +18,11 @@ export interface PageBlock {
     | 'archive_process'
     | 'archive_artist'
     | 'collection_clay'
-    | 'collection_shape';
+    | 'collection_shape'
+    | 'color_card_list'
+    | 'timeline_list'
+    | 'person_card_list'
+    | 'image_card_grid';
   content: Record<string, unknown>;
   sort_order: number;
   is_visible: boolean;
@@ -102,6 +106,66 @@ export interface SectionHeadingBlockContent {
   sectionLabel?: string;
   sectionTitle?: string;
   sectionDesc?: string;
+}
+
+
+export interface ColorCardItem {
+  id: string;
+  color: string;
+  nameEn?: string;
+  nameKo: string;
+  region?: string;
+  description: string;
+  characteristics?: string[];
+  href?: string;
+  hrefLabel?: string;
+}
+
+export interface ColorCardListContent extends SectionHeadingBlockContent {
+  layout: 'alternating' | 'grid-3';
+  items: ColorCardItem[];
+}
+
+export interface TimelineItem {
+  id: string;
+  step: number;
+  label?: string;
+  title: string;
+  description: string;
+}
+
+export interface TimelineListContent extends SectionHeadingBlockContent {
+  items: TimelineItem[];
+}
+
+export interface PersonCardItem {
+  id: string;
+  imageUrl: string;
+  title?: string;
+  name: string;
+  region?: string;
+  specialty?: string;
+  story: string;
+  href?: string;
+  hrefLabel?: string;
+}
+
+export interface PersonCardListContent extends SectionHeadingBlockContent {
+  items: PersonCardItem[];
+}
+
+export interface ImageCardItem {
+  id: string;
+  imageUrl: string;
+  name: string;
+  description: string;
+  href?: string;
+  hrefLabel?: string;
+}
+
+export interface ImageCardGridContent extends SectionHeadingBlockContent {
+  columns?: 2 | 3 | 4;
+  items: ImageCardItem[];
 }
 
 export interface TextContentContent {

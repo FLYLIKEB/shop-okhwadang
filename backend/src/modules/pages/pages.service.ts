@@ -30,7 +30,34 @@ const SUPPORTED_BLOCK_TYPES = [
   'archive_artist',
   'collection_clay',
   'collection_shape',
+  'color_card_list',
+  'timeline_list',
+  'person_card_list',
+  'image_card_grid',
 ];
+
+const GENERIC_ITEM_BLOCK_TYPES = new Set([
+  'color_card_list',
+  'timeline_list',
+  'person_card_list',
+  'image_card_grid',
+]);
+
+function validateGenericBlockContent(type: string, content: Record<string, unknown>): void {
+  if (!GENERIC_ITEM_BLOCK_TYPES.has(type)) return;
+
+  if (!Array.isArray(content.items)) {
+    throw new BadRequestException('블록 콘텐츠 items는 배열이어야 합니다.');
+  }
+
+  if (type === 'color_card_list') {
+    const layout = content.layout;
+    if (layout !== 'alternating' && layout !== 'grid-3') {
+      throw new BadRequestException('색상 카드 리스트 layout은 alternating 또는 grid-3이어야 합니다.');
+    }
+  }
+}
+
 
 @Injectable()
 export class PagesService {
@@ -136,6 +163,7 @@ export class PagesService {
     if (!SUPPORTED_BLOCK_TYPES.includes(dto.type)) {
       throw new BadRequestException('지원하지 않는 블록 타입입니다.');
     }
+    validateGenericBlockContent(dto.type, dto.content);
     const block = this.blockRepository.create({
       ...dto,
       page_id: pageId,
@@ -151,6 +179,10 @@ export class PagesService {
     const block = await findOrThrow(this.blockRepository, { id: blockId, page_id: pageId }, '존재하지 않는 블록입니다.');
     if (dto.type && !SUPPORTED_BLOCK_TYPES.includes(dto.type)) {
       throw new BadRequestException('지원하지 않는 블록 타입입니다.');
+    }
+    const nextType = dto.type ?? block.type;
+    if (dto.content) {
+      validateGenericBlockContent(nextType, dto.content);
     }
     Object.assign(block, dto);
     return this.blockRepository.save(block);

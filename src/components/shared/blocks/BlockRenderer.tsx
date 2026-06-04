@@ -17,6 +17,10 @@ import ArchiveNiloBlock from './ArchiveNiloBlock';
 import ArchiveProcessBlock from './ArchiveProcessBlock';
 import CollectionClayBlock from './CollectionClayBlock';
 import CollectionShapeBlock from './CollectionShapeBlock';
+import ColorCardListBlock from './ColorCardListBlock';
+import TimelineListBlock from './TimelineListBlock';
+import PersonCardListBlock from './PersonCardListBlock';
+import ImageCardGridBlock from './ImageCardGridBlock';
 import UnknownBlock from './UnknownBlock';
 
 type BlockComponent = ComponentType<{ content: Record<string, unknown> }>;
@@ -36,6 +40,10 @@ const blockComponentMap: Record<string, BlockComponent> = {
   archive_artist: ArchiveArtistBlock as unknown as BlockComponent,
   collection_clay: CollectionClayBlock as unknown as BlockComponent,
   collection_shape: CollectionShapeBlock as unknown as BlockComponent,
+  color_card_list: ColorCardListBlock as unknown as BlockComponent,
+  timeline_list: TimelineListBlock as unknown as BlockComponent,
+  person_card_list: PersonCardListBlock as unknown as BlockComponent,
+  image_card_grid: ImageCardGridBlock as unknown as BlockComponent,
 };
 
 interface Props {

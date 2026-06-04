@@ -52,11 +52,35 @@ describe('archive/collection CMS page seed data', () => {
 
     expect(archiveBlocks.map((block) => `${block.sortOrder}:${block.type}`)).toEqual([
       '-1:hero_banner',
-      '0:archive_nilo',
-      '1:archive_process',
-      '2:archive_artist',
+      '0:color_card_list',
+      '1:timeline_list',
+      '2:person_card_list',
       '99:promotion_banner',
     ]);
+  });
+
+
+
+  it('inlines item arrays for generic archive and collection blocks', () => {
+    const genericBlocks = pageBlocks.filter((block) =>
+      ['color_card_list', 'timeline_list', 'person_card_list', 'image_card_grid'].includes(block.type),
+    );
+
+    expect(genericBlocks.length).toBeGreaterThan(0);
+    for (const block of genericBlocks) {
+      const content = block.content as unknown as { items?: unknown[]; layout?: string; columns?: number };
+      expect(Array.isArray(content.items)).toBe(true);
+      expect(content.items?.length).toBeGreaterThan(0);
+    }
+
+    const archiveColorBlock = pageBlocks.find((block) => block.pageSlug === 'archive' && block.type === 'color_card_list');
+    expect((archiveColorBlock?.content as unknown as { layout?: string }).layout).toBe('alternating');
+
+    const collectionColorBlock = pageBlocks.find((block) => block.pageSlug === 'collection' && block.type === 'color_card_list');
+    expect((collectionColorBlock?.content as unknown as { layout?: string }).layout).toBe('grid-3');
+
+    const imageGridBlock = pageBlocks.find((block) => block.pageSlug === 'collection' && block.type === 'image_card_grid');
+    expect((imageGridBlock?.content as unknown as { columns?: number }).columns).toBe(3);
   });
 
   it('seeds collection body blocks between CMS-managed hero and CTA blocks', () => {
@@ -66,8 +90,8 @@ describe('archive/collection CMS page seed data', () => {
 
     expect(collectionBlocks.map((block) => `${block.sortOrder}:${block.type}`)).toEqual([
       '-1:hero_banner',
-      '0:collection_clay',
-      '1:collection_shape',
+      '0:color_card_list',
+      '1:image_card_grid',
       '99:promotion_banner',
     ]);
   });

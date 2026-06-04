@@ -21,6 +21,10 @@ const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   archive_artist: '장인',
   collection_clay: '흙 컬렉션',
   collection_shape: '형태 컬렉션',
+  color_card_list: '색상 카드 리스트',
+  timeline_list: '타임라인',
+  person_card_list: '인물 카드',
+  image_card_grid: '이미지 카드 그리드',
 };
 
 interface DraftBlock {
@@ -70,6 +74,14 @@ function getContentSummary(block: DraftBlock): string {
     case 'collection_clay':
     case 'collection_shape':
       return (c.sectionTitle as string) || (c.sectionLabel as string) || '기본 섹션 문구 사용';
+    case 'color_card_list':
+      return `${(c.sectionTitle as string) || '색상 카드 리스트'} · ${Array.isArray(c.items) ? c.items.length : 0}개`;
+    case 'timeline_list':
+      return `${(c.sectionTitle as string) || '타임라인'} · ${Array.isArray(c.items) ? c.items.length : 0}개`;
+    case 'person_card_list':
+      return `${(c.sectionTitle as string) || '인물 카드'} · ${Array.isArray(c.items) ? c.items.length : 0}개`;
+    case 'image_card_grid':
+      return `${(c.sectionTitle as string) || '이미지 카드 그리드'} · ${Array.isArray(c.items) ? c.items.length : 0}개`;
   }
 }
 
