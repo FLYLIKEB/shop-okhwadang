@@ -170,6 +170,7 @@ export default function SearchPage() {
                 status={product.status}
                 images={product.images}
                 categoryName={product.category?.name ?? null}
+                isFreeShipping={product.isFreeShipping}
               />
             ))}
           </div>

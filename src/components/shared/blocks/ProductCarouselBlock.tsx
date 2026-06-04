@@ -151,6 +151,7 @@ export default function ProductCarouselBlock({ content }: Props) {
                 categoryName={product.category?.name}
                 status={product.status}
                 images={product.images}
+                isFreeShipping={product.isFreeShipping}
                 priority={index === 0}
               />
             </div>
