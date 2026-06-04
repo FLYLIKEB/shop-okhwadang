@@ -64,6 +64,17 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: '고객센터' })).toBeInTheDocument();
   });
 
+  it('renders footer section headings larger and bold', () => {
+    render(<Footer />);
+
+    for (const heading of ['고객센터', '회사', '쇼핑']) {
+      const sectionHeading = screen.getAllByText(heading).find((element) => element.tagName === 'P');
+
+      expect(sectionHeading).toHaveClass('typo-body', 'font-semibold', 'text-foreground');
+      expect(sectionHeading).not.toHaveClass('text-sm', 'font-medium');
+    }
+  });
+
   it('renders footer without solid or dotted divider lines', () => {
     const { container } = render(<Footer />);
 
