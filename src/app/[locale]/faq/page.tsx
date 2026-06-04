@@ -9,13 +9,22 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/shared/EmptyState';
 import { cn } from '@/components/ui/utils';
+import { useTranslations } from 'next-intl';
 
-const CATEGORIES = ['전체', '배송', '결제', '교환/반품', '회원', '기타'];
+const CATEGORIES = [
+  { value: '전체', key: 'all' },
+  { value: '배송', key: 'shipping' },
+  { value: '결제', key: 'payment' },
+  { value: '교환/반품', key: 'exchange' },
+  { value: '회원', key: 'member' },
+  { value: '기타', key: 'other' },
+];
 
 export default function FaqPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const [faqs, setFaqs] = useState<Faq[]>([]);
+  const t = useTranslations('faqPage');
   const [activeCategory, setActiveCategory] = useState('전체');
 
   const { execute: loadFaqs, isLoading: loading } = useAsyncAction(
@@ -24,7 +33,7 @@ export default function FaqPage() {
       const res = await faqsApi.getList(cat, locale);
       setFaqs(Array.isArray(res) ? res : (res?.data ?? []));
     },
-    { errorMessage: 'FAQ를 불러오지 못했습니다.' },
+    { errorMessage: t('loadError') },
   );
 
   useEffect(() => {
@@ -34,21 +43,21 @@ export default function FaqPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="typo-h1 mb-6">자주 묻는 질문</h1>
+      <h1 className="typo-h1 mb-6">{t('title')}</h1>
 
       <div className="flex gap-2 flex-wrap mb-6">
         {CATEGORIES.map((cat) => (
           <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
+            key={cat.value}
+            onClick={() => setActiveCategory(cat.value)}
             className={cn(
               'px-4 py-1.5 rounded-full typo-button border transition-colors',
-              activeCategory === cat
+              activeCategory === cat.value
                 ? 'bg-foreground text-background border-foreground'
                 : 'border-border text-muted-foreground hover:border-foreground',
             )}
           >
-            {cat}
+            {t(`categories.${cat.key}`)}
           </button>
         ))}
       </div>
@@ -60,7 +69,7 @@ export default function FaqPage() {
           ))}
         </div>
       ) : (faqs?.length ?? 0) === 0 ? (
-        <EmptyState title="해당 카테고리의 FAQ가 없습니다." />
+        <EmptyState title={t('empty')} />
       ) : (
         <Accordion.Root type="single" collapsible className="divide-y divide-border border-t border-b">
           {faqs.map((faq) => (

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { adminOrdersApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { ORDER_STATUS_LABELS } from '@/constants/status';
+import { toastMessage } from '@/utils/toastMessages';
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ['paid'],
@@ -32,10 +33,10 @@ export function OrderStatusSelect({ orderId, currentStatus, onStatusChange }: Or
     setUpdating(true);
     try {
       await adminOrdersApi.updateStatus(orderId, nextStatus);
-      toast.success(`주문 상태가 ${ORDER_STATUS_LABELS[nextStatus]}(으)로 변경되었습니다.`);
+      toast.success(toastMessage('orderStatusChanged', { status: ORDER_STATUS_LABELS[nextStatus] ?? nextStatus }));
       onStatusChange();
     } catch (err) {
-      toast.error(handleApiError(err, '상태 변경에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('statusChangeError')));
     } finally {
       setUpdating(false);
     }

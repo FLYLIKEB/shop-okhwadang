@@ -6,6 +6,7 @@ import { uploadApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { X, Upload } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
+import { toastMessage } from '@/utils/toastMessages';
 
 export interface ImageItem {
   url: string;
@@ -40,9 +41,9 @@ export default function MultiImageUploader({
         i === currentLength ? { url: result.url } : img,
       );
       onChange(updated);
-      toast.success('이미지가 업로드되었습니다.');
+      toast.success(toastMessage('imageUploadSuccess'));
     } catch (err) {
-      toast.error(handleApiError(err, '이미지 업로드에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('imageUploadError')));
       onChange(images);
     }
   };

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
 import { SESSION_KEYS } from '@/constants/storage';
 import { redirectTo } from '@/utils/navigation';
+import { toastMessage } from '@/utils/toastMessages';
 
 interface User {
   id: number;
@@ -108,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login(email, password);
     setUser(res.user);
-    toast.success('로그인되었습니다.');
+    toast.success(toastMessage('loginSuccess'));
   }, []);
 
   const logout = useCallback(async () => {
@@ -118,12 +119,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ignore server errors on logout
     }
     setUser(null);
-    toast.success('로그아웃되었습니다.');
+    toast.success(toastMessage('logoutSuccess'));
   }, []);
 
   const register = useCallback(async (email: string, password: string, name: string) => {
     await authApi.register(email, password, name);
-    toast.success('회원가입이 완료되었습니다. 로그인해 주세요.');
+    toast.success(toastMessage('registerSuccess'));
   }, []);
 
   const loginWithKakao = useCallback(() => {

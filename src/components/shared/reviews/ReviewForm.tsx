@@ -7,6 +7,7 @@ import { handleApiError } from '@/utils/error'
 import { Button } from '@/components/ui/button'
 import { reviewsApi } from '@/lib/api'
 import StarRating from './StarRating'
+import { toastMessage } from '@/utils/toastMessages';
 
 interface ReviewFormProps {
   productId: number
@@ -33,7 +34,7 @@ export default function ReviewForm({
     if (!files || files.length === 0) return
 
     if (imageUrls.length + files.length > 5) {
-      toast.error('이미지는 최대 5장까지 업로드 가능합니다.')
+      toast.error(toastMessage('reviewImageLimit'))
       return
     }
 
@@ -45,9 +46,9 @@ export default function ReviewForm({
         uploaded.push(result.url)
       }
       setImageUrls((prev) => [...prev, ...uploaded])
-      toast.success('이미지 업로드 완료')
+      toast.success(toastMessage('reviewImageUploadSuccess'))
     } catch (err) {
-      toast.error(handleApiError(err, '이미지 업로드에 실패했습니다.'))
+      toast.error(handleApiError(err, toastMessage('imageUploadError')))
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -62,7 +63,7 @@ export default function ReviewForm({
     e.preventDefault()
 
     if (rating === 0) {
-      toast.error('별점을 선택해 주세요.')
+      toast.error(toastMessage('ratingRequired'))
       return
     }
 
@@ -75,10 +76,10 @@ export default function ReviewForm({
         content: content || null,
         imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
       })
-      toast.success('리뷰가 등록되었습니다.')
+      toast.success(toastMessage('reviewCreated'))
       onSuccess()
     } catch (err) {
-      toast.error(handleApiError(err, '리뷰 작성에 실패했습니다.'))
+      toast.error(handleApiError(err, toastMessage('reviewCreateError')))
     } finally {
       setIsSubmitting(false)
     }

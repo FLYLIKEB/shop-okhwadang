@@ -13,6 +13,7 @@ import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { InquiryStatusBadge } from '@/components/shared/admin/StatusBadge';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
+import { toastMessage } from '@/utils/toastMessages';
 
 type InquiryStatusFilter = 'all' | 'pending' | 'answered';
 
@@ -53,7 +54,7 @@ export default function AdminInquiriesPage() {
 
   const handleAnswer = async (id: number) => {
     if (!answerText.trim()) {
-      toast.error('답변 내용을 입력해주세요.');
+      toast.error(toastMessage('answerRequired'));
       return;
     }
 
@@ -63,9 +64,9 @@ export default function AdminInquiriesPage() {
       setInquiries((prev) => prev.map((inquiry) => (inquiry.id === id ? updated : inquiry)));
       setAnswerText('');
       setOpenId(null);
-      toast.success('답변이 등록되었습니다.');
+      toast.success(toastMessage('answerCreated'));
     } catch (err) {
-      toast.error(handleApiError(err, '답변 등록에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('answerCreateError')));
     } finally {
       setAnswering(false);
     }

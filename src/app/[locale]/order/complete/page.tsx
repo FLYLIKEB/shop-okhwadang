@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, use } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -10,8 +10,11 @@ import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
+import { toastMessage } from '@/utils/toastMessages';
+import { useTranslations } from 'next-intl';
 
-function OrderCompleteContent() {
+function OrderCompleteContent({ locale }: { locale: string }) {
+  const t = useTranslations('orderComplete');
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
@@ -35,7 +38,7 @@ function OrderCompleteContent() {
       .getById(id)
       .then((data) => setOrder(data))
       .catch((err: unknown) => {
-        toast.error(handleApiError(err, '주문 정보를 불러올 수 없습니다.'));
+        toast.error(handleApiError(err, toastMessage('orderLoadError')));
         router.replace('/');
       })
       .finally(() => setIsLoading(false));
@@ -59,13 +62,13 @@ function OrderCompleteContent() {
     <div className="mx-auto max-w-2xl px-4 py-16">
       <div className="text-center space-y-4 mb-10">
         <CheckCircle className="mx-auto h-16 w-16 text-green-500" aria-hidden="true" />
-        <h1 className="text-2xl font-bold">주문이 완료되었습니다!</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          주문번호: <span className="font-semibold text-foreground">{order.orderNumber}</span>
+          {t('orderNumber')} <span className="font-semibold text-foreground">{order.orderNumber}</span>
         </p>
         <p className="text-sm text-muted-foreground">
-          주문일시:{' '}
-          {new Date(order.createdAt).toLocaleString('ko-KR', {
+          {t('orderDate')}{' '}
+          {new Date(order.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'ko-KR', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -76,7 +79,7 @@ function OrderCompleteContent() {
       </div>
 
       <section className="rounded-lg border p-6 space-y-4 mb-8">
-        <h2 className="font-semibold text-lg">주문 상품</h2>
+        <h2 className="font-semibold text-lg">{t('items')}</h2>
         <ul className="divide-y text-sm">
           {order.items.map((item) => (
             <li key={item.id} className="py-3 flex justify-between gap-2">
@@ -85,7 +88,7 @@ function OrderCompleteContent() {
                 {item.optionName && (
                   <p className="text-xs text-muted-foreground">{item.optionName}</p>
                 )}
-                <p className="text-muted-foreground">수량 {item.quantity}개</p>
+                <p className="text-muted-foreground">{t('quantity', { quantity: item.quantity })}</p>
               </div>
               <p className="font-medium shrink-0">
                 {formatCurrency(item.price * item.quantity)}
@@ -96,19 +99,19 @@ function OrderCompleteContent() {
 
         <div className="border-t pt-4 space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">배송비</span>
-            <span>{order.shippingFee === 0 ? '무료' : formatCurrency(order.shippingFee)}</span>
+            <span className="text-muted-foreground">{t('shippingFee')}</span>
+            <span>{order.shippingFee === 0 ? t('free') : formatCurrency(order.shippingFee)}</span>
           </div>
           {order.discountAmount > 0 && (
             <div className="flex justify-between">
-              <span className="text-muted-foreground">할인</span>
+              <span className="text-muted-foreground">{t('discount')}</span>
               <span className="text-destructive">-{formatCurrency(order.discountAmount)}</span>
             </div>
           )}
         </div>
 
         <div className="border-t pt-4 flex justify-between font-bold">
-          <span>결제 금액</span>
+          <span>{t('paymentAmount')}</span>
           <span>{formatCurrency(order.totalAmount)}</span>
         </div>
       </section>
@@ -118,20 +121,26 @@ function OrderCompleteContent() {
           href="/my/orders"
           className="flex-1 rounded-md border py-3 text-center text-sm font-semibold hover:bg-muted transition-colors"
         >
-          주문 내역 보기
+          {t('viewOrders')}
         </Link>
         <Link
           href="/"
           className="flex-1 rounded-md bg-foreground py-3 text-center text-sm font-semibold text-background hover:opacity-90 transition-opacity"
         >
-          쇼핑 계속하기
+          {t('continueShopping')}
         </Link>
       </div>
     </div>
   );
 }
 
-export default function OrderCompletePage() {
+export default function OrderCompletePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = use(params);
+
   return (
     <Suspense
       fallback={
@@ -142,7 +151,7 @@ export default function OrderCompletePage() {
         </div>
       }
     >
-      <OrderCompleteContent />
+      <OrderCompleteContent locale={locale} />
     </Suspense>
   );
 }

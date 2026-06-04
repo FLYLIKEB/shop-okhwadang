@@ -345,7 +345,18 @@
     }
   },
   "orderComplete": {
-    "loading": "Processing your order..."
+    "loading": "Processing your order...",
+    "title": "Order complete!",
+    "orderNumber": "Order number:",
+    "orderDate": "Order date:",
+    "items": "Order items",
+    "quantity": "Quantity {quantity}",
+    "shippingFee": "Shipping fee",
+    "free": "Free",
+    "discount": "Discount",
+    "paymentAmount": "Payment amount",
+    "viewOrders": "View order history",
+    "continueShopping": "Continue shopping"
   },
   "myPage": {
     "title": "My Page",
@@ -997,5 +1008,46 @@
     "phone": "Phone",
     "address": "Address",
     "deliveryMemo": "Delivery Memo"
+  },
+  "checkoutResult": {
+    "failedTitle": "Payment Failed",
+    "confirmFailedTitle": "Payment Confirmation Failed",
+    "confirmFailedDescription": "There was a problem confirming your payment. Please contact customer support.",
+    "processingTitle": "Processing payment...",
+    "processingDescription": "Please wait a moment.",
+    "backToCart": "Back to Cart",
+    "back": "Back",
+    "errorCode": "Error code: {code}",
+    "loading": "Loading...",
+    "defaultFailMessage": "Payment failed."
+  },
+  "contact": {
+    "loadError": "Failed to load page.",
+    "title": "Contact Us",
+    "description": "If you have questions, please use one-on-one inquiries.",
+    "newInquiry": "New inquiry",
+    "myInquiries": "My inquiries"
+  },
+  "faqPage": {
+    "title": "FAQ",
+    "loadError": "Failed to load FAQ.",
+    "empty": "No FAQ found in this category.",
+    "categories": {
+      "all": "All",
+      "shipping": "Shipping",
+      "payment": "Payment",
+      "exchange": "Returns/Exchanges",
+      "member": "Account",
+      "other": "Other"
+    }
+  },
+  "notice": {
+    "title": "Notices",
+    "loadError": "Failed to load notices.",
+    "empty": "No notices have been posted.",
+    "pinned": "Important",
+    "views": "Views {count}",
+    "notFound": "Notice not found.",
+    "backToList": "Back to list"
   }
 }

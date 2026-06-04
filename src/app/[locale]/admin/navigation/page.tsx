@@ -8,6 +8,7 @@ import type { NavigationItem } from '@/lib/api';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import NavigationEditor from '@/components/shared/admin/NavigationEditor';
+import { toastMessage } from '@/utils/toastMessages';
 
 type NavGroup = 'gnb' | 'sidebar' | 'footer';
 
@@ -66,9 +67,9 @@ export default function AdminNavigationPage() {
   }) => {
     try {
       await adminNavigationApi.create(data);
-      toast.success('메뉴가 추가되었습니다.');
+      toast.success(toastMessage('menuCreated'));
     } catch (err) {
-      toast.error(handleApiError(err, '추가에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('addError')));
       throw err;
     }
   };
@@ -82,9 +83,9 @@ export default function AdminNavigationPage() {
   }) => {
     try {
       await adminNavigationApi.update(id, data);
-      toast.success('메뉴가 수정되었습니다.');
+      toast.success(toastMessage('menuUpdated'));
     } catch (err) {
-      toast.error(handleApiError(err, '수정에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('editError')));
       throw err;
     }
   };
@@ -92,9 +93,9 @@ export default function AdminNavigationPage() {
   const handleDelete = async (id: number) => {
     try {
       await adminNavigationApi.remove(id);
-      toast.success('메뉴가 삭제되었습니다.');
+      toast.success(toastMessage('menuDeleted'));
     } catch (err) {
-      toast.error(handleApiError(err, '삭제에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('deleteError')));
       throw err;
     }
   };
@@ -103,7 +104,7 @@ export default function AdminNavigationPage() {
     try {
       await adminNavigationApi.reorder(orders);
     } catch (err) {
-      toast.error(handleApiError(err, '순서 변경에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('sortError')));
       throw err;
     }
   };
@@ -112,9 +113,9 @@ export default function AdminNavigationPage() {
     try {
       await adminSettingsApi.bulkUpdate([{ key: 'mobile_bottom_nav_visible', value: String(visible) }]);
       setBottomNavVisible(visible);
-      toast.success(`하단 네비게이션이 ${visible ? '표시' : '숨김'} 처리되었습니다.`);
+      toast.success(toastMessage('bottomNavVisibilityChanged', { visibility: toastMessage(visible ? 'visible' : 'hidden') }));
     } catch (err) {
-      toast.error(handleApiError(err, '설정 저장에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('settingsSaveError')));
     }
   };
 

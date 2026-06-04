@@ -10,6 +10,7 @@ import type { ProductDetail } from '@/lib/api';
 import MultiImageUploader from './MultiImageUploader';
 import ProductOptionsEditor, { type ProductOptionDraft } from './ProductOptionsEditor';
 import { CheckboxField, SelectField, TextAreaField, TextField } from './FormField';
+import { toastMessage } from '@/utils/toastMessages';
 
 interface GalleryImage {
   url: string;
@@ -277,15 +278,15 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     e.preventDefault();
 
     if (!form.name.trim()) {
-      toast.error('상품명을 입력해주세요.');
+      toast.error(toastMessage('productNameRequired'));
       return;
     }
     if (!form.slug.trim()) {
-      toast.error('슬러그를 입력해주세요.');
+      toast.error(toastMessage('slugRequired'));
       return;
     }
     if (!form.price || Number(form.price) < 1) {
-      toast.error('가격을 올바르게 입력해주세요.');
+      toast.error(toastMessage('validPriceRequired'));
       return;
     }
 
@@ -320,14 +321,14 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
 
       if (mode === 'create') {
         await adminProductsApi.create(payload);
-        toast.success('상품이 등록되었습니다.');
+        toast.success(toastMessage('productCreated'));
       } else if (product) {
         await adminProductsApi.update(product.id, payload);
-        toast.success('상품이 수정되었습니다.');
+        toast.success(toastMessage('productUpdated'));
       }
       router.push('/admin/products');
     } catch (err) {
-      toast.error(handleApiError(err, '저장에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('saveError')));
     } finally {
       setSubmitting(false);
     }

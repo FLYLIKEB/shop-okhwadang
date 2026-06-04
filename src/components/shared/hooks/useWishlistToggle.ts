@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { wishlistApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { toastMessage } from '@/utils/toastMessages';
 
 interface UseWishlistToggleOptions {
   initialIsWishlisted?: boolean;
@@ -50,17 +51,17 @@ export function useWishlistToggle(
       if (isWishlisted && wishlistId != null) {
         await wishlistApi.remove(wishlistId);
         setWishlistId(null);
-        toast.success('위시리스트에서 삭제되었습니다.');
+        toast.success(toastMessage('wishlistRemoved'));
       } else {
         const result = await wishlistApi.add(productId);
         setWishlistId(result.id);
-        toast.success('위시리스트에 추가되었습니다.');
+        toast.success(toastMessage('wishlistAdded'));
       }
     } catch {
       // Rollback on failure
       setIsWishlisted(prevIsWishlisted);
       setWishlistId(prevWishlistId);
-      toast.error('위시리스트 처리에 실패했습니다.');
+      toast.error(toastMessage('wishlistError'));
     } finally {
       setLoading(false);
     }

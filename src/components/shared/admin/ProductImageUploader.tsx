@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { uploadApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { toastMessage } from '@/utils/toastMessages';
 
 interface ProductImageUploaderProps {
   imageUrl: string;
@@ -23,9 +24,9 @@ export default function ProductImageUploader({
     try {
       const result = await uploadApi.uploadImage(file);
       onChange(result.url);
-      toast.success('이미지가 업로드되었습니다.');
+      toast.success(toastMessage('imageUploadSuccess'));
     } catch (err) {
-      toast.error(handleApiError(err, '이미지 업로드에 실패했습니다.'));
+      toast.error(handleApiError(err, toastMessage('imageUploadError')));
     } finally {
       setUploading(false);
     }

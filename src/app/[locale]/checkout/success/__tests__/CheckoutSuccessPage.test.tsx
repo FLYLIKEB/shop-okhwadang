@@ -41,6 +41,20 @@ vi.mock('@/utils/error', () => ({
   handleApiError: vi.fn((_err: unknown) => '결제 확인 중 오류가 발생했습니다.'),
 }));
 
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => {
+    const messages: Record<string, string> = {
+      confirmFailedTitle: '결제 확인 실패',
+      confirmFailedDescription: '결제 확인 중 문제가 발생했습니다. 고객센터에 문의해주세요.',
+      processingTitle: '결제 처리 중...',
+      processingDescription: '잠시만 기다려주세요.',
+      backToCart: '장바구니로 돌아가기',
+    };
+
+    return messages[key] ?? key;
+  },
+}));
+
 const makeParams = () => Promise.resolve({ locale: 'ko' as const });
 
 describe('CheckoutSuccessPage', () => {

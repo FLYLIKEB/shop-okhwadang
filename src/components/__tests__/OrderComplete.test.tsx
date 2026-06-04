@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import OrderCompletePage from '@/app/[locale]/order/complete/page';
 import { ordersApi } from '@/lib/api';
+import koMessages from '@/i18n/messages/ko.json';
 
 // ---- next/navigation ----
 const mockReplace = vi.fn();
@@ -10,6 +11,22 @@ let mockSearchParams = new URLSearchParams('orderId=1&orderNumber=ORD-20260325-A
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace }),
   useSearchParams: () => mockSearchParams,
+}));
+
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace: keyof typeof koMessages) => (
+    key: string,
+    values?: Record<string, string | number>,
+  ) => {
+    const messages = koMessages[namespace] as Record<string, string>;
+    let message = messages[key] ?? key;
+
+    Object.entries(values ?? {}).forEach(([name, value]) => {
+      message = message.replaceAll(`{${name}}`, String(value));
+    });
+
+    return message;
+  },
 }));
 
 // ---- next/link ----
@@ -91,16 +108,20 @@ describe('OrderCompletePage', () => {
     mockSearchParams = new URLSearchParams('orderId=1&orderNumber=ORD-20260325-ABCDE');
   });
 
-  it('redirects to / when no orderId in searchParams', () => {
+  it('redirects to / when no orderId in searchParams', async () => {
     mockSearchParams = new URLSearchParams('');
-    render(<OrderCompletePage />);
+    await act(async () => {
+      render(<OrderCompletePage params={Promise.resolve({ locale: 'ko' })} />);
+    });
     expect(mockReplace).toHaveBeenCalledWith('/');
   });
 
   it('renders order number text after fetching order', async () => {
     vi.mocked(ordersApi.getById).mockResolvedValue(sampleOrder);
 
-    render(<OrderCompletePage />);
+    await act(async () => {
+      render(<OrderCompletePage params={Promise.resolve({ locale: 'ko' })} />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('ORD-20260325-ABCDE')).toBeInTheDocument();
@@ -113,7 +134,9 @@ describe('OrderCompletePage', () => {
   it('renders "쇼핑 계속하기" link pointing to /', async () => {
     vi.mocked(ordersApi.getById).mockResolvedValue(sampleOrder);
 
-    render(<OrderCompletePage />);
+    await act(async () => {
+      render(<OrderCompletePage params={Promise.resolve({ locale: 'ko' })} />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('쇼핑 계속하기')).toBeInTheDocument();

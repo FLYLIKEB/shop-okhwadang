@@ -18,6 +18,7 @@ import type { PaymentStep } from '@/components/shared/hooks/useCheckout';
 import { handleApiError } from '@/utils/error';
 import { toast } from 'sonner';
 import type { Locale } from '@/i18n/routing';
+import { toastMessage } from '@/utils/toastMessages';
 
 const STATUS_TIMELINE = ['pending', 'paid', 'preparing', 'shipped', 'delivered'];
 
@@ -111,7 +112,7 @@ export default function OrderDetailPage() {
       try {
         await paymentRef.current.confirm();
       } catch (err) {
-        toast.error(handleApiError(err, '결제 중 오류가 발생했습니다.'));
+        toast.error(handleApiError(err, toastMessage('paymentError')));
         setPaymentStep('idle');
       }
       return;
@@ -127,7 +128,7 @@ export default function OrderDetailPage() {
       setPrepareResult(result);
       setPaymentStep('idle');
     } catch (err) {
-      toast.error(handleApiError(err, '결제 중 오류가 발생했습니다.'));
+      toast.error(handleApiError(err, toastMessage('paymentError')));
       setPaymentStep('idle');
     }
   };

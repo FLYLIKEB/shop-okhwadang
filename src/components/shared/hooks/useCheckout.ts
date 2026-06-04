@@ -10,6 +10,7 @@ import { ordersApi, paymentsApi } from '@/lib/api';
 import type { Locale } from '@/i18n/routing';
 import type { ShippingForm, FormErrors } from '@/app/[locale]/checkout/page';
 import type { PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
+import { toastMessage } from '@/utils/toastMessages';
 
 export type PaymentStep = 'idle' | 'creating_order' | 'preparing_payment' | 'confirming_payment' | 'success';
 
@@ -85,7 +86,7 @@ export function useCheckout(options: UseCheckoutOptions) {
       const gateway = options.paymentRef.current;
       if (!gateway) {
         options.setStep('idle');
-        toast.info('결제 수단을 확인하고 결제하기를 눌러주세요.');
+        toast.info(toastMessage('paymentMethodPrompt'));
         return;
       }
 
@@ -104,7 +105,7 @@ export function useCheckout(options: UseCheckoutOptions) {
     );
 
     options.setStep('success');
-    toast.success('결제가 완료되었습니다.');
+    toast.success(toastMessage('paymentComplete'));
     sessionStorage.removeItem(SESSION_KEYS.CHECKOUT_ITEMS);
     await refetch();
     router.replace(`/${locale}/order/complete?orderId=${orderId}&orderNumber=${orderNumber}`);
@@ -195,7 +196,7 @@ export function useCheckout(options: UseCheckoutOptions) {
         options.setCurrentOrderNumber(order.orderNumber);
         options.setPrepareResult(result);
         options.setStep('idle');
-        toast.info('카드 정보를 입력하고 결제하기를 눌러주세요.');
+        toast.info(toastMessage('cardPaymentPrompt'));
         return;
       }
 
@@ -207,7 +208,7 @@ export function useCheckout(options: UseCheckoutOptions) {
       // Mock flow
       await handleMockFlow(order.id, order.orderNumber);
     } catch (err) {
-      toast.error(handleApiError(err, '결제 중 오류가 발생했습니다.'));
+      toast.error(handleApiError(err, toastMessage('paymentError')));
       options.setStep('idle');
     }
   }, [options, form, checkoutItems, locale, handlePreparedGatewayFlow, handleTossFlow, handleExternalRedirectFlow, handleMockFlow]);
