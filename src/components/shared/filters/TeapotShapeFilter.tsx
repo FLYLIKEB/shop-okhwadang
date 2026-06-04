@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { Collection } from '@/lib/api';
+import { getCompactCollectionLabel } from '@/lib/collectionDisplay';
 import { getCollectionFilterValue } from '@/lib/collectionFilters';
 
 interface TeapotShapeFilterProps {
@@ -45,7 +46,7 @@ export default function TeapotShapeFilter({ collections, selected, onSelect }: T
               'text-sm transition-colors',
               selected === filterValue ? 'font-medium text-foreground' : 'text-muted-foreground',
             )}>
-              {item.name}
+              {getCompactCollectionLabel(item)}
             </span>
           </label>
         );

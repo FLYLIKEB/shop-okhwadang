@@ -63,7 +63,7 @@ const clayCollections: Collection[] = [
   {
     id: 11,
     type: CollectionType.CLAY,
-    name: '자니',
+    name: 'Zisha Collection',
     nameKo: null,
     color: null,
     description: null,
@@ -78,7 +78,7 @@ const shapeCollections: Collection[] = [
   {
     id: 21,
     type: CollectionType.SHAPE,
-    name: '원형',
+    name: 'Byeonpyeong Collection',
     nameKo: null,
     color: null,
     description: null,
@@ -140,10 +140,13 @@ describe('FilterSidebar', () => {
 
     render(<FilterSidebar categories={categories} clayCollections={clayCollections} shapeCollections={shapeCollections} />);
 
-    await userEvent.click(screen.getAllByRole('button', { name: '자니' })[0]);
+    expect(screen.queryByRole('button', { name: /Collection/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Collection/ })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getAllByRole('button', { name: 'Zisha' })[0]);
     expect(updateQueryMock).toHaveBeenCalledWith({ attrs: undefined });
 
-    await userEvent.click(screen.getAllByRole('radio', { name: '원형' })[0]);
+    await userEvent.click(screen.getAllByRole('radio', { name: 'Byeonpyeong' })[0]);
     expect(updateQueryMock).toHaveBeenCalledWith({ attrs: 'clay_type:zini,teapot_shape:round' });
 
     await userEvent.click(screen.getAllByRole('button', { name: '초기화' })[0]);

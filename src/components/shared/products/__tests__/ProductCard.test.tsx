@@ -80,3 +80,12 @@ describe('ProductCard image presentation', () => {
     expect(screen.queryByAltText('자사호')).not.toBeInTheDocument();
   });
 });
+
+describe('ProductCard summary display', () => {
+  it('compacts long attribute wording in the card summary', () => {
+    renderCard({ shortDescription: 'Fujian Zhuni · Xishi Shape · 120ml · Gongfu Tea' });
+
+    expect(screen.getByText('Fujian Zhuni · Xishi · 120ml · Gongfu Tea')).toBeInTheDocument();
+    expect(screen.queryByText(/Xishi Shape/)).not.toBeInTheDocument();
+  });
+});

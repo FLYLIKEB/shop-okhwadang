@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import type { Collection } from '@/lib/api';
 import SegmentedOptionGroup from '@/components/shared/ui/SegmentedOptionGroup';
+import { getCompactCollectionLabel } from '@/lib/collectionDisplay';
 import { getCollectionFilterValue } from '@/lib/collectionFilters';
 
 interface ClayTypeFilterProps {
@@ -18,7 +19,10 @@ export default function ClayTypeFilter({ collections, selected, onSelect }: Clay
     <SegmentedOptionGroup
       items={[
         { label: tCommon('all'), value: '' },
-        ...collections.map((item) => ({ label: item.name, value: getCollectionFilterValue(item, 'clay_type') })),
+        ...collections.map((item) => ({
+          label: getCompactCollectionLabel(item),
+          value: getCollectionFilterValue(item, 'clay_type'),
+        })),
       ]}
       value={selected ?? ''}
       onToggle={(value) => onSelect(value === selected ? undefined : value || undefined)}
