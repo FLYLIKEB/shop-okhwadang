@@ -56,6 +56,14 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: '고객센터' })).toBeInTheDocument();
   });
 
+  it('renders footer without solid or dotted divider lines', () => {
+    const { container } = render(<Footer />);
+
+    expect(container.querySelector('footer')?.className).not.toContain('border-');
+    expect(container.innerHTML).not.toContain('border-divider-soft');
+    expect(container.innerHTML).not.toContain('border-dashed');
+  });
+
   it('hides nav links while loading', () => {
     const { container } = render(<Footer />);
     expect(container.querySelector('.opacity-100')).toBeInTheDocument();

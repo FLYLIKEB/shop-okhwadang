@@ -54,7 +54,7 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
         role="search"
         aria-label={t('searchLabel')}
       >
-        <form onSubmit={handleSubmit} className="flex items-center gap-3 px-4 py-3 border-b border-divider-soft">
+        <form onSubmit={handleSubmit} className="flex items-center gap-3 px-4 py-3">
           <Search className="h-5 w-5 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}

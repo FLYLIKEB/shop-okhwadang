@@ -141,6 +141,18 @@ describe('Header', () => {
     expect(screen.getByRole('button', { name: '메뉴 열기' })).toBeInTheDocument();
   });
 
+  it('renders header chrome without divider lines', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<Header />);
+
+    expect(container.querySelector('header')?.className).not.toMatch(/border-[bt]/);
+    expect(container.innerHTML).not.toContain('border-divider-soft');
+
+    await user.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    expect(screen.getByRole('navigation', { name: '모바일 메뉴' })).toBeInTheDocument();
+    expect(container.innerHTML).not.toContain('border-divider-soft');
+  });
+
   it('hamburger click → mobile menu appears', async () => {
     const user = userEvent.setup();
     render(<Header />);

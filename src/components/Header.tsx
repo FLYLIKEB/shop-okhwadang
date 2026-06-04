@@ -64,8 +64,8 @@ export default function Header() {
       <header ref={headerRef} className={cn(
         'sticky top-0 z-50 transition-all duration-300 ease-in-out',
         isScrolled
-          ? 'bg-background/85 backdrop-blur-lg border-b border-divider-soft shadow-sm'
-          : 'bg-background border-b border-transparent',
+          ? 'bg-background/85 backdrop-blur-lg shadow-sm'
+          : 'bg-background',
       )}>
         {/* 2줄 헤더 — top: 로고/검색/액션 · bottom: GNB 전폭 균등 */}
         <div className="mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
@@ -101,7 +101,7 @@ export default function Header() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
               aria-label={t('searchLabel')}
-              className="w-full border-b border-divider-soft bg-transparent pl-1 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
+              className="w-full rounded-md bg-muted/40 pl-3 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-muted/60 transition-colors"
             />
             <button type="submit" aria-label={t('searchButton')} className="absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
               <Search className="h-4 w-4" />
@@ -162,7 +162,7 @@ export default function Header() {
         </div>
 
         {/* Bottom row — GNB 전폭 균등 분할 */}
-        <div className="hidden md:block border-t border-divider-soft">
+        <div className="hidden md:block">
           <div className="flex h-12 items-stretch justify-between px-4 md:px-20">
             <DesktopNav items={navItems} fullWidth />
           </div>
