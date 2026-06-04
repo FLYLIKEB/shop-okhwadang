@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { X } from 'lucide-react';
 import { useFormModal } from '@/components/shared/hooks/useFormModal';
 import type { NavigationItem } from '@/lib/api';
@@ -31,17 +32,20 @@ export default function NavigationFormModal({
   group,
   flatItems,
 }: NavigationFormModalProps) {
-  const defaults: NavigationFormData = {
+  const defaults = useMemo<NavigationFormData>(() => ({
     label: '',
     labelEn: '',
     url: '',
     group,
     parent_id: null,
     is_active: true,
-  };
-  const modalInitial: NavigationFormData | null = initial
-    ? { label: initial.label, labelEn: initial.labelEn ?? '', url: initial.url, group, parent_id: initial.parent_id, is_active: initial.is_active }
-    : null;
+  }), [group]);
+
+  const modalInitial = useMemo<NavigationFormData | null>(() => (
+    initial
+      ? { label: initial.label, labelEn: initial.labelEn ?? '', url: initial.url, group, parent_id: initial.parent_id, is_active: initial.is_active }
+      : null
+  ), [group, initial]);
   const { formData, setFormData, loading, handleSubmit } = useFormModal(defaults, modalInitial, open);
 
   if (!open) return null;
