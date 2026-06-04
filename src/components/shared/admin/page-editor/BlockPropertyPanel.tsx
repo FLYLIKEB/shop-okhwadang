@@ -10,7 +10,6 @@ import PersonCardListFields from './block-property-panel/blocks/PersonCardListFi
 import ProductCarouselFields from './block-property-panel/blocks/ProductCarouselFields';
 import ProductGridFields from './block-property-panel/blocks/ProductGridFields';
 import PromotionBannerFields from './block-property-panel/blocks/PromotionBannerFields';
-import SectionHeadingFields from './block-property-panel/blocks/SectionHeadingFields';
 import SplitContentFields from './block-property-panel/blocks/SplitContentFields';
 import TextContentFields from './block-property-panel/blocks/TextContentFields';
 import TimelineListFields from './block-property-panel/blocks/TimelineListFields';
@@ -53,12 +52,6 @@ export default function BlockPropertyPanel({ block, onUpdateContent }: BlockProp
         return <SplitContentFields content={block.content} onChange={handleChange} />;
       case 'journal_preview':
         return <JournalPreviewFields content={block.content} onChange={handleChange} />;
-      case 'archive_nilo':
-      case 'archive_process':
-      case 'archive_artist':
-      case 'collection_clay':
-      case 'collection_shape':
-        return <SectionHeadingFields content={block.content} onChange={handleChange} />;
       case 'color_card_list':
         return <ColorCardListFields content={block.content} onChange={handleChange} />;
       case 'timeline_list':

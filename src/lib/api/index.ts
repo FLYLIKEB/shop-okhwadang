@@ -30,8 +30,6 @@ export * from './inquiries';
 export * from './promotions';
 export * from './banners';
 export * from './settings';
-export * from './collections';
-export * from './archives';
 export * from './journals';
 
 // Admin modules

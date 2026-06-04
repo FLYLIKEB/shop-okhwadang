@@ -16,11 +16,6 @@ const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   split_content: '분할 콘텐츠',
   brand_story: '브랜드 이야기',
   journal_preview: '저널 미리보기',
-  archive_nilo: '닐로 (보이차 산지)',
-  archive_process: '제조 과정',
-  archive_artist: '장인',
-  collection_clay: '흙 컬렉션',
-  collection_shape: '형태 컬렉션',
   color_card_list: '색상 카드 리스트',
   timeline_list: '타임라인',
   person_card_list: '인물 카드',
@@ -68,12 +63,6 @@ function getContentSummary(block: DraftBlock): string {
       return (c.title as string) || (c.description as string) || '(내용 없음)';
     case 'journal_preview':
       return `${(c.title as string) || '저널'} · ${c.limit ?? 6}개`;
-    case 'archive_nilo':
-    case 'archive_process':
-    case 'archive_artist':
-    case 'collection_clay':
-    case 'collection_shape':
-      return (c.sectionTitle as string) || (c.sectionLabel as string) || '기본 섹션 문구 사용';
     case 'color_card_list':
       return `${(c.sectionTitle as string) || '색상 카드 리스트'} · ${Array.isArray(c.items) ? c.items.length : 0}개`;
     case 'timeline_list':
