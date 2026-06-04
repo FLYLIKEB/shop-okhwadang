@@ -11,6 +11,7 @@ import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import StarRating from '@/components/shared/reviews/StarRating';
 import { useWishlistToggle } from '@/components/shared/hooks/useWishlistToggle';
 import { useCart } from '@/contexts/CartContext';
+import { compactProductSummary } from '@/lib/collectionDisplay';
 import type { Locale } from '@/utils/currency';
 
 interface ProductCardProps {
@@ -194,7 +195,7 @@ function ProductCard({
 
           {shortDescription && (
             <p className="line-clamp-1 text-xs text-muted-foreground leading-relaxed">
-              {shortDescription}
+              {compactProductSummary(shortDescription)}
             </p>
           )}
         </div>
