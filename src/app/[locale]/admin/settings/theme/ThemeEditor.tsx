@@ -122,11 +122,11 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
   return (
     <div
       className="space-y-4 rounded-lg border p-4"
-      style={{ background: isDark ? 'var(--db-color-dark-background, #141210)' : 'var(--color-background)' }}
+      style={{ background: isDark ? 'var(--db-color-dark-background, #121212)' : 'var(--color-background)' }}
     >
       <h3
         className="text-sm font-semibold uppercase tracking-wide"
-        style={{ color: isDark ? 'var(--db-color-dark-muted-foreground, #9B8E7E)' : 'var(--color-muted-foreground)' }}
+        style={{ color: isDark ? 'var(--db-color-dark-muted-foreground, #909090)' : 'var(--color-muted-foreground)' }}
       >
         라이브 프리뷰 {isDark ? '(다크)' : '(라이트)'}
       </h3>
@@ -134,8 +134,8 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
         <button
           className="rounded-md px-4 py-2 text-sm hover:opacity-90"
           style={{
-            background: isDark ? 'var(--db-color-dark-primary, #C4956A)' : 'var(--color-primary)',
-            color: isDark ? 'var(--db-color-dark-primary-foreground, #141210)' : 'var(--color-primary-foreground)',
+            background: isDark ? 'var(--db-color-dark-primary, #9C9C9C)' : 'var(--color-primary)',
+            color: isDark ? 'var(--db-color-dark-primary-foreground, #121212)' : 'var(--color-primary-foreground)',
           }}
         >
           Primary 버튼
@@ -143,8 +143,8 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
         <button
           className="rounded-md px-4 py-2 text-sm hover:opacity-90"
           style={{
-            background: isDark ? 'var(--db-color-dark-secondary, #1E1C18)' : 'var(--color-secondary)',
-            color: isDark ? 'var(--db-color-dark-secondary-foreground, #E8E0D4)' : 'var(--color-secondary-foreground)',
+            background: isDark ? 'var(--db-color-dark-secondary, #1C1C1C)' : 'var(--color-secondary)',
+            color: isDark ? 'var(--db-color-dark-secondary-foreground, #E1E1E1)' : 'var(--color-secondary-foreground)',
           }}
         >
           Secondary 버튼
@@ -159,19 +159,19 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
       <div
         className="rounded-lg border p-4 shadow-sm"
         style={{
-          background: isDark ? 'var(--db-color-dark-card, #1A1714)' : 'var(--color-card)',
-          borderColor: isDark ? 'var(--db-color-dark-border, #2E2822)' : 'var(--color-border)',
+          background: isDark ? 'var(--db-color-dark-card, #171717)' : 'var(--color-card)',
+          borderColor: isDark ? 'var(--db-color-dark-border, #292929)' : 'var(--color-border)',
         }}
       >
         <h4
           className="font-semibold"
-          style={{ color: isDark ? 'var(--db-color-dark-card-foreground, #F0EDE8)' : 'var(--color-card-foreground)' }}
+          style={{ color: isDark ? 'var(--db-color-dark-card-foreground, #EDEDED)' : 'var(--color-card-foreground)' }}
         >
           카드 제목
         </h4>
         <p
           className="mt-1 text-sm"
-          style={{ color: isDark ? 'var(--db-color-dark-muted-foreground, #9B8E7E)' : 'var(--color-muted-foreground)' }}
+          style={{ color: isDark ? 'var(--db-color-dark-muted-foreground, #909090)' : 'var(--color-muted-foreground)' }}
         >
           카드 본문 텍스트 예시입니다.
         </p>
@@ -179,19 +179,19 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
       <div className="space-y-1">
         <p
           className="text-lg font-bold"
-          style={{ color: isDark ? 'var(--db-color-dark-foreground, #F0EDE8)' : 'var(--color-foreground)' }}
+          style={{ color: isDark ? 'var(--db-color-dark-foreground, #EDEDED)' : 'var(--color-foreground)' }}
         >
           Heading 텍스트
         </p>
         <p
           className="text-sm"
-          style={{ color: isDark ? 'var(--db-color-dark-foreground, #F0EDE8)' : 'var(--color-foreground)' }}
+          style={{ color: isDark ? 'var(--db-color-dark-foreground, #EDEDED)' : 'var(--color-foreground)' }}
         >
           Body 텍스트 예시입니다.
         </p>
         <p
           className="text-sm"
-          style={{ color: isDark ? 'var(--db-color-dark-muted-foreground, #9B8E7E)' : 'var(--color-muted-foreground)' }}
+          style={{ color: isDark ? 'var(--db-color-dark-muted-foreground, #909090)' : 'var(--color-muted-foreground)' }}
         >
           Muted 텍스트 예시입니다.
         </p>
@@ -201,9 +201,9 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
         value="Input 필드 예시"
         className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
         style={{
-          background: isDark ? 'var(--db-color-dark-background, #141210)' : 'var(--color-background)',
-          borderColor: isDark ? 'var(--db-color-dark-input, #2E2822)' : 'var(--color-input)',
-          color: isDark ? 'var(--db-color-dark-foreground, #F0EDE8)' : 'var(--color-foreground)',
+          background: isDark ? 'var(--db-color-dark-background, #121212)' : 'var(--color-background)',
+          borderColor: isDark ? 'var(--db-color-dark-input, #292929)' : 'var(--color-input)',
+          color: isDark ? 'var(--db-color-dark-foreground, #EDEDED)' : 'var(--color-foreground)',
         }}
       />
     </div>

@@ -86,7 +86,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
               <div className="relative z-10 w-full px-8 md:px-16 max-w-3xl">
-                <p className="typo-label uppercase tracking-[0.35em] text-[#B8976A] mb-4 font-body">
+                <p className="typo-label uppercase tracking-[0.35em] text-primary mb-4 font-body">
                   {slideIndex === 0 ? t('primaryLabel') : `0${slideIndex + 1}`}
                 </p>
                 <h1 className="typo-h0 font-display text-white leading-tight">
@@ -94,12 +94,12 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                 </h1>
                 {slide.subtitle && (
                   <div className="mt-5 typo-body text-white/85 font-display leading-relaxed">
-                    <SafeHtml html={slide.subtitle} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline" />
+                    <SafeHtml html={slide.subtitle} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-primary hover:[&_a]:underline" />
                   </div>
                 )}
                 {slideIndex === 0 && description && (
                   <div className="mt-4 text-white/75">
-                    <SafeHtml html={description} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline" />
+                    <SafeHtml html={description} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-primary hover:[&_a]:underline" />
                   </div>
                 )}
                 {slide.cta_text && slide.cta_url && (
@@ -157,7 +157,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                 aria-label={t('goToSlide', { index: idx + 1 })}
                 className={cn(
                   'h-1.5 rounded-full transition-all duration-300',
-                  idx === selectedIndex ? 'w-6 bg-[#B8976A]' : 'w-1.5 bg-white/40 hover:bg-white/60',
+                  idx === selectedIndex ? 'w-6 bg-primary' : 'w-1.5 bg-white/40 hover:bg-white/60',
                 )}
               />
             ))}
@@ -286,7 +286,7 @@ export default function HeroBannerBlock({ content }: Props) {
           {description && (
             <SafeHtml
               html={description}
-              className={cn('mt-4 [&_p]:mt-1', image_url ? 'text-white/75 [&_strong]:text-white [&_b]:text-white [&_a]:text-[#B8976A] hover:[&_a]:underline' : 'text-muted-foreground [&_strong]:text-foreground [&_b]:text-foreground')}
+              className={cn('mt-4 [&_p]:mt-1', image_url ? 'text-white/75 [&_strong]:text-white [&_b]:text-white [&_a]:text-primary hover:[&_a]:underline' : 'text-muted-foreground [&_strong]:text-foreground [&_b]:text-foreground')}
             />
           )}
           {cta_text && cta_url && (
