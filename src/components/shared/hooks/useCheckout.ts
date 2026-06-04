@@ -74,6 +74,29 @@ export function useCheckout(options: UseCheckoutOptions) {
     }, 100);
   }, [options]);
 
+  const handleExternalRedirectFlow = useCallback(async (orderId: number, orderNumber: string, result: PreparePaymentResponse): Promise<void> => {
+    options.setCurrentOrderId(orderId);
+    options.setCurrentOrderNumber(orderNumber);
+    options.setPrepareResult(result);
+    options.setStep('confirming_payment');
+
+    // PaymentGateway renders after state update; give it a tick before invoking the redirect/open gateway.
+    setTimeout(async () => {
+      const gateway = options.paymentRef.current;
+      if (!gateway) {
+        options.setStep('idle');
+        toast.info('결제 수단을 확인하고 결제하기를 눌러주세요.');
+        return;
+      }
+
+      try {
+        await gateway.confirm();
+      } catch (err) {
+        handlePaymentError(handleApiError(err, '결제에 실패했습니다.'));
+      }
+    }, 100);
+  }, [options, handlePaymentError]);
+
   const handleMockFlow = useCallback(async (orderId: number, orderNumber: string): Promise<void> => {
     options.setStep('confirming_payment');
     await paymentsApi.confirm(
@@ -177,11 +200,7 @@ export function useCheckout(options: UseCheckoutOptions) {
       }
 
       if (result.gateway === 'paypal' || result.gateway === 'naverpay') {
-        options.setCurrentOrderId(order.id);
-        options.setCurrentOrderNumber(order.orderNumber);
-        options.setPrepareResult(result);
-        options.setStep('idle');
-        toast.info('결제 수단을 확인하고 결제하기를 눌러주세요.');
+        await handleExternalRedirectFlow(order.id, order.orderNumber, result);
         return;
       }
 
@@ -191,7 +210,7 @@ export function useCheckout(options: UseCheckoutOptions) {
       toast.error(handleApiError(err, '결제 중 오류가 발생했습니다.'));
       options.setStep('idle');
     }
-  }, [options, form, checkoutItems, locale, handlePreparedGatewayFlow, handleTossFlow, handleMockFlow]);
+  }, [options, form, checkoutItems, locale, handlePreparedGatewayFlow, handleTossFlow, handleExternalRedirectFlow, handleMockFlow]);
 
   return {
     handleSubmit,
