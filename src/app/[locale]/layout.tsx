@@ -115,6 +115,7 @@ export default async function LocaleLayout({
               <Toaster
                 position="top-center"
                 closeButton
+                swipeDirections={['top', 'right', 'bottom', 'left']}
                 toastOptions={{
                   style: {
                     fontFamily: 'var(--font-body)',
