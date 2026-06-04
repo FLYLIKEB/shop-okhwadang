@@ -36,3 +36,9 @@ describe('createPaymentConfig', () => {
     ).toThrow('Unknown PAYMENT_GATEWAY: legacy');
   });
 });
+
+it('PayPal KRW→USD 환율은 env 값 또는 기본값을 사용한다', () => {
+  expect(createPaymentConfig({ NODE_ENV: 'development' }).paypal.krwPerUsd).toBe(1350);
+  expect(createPaymentConfig({ NODE_ENV: 'development', PAYPAL_KRW_PER_USD: '1400' }).paypal.krwPerUsd).toBe(1400);
+  expect(createPaymentConfig({ NODE_ENV: 'development', PAYPAL_KRW_PER_USD: '0' }).paypal.krwPerUsd).toBe(1350);
+});

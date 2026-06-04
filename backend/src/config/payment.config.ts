@@ -35,6 +35,7 @@ export interface PaymentConfig {
     clientSecret: string;
     webhookId: string;
     apiBaseUrl: string;
+    krwPerUsd: number;
   };
 }
 
@@ -52,6 +53,7 @@ function isPaymentGatewayName(value: string): value is PaymentGatewayName {
 export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): PaymentConfig {
   const nodeEnv = env.NODE_ENV ?? 'development';
   const gateway = (env.PAYMENT_GATEWAY ?? 'mock').trim().toLowerCase();
+  const paypalKrwPerUsd = parsePositiveNumber(env.PAYPAL_KRW_PER_USD, 1350);
 
   if (nodeEnv === 'production' && (gateway === 'mock' || !env.PAYMENT_GATEWAY)) {
     throw new Error(
@@ -97,6 +99,7 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
         env.PAYPAL_API_BASE_URL
         ?? (nodeEnv === 'production' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com')
       ).replace(/\/$/, ''),
+      krwPerUsd: paypalKrwPerUsd,
     },
   };
 }
@@ -105,3 +108,9 @@ export const paymentConfigProvider: Provider = {
   provide: PAYMENT_CONFIG,
   useFactory: () => createPaymentConfig(),
 };
+
+function parsePositiveNumber(value: string | undefined, fallback: number): number {
+  if (!value || !value.trim()) return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}

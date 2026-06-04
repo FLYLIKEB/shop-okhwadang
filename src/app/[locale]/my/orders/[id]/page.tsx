@@ -1,16 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { ordersApi } from '@/lib/api';
-import type { OrderResponse } from '@/lib/api';
+import { ordersApi, paymentsApi } from '@/lib/api';
+import type { CheckoutGatewayName, OrderResponse, PreparePaymentResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { Button } from '@/components/ui/button';
 import ShippingTimeline from '@/components/shared/ShippingTimeline';
+import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
+import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMethodSelector';
+import type { PaymentStep } from '@/components/shared/hooks/useCheckout';
+import { handleApiError } from '@/utils/error';
+import { toast } from 'sonner';
+import type { Locale } from '@/i18n/routing';
 
 const STATUS_TIMELINE = ['pending', 'paid', 'preparing', 'shipped', 'delivered'];
 
@@ -20,9 +27,17 @@ export default function OrderDetailPage() {
   const tOrder = useTranslations('order');
   const tMy = useTranslations('myPage');
   const t = useTranslations('orderDetail');
+  const tCheckout = useTranslations('checkout');
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const checkoutLocale: Locale = locale === 'en' ? 'en' : 'ko';
+  const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(
+    checkoutLocale === 'ko' ? 'naverpay' : 'paypal',
+  );
+  const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
+  const [paymentStep, setPaymentStep] = useState<PaymentStep>('idle');
+  const paymentRef = useRef<PaymentGatewayHandle>(null);
 
   const { execute: loadOrder, isLoading: loading } = useAsyncAction(
     async () => {
@@ -36,6 +51,12 @@ export default function OrderDetailPage() {
     },
     { onError: () => setNotFound(true) },
   );
+
+  useEffect(() => {
+    setSelectedGateway(checkoutLocale === 'ko' ? 'naverpay' : 'paypal');
+    setPrepareResult(null);
+    setPaymentStep('idle');
+  }, [checkoutLocale]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -63,6 +84,53 @@ export default function OrderDetailPage() {
   }
 
   const currentStatusIndex = STATUS_TIMELINE.indexOf(order.status);
+  const gatewayOptions: CheckoutGatewayName[] = checkoutLocale === 'ko'
+    ? ['naverpay', 'paypal']
+    : ['paypal', 'naverpay'];
+  const stepLabels: Record<PaymentStep, string> = {
+    idle: tCheckout('steps.idle'),
+    creating_order: tCheckout('steps.creating_order'),
+    preparing_payment: tCheckout('steps.preparing_payment'),
+    confirming_payment: tCheckout('steps.confirming_payment'),
+    success: tCheckout('steps.success'),
+  };
+  const isPaymentPending = order.status === 'pending';
+  const shouldShowShippingTracking = !['pending', 'cancelled', 'refunded'].includes(order.status);
+  const payableAmount = Number(order.totalAmount);
+
+  const handlePaymentError = (message: string) => {
+    toast.error(message);
+    setPaymentStep('idle');
+  };
+
+  const handlePendingPayment = async () => {
+    if (!isPaymentPending) return;
+
+    if (prepareResult && paymentRef.current) {
+      setPaymentStep('confirming_payment');
+      try {
+        await paymentRef.current.confirm();
+      } catch (err) {
+        toast.error(handleApiError(err, '결제 중 오류가 발생했습니다.'));
+        setPaymentStep('idle');
+      }
+      return;
+    }
+
+    setPaymentStep('preparing_payment');
+    try {
+      const result = await paymentsApi.prepare({
+        orderId: order.id,
+        locale: checkoutLocale,
+        gateway: selectedGateway,
+      });
+      setPrepareResult(result);
+      setPaymentStep('idle');
+    } catch (err) {
+      toast.error(handleApiError(err, '결제 중 오류가 발생했습니다.'));
+      setPaymentStep('idle');
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
@@ -114,8 +182,40 @@ export default function OrderDetailPage() {
         )}
 
         {/* Shipping tracking */}
-        {!['cancelled', 'refunded'].includes(order.status) && (
+        {shouldShowShippingTracking && (
           <ShippingTimeline orderId={Number(params.id)} />
+        )}
+
+        {/* Pending payment */}
+        {isPaymentPending && (
+          <section className="rounded-lg border p-6">
+            <h2 className="mb-4 text-base font-semibold">{tCheckout('paymentMethod')}</h2>
+            {prepareResult ? (
+              <PaymentGateway
+                ref={paymentRef}
+                prepareResult={prepareResult}
+                orderId={order.id}
+                orderNumber={order.orderNumber}
+                amount={payableAmount}
+                locale={checkoutLocale}
+                onError={handlePaymentError}
+              />
+            ) : (
+              <PaymentMethodSelector
+                gatewayOptions={gatewayOptions}
+                selectedGateway={selectedGateway}
+                onSelect={setSelectedGateway}
+              />
+            )}
+            <Button
+              type="button"
+              disabled={paymentStep !== 'idle'}
+              className="mt-4 w-full md:w-auto"
+              onClick={handlePendingPayment}
+            >
+              {stepLabels[paymentStep]}
+            </Button>
+          </section>
         )}
 
         {/* Order items */}

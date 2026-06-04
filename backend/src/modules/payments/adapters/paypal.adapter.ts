@@ -44,6 +44,7 @@ export class PayPalPaymentAdapter implements PaymentGateway {
   private readonly webhookId: string;
   private readonly apiBaseUrl: string;
   private readonly frontendUrl: string;
+  private readonly krwPerUsd: number;
 
   constructor(@Inject(PAYMENT_CONFIG) config: PaymentConfig) {
     this.clientId = config.paypal.clientId;
@@ -51,6 +52,7 @@ export class PayPalPaymentAdapter implements PaymentGateway {
     this.webhookId = config.paypal.webhookId;
     this.apiBaseUrl = config.paypal.apiBaseUrl;
     this.frontendUrl = config.frontendUrl;
+    this.krwPerUsd = config.paypal.krwPerUsd;
   }
 
   async prepare(orderId: string, amount: number, context?: PrepareContext): Promise<PrepareResult> {
@@ -65,7 +67,7 @@ export class PayPalPaymentAdapter implements PaymentGateway {
             reference_id: orderId,
             amount: {
               currency_code: 'USD',
-              value: formatPayPalAmount(amount),
+              value: formatPayPalUsdAmount(amount, this.krwPerUsd),
             },
           },
         ],
@@ -138,7 +140,7 @@ export class PayPalPaymentAdapter implements PaymentGateway {
     if (params.cancelAmount > 0) {
       payload.amount = {
         currency_code: 'USD',
-        value: formatPayPalAmount(params.cancelAmount),
+        value: formatPayPalUsdAmount(params.cancelAmount, this.krwPerUsd),
       };
     }
 
@@ -267,8 +269,8 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
-function formatPayPalAmount(amount: number): string {
-  return Number(amount).toFixed(2);
+function formatPayPalUsdAmount(krwAmount: number, krwPerUsd: number): string {
+  return (Number(krwAmount) / krwPerUsd).toFixed(2);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

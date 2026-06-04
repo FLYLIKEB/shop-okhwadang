@@ -18,6 +18,7 @@ describe('PayPalPaymentAdapter', () => {
         PAYPAL_CLIENT_SECRET: 'paypal-secret',
         PAYPAL_WEBHOOK_ID: 'paypal-webhook',
         FRONTEND_URL: 'https://shop.example.com',
+        PAYPAL_KRW_PER_USD: '1350',
       }),
     );
   });
@@ -60,6 +61,11 @@ describe('PayPalPaymentAdapter', () => {
           body: expect.stringContaining('https://shop.example.com/en/checkout/success'),
         }),
       );
+      const createOrderBody = JSON.parse(mockFetch.mock.calls.at(-1)?.[1]?.body as string);
+      expect(createOrderBody.purchase_units[0].amount).toEqual({
+        currency_code: 'USD',
+        value: '7.41',
+      });
     });
   });
 
@@ -125,6 +131,8 @@ describe('PayPalPaymentAdapter', () => {
         'https://api-m.sandbox.paypal.com/v2/payments/captures/CAPTURE-1/refund',
         expect.objectContaining({ method: 'POST' }),
       );
+      const refundBody = JSON.parse(mockFetch.mock.calls.at(-1)?.[1]?.body as string);
+      expect(refundBody.amount).toEqual({ currency_code: 'USD', value: '3.70' });
     });
   });
 

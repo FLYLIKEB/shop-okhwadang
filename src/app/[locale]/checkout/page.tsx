@@ -15,6 +15,7 @@ import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
 import { SESSION_KEYS } from '@/constants/storage';
 import type { Locale } from '@/i18n/routing';
 import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
+import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMethodSelector';
 import { AddressSelectorSection } from '@/components/shared/checkout/AddressSelectorSection';
 import { OrderSummarySection } from '@/components/shared/checkout/OrderSummarySection';
 import {
@@ -258,42 +259,11 @@ export default function CheckoutPage({
                     onError={handlePaymentError}
                   />
                 ) : (
-                  <div className="layout-stack-sm">
-                    <p className="typo-body-sm text-muted-foreground">{t('paymentMethodHint')}</p>
-                    <div className="grid gap-3 md:grid-cols-2" role="radiogroup" aria-label={t('paymentMethod')}>
-                      {gatewayOptions.map((gateway) => (
-                        <label
-                          key={gateway}
-                          className={cn(
-                            'flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-border p-3 transition-colors',
-                            selectedGateway === gateway ? 'bg-muted/40' : 'bg-background',
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name="checkoutGateway"
-                            value={gateway}
-                            checked={selectedGateway === gateway}
-                            onChange={() => setSelectedGateway(gateway)}
-                            className="mt-1 accent-foreground"
-                          />
-                          <span className="layout-stack-xs">
-                            <span className="flex items-center gap-2 typo-body-sm text-foreground">
-                              {t(gateway === 'naverpay' ? 'naverpayPayment' : 'paypalPayment')}
-                              {gateway === 'naverpay' && (
-                                <span className="rounded-sm bg-muted px-2 py-0.5 typo-label text-muted-foreground" title={t('naverpayDomesticHint')}>
-                                  {t('naverpayDomesticBadge')}
-                                </span>
-                              )}
-                            </span>
-                            {gateway === 'naverpay' && (
-                              <span className="typo-label text-muted-foreground">{t('naverpayDomesticHint')}</span>
-                            )}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                  <PaymentMethodSelector
+                    gatewayOptions={gatewayOptions}
+                    selectedGateway={selectedGateway}
+                    onSelect={setSelectedGateway}
+                  />
                 )}
               </div>
             </section>

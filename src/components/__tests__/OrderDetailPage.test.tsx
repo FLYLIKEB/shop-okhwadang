@@ -1,0 +1,149 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { forwardRef, useImperativeHandle } from 'react';
+import OrderDetailPage from '@/app/[locale]/my/orders/[id]/page';
+import { ordersApi, paymentsApi } from '@/lib/api';
+import type { OrderResponse } from '@/lib/api';
+
+function makeTranslator(namespace?: string) {
+  const dict: Record<string, string> = {
+    title: '마이페이지',
+    orderHistory: '주문 내역',
+    shippingStatus: '주문 상태',
+    orderItems: '주문 상품',
+    paymentSummary: '결제 금액',
+    productAmount: '상품 금액',
+    discountAmount: '할인 금액',
+    shippingFee: '배송비',
+    total: '합계',
+    shippingAddress: '배송지',
+    recipient: '받는 분',
+    phone: '연락처',
+    address: '주소',
+    deliveryMemo: '배송 메모',
+    freeShipping: '무료',
+    notFound: '주문을 찾을 수 없습니다.',
+    backToOrders: '주문 목록으로',
+    paymentMethod: '결제 수단',
+    paymentMethodHint: '주문 정보 입력 후 결제 수단이 표시됩니다.',
+    paypalPayment: 'PayPal',
+    naverpayPayment: '네이버페이',
+    naverpayDomesticBadge: '국내 전용',
+    naverpayDomesticHint: '해외 사용자는 결제가 실패할 수 있습니다.',
+    'steps.idle': '결제하기',
+    'steps.creating_order': '주문 생성 중...',
+    'steps.preparing_payment': '결제 준비 중...',
+    'steps.confirming_payment': '결제 확인 중...',
+    'steps.success': '완료',
+    'status.pending': '결제대기',
+    'status.paid': '결제완료',
+    'status.preparing': '상품준비',
+    'status.shipped': '배송중',
+    'status.delivered': '배송완료',
+  };
+  const fn = ((key: string, vars?: Record<string, unknown>) => {
+    if (key === 'quantity') return `${vars?.count ?? 0}개`;
+    return dict[key] ?? `${namespace ? `${namespace}.` : ''}${key}`;
+  }) as ((key: string, vars?: Record<string, unknown>) => string) & { has: (key: string) => boolean };
+  fn.has = (key: string) => key in dict;
+  return fn;
+}
+
+vi.mock('next-intl', () => ({
+  useLocale: () => 'ko',
+  useTranslations: (namespace?: string) => makeTranslator(namespace),
+}));
+
+vi.mock('next/navigation', () => ({
+  useParams: () => ({ id: '16' }),
+}));
+
+vi.mock('sonner', () => ({
+  toast: { error: vi.fn(), info: vi.fn(), success: vi.fn() },
+}));
+
+vi.mock('@/components/shared/hooks/useRequireAuth', () => ({
+  useRequireAuth: () => ({ isAuthenticated: true, isLoading: false }),
+}));
+
+vi.mock('@/contexts/GlobalLoadingContext', () => ({
+  useGlobalLoading: () => ({ startLoading: vi.fn(), stopLoading: vi.fn() }),
+}));
+
+vi.mock('@/components/shared/ShippingTimeline', () => ({
+  default: ({ orderId }: { orderId: number }) => <div data-testid="shipping-timeline">shipping {orderId}</div>,
+}));
+
+vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
+  default: forwardRef(function MockPaymentGateway(_props: unknown, ref) {
+    useImperativeHandle(ref, () => ({ confirm: vi.fn() }));
+    return <div data-testid="payment-gateway">PaymentGateway</div>;
+  }),
+}));
+
+vi.mock('@/lib/api', () => ({
+  ordersApi: { getById: vi.fn() },
+  paymentsApi: { prepare: vi.fn() },
+}));
+
+const pendingOrder: OrderResponse = {
+  id: 16,
+  orderNumber: 'ORD-16',
+  status: 'pending',
+  totalAmount: 30000,
+  discountAmount: 0,
+  shippingFee: 0,
+  recipientName: '홍길동',
+  recipientPhone: '010-1234-5678',
+  zipcode: '06000',
+  address: '서울시 강남구',
+  addressDetail: null,
+  memo: null,
+  createdAt: '2026-06-04T00:00:00.000Z',
+  items: [
+    { id: 1, productId: 1, productOptionId: null, productName: '찻잔', optionName: null, price: 30000, quantity: 1 },
+  ],
+};
+
+describe('OrderDetailPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(ordersApi.getById).mockResolvedValue(pendingOrder);
+  });
+
+  it('결제대기 주문에서는 배송 추적을 숨기고 결제 수단 선택을 노출한다', async () => {
+    render(<OrderDetailPage />);
+
+    expect(await screen.findByText('ORD-16')).toBeInTheDocument();
+    expect(screen.queryByTestId('shipping-timeline')).toBeNull();
+    expect(screen.getByLabelText(/네이버페이/)).toBeChecked();
+    expect(screen.getByLabelText(/PayPal/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '결제하기' })).toBeInTheDocument();
+  });
+
+  it('결제대기 주문에서 PayPal 선택 후 결제 준비 API를 호출하고 동일 PaymentGateway 컴포넌트로 전환한다', async () => {
+    const user = userEvent.setup();
+    vi.mocked(paymentsApi.prepare).mockResolvedValue({
+      paymentId: 10,
+      orderId: 16,
+      orderNumber: 'ORD-16',
+      amount: 30000,
+      gateway: 'paypal',
+      clientKey: 'paypal-client',
+      redirectUrl: 'https://www.paypal.com/checkoutnow?token=PAYPAL-16',
+      availableGateways: ['naverpay', 'paypal'],
+    });
+
+    render(<OrderDetailPage />);
+
+    await screen.findByText('ORD-16');
+    await user.click(screen.getByLabelText(/PayPal/));
+    await user.click(screen.getByRole('button', { name: '결제하기' }));
+
+    await waitFor(() => {
+      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 16, locale: 'ko', gateway: 'paypal' });
+    });
+    expect(await screen.findByTestId('payment-gateway')).toBeInTheDocument();
+  });
+});

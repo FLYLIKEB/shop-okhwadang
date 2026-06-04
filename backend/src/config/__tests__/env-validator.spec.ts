@@ -1,4 +1,9 @@
-import { validateEnv, assertEnv, REQUIRED_PROD_ENV_KEYS } from '../env-validator';
+import {
+  validateEnv,
+  assertEnv,
+  REQUIRED_PROD_ENV_KEYS,
+  CHECKOUT_PROD_ENV_KEYS,
+} from '../env-validator';
 
 const makeFullEnv = (): NodeJS.ProcessEnv => ({
   NODE_ENV: 'production',
@@ -15,6 +20,12 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   KAKAO_CLIENT_ID: 'kakao-client',
   KAKAO_CLIENT_SECRET: 'kakao-secret',
   KAKAO_REDIRECT_URI: 'https://ockhwadang.com/auth/kakao/callback',
+  NAVERPAY_PARTNER_ID: 'naver-partner',
+  NAVERPAY_CLIENT_ID: 'naver-client',
+  NAVERPAY_CLIENT_SECRET: 'naver-secret',
+  NAVERPAY_CHAIN_ID: 'naver-chain',
+  PAYPAL_CLIENT_ID: 'paypal-client',
+  PAYPAL_CLIENT_SECRET: 'paypal-secret',
 });
 
 describe('validateEnv', () => {
@@ -26,6 +37,16 @@ describe('validateEnv', () => {
 
   it('필수 키가 모두 있으면 빈 배열 반환', () => {
     expect(validateEnv(makeFullEnv())).toEqual([]);
+  });
+
+  it('프로덕션 체크아웃에서 PayPal/NaverPay 키 누락을 배포 전 검출', () => {
+    const env = makeFullEnv();
+    delete env.PAYPAL_CLIENT_SECRET;
+    delete env.NAVERPAY_CHAIN_ID;
+
+    const errorKeys = validateEnv(env).map((e) => e.key);
+    expect(errorKeys).toContain('PAYPAL_CLIENT_SECRET');
+    expect(errorKeys).toContain('NAVERPAY_CHAIN_ID');
   });
 
   it('누락된 키가 있으면 해당 키 에러 반환', () => {
@@ -54,7 +75,7 @@ describe('validateEnv', () => {
     const env: NodeJS.ProcessEnv = { NODE_ENV: 'production' };
     const errors = validateEnv(env);
     // NODE_ENV는 있으므로 나머지 키들이 모두 에러로 나와야 함
-    const missing = REQUIRED_PROD_ENV_KEYS.filter((k) => k !== 'NODE_ENV');
+    const missing = [...REQUIRED_PROD_ENV_KEYS, ...CHECKOUT_PROD_ENV_KEYS].filter((k) => k !== 'NODE_ENV');
     const errorKeys = errors.map((e) => e.key);
     for (const key of missing) {
       expect(errorKeys).toContain(key);

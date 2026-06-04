@@ -138,7 +138,12 @@ backend/.env.example      # 키 목록 (커밋 O, 값 없음)
 
 > **`.env` 파일은 절대 커밋하지 않습니다.** `.env.example`에 키 목록만 기록합니다.
 
-| `PAYPAL_CLIENT_ID` | — | PayPal REST API client ID |
-| `PAYPAL_CLIENT_SECRET` | — | PayPal REST API client secret |
+| `NAVERPAY_PARTNER_ID` | — | NaverPay partner ID (프로덕션 체크아웃 필수) |
+| `NAVERPAY_CLIENT_ID` | — | NaverPay client ID (프로덕션 체크아웃 필수) |
+| `NAVERPAY_CLIENT_SECRET` | — | NaverPay client secret (프로덕션 체크아웃 필수) |
+| `NAVERPAY_CHAIN_ID` | — | NaverPay chain ID (프로덕션 체크아웃 필수) |
+| `PAYPAL_CLIENT_ID` | — | PayPal REST API client ID (프로덕션 체크아웃 필수) |
+| `PAYPAL_CLIENT_SECRET` | — | PayPal REST API client secret (프로덕션 체크아웃 필수) |
 | `PAYPAL_WEBHOOK_ID` | — | PayPal webhook signature verification ID |
 | `PAYPAL_API_BASE_URL` | sandbox/prod default | PayPal REST API base URL override |
+| `PAYPAL_KRW_PER_USD` | `1350` | PayPal USD 결제를 위한 KRW→USD 환산 기준 |
