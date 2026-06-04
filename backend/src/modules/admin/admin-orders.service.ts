@@ -94,6 +94,7 @@ export class AdminOrdersService {
 
     await this.dataSource.transaction(async (manager) => {
       await manager.update(Order, orderId, { status: nextStatus });
+      await this.syncShippingStatus(manager, orderId, nextStatus);
 
       if (this.shouldRestoreStockAndPoints(currentStatus, nextStatus)) {
         await this.restoreStock(manager, orderId);
@@ -117,6 +118,27 @@ export class AdminOrdersService {
   private shouldRestoreStockAndPoints(currentStatus: OrderStatus, nextStatus: OrderStatus): boolean {
     const restoreTargets = new Set<OrderStatus>([OrderStatus.CANCELLED, OrderStatus.REFUNDED]);
     return !restoreTargets.has(currentStatus) && restoreTargets.has(nextStatus);
+  }
+
+  private async syncShippingStatus(
+    manager: EntityManager,
+    orderId: number,
+    nextStatus: OrderStatus,
+  ): Promise<void> {
+    if (nextStatus === OrderStatus.SHIPPED) {
+      await manager.update(Shipping, { orderId }, {
+        status: ShippingStatus.SHIPPED,
+        shippedAt: new Date(),
+      });
+      return;
+    }
+
+    if (nextStatus === OrderStatus.DELIVERED) {
+      await manager.update(Shipping, { orderId }, {
+        status: ShippingStatus.DELIVERED,
+        deliveredAt: new Date(),
+      });
+    }
   }
 
   /**

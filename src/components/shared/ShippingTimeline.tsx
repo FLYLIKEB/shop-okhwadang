@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { shippingApi, type ShippingResponse } from '@/lib/api';
 import {
-  SHIPPING_STATUS_LABELS,
   CARRIER_NAMES,
   CARRIER_TRACKING_URLS,
 } from '@/constants/status';
@@ -17,6 +17,9 @@ interface Props {
 
 export default function ShippingTimeline({ orderId }: Props) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('shippingTracking');
+  const dateLocale = locale === 'en' ? 'en-US' : 'ko-KR';
   const [shipping, setShipping] = useState<ShippingResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,18 +38,18 @@ export default function ShippingTimeline({ orderId }: Props) {
       if (status === 404) {
         setShipping(null);
       } else if (status === 403) {
-        setError('접근 권한이 없습니다.');
+        setError(t('forbidden'));
       } else {
         if (silent) {
           setPollErrorCount((c) => c + 1);
         } else {
-          setError('배송 정보를 불러올 수 없습니다.');
+          setError(t('loadError'));
         }
       }
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, t]);
 
   useEffect(() => {
     fetchShipping();
@@ -70,7 +73,7 @@ export default function ShippingTimeline({ orderId }: Props) {
   if (loading) {
     return (
       <section className="rounded-lg border p-6" aria-busy="true">
-        <h2 className="mb-4 text-base font-semibold">배송 추적</h2>
+        <h2 className="mb-4 text-base font-semibold">{t('title')}</h2>
         <div className="space-y-2">
           <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
           <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
@@ -82,7 +85,7 @@ export default function ShippingTimeline({ orderId }: Props) {
   if (error) {
     return (
       <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-6">
-        <h2 className="mb-2 text-base font-semibold">배송 추적</h2>
+        <h2 className="mb-2 text-base font-semibold">{t('title')}</h2>
         <p className="text-sm text-destructive">{error}</p>
       </section>
     );
@@ -95,24 +98,27 @@ export default function ShippingTimeline({ orderId }: Props) {
     shipping.tracking_number && shipping.carrier !== 'mock'
       ? (CARRIER_TRACKING_URLS[shipping.carrier] ?? null)
       : null;
+  const trackingHref = trackingUrl && shipping.tracking_number
+    ? `${trackingUrl}${encodeURIComponent(shipping.tracking_number)}`
+    : null;
 
   return (
     <section className="rounded-lg border p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold">배송 추적</h2>
+        <h2 className="text-base font-semibold">{t('title')}</h2>
         <div className="flex items-center gap-2">
           {isPolling && (
-            <span className="text-xs text-muted-foreground">자동 업데이트 중</span>
+            <span className="text-xs text-muted-foreground">{t('polling')}</span>
           )}
           {pollErrorCount >= 3 && (
-            <span className="text-xs text-destructive">자동 업데이트 중단됨</span>
+            <span className="text-xs text-destructive">{t('pollingStopped')}</span>
           )}
           <button
             onClick={() => fetchShipping()}
             className="text-xs text-muted-foreground underline hover:text-foreground"
-            aria-label="배송 상태 새로고침"
+            aria-label={t('refreshLabel')}
           >
-            새로고침
+            {t('refresh')}
           </button>
         </div>
       </div>
@@ -128,21 +134,21 @@ export default function ShippingTimeline({ orderId }: Props) {
                     ? 'bg-foreground text-background'
                     : 'bg-muted text-muted-foreground'
                 }`}
-                aria-label={index <= currentIndex ? `${SHIPPING_STATUS_LABELS[step]} 완료` : SHIPPING_STATUS_LABELS[step]}
+                aria-label={index <= currentIndex ? t('stepCompleted', { status: t(step) }) : t(step)}
               >
                 {index < currentIndex ? '✓' : index + 1}
               </div>
               <span className="text-center text-xs whitespace-nowrap">
-                {SHIPPING_STATUS_LABELS[step]}
+                {t(step)}
               </span>
               {step === 'shipped' && shipping.shipped_at && (
                 <span className="text-center text-xs text-muted-foreground">
-                  {new Date(shipping.shipped_at).toLocaleDateString('ko-KR')}
+                  {new Date(shipping.shipped_at).toLocaleDateString(dateLocale)}
                 </span>
               )}
               {step === 'delivered' && shipping.delivered_at && (
                 <span className="text-center text-xs text-muted-foreground">
-                  {new Date(shipping.delivered_at).toLocaleDateString('ko-KR')}
+                  {new Date(shipping.delivered_at).toLocaleDateString(dateLocale)}
                 </span>
               )}
             </div>
@@ -160,28 +166,28 @@ export default function ShippingTimeline({ orderId }: Props) {
       {/* Carrier info */}
       <div className="mb-4 rounded-md bg-muted/40 p-3 text-sm">
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">택배사</span>
+          <span className="text-muted-foreground">{t('carrier')}</span>
           <span className="font-medium">{CARRIER_NAMES[shipping.carrier] ?? shipping.carrier}</span>
         </div>
         {shipping.tracking_number ? (
           <div className="mt-1 flex items-center gap-2">
-            <span className="text-muted-foreground">운송장</span>
+            <span className="text-muted-foreground">{t('trackingNumber')}</span>
             <span className="font-mono font-medium">{shipping.tracking_number}</span>
-            {trackingUrl && (
+            {trackingHref && (
               <a
-                href={`${trackingUrl}${shipping.tracking_number}`}
+                href={trackingHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-primary underline"
-                aria-label={`${CARRIER_NAMES[shipping.carrier] ?? shipping.carrier} 사이트에서 배송 추적 (새 탭에서 열림)`}
+                aria-label={t('trackingLinkLabel', { carrier: CARRIER_NAMES[shipping.carrier] ?? shipping.carrier })}
               >
-                택배사 사이트에서 보기 →
+                {t('trackingLink')}
               </a>
             )}
           </div>
         ) : (
           <p className="mt-1 text-xs text-muted-foreground">
-            배송 준비 중입니다. 운송장 번호가 등록되면 알려드립니다.
+            {t('noTrackingNumber')}
           </p>
         )}
       </div>
@@ -195,7 +201,7 @@ export default function ShippingTimeline({ orderId }: Props) {
               <div>
                 <span className="font-medium">{step.description}</span>
                 <span className="ml-2 text-xs text-muted-foreground">
-                  {new Date(step.timestamp).toLocaleString('ko-KR')}
+                  {new Date(step.timestamp).toLocaleString(dateLocale)}
                 </span>
               </div>
             </li>
@@ -205,7 +211,7 @@ export default function ShippingTimeline({ orderId }: Props) {
 
       {shipping.tracking?.estimatedDelivery && (
         <p className="mt-3 text-sm text-muted-foreground">
-          예상 배송일: {shipping.tracking.estimatedDelivery}
+          {t('estimatedDelivery', { date: shipping.tracking.estimatedDelivery })}
         </p>
       )}
     </section>

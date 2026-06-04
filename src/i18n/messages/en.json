@@ -959,6 +959,27 @@
       "other": "Other"
     }
   },
+  "shippingTracking": {
+    "title": "Shipping Tracking",
+    "payment_confirmed": "Payment Confirmed",
+    "preparing": "Preparing Items",
+    "shipped": "Shipment Started",
+    "in_transit": "In Transit",
+    "delivered": "Delivered",
+    "stepCompleted": "{status} completed",
+    "carrier": "Carrier",
+    "trackingNumber": "Tracking No.",
+    "trackingLink": "View on carrier site →",
+    "trackingLinkLabel": "Track shipment on {carrier} site (opens in a new tab)",
+    "noTrackingNumber": "Preparing shipment. We will show the tracking number once it is registered.",
+    "refresh": "Refresh",
+    "refreshLabel": "Refresh shipping status",
+    "polling": "Auto-updating",
+    "pollingStopped": "Auto-update stopped",
+    "loadError": "Unable to load shipping information.",
+    "forbidden": "You do not have permission to view this shipment.",
+    "estimatedDelivery": "Estimated delivery: {date}"
+  },
   "orderDetail": {
     "notFound": "Order not found.",
     "backToOrders": "Back to orders",

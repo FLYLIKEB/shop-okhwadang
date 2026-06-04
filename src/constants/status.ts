@@ -20,14 +20,6 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
   refunded: 'bg-red-100 text-red-800',
 };
 
-export const SHIPPING_STATUS_LABELS: Record<string, string> = {
-  payment_confirmed: '결제 완료',
-  preparing: '상품 준비중',
-  shipped: '배송 시작',
-  in_transit: '배송 중',
-  delivered: '배송 완료',
-};
-
 export const CARRIER_NAMES: Record<CarrierCode, string> = {
   mock: '테스트 택배',
   cj: 'CJ대한통운',
@@ -36,7 +28,7 @@ export const CARRIER_NAMES: Record<CarrierCode, string> = {
 };
 
 export const CARRIER_TRACKING_URLS: Partial<Record<CarrierCode, string>> = {
-  cj: 'https://www.doortodoor.co.kr/parcel/doortodoor.do?fsp_action=PARC_ACT_002&invc_no=',
+  cj: 'https://trace.cjlogistics.com/next/tracking.html?wblNo=',
   hanjin: 'https://www.hanjin.com/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wbl_num=',
   lotte: 'https://www.lotteglogis.com/home/reservation/tracking/index?InvNo=',
 };

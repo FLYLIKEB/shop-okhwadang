@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 import { AdminOrdersService } from '../admin-orders.service';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
-import { Shipping } from '../../payments/entities/shipping.entity';
+import { Shipping, ShippingStatus } from '../../payments/entities/shipping.entity';
 import { PaymentsService } from '../../payments/payments.service';
 import { MembershipService } from '../../membership/membership.service';
 import { PointsService } from '../../points/points.service';
@@ -128,14 +128,33 @@ describe('AdminOrdersService', () => {
         .rejects.toThrow(BadRequestException);
     });
 
-    it('preparing → shipped: allowed with tracking number', async () => {
+    it('preparing → shipped: allowed with tracking number and marks shipping as shipped', async () => {
       orderRepo.findOne
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PREPARING })
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.SHIPPED });
-      shippingRepo.findOne.mockResolvedValue({ trackingNumber: '123456' });
+      shippingRepo.findOne.mockResolvedValue({ orderId: 1, status: ShippingStatus.PREPARING, trackingNumber: '123456' });
 
       await service.updateStatus(1, OrderStatus.SHIPPED);
       expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.SHIPPED });
+      expect(mockManager.update).toHaveBeenCalledWith(
+        Shipping,
+        { orderId: 1 },
+        expect.objectContaining({ status: ShippingStatus.SHIPPED, shippedAt: expect.any(Date) }),
+      );
+    });
+
+    it('shipped → delivered: allowed and marks shipping as delivered', async () => {
+      orderRepo.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.SHIPPED })
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED });
+
+      await service.updateStatus(1, OrderStatus.DELIVERED);
+      expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.DELIVERED });
+      expect(mockManager.update).toHaveBeenCalledWith(
+        Shipping,
+        { orderId: 1 },
+        expect.objectContaining({ status: ShippingStatus.DELIVERED, deliveredAt: expect.any(Date) }),
+      );
     });
 
     it('delivered → paid: not allowed (terminal state)', async () => {
