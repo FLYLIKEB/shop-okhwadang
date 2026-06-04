@@ -20,12 +20,20 @@ vi.mock('next-intl', async (importOriginal) => {
       }
       return undefined;
     }, root);
+  const format = (value: string, params?: Record<string, unknown>) => {
+    if (!params) return value;
+    return Object.entries(params).reduce(
+      (acc, [paramKey, paramValue]) => acc.replace(`{${paramKey}}`, String(paramValue)),
+      value,
+    );
+  };
+
   return {
     ...actual,
     useLocale: () => 'ko',
-    useTranslations: (namespace: string) => (key: string) => {
+    useTranslations: (namespace: string) => (key: string, params?: Record<string, unknown>) => {
       const value = resolvePath(messages[namespace], key);
-      return typeof value === 'string' ? value : key;
+      return typeof value === 'string' ? format(value, params) : key;
     },
   };
 });
@@ -69,12 +77,20 @@ describe('Footer', () => {
     expect(container.querySelector('.opacity-100')).toBeInTheDocument();
   });
 
-  it('renders copyright text containing current year', () => {
+  it('renders centered copyright text with normal Pretendard body styling', () => {
     render(<Footer />);
     const year = new Date().getFullYear().toString();
-    expect(
-      screen.getByText(new RegExp(`${year} OCKHWADANG`))
-    ).toBeInTheDocument();
+    const copyright = screen.getByText(new RegExp(`${year} OCKHWADANG`));
+
+    expect(copyright).toBeInTheDocument();
+    expect(copyright).toHaveClass('typo-body-sm', 'font-body', 'text-muted-foreground');
+    expect(copyright).not.toHaveClass('font-mono', 'font-display', 'italic');
+    expect(copyright.closest('.text-center')).toBeInTheDocument();
+  });
+
+  it('does not render the old display-font footer seal', () => {
+    render(<Footer />);
+    expect(screen.queryByText('玉華堂')).not.toBeInTheDocument();
   });
 
   it('renders required business information (상호·대표자·사업자번호·통신판매번호·소재지)', () => {

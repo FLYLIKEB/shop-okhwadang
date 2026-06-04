@@ -56,6 +56,7 @@ export default function Footer() {
   const { items: footerItems, loading } = useNavigation('footer');
   const hasCmsData = !loading && footerItems.length > 0;
   const rootItems = hasCmsData ? footerItems.filter((item) => item.parent_id === null) : [];
+  const currentYear = new Date().getFullYear();
 
   const socialLabels: Record<'instagram' | 'naver', string> = {
     instagram: 'Instagram',
@@ -110,21 +111,17 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* 공방 서명/낙관 영역 */}
-        <div className="mt-12 pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <span className="font-display text-lg text-muted-foreground/50">玉華堂</span>
-            <div className="font-mono text-xs text-muted-foreground text-center md:text-right space-y-0.5 tracking-wide">
-              <p>&copy; {new Date().getFullYear()} OCKHWADANG. All rights reserved.</p>
-            </div>
-          </div>
-
-          {/* 사업자 정보 (전자상거래법 제10조) */}
-          <div className="mt-4 text-xs text-muted-foreground/70 leading-relaxed text-center md:text-left space-y-0.5">
+        {/* 사업자 정보 (전자상거래법 제10조) */}
+        <div className="mt-12 pt-8 text-center">
+          <div className="typo-body-sm text-muted-foreground/70 leading-relaxed space-y-0.5">
             <p>{t('businessInfo.companyName')} · {t('businessInfo.ceo')}</p>
             <p>{t('businessInfo.address')}</p>
             <p>{t('businessInfo.bizNo')} · {t('businessInfo.mailOrderNo')}</p>
           </div>
+
+          <p className="mt-6 typo-body-sm font-body text-muted-foreground">
+            {t('copyright', { year: currentYear })}
+          </p>
         </div>
       </div>
     </footer>
