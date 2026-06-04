@@ -63,3 +63,10 @@ docs/infrastructure/s3-cloudfront-cdn.md
 .claude/settings.local.json
 .claude/skills/*
 .sisyphus/*.local.md
+
+# Local study/prep notes
+# Keep exam-prep drafts out of the project repo; historical tracked copies were removed.
+docs/중간고사_*.md
+
+# Local OMX pruning experiment scratch
+scripts/prune-omx-state.test.mjs
