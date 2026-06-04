@@ -175,6 +175,38 @@ describe('ShippingService', () => {
       expect(result.tracking).not.toBeNull();
       expect(result.tracking?.trackingNumber).toBe('1234567890');
     });
+
+    it('주문은 shipped인데 shipping이 preparing이면 shipped로 보정한다', async () => {
+      mockOrderRepo.findOne.mockResolvedValue(makeOrder({ status: OrderStatus.SHIPPED }));
+      mockShippingRepo.findOne.mockResolvedValue(
+        makeShipping({ trackingNumber: '123456', status: ShippingStatus.PREPARING }),
+      );
+
+      const result = await service.getByOrderId(1, 10);
+
+      expect(result.status).toBe(ShippingStatus.SHIPPED);
+      expect(result.shipped_at).toBeInstanceOf(Date);
+      expect(mockShippingRepo.update).toHaveBeenCalledWith(
+        { id: 1, status: ShippingStatus.PREPARING },
+        expect.objectContaining({ status: ShippingStatus.SHIPPED, shippedAt: expect.any(Date) }),
+      );
+    });
+
+    it('주문은 delivered인데 shipping이 shipped이면 delivered로 보정한다', async () => {
+      mockOrderRepo.findOne.mockResolvedValue(makeOrder({ status: OrderStatus.DELIVERED }));
+      mockShippingRepo.findOne.mockResolvedValue(
+        makeShipping({ trackingNumber: '123456', status: ShippingStatus.SHIPPED, shippedAt: new Date('2026-06-04T01:00:00Z') }),
+      );
+
+      const result = await service.getByOrderId(1, 10);
+
+      expect(result.status).toBe(ShippingStatus.DELIVERED);
+      expect(result.delivered_at).toBeInstanceOf(Date);
+      expect(mockShippingRepo.update).toHaveBeenCalledWith(
+        { id: 1, status: ShippingStatus.SHIPPED },
+        expect.objectContaining({ status: ShippingStatus.DELIVERED, deliveredAt: expect.any(Date) }),
+      );
+    });
   });
 
   describe('registerTracking', () => {

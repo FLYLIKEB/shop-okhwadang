@@ -60,13 +60,14 @@ export class ShippingService {
     assertOwnership(order.userId, userId);
 
     const shipping = await findOrThrow(this.shippingRepository, { orderId }, '배송 정보를 찾을 수 없습니다.');
+    const normalizedShipping = await this.syncShippingStatusFromOrder(order, shipping);
 
     let tracking: TrackingResult | null = null;
-    if (shipping.trackingNumber) {
+    if (normalizedShipping.trackingNumber) {
       try {
         tracking = await this.getTrackingWithStaleFallback(
-          shipping.trackingNumber,
-          (shipping.carrier as CarrierCode) ?? 'mock',
+          normalizedShipping.trackingNumber,
+          (normalizedShipping.carrier as CarrierCode) ?? 'mock',
         );
       } catch (err) {
         this.logger.warn(`Carrier API error for orderId=${orderId}: ${String(err)}`);
@@ -77,10 +78,10 @@ export class ShippingService {
       id: Number(shipping.id),
       order_id: orderId,
       carrier: shipping.carrier,
-      tracking_number: shipping.trackingNumber,
-      status: shipping.status,
-      shipped_at: shipping.shippedAt,
-      delivered_at: shipping.deliveredAt,
+      tracking_number: normalizedShipping.trackingNumber,
+      status: normalizedShipping.status,
+      shipped_at: normalizedShipping.shippedAt,
+      delivered_at: normalizedShipping.deliveredAt,
       tracking,
     };
   }
@@ -226,6 +227,29 @@ export class ShippingService {
 
   validateTransition(current: ShippingStatus, next: ShippingStatus): void {
     assertShippingStatusTransition(current, next);
+  }
+
+  private async syncShippingStatusFromOrder(order: Order, shipping: Shipping): Promise<Shipping> {
+    if (order.status === OrderStatus.SHIPPED && shipping.status === ShippingStatus.PREPARING) {
+      const shippedAt = shipping.shippedAt ?? new Date();
+      await this.shippingRepository.update(
+        { id: shipping.id, status: ShippingStatus.PREPARING },
+        { status: ShippingStatus.SHIPPED, shippedAt },
+      );
+      return { ...shipping, status: ShippingStatus.SHIPPED, shippedAt };
+    }
+
+    if (order.status === OrderStatus.DELIVERED && shipping.status !== ShippingStatus.DELIVERED) {
+      const deliveredAt = shipping.deliveredAt ?? new Date();
+      const shippedAt = shipping.shippedAt ?? deliveredAt;
+      await this.shippingRepository.update(
+        { id: shipping.id, status: shipping.status },
+        { status: ShippingStatus.DELIVERED, shippedAt, deliveredAt },
+      );
+      return { ...shipping, status: ShippingStatus.DELIVERED, shippedAt, deliveredAt };
+    }
+
+    return shipping;
   }
 
   private resolveProvider(carrier: CarrierCode): ShippingProvider {
