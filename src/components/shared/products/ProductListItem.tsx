@@ -39,6 +39,7 @@ function ProductListItem({
   const t = useTranslations('product');
   const thumbnail = images[0]?.url;
   const isSoldout = status === 'soldout';
+  const [hasImageError, setHasImageError] = React.useState(false);
 
   return (
     <Link
@@ -48,8 +49,8 @@ function ProductListItem({
         isSoldout && 'opacity-75',
       )}
     >
-      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md bg-muted">
-        {thumbnail ? (
+      <div data-testid="product-list-item-image-frame" className="relative h-24 w-24 shrink-0 overflow-hidden bg-muted">
+        {thumbnail && !hasImageError ? (
           <Image
             src={thumbnail}
             alt={name}
@@ -57,10 +58,17 @@ function ProductListItem({
             sizes="96px"
             className="object-cover"
             loading="lazy"
+            onError={() => setHasImageError(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <span className="text-xs">No Image</span>
+          <div data-testid="product-list-item-image-fallback" className="flex h-full w-full items-center justify-center bg-neutral-200">
+            <Image
+              src="/logo-okhwadang.png"
+              alt="옥화당"
+              width={72}
+              height={21}
+              className="object-contain opacity-70 grayscale"
+            />
           </div>
         )}
         {isSoldout && (
@@ -75,7 +83,7 @@ function ProductListItem({
         <div className="flex items-center gap-2">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
           {isFreeShipping && (
-            <span className="tag-clay rounded-sm bg-foreground/85 px-2 py-0.5 text-background">
+            <span className="tag-clay bg-foreground/85 px-2 py-0.5 text-background">
               {t('badgeFreeShipping')}
             </span>
           )}

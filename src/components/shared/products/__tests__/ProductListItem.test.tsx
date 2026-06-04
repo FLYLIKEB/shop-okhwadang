@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import ProductListItem from '@/components/shared/products/ProductListItem';
 import type { ProductImage } from '@/lib/api';
@@ -37,5 +37,25 @@ describe('ProductListItem free-shipping badge', () => {
     renderItem({ isFreeShipping: false });
 
     expect(screen.queryByText('무료배송')).not.toBeInTheDocument();
+  });
+});
+
+describe('ProductListItem image presentation', () => {
+  it('renders the image frame and image badges without rounded corners', () => {
+    renderItem({ isFreeShipping: true });
+
+    expect(screen.getByTestId('product-list-item-image-frame')).not.toHaveClass('rounded-md');
+    expect(screen.getByText('무료배송')).not.toHaveClass('rounded-sm');
+  });
+
+  it('replaces a failed product image with the Okhwadang logo fallback on a neutral gray background', () => {
+    renderItem();
+
+    fireEvent.error(screen.getByAltText('자사호'));
+
+    const fallback = screen.getByTestId('product-list-item-image-fallback');
+    expect(fallback).toHaveClass('bg-neutral-200');
+    expect(screen.getByAltText('옥화당')).toHaveAttribute('src', '/logo-okhwadang.png');
+    expect(screen.queryByAltText('자사호')).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import ProductCard from '@/components/shared/products/ProductCard';
 import type { ProductImage } from '@/lib/api';
@@ -55,5 +55,28 @@ describe('ProductCard free-shipping badge', () => {
     renderCard();
 
     expect(screen.queryByText('무료배송')).not.toBeInTheDocument();
+  });
+});
+
+describe('ProductCard image presentation', () => {
+  it('renders the image frame and image badges without rounded corners', () => {
+    renderCard({ categoryName: '자사호', isFreeShipping: true });
+
+    const imageFrame = screen.getByTestId('product-card-image-frame');
+
+    expect(imageFrame).not.toHaveClass('rounded-md');
+    expect(imageFrame.querySelector('.tag-clay')).not.toHaveClass('rounded-sm');
+    expect(screen.getByText('무료배송')).not.toHaveClass('rounded-sm');
+  });
+
+  it('replaces a failed product image with the Okhwadang logo fallback on a neutral gray background', () => {
+    renderCard();
+
+    fireEvent.error(screen.getByAltText('자사호'));
+
+    const fallback = screen.getByTestId('product-card-image-fallback');
+    expect(fallback).toHaveClass('bg-neutral-200');
+    expect(screen.getByAltText('옥화당')).toHaveAttribute('src', '/logo-okhwadang.png');
+    expect(screen.queryByAltText('자사호')).not.toBeInTheDocument();
   });
 });
