@@ -122,6 +122,7 @@ function makeOptions(
     setPrepareResult: vi.fn((r) => { state.prepareResult = r; }),
     setCurrentOrderId: vi.fn((id) => { state.currentOrderId = id; }),
     setCurrentOrderNumber: vi.fn((n) => { state.currentOrderNumber = n; }),
+    setConfirmedGrandTotal: vi.fn(),
     refetch,
     ...overrides,
   };

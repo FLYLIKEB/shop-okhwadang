@@ -103,6 +103,7 @@ vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
 vi.mock('@/lib/api', () => ({
   ordersApi: { create: vi.fn(), getById: vi.fn() },
   paymentsApi: { prepare: vi.fn(), confirm: vi.fn() },
+  shippingApi: { quote: vi.fn().mockResolvedValue({ subtotal: 40000, zipcode: '00000', shippingFee: 0, isFreeShipping: true, isRemoteArea: false, threshold: 10, baseFee: 3000, remoteAreaSurcharge: 3000 }) },
   cartApi: { getList: vi.fn() },
   usersApi: { getAddresses: vi.fn().mockResolvedValue([]), updateAddress: vi.fn().mockResolvedValue({}) },
 }));

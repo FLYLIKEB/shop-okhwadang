@@ -9,9 +9,8 @@ import { useCart } from '@/contexts/CartContext';
 import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
-import type { CartItem, CheckoutGatewayName, PreparePaymentResponse, UserAddress } from '@/lib/api';
-import { usersApi } from '@/lib/api';
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
+import type { CartItem, CheckoutGatewayName, PreparePaymentResponse, ShippingQuoteResponse, UserAddress } from '@/lib/api';
+import { shippingApi, usersApi } from '@/lib/api';
 import { SESSION_KEYS } from '@/constants/storage';
 import type { Locale } from '@/i18n/routing';
 import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
@@ -77,6 +76,8 @@ export default function CheckoutPage({
   );
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
   const [currentOrderNumber, setCurrentOrderNumber] = useState('');
+  const [confirmedGrandTotal, setConfirmedGrandTotal] = useState<number | null>(null);
+  const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResponse | null>(null);
   const [form, setForm] = useState<ShippingForm>({
     recipientName: '',
     recipientPhone: '',
@@ -92,8 +93,10 @@ export default function CheckoutPage({
   const [addressLoading, setAddressLoading] = useState(false);
 
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const shippingFee = totalAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
-  const grandTotal = totalAmount + shippingFee;
+  const shippingFee = shippingQuote?.shippingFee ?? 0;
+  const freeShippingThreshold = shippingQuote?.threshold ?? 0;
+  const estimatedGrandTotal = totalAmount + shippingFee;
+  const grandTotal = confirmedGrandTotal ?? estimatedGrandTotal;
 
   const stepLabels: Record<PaymentStep, string> = {
     idle: t('steps.idle'),
@@ -144,6 +147,27 @@ export default function CheckoutPage({
       router.replace(`/${locale}/cart`);
     }
   }, [isAuthenticated, isLoading, locale, router]);
+
+  useEffect(() => {
+    if (totalAmount <= 0) {
+      setShippingQuote(null);
+      return;
+    }
+
+    let cancelled = false;
+    const zipcode = /^\d{3,10}$/.test(form.zipcode.trim()) ? form.zipcode.trim() : '00000';
+    shippingApi.quote(totalAmount, zipcode)
+      .then((quote) => {
+        if (!cancelled) setShippingQuote(quote);
+      })
+      .catch(() => {
+        if (!cancelled) setShippingQuote(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [totalAmount, form.zipcode]);
 
   useEffect(() => {
     if (isLoading || !isAuthenticated) return;
@@ -202,6 +226,7 @@ export default function CheckoutPage({
     setPrepareResult,
     setCurrentOrderId,
     setCurrentOrderNumber,
+    setConfirmedGrandTotal,
     refetch,
   });
 
@@ -275,7 +300,12 @@ export default function CheckoutPage({
           </div>
 
           <aside className="layout-stack-md lg:sticky lg:top-24 lg:self-start">
-            <OrderSummarySection checkoutItems={checkoutItems} locale={locale} />
+            <OrderSummarySection
+              checkoutItems={checkoutItems}
+              locale={locale}
+              shippingFee={shippingFee}
+              freeShippingThreshold={freeShippingThreshold}
+            />
             <div className="hidden rounded-lg border border-border p-4 lg:block">
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>

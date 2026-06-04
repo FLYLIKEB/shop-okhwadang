@@ -23,6 +23,17 @@ export interface TrackingResult {
   estimatedDelivery?: string;
 }
 
+export interface ShippingQuoteResponse {
+  subtotal: number;
+  zipcode: string;
+  shippingFee: number;
+  isFreeShipping: boolean;
+  isRemoteArea: boolean;
+  threshold: number;
+  baseFee: number;
+  remoteAreaSurcharge: number;
+}
+
 export interface ShippingResponse {
   id: number;
   order_id: number;
@@ -42,4 +53,6 @@ export const shippingApi = {
       '/shipping/track',
       { carrier, trackingNumber },
     ),
+  quote: (subtotal: number, zipcode: string) =>
+    apiClient.post<ShippingQuoteResponse>('/shipping/quote', { subtotal, zipcode }),
 };

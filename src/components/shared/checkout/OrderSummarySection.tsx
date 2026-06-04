@@ -4,20 +4,27 @@ import { useTranslations } from 'next-intl';
 import type { CartItem } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import type { Locale } from '@/i18n/routing';
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
 
 interface OrderSummarySectionProps {
   checkoutItems: CartItem[];
   locale: Locale;
+  shippingFee: number;
+  freeShippingThreshold: number;
 }
 
-export function OrderSummarySection({ checkoutItems, locale }: OrderSummarySectionProps) {
+export function OrderSummarySection({
+  checkoutItems,
+  locale,
+  shippingFee,
+  freeShippingThreshold,
+}: OrderSummarySectionProps) {
   const t = useTranslations('checkout');
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const shippingFee = totalAmount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const grandTotal = totalAmount + shippingFee;
-  const remainingForFreeShipping = Math.max(FREE_SHIPPING_THRESHOLD - totalAmount, 0);
-  const freeShippingProgress = Math.min((totalAmount / FREE_SHIPPING_THRESHOLD) * 100, 100);
+  const remainingForFreeShipping = Math.max(freeShippingThreshold - totalAmount, 0);
+  const freeShippingProgress = freeShippingThreshold > 0
+    ? Math.min((totalAmount / freeShippingThreshold) * 100, 100)
+    : 100;
 
   return (
     <section className="rounded-lg border p-6">

@@ -27,6 +27,7 @@ export interface UseCheckoutOptions {
   setPrepareResult: (result: PreparePaymentResponse | null) => void;
   setCurrentOrderId: (id: number | null) => void;
   setCurrentOrderNumber: (orderNumber: string) => void;
+  setConfirmedGrandTotal: (amount: number | null) => void;
   refetch: () => Promise<void>;
 }
 
@@ -139,6 +140,9 @@ export function useCheckout(options: UseCheckoutOptions) {
           memo: memo || null,
         },
       );
+
+      const confirmedTotal = Number(order.totalAmount) + Number(order.shippingFee);
+      options.setConfirmedGrandTotal(confirmedTotal);
 
       options.setStep('preparing_payment');
       const result: PreparePaymentResponse = await paymentsApi.prepare(

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDown } from 'lucide-react';
@@ -13,9 +13,9 @@ import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/shared/EmptyState';
 import CartItemRow from '@/components/shared/cart/CartItemRow';
 import { formatCurrency } from '@/utils/currency';
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_FEE } from '@/constants/shipping';
 import { SESSION_KEYS } from '@/constants/storage';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { shippingApi, type ShippingQuoteResponse } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
 
 export default function CartPage() {
@@ -27,6 +27,7 @@ export default function CartPage() {
   const { isAuthenticated } = useAuth();
   const { items, isLoading, updateQuantity, removeItem } = useCart();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResponse | null>(null);
 
   const allSelected = items.length > 0 && selectedIds.size === items.length;
 
@@ -38,11 +39,33 @@ export default function CartPage() {
     [items, selectedIds],
   );
 
-  const selectedShippingFee =
-    selectedTotal >= FREE_SHIPPING_THRESHOLD || selectedTotal === 0 ? 0 : SHIPPING_FEE;
+  const selectedShippingFee = selectedTotal === 0 ? 0 : (shippingQuote?.shippingFee ?? 0);
+  const freeShippingThreshold = shippingQuote?.threshold ?? 0;
   const grandTotal = selectedTotal + selectedShippingFee;
-  const remainingForFreeShipping = Math.max(FREE_SHIPPING_THRESHOLD - selectedTotal, 0);
-  const freeShippingProgress = Math.min((selectedTotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+  const remainingForFreeShipping = Math.max(freeShippingThreshold - selectedTotal, 0);
+  const freeShippingProgress = freeShippingThreshold > 0
+    ? Math.min((selectedTotal / freeShippingThreshold) * 100, 100)
+    : 100;
+
+  useEffect(() => {
+    if (selectedTotal <= 0) {
+      setShippingQuote(null);
+      return;
+    }
+
+    let cancelled = false;
+    shippingApi.quote(selectedTotal, '00000')
+      .then((quote) => {
+        if (!cancelled) setShippingQuote(quote);
+      })
+      .catch(() => {
+        if (!cancelled) setShippingQuote(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTotal]);
 
   const handleSelectAll = (checked: boolean) => {
     setSelectedIds(checked ? new Set(items.map((i) => i.id)) : new Set());
