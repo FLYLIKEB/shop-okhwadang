@@ -21,7 +21,7 @@ export default function PromotionBannerBlock({ content }: Props) {
   if (template === 'timer') {
     return (
       <section className="py-16 md:py-24 border-y border-divider-soft text-center">
-        <p className="text-sm tracking-widest text-[#B8976A] uppercase mb-3">{t('limitedTime')}</p>
+        <p className="text-sm tracking-widest text-primary uppercase mb-3">{t('limitedTime')}</p>
         <h2 className="text-2xl font-display font-medium">{title}</h2>
         {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
         {countdownEndDate && <CountdownTimer endDate={countdownEndDate} />}
@@ -97,7 +97,7 @@ export default function PromotionBannerBlock({ content }: Props) {
       )}
       <div className="relative z-10 text-center px-8">
         <p
-          className={`text-sm tracking-widest text-[#B8976A] uppercase mb-3 transition-all duration-600 ease-out ${
+          className={`text-sm tracking-widest text-primary uppercase mb-3 transition-all duration-600 ease-out ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
           }`}
         >
