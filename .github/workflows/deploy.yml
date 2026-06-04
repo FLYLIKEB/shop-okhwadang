@@ -26,6 +26,8 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: EC2에 배포
+        env:
+          BACKEND_ENV_PRODUCTION: ${{ secrets.BACKEND_ENV_PRODUCTION }}
         run: |
           set -e
 
@@ -38,10 +40,17 @@ jobs:
           git reset --hard origin/main
 
           # ------------------------------------------------------------------
-          # 2. 환경변수 확인 — EC2 내부 .env / keys/ 를 신뢰한다.
-          #    (GitHub Secret 으로 덮어쓰지 않음. 로컬 수정은
-          #     scripts/remote-env-sync.sh push 로 반영)
+          # 2. 환경변수 확인 — 기본은 EC2 내부 .env / keys/ 를 신뢰한다.
+          #    단, BACKEND_ENV_PRODUCTION secret 이 있으면 self-hosted
+          #    runner 내부에서 원격 .env 를 복원한다. 로컬 수정은
+          #    scripts/remote-env-sync.sh set-secret 로 반영한다.
           # ------------------------------------------------------------------
+          if [ -n "${BACKEND_ENV_PRODUCTION:-}" ]; then
+            printf '%s' "$BACKEND_ENV_PRODUCTION" > .env
+            chmod 600 .env
+            echo "BACKEND_ENV_PRODUCTION secret → backend/.env 복원 완료"
+          fi
+
           [ -f .env ] || { echo "ERROR: backend/.env 가 원격에 없습니다. remote-env-sync.sh push 로 먼저 업로드하세요." >&2; exit 1; }
           [ -f keys/jwt-private.pem ] || { echo "ERROR: keys/jwt-private.pem 가 원격에 없습니다." >&2; exit 1; }
           [ -f keys/jwt-public.pem ] || { echo "ERROR: keys/jwt-public.pem 가 원격에 없습니다." >&2; exit 1; }
