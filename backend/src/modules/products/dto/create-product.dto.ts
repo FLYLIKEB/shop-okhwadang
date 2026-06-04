@@ -102,6 +102,11 @@ export class CreateProductDto {
   @IsBoolean({ message: '추천 상품 여부는 불리언이어야 합니다.' })
   isFeatured?: boolean;
 
+  @ApiProperty({ example: false, description: '상품별 무료배송 여부', required: false })
+  @IsOptional()
+  @IsBoolean({ message: '무료배송 상품 여부는 불리언이어야 합니다.' })
+  isFreeShipping?: boolean;
+
   @ApiPropertyOptional({ example: 'Ockhwadang Pu-erh Tea', description: '상품명 (영문)' })
   @IsOptional()
   @IsString({ message: '영문 상품명은 문자열이어야 합니다.' })

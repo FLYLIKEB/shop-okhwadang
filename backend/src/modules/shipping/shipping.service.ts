@@ -3,7 +3,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { MockShippingAdapter } from './adapters/mock-shipping.adapter';
@@ -20,6 +20,9 @@ import { assertOwnership } from '../../common/utils/ownership.util';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { ShippingFeeCalculatorService, ShippingFeeQuote } from './services/shipping-fee-calculator.service';
+import { ShippingQuoteItemDto } from './dto/shipping-quote.dto';
+import { Product } from '../products/entities/product.entity';
+import { ProductOption } from '../products/entities/product-option.entity';
 import { assertShippingStatusTransition } from './policies/shipping-status-transition.policy';
 
 @Injectable()
@@ -32,6 +35,10 @@ export class ShippingService {
     private readonly shippingRepository: Repository<Shipping>,
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductOption)
+    private readonly productOptionRepository: Repository<ProductOption>,
     private readonly notificationService: NotificationService,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly mockAdapter: MockShippingAdapter,
@@ -127,8 +134,70 @@ export class ShippingService {
     return this.shippingRepository.findOne({ where: { orderId } });
   }
 
-  async quote(subtotal: number, zipcode: string): Promise<ShippingFeeQuote> {
-    return this.shippingFeeCalculator.calculate(subtotal, zipcode);
+  async quote(
+    subtotal: number,
+    zipcode: string,
+    items?: ShippingQuoteItemDto[],
+  ): Promise<ShippingFeeQuote> {
+    if (!items || items.length === 0) {
+      return this.shippingFeeCalculator.calculate(subtotal, zipcode);
+    }
+
+    const quoteContext = await this.buildQuoteContext(items);
+    return this.shippingFeeCalculator.calculate(
+      quoteContext.subtotal,
+      zipcode,
+      quoteContext.itemPolicies,
+    );
+  }
+
+  private async buildQuoteContext(items: ShippingQuoteItemDto[]): Promise<{
+    subtotal: number;
+    itemPolicies: { isFreeShipping: boolean }[];
+  }> {
+    const productIds = [...new Set(items.map((item) => item.productId))];
+    const optionIds = [
+      ...new Set(
+        items
+          .map((item) => item.productOptionId)
+          .filter((id): id is number => id != null),
+      ),
+    ];
+
+    const [products, options] = await Promise.all([
+      this.productRepository.find({ where: { id: In(productIds) } }),
+      optionIds.length > 0
+        ? this.productOptionRepository.find({ where: { id: In(optionIds) } })
+        : Promise.resolve([]),
+    ]);
+
+    const productMap = new Map(products.map((product) => [Number(product.id), product]));
+    const optionMap = new Map(options.map((option) => [Number(option.id), option]));
+
+    let subtotal = 0;
+    const itemPolicies: { isFreeShipping: boolean }[] = [];
+
+    for (const item of items) {
+      const product = productMap.get(Number(item.productId));
+      if (!product) {
+        throw new BadRequestException('상품을 찾을 수 없습니다.');
+      }
+
+      let priceAdjustment = 0;
+      if (item.productOptionId != null) {
+        const option = optionMap.get(Number(item.productOptionId));
+        if (!option || Number(option.productId) !== Number(item.productId)) {
+          throw new BadRequestException('해당 상품의 옵션을 찾을 수 없습니다.');
+        }
+        priceAdjustment = Number(option.priceAdjustment);
+      }
+
+      const unitPrice = Number(product.salePrice ?? product.price) + priceAdjustment;
+      subtotal += unitPrice * item.quantity;
+      itemPolicies.push({ isFreeShipping: product.isFreeShipping });
+    }
+
+    return { subtotal, itemPolicies };
   }
 
   private async notifyShippingUpdate(

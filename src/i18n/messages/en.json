@@ -643,7 +643,8 @@
         "nameRequired": "Please enter a product name.",
         "slugRequired": "Please enter a slug.",
         "priceRequired": "Please enter a valid price."
-      }
+      },
+      "freeShippingProduct": "Free-shipping product"
     },
     "members": {
       "title": "Member Management",

@@ -33,6 +33,9 @@ export class OrderItem {
   @Column({ type: 'int' })
   quantity!: number;
 
+  @Column({ name: 'is_free_shipping', default: false })
+  isFreeShipping!: boolean;
+
   @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order!: Order;

@@ -40,6 +40,7 @@ export interface Product {
   reviewCount: number;
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   isFeatured: boolean;
+  isFreeShipping?: boolean;
   viewCount: number;
   category: Category | null;
   images: ProductImage[];

@@ -54,7 +54,16 @@ export default function CartPage() {
     }
 
     let cancelled = false;
-    shippingApi.quote(selectedTotal, '00000')
+    const selectedItems = items.filter((item) => selectedIds.has(item.id));
+    shippingApi.quote(
+      selectedTotal,
+      '00000',
+      selectedItems.map((item) => ({
+        productId: item.productId,
+        productOptionId: item.productOptionId,
+        quantity: item.quantity,
+      })),
+    )
       .then((quote) => {
         if (!cancelled) setShippingQuote(quote);
       })
@@ -65,7 +74,7 @@ export default function CartPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedTotal]);
+  }, [items, selectedIds, selectedTotal]);
 
   const handleSelectAll = (checked: boolean) => {
     setSelectedIds(checked ? new Set(items.map((i) => i.id)) : new Set());

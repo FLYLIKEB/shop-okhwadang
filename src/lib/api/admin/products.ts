@@ -18,6 +18,7 @@ export interface CreateProductData {
   sku?: string;
   status?: string;
   isFeatured?: boolean;
+  isFreeShipping?: boolean;
   nameEn?: string;
   descriptionEn?: string;
   images?: Array<{

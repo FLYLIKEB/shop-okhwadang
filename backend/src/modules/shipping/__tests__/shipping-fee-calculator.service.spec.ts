@@ -34,6 +34,7 @@ describe('ShippingFeeCalculatorService', () => {
     expect(result.shippingFee).toBe(3000);
     expect(result.isFreeShipping).toBe(false);
     expect(result.isRemoteArea).toBe(false);
+    expect(result.isProductFreeShipping).toBe(false);
   });
 
   it('제주(63 prefix) 우편번호는 도서산간 추가비를 부과한다', async () => {
@@ -41,6 +42,7 @@ describe('ShippingFeeCalculatorService', () => {
 
     expect(result.shippingFee).toBe(7000);
     expect(result.isRemoteArea).toBe(true);
+    expect(result.isProductFreeShipping).toBe(false);
   });
 
   it('무료배송 임계 이상이면 기본 배송비를 0으로 처리한다', async () => {
@@ -48,5 +50,39 @@ describe('ShippingFeeCalculatorService', () => {
 
     expect(result.shippingFee).toBe(0);
     expect(result.isFreeShipping).toBe(true);
+    expect(result.isProductFreeShipping).toBe(false);
+  });
+
+  it('모든 주문 상품이 무료배송 상품이면 기본 배송비만 면제한다', async () => {
+    const result = await service.calculate(30000, '04524', [
+      { isFreeShipping: true },
+      { isFreeShipping: true },
+    ]);
+
+    expect(result.shippingFee).toBe(0);
+    expect(result.isFreeShipping).toBe(true);
+    expect(result.isProductFreeShipping).toBe(true);
+  });
+
+  it('무료배송 상품이어도 도서산간 추가비는 유지한다', async () => {
+    const result = await service.calculate(30000, '63124', [
+      { isFreeShipping: true },
+    ]);
+
+    expect(result.shippingFee).toBe(4000);
+    expect(result.isFreeShipping).toBe(true);
+    expect(result.isProductFreeShipping).toBe(true);
+    expect(result.isRemoteArea).toBe(true);
+  });
+
+  it('무료배송 상품과 일반 상품이 섞이면 기존 금액 기준 정책을 적용한다', async () => {
+    const result = await service.calculate(30000, '04524', [
+      { isFreeShipping: true },
+      { isFreeShipping: false },
+    ]);
+
+    expect(result.shippingFee).toBe(3000);
+    expect(result.isFreeShipping).toBe(false);
+    expect(result.isProductFreeShipping).toBe(false);
   });
 });

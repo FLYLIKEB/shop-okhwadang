@@ -25,6 +25,7 @@ import { applyLocale } from '../../common/utils/locale.util';
 interface OrderItemBuildResult {
   orderItems: Partial<OrderItem>[];
   subtotalAmount: number;
+  shippingItemPolicies: { isFreeShipping: boolean }[];
 }
 
 interface OrderPriceResult {
@@ -118,13 +119,14 @@ export class OrdersService {
   ): Promise<OrderPostCommitPayload> {
     await this.ensureSufficientPoints(manager, userId, pointsToUse);
 
-    const { orderItems, subtotalAmount } = await this.validateAndReserveStock(manager, dto);
+    const { orderItems, subtotalAmount, shippingItemPolicies } = await this.validateAndReserveStock(manager, dto);
 
     const pricing = await this.calculateDiscountAndShipping(
       userId,
       dto,
       subtotalAmount,
       pointsToUse,
+      shippingItemPolicies,
     );
 
     const savedOrder = await this.persistOrder(manager, userId, dto, pointsToUse, pricing);
@@ -167,6 +169,7 @@ export class OrdersService {
     dto: CreateOrderDto,
   ): Promise<OrderItemBuildResult> {
     const orderItems: Partial<OrderItem>[] = [];
+    const shippingItemPolicies: { isFreeShipping: boolean }[] = [];
     let subtotalAmount = 0;
 
     for (const item of dto.items) {
@@ -230,10 +233,12 @@ export class OrdersService {
         optionName,
         price: unitPrice,
         quantity: item.quantity,
+        isFreeShipping: product.isFreeShipping,
       });
+      shippingItemPolicies.push({ isFreeShipping: product.isFreeShipping });
     }
 
-    return { orderItems, subtotalAmount };
+    return { orderItems, subtotalAmount, shippingItemPolicies };
   }
 
   private async calculateDiscountAndShipping(
@@ -241,6 +246,7 @@ export class OrdersService {
     dto: CreateOrderDto,
     subtotalAmount: number,
     pointsToUse: number,
+    shippingItemPolicies: { isFreeShipping: boolean }[],
   ): Promise<OrderPriceResult> {
     let discountAmount = 0;
     let discountedAmount = subtotalAmount;
@@ -256,7 +262,11 @@ export class OrdersService {
       discountedAmount = discountResult.finalAmount;
     }
 
-    const shippingQuote = await this.shippingFeeCalculator.calculate(subtotalAmount, dto.zipcode);
+    const shippingQuote = await this.shippingFeeCalculator.calculate(
+      subtotalAmount,
+      dto.zipcode,
+      shippingItemPolicies,
+    );
     const shippingFee = shippingQuote.shippingFee;
     const totalPayable = discountedAmount + shippingFee;
 

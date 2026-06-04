@@ -156,7 +156,15 @@ export default function CheckoutPage({
 
     let cancelled = false;
     const zipcode = /^\d{3,10}$/.test(form.zipcode.trim()) ? form.zipcode.trim() : '00000';
-    shippingApi.quote(totalAmount, zipcode)
+    shippingApi.quote(
+      totalAmount,
+      zipcode,
+      checkoutItems.map((item) => ({
+        productId: item.productId,
+        productOptionId: item.productOptionId,
+        quantity: item.quantity,
+      })),
+    )
       .then((quote) => {
         if (!cancelled) setShippingQuote(quote);
       })
@@ -167,7 +175,7 @@ export default function CheckoutPage({
     return () => {
       cancelled = true;
     };
-  }, [totalAmount, form.zipcode]);
+  }, [checkoutItems, totalAmount, form.zipcode]);
 
   useEffect(() => {
     if (isLoading || !isAuthenticated) return;
