@@ -27,6 +27,7 @@ export enum ProductStatus {
 @Index(['categoryId'])
 @Index(['status'])
 @Index(['isFeatured'])
+@Index(['isFreeShipping'])
 @Index(['reviewCount'])
 @Index(['avgRating'])
 export class Product {
@@ -102,6 +103,9 @@ export class Product {
 
   @Column({ name: 'is_featured', default: false })
   isFeatured!: boolean;
+
+  @Column({ name: 'is_free_shipping', default: false })
+  isFreeShipping!: boolean;
 
   @Column({ name: 'view_count', default: 0 })
   viewCount!: number;

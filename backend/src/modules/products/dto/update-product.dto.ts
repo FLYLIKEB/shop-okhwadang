@@ -67,6 +67,11 @@ export class UpdateProductDto {
   @IsBoolean()
   isFeatured?: boolean;
 
+  @ApiProperty({ example: false, description: '상품별 무료배송 여부', required: false })
+  @IsOptional()
+  @IsBoolean()
+  isFreeShipping?: boolean;
+
   @ApiPropertyOptional({ example: 'Ockhwadang Pu-erh Tea', description: '상품명 (영문)' })
   @IsOptional()
   @IsString()

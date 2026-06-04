@@ -99,6 +99,19 @@ describe('ProductCommandService', () => {
       );
     });
 
+    it('isFreeShipping 값을 상품 생성 데이터에 포함한다', async () => {
+      const created = { id: 1, isFreeShipping: true } as Product;
+      manager.create.mockReturnValue(created);
+      manager.save.mockResolvedValue(created);
+
+      await service.create({ name: 'p', slug: 'free-shipping', price: 100, isFreeShipping: true });
+
+      expect(manager.create).toHaveBeenCalledWith(
+        Product,
+        expect.objectContaining({ isFreeShipping: true }),
+      );
+    });
+
     it('이미지 함께 생성하면 ProductImage 도 저장', async () => {
       const created = { id: 5 } as Product;
       manager.create.mockReturnValue(created);

@@ -15,6 +15,7 @@ export interface CartItemProduct {
   price: number;
   salePrice: number | null;
   status: string;
+  isFreeShipping?: boolean;
   images: ProductImage[];
 }
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { adminProductsApi } from '@/lib/api';
@@ -31,6 +32,7 @@ interface ProductFormData {
   sku: string;
   status: 'draft' | 'active' | 'soldout' | 'hidden';
   isFeatured: boolean;
+  isFreeShipping: boolean;
   images: GalleryImage[];
   detailImages: DetailImage[];
   options: ProductOptionDraft[];
@@ -210,9 +212,11 @@ function VisibilitySection({
   form,
   set,
 }: {
-  form: Pick<ProductFormData, 'status' | 'isFeatured'>;
+  form: Pick<ProductFormData, 'status' | 'isFeatured' | 'isFreeShipping'>;
   set: Setter;
 }) {
+  const t = useTranslations('admin.productForm');
+
   return (
     <section className="space-y-4">
       <h2 className="text-sm font-semibold">노출 설정</h2>
@@ -228,6 +232,12 @@ function VisibilitySection({
         label="추천 상품으로 표시"
         checked={form.isFeatured}
         onChange={(v) => set('isFeatured', v)}
+      />
+
+      <CheckboxField
+        label={t('freeShippingProduct')}
+        checked={form.isFreeShipping}
+        onChange={(v) => set('isFreeShipping', v)}
       />
     </section>
   );
@@ -247,6 +257,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     sku: product?.sku ?? '',
     status: (product?.status as ProductFormData['status']) ?? 'draft',
     isFeatured: product?.isFeatured ?? false,
+    isFreeShipping: product?.isFreeShipping ?? false,
     images: product?.images?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
     detailImages: product?.detailImages?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
     options: product?.options?.map((o) => ({
@@ -291,6 +302,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         sku: form.sku || undefined,
         status: form.status,
         isFeatured: form.isFeatured,
+        isFreeShipping: form.isFreeShipping,
         nameEn: form.nameEn.trim() || undefined,
         descriptionEn: form.descriptionEn.trim() || undefined,
         images: form.images.map((img, index) => ({

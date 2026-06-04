@@ -280,6 +280,86 @@ describe('OrdersService', () => {
       expect(mockDeleteQb.execute).toHaveBeenCalled();
     });
 
+    it('무료배송 상품 단독 주문은 상품 정책을 배송비 계산에 전달하고 주문상품에 스냅샷을 저장한다', async () => {
+      const dto: CreateOrderDto = {
+        items: [{ productId: 1, quantity: 2 }],
+        recipientName: '홍길동',
+        recipientPhone: '010-1234-5678',
+        zipcode: '12345',
+        address: '서울시 강남구',
+      };
+
+      const mockProduct = {
+        id: 1,
+        name: '무료배송상품',
+        price: 10000,
+        salePrice: null,
+        stock: 5,
+        isFreeShipping: true,
+      };
+      const mockSavedOrder = {
+        id: 42,
+        orderNumber: 'ORD-20240101-FREE1',
+        userId: 1,
+        status: OrderStatus.PENDING,
+        totalAmount: 20000,
+        shippingFee: 0,
+        items: [],
+      } as unknown as Order;
+
+      const mockProductQb = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockProduct),
+      };
+      const mockDeleteQb = {
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({}),
+      };
+
+      mockManager.createQueryBuilder
+        .mockReturnValueOnce(mockProductQb)
+        .mockReturnValueOnce(mockDeleteQb);
+      mockManager.update.mockResolvedValue({});
+      mockManager.create.mockReturnValue(mockSavedOrder);
+      mockManager.save
+        .mockResolvedValueOnce(mockSavedOrder)
+        .mockResolvedValue([]);
+      mockShippingFeeCalculator.calculate.mockResolvedValueOnce({
+        subtotal: 20000,
+        zipcode: '12345',
+        shippingFee: 0,
+        isFreeShipping: true,
+        isRemoteArea: false,
+        isProductFreeShipping: true,
+        threshold: 50000,
+        baseFee: 3000,
+        remoteAreaSurcharge: 3000,
+      });
+      mockOrderRepository.createQueryBuilder.mockReturnValue({
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockSavedOrder),
+      });
+
+      await service.create(1, dto);
+
+      expect(mockShippingFeeCalculator.calculate).toHaveBeenCalledWith(20000, '12345', [
+        { isFreeShipping: true },
+      ]);
+      expect(mockManager.create).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ isFreeShipping: true }),
+      );
+      expect(mockManager.create).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ shippingFee: 0 }),
+      );
+    });
+
     it('valid dto with userCouponId → applies coupon discount, sets discountAmount, calls useCoupon', async () => {
       const dto: CreateOrderDto = {
         items: [{ productId: 1, quantity: 2 }],

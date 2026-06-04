@@ -643,7 +643,8 @@
         "nameRequired": "상품명을 입력해주세요.",
         "slugRequired": "슬러그를 입력해주세요.",
         "priceRequired": "가격을 올바르게 입력해주세요."
-      }
+      },
+      "freeShippingProduct": "무료배송 상품"
     },
     "members": {
       "title": "회원 관리",

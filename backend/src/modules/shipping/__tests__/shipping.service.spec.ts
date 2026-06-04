@@ -9,6 +9,8 @@ import { NotificationDispatchHelper } from '../../notification/notification-disp
 import { MockShippingAdapter } from '../adapters/mock-shipping.adapter';
 import { CjShippingAdapter } from '../adapters/cj-shipping.adapter';
 import { ShippingFeeCalculatorService } from '../services/shipping-fee-calculator.service';
+import { Product } from '../../products/entities/product.entity';
+import { ProductOption } from '../../products/entities/product-option.entity';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({ id: 1, userId: 10, status: OrderStatus.PAID, ...overrides } as unknown as Order);
@@ -35,6 +37,12 @@ describe('ShippingService', () => {
   const mockOrderRepo = {
     findOne: jest.fn(),
     update: jest.fn(),
+  };
+  const mockProductRepo = {
+    find: jest.fn(),
+  };
+  const mockProductOptionRepo = {
+    find: jest.fn(),
   };
   const mockAdapter = {
     registerTrackingNumber: jest.fn(),
@@ -73,6 +81,8 @@ describe('ShippingService', () => {
         ShippingService,
         { provide: getRepositoryToken(Shipping), useValue: mockShippingRepo },
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
+        { provide: getRepositoryToken(Product), useValue: mockProductRepo },
+        { provide: getRepositoryToken(ProductOption), useValue: mockProductOptionRepo },
         { provide: NotificationService, useValue: { sendShippingUpdate: jest.fn() } },
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: MockShippingAdapter, useValue: mockAdapter },
@@ -230,6 +240,41 @@ describe('ShippingService', () => {
 
       expect(mockCalculator.calculate).toHaveBeenCalledWith(10000, '12345');
       expect(result.shippingFee).toBe(3000);
+    });
+
+    it('items가 있으면 서버 상품 가격과 무료배송 정책으로 계산한다', async () => {
+      mockProductRepo.find.mockResolvedValue([
+        { id: 1, price: 10000, salePrice: null, isFreeShipping: true },
+        { id: 2, price: 20000, salePrice: 15000, isFreeShipping: true },
+      ]);
+      mockProductOptionRepo.find.mockResolvedValue([]);
+
+      await service.quote(1, '12345', [
+        { productId: 1, quantity: 2 },
+        { productId: 2, quantity: 1 },
+      ]);
+
+      expect(mockCalculator.calculate).toHaveBeenCalledWith(35000, '12345', [
+        { isFreeShipping: true },
+        { isFreeShipping: true },
+      ]);
+    });
+
+    it('옵션이 있으면 해당 상품 옵션인지 검증하고 옵션 가격을 포함한다', async () => {
+      mockProductRepo.find.mockResolvedValue([
+        { id: 1, price: 10000, salePrice: null, isFreeShipping: false },
+      ]);
+      mockProductOptionRepo.find.mockResolvedValue([
+        { id: 7, productId: 1, priceAdjustment: 2500 },
+      ]);
+
+      await service.quote(1, '12345', [
+        { productId: 1, productOptionId: 7, quantity: 2 },
+      ]);
+
+      expect(mockCalculator.calculate).toHaveBeenCalledWith(25000, '12345', [
+        { isFreeShipping: false },
+      ]);
     });
   });
 });

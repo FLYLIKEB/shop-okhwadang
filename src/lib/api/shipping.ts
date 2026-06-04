@@ -29,6 +29,7 @@ export interface ShippingQuoteResponse {
   shippingFee: number;
   isFreeShipping: boolean;
   isRemoteArea: boolean;
+  isProductFreeShipping: boolean;
   threshold: number;
   baseFee: number;
   remoteAreaSurcharge: number;
@@ -53,6 +54,10 @@ export const shippingApi = {
       '/shipping/track',
       { carrier, trackingNumber },
     ),
-  quote: (subtotal: number, zipcode: string) =>
-    apiClient.post<ShippingQuoteResponse>('/shipping/quote', { subtotal, zipcode }),
+  quote: (
+    subtotal: number,
+    zipcode: string,
+    items?: Array<{ productId: number; productOptionId?: number | null; quantity: number }>,
+  ) =>
+    apiClient.post<ShippingQuoteResponse>('/shipping/quote', { subtotal, zipcode, items }),
 };

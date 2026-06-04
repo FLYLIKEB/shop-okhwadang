@@ -6,12 +6,17 @@ const DEFAULT_FREE_SHIPPING_THRESHOLD = 50000;
 const DEFAULT_BASE_SHIPPING_FEE = 3000;
 const DEFAULT_REMOTE_AREA_SURCHARGE = 3000;
 
+export interface ShippingFeeItemPolicy {
+  isFreeShipping: boolean;
+}
+
 export interface ShippingFeeQuote {
   subtotal: number;
   zipcode: string;
   shippingFee: number;
   isFreeShipping: boolean;
   isRemoteArea: boolean;
+  isProductFreeShipping: boolean;
   threshold: number;
   baseFee: number;
   remoteAreaSurcharge: number;
@@ -21,7 +26,11 @@ export interface ShippingFeeQuote {
 export class ShippingFeeCalculatorService {
   constructor(private readonly settingsService: SettingsService) {}
 
-  async calculate(subtotal: number, zipcode: string): Promise<ShippingFeeQuote> {
+  async calculate(
+    subtotal: number,
+    zipcode: string,
+    itemPolicies?: ShippingFeeItemPolicy[],
+  ): Promise<ShippingFeeQuote> {
     const safeSubtotal = Math.max(0, Math.floor(subtotal));
 
     const [threshold, baseFee, remoteAreaSurcharge] = await Promise.all([
@@ -30,7 +39,12 @@ export class ShippingFeeCalculatorService {
       this.settingsService.getNumber('remote_area_surcharge', DEFAULT_REMOTE_AREA_SURCHARGE),
     ]);
 
-    const isFreeShipping = safeSubtotal >= threshold;
+    const isThresholdFreeShipping = safeSubtotal >= threshold;
+    const isProductFreeShipping =
+      itemPolicies !== undefined &&
+      itemPolicies.length > 0 &&
+      itemPolicies.every((item) => item.isFreeShipping);
+    const isFreeShipping = isThresholdFreeShipping || isProductFreeShipping;
     const isRemoteArea = isRemoteAreaZipcode(zipcode);
 
     const shippingFee = (isFreeShipping ? 0 : baseFee) + (isRemoteArea ? remoteAreaSurcharge : 0);
@@ -41,6 +55,7 @@ export class ShippingFeeCalculatorService {
       shippingFee,
       isFreeShipping,
       isRemoteArea,
+      isProductFreeShipping,
       threshold,
       baseFee,
       remoteAreaSurcharge,

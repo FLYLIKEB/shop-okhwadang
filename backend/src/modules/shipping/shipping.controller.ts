@@ -45,6 +45,6 @@ export class ShippingController {
   @ApiOperation({ summary: '배송비 사전 견적', description: '체크아웃 전에 배송비를 계산합니다.' })
   @ApiResponse({ status: 200, description: '배송비 견적 성공' })
   quote(@Body() dto: ShippingQuoteDto) {
-    return this.shippingService.quote(dto.subtotal, dto.zipcode);
+    return this.shippingService.quote(dto.subtotal, dto.zipcode, dto.items);
   }
 }
