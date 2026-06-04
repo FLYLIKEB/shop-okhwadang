@@ -34,6 +34,7 @@ jobs:
           cd /app/shop-okhwadang/shop-okhwadang/backend
 
           node <<'NODE'
+          (async () => {
           const fs = require('fs');
           const mysql = require('mysql2/promise');
 
@@ -146,4 +147,8 @@ jobs:
           } finally {
             await connection.end();
           }
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
           NODE
