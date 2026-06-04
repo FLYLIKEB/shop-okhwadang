@@ -571,35 +571,9 @@ h3 {
   background-color: var(--color-card) !important;
 }
 
-/* Slide-down entrance from top-center */
-@keyframes toast-slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(-12px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes toast-slide-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.97);
-  }
-}
-
-[data-sonner-toast][data-mounted="true"] {
-  animation: toast-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-[data-sonner-toast][data-removed="true"] {
-  animation: toast-slide-out 0.18s ease-in forwards;
+/* Smooth transition for sonner's built-in --y transform */
+[data-sonner-toast] {
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease !important;
 }
 
 /* ── Accordion animations ──────────────────────────────────────────── */
