@@ -306,7 +306,7 @@ export class ProductQueryService {
     isAdmin: boolean,
     status?: ProductStatus,
   ): SelectQueryBuilder<Product> {
-    return this.productRepository
+    const qb = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect(
@@ -314,10 +314,19 @@ export class ProductQueryService {
         'image',
         'image.is_thumbnail = :isThumbnail',
         { isThumbnail: true },
-      )
-      .andWhere('product.status = :status', {
-        status: isAdmin && status ? status : ProductStatus.ACTIVE,
+      );
+
+    if (!isAdmin) {
+      return qb.andWhere('product.status = :status', {
+        status: ProductStatus.ACTIVE,
       });
+    }
+
+    if (status) {
+      return qb.andWhere('product.status = :status', { status });
+    }
+
+    return qb;
   }
 
   private applyFiltersAndSort(
