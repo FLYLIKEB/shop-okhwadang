@@ -3,11 +3,73 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ShippingTimeline from '@/components/shared/ShippingTimeline';
 import type { ShippingResponse } from '@/lib/api';
 
+let mockLocale = 'ko';
+
+const shippingMessages: Record<string, Record<string, string>> = {
+  ko: {
+    title: '배송 추적',
+    payment_confirmed: '결제 완료',
+    preparing: '상품 준비중',
+    shipped: '배송 시작',
+    in_transit: '배송 중',
+    delivered: '배송 완료',
+    stepCompleted: '{status} 완료',
+    carrier: '택배사',
+    trackingNumber: '운송장',
+    trackingLink: '택배사 사이트에서 보기 →',
+    trackingLinkLabel: '{carrier} 사이트에서 배송 추적 (새 탭에서 열림)',
+    noTrackingNumber: '배송 준비 중입니다. 운송장 번호가 등록되면 알려드립니다.',
+    refresh: '새로고침',
+    refreshLabel: '배송 상태 새로고침',
+    polling: '자동 업데이트 중',
+    pollingStopped: '자동 업데이트 중단됨',
+    loadError: '배송 정보를 불러올 수 없습니다.',
+    forbidden: '접근 권한이 없습니다.',
+    estimatedDelivery: '예상 배송일: {date}',
+  },
+  en: {
+    title: 'Shipping Tracking',
+    payment_confirmed: 'Payment Confirmed',
+    preparing: 'Preparing Items',
+    shipped: 'Shipment Started',
+    in_transit: 'In Transit',
+    delivered: 'Delivered',
+    stepCompleted: '{status} completed',
+    carrier: 'Carrier',
+    trackingNumber: 'Tracking No.',
+    trackingLink: 'View on carrier site →',
+    trackingLinkLabel: 'Track shipment on {carrier} site (opens in a new tab)',
+    noTrackingNumber: 'Preparing shipment. We will show the tracking number once it is registered.',
+    refresh: 'Refresh',
+    refreshLabel: 'Refresh shipping status',
+    polling: 'Auto-updating',
+    pollingStopped: 'Auto-update stopped',
+    loadError: 'Unable to load shipping information.',
+    forbidden: 'You do not have permission to view this shipment.',
+    estimatedDelivery: 'Estimated delivery: {date}',
+  },
+};
+
+function translateShipping(key: string, vars?: Record<string, unknown>) {
+  let message = shippingMessages[mockLocale]?.[key] ?? key;
+  if (vars) {
+    for (const [name, value] of Object.entries(vars)) {
+      message = message.replace(`{${name}}`, String(value));
+    }
+  }
+  return message;
+}
+
 const mockRefresh = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: mockRefresh }),
   useParams: () => ({ id: '1' }),
   usePathname: () => '/my/orders/1',
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => mockLocale,
+  useTranslations: () => translateShipping,
 }));
 
 const mockGetByOrderId = vi.fn();
@@ -34,6 +96,7 @@ function makeShipping(overrides: Partial<ShippingResponse> = {}): ShippingRespon
 describe('ShippingTimeline', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLocale = 'ko';
   });
 
   it('status=payment_confirmed → 1단계만 active', async () => {
@@ -90,6 +153,34 @@ describe('ShippingTimeline', () => {
     await waitFor(() => expect(screen.getByText('1234567890123')).toBeInTheDocument());
     expect(screen.getByText('CJ대한통운')).toBeInTheDocument();
     expect(screen.getByText(/택배사 사이트에서 보기/)).toBeInTheDocument();
+  });
+
+  it('locale=en → 배송 추적 상태를 영어 문구로 표시한다', async () => {
+    mockLocale = 'en';
+    mockGetByOrderId.mockResolvedValue(
+      makeShipping({
+        status: 'shipped',
+        carrier: 'cj',
+        tracking_number: '1234567890123',
+      }),
+    );
+    render(<ShippingTimeline orderId={42} />);
+    await waitFor(() => expect(screen.getByText('Shipment Started')).toBeInTheDocument());
+    expect(screen.getByLabelText('Payment Confirmed completed')).toBeInTheDocument();
+    expect(screen.queryByText('상품 준비중')).toBeNull();
+    expect(screen.getByText(/View on carrier site/)).toBeInTheDocument();
+  });
+
+  it('carrier=cj → 공식 추적 URL에 실제 운송장 번호를 인코딩해서 붙인다', async () => {
+    mockGetByOrderId.mockResolvedValue(
+      makeShipping({ carrier: 'cj', tracking_number: '123 456' }),
+    );
+    render(<ShippingTimeline orderId={42} />);
+    await waitFor(() => expect(screen.getByText('CJ대한통운')).toBeInTheDocument());
+    const link = screen.getByRole('link', { name: /배송 추적/ });
+    expect((link as HTMLAnchorElement).href).toBe(
+      'https://trace.cjlogistics.com/next/tracking.html?wblNo=123%20456',
+    );
   });
 
   it('carrier=hanjin → 한진 추적 URL 생성', async () => {
