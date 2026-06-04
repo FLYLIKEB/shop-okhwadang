@@ -306,7 +306,7 @@ export default function CheckoutPage({
               shippingFee={shippingFee}
               freeShippingThreshold={freeShippingThreshold}
             />
-            <div className="hidden rounded-lg border border-border p-4 lg:block">
+            <div className="hidden rounded-lg border border-border p-4 md:block">
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
