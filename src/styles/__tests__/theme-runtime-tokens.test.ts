@@ -16,9 +16,22 @@ const POINT_COLOR_TOKENS = [
   '--color-zuni',
   '--color-danni',
   '--color-zini',
+  '--color-heukni',
   '--color-chunsuni',
   '--color-nokni',
   '--color-tea',
+] as const;
+
+const DARK_BASE_COLOR_TOKENS = [
+  '--color-bg',
+  '--color-secondary',
+  '--color-muted',
+  '--color-accent',
+  '--color-background',
+  '--color-card',
+  '--color-border',
+  '--color-input',
+  '--color-surface',
 ] as const;
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -71,6 +84,14 @@ describe('runtime theme tokens', () => {
     for (const token of POINT_COLOR_TOKENS) {
       const values = tokenSources.flatMap((source) => extractTokenHexValues(source, token));
       expect(values.length, `${token} should define at least one default color`).toBeGreaterThan(0);
+      values.forEach(expectGrayscale);
+    }
+  });
+
+  it('keeps dark theme base surface defaults grayscale', () => {
+    for (const token of DARK_BASE_COLOR_TOKENS) {
+      const values = extractTokenHexValues(darkTokens, token);
+      expect(values.length, `${token} should define at least one dark default color`).toBeGreaterThan(0);
       values.forEach(expectGrayscale);
     }
   });
