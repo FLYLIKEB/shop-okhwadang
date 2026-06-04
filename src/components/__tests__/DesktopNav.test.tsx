@@ -53,7 +53,7 @@ const navItems: NavigationItem[] = [
 
 describe('DesktopNav', () => {
   it('헤더 드롭다운 카테고리 라벨에서 선행 ㄴ 장식을 숨긴다', () => {
-    render(<DesktopNav items={navItems} />);
+    const { container } = render(<DesktopNav items={navItems} />);
 
     fireEvent.mouseEnter(screen.getByText('보이차·다구').closest('div')!);
 
@@ -61,5 +61,6 @@ describe('DesktopNav', () => {
     expect(screen.getByRole('link', { name: '생차' })).toHaveAttribute('href', '/products?categoryId=3');
     expect(screen.queryByText('ㄴ 보이차')).not.toBeInTheDocument();
     expect(screen.queryByText('ㄴ 생차')).not.toBeInTheDocument();
+    expect(container.innerHTML).not.toContain('border-divider-soft');
   });
 });

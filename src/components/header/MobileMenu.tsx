@@ -40,7 +40,7 @@ function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: Mobi
   const tHeader = useTranslations('header');
   return (
     <>
-      <div className="flex items-center px-4 h-14 border-b border-divider-soft shrink-0">
+      <div className="flex items-center px-4 h-14 shrink-0">
         <button
           type="button"
           onClick={onClose}
@@ -54,7 +54,7 @@ function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: Mobi
         </Link>
       </div>
       {historyLength > 0 && (
-        <div className="flex items-center px-4 h-12 border-b border-divider-soft shrink-0">
+        <div className="flex items-center px-4 h-12 shrink-0">
           <button
             type="button"
             onClick={onBack}
@@ -129,7 +129,7 @@ function MobileMenuFooter({ isAuthenticated, userName, userRole, onLogout, onLin
   const orderTrackingHref = isAuthenticated ? '/my/orders' : '/login?redirect=/my/orders';
   const isAdmin = userRole === 'admin' || userRole === 'super_admin';
   return (
-    <div className="px-4 py-4 border-t border-divider-soft shrink-0">
+    <div className="px-4 py-4 shrink-0">
       <div className="flex flex-col gap-1">
         {isAuthenticated ? (
           <>

@@ -63,7 +63,7 @@ export function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
 
       {hasChildren && (
         <div
-          className="fixed left-0 right-0 z-50 bg-background border-b border-divider-soft shadow-md"
+          className="fixed left-0 right-0 z-50 bg-background shadow-md"
           style={{ top: 'var(--header-bottom)' }}
           onMouseEnter={() => setHoveredId(hoveredId)}
           onMouseLeave={() => setHoveredId(null)}
