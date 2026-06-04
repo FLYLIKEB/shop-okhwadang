@@ -63,7 +63,7 @@
     "next": "다음 공지"
   },
   "header": {
-    "searchPlaceholder": "상품 검색...",
+    "searchPlaceholder": "",
     "searchLabel": "상품 검색",
     "searchButton": "검색",
     "searchShort": "검색...",
