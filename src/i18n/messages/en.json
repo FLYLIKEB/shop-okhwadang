@@ -104,7 +104,14 @@
     "collection": "Collection",
     "archive": "Archive",
     "journal": "Journal",
-    "copyright": "© {year} Ockhwadang. All rights reserved."
+    "copyright": "© {year} Ockhwadang. All rights reserved.",
+    "businessInfo": {
+      "companyName": "Seoro International",
+      "ceo": "CEO: Kwon Junhyun",
+      "address": "Address: 8F 8028, Hyeonjuk Building, 114 Yeoksam-ro, Gangnam-gu, Seoul 06252, Korea",
+      "bizNo": "Business Reg. No.: 131-72-05631",
+      "mailOrderNo": "Mail-Order Reg. No.: 2026-서울강남-01632"
+    }
   },
   "auth": {
     "email": "Email",

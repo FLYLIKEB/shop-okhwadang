@@ -118,6 +118,13 @@ export default function Footer() {
               <p>&copy; {new Date().getFullYear()} OCKHWADANG. All rights reserved.</p>
             </div>
           </div>
+
+          {/* 사업자 정보 (전자상거래법 제10조) */}
+          <div className="mt-4 text-xs text-muted-foreground/70 leading-relaxed text-center md:text-left space-y-0.5">
+            <p>{t('businessInfo.companyName')} · {t('businessInfo.ceo')}</p>
+            <p>{t('businessInfo.address')}</p>
+            <p>{t('businessInfo.bizNo')} · {t('businessInfo.mailOrderNo')}</p>
+          </div>
         </div>
       </div>
     </footer>
