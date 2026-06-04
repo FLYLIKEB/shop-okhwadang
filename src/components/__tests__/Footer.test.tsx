@@ -71,7 +71,7 @@ describe('Footer', () => {
 
   it('renders required business information (상호·대표자·사업자번호·통신판매번호·소재지)', () => {
     render(<Footer />);
-    expect(screen.getByText(/서로인터네셔널/)).toBeInTheDocument();
+    expect(screen.getByText(/서로 인터내셔널/)).toBeInTheDocument();
     expect(screen.getByText(/권준현/)).toBeInTheDocument();
     expect(screen.getByText(/131-72-05631/)).toBeInTheDocument();
     expect(screen.getByText(/2026-서울강남-01632/)).toBeInTheDocument();
