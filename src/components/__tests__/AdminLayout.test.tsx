@@ -14,6 +14,28 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock('next-intl', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-intl')>();
+  const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, unknown>;
+  return {
+    ...actual,
+    useTranslations: (namespace: string) => (key: string) => {
+      const value = namespace.split('.').reduce<unknown>((acc, part) => {
+        if (acc && typeof acc === 'object' && part in acc) {
+          return (acc as Record<string, unknown>)[part];
+        }
+        return undefined;
+      }, messages);
+
+      if (value && typeof value === 'object' && key in value) {
+        return String((value as Record<string, unknown>)[key]);
+      }
+
+      return key;
+    },
+  };
+});
+
 beforeEach(() => {
   mockReplace.mockClear();
 });
@@ -65,6 +87,8 @@ describe('AdminSidebar', () => {
       logout: vi.fn(),
     });
     render(<AdminLayout><span /></AdminLayout>);
+    const homeLink = screen.getByRole('link', { name: '쇼핑몰로 돌아가기' });
+    expect(homeLink).toHaveAttribute('href', '/');
     expect(screen.getByText('대시보드')).toBeInTheDocument();
 
     // Nav groups are collapsed by default — open each to reveal children
