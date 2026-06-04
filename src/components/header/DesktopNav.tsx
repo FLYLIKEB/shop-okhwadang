@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/components/ui/utils';
+import { getHeaderNavigationLabel } from './navigationLabel';
 import type { NavigationItem } from '@/lib/api';
 
 interface DesktopNavProps {
@@ -48,7 +49,7 @@ export function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
             )}
           >
             <span className="relative">
-              {item.label}
+              {getHeaderNavigationLabel(item.label)}
               <span
                 className={cn(
                   'absolute -bottom-0.5 left-0 h-px bg-foreground transition-all duration-300 ease-out',
@@ -75,7 +76,7 @@ export function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
                     href={child.url}
                     className="typo-body-sm font-semibold text-foreground hover:text-primary transition-colors tracking-wide"
                   >
-                    {child.label}
+                    {getHeaderNavigationLabel(child.label)}
                   </Link>
                   {child.children && child.children.length > 0 && (
                     <div className="flex flex-col gap-2">
@@ -85,7 +86,7 @@ export function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
                           href={grandchild.url}
                           className="typo-body-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
-                          {grandchild.label}
+                          {getHeaderNavigationLabel(grandchild.label)}
                         </Link>
                       ))}
                     </div>
