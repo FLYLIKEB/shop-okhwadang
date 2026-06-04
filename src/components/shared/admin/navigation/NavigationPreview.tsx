@@ -37,8 +37,7 @@ function GNBDropdownPreviewItem({ item }: { item: NavigationItem }) {
       {hasActiveChildren && isHovered && (
         <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 min-w-36 rounded-lg border border-slate-600 bg-slate-800 shadow-xl py-1 z-10 animate-accordion-down">
           {activeChildren.map((child: NavigationItem) => (
-            <span key={child.id} className="flex items-center gap-2 px-4 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all duration-200 cursor-default border-l-2 border-transparent hover:border-slate-400/50">
-              <span className="text-slate-500">└</span>
+            <span key={child.id} className="flex items-center px-4 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all duration-200 cursor-default border-l-2 border-transparent hover:border-slate-400/50">
               {child.label}
             </span>
           ))}
