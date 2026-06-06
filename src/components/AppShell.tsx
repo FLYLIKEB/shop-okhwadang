@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
 import Header from '@/components/Header';
-import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
 import Footer from '@/components/Footer';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 import { MobileNavProvider } from '@/contexts/MobileNavContext';
@@ -14,6 +13,7 @@ type AppShellProps = {
   children: React.ReactNode;
   locale: Locale;
   mobileBottomNavVisible: boolean;
+  announcementBar?: React.ReactNode;
 };
 
 function isAdminPath(pathname: string): boolean {
@@ -40,6 +40,7 @@ export default function AppShell({
   children,
   locale,
   mobileBottomNavVisible,
+  announcementBar,
 }: AppShellProps) {
   const pathname = usePathname();
   const isAdminRoute = isAdminPath(pathname);
@@ -56,7 +57,7 @@ export default function AppShell({
   return (
     <MobileNavProvider initialVisible={mobileBottomNavVisible}>
       <div className="flex min-h-screen flex-col">
-        <AnnouncementBar locale={locale} />
+        {announcementBar}
         <Header />
         <main id="main-content" className="flex-1 pb-16 md:pb-0">
           {children}

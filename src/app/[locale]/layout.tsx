@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import AppShell from '@/components/AppShell';
+import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
 import Providers from '@/components/Providers';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
@@ -99,7 +100,11 @@ export default async function LocaleLayout({
         </a>
         <NextIntlClientProvider messages={messages}>
           <Providers locale={safeLocale}>
-            <AppShell locale={safeLocale} mobileBottomNavVisible={mobileBottomNavVisible}>
+            <AppShell
+              locale={safeLocale}
+              mobileBottomNavVisible={mobileBottomNavVisible}
+              announcementBar={<AnnouncementBar locale={safeLocale} />}
+            >
               {children}
             </AppShell>
           </Providers>
