@@ -24,7 +24,7 @@ export interface UseCheckoutOptions {
   selectedGateway: CheckoutGatewayName;
   currentOrderId: number | null;
   currentOrderNumber: string;
-  requiredConsent: boolean;
+  requiredConsent?: boolean;
   setStep: (step: PaymentStep) => void;
   setPrepareResult: (result: PreparePaymentResponse | null) => void;
   setCurrentOrderId: (id: number | null) => void;
@@ -115,8 +115,8 @@ export function useCheckout(options: UseCheckoutOptions) {
   const handleSubmit = useCallback(async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
-    if (!options.requiredConsent) {
-      toast.warning(toastMessage('checkoutConsentRequired'));
+    if (options.requiredConsent === false) {
+      toast.error(toastMessage('checkoutConsentRequired'));
       return;
     }
 
