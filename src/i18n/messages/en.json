@@ -206,6 +206,30 @@
         "statusAnswered": "Answered",
         "statusPending": "Received",
         "answerLabel": "Answer"
+      },
+      "deliveryGuide": {
+        "eyebrow": "Shipping Guide",
+        "title": "Delivery Period & Service Guide",
+        "method": {
+          "label": "Shipping method",
+          "value": "Orders are shipped safely by parcel courier."
+        },
+        "area": {
+          "label": "Service area",
+          "value": "Delivery is available throughout South Korea."
+        },
+        "period": {
+          "label": "Standard delivery period",
+          "value": "Delivery usually takes 2–5 business days after payment is completed."
+        },
+        "dispatch": {
+          "label": "Dispatch schedule",
+          "value": "Orders are dispatched within 1–2 business days after payment confirmation."
+        },
+        "remoteArea": {
+          "label": "Remote or island areas",
+          "value": "Jeju, island, and remote areas may require additional shipping fees or delivery time."
+        }
       }
     },
     "sort": {
