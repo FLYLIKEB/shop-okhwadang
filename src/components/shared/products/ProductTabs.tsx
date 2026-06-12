@@ -24,15 +24,17 @@ const TABS = ['details', 'reviews', 'inquiry'] as const
 type Tab = (typeof TABS)[number]
 const INQUIRY_TYPE_PRODUCT = '상품'
 
-function DeliveryGuide() {
-  const t = useTranslations('product.tabs.deliveryGuide')
-  const items = ['method', 'area', 'period', 'dispatch', 'remoteArea'] as const
+function ProductPolicyGuide({ namespace, titleId }: { namespace: 'deliveryGuide' | 'exchangeRefundGuide'; titleId: string }) {
+  const t = useTranslations(`product.tabs.${namespace}`)
+  const items = namespace === 'deliveryGuide'
+    ? ['method', 'area', 'period', 'dispatch', 'remoteArea'] as const
+    : ['changeOfMindPeriod', 'sellerFault', 'customerFault', 'refundTiming', 'foodRestriction'] as const
 
   return (
-    <section className="rounded-lg border border-border bg-muted/20 p-5" aria-labelledby="delivery-guide-title">
+    <section className="rounded-lg border border-border bg-muted/20 p-5" aria-labelledby={titleId}>
       <div className="mb-4">
         <p className="typo-label text-muted-foreground">{t('eyebrow')}</p>
-        <h2 id="delivery-guide-title" className="typo-h2 text-foreground">
+        <h2 id={titleId} className="typo-h2 text-foreground">
           {t('title')}
         </h2>
       </div>
@@ -179,7 +181,8 @@ export default function ProductTabs({ description, descriptionImages, productId,
               className="prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ __html: sanitized }}
             />
-            <DeliveryGuide />
+            <ProductPolicyGuide namespace="deliveryGuide" titleId="delivery-guide-title" />
+            <ProductPolicyGuide namespace="exchangeRefundGuide" titleId="exchange-refund-guide-title" />
           </div>
         )}
         {activeTab === 'reviews' && productId && (
