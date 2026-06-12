@@ -1114,5 +1114,30 @@
     "views": "Views {count}",
     "notFound": "Notice not found.",
     "backToList": "Back to list"
+  },
+  "shippingReturnsPage": {
+    "eyebrow": "Customer Support",
+    "title": "Shipping, Exchange & Refund Policy",
+    "description": "Detailed shipping, exchange/return, and refund standards beyond the product-detail summary.",
+    "effectiveDate": "Effective date: June 12, 2026",
+    "sectionKeys": [
+      "shipping",
+      "exchangeReturn",
+      "refund"
+    ],
+    "sections": {
+      "shipping": {
+        "title": "Shipping Policy",
+        "body": "Carrier: Orders are shipped through domestic parcel carriers such as CJ Logistics.\nShipping fee: Basic shipping fees are shown at checkout based on order and destination conditions.\nFree shipping threshold: Shipping fees are waived when the order meets the free-shipping threshold.\nJeju/island/remote areas: Additional fees and delivery time may apply.\nDelivery period: Orders are usually dispatched within 1–2 business days after payment and delivered within 2–5 business days after dispatch.\nDispatch cut-off: Orders paid before 2 PM on business days are prioritized for dispatch preparation.\nTracking: After dispatch, tracking is available from the order detail page or the tracking number in the shipment notice."
+      },
+      "exchangeReturn": {
+        "title": "Exchange & Return Policy",
+        "body": "Request period: Requests may be submitted through customer support or My Page inquiries within 7 days after receipt.\nRestrictions: For tea, food, and hygiene-sensitive products, change-of-mind exchanges/returns may be restricted if opened, used, packaging is damaged, components are missing, or product value is reduced.\nShipping fee responsibility: Ockhwadang covers shipping for defective or wrong items; customers cover round-trip shipping for change-of-mind returns.\nHow to request: Submit the order number, product name, reason, and supporting images when needed."
+      },
+      "refund": {
+        "title": "Refund Policy",
+        "body": "Refund approval: Refund eligibility is confirmed after the returned item is collected and inspected.\nProcessing period: After approval, refunds are processed to the original payment method within 3–7 business days.\nTiming by payment method: Card and easy-payment cancellations may reflect at different times depending on card issuer and PG policies; international payments follow the payment provider schedule."
+      }
+    }
   }
 }
