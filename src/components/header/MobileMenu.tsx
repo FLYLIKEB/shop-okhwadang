@@ -29,48 +29,25 @@ interface HistoryEntry {
 }
 
 interface MobileMenuHeaderProps {
-  historyLength: number;
-  currentTitle: string;
   onClose: () => void;
-  onBack: () => void;
 }
 
-function MobileMenuHeader({ historyLength, currentTitle, onClose, onBack }: MobileMenuHeaderProps) {
+function MobileMenuHeader({ onClose }: MobileMenuHeaderProps) {
   const tNav = useTranslations('navigation');
-  const tHeader = useTranslations('header');
   return (
-    <>
-      <div className="flex items-center px-4 h-14 shrink-0">
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-2 -ml-2 mr-3 text-muted-foreground hover:text-foreground transition-all duration-200 active:scale-90"
-          aria-label={tNav('closeMenu')}
-        >
-          <X className="h-5 w-5" />
-        </button>
-        <Link href="/" onClick={onClose} className="shrink-0">
-          <Logo variant="header" />
-        </Link>
-      </div>
-      {historyLength > 0 && (
-        <div className="flex items-center px-4 h-12 shrink-0">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label={tHeader('menuBack')}
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 5l-5 5 5 5" />
-            </svg>
-          </button>
-          <span className="typo-body-sm font-medium ml-3">
-            {getHeaderNavigationLabel(currentTitle)}
-          </span>
-        </div>
-      )}
-    </>
+    <div className="flex items-center px-4 h-14 shrink-0">
+      <button
+        type="button"
+        onClick={onClose}
+        className="p-2 -ml-2 mr-3 text-muted-foreground hover:text-foreground transition-all duration-200 active:scale-90"
+        aria-label={tNav('closeMenu')}
+      >
+        <X className="h-5 w-5" />
+      </button>
+      <Link href="/" onClick={onClose} className="shrink-0">
+        <Logo variant="header" />
+      </Link>
+    </div>
   );
 }
 
@@ -78,39 +55,81 @@ interface MobileMenuContentProps {
   items: NavigationItem[];
   history: HistoryEntry[];
   onItemClick: (item: NavigationItem) => void;
+  onBack: () => void;
   onLinkClick: () => void;
 }
 
-function MobileMenuContent({ items, history, onItemClick, onLinkClick }: MobileMenuContentProps) {
-  const current = history.length > 0 ? history[history.length - 1].items : items;
+function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }: MobileMenuContentProps) {
+  const panels = [{ title: '', items }, ...history];
+  const activeIndex = panels.length - 1;
+  const tHeader = useTranslations('header');
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4">
-      <div className="flex flex-col gap-1">
-        {current.map((item) => (
-          <div key={item.id}>
-            {item.children && item.children.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => onItemClick(item)}
-                className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
-              >
-                {getHeaderNavigationLabel(item.label)}
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground">
-                  <path d="M6 4l4 4-4 4" />
-                </svg>
-              </button>
-            ) : (
-              <Link
-                href={item.url}
-                onClick={onLinkClick}
-                className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
-              >
-                {getHeaderNavigationLabel(item.label)}
-              </Link>
-            )}
-          </div>
-        ))}
+    <div className="relative flex-1 overflow-hidden">
+      <div
+        data-testid="mobile-menu-track"
+        className="absolute inset-0 transition-transform duration-300 ease-out motion-reduce:transition-none"
+        style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+      >
+        {panels.map((panel, index) => {
+          const isActive = index === activeIndex;
+          const title = getHeaderNavigationLabel(panel.title);
+          return (
+            <div
+              key={`${panel.title}-${index}`}
+              className="absolute top-0 bottom-0 w-full overflow-y-auto px-4 py-4"
+              style={{ left: `${index * 100}%` }}
+              aria-hidden={!isActive}
+            >
+              {index > 0 && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  aria-label={`${title} 메뉴로 돌아가기`}
+                  tabIndex={isActive ? 0 : -1}
+                  className="mb-3 flex min-h-11 w-full items-center gap-3 py-2 text-left typo-body-sm font-medium text-foreground hover:text-muted-foreground transition-colors"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                    <path d="M12 5l-5 5 5 5" />
+                  </svg>
+                  {title || tHeader('menuBack')}
+                </button>
+              )}
+              <div className="flex flex-col gap-1">
+                {panel.items.map((item) => {
+                  const label = getHeaderNavigationLabel(item.label);
+                  return (
+                    <div key={item.id}>
+                      {item.children && item.children.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => isActive && onItemClick(item)}
+                          tabIndex={isActive ? 0 : -1}
+                          aria-label={`${label} 하위 메뉴 열기`}
+                          className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
+                        >
+                          {label}
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground" aria-hidden="true">
+                            <path d="M6 4l4 4-4 4" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <Link
+                          href={item.url}
+                          onClick={onLinkClick}
+                          tabIndex={isActive ? 0 : -1}
+                          className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
+                        >
+                          {label}
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -214,10 +233,8 @@ function MobileMenuNav({ visible, children }: { visible: boolean; children: Reac
 }
 
 export function MobileMenu({ isAuthenticated, userName, userRole, navItems, sidebarItems, visible, onClose, onNavigate, onLogout }: MobileMenuProps) {
-  const t = useTranslations('header');
   const menuItems = sidebarItems.length > 0 ? sidebarItems : navItems;
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const current = history.length > 0 ? history[history.length - 1] : { title: t('menuLabel'), items: menuItems };
   const resetAndRun = (callback: () => void) => {
     setHistory([]);
     callback();
@@ -243,16 +260,12 @@ export function MobileMenu({ isAuthenticated, userName, userRole, navItems, side
     <div id="mobile-menu" className="fixed inset-0 z-50 lg:hidden">
       <MobileMenuBackdrop visible={visible} onClose={handleMenuClose} />
       <MobileMenuNav visible={visible}>
-        <MobileMenuHeader
-          historyLength={history.length}
-          currentTitle={current.title}
-          onClose={handleMenuClose}
-          onBack={handleBack}
-        />
+        <MobileMenuHeader onClose={handleMenuClose} />
         <MobileMenuContent
-          items={current.items}
+          items={menuItems}
           history={history}
           onItemClick={handleItemClick}
+          onBack={handleBack}
           onLinkClick={handleNavigateClose}
         />
         <MobileMenuFooter
