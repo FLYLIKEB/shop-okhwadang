@@ -1049,5 +1049,115 @@
     "views": "Views {count}",
     "notFound": "Notice not found.",
     "backToList": "Back to list"
+  },
+  "termsPage": {
+    "eyebrow": "Legal Notice",
+    "title": "Terms of Service",
+    "description": "These terms govern use of the Ockhwadang online store, including orders, payments, shipping, cancellations, and refunds.",
+    "effectiveDate": "Effective date: June 12, 2026",
+    "sectionKeys": [
+      "membership",
+      "orders",
+      "cancellation",
+      "shipping",
+      "withdrawal",
+      "points",
+      "liability",
+      "disputes"
+    ],
+    "sections": {
+      "membership": {
+        "title": "Membership and Accounts",
+        "body": "Members must provide accurate information when registering and are responsible for managing their account credentials. We may restrict use if fraudulent activity, use of another person’s identity, or interference with service operations is confirmed."
+      },
+      "orders": {
+        "title": "Orders and Payments",
+        "body": "Customers confirm orders after reviewing product names, prices, quantities, and shipping information. Orders are received when payment is completed. If stock shortages or payment errors occur, we may notify the customer and cancel or modify the order."
+      },
+      "cancellation": {
+        "title": "Cancellations and Refunds",
+        "body": "Orders may be canceled before shipment preparation begins. Refund or payment cancellation timing may vary by payment gateway and card issuer, and may take 3–7 business days after refund approval."
+      },
+      "shipping": {
+        "title": "Shipping",
+        "body": "Orders are generally dispatched within 1–2 business days after payment completion, and standard delivery takes 2–5 business days. Jeju, island, and remote areas may require additional shipping fees or delivery time."
+      },
+      "withdrawal": {
+        "title": "Withdrawal, Exchanges, and Returns",
+        "body": "Exchange or return requests due to change of mind may be made within 7 days after receipt. For tea, food, and hygiene-sensitive products, change-of-mind exchanges or returns may be restricted if opened, used, damaged, or reduced in value."
+      },
+      "points": {
+        "title": "Points and Coupons",
+        "body": "Points and coupons are issued and used under conditions set by Ockhwadang, and may have expiration dates or excluded products. Benefits may be withdrawn if misuse is confirmed."
+      },
+      "liability": {
+        "title": "Limitation of Liability",
+        "body": "To the extent permitted by law, we limit liability for damages caused by events outside our reasonable control, including natural disasters, network failures, or faults of payment or shipping providers."
+      },
+      "disputes": {
+        "title": "Dispute Resolution",
+        "body": "Disputes related to service use will first be discussed through customer support. If unresolved, they will be handled under applicable laws and the competent court process."
+      }
+    }
+  },
+  "privacyPage": {
+    "eyebrow": "Legal Notice",
+    "title": "Privacy Policy",
+    "description": "Ockhwadang processes customer personal information safely in accordance with applicable privacy laws.",
+    "effectiveDate": "Effective date: June 12, 2026",
+    "sectionKeys": [
+      "purpose",
+      "items",
+      "retention",
+      "destruction",
+      "rights",
+      "officer",
+      "safeguards",
+      "notice",
+      "request",
+      "remedy"
+    ],
+    "sections": {
+      "purpose": {
+        "title": "Purposes of Processing",
+        "body": "We process personal information for membership registration and verification, order/payment/shipping processing, customer support, service improvement, and legal compliance."
+      },
+      "items": {
+        "title": "Personal Information Collected",
+        "body": "Required: name, email, password, phone number, shipping address, order/payment/shipping information. Optional: marketing consent information, inquiry attachments, and other information directly provided by customers."
+      },
+      "retention": {
+        "title": "Retention Period",
+        "body": "Personal information is destroyed without delay when membership ends or processing purposes are achieved. However, records may be retained as required by law, including contract/withdrawal records for 5 years, payment and goods supply records for 5 years, and complaint/dispute records for 3 years."
+      },
+      "destruction": {
+        "title": "Destruction Procedure and Method",
+        "body": "Expired personal information is securely deleted in a non-recoverable way. Electronic files are deleted by technical means, and paper documents are shredded or incinerated."
+      },
+      "rights": {
+        "title": "Data Subject Rights",
+        "body": "Customers may request access, correction, deletion, suspension of processing, or withdrawal of consent. Requests may be submitted through customer support or the privacy request department."
+      },
+      "officer": {
+        "title": "Privacy Officer",
+        "body": "Privacy Officer: Junhyun Kwon\nEmail: privacy@ockhwadang.com\nPhone: +82-2-0000-0000"
+      },
+      "safeguards": {
+        "title": "Security Measures",
+        "body": "We implement technical and administrative safeguards such as access control, password encryption, access log retention, security tools, and minimization of personal information handlers."
+      },
+      "notice": {
+        "title": "Notice of Changes",
+        "body": "If this policy changes, we will notify customers on the website or individually at least 7 days before the effective date. Important changes may require separate consent under applicable law."
+      },
+      "request": {
+        "title": "Personal Information Request Department",
+        "body": "Department: Customer Support\nEmail: support@ockhwadang.com\nPhone: +82-2-0000-0000"
+      },
+      "remedy": {
+        "title": "Remedies for Rights Infringement",
+        "body": "For privacy infringement consultation, customers may contact the Korea Internet & Security Agency Privacy Center, Personal Information Dispute Mediation Committee, Supreme Prosecutors’ Office Cyber Investigation Division, or National Police Agency Cyber Bureau."
+      }
+    }
   }
 }
