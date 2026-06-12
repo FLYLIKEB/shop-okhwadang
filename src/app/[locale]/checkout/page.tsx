@@ -87,6 +87,8 @@ export default function CheckoutPage({
     memo: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [requiredConsent, setRequiredConsent] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const paymentRef = useRef<PaymentGatewayHandle>(null);
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | 'manual' | null>(null);
@@ -230,6 +232,7 @@ export default function CheckoutPage({
     selectedGateway,
     currentOrderId,
     currentOrderNumber,
+    requiredConsent,
     setStep,
     setPrepareResult,
     setCurrentOrderId,
@@ -305,6 +308,39 @@ export default function CheckoutPage({
               <h2 className="typo-h3">{t('couponPoints')}</h2>
               <p className="mt-2 text-sm text-muted-foreground">{t('couponPointsComingSoon')}</p>
             </section>
+
+            <section className="rounded-lg border p-6">
+              <h2 className="typo-h3">{t('consent.title')}</h2>
+              <div className="mt-4 space-y-4">
+                <label className="flex gap-3 rounded-md border border-border bg-muted/20 p-3 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={requiredConsent}
+                    onChange={(event) => setRequiredConsent(event.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-foreground"
+                    aria-describedby="checkout-required-consent-description"
+                  />
+                  <span>
+                    <span className="font-medium">{t('consent.requiredLabel')}</span>
+                    <span id="checkout-required-consent-description" className="mt-1 block whitespace-pre-line text-muted-foreground">
+                      {t('consent.requiredDescription')}
+                    </span>
+                  </span>
+                </label>
+                <label className="flex gap-3 rounded-md border border-border p-3 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={marketingConsent}
+                    onChange={(event) => setMarketingConsent(event.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-foreground"
+                  />
+                  <span>
+                    <span className="font-medium">{t('consent.marketingLabel')}</span>
+                    <span className="mt-1 block text-muted-foreground">{t('consent.marketingDescription')}</span>
+                  </span>
+                </label>
+              </div>
+            </section>
           </div>
 
           <aside className="layout-stack-md lg:sticky lg:top-24 lg:self-start">
@@ -319,7 +355,7 @@ export default function CheckoutPage({
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
               </div>
-              <Button type="submit" disabled={step !== 'idle'} className="w-full">
+              <Button type="submit" disabled={step !== 'idle' || !requiredConsent} className="w-full">
                 {stepLabels[step]}
               </Button>
             </div>
@@ -338,7 +374,7 @@ export default function CheckoutPage({
             <span className="text-xs text-muted-foreground">{t('total')}</span>
             <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
           </div>
-          <Button type="submit" form="checkout-form" className="w-full" disabled={step !== 'idle'}>
+          <Button type="submit" form="checkout-form" className="w-full" disabled={step !== 'idle' || !requiredConsent}>
             {stepLabels[step]}
           </Button>
         </div>

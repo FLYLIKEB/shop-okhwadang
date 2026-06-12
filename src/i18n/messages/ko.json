@@ -377,7 +377,14 @@
     "naverpayDomesticBadge": "국내 전용",
     "naverpayDomesticHint": "해외 사용자는 네이버페이 결제가 실패할 수 있습니다.",
     "paypalRedirectHint": "PayPal 승인 페이지로 이동합니다.",
-    "externalPaymentUnavailable": "결제 페이지를 열 수 없습니다."
+    "externalPaymentUnavailable": "결제 페이지를 열 수 없습니다.",
+    "consent": {
+      "title": "필수 동의",
+      "requiredLabel": "[필수] 구매조건 및 개인정보 처리에 동의합니다.",
+      "requiredDescription": "주문할 상품의 상품명, 가격, 배송정보, 교환·환불 규정을 확인했으며 구매에 동의합니다.\n결제 및 배송 처리를 위해 개인정보 수집·이용과 PG사/배송사 처리위탁 또는 제3자 제공 안내에 동의합니다.",
+      "marketingLabel": "[선택] 마케팅 정보 수신에 동의합니다.",
+      "marketingDescription": "신상품, 프로모션, 이벤트 안내를 이메일 또는 문자로 받을 수 있습니다."
+    }
   },
   "order": {
     "orderHistory": "주문 내역",

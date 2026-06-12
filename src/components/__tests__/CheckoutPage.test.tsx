@@ -49,6 +49,11 @@ vi.mock('next-intl', () => ({
       'steps.preparing_payment': '결제 준비 중...',
       'steps.confirming_payment': '결제 확인 중...',
       'steps.success': '완료',
+      'consent.title': '필수 동의',
+      'consent.requiredLabel': '[필수] 구매조건 및 개인정보 처리에 동의합니다.',
+      'consent.requiredDescription': '주문할 상품의 상품명, 가격, 배송정보, 교환·환불 규정을 확인했으며 구매에 동의합니다.',
+      'consent.marketingLabel': '[선택] 마케팅 정보 수신에 동의합니다.',
+      'consent.marketingDescription': '신상품, 프로모션, 이벤트 안내를 받을 수 있습니다.',
     };
     return dict[key] ?? key;
   },
@@ -181,6 +186,7 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByLabelText(/연락처/), { target: { value: '01012345678' } });
     fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
+    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
@@ -215,6 +221,7 @@ describe('CheckoutPage', () => {
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');
     await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
@@ -252,6 +259,7 @@ describe('CheckoutPage', () => {
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');
     await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
