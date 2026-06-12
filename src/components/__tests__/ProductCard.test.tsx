@@ -49,6 +49,8 @@ const translations: Record<string, string> = {
   discountOff: '{percent}% 할인',
   toggleOn: '찜하기',
   toggleOff: '찜 해제',
+  'stockStatus.soldout': '품절',
+  'stockStatus.soldoutReason': '현재 재고가 없어 구매할 수 없습니다.',
 };
 
 vi.mock('next-intl', () => ({
@@ -107,7 +109,7 @@ describe('ProductCard', () => {
 
   it('shows soldout badge when status is soldout', () => {
     render(<ProductCard {...baseProps} status="soldout" />);
-    expect(screen.getByText('SOLD OUT')).toBeInTheDocument();
+    expect(screen.getByText('품절')).toBeInTheDocument();
   });
 
   it('renders the Okhwadang logo fallback when images are empty', () => {
@@ -133,7 +135,7 @@ describe('ProductCard', () => {
 
   it('shows soldout overlay when status is soldout', () => {
     render(<ProductCard {...baseProps} status="soldout" />);
-    expect(screen.getByText('SOLD OUT')).toBeInTheDocument();
+    expect(screen.getByText('품절')).toBeInTheDocument();
   });
 
   it('redirects to login when unauthenticated user clicks wishlist', async () => {

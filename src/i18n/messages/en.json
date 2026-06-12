@@ -239,7 +239,17 @@
       "hidden": "Hidden"
     },
     "lowStock": "Only {count} left",
-    "badgeFreeShipping": "Free Shipping"
+    "badgeFreeShipping": "Free Shipping",
+    "stockStatus": {
+      "title": "Stock status",
+      "soldout": "Sold out",
+      "soldoutReason": "This item is currently unavailable and cannot be purchased.",
+      "optionSoldoutReason": "This option is sold out and cannot be selected.",
+      "optionSoldoutAria": "{option} option sold out",
+      "lowStock": "Only {count} left",
+      "available": "Available",
+      "restockNotice": "Restock notification support is being prepared."
+    }
   },
   "cart": {
     "title": "Cart",

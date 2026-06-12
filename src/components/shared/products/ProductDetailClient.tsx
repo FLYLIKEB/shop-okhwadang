@@ -99,7 +99,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
     (o) => o.id === selectedOptionId,
   )
   const maxQuantity = selectedOption?.stock ?? product.stock
-  const isSoldout = product.status === 'soldout'
+  const isSoldout = product.status === 'soldout' || maxQuantity === 0
   const isLowStock = !isSoldout && maxQuantity > 0 && maxQuantity <= 5
   const descriptionImages = product.detailImages?.filter((img) => img.isActive) ?? []
 
@@ -375,9 +375,13 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
             </Button>
           </div>
 
-          {isSoldout && (
-            <p className="typo-body-sm font-medium text-destructive">{t('outOfStockMessage')}</p>
-          )}
+          <div className="rounded-lg border border-border bg-muted/20 p-4">
+            <p className="typo-label text-muted-foreground">{t('stockStatus.title')}</p>
+            <p className={cn('mt-1 typo-body-sm font-medium', isSoldout ? 'text-destructive' : 'text-foreground')}>
+              {isSoldout ? t('stockStatus.soldoutReason') : isLowStock ? t('stockStatus.lowStock', { count: maxQuantity }) : t('stockStatus.available')}
+            </p>
+            <p className="mt-2 typo-body-sm text-muted-foreground">{t('stockStatus.restockNotice')}</p>
+          </div>
         </div>
       </div>
 

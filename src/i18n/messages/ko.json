@@ -239,7 +239,17 @@
       "hidden": "숨김"
     },
     "lowStock": "{count}개 남음",
-    "badgeFreeShipping": "무료배송"
+    "badgeFreeShipping": "무료배송",
+    "stockStatus": {
+      "title": "재고 안내",
+      "soldout": "품절",
+      "soldoutReason": "현재 재고가 없어 구매할 수 없습니다.",
+      "optionSoldoutReason": "해당 옵션은 품절되어 선택할 수 없습니다.",
+      "optionSoldoutAria": "{option} 옵션 품절",
+      "lowStock": "남은 수량 {count}개",
+      "available": "구매 가능",
+      "restockNotice": "재입고 알림 기능과 연결될 수 있도록 준비 중입니다."
+    }
   },
   "cart": {
     "title": "장바구니",
