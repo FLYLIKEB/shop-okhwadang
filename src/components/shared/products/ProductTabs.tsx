@@ -24,6 +24,30 @@ const TABS = ['details', 'reviews', 'inquiry'] as const
 type Tab = (typeof TABS)[number]
 const INQUIRY_TYPE_PRODUCT = '상품'
 
+function DeliveryGuide() {
+  const t = useTranslations('product.tabs.deliveryGuide')
+  const items = ['method', 'area', 'period', 'dispatch', 'remoteArea'] as const
+
+  return (
+    <section className="rounded-lg border border-border bg-muted/20 p-5" aria-labelledby="delivery-guide-title">
+      <div className="mb-4">
+        <p className="typo-label text-muted-foreground">{t('eyebrow')}</p>
+        <h2 id="delivery-guide-title" className="typo-h2 text-foreground">
+          {t('title')}
+        </h2>
+      </div>
+      <dl className="grid gap-3 md:grid-cols-2">
+        {items.map((item) => (
+          <div key={item} className="rounded-md bg-background/70 p-3">
+            <dt className="typo-label text-muted-foreground">{t(`${item}.label`)}</dt>
+            <dd className="mt-1 typo-body-sm text-foreground">{t(`${item}.value`)}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
+
 export default function ProductTabs({ description, descriptionImages, productId, locale = 'ko' }: ProductTabsProps) {
   const t = useTranslations('product')
   const pathname = usePathname()
@@ -155,6 +179,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
               className="prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ __html: sanitized }}
             />
+            <DeliveryGuide />
           </div>
         )}
         {activeTab === 'reviews' && productId && (
