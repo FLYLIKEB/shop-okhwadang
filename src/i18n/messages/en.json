@@ -230,6 +230,30 @@
           "label": "Remote or island areas",
           "value": "Jeju, island, and remote areas may require additional shipping fees or delivery time."
         }
+      },
+      "exchangeRefundGuide": {
+        "eyebrow": "Exchange & Refund Guide",
+        "title": "Exchange, Return & Refund Policy",
+        "changeOfMindPeriod": {
+          "label": "Change-of-mind request period",
+          "value": "Exchange or return requests due to change of mind may be submitted within 7 days after receipt."
+        },
+        "sellerFault": {
+          "label": "Defective or wrong items",
+          "value": "For defective items or wrong deliveries, Ockhwadang covers the exchange or return shipping fee."
+        },
+        "customerFault": {
+          "label": "Customer-paid shipping",
+          "value": "For change-of-mind exchanges or returns, the customer is responsible for return shipping fees."
+        },
+        "refundTiming": {
+          "label": "Refund timing",
+          "value": "Refunds are processed by the original payment method within 3–7 business days after returned items are received and inspected."
+        },
+        "foodRestriction": {
+          "label": "Tea and food restrictions",
+          "value": "For tea and food products, change-of-mind exchanges or returns may be restricted if opened, used, packaging is damaged, or product value is reduced."
+        }
       }
     },
     "sort": {
