@@ -124,7 +124,7 @@ function ProductCard({
 
         {isSoldout && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/70">
-            <span className="data-label text-foreground tracking-widest">SOLD OUT</span>
+            <span className="data-label text-foreground tracking-widest">{t('stockStatus.soldout')}</span>
           </div>
         )}
 
@@ -199,6 +199,12 @@ function ProductCard({
             </p>
           )}
         </div>
+
+        {isSoldout && (
+          <p className="mt-auto rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-center text-xs font-medium text-destructive">
+            {t('stockStatus.soldoutReason')}
+          </p>
+        )}
 
         {/* 장바구니 담기 — 메타 아래 고정, hover 시 foreground 대비 강화 */}
         {!isSoldout && (

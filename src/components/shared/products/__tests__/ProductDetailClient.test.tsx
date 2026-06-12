@@ -56,6 +56,11 @@ vi.mock('next-intl', () => ({
       selectedQuantity: `수량 ${values?.quantity ?? 0}개`,
       totalProductPrice: '상품 합계',
       outOfStockMessage: '품절',
+      'stockStatus.title': '재고 안내',
+      'stockStatus.soldoutReason': '품절',
+      'stockStatus.lowStock': `재고 ${values?.count ?? 0}개`,
+      'stockStatus.available': '구매 가능',
+      'stockStatus.restockNotice': '재입고 알림 준비 중',
       clay: '진흙',
       shape: '모양',
     };

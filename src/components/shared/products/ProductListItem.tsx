@@ -73,7 +73,7 @@ function ProductListItem({
         )}
         {isSoldout && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <span className="text-xs font-semibold text-white">품절</span>
+            <span className="text-xs font-semibold text-white">{t('stockStatus.soldout')}</span>
           </div>
         )}
       </div>
@@ -97,7 +97,10 @@ function ProductListItem({
             )}
           </div>
         )}
-        {shortDescription && (
+        {isSoldout && (
+          <p className="line-clamp-1 typo-body-sm font-medium text-destructive">{t('stockStatus.soldoutReason')}</p>
+        )}
+        {!isSoldout && shortDescription && (
           <p className="line-clamp-1 typo-body-sm text-muted-foreground">{shortDescription}</p>
         )}
       </div>
