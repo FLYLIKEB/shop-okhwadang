@@ -39,11 +39,18 @@ const SOCIAL_LINKS: {
   },
 ];
 
+function getFooterHref(item: NavigationItem): string {
+  if (item.url === '/pages/shipping' || item.url === '/pages/returns') {
+    return '/shipping-returns';
+  }
+  return item.url;
+}
+
 function renderNavLinks(items: NavigationItem[]) {
   return items.map((item) => (
     <Link
       key={item.id}
-      href={item.url}
+      href={getFooterHref(item)}
       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
     >
       {item.label}
