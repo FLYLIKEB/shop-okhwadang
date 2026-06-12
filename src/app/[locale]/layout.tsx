@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import AppShell from '@/components/AppShell';
@@ -39,6 +40,8 @@ export async function generateMetadata({
     },
   };
 }
+
+const GOOGLE_TAG_ID = 'G-ENSHH2TBSY';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
@@ -89,6 +92,15 @@ export default async function LocaleLayout({
     <html lang={safeLocale} data-theme={initialTheme} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: foucScript }} />
+        <Script async src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`} strategy="afterInteractive" />
+        <Script id="google-tag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_TAG_ID}');
+          `}
+        </Script>
         {themeStyle ? <style>{themeStyle}</style> : null}
       </head>
       <body>
