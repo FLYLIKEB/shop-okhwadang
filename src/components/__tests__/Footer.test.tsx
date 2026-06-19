@@ -3,8 +3,8 @@ import { describe, it, expect, vi } from 'vitest';
 import Footer from '@/components/Footer';
 
 vi.mock('@/i18n/navigation', () => ({
-  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-    <a href={href} {...props}>{children}</a>
+  Link: ({ href, children, prefetch, ...props }: { href: string; children: React.ReactNode; prefetch?: boolean; [key: string]: unknown }) => (
+    <a href={href} data-prefetch={String(prefetch)} {...props}>{children}</a>
   ),
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/',
@@ -62,6 +62,13 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: '이용약관' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '개인정보처리방침' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '고객센터' })).toBeInTheDocument();
+  });
+
+  it('disables prefetch for footer navigation links', () => {
+    render(<Footer />);
+
+    expect(screen.getByRole('link', { name: '전체 상품' })).toHaveAttribute('data-prefetch', 'false');
+    expect(screen.getByRole('link', { name: '고객센터' })).toHaveAttribute('data-prefetch', 'false');
   });
 
   it('renders footer section headings larger and bold', () => {

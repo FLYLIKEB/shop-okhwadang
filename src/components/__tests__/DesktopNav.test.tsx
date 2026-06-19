@@ -4,8 +4,8 @@ import { DesktopNav } from '@/components/header/DesktopNav';
 import type { NavigationItem } from '@/lib/api';
 
 vi.mock('@/i18n/navigation', () => ({
-  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-    <a href={href} {...props}>{children}</a>
+  Link: ({ href, children, prefetch, ...props }: { href: string; children: React.ReactNode; prefetch?: boolean; [key: string]: unknown }) => (
+    <a href={href} data-prefetch={String(prefetch)} {...props}>{children}</a>
   ),
 }));
 
@@ -57,8 +57,15 @@ describe('DesktopNav', () => {
 
     fireEvent.mouseEnter(screen.getByText('보이차·다구').closest('div')!);
 
-    expect(screen.getByRole('link', { name: '보이차' })).toHaveAttribute('href', '/products?categoryId=2');
-    expect(screen.getByRole('link', { name: '생차' })).toHaveAttribute('href', '/products?categoryId=3');
+    const parentLink = screen.getByRole('link', { name: '보이차·다구' });
+    const childLink = screen.getByRole('link', { name: '보이차' });
+    const grandchildLink = screen.getByRole('link', { name: '생차' });
+
+    expect(parentLink).toHaveAttribute('data-prefetch', 'false');
+    expect(childLink).toHaveAttribute('href', '/products?categoryId=2');
+    expect(childLink).toHaveAttribute('data-prefetch', 'false');
+    expect(grandchildLink).toHaveAttribute('href', '/products?categoryId=3');
+    expect(grandchildLink).toHaveAttribute('data-prefetch', 'false');
     expect(screen.queryByText('ㄴ 보이차')).not.toBeInTheDocument();
     expect(screen.queryByText('ㄴ 생차')).not.toBeInTheDocument();
     expect(container.innerHTML).not.toContain('border-divider-soft');

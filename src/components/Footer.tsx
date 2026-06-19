@@ -51,6 +51,7 @@ function renderNavLinks(items: NavigationItem[]) {
     <Link
       key={item.id}
       href={getFooterHref(item)}
+      prefetch={false}
       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
     >
       {item.label}
