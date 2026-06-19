@@ -19,6 +19,11 @@ import { CouponsService } from '../coupons/coupons.service';
 import { CalculateDiscountDto } from '../coupons/dto/calculate-discount.dto';
 import { ShippingFeeCalculatorService } from '../shipping/services/shipping-fee-calculator.service';
 import { OrderEventEmitter } from './order-event.emitter';
+import {
+  PolicyConsent,
+  PolicyConsentContext,
+  PolicyConsentSnapshot,
+} from '../pages/entities/policy-consent.entity';
 import { OrderCompletedEvent } from './events/order-completed.event';
 import { applyLocale } from '../../common/utils/locale.util';
 
@@ -131,6 +136,7 @@ export class OrdersService {
 
     const savedOrder = await this.persistOrder(manager, userId, dto, pointsToUse, pricing);
     await this.applyCouponAndPoints(manager, userId, dto, pointsToUse, savedOrder);
+    await this.savePolicyConsent(manager, userId, savedOrder, dto);
     await this.saveOrderItems(manager, orderItems, Number(savedOrder.id));
     await this.clearCartItems(manager, userId, dto);
 
@@ -323,6 +329,55 @@ export class OrdersService {
         Number(savedOrder.id),
       );
     }
+  }
+
+  private async savePolicyConsent(
+    manager: EntityManager,
+    userId: number,
+    savedOrder: Order,
+    dto: CreateOrderDto,
+  ): Promise<void> {
+    const policies = dto.policyConsents?.length
+      ? dto.policyConsents.map((policy) => ({
+        slug: policy.slug,
+        version: policy.version ?? null,
+        effectiveDate: policy.effectiveDate ?? null,
+      }))
+      : await this.loadCurrentPolicySnapshots(manager);
+
+    await manager.save(PolicyConsent, {
+      userId,
+      context: PolicyConsentContext.CHECKOUT,
+      resourceType: 'order',
+      resourceId: Number(savedOrder.id),
+      policies,
+      marketingConsent: dto.marketingConsent ?? false,
+    });
+  }
+
+  private async loadCurrentPolicySnapshots(manager: EntityManager): Promise<PolicyConsentSnapshot[]> {
+    const rows = await manager.query(`
+      SELECT slug, title, policy_version AS version, policy_effective_date AS effectiveDate
+      FROM pages
+      WHERE is_current_policy = 1
+        AND slug IN ('terms', 'privacy', 'shipping', 'returns', 'shipping-returns')
+      ORDER BY slug ASC
+    `) as Array<{ slug: string; title: string | null; version: string | null; effectiveDate: string | null }>;
+
+    if (rows.length > 0) {
+      return rows.map((row) => ({
+        slug: row.slug,
+        title: row.title,
+        version: row.version,
+        effectiveDate: row.effectiveDate,
+      }));
+    }
+
+    return [
+      { slug: 'terms', version: null, effectiveDate: null },
+      { slug: 'privacy', version: null, effectiveDate: null },
+      { slug: 'shipping-returns', version: null, effectiveDate: null },
+    ];
   }
 
   private async saveOrderItems(

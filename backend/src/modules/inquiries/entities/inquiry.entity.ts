@@ -2,6 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  Index,
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
@@ -23,12 +24,16 @@ export enum InquiryStatus {
 }
 
 @Entity('inquiries')
+@Index(['productId'])
 export class Inquiry {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: number;
 
   @Column({ name: 'user_id', type: 'bigint' })
   userId!: number;
+
+  @Column({ name: 'product_id', type: 'bigint', nullable: true })
+  productId!: number | null;
 
   @Column({ type: 'enum', enum: InquiryType })
   type!: InquiryType;
@@ -38,6 +43,9 @@ export class Inquiry {
 
   @Column({ type: 'longtext' })
   content!: string;
+
+  @Column({ name: 'is_secret', type: 'boolean', default: false })
+  isSecret!: boolean;
 
   @Column({ type: 'enum', enum: InquiryStatus, default: InquiryStatus.PENDING })
   status!: InquiryStatus;

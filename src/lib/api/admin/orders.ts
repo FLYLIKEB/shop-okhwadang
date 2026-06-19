@@ -1,4 +1,5 @@
 import { apiClient, type PaginatedResponse } from '../core';
+import type { OrderServiceRequest, OrderServiceRequestStatus, OrderServiceRequestType } from '../orders';
 
 export interface AdminOrder {
   id: number;
@@ -39,6 +40,13 @@ export interface AdminShipping {
   status: string;
 }
 
+export interface AdminOrderServiceRequestQueryParams {
+  type?: OrderServiceRequestType;
+  status?: OrderServiceRequestStatus;
+  page?: number;
+  limit?: number;
+}
+
 export const adminOrdersApi = {
   getList: (params?: AdminOrderQueryParams) =>
     apiClient.get<AdminOrderListResponse>('/admin/orders', {
@@ -48,4 +56,10 @@ export const adminOrdersApi = {
     apiClient.patch<AdminOrder>(`/admin/orders/${id}`, { status }),
   registerShipping: (orderId: number, data: { carrier: string; trackingNumber: string }) =>
     apiClient.post<AdminShipping>(`/admin/shipping/${orderId}`, data),
+  getServiceRequests: (params?: AdminOrderServiceRequestQueryParams) =>
+    apiClient.get<PaginatedResponse<OrderServiceRequest>>('/admin/order-service-requests', {
+      params: params as Record<string, string | number | undefined>,
+    }),
+  updateServiceRequest: (id: number, data: { status: OrderServiceRequestStatus; adminNote?: string }) =>
+    apiClient.patch<OrderServiceRequest>(`/admin/order-service-requests/${id}`, data),
 };

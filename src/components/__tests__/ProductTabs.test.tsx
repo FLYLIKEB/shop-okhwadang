@@ -128,6 +128,8 @@ describe('ProductTabs', () => {
         {
           id: 22,
           type: '상품',
+          productId: 1,
+          isSecret: false,
           title: '기존 문의',
           content: '내용',
           status: 'pending',
@@ -153,6 +155,8 @@ describe('ProductTabs', () => {
       type: '상품',
       title: '추가 문의',
       content: '문의 내용',
+      productId: 1,
+      isSecret: false,
     })
   })
 })

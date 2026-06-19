@@ -221,7 +221,9 @@
         "loadError": "Failed to load inquiries.",
         "statusAnswered": "Answered",
         "statusPending": "Received",
-        "answerLabel": "Answer"
+        "answerLabel": "Answer",
+        "secretLabel": "Submit as private",
+        "secretBadge": "[Private]"
       },
       "deliveryGuide": {
         "eyebrow": "Shipping Guide",
@@ -1092,7 +1094,34 @@
     "recipient": "Recipient",
     "phone": "Phone",
     "address": "Address",
-    "deliveryMemo": "Delivery Memo"
+    "deliveryMemo": "Delivery Memo",
+    "serviceRequests": {
+      "title": "Cancellation, Exchange, Return & Refund Requests",
+      "cancelGuide": "You can request cancellation while the order is pending or paid. After preparation starts, customer support review is required.",
+      "afterDeliveryGuide": "After delivery, you can request exchange, return, or refund. Shipping-fee responsibility depends on change of mind, defect, or wrong delivery.",
+      "unavailableGuide": "Online requests are limited for the current order status. Please contact customer support for cancellation after preparation starts.",
+      "typeLabel": "Request type",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. Change of mind, defect, wrong delivery",
+      "detailLabel": "Details",
+      "detailPlaceholder": "Describe details. Submit supporting photos as guided by customer support when needed.",
+      "submit": "Submit request",
+      "submitSuccess": "Your request has been submitted.",
+      "submitError": "Failed to submit your request.",
+      "reasonRequired": "Please enter a reason.",
+      "types": {
+        "cancel": "Cancellation",
+        "return": "Return",
+        "exchange": "Exchange",
+        "refund": "Refund"
+      },
+      "status": {
+        "requested": "Requested",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "completed": "Completed"
+      }
+    }
   },
   "checkoutResult": {
     "failedTitle": "Payment Failed",

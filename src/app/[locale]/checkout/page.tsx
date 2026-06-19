@@ -233,6 +233,7 @@ export default function CheckoutPage({
     currentOrderId,
     currentOrderNumber,
     requiredConsent,
+    marketingConsent,
     setStep,
     setPrepareResult,
     setCurrentOrderId,

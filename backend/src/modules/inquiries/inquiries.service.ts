@@ -25,9 +25,9 @@ export class InquiriesService {
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
   ) {}
 
-  async findAllByUser(userId: number): Promise<Inquiry[]> {
+  async findAllByUser(userId: number, productId?: number): Promise<Inquiry[]> {
     return this.inquiryRepo.find({
-      where: { userId },
+      where: productId ? { userId, productId } : { userId },
       order: { createdAt: 'DESC' },
     });
   }
@@ -48,8 +48,10 @@ export class InquiriesService {
     const inquiry = this.inquiryRepo.create({
       userId,
       type: dto.type,
+      productId: dto.productId ?? null,
       title: dto.title,
       content: dto.content,
+      isSecret: dto.isSecret ?? false,
     });
     const saved = await this.inquiryRepo.save(inquiry);
     this.logger.log(`Inquiry created: id=${saved.id}, userId=${userId}`);

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ordersApi, paymentsApi } from '@/lib/api';
-import type { CheckoutGatewayName, OrderResponse, PreparePaymentResponse } from '@/lib/api';
+import type { CheckoutGatewayName, OrderResponse, OrderServiceRequest, OrderServiceRequestType, PreparePaymentResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -38,6 +38,10 @@ export default function OrderDetailPage() {
   );
   const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('idle');
+  const [serviceRequests, setServiceRequests] = useState<OrderServiceRequest[]>([]);
+  const [requestType, setRequestType] = useState<OrderServiceRequestType>('cancel');
+  const [requestReason, setRequestReason] = useState('');
+  const [requestDetail, setRequestDetail] = useState('');
   const paymentRef = useRef<PaymentGatewayHandle>(null);
 
   const { execute: loadOrder, isLoading: loading } = useAsyncAction(
@@ -49,6 +53,10 @@ export default function OrderDetailPage() {
       }
       const res = await ordersApi.getById(id, { params: { locale } });
       setOrder(res);
+      if (typeof ordersApi.getServiceRequests === 'function') {
+        const requests = await ordersApi.getServiceRequests(id);
+        setServiceRequests(requests);
+      }
     },
     { onError: () => setNotFound(true) },
   );
@@ -64,6 +72,17 @@ export default function OrderDetailPage() {
     void loadOrder();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, locale, params.id]);
+
+  useEffect(() => {
+    if (!order) return;
+    if (['pending', 'paid'].includes(order.status)) {
+      setRequestType('cancel');
+      return;
+    }
+    if (['delivered', 'completed'].includes(order.status) && requestType === 'cancel') {
+      setRequestType('return');
+    }
+  }, [order, requestType]);
 
   if (isLoading || loading) {
     return (
@@ -98,10 +117,48 @@ export default function OrderDetailPage() {
   const isPaymentPending = order.status === 'pending';
   const shouldShowShippingTracking = !['pending', 'cancelled', 'refunded'].includes(order.status);
   const payableAmount = Number(order.totalAmount);
+  const canCancel = ['pending', 'paid'].includes(order.status);
+  const canAfterDeliveryRequest = ['delivered', 'completed'].includes(order.status);
+  const requestTypeLabels: Record<OrderServiceRequestType, string> = {
+    cancel: t('serviceRequests.types.cancel'),
+    return: t('serviceRequests.types.return'),
+    exchange: t('serviceRequests.types.exchange'),
+    refund: t('serviceRequests.types.refund'),
+  };
+  const requestStatusLabels: Record<string, string> = {
+    requested: t('serviceRequests.status.requested'),
+    approved: t('serviceRequests.status.approved'),
+    rejected: t('serviceRequests.status.rejected'),
+    completed: t('serviceRequests.status.completed'),
+  };
 
   const handlePaymentError = (message: string) => {
     toast.error(message);
     setPaymentStep('idle');
+  };
+
+  const submitServiceRequest = async () => {
+    if (!requestReason.trim()) {
+      toast.error(t('serviceRequests.reasonRequired'));
+      return;
+    }
+
+    try {
+      await ordersApi.createServiceRequest(order.id, {
+        type: requestType,
+        reason: requestReason.trim(),
+        detail: requestDetail.trim() || undefined,
+        useShippingAddress: true,
+      });
+      toast.success(t('serviceRequests.submitSuccess'));
+      setRequestReason('');
+      setRequestDetail('');
+      const requests = await ordersApi.getServiceRequests(order.id);
+      setServiceRequests(requests);
+      void loadOrder();
+    } catch (err) {
+      toast.error(handleApiError(err, t('serviceRequests.submitError')));
+    }
   };
 
   const handlePendingPayment = async () => {
@@ -275,6 +332,73 @@ export default function OrderDetailPage() {
               </dd>
             </div>
           </dl>
+        </section>
+
+
+        {/* Cancellation / return / exchange / refund requests */}
+        <section className="rounded-lg border p-6">
+          <h2 className="mb-4 text-base font-semibold">{t('serviceRequests.title')}</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            {canCancel ? t('serviceRequests.cancelGuide') : canAfterDeliveryRequest ? t('serviceRequests.afterDeliveryGuide') : t('serviceRequests.unavailableGuide')}
+          </p>
+
+          {(canCancel || canAfterDeliveryRequest) && (
+            <div className="space-y-3 rounded-md bg-muted/30 p-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="text-sm">
+                  <span className="mb-1 block font-medium">{t('serviceRequests.typeLabel')}</span>
+                  <select
+                    value={requestType}
+                    onChange={(event) => setRequestType(event.target.value as OrderServiceRequestType)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    {canCancel && <option value="cancel">{requestTypeLabels.cancel}</option>}
+                    {canAfterDeliveryRequest && <option value="return">{requestTypeLabels.return}</option>}
+                    {canAfterDeliveryRequest && <option value="exchange">{requestTypeLabels.exchange}</option>}
+                    {canAfterDeliveryRequest && <option value="refund">{requestTypeLabels.refund}</option>}
+                  </select>
+                </label>
+                <label className="text-sm">
+                  <span className="mb-1 block font-medium">{t('serviceRequests.reasonLabel')}</span>
+                  <input
+                    value={requestReason}
+                    onChange={(event) => setRequestReason(event.target.value)}
+                    maxLength={100}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder={t('serviceRequests.reasonPlaceholder')}
+                  />
+                </label>
+              </div>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium">{t('serviceRequests.detailLabel')}</span>
+                <textarea
+                  value={requestDetail}
+                  onChange={(event) => setRequestDetail(event.target.value)}
+                  rows={3}
+                  className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder={t('serviceRequests.detailPlaceholder')}
+                />
+              </label>
+              <Button type="button" onClick={submitServiceRequest}>
+                {t('serviceRequests.submit')}
+              </Button>
+            </div>
+          )}
+
+          {serviceRequests.length > 0 && (
+            <ul className="mt-4 space-y-2">
+              {serviceRequests.map((request) => (
+                <li key={request.id} className="rounded-md border bg-card p-3 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium">{requestTypeLabels[request.type]}</span>
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{requestStatusLabels[request.status] ?? request.status}</span>
+                  </div>
+                  <p className="mt-1 text-muted-foreground">{request.reason}</p>
+                  {request.adminNote && <p className="mt-2 text-xs text-muted-foreground">{request.adminNote}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {/* Tax receipt / invoice guide */}

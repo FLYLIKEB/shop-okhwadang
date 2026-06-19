@@ -19,6 +19,7 @@ const mockManager = {
   save: jest.fn(),
   update: jest.fn(),
   getRepository: jest.fn(),
+  query: jest.fn(),
 };
 
 const mockDataSource = {
@@ -60,6 +61,7 @@ describe('OrdersService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockManager.query.mockResolvedValue([]);
     mockDataSource.transaction.mockImplementation(
       (cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager),
     );

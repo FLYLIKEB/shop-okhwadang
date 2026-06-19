@@ -25,6 +25,7 @@ export interface UseCheckoutOptions {
   currentOrderId: number | null;
   currentOrderNumber: string;
   requiredConsent?: boolean;
+  marketingConsent?: boolean;
   setStep: (step: PaymentStep) => void;
   setPrepareResult: (result: PreparePaymentResponse | null) => void;
   setCurrentOrderId: (id: number | null) => void;
@@ -168,6 +169,7 @@ export function useCheckout(options: UseCheckoutOptions) {
           address,
           addressDetail: addressDetail || null,
           memo: memo || null,
+          marketingConsent: options.marketingConsent ?? false,
         },
       );
 

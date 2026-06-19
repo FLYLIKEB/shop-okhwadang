@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray, IsInt, IsOptional, IsString, MaxLength, Min,
-  ValidateNested, ValidateIf, IsNotEmpty,
+  ValidateNested, ValidateIf, IsNotEmpty, IsBoolean,
 } from 'class-validator';
 
 export class OrderItemDto {
@@ -20,6 +20,27 @@ export class OrderItemDto {
   @IsInt({ message: '수량은 정수여야 합니다.' })
   @Min(1, { message: '수량은 최소 1개 이상이어야 합니다.' })
   quantity!: number;
+}
+
+
+export class PolicyConsentSnapshotDto {
+  @ApiProperty({ example: 'terms', description: '정책 문서 slug' })
+  @IsString({ message: '정책 문서 식별자는 문자열이어야 합니다.' })
+  @IsNotEmpty({ message: '정책 문서 식별자를 입력해 주세요.' })
+  @MaxLength(100, { message: '정책 문서 식별자는 최대 100자까지 입력 가능합니다.' })
+  slug!: string;
+
+  @ApiProperty({ example: 'v1.0', description: '동의한 정책 버전', required: false })
+  @IsOptional()
+  @IsString({ message: '정책 버전은 문자열이어야 합니다.' })
+  @MaxLength(50, { message: '정책 버전은 최대 50자까지 입력 가능합니다.' })
+  version?: string | null;
+
+  @ApiProperty({ example: '2026-04-20', description: '동의한 정책 시행일', required: false })
+  @IsOptional()
+  @IsString({ message: '정책 시행일은 문자열이어야 합니다.' })
+  @MaxLength(20, { message: '정책 시행일은 최대 20자까지 입력 가능합니다.' })
+  effectiveDate?: string | null;
 }
 
 export class CreateOrderDto {
@@ -75,4 +96,17 @@ export class CreateOrderDto {
   @IsOptional()
   @IsInt({ message: '쿠폰 ID는 정수여야 합니다.' })
   userCouponId?: number;
+
+  @ApiProperty({ type: [PolicyConsentSnapshotDto], description: '결제 동의 시점 정책 버전 스냅샷', required: false })
+  @IsOptional()
+  @IsArray({ message: '정책 동의 목록은 배열이어야 합니다.' })
+  @ValidateNested({ each: true })
+  @Type(() => PolicyConsentSnapshotDto)
+  policyConsents?: PolicyConsentSnapshotDto[];
+
+  @ApiProperty({ example: false, description: '마케팅 수신 동의 여부', required: false })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === true || value === 'true')
+  @IsBoolean({ message: '마케팅 수신 동의 여부는 boolean이어야 합니다.' })
+  marketingConsent?: boolean;
 }
