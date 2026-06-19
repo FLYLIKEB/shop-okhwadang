@@ -13,13 +13,23 @@ vi.mock('next/image', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    prefetch,
+  }: {
+    children: React.ReactNode;
+    href: string;
+    prefetch?: boolean;
+  }) => (
+    <a href={href} data-prefetch={String(prefetch)}>
+      {children}
+    </a>
   ),
 }));
 
 vi.mock('next/navigation', () => ({
-  useParams: () => ({ locale: 'ko' }),
+  useParams: () => ({ locale: 'en' }),
 }));
 
 vi.mock('@/lib/api', () => ({
@@ -39,7 +49,7 @@ describe('CategoryNavBlock', () => {
     vi.clearAllMocks();
   });
 
-  it('renders categories when prefetched_categories is provided', async () => {
+  it('renders text category links with locale path and disabled prefetch', async () => {
     const content = {
       category_ids: [],
       template: 'text' as const,
@@ -51,6 +61,25 @@ describe('CategoryNavBlock', () => {
     await waitFor(() => {
       const links = screen.getAllByRole('link');
       expect(links).toHaveLength(3);
+      expect(links[0]).toHaveAttribute('href', '/en/products?categoryId=1');
+      expect(links[0]).toHaveAttribute('data-prefetch', 'false');
+    });
+  });
+
+  it('renders image category links with locale path and disabled prefetch', async () => {
+    const content = {
+      category_ids: [],
+      template: 'image' as const,
+      prefetched_categories: mockCategories,
+    };
+
+    render(<CategoryNavBlock content={content} />);
+
+    await waitFor(() => {
+      const links = screen.getAllByRole('link');
+      expect(links).toHaveLength(3);
+      expect(links[1]).toHaveAttribute('href', '/en/products?categoryId=2');
+      expect(links[1]).toHaveAttribute('data-prefetch', 'false');
     });
   });
 
