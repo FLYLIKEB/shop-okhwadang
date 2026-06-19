@@ -1117,6 +1117,9 @@
     "title": "자주 묻는 질문",
     "loadError": "FAQ를 불러오지 못했습니다.",
     "empty": "해당 카테고리의 FAQ가 없습니다.",
+    "memberOnlyOrderTitle": "주문조회는 회원 로그인 후 이용할 수 있습니다.",
+    "memberOnlyOrderDescription": "옥화당은 현재 회원 주문만 지원하며, 비회원 주문조회 폼은 제공하지 않습니다.",
+    "memberOnlyOrderAction": "로그인 후 마이페이지 주문 내역에서 결제 상태와 배송 상태를 확인해 주세요.",
     "categories": {
       "all": "전체",
       "shipping": "배송",

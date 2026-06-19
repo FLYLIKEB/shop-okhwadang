@@ -1117,6 +1117,9 @@
     "title": "FAQ",
     "loadError": "Failed to load FAQ.",
     "empty": "No FAQ found in this category.",
+    "memberOnlyOrderTitle": "Order lookup is available after member login.",
+    "memberOnlyOrderDescription": "Ockhwadang currently supports member orders only and does not provide a guest order lookup form.",
+    "memberOnlyOrderAction": "After logging in, check payment and shipping status from My Page order history.",
     "categories": {
       "all": "All",
       "shipping": "Shipping",

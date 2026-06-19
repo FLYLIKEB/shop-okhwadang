@@ -62,6 +62,12 @@ export default function FaqPage() {
         ))}
       </div>
 
+      <section className="mb-6 rounded-lg border border-border bg-muted/20 p-5">
+        <h2 className="typo-h3 text-foreground">{t('memberOnlyOrderTitle')}</h2>
+        <p className="mt-2 typo-body text-muted-foreground">{t('memberOnlyOrderDescription')}</p>
+        <p className="mt-2 typo-body-sm text-muted-foreground">{t('memberOnlyOrderAction')}</p>
+      </section>
+
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
