@@ -42,6 +42,7 @@ export function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
         >
           <Link
             href={item.url}
+            prefetch={false}
             className={cn(
               'group relative flex items-center gap-1 py-2 typo-body-sm transition-colors duration-200',
               fullWidth && 'w-full justify-center',
@@ -74,6 +75,7 @@ export function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
                 <div key={child.id} className="flex flex-col gap-3">
                   <Link
                     href={child.url}
+                    prefetch={false}
                     className="typo-body-sm font-semibold text-foreground hover:text-primary transition-colors tracking-wide"
                   >
                     {getHeaderNavigationLabel(child.label)}
@@ -84,6 +86,7 @@ export function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
                         <Link
                           key={grandchild.id}
                           href={grandchild.url}
+                          prefetch={false}
                           className="typo-body-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
                           {getHeaderNavigationLabel(grandchild.label)}
