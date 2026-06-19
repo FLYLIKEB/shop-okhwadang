@@ -15,6 +15,7 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   FRONTEND_URL: 'https://ockhwadang.com',
   NOTIFICATION_PROVIDER: 'resend',
   RESEND_API_KEY: 're_abc123',
+  MESSAGE_PROVIDER: 'solapi',
   PAYMENT_GATEWAY: 'toss',
   STORAGE_PROVIDER: 's3',
   KAKAO_CLIENT_ID: 'kakao-client',
@@ -52,11 +53,13 @@ describe('validateEnv', () => {
   it('누락된 키가 있으면 해당 키 에러 반환', () => {
     const env = makeFullEnv();
     delete env.NOTIFICATION_PROVIDER;
+    delete env.MESSAGE_PROVIDER;
     delete env.RESEND_API_KEY;
 
     const errors = validateEnv(env);
-    expect(errors).toHaveLength(2);
+    expect(errors).toHaveLength(3);
     expect(errors.map((e) => e.key)).toContain('NOTIFICATION_PROVIDER');
+    expect(errors.map((e) => e.key)).toContain('MESSAGE_PROVIDER');
     expect(errors.map((e) => e.key)).toContain('RESEND_API_KEY');
   });
 

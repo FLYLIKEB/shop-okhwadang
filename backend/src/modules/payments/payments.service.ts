@@ -1,6 +1,6 @@
 import {
   Injectable, BadRequestException, ConflictException,
-  Logger, Inject,
+  Logger, Inject, Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -28,6 +28,7 @@ import {
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { NotificationService } from '../notification/notification.service';
+import { MessageNotificationService } from '../notification/message-notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { PaymentConfirmationService } from './services/payment-confirmation.service';
 import { PaymentRefundService } from './services/payment-refund.service';
@@ -62,6 +63,8 @@ export class PaymentsService {
     private readonly naverpayAdapter: NaverPayPaymentAdapter,
     private readonly paypalAdapter: PayPalPaymentAdapter,
     private readonly notificationService: NotificationService,
+    @Optional()
+    private readonly messageNotificationService: MessageNotificationService | undefined,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly dataSource: DataSource,
   ) {
@@ -71,6 +74,7 @@ export class PaymentsService {
       shippingRepository: this.shippingRepository,
       dataSource: this.dataSource,
       notificationService: this.notificationService,
+      messageNotificationService: this.messageNotificationService,
       notificationDispatchHelper: this.notificationDispatchHelper,
       resolveGatewayByType: (gatewayType) => this.resolveGatewayByType(gatewayType),
       logger: this.logger,

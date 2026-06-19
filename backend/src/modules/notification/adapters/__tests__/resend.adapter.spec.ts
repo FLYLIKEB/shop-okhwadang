@@ -9,6 +9,24 @@ describe('ResendEmailAdapter', () => {
       apiKey: 'test-key',
       fromAddress: 'noreply@example.com',
     },
+    message: {
+      provider: 'mock',
+      senderPhone: '',
+      kakaoChannelId: '',
+      smsFallbackEnabled: true,
+      phoneHashSalt: 'test',
+      templates: {
+        ORDER_CREATED: '',
+        PAYMENT_CONFIRMED: '',
+        SHIPPING_STARTED: '',
+        SHIPPING_DELIVERED: '',
+      },
+      solapi: {
+        apiKey: '',
+        apiSecret: '',
+        apiBaseUrl: 'https://api.solapi.com',
+      },
+    },
   };
 
   let fetchSpy: jest.SpyInstance;
