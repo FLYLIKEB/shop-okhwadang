@@ -23,6 +23,27 @@ export enum ProductStatus {
   HIDDEN = 'hidden',
 }
 
+export interface ProductNoticeInfo {
+  type?: 'teaware' | 'tea';
+  productName?: string;
+  material?: string;
+  components?: string;
+  sizeCapacity?: string;
+  manufacturer?: string;
+  countryOfOrigin?: string;
+  handlingPrecautions?: string;
+  warrantyPolicy?: string;
+  asContact?: string;
+  foodType?: string;
+  producer?: string;
+  origin?: string;
+  manufactureDate?: string;
+  expirationDate?: string;
+  storageMethod?: string;
+  ingredients?: string;
+  customerServicePhone?: string;
+}
+
 @Entity('products')
 @Index(['categoryId'])
 @Index(['status'])
@@ -115,6 +136,9 @@ export class Product {
 
   @Column({ name: 'avg_rating', type: 'decimal', precision: 3, scale: 2, default: 0 })
   avgRating!: number;
+
+  @Column({ name: 'notice_info', type: 'json', nullable: true })
+  noticeInfo!: ProductNoticeInfo | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

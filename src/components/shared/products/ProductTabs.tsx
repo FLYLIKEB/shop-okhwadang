@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { inquiriesApi } from '@/lib/api'
-import type { Inquiry, ProductDetailImage } from '@/lib/api'
+import type { Inquiry, ProductDetailImage, ProductNoticeInfo } from '@/lib/api'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/components/ui/utils'
@@ -18,11 +18,83 @@ interface ProductTabsProps {
   descriptionImages: ProductDetailImage[]
   productId?: number
   locale?: string
+  noticeInfo?: ProductNoticeInfo | null
 }
 
 const TABS = ['details', 'reviews', 'inquiry'] as const
 type Tab = (typeof TABS)[number]
 const INQUIRY_TYPE_PRODUCT = '상품'
+
+const NOTICE_INFO_LABELS: Record<keyof Omit<ProductNoticeInfo, 'type'>, string> = {
+  productName: '품명 및 모델명',
+  material: '재질',
+  components: '구성품',
+  sizeCapacity: '크기/용량',
+  manufacturer: '제조자/수입자',
+  countryOfOrigin: '제조국',
+  handlingPrecautions: '취급 시 주의사항',
+  warrantyPolicy: '품질보증기준',
+  asContact: 'A/S 책임자와 전화번호',
+  foodType: '식품 유형',
+  producer: '생산자/수입자',
+  origin: '원산지',
+  manufactureDate: '제조연월일',
+  expirationDate: '소비기한',
+  storageMethod: '보관방법',
+  ingredients: '원재료명',
+  customerServicePhone: '소비자상담 전화번호',
+}
+
+const TEA_NOTICE_FIELDS: Array<keyof Omit<ProductNoticeInfo, 'type'>> = [
+  'foodType',
+  'producer',
+  'origin',
+  'manufactureDate',
+  'expirationDate',
+  'storageMethod',
+  'ingredients',
+  'customerServicePhone',
+]
+
+const TEAWARE_NOTICE_FIELDS: Array<keyof Omit<ProductNoticeInfo, 'type'>> = [
+  'productName',
+  'material',
+  'components',
+  'sizeCapacity',
+  'manufacturer',
+  'countryOfOrigin',
+  'handlingPrecautions',
+  'warrantyPolicy',
+  'asContact',
+]
+
+function ProductNoticeInfoGuide({ noticeInfo }: { noticeInfo?: ProductNoticeInfo | null }) {
+  if (!noticeInfo) return null
+
+  const keys = noticeInfo.type === 'tea' ? TEA_NOTICE_FIELDS : TEAWARE_NOTICE_FIELDS
+  const rows = keys
+    .map((key) => ({ key, label: NOTICE_INFO_LABELS[key], value: noticeInfo[key] }))
+    .filter((row): row is { key: keyof Omit<ProductNoticeInfo, 'type'>; label: string; value: string } => typeof row.value === 'string' && row.value.trim().length > 0)
+
+  if (rows.length === 0) return null
+
+  return (
+    <section className="rounded-lg border border-border bg-muted/20 p-5" aria-labelledby="product-notice-info-title">
+      <div className="mb-4">
+        <p className="typo-label text-muted-foreground">Product information</p>
+        <h2 id="product-notice-info-title" className="typo-h2 text-foreground">상품고시정보</h2>
+      </div>
+      <dl className="grid gap-3 md:grid-cols-2">
+        {rows.map((row) => (
+          <div key={row.key} className="rounded-md bg-background/70 p-3">
+            <dt className="typo-label text-muted-foreground">{row.label}</dt>
+            <dd className="mt-1 typo-body-sm text-foreground">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
 
 function ProductPolicyGuide({ namespace, titleId }: { namespace: 'deliveryGuide' | 'exchangeRefundGuide'; titleId: string }) {
   const t = useTranslations(`product.tabs.${namespace}`)
@@ -50,7 +122,7 @@ function ProductPolicyGuide({ namespace, titleId }: { namespace: 'deliveryGuide'
   )
 }
 
-export default function ProductTabs({ description, descriptionImages, productId, locale = 'ko' }: ProductTabsProps) {
+export default function ProductTabs({ description, descriptionImages, productId, locale = 'ko', noticeInfo }: ProductTabsProps) {
   const t = useTranslations('product')
   const pathname = usePathname()
   const { isAuthenticated } = useAuth()
@@ -181,6 +253,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
               className="prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ __html: sanitized }}
             />
+            <ProductNoticeInfoGuide noticeInfo={noticeInfo} />
             <ProductPolicyGuide namespace="deliveryGuide" titleId="delivery-guide-title" />
             <ProductPolicyGuide namespace="exchangeRefundGuide" titleId="exchange-refund-guide-title" />
           </div>

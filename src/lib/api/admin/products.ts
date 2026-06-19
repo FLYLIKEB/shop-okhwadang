@@ -1,5 +1,5 @@
 import { apiClient } from '../core';
-import type { ProductDetail, ProductListResponse } from '../products';
+import type { ProductDetail, ProductListResponse, ProductNoticeInfo } from '../products';
 
 export interface AdminProductsParams {
   page?: number;
@@ -21,6 +21,7 @@ export interface CreateProductData {
   isFreeShipping?: boolean;
   nameEn?: string;
   descriptionEn?: string;
+  noticeInfo?: ProductNoticeInfo | null;
   images?: Array<{
     url: string;
     alt?: string;
