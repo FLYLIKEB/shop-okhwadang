@@ -26,6 +26,10 @@ function makeTranslator(namespace?: string) {
     notFound: '주문을 찾을 수 없습니다.',
     backToOrders: '주문 목록으로',
     paymentMethod: '결제 수단',
+    taxReceiptGuideTitle: '현금영수증/세금계산서 안내',
+    taxReceiptGuideDescription: '현금영수증 또는 세금계산서가 필요하시면 주문번호를 포함해 고객센터로 요청해 주세요.',
+    taxReceiptPersonal: '개인소득공제와 사업자지출증빙은 결제수단 정책에 따라 처리 범위가 달라질 수 있습니다.',
+    taxInvoiceBusiness: '세금계산서는 사업자등록번호와 담당자 연락처를 함께 전달해 주세요.',
     paymentMethodHint: '주문 정보 입력 후 결제 수단이 표시됩니다.',
     paypalPayment: 'PayPal',
     naverpayPayment: '네이버페이',
@@ -120,6 +124,8 @@ describe('OrderDetailPage', () => {
     expect(screen.getByLabelText(/네이버페이/)).toBeChecked();
     expect(screen.getByLabelText(/PayPal/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '결제하기' })).toBeInTheDocument();
+    expect(screen.getByText('현금영수증/세금계산서 안내')).toBeInTheDocument();
+    expect(screen.getByText(/주문번호를 포함해 고객센터로 요청/)).toBeInTheDocument();
   });
 
   it('결제대기 주문에서 PayPal 선택 후 결제 준비 API를 호출하고 동일 PaymentGateway 컴포넌트로 전환한다', async () => {

@@ -277,6 +277,18 @@ export default function OrderDetailPage() {
           </dl>
         </section>
 
+        {/* Tax receipt / invoice guide */}
+        <section className="rounded-lg border p-6">
+          <h2 className="mb-4 text-base font-semibold">{t('taxReceiptGuideTitle')}</h2>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>{t('taxReceiptGuideDescription')}</p>
+            <ul className="list-disc space-y-2 pl-5">
+              <li>{t('taxReceiptPersonal')}</li>
+              <li>{t('taxInvoiceBusiness')}</li>
+            </ul>
+          </div>
+        </section>
+
         {/* Shipping address */}
         <section className="rounded-lg border p-6">
           <h2 className="mb-4 text-base font-semibold">{t('shippingAddress')}</h2>
