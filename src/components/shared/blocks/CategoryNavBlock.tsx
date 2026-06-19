@@ -26,14 +26,15 @@ function getClayColor(slug: string): string | null {
   return null;
 }
 
-function CategoryImageCard({ cat }: { cat: Category }) {
+function CategoryImageCard({ cat, locale }: { cat: Category; locale: string }) {
   const [imgError, setImgError] = useState(false);
   const handleError = useCallback(() => setImgError(true), []);
   const clayColor = getClayColor(cat.slug);
 
   return (
     <Link
-      href={`/products?categoryId=${cat.id}`}
+      href={`/${locale}/products?categoryId=${cat.id}`}
+      prefetch={false}
       className="group relative aspect-[4/3] overflow-hidden bg-muted"
     >
       {cat.imageUrl && !imgError ? (
@@ -105,7 +106,7 @@ export default function CategoryNavBlock({ content }: Props) {
         {title && <h2 className="text-2xl font-medium mb-8 text-center">{title}</h2>}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {categories.map((cat) => (
-            <CategoryImageCard key={cat.id} cat={cat} />
+            <CategoryImageCard key={cat.id} cat={cat} locale={locale} />
           ))}
         </div>
       </nav>
@@ -121,7 +122,8 @@ export default function CategoryNavBlock({ content }: Props) {
           return (
             <Link
               key={cat.id}
-              href={`/products?categoryId=${cat.id}`}
+              href={`/${locale}/products?categoryId=${cat.id}`}
+              prefetch={false}
               className="group bg-background px-6 py-8 flex flex-col gap-3 hover:bg-muted/40 transition-colors duration-300"
               style={{
                 opacity: visible ? 1 : 0,

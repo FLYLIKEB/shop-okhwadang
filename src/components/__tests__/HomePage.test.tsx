@@ -262,7 +262,7 @@ describe('CategoryNavBlock', () => {
     };
     render(<CategoryNavBlock content={content} />);
     const topLink = screen.getByRole('link', { name: /상의/ });
-    expect(topLink).toHaveAttribute('href', '/products?categoryId=1');
+    expect(topLink).toHaveAttribute('href', '/ko/products?categoryId=1');
   });
 
   it('renders nothing when categories empty and not loading', () => {
