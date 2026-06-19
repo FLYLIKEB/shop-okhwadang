@@ -19,6 +19,8 @@ const FIELD_ORDER = [
   'business_phone',
   'business_email',
   'business_hours',
+  'business_lunch_time',
+  'business_holidays',
   'business_privacy_officer',
   'business_info_url',
 ] as const;

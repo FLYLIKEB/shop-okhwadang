@@ -68,6 +68,8 @@ export interface FooterBusinessInfo {
   phone: string;
   email: string;
   hours: string;
+  lunchTime: string;
+  holidays: string;
   privacyOfficer: string;
   infoUrl: string;
 }
@@ -99,6 +101,8 @@ export default function Footer({ businessInfo }: FooterProps) {
   const phone = businessInfo?.phone ? t('businessInfo.phoneLabel', { value: businessInfo.phone }) : t('businessInfo.phone');
   const email = businessInfo?.email ? t('businessInfo.emailLabel', { value: businessInfo.email }) : t('businessInfo.email');
   const hours = businessInfo?.hours ? t('businessInfo.hoursLabel', { value: businessInfo.hours }) : t('businessInfo.hours');
+  const lunchTime = businessInfo?.lunchTime ? t('businessInfo.lunchTimeLabel', { value: businessInfo.lunchTime }) : t('businessInfo.lunchTime');
+  const holidays = businessInfo?.holidays ? t('businessInfo.holidaysLabel', { value: businessInfo.holidays }) : t('businessInfo.holidays');
   const privacyOfficer = businessInfo?.privacyOfficer
     ? t('businessInfo.privacyOfficerLabel', { value: businessInfo.privacyOfficer })
     : t('businessInfo.privacyOfficer');
@@ -160,6 +164,7 @@ export default function Footer({ businessInfo }: FooterProps) {
             <p>{bizNo} · {mailOrderNo}</p>
             <p>{phone} · {email}</p>
             <p>{hours}</p>
+            <p>{lunchTime} · {holidays}</p>
             <p>{privacyOfficer}</p>
             {infoUrl ? (
               <p>
