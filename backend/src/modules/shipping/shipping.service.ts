@@ -1,6 +1,6 @@
 import {
   Injectable, BadRequestException,
-  Logger,
+  Logger, Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -18,6 +18,7 @@ import { TrackShipmentDto } from './dto/track-shipment.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { NotificationService } from '../notification/notification.service';
+import { MessageNotificationService } from '../notification/message-notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { ShippingFeeCalculatorService, ShippingFeeQuote } from './services/shipping-fee-calculator.service';
 import { ShippingQuoteItemDto } from './dto/shipping-quote.dto';
@@ -40,6 +41,8 @@ export class ShippingService {
     @InjectRepository(ProductOption)
     private readonly productOptionRepository: Repository<ProductOption>,
     private readonly notificationService: NotificationService,
+    @Optional()
+    private readonly messageNotificationService: MessageNotificationService | undefined,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly mockAdapter: MockShippingAdapter,
     private readonly cjAdapter: CjShippingAdapter,
@@ -131,6 +134,7 @@ export class ShippingService {
       dto.carrier,
       dto.trackingNumber,
     );
+    void this.messageNotificationService?.sendShippingStarted(orderId);
 
     return this.shippingRepository.findOne({ where: { orderId } });
   }
@@ -246,6 +250,7 @@ export class ShippingService {
         { id: shipping.id, status: shipping.status },
         { status: ShippingStatus.DELIVERED, shippedAt, deliveredAt },
       );
+      void this.messageNotificationService?.sendShippingDelivered(Number(order.id));
       return { ...shipping, status: ShippingStatus.DELIVERED, shippedAt, deliveredAt };
     }
 

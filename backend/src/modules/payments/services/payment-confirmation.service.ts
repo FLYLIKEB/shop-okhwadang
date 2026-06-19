@@ -11,6 +11,7 @@ import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Shipping, ShippingStatus } from '../entities/shipping.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { NotificationService } from '../../notification/notification.service';
+import { MessageNotificationService } from '../../notification/message-notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { assertOwnership } from '../../../common/utils/ownership.util';
 import { findOrThrow } from '../../../common/utils/repository.util';
@@ -24,6 +25,7 @@ interface PaymentConfirmationDependencies {
   shippingRepository: Repository<Shipping>;
   dataSource: DataSource;
   notificationService: NotificationService;
+  messageNotificationService?: MessageNotificationService;
   notificationDispatchHelper: NotificationDispatchHelper;
   resolveGatewayByType: ResolveGatewayByType;
   logger: Logger;
@@ -103,6 +105,7 @@ export class PaymentConfirmationService {
         Number(payment.amount),
         result.method,
       );
+      void this.deps.messageNotificationService?.sendPaymentConfirmed(dto.orderId, result.method);
 
       return {
         paymentId: Number(payment.id),

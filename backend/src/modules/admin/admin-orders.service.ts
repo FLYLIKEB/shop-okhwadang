@@ -1,6 +1,6 @@
 import {
   Injectable, BadRequestException,
-  ConflictException, Logger,
+  ConflictException, Logger, Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
@@ -17,6 +17,7 @@ import { RegisterShippingDto } from './dto/register-shipping.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
+import { MessageNotificationService } from '../notification/message-notification.service';
 
 @Injectable()
 export class AdminOrdersService {
@@ -33,6 +34,8 @@ export class AdminOrdersService {
     private readonly dataSource: DataSource,
     private readonly membershipService: MembershipService,
     private readonly pointsService: PointsService,
+    @Optional()
+    private readonly messageNotificationService: MessageNotificationService | undefined,
   ) {}
 
   async findAll(query: AdminOrderQueryDto): Promise<PaginatedResult<Order>> {
@@ -101,6 +104,10 @@ export class AdminOrdersService {
         await this.restorePoints(manager, order);
       }
     });
+
+    if (nextStatus === OrderStatus.DELIVERED) {
+      void this.messageNotificationService?.sendShippingDelivered(orderId);
+    }
 
     if (nextStatus === OrderStatus.COMPLETED) {
       const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
@@ -195,6 +202,7 @@ export class AdminOrdersService {
     }
 
     this.logger.log(`Shipping registered for order #${orderId}: ${dto.carrier} ${dto.trackingNumber}`);
+    void this.messageNotificationService?.sendShippingStarted(orderId);
 
     return this.shippingRepository.findOne({ where: { orderId } });
   }

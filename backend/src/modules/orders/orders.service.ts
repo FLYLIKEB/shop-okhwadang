@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, BadRequestException, Logger,
+  Injectable, NotFoundException, BadRequestException, Logger, Optional,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
@@ -14,6 +14,7 @@ import { assertOwnership } from '../../common/utils/ownership.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { PointsService } from '../points/points.service';
 import { NotificationService } from '../notification/notification.service';
+import { MessageNotificationService } from '../notification/message-notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { CouponsService } from '../coupons/coupons.service';
 import { CalculateDiscountDto } from '../coupons/dto/calculate-discount.dto';
@@ -56,6 +57,8 @@ export class OrdersService {
     private readonly dataSource: DataSource,
     private readonly pointsService: PointsService,
     private readonly notificationService: NotificationService,
+    @Optional()
+    private readonly messageNotificationService: MessageNotificationService | undefined,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly couponsService: CouponsService,
     private readonly shippingFeeCalculator: ShippingFeeCalculatorService,
@@ -381,6 +384,7 @@ export class OrdersService {
         totalPayable,
         recipientName,
       );
+      void this.messageNotificationService?.sendOrderCreated(Number(savedOrder.id));
     } catch (err) {
       this.logger.error('주문 post-commit 처리 실패 (주문 자체는 이미 커밋됨)', err as Error);
     }
