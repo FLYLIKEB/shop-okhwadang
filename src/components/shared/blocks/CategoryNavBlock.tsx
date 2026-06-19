@@ -61,12 +61,15 @@ function CategoryImageCard({ cat, locale }: { cat: Category; locale: string }) {
   );
 }
 
+const EMPTY_CATEGORY_IDS: number[] = [];
+
 interface Props {
   content: CategoryNavContent;
 }
 
 export default function CategoryNavBlock({ content }: Props) {
-  const { title, category_ids = [], template, prefetched_categories } = content;
+  const { title, template, prefetched_categories } = content;
+  const category_ids = content.category_ids ?? EMPTY_CATEGORY_IDS;
   const { ref, visible } = useScrollAnimation<HTMLElement>();
   const params = useParams();
   const locale = params.locale as string;
