@@ -131,6 +131,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
   const [inquiries, setInquiries] = useState<Inquiry[]>([])
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [isSecret, setIsSecret] = useState(false)
 
   const tabLabels = useMemo(
     () => ({
@@ -148,10 +149,10 @@ export default function ProductTabs({ description, descriptionImages, productId,
 
   const { execute: loadInquiries, isLoading: isLoadingInquiries } = useAsyncAction(
     async () => {
-      const response = await inquiriesApi.getList()
+      const response = await inquiriesApi.getList(productId ? { productId } : undefined)
       const items = Array.isArray(response) ? response : response.data
       const filtered = items
-        .filter((inquiry) => inquiry.type === INQUIRY_TYPE_PRODUCT)
+        .filter((inquiry) => inquiry.type === INQUIRY_TYPE_PRODUCT && (!productId || inquiry.productId == null || inquiry.productId === productId))
         .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
       setInquiries(filtered)
     },
@@ -167,9 +168,12 @@ export default function ProductTabs({ description, descriptionImages, productId,
         type: INQUIRY_TYPE_PRODUCT,
         title: trimmedTitle,
         content: trimmedContent,
+        productId,
+        isSecret,
       })
       setTitle('')
       setContent('')
+      setIsSecret(false)
       await loadInquiries(undefined)
     },
     { successMessage: t('tabs.inquiryPanel.submitSuccess'), errorMessage: t('tabs.inquiryPanel.submitError') },
@@ -312,6 +316,15 @@ export default function ProductTabs({ description, descriptionImages, productId,
                       className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={isSecret}
+                      onChange={(e) => setIsSecret(e.target.checked)}
+                      className="size-4 rounded border-input"
+                    />
+                    {t('tabs.inquiryPanel.secretLabel')}
+                  </label>
                   <div className="flex justify-end">
                     <button
                       type="submit"
@@ -334,7 +347,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
                       {inquiries.map((inquiry) => (
                         <li key={inquiry.id} className="rounded-lg border border-border bg-muted/20 p-3">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-sm font-medium text-foreground">{inquiry.title}</p>
+                            <p className="text-sm font-medium text-foreground">{inquiry.isSecret ? `${t('tabs.inquiryPanel.secretBadge')} ` : ''}{inquiry.title}</p>
                             <span className="text-xs text-muted-foreground">
                               {new Date(inquiry.createdAt).toLocaleDateString(locale)}
                             </span>

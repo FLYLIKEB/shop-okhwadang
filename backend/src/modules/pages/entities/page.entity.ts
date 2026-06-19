@@ -47,6 +47,18 @@ export class Page {
   @Column({ type: 'boolean', default: false })
   is_published!: boolean;
 
+  @Column({ name: 'policy_version', type: 'varchar', length: 50, nullable: true })
+  policyVersion!: string | null;
+
+  @Column({ name: 'policy_effective_date', type: 'date', nullable: true })
+  policyEffectiveDate!: string | null;
+
+  @Column({ name: 'policy_change_summary', type: 'longtext', nullable: true })
+  policyChangeSummary!: string | null;
+
+  @Column({ name: 'is_current_policy', type: 'boolean', default: false })
+  isCurrentPolicy!: boolean;
+
   @CreateDateColumn()
   created_at!: Date;
 

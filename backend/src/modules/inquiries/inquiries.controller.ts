@@ -14,6 +14,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiCookieAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { InquiriesService } from './inquiries.service';
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
@@ -32,8 +33,13 @@ export class InquiriesController {
   @ApiOperation({ summary: '내 문의 목록 조회', description: '현재 사용자의 1:1 문의 목록을 조회합니다.' })
   @ApiResponse({ status: 200, description: '문의 목록 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  findAll(@Request() req: AuthenticatedRequestWithAuthUser) {
-    return this.inquiriesService.findAllByUser(req.user.id);
+  @ApiQuery({ name: 'productId', required: false, type: Number, description: '상품 ID 필터' })
+  findAll(
+    @Request() req: AuthenticatedRequestWithAuthUser,
+    @Query('productId') productId?: string,
+  ) {
+    const parsedProductId = productId ? Number(productId) : undefined;
+    return this.inquiriesService.findAllByUser(req.user.id, parsedProductId);
   }
 
   @Post()

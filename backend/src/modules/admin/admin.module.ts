@@ -11,6 +11,7 @@ import { AdminMembersService } from './admin-members.service';
 import { AdminExportController } from './admin-export.controller';
 import { AdminExportService } from './admin-export.service';
 import { Order } from '../orders/entities/order.entity';
+import { OrderServiceRequest } from '../orders/entities/order-service-request.entity';
 import { Payment } from '../payments/entities/payment.entity';
 import { Shipping } from '../payments/entities/shipping.entity';
 import { User } from '../users/entities/user.entity';
@@ -22,7 +23,7 @@ import { PointsModule } from '../points/points.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, Payment, Shipping, User, Product]),
+    TypeOrmModule.forFeature([Order, OrderServiceRequest, Payment, Shipping, User, Product]),
     PaymentsModule,
     AuditLogModule,
     MembershipModule,
