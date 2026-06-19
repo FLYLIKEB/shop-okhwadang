@@ -38,8 +38,10 @@ const mockSettings: SiteSetting[] = [
   { id: 6, key: 'business_phone', value: '010-2908-0393', valueEn: '010-2908-0393', group: 'business_info', label: '대표전화', inputType: 'text', options: null, defaultValue: '010-2908-0393', sortOrder: 205 },
   { id: 7, key: 'business_email', value: 'seorointernational@naver.com', valueEn: 'seorointernational@naver.com', group: 'business_info', label: '이메일', inputType: 'text', options: null, defaultValue: 'seorointernational@naver.com', sortOrder: 206 },
   { id: 8, key: 'business_hours', value: '평일 10:00 - 18:00', valueEn: 'Weekdays 10:00 - 18:00', group: 'business_info', label: '운영시간', inputType: 'text', options: null, defaultValue: '평일 10:00 - 18:00', sortOrder: 207 },
-  { id: 9, key: 'business_privacy_officer', value: '권준현', valueEn: 'Kwon Junhyun', group: 'business_info', label: '개인정보보호책임자', inputType: 'text', options: null, defaultValue: '권준현', sortOrder: 208 },
-  { id: 10, key: 'business_info_url', value: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=1317205631', valueEn: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=1317205631', group: 'business_info', label: '사업자정보확인 URL', inputType: 'text', options: null, defaultValue: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=1317205631', sortOrder: 209 },
+  { id: 9, key: 'business_lunch_time', value: '점심시간 12:00 - 13:00', valueEn: 'Lunch break 12:00 - 13:00', group: 'business_info', label: '점심시간', inputType: 'text', options: null, defaultValue: '점심시간 12:00 - 13:00', sortOrder: 208 },
+  { id: 10, key: 'business_holidays', value: '주말·공휴일 휴무', valueEn: 'Closed on weekends & holidays', group: 'business_info', label: '휴무일', inputType: 'text', options: null, defaultValue: '주말·공휴일 휴무', sortOrder: 209 },
+  { id: 11, key: 'business_privacy_officer', value: '권준현', valueEn: 'Kwon Junhyun', group: 'business_info', label: '개인정보보호책임자', inputType: 'text', options: null, defaultValue: '권준현', sortOrder: 210 },
+  { id: 12, key: 'business_info_url', value: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=1317205631', valueEn: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=1317205631', group: 'business_info', label: '사업자정보확인 URL', inputType: 'text', options: null, defaultValue: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=1317205631', sortOrder: 211 },
 ];
 
 describe('BusinessInfoEditor', () => {
@@ -57,6 +59,8 @@ describe('BusinessInfoEditor', () => {
     expect(screen.getByText('대표전화')).toBeInTheDocument();
     expect(screen.getByText('이메일')).toBeInTheDocument();
     expect(screen.getByText('운영시간')).toBeInTheDocument();
+    expect(screen.getByText('점심시간')).toBeInTheDocument();
+    expect(screen.getByText('휴무일')).toBeInTheDocument();
     expect(screen.getByText('개인정보보호책임자')).toBeInTheDocument();
     expect(screen.getByText('사업자정보확인 URL')).toBeInTheDocument();
   });

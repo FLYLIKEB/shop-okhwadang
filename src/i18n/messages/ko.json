@@ -118,8 +118,12 @@
       "phoneLabel": "대표전화: {value}",
       "email": "이메일: seorointernational@naver.com",
       "emailLabel": "이메일: {value}",
-      "hours": "운영시간: 평일 10:00 - 18:00 (주말·공휴일 휴무)",
+      "hours": "운영시간: 평일 10:00 - 18:00",
       "hoursLabel": "운영시간: {value}",
+      "lunchTime": "점심시간: 12:00 - 13:00",
+      "lunchTimeLabel": "점심시간: {value}",
+      "holidays": "휴무일: 주말·공휴일",
+      "holidaysLabel": "휴무일: {value}",
       "privacyOfficer": "개인정보보호책임자: 권준현",
       "privacyOfficerLabel": "개인정보보호책임자: {value}",
       "infoUrlLabel": "사업자정보확인"

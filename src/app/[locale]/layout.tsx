@@ -92,6 +92,8 @@ export default async function LocaleLayout({
         phone: settingsMap.business_phone ?? '',
         email: settingsMap.business_email ?? '',
         hours: settingsMap.business_hours ?? '',
+        lunchTime: settingsMap.business_lunch_time ?? '',
+        holidays: settingsMap.business_holidays ?? '',
         privacyOfficer: settingsMap.business_privacy_officer ?? '',
         infoUrl: settingsMap.business_info_url ?? '',
       }

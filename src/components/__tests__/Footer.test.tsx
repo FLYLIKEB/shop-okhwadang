@@ -130,6 +130,8 @@ describe('Footer', () => {
       phone: '02-1234-5678',
       email: 'support@example.com',
       hours: '평일 09:00 - 17:00',
+      lunchTime: '점심시간 12:30 - 13:30',
+      holidays: '일요일 휴무',
       privacyOfficer: '개인정보 담당자',
       infoUrl: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=0000000000',
     };
@@ -142,6 +144,8 @@ describe('Footer', () => {
     expect(screen.getByText(/대표전화: 02-1234-5678/)).toBeInTheDocument();
     expect(screen.getByText(/이메일: support@example.com/)).toBeInTheDocument();
     expect(screen.getByText('운영시간: 평일 09:00 - 17:00')).toBeInTheDocument();
+    expect(screen.getByText(/점심시간: 점심시간 12:30 - 13:30/)).toBeInTheDocument();
+    expect(screen.getByText(/휴무일: 일요일 휴무/)).toBeInTheDocument();
     expect(screen.getByText('개인정보보호책임자: 개인정보 담당자')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '사업자정보확인' })).toHaveAttribute('href', businessInfo.infoUrl);
   });
@@ -153,6 +157,8 @@ describe('Footer', () => {
     expect(screen.getByText(/131-72-05631/)).toBeInTheDocument();
     expect(screen.getByText(/대표전화: 010-2908-0393/)).toBeInTheDocument();
     expect(screen.getByText(/이메일: seorointernational@naver.com/)).toBeInTheDocument();
+    expect(screen.getByText(/점심시간: 12:00 - 13:00/)).toBeInTheDocument();
+    expect(screen.getByText(/휴무일: 주말·공휴일/)).toBeInTheDocument();
     expect(screen.getByText(/개인정보보호책임자: 권준현/)).toBeInTheDocument();
   });
 });
