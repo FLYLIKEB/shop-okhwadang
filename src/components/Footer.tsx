@@ -59,7 +59,19 @@ function renderNavLinks(items: NavigationItem[]) {
   ));
 }
 
-export default function Footer() {
+export interface FooterBusinessInfo {
+  companyName: string;
+  ceo: string;
+  address: string;
+  bizNo: string;
+  mailOrderNo: string;
+}
+
+interface FooterProps {
+  businessInfo?: FooterBusinessInfo;
+}
+
+export default function Footer({ businessInfo }: FooterProps) {
   const t = useTranslations('footer');
   const { items: footerItems, loading } = useNavigation('footer');
   const hasCmsData = !loading && footerItems.length > 0;
@@ -70,6 +82,13 @@ export default function Footer() {
     instagram: 'Instagram',
     naver: 'Naver Smart Store',
   };
+
+  // Settings values take priority; fall back to i18n for safety
+  const companyName = businessInfo?.companyName ?? t('businessInfo.companyName');
+  const ceo = businessInfo?.ceo ?? t('businessInfo.ceo');
+  const address = businessInfo?.address ?? t('businessInfo.address');
+  const bizNo = businessInfo?.bizNo ?? t('businessInfo.bizNo');
+  const mailOrderNo = businessInfo?.mailOrderNo ?? t('businessInfo.mailOrderNo');
 
   return (
     <footer className="mt-auto bg-card">
@@ -122,9 +141,9 @@ export default function Footer() {
         {/* 사업자 정보 (전자상거래법 제10조) */}
         <div className="mt-12 pt-8 text-center">
           <div className="typo-body-sm text-muted-foreground/70 leading-relaxed space-y-0.5">
-            <p>{t('businessInfo.companyName')} · {t('businessInfo.ceo')}</p>
-            <p>{t('businessInfo.address')}</p>
-            <p>{t('businessInfo.bizNo')} · {t('businessInfo.mailOrderNo')}</p>
+            <p>{companyName} · {ceo}</p>
+            <p>{address}</p>
+            <p>{bizNo} · {mailOrderNo}</p>
           </div>
 
           <p className="mt-6 typo-body-sm font-body text-muted-foreground">

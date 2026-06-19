@@ -82,6 +82,16 @@ export default async function LocaleLayout({
 
   const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible === 'true';
 
+  const businessInfo = settingsMap
+    ? {
+        companyName: settingsMap.business_company_name ?? '',
+        ceo: settingsMap.business_ceo ?? '',
+        address: settingsMap.business_address ?? '',
+        bizNo: settingsMap.business_registration_number ?? '',
+        mailOrderNo: settingsMap.business_mail_order_number ?? '',
+      }
+    : undefined;
+
   // SSR 단계에서 data-theme 기본값을 locale 기반으로 설정 — hydration mismatch 방지.
   // 클라이언트의 FOUC 스크립트가 localStorage 에 저장된 사용자 선호가 있으면 즉시 덮어씀.
   const initialTheme = safeLocale === 'ko' ? 'dark' : 'light';
@@ -116,6 +126,7 @@ export default async function LocaleLayout({
               locale={safeLocale}
               mobileBottomNavVisible={mobileBottomNavVisible}
               announcementBar={<AnnouncementBar locale={safeLocale} />}
+              businessInfo={businessInfo}
             >
               {children}
             </AppShell>
