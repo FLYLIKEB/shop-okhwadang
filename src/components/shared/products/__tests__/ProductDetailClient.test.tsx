@@ -175,6 +175,7 @@ const productWithOptions: ProductDetail = {
   description: '<p>본문</p>',
   stock: 12,
   sku: 'TP-001',
+  noticeInfo: null,
   options: [
     { id: 11, name: '크기', value: '대', priceAdjustment: 0, stock: 12, sortOrder: 0 },
     { id: 12, name: '크기', value: '소', priceAdjustment: -10000, stock: 5, sortOrder: 1 },

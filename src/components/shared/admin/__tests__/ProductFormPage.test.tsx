@@ -157,6 +157,58 @@ describe('ProductFormPage', () => {
       });
     });
 
+    it('상품고시정보 입력 시 빈 값은 제외하고 noticeInfo를 전송한다', async () => {
+      const { adminProductsApi } = await import('@/lib/api');
+      vi.mocked(adminProductsApi.create).mockResolvedValue({
+        id: 1,
+        name: '테스트 상품',
+        slug: 'test-product',
+        price: 10000,
+        salePrice: null,
+        status: 'draft',
+        isFeatured: false,
+        viewCount: 0,
+        category: null,
+        images: [],
+        description: null,
+        shortDescription: null,
+        rating: 0,
+        reviewCount: 0,
+        stock: 0,
+        sku: null,
+        options: [],
+        detailImages: [],
+        noticeInfo: null,
+      });
+
+      render(<ProductFormPage mode="create" />);
+
+      fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), {
+        target: { value: '테스트 상품' },
+      });
+      fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), {
+        target: { value: 'test-product' },
+      });
+      fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
+      fireEvent.change(screen.getByDisplayValue('선택 안 함'), { target: { value: 'tea' } });
+      fireEvent.change(screen.getByPlaceholderText('침출차'), { target: { value: '잎차' } });
+      fireEvent.change(screen.getByPlaceholderText('직사광선을 피하고 서늘한 곳에 보관'), {
+        target: { value: '냉암소 보관' },
+      });
+
+      fireEvent.click(screen.getByText('등록하기'));
+
+      await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalled());
+      expect(adminProductsApi.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          noticeInfo: {
+            type: 'tea',
+            foodType: '잎차',
+            storageMethod: '냉암소 보관',
+          },
+        }),
+      );
+    });
 
     it('다국어 입력은 영어만 노출하고 ja/zh 필드를 전송하지 않는다', async () => {
       const { adminProductsApi } = await import('@/lib/api');
@@ -201,12 +253,78 @@ describe('ProductFormPage', () => {
       fireEvent.click(screen.getByText('등록하기'));
 
       await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalled());
-      const payload = vi.mocked(adminProductsApi.create).mock.calls[0][0] as Record<string, unknown>;
+      const payload = vi.mocked(adminProductsApi.create).mock.calls[0][0] as unknown as Record<string, unknown>;
       expect(payload.nameEn).toBe('Test product');
       expect(payload).not.toHaveProperty('nameJa');
       expect(payload).not.toHaveProperty('nameZh');
       expect(payload).not.toHaveProperty('descriptionJa');
       expect(payload).not.toHaveProperty('descriptionZh');
+    });
+    it('수정 모드에서 기존 상품고시정보를 모두 비우면 noticeInfo=null을 전송한다', async () => {
+      const { adminProductsApi } = await import('@/lib/api');
+      vi.mocked(adminProductsApi.update).mockResolvedValue({
+        id: 1,
+        name: '테스트 상품',
+        slug: 'test-product',
+        price: 10000,
+        salePrice: null,
+        status: 'draft',
+        isFeatured: false,
+        viewCount: 0,
+        category: null,
+        images: [],
+        description: null,
+        shortDescription: null,
+        rating: 0,
+        reviewCount: 0,
+        stock: 0,
+        sku: null,
+        options: [],
+        detailImages: [],
+        noticeInfo: null,
+      });
+
+      render(
+        <ProductFormPage
+          mode="edit"
+          product={{
+            id: 1,
+            name: '테스트 상품',
+            slug: 'test-product',
+            price: 10000,
+            salePrice: null,
+            status: 'draft',
+            isFeatured: false,
+            viewCount: 0,
+            category: null,
+            images: [],
+            description: null,
+            shortDescription: null,
+            rating: 0,
+            reviewCount: 0,
+            stock: 0,
+            sku: null,
+            options: [],
+            detailImages: [],
+            noticeInfo: {
+              type: 'tea',
+              foodType: '침출차',
+              storageMethod: '서늘한 곳 보관',
+            },
+          }}
+        />,
+      );
+
+      fireEvent.change(screen.getByDisplayValue('침출차'), { target: { value: '' } });
+      fireEvent.change(screen.getByDisplayValue('서늘한 곳 보관'), { target: { value: '' } });
+      fireEvent.change(screen.getByDisplayValue('차류/식품류'), { target: { value: '' } });
+      fireEvent.click(screen.getByText('수정하기'));
+
+      await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalled());
+      expect(adminProductsApi.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ noticeInfo: null }),
+      );
     });
   });
 });

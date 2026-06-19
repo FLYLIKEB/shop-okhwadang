@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { adminProductsApi } from '@/lib/api';
-import type { ProductDetail } from '@/lib/api';
+import type { ProductDetail, ProductNoticeInfo } from '@/lib/api';
 import MultiImageUploader from './MultiImageUploader';
 import ProductOptionsEditor, { type ProductOptionDraft } from './ProductOptionsEditor';
 import { CheckboxField, SelectField, TextAreaField, TextField } from './FormField';
@@ -39,6 +39,7 @@ interface ProductFormData {
   options: ProductOptionDraft[];
   nameEn: string;
   descriptionEn: string;
+  noticeInfo: ProductNoticeInfo;
 }
 
 interface ProductFormPageProps {
@@ -53,7 +54,117 @@ const STATUS_OPTIONS = [
   { value: 'hidden', label: '숨김' },
 ] as const;
 
+const NOTICE_TYPE_OPTIONS = [
+  { value: '', label: '선택 안 함' },
+  { value: 'teaware', label: '자사호/다구' },
+  { value: 'tea', label: '차류/식품류' },
+] as const;
+
+const EMPTY_NOTICE_INFO: ProductNoticeInfo = {
+  type: undefined,
+  productName: '',
+  material: '',
+  components: '',
+  sizeCapacity: '',
+  manufacturer: '',
+  countryOfOrigin: '',
+  handlingPrecautions: '',
+  warrantyPolicy: '',
+  asContact: '',
+  foodType: '',
+  producer: '',
+  origin: '',
+  manufactureDate: '',
+  expirationDate: '',
+  storageMethod: '',
+  ingredients: '',
+  customerServicePhone: '',
+};
+
 type Setter = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) => void;
+
+type NoticeInfoKey = keyof ProductNoticeInfo;
+
+function buildNoticeInfoPayload(noticeInfo: ProductNoticeInfo, hadNoticeInfo: boolean): ProductNoticeInfo | null | undefined {
+  const entries = Object.entries(noticeInfo).filter(([, value]) => typeof value === 'string' && value.trim().length > 0);
+  if (entries.length === 0) return hadNoticeInfo ? null : undefined;
+  return Object.fromEntries(entries.map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value])) as ProductNoticeInfo;
+}
+
+function NoticeInfoSection({
+  noticeInfo,
+  set,
+}: {
+  noticeInfo: ProductNoticeInfo;
+  set: Setter;
+}) {
+  const updateNoticeInfo = (key: NoticeInfoKey, value: string) => {
+    if (key === 'type') {
+      set('noticeInfo', {
+        ...EMPTY_NOTICE_INFO,
+        productName: noticeInfo.productName,
+        manufacturer: noticeInfo.manufacturer,
+        countryOfOrigin: noticeInfo.countryOfOrigin,
+        handlingPrecautions: noticeInfo.handlingPrecautions,
+        type: value === '' ? undefined : value as ProductNoticeInfo['type'],
+      });
+      return;
+    }
+
+    set('noticeInfo', {
+      ...noticeInfo,
+      [key]: value,
+    });
+  };
+
+  const commonFields = [
+    ['productName', '품명 및 모델명', '옥화당 자사호'] as const,
+    ['manufacturer', '제조자/수입자', '옥화당'] as const,
+    ['countryOfOrigin', '제조국', '중국'] as const,
+    ['handlingPrecautions', '취급 시 주의사항', '강한 충격을 피해주세요.'] as const,
+  ];
+  const teawareFields = [
+    ['material', '재질', '자사니'] as const,
+    ['components', '구성품', '자사호 1점, 보관함 1점'] as const,
+    ['sizeCapacity', '크기/용량', '150ml'] as const,
+    ['warrantyPolicy', '품질보증기준', '관련 법 및 소비자분쟁해결기준에 따름'] as const,
+    ['asContact', 'A/S 책임자와 전화번호', '고객센터 010-2908-0393'] as const,
+  ];
+  const teaFields = [
+    ['foodType', '식품 유형', '침출차'] as const,
+    ['producer', '생산자/수입자', '옥화당'] as const,
+    ['origin', '원산지', '중국 운남성'] as const,
+    ['manufactureDate', '제조연월일', '별도 표기'] as const,
+    ['expirationDate', '소비기한', '별도 표기'] as const,
+    ['storageMethod', '보관방법', '직사광선을 피하고 서늘한 곳에 보관'] as const,
+    ['ingredients', '원재료명', '차엽 100%'] as const,
+    ['customerServicePhone', '소비자상담 전화번호', '010-2908-0393'] as const,
+  ];
+  const typedFields = noticeInfo.type === 'tea' ? teaFields : teawareFields;
+
+  return (
+    <section className="space-y-4">
+      <h2 className="text-sm font-semibold">상품고시정보</h2>
+      <SelectField
+        label="고시정보 유형"
+        value={noticeInfo.type ?? ''}
+        onChange={(value) => updateNoticeInfo('type', value)}
+        options={NOTICE_TYPE_OPTIONS}
+      />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {[...commonFields, ...typedFields].map(([key, label, placeholder]) => (
+          <TextField
+            key={key}
+            label={label}
+            value={noticeInfo[key] ?? ''}
+            onChange={(value) => updateNoticeInfo(key, value)}
+            placeholder={placeholder}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function ImagesSection({
   images,
@@ -247,6 +358,7 @@ function VisibilitySection({
 export default function ProductFormPage({ mode, product }: ProductFormPageProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const hadNoticeInfo = product?.noticeInfo != null;
   const [form, setForm] = useState<ProductFormData>({
     name: product?.name ?? '',
     slug: product?.slug ?? '',
@@ -269,6 +381,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     })) ?? [],
     nameEn: '',
     descriptionEn: '',
+    noticeInfo: { ...EMPTY_NOTICE_INFO, ...(product?.noticeInfo ?? {}) },
   });
 
   const set = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) =>
@@ -306,6 +419,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         isFreeShipping: form.isFreeShipping,
         nameEn: form.nameEn.trim() || undefined,
         descriptionEn: form.descriptionEn.trim() || undefined,
+        noticeInfo: buildNoticeInfoPayload(form.noticeInfo, hadNoticeInfo),
         images: form.images.map((img, index) => ({
           url: img.url,
           alt: img.alt,
@@ -346,6 +460,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         <MultilingualSection form={form} set={set} />
         <PricingSection form={form} set={set} />
         <VisibilitySection form={form} set={set} />
+        <NoticeInfoSection noticeInfo={form.noticeInfo} set={set} />
 
         <section>
           <ProductOptionsEditor

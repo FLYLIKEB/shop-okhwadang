@@ -77,11 +77,33 @@ export interface ProductOption {
   sortOrder: number;
 }
 
+export interface ProductNoticeInfo {
+  type?: 'teaware' | 'tea';
+  productName?: string;
+  material?: string;
+  components?: string;
+  sizeCapacity?: string;
+  manufacturer?: string;
+  countryOfOrigin?: string;
+  handlingPrecautions?: string;
+  warrantyPolicy?: string;
+  asContact?: string;
+  foodType?: string;
+  producer?: string;
+  origin?: string;
+  manufactureDate?: string;
+  expirationDate?: string;
+  storageMethod?: string;
+  ingredients?: string;
+  customerServicePhone?: string;
+}
+
 export interface ProductDetail extends Product {
   description: string | null;
   shortDescription: string | null;
   stock: number;
   sku: string | null;
+  noticeInfo: ProductNoticeInfo | null;
   options: ProductOption[];
   detailImages: ProductDetailImage[];
 }

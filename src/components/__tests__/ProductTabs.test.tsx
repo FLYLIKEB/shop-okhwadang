@@ -81,6 +81,27 @@ describe('ProductTabs', () => {
     expect(detailContent).toBeInTheDocument()
   })
 
+  it('shows product notice info in details tab', () => {
+    render(
+      <ProductTabs
+        description="<p>상품 상세 내용입니다.</p>"
+        descriptionImages={[]}
+        noticeInfo={{
+          type: 'tea',
+          foodType: '침출차',
+          producer: '옥화당',
+          storageMethod: '서늘한 곳 보관',
+        }}
+      />,
+    )
+
+    expect(screen.getByText('상품고시정보')).toBeInTheDocument()
+    expect(screen.getByText('식품 유형')).toBeInTheDocument()
+    expect(screen.getByText('침출차')).toBeInTheDocument()
+    expect(screen.getByText('보관방법')).toBeInTheDocument()
+    expect(screen.getByText('서늘한 곳 보관')).toBeInTheDocument()
+  })
+
   it('clicking 리뷰 tab shows 준비 중입니다', async () => {
     const user = userEvent.setup()
     render(<ProductTabs description={null} descriptionImages={[]} />)

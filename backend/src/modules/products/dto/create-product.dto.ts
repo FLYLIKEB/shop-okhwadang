@@ -5,6 +5,103 @@ import { ProductStatus } from '../entities/product.entity';
 
 export { ProductStatus };
 
+export enum ProductNoticeInfoType {
+  TEAWARE = 'teaware',
+  TEA = 'tea',
+}
+
+export class ProductNoticeInfoDto {
+  @ApiPropertyOptional({ example: ProductNoticeInfoType.TEA, enum: ProductNoticeInfoType, description: '고시정보 유형' })
+  @IsOptional()
+  @IsEnum(ProductNoticeInfoType, { message: '고시정보 유형은 teaware 또는 tea여야 합니다.' })
+  type?: ProductNoticeInfoType;
+
+  @ApiPropertyOptional({ example: '옥화당 자사호', description: '품명 및 모델명' })
+  @IsOptional()
+  @IsString()
+  productName?: string;
+
+  @ApiPropertyOptional({ example: '자사니', description: '재질' })
+  @IsOptional()
+  @IsString()
+  material?: string;
+
+  @ApiPropertyOptional({ example: '자사호 1점, 보관함 1점', description: '구성품' })
+  @IsOptional()
+  @IsString()
+  components?: string;
+
+  @ApiPropertyOptional({ example: '150ml', description: '크기/용량' })
+  @IsOptional()
+  @IsString()
+  sizeCapacity?: string;
+
+  @ApiPropertyOptional({ example: '옥화당', description: '제조자/수입자' })
+  @IsOptional()
+  @IsString()
+  manufacturer?: string;
+
+  @ApiPropertyOptional({ example: '중국', description: '제조국' })
+  @IsOptional()
+  @IsString()
+  countryOfOrigin?: string;
+
+  @ApiPropertyOptional({ example: '강한 충격을 피해주세요.', description: '취급 시 주의사항' })
+  @IsOptional()
+  @IsString()
+  handlingPrecautions?: string;
+
+  @ApiPropertyOptional({ example: '관련 법 및 소비자분쟁해결기준에 따름', description: '품질보증기준' })
+  @IsOptional()
+  @IsString()
+  warrantyPolicy?: string;
+
+  @ApiPropertyOptional({ example: '고객센터 010-2908-0393', description: 'A/S 책임자와 전화번호' })
+  @IsOptional()
+  @IsString()
+  asContact?: string;
+
+  @ApiPropertyOptional({ example: '침출차', description: '식품 유형' })
+  @IsOptional()
+  @IsString()
+  foodType?: string;
+
+  @ApiPropertyOptional({ example: '옥화당', description: '생산자/수입자' })
+  @IsOptional()
+  @IsString()
+  producer?: string;
+
+  @ApiPropertyOptional({ example: '중국 운남성', description: '원산지' })
+  @IsOptional()
+  @IsString()
+  origin?: string;
+
+  @ApiPropertyOptional({ example: '별도 표기', description: '제조연월일' })
+  @IsOptional()
+  @IsString()
+  manufactureDate?: string;
+
+  @ApiPropertyOptional({ example: '별도 표기', description: '소비기한' })
+  @IsOptional()
+  @IsString()
+  expirationDate?: string;
+
+  @ApiPropertyOptional({ example: '직사광선을 피하고 서늘한 곳에 보관', description: '보관방법' })
+  @IsOptional()
+  @IsString()
+  storageMethod?: string;
+
+  @ApiPropertyOptional({ example: '차엽 100%', description: '원재료명' })
+  @IsOptional()
+  @IsString()
+  ingredients?: string;
+
+  @ApiPropertyOptional({ example: '010-2908-0393', description: '소비자상담 전화번호' })
+  @IsOptional()
+  @IsString()
+  customerServicePhone?: string;
+}
+
 export class ProductImageInputDto {
   @ApiProperty({ example: 'https://cdn.example.com/image.jpg', description: '이미지 URL' })
   @IsString()
@@ -135,6 +232,12 @@ export class CreateProductDto {
   @IsString({ message: '모양은 문자열이어야 합니다.' })
   @MaxLength(50, { message: '모양은 최대 50자까지 입력 가능합니다.' })
   teapotShape?: string;
+
+  @ApiPropertyOptional({ type: ProductNoticeInfoDto, description: '상품고시정보' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProductNoticeInfoDto)
+  noticeInfo?: ProductNoticeInfoDto;
 
   @ApiPropertyOptional({ type: [ProductImageInputDto], description: '갤러리 이미지 목록' })
   @IsOptional()

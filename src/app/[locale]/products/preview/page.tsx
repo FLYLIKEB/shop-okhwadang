@@ -94,6 +94,18 @@ const DUMMY_PRODUCT: ProductDetail = {
       isThumbnail: false, isDescriptionImage: false,
     },
   ],
+  noticeInfo: {
+    type: 'teaware',
+    productName: '주니 서시호',
+    material: '원광주니',
+    components: '자사호 1점',
+    sizeCapacity: '120ml',
+    manufacturer: '홍상설',
+    countryOfOrigin: '중국',
+    handlingPrecautions: '강한 충격과 세제 사용을 피해주세요.',
+    warrantyPolicy: '관련 법 및 소비자분쟁해결기준에 따름',
+    asContact: '옥화당 고객센터',
+  },
   detailImages: [
     {
       id: 1,

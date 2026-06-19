@@ -392,6 +392,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
           descriptionImages={descriptionImages}
           productId={Number(product.id)}
           locale={locale}
+          noticeInfo={product.noticeInfo}
         />
       </div>
 
