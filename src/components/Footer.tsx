@@ -59,7 +59,24 @@ function renderNavLinks(items: NavigationItem[]) {
   ));
 }
 
-export default function Footer() {
+export interface FooterBusinessInfo {
+  companyName: string;
+  ceo: string;
+  address: string;
+  bizNo: string;
+  mailOrderNo: string;
+  phone: string;
+  email: string;
+  hours: string;
+  privacyOfficer: string;
+  infoUrl: string;
+}
+
+interface FooterProps {
+  businessInfo?: FooterBusinessInfo;
+}
+
+export default function Footer({ businessInfo }: FooterProps) {
   const t = useTranslations('footer');
   const { items: footerItems, loading } = useNavigation('footer');
   const hasCmsData = !loading && footerItems.length > 0;
@@ -70,6 +87,22 @@ export default function Footer() {
     instagram: 'Instagram',
     naver: 'Naver Smart Store',
   };
+
+  // Settings values take priority; fall back to i18n for safety
+  const companyName = businessInfo?.companyName ?? t('businessInfo.companyName');
+  const ceo = businessInfo?.ceo ?? t('businessInfo.ceo');
+  const address = businessInfo?.address ? t('businessInfo.addressLabel', { value: businessInfo.address }) : t('businessInfo.address');
+  const bizNo = businessInfo?.bizNo ? t('businessInfo.bizNoLabel', { value: businessInfo.bizNo }) : t('businessInfo.bizNo');
+  const mailOrderNo = businessInfo?.mailOrderNo
+    ? t('businessInfo.mailOrderNoLabel', { value: businessInfo.mailOrderNo })
+    : t('businessInfo.mailOrderNo');
+  const phone = businessInfo?.phone ? t('businessInfo.phoneLabel', { value: businessInfo.phone }) : t('businessInfo.phone');
+  const email = businessInfo?.email ? t('businessInfo.emailLabel', { value: businessInfo.email }) : t('businessInfo.email');
+  const hours = businessInfo?.hours ? t('businessInfo.hoursLabel', { value: businessInfo.hours }) : t('businessInfo.hours');
+  const privacyOfficer = businessInfo?.privacyOfficer
+    ? t('businessInfo.privacyOfficerLabel', { value: businessInfo.privacyOfficer })
+    : t('businessInfo.privacyOfficer');
+  const infoUrl = businessInfo?.infoUrl ?? '';
 
   return (
     <footer className="mt-auto bg-card">
@@ -122,9 +155,19 @@ export default function Footer() {
         {/* 사업자 정보 (전자상거래법 제10조) */}
         <div className="mt-12 pt-8 text-center">
           <div className="typo-body-sm text-muted-foreground/70 leading-relaxed space-y-0.5">
-            <p>{t('businessInfo.companyName')} · {t('businessInfo.ceo')}</p>
-            <p>{t('businessInfo.address')}</p>
-            <p>{t('businessInfo.bizNo')} · {t('businessInfo.mailOrderNo')}</p>
+            <p>{companyName} · {ceo}</p>
+            <p>{address}</p>
+            <p>{bizNo} · {mailOrderNo}</p>
+            <p>{phone} · {email}</p>
+            <p>{hours}</p>
+            <p>{privacyOfficer}</p>
+            {infoUrl ? (
+              <p>
+                <a href={infoUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:underline">
+                  {t('businessInfo.infoUrlLabel')}
+                </a>
+              </p>
+            ) : null}
           </div>
 
           <p className="mt-6 typo-body-sm font-body text-muted-foreground">

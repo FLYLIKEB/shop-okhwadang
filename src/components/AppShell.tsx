@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import type { FooterBusinessInfo } from '@/components/Footer';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 import { MobileNavProvider } from '@/contexts/MobileNavContext';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
@@ -14,6 +15,7 @@ type AppShellProps = {
   locale: Locale;
   mobileBottomNavVisible: boolean;
   announcementBar?: React.ReactNode;
+  businessInfo?: FooterBusinessInfo;
 };
 
 function isAdminPath(pathname: string): boolean {
@@ -41,6 +43,7 @@ export default function AppShell({
   locale,
   mobileBottomNavVisible,
   announcementBar,
+  businessInfo,
 }: AppShellProps) {
   const pathname = usePathname();
   const isAdminRoute = isAdminPath(pathname);
@@ -62,7 +65,7 @@ export default function AppShell({
         <main id="main-content" className="flex-1 pb-16 md:pb-0">
           {children}
         </main>
-        <Footer />
+        <Footer businessInfo={businessInfo} />
         <MobileBottomNavWrapper visible={mobileBottomNavVisible} />
         <SharedToaster />
         <RecentlyViewedWidget />

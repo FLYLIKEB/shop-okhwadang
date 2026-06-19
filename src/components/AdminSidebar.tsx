@@ -73,6 +73,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: Settings,
     children: [
       { label: '테마 편집', href: '/admin/settings/theme' },
+      { label: '사업자 정보', href: '/admin/settings/business' },
     ],
   },
 ];
