@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import CategoryNavBlock from '@/components/shared/blocks/CategoryNavBlock';
+import { categoriesApi } from '@/lib/api';
 import type { Category } from '@/lib/api';
 
 vi.mock('next/image', () => ({
@@ -81,6 +82,21 @@ describe('CategoryNavBlock', () => {
       expect(links[1]).toHaveAttribute('href', '/en/products?categoryId=2');
       expect(links[1]).toHaveAttribute('data-prefetch', 'false');
     });
+  });
+
+  it('fetches client fallback categories only once when category_ids is omitted', async () => {
+    vi.mocked(categoriesApi.getTree).mockResolvedValue(mockCategories);
+
+    render(<CategoryNavBlock content={{ template: 'text' }} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('link')).toHaveLength(3);
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(categoriesApi.getTree).toHaveBeenCalledTimes(1);
+    expect(categoriesApi.getTree).toHaveBeenCalledWith('en');
   });
 
   it('returns null when prefetched_categories is empty array', () => {
