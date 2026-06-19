@@ -65,6 +65,11 @@ export interface FooterBusinessInfo {
   address: string;
   bizNo: string;
   mailOrderNo: string;
+  phone: string;
+  email: string;
+  hours: string;
+  privacyOfficer: string;
+  infoUrl: string;
 }
 
 interface FooterProps {
@@ -86,9 +91,18 @@ export default function Footer({ businessInfo }: FooterProps) {
   // Settings values take priority; fall back to i18n for safety
   const companyName = businessInfo?.companyName ?? t('businessInfo.companyName');
   const ceo = businessInfo?.ceo ?? t('businessInfo.ceo');
-  const address = businessInfo?.address ?? t('businessInfo.address');
-  const bizNo = businessInfo?.bizNo ?? t('businessInfo.bizNo');
-  const mailOrderNo = businessInfo?.mailOrderNo ?? t('businessInfo.mailOrderNo');
+  const address = businessInfo?.address ? t('businessInfo.addressLabel', { value: businessInfo.address }) : t('businessInfo.address');
+  const bizNo = businessInfo?.bizNo ? t('businessInfo.bizNoLabel', { value: businessInfo.bizNo }) : t('businessInfo.bizNo');
+  const mailOrderNo = businessInfo?.mailOrderNo
+    ? t('businessInfo.mailOrderNoLabel', { value: businessInfo.mailOrderNo })
+    : t('businessInfo.mailOrderNo');
+  const phone = businessInfo?.phone ? t('businessInfo.phoneLabel', { value: businessInfo.phone }) : t('businessInfo.phone');
+  const email = businessInfo?.email ? t('businessInfo.emailLabel', { value: businessInfo.email }) : t('businessInfo.email');
+  const hours = businessInfo?.hours ? t('businessInfo.hoursLabel', { value: businessInfo.hours }) : t('businessInfo.hours');
+  const privacyOfficer = businessInfo?.privacyOfficer
+    ? t('businessInfo.privacyOfficerLabel', { value: businessInfo.privacyOfficer })
+    : t('businessInfo.privacyOfficer');
+  const infoUrl = businessInfo?.infoUrl ?? '';
 
   return (
     <footer className="mt-auto bg-card">
@@ -144,6 +158,16 @@ export default function Footer({ businessInfo }: FooterProps) {
             <p>{companyName} · {ceo}</p>
             <p>{address}</p>
             <p>{bizNo} · {mailOrderNo}</p>
+            <p>{phone} · {email}</p>
+            <p>{hours}</p>
+            <p>{privacyOfficer}</p>
+            {infoUrl ? (
+              <p>
+                <a href={infoUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:underline">
+                  {t('businessInfo.infoUrlLabel')}
+                </a>
+              </p>
+            ) : null}
           </div>
 
           <p className="mt-6 typo-body-sm font-body text-muted-foreground">

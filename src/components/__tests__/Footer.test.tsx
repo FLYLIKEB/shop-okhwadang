@@ -114,7 +114,7 @@ describe('Footer', () => {
   it('renders required business information (상호·대표자·사업자번호·통신판매번호·소재지)', () => {
     render(<Footer />);
     expect(screen.getByText(/서로 인터내셔널/)).toBeInTheDocument();
-    expect(screen.getByText(/권준현/)).toBeInTheDocument();
+    expect(screen.getAllByText(/권준현/).length).toBeGreaterThan(0);
     expect(screen.getByText(/131-72-05631/)).toBeInTheDocument();
     expect(screen.getByText(/2026-서울강남-01632/)).toBeInTheDocument();
     expect(screen.getByText(/역삼로 114/)).toBeInTheDocument();
@@ -125,15 +125,25 @@ describe('Footer', () => {
       companyName: '설정 회사명',
       ceo: '대표 홍길동',
       address: '서울시 종로구 1번지',
-      bizNo: '사업자등록번호: 000-00-00000',
-      mailOrderNo: '통신판매업신고번호: 2026-서울종로-0001',
+      bizNo: '000-00-00000',
+      mailOrderNo: '2026-서울종로-0001',
+      phone: '02-1234-5678',
+      email: 'support@example.com',
+      hours: '평일 09:00 - 17:00',
+      privacyOfficer: '개인정보 담당자',
+      infoUrl: 'https://www.ftc.go.kr/bizCommPop.do?wrkr_no=0000000000',
     };
     render(<Footer businessInfo={businessInfo} />);
     expect(screen.getByText(/설정 회사명/)).toBeInTheDocument();
     expect(screen.getByText(/홍길동/)).toBeInTheDocument();
-    expect(screen.getByText(/000-00-00000/)).toBeInTheDocument();
-    expect(screen.getByText(/2026-서울종로-0001/)).toBeInTheDocument();
-    expect(screen.getByText(/종로구 1번지/)).toBeInTheDocument();
+    expect(screen.getByText(/사업자등록번호: 000-00-00000/)).toBeInTheDocument();
+    expect(screen.getByText(/통신판매업신고번호: 2026-서울종로-0001/)).toBeInTheDocument();
+    expect(screen.getByText('소재지: 서울시 종로구 1번지')).toBeInTheDocument();
+    expect(screen.getByText(/대표전화: 02-1234-5678/)).toBeInTheDocument();
+    expect(screen.getByText(/이메일: support@example.com/)).toBeInTheDocument();
+    expect(screen.getByText('운영시간: 평일 09:00 - 17:00')).toBeInTheDocument();
+    expect(screen.getByText('개인정보보호책임자: 개인정보 담당자')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '사업자정보확인' })).toHaveAttribute('href', businessInfo.infoUrl);
   });
 
   it('falls back to i18n when businessInfo prop is not provided', () => {
@@ -141,5 +151,8 @@ describe('Footer', () => {
     // i18n fallback values from ko.json
     expect(screen.getByText(/서로 인터내셔널/)).toBeInTheDocument();
     expect(screen.getByText(/131-72-05631/)).toBeInTheDocument();
+    expect(screen.getByText(/대표전화: 010-2908-0393/)).toBeInTheDocument();
+    expect(screen.getByText(/이메일: seorointernational@naver.com/)).toBeInTheDocument();
+    expect(screen.getByText(/개인정보보호책임자: 권준현/)).toBeInTheDocument();
   });
 });

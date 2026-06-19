@@ -89,6 +89,11 @@ export default async function LocaleLayout({
         address: settingsMap.business_address ?? '',
         bizNo: settingsMap.business_registration_number ?? '',
         mailOrderNo: settingsMap.business_mail_order_number ?? '',
+        phone: settingsMap.business_phone ?? '',
+        email: settingsMap.business_email ?? '',
+        hours: settingsMap.business_hours ?? '',
+        privacyOfficer: settingsMap.business_privacy_officer ?? '',
+        infoUrl: settingsMap.business_info_url ?? '',
       }
     : undefined;
 

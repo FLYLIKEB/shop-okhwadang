@@ -109,8 +109,20 @@
       "companyName": "Seoro International",
       "ceo": "CEO: Kwon Junhyun",
       "address": "Address: 8F 8028, Hyeonjuk Building, 114 Yeoksam-ro, Gangnam-gu, Seoul 06252, Korea",
+      "addressLabel": "Address: {value}",
       "bizNo": "Business Reg. No.: 131-72-05631",
-      "mailOrderNo": "Mail-Order Reg. No.: 2026-서울강남-01632"
+      "bizNoLabel": "Business Reg. No.: {value}",
+      "mailOrderNo": "Mail-Order Reg. No.: 2026-서울강남-01632",
+      "mailOrderNoLabel": "Mail-Order Reg. No.: {value}",
+      "phone": "Phone: 010-2908-0393",
+      "phoneLabel": "Phone: {value}",
+      "email": "Email: seorointernational@naver.com",
+      "emailLabel": "Email: {value}",
+      "hours": "Hours: Weekdays 10:00 - 18:00 (Closed on weekends & holidays)",
+      "hoursLabel": "Hours: {value}",
+      "privacyOfficer": "Privacy Officer: Kwon Junhyun",
+      "privacyOfficerLabel": "Privacy Officer: {value}",
+      "infoUrlLabel": "Verify Business Information"
     }
   },
   "auth": {
