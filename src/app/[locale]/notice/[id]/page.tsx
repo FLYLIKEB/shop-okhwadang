@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import { noticesApi } from '@/lib/api';
 import type { Notice } from '@/lib/api';
@@ -17,6 +18,7 @@ const DOMPurifyContent = dynamic(
 export default function NoticeDetailPage() {
   const { id, locale } = useParams<{ id: string; locale: string }>();
   const router = useRouter();
+  const t = useTranslations('notice');
   const [notice, setNotice] = useState<Notice | null>(null);
   const [notFound, setNotFound] = useState(false);
 
@@ -46,7 +48,7 @@ export default function NoticeDetailPage() {
   if (notFound || !notice) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8 text-center text-gray-500">
-        공지사항을 찾을 수 없습니다.
+        {t('notFound')}
       </div>
     );
   }
@@ -57,14 +59,14 @@ export default function NoticeDetailPage() {
         onClick={() => router.back()}
         className="text-sm text-gray-500 hover:text-gray-700 mb-6 flex items-center gap-1"
       >
-        ← 목록으로
+        ← {t('backToList')}
       </button>
       <h1 className="text-xl font-bold text-gray-900 mb-2">{notice.title}</h1>
       <div className="flex items-center gap-3 text-xs text-gray-400 mb-6 pb-4 border-b">
-        <span>{new Date(notice.createdAt).toLocaleDateString('ko-KR')}</span>
-        <span>조회 {notice.viewCount.toLocaleString()}</span>
+        <span>{new Date(notice.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}</span>
+        <span>{t('views', { count: notice.viewCount.toLocaleString(locale === 'en' ? 'en-US' : 'ko-KR') })}</span>
         {notice.isPinned && (
-          <span className="text-blue-600 font-semibold">필독</span>
+          <span className="text-blue-600 font-semibold">{t('pinned')}</span>
         )}
       </div>
       <div className="prose prose-sm max-w-none text-gray-700">

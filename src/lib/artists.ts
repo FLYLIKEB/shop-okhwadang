@@ -2,12 +2,18 @@ export interface Artist {
   slug: string;
   name: string;
   nameKo: string;
+  nameEn: string;
   clay: string;
+  clayEn: string;
   workshop: string;
+  workshopEn: string;
   productCount: number;
   bio: string;
   story: string[];
   specialty: string;
+  bioEn: string;
+  storyEn: string[];
+  specialtyEn: string;
 }
 
 export const ARTISTS: Artist[] = [
@@ -15,8 +21,11 @@ export const ARTISTS: Artist[] = [
     slug: 'master-chen',
     name: '陳師傅',
     nameKo: '진사부',
+    nameEn: 'Master Chen',
     clay: '주니',
+    clayEn: 'Zhuni',
     workshop: '의흥',
+    workshopEn: 'Yixing',
     productCount: 12,
     bio: '40년 경력의 의흥 주니 전문 장인',
     story: [
@@ -25,13 +34,23 @@ export const ARTISTS: Artist[] = [
       '현재 의흥 공방에서 전통 방식만을 고집하며, 한 점 한 점 손으로 빚어냅니다.',
     ],
     specialty: '주니 자사호',
+    bioEn: 'A Yixing Zhuni artisan with 40 years of experience',
+    storyEn: [
+      'Master Chen was born into a Yixing pottery family and began learning clay work beside his father at the age of fifteen.',
+      'He is known for bringing out the warm red character of Zhuni clay, with a style that follows the natural rhythm of the material.',
+      'He continues to make each piece by hand in his Yixing workshop using traditional methods.',
+    ],
+    specialtyEn: 'Zhuni zisha teapots',
   },
   {
     slug: 'master-li',
     name: '李師傅',
     nameKo: '이사부',
+    nameEn: 'Master Li',
     clay: '단니',
+    clayEn: 'Duanni',
     workshop: '의흥',
+    workshopEn: 'Yixing',
     productCount: 8,
     bio: '단니 재료 연구 30년, 의흥 단니의 권위자',
     story: [
@@ -40,13 +59,23 @@ export const ARTISTS: Artist[] = [
       '그의 다관은 뚜껑과 본체의 유격이 머리카락 한 올 수준으로 알려져 있습니다.',
     ],
     specialty: '단니 다관',
+    bioEn: 'A Duanni specialist with 30 years of clay-material research',
+    storyEn: [
+      'Master Li has spent three decades studying the golden tone and mineral character of Duanni clay.',
+      'He oversees everything from clay selection to blending and firing temperature to achieve stable, deep color.',
+      'His teapots are known for precise fit between lid and body.',
+    ],
+    specialtyEn: 'Duanni teapots',
   },
   {
     slug: 'master-wang',
     name: '王師傅',
     nameKo: '왕사부',
+    nameEn: 'Master Wang',
     clay: '자니',
+    clayEn: 'Zini',
     workshop: '의흥',
+    workshopEn: 'Yixing',
     productCount: 15,
     bio: '자니 명장, 전통 형태 복원 프로젝트 주도',
     story: [
@@ -55,13 +84,23 @@ export const ARTISTS: Artist[] = [
       '의흥 박물관과 협력하여 전통 형태 자료집 편찬에도 참여한 학자적 장인입니다.',
     ],
     specialty: '자니 고전형 자사호',
+    bioEn: 'A Zini master leading traditional-form restoration projects',
+    storyEn: [
+      'Master Wang has focused on restoring classical forms from the Ming dynasty for contemporary use.',
+      'He developed a double-firing approach to bring out the deep purple tone of Zini clay.',
+      'He also works with Yixing museum materials, combining scholarship with craftsmanship.',
+    ],
+    specialtyEn: 'Classical Zini zisha teapots',
   },
   {
     slug: 'master-zhao',
     name: '趙師傅',
     nameKo: '조사부',
+    nameEn: 'Master Zhao',
     clay: '흑니',
+    clayEn: 'Heini',
     workshop: '의흥',
+    workshopEn: 'Yixing',
     productCount: 6,
     bio: '흑니 전문 신예 장인, 현대적 감각의 전통 계승',
     story: [
@@ -70,11 +109,31 @@ export const ARTISTS: Artist[] = [
       '스승 왕사부에게 소성 기술을 전수받아 독자적인 광택 처리 기법을 발전시켰습니다.',
     ],
     specialty: '흑니 현대형 자사호',
+    bioEn: 'An emerging Heini artisan with a contemporary sense of tradition',
+    storyEn: [
+      'Master Zhao graduated at the top of his class from a Yixing ceramic school and has dedicated his practice to Heini clay.',
+      'He is gaining attention among younger tea drinkers by blending modern lines with traditional forms.',
+      'After learning firing techniques from Master Wang, he developed his own surface-finishing method.',
+    ],
+    specialtyEn: 'Contemporary Heini zisha teapots',
   },
 ];
 
 export function getArtistBySlug(slug: string): Artist | undefined {
   return ARTISTS.find((a) => a.slug === slug);
+}
+
+export function localizeArtist(artist: Artist, locale: string) {
+  const isEn = locale === 'en';
+  return {
+    ...artist,
+    displayName: isEn ? artist.nameEn : artist.nameKo,
+    displayClay: isEn ? artist.clayEn : artist.clay,
+    displayWorkshop: isEn ? artist.workshopEn : artist.workshop,
+    displayBio: isEn ? artist.bioEn : artist.bio,
+    displayStory: isEn ? artist.storyEn : artist.story,
+    displaySpecialty: isEn ? artist.specialtyEn : artist.specialty,
+  };
 }
 
 export const CLAY_FILTERS = ['전체', '주니', '단니', '자니', '흑니'] as const;

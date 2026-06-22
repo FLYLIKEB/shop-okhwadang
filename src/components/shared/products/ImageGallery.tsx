@@ -6,6 +6,8 @@ import { cn } from '@/components/ui/utils'
 import { ZoomIn } from 'lucide-react'
 import { useLightboxInteraction } from '@/components/shared/hooks/useLightboxInteraction'
 import { useUrlQueryState } from '@/hooks/useUrlModal'
+import { handleApiError } from '@/utils/error'
+import { localMessage } from '@/utils/localMessages'
 import LightboxOverlay from './LightboxOverlay'
 import ThumbnailStrip from './ThumbnailStrip'
 
@@ -41,8 +43,8 @@ function ImageGalleryError({ error, onRetry }: { error: Error; onRetry?: () => v
   return (
     <div className="aspect-square w-full rounded-lg bg-muted flex flex-col items-center justify-center gap-4 text-muted-foreground">
       <div className="text-center">
-        <p className="text-sm font-medium text-foreground mb-1">이미지를 불러오지 못했습니다</p>
-        <p className="text-xs text-muted-foreground">{error.message || '알 수 없는 오류가 발생했습니다.'}</p>
+        <p className="text-sm font-medium text-foreground mb-1">{localMessage('product.imageLoadError')}</p>
+        <p className="text-xs text-muted-foreground">{handleApiError(error, localMessage('product.unknownImageError'))}</p>
       </div>
       {onRetry && (
         <button
@@ -50,7 +52,7 @@ function ImageGalleryError({ error, onRetry }: { error: Error; onRetry?: () => v
           onClick={onRetry}
           className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
         >
-          다시 시도
+          {localMessage('product.retry')}
         </button>
       )}
     </div>
@@ -242,7 +244,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
         <svg className="w-10 h-10 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <span className="text-sm text-muted-foreground">등록된 이미지가 없습니다</span>
+        <span className="text-sm text-muted-foreground">{localMessage('product.noImages')}</span>
       </div>
     )
   }
@@ -266,12 +268,12 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
                 onClick={() => setLightboxParam(String(index), 'push')}
                 role="button"
                 tabIndex={index === selectedIndex ? 0 : -1}
-                aria-label={`이미지 ${index + 1} 확대해서 보기`}
+                aria-label={localMessage('product.zoomImage', { index: index + 1 })}
                 onKeyDown={(e) => e.key === 'Enter' && setLightboxParam(String(index), 'push')}
               >
                 <Image
                   src={image.url}
-                  alt={image.alt ?? `상품 이미지 ${index + 1}`}
+                  alt={image.alt ?? localMessage('product.productImage', { index: index + 1 })}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className={cn(
@@ -301,7 +303,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
             <div className="absolute inset-0 flex items-end justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
               <span className="flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm">
                 <ZoomIn className="size-3" />
-                확대
+                {localMessage('product.zoom')}
               </span>
             </div>
           )}
@@ -313,7 +315,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
                 onClick={(e) => { e.stopPropagation(); goPrev() }}
                 className="absolute left-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity"
                 style={{ background: 'transparent' }}
-                aria-label="이전 이미지"
+                aria-label={localMessage('product.prevProduct')}
               >
                 <span className="flex items-center justify-center w-10 h-20 rounded-md bg-black/40 text-white text-2xl font-bold shadow hover:bg-black/60 transition-colors">
                   ‹
@@ -324,7 +326,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
                 onClick={(e) => { e.stopPropagation(); goNext() }}
                 className="absolute right-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity"
                 style={{ background: 'transparent' }}
-                aria-label="다음 이미지"
+                aria-label={localMessage('product.nextProduct')}
               >
                 <span className="flex items-center justify-center w-10 h-20 rounded-md bg-black/40 text-white text-2xl font-bold shadow hover:bg-black/60 transition-colors">
                   ›

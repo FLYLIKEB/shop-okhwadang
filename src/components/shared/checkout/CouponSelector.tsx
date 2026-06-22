@@ -9,6 +9,8 @@ import { cn } from '@/components/ui/utils';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { toastMessage } from '@/utils/toastMessages';
+import { getClientLocale } from '@/utils/clientLocale';
+import { localMessage } from '@/utils/localMessages';
 
 interface CouponSelectorProps {
   orderAmount: number;
@@ -16,6 +18,7 @@ interface CouponSelectorProps {
 }
 
 export default function CouponSelector({ orderAmount, onDiscountChange }: CouponSelectorProps) {
+  const locale = getClientLocale();
   const [coupons, setCoupons] = useState<CouponItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | ''>('');
   const [calculating, setCalculating] = useState(false);
@@ -25,7 +28,7 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
       const res = await couponsApi.getList('available');
       setCoupons(res.coupons);
     },
-    { onError: () => setCoupons([]), errorMessage: '쿠폰 목록을 불러오지 못했습니다.' },
+    { onError: () => setCoupons([]), errorMessage: localMessage('checkout.couponLoadError') },
   );
 
   useEffect(() => {
@@ -58,13 +61,13 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
   const selected = coupons.find((c) => c.id === selectedId);
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">쿠폰 불러오는 중...</p>;
+    return <p className="text-sm text-muted-foreground">{localMessage('checkout.couponLoading')}</p>;
   }
 
   return (
     <div className="space-y-2">
       <label htmlFor="coupon-select" className="text-sm font-medium">
-        쿠폰 선택
+        {localMessage('checkout.couponSelect')}
       </label>
       <select
         id="coupon-select"
@@ -77,13 +80,13 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
           calculating && 'opacity-50 cursor-not-allowed',
         )}
       >
-        <option value="">쿠폰을 선택하세요</option>
+        <option value="">{localMessage('checkout.couponPlaceholder')}</option>
         {coupons.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name} (
             {c.type === 'percentage'
-              ? `${c.value}% 할인${c.maxDiscount ? ` / 최대 ${formatCurrency(c.maxDiscount)}` : ''}`
-              : `${formatCurrency(c.value)} 할인`}
+              ? `${c.value}% ${localMessage('checkout.discount')}${c.maxDiscount ? ` / ${localMessage('checkout.maxDiscount', { amount: formatCurrency(c.maxDiscount, locale) })}` : ''}`
+              : `${formatCurrency(c.value, locale)} ${localMessage('checkout.discount')}`}
             )
           </option>
         ))}
@@ -91,13 +94,13 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
 
       {selected && (
         <p className="text-xs text-muted-foreground">
-          최소 주문금액: {formatCurrency(selected.minOrderAmount)} &middot; 만료:{' '}
-          {new Date(selected.expiresAt).toLocaleDateString('ko-KR')}
+          {localMessage('checkout.minimumOrderAmount', { amount: formatCurrency(selected.minOrderAmount, locale) })} &middot; {localMessage('checkout.expires')}:{' '}
+          {new Date(selected.expiresAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
         </p>
       )}
 
       {coupons.length === 0 && (
-        <p className="text-xs text-muted-foreground">사용 가능한 쿠폰이 없습니다.</p>
+        <p className="text-xs text-muted-foreground">{localMessage('checkout.noCoupons')}</p>
       )}
     </div>
   );

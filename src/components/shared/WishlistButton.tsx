@@ -3,6 +3,7 @@
 import { Heart } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { useWishlistToggle } from '@/components/shared/hooks/useWishlistToggle';
+import { localMessage } from '@/utils/localMessages';
 
 interface WishlistButtonProps {
   productId: number;
@@ -26,7 +27,7 @@ export default function WishlistButton({
     <button
       type="button"
       onClick={toggle}
-      aria-label={isWishlisted ? '위시리스트에서 삭제' : '위시리스트에 추가'}
+      aria-label={isWishlisted ? localMessage('wishlist.remove') : localMessage('wishlist.add')}
       className={cn(
         'flex items-center justify-center rounded-full p-1.5 transition-colors',
         'hover:bg-muted',

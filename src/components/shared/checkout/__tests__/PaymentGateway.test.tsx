@@ -127,7 +127,7 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByText('테스트 결제 (Mock)')).toBeInTheDocument();
+    expect(screen.getByText('Test Payment (Mock)')).toBeInTheDocument();
     expect(screen.queryByText('Stripe (International Card)')).not.toBeInTheDocument();
   });
 

@@ -1,4 +1,5 @@
 import type { CarrierCode } from '@/lib/api';
+import type { Locale } from '@/utils/currency';
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: '결제 대기',
@@ -26,6 +27,17 @@ export const CARRIER_NAMES: Record<CarrierCode, string> = {
   hanjin: '한진택배',
   lotte: '롯데택배',
 };
+
+const CARRIER_NAMES_EN: Record<CarrierCode, string> = {
+  mock: 'Test carrier',
+  cj: 'CJ Logistics',
+  hanjin: 'Hanjin Express',
+  lotte: 'Lotte Logistics',
+};
+
+export function getCarrierName(carrier: CarrierCode, locale: Locale | string): string {
+  return locale === 'en' ? CARRIER_NAMES_EN[carrier] : CARRIER_NAMES[carrier];
+}
 
 export const CARRIER_TRACKING_URLS: Partial<Record<CarrierCode, string>> = {
   cj: 'https://trace.cjlogistics.com/next/tracking.html?wblNo=',

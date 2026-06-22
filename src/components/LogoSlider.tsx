@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale } from 'next-intl';
 
 /**
  * 히어로 섹션 위에 fixed로 표시되는 브랜드 워드마크.
@@ -8,6 +9,7 @@ import { useEffect, useState } from 'react';
  * 헤더의 로고가 페이드인되어 자연스럽게 이어진다.
  */
 export default function LogoSlider() {
+  const locale = useLocale();
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function LogoSlider() {
           textShadow: '0 1px 8px rgba(0,0,0,0.4)',
         }}
       >
-        옥화당
+        {locale === 'en' ? 'Okhwadang' : '옥화당'}
       </span>
     </div>
   );

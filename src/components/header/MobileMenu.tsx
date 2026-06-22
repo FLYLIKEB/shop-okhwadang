@@ -9,6 +9,7 @@ import Logo from '@/components/Logo';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getHeaderNavigationLabel } from './navigationLabel';
+import { localMessage } from '@/utils/localMessages';
 import type { NavigationItem } from '@/lib/api';
 
 interface MobileMenuProps {
@@ -85,7 +86,7 @@ function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }:
                 <button
                   type="button"
                   onClick={onBack}
-                  aria-label={`${title} 메뉴로 돌아가기`}
+                  aria-label={localMessage('header.menuBackTo', { title })}
                   tabIndex={isActive ? 0 : -1}
                   className="mb-3 flex min-h-11 w-full items-center gap-3 py-2 text-left typo-body-sm font-medium text-foreground hover:text-muted-foreground transition-colors"
                 >
@@ -105,7 +106,7 @@ function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }:
                           type="button"
                           onClick={() => isActive && onItemClick(item)}
                           tabIndex={isActive ? 0 : -1}
-                          aria-label={`${label} 하위 메뉴 열기`}
+                          aria-label={localMessage('header.openSubmenu', { label })}
                           className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
                         >
                           {label}

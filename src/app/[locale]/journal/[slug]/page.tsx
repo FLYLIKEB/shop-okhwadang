@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { JOURNAL_ENTRIES, getJournalBySlug } from '@/lib/journal';
+import { getTranslations } from 'next-intl/server';
+import { JOURNAL_ENTRIES, getLocalizedJournalBySlug } from '@/lib/journal';
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: 'ko' | 'en'; slug: string }>;
 }
 
 export async function generateStaticParams() {
@@ -12,9 +13,9 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const entry = getJournalBySlug(slug);
-  if (!entry) return { title: 'Journal — 옥화당' };
+  const { locale, slug } = await params;
+  const entry = getLocalizedJournalBySlug(slug, locale);
+  if (!entry) return { title: locale === 'en' ? 'Journal — Ockhwadang' : 'Journal — 옥화당' };
 
   return {
     title: `${entry.title} — Journal`,
@@ -29,8 +30,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function JournalDetailPage({ params }: PageProps) {
-  const { slug } = await params;
-  const entry = getJournalBySlug(slug);
+  const { locale, slug } = await params;
+  const t = await getTranslations({ locale, namespace: 'journalPage' });
+  const entry = getLocalizedJournalBySlug(slug, locale);
 
   if (!entry) {
     notFound();
@@ -44,7 +46,7 @@ export default async function JournalDetailPage({ params }: PageProps) {
     datePublished: entry.date,
     publisher: {
       '@type': 'Organization',
-      name: '옥화당',
+      name: locale === 'en' ? 'Ockhwadang' : '옥화당',
     },
   };
 
@@ -65,7 +67,7 @@ export default async function JournalDetailPage({ params }: PageProps) {
             <span className="text-xs text-background/40">·</span>
             <time className="text-xs text-background/60">{entry.date}</time>
             <span className="text-xs text-background/40">·</span>
-            <span className="text-xs text-background/60">{entry.readTime} 읽기</span>
+            <span className="text-xs text-background/60">{entry.readTime} {t('readSuffix')}</span>
           </div>
           <h1 className="font-display typo-h1 tracking-tight mb-3">
             {entry.title}
@@ -96,7 +98,7 @@ export default async function JournalDetailPage({ params }: PageProps) {
           href="/journal"
           className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:underline"
         >
-          ← 저널 목록으로 돌아가기
+          {t('backToList')}
         </Link>
       </section>
     </div>

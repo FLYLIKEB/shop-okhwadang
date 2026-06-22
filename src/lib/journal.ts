@@ -11,6 +11,8 @@ export interface JournalEntry {
   content: string[];
 }
 
+export type JournalLocale = 'ko' | 'en';
+
 export const JOURNAL_CATEGORIES: JournalCategory[] = [
   '다문화',
   '사용법',
@@ -118,8 +120,103 @@ export const JOURNAL_ENTRIES: JournalEntry[] = [
   },
 ];
 
+const ENGLISH_JOURNAL_ENTRIES: Record<string, Omit<JournalEntry, 'slug' | 'date'>> = {
+  'yixing-clay-origin': {
+    title: 'The Origins of Yixing Zisha Teapots',
+    subtitle: 'Tracing 600 years of clay history',
+    category: 'Tea Culture' as JournalCategory,
+    readTime: '8 min',
+    summary:
+      'A history of Yixing zisha teapots from the Ming dynasty to today, following the discovery of Huanglong Mountain clay and the craft inherited by modern artisans.',
+    content: [
+      'Yixing is a small city on the western shore of Lake Tai in southern Jiangsu. The zisha clay mined around Huanglong Mountain has a mineral composition found nowhere else.',
+      'Records say that during the Zhengde era of the Ming dynasty, a monk from Jinsha Temple began making teapots from zisha clay. Gong Chun later refined the method and became known as an early master of the craft.',
+      'By the Qing dynasty, masters such as Chen Mingyuan and Hui Mengchen had elevated the teapot from a simple tea tool into an art object. Hui Mengchen’s small teapots became closely tied to Chaozhou gongfu tea culture.',
+      'Today, thousands of ceramic artisans work in Yixing, ranging from nationally recognized masters to emerging makers. Ockhwadang works directly with these artisans and introduces only carefully verified pieces.',
+    ],
+  },
+  'how-to-season-teapot': {
+    title: 'How to Season a New Zisha Teapot',
+    subtitle: 'What to do before the first brew',
+    category: 'How to Use' as JournalCategory,
+    readTime: '5 min',
+    summary:
+      'A step-by-step guide to preparing a new zisha teapot before first use, including key precautions for safe seasoning.',
+    content: [
+      'Seasoning opens the pores of a new zisha teapot and removes the raw clay smell. It helps the teapot develop its natural ability to absorb and enrich tea aroma.',
+      'Step 1: Rinse the inside and outside gently with lukewarm water. Do not use detergent, as chemicals can seep into the clay pores.',
+      'Step 2: Place the teapot in a clean pot, cover it with filtered water, and simmer over low heat for 30 minutes. Start from cool water and warm slowly to avoid thermal shock.',
+      'Step 3: Add the tea leaves you plan to brew in this teapot and simmer for another 20 minutes. The aroma begins to settle into the pores and forms a foundation for future brews.',
+      'Step 4: Turn off the heat and let everything cool naturally at room temperature. After it is fully cool, dry it with a clean cloth and leave it in a well-ventilated place.',
+    ],
+  },
+  'spring-tea-table': {
+    title: 'A Spring Tea Table',
+    subtitle: 'Seasonal tea setting ideas',
+    category: 'Tea Table' as JournalCategory,
+    readTime: '6 min',
+    summary:
+      'Tea table ideas for spring, from green and white tea pairings to teaware, cloth, and floral details.',
+    content: [
+      'The key to a spring tea table is lightness. It is a season for fresh green tea or clear white tea after the weight of winter pu-erh.',
+      'For teaware, duanni or qingshuini zisha teapots bring a bright mood to the table. A porcelain gaiwan is also ideal for appreciating the color of the liquor.',
+      'A linen tea cloth in pale beige or soft green pairs well with the season. A single seasonal flower can complete the visual mood without overwhelming the table.',
+      'For sweets, mung bean jelly or a small honey rice cake works beautifully with spring green tea. One or two restrained pairings are enough.',
+    ],
+  },
+  'puer-storage-guide': {
+    title: 'The Art of Storing Pu-erh',
+    subtitle: 'Temperature, humidity, and airflow',
+    category: 'How to Use' as JournalCategory,
+    readTime: '7 min',
+    summary:
+      'Pu-erh is a living tea. The right storage environment shapes its flavor. Here are practical home storage guidelines.',
+    content: [
+      'Pu-erh continues to change through microbial and enzymatic activity. Temperature, humidity, and ventilation all directly influence that process.',
+      'Keep the temperature around 20–30°C. Avoid direct sunlight, heaters, and hot pipes, and try to maintain a stable year-round environment.',
+      'Relative humidity of 60–75% is generally suitable. If it is too dry, aging slows; if it is too humid, mold can appear. During humid seasons, use dehumidifiers carefully without direct contact with tea.',
+      'Loose ventilation is better than airtight sealing. Traditional storage often uses paper wrapping or a ceramic jar with slight airflow. Keep tea away from strong odors such as perfume, detergent, and coffee.',
+    ],
+  },
+  'okhwadang-first-anniversary': {
+    title: 'Ockhwadang, One Year In',
+    subtitle: 'A note of gratitude',
+    category: 'News' as JournalCategory,
+    readTime: '4 min',
+    summary:
+      'Looking back on Ockhwadang’s first year: relationships with Yixing artisans, support from customers, and where we go next.',
+    content: [
+      'Ockhwadang began as a small online shop in spring 2024. Since then, we have worked directly with four Yixing artisans and introduced each handmade piece with care.',
+      'Many customers have asked where we find these teapots. Our answer is always the same: we go in person, examine in person, and recommend only what we have used and trusted.',
+      'This year we plan to expand our pu-erh selection and begin an artisan interview series. We also hope to host offline tea gatherings where customers can experience the texture of zisha clay and the aroma of tea directly.',
+      'Thank you to everyone who has supported us. Ockhwadang will continue to stand by the principle of good clay, good tea, and good people.',
+    ],
+  },
+  'gongfu-tea-ceremony': {
+    title: 'An Introduction to Gongfu Tea',
+    subtitle: 'A concentrated cup from a small pot',
+    category: 'Tea Culture' as JournalCategory,
+    readTime: '9 min',
+    summary:
+      'A beginner-friendly guide to gongfu tea, the southern Chinese brewing method using a small zisha teapot and multiple short infusions.',
+    content: [
+      'In gongfu tea, “gongfu” means time, skill, and devoted effort. The method developed in Guangdong, Fujian, and Chaozhou using a small zisha teapot or gaiwan with generous leaves and short infusions.',
+      'Basic tools include a zisha teapot or gaiwan, fairness pitcher, tasting cups, tea tray, tea scoop, and boiled water. These six are enough to begin.',
+      'The basic order is warming the pot, adding leaves, rinsing, brewing, pouring into the fairness pitcher, and serving into cups. Start the first infusion at about five seconds and lengthen gradually.',
+      'The beauty of gongfu tea is watching the same leaves change over many infusions: freshness in the first cup, deeper sweetness in the middle, and a lingering finish at the end.',
+    ],
+  },
+};
+
 export function getJournalBySlug(slug: string): JournalEntry | undefined {
   return JOURNAL_ENTRIES.find((e) => e.slug === slug);
+}
+
+export function getLocalizedJournalBySlug(slug: string, locale: JournalLocale): JournalEntry | undefined {
+  const entry = getJournalBySlug(slug);
+  if (!entry || locale !== 'en') return entry;
+  const translated = ENGLISH_JOURNAL_ENTRIES[slug];
+  return translated ? { ...entry, ...translated } : entry;
 }
 
 export function getJournalsByCategory(category: JournalCategory): JournalEntry[] {

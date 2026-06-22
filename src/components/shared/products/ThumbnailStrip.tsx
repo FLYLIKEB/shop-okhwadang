@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { cn } from '@/components/ui/utils'
+import { localMessage } from '@/utils/localMessages'
 
 interface ThumbnailStripProps {
   images: Array<{
@@ -36,11 +37,11 @@ export default function ThumbnailStrip({
                 ? 'ring-2 ring-primary border-transparent'
                 : 'border-transparent hover:border-border',
             )}
-            aria-label={`이미지 ${index + 1} 선택`}
+            aria-label={localMessage('product.selectImage', { index: index + 1 })}
           >
             <Image
               src={image.url}
-              alt={image.alt ?? `상품 이미지 ${index + 1}`}
+              alt={image.alt ?? localMessage('product.productImage', { index: index + 1 })}
               fill
               sizes="64px"
               className="object-cover"

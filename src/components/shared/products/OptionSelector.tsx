@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { cn } from '@/components/ui/utils'
 import type { ProductOption } from '@/lib/api'
 import { formatCurrency } from '@/utils/currency'
+import { getClientLocale } from '@/utils/clientLocale'
 
 interface OptionSelectorProps {
   options: ProductOption[]
@@ -13,6 +14,7 @@ interface OptionSelectorProps {
 
 export default function OptionSelector({ options, selectedOptionId, onSelect }: OptionSelectorProps) {
   const t = useTranslations('product.stockStatus')
+  const locale = getClientLocale()
   const groups = options.reduce<Record<string, ProductOption[]>>((acc, option) => {
     if (!acc[option.name]) {
       acc[option.name] = []
@@ -52,7 +54,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                   {option.priceAdjustment !== 0 && (
                     <span className="text-xs">
                       ({option.priceAdjustment > 0 ? '+' : ''}
-                      {formatCurrency(option.priceAdjustment)})
+                      {formatCurrency(option.priceAdjustment, locale)})
                     </span>
                   )}
                   <span className={cn('text-xs', isSelected ? 'text-background/80' : 'text-muted-foreground', isSoldout && 'text-destructive')}>

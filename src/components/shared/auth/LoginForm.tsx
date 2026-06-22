@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { localMessage } from '@/utils/localMessages';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -36,10 +37,10 @@ export default function LoginForm() {
     },
     {
       onError: (err) => {
-        const message = handleApiError(err, '로그인에 실패했습니다.');
-        if (message.includes('이메일') || message.includes('email')) {
+        const message = handleApiError(err, localMessage('auth.loginError'));
+        if (message.includes('이메일') || message.toLowerCase().includes('email')) {
           setEmailError(message);
-        } else if (message.includes('비밀번호') || message.includes('password')) {
+        } else if (message.includes('비밀번호') || message.toLowerCase().includes('password')) {
           setPasswordError(message);
         } else {
           setEmailError(message);
@@ -57,12 +58,12 @@ export default function LoginForm() {
 
   return (
     <div className="mx-auto max-w-sm w-full">
-      <h1 className="text-2xl font-bold text-center mb-8">로그인</h1>
+      <h1 className="text-2xl font-bold text-center mb-8">{localMessage('auth.loginTitle')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1">
           <label htmlFor="email" className="text-sm font-medium">
-            이메일
+            {localMessage('auth.email')}
           </label>
           <input
             id="email"
@@ -89,9 +90,9 @@ export default function LoginForm() {
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <label htmlFor="password" className="text-sm font-medium">
-              비밀번호
+              {localMessage('auth.password')}
             </label>
-            <span className="text-xs text-muted-foreground cursor-not-allowed">비밀번호 찾기</span>
+            <span className="text-xs text-muted-foreground cursor-not-allowed">{localMessage('auth.forgotPassword')}</span>
           </div>
           <div className="relative">
             <input
@@ -114,7 +115,7 @@ export default function LoginForm() {
             <button
               type="button"
               onClick={handleTogglePassword}
-              aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 잠깐 보기'}
+              aria-label={showPassword ? localMessage('auth.hidePassword') : localMessage('auth.showPassword')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               {showPassword ? (
@@ -130,13 +131,13 @@ export default function LoginForm() {
         </div>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? '로그인 중...' : '로그인'}
+          {isSubmitting ? localMessage('auth.loginSubmitting') : localMessage('auth.loginSubmit')}
         </Button>
       </form>
 
       <div className="my-6 flex items-center gap-3">
         <div className="flex-1 border-t border-border" />
-        <span className="text-xs text-muted-foreground">또는</span>
+        <span className="text-xs text-muted-foreground">{localMessage('auth.dividerOr')}</span>
         <div className="flex-1 border-t border-border" />
       </div>
 
@@ -150,7 +151,7 @@ export default function LoginForm() {
           )}
         >
           <span className="font-bold">K</span>
-          카카오로 로그인
+          {localMessage('auth.kakaoLogin')}
         </button>
 
         <button
@@ -162,14 +163,14 @@ export default function LoginForm() {
           )}
         >
           <span className="font-bold text-blue-500">G</span>
-          Google로 로그인
+          {localMessage('auth.googleLogin')}
         </button>
       </div>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        계정이 없으신가요?{' '}
+        {localMessage('auth.noAccount')}{' '}
         <Link href="/register" className="font-medium text-primary hover:underline">
-          회원가입
+          {localMessage('auth.registerSubmit')}
         </Link>
       </p>
     </div>

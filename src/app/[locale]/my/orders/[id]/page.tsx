@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ordersApi, paymentsApi } from '@/lib/api';
 import type { CheckoutGatewayName, OrderResponse, OrderServiceRequest, OrderServiceRequestType, PreparePaymentResponse } from '@/lib/api';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency, type Locale as CurrencyLocale } from '@/utils/currency';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
@@ -24,7 +24,7 @@ const STATUS_TIMELINE = ['pending', 'paid', 'preparing', 'shipped', 'delivered']
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const locale = useLocale();
+  const locale = useLocale() as CurrencyLocale;
   const tOrder = useTranslations('order');
   const tMy = useTranslations('myPage');
   const t = useTranslations('orderDetail');
@@ -289,11 +289,11 @@ export default function OrderDetailPage() {
                       <p className="text-xs text-muted-foreground">{item.optionName}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(item.price)} × {t('quantity', { count: item.quantity })}
+                      {formatCurrency(item.price, locale)} × {t('quantity', { count: item.quantity })}
                     </p>
                   </div>
                   <p className="font-medium shrink-0">
-                    {formatCurrency(Number(item.price) * item.quantity)}
+                    {formatCurrency(Number(item.price) * item.quantity, locale)}
                   </p>
                 </div>
               </li>
@@ -307,18 +307,18 @@ export default function OrderDetailPage() {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('productAmount')}</dt>
-              <dd>{formatCurrency(order.totalAmount)}</dd>
+              <dd>{formatCurrency(order.totalAmount, locale)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('discountAmount')}</dt>
-              <dd>-{formatCurrency(order.discountAmount)}</dd>
+              <dd>-{formatCurrency(order.discountAmount, locale)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('shippingFee')}</dt>
               <dd>
                 {Number(order.shippingFee) === 0
                   ? t('freeShipping')
-                  : formatCurrency(order.shippingFee)}
+                  : formatCurrency(order.shippingFee, locale)}
               </dd>
             </div>
             <div className="flex justify-between border-t pt-2 font-bold">
@@ -327,7 +327,8 @@ export default function OrderDetailPage() {
                 {formatCurrency(
                   Number(order.totalAmount) -
                   Number(order.discountAmount) +
-                  Number(order.shippingFee)
+                  Number(order.shippingFee),
+                  locale,
                 )}
               </dd>
             </div>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency, type Locale } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -17,7 +17,7 @@ const PAGE_LIMIT = 10;
 export default function OrdersPage() {
   const t = useTranslations('order');
   const tMy = useTranslations('myPage');
-  const locale = useLocale();
+  const locale = useLocale() as Locale;
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [total, setTotal] = useState(0);
@@ -118,7 +118,7 @@ export default function OrdersPage() {
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-semibold">{formatCurrency(order.totalAmount)}</p>
+                      <p className="font-semibold">{formatCurrency(order.totalAmount, locale)}</p>
                     </div>
                   </div>
                 </Link>

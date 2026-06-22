@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
+import { localMessage } from '@/utils/localMessages';
 
 /**
  * 헤더 아래 좌측에 fixed로 표시되는 원형 뒤로가기 버튼.
@@ -19,7 +20,7 @@ export default function BackButton() {
     <button
       type="button"
       onClick={() => router.back()}
-      aria-label="뒤로가기"
+      aria-label={localMessage('ui.back')}
       className={cn(
         'fixed left-4 top-[4.5rem] z-10',
         'flex h-9 w-9 items-center justify-center rounded-full',

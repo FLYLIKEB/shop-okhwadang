@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
+import { formatCurrency } from '@/utils/currency';
+import { getClientLocale } from '@/utils/clientLocale';
+import { localMessage } from '@/utils/localMessages';
 
 interface PriceRangeFilterProps {
   min?: number;
@@ -10,11 +13,8 @@ interface PriceRangeFilterProps {
   onChange: (min?: number, max?: number) => void;
 }
 
-function formatKRW(value: number): string {
-  return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(value);
-}
-
 export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilterProps) {
+  const locale = getClientLocale();
   const t = useTranslations('product.filter');
   const tCommon = useTranslations('common');
   const [localMin, setLocalMin] = useState(min !== undefined ? String(min) : '');
@@ -64,10 +64,10 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
       {(min !== undefined || max !== undefined) && (
         <p className="text-xs text-muted-foreground">
           {min !== undefined && max !== undefined
-            ? `${formatKRW(min)} ~ ${formatKRW(max)}`
+            ? `${formatCurrency(min, locale)} ~ ${formatCurrency(max, locale)}`
             : min !== undefined
-              ? `${formatKRW(min)} 이상`
-              : `${formatKRW(max!)} 이하`}
+              ? localMessage('filters.priceMinOrMore', { amount: formatCurrency(min, locale) })
+              : localMessage('filters.priceMaxOrLess', { amount: formatCurrency(max!, locale) })}
         </p>
       )}
       <button

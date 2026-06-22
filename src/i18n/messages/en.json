@@ -85,7 +85,9 @@
     "themeToggleToLight": "Switch to light mode",
     "themeToggleToDark": "Switch to dark mode",
     "languageSelector": "Select Language",
-    "languageList": "Language list"
+    "languageList": "Language list",
+    "menuBackTo": "Back to {title} menu",
+    "openSubmenu": "Open {label} submenu"
   },
   "footer": {
     "customerService": "Customer Service",
@@ -112,7 +114,7 @@
       "addressLabel": "Address: {value}",
       "bizNo": "Business Reg. No.: 131-72-05631",
       "bizNoLabel": "Business Reg. No.: {value}",
-      "mailOrderNo": "Mail-Order Reg. No.: 2026-서울강남-01632",
+      "mailOrderNo": "Mail-order business registration: 2026-Seoul Gangnam-01632",
       "mailOrderNoLabel": "Mail-Order Reg. No.: {value}",
       "phone": "Phone: 010-2908-0393",
       "phoneLabel": "Phone: {value}",
@@ -160,7 +162,10 @@
       "passwordNeedsSpecial": "Password must contain at least one special character.",
       "nameTooShort": "Name must be between 1 and 100 characters.",
       "passwordMismatch": "Passwords do not match."
-    }
+    },
+    "showPassword": "Temporarily show password",
+    "hidePassword": "Hide password",
+    "processingOAuth": "Processing {provider} login..."
   },
   "product": {
     "addToCart": "Add to Cart",
@@ -272,6 +277,29 @@
           "label": "Tea and food restrictions",
           "value": "For tea and food products, change-of-mind exchanges or returns may be restricted if opened, used, packaging is damaged, or product value is reduced."
         }
+      },
+      "noticeInfo": {
+        "eyebrow": "Product information",
+        "title": "Required Product Information",
+        "labels": {
+          "productName": "Product / model name",
+          "material": "Material",
+          "components": "Components",
+          "sizeCapacity": "Size / capacity",
+          "manufacturer": "Manufacturer / importer",
+          "countryOfOrigin": "Country of origin",
+          "handlingPrecautions": "Handling precautions",
+          "warrantyPolicy": "Warranty policy",
+          "asContact": "A/S contact",
+          "foodType": "Food type",
+          "producer": "Producer / importer",
+          "origin": "Origin",
+          "manufactureDate": "Manufacture date",
+          "expirationDate": "Best-before / expiration date",
+          "storageMethod": "Storage method",
+          "ingredients": "Ingredients",
+          "customerServicePhone": "Customer service phone"
+        }
       }
     },
     "sort": {
@@ -315,7 +343,26 @@
       "lowStock": "Only {count} left",
       "available": "Available",
       "restockNotice": "Restock notification support is being prepared."
-    }
+    },
+    "quantityDecrease": "Decrease quantity",
+    "quantityIncrease": "Increase quantity",
+    "loadErrorTitle": "Unable to load products",
+    "loadErrorDescription": "Please try again in a moment.",
+    "retry": "Try again",
+    "imageLoadError": "Failed to load image",
+    "unknownImageError": "An unknown error occurred.",
+    "noImages": "No images available",
+    "zoom": "Zoom",
+    "close": "Close",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "productImage": "Product image {index}",
+    "zoomImage": "Open image {index} enlarged",
+    "selectImage": "Select image {index}",
+    "prevImage": "Previous image",
+    "nextImage": "Next image",
+    "imageDot": "Image {index}",
+    "defaultImage": "Product image"
   },
   "cart": {
     "title": "Cart",
@@ -337,7 +384,9 @@
     "continueShopping": "Continue shopping",
     "freeShipping": "Free",
     "freeShippingUnlocked": "Free shipping is now applied.",
-    "freeShippingRemaining": "Add {amount} more for free shipping"
+    "freeShippingRemaining": "Add {amount} more for free shipping",
+    "selectItemAria": "Select {product}",
+    "removeItemAria": "Remove {product}"
   },
   "checkout": {
     "title": "Order / Payment",
@@ -402,7 +451,21 @@
       "requiredDescription": "I have reviewed the product name, price, shipping information, and exchange/refund policy, and agree to proceed with this purchase.\nI agree to personal information collection/use and processing delegation or third-party provision to payment gateways and shipping providers for payment and delivery.",
       "marketingLabel": "[Optional] I agree to receive marketing communications.",
       "marketingDescription": "Receive new product, promotion, and event updates by email or SMS."
-    }
+    },
+    "couponLoadError": "Failed to load coupons.",
+    "couponLoading": "Loading coupons...",
+    "couponSelect": "Select Coupon",
+    "couponPlaceholder": "Choose a coupon",
+    "discount": "off",
+    "maxDiscount": "max {amount}",
+    "minimumOrderAmount": "Minimum order: {amount}",
+    "expires": "Expires",
+    "noCoupons": "No available coupons.",
+    "defaultAddressLabel": "Address",
+    "addressPlaceholder": "123 Main St, Seoul",
+    "stripeSetupError": "Stripe is not configured correctly.",
+    "paymentMethodLoadError": "Failed to load payment methods.",
+    "loadingPaymentMethods": "Loading payment methods..."
   },
   "order": {
     "orderHistory": "Order History",
@@ -534,7 +597,14 @@
     "submitSuccess": "Review submitted successfully.",
     "submitError": "Failed to submit review.",
     "nStar": "{n}-star",
-    "totalCount": "{count} reviews"
+    "totalCount": "{count} reviews",
+    "smartstore": "Naver Smart Store",
+    "smartstoreIncluded": "Includes {count} Naver Smart Store review(s)",
+    "imageAria": "Review image {index}",
+    "expandImage": "Enlarge image",
+    "expandedImageAlt": "Enlarged image",
+    "previous": "Previous",
+    "next": "Next"
   },
   "shipping": {
     "title": "Register Tracking Number",
@@ -671,7 +741,7 @@
       "import": {
         "title": "Import SmartStore Product Excel",
         "description": "Validate a SmartStore Excel file, then create new products and update existing SKU matches.",
-        "supportedFormats": "Supported formats: product-list export XLSX and bulk-edit XLSX (일괄수정 sheet).",
+        "supportedFormats": "Supported formats: product-list export XLSX and bulk-edit XLSX (bulk-edit sheet).",
         "supportedScope": "Initial scope: basic product fields only. Options, detail images, and additional-image expansion remain follow-up work.",
         "fileLabel": "SmartStore product Excel file",
         "previewButton": "Preview upload",
@@ -816,8 +886,28 @@
     "recentSearches": "Recent Searches",
     "clearAll": "Clear All",
     "noResults": "No results found",
-    "noResultsDescription": "No results found for \"{query}\".",
-    "results": "Results for \"{query}\""
+    "noResultsDescription": "Try a different keyword.",
+    "results": "Results for \"{query}\"",
+    "productSearch": "Search products",
+    "searching": "Searching...",
+    "autocompleteResults": "Autocomplete results",
+    "deleteTerm": "Delete {term}",
+    "popularSearches": "Popular Searches",
+    "sort": "Sort",
+    "sortAria": "Sort by",
+    "price": "Price",
+    "min": "Min",
+    "max": "Max",
+    "minPrice": "Minimum price",
+    "maxPrice": "Maximum price",
+    "loadMore": "Load more",
+    "loadError": "An error occurred while searching.",
+    "sortOptions": {
+      "latest": "Newest",
+      "popular": "Most Popular",
+      "price_asc": "Lowest Price",
+      "price_desc": "Highest Price"
+    }
   },
   "wishlist": {
     "add": "Add to Wishlist",
@@ -941,7 +1031,12 @@
   "journalPage": {
     "heroEyebrow": "Journal",
     "heroTitle": "Stories of Tea, Clay, and People",
-    "heroDesc": "The depth of tea culture, how to care for your teapot, artful tea settings, and news from Ockhwadang — for those who love tea."
+    "heroDesc": "The depth of tea culture, how to care for your teapot, artful tea settings, and news from Ockhwadang — for those who love tea.",
+    "readSuffix": "read",
+    "backToList": "← Back to journal list",
+    "emptyCategory": "No posts in this category yet.",
+    "categoryFilter": "Category filter",
+    "loadError": "Failed to load journal entries."
   },
   "nav": {
     "products": "Products",
@@ -1191,5 +1286,65 @@
         "body": "Refund approval: Refund eligibility is confirmed after the returned item is collected and inspected.\nProcessing period: After approval, refunds are processed to the original payment method within 3–7 business days.\nTiming by payment method: Card and easy-payment cancellations may reflect at different times depending on card issuer and PG policies; international payments follow the payment provider schedule."
       }
     }
+  },
+  "points": {
+    "loadError": "Failed to load points.",
+    "loading": "Loading points...",
+    "label": "Use points",
+    "balance": "Available points: {amount}",
+    "placeholder": "Enter points to use",
+    "useAll": "Use all",
+    "empty": "No points are available."
+  },
+  "recentlyViewedWidget": {
+    "more": "View all {count} items",
+    "open": "Recently viewed products",
+    "close": "Close widget"
+  },
+  "artistPage": {
+    "metaTitle": "Artisans | Ockhwadang",
+    "metaDescription": "Meet the Yixing artisans who craft Ockhwadang teapots.",
+    "title": "Artisans",
+    "description": "Yixing masters who craft Ockhwadang teapots",
+    "clayFilter": "Clay filter",
+    "noArtists": "No artisans found for this clay.",
+    "all": "All",
+    "worksCount": "{count} pieces",
+    "backToList": "← Artisan list",
+    "workshop": "{workshop} workshop",
+    "representativeClay": "Signature clay",
+    "specialty": "Specialty",
+    "works": "Works",
+    "workshopLocation": "Workshop location",
+    "storyTitle": "Artisan Story",
+    "galleryTitle": "Signature Works",
+    "workLabel": "Work {index}",
+    "collectionTitle": "Works by {name}",
+    "collectionDescription": "Discover {clay} Yixing teapots crafted by {name}.",
+    "viewWorks": "View this artisan’s works",
+    "notFound": "Artisan not found",
+    "metaTitleDetail": "{name} | Ockhwadang Artisan"
+  },
+  "ui": {
+    "close": "Close",
+    "back": "Go back",
+    "expired": "Ended",
+    "dataLoadError": "Failed to load data",
+    "unknownError": "An unknown error occurred.",
+    "retry": "Try again",
+    "blockError": "Unable to display this block ({type})",
+    "unknownBlock": "Unknown block type: {type}"
+  },
+  "newsletter": {
+    "emailPlaceholder": "Enter your email",
+    "button": "Subscribe",
+    "thanks": "Thank you.",
+    "ready": "You are ready to receive updates.",
+    "error": "An error occurred. Please try again."
+  },
+  "filters": {
+    "clayAria": "Clay filter",
+    "priceMinOrMore": "{amount} or more",
+    "priceMaxOrLess": "{amount} or less"
   }
 }

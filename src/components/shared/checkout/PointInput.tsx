@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { couponsApi } from '@/lib/api';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency, type Locale } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
 
 interface PointInputProps {
@@ -11,6 +12,8 @@ interface PointInputProps {
 }
 
 export default function PointInput({ onPointsChange }: PointInputProps) {
+  const t = useTranslations('points');
+  const locale = useLocale() as Locale;
   const [balance, setBalance] = useState(0);
   const [value, setValue] = useState('');
 
@@ -19,7 +22,7 @@ export default function PointInput({ onPointsChange }: PointInputProps) {
       const res = await couponsApi.getPoints();
       setBalance(res.balance);
     },
-    { onError: () => setBalance(0), errorMessage: '적립금을 불러오지 못했습니다.' },
+    { onError: () => setBalance(0), errorMessage: t('loadError') },
   );
 
   useEffect(() => {
@@ -39,17 +42,17 @@ export default function PointInput({ onPointsChange }: PointInputProps) {
   };
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">적립금 불러오는 중...</p>;
+    return <p className="text-sm text-muted-foreground">{t('loading')}</p>;
   }
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <label htmlFor="point-input" className="text-sm font-medium">
-          적립금 사용
+          {t('label')}
         </label>
         <span className="text-xs text-muted-foreground">
-          보유 적립금: <strong>{formatCurrency(balance)}원</strong>
+          {t('balance', { amount: formatCurrency(balance, locale) })}
         </span>
       </div>
       <div className="flex gap-2">
@@ -59,7 +62,7 @@ export default function PointInput({ onPointsChange }: PointInputProps) {
           inputMode="numeric"
           value={value}
           onChange={handleChange}
-          placeholder="사용할 적립금 입력"
+          placeholder={t('placeholder')}
           disabled={balance === 0}
           className={cn(
             'flex-1 rounded-md border px-3 py-2 text-sm',
@@ -77,11 +80,11 @@ export default function PointInput({ onPointsChange }: PointInputProps) {
             balance === 0 && 'opacity-50 cursor-not-allowed',
           )}
         >
-          전액 사용
+          {t('useAll')}
         </button>
       </div>
       {balance === 0 && (
-        <p className="text-xs text-muted-foreground">사용 가능한 적립금이 없습니다.</p>
+        <p className="text-xs text-muted-foreground">{t('empty')}</p>
       )}
     </div>
   );
