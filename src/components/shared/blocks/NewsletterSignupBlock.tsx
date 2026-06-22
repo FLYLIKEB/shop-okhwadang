@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { NewsletterSignupContent } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
+import { localMessage } from '@/utils/localMessages';
 
 interface Props {
   content: NewsletterSignupContent;
@@ -13,8 +14,8 @@ export default function NewsletterSignupBlock({ content }: Props) {
   const {
     title,
     description,
-    placeholder = '이메일을 입력하세요',
-    button_text = '가입하기',
+    placeholder = localMessage('newsletter.emailPlaceholder'),
+    button_text = localMessage('newsletter.button'),
     template = 'default',
     background_image,
   } = content;
@@ -47,8 +48,8 @@ export default function NewsletterSignupBlock({ content }: Props) {
           </div>
         )}
         <div className="relative z-10 max-w-xl mx-auto px-6">
-          <p className="text-lg font-medium text-foreground">감사합니다.</p>
-          <p className="mt-2 text-muted-foreground">소식を受け取る準備ができました。</p>
+          <p className="text-lg font-medium text-foreground">{localMessage('newsletter.thanks')}</p>
+          <p className="mt-2 text-muted-foreground">{localMessage('newsletter.ready')}</p>
         </div>
       </section>
     );
@@ -112,7 +113,7 @@ export default function NewsletterSignupBlock({ content }: Props) {
           </div>
         </form>
         {status === 'error' && (
-          <p className="mt-4 text-sm text-destructive">오류가 발생했습니다. 다시 시도해주세요.</p>
+          <p className="mt-4 text-sm text-destructive">{localMessage('newsletter.error')}</p>
         )}
       </div>
     </section>

@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { ZoomIn, ZoomOut, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/components/ui/utils'
+import { localMessage } from '@/utils/localMessages'
 
 interface LightboxOverlayProps {
   images: Array<{
@@ -67,7 +68,7 @@ export default function LightboxOverlay({
         type="button"
         onClick={onClose}
         className="absolute right-4 top-4 rounded-full bg-white/10 hover:bg-white/20 p-3 text-white transition-colors z-50"
-        aria-label="닫기"
+        aria-label={localMessage('product.close')}
       >
         <X className="size-6" />
       </button>
@@ -86,7 +87,7 @@ export default function LightboxOverlay({
           'absolute right-16 top-4 rounded-full p-3 text-white transition-colors z-50',
           lightboxZoomed ? 'bg-white/30 hover:bg-white/40' : 'bg-white/10 hover:bg-white/20',
         )}
-        aria-label={lightboxZoomed ? '축소' : '확대'}
+        aria-label={lightboxZoomed ? localMessage('product.zoomOut') : localMessage('product.zoomIn')}
       >
         {lightboxZoomed ? <ZoomOut className="size-6" /> : <ZoomIn className="size-6" />}
       </button>
@@ -114,7 +115,7 @@ export default function LightboxOverlay({
         >
           <Image
             src={selectedImage.url}
-            alt={selectedImage.alt ?? '상품 이미지'}
+            alt={selectedImage.alt ?? localMessage('product.defaultImage')}
             width={900}
             height={900}
             className="object-contain w-full h-full"
@@ -133,7 +134,7 @@ export default function LightboxOverlay({
               onPrev()
             }}
             className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
-            aria-label="이전 이미지"
+            aria-label={localMessage('product.prevImage')}
           >
             <ChevronLeft className="size-8" />
           </button>
@@ -144,7 +145,7 @@ export default function LightboxOverlay({
               onNext()
             }}
             className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
-            aria-label="다음 이미지"
+            aria-label={localMessage('product.nextImage')}
           >
             <ChevronRight className="size-8" />
           </button>
@@ -169,7 +170,7 @@ export default function LightboxOverlay({
                 'size-2 rounded-full transition-all',
                 i === selectedIndex ? 'bg-white scale-125' : 'bg-white/40',
               )}
-              aria-label={`이미지 ${i + 1}`}
+              aria-label={localMessage('product.imageDot', { index: i + 1 })}
             />
           ))}
         </div>

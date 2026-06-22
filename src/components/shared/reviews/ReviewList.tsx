@@ -7,15 +7,16 @@ import { cn } from '@/components/ui/utils'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import ReviewCard from './ReviewCard'
 import ReviewStatsComponent from './ReviewStats'
+import { localMessage } from '@/utils/localMessages'
 
 interface ReviewListProps {
   productId: number
 }
 
-const SORT_OPTIONS: { value: ReviewSort; label: string }[] = [
-  { value: 'recent', label: '최신순' },
-  { value: 'rating_high', label: '별점 높은순' },
-  { value: 'rating_low', label: '별점 낮은순' },
+const SORT_OPTIONS: { value: ReviewSort; key: 'sortRecent' | 'sortRatingHigh' | 'sortRatingLow' }[] = [
+  { value: 'recent', key: 'sortRecent' },
+  { value: 'rating_high', key: 'sortRatingHigh' },
+  { value: 'rating_low', key: 'sortRatingLow' },
 ]
 
 export default function ReviewList({ productId }: ReviewListProps) {
@@ -37,7 +38,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
       setStats(res.stats)
       setTotal(res.pagination.total)
     },
-    { errorMessage: '리뷰를 불러올 수 없습니다.' },
+    { errorMessage: localMessage('review.submitError') },
   )
 
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
                 : 'bg-muted text-muted-foreground hover:bg-muted/80',
             )}
           >
-            {opt.label}
+            {localMessage(`review.${opt.key}`)}
           </button>
         ))}
       </div>
@@ -78,7 +79,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
         </div>
       ) : reviews.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          아직 리뷰가 없습니다.
+          {localMessage('review.noReviews')}
         </p>
       ) : (
         <div>

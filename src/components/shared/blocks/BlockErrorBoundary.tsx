@@ -2,6 +2,7 @@
 
 import { Component } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
+import { localMessage } from '@/utils/localMessages';
 
 interface Props {
   children: ReactNode;
@@ -34,7 +35,7 @@ export default class BlockErrorBoundary extends Component<Props, State> {
           className="rounded-lg border border-red-200 bg-red-50 p-4 text-center text-sm text-red-600"
           role="alert"
         >
-          블록을 표시할 수 없습니다 ({this.props.blockType})
+          {localMessage('ui.blockError', { type: this.props.blockType })}
         </div>
       );
     }

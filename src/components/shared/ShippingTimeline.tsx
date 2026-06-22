@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { shippingApi, type ShippingResponse } from '@/lib/api';
 import {
-  CARRIER_NAMES,
   CARRIER_TRACKING_URLS,
+  getCarrierName,
 } from '@/constants/status';
 
 const SHIPPING_STEPS = ['payment_confirmed', 'preparing', 'shipped', 'in_transit', 'delivered'];
@@ -101,6 +101,7 @@ export default function ShippingTimeline({ orderId }: Props) {
   const trackingHref = trackingUrl && shipping.tracking_number
     ? `${trackingUrl}${encodeURIComponent(shipping.tracking_number)}`
     : null;
+  const carrierName = getCarrierName(shipping.carrier, locale);
 
   return (
     <section className="rounded-lg border p-6">
@@ -167,7 +168,7 @@ export default function ShippingTimeline({ orderId }: Props) {
       <div className="mb-4 rounded-md bg-muted/40 p-3 text-sm">
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">{t('carrier')}</span>
-          <span className="font-medium">{CARRIER_NAMES[shipping.carrier] ?? shipping.carrier}</span>
+          <span className="font-medium">{carrierName}</span>
         </div>
         {shipping.tracking_number ? (
           <div className="mt-1 flex items-center gap-2">
@@ -179,7 +180,7 @@ export default function ShippingTimeline({ orderId }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-primary underline"
-                aria-label={t('trackingLinkLabel', { carrier: CARRIER_NAMES[shipping.carrier] ?? shipping.carrier })}
+                aria-label={t('trackingLinkLabel', { carrier: carrierName })}
               >
                 {t('trackingLink')}
               </a>

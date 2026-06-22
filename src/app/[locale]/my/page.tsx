@@ -9,7 +9,7 @@ import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency, type Locale } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import {
   Package,
@@ -35,7 +35,7 @@ const QUICK_LINKS = [
 export default function MyPage() {
   const t = useTranslations('myPage');
   const tOrder = useTranslations('order');
-  const locale = useLocale();
+  const locale = useLocale() as Locale;
   const { isAuthenticated, isLoading } = useRequireAuth();
   const { user } = useAuth();
   const [recentOrders, setRecentOrders] = useState<OrderResponse[]>([]);
@@ -143,7 +143,7 @@ export default function MyPage() {
                   </div>
                   <div className="text-right shrink-0 ml-4">
                     <p className="typo-body-sm font-medium">
-                      {formatCurrency(Number(order.totalAmount))}
+                      {formatCurrency(Number(order.totalAmount), locale)}
                     </p>
                     <p className="typo-label text-muted-foreground mt-0.5">
                       {tOrder.has(`status.${order.status}`) ? tOrder(`status.${order.status}`) : order.status}

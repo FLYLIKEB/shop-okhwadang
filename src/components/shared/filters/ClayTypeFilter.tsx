@@ -14,6 +14,7 @@ interface ClayTypeFilterProps {
 
 export default function ClayTypeFilter({ collections, selected, onSelect }: ClayTypeFilterProps) {
   const tCommon = useTranslations('common');
+  const tFilters = useTranslations('filters');
 
   return (
     <SegmentedOptionGroup
@@ -26,7 +27,7 @@ export default function ClayTypeFilter({ collections, selected, onSelect }: Clay
       ]}
       value={selected ?? ''}
       onToggle={(value) => onSelect(value === selected ? undefined : value || undefined)}
-      ariaLabel="니료 필터"
+      ariaLabel={tFilters('clayAria')}
       size="xs"
       radius="full"
       tone="primary"

@@ -8,8 +8,11 @@ import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed';
 import { useUrlModal } from '@/hooks/useUrlModal';
 import { formatCurrency } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
+import { getClientLocale } from '@/utils/clientLocale';
+import { localMessage } from '@/utils/localMessages';
 
 export default function RecentlyViewedWidget() {
+  const locale = getClientLocale();
   const { items } = useRecentlyViewed();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useUrlModal('recentlyViewed');
@@ -54,7 +57,7 @@ export default function RecentlyViewedWidget() {
               <div className="max-w-32 text-xs">
                 <p className="line-clamp-1 font-medium">{item.name}</p>
                 <p className="text-muted-foreground">
-                  {formatCurrency(item.salePrice ?? item.price)}
+                  {formatCurrency(item.salePrice ?? item.price, locale)}
                 </p>
               </div>
             </Link>
@@ -64,7 +67,7 @@ export default function RecentlyViewedWidget() {
               href="/my/recently-viewed"
               className="text-center text-xs text-muted-foreground hover:underline py-1"
             >
-              전체 {items.length}개 보기
+              {localMessage('recentlyViewedWidget.more', { count: items.length })}
             </Link>
           )}
         </div>
@@ -74,7 +77,7 @@ export default function RecentlyViewedWidget() {
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background shadow-md hover:bg-muted transition-colors"
-          aria-label="최근 본 상품"
+          aria-label={localMessage('recentlyViewedWidget.open')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
@@ -84,7 +87,7 @@ export default function RecentlyViewedWidget() {
         <button
           onClick={() => setIsHidden(true)}
           className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background shadow-sm hover:bg-muted transition-colors"
-          aria-label="위젯 닫기"
+          aria-label={localMessage('recentlyViewedWidget.close')}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
             <path d="M18 6L6 18M6 6l12 12"/>

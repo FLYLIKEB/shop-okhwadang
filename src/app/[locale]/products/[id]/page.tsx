@@ -14,11 +14,11 @@ export async function generateMetadata({ params }: ProductDetailProps): Promise<
   const { id, locale } = await params
   const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale;
   const product = await fetchProduct(Number(id), safeLocale)
-  if (!product) return { title: '상품을 찾을 수 없습니다' }
+  if (!product) return { title: safeLocale === 'en' ? 'Product not found' : '상품을 찾을 수 없습니다' }
 
   const imageUrl = product.images?.[0]?.url ?? '';
   const absoluteImageUrl = imageUrl.startsWith('http') ? imageUrl : `${SITE_URL}${imageUrl}`;
-  const description = product.shortDescription ?? product.description?.slice(0, 160) ?? `${product.name} 상세 페이지`;
+  const description = product.shortDescription ?? product.description?.slice(0, 160) ?? (safeLocale === 'en' ? `${product.name} detail page` : `${product.name} 상세 페이지`);
 
   const languages: Record<string, string> = {};
   for (const loc of routing.locales) {
@@ -68,14 +68,14 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
     description: product.description,
     image: product.images?.map(img => img.url) ?? [],
     sku: product.sku,
-    brand: { '@type': 'Brand', name: '옥화당' },
+    brand: { '@type': 'Brand', name: safeLocale === 'en' ? 'Okhwadang' : '옥화당' },
     url: `${SITE_URL}/${safeLocale}/products/${id}`,
     offers: {
       '@type': 'Offer',
       priceCurrency: 'KRW',
       price: product.salePrice ?? product.price,
       availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      seller: { '@type': 'Organization', name: '옥화당' },
+      seller: { '@type': 'Organization', name: safeLocale === 'en' ? 'Okhwadang' : '옥화당' },
     },
   };
 

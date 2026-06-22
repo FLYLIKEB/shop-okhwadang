@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { localMessage } from '@/utils/localMessages';
 import { cn } from '@/components/ui/utils';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/shared/EmptyState';
@@ -11,12 +12,7 @@ import { productsApi, type Product, type ProductSort } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
 
-const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
-  { value: 'latest', label: '최신순' },
-  { value: 'popular', label: '인기순' },
-  { value: 'price_asc', label: '가격낮은순' },
-  { value: 'price_desc', label: '가격높은순' },
-];
+const SORT_OPTIONS: ProductSort[] = ['latest', 'popular', 'price_asc', 'price_desc'];
 
 const LIMIT = 20;
 
@@ -31,6 +27,7 @@ export default function SearchPage() {
     updateQuery,
   } = useCatalogQueryParams();
   const tProduct = useTranslations('product');
+  const tCommon = useTranslations('common');
 
   const activeSort = (sort as ProductSort) ?? 'latest';
 
@@ -54,7 +51,7 @@ export default function SearchPage() {
       setProducts(data.items);
       setTotal(data.total);
     },
-    { errorMessage: '검색 중 오류가 발생했습니다.' },
+    { errorMessage: localMessage('search.loadError') },
   );
 
   useEffect(() => {
@@ -92,34 +89,34 @@ export default function SearchPage() {
       <div className="mb-6 flex flex-wrap items-end gap-4">
         <div className="flex items-center gap-2">
           <label htmlFor="sort-select" className="text-sm text-muted-foreground">
-            정렬
+            {localMessage('search.sort')}
           </label>
           <select
             id="sort-select"
             value={activeSort}
             onChange={handleSortChange}
-            aria-label="정렬 기준"
+            aria-label={localMessage('search.sortAria')}
             className={cn(
               'rounded-md border border-input bg-background px-3 py-1.5 text-sm',
               'focus:outline-none focus:ring-2 focus:ring-ring',
             )}
           >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {SORT_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                {localMessage(`search.sortOptions.${value}`)}
               </option>
             ))}
           </select>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <label className="text-sm text-muted-foreground">가격</label>
+          <label className="text-sm text-muted-foreground">{localMessage('search.price')}</label>
           <input
             type="number"
             value={priceMinInput}
             onChange={(e) => setPriceMinInput(e.target.value)}
-            placeholder="최소"
-            aria-label="최소 가격"
+            placeholder={localMessage('search.min')}
+            aria-label={localMessage('search.minPrice')}
             className={cn(
               'w-24 rounded-md border border-input bg-background px-3 py-1.5 text-sm',
               'placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring',
@@ -130,15 +127,15 @@ export default function SearchPage() {
             type="number"
             value={priceMaxInput}
             onChange={(e) => setPriceMaxInput(e.target.value)}
-            placeholder="최대"
-            aria-label="최대 가격"
+            placeholder={localMessage('search.max')}
+            aria-label={localMessage('search.maxPrice')}
             className={cn(
               'w-24 rounded-md border border-input bg-background px-3 py-1.5 text-sm',
               'placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring',
             )}
           />
           <Button type="button" size="sm" variant="outline" onClick={handlePriceApply}>
-            적용
+            {tCommon('apply')}
           </Button>
         </div>
       </div>
@@ -151,8 +148,8 @@ export default function SearchPage() {
         </div>
       ) : products.length === 0 ? (
         <EmptyState
-          title="검색 결과가 없습니다"
-          description="다른 키워드를 시도해보세요"
+          title={localMessage('search.noResults')}
+          description={localMessage('search.noResultsDescription')}
         />
       ) : (
         <>
@@ -178,7 +175,7 @@ export default function SearchPage() {
           {hasMore && (
             <div className="mt-8 flex justify-center">
               <Button variant="outline" onClick={handleLoadMore}>
-                더 보기
+                {localMessage('search.loadMore')}
               </Button>
             </div>
           )}

@@ -85,7 +85,9 @@
     "themeToggleToLight": "라이트 모드로 전환",
     "themeToggleToDark": "다크 모드로 전환",
     "languageSelector": "언어 선택",
-    "languageList": "언어 목록"
+    "languageList": "언어 목록",
+    "menuBackTo": "{title} 메뉴로 돌아가기",
+    "openSubmenu": "{label} 하위 메뉴 열기"
   },
   "footer": {
     "customerService": "고객센터",
@@ -160,7 +162,10 @@
       "passwordNeedsSpecial": "비밀번호는 특수문자를 포함해야 합니다.",
       "nameTooShort": "이름은 1~100자 사이여야 합니다.",
       "passwordMismatch": "비밀번호가 일치하지 않습니다."
-    }
+    },
+    "showPassword": "비밀번호 잠깐 보기",
+    "hidePassword": "비밀번호 숨기기",
+    "processingOAuth": "{provider} 로그인 처리 중..."
   },
   "product": {
     "addToCart": "장바구니 담기",
@@ -272,6 +277,29 @@
           "label": "차류·식품 제한",
           "value": "차류/식품 상품은 개봉, 사용, 포장 훼손 또는 가치 감소가 발생한 경우 단순 변심 교환/반품이 제한됩니다."
         }
+      },
+      "noticeInfo": {
+        "eyebrow": "상품 정보",
+        "title": "상품고시정보",
+        "labels": {
+          "productName": "품명 및 모델명",
+          "material": "재질",
+          "components": "구성품",
+          "sizeCapacity": "크기/용량",
+          "manufacturer": "제조자/수입자",
+          "countryOfOrigin": "제조국",
+          "handlingPrecautions": "취급 시 주의사항",
+          "warrantyPolicy": "품질보증기준",
+          "asContact": "A/S 책임자와 전화번호",
+          "foodType": "식품 유형",
+          "producer": "생산자/수입자",
+          "origin": "원산지",
+          "manufactureDate": "제조연월일",
+          "expirationDate": "소비기한",
+          "storageMethod": "보관방법",
+          "ingredients": "원재료명",
+          "customerServicePhone": "소비자상담 전화번호"
+        }
       }
     },
     "sort": {
@@ -315,7 +343,26 @@
       "lowStock": "남은 수량 {count}개",
       "available": "구매 가능",
       "restockNotice": "재입고 알림 기능과 연결될 수 있도록 준비 중입니다."
-    }
+    },
+    "quantityDecrease": "수량 감소",
+    "quantityIncrease": "수량 증가",
+    "loadErrorTitle": "상품을 불러올 수 없습니다",
+    "loadErrorDescription": "잠시 후 다시 시도해주세요.",
+    "retry": "다시 시도",
+    "imageLoadError": "이미지를 불러오지 못했습니다",
+    "unknownImageError": "알 수 없는 오류가 발생했습니다.",
+    "noImages": "등록된 이미지가 없습니다",
+    "zoom": "확대",
+    "close": "닫기",
+    "zoomIn": "확대",
+    "zoomOut": "축소",
+    "productImage": "상품 이미지 {index}",
+    "zoomImage": "이미지 {index} 확대해서 보기",
+    "selectImage": "이미지 {index} 선택",
+    "prevImage": "이전 이미지",
+    "nextImage": "다음 이미지",
+    "imageDot": "이미지 {index}",
+    "defaultImage": "상품 이미지"
   },
   "cart": {
     "title": "장바구니",
@@ -337,7 +384,9 @@
     "continueShopping": "쇼핑 계속하기",
     "freeShipping": "무료",
     "freeShippingUnlocked": "무료배송이 적용되었습니다.",
-    "freeShippingRemaining": "{amount} 더 담으면 무료배송"
+    "freeShippingRemaining": "{amount} 더 담으면 무료배송",
+    "selectItemAria": "{product} 선택",
+    "removeItemAria": "{product} 삭제"
   },
   "checkout": {
     "title": "주문 / 결제",
@@ -402,7 +451,21 @@
       "requiredDescription": "주문할 상품의 상품명, 가격, 배송정보, 교환·환불 규정을 확인했으며 구매에 동의합니다.\n결제 및 배송 처리를 위해 개인정보 수집·이용과 PG사/배송사 처리위탁 또는 제3자 제공 안내에 동의합니다.",
       "marketingLabel": "[선택] 마케팅 정보 수신에 동의합니다.",
       "marketingDescription": "신상품, 프로모션, 이벤트 안내를 이메일 또는 문자로 받을 수 있습니다."
-    }
+    },
+    "couponLoadError": "쿠폰 목록을 불러오지 못했습니다.",
+    "couponLoading": "쿠폰 불러오는 중...",
+    "couponSelect": "쿠폰 선택",
+    "couponPlaceholder": "쿠폰을 선택하세요",
+    "discount": "할인",
+    "maxDiscount": "최대 {amount}",
+    "minimumOrderAmount": "최소 주문금액: {amount}",
+    "expires": "만료",
+    "noCoupons": "사용 가능한 쿠폰이 없습니다.",
+    "defaultAddressLabel": "주소",
+    "addressPlaceholder": "서울특별시 강남구 테헤란로 123",
+    "stripeSetupError": "Stripe 설정이 올바르지 않습니다.",
+    "paymentMethodLoadError": "결제 수단을 불러오는데 실패했습니다.",
+    "loadingPaymentMethods": "결제 수단 불러오는 중..."
   },
   "order": {
     "orderHistory": "주문 내역",
@@ -534,7 +597,14 @@
     "submitSuccess": "리뷰가 등록되었습니다.",
     "submitError": "리뷰 작성에 실패했습니다.",
     "nStar": "{n}점",
-    "totalCount": "{count}개 리뷰"
+    "totalCount": "{count}개 리뷰",
+    "smartstore": "네이버 스마트스토어",
+    "smartstoreIncluded": "네이버 스마트스토어 {count}개 포함",
+    "imageAria": "리뷰 이미지 {index}",
+    "expandImage": "이미지 확대",
+    "expandedImageAlt": "확대 이미지",
+    "previous": "이전",
+    "next": "다음"
   },
   "shipping": {
     "title": "운송장 등록",
@@ -816,8 +886,28 @@
     "recentSearches": "최근 검색어",
     "clearAll": "전체 삭제",
     "noResults": "검색 결과가 없습니다",
-    "noResultsDescription": "\"{query}\"에 대한 검색 결과를 찾을 수 없습니다.",
-    "results": "\"{query}\" 검색 결과"
+    "noResultsDescription": "다른 키워드를 시도해보세요",
+    "results": "\"{query}\" 검색 결과",
+    "productSearch": "상품 검색",
+    "searching": "검색 중...",
+    "autocompleteResults": "자동완성 결과",
+    "deleteTerm": "{term} 삭제",
+    "popularSearches": "인기 검색어",
+    "sort": "정렬",
+    "sortAria": "정렬 기준",
+    "price": "가격",
+    "min": "최소",
+    "max": "최대",
+    "minPrice": "최소 가격",
+    "maxPrice": "최대 가격",
+    "loadMore": "더 보기",
+    "loadError": "검색 중 오류가 발생했습니다.",
+    "sortOptions": {
+      "latest": "최신순",
+      "popular": "인기순",
+      "price_asc": "가격낮은순",
+      "price_desc": "가격높은순"
+    }
   },
   "wishlist": {
     "add": "위시리스트에 추가",
@@ -941,7 +1031,12 @@
   "journalPage": {
     "heroEyebrow": "Journal",
     "heroTitle": "차와 흙, 그리고 사람의 이야기",
-    "heroDesc": "다문화의 깊이, 자사호 사용법, 아름다운 찻자리 세팅, 옥화당 소식까지. 차를 사랑하는 이들을 위한 읽을거리를 모았습니다."
+    "heroDesc": "다문화의 깊이, 자사호 사용법, 아름다운 찻자리 세팅, 옥화당 소식까지. 차를 사랑하는 이들을 위한 읽을거리를 모았습니다.",
+    "readSuffix": "읽기",
+    "backToList": "← 저널 목록으로 돌아가기",
+    "emptyCategory": "해당 카테고리의 글이 아직 없습니다.",
+    "categoryFilter": "카테고리 필터",
+    "loadError": "저널 목록을 불러오지 못했습니다."
   },
   "nav": {
     "products": "상품목록",
@@ -1191,5 +1286,65 @@
         "body": "환불 승인 조건: 반품 상품 회수 및 검수 완료 후 환불 가능 여부를 확정합니다.\n처리 기간: 환불 승인 후 영업일 기준 3~7일 이내 결제수단별로 환불 처리를 진행합니다.\n결제수단별 소요기간: 카드/간편결제 취소는 카드사·PG사 정책에 따라 반영 시점이 달라질 수 있으며, 해외 결제는 결제사 승인 일정에 따릅니다."
       }
     }
+  },
+  "points": {
+    "loadError": "적립금을 불러오지 못했습니다.",
+    "loading": "적립금 불러오는 중...",
+    "label": "적립금 사용",
+    "balance": "보유 적립금: {amount}",
+    "placeholder": "사용할 적립금 입력",
+    "useAll": "전액 사용",
+    "empty": "사용 가능한 적립금이 없습니다."
+  },
+  "recentlyViewedWidget": {
+    "more": "전체 {count}개 보기",
+    "open": "최근 본 상품",
+    "close": "위젯 닫기"
+  },
+  "artistPage": {
+    "metaTitle": "장인 | 옥화당",
+    "metaDescription": "옥화당 자사호를 빚는 장인들을 만나보세요.",
+    "title": "장인",
+    "description": "옥화당의 자사호를 빚는 의흥 장인들",
+    "clayFilter": "니료 필터",
+    "noArtists": "해당 니료의 장인이 없습니다.",
+    "all": "전체",
+    "worksCount": "작품 {count}점",
+    "backToList": "← 장인 목록",
+    "workshop": "{workshop} 공방",
+    "representativeClay": "대표 니료",
+    "specialty": "전문 분야",
+    "works": "작품 수",
+    "workshopLocation": "공방 소재지",
+    "storyTitle": "장인 이야기",
+    "galleryTitle": "대표 작품",
+    "workLabel": "작품 {index}",
+    "collectionTitle": "{name}의 작품 컬렉션",
+    "collectionDescription": "{name} 장인이 빚은 {clay} 자사호를 만나보세요.",
+    "viewWorks": "이 장인의 작품 보기",
+    "notFound": "장인을 찾을 수 없습니다",
+    "metaTitleDetail": "{name} | 옥화당 장인"
+  },
+  "ui": {
+    "close": "닫기",
+    "back": "뒤로가기",
+    "expired": "종료됨",
+    "dataLoadError": "데이터를 불러오지 못했습니다",
+    "unknownError": "알 수 없는 오류가 발생했습니다.",
+    "retry": "다시 시도",
+    "blockError": "블록을 표시할 수 없습니다 ({type})",
+    "unknownBlock": "알 수 없는 블록 타입: {type}"
+  },
+  "newsletter": {
+    "emailPlaceholder": "이메일을 입력하세요",
+    "button": "가입하기",
+    "thanks": "감사합니다.",
+    "ready": "소식을 받을 준비가 되었습니다.",
+    "error": "오류가 발생했습니다. 다시 시도해주세요."
+  },
+  "filters": {
+    "clayAria": "니료 필터",
+    "priceMinOrMore": "{amount} 이상",
+    "priceMaxOrLess": "{amount} 이하"
   }
 }

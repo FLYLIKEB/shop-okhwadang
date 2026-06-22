@@ -4,6 +4,7 @@ import { memo } from 'react'
 import { useTranslations } from 'next-intl'
 import type { ReviewStats as ReviewStatsType } from '@/lib/api'
 import StarRating from './StarRating'
+import { localMessage } from '@/utils/localMessages'
 
 interface ReviewStatsProps {
   stats: ReviewStatsType
@@ -27,7 +28,7 @@ const ReviewStatsComponent = memo(function ReviewStats({ stats }: ReviewStatsPro
         </span>
         {externalCount > 0 && (
           <span className="text-[11px] text-muted-foreground">
-            네이버 스마트스토어 {externalCount}개 포함
+            {localMessage('review.smartstoreIncluded', { count: externalCount })}
           </span>
         )}
       </div>

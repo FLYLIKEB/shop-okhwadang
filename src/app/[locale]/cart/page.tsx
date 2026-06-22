@@ -12,7 +12,7 @@ import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/shared/EmptyState';
 import CartItemRow from '@/components/shared/cart/CartItemRow';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency, type Locale } from '@/utils/currency';
 import { SESSION_KEYS } from '@/constants/storage';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { shippingApi, type ShippingQuoteResponse } from '@/lib/api';
@@ -22,7 +22,7 @@ export default function CartPage() {
   const t = useTranslations('cart');
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
-  const locale = params?.locale ?? 'ko';
+  const locale = (params?.locale ?? 'ko') as Locale;
   const { isVisible: isNavVisible } = useMobileNav();
   const { isAuthenticated } = useAuth();
   const { items, isLoading, updateQuantity, removeItem } = useCart();
@@ -156,11 +156,11 @@ export default function CartPage() {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t('productAmount')}</span>
-          <span className="typo-price">{formatCurrency(selectedTotal)}</span>
+          <span className="typo-price">{formatCurrency(selectedTotal, locale)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t('shippingFee')}</span>
-          <span className="typo-price">{selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee)}</span>
+          <span className="typo-price">{selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee, locale)}</span>
         </div>
       </div>
 
@@ -168,7 +168,7 @@ export default function CartPage() {
         <p className="text-xs text-muted-foreground">
           {remainingForFreeShipping === 0
             ? t('freeShippingUnlocked')
-            : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping) })}
+            : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping, locale) })}
         </p>
         <div className="mt-2 h-1.5 w-full rounded-full bg-background">
           <div
@@ -182,7 +182,7 @@ export default function CartPage() {
       <div className="mt-4 border-t border-divider-soft pt-4">
         <div className="flex items-end justify-between">
           <span className="typo-title">{t('total')}</span>
-          <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal)}</span>
+          <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
         </div>
       </div>
     </>
@@ -226,7 +226,7 @@ export default function CartPage() {
                     <div>
                       <p className="typo-h3">{t('orderSummary')}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {t('total')} · {formatCurrency(grandTotal)}
+                        {t('total')} · {formatCurrency(grandTotal, locale)}
                       </p>
                     </div>
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -259,7 +259,7 @@ export default function CartPage() {
         <div className="mobile-sticky-inner">
           <div className="mb-2 flex items-end justify-between">
             <p className="text-xs text-muted-foreground">{t('total')}</p>
-            <p className="typo-price text-foreground">{formatCurrency(grandTotal)}</p>
+            <p className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</p>
           </div>
           <Button type="button" className="w-full" onClick={handleOrder}>
             {t('orderSelected')}

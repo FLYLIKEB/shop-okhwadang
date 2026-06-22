@@ -117,12 +117,12 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
             method: 'CARD',
             amount: { currency: 'KRW', value: amount },
             orderId: orderNumber,
-            orderName: `주문 ${orderNumber}`,
+            orderName: locale === 'en' ? `Order ${orderNumber}` : `주문 ${orderNumber}`,
             successUrl: `${origin}/${locale}/checkout/success`,
             failUrl: `${origin}/${locale}/checkout/fail`,
           });
         } catch (err) {
-          onError(handleApiError(err, '결제 초기화 오류'));
+          onError(handleApiError(err, locale === 'en' ? 'Failed to initialize payment.' : '결제 초기화 오류'));
         }
       };
 
@@ -151,7 +151,7 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
           readOnly
           className="accent-foreground"
         />
-        <span className="text-sm">토스페이먼츠 (카드)</span>
+        <span className="text-sm">{locale === 'en' ? 'Toss Payments (Card)' : '토스페이먼츠 (카드)'}</span>
       </label>
     );
   },
@@ -177,7 +177,7 @@ const StripePaymentGateway = forwardRef<
 
   useEffect(() => {
     if (!clientSecret || !publishableKey) {
-      setMountError('Stripe 설정이 올바르지 않습니다.');
+      setMountError(locale === 'en' ? 'Stripe is not configured correctly.' : 'Stripe 설정이 올바르지 않습니다.');
       setLoading(false);
       return;
     }
@@ -207,7 +207,7 @@ const StripePaymentGateway = forwardRef<
       });
       paymentElement.on('loaderror', () => {
         if (mounted) {
-          setMountError('결제 수단을 불러오는데 실패했습니다.');
+          setMountError(locale === 'en' ? 'Failed to load payment methods.' : '결제 수단을 불러오는데 실패했습니다.');
           setLoading(false);
         }
       });
@@ -220,7 +220,7 @@ const StripePaymentGateway = forwardRef<
           },
         });
         if (error) {
-          throw new Error(error.message ?? '결제에 실패했습니다.');
+          throw new Error(error.message ?? (locale === 'en' ? 'Payment failed.' : '결제에 실패했습니다.'));
         }
       };
     });
@@ -254,7 +254,7 @@ const StripePaymentGateway = forwardRef<
         <span className="text-sm">Stripe (International Card)</span>
       </label>
       {loading && !mountError && (
-        <p className="text-xs text-muted-foreground">결제 수단 불러오는 중...</p>
+        <p className="text-xs text-muted-foreground">{locale === 'en' ? 'Loading payment methods...' : '결제 수단 불러오는 중...'}</p>
       )}
       {mountError && <p className="text-xs text-destructive">{mountError}</p>}
       <div ref={containerRef} className={loading ? 'sr-only' : undefined} />
@@ -264,8 +264,8 @@ const StripePaymentGateway = forwardRef<
 
 // ─── Mock / fallback ──────────────────────────────────────────────────────────
 
-const MockPaymentGateway = forwardRef<PaymentGatewayHandle>(
-  function MockPaymentGateway(_props, ref) {
+const MockPaymentGateway = forwardRef<PaymentGatewayHandle, { locale: Locale }>(
+  function MockPaymentGateway({ locale }, ref) {
     useImperativeHandle(ref, () => ({
       confirm: async () => {
         // Mock gateway: no-op — caller handles mock payment directly
@@ -282,7 +282,7 @@ const MockPaymentGateway = forwardRef<PaymentGatewayHandle>(
           readOnly
           className="accent-foreground"
         />
-        <span className="text-sm">테스트 결제 (Mock)</span>
+        <span className="text-sm">{locale === 'en' ? 'Test Payment (Mock)' : '테스트 결제 (Mock)'}</span>
       </label>
     );
   },
@@ -420,7 +420,7 @@ const PaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
       );
     }
 
-    return <MockPaymentGateway ref={ref} />;
+    return <MockPaymentGateway ref={ref} locale={locale} />;
   },
 );
 

@@ -8,6 +8,7 @@ import { useAutocomplete } from '@/components/shared/hooks/useAutocomplete';
 import { useRecentSearches } from '@/components/shared/hooks/useRecentSearches';
 import { useUrlModal } from '@/hooks/useUrlModal';
 import { searchApi } from '@/lib/api';
+import { localMessage } from '@/utils/localMessages';
 
 interface SearchInputProps {
   className?: string;
@@ -91,7 +92,7 @@ export default function SearchInput({ className, placeholder = '' }: SearchInput
           onChange={(e) => setValue(e.target.value)}
           onFocus={() => setIsOpen(true, isOpen ? 'replace' : 'push')}
           placeholder={placeholder}
-          aria-label="상품 검색"
+          aria-label={localMessage('search.productSearch')}
           className={cn(
             'w-full rounded-md border border-input bg-background py-1.5 pl-9 pr-3 text-sm',
             'placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring',
@@ -104,9 +105,9 @@ export default function SearchInput({ className, placeholder = '' }: SearchInput
           {showAutocomplete && (
             <div>
               {isLoading ? (
-                <div className="px-4 py-3 text-sm text-muted-foreground">검색 중...</div>
+                <div className="px-4 py-3 text-sm text-muted-foreground">{localMessage('search.searching')}</div>
               ) : (
-                <ul role="listbox" aria-label="자동완성 결과">
+                <ul role="listbox" aria-label={localMessage('search.autocompleteResults')}>
                   {suggestions.map((item) => (
                     <li key={item.id}>
                       <button
@@ -127,16 +128,16 @@ export default function SearchInput({ className, placeholder = '' }: SearchInput
           {showRecent && (
             <div>
               <div className="flex items-center justify-between px-4 py-2">
-                <span className="text-xs font-medium text-muted-foreground">최근 검색어</span>
+                <span className="text-xs font-medium text-muted-foreground">{localMessage('search.recentSearches')}</span>
                 <button
                   type="button"
                   onClick={clearSearches}
                   className="text-xs text-muted-foreground hover:text-foreground"
                 >
-                  전체 삭제
+                  {localMessage('search.clearAll')}
                 </button>
               </div>
-              <ul role="listbox" aria-label="최근 검색어">
+              <ul role="listbox" aria-label={localMessage('search.recentSearches')}>
                 {recentSearches.map((term) => (
                   <li key={term} className="flex items-center">
                     <button
@@ -150,7 +151,7 @@ export default function SearchInput({ className, placeholder = '' }: SearchInput
                     <button
                       type="button"
                       onClick={() => removeSearch(term)}
-                      aria-label={`${term} 삭제`}
+                      aria-label={localMessage('search.deleteTerm', { term })}
                       className="px-3 py-2 text-muted-foreground hover:text-foreground"
                     >
                       <X className="h-3 w-3" />
@@ -164,9 +165,9 @@ export default function SearchInput({ className, placeholder = '' }: SearchInput
           {showPopular && (
             <div>
               <div className="px-4 py-2">
-                <span className="text-xs font-medium text-muted-foreground">인기 검색어</span>
+                <span className="text-xs font-medium text-muted-foreground">{localMessage('search.popularSearches')}</span>
               </div>
-              <ul role="listbox" aria-label="인기 검색어">
+              <ul role="listbox" aria-label={localMessage('search.popularSearches')}>
                 {popularKeywords.map((keyword, index) => (
                   <li key={keyword}>
                     <button

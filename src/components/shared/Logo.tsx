@@ -1,13 +1,32 @@
+'use client';
+
 import Image from 'next/image';
+import { useLocale } from 'next-intl';
+import { cn } from '@/components/ui/utils';
 
 interface LogoProps {
-  /** 히어로용 큰 사이즈 vs 헤더용 작은 사이즈 */
   variant?: 'hero' | 'header';
   className?: string;
 }
 
 export default function Logo({ variant = 'header', className }: LogoProps) {
+  const locale = useLocale();
   const size = variant === 'hero' ? { width: 200, height: 56 } : { width: 140, height: 40 };
+
+  if (locale === 'en') {
+    return (
+      <span
+        className={cn(
+          'font-display text-xl font-semibold tracking-tight text-foreground',
+          variant === 'hero' && 'text-3xl text-white',
+          className,
+        )}
+        aria-label="Okhwadang"
+      >
+        Okhwadang
+      </span>
+    );
+  }
 
   return (
     <Image

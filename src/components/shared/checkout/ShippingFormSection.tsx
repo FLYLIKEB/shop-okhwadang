@@ -1,6 +1,7 @@
 'use client';
 
 import type { ShippingForm, FormErrors } from '@/app/[locale]/checkout/page';
+import { localMessage } from '@/utils/localMessages';
 
 interface ShippingFormSectionProps {
   form: ShippingForm;
@@ -12,7 +13,7 @@ export function ShippingFormSection({ form, errors, onChange }: ShippingFormSect
   return (
     <div className="space-y-1">
       <label htmlFor="recipientName" className="typo-label">
-        받는 분 이름 <span className="text-destructive">*</span>
+        {localMessage('checkout.recipientName')} <span className="text-destructive">*</span>
       </label>
       <input
         id="recipientName"
@@ -20,7 +21,7 @@ export function ShippingFormSection({ form, errors, onChange }: ShippingFormSect
         type="text"
         value={form.recipientName}
         onChange={onChange}
-        placeholder="홍길동"
+        placeholder={localMessage('checkout.recipientName')}
         className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
       {errors.recipientName && (
@@ -40,7 +41,7 @@ export function PhoneInputSection({ form, errors, onChange }: PhoneInputSectionP
   return (
     <div className="space-y-1">
       <label htmlFor="recipientPhone" className="typo-label">
-        연락처 <span className="text-destructive">*</span>
+        {localMessage('checkout.phone')} <span className="text-destructive">*</span>
       </label>
       <input
         id="recipientPhone"
@@ -68,7 +69,7 @@ export function ZipcodeInputSection({ form, errors, onChange }: ZipcodeInputSect
   return (
     <div className="space-y-1">
       <label htmlFor="zipcode" className="typo-label">
-        우편번호 <span className="text-destructive">*</span>
+        {localMessage('checkout.zipcode')} <span className="text-destructive">*</span>
       </label>
       <input
         id="zipcode"
@@ -97,7 +98,7 @@ export function AddressInputSection({ form, errors, onChange }: AddressInputSect
   return (
     <div className="space-y-1">
       <label htmlFor="address" className="typo-label">
-        주소 <span className="text-destructive">*</span>
+        {localMessage('checkout.address')} <span className="text-destructive">*</span>
       </label>
       <input
         id="address"
@@ -105,7 +106,7 @@ export function AddressInputSection({ form, errors, onChange }: AddressInputSect
         type="text"
         value={form.address}
         onChange={onChange}
-        placeholder="서울특별시 강남구 테헤란로 123"
+        placeholder={localMessage('checkout.addressPlaceholder')}
         className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
       {errors.address && (
@@ -124,7 +125,7 @@ export function AddressDetailInputSection({ form, onChange }: AddressDetailInput
   return (
     <div className="space-y-1">
       <label htmlFor="addressDetail" className="typo-label">
-        상세 주소
+        {localMessage('checkout.addressDetail')}
       </label>
       <input
         id="addressDetail"
@@ -132,7 +133,7 @@ export function AddressDetailInputSection({ form, onChange }: AddressDetailInput
         type="text"
         value={form.addressDetail}
         onChange={onChange}
-        placeholder="동/호수 등"
+        placeholder={localMessage('checkout.addressDetailPlaceholder')}
         className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
     </div>
@@ -148,14 +149,14 @@ export function MemoInputSection({ form, onChange }: MemoInputSectionProps) {
   return (
     <div className="space-y-1">
       <label htmlFor="memo" className="typo-label">
-        배송 메모
+        {localMessage('checkout.shippingMemo')}
       </label>
       <textarea
         id="memo"
         name="memo"
         value={form.memo}
         onChange={onChange}
-        placeholder="배송 시 요청사항을 입력해주세요."
+        placeholder={localMessage('checkout.shippingMemoPlaceholder')}
         rows={3}
         className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20 resize-none"
       />

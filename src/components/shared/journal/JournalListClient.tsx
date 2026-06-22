@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { TEAPOT_IMAGES } from '@/lib/teapot-images';
 import { journalsApi, type Journal, JournalCategory } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
@@ -21,6 +21,7 @@ function CategoryFilter({
 }) {
   const tCommon = useTranslations('common');
   const tCategory = useTranslations('journalCategories');
+  const tJournal = useTranslations('journalPage');
 
   return (
     <SegmentedOptionGroup
@@ -33,7 +34,7 @@ function CategoryFilter({
       ]}
       value={selected}
       onToggle={(value) => onSelect(value === ALL_CATEGORY ? null : value)}
-      ariaLabel="카테고리 필터"
+      ariaLabel={tJournal('categoryFilter')}
       className="justify-center"
       size="sm"
       radius="full"
@@ -43,7 +44,9 @@ function CategoryFilter({
 }
 
 export default function JournalListClient() {
+  const locale = useLocale();
   const tCategory = useTranslations('journalCategories');
+  const tJournal = useTranslations('journalPage');
   const [journals, setJournals] = useState<Journal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,17 +56,17 @@ export default function JournalListClient() {
     async function loadJournals() {
       try {
         setLoading(true);
-        const data = await journalsApi.getAll();
+        const data = await journalsApi.getAll(undefined, locale);
         setJournals(data);
       } catch (err) {
-        setError(handleApiError(err, '저널 목록을 불러오지 못했습니다.'));
+        setError(handleApiError(err, tJournal('loadError')));
       } finally {
         setLoading(false);
       }
     }
 
     void loadJournals();
-  }, []);
+  }, [locale, tJournal]);
 
   const filtered = selectedCategory
     ? journals.filter((journal) => journal.category === selectedCategory)
@@ -89,7 +92,7 @@ export default function JournalListClient() {
 
       {filtered.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground py-20">
-          해당 카테고리의 글이 아직 없습니다.
+          {tJournal('emptyCategory')}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

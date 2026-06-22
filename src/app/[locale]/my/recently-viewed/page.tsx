@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed';
 import EmptyState from '@/components/shared/EmptyState';
 import { formatCurrency } from '@/utils/currency';
+import { getClientLocale } from '@/utils/clientLocale';
 
 interface RecentlyViewedProductImageProps {
   thumbnail: string | null;
@@ -45,6 +46,7 @@ function RecentlyViewedProductImage({ thumbnail, name }: RecentlyViewedProductIm
 
 export default function RecentlyViewedPage() {
   const t = useTranslations('recentlyViewed');
+  const locale = getClientLocale();
   const { items, clear } = useRecentlyViewed();
 
   const handleClear = () => {
@@ -80,7 +82,7 @@ export default function RecentlyViewedPage() {
               <div className="p-3">
                 <p className="line-clamp-2 text-sm font-medium">{item.name}</p>
                 <p className="mt-1 text-sm font-semibold">
-                  {formatCurrency(item.salePrice ?? item.price)}
+                  {formatCurrency(item.salePrice ?? item.price, locale)}
                 </p>
               </div>
             </Link>

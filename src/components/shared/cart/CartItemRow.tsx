@@ -7,6 +7,8 @@ import { CartItem } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
 import { formatCurrency } from '@/utils/currency';
 import QuantitySelector from '@/components/shared/products/QuantitySelector';
+import { getClientLocale } from '@/utils/clientLocale';
+import { localMessage } from '@/utils/localMessages';
 
 interface CartItemRowProps {
   item: CartItem;
@@ -23,6 +25,7 @@ const CartItemRowComponent = memo(function CartItemRow({
   onQuantityChange,
   onRemove,
 }: CartItemRowProps) {
+  const locale = getClientLocale();
   const thumbnail =
     item.product.images.find((img) => img.isThumbnail) ?? item.product.images[0];
 
@@ -32,7 +35,7 @@ const CartItemRowComponent = memo(function CartItemRow({
         type="checkbox"
         checked={selected}
         onChange={(e) => onSelect(item.id, e.target.checked)}
-        aria-label={`${item.product.name} 선택`}
+        aria-label={localMessage('cart.selectItemAria', { product: item.product.name })}
         className="mt-1 h-4 w-4 rounded border-input accent-foreground"
       />
 
@@ -58,7 +61,7 @@ const CartItemRowComponent = memo(function CartItemRow({
             {item.option.name}: {item.option.value}
           </p>
         )}
-        <p className="typo-price text-foreground">{formatCurrency(item.unitPrice)}</p>
+        <p className="typo-price text-foreground">{formatCurrency(item.unitPrice, locale)}</p>
 
         <div className="mt-2 flex flex-wrap items-center gap-2 md:hidden">
           <QuantitySelector
@@ -68,12 +71,12 @@ const CartItemRowComponent = memo(function CartItemRow({
             onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
           />
 
-          <p className="typo-price text-foreground">{formatCurrency(item.subtotal)}</p>
+          <p className="typo-price text-foreground">{formatCurrency(item.subtotal, locale)}</p>
 
           <button
             type="button"
             onClick={() => onRemove(item.id)}
-            aria-label={`${item.product.name} 삭제`}
+            aria-label={localMessage('cart.removeItemAria', { product: item.product.name })}
             className="ml-auto text-muted-foreground transition-colors hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
@@ -89,12 +92,12 @@ const CartItemRowComponent = memo(function CartItemRow({
           onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
         />
 
-        <p className="typo-price mt-0.5 text-foreground">{formatCurrency(item.subtotal)}</p>
+        <p className="typo-price mt-0.5 text-foreground">{formatCurrency(item.subtotal, locale)}</p>
 
         <button
           type="button"
           onClick={() => onRemove(item.id)}
-          aria-label={`${item.product.name} 삭제`}
+          aria-label={localMessage('cart.removeItemAria', { product: item.product.name })}
           className="text-muted-foreground transition-colors hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" />

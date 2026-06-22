@@ -91,7 +91,7 @@ function OrderCompleteContent({ locale }: { locale: string }) {
                 <p className="text-muted-foreground">{t('quantity', { quantity: item.quantity })}</p>
               </div>
               <p className="font-medium shrink-0">
-                {formatCurrency(item.price * item.quantity)}
+                {formatCurrency(item.price * item.quantity, locale === 'en' ? 'en' : 'ko')}
               </p>
             </li>
           ))}
@@ -100,19 +100,19 @@ function OrderCompleteContent({ locale }: { locale: string }) {
         <div className="border-t pt-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('shippingFee')}</span>
-            <span>{order.shippingFee === 0 ? t('free') : formatCurrency(order.shippingFee)}</span>
+            <span>{order.shippingFee === 0 ? t('free') : formatCurrency(order.shippingFee, locale === 'en' ? 'en' : 'ko')}</span>
           </div>
           {order.discountAmount > 0 && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('discount')}</span>
-              <span className="text-destructive">-{formatCurrency(order.discountAmount)}</span>
+              <span className="text-destructive">-{formatCurrency(order.discountAmount, locale === 'en' ? 'en' : 'ko')}</span>
             </div>
           )}
         </div>
 
         <div className="border-t pt-4 flex justify-between font-bold">
           <span>{t('paymentAmount')}</span>
-          <span>{formatCurrency(order.totalAmount)}</span>
+          <span>{formatCurrency(order.totalAmount, locale === 'en' ? 'en' : 'ko')}</span>
         </div>
       </section>
 

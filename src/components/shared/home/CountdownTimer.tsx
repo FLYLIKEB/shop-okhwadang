@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { localMessage } from '@/utils/localMessages';
 
 interface Props {
   endsAt: string;
@@ -29,7 +30,7 @@ export default function CountdownTimer({ endsAt }: Props) {
     return () => clearInterval(id);
   }, [endsAt]);
 
-  if (expired) return <span className="text-red-500 text-sm font-medium">종료됨</span>;
+  if (expired) return <span className="text-red-500 text-sm font-medium">{localMessage('ui.expired')}</span>;
 
   const pad = (n: number) => String(n).padStart(2, '0');
 

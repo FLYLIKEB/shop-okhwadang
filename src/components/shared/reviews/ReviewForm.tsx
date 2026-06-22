@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { reviewsApi } from '@/lib/api'
 import StarRating from './StarRating'
 import { toastMessage } from '@/utils/toastMessages';
+import { localMessage } from '@/utils/localMessages';
 
 interface ReviewFormProps {
   productId: number
@@ -87,11 +88,11 @@ export default function ReviewForm({
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 rounded-lg border border-border p-4">
-      <h3 className="text-sm font-medium text-foreground">리뷰 작성</h3>
+      <h3 className="text-sm font-medium text-foreground">{localMessage('review.title')}</h3>
 
       {/* Star rating */}
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">별점</span>
+        <span className="text-sm text-muted-foreground">{localMessage('review.rating')}</span>
         <StarRating rating={rating} size="lg" interactive onChange={setRating} />
       </div>
 
@@ -99,7 +100,7 @@ export default function ReviewForm({
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="상품에 대한 리뷰를 작성해 주세요."
+        placeholder={localMessage('review.contentPlaceholder')}
         className="w-full min-h-24 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       />
 
@@ -113,7 +114,7 @@ export default function ReviewForm({
             disabled={isUploading || imageUrls.length >= 5}
             onClick={() => fileInputRef.current?.click()}
           >
-            {isUploading ? '업로드 중...' : '사진 첨부'}
+            {isUploading ? localMessage('review.uploading') : localMessage('review.attachPhoto')}
           </Button>
           <span className="text-xs text-muted-foreground">{imageUrls.length}/5</span>
         </div>
@@ -129,12 +130,12 @@ export default function ReviewForm({
           <div className="mt-2 flex gap-2 flex-wrap">
             {imageUrls.map((url, idx) => (
               <div key={url} className="relative">
-                <Image src={url} alt={`첨부 이미지 ${idx + 1}`} width={64} height={64} className="rounded object-cover" />
+                <Image src={url} alt={localMessage('review.attachedImage', { index: idx + 1 })} width={64} height={64} className="rounded object-cover" />
                 <button
                   type="button"
                   onClick={() => removeImage(idx)}
                   className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground"
-                  aria-label="이미지 삭제"
+                  aria-label={localMessage('review.deleteImage')}
                 >
                   x
                 </button>
@@ -147,10 +148,10 @@ export default function ReviewForm({
       {/* Actions */}
       <div className="flex gap-2">
         <Button type="submit" disabled={isSubmitting || rating === 0} size="sm">
-          {isSubmitting ? '등록 중...' : '리뷰 등록'}
+          {isSubmitting ? localMessage('review.submitting') : localMessage('review.submit')}
         </Button>
         <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-          취소
+          {localMessage('review.cancel')}
         </Button>
       </div>
     </form>

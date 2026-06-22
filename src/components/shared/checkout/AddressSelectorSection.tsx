@@ -1,6 +1,7 @@
 'use client';
 
 import type { UserAddress } from '@/lib/api';
+import { localMessage } from '@/utils/localMessages';
 
 interface AddressSelectorSectionProps {
   addresses: UserAddress[];
@@ -18,19 +19,19 @@ export function AddressSelectorSection({
   locale,
 }: AddressSelectorSectionProps) {
   if (addressLoading) {
-    return <p className="text-sm text-muted-foreground">주소 불러오는 중...</p>;
+    return <p className="text-sm text-muted-foreground">{localMessage('checkout.loadingAddresses')}</p>;
   }
 
   if (addresses.length === 0) {
     return (
       <div className="flex items-center justify-between rounded-md border border-dashed p-4">
-        <p className="text-sm text-muted-foreground">저장된 배송지가 없습니다.</p>
+        <p className="text-sm text-muted-foreground">{localMessage('checkout.noSavedAddress')}</p>
         <button
           type="button"
           onClick={() => { window.location.href = `/${locale}/my/address`; }}
           className="text-sm font-medium underline underline-offset-2 hover:opacity-70 transition-opacity"
         >
-          배송지 추가
+          {localMessage('checkout.addAddress')}
         </button>
       </div>
     );
@@ -48,7 +49,7 @@ export function AddressSelectorSection({
             className="mt-1 accent-foreground"
           />
           <span className="text-sm">
-            <span className="font-medium">{addr.label ?? '주소'}</span>{' '}
+            <span className="font-medium">{addr.label ?? localMessage('checkout.defaultAddressLabel')}</span>{' '}
             {addr.recipientName} {addr.phone}{' '}
             <span className="text-muted-foreground">
               {addr.address} {addr.addressDetail ?? ''}
@@ -64,7 +65,7 @@ export function AddressSelectorSection({
           onChange={() => onSelect('manual')}
           className="accent-foreground"
         />
-        <span className="text-sm">직접 입력</span>
+        <span className="text-sm">{localMessage('checkout.manualEntry')}</span>
       </label>
     </div>
   );

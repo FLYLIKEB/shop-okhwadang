@@ -1,6 +1,7 @@
 'use client'
 
 import { Minus, Plus } from 'lucide-react'
+import { localMessage } from '@/utils/localMessages'
 import { cn } from '@/components/ui/utils'
 
 interface QuantitySelectorProps {
@@ -22,7 +23,7 @@ export default function QuantitySelector({
         type="button"
         onClick={onDecrease}
         disabled={quantity <= 1}
-        aria-label="수량 감소"
+        aria-label={localMessage('product.quantityDecrease')}
         className={cn(
           'flex items-center justify-center h-9 w-9 shrink-0 border-r border-border transition-colors text-muted-foreground hover:bg-muted',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
@@ -40,7 +41,7 @@ export default function QuantitySelector({
         type="button"
         onClick={onIncrease}
         disabled={quantity >= maxQuantity}
-        aria-label="수량 증가"
+        aria-label={localMessage('product.quantityIncrease')}
         className={cn(
           'flex items-center justify-center h-9 w-9 shrink-0 border-l border-border transition-colors text-muted-foreground hover:bg-muted',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',

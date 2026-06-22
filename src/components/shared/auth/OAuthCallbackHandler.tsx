@@ -7,6 +7,7 @@ import { AuthTokenResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { SESSION_KEYS } from '@/constants/storage';
 import { toastMessage } from '@/utils/toastMessages';
+import { localMessage } from '@/utils/localMessages';
 
 interface OAuthCallbackHandlerProps {
   provider: 'kakao' | 'google';
@@ -50,7 +51,7 @@ export default function OAuthCallbackHandler({ provider, apiMethod }: OAuthCallb
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <p className="text-muted-foreground">{provider} 로그인 처리 중...</p>
+      <p className="text-muted-foreground">{localMessage('auth.processingOAuth', { provider })}</p>
     </div>
   );
 }

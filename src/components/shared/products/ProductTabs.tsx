@@ -12,6 +12,7 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/components/ui/utils'
 import ReviewsTab from '@/components/shared/reviews/ReviewsTab'
+import { localMessage } from '@/utils/localMessages'
 
 interface ProductTabsProps {
   description: string | null
@@ -24,26 +25,6 @@ interface ProductTabsProps {
 const TABS = ['details', 'reviews', 'inquiry'] as const
 type Tab = (typeof TABS)[number]
 const INQUIRY_TYPE_PRODUCT = '상품'
-
-const NOTICE_INFO_LABELS: Record<keyof Omit<ProductNoticeInfo, 'type'>, string> = {
-  productName: '품명 및 모델명',
-  material: '재질',
-  components: '구성품',
-  sizeCapacity: '크기/용량',
-  manufacturer: '제조자/수입자',
-  countryOfOrigin: '제조국',
-  handlingPrecautions: '취급 시 주의사항',
-  warrantyPolicy: '품질보증기준',
-  asContact: 'A/S 책임자와 전화번호',
-  foodType: '식품 유형',
-  producer: '생산자/수입자',
-  origin: '원산지',
-  manufactureDate: '제조연월일',
-  expirationDate: '소비기한',
-  storageMethod: '보관방법',
-  ingredients: '원재료명',
-  customerServicePhone: '소비자상담 전화번호',
-}
 
 const TEA_NOTICE_FIELDS: Array<keyof Omit<ProductNoticeInfo, 'type'>> = [
   'foodType',
@@ -73,7 +54,7 @@ function ProductNoticeInfoGuide({ noticeInfo }: { noticeInfo?: ProductNoticeInfo
 
   const keys = noticeInfo.type === 'tea' ? TEA_NOTICE_FIELDS : TEAWARE_NOTICE_FIELDS
   const rows = keys
-    .map((key) => ({ key, label: NOTICE_INFO_LABELS[key], value: noticeInfo[key] }))
+    .map((key) => ({ key, label: localMessage(`product.tabs.noticeInfo.labels.${key}`), value: noticeInfo[key] }))
     .filter((row): row is { key: keyof Omit<ProductNoticeInfo, 'type'>; label: string; value: string } => typeof row.value === 'string' && row.value.trim().length > 0)
 
   if (rows.length === 0) return null
@@ -81,8 +62,8 @@ function ProductNoticeInfoGuide({ noticeInfo }: { noticeInfo?: ProductNoticeInfo
   return (
     <section className="rounded-lg border border-border bg-muted/20 p-5" aria-labelledby="product-notice-info-title">
       <div className="mb-4">
-        <p className="typo-label text-muted-foreground">Product information</p>
-        <h2 id="product-notice-info-title" className="typo-h2 text-foreground">상품고시정보</h2>
+        <p className="typo-label text-muted-foreground">{localMessage('product.tabs.noticeInfo.eyebrow')}</p>
+        <h2 id="product-notice-info-title" className="typo-h2 text-foreground">{localMessage('product.tabs.noticeInfo.title')}</h2>
       </div>
       <dl className="grid gap-3 md:grid-cols-2">
         {rows.map((row) => (

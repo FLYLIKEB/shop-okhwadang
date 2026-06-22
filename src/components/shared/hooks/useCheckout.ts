@@ -63,9 +63,9 @@ export function useCheckout(options: UseCheckoutOptions) {
     try {
       await options.paymentRef.current.confirm();
     } catch (err) {
-      handlePaymentError(handleApiError(err, '결제에 실패했습니다.'));
+      handlePaymentError(handleApiError(err, locale === 'en' ? 'Payment failed.' : '결제에 실패했습니다.'));
     }
-  }, [options, handlePaymentError]);
+  }, [options, handlePaymentError, locale]);
 
   const handleTossFlow = useCallback(async (orderId: number, orderNumber: string, result: PreparePaymentResponse): Promise<void> => {
     options.setCurrentOrderId(orderId);
@@ -95,10 +95,10 @@ export function useCheckout(options: UseCheckoutOptions) {
       try {
         await gateway.confirm();
       } catch (err) {
-        handlePaymentError(handleApiError(err, '결제에 실패했습니다.'));
+        handlePaymentError(handleApiError(err, locale === 'en' ? 'Payment failed.' : '결제에 실패했습니다.'));
       }
     }, 100);
-  }, [options, handlePaymentError]);
+  }, [options, handlePaymentError, locale]);
 
   const handleMockFlow = useCallback(async (orderId: number, orderNumber: string): Promise<void> => {
     options.setStep('confirming_payment');
@@ -139,16 +139,16 @@ export function useCheckout(options: UseCheckoutOptions) {
 
     const errors: FormErrors = {};
     if (recipientName.length < 2) {
-      errors.recipientName = '이름은 2자 이상 입력해주세요.';
+      errors.recipientName = locale === 'en' ? 'Please enter at least 2 characters for the name.' : '이름은 2자 이상 입력해주세요.';
     }
     if (!/^\d{3}-\d{3,4}-\d{4}$/.test(recipientPhone)) {
-      errors.recipientPhone = '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)';
+      errors.recipientPhone = locale === 'en' ? 'Please enter a valid phone number. (e.g. 010-1234-5678)' : '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)';
     }
     if (!/^\d{5}$/.test(zipcode)) {
-      errors.zipcode = '우편번호는 5자리 숫자로 입력해주세요.';
+      errors.zipcode = locale === 'en' ? 'ZIP code must be 5 digits.' : '우편번호는 5자리 숫자로 입력해주세요.';
     }
     if (address.length === 0) {
-      errors.address = '주소를 입력해주세요.';
+      errors.address = locale === 'en' ? 'Please enter your address.' : '주소를 입력해주세요.';
     }
     if (Object.keys(errors).length > 0) {
       return;

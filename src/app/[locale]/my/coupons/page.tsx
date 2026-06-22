@@ -7,7 +7,7 @@ import type { CouponItem } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
-import { formatCurrency } from '@/utils/currency';
+import { formatCurrency, type Locale } from '@/utils/currency';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 
 type TabStatus = 'available' | 'used' | 'expired';
@@ -18,7 +18,7 @@ function CouponCard({
   t,
 }: {
   coupon: CouponItem;
-  locale: string;
+  locale: Locale;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   const discountText =
@@ -26,10 +26,10 @@ function CouponCard({
       ? coupon.maxDiscount
         ? t('discountPercentWithMax', {
           value: coupon.value,
-          max: formatCurrency(coupon.maxDiscount),
+          max: formatCurrency(coupon.maxDiscount, locale),
         })
         : t('discountPercent', { value: coupon.value })
-      : t('discountFixed', { value: formatCurrency(coupon.value) });
+      : t('discountFixed', { value: formatCurrency(coupon.value, locale) });
 
   return (
     <div
@@ -54,7 +54,7 @@ function CouponCard({
       <p className="text-sm font-medium text-primary">{discountText}</p>
       {coupon.minOrderAmount > 0 && (
         <p className="text-xs text-muted-foreground">
-          {t('minOrderAmount', { amount: formatCurrency(coupon.minOrderAmount) })}
+          {t('minOrderAmount', { amount: formatCurrency(coupon.minOrderAmount, locale) })}
         </p>
       )}
       <p className="text-xs text-muted-foreground">
@@ -66,7 +66,7 @@ function CouponCard({
 
 export default function MyCouponsPage() {
   const t = useTranslations('myCoupons');
-  const locale = useLocale();
+  const locale = useLocale() as Locale;
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [tab, setTab] = useState<TabStatus>('available');
   const [coupons, setCoupons] = useState<CouponItem[]>([]);
@@ -101,7 +101,7 @@ export default function MyCouponsPage() {
       {/* 적립금 잔액 */}
       <div className="mb-6 rounded-lg border p-4 flex items-center justify-between">
         <span className="text-sm font-medium">{t('pointBalance')}</span>
-        <span className="text-lg font-bold">{formatCurrency(pointBalance)}</span>
+        <span className="text-lg font-bold">{formatCurrency(pointBalance, locale)}</span>
       </div>
 
       {/* 탭 */}
