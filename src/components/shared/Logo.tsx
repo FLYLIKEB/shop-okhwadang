@@ -21,9 +21,9 @@ export default function Logo({ variant = 'header', className }: LogoProps) {
           variant === 'hero' && 'text-3xl text-white',
           className,
         )}
-        aria-label="Okhwadang"
+        aria-label="Ockhwadang"
       >
-        Okhwadang
+        Ockhwadang
       </span>
     );
   }

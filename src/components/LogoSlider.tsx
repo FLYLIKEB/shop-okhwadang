@@ -45,7 +45,7 @@ export default function LogoSlider() {
           textShadow: '0 1px 8px rgba(0,0,0,0.4)',
         }}
       >
-        {locale === 'en' ? 'Okhwadang' : '옥화당'}
+        {locale === 'en' ? 'Ockhwadang' : '옥화당'}
       </span>
     </div>
   );
