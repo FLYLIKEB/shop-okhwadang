@@ -68,14 +68,14 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
     description: product.description,
     image: product.images?.map(img => img.url) ?? [],
     sku: product.sku,
-    brand: { '@type': 'Brand', name: safeLocale === 'en' ? 'Okhwadang' : '옥화당' },
+    brand: { '@type': 'Brand', name: safeLocale === 'en' ? 'Ockhwadang' : '옥화당' },
     url: `${SITE_URL}/${safeLocale}/products/${id}`,
     offers: {
       '@type': 'Offer',
       priceCurrency: 'KRW',
       price: product.salePrice ?? product.price,
       availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      seller: { '@type': 'Organization', name: safeLocale === 'en' ? 'Okhwadang' : '옥화당' },
+      seller: { '@type': 'Organization', name: safeLocale === 'en' ? 'Ockhwadang' : '옥화당' },
     },
   };
 
