@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 const write = process.argv.includes('--write');
+const json = process.argv.includes('--json');
 const root = process.cwd();
 const stateRoot = path.join(root, '.omx', 'state');
 const now = new Date().toISOString();
@@ -141,4 +142,6 @@ for (const filePath of await collectSkillStateFiles()) {
   }
 }
 
-console.log(JSON.stringify({ checked, pruned, write }));
+if (json) {
+  process.stdout.write(`${JSON.stringify({ checked, pruned, write })}\n`);
+}

@@ -27,13 +27,21 @@ gh issue view <number> --json title,body,labels,state,comments
 3. Use `ralplan` first if requirements, tests, or architectural impact need clarification.
 4. Implement with TDD where practical.
 5. Verify:
+   - `make bootstrap` before implementation in a new worktree; use `make up` for local runtime verification.
+   - `bash scripts/codex-project-guard.sh` before final reporting to catch merge markers, invalid locale JSON, shell syntax errors in local runtime scripts, and missing JWT key files.
    - `npm run build && npm run test:run`
    - `cd backend && npm run build && npm run test`
    - `cd backend && npm run test:e2e` for schema or migration changes
+   - For runtime/UI/CMS/i18n changes, do not trust script success alone: verify `curl http://localhost:3000/api/health`, `curl -I http://localhost:5173/ko`, listening ports `3000`/`5173`, and affected locale URLs such as `/en/p/<slug>`.
 6. Create a Korean commit message following repo rules.
 7. Push branch, open PR, and run a code-review pass before merge.
 8. After merge, verify GitHub Actions and remote health checks if the changed area affects deployment/runtime.
-9. Restart local services with `bash scripts/start-local.sh` unless the user said not to.
+9. Pull/update `main` locally and return to the main checkout.
+10. If an isolated git worktree was created for the issue, always remove that local worktree folder after the PR has merged into `main`:
+   - Use `git worktree remove --force <worktree-path>` when the path is still registered.
+   - Then verify the worktree folder no longer exists; if it remains, remove that exact folder path directly.
+   - Do not leave the worktree in Finder Trash. Prefer direct deletion over moving to Trash; if an exact matching worktree folder was moved to `~/.Trash`, remove that exact trashed folder too. Never empty the whole Trash.
+11. Restart local services with `bash scripts/start-local.sh` unless the user said not to.
 
 ## Guardrails
 

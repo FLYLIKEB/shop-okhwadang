@@ -51,6 +51,10 @@ stop_ssh_tunnel() {
 }
 
 echo -e "${YELLOW}백엔드 + 프론트엔드 + Vitest + SSH 터널 종료 중...${NC}"
+if command -v tmux > /dev/null 2>&1; then
+    tmux kill-session -t okhwadang-backend 2>/dev/null || true
+    tmux kill-session -t okhwadang-frontend 2>/dev/null || true
+fi
 stop_backend &
 stop_frontend &
 stop_vitest_workers &
