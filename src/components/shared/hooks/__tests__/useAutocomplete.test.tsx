@@ -58,4 +58,29 @@ describe('useAutocomplete', () => {
     expect(result.current.suggestions).toEqual([]);
     expect(result.current.isLoading).toBe(false);
   });
+
+  it('ignores stale results when the query changes before a request settles', async () => {
+    let resolveFirst!: (value: Array<{ id: number; name: string; slug: string }>) => void;
+    autocompleteMock
+      .mockReturnValueOnce(new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockResolvedValueOnce([{ id: 2, name: '새 검색어', slug: 'new' }]);
+
+    const { result, rerender } = renderHook(({ query }) => useAutocomplete(query), {
+      initialProps: { query: '이전' },
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
+    rerender({ query: '새 검색어' });
+
+    await act(async () => {
+      resolveFirst([{ id: 1, name: '이전', slug: 'old' }]);
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
+    expect(result.current.suggestions).toEqual([{ id: 2, name: '새 검색어', slug: 'new' }]);
+    expect(result.current.isLoading).toBe(false);
+  });
 });
