@@ -20,5 +20,6 @@ globs: ["**/Dockerfile", "**/docker-compose*.yml", ".github/workflows/**", "scri
 
 ## Environment Variables
 - Frontend: `BACKEND_URL`
-- Backend: `NODE_ENV`, `PORT`, `DATABASE_URL`, `JWT_SECRET`, `PAYMENT_GATEWAY`, `STORAGE_PROVIDER`
+- Backend key groups: runtime (`NODE_ENV`, `PORT`, `DATABASE_URL`, `FRONTEND_URL`), auth/JWT, OAuth, payments, storage, notification/email, observability (`SENTRY_*`)
+- Production required env is enforced by `backend/src/config/env-validator.ts`; sync remote values with `bash scripts/remote-env-sync.sh verify|push`
 - Full reference: `docs/infrastructure/ENVIRONMENT_VARIABLES.md`

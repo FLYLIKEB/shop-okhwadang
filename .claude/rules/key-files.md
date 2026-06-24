@@ -2,7 +2,7 @@
 
 ## Application Code
 
-- **API Client**: `src/lib/api.ts`
+- **API Client**: `src/lib/api/index.ts`
 - **Auth Context**: `src/contexts/AuthContext.tsx`
 - **Cart Context**: `src/contexts/CartContext.tsx`
 

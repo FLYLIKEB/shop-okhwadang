@@ -13,7 +13,7 @@ NestJS + TypeORM + MySQL. Inherits root CLAUDE.md. See `.claude/rules/backend-pa
 - ValidationPipe messages must be Korean (configure exceptionFactory)
 
 ## Guard Execution Order
-APP_GUARD order: **ThrottlerGuard → JwtAuthGuard → RolesGuard**. RolesGuard depends on `request.user` — must run after JwtAuthGuard.
+APP_GUARD order: **UserAwareThrottlerGuard → JwtAuthGuard → RolesGuard**. RolesGuard depends on `request.user` — must run after JwtAuthGuard. UserAwareThrottlerGuard runs before JWT but verifies the `accessToken` cookie with `JWT_SECRET` to use per-user rate-limit buckets; otherwise it falls back to IP.
 
 ## Public API Endpoints
 **모든 공개 API 컨트롤러는 반드시 `@Public()`을 명시.** 전역 `JwtAuthGuard`가 기본 적용되므로, 인증 불필요 엔드포인트도 `@Public()` 없으면 401. 새 컨트롤러 생성 시 공개 여부를 먼저 판단하고 `@Public()` 또는 `@ApiCookieAuth()` 명확히 표시.
@@ -39,6 +39,8 @@ const req = context.switchToHttp().getRequest<{ user?: { id: number; role: strin
 
 ## Security
 See `.claude/rules/security.md`. Backend additions:
+- `assertEnv()` validates REQUIRED production env keys before Nest bootstrap; keep `backend/.env.example` REQUIRED comments in sync
+- `TRUST_PROXY` controls Express trust proxy hop count for real client IP rate limiting (default: production=1, non-production=false)
 - `app.use(helmet())` in `main.ts`
 - Server-side payment amount validation mandatory
 - PG webhook signature verification

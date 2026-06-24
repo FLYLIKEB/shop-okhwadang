@@ -4,14 +4,15 @@ NestJS-specific patterns and utilities. Complements `backend/CLAUDE.md`.
 
 ## Adapter Pattern
 
-- **Payments**: `PaymentGateway` interface → `MockAdapter` / `TossAdapter` / `StripeAdapter`. Selected by `PAYMENT_GATEWAY` env.
-- **Shipping**: `ShippingProvider` interface → `MockShippingAdapter`. CarrierCode type supports `'mock' | 'cj' | 'hanjin' | 'lotte'`. Selected by env.
+- **Payments**: `PaymentGateway` interface → Mock, Toss, Stripe, KG Inicis, NaverPay, PayPal adapters. Selected by `PAYMENT_GATEWAY` env.
+- **Shipping**: `ShippingProvider` interface → `MockShippingAdapter` and `CjShippingAdapter`; `hanjin`/`lotte` currently fall back to mock. CarrierCode type supports `'mock' | 'cj' | 'hanjin' | 'lotte'`.
 - **Storage**: `local` / `s3`. Selected by `STORAGE_PROVIDER` env.
+- **Notification/Email**: `EmailProvider` adapters → mock, Resend, SES stub. Selected by `NOTIFICATION_PROVIDER`; `mock` is blocked in production.
 
 ## Payment Gateway Selection
 
-- Locale-based gateway choice in `prepare()` must be persisted to `payment.gateway`, and all later operations (`confirm`, `cancel`, `partialRefund`) must resolve the adapter from the stored `payment.gateway` value — never from the default injected gateway.
-- `PaymentGatewayType` 값별 매핑은 1:1 — `STRIPE` → `StripeAdapter`, `TOSS` → `TossAdapter`, `INICIS` → 향후 KG이니시스 어댑터(#721 도입 예정), `MOCK` → 기본 게이트웨이. 한 enum 값을 다른 어댑터로 재사용하는 placeholder 패턴 금지.
+- Locale-based checkout exposure uses `getAvailableGatewaysByLocale()` / `resolveGatewayByLocale()` (`ko`: NaverPay first, otherwise PayPal first); selected gateway must be persisted to `payment.gateway`, and later operations (`confirm`, `cancel`, `partialRefund`) must resolve the adapter from the stored `payment.gateway` value — never from the default injected gateway.
+- `PaymentGatewayType` 값별 매핑은 1:1 — `MOCK`, `TOSS`, `STRIPE`, `INICIS`, `NAVERPAY`, `PAYPAL` 각각 전용 어댑터를 사용한다. 한 enum 값을 다른 어댑터로 재사용하는 placeholder 패턴 금지.
 
 ## API Documentation (Swagger/OpenAPI)
 
