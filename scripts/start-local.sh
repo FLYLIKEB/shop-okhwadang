@@ -112,13 +112,31 @@ fi
 echo -e "${BLUE}🔧 백엔드 + 🎨 프론트엔드 시작...${NC}"
 export NODE_ENV=development
 
-cd "$BACKEND_DIR"
-npm run start:dev > /tmp/commerce-backend.log 2>&1 &
-BACKEND_PID=$!
+if command -v tmux > /dev/null 2>&1; then
+    tmux kill-session -t okhwadang-backend 2>/dev/null || true
+    tmux kill-session -t okhwadang-frontend 2>/dev/null || true
 
-cd "$PROJECT_ROOT"
-npm run dev > /tmp/commerce-frontend.log 2>&1 &
-FRONTEND_PID=$!
+    tmux new-session -d -s okhwadang-backend \
+        "cd '$BACKEND_DIR' && set -a && source .env && set +a && export NODE_ENV=development && npm run start:dev > /tmp/commerce-backend.log 2>&1"
+    BACKEND_PID=$(tmux display-message -p -t okhwadang-backend '#{pane_pid}')
+
+    tmux new-session -d -s okhwadang-frontend \
+        "cd '$PROJECT_ROOT' && npm run dev > /tmp/commerce-frontend.log 2>&1"
+    FRONTEND_PID=$(tmux display-message -p -t okhwadang-frontend '#{pane_pid}')
+else
+    cd "$BACKEND_DIR"
+    nohup npm run start:dev > /tmp/commerce-backend.log 2>&1 < /dev/null &
+    BACKEND_PID=$!
+    disown "$BACKEND_PID" 2>/dev/null || true
+
+    cd "$PROJECT_ROOT"
+    nohup npm run dev > /tmp/commerce-frontend.log 2>&1 < /dev/null &
+    FRONTEND_PID=$!
+    disown "$FRONTEND_PID" 2>/dev/null || true
+fi
+
+echo "$BACKEND_PID" > /tmp/commerce-backend.pid
+echo "$FRONTEND_PID" > /tmp/commerce-frontend.pid
 
 # 백엔드 health check
 echo -e "${YELLOW}⏳ 백엔드 준비 대기...${NC}"

@@ -15,6 +15,15 @@ if [[ -z "$node_bin" ]]; then
 fi
 
 if [[ -z "$node_bin" ]]; then
+  for candidate in "$HOME"/.nvm/versions/node/*/bin/node /opt/homebrew/bin/node /usr/local/bin/node /usr/bin/node; do
+    if [[ -x "$candidate" ]]; then
+      node_bin="$candidate"
+      break
+    fi
+  done
+fi
+
+if [[ -z "$node_bin" ]]; then
   echo "Unable to find node. Set NODE_BIN to the Node executable used by oh-my-codex." >&2
   exit 127
 fi
