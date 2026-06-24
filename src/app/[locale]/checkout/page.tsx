@@ -69,6 +69,7 @@ export default function CheckoutPage({
   const { refetch } = useCart();
 
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [step, setStep] = useState<PaymentStep>('idle');
   const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
   const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(
@@ -129,6 +130,7 @@ export default function CheckoutPage({
 
   useEffect(() => {
     if (isLoading) return;
+    setSessionChecked(false);
     if (!isAuthenticated) {
       router.replace(`/${locale}/login`);
       return;
@@ -145,6 +147,7 @@ export default function CheckoutPage({
         return;
       }
       setCheckoutItems(parsed);
+      setSessionChecked(true);
     } catch {
       router.replace(`/${locale}/cart`);
     }
@@ -239,10 +242,13 @@ export default function CheckoutPage({
     setCurrentOrderId,
     setCurrentOrderNumber,
     setConfirmedGrandTotal,
+    setErrors,
     refetch,
   });
 
-  if (checkoutItems.length === 0) {
+  // Keep the server render and the first client render identical for checkout.
+  // The actual order form depends on sessionStorage restored after OAuth redirects.
+  if (!sessionChecked || checkoutItems.length === 0) {
     return null;
   }
 

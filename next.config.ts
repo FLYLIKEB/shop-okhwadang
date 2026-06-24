@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
           "base-uri 'self'",
           "img-src 'self' data: https://images.unsplash.com https://*.amazonaws.com https://*.cloudfront.net https://cdn.ockhwadang.com https://ockhwadang.com https://i.pinimg.com https://m.cbw.co.kr https://gdimg.gmarket.co.kr https://cdn-optimized.imweb.me",
           "font-src 'self' https://fonts.gstatic.com",
-          "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://cloudflareinsights.com https://www.google-analytics.com https://region1.google-analytics.com",
+          "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://cloudflareinsights.com https://www.google-analytics.com https://analytics.google.com https://www.google.com https://region1.google-analytics.com",
         ].join('; ') + ';' },
         { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
       ],

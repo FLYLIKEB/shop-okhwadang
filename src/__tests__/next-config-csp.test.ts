@@ -7,6 +7,8 @@ describe('Next.js CSP headers', () => {
 
     expect(source).toContain('https://www.googletagmanager.com');
     expect(source).toContain('https://www.google-analytics.com');
+    expect(source).toContain('https://analytics.google.com');
+    expect(source).toContain('https://www.google.com');
     expect(source).toContain('https://region1.google-analytics.com');
   });
 });

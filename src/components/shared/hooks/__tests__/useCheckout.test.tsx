@@ -123,6 +123,7 @@ function makeOptions(
     setCurrentOrderId: vi.fn((id) => { state.currentOrderId = id; }),
     setCurrentOrderNumber: vi.fn((n) => { state.currentOrderNumber = n; }),
     setConfirmedGrandTotal: vi.fn(),
+    setErrors: vi.fn(),
     refetch,
     ...overrides,
   };
@@ -164,6 +165,10 @@ describe('useCheckout - 폼 검증', () => {
     });
 
     expect(mockOrdersCreate).not.toHaveBeenCalled();
+    expect(options.setErrors).toHaveBeenCalledWith({
+      recipientPhone: '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)',
+    });
+    expect(toast.error).toHaveBeenCalledWith('배송 정보를 다시 확인해 주세요.');
   });
 
   it('우편번호가 5자리가 아니면 주문 생성을 호출하지 않는다', async () => {
@@ -211,6 +216,38 @@ describe('useCheckout - 폼 검증', () => {
 
     expect(mockOrdersCreate).toHaveBeenCalledWith(
       expect.objectContaining({ zipcode: '12345' }),
+    );
+  });
+
+  it('선택 마케팅 동의 값을 주문 생성 payload에 포함한다', async () => {
+    mockOrdersCreate.mockResolvedValue(mockOrder);
+    mockPaymentsPrepare.mockResolvedValue({
+      paymentId: 1,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      amount: 30000,
+      gateway: 'mock',
+      clientKey: 'mock_client_key',
+    } satisfies PreparePaymentResponse);
+    mockPaymentsConfirm.mockResolvedValue({
+      paymentId: 1,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      status: 'confirmed',
+      method: 'mock',
+      amount: 30000,
+      paidAt: '2026-04-25T00:00:00Z',
+    });
+
+    const { options } = makeOptions({ marketingConsent: true });
+    const { result } = renderHook(() => useCheckout(options));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeFormEvent());
+    });
+
+    expect(mockOrdersCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ marketingConsent: true }),
     );
   });
 
@@ -267,8 +304,10 @@ describe('useCheckout - Mock 결제 흐름', () => {
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
         zipcode: '12345',
+        marketingConsent: false,
       }),
     );
+    expect(options.setErrors).toHaveBeenCalledWith({});
     expect(mockPaymentsPrepare).toHaveBeenCalledWith({ orderId: mockOrder.id, locale: 'ko', gateway: 'naverpay' });
     expect(mockPaymentsConfirm).toHaveBeenCalledWith({
       orderId: mockOrder.id,
