@@ -8,6 +8,8 @@ import type { ColorCardItem, ColorCardListContent } from '@/lib/api';
 import { getHeadingId, InlineHtmlText } from './genericBlockUtils';
 
 function AlternatingCard({ item, reversed }: { item: ColorCardItem; reversed: boolean }) {
+  const displayName = item.name ?? item.nameKo;
+
   return (
     <article
       className={cn(
@@ -19,14 +21,14 @@ function AlternatingCard({ item, reversed }: { item: ColorCardItem; reversed: bo
         className="w-full md:w-2/5 aspect-square rounded-lg shrink-0"
         style={{ backgroundColor: item.color }}
         role="img"
-        aria-label={item.nameKo}
+        aria-label={displayName}
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3 mb-4">
           <span className="inline-block w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} aria-hidden="true" />
           {item.nameEn && <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">{item.nameEn}</span>}
         </div>
-        <h3 className="text-2xl font-bold text-foreground mb-1">{item.nameKo}</h3>
+        <h3 className="text-2xl font-bold text-foreground mb-1">{displayName}</h3>
         {item.region && <p className="text-xs text-muted-foreground mb-4">{item.region}</p>}
         <InlineHtmlText html={item.description} className="text-sm text-foreground leading-relaxed mb-6 [&_b]:font-semibold [&_strong]:font-semibold" />
         {item.characteristics && item.characteristics.length > 0 && (
@@ -40,7 +42,7 @@ function AlternatingCard({ item, reversed }: { item: ColorCardItem; reversed: bo
         )}
         {item.href && (
           <Link href={item.href} className="inline-flex items-center gap-1 text-sm font-medium text-foreground border border-foreground rounded px-4 py-2 hover:bg-foreground hover:text-background transition-colors">
-            {item.hrefLabel || item.nameKo}
+            {item.hrefLabel || displayName}
           </Link>
         )}
       </div>
@@ -49,17 +51,19 @@ function AlternatingCard({ item, reversed }: { item: ColorCardItem; reversed: bo
 }
 
 function GridCard({ item }: { item: ColorCardItem }) {
+  const displayName = item.name ?? item.nameKo;
+
   const body = (
     <>
-      <div className="h-40 transition-transform duration-300 group-hover:scale-105" style={{ backgroundColor: item.color }} role="img" aria-label={item.nameKo} />
+      <div className="h-40 transition-transform duration-300 group-hover:scale-105" style={{ backgroundColor: item.color }} role="img" aria-label={displayName} />
       <div className="p-5">
         <div className="flex items-center gap-2 mb-2">
           <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} aria-hidden="true" />
           {item.nameEn && <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">{item.nameEn}</span>}
         </div>
-        <h3 className="text-lg font-bold text-foreground mb-1">{item.nameKo}</h3>
+        <h3 className="text-lg font-bold text-foreground mb-1">{displayName}</h3>
         <InlineHtmlText html={item.description} className="text-sm text-muted-foreground leading-relaxed [&_b]:font-semibold [&_strong]:font-semibold [&_b]:text-foreground [&_strong]:text-foreground" />
-        {item.href && <span className="inline-block mt-4 text-xs font-medium text-foreground border-b border-foreground pb-0.5 group-hover:border-foreground/60 transition-colors">{item.hrefLabel || item.nameKo}</span>}
+        {item.href && <span className="inline-block mt-4 text-xs font-medium text-foreground border-b border-foreground pb-0.5 group-hover:border-foreground/60 transition-colors">{item.hrefLabel || displayName}</span>}
       </div>
     </>
   );

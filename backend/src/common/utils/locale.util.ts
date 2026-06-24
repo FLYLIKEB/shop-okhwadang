@@ -10,6 +10,10 @@ const LOCALE_SNAKE_SUFFIX_MAP: Record<string, string> = {
 
 const MAX_CONTENT_DEPTH = 16;
 
+const CAMEL_LOCALE_SUFFIX_MAP: Record<string, string> = {
+  en: 'En',
+};
+
 /**
  * 엔티티의 다국어 필드를 locale에 맞게 매핑한다.
  * locale이 'ko'이거나 없으면 원본 그대로 반환.
@@ -56,12 +60,19 @@ export function applyLocaleToContent<T>(
   const snakeSuffix = LOCALE_SNAKE_SUFFIX_MAP[locale];
   if (!snakeSuffix) return content;
 
-  return applyLocaleRecursive(content, snakeSuffix, new WeakSet(), 0) as T;
+  return applyLocaleRecursive(
+    content,
+    snakeSuffix,
+    CAMEL_LOCALE_SUFFIX_MAP[locale] ?? '',
+    new WeakSet(),
+    0,
+  ) as T;
 }
 
 function applyLocaleRecursive(
   value: unknown,
   snakeSuffix: string,
+  camelSuffix: string,
   seen: WeakSet<object>,
   depth: number,
 ): unknown {
@@ -74,7 +85,7 @@ function applyLocaleRecursive(
   seen.add(value as object);
 
   if (Array.isArray(value)) {
-    return value.map((item) => applyLocaleRecursive(item, snakeSuffix, seen, depth + 1));
+    return value.map((item) => applyLocaleRecursive(item, snakeSuffix, camelSuffix, seen, depth + 1));
   }
 
   const source = value as Record<string, unknown>;
@@ -89,6 +100,14 @@ function applyLocaleRecursive(
         overrides[baseKey] = v;
       }
     }
+
+    if (camelSuffix && key.endsWith(camelSuffix)) {
+      const baseKey = key.slice(0, -camelSuffix.length);
+      const normalizedBaseKey = baseKey.charAt(0).toLowerCase() + baseKey.slice(1);
+      if (v !== null && v !== undefined && v !== '') {
+        overrides[normalizedBaseKey] = v;
+      }
+    }
   }
 
   // Pass 2: 기본 필드는 재귀 처리, 오버라이드가 있으면 해당 값으로 대체
@@ -97,7 +116,7 @@ function applyLocaleRecursive(
     if (key in overrides) {
       result[key] = overrides[key];
     } else if (Array.isArray(v) || (v && typeof v === 'object')) {
-      result[key] = applyLocaleRecursive(v, snakeSuffix, seen, depth + 1);
+      result[key] = applyLocaleRecursive(v, snakeSuffix, camelSuffix, seen, depth + 1);
     } else {
       result[key] = v;
     }

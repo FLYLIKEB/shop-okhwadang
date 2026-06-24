@@ -11,7 +11,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  const page = await fetchPage(slug);
+  const page = await fetchPage(slug, locale);
   if (!page) return { title: locale === 'en' ? 'Page not found' : '페이지를 찾을 수 없습니다' };
   return {
     title: `${page.title} | ${locale === 'en' ? 'Okhwadang' : '옥화당'}`,
@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function SlugPage({ params }: PageProps) {
-  const { slug } = await params;
-  const page = await fetchPage(slug);
+  const { locale, slug } = await params;
+  const page = await fetchPage(slug, locale);
 
   if (!page || !page.is_published) {
     notFound();

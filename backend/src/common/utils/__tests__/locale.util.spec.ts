@@ -122,4 +122,17 @@ describe('applyLocaleToContent', () => {
     const result = applyLocaleToContent(content, 'en') as Record<string, unknown>;
     expect(result.config).toBe('English config');
   });
+
+  it('JSON content의 camelCase En 필드도 base 필드로 매핑한다', () => {
+    const content = {
+      items: [
+        { name: '주니', nameEn: 'Zhuni', hrefLabel: '주니 작품 보기', hrefLabel_en: 'View Zhuni pieces' },
+      ],
+    };
+
+    const result = applyLocaleToContent(content, 'en') as typeof content;
+
+    expect(result.items[0].name).toBe('Zhuni');
+    expect(result.items[0].hrefLabel).toBe('View Zhuni pieces');
+  });
 });
