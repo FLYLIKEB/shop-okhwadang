@@ -107,6 +107,7 @@ export interface SectionHeadingBlockContent {
 export interface ColorCardItem {
   id: string;
   color: string;
+  name?: string;
   nameEn?: string;
   nameKo: string;
   region?: string;
