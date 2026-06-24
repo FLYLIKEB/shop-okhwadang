@@ -26,6 +26,7 @@ export interface UseCheckoutOptions {
   currentOrderNumber: string;
   requiredConsent?: boolean;
   marketingConsent?: boolean;
+  setErrors: (errors: FormErrors) => void;
   setStep: (step: PaymentStep) => void;
   setPrepareResult: (result: PreparePaymentResponse | null) => void;
   setCurrentOrderId: (id: number | null) => void;
@@ -151,8 +152,12 @@ export function useCheckout(options: UseCheckoutOptions) {
       errors.address = locale === 'en' ? 'Please enter your address.' : '주소를 입력해주세요.';
     }
     if (Object.keys(errors).length > 0) {
+      options.setErrors(errors);
+      toast.error(toastMessage('checkoutValidationError'));
       return;
     }
+
+    options.setErrors({});
 
     try {
       options.setStep('creating_order');
