@@ -44,9 +44,7 @@ function requireMessageEnv(env: NodeJS.ProcessEnv, key: string): string {
   return value;
 }
 
-export function createNotificationConfig(
-  env: NodeJS.ProcessEnv = process.env,
-): NotificationConfig {
+export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): NotificationConfig {
   const nodeEnv = env.NODE_ENV ?? 'development';
   const provider = (env.NOTIFICATION_PROVIDER ?? 'mock').trim().toLowerCase();
   const messageProvider = (env.MESSAGE_PROVIDER ?? 'mock').trim().toLowerCase();
@@ -61,14 +59,21 @@ export function createNotificationConfig(
     throw new Error(`Unknown NOTIFICATION_PROVIDER: ${provider}`);
   }
 
-  if (nodeEnv === 'production' && (messageProvider === 'mock' || !env.MESSAGE_PROVIDER)) {
-    throw new Error(
-      'Mock message provider는 프로덕션에서 사용할 수 없습니다. MESSAGE_PROVIDER 환경변수를 설정하세요.',
-    );
-  }
-
   if (!isMessageProviderName(messageProvider)) {
     throw new Error(`Unknown MESSAGE_PROVIDER: ${messageProvider}`);
+  }
+
+  const hasMessageTemplate = [
+    env.MESSAGE_TEMPLATE_ORDER_CREATED,
+    env.MESSAGE_TEMPLATE_PAYMENT_CONFIRMED,
+    env.MESSAGE_TEMPLATE_SHIPPING_STARTED,
+    env.MESSAGE_TEMPLATE_SHIPPING_DELIVERED,
+  ].some((value) => Boolean(value?.trim()));
+
+  if (nodeEnv === 'production' && messageProvider === 'mock' && hasMessageTemplate) {
+    throw new Error(
+      'Mock message provider는 프로덕션 템플릿이 설정된 상태에서 사용할 수 없습니다. MESSAGE_PROVIDER=solapi 를 설정하거나 메시지 템플릿 값을 비우세요.',
+    );
   }
 
   if (messageProvider === 'solapi') {
@@ -97,8 +102,10 @@ export function createNotificationConfig(
       provider: messageProvider,
       senderPhone: env.MESSAGE_SENDER_PHONE ?? '',
       kakaoChannelId: env.MESSAGE_KAKAO_CHANNEL_ID ?? '',
-      smsFallbackEnabled: (env.MESSAGE_ENABLE_SMS_FALLBACK ?? 'true').trim().toLowerCase() !== 'false',
-      phoneHashSalt: env.MESSAGE_PHONE_HASH_SALT ?? env.JWT_SECRET ?? 'okhwadang-local-message-salt',
+      smsFallbackEnabled:
+        (env.MESSAGE_ENABLE_SMS_FALLBACK ?? 'true').trim().toLowerCase() !== 'false',
+      phoneHashSalt:
+        env.MESSAGE_PHONE_HASH_SALT ?? env.JWT_SECRET ?? 'okhwadang-local-message-salt',
       templates: {
         ORDER_CREATED: env.MESSAGE_TEMPLATE_ORDER_CREATED ?? '',
         PAYMENT_CONFIRMED: env.MESSAGE_TEMPLATE_PAYMENT_CONFIRMED ?? '',

@@ -15,7 +15,6 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   FRONTEND_URL: 'https://ockhwadang.com',
   NOTIFICATION_PROVIDER: 'resend',
   RESEND_API_KEY: 're_abc123',
-  MESSAGE_PROVIDER: 'solapi',
   PAYMENT_GATEWAY: 'toss',
   STORAGE_PROVIDER: 's3',
   KAKAO_CLIENT_ID: 'kakao-client',
@@ -53,14 +52,19 @@ describe('validateEnv', () => {
   it('누락된 키가 있으면 해당 키 에러 반환', () => {
     const env = makeFullEnv();
     delete env.NOTIFICATION_PROVIDER;
-    delete env.MESSAGE_PROVIDER;
     delete env.RESEND_API_KEY;
 
     const errors = validateEnv(env);
-    expect(errors).toHaveLength(3);
+    expect(errors).toHaveLength(2);
     expect(errors.map((e) => e.key)).toContain('NOTIFICATION_PROVIDER');
-    expect(errors.map((e) => e.key)).toContain('MESSAGE_PROVIDER');
     expect(errors.map((e) => e.key)).toContain('RESEND_API_KEY');
+  });
+
+  it('거래 메시지 provider 미설정은 배포 사전 검증에서 차단하지 않는다', () => {
+    const env = makeFullEnv();
+    delete env.MESSAGE_PROVIDER;
+
+    expect(validateEnv(env).map((e) => e.key)).not.toContain('MESSAGE_PROVIDER');
   });
 
   it('값이 빈 문자열이면 에러 반환', () => {
@@ -78,7 +82,9 @@ describe('validateEnv', () => {
     const env: NodeJS.ProcessEnv = { NODE_ENV: 'production' };
     const errors = validateEnv(env);
     // NODE_ENV는 있으므로 나머지 키들이 모두 에러로 나와야 함
-    const missing = [...REQUIRED_PROD_ENV_KEYS, ...CHECKOUT_PROD_ENV_KEYS].filter((k) => k !== 'NODE_ENV');
+    const missing = [...REQUIRED_PROD_ENV_KEYS, ...CHECKOUT_PROD_ENV_KEYS].filter(
+      (k) => k !== 'NODE_ENV',
+    );
     const errorKeys = errors.map((e) => e.key);
     for (const key of missing) {
       expect(errorKeys).toContain(key);
@@ -91,11 +97,9 @@ describe('assertEnv', () => {
   let stderrSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    exitSpy = jest
-      .spyOn(process, 'exit')
-      .mockImplementation((_code?: number | string | null) => {
-        throw new Error(`process.exit(${_code})`);
-      });
+    exitSpy = jest.spyOn(process, 'exit').mockImplementation((_code?: number | string | null) => {
+      throw new Error(`process.exit(${_code})`);
+    });
     stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
   });
 

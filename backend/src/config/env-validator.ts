@@ -14,7 +14,6 @@ export const REQUIRED_PROD_ENV_KEYS = [
   'JWT_PUBLIC_KEY_PATH',
   'FRONTEND_URL',
   'NOTIFICATION_PROVIDER',
-  'MESSAGE_PROVIDER',
   'RESEND_API_KEY',
   'PAYMENT_GATEWAY',
   'STORAGE_PROVIDER',
@@ -47,9 +46,7 @@ export interface EnvValidationError {
  *
  * @returns 누락/빈 키 목록 (빈 배열이면 정상)
  */
-export function validateEnv(
-  env: NodeJS.ProcessEnv = process.env,
-): EnvValidationError[] {
+export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidationError[] {
   if (env.NODE_ENV !== 'production') {
     return [];
   }
@@ -91,7 +88,9 @@ export function assertEnv(env: NodeJS.ProcessEnv = process.env): void {
   write('    1. EC2에서 backend/.env 확인: cat /app/shop-okhwadang/shop-okhwadang/backend/.env');
   write('    2. 로컬에서 원격 동기화: bash scripts/remote-env-sync.sh push');
   write('    3. 키 목록 검증: bash scripts/remote-env-sync.sh verify');
-  write('    4. PayPal/NaverPay는 체크아웃에 항상 노출되므로 프로덕션에서 client key/secret이 필요합니다.');
+  write(
+    '    4. PayPal/NaverPay는 체크아웃에 항상 노출되므로 프로덕션에서 client key/secret이 필요합니다.',
+  );
   write(line.trimEnd());
   write('');
 
