@@ -22,15 +22,21 @@ export function useBlockData<T>({
   const [loading, setLoading] = useState(!prefetched);
 
   useEffect(() => {
-    if (prefetched && prefetched.length > 0) return;
+    if (prefetched) {
+      setData(prefetched);
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
+    setLoading(true);
 
     async function load() {
       try {
         const result = await fetch();
         if (!cancelled) setData(result);
       } catch {
+        if (!cancelled) setData([]);
         // network errors are non-fatal for CMS blocks
       } finally {
         if (!cancelled) setLoading(false);

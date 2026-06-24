@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { productsApi, type AutocompleteItem } from '@/lib/api';
 
@@ -8,22 +10,34 @@ export function useAutocomplete(query: string) {
   useEffect(() => {
     if (query.length < 2) {
       setSuggestions([]);
+      setIsLoading(false);
       return;
     }
+
+    let cancelled = false;
 
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
         const results = await productsApi.autocomplete(query);
-        setSuggestions(results);
+        if (!cancelled) {
+          setSuggestions(results);
+        }
       } catch {
-        setSuggestions([]);
+        if (!cancelled) {
+          setSuggestions([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [query]);
 
   return { suggestions, isLoading };

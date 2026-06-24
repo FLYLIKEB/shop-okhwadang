@@ -24,10 +24,21 @@ describe('useBlockData', () => {
     expect(result.current.data).toEqual([{ id: 2, title: 'loaded' }]);
   });
 
+  it('uses empty prefetched data without fetching', () => {
+    const fetch = vi.fn();
+    const prefetched: Array<{ id: number }> = [];
+
+    const { result } = renderHook(() => useBlockData({ prefetched, fetch, deps: [] }));
+
+    expect(result.current.data).toEqual([]);
+    expect(result.current.loading).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('does not update state after unmount', async () => {
     let resolve!: (value: Array<{ id: number }>) => void;
     const fetch = vi.fn().mockReturnValue(new Promise((res) => { resolve = res; }));
-    const { unmount } = renderHook(() => useBlockData({ prefetched: [], fetch, deps: [] }));
+    const { unmount } = renderHook(() => useBlockData({ prefetched: null, fetch, deps: [] }));
 
     unmount();
 

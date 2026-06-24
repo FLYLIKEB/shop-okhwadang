@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { wishlistApi } from '@/lib/api';
@@ -29,6 +29,7 @@ export function useWishlistToggle(
   const [isWishlisted, setIsWishlisted] = useState(initialIsWishlisted);
   const [wishlistId, setWishlistId] = useState<number | null>(initialWishlistId);
   const [loading, setLoading] = useState(false);
+  const loadingRef = useRef(false);
 
   const toggle = async (e: React.MouseEvent): Promise<void> => {
     e.preventDefault();
@@ -39,7 +40,8 @@ export function useWishlistToggle(
       return;
     }
 
-    if (loading) return;
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
 
     // Optimistic update
@@ -63,6 +65,7 @@ export function useWishlistToggle(
       setWishlistId(prevWishlistId);
       toast.error(toastMessage('wishlistError'));
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
   };

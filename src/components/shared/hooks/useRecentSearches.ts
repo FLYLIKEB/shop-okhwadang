@@ -1,4 +1,6 @@
-import { useState, useCallback } from 'react';
+'use client';
+
+import { useState, useCallback, useEffect } from 'react';
 
 const STORAGE_KEY = 'recent_searches';
 const MAX_ITEMS = 10;
@@ -15,7 +17,11 @@ function readFromStorage(): string[] {
 
 function writeToStorage(items: string[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    if (items.length === 0) {
+      localStorage.removeItem(STORAGE_KEY);
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
   } catch {
     // ignore storage errors
   }
@@ -23,6 +29,10 @@ function writeToStorage(items: string[]): void {
 
 export function useRecentSearches() {
   const [recentSearches, setRecentSearches] = useState<string[]>(() => readFromStorage());
+
+  useEffect(() => {
+    setRecentSearches(readFromStorage());
+  }, []);
 
   const addSearch = useCallback((query: string) => {
     const trimmed = query.trim();
