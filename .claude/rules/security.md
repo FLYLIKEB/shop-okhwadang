@@ -22,6 +22,9 @@ CORS validation → Rate Limiting → JWT Guard → ValidationPipe → Controlle
 ## Rate Limiting
 - Global: 200 requests/minute (ThrottlerModule, name: `global`)
 - Auth endpoints: 30 requests/minute (name: `auth`)
+- Password reset: 1 request/minute (`forgotPassword`), resend verification: 3 requests/minute (`resendVerification`)
+- `UserAwareThrottlerGuard` uses a verified `accessToken` cookie for `user:{id}` buckets before JwtAuthGuard runs, falling back to `ip:{addr}`
+- `TRUST_PROXY` must match the proxy hop count in production so `req.ip` reflects the real client IP
 - Override per endpoint: `@Throttle({ auth: { limit: 30, ttl: 60000 } })`
 
 ## Input Validation
@@ -31,6 +34,7 @@ CORS validation → Rate Limiting → JWT Guard → ValidationPipe → Controlle
 ## Environment & Keys
 - `.env` in `.gitignore` — never commit
 - `.env.example` committed (key names only, no values)
+- Production startup calls `assertEnv()` before Nest bootstrap; update `backend/src/config/env-validator.ts` and `backend/.env.example` REQUIRED comments together
 - `.pem`, `.key` files must be in `.gitignore`
 - SSH keys in `~/.ssh/` only
 

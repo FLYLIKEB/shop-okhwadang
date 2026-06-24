@@ -10,7 +10,7 @@ Shared architectural concerns for both frontend and backend.
 - **Backend**: NestJS + TypeORM + MySQL 8.0
 - **Auth**: JWT (Access + Refresh Token) + OAuth (Kakao/Google)
 - **Cache**: In-memory (백엔드 프로세스의 CacheService, TTL 기반)
-- **Storage**: S3/R2 compatible (selected by `STORAGE_PROVIDER` env)
+- **Storage**: local or AWS S3/CloudFront (selected by `STORAGE_PROVIDER` env)
 - **Runtime**: Node.js 22
 
 ## Project Structure

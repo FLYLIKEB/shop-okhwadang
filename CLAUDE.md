@@ -55,7 +55,7 @@ bash scripts/setup-git-hooks.sh      # post-checkout hook 활성화 (새 워크�
 ## Issue Tracker
 * Phase 0-7 (Setup → MVP → Core → Payment → Admin → CMS → Polish → Ops)
 * Labels: `phase-N`, `backend`, `frontend`, `infra`, `P0`~`P3`
-* Latest merged PR: #641
+* Recent merged PRs: use `git log --oneline --merges` or GitHub PR history; do not rely on this file for a current PR number
 
 ## Rules Reference
 | Subject | File |

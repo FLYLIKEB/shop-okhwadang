@@ -27,11 +27,11 @@ globs: ["backend/src/database/**", "backend/src/modules/**/*.entity.ts", "backen
 - `BIGINT` for IDs
 - `ENUM` for statuses
 
-## Key Tables (22 total)
+## Key Table Groups
 - **Core**: users, user_authentications, user_addresses, categories, products, product_options, product_images
-- **Orders**: orders, order_items, payments, shipping
-- **Engagement**: reviews, wishlist, coupons, user_coupons, point_history
-- **CMS**: pages, page_blocks, navigation_items
+- **Orders/Payments**: orders, order_items, payments, refunds, shipping, payment_webhook_events
+- **Engagement**: reviews, external_reviews, wishlist, coupons, user_coupons, point_history, restock_alerts
+- **CMS/Content**: pages, page_blocks, navigation_items, collections, promotions, banners, journal_entries, notices, faqs, inquiries, site_settings, announcement_bars
 
 ## State Machines
 - **Order**: pending → paid → preparing → shipped → delivered → completed (or cancelled/refund_requested/refunded)
@@ -66,9 +66,9 @@ app.getHttpAdapter().getInstance().set('json replacer', (_key: string, value: un
 - **민감값 저장소**: `.env.secrets` (gitignored). 문서/코드에는 키 이름만 기재하고 실제 값은 절대 커밋 금지 (`.claude/rules/sensitive-info.md` 참조)
 - **접근 통제 방식**: Lightsail DB는 `publiclyAccessible=true`지만 **MySQL 사용자 host 제한**으로 접근 통제
   - `dbadmin@%` — 관리 전용, 일반 앱 사용 금지
-  - `okhwadang_app@172.31.8.153` — EC2 사설IP에서만 접속 허용, `commerce.*` 권한만
+  - `okhwadang_app@{{EC2_PRIVATE_IP}}` — EC2 사설IP에서만 접속 허용, `commerce.*` 권한만
 - **EC2 재생성 시 사설IP가 바뀌면** `dbadmin`으로 붙어 `okhwadang_app@<new-private-ip>` 재등록 필요
-- **VPC peering** 활성: EC2 VPC(`vpc-02836c09f4af7ddbb`) ↔ Lightsail VPC. EC2에서 endpoint로 접속하면 private IP(`172.26.x.x`)로 라우팅됨 — 접속 로그의 소스 IP는 사설IP 기준
+- **VPC peering** 활성: EC2 VPC(`{{EC2_VPC_ID}}`) ↔ Lightsail VPC. EC2에서 endpoint로 접속하면 private IP(`172.26.x.x`)로 라우팅됨 — 접속 로그의 소스 IP는 사설IP 기준
 - **마이그레이션**: EC2 내부에서 직접 실행하거나, 로컬에서는 EC2 bastion 경유 SSH 터널(`3307`) 사용
 - **관련 문서**: `docs/infrastructure/REMOTE_DB_ACCESS.md`, `docs/infrastructure/DEPLOYMENT.md`, `docs/infrastructure/ENVIRONMENT_VARIABLES.md`
 

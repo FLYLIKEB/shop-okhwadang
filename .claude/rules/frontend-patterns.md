@@ -38,34 +38,52 @@ All CMS block components (`*Block.tsx`) must use these shared hooks — do not i
 
 - **`useBlockData<T>({ prefetched, fetch, deps })`** (`components/shared/hooks/useBlockData.ts`) — SSR prefetch-first data fetching for blocks. Uses `prefetched` data when available; falls back to client-side `fetch()` on mount. Returns `{ data: T[], loading: boolean }`. Network errors are silently swallowed (non-fatal for CMS blocks).
 - **`useScrollAnimation<El>()`** (`components/shared/hooks/useScrollAnimation.ts`) — IntersectionObserver-based scroll visibility. Returns `{ ref, visible }`. Apply `opacity`/`translateY` transitions gated on `visible` for staggered reveal.
+- **`useCarouselProgress({ scrollRef })`** (`components/shared/hooks/useCarouselProgress.ts`) — shared horizontal carousel progress (0–1). Call `updateProgress()` after async data loads.
+- **`CarouselProgressBar`** (`components/shared/common/CarouselProgressBar.tsx`) — shared visual progress indicator for carousel blocks. Use instead of reimplementing progress UI.
+
+When passing optional array props into hook deps, use a module-level empty constant (e.g. `EMPTY_CATEGORY_IDS`) instead of `content.ids ?? []` inline; a new empty array each render can trigger fetch loops.
 
 When an enum needs i18n display, define a `CATEGORY_KEY_MAP: Record<EnumType, string>` constant mapping enum values to translation keys, then call `t(CATEGORY_KEY_MAP[value])` — never inline string literals or switch statements for this mapping.
 
+## CMS Navigation Links
+
+For CMS-driven navigation links that point to data-heavy routes (header nav, footer nav, category cards), set Next `Link` `prefetch={false}` to avoid production prefetch bursts and backend 429s. Keep this explicit when adding new header/footer/category navigation surfaces.
+
+## Bundle-Sensitive Imports
+
+- `npm run audit:bundle-imports` (`scripts/audit-bundle-imports.sh`) checks static `react-markdown` / `@stripe/stripe-js` imports and lucide wildcard imports.
+- Use dynamic imports for `react-markdown` and `@stripe/stripe-js` where possible.
+- Import individual lucide icons only; never use `import * as Icons from 'lucide-react'`.
+
 ## Admin Patterns
 
-- `useAdminGuard()` (`hooks/useAdminGuard.ts`) — admin role check + redirect to `/`. Returns `{ user, isLoading, isAdmin }`. Always use `isAdmin` to gate data loading; never inline `user.role === 'admin'` checks.
-- `useFormModal<T>(defaults, initial, open)` (`hooks/useFormModal.ts`) — shared form modal state. Returns `{ formData, setFormData, loading, handleSubmit }`. Use a `toFormData()` mapper when the initial entity type differs from the create DTO. Always wrap `initialFormData` in `useMemo(() => initial ? toFormData(initial) : null, [initial])` — never compute inline.
-- `AdminTable` + `AdminTableRowActions` (`components/admin/AdminTable.tsx`) — standard table wrapper with column headers, empty state, edit/delete buttons.
-- `StatusBadge` (`components/admin/StatusBadge.tsx`) — renders `활성` / `비활성` from `isActive: boolean`.
-- `EntitySelector` (`components/admin/page-editor/EntitySelector.tsx`) — searchable picker for categories or products with reorder (up/down) and remove. Props: `type: 'category' | 'product'`, `selectedIds`, `onChange`, `categoryId?`. Replaces raw comma-separated ID input fields in block property panels.
+- `useAdminGuard()` (`components/shared/hooks/useAdminGuard.ts`) — admin role check + redirect to `/`. Returns `{ user, isLoading, isAdmin }`. Always use `isAdmin` to gate data loading; never inline `user.role === 'admin'` checks.
+- `useFormModal<T>(defaults, initial, open)` (`components/shared/hooks/useFormModal.ts`) — shared form modal state. Returns `{ formData, setFormData, loading, handleSubmit }`. Use a `toFormData()` mapper when the initial entity type differs from the create DTO. Always wrap `initialFormData` in `useMemo(() => initial ? toFormData(initial) : null, [initial])` — never compute inline.
+- `AdminTable` + `AdminTableRowActions` (`components/shared/admin/AdminTable.tsx`) — standard table wrapper with column headers, empty state, edit/delete buttons.
+- `StatusBadge` (`components/shared/admin/StatusBadge.tsx`) — renders `활성` / `비활성` from `isActive: boolean`.
+- `EntitySelector` (`components/shared/admin/page-editor/EntitySelector.tsx`) — searchable picker for categories or products with reorder (up/down) and remove. Props: `type: 'category' | 'product'`, `selectedIds`, `onChange`, `categoryId?`. Replaces raw comma-separated ID input fields in block property panels.
+- `useAdminDndSensors()` (`components/shared/hooks/useDndSensors.ts`) — shared @dnd-kit sensors (PointerSensor distance:8 + KeyboardSensor). Use for admin drag-and-drop tables; do not inline `useSensors` setup.
 
 ## Key Files
 
 ```
 app/                            # Pages & layouts (App Router)
 components/                     # Reusable UI + shadcn/ui wrappers
-lib/api.ts                      # API client
+lib/api/index.ts                # API client barrel export (`@/lib/api`)
 contexts/                       # AuthContext, CartContext
 hooks/useWishlistToggle.ts      # Wishlist toggle with optimistic update
-hooks/useAdminGuard.ts          # Admin role guard (redirect + isAdmin flag)
-hooks/useFormModal.ts           # Form modal state/submit boilerplate
-hooks/useAsyncAction.ts         # Async loading/error state management hook
-hooks/useScrollLogoTransition.ts # Hero scroll → header logo crossfade
+components/shared/hooks/useAdminGuard.ts # Admin role guard (redirect + isAdmin flag)
+components/shared/hooks/useFormModal.ts  # Form modal state/submit boilerplate
+components/shared/hooks/useAsyncAction.ts # Async loading/error state management hook
+components/shared/hooks/useScrollLogoTransition.ts # Hero scroll → header logo crossfade
 components/shared/hooks/useBlockData.ts  # CMS block SSR-prefetch + client fallback data fetching
 components/shared/hooks/useScrollAnimation.ts # IntersectionObserver scroll reveal for CMS blocks
+components/shared/hooks/useCarouselProgress.ts # Shared carousel scroll progress hook
+components/shared/hooks/useDndSensors.ts # Shared admin drag-and-drop sensors
+components/shared/common/CarouselProgressBar.tsx # Shared carousel progress indicator
 contexts/ScrollLogoContext.tsx  # Context for scroll logo state — wrap hero sections with ScrollLogoProvider
-components/admin/AdminTable.tsx # Common admin table shell
-components/admin/StatusBadge.tsx # Active/inactive status badge
+components/shared/admin/AdminTable.tsx # Common admin table shell
+components/shared/admin/StatusBadge.tsx # Active/inactive status badge
 utils/currency.ts               # Price formatting utility (formatCurrency) — single source of truth
 utils/error.ts                  # Error extraction utility (handleApiError)
 ```
