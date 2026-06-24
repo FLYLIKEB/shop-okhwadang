@@ -38,7 +38,7 @@ describe('/[locale]/p/[slug] CMS page', () => {
     const metadata = await generateMetadata({ params: Promise.resolve({ locale: 'en', slug: 'best' }) });
 
     expect(mockFetchPage).toHaveBeenCalledWith('best', 'en');
-    expect(metadata.title).toBe('Best Sellers | Okhwadang');
+    expect(metadata.title).toBe('Best Sellers | Ockhwadang');
   });
 
   it('requests the CMS page with the route locale before rendering blocks', async () => {
