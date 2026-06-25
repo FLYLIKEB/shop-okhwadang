@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
-import { productsApi } from '@/lib/api';
+import { adminProductsApi } from '@/lib/api';
 import type { ProductDetail } from '@/lib/api';
 import ProductFormPage from '@/components/shared/admin/ProductFormPage';
 
@@ -19,7 +19,7 @@ export default function AdminProductEditPage() {
         setNotFound(true);
         return;
       }
-      const p = await productsApi.getById(id);
+      const p = await adminProductsApi.getById(id);
       setProduct(p);
     },
     { onError: () => setNotFound(true), errorMessage: '상품을 불러오지 못했습니다.' },

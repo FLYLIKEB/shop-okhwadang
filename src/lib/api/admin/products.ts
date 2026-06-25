@@ -67,6 +67,10 @@ export const adminProductsApi = {
     apiClient.get<ProductListResponse>('/admin/products', {
       params: params as Record<string, string | number | undefined>,
     }),
+  getById: (id: number, locale?: string) =>
+    apiClient.get<ProductDetail>(`/admin/products/${id}`, {
+      params: locale ? { locale } : undefined,
+    }),
   create: (data: CreateProductData) =>
     apiClient.post<ProductDetail>('/products', data),
   update: (id: number, data: UpdateProductData) =>
