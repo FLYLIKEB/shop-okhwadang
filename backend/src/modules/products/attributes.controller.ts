@@ -15,10 +15,11 @@ import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
   ApiTags,
   ApiOperation,
-  ApiBearerAuth,
+  ApiCookieAuth,
   ApiQuery,
 } from '@nestjs/swagger';
 import { Public } from '../../common/decorators';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { AttributesService } from './attributes.service';
 import { CreateAttributeTypeDto, UpdateAttributeTypeDto } from './dto/attribute-type.dto';
 import { CreateProductAttributeDto, UpdateProductAttributeDto, SetProductAttributesDto } from './dto/product-attribute.dto';
@@ -78,14 +79,16 @@ export class AttributesController {
   }
 
   @Post('types')
-  @ApiBearerAuth()
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
   @ApiOperation({ summary: '속성 유형 생성 (관리자)' })
   async createType(@Body() dto: CreateAttributeTypeDto): Promise<AttributeType> {
     return this.attributesService.createAttributeType(dto);
   }
 
   @Patch('types/:id')
-  @ApiBearerAuth()
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
   @ApiOperation({ summary: '속성 유형 수정 (관리자)' })
   async updateType(
     @Param('id', ParseIntPipe) id: number,
@@ -95,7 +98,8 @@ export class AttributesController {
   }
 
   @Delete('types/:id')
-  @ApiBearerAuth()
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '속성 유형 삭제 (관리자)' })
   async deleteType(@Param('id', ParseIntPipe) id: number): Promise<void> {
@@ -112,14 +116,16 @@ export class AttributesController {
   }
 
   @Post('products')
-  @ApiBearerAuth()
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
   @ApiOperation({ summary: '상품 속성 생성 (관리자)' })
   async create(@Body() dto: CreateProductAttributeDto): Promise<ProductAttribute> {
     return this.attributesService.createProductAttribute(dto);
   }
 
   @Patch('products/:id')
-  @ApiBearerAuth()
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
   @ApiOperation({ summary: '상품 속성 수정 (관리자)' })
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -129,7 +135,8 @@ export class AttributesController {
   }
 
   @Delete('products/:id')
-  @ApiBearerAuth()
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '상품 속성 삭제 (관리자)' })
   async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
@@ -137,7 +144,8 @@ export class AttributesController {
   }
 
   @Post('products/:productId/set')
-  @ApiBearerAuth()
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '상품 속성 일괄 설정 (관리자)' })
   async setProductAttributes(
