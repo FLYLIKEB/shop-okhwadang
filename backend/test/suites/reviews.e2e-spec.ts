@@ -239,7 +239,7 @@ export function registerReviewsSuite(getApp: () => INestApplication) {
           [userId],
         ) as Array<{ amount: number; description: string }>;
         expect(revokeRow).toBeDefined();
-        expect(revokeRow.amount).toBe(100);
+        expect(revokeRow.amount).toBe(-100);
         expect(revokeRow.description).toContain(`review_id:${reviewId}`);
       });
 

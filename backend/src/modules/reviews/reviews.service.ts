@@ -407,7 +407,7 @@ export class ReviewsService {
           const revokeEntry = manager.create(PointHistory, {
             userId: Number(review.userId),
             type: 'spend' as const,
-            amount: earnEntry.amount,
+            amount: -earnEntry.amount,
             balance: newBalance,
             description: `리뷰 포인트 환수 (review_id:${id})`,
             orderId: null,
