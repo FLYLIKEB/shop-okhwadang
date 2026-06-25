@@ -22,6 +22,19 @@ vi.mock('next/link', () => ({
 const mockRouterPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockRouterPush }),
+  usePathname: () => '/en/products',
+}));
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({
+    children,
+    href,
+    locale = 'ko',
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; locale?: string }) => (
+    <a href={`/${locale}${href}`} onClick={(e) => e.preventDefault()} {...props}>{children}</a>
+  ),
+  useRouter: () => ({ push: mockRouterPush }),
 }));
 
 const mockAddItem = vi.fn();
@@ -54,6 +67,7 @@ const translations: Record<string, string> = {
 };
 
 vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
   useTranslations: () => (key: string, values?: Record<string, string | number>) => {
     const template = translations[key] ?? key;
     if (!values) return template;
@@ -85,6 +99,7 @@ describe('ProductCard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.pushState({}, '', '/en/products');
     mockRouterPush.mockReset();
     mockUseAuth.mockReturnValue({
       isAuthenticated: false,
@@ -120,7 +135,13 @@ describe('ProductCard', () => {
   it('links to the product detail page', () => {
     render(<ProductCard {...baseProps} />);
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/products/1');
+    expect(link).toHaveAttribute('href', '/ko/products/1');
+  });
+
+  it('links to the English product detail page when rendered with locale en', () => {
+    render(<ProductCard {...baseProps} locale="en" />);
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/en/products/1');
   });
 
   it('shows wishlist button', () => {
@@ -142,12 +163,13 @@ describe('ProductCard', () => {
     render(<ProductCard {...baseProps} />);
     fireEvent.click(screen.getByRole('button', { name: '찜하기' }));
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalledWith('/login');
+      expect(mockRouterPush).toHaveBeenCalledWith('/login?redirect=%2Fen%2Fproducts', { locale: 'en' });
     });
     expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('calls wishlistApi.add and shows toast on wishlist click when authenticated', async () => {
+    window.history.pushState({}, '', '/ko/products');
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,

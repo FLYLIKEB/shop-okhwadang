@@ -1,11 +1,17 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
 import { wishlistApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { toastMessage } from '@/utils/toastMessages';
+import type { Locale } from '@/i18n/routing';
+
+function getLocaleFromPathname(pathname: string | null): Locale {
+  const firstSegment = pathname?.split('/').filter(Boolean)[0];
+  return firstSegment === 'en' ? 'en' : 'ko';
+}
 
 interface UseWishlistToggleOptions {
   initialIsWishlisted?: boolean;
@@ -25,6 +31,8 @@ export function useWishlistToggle(
   const { initialIsWishlisted = false, initialWishlistId = null } = options;
 
   const router = useRouter();
+  const pathname = typeof window === 'undefined' ? null : window.location.pathname;
+  const locale = getLocaleFromPathname(pathname);
   const { isAuthenticated } = useAuth();
   const [isWishlisted, setIsWishlisted] = useState(initialIsWishlisted);
   const [wishlistId, setWishlistId] = useState<number | null>(initialWishlistId);
@@ -36,7 +44,8 @@ export function useWishlistToggle(
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      router.push('/login');
+      const loginHref = pathname ? `/login?redirect=${encodeURIComponent(pathname)}` : '/login';
+      router.push(loginHref, { locale });
       return;
     }
 

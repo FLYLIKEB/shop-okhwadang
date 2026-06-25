@@ -8,6 +8,33 @@ vi.mock('next/image', () => ({
   default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => React.createElement('img', props),
 }));
 
+vi.mock('@/i18n/navigation', () => {
+  const localizeHref = (href: unknown, locale?: string) => {
+    const value = typeof href === 'string' ? href : String(href);
+    return locale && value.startsWith('/') ? `/${locale}${value}` : value;
+  };
+
+  return {
+    Link: ({
+      children,
+      href,
+      locale,
+      ...props
+    }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: unknown; locale?: string }) =>
+      React.createElement('a', { href: localizeHref(href, locale), ...props }, children),
+    redirect: vi.fn(),
+    usePathname: () => '/',
+    useRouter: () => ({
+      back: vi.fn(),
+      forward: vi.fn(),
+      prefetch: vi.fn(),
+      push: vi.fn(),
+      refresh: vi.fn(),
+      replace: vi.fn(),
+    }),
+  };
+});
+
 // jsdom does not implement window.matchMedia — provide a stub so tests can spy on it
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

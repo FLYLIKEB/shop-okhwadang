@@ -14,6 +14,17 @@ vi.mock('next-intl', () => ({
     }[key] ?? key),
 }));
 
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({
+    children,
+    href,
+    locale = 'ko',
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; locale?: string }) => (
+    <a href={`/${locale}${href}`} {...props}>{children}</a>
+  ),
+}));
+
 vi.mock('@/components/shared/hooks/useWishlistToggle', () => ({
   useWishlistToggle: () => ({ isWishlisted: false, loading: false, toggle: vi.fn() }),
 }));
@@ -87,5 +98,13 @@ describe('ProductCard summary display', () => {
 
     expect(screen.getByText('Fujian Zhuni · Xishi · 120ml · Gongfu Tea')).toBeInTheDocument();
     expect(screen.queryByText(/Xishi Shape/)).not.toBeInTheDocument();
+  });
+});
+
+describe('ProductCard locale-aware navigation', () => {
+  it('renders English product detail links under /en', () => {
+    renderCard({ locale: 'en' });
+
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/en/products/1');
   });
 });

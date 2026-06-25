@@ -13,6 +13,7 @@ const {
   wishlistRemoveMock,
   wishlistCheckMock,
   mockUseAuth,
+  mockPathname,
 } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   toastSuccessMock: vi.fn(),
@@ -22,11 +23,23 @@ const {
   wishlistRemoveMock: vi.fn(),
   wishlistCheckMock: vi.fn(),
   mockUseAuth: vi.fn(() => ({ isAuthenticated: true, isLoading: false, user: { id: 1, email: 'test@example.com', name: '테스터', role: 'user' } })),
+  mockPathname: vi.fn(() => '/ko/products/1'),
 }));
 
 vi.mock('next/navigation', () => ({
+  usePathname: () => mockPathname(),
+}));
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({
+    children,
+    href,
+    locale = 'ko',
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; locale?: string }) => (
+    <a href={`/${locale}${href}`} {...props}>{children}</a>
+  ),
   useRouter: () => ({ push: pushMock }),
-  usePathname: () => '/ko/products/1',
 }));
 
 vi.mock('next/link', () => ({
@@ -203,6 +216,8 @@ describe('ProductDetailClient', () => {
     wishlistAddMock.mockResolvedValue({ id: 999 });
     wishlistRemoveMock.mockReset();
     pushMock.mockReset();
+    mockPathname.mockReset();
+    mockPathname.mockReturnValue('/ko/products/1');
     toastSuccessMock.mockReset();
     toastErrorMock.mockReset();
     mockUseAuth.mockReturnValue({
@@ -245,12 +260,20 @@ describe('ProductDetailClient', () => {
     expect(toastErrorMock).not.toHaveBeenCalled();
   });
 
-  it('바로 구매 → addItem + router.push("/checkout")', async () => {
+  it('바로 구매 → addItem + locale-aware router.push("/checkout")', async () => {
     render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
     await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[0]);
     await waitFor(() => {
       expect(addCartItemMock).toHaveBeenCalled();
-      expect(pushMock).toHaveBeenCalledWith('/checkout');
+      expect(pushMock).toHaveBeenCalledWith('/checkout', { locale: 'ko' });
+    });
+  });
+
+  it('English 바로 구매 keeps checkout navigation under /en', async () => {
+    render(<ProductDetailClient product={productWithoutOptions} locale="en" />);
+    await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[0]);
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith('/checkout', { locale: 'en' });
     });
   });
 
@@ -289,7 +312,7 @@ describe('ProductDetailClient', () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: false,
       isLoading: false,
-      user: null,
+      user: { id: 1, email: 'test@example.com', name: '테스터', role: 'user' },
     });
 
     render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
@@ -299,6 +322,23 @@ describe('ProductDetailClient', () => {
     await userEvent.click(screen.getAllByLabelText('찜하기')[0]);
 
     expect(pushMock).toHaveBeenCalledWith('/login?redirect=%2Fko%2Fproducts%2F1');
+    expect(wishlistAddMock).not.toHaveBeenCalled();
+    expect(wishlistRemoveMock).not.toHaveBeenCalled();
+  });
+
+  it('English 비로그인 찜 클릭 → locale-aware login redirect로 이동', async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+      isLoading: false,
+      user: { id: 1, email: 'test@example.com', name: '테스터', role: 'user' },
+    });
+    mockPathname.mockReturnValue('/en/products/1');
+
+    render(<ProductDetailClient product={productWithoutOptions} locale="en" />);
+
+    await userEvent.click(screen.getAllByLabelText('찜하기')[0]);
+
+    expect(pushMock).toHaveBeenCalledWith('/login?redirect=%2Fen%2Fproducts%2F1');
     expect(wishlistAddMock).not.toHaveBeenCalled();
     expect(wishlistRemoveMock).not.toHaveBeenCalled();
   });

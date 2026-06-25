@@ -13,7 +13,15 @@ vi.mock('@/lib/api', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
+  usePathname: () => '/en/products/1',
+}));
+
+vi.mock('@/i18n/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
 }));
 
 const mockIsAuthenticated = vi.fn(() => true);
@@ -32,6 +40,7 @@ vi.mock('sonner', () => ({
 describe('useWishlistToggle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.pushState({}, '', '/en/products/1');
     mockIsAuthenticated.mockReturnValue(true);
   });
 
@@ -51,7 +60,7 @@ describe('useWishlistToggle', () => {
     expect(result.current.isWishlisted).toBe(true);
   });
 
-  it('미인증 상태에서 toggle 호출 시 로그인 페이지로 이동한다', async () => {
+  it('미인증 상태에서 toggle 호출 시 locale-aware 로그인 페이지로 이동한다', async () => {
     mockIsAuthenticated.mockReturnValue(false);
 
     const { result } = renderHook(() => useWishlistToggle(1));
@@ -62,7 +71,7 @@ describe('useWishlistToggle', () => {
       await result.current.toggle(fakeEvent);
     });
 
-    expect(mockPush).toHaveBeenCalledWith('/login');
+    expect(mockPush).toHaveBeenCalledWith('/login?redirect=%2Fen%2Fproducts%2F1', { locale: 'en' });
     expect(mockAdd).not.toHaveBeenCalled();
   });
 

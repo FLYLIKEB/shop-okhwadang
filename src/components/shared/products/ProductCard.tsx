@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -93,6 +93,7 @@ function ProductCard({
   return (
     <Link
       href={`/products/${id}`}
+      locale={locale}
       className={cn(
         'group flex flex-col h-full',
         isSoldout && 'opacity-60',
