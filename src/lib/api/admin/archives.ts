@@ -74,7 +74,7 @@ export const adminArchivesApi = {
   deleteNiloType: (id: number) =>
     apiClient.delete<void>(`/admin/archives/nilo-types/${id}`),
   reorderNiloTypes: (orders: Array<{ id: number; sortOrder: number }>) =>
-    apiClient.patch<void>('/admin/archives/nilo-types/reorder', orders),
+    apiClient.patch<void>('/admin/archives/nilo-types/reorder', { orders }),
 
   getProcessSteps: () => apiClient.get<ProcessStep[]>('/admin/archives/process-steps'),
   createProcessStep: (data: CreateProcessStepData) =>
@@ -92,5 +92,5 @@ export const adminArchivesApi = {
   deleteArtist: (id: number) =>
     apiClient.delete<void>(`/admin/archives/artists/${id}`),
   reorderArtists: (orders: Array<{ id: number; sortOrder: number }>) =>
-    apiClient.patch<void>('/admin/archives/artists/reorder', orders),
+    apiClient.patch<void>('/admin/archives/artists/reorder', { orders }),
 };
