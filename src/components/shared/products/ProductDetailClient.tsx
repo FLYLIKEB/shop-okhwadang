@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { Link, useRouter } from '@/i18n/navigation'
 import { toast } from 'sonner'
 import { Heart } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -147,7 +147,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
   const { execute: buyNow } = useAsyncAction(
     async () => {
       await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
-      router.push('/checkout')
+      router.push('/checkout', { locale })
     },
     { errorMessage: t('buyNowError') },
   )
@@ -202,7 +202,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
           {/* Breadcrumb */}
           {product.category && (
             <nav className="typo-label text-muted-foreground tracking-widest uppercase">
-              <Link href={`/products?categoryId=${product.category.id}`} className="hover:text-foreground transition-colors">
+              <Link href={`/products?categoryId=${product.category.id}`} locale={locale} className="hover:text-foreground transition-colors">
                 {product.category.name}
               </Link>
               <span className="mx-2 text-danni">·</span>
@@ -219,6 +219,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
                     <Link
                       key={attr.id}
                       href={`/products?attrs=clay_type:${encodeURIComponent(attr.value)}`}
+                      locale={locale}
                       className={cn(
                         'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                         'tag-clay border-transparent',
@@ -234,6 +235,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
                     <Link
                       key={attr.id}
                       href={`/products?attrs=teapot_shape:${encodeURIComponent(attr.value)}`}
+                      locale={locale}
                       className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-foreground/30"
                     >
                       {t('shape')}: {findCollectionLabel(shapeCollections, 'teapot_shape', attr.value)}

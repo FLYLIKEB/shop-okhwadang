@@ -26,7 +26,6 @@ const getMessage = (path: string): string => {
 }
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: pushMock }),
   usePathname: () => '/en/products/1',
 }))
 
@@ -34,6 +33,18 @@ vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
     <a href={href} {...props}>{children}</a>
   ),
+}))
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({
+    children,
+    href,
+    locale = 'en',
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; locale?: string }) => (
+    <a href={`/${locale}${href}`} {...props}>{children}</a>
+  ),
+  useRouter: () => ({ push: pushMock }),
 }))
 
 vi.mock('next-intl', () => ({
@@ -128,8 +139,14 @@ const product: ProductDetail = {
   description: '<p>Detail</p>',
   stock: 12,
   sku: 'TP-001',
+  noticeInfo: null,
   options: [{ id: 11, name: 'Size', value: 'Large', priceAdjustment: 0, stock: 12, sortOrder: 0 }],
   detailImages: [],
+}
+
+const productWithoutOptions: ProductDetail = {
+  ...product,
+  options: [],
 }
 
 describe('ProductDetailClient', () => {
@@ -157,5 +174,13 @@ describe('ProductDetailClient', () => {
     expect(container.innerHTML).not.toContain('text-[#')
     expect(container.innerHTML).not.toContain('border-[#')
     expect(container.innerHTML).not.toContain('max-w-8xl')
+  })
+
+  it('keeps English buy-now checkout navigation locale-aware', async () => {
+    render(<ProductDetailClient product={productWithoutOptions} locale="en" />)
+
+    await userEvent.click(screen.getAllByRole('button', { name: 'Buy Now' })[0])
+
+    expect(pushMock).toHaveBeenCalledWith('/checkout', { locale: 'en' })
   })
 })

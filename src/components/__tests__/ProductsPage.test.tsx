@@ -3,11 +3,16 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockPush = vi.fn();
+const mockLocaleAwarePush = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
   useSearchParams: () => new URLSearchParams(),
   usePathname: () => '/products',
+}));
+
+vi.mock('@/i18n/navigation', () => ({
+  useRouter: () => ({ push: mockLocaleAwarePush }),
 }));
 
 const translations: Record<string, string> = {
@@ -100,6 +105,7 @@ describe('SortDropdown', () => {
 describe('Pagination', () => {
   beforeEach(() => {
     mockPush.mockClear();
+    mockLocaleAwarePush.mockClear();
   });
 
   it('renders page buttons and navigates on click', async () => {
@@ -109,7 +115,17 @@ describe('Pagination', () => {
     const nextButton = screen.getByText('다음');
     await userEvent.click(nextButton);
 
-    expect(mockPush).toHaveBeenCalledWith('/products?page=2');
+    expect(mockLocaleAwarePush).toHaveBeenCalledWith('/products?page=2');
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('uses locale-aware router for English pagination links', async () => {
+    const { default: Pagination } = await import('@/components/shared/products/Pagination');
+    render(<Pagination total={100} page={1} limit={20} />);
+
+    await userEvent.click(screen.getByText('다음'));
+
+    expect(mockLocaleAwarePush).toHaveBeenCalledWith('/products?page=2');
   });
 
   it('disables prev button on first page', async () => {

@@ -7,6 +7,10 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+vi.mock('@/i18n/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
 const mockUseAuth = vi.fn();
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
@@ -34,13 +38,14 @@ import WishlistButton from '@/components/shared/WishlistButton';
 describe('WishlistButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.pushState({}, '', '/en/products/1');
     mockUseAuth.mockReturnValue({ isAuthenticated: false, isLoading: false, user: null, logout: vi.fn() });
   });
 
-  it('비로그인 클릭 → router.push("/login")', () => {
+  it('비로그인 클릭 → locale-aware router.push("/login")', () => {
     render(<WishlistButton productId={1} />);
     fireEvent.click(screen.getByRole('button'));
-    expect(mockPush).toHaveBeenCalledWith('/login');
+    expect(mockPush).toHaveBeenCalledWith('/login?redirect=%2Fen%2Fproducts%2F1', { locale: 'en' });
   });
 
   it('로그인 상태 추가 → API 호출 후 wishlistId 업데이트', async () => {

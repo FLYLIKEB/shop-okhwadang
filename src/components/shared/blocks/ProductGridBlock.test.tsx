@@ -24,7 +24,20 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({
+    children,
+    href,
+    locale = 'ko',
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; locale?: string }) => (
+    <a href={`/${locale}${href}`} {...props}>{children}</a>
+  ),
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock('next-intl', () => ({
+  useLocale: () => 'ko',
   useTranslations: () => (key: string) => {
     const map: Record<string, string> = { viewAll: '전체 보기' };
     return map[key] ?? key;
