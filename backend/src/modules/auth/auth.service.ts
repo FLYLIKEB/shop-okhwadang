@@ -58,7 +58,7 @@ export interface TokenPair {
   refreshToken: string;
 }
 
-export interface AuthResponse extends TokenPair {
+export interface AuthUserResponse {
   user: {
     id: number;
     email: string;
@@ -66,6 +66,8 @@ export interface AuthResponse extends TokenPair {
     role: string;
   };
 }
+
+export interface AuthResponse extends TokenPair, AuthUserResponse {}
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -100,7 +102,7 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  async register(dto: RegisterDto): Promise<AuthResponse> {
+  async register(dto: RegisterDto): Promise<AuthUserResponse> {
     if (!PASSWORD_REGEX.test(dto.password)) {
       throw new BadRequestException('비밀번호는 문자, 숫자, 특수문자를 포함해야 합니다.');
     }
@@ -125,11 +127,8 @@ export class AuthService implements OnModuleInit {
 
     await this.createVerificationTokenAndSendEmail(user);
 
-    const tokens = await this.tokenIssuerService.issueAndPersistRefresh(user);
-
     this.logger.log(`User registered: ${dto.email}`);
     return {
-      ...tokens,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     };
   }
