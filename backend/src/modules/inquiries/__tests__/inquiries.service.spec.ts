@@ -13,6 +13,7 @@ const mockRepo = () => ({
   save: jest.fn(),
   create: jest.fn(),
   find: jest.fn(),
+  count: jest.fn(),
 });
 
 describe('InquiriesService', () => {
@@ -212,6 +213,37 @@ describe('InquiriesService', () => {
       await service.findAllForAdmin({});
 
       expect(mockQb.andWhere).not.toHaveBeenCalled();
+    });
+
+    it('status 필터와 pagination metadata/counts를 함께 반환한다', async () => {
+      const mockQb = buildMockQb();
+      const items = [{ id: 51, status: InquiryStatus.PENDING }] as Inquiry[];
+      mockQb.getManyAndCount.mockResolvedValue([items, 52]);
+      repo.count
+        .mockResolvedValueOnce(52)
+        .mockResolvedValueOnce(8);
+
+      const result = await service.findAllForAdmin({
+        status: InquiryStatus.PENDING,
+        page: 2,
+        limit: 10,
+      });
+
+      expect(mockQb.andWhere).toHaveBeenCalledWith('inquiry.status = :status', { status: InquiryStatus.PENDING });
+      expect(mockQb.skip).toHaveBeenCalledWith(10);
+      expect(mockQb.take).toHaveBeenCalledWith(10);
+      expect(result).toEqual({
+        items,
+        total: 52,
+        page: 2,
+        limit: 10,
+        counts: {
+          pending: 52,
+          answered: 8,
+        },
+      });
+      expect(repo.count).toHaveBeenNthCalledWith(1, { where: { status: InquiryStatus.PENDING } });
+      expect(repo.count).toHaveBeenNthCalledWith(2, { where: { status: InquiryStatus.ANSWERED } });
     });
   });
 });

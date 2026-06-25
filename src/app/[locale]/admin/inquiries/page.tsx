@@ -13,6 +13,7 @@ import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { InquiryStatusBadge } from '@/components/shared/admin/StatusBadge';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
+import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 import { toastMessage } from '@/utils/toastMessages';
 
 type InquiryStatusFilter = 'all' | 'pending' | 'answered';
@@ -23,14 +24,18 @@ const STATUS_FILTERS = [
   { label: '답변완료', value: 'answered' },
 ] as const;
 
+const PAGE_SIZE = 20;
+
 export default function AdminInquiriesPage() {
   const { isAdmin } = useAdminGuard();
 
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const [openId, setOpenId] = useState<number | null>(null);
   const [answerText, setAnswerText] = useState('');
   const [answering, setAnswering] = useState(false);
-  const { filters, setFilter } = useAdminListPage({
+  const { page, setPage, filters, setFilter } = useAdminListPage({
     initialFilters: {
       status: 'all' as InquiryStatusFilter,
     },
@@ -38,19 +43,21 @@ export default function AdminInquiriesPage() {
 
   const { execute: loadInquiries, isLoading } = useAsyncAction(
     async () => {
-      const data = await adminInquiriesApi.getAll();
-      setInquiries(data);
+      const response = await adminInquiriesApi.getAll({
+        page,
+        limit: PAGE_SIZE,
+        status: filters.status === 'all' ? undefined : filters.status,
+      });
+      setInquiries(response.items);
+      setTotal(response.total);
+      setPendingCount(response.counts.pending);
     },
     { errorMessage: '문의 목록을 불러오지 못했습니다.' },
   );
 
   useEffect(() => {
     if (isAdmin) void loadInquiries();
-  }, [isAdmin, loadInquiries]);
-
-  const filtered = filters.status === 'all'
-    ? inquiries
-    : inquiries.filter((inquiry) => inquiry.status === filters.status);
+  }, [isAdmin, loadInquiries, page, filters.status]);
 
   const handleAnswer = async (id: number) => {
     if (!answerText.trim()) {
@@ -60,8 +67,8 @@ export default function AdminInquiriesPage() {
 
     setAnswering(true);
     try {
-      const updated = await adminInquiriesApi.answer(id, answerText.trim());
-      setInquiries((prev) => prev.map((inquiry) => (inquiry.id === id ? updated : inquiry)));
+      await adminInquiriesApi.answer(id, answerText.trim());
+      await loadInquiries();
       setAnswerText('');
       setOpenId(null);
       toast.success(toastMessage('answerCreated'));
@@ -72,18 +79,7 @@ export default function AdminInquiriesPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <h1 className="typo-h1">문의 관리</h1>
-        {Array.from({ length: 5 }).map((_, index) => (
-          <SkeletonBox key={index} className="h-14 rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-
-  const pendingCount = inquiries.filter((inquiry) => inquiry.status === 'pending').length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="space-y-4">
@@ -105,9 +101,22 @@ export default function AdminInquiriesPage() {
         size="sm"
       />
 
-      {filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">문의가 없습니다.</p>
+      {isLoading && inquiries.length === 0 ? (
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <SkeletonBox key={index} className="h-14 rounded-lg" />
+          ))}
+        </div>
       ) : (
+        <PaginatedAdminTableShell
+          loading={isLoading}
+          loadingMessage="문의 목록을 불러오는 중..."
+          isEmpty={inquiries.length === 0}
+          emptyMessage="문의가 없습니다."
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        >
         <AdminTable
           columns={[
             { label: '상태', width: 'w-20' },
@@ -116,10 +125,10 @@ export default function AdminInquiriesPage() {
             { label: '제목' },
             { label: '접수일', width: 'w-28' },
           ]}
-          isEmpty={filtered.length === 0}
+          isEmpty={inquiries.length === 0}
           emptyMessage="문의가 없습니다."
         >
-          {filtered.map((inquiry) => (
+          {inquiries.map((inquiry) => (
             <React.Fragment key={inquiry.id}>
               <tr
                 className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
@@ -174,6 +183,7 @@ export default function AdminInquiriesPage() {
             </React.Fragment>
           ))}
         </AdminTable>
+        </PaginatedAdminTableShell>
       )}
     </div>
   );
