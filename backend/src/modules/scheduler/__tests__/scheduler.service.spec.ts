@@ -98,7 +98,23 @@ describe('SchedulerService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+
+    mockDataSource.query.mockReset();
+    mockDataSource.createQueryRunner.mockReset();
     mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunner);
+    mockQueryRunner.connect.mockReset();
+    mockQueryRunner.startTransaction.mockReset();
+    mockQueryRunner.commitTransaction.mockReset();
+    mockQueryRunner.rollbackTransaction.mockReset();
+    mockQueryRunner.release.mockReset();
+    mockQueryRunner.manager.createQueryBuilder.mockReset();
+    mockQueryRunner.manager.create.mockReset();
+    mockQueryRunner.manager.save.mockReset();
+    mockQueryRunner.manager.update.mockReset();
+    mockQueryRunner.manager.findOne.mockReset();
+    mockQueryRunner.manager.increment.mockReset();
+    mockQueryRunner.manager.getRepository.mockReset();
+    mockSchedulerLockService.runWithLock.mockReset();
     mockSchedulerLockService.runWithLock.mockImplementation(
       async (
         _policy: { lockName: string; ttlMinutes: number },
@@ -267,7 +283,6 @@ describe('SchedulerService', () => {
           { id: 1, user_id: 1, amount: 1000, expires_at: new Date(Date.now() - 24 * 60 * 60 * 1000) },
         ]);
 
-      mockQueryRunner.manager.findOne.mockResolvedValue({ balance: 5000 });
       mockQueryRunner.manager.save.mockResolvedValue({});
       mockQueryRunner.manager.findOne
         .mockResolvedValueOnce({ balance: 5000 })   // latest balance
@@ -276,6 +291,59 @@ describe('SchedulerService', () => {
       await service.handlePointExpiry();
 
       expect(mockDataSource.query).toHaveBeenCalled();
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(PointHistory, expect.objectContaining({
+        userId: 1,
+        type: 'expire',
+        amount: -1000,
+        balance: 4000,
+        relatedEntityType: null,
+        relatedEntityId: 1,
+      }));
+    });
+
+    it('should not expire the same earn row again on a later day', async () => {
+      const earnRow = {
+        id: 99,
+        user_id: 1,
+        amount: 1000,
+        expires_at: new Date('2026-01-01T00:00:00.000Z'),
+      };
+      const expireMarkers: Array<{ type?: string; relatedEntityType?: string | null; relatedEntityId?: number | null }> = [];
+
+      mockDataSource.query.mockImplementation(async (query: string) => {
+        expect(query).toContain('ex.related_entity_id = ph.id');
+        expect(query).not.toContain('DATE(ex.created_at)');
+
+        return expireMarkers.some((marker) => (
+          marker.type === 'expire'
+          && marker.relatedEntityType === null
+          && marker.relatedEntityId === earnRow.id
+        ))
+          ? []
+          : [earnRow];
+      });
+      mockQueryRunner.manager.findOne
+        .mockResolvedValueOnce({ balance: 1000 })
+        .mockResolvedValueOnce(null);
+      mockQueryRunner.manager.save.mockImplementation(async (_entity, entry) => {
+        expireMarkers.push(entry);
+        return entry;
+      });
+
+      jest.setSystemTime(new Date('2026-01-02T02:00:00.000Z'));
+      await service.handlePointExpiry();
+
+      jest.setSystemTime(new Date('2026-01-03T02:00:00.000Z'));
+      await service.handlePointExpiry();
+
+      expect(mockDataSource.query).toHaveBeenCalledTimes(2);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(PointHistory, expect.objectContaining({
+        type: 'expire',
+        amount: -1000,
+        relatedEntityType: null,
+        relatedEntityId: earnRow.id,
+      }));
     });
 
     it('should do nothing when no expired points found', async () => {

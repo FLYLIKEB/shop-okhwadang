@@ -18,7 +18,10 @@ export class PointSchedulerJob {
   async handlePointExpiry(): Promise<void> {
     const now = new Date();
 
-    // Only process earn entries that have expired and have NOT yet had an expire record created.
+    // Only process earn entries that have expired and have NOT yet had an expire record
+    // created for that source earn row. `related_entity_id` stores the source earn id
+    // for scheduler-created expiration markers; `related_entity_type` stays null because
+    // the existing enum is for business entities, not point_history self-references.
     const expiredPoints = await this.deps.dataSource.query<
       Array<{ id: number; user_id: number; amount: number; expires_at: string }>
     >(
@@ -31,10 +34,10 @@ export class PointSchedulerJob {
            SELECT 1 FROM point_history ex
            WHERE ex.user_id = ph.user_id
              AND ex.type = 'expire'
-             AND ex.description = '포인트 만료'
-             AND DATE(ex.created_at) = DATE(?)
+             AND ex.related_entity_type IS NULL
+             AND ex.related_entity_id = ph.id
          )`,
-      [now, now],
+      [now],
     );
 
     if (expiredPoints.length === 0) {
@@ -44,14 +47,15 @@ export class PointSchedulerJob {
 
     this.deps.logger.log(`[cron:point-expiry] Processing ${expiredPoints.length} expired point records`);
 
-    const userExpiredMap = new Map<number, number>();
+    const userExpiredMap = new Map<number, Array<{ id: number; amount: number }>>();
     for (const ph of expiredPoints) {
-      const uid = Number(ph.user_id);
-      const current = userExpiredMap.get(uid) || 0;
-      userExpiredMap.set(uid, current + Number(ph.amount));
+      const userId = Number(ph.user_id);
+      const entries = userExpiredMap.get(userId) ?? [];
+      entries.push({ id: Number(ph.id), amount: Number(ph.amount) });
+      userExpiredMap.set(userId, entries);
     }
 
-    for (const [userId, totalExpired] of userExpiredMap) {
+    for (const [userId, entries] of userExpiredMap) {
       const queryRunner = this.deps.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
@@ -62,27 +66,35 @@ export class PointSchedulerJob {
           order: { createdAt: 'DESC', id: 'DESC' },
         });
 
-        const currentBalance = latestBalance?.balance ?? 0;
-        const expireAmount = Math.min(totalExpired, currentBalance);
+        let currentBalance = latestBalance?.balance ?? 0;
+        let totalExpired = 0;
 
-        if (expireAmount > 0 && currentBalance > 0) {
+        for (const entry of entries) {
+          const expireAmount = Math.max(0, Math.min(entry.amount, currentBalance));
+          currentBalance -= expireAmount;
+          totalExpired += expireAmount;
+
           await queryRunner.manager.save(PointHistory, {
             userId,
             type: 'expire',
             amount: -expireAmount,
-            balance: currentBalance - expireAmount,
+            balance: currentBalance,
             description: '포인트 만료',
             expiresAt: null,
+            relatedEntityType: null,
+            relatedEntityId: entry.id,
           });
+        }
 
+        if (totalExpired > 0) {
           const user = await queryRunner.manager.findOne(User, { where: { id: userId } });
           if (user?.email) {
             void Promise.resolve(
               this.deps.notificationService.sendEmail({
                 to: user.email,
                 subject: '[옥화당] 포인트 만료 안내',
-                text: `안녕하세요. 고객님의 포인트 ${expireAmount.toLocaleString()}원이 만료되었습니다.`,
-                html: `<p>안녕하세요.</p><p>고객님의 포인트 <strong>${expireAmount.toLocaleString()}원</strong>이 만료되었습니다.</p>`,
+                text: `안녕하세요. 고객님의 포인트 ${totalExpired.toLocaleString()}원이 만료되었습니다.`,
+                html: `<p>안녕하세요.</p><p>고객님의 포인트 <strong>${totalExpired.toLocaleString()}원</strong>이 만료되었습니다.</p>`,
               }),
             )
               .catch((err) => this.deps.logger.warn(`Failed to send point expiry email: ${String(err)}`));
@@ -90,7 +102,7 @@ export class PointSchedulerJob {
         }
 
         await queryRunner.commitTransaction();
-        this.deps.logger.log(`[cron:point-expiry] Expired ${expireAmount} points for user ${userId}`);
+        this.deps.logger.log(`[cron:point-expiry] Expired ${totalExpired} points for user ${userId}`);
       } catch (err) {
         await queryRunner.rollbackTransaction();
         this.deps.logger.error(`[cron:point-expiry] Failed to expire points for user ${userId}: ${String(err)}`);
