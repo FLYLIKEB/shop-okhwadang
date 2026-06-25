@@ -76,13 +76,11 @@ export class AuthController {
 
   @Post('register')
   @Public()
-  @ApiOperation({ summary: '회원가입', description: '이메일/비밀번호로 새로운 계정을 생성합니다. 성공 시 accessToken과 refreshToken이 쿠키에 저장됩니다.' })
+  @ApiOperation({ summary: '회원가입', description: '이메일/비밀번호로 새로운 계정을 생성하고 인증 이메일을 발송합니다. 이메일 인증 전에는 토큰 또는 인증 쿠키를 발급하지 않습니다.' })
   @ApiResponse({ status: 201, description: '회원가입 성공' })
   @ApiResponse({ status: 400, description: '입력값 오류 또는 이미 존재하는 이메일' })
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, refreshToken, user } = await this.authService.register(dto);
-    setAuthCookies(res, accessToken, refreshToken, this.authConfig.cookie.secure);
-    return { user, accessToken, refreshToken };
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
   @Post('login')

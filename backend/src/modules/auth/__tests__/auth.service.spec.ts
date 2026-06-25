@@ -177,19 +177,27 @@ describe('AuthService', () => {
       );
     });
 
-    it('가입 성공 시 accessToken, refreshToken, user 반환', async () => {
+    it('가입 성공 시 토큰 없이 user만 반환하고 refreshToken을 저장하지 않음', async () => {
       mockUserRepository.findOne.mockResolvedValue(null);
       const newUser = makeUser({ id: 2, email: 'new@example.com', name: '신규' });
       mockUserRepository.create.mockReturnValue(newUser);
       mockUserRepository.save.mockResolvedValue(newUser);
-      mockUserRepository.update.mockResolvedValue(undefined);
+      mockVerificationTokenRepository.create.mockImplementation((value) => value);
+      mockVerificationTokenRepository.save.mockResolvedValue(undefined);
+      mockNotificationService.sendEmailVerification.mockResolvedValue(undefined);
 
       const result = await service.register({ email: 'new@example.com', password: 'Test1234!', name: '신규' });
 
-      expect(result).toHaveProperty('accessToken');
-      expect(result).toHaveProperty('refreshToken');
-      expect(result).toHaveProperty('user');
-      expect(result.user.email).toBe('new@example.com');
+      expect(result).toEqual({
+        user: expect.objectContaining({ email: 'new@example.com' }),
+      });
+      expect(result).not.toHaveProperty('accessToken');
+      expect(result).not.toHaveProperty('refreshToken');
+      expect(mockTokenIssuerService.issueAndPersistRefresh).not.toHaveBeenCalled();
+      expect(mockUserRepository.update).not.toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.objectContaining({ refreshToken: expect.any(String) }),
+      );
     });
   });
 

@@ -67,8 +67,13 @@ export async function registerAndGetCookies(
     [body.user.id],
   );
 
+  const cookies = await loginAndGetCookies(app, {
+    email: payload.email,
+    password: payload.password,
+  });
+
   return {
-    cookies: extractAuthCookies(res),
+    cookies,
     body,
   };
 }

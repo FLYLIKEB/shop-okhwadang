@@ -65,6 +65,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('비활성화된 계정입니다.');
     }
 
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedException('이메일 인증이 필요합니다.');
+    }
+
     return { id: payload.sub, email: user.email, role: user.role, jti: payload.jti };
   }
 }

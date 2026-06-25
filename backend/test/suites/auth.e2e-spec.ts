@@ -30,6 +30,7 @@ interface RefreshBody {
 
 const ACCESS_COOKIE_REGEX = /^accessToken=/;
 const REFRESH_COOKIE_REGEX = /^refreshToken=/;
+const AUTH_COOKIE_REGEX = /^(accessToken|refreshToken)=/;
 const CLEARED_ACCESS_COOKIE_REGEX = /^accessToken=;/;
 const CLEARED_REFRESH_COOKIE_REGEX = /^refreshToken=;/;
 
@@ -73,18 +74,18 @@ export function registerAuthSuite(getApp: () => INestApplication): void {
     });
 
     describe('POST /api/auth/register', () => {
-      it('유효한 정보로 가입 → 201, 인증 쿠키 설정', async () => {
+      it('유효한 정보로 가입 → 201, 인증 쿠키/토큰 미발급 및 /me 접근 거부', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/auth/register')
           .send({ email, password, name })
           .expect(201);
 
-        expect(res.headers['set-cookie']).toEqual(
-          expect.arrayContaining([
-            expect.stringMatching(ACCESS_COOKIE_REGEX),
-            expect.stringMatching(REFRESH_COOKIE_REGEX),
-          ]),
-        );
+        const setCookie = (res.headers['set-cookie'] ?? []) as unknown as string[];
+        expect(setCookie.some((cookie) => AUTH_COOKIE_REGEX.test(cookie))).toBe(false);
+        expect(res.body).not.toHaveProperty('accessToken');
+        expect(res.body).not.toHaveProperty('refreshToken');
+
+        await request(app.getHttpServer()).get('/api/auth/me').expect(401);
 
         const body = res.body as AuthBody;
         expect(body.user.id).toBeDefined();
@@ -93,7 +94,6 @@ export function registerAuthSuite(getApp: () => INestApplication): void {
           'UPDATE users SET is_email_verified = 1, email_verified_at = NOW() WHERE id = ?',
           [userId],
         );
-        cookies = extractAuthCookies(res);
       });
 
       it('중복 이메일 → 409', () => {

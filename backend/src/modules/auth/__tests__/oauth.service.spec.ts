@@ -164,6 +164,12 @@ describe('OAuthService', () => {
       expect(result.isNewUser).toBe(true);
       expect(result.accessToken).toBe('mock-access-token');
       expect(result.user.email).toBe('new@kakao.com');
+      expect(mockUserRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isEmailVerified: true,
+          emailVerifiedAt: expect.any(Date),
+        }),
+      );
     });
 
     it('카카오 기존 사용자 시 isNewUser: false', async () => {
@@ -271,7 +277,13 @@ describe('OAuthService', () => {
       // No existing google auth record
       mockUserAuthRepository.findOne.mockResolvedValue(null);
       // But user exists with same email (e.g. registered via kakao before)
-      const existingUser = makeUser({ id: 5, email: 'same@email.com', name: '동일유저' });
+      const existingUser = makeUser({
+        id: 5,
+        email: 'same@email.com',
+        name: '동일유저',
+        isEmailVerified: false,
+        emailVerifiedAt: null,
+      });
       mockUserRepository.findOne.mockResolvedValue(existingUser);
       mockUserAuthRepository.create.mockReturnValue(makeUserAuth({
         user: existingUser,
@@ -286,6 +298,13 @@ describe('OAuthService', () => {
       // Not a new user — linked to existing account
       expect(result.isNewUser).toBe(false);
       expect(result.user.email).toBe('same@email.com');
+      expect(mockUserRepository.update).toHaveBeenCalledWith(
+        5,
+        expect.objectContaining({
+          isEmailVerified: true,
+          emailVerifiedAt: expect.any(Date),
+        }),
+      );
       expect(mockUserRepository.create).not.toHaveBeenCalled();
     });
   });

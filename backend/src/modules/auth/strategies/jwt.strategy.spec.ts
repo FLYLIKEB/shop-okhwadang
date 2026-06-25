@@ -22,6 +22,7 @@ describe('JwtStrategy', () => {
     email: 'test@test.com',
     role: UserRole.USER,
     isActive: true,
+    isEmailVerified: true,
   } as User;
 
   beforeEach(() => {
@@ -85,6 +86,20 @@ describe('JwtStrategy', () => {
       mockUserRepository.findOne.mockResolvedValue({ id: 1, isActive: false } as User);
       const payload = { sub: 1, email: 'test@test.com', role: 'user' };
       await expect(strategy.validate(payload)).rejects.toThrow('비활성화된 계정입니다.');
+    });
+
+    it('should throw UnauthorizedException when user email is not verified', async () => {
+      mockUserRepository.findOne.mockResolvedValue({
+        id: 1,
+        email: 'test@test.com',
+        role: UserRole.USER,
+        isActive: true,
+        isEmailVerified: false,
+      } as User);
+      const payload = { sub: 1, email: 'test@test.com', role: 'user' };
+
+      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(strategy.validate(payload)).rejects.toThrow('이메일 인증이 필요합니다.');
     });
 
     it('should throw UnauthorizedException when token is blacklisted', async () => {

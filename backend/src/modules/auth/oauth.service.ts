@@ -169,6 +169,7 @@ export class OAuthService {
     });
 
     if (existingAuth) {
+      await this.markEmailVerifiedForOAuth(existingAuth.user);
       return { user: existingAuth.user, isNewUser: false };
     }
 
@@ -189,10 +190,14 @@ export class OAuthService {
         name,
         role: UserRole.USER,
         isActive: true,
+        isEmailVerified: true,
+        emailVerifiedAt: new Date(),
       });
       user = await this.userRepository.save(user);
       isNewUser = true;
     }
+
+    await this.markEmailVerifiedForOAuth(user);
 
     // 4. Create auth record (do not persist provider access token)
     const auth = this.userAuthRepository.create({
@@ -205,6 +210,20 @@ export class OAuthService {
     await this.userAuthRepository.save(auth);
 
     return { user, isNewUser };
+  }
+
+  private async markEmailVerifiedForOAuth(user: User): Promise<void> {
+    if (user.isEmailVerified) {
+      return;
+    }
+
+    const emailVerifiedAt = new Date();
+    await this.userRepository.update(user.id, {
+      isEmailVerified: true,
+      emailVerifiedAt,
+    });
+    user.isEmailVerified = true;
+    user.emailVerifiedAt = emailVerifiedAt;
   }
 
   private async exchangeKakaoToken(code: string): Promise<string> {
