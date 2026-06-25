@@ -38,6 +38,7 @@ import { AnnouncementBarsModule } from './modules/announcement-bars/announcement
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
+import { AuthConfigModule } from './config/auth-config.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.gu
       autoLoadEntities: true,
       migrations: ['dist/database/migrations/*.js'],
     }),
+    AuthConfigModule,
     ThrottlerModule.forRoot([
       {
         name: 'global',

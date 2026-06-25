@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import * as jwt from 'jsonwebtoken';
+import { AUTH_CONFIG, AuthConfig } from '../../config/auth.config';
 
 /**
  * NAT/사옥/공유 프록시 환경에서 한 사용자의 burst 가 다른 사용자에게
@@ -13,6 +14,9 @@ import * as jwt from 'jsonwebtoken';
  */
 @Injectable()
 export class UserAwareThrottlerGuard extends ThrottlerGuard {
+  @Inject(AUTH_CONFIG)
+  private readonly authConfig!: AuthConfig;
+
   protected async getTracker(req: Record<string, unknown>): Promise<string> {
     const userFromReq = req?.user as { id?: number | string } | undefined;
     if (this.hasId(userFromReq?.id)) {
@@ -46,10 +50,10 @@ export class UserAwareThrottlerGuard extends ThrottlerGuard {
 
   private decodeSub(token: string): number | string | undefined {
     try {
-      const secret = process.env.JWT_SECRET?.trim();
-      if (!secret) return undefined;
+      const publicKey = this.authConfig.jwt.publicKey.trim();
+      if (!publicKey) return undefined;
 
-      const payload = jwt.verify(token, secret);
+      const payload = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
       if (!payload || typeof payload !== 'object') return undefined;
       // refresh 토큰은 tracker 버킷을 access 와 섞지 않도록 거부
       if ((payload as { tokenType?: string }).tokenType === 'refresh') return undefined;
