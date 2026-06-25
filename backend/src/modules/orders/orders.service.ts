@@ -6,7 +6,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
-import { Product } from '../products/entities/product.entity';
+import { Product, ProductStatus } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -190,6 +190,10 @@ export class OrdersService {
 
       if (!product) {
         throw new NotFoundException(`상품을 찾을 수 없습니다. (id: ${item.productId})`);
+      }
+
+      if (product.status !== ProductStatus.ACTIVE) {
+        throw new BadRequestException('판매 중인 상품만 주문할 수 있습니다.');
       }
 
       let optionName: string | null = null;

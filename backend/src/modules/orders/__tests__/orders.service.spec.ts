@@ -11,6 +11,7 @@ import { NotificationDispatchHelper } from '../../notification/notification-disp
 import { CouponsService } from '../../coupons/coupons.service';
 import { ShippingFeeCalculatorService } from '../../shipping/services/shipping-fee-calculator.service';
 import { OrderEventEmitter } from '../order-event.emitter';
+import { ProductStatus } from '../../products/entities/product.entity';
 
 // Manager used inside dataSource.transaction — same shape as the previous queryRunner.manager mock
 const mockManager = {
@@ -94,7 +95,14 @@ describe('OrdersService', () => {
         address: '서울시 강남구',
       };
 
-      const mockProduct = { id: 1, name: '테스트상품', price: 10000, salePrice: null, stock: 5 };
+      const mockProduct = {
+        id: 1,
+        name: '테스트상품',
+        price: 10000,
+        salePrice: null,
+        stock: 5,
+        status: ProductStatus.ACTIVE,
+      };
       const mockSavedOrder = {
         id: 1,
         orderNumber: 'ORD-20240101-ABCD1',
@@ -164,7 +172,14 @@ describe('OrdersService', () => {
         address: '서울시',
       };
 
-      const mockProduct = { id: 1, name: '재고없는상품', price: 10000, salePrice: null, stock: 5 };
+      const mockProduct = {
+        id: 1,
+        name: '재고없는상품',
+        price: 10000,
+        salePrice: null,
+        stock: 5,
+        status: ProductStatus.ACTIVE,
+      };
       const mockQb = {
         setLock: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
@@ -196,6 +211,42 @@ describe('OrdersService', () => {
       expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     });
 
+    it.each([
+      ProductStatus.DRAFT,
+      ProductStatus.HIDDEN,
+      ProductStatus.SOLDOUT,
+    ])(
+      'non-active product status %s → BadRequestException before stock reservation',
+      async (status) => {
+        const dto: CreateOrderDto = {
+          items: [{ productId: 1, quantity: 1 }],
+          recipientName: '홍길동',
+          recipientPhone: '010-1234-5678',
+          zipcode: '12345',
+          address: '서울시',
+        };
+
+        const mockProduct = {
+          id: 1,
+          name: `${status}상품`,
+          price: 10000,
+          salePrice: null,
+          stock: 5,
+          status,
+        };
+        const mockQb = {
+          setLock: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          getOne: jest.fn().mockResolvedValue(mockProduct),
+        };
+        mockManager.createQueryBuilder.mockReturnValue(mockQb);
+
+        await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
+        expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+        expect(mockManager.update).not.toHaveBeenCalled();
+      },
+    );
+
     it('insufficient points inside transaction → BadRequestException (transaction rolls back)', async () => {
       const dto: CreateOrderDto = {
         items: [{ productId: 1, quantity: 1 }],
@@ -215,7 +266,13 @@ describe('OrdersService', () => {
       mockManager.createQueryBuilder.mockReturnValue({
         setLock: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue({ id: 1, price: 10000, salePrice: null, stock: 5 }),
+        getOne: jest.fn().mockResolvedValue({
+          id: 1,
+          price: 10000,
+          salePrice: null,
+          stock: 5,
+          status: ProductStatus.ACTIVE,
+        }),
       });
 
       await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
@@ -232,7 +289,14 @@ describe('OrdersService', () => {
         pointsUsed: 0,
       };
 
-      const mockProduct = { id: 1, name: '상품', price: 10000, salePrice: 9000, stock: 5 };
+      const mockProduct = {
+        id: 1,
+        name: '상품',
+        price: 10000,
+        salePrice: 9000,
+        stock: 5,
+        status: ProductStatus.ACTIVE,
+      };
       const mockSavedOrder = {
         id: 42,
         orderNumber: 'ORD-20240101-XYZ12',
@@ -297,6 +361,7 @@ describe('OrdersService', () => {
         price: 10000,
         salePrice: null,
         stock: 5,
+        status: ProductStatus.ACTIVE,
         isFreeShipping: true,
       };
       const mockSavedOrder = {
@@ -373,7 +438,14 @@ describe('OrdersService', () => {
         userCouponId: 10,
       };
 
-      const mockProduct = { id: 1, name: '상품', price: 10000, salePrice: 9000, stock: 5 };
+      const mockProduct = {
+        id: 1,
+        name: '상품',
+        price: 10000,
+        salePrice: 9000,
+        stock: 5,
+        status: ProductStatus.ACTIVE,
+      };
       const mockSavedOrder = {
         id: 42,
         orderNumber: 'ORD-20240101-XYZ12',
@@ -450,7 +522,14 @@ describe('OrdersService', () => {
         userCouponId: 10,
       };
 
-      const mockProduct = { id: 1, name: '상품', price: 10000, salePrice: null, stock: 5 };
+      const mockProduct = {
+        id: 1,
+        name: '상품',
+        price: 10000,
+        salePrice: null,
+        stock: 5,
+        status: ProductStatus.ACTIVE,
+      };
       const mockQb = {
         setLock: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
@@ -475,7 +554,14 @@ describe('OrdersService', () => {
         address: '서울시',
       };
 
-      const mockProduct = { id: 1, name: '옵션상품', price: 10000, salePrice: null, stock: 100 };
+      const mockProduct = {
+        id: 1,
+        name: '옵션상품',
+        price: 10000,
+        salePrice: null,
+        stock: 100,
+        status: ProductStatus.ACTIVE,
+      };
       const mockOption = {
         id: 7,
         productId: 1,
@@ -549,7 +635,14 @@ describe('OrdersService', () => {
         zipcode: '12345',
         address: '서울시',
       };
-      const mockProduct = { id: 99, name: '단일상품', price: 5000, salePrice: null, stock: 10 };
+      const mockProduct = {
+        id: 99,
+        name: '단일상품',
+        price: 5000,
+        salePrice: null,
+        stock: 10,
+        status: ProductStatus.ACTIVE,
+      };
       const mockSavedOrder = {
         id: 60, orderNumber: 'ORD-Y', userId: 1, status: OrderStatus.PENDING, items: [],
       } as unknown as Order;
@@ -596,7 +689,14 @@ describe('OrdersService', () => {
         zipcode: '12345',
         address: '서울시',
       };
-      const mockProduct = { id: 1, name: 'X', price: 1000, salePrice: null, stock: 10 };
+      const mockProduct = {
+        id: 1,
+        name: 'X',
+        price: 1000,
+        salePrice: null,
+        stock: 10,
+        status: ProductStatus.ACTIVE,
+      };
       const mockOption = { id: 7, productId: 1, name: 'a', value: 'b', priceAdjustment: 0, stock: 10 };
       const mockSavedOrder = { id: 1, orderNumber: 'ORD', userId: 1, status: OrderStatus.PENDING, items: [] } as unknown as Order;
       const productQb = {
