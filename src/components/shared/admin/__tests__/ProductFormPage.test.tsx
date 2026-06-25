@@ -87,6 +87,7 @@ describe('ProductFormPage', () => {
         sku: null,
         options: [],
         detailImages: [],
+        noticeInfo: null,
       });
 
       render(<ProductFormPage mode="create" />);
@@ -136,6 +137,7 @@ describe('ProductFormPage', () => {
         sku: null,
         options: [],
         detailImages: [],
+        noticeInfo: null,
       });
 
       render(<ProductFormPage mode="create" />);
@@ -231,6 +233,7 @@ describe('ProductFormPage', () => {
         sku: null,
         options: [],
         detailImages: [],
+        noticeInfo: null,
       });
 
       render(<ProductFormPage mode="create" />);
