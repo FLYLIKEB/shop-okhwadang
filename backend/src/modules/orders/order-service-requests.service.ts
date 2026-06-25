@@ -17,9 +17,14 @@ import { NotificationService } from '../notification/notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { restoreOrderStock } from './order-stock.util';
 import { PointHistory } from '../coupons/entities/point-history.entity';
+import { ModuleRef } from '@nestjs/core';
 
 const CANCELLABLE_STATUSES = new Set<OrderStatus>([OrderStatus.PENDING, OrderStatus.PAID]);
 const AFTER_DELIVERY_REQUEST_STATUSES = new Set<OrderStatus>([OrderStatus.DELIVERED, OrderStatus.COMPLETED]);
+
+interface PaymentCancellationService {
+  cancelPaidOrder(orderId: number, reason: string): Promise<unknown>;
+}
 const ACTIVE_REQUEST_STATUSES = [OrderServiceRequestStatus.REQUESTED, OrderServiceRequestStatus.APPROVED];
 
 @Injectable()
@@ -34,6 +39,7 @@ export class OrderServiceRequestsService {
     private readonly dataSource: DataSource,
     private readonly notificationService: NotificationService,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   async create(orderId: number, userId: number, dto: CreateOrderServiceRequestDto): Promise<OrderServiceRequest> {
@@ -111,10 +117,22 @@ export class OrderServiceRequestsService {
       ['order', 'user'],
     );
 
+    const adminNote = dto.adminNote?.trim() || null;
+
+    // 유료 주문의 취소 신청 완료는 외부 PG 취소를 포함하므로, 신청 상태 업데이트
+    // 트랜잭션을 연 채로 네트워크 호출을 수행하지 않는다. 결제 취소 서비스가 PG
+    // 성공 후 Payment/Order/stock/points 동기화를 자체 트랜잭션으로 처리한다.
+    if (this.isPaidCancelCompletion(request, dto.status)) {
+      await this.getPaymentsService().cancelPaidOrder(
+        Number(request.orderId),
+        adminNote || `고객 취소 신청 처리: ${request.reason}`,
+      );
+    }
+
     await this.dataSource.transaction(async (manager) => {
       await manager.update(OrderServiceRequest, id, {
         status: dto.status,
-        adminNote: dto.adminNote?.trim() || null,
+        adminNote,
         processedAt: dto.status === OrderServiceRequestStatus.REQUESTED ? null : new Date(),
       });
 
@@ -131,6 +149,19 @@ export class OrderServiceRequestsService {
     );
     void this.notifyRequestStatusChanged(updated);
     return updated;
+  }
+
+  private getPaymentsService(): PaymentCancellationService {
+    return this.moduleRef.get<PaymentCancellationService>('PaymentsService', { strict: false });
+  }
+
+  private isPaidCancelCompletion(
+    request: OrderServiceRequest,
+    nextStatus: OrderServiceRequestStatus,
+  ): boolean {
+    return nextStatus === OrderServiceRequestStatus.COMPLETED
+      && request.type === OrderServiceRequestType.CANCEL
+      && request.order?.status === OrderStatus.PAID;
   }
 
   private assertRequestAllowed(orderStatus: OrderStatus, type: OrderServiceRequestType): void {
@@ -158,6 +189,13 @@ export class OrderServiceRequestsService {
 
     if (request.type === OrderServiceRequestType.CANCEL) {
       if (![OrderStatus.PENDING, OrderStatus.PAID].includes(order.status)) return;
+
+      if (order.status === OrderStatus.PAID) {
+        // Paid cancellations are handled before this transaction by PaymentsService
+        // so the external gateway call is not made while this request transaction is open.
+        return;
+      }
+
       await manager.update(Order, order.id, { status: OrderStatus.CANCELLED });
       await restoreOrderStock(manager, Number(order.id));
       await this.restorePoints(manager, order);

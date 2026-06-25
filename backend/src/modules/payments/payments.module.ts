@@ -5,6 +5,7 @@ import { PaymentWebhookEvent } from './entities/payment-webhook-event.entity';
 import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order } from '../orders/entities/order.entity';
+import { PointHistory } from '../coupons/entities/point-history.entity';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { AdminOrderRefundsController } from './admin-order-refunds.controller';
@@ -96,9 +97,9 @@ const gatewayProviders = [
 ];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order])],
+  imports: [TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory])],
   controllers: [PaymentsController, AdminOrderRefundsController, AdminPaymentWebhooksController],
-  providers: [...gatewayProviders, PaymentsService],
-  exports: [PaymentsService],
+  providers: [...gatewayProviders, PaymentsService, { provide: 'PaymentsService', useExisting: PaymentsService }],
+  exports: [PaymentsService, 'PaymentsService'],
 })
 export class PaymentsModule {}

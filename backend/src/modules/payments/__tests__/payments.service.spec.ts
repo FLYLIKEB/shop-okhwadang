@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { NotFoundException, BadRequestException, ConflictException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { PaymentsService } from '../payments.service';
 import { Payment, PaymentStatus, PaymentMethod, PaymentGatewayType } from '../entities/payment.entity';
@@ -780,6 +780,92 @@ describe('PaymentsService', () => {
       expect(txManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 12 }, 'stock', 5);
       // 옵션 있는 상품의 product.stock 은 건드리지 않음.
       expect(txManager.increment).toHaveBeenCalledTimes(2);
+    });
+
+
+
+    it('cancelPaidOrder() persists reconciliation marker when DB sync fails after gateway cancellation (#898)', async () => {
+      const order = makeOrder({ status: OrderStatus.PAID, pointsUsed: 0 });
+      const payment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pay_abc',
+        order,
+      });
+      const cancelledAt = new Date();
+      const syncError = new Error('db sync failed');
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt, rawResponse: { mock: true } });
+      mockDataSource.transaction.mockRejectedValueOnce(syncError);
+
+      await expect(service.cancelPaidOrder(1, '관리자 승인')).rejects.toThrow(syncError);
+
+      expect(mockDefaultGateway.cancel).toHaveBeenCalledWith('pay_abc', '관리자 승인');
+      expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, {
+        status: PaymentStatus.CANCELLED,
+        cancelledAt,
+        cancelReason: '관리자 승인',
+        rawResponse: expect.objectContaining({
+          gatewayCancellationSucceeded: true,
+          reconciliationRequired: true,
+          orderId: 1,
+          rawResponse: { mock: true },
+          error: 'db sync failed',
+        }),
+      });
+    });
+
+    it('cancelPaidOrder()는 전달받은 트랜잭션에서 PG 취소 후 Payment/Order/stock/points를 함께 갱신한다 (#898)', async () => {
+      const order = makeOrder({
+        status: OrderStatus.PAID,
+        pointsUsed: 1000,
+      });
+      const payment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pay_abc',
+        order,
+      });
+      const items = [
+        { orderId: 1, productId: 11, productOptionId: 22, quantity: 3 },
+        { orderId: 1, productId: 12, productOptionId: null, quantity: 5 },
+      ];
+      const cancelledAt = new Date();
+      const txManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Payment) return Promise.resolve(payment);
+          return Promise.resolve({ balance: 2000 });
+        }),
+        find: jest.fn().mockResolvedValue(items),
+        increment: jest.fn().mockResolvedValue({}),
+      });
+      mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt, rawResponse: { mock: true } });
+
+      const result = await service.cancelPaidOrder(
+        1,
+        '관리자 승인',
+        txManager as unknown as EntityManager,
+      );
+
+      expect(result.status).toBe(PaymentStatus.CANCELLED);
+      expect(mockDefaultGateway.cancel).toHaveBeenCalledWith('pay_abc', '관리자 승인');
+      expect(mockDataSource.transaction).not.toHaveBeenCalled();
+      expect(txManager.update).toHaveBeenCalledWith(Payment, payment.id, {
+        status: PaymentStatus.CANCELLED,
+        cancelledAt,
+        cancelReason: '관리자 승인',
+        rawResponse: { mock: true },
+      });
+      expect(txManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
+      expect(txManager.increment).toHaveBeenCalledTimes(2);
+      expect(txManager.save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          userId: order.userId,
+          type: 'admin_adjust',
+          amount: 1000,
+          balance: 3000,
+          orderId: order.id,
+        }),
+      );
     });
   });
 });
