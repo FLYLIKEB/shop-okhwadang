@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { PointHistory } from '../coupons/entities/point-history.entity';
@@ -16,22 +16,42 @@ export class PointsService {
     private readonly pointHistoryRepo: Repository<PointHistory>,
   ) {}
 
+  private effectiveBalanceExpression(): string {
+    return `
+      COALESCE(SUM(ph.amount), 0)
+      - COALESCE(SUM(
+        CASE
+          WHEN ph.type = 'earn'
+            AND ph.expires_at IS NOT NULL
+            AND ph.expires_at <= :now
+            AND NOT EXISTS (
+              SELECT 1
+              FROM point_history ex
+              WHERE ex.user_id = ph.user_id
+                AND ex.type = 'expire'
+                AND ex.related_entity_type IS NULL
+                AND ex.related_entity_id = ph.id
+            )
+          THEN ph.amount
+          ELSE 0
+        END
+      ), 0)
+    `;
+  }
+
   /**
    * Returns the effective point balance for a user.
-   * Sums all point history amounts, but excludes earn entries
-   * that have already expired (expiresAt <= now).
+   * Uses the running ledger and subtracts only expired earn entries that have not
+   * already been represented by scheduler-created expire ledger rows.
    */
   async getUserPointBalance(userId: number): Promise<number> {
     const now = new Date();
 
     const result = await this.pointHistoryRepo
       .createQueryBuilder('ph')
-      .select('COALESCE(SUM(ph.amount), 0)', 'total')
+      .select(this.effectiveBalanceExpression(), 'total')
       .where('ph.user_id = :userId', { userId })
-      .andWhere(
-        `(ph.type != 'earn' OR ph.expires_at IS NULL OR ph.expires_at > :now)`,
-        { now },
-      )
+      .setParameter('now', now)
       .getRawOne<{ total: string }>();
 
     return parseInt(result?.total ?? '0', 10);
@@ -45,12 +65,9 @@ export class PointsService {
 
     const result = await manager
       .createQueryBuilder(PointHistory, 'ph')
-      .select('COALESCE(SUM(ph.amount), 0)', 'total')
+      .select(this.effectiveBalanceExpression(), 'total')
       .where('ph.user_id = :userId', { userId })
-      .andWhere(
-        `(ph.type != 'earn' OR ph.expires_at IS NULL OR ph.expires_at > :now)`,
-        { now },
-      )
+      .setParameter('now', now)
       .getRawOne<{ total: string }>();
 
     return parseInt(result?.total ?? '0', 10);
@@ -84,6 +101,11 @@ export class PointsService {
     description: string,
     orderId: number | null = null,
   ): Promise<number> {
+    const effectiveBalance = await this.getEffectiveBalanceInTx(manager, userId);
+    if (amount > effectiveBalance) {
+      throw new BadRequestException('적립금이 부족합니다.');
+    }
+
     const currentBalance = await this.getRunningBalanceInTx(manager, userId);
     const newBalance = currentBalance - amount;
 

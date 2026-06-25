@@ -157,7 +157,7 @@ export class OrdersService {
   ): Promise<void> {
     if (pointsToUse <= 0) return;
 
-    const balance = await this.pointsService.getRunningBalanceInTx(manager, userId);
+    const balance = await this.pointsService.getEffectiveBalanceInTx(manager, userId);
     if (pointsToUse > balance) {
       throw new BadRequestException('적립금이 부족합니다.');
     }
