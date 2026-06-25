@@ -38,7 +38,7 @@ vi.mock('@/lib/api', () => ({
 describe('FaqPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(faqsApi.getList).mockResolvedValue([]);
+    vi.mocked(faqsApi.getList).mockResolvedValue({ data: [], total: 0 });
   });
 
   it('비회원 주문조회 대신 회원 주문 전용 정책 안내를 노출한다', async () => {

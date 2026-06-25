@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev --turbopack -p 5173",
     "build": "next build",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
     "build:analyze": "ANALYZE=true npm run build",
     "start": "next start",
     "audit:bundle-imports": "bash scripts/audit-bundle-imports.sh",

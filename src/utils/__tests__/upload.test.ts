@@ -25,8 +25,8 @@ describe('upload utils', () => {
     uploadImageMock.mockResolvedValue({ url: '/uploads/product.jpg' });
     const file = new File(['image'], 'product.jpg', { type: 'image/jpeg' });
 
-    await expect(uploadImage(file, 'products')).resolves.toEqual({ url: '/uploads/product.jpg' });
-    expect(uploadImageMock).toHaveBeenCalledWith(file, 'products');
+    await expect(uploadImage(file)).resolves.toEqual({ url: '/uploads/product.jpg' });
+    expect(uploadImageMock).toHaveBeenCalledWith(file);
   });
 
   it('delegates review image uploads to reviewsApi', async () => {

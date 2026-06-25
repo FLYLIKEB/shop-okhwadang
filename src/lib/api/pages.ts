@@ -78,7 +78,7 @@ export interface ProductCarouselContent {
 
 export interface CategoryNavContent {
   title?: string;
-  category_ids: number[];
+  category_ids?: number[];
   template: 'icon' | 'image' | 'text';
   prefetched_categories?: Category[];
 }
