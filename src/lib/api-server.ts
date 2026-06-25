@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, SiteSetting } from '@/lib/api';
+import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, SiteSetting, Journal } from '@/lib/api';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
@@ -85,6 +85,15 @@ export const fetchProduct = cache(async (id: number, locale?: string): Promise<P
 export async function fetchPage(slug: string, locale?: string): Promise<Page | null> {
   try {
     return await fetchFromBackend<Page>(`/pages/${slug}`, locale ? { locale } : undefined);
+  } catch {
+    return null;
+  }
+}
+
+
+export async function fetchJournal(slug: string, locale?: string): Promise<Journal | null> {
+  try {
+    return await fetchFromBackend<Journal>(`/journals/${slug}`, locale ? { locale } : undefined);
   } catch {
     return null;
   }
