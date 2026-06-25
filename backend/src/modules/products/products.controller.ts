@@ -39,7 +39,7 @@ import { CreateRestockAlertDto } from '../restock-alerts/dto/create-restock-aler
 import { RecentlyViewedService } from './recently-viewed.service';
 import { SmartStoreProductImportService } from './smartstore-product-import.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { createSingleFileMemoryUploadOptions } from '../../common/multer/single-file-upload.options';
 
 @ApiTags('상품')
 @Controller('products')
@@ -119,10 +119,10 @@ export class ProductsController {
   @ApiResponse({ status: 403, description: '권한 없음' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } })
-  @UseInterceptors(FileInterceptor('file', {
-    storage: memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 },
-  }))
+  @UseInterceptors(FileInterceptor(
+    'file',
+    createSingleFileMemoryUploadOptions({ fileSize: 10 * 1024 * 1024 }),
+  ))
   previewSmartStoreImport(@UploadedFile() file: Express.Multer.File) {
     return this.smartStoreProductImportService.preview(file);
   }
@@ -137,10 +137,10 @@ export class ProductsController {
   @ApiResponse({ status: 403, description: '권한 없음' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } })
-  @UseInterceptors(FileInterceptor('file', {
-    storage: memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 },
-  }))
+  @UseInterceptors(FileInterceptor(
+    'file',
+    createSingleFileMemoryUploadOptions({ fileSize: 10 * 1024 * 1024 }),
+  ))
   commitSmartStoreImport(@UploadedFile() file: Express.Multer.File) {
     return this.smartStoreProductImportService.commit(file);
   }

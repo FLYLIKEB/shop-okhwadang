@@ -13,7 +13,11 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { createSingleFileMemoryUploadOptions } from '../../common/multer/single-file-upload.options';
+import {
+  ALLOWED_IMAGE_MIME_TYPES,
+  MAX_UPLOAD_FILE_SIZE_BYTES,
+} from './upload.constants';
 import { UploadService } from './upload.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UploadedFile as UploadedFileType } from './interfaces/storage.interface';
@@ -27,9 +31,14 @@ const IMAGE_UPLOAD_BODY_SCHEMA = {
   },
 } as const;
 
-const FILE_UPLOAD_INTERCEPTOR = FileInterceptor('file', {
-  storage: memoryStorage(),
-});
+const FILE_UPLOAD_INTERCEPTOR = FileInterceptor(
+  'file',
+  createSingleFileMemoryUploadOptions({
+    fileSize: MAX_UPLOAD_FILE_SIZE_BYTES,
+    allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
+    invalidMimeMessage: '허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)',
+  }),
+);
 
 @ApiTags('업로드')
 @Controller('upload')
