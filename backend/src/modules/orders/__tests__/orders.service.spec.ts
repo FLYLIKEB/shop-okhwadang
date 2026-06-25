@@ -36,7 +36,9 @@ const mockOrderRepository = {
 
 const mockPointsService = {
   getUserPointBalance: jest.fn(),
+  getEffectiveBalanceInTx: jest.fn(),
   getRunningBalanceInTx: jest.fn(),
+  deductFifo: jest.fn(),
 };
 
 const mockCouponsService = {
@@ -257,12 +259,7 @@ describe('OrdersService', () => {
         pointsUsed: 5000,
       };
 
-      // point balance check uses manager.getRepository (inside transaction)
-      const mockPointRepo = {
-        findOne: jest.fn().mockResolvedValue({ balance: 1000 }),
-      };
-      mockManager.getRepository.mockReturnValue(mockPointRepo);
-      mockPointsService.getRunningBalanceInTx.mockResolvedValue(1000);
+      mockPointsService.getEffectiveBalanceInTx.mockResolvedValue(1000);
       mockManager.createQueryBuilder.mockReturnValue({
         setLock: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
@@ -277,6 +274,34 @@ describe('OrdersService', () => {
 
       await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
       expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(mockPointsService.getEffectiveBalanceInTx).toHaveBeenCalledWith(mockManager, 1);
+      expect(mockPointsService.getRunningBalanceInTx).not.toHaveBeenCalled();
+      expect(mockPointsService.deductFifo).not.toHaveBeenCalled();
+    });
+
+    it('만료 earn 이 history 에 남아 running balance 가 충분해도 effective balance 부족이면 주문 포인트 사용을 거부한다', async () => {
+      const dto: CreateOrderDto = {
+        items: [{ productId: 1, quantity: 1 }],
+        recipientName: '홍길동',
+        recipientPhone: '010-1234-5678',
+        zipcode: '12345',
+        address: '서울시',
+        pointsUsed: 1500,
+      };
+
+      // Regression for #900: running balance may still include an expired earn
+      // before the expiry cron writes an expire row, but checkout must only trust
+      // the non-expired effective balance.
+      mockPointsService.getEffectiveBalanceInTx.mockResolvedValue(1000);
+      mockPointsService.getRunningBalanceInTx.mockResolvedValue(2000);
+
+      await expect(service.create(1, dto)).rejects.toThrow(BadRequestException);
+
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(mockPointsService.getEffectiveBalanceInTx).toHaveBeenCalledWith(mockManager, 1);
+      expect(mockPointsService.getRunningBalanceInTx).not.toHaveBeenCalled();
+      expect(mockPointsService.deductFifo).not.toHaveBeenCalled();
+      expect(mockManager.update).not.toHaveBeenCalled();
     });
 
     it('valid dto → creates order, deducts stock, clears cart', async () => {

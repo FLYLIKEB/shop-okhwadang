@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
+import { BadRequestException } from '@nestjs/common';
 import { PointHistory } from '../../coupons/entities/point-history.entity';
 import { PointsService, addOneYear } from '../points.service';
 
@@ -8,6 +9,7 @@ const mockSelectQueryBuilder = {
   select: jest.fn().mockReturnThis(),
   where: jest.fn().mockReturnThis(),
   andWhere: jest.fn().mockReturnThis(),
+  setParameter: jest.fn().mockReturnThis(),
   getRawOne: jest.fn(),
 };
 
@@ -28,6 +30,7 @@ describe('PointsService', () => {
     jest.clearAllMocks();
     mockPointHistoryRepo.createQueryBuilder.mockReturnValue(mockSelectQueryBuilder);
     mockEntityManager.createQueryBuilder.mockReturnValue(mockSelectQueryBuilder);
+    mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '999999' });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -91,10 +94,14 @@ describe('PointsService', () => {
 
       await service.getUserPointBalance(1);
 
-      // 만료된 earn 은 합산 대상에서 빠져야 하므로 expires_at > now 가드가 SQL 에 있어야 한다.
-      expect(mockSelectQueryBuilder.andWhere).toHaveBeenCalledWith(
-        expect.stringContaining(`ph.type != 'earn' OR ph.expires_at IS NULL OR ph.expires_at > :now`),
-        expect.objectContaining({ now: expect.any(Date) }),
+      // 만료된 earn 은 아직 expire ledger row 로 반영되지 않은 경우에만 추가 차감해야 한다.
+      expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
+        expect.stringContaining('NOT EXISTS'),
+        'total',
+      );
+      expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
+        expect.stringContaining('ex.related_entity_id = ph.id'),
+        'total',
       );
     });
   });
@@ -120,6 +127,30 @@ describe('PointsService', () => {
       );
 
       expect(balance).toBe(0);
+    });
+
+
+    it('post-cron expire rows do not double-subtract expired earns', async () => {
+      mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '1000' });
+
+      const balance = await service.getEffectiveBalanceInTx(
+        mockEntityManager as unknown as EntityManager,
+        1,
+      );
+
+      expect(balance).toBe(1000);
+      expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
+        expect.stringContaining('COALESCE(SUM(ph.amount), 0)'),
+        'total',
+      );
+      expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
+        expect.stringContaining("ex.type = 'expire'"),
+        'total',
+      );
+      expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
+        expect.stringContaining('ex.related_entity_id = ph.id'),
+        'total',
+      );
     });
   });
 
@@ -153,6 +184,7 @@ describe('PointsService', () => {
 
   describe('deductFifo', () => {
     it('should create a spend record with correct balance and return new balance', async () => {
+      mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '5000' });
       mockEntityManager.findOne.mockResolvedValue({ balance: 5000 });
       mockEntityManager.save.mockResolvedValue({});
 
@@ -175,30 +207,25 @@ describe('PointsService', () => {
       });
     });
 
-    it('should use balance 0 when no prior history exists', async () => {
+    it('should reject when no effective balance exists', async () => {
+      mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '0' });
       mockEntityManager.findOne.mockResolvedValue(null);
       mockEntityManager.save.mockResolvedValue({});
 
-      const newBalance = await service.deductFifo(
-        mockEntityManager as unknown as EntityManager,
-        1,
-        500,
-        '주문 사용 (ORD-002)',
-        null,
-      );
-
-      expect(newBalance).toBe(-500);
-      expect(mockEntityManager.save).toHaveBeenCalledWith(PointHistory, {
-        userId: 1,
-        type: 'spend',
-        amount: -500,
-        balance: -500,
-        orderId: null,
-        description: '주문 사용 (ORD-002)',
-      });
+      await expect(
+        service.deductFifo(
+          mockEntityManager as unknown as EntityManager,
+          1,
+          500,
+          '주문 사용 (ORD-002)',
+          null,
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockEntityManager.save).not.toHaveBeenCalled();
     });
 
     it('should query latest entry ordered by createdAt DESC, id DESC for FIFO', async () => {
+      mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '2000' });
       mockEntityManager.findOne.mockResolvedValue({ balance: 2000 });
       mockEntityManager.save.mockResolvedValue({});
 
@@ -211,6 +238,7 @@ describe('PointsService', () => {
     });
 
     it('should deduct full balance when amount equals balance', async () => {
+      mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '1000' });
       mockEntityManager.findOne.mockResolvedValue({ balance: 1000 });
       mockEntityManager.save.mockResolvedValue({});
 
@@ -223,6 +251,24 @@ describe('PointsService', () => {
       );
 
       expect(newBalance).toBe(0);
+    });
+
+    it('rejects spending expired earn that is still present in running balance before cron expiry', async () => {
+      mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '1000' });
+      mockEntityManager.findOne.mockResolvedValue({ balance: 2000 });
+      mockEntityManager.save.mockResolvedValue({});
+
+      await expect(
+        service.deductFifo(
+          mockEntityManager as unknown as EntityManager,
+          1,
+          1500,
+          '주문 사용 (ORD-EXPIRED)',
+          42,
+        ),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockEntityManager.save).not.toHaveBeenCalled();
     });
   });
 });
