@@ -25,6 +25,7 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { createSingleFileMemoryUploadOptions } from '../../common/multer/single-file-upload.options';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
@@ -35,8 +36,17 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthenticatedRequestWithAuthUser } from '../../common/interfaces/auth-user.interface';
 import { UploadService } from '../upload/upload.service';
 
-const REVIEW_ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const REVIEW_ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 const REVIEW_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+const REVIEW_IMAGE_UPLOAD_INTERCEPTOR = FileInterceptor(
+  'file',
+  createSingleFileMemoryUploadOptions({
+    fileSize: REVIEW_MAX_FILE_SIZE,
+    allowedMimeTypes: REVIEW_ALLOWED_MIME_TYPES,
+    invalidMimeMessage: '허용되지 않는 파일 형식입니다. (jpg, png, webp만 허용)',
+  }),
+);
 
 @ApiTags('후기')
 @Controller('reviews')
@@ -100,7 +110,7 @@ export class ReviewsController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(REVIEW_IMAGE_UPLOAD_INTERCEPTOR)
   async uploadImage(
     @UploadedFile() file: Express.Multer.File,
   ) {
@@ -108,7 +118,7 @@ export class ReviewsController {
       throw new BadRequestException('파일이 필요합니다.');
     }
 
-    if (!REVIEW_ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    if (!REVIEW_ALLOWED_MIME_TYPES.some((mimeType) => mimeType === file.mimetype)) {
       throw new BadRequestException('허용되지 않는 파일 형식입니다. (jpg, png, webp만 허용)');
     }
 
