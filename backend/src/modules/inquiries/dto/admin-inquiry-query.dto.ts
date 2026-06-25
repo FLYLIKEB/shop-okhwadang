@@ -1,8 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { InquiryStatus } from '../entities/inquiry.entity';
 
 export class AdminInquiryQueryDto {
+  @ApiPropertyOptional({ description: '문의 상태', enum: InquiryStatus, example: InquiryStatus.PENDING })
+  @IsOptional()
+  @IsEnum(InquiryStatus, { message: 'status는 pending 또는 answered여야 합니다.' })
+  status?: InquiryStatus;
+
   @ApiPropertyOptional({ description: '페이지 번호', example: 1, default: 1 })
   @IsOptional()
   @Type(() => Number)

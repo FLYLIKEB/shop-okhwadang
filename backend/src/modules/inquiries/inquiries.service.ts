@@ -14,6 +14,15 @@ import { NotificationService } from '../notification/notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { PaginatedResult, paginate } from '../../common/utils/pagination.util';
 
+export interface AdminInquiryCounts {
+  pending: number;
+  answered: number;
+}
+
+export interface AdminInquiryListResult extends PaginatedResult<Inquiry> {
+  counts: AdminInquiryCounts;
+}
+
 @Injectable()
 export class InquiriesService {
   private readonly logger = new Logger(InquiriesService.name);
@@ -58,21 +67,34 @@ export class InquiriesService {
     return saved;
   }
 
-  async findAllForAdmin(query: AdminInquiryQueryDto = {}): Promise<PaginatedResult<Inquiry>> {
+  async findAllForAdmin(query: AdminInquiryQueryDto = {}): Promise<AdminInquiryListResult> {
     const qb = this.inquiryRepo
       .createQueryBuilder('inquiry')
       .leftJoinAndSelect('inquiry.user', 'user')
       .orderBy('inquiry.createdAt', 'DESC');
+
+    if (query.status) {
+      qb.andWhere('inquiry.status = :status', { status: query.status });
+    }
 
     if (query.unread) {
       qb.andWhere('inquiry.answeredAt IS NOT NULL')
         .andWhere('inquiry.customerReadAt IS NULL');
     }
 
-    return paginate(qb, {
-      page: query.page ?? 1,
-      limit: query.limit ?? 20,
-    });
+    const [result, pending, answered] = await Promise.all([
+      paginate(qb, {
+        page: query.page ?? 1,
+        limit: query.limit ?? 20,
+      }),
+      this.inquiryRepo.count({ where: { status: InquiryStatus.PENDING } }),
+      this.inquiryRepo.count({ where: { status: InquiryStatus.ANSWERED } }),
+    ]);
+
+    return {
+      ...result,
+      counts: { pending, answered },
+    };
   }
 
   async answerInquiry(id: number, dto: AnswerInquiryDto): Promise<Inquiry> {
