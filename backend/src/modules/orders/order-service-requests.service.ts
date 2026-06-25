@@ -15,6 +15,7 @@ import { assertOwnership } from '../../common/utils/ownership.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
+import { escapeHtml } from '../notification/templates/sanitize';
 import { restoreOrderStock } from './order-stock.util';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { ModuleRef } from '@nestjs/core';
@@ -234,12 +235,15 @@ export class OrderServiceRequestsService {
       resourceId: request.id,
       mode: 'fire-and-forget',
       logger: this.logger,
-      send: (recipient) => this.notificationService.sendEmail({
-        to: recipient.email,
-        subject: `[옥화당] ${order.orderNumber} 신청이 접수되었습니다`,
-        text: `${recipient.name}님, ${this.getRequestTypeLabel(request.type)} 신청이 접수되었습니다. 처리 상태는 마이페이지 주문 상세에서 확인하실 수 있습니다.`,
-        html: `<p>${recipient.name}님, ${this.getRequestTypeLabel(request.type)} 신청이 접수되었습니다.</p><p>처리 상태는 마이페이지 주문 상세에서 확인하실 수 있습니다.</p>`,
-      }),
+      send: (recipient) => {
+        const recipientNameHtml = escapeHtml(recipient.name);
+        return this.notificationService.sendEmail({
+          to: recipient.email,
+          subject: `[옥화당] ${order.orderNumber} 신청이 접수되었습니다`,
+          text: `${recipient.name}님, ${this.getRequestTypeLabel(request.type)} 신청이 접수되었습니다. 처리 상태는 마이페이지 주문 상세에서 확인하실 수 있습니다.`,
+          html: `<p>${recipientNameHtml}님, ${this.getRequestTypeLabel(request.type)} 신청이 접수되었습니다.</p><p>처리 상태는 마이페이지 주문 상세에서 확인하실 수 있습니다.</p>`,
+        });
+      },
     });
   }
 
@@ -250,12 +254,16 @@ export class OrderServiceRequestsService {
       resourceId: request.id,
       mode: 'fire-and-forget',
       logger: this.logger,
-      send: (recipient) => this.notificationService.sendEmail({
-        to: recipient.email,
-        subject: `[옥화당] ${request.order.orderNumber} 신청 처리 상태 안내`,
-        text: `${recipient.name}님, ${this.getRequestTypeLabel(request.type)} 신청 상태가 ${this.getRequestStatusLabel(request.status)}(으)로 변경되었습니다.${request.adminNote ? `\n안내: ${request.adminNote}` : ''}`,
-        html: `<p>${recipient.name}님, ${this.getRequestTypeLabel(request.type)} 신청 상태가 <strong>${this.getRequestStatusLabel(request.status)}</strong>(으)로 변경되었습니다.</p>${request.adminNote ? `<p>안내: ${request.adminNote}</p>` : ''}`,
-      }),
+      send: (recipient) => {
+        const recipientNameHtml = escapeHtml(recipient.name);
+        const adminNoteHtml = request.adminNote ? escapeHtml(request.adminNote) : '';
+        return this.notificationService.sendEmail({
+          to: recipient.email,
+          subject: `[옥화당] ${request.order.orderNumber} 신청 처리 상태 안내`,
+          text: `${recipient.name}님, ${this.getRequestTypeLabel(request.type)} 신청 상태가 ${this.getRequestStatusLabel(request.status)}(으)로 변경되었습니다.${request.adminNote ? `\n안내: ${request.adminNote}` : ''}`,
+          html: `<p>${recipientNameHtml}님, ${this.getRequestTypeLabel(request.type)} 신청 상태가 <strong>${this.getRequestStatusLabel(request.status)}</strong>(으)로 변경되었습니다.</p>${adminNoteHtml ? `<p>안내: ${adminNoteHtml}</p>` : ''}`,
+        });
+      },
     });
   }
 
