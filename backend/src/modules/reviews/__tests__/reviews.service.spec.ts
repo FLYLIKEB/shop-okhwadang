@@ -426,8 +426,9 @@ describe('ReviewsService', () => {
   });
 
   describe('remove', () => {
-    it('should delete own review and revoke points', async () => {
+    it('should delete own review and revoke points with negative spend amount', async () => {
       mockRepo.findOne.mockResolvedValue({ ...mockReview });
+      mockPointsService.getRunningBalanceInTx.mockResolvedValue(250);
 
       const earnEntry = {
         id: 99,
@@ -452,7 +453,13 @@ describe('ReviewsService', () => {
         return data?.type === 'spend';
       });
       expect(revokeSave).toBeDefined();
-      expect((revokeSave![1] as { amount: number }).amount).toBe(100);
+      expect(revokeSave![1]).toEqual(
+        expect.objectContaining({
+          type: 'spend',
+          amount: -100,
+          balance: 150,
+        }),
+      );
     });
 
     it('should revoke based on relatedEntity columns even when description format changes', async () => {
