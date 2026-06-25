@@ -22,7 +22,9 @@ export interface OrderStatusSummary {
   preparing: number;
   shipped: number;
   delivered: number;
+  completed: number;
   cancelled: number;
+  refund_requested: number;
   refunded: number;
 }
 

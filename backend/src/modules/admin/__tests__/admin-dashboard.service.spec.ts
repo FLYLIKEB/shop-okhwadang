@@ -127,6 +127,8 @@ describe('AdminDashboardService', () => {
             { status: 'pending', count: '5' },
             { status: 'paid', count: '12' },
             { status: 'delivered', count: '150' },
+            { status: 'completed', count: '9' },
+            { status: 'refund_requested', count: '4' },
           ]),
         }),
       );
@@ -136,6 +138,8 @@ describe('AdminDashboardService', () => {
       expect(result.order_status_summary.pending).toBe(5);
       expect(result.order_status_summary.paid).toBe(12);
       expect(result.order_status_summary.delivered).toBe(150);
+      expect(result.order_status_summary.completed).toBe(9);
+      expect(result.order_status_summary.refund_requested).toBe(4);
       expect(result.order_status_summary.shipped).toBe(0);
     });
 

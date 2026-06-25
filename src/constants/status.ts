@@ -7,7 +7,9 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   preparing: '상품 준비 중',
   shipped: '배송 중',
   delivered: '배송 완료',
+  completed: '구매 확정',
   cancelled: '취소됨',
+  refund_requested: '환불 요청',
   refunded: '환불됨',
 };
 
@@ -17,7 +19,9 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
   preparing: 'bg-purple-100 text-purple-800',
   shipped: 'bg-indigo-100 text-indigo-800',
   delivered: 'bg-green-100 text-green-800',
+  completed: 'bg-emerald-100 text-emerald-800',
   cancelled: 'bg-gray-100 text-gray-800',
+  refund_requested: 'bg-orange-100 text-orange-800',
   refunded: 'bg-red-100 text-red-800',
 };
 
