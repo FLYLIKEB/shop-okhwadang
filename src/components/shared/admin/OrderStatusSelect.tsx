@@ -12,8 +12,10 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   paid: ['preparing', 'cancelled', 'refunded'],
   preparing: ['shipped', 'cancelled', 'refunded'],
   shipped: ['delivered', 'refunded'],
-  delivered: [],
+  delivered: ['completed', 'refund_requested'],
+  completed: [],
   cancelled: [],
+  refund_requested: ['refunded'],
   refunded: [],
 };
 

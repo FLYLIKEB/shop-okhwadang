@@ -30,7 +30,9 @@ interface OrderStatusSummary {
   preparing: number;
   shipped: number;
   delivered: number;
+  completed: number;
   cancelled: number;
+  refund_requested: number;
   refunded: number;
 }
 
@@ -260,7 +262,9 @@ export class AdminDashboardService {
       preparing: 0,
       shipped: 0,
       delivered: 0,
+      completed: 0,
       cancelled: 0,
+      refund_requested: 0,
       refunded: 0,
     };
 
