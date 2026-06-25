@@ -41,5 +41,5 @@ export const adminCollectionsApi = {
   remove: (id: number) =>
     apiClient.delete<void>(`/admin/collections/${id}`),
   reorder: (orders: Array<{ id: number; sortOrder: number }>) =>
-    apiClient.patch<void>('/admin/collections/reorder', orders),
+    apiClient.patch<void>('/admin/collections/reorder', { orders }),
 };
