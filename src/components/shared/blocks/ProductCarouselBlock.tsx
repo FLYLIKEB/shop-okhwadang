@@ -11,6 +11,7 @@ import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import { useCarouselProgress } from '@/components/shared/hooks/useCarouselProgress';
 import CarouselProgressBar from '@/components/shared/common/CarouselProgressBar';
 import { cn } from '@/components/ui/utils';
+import type { Locale } from '@/utils/currency';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Props {
@@ -19,7 +20,7 @@ interface Props {
 
 export default function ProductCarouselBlock({ content }: Props) {
   const params = useParams();
-  const locale = params.locale as string;
+  const locale = params.locale as Locale;
   const t = useTranslations('product');
   const tCommon = useTranslations('common');
   const { product_ids, category_id, sort, limit, template, title } = content;
@@ -152,6 +153,7 @@ export default function ProductCarouselBlock({ content }: Props) {
                 status={product.status}
                 images={product.images}
                 isFreeShipping={product.isFreeShipping}
+                locale={locale}
                 priority={index === 0}
               />
             </div>

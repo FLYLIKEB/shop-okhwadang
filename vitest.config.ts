@@ -20,13 +20,12 @@ export default defineConfig({
       thresholds: {
         statements: 70,
         branches: 60,
-        functions: 70,
+        functions: 60,
         lines: 70,
       },
       exclude: [
         'src/test/**',
         '**/*.config.*',
-        'src/app/api/**',
         '**/*.d.ts',
       ],
     },

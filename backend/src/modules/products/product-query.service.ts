@@ -118,9 +118,9 @@ export class ProductQueryService {
     }
   }
 
-  async findOne(id: number, isAdmin = false, locale?: string): Promise<Product> {
+  async findOne(id: number, isAdmin = false, locale?: string): Promise<Product & { rating: number; reviewCount: number }> {
     const cacheKey = getProductDetailCacheKey(id);
-    const cached = await this.cacheService.get<Product>(cacheKey);
+    const cached = await this.cacheService.get<Product & { rating: number; reviewCount: number }>(cacheKey);
 
     if (cached) {
       if (
@@ -130,7 +130,7 @@ export class ProductQueryService {
       ) {
         throw new NotFoundException('상품을 찾을 수 없습니다.');
       }
-      return this.applyLocale(cached, locale);
+      return this.applyLocale(cached, locale) as Product & { rating: number; reviewCount: number };
     }
 
     const product = await this.productRepository
@@ -154,8 +154,6 @@ export class ProductQueryService {
       throw new NotFoundException('상품을 찾을 수 없습니다.');
     }
 
-    await this.cacheService.set(cacheKey, product, CACHE_TTL_DETAIL);
-
     void this.productRepository.increment({ id }, 'viewCount', 1).catch((err: Error) =>
       this.logger.warn(`view_count increment failed: ${err.message}`),
     );
@@ -163,6 +161,7 @@ export class ProductQueryService {
     const localized = this.applyLocale(product, locale);
     const statsMap = await this.getReviewStats([id]);
     const itemsWithStats = this.applyReviewStats([localized], statsMap);
+    await this.cacheService.set(cacheKey, itemsWithStats[0], CACHE_TTL_DETAIL);
     return itemsWithStats[0];
   }
 

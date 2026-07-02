@@ -109,7 +109,7 @@ describe('AuditLogService', () => {
 
       expect(mockRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          beforeJson: { email: 'admin@example.com', password: '[REDACTED]', nested: { apiKey: '[REDACTED]' } },
+          beforeJson: { email: '[REDACTED]', password: '[REDACTED]', nested: { apiKey: '[REDACTED]' } },
           afterJson: { token: '[REDACTED]', reason: 'invalid_password' },
         }),
       );

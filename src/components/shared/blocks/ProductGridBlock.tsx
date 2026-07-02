@@ -10,6 +10,7 @@ import { CardSkeleton } from '@/components/ui/Skeleton';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import { cn } from '@/components/ui/utils';
+import type { Locale } from '@/utils/currency';
 
 interface Props {
   content: ProductGridContent;
@@ -23,7 +24,7 @@ const gridColsMap: Record<string, string> = {
 
 export default function ProductGridBlock({ content }: Props) {
   const params = useParams();
-  const locale = params.locale as string;
+  const locale = params.locale as Locale;
   const t = useTranslations('common');
   const { product_ids, category_id, auto, sort, limit, template, title, more_href, prefetched_products } = content;
   const { ref, visible } = useScrollAnimation<HTMLElement>();

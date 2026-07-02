@@ -53,7 +53,7 @@ export default function LoginForm() {
     e.preventDefault();
     setEmailError('');
     setPasswordError('');
-    void submitLogin().catch(() => {});
+    void submitLogin();
   };
 
   return (

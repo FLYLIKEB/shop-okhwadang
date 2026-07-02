@@ -17,19 +17,19 @@ import {
 import { cn } from '@/components/ui/utils';
 
 type NavLeaf = {
-  label: string;
+  labelKey: string;
   href: string;
 };
 
 type NavGroup = {
-  label: string;
+  labelKey: string;
   icon: React.ElementType;
   children: NavLeaf[];
   href?: never;
 };
 
 type NavLeafItem = {
-  label: string;
+  labelKey: string;
   href: string;
   icon: React.ElementType;
   children?: never;
@@ -38,42 +38,42 @@ type NavLeafItem = {
 type NavItem = NavLeafItem | NavGroup;
 
 const NAV_ITEMS: NavItem[] = [
-  { label: '대시보드', href: '/admin/dashboard', icon: LayoutDashboard },
+  { labelKey: 'dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   {
-    label: '상품',
+    labelKey: 'productsGroup',
     icon: Package,
     children: [
-      { label: '상품관리', href: '/admin/products' },
-      { label: '카테고리관리', href: '/admin/categories' },
+      { labelKey: 'products', href: '/admin/products' },
+      { labelKey: 'categories', href: '/admin/categories' },
     ],
   },
   {
-    label: '운영',
+    labelKey: 'operationsGroup',
     icon: ShoppingBag,
     children: [
-      { label: '주문관리', href: '/admin/orders' },
-      { label: '회원관리', href: '/admin/members' },
-      { label: '문의관리', href: '/admin/inquiries' },
+      { labelKey: 'orders', href: '/admin/orders' },
+      { labelKey: 'members', href: '/admin/members' },
+      { labelKey: 'inquiries', href: '/admin/inquiries' },
     ],
   },
   {
-    label: 'CMS',
+    labelKey: 'cmsGroup',
     icon: FileText,
     children: [
-      { label: '페이지관리', href: '/admin/pages' },
-      { label: '네비게이션관리', href: '/admin/navigation' },
-      { label: '안내바관리', href: '/admin/announcement-bars' },
-      { label: '컬렉션관리', href: '/admin/collections' },
-      { label: '저널관리', href: '/admin/journal' },
-      { label: '아카이브관리', href: '/admin/archives' },
+      { labelKey: 'pages', href: '/admin/pages' },
+      { labelKey: 'navigation', href: '/admin/navigation' },
+      { labelKey: 'announcementBars', href: '/admin/announcement-bars' },
+      { labelKey: 'collections', href: '/admin/collections' },
+      { labelKey: 'journal', href: '/admin/journal' },
+      { labelKey: 'archives', href: '/admin/archives' },
     ],
   },
   {
-    label: '사이트 설정',
+    labelKey: 'settingsGroup',
     icon: Settings,
     children: [
-      { label: '테마 편집', href: '/admin/settings/theme' },
-      { label: '사업자 정보', href: '/admin/settings/business' },
+      { labelKey: 'theme', href: '/admin/settings/theme' },
+      { labelKey: 'business', href: '/admin/settings/business' },
     ],
   },
 ];
@@ -85,7 +85,7 @@ function isNavGroup(item: NavItem): item is NavGroup {
 function getInitialOpenGroups(pathname: string): Record<string, boolean> {
   return NAV_ITEMS.reduce<Record<string, boolean>>((acc, item) => {
     if (isNavGroup(item)) {
-      acc[item.label] = item.children.some((c) => pathname.startsWith(c.href));
+      acc[item.labelKey] = item.children.some((c) => pathname.startsWith(c.href));
     }
     return acc;
   }, {});
@@ -102,8 +102,8 @@ function SidebarContent({ onClose }: SidebarContentProps) {
     () => getInitialOpenGroups(pathname),
   );
 
-  const toggleGroup = (label: string) => {
-    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  const toggleGroup = (labelKey: string) => {
+    setOpenGroups((prev) => ({ ...prev, [labelKey]: !prev[labelKey] }));
   };
 
   return (
@@ -114,7 +114,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
           <button
             onClick={onClose}
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
-            aria-label="사이드바 닫기"
+            aria-label={t('close')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -134,12 +134,12 @@ function SidebarContent({ onClose }: SidebarContentProps) {
         <ul className="space-y-1 px-2">
           {NAV_ITEMS.map((item) => {
             if (isNavGroup(item)) {
-              const isOpen = openGroups[item.label] ?? false;
+              const isOpen = openGroups[item.labelKey] ?? false;
               const isGroupActive = item.children.some((c) => pathname.startsWith(c.href));
               return (
-                <li key={item.label}>
+                <li key={item.labelKey}>
                   <button
-                    onClick={() => toggleGroup(item.label)}
+                    onClick={() => toggleGroup(item.labelKey)}
                     className={cn(
                       'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
                       isGroupActive
@@ -148,7 +148,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                     )}
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
-                    <span className="flex-1 text-left">{item.label}</span>
+                    <span className="flex-1 text-left">{t(item.labelKey)}</span>
                     <ChevronDown
                       className={cn(
                         'h-4 w-4 shrink-0 transition-transform duration-200',
@@ -173,7 +173,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                               )}
                             >
-                              {child.label}
+                              {t(child.labelKey)}
                             </Link>
                           </li>
                         );
@@ -198,7 +198,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                   )}
                 >
                   <item.icon className="h-4 w-4 shrink-0" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               </li>
             );

@@ -27,6 +27,10 @@ export const SENSITIVE_FIELDS = [
   'residentregistrationnumber',
   'rrn',
   'birthdate',
+  'email',
+  'name',
+  'recipientName',
+  'recipient_name',
   'phone',
   'address',
   'clientSecret',
@@ -36,9 +40,16 @@ function normalizeField(key: string): string {
   return key.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+const EXACT_SENSITIVE_FIELDS = new Set(['email', 'name', 'recipientname', 'recipient_name']);
+
 function isSensitiveField(key: string): boolean {
   const normalized = normalizeField(key);
-  return SENSITIVE_FIELDS.some((field) => normalized.includes(normalizeField(field)));
+  if (EXACT_SENSITIVE_FIELDS.has(normalized)) {
+    return true;
+  }
+  return SENSITIVE_FIELDS
+    .filter((field) => !EXACT_SENSITIVE_FIELDS.has(normalizeField(field)))
+    .some((field) => normalized.includes(normalizeField(field)));
 }
 
 function redactValue(value: unknown): unknown {

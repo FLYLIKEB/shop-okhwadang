@@ -55,7 +55,7 @@ describe('useAsyncAction', () => {
     expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it('실패 시 에러 토스트 + onError 콜백 + 에러 throw', async () => {
+  it('실패 시 기본적으로 에러 토스트 + onError 콜백 후 undefined를 반환한다', async () => {
     const err = new Error('서버 오류');
     const fn = vi.fn().mockRejectedValue(err);
     const onError = vi.fn();
@@ -65,10 +65,12 @@ describe('useAsyncAction', () => {
       { wrapper },
     );
 
+    let returned: unknown;
     await act(async () => {
-      await expect(result.current.execute(undefined)).rejects.toThrow('서버 오류');
+      returned = await result.current.execute(undefined);
     });
 
+    expect(returned).toBeUndefined();
     expect(toast.error).toHaveBeenCalledWith('서버 오류');
     expect(onError).toHaveBeenCalledWith(err);
   });
@@ -82,7 +84,7 @@ describe('useAsyncAction', () => {
     );
 
     await act(async () => {
-      await expect(result.current.execute(undefined)).rejects.toBe('string-error');
+      await result.current.execute(undefined);
     });
 
     expect(toast.error).toHaveBeenCalledWith('커스텀 폴백');
@@ -94,10 +96,28 @@ describe('useAsyncAction', () => {
     const { result } = renderHook(() => useAsyncAction(fn), { wrapper });
 
     await act(async () => {
-      await expect(result.current.execute(undefined)).rejects.toBeNull();
+      await result.current.execute(undefined);
     });
 
     expect(toast.error).toHaveBeenCalledWith('오류가 발생했습니다.');
+  });
+
+
+
+  it('throwOnError 옵션이 있으면 처리 후 원래 에러를 다시 throw한다', async () => {
+    const err = new Error('서버 오류');
+    const fn = vi.fn().mockRejectedValue(err);
+
+    const { result } = renderHook(
+      () => useAsyncAction(fn, { throwOnError: true }),
+      { wrapper },
+    );
+
+    await act(async () => {
+      await expect(result.current.execute(undefined)).rejects.toThrow('서버 오류');
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('서버 오류');
   });
 
   it('실행 중 isLoading이 true가 되고 완료 후 false로 돌아온다', async () => {

@@ -871,7 +871,18 @@
       "settings": "Settings",
       "shopName": "Ockhwadang",
       "adminPanel": "Admin Panel",
-      "backToShop": "Back to Shop"
+      "backToShop": "Back to Shop",
+      "productsGroup": "Products",
+      "operationsGroup": "Operations",
+      "settingsGroup": "Site Settings",
+      "inquiries": "Inquiries",
+      "announcementBars": "Announcement Bars",
+      "collections": "Collections",
+      "journal": "Journal",
+      "archives": "Archives",
+      "business": "Business Info",
+      "close": "Close sidebar",
+      "cmsGroup": "CMS"
     },
     "navigation": {
       "title": "Navigation Management"

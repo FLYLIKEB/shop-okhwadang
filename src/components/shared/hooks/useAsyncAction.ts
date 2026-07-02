@@ -6,6 +6,7 @@ import { handleApiError } from '@/utils/error';
 import { useGlobalLoading } from '@/contexts/GlobalLoadingContext';
 
 interface UseAsyncActionOptions {
+  throwOnError?: boolean;
   onSuccess?: () => void;
   onError?: (err: unknown) => void;
   successMessage?: string;
@@ -43,7 +44,10 @@ export function useAsyncAction<T, A = void>(
       const message = handleApiError(err, optRef.current.errorMessage ?? '오류가 발생했습니다.');
       toast.error(message);
       optRef.current.onError?.(err);
-      throw err;
+      if (optRef.current.throwOnError) {
+        throw err;
+      }
+      return undefined as T;
     } finally {
       setIsLoading(false);
       stopLoadingRef.current();

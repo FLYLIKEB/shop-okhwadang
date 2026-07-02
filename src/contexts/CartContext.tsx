@@ -12,7 +12,8 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import { useLocale } from 'next-intl';
-import { cartApi, CartItem, CartResponse } from '@/lib/api';
+import * as api from '@/lib/api';
+import type { CartItem, CartResponse, Product } from '@/lib/api';
 import { useAuth } from './AuthContext';
 import { handleApiError } from '@/utils/error';
 import { toastMessage } from '@/utils/toastMessages';
@@ -61,21 +62,43 @@ function clearGuestCart(): void {
   localStorage.removeItem(GUEST_CART_KEY);
 }
 
-function guestCartToCartResponse(items: GuestCartItem[]): CartResponse {
-  const cartItems: CartItem[] = items.map((item, index) => ({
-    id: -(index + 1),
-    productId: item.productId,
-    productOptionId: item.productOptionId,
-    quantity: item.quantity,
-    unitPrice: 0,
-    subtotal: 0,
-    product: { id: item.productId, name: '', slug: '', price: 0, salePrice: null, status: '', images: [] },
-    option: null,
-  }));
+async function guestCartToCartResponse(items: GuestCartItem[], locale: string): Promise<CartResponse> {
+  const ids = [...new Set(items.map((item) => item.productId))];
+  const productApi = 'productsApi' in api ? api.productsApi : null;
+  const products: Product[] = ids.length > 0 && productApi
+    ? await productApi.getBulk(ids, locale).catch(() => [])
+    : [];
+  const productMap = new Map(products.map((product) => [product.id, product]));
+
+  const cartItems: CartItem[] = items.map((item, index) => {
+    const product = productMap.get(item.productId);
+    const unitPrice = product?.salePrice ?? product?.price ?? 0;
+
+    return {
+      id: -(index + 1),
+      productId: item.productId,
+      productOptionId: item.productOptionId,
+      quantity: item.quantity,
+      unitPrice,
+      subtotal: unitPrice * item.quantity,
+      product: {
+        id: item.productId,
+        name: product?.name ?? '',
+        slug: product?.slug ?? '',
+        price: product?.price ?? 0,
+        salePrice: product?.salePrice ?? null,
+        status: product?.status ?? '',
+        isFreeShipping: product?.isFreeShipping,
+        images: product?.images ?? [],
+      },
+      option: null,
+    };
+  });
+
   return {
     items: cartItems,
-    totalAmount: 0,
-    itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
+    totalAmount: cartItems.reduce((sum, item) => sum + item.subtotal, 0),
+    itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
   };
 }
 
@@ -92,12 +115,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const fetchCart = useCallback(async () => {
     if (!isAuthenticated) {
-      setCartData(guestCartToCartResponse(loadGuestCart()));
+      setCartData(await guestCartToCartResponse(loadGuestCart(), locale));
       return;
     }
     setIsLoading(true);
     try {
-      const data = await cartApi.getList({ params: { locale } });
+      const data = await api.cartApi.getList({ params: { locale } });
       setCartData(data);
     } catch {
       // silent — cart load failure should not block the UI
@@ -112,7 +135,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     prevAuthRef.current = isAuthenticated;
 
     if (!isAuthenticated) {
-      if (mounted) setCartData(guestCartToCartResponse(loadGuestCart()));
+      void guestCartToCartResponse(loadGuestCart(), locale).then((data) => {
+        if (mounted) setCartData(data);
+      });
       return;
     }
 
@@ -120,14 +145,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (wasAuthenticated === false) {
         const guestItems = loadGuestCart();
         if (guestItems.length > 0) {
-          await Promise.allSettled(guestItems.map((item) => cartApi.add(item)));
+          await Promise.allSettled(guestItems.map((item) => api.cartApi.add(item)));
           clearGuestCart();
         }
       }
 
       setIsLoading(true);
       try {
-        const data = await cartApi.getList({ params: { locale } });
+        const data = await api.cartApi.getList({ params: { locale } });
         if (mounted) setCartData(data);
       } catch {
         // silent
@@ -154,10 +179,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
           guestItems.push(params);
         }
         saveGuestCart(guestItems);
-        setCartData(guestCartToCartResponse(guestItems));
+        setCartData(await guestCartToCartResponse(guestItems, locale));
         return;
       }
-      const data = await cartApi.add(params, { params: { locale } });
+      const data = await api.cartApi.add(params, { params: { locale } });
       setCartData(data);
     },
     [isAuthenticated, locale],
@@ -172,7 +197,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           guestItems[index].quantity = quantity;
           saveGuestCart(guestItems);
         }
-        setCartData(guestCartToCartResponse(guestItems));
+        setCartData(await guestCartToCartResponse(guestItems, locale));
         return;
       }
       setCartData((prev) => ({
@@ -186,13 +211,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ),
       }));
       try {
-        await cartApi.updateQuantity(id, { quantity });
+        await api.cartApi.updateQuantity(id, { quantity });
       } catch (err) {
         toast.error(handleApiError(err, toastMessage('cartQuantityUpdateError')));
         await fetchCart();
       }
     },
-    [isAuthenticated, fetchCart],
+    [isAuthenticated, fetchCart, locale],
   );
 
   const removeItem = useCallback(
@@ -202,11 +227,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const index = -(id + 1);
         guestItems.splice(index, 1);
         saveGuestCart(guestItems);
-        setCartData(guestCartToCartResponse(guestItems));
+        setCartData(await guestCartToCartResponse(guestItems, locale));
         toast.success(toastMessage('deleted'));
         return;
       }
-      await cartApi.remove(id);
+      await api.cartApi.remove(id);
       setCartData((prev) => {
         const items = prev.items.filter((item) => item.id !== id);
         const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
@@ -215,7 +240,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
       toast.success(toastMessage('deleted'));
     },
-    [isAuthenticated],
+    [isAuthenticated, locale],
   );
 
   const value = useMemo(

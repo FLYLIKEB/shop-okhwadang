@@ -1,14 +1,9 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import type { AdminMember } from '@/lib/api';
 import { MemberRoleSelect } from './MemberRoleSelect';
 import { StatusBadge } from './StatusBadge';
-
-const ROLE_LABELS: Record<string, string> = {
-  user: '일반회원',
-  admin: '관리자',
-  super_admin: '최고관리자',
-};
 
 interface AdminMembersTableProps {
   members: AdminMember[];
@@ -16,9 +11,13 @@ interface AdminMembersTableProps {
 }
 
 export function AdminMembersTable({ members, onRoleChange }: AdminMembersTableProps) {
+  const t = useTranslations('admin.members');
+  const locale = useLocale();
+  const dateLocale = locale === 'en' ? 'en-US' : 'ko-KR';
+
   if (members.length === 0) {
     return (
-      <p className="py-8 text-center text-muted-foreground">회원이 없습니다.</p>
+      <p className="py-8 text-center text-muted-foreground">{t('noMembers')}</p>
     );
   }
 
@@ -27,13 +26,13 @@ export function AdminMembersTable({ members, onRoleChange }: AdminMembersTablePr
       <table className="w-full text-sm">
         <thead className="bg-muted/50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium">ID</th>
-            <th className="px-4 py-3 text-left font-medium">이메일</th>
-            <th className="px-4 py-3 text-left font-medium">이름</th>
-            <th className="px-4 py-3 text-left font-medium">역할</th>
-            <th className="px-4 py-3 text-left font-medium">상태</th>
-            <th className="px-4 py-3 text-left font-medium">가입일</th>
-            <th className="px-4 py-3 text-left font-medium">역할 변경</th>
+            <th className="px-4 py-3 text-left font-medium">{t('columns.id')}</th>
+            <th className="px-4 py-3 text-left font-medium">{t('columns.email')}</th>
+            <th className="px-4 py-3 text-left font-medium">{t('columns.name')}</th>
+            <th className="px-4 py-3 text-left font-medium">{t('columns.role')}</th>
+            <th className="px-4 py-3 text-left font-medium">{t('columns.status')}</th>
+            <th className="px-4 py-3 text-left font-medium">{t('columns.joinDate')}</th>
+            <th className="px-4 py-3 text-left font-medium">{t('columns.changeRole')}</th>
           </tr>
         </thead>
         <tbody className="divide-y">
@@ -44,14 +43,14 @@ export function AdminMembersTable({ members, onRoleChange }: AdminMembersTablePr
               <td className="px-4 py-3">{member.name}</td>
               <td className="px-4 py-3">
                 <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
-                  {ROLE_LABELS[member.role] ?? member.role}
+                  {t(`roles.${member.role}`)}
                 </span>
               </td>
               <td className="px-4 py-3">
                 <StatusBadge isActive={member.isActive} />
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                {new Date(member.createdAt).toLocaleDateString('ko-KR')}
+                {new Date(member.createdAt).toLocaleDateString(dateLocale)}
               </td>
               <td className="px-4 py-3">
                 {member.isActive ? (
@@ -61,7 +60,7 @@ export function AdminMembersTable({ members, onRoleChange }: AdminMembersTablePr
                     onRoleChange={onRoleChange}
                   />
                 ) : (
-                  <span className="text-xs text-muted-foreground">변경 불가</span>
+                  <span className="text-xs text-muted-foreground">{t('cannotChange')}</span>
                 )}
               </td>
             </tr>

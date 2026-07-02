@@ -3,6 +3,16 @@ import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, S
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
+class BackendHttpError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = 'BackendHttpError';
+  }
+}
+
 
 interface CollectionItem {
   id: number;
@@ -46,7 +56,7 @@ async function fetchFromBackend<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
+    throw new BackendHttpError(error.message || `HTTP ${response.status}`, response.status);
   }
 
   return response.json() as Promise<T>;
@@ -77,8 +87,11 @@ export function fetchCategories(locale?: string) {
 export const fetchProduct = cache(async (id: number, locale?: string): Promise<ProductDetail | null> => {
   try {
     return await fetchFromBackend<ProductDetail>(`/products/${id}`, locale ? { locale } : undefined);
-  } catch {
-    return null;
+  } catch (err) {
+    if (err instanceof BackendHttpError && err.status === 404) {
+      return null;
+    }
+    throw err;
   }
 });
 

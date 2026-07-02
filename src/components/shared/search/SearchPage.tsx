@@ -11,6 +11,8 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { productsApi, type Product, type ProductSort } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
+import { usePathname } from 'next/navigation';
+import type { Locale } from '@/utils/currency';
 
 const SORT_OPTIONS: ProductSort[] = ['latest', 'popular', 'price_asc', 'price_desc'];
 
@@ -26,6 +28,8 @@ export default function SearchPage() {
     priceMax,
     updateQuery,
   } = useCatalogQueryParams();
+  const pathname = usePathname();
+  const locale = pathname?.split('/').filter(Boolean)[0] === 'en' ? 'en' : 'ko' as Locale;
   const tProduct = useTranslations('product');
   const tCommon = useTranslations('common');
 
@@ -168,6 +172,7 @@ export default function SearchPage() {
                 images={product.images}
                 categoryName={product.category?.name ?? null}
                 isFreeShipping={product.isFreeShipping}
+                locale={locale}
               />
             ))}
           </div>
