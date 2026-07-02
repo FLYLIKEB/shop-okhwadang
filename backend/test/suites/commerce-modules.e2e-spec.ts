@@ -204,17 +204,10 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
         .expect(201);
       const expiredCouponId = Number((expiredCouponRes.body as { id: number }).id);
 
-      const expiredIssueRes = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/api/admin/coupons/issue')
         .set('Cookie', adminCookies)
         .send({ couponId: expiredCouponId, userId })
-        .expect(201);
-      const expiredUserCouponId = Number((expiredIssueRes.body as { id: number }).id);
-
-      await request(app.getHttpServer())
-        .post('/api/coupons/calculate')
-        .set('Cookie', userCookies)
-        .send({ orderAmount: 15000, userCouponId: expiredUserCouponId })
         .expect(400);
 
       const orderRes = await request(app.getHttpServer())
