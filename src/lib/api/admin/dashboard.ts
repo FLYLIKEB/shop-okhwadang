@@ -8,6 +8,8 @@ export interface DashboardKpi {
   new_members_today: number;
   new_members_diff_pct: number;
   total_product_views: number;
+  deletion_pending_count: number;
+  deletion_completed_count: number;
 }
 
 export interface RevenueChartItem {

@@ -158,7 +158,7 @@ export default function DashboardPage() {
       ) : data ? (
         <div className="space-y-6">
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
             <KpiCard
               label="오늘 매출"
               value={formatCurrency(data.kpi.today_revenue)}
@@ -180,6 +180,18 @@ export default function DashboardPage() {
               label="상품 조회수"
               value={data.kpi.total_product_views.toLocaleString()}
               diffPct={0}
+            />
+            <KpiCard
+              label="탈퇴 예정"
+              value={(data.kpi.deletion_pending_count ?? 0).toLocaleString()}
+              diffPct={0}
+              unit="명"
+            />
+            <KpiCard
+              label="탈퇴 완료"
+              value={(data.kpi.deletion_completed_count ?? 0).toLocaleString()}
+              diffPct={0}
+              unit="명"
             />
           </div>
 

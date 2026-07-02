@@ -1,16 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { adminMembersApi } from '@/lib/api';
 import { toastMessage } from '@/utils/toastMessages';
-
-const ROLE_LABELS: Record<string, string> = {
-  user: '일반회원',
-  admin: '관리자',
-  super_admin: '최고관리자',
-};
 
 const ALL_ROLES = ['user', 'admin', 'super_admin'];
 
@@ -21,6 +16,7 @@ interface MemberRoleSelectProps {
 }
 
 export function MemberRoleSelect({ memberId, currentRole, onRoleChange }: MemberRoleSelectProps) {
+  const t = useTranslations('admin.members.roles');
   const [updating, setUpdating] = useState(false);
 
   const handleChange = async (nextRole: string) => {
@@ -29,7 +25,7 @@ export function MemberRoleSelect({ memberId, currentRole, onRoleChange }: Member
     setUpdating(true);
     try {
       await adminMembersApi.updateRole(memberId, nextRole);
-      toast.success(toastMessage('roleChanged', { role: ROLE_LABELS[nextRole] ?? nextRole }));
+      toast.success(toastMessage('roleChanged', { role: t(nextRole) }));
       onRoleChange();
     } catch (err) {
       toast.error(handleApiError(err, toastMessage('roleChangeError')));
@@ -47,7 +43,7 @@ export function MemberRoleSelect({ memberId, currentRole, onRoleChange }: Member
     >
       {ALL_ROLES.map((role) => (
         <option key={role} value={role}>
-          {ROLE_LABELS[role]}
+          {t(role)}
         </option>
       ))}
     </select>

@@ -2,7 +2,7 @@ import {
   Injectable, NotFoundException, BadRequestException, Logger, Optional,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { Brackets, DataSource, EntityManager, Repository } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
@@ -403,14 +403,38 @@ export class OrdersService {
     userId: number,
     dto: CreateOrderDto,
   ): Promise<void> {
+    const pairs = dto.items.map((item) => ({
+      productId: item.productId,
+      productOptionId: item.productOptionId ?? null,
+    }));
+
+    if (pairs.length === 0) {
+      return;
+    }
+
     await manager
       .createQueryBuilder()
       .delete()
       .from(CartItem)
       .where('userId = :userId', { userId })
-      .andWhere('productId IN (:...productIds)', {
-        productIds: dto.items.map((i) => i.productId),
-      })
+      .andWhere(
+        new Brackets((qb) => {
+          pairs.forEach((pair, index) => {
+            const condition = pair.productOptionId === null
+              ? `(productId = :productId${index} AND productOptionId IS NULL)`
+              : `(productId = :productId${index} AND productOptionId = :productOptionId${index})`;
+            const params = pair.productOptionId === null
+              ? { [`productId${index}`]: pair.productId }
+              : { [`productId${index}`]: pair.productId, [`productOptionId${index}`]: pair.productOptionId };
+
+            if (index === 0) {
+              qb.where(condition, params);
+            } else {
+              qb.orWhere(condition, params);
+            }
+          });
+        }),
+      )
       .execute();
   }
 

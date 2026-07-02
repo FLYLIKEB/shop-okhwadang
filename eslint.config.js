@@ -12,10 +12,17 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   {
-    ignores: ['backend/**', '.next/**'],
+    ignores: ['backend/**', '.next/**', 'scripts/venv/**', 'next-env.d.ts'],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
+    files: ['scripts/**/*.mjs', 'scripts/**/*.js'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx,js,jsx}', 'middleware.ts', 'next.config.ts', 'vitest.config.ts'],
     plugins: {
       import: eslintPluginImport,
     },

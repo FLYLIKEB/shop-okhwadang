@@ -105,6 +105,26 @@ export class CouponsService {
     };
   }
 
+
+  private assertCouponTemplateUsable(coupon: Coupon, now: Date): void {
+    if (!coupon.isActive) {
+      throw new BadRequestException('비활성화된 쿠폰입니다.');
+    }
+    if (coupon.startsAt > now) {
+      throw new BadRequestException('아직 사용할 수 없는 쿠폰입니다.');
+    }
+    if (coupon.expiresAt < now) {
+      throw new BadRequestException('만료된 쿠폰입니다.');
+    }
+  }
+
+  private assertUserCouponUsable(uc: UserCoupon, now: Date): void {
+    if (uc.status !== 'available') {
+      throw new BadRequestException('이미 사용된 쿠폰입니다.');
+    }
+    this.assertCouponTemplateUsable(uc.coupon, now);
+  }
+
   computeCouponDiscount(orderAmount: number, coupon: Coupon): number {
     const value = Number(coupon.value);
     const maxDiscount = coupon.maxDiscount != null ? Number(coupon.maxDiscount) : Infinity;
@@ -144,12 +164,7 @@ export class CouponsService {
       const uc = await findOrThrow(this.userCouponRepo, { id: userCouponId, userId }, '쿠폰을 찾을 수 없습니다.', ['coupon']);
 
       const now = new Date();
-      if (uc.coupon.expiresAt < now) {
-        throw new BadRequestException('만료된 쿠폰입니다.');
-      }
-      if (uc.status !== 'available') {
-        throw new BadRequestException('이미 사용된 쿠폰입니다.');
-      }
+      this.assertUserCouponUsable(uc, now);
       const minOrder = Number(uc.coupon.minOrderAmount);
       if (orderAmount < minOrder) {
         throw new BadRequestException(`${minOrder.toLocaleString()}원 이상 주문 시 사용 가능한 쿠폰입니다.`);
@@ -261,9 +276,7 @@ export class CouponsService {
     if (!coupon) {
       throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
     }
-    if (!coupon.isActive) {
-      throw new BadRequestException('비활성화된 쿠폰입니다.');
-    }
+    this.assertCouponTemplateUsable(coupon, new Date());
     if (coupon.totalQuantity != null && coupon.issuedCount >= coupon.totalQuantity) {
       throw new BadRequestException('발급 수량이 소진된 쿠폰입니다.');
     }
@@ -303,14 +316,8 @@ export class CouponsService {
         throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
       }
       assertOwnership(uc.userId, userId, '권한이 없는 쿠폰입니다.');
-      if (uc.status !== 'available') {
-        throw new BadRequestException('이미 사용된 쿠폰입니다.');
-      }
-
       const now = new Date();
-      if (uc.coupon.expiresAt < now) {
-        throw new BadRequestException('만료된 쿠폰입니다.');
-      }
+      this.assertUserCouponUsable(uc, now);
 
       uc.status = 'used';
       uc.usedAt = now;

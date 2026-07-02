@@ -26,7 +26,6 @@ export default defineConfig({
       exclude: [
         'src/test/**',
         '**/*.config.*',
-        'src/app/api/**',
         '**/*.d.ts',
       ],
     },

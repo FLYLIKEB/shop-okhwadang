@@ -31,10 +31,10 @@ describe('redactSensitiveFields', () => {
         approvalNumber: 'A-123',
       },
       customer: {
-        email: 'buyer@example.com',
+        email: '[REDACTED]',
         phone: '[REDACTED]',
         address: '[REDACTED]',
-        name: '홍길동',
+        name: '[REDACTED]',
       },
       items: [
         { productName: '보이차', token: '[REDACTED]' },

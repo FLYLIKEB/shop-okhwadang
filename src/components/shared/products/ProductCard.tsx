@@ -74,14 +74,14 @@ function ProductCard({
   const isSoldout = status === 'soldout';
   const clayTagClass = categoryName ? getClayTagClass(categoryName) : null;
   const hasRating = rating !== undefined && reviewCount !== undefined && reviewCount > 0;
+  const productHref = `/products/${id}`;
 
   const { addItem } = useCart();
   const { isWishlisted, loading: isWishlistLoading, toggle: handleToggleWishlist } = useWishlistToggle(id);
   const [isCartLoading, setIsCartLoading] = useState(false);
   const [hasImageError, setHasImageError] = useState(false);
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleAddToCart = async () => {
     setIsCartLoading(true);
     try {
       await addItem({ productId: id, productOptionId: null, quantity: 1 });
@@ -91,40 +91,40 @@ function ProductCard({
   };
 
   return (
-    <Link
-      href={`/products/${id}`}
-      locale={locale}
+    <article
       className={cn(
-        'group flex flex-col h-full',
+        'group flex h-full flex-col',
         isSoldout && 'opacity-60',
       )}
     >
       {/* ── 이미지 영역 — 오버레이 액션은 hover 시에만 노출 ── */}
       <div data-testid="product-card-image-frame" className="relative aspect-square overflow-hidden bg-secondary">
-        {thumbnail && !hasImageError ? (
-          <Image
-            src={thumbnail}
-            alt={name}
-            fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            priority={priority}
-            onError={() => setHasImageError(true)}
-          />
-        ) : (
-          <div data-testid="product-card-image-fallback" className="flex h-full w-full items-center justify-center bg-neutral-200">
+        <Link href={productHref} locale={locale} className="block h-full" aria-label={name}>
+          {thumbnail && !hasImageError ? (
             <Image
-              src="/logo-okhwadang.png"
-              alt="옥화당"
-              width={120}
-              height={34}
-              className="object-contain opacity-70 grayscale"
+              src={thumbnail}
+              alt={name}
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              priority={priority}
+              onError={() => setHasImageError(true)}
             />
-          </div>
-        )}
+          ) : (
+            <div data-testid="product-card-image-fallback" className="flex h-full w-full items-center justify-center bg-neutral-200">
+              <Image
+                src="/logo-okhwadang.png"
+                alt="옥화당"
+                width={120}
+                height={34}
+                className="object-contain opacity-70 grayscale"
+              />
+            </div>
+          )}
+        </Link>
 
         {isSoldout && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/70 pointer-events-none">
             <span className="data-label text-foreground tracking-widest">{t('stockStatus.soldout')}</span>
           </div>
         )}
@@ -132,7 +132,7 @@ function ProductCard({
         {categoryName && (
           <span
             className={cn(
-              'absolute left-2 bottom-2 z-10 px-2 py-0.5 tag-clay',
+              'absolute left-2 bottom-2 z-10 px-2 py-0.5 tag-clay pointer-events-none',
               clayTagClass ?? 'tag-generic',
             )}
           >
@@ -144,10 +144,7 @@ function ProductCard({
         <button
           type="button"
           aria-label={isWishlisted ? tWishlist('toggleOff') : tWishlist('toggleOn')}
-          onClick={(e) => {
-            e.preventDefault();
-            handleToggleWishlist(e);
-          }}
+          onClick={handleToggleWishlist}
           disabled={isWishlistLoading}
           className={cn(
             'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full',
@@ -166,7 +163,7 @@ function ProductCard({
         </button>
 
         {isFreeShipping && (
-          <span className="tag-clay absolute bottom-2 right-2 z-10 bg-foreground/85 px-2 py-0.5 text-background backdrop-blur-sm">
+          <span className="tag-clay absolute bottom-2 right-2 z-10 bg-foreground/85 px-2 py-0.5 text-background backdrop-blur-sm pointer-events-none">
             {t('badgeFreeShipping')}
           </span>
         )}
@@ -174,13 +171,10 @@ function ProductCard({
 
       {/* ── 정보 영역 — 상품명 > 가격 > 메타 위계 ── */}
       <div className="mt-3 flex flex-1 flex-col gap-1.5">
-        {/* 1순위: 상품명 */}
         <p className="typo-title line-clamp-3 break-words leading-snug text-foreground min-h-[3.75rem] md:min-h-[4.25rem]">{name}</p>
 
-        {/* 2순위: 가격 */}
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
 
-        {/* 3순위: 리뷰·설명 — 낮은 대비로 보조 */}
         <div className="mt-0.5 flex flex-col gap-1">
           {hasRating && (
             <div className="flex items-center gap-1.5">
@@ -207,7 +201,6 @@ function ProductCard({
           </p>
         )}
 
-        {/* 장바구니 담기 — 메타 아래 고정, hover 시 foreground 대비 강화 */}
         {!isSoldout && (
           <button
             type="button"
@@ -224,7 +217,7 @@ function ProductCard({
           </button>
         )}
       </div>
-    </Link>
+    </article>
   );
 }
 

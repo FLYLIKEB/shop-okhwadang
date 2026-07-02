@@ -129,12 +129,12 @@ describe('CartPage', () => {
     vi.clearAllMocks();
   });
 
-  it('shows login EmptyState when not authenticated', () => {
+  it('shows guest cart empty state when not authenticated and no guest items exist', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: false });
     mockUseCart.mockReturnValue(defaultCart);
 
     render(<CartPage />);
-    expect(screen.getByText('로그인이 필요합니다')).toBeInTheDocument();
+    expect(screen.getByText('장바구니가 비었습니다')).toBeInTheDocument();
   });
 
   it('shows empty cart EmptyState when authenticated but no items', () => {

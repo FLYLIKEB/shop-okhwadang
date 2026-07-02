@@ -105,20 +105,12 @@ export default function CartPage() {
     }
     const selectedItems = items.filter((item) => selectedIds.has(item.id));
     sessionStorage.setItem(SESSION_KEYS.CHECKOUT_ITEMS, JSON.stringify(selectedItems));
+    if (!isAuthenticated) {
+      router.push(`/${locale}/login?redirect=${encodeURIComponent(`/${locale}/checkout`)}`);
+      return;
+    }
     router.push(`/${locale}/checkout`);
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="layout-container layout-page">
-        <EmptyState
-          title={t('requireLogin')}
-          description={t('requireLoginDescription')}
-          action={{ label: t('loginAction'), onClick: () => router.push(`/${locale}/login`) }}
-        />
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (

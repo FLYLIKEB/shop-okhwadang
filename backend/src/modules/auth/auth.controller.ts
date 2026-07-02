@@ -98,7 +98,7 @@ export class AuthController {
     const userAgent = req.headers['user-agent'] ?? null;
     const { accessToken, refreshToken, user } = await this.authService.login(dto, ip, userAgent);
     setAuthCookies(res, accessToken, refreshToken, this.authConfig.cookie.secure);
-    return { user, accessToken, refreshToken };
+    return { user };
   }
 
   @Post('forgot-password')

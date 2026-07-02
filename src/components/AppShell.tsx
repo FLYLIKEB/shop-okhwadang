@@ -40,7 +40,6 @@ function SharedToaster() {
 
 export default function AppShell({
   children,
-  locale,
   mobileBottomNavVisible,
   announcementBar,
   businessInfo,

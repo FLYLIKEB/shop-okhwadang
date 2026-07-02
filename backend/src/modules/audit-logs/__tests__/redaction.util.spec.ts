@@ -14,7 +14,7 @@ describe('redactSensitiveFields', () => {
   });
 
   it('should not redact non-sensitive fields', () => {
-    const input = { name: 'John', email: 'john@example.com', id: 123 };
+    const input = { id: 123, status: 'active' };
     const result = redactSensitiveFields(input);
     expect(result).toEqual(input);
   });
@@ -22,25 +22,25 @@ describe('redactSensitiveFields', () => {
   it('should redact password field', () => {
     const input = { email: 'john@example.com', password: 'secret123' };
     const result = redactSensitiveFields(input);
-    expect(result).toEqual({ email: 'john@example.com', password: '[REDACTED]' });
+    expect(result).toEqual({ email: '[REDACTED]', password: '[REDACTED]' });
   });
 
   it('should redact nested sensitive fields', () => {
     const input = { user: { name: 'John', password: 'secret123' } };
     const result = redactSensitiveFields(input);
-    expect(result).toEqual({ user: { name: 'John', password: '[REDACTED]' } });
+    expect(result).toEqual({ user: { name: '[REDACTED]', password: '[REDACTED]' } });
   });
 
   it('should redact token field', () => {
     const input = { token: 'jwt-token-here', name: 'John' };
     const result = redactSensitiveFields(input);
-    expect(result).toEqual({ token: '[REDACTED]', name: 'John' });
+    expect(result).toEqual({ token: '[REDACTED]', name: '[REDACTED]' });
   });
 
   it('should redact refreshtoken field', () => {
     const input = { email: 'john@example.com', refreshtoken: 'refresh-token-here' };
     const result = redactSensitiveFields(input);
-    expect(result).toEqual({ email: 'john@example.com', refreshtoken: '[REDACTED]' });
+    expect(result).toEqual({ email: '[REDACTED]', refreshtoken: '[REDACTED]' });
   });
 
   it('should redact creditcard field', () => {
@@ -58,7 +58,7 @@ describe('redactSensitiveFields', () => {
   it('should recurse into arrays', () => {
     const input = { users: [{ name: 'John', password: 'secret' }] };
     const result = redactSensitiveFields(input);
-    expect(result).toEqual({ users: [{ name: 'John', password: '[REDACTED]' }] });
+    expect(result).toEqual({ users: [{ name: '[REDACTED]', password: '[REDACTED]' }] });
   });
 
   it('should handle mixed sensitive and non-sensitive fields', () => {
@@ -72,8 +72,8 @@ describe('redactSensitiveFields', () => {
     const result = redactSensitiveFields(input);
     expect(result).toEqual({
       id: 1,
-      name: 'John',
-      email: 'john@example.com',
+      name: '[REDACTED]',
+      email: '[REDACTED]',
       password: '[REDACTED]',
       token: '[REDACTED]',
     });
@@ -87,5 +87,7 @@ describe('SENSITIVE_FIELDS constant', () => {
     expect(SENSITIVE_FIELDS).toContain('refreshtoken');
     expect(SENSITIVE_FIELDS).toContain('creditcard');
     expect(SENSITIVE_FIELDS).toContain('ssn');
+    expect(SENSITIVE_FIELDS).toContain('email');
+    expect(SENSITIVE_FIELDS).toContain('name');
   });
 });

@@ -22,6 +22,7 @@ import { AttributesController } from './attributes.controller';
 import { CacheModule } from '../cache/cache.module';
 import { RestockAlertsModule } from '../restock-alerts/restock-alerts.module';
 import { RecentlyViewedProduct } from './entities/recently-viewed-product.entity';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { RecentlyViewedProduct } from './entities/recently-viewed-product.entity
     AttributesService,
     RecentlyViewedService,
     SmartStoreProductImportService,
+    OptionalJwtAuthGuard,
   ],
   controllers: [ProductsController, AdminProductsController, CategoriesController, AttributesController],
   exports: [
@@ -57,6 +59,7 @@ import { RecentlyViewedProduct } from './entities/recently-viewed-product.entity
     AttributesService,
     RecentlyViewedService,
     SmartStoreProductImportService,
+    OptionalJwtAuthGuard,
   ],
 })
 export class ProductsModule {}

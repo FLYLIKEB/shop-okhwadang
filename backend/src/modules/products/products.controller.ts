@@ -13,6 +13,7 @@ import {
   HttpStatus,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
@@ -40,6 +41,7 @@ import { RecentlyViewedService } from './recently-viewed.service';
 import { SmartStoreProductImportService } from './smartstore-product-import.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createSingleFileMemoryUploadOptions } from '../../common/multer/single-file-upload.options';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 
 @ApiTags('상품')
 @Controller('products')
@@ -86,6 +88,8 @@ export class ProductsController {
 
   @Get(':id')
   @Public()
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiCookieAuth()
   @ApiOperation({ summary: '상품 상세 조회', description: '상품 ID로 상품 상세 정보를 조회합니다.' })
   @ApiResponse({ status: 200, description: '상품 상세 조회 성공' })
   @ApiResponse({ status: 404, description: '상품을 찾을 수 없음' })

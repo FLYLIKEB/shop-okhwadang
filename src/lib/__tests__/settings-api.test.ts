@@ -1,28 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { SiteSetting } from '@/lib/api';
-
-vi.mock('@/lib/api', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/api')>('@/lib/api');
-  return {
-    ...actual,
-    settingsApi: {
-      getAll: vi.fn(),
-      getMap: vi.fn(),
-    },
-  };
-});
-
-import { settingsApi } from '@/lib/api';
-
-const mockGetAll = settingsApi.getAll as ReturnType<typeof vi.fn>;
-const mockGetMap = settingsApi.getMap as ReturnType<typeof vi.fn>;
+import { apiClient } from '@/lib/api/core';
+import { settingsApi, type SiteSetting } from '@/lib/api/settings';
 
 describe('settingsApi', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
-  it('getAll returns settings list', async () => {
+  it('getAll requests the grouped settings endpoint exactly', async () => {
     const mockSettings: SiteSetting[] = [
       {
         id: 1,
@@ -36,32 +21,32 @@ describe('settingsApi', () => {
         sortOrder: 1,
       },
     ];
-    mockGetAll.mockResolvedValue(mockSettings);
+    const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValue(mockSettings);
 
     const result = await settingsApi.getAll('theme');
 
-    expect(mockGetAll).toHaveBeenCalledWith('theme');
+    expect(getSpy).toHaveBeenCalledWith('/settings?group=theme');
     expect(result).toEqual(mockSettings);
   });
 
-  it('getAll without group returns all settings', async () => {
-    mockGetAll.mockResolvedValue([]);
+  it('getAll without group requests all settings without a query string', async () => {
+    const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValue([]);
 
     await settingsApi.getAll();
 
-    expect(mockGetAll).toHaveBeenCalledWith();
+    expect(getSpy).toHaveBeenCalledWith('/settings');
   });
 
-  it('getMap returns key-value map', async () => {
+  it('getMap requests the settings map endpoint exactly', async () => {
     const mockMap = {
       color_primary: '#2563eb',
       color_background: '#ffffff',
     };
-    mockGetMap.mockResolvedValue(mockMap);
+    const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValue(mockMap);
 
     const result = await settingsApi.getMap();
 
-    expect(mockGetMap).toHaveBeenCalled();
+    expect(getSpy).toHaveBeenCalledWith('/settings/map');
     expect(result).toEqual(mockMap);
   });
 });
