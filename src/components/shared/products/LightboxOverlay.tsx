@@ -31,6 +31,7 @@ interface LightboxOverlayProps {
   handleLightboxTouchMove: (e: React.TouchEvent) => void
   handleLightboxTouchEnd: (e: React.TouchEvent) => void
   isDragging: React.MutableRefObject<boolean>
+  lightboxDragMovedRef: React.MutableRefObject<boolean>
 }
 
 export default function LightboxOverlay({
@@ -52,6 +53,7 @@ export default function LightboxOverlay({
   handleLightboxTouchMove,
   handleLightboxTouchEnd,
   isDragging,
+  lightboxDragMovedRef,
 }: LightboxOverlayProps) {
   if (!lightboxOpen) return null
 
@@ -97,15 +99,17 @@ export default function LightboxOverlay({
       </button>
 
       <div
-        className="relative z-10 max-h-[85vh] max-w-[90vw]"
+        className="relative z-10 h-[85vh] w-[90vw] max-w-[90vw] touch-none select-none overflow-hidden"
         onClick={(e) => {
           e.stopPropagation()
-          if (!isDragging.current) {
-            if (lightboxZoomed) {
-              lightboxPanRef.current = { x: 0, y: 0 }
-            }
-            setLightboxZoomed(!lightboxZoomed)
+          if (isDragging.current || lightboxDragMovedRef.current) {
+            lightboxDragMovedRef.current = false
+            return
           }
+          if (lightboxZoomed) {
+            lightboxPanRef.current = { x: 0, y: 0 }
+          }
+          setLightboxZoomed(!lightboxZoomed)
         }}
         onMouseDown={handleLightboxMouseDown}
         onMouseMove={handleLightboxMouseMove}
@@ -113,16 +117,15 @@ export default function LightboxOverlay({
         onMouseLeave={handleLightboxMouseUp}
         style={{ cursor: lightboxZoomed ? (isDragging.current ? 'grabbing' : 'grab') : 'zoom-in' }}
       >
-        <div
-          className="relative transition-transform duration-200"
-          style={{ width: '90vw', height: 'auto', maxHeight: '85vh', aspectRatio: 'auto' }}
-        >
+        <div className="relative h-full w-full">
           <Image
             src={selectedImage.url}
             alt={selectedImage.alt ?? localMessage('product.defaultImage')}
-            width={900}
-            height={900}
-            className="object-contain w-full h-full"
+            fill
+            sizes="90vw"
+            className="object-contain select-none"
+            draggable={false}
+            onDragStart={(e) => e.preventDefault()}
             style={lightboxImageStyle}
             priority
           />

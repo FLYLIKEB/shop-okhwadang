@@ -79,6 +79,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
     lightboxPan,
     lightboxPanRef,
     isDragging,
+    lightboxDragMovedRef,
     handleLightboxMouseDown,
     handleLightboxMouseMove,
     handleLightboxMouseUp,
@@ -365,6 +366,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
         handleLightboxTouchMove={handleLightboxTouchMove}
         handleLightboxTouchEnd={handleLightboxTouchEnd}
         isDragging={isDragging}
+        lightboxDragMovedRef={lightboxDragMovedRef}
       />
     </>
   )
