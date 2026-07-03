@@ -4,6 +4,8 @@ import { NaverCommerceProductImportService } from '../naver-commerce-product-imp
 import { ProductCommandService } from '../product-command.service';
 import { SmartStoreProductImportService } from '../smartstore-product-import.service';
 import { RemoteImageIngestService } from '../../upload/remote-image-ingest.service';
+import { ProductKeywordMappingService } from '../product-keyword-mapping.service';
+import { AttributesService } from '../attributes.service';
 
 function createRepositoryMock(existingProducts: Product[] = []) {
   return {
@@ -28,6 +30,29 @@ function createIngestServiceMock() {
   };
 }
 
+function createCategoryRepositoryMock() {
+  return {
+    find: jest.fn().mockResolvedValue([{ id: 1, slug: 'teapot', name: '자사호', isActive: true }]),
+  };
+}
+
+function createAttributeTypeRepositoryMock() {
+  return {
+    find: jest.fn().mockResolvedValue([
+      { id: 10, code: 'clay_type', isActive: true },
+      { id: 11, code: 'teapot_shape', isActive: true },
+      { id: 14, code: 'clay_origin', isActive: true },
+    ]),
+  };
+}
+
+function createAttributesServiceMock() {
+  return {
+    setProductAttributes: jest.fn().mockResolvedValue([]),
+    createOrUpdateProductAttribute: jest.fn().mockResolvedValue({}),
+  };
+}
+
 function createService(
   fetchedProducts: NaverCommerceFetchedProduct[],
   existingProducts: Product[] = [],
@@ -38,10 +63,15 @@ function createService(
   const repository = createRepositoryMock(existingProducts);
   const commandService = createCommandServiceMock();
   const ingestService = createIngestServiceMock();
+  const attributesService = createAttributesServiceMock();
   const smartStoreImportService = new SmartStoreProductImportService(
     repository as never,
+    createCategoryRepositoryMock() as never,
+    createAttributeTypeRepositoryMock() as never,
     commandService as unknown as ProductCommandService,
     ingestService as unknown as RemoteImageIngestService,
+    new ProductKeywordMappingService(),
+    attributesService as unknown as AttributesService,
   );
   return {
     service: new NaverCommerceProductImportService(
@@ -61,7 +91,7 @@ const NAVER_PRODUCTS: NaverCommerceFetchedProduct[] = [
     listProduct: { originProductNo: 1001, channelProducts: [{ sellerManagementCode: 'SKU-1' }] },
     detailProduct: {
       originProduct: {
-        name: '네이버 상품 A',
+        name: '옥화당 자사호 황룡산 노단니 연자호 110cc',
         salePrice: 50000,
         stockQuantity: 3,
         statusType: 'SALE',
@@ -123,6 +153,13 @@ describe('NaverCommerceProductImportService', () => {
       galleryImageCount: 2,
       isFreeShipping: true,
       hasNoticeInfo: true,
+      automaticMapping: expect.objectContaining({
+        category: expect.objectContaining({ slug: 'teapot', categoryId: 1 }),
+        attributes: expect.arrayContaining([
+          expect.objectContaining({ code: 'clay_type', value: 'old_duanni', attributeTypeId: 10 }),
+          expect.objectContaining({ code: 'teapot_shape', value: 'lianzi', attributeTypeId: 11 }),
+        ]),
+      }),
     });
     expect(result.rows[1]).toMatchObject({ identifier: 'SKU-2', action: 'skip', status: 'valid' });
     expect(result.rows[1].errors.join(' ')).toContain('업데이트 대상에서 제외');
@@ -146,7 +183,7 @@ describe('NaverCommerceProductImportService', () => {
     expect(commandService.update).toHaveBeenCalledWith(
       7,
       expect.objectContaining({
-        name: '네이버 상품 A',
+        name: '옥화당 자사호 황룡산 노단니 연자호 110cc',
         sku: 'SKU-1',
         price: 50000,
         stock: 3,

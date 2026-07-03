@@ -87,6 +87,8 @@ const naverResult: SmartStoreProductImportResult = {
       hasDiscount: false,
       isFreeShipping: true,
       hasNoticeInfo: true,
+      automaticMapping: { status: 'none', attributes: [], options: [] },
+      mappingWarnings: [],
       errors: [],
     },
   ],

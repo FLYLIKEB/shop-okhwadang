@@ -40,6 +40,14 @@ export type UpdateProductData = Partial<CreateProductData>;
 export type SmartStoreImportAction = 'create' | 'update' | 'skip';
 export type SmartStoreImportStatus = 'valid' | 'failed' | 'success';
 
+export interface SmartStoreAutomaticMappingResult {
+  status: 'none' | 'mapped' | 'needs_review';
+  category?: { slug: string; displayName: string; categoryId?: number };
+  attributes: Array<{ code: string; value: string; displayValue: string; attributeTypeId?: number }>;
+  options: Array<{ name: string; value: string }>;
+  noticeInfoType?: 'teaware' | 'tea';
+}
+
 export interface SmartStoreProductImportRow {
   rowNumber: number;
   identifier: string | null;
@@ -55,6 +63,8 @@ export interface SmartStoreProductImportRow {
   hasDiscount: boolean;
   isFreeShipping: boolean | null;
   hasNoticeInfo: boolean;
+  automaticMapping: SmartStoreAutomaticMappingResult;
+  mappingWarnings: string[];
   errors: string[];
 }
 

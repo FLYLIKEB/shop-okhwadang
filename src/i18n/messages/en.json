@@ -783,7 +783,8 @@
           "discount": "Discount",
           "freeShipping": "Free shipping",
           "noticeInfo": "Notice info",
-          "matchedProduct": "Matched product"
+          "matchedProduct": "Matched product",
+          "automaticMapping": "Auto mapping"
         },
         "actions": {
           "create": "Create",
@@ -813,6 +814,19 @@
           "discountNone": "No",
           "productLink": "View product #{id}",
           "notLinked": "New product"
+        },
+        "mappingStatus": {
+          "none": "None",
+          "mapped": "Auto mapped",
+          "needs_review": "Needs review"
+        },
+        "mappingValues": {
+          "category": "Category {value}",
+          "noticeInfo": "Notice {value}"
+        },
+        "noticeInfoTypes": {
+          "teaware": "Teaware",
+          "tea": "Tea"
         }
       },
       "naverCommerce": {

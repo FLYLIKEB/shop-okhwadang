@@ -17,6 +17,7 @@ import { RecentlyViewedService } from './recently-viewed.service';
 import { SmartStoreProductImportService } from './smartstore-product-import.service';
 import { NaverCommerceApiClient } from './naver-commerce-api.client';
 import { NaverCommerceProductImportService } from './naver-commerce-product-import.service';
+import { ProductKeywordMappingService } from './product-keyword-mapping.service';
 import { ProductsController } from './products.controller';
 import { AdminProductsController } from './admin-products.controller';
 import { CategoriesController } from './categories.controller';
@@ -54,6 +55,7 @@ import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guar
     SmartStoreProductImportService,
     NaverCommerceApiClient,
     NaverCommerceProductImportService,
+    ProductKeywordMappingService,
     OptionalJwtAuthGuard,
   ],
   controllers: [ProductsController, AdminProductsController, CategoriesController, AttributesController],
@@ -67,6 +69,7 @@ import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guar
     SmartStoreProductImportService,
     NaverCommerceApiClient,
     NaverCommerceProductImportService,
+    ProductKeywordMappingService,
     OptionalJwtAuthGuard,
   ],
 })

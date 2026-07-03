@@ -4,11 +4,34 @@ import { ProductStatus, Product } from '../entities/product.entity';
 import { SmartStoreProductImportService } from '../smartstore-product-import.service';
 import { ProductCommandService } from '../product-command.service';
 import { RemoteImageIngestService } from '../../upload/remote-image-ingest.service';
+import { ProductKeywordMappingService } from '../product-keyword-mapping.service';
+import { AttributesService } from '../attributes.service';
 
 function createRepositoryMock(existingProducts: Product[] = []) {
   return {
     find: jest.fn().mockResolvedValue(existingProducts),
     findOne: jest.fn().mockResolvedValue(null),
+  };
+}
+
+function createCategoryRepositoryMock() {
+  return {
+    find: jest.fn().mockResolvedValue([
+      { id: 1, slug: 'teapot', name: '자사호', isActive: true },
+      { id: 2, slug: 'puerh-tea', name: '보이차', isActive: true },
+    ]),
+  };
+}
+
+function createAttributeTypeRepositoryMock() {
+  return {
+    find: jest.fn().mockResolvedValue([
+      { id: 10, code: 'clay_type', isActive: true },
+      { id: 11, code: 'teapot_shape', isActive: true },
+      { id: 12, code: 'capacity', isActive: true },
+      { id: 13, code: 'craft_method', isActive: true },
+      { id: 14, code: 'clay_origin', isActive: true },
+    ]),
   };
 }
 
@@ -28,6 +51,13 @@ function createIngestServiceMock() {
   };
 }
 
+function createAttributesServiceMock() {
+  return {
+    setProductAttributes: jest.fn().mockResolvedValue([]),
+    createOrUpdateProductAttribute: jest.fn().mockResolvedValue({}),
+  };
+}
+
 function ingestedUrl(url: string): string {
   return `https://cdn.okhwadang.com/uploads/${encodeURIComponent(url)}`;
 }
@@ -36,11 +66,18 @@ function createService(
   repository: ReturnType<typeof createRepositoryMock>,
   commandService: ReturnType<typeof createCommandServiceMock>,
   ingestService: ReturnType<typeof createIngestServiceMock> = createIngestServiceMock(),
+  categoryRepository: ReturnType<typeof createCategoryRepositoryMock> = createCategoryRepositoryMock(),
+  attributeTypeRepository: ReturnType<typeof createAttributeTypeRepositoryMock> = createAttributeTypeRepositoryMock(),
+  attributesService: ReturnType<typeof createAttributesServiceMock> = createAttributesServiceMock(),
 ) {
   return new SmartStoreProductImportService(
     repository as never,
+    categoryRepository as never,
+    attributeTypeRepository as never,
     commandService as unknown as ProductCommandService,
     ingestService as unknown as RemoteImageIngestService,
+    new ProductKeywordMappingService(),
+    attributesService as unknown as AttributesService,
   );
 }
 
@@ -68,6 +105,100 @@ function createFile(buffer: Buffer, overrides: Partial<Express.Multer.File> = {}
 }
 
 describe('SmartStoreProductImportService', () => {
+
+  it('previews keyword-based category, attribute, option, and notice mappings without saving', async () => {
+    const repository = createRepositoryMock([]);
+    const commandService = createCommandServiceMock();
+    const attributesService = createAttributesServiceMock();
+    const service = createService(
+      repository,
+      commandService,
+      createIngestServiceMock(),
+      createCategoryRepositoryMock(),
+      createAttributeTypeRepositoryMock(),
+      attributesService,
+    );
+    const buffer = await createWorkbookBuffer([
+      ['판매자상품코드', '상품명', '판매가'],
+      ['SKU-1', '옥화당 자사호 황룡산 노단니 연자호 110cc', 12000],
+    ]);
+
+    const result = await service.preview(createFile(buffer));
+
+    expect(result.rows[0].automaticMapping).toMatchObject({
+      status: 'needs_review',
+      category: { slug: 'teapot', displayName: '자사호', categoryId: 1 },
+      attributes: expect.arrayContaining([
+        expect.objectContaining({ code: 'clay_type', value: 'old_duanni', displayValue: '노단니', attributeTypeId: 10 }),
+        expect.objectContaining({ code: 'teapot_shape', value: 'lianzi', displayValue: '연자호', attributeTypeId: 11 }),
+        expect.objectContaining({ code: 'clay_origin', value: 'huanglongshan', displayValue: '황룡산', attributeTypeId: 14 }),
+      ]),
+      options: [expect.objectContaining({ name: '용량', value: '110cc' })],
+      noticeInfoType: 'teaware',
+    });
+    expect(result.rows[0].mappingWarnings.join(' ')).toContain('단니');
+    expect(commandService.create).not.toHaveBeenCalled();
+    expect(attributesService.createOrUpdateProductAttribute).not.toHaveBeenCalled();
+  });
+
+  it('commits keyword mappings to categoryId, generated options, notice info, and product_attributes', async () => {
+    const repository = createRepositoryMock([]);
+    const commandService = createCommandServiceMock();
+    const attributesService = createAttributesServiceMock();
+    const service = createService(
+      repository,
+      commandService,
+      createIngestServiceMock(),
+      createCategoryRepositoryMock(),
+      createAttributeTypeRepositoryMock(),
+      attributesService,
+    );
+    const buffer = await createWorkbookBuffer([
+      ['판매자상품코드', '상품명', '판매가'],
+      ['SKU-1', '옥화당 자사호 황룡산 강파니 방고호 130cc', 12000],
+    ]);
+
+    await service.commit(createFile(buffer));
+
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+      categoryId: 1,
+      noticeInfo: expect.objectContaining({ type: 'teaware', productName: '옥화당 자사호 황룡산 강파니 방고호 130cc', sizeCapacity: '130cc' }),
+      options: [expect.objectContaining({ name: '용량', value: '130cc', priceAdjustment: 0, stock: 0 })],
+    }));
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(100, 10, expect.objectContaining({
+      attributeTypeId: 10,
+      value: 'jiangponi',
+      displayValue: '강파니',
+    }));
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(100, 11, expect.objectContaining({
+      attributeTypeId: 11,
+      value: 'fanggu',
+      displayValue: '방고호',
+    }));
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(100, 14, expect.objectContaining({
+      attributeTypeId: 14,
+      value: 'huanglongshan',
+      displayValue: '황룡산',
+    }));
+  });
+
+  it('keeps explicit SmartStore options over keyword option candidates', async () => {
+    const repository = createRepositoryMock([]);
+    const commandService = createCommandServiceMock();
+    const service = createService(repository, commandService);
+    const buffer = await createWorkbookBuffer([
+      ['판매자상품코드', '상품명', '판매가', '옵션형태', '옵션명', '옵션값'],
+      ['SKU-1', '옥화당 자사호 노단니 연자호 120cc', 10000, '단독형', '색상', '노단니'],
+    ]);
+
+    const result = await service.commit(createFile(buffer));
+
+    expect(result.rows[0].mappingWarnings.join(' ')).toContain('명시 옵션');
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+      options: [expect.objectContaining({ name: '색상', value: '노단니' })],
+    }));
+  });
+
   it('previews create and update actions by SKU without saving', async () => {
     const existing = { id: 7, sku: 'SKU-2', slug: 'old-product' } as Product;
     const repository = createRepositoryMock([existing]);
