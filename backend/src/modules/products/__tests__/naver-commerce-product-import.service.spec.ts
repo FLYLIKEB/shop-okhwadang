@@ -41,6 +41,7 @@ function createAttributeTypeRepositoryMock() {
     find: jest.fn().mockResolvedValue([
       { id: 10, code: 'clay_type', isActive: true },
       { id: 11, code: 'teapot_shape', isActive: true },
+      { id: 12, code: 'capacity', isActive: true },
       { id: 14, code: 'clay_origin', isActive: true },
     ]),
   };

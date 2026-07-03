@@ -8,9 +8,10 @@ describe('ProductKeywordMappingService', () => {
     const result = service.analyzeProductName('옥화당 (老段泥) 120 mL');
 
     expect(result.normalizedName).toBe('옥화당 老段泥 120 ml');
-    expect(result.attributes).toEqual([
+    expect(result.attributes).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: 'clay_type', value: 'old_duanni', displayValue: '노단니' }),
-    ]);
+      expect.objectContaining({ code: 'capacity', value: '120ml', displayValue: '120ml' }),
+    ]));
     expect(result.options).toEqual([
       expect.objectContaining({ name: '용량', value: '120ml' }),
     ]);
@@ -24,6 +25,7 @@ describe('ProductKeywordMappingService', () => {
       expect.objectContaining({ code: 'clay_type', value: 'old_duanni', displayValue: '노단니' }),
       expect.objectContaining({ code: 'teapot_shape', value: 'lianzi', displayValue: '연자호' }),
       expect.objectContaining({ code: 'clay_origin', value: 'huanglongshan', displayValue: '황룡산' }),
+      expect.objectContaining({ code: 'capacity', value: '110cc', displayValue: '110cc' }),
     ]));
     expect(result.attributes).not.toEqual(expect.arrayContaining([
       expect.objectContaining({ code: 'clay_type', value: 'duanni' }),
@@ -44,8 +46,38 @@ describe('ProductKeywordMappingService', () => {
       expect.objectContaining({ code: 'clay_type', value: 'jiangponi' }),
       expect.objectContaining({ code: 'teapot_shape', value: 'fanggu' }),
       expect.objectContaining({ code: 'clay_origin', value: 'huanglongshan' }),
+      expect.objectContaining({ code: 'capacity', value: '130cc' }),
     ]));
     expect(result.options).toEqual([expect.objectContaining({ value: '130cc' })]);
+  });
+
+
+  it('deduplicates nested shape aliases and keeps only one lower-priority warning', () => {
+    const result = service.analyzeProductName('옥화당 자사호 옥백니 평개연자호 135cc');
+
+    expect(result.attributes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'clay_type', value: 'yubaini', displayValue: '옥백니' }),
+      expect.objectContaining({ code: 'teapot_shape', value: 'pinggai_lianzi', displayValue: '평개연자호' }),
+      expect.objectContaining({ code: 'capacity', value: '135cc', displayValue: '135cc' }),
+    ]));
+    expect(result.warnings.filter((warning) => warning.includes("후보 '연자호'"))).toHaveLength(1);
+  });
+
+  it('maps follow-up SmartStore words from the remote preview sample', () => {
+    const cases = [
+      ['옥화당 자사호 홍위주니 전수공 반호 90cc', 'hongwei_zhuni', 'banhu'],
+      ['옥화당 자사호 황룡산 철성조홍니 거륜주 110cc', 'tiechengzao_hongni', 'julunzhu'],
+      ['옥화당 자사호 황룡산 노자니 이형호 120cc', 'old_zini', 'yixing'],
+    ] as const;
+
+    cases.forEach(([name, clayValue, shapeValue]) => {
+      const result = service.analyzeProductName(name);
+      expect(result.attributes).toEqual(expect.arrayContaining([
+        expect.objectContaining({ code: 'clay_type', value: clayValue }),
+        expect.objectContaining({ code: 'teapot_shape', value: shapeValue }),
+        expect.objectContaining({ code: 'capacity' }),
+      ]));
+    });
   });
 
   it('maps tea names to tea notice information', () => {
