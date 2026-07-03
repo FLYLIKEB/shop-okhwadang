@@ -268,8 +268,22 @@ describe('ProductQueryService', () => {
       expect(qb.innerJoin).toHaveBeenCalledWith(
         'product.attributes',
         'pa_0',
-        'pa_0.attributeTypeId = :typeId0 AND pa_0.value = :attrValue0',
-        { typeId0: 1, attrValue0: 'junni' },
+        'pa_0.attributeTypeId = :typeId0 AND pa_0.value IN (:...attrValues0)',
+        { typeId0: 1, attrValues0: ['junni', 'zhuni', 'hongwei_zhuni'] },
+      );
+    });
+
+    it('한국어 attrs 라벨을 같은 의미의 코드값 목록으로 정규화한다', async () => {
+      qb.getMany.mockResolvedValue([{ id: 1, code: 'clay_type' } as AttributeType]);
+      qb.getManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({ attrs: 'clay_type:주니' });
+
+      expect(qb.innerJoin).toHaveBeenCalledWith(
+        'product.attributes',
+        'pa_0',
+        'pa_0.attributeTypeId = :typeId0 AND pa_0.value IN (:...attrValues0)',
+        { typeId0: 1, attrValues0: ['junni', 'zhuni', 'hongwei_zhuni'] },
       );
     });
 
