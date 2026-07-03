@@ -325,6 +325,7 @@ export default function AdminProductsPage() {
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.discount')}</th>
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.freeShipping')}</th>
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.noticeInfo')}</th>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.automaticMapping')}</th>
                       <th className="px-3 py-2 text-right">{t('import.previewColumns.options')}</th>
                       <th className="px-3 py-2 text-right">{t('import.previewColumns.galleryImages')}</th>
                       <th className="px-3 py-2 text-right">{t('import.previewColumns.detailImages')}</th>
@@ -364,6 +365,9 @@ export default function AdminProductsPage() {
                               : t('import.previewValues.no')}
                         </td>
                         <td className="px-3 py-2">{row.hasNoticeInfo ? t('import.previewValues.yes') : t('import.previewValues.no')}</td>
+                        <td className="min-w-56 px-3 py-2">
+                          <ImportMappingSummary row={row} t={t} />
+                        </td>
                         <td className="px-3 py-2 text-right">{row.optionCount ?? 0}</td>
                         <td className="px-3 py-2 text-right">{row.galleryImageCount ?? 0}</td>
                         <td className="px-3 py-2 text-right">{row.detailImageCount ?? 0}</td>
@@ -467,6 +471,38 @@ function ImportSummaryItem({ label, value }: { label: string; value: number }) {
     <div className="rounded border bg-background p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-lg font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function ImportMappingSummary({
+  row,
+  t,
+}: {
+  row: SmartStoreProductImportResult['rows'][number];
+  t: ReturnType<typeof useTranslations<'admin.products'>>;
+}) {
+  const mapping = row.automaticMapping;
+  if (!mapping || mapping.status === 'none') {
+    return <span className="text-muted-foreground">{t('import.mappingStatus.none')}</span>;
+  }
+
+  const parts = [
+    mapping.category ? t('import.mappingValues.category', { value: mapping.category.displayName }) : null,
+    ...mapping.attributes.map((attribute) => `${attribute.code}: ${attribute.displayValue}`),
+    ...mapping.options.map((option) => `${option.name}: ${option.value}`),
+    mapping.noticeInfoType ? t('import.mappingValues.noticeInfo', { value: t(`import.noticeInfoTypes.${mapping.noticeInfoType}`) }) : null,
+  ].filter((value): value is string => Boolean(value));
+
+  return (
+    <div className="space-y-1">
+      <span className={mapping.status === 'needs_review' ? 'font-medium text-amber-700' : 'font-medium text-tea'}>
+        {t(`import.mappingStatus.${mapping.status}`)}
+      </span>
+      <p className="text-muted-foreground">{parts.join(' · ')}</p>
+      {row.mappingWarnings.length > 0 && (
+        <p className="text-amber-700">{row.mappingWarnings.join(' / ')}</p>
+      )}
     </div>
   );
 }

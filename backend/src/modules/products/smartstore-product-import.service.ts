@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as ExcelJS from 'exceljs';
 import { In, Repository } from 'typeorm';
 import { Product, ProductStatus } from './entities/product.entity';
+import { Category } from './entities/category.entity';
+import { AttributeType } from './entities/attribute-type.entity';
 import { ProductCommandService } from './product-command.service';
 import { CreateProductDto, ProductNoticeInfoType, ProductOptionInputDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -10,6 +12,13 @@ import { RemoteImageIngestService } from '../upload/remote-image-ingest.service'
 import { UploadedFile } from '../upload/interfaces/storage.interface';
 import { assertXlsxFile, cellToString, normalizeExcelHeader } from '../../common/imports/excel-import.util';
 import { buildNaverExternalProductKey } from '../../common/imports/external-source.util';
+import { AttributesService } from './attributes.service';
+import {
+  ProductKeywordAttributeMapping,
+  ProductKeywordCategoryMapping,
+  ProductKeywordMappingService,
+  ProductKeywordOptionMapping,
+} from './product-keyword-mapping.service';
 
 export type SmartStoreImportAction = 'create' | 'update' | 'skip';
 
@@ -28,6 +37,8 @@ export interface SmartStoreImportRowResult {
   hasDiscount: boolean;
   isFreeShipping: boolean | null;
   hasNoticeInfo: boolean;
+  automaticMapping: SmartStoreAutomaticMappingResult;
+  mappingWarnings: string[];
   errors: string[];
 }
 
@@ -57,6 +68,21 @@ export interface SmartStoreParsedProductRow {
   isFreeShipping: boolean | null;
   hasNoticeInfo: boolean;
   errors: string[];
+}
+
+export interface SmartStoreAutomaticMappingResult {
+  status: 'none' | 'mapped' | 'needs_review';
+  category?: { slug: string; displayName: string; categoryId?: number };
+  attributes: Array<{ code: string; value: string; displayValue: string; attributeTypeId?: number }>;
+  options: Array<{ name: string; value: string }>;
+  noticeInfoType?: ProductNoticeInfoType;
+}
+
+interface ResolvedProductKeywordMapping extends SmartStoreAutomaticMappingResult {
+  category?: { slug: string; displayName: string; categoryId?: number };
+  attributes: Array<{ code: string; value: string; displayValue: string; attributeTypeId?: number }>;
+  options: ProductKeywordOptionMapping[];
+  warnings: string[];
 }
 
 const MAX_IMPORT_ROWS = 500;
@@ -119,8 +145,14 @@ export class SmartStoreProductImportService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(AttributeType)
+    private readonly attributeTypeRepository: Repository<AttributeType>,
     private readonly productCommandService: ProductCommandService,
     private readonly remoteImageIngestService: RemoteImageIngestService,
+    private readonly productKeywordMappingService: ProductKeywordMappingService,
+    private readonly attributesService: AttributesService,
   ) {}
 
   async preview(file: Express.Multer.File): Promise<SmartStoreImportResult> {
@@ -169,10 +201,12 @@ export class SmartStoreProductImportService {
     );
 
     const duplicateIdentifiers = this.findDuplicates(identifiers);
+    const resolvedMappings = await this.resolveKeywordMappings(parsedRows);
     const ingestCache = new Map<string, Promise<UploadedFile>>();
     const rows: SmartStoreImportRowResult[] = [];
 
     for (const parsed of parsedRows) {
+      const keywordMapping = resolvedMappings.get(parsed.rowNumber) ?? this.emptyResolvedMapping();
       const errors = [...parsed.errors];
       if (parsed.identifier && duplicateIdentifiers.has(parsed.identifier)) {
         errors.push(`파일 안에서 중복된 상품 식별자입니다: ${parsed.identifier}`);
@@ -199,18 +233,22 @@ export class SmartStoreProductImportService {
         hasDiscount: parsed.hasDiscount,
         isFreeShipping: parsed.isFreeShipping,
         hasNoticeInfo: parsed.hasNoticeInfo,
+        automaticMapping: this.toRowAutomaticMapping(keywordMapping),
+        mappingWarnings: keywordMapping.warnings,
         errors,
       };
 
       if (commit && !hasBlockingErrors && action !== 'skip' && parsed.dto) {
         try {
-          const dto = await this.resolveRemoteImages(parsed.dto, ingestCache);
+          const mappedDto = this.applyKeywordMapping(parsed.dto, keywordMapping);
+          const dto = await this.resolveRemoteImages(mappedDto, ingestCache);
           const saved = existing
             ? await this.productCommandService.update(existing.id, this.toUpdateDto(dto))
             : await this.productCommandService.create({
                 ...dto,
                 slug: await this.generateUniqueSlug(dto.slug),
               });
+          await this.syncKeywordAttributes(saved.id, keywordMapping);
           rowResult.productId = saved.id;
           rowResult.status = 'success';
         } catch (err) {
@@ -379,6 +417,141 @@ export class SmartStoreProductImportService {
       isFreeShipping: isFreeShipping ?? null,
       hasNoticeInfo: Boolean(noticeInfo),
       errors,
+    };
+  }
+
+  private async resolveKeywordMappings(parsedRows: SmartStoreParsedProductRow[]): Promise<Map<number, ResolvedProductKeywordMapping>> {
+    const analyzed = parsedRows.map((row) => ({
+      rowNumber: row.rowNumber,
+      result: this.productKeywordMappingService.analyzeProductName(row.productName),
+      hasExplicitOptions: (row.optionCount ?? 0) > 0,
+    }));
+    const categorySlugs = [...new Set(analyzed.map((item) => item.result.category?.slug).filter((slug): slug is string => Boolean(slug)))];
+    const attributeCodes = [...new Set(analyzed.flatMap((item) => item.result.attributes.map((attribute) => attribute.code)))];
+
+    const categories = categorySlugs.length > 0
+      ? await this.categoryRepository.find({ where: { slug: In(categorySlugs), isActive: true } })
+      : [];
+    const attributeTypes = attributeCodes.length > 0
+      ? await this.attributeTypeRepository.find({ where: { code: In(attributeCodes), isActive: true } })
+      : [];
+    const categoryBySlug = new Map(categories.map((category) => [category.slug, category]));
+    const attributeTypeByCode = new Map(attributeTypes.map((type) => [type.code, type]));
+    const resolved = new Map<number, ResolvedProductKeywordMapping>();
+
+    analyzed.forEach((item) => {
+      const warnings = [...item.result.warnings];
+      const category = item.result.category ? this.resolveCategoryMapping(item.result.category, categoryBySlug, warnings) : undefined;
+      const attributes = item.result.attributes.map((attribute) => this.resolveAttributeMapping(attribute, attributeTypeByCode, warnings));
+      const options = item.result.options;
+      if (item.hasExplicitOptions && options.length > 0) {
+        warnings.push('원본 파일에 명시 옵션이 있어 상품명 기반 옵션 후보는 미리보기만 표시하고 자동 반영하지 않습니다.');
+      }
+      resolved.set(item.rowNumber, {
+        status: this.resolveAutomaticMappingStatus(category, attributes, options, item.result.noticeInfoType, warnings),
+        ...(category ? { category } : {}),
+        attributes,
+        options,
+        ...(item.result.noticeInfoType ? { noticeInfoType: item.result.noticeInfoType } : {}),
+        warnings,
+      });
+    });
+
+    return resolved;
+  }
+
+  private resolveCategoryMapping(
+    category: ProductKeywordCategoryMapping,
+    categoryBySlug: Map<string, Category>,
+    warnings: string[],
+  ): ResolvedProductKeywordMapping['category'] {
+    const matched = categoryBySlug.get(category.slug);
+    if (!matched) {
+      warnings.push(`자동 매핑 카테고리 '${category.displayName}'(${category.slug})를 찾을 수 없어 categoryId는 반영하지 않습니다.`);
+      return { slug: category.slug, displayName: category.displayName };
+    }
+    return { slug: category.slug, displayName: category.displayName, categoryId: Number(matched.id) };
+  }
+
+  private resolveAttributeMapping(
+    attribute: ProductKeywordAttributeMapping,
+    attributeTypeByCode: Map<string, AttributeType>,
+    warnings: string[],
+  ): ResolvedProductKeywordMapping['attributes'][number] {
+    const matched = attributeTypeByCode.get(attribute.code);
+    if (!matched) {
+      warnings.push(`자동 매핑 속성 타입 '${attribute.code}'를 찾을 수 없어 해당 속성은 저장하지 않습니다.`);
+      return { code: attribute.code, value: attribute.value, displayValue: attribute.displayValue };
+    }
+    return { code: attribute.code, value: attribute.value, displayValue: attribute.displayValue, attributeTypeId: Number(matched.id) };
+  }
+
+  private resolveAutomaticMappingStatus(
+    category: ResolvedProductKeywordMapping['category'] | undefined,
+    attributes: ResolvedProductKeywordMapping['attributes'],
+    options: ProductKeywordOptionMapping[],
+    noticeInfoType: ProductNoticeInfoType | undefined,
+    warnings: string[],
+  ): SmartStoreAutomaticMappingResult['status'] {
+    const hasMapping = Boolean(category) || attributes.length > 0 || options.length > 0 || Boolean(noticeInfoType);
+    if (!hasMapping) return 'none';
+    return warnings.length > 0 ? 'needs_review' : 'mapped';
+  }
+
+  private applyKeywordMapping(dto: CreateProductDto, mapping: ResolvedProductKeywordMapping): CreateProductDto {
+    const noticeInfo = mapping.noticeInfoType || mapping.options.length > 0
+      ? {
+          ...(dto.noticeInfo ?? {}),
+          ...(mapping.noticeInfoType ? { type: mapping.noticeInfoType } : {}),
+          productName: dto.noticeInfo?.productName ?? dto.name,
+          sizeCapacity: dto.noticeInfo?.sizeCapacity ?? mapping.options.find((option) => option.name === '용량')?.value,
+        }
+      : dto.noticeInfo;
+
+    return {
+      ...dto,
+      ...(mapping.category?.categoryId ? { categoryId: mapping.category.categoryId } : {}),
+      ...(noticeInfo ? { noticeInfo } : {}),
+      ...(dto.options === undefined && mapping.options.length > 0
+        ? { options: mapping.options.map(({ keyword: _keyword, ...option }) => option) }
+        : {}),
+    };
+  }
+
+  private async syncKeywordAttributes(productId: number, mapping: ResolvedProductKeywordMapping): Promise<void> {
+    const attributes = mapping.attributes
+      .filter((attribute): attribute is Required<ResolvedProductKeywordMapping['attributes'][number]> => attribute.attributeTypeId !== undefined)
+      .map((attribute, index) => ({
+        attributeTypeId: attribute.attributeTypeId,
+        value: attribute.value,
+        displayValue: attribute.displayValue,
+        sortOrder: index,
+      }));
+    if (attributes.length === 0) return;
+    await Promise.all(
+      attributes.map((attribute) =>
+        this.attributesService.createOrUpdateProductAttribute(productId, attribute.attributeTypeId, {
+          productId,
+          attributeTypeId: attribute.attributeTypeId,
+          value: attribute.value,
+          displayValue: attribute.displayValue,
+          sortOrder: attribute.sortOrder,
+        }),
+      ),
+    );
+  }
+
+  private emptyResolvedMapping(): ResolvedProductKeywordMapping {
+    return { status: 'none', attributes: [], options: [], warnings: [] };
+  }
+
+  private toRowAutomaticMapping(mapping: ResolvedProductKeywordMapping): SmartStoreAutomaticMappingResult {
+    return {
+      status: mapping.status,
+      ...(mapping.category ? { category: mapping.category } : {}),
+      attributes: mapping.attributes,
+      options: mapping.options.map((option) => ({ name: option.name, value: option.value })),
+      ...(mapping.noticeInfoType ? { noticeInfoType: mapping.noticeInfoType } : {}),
     };
   }
 

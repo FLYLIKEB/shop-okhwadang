@@ -783,7 +783,8 @@
           "discount": "할인 반영",
           "freeShipping": "무료배송",
           "noticeInfo": "고시정보",
-          "matchedProduct": "연결 상품"
+          "matchedProduct": "연결 상품",
+          "automaticMapping": "자동 매핑"
         },
         "actions": {
           "create": "신규 추가",
@@ -813,6 +814,19 @@
           "discountNone": "미반영",
           "productLink": "상품 #{id} 보기",
           "notLinked": "신규 예정"
+        },
+        "mappingStatus": {
+          "none": "없음",
+          "mapped": "자동 분류됨",
+          "needs_review": "확인 필요"
+        },
+        "mappingValues": {
+          "category": "카테고리 {value}",
+          "noticeInfo": "고시정보 {value}"
+        },
+        "noticeInfoTypes": {
+          "teaware": "다구",
+          "tea": "차류"
         }
       },
       "naverCommerce": {
