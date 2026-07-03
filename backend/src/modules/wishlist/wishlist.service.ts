@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Wishlist } from './entities/wishlist.entity';
+import { Product, ProductStatus } from '../products/entities/product.entity';
 import { CreateWishlistDto } from './dto/create-wishlist.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
@@ -42,6 +43,8 @@ export class WishlistService {
   constructor(
     @InjectRepository(Wishlist)
     private readonly wishlistRepo: Repository<Wishlist>,
+    @InjectRepository(Product)
+    private readonly productRepo: Repository<Product>,
   ) {}
 
   private toResponse(w: Wishlist): WishlistItemResponse {
@@ -72,7 +75,7 @@ export class WishlistService {
 
   async findAll(userId: number): Promise<WishlistListResult> {
     const [items, total] = await this.wishlistRepo.findAndCount({
-      where: { userId },
+      where: { userId, product: { status: ProductStatus.ACTIVE } },
       relations: ['product', 'product.images'],
       order: { createdAt: 'DESC' },
     });
@@ -85,7 +88,8 @@ export class WishlistService {
 
   async check(userId: number, productId: number): Promise<WishlistCheckResult> {
     const item = await this.wishlistRepo.findOne({
-      where: { userId, productId },
+      where: { userId, productId, product: { status: ProductStatus.ACTIVE } },
+      relations: ['product'],
     });
 
     return {
@@ -95,6 +99,12 @@ export class WishlistService {
   }
 
   async create(userId: number, dto: CreateWishlistDto): Promise<WishlistItemResponse> {
+    await findOrThrow(
+      this.productRepo,
+      { id: dto.productId, status: ProductStatus.ACTIVE },
+      '상품을 찾을 수 없습니다.',
+    );
+
     const existing = await this.wishlistRepo.findOne({
       where: { userId, productId: dto.productId },
     });

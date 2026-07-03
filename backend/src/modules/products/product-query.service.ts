@@ -174,13 +174,14 @@ export class ProductQueryService {
       return [];
     }
 
-    const cacheKey = getProductBulkCacheKey(ids);
+    const cacheKey = getProductBulkCacheKey(ids, isAdmin);
     const cached = await this.cacheService.get<
       (Product & { rating: number; reviewCount: number })[]
     >(cacheKey);
 
     if (cached) {
-      const localized = cached.map((product) => this.applyLocale(product, locale));
+      const visible = this.filterVisibleForPublic(cached, isAdmin);
+      const localized = visible.map((product) => this.applyLocale(product, locale));
       return localized as (Product & { rating: number; reviewCount: number })[];
     }
 
@@ -257,6 +258,15 @@ export class ProductQueryService {
       });
     }
     return map;
+  }
+
+  private filterVisibleForPublic<T extends { status: ProductStatus }>(
+    items: T[],
+    isAdmin: boolean,
+  ): T[] {
+    return isAdmin
+      ? items
+      : items.filter((product) => product.status === ProductStatus.ACTIVE);
   }
 
   private applyReviewStats<T extends { id: number }>(

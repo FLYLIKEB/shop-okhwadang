@@ -15,6 +15,7 @@ import { CacheService } from '../cache/cache.service';
 import { findOrThrow } from '../../common/utils/repository.util';
 import {
   getProductDetailCacheKey,
+  PRODUCT_BULK_CACHE_PATTERN,
   PRODUCT_LIST_CACHE_PATTERN,
 } from './product-cache.util';
 
@@ -33,7 +34,7 @@ export class ProductCommandService {
     const { images, detailImages, options, ...productData } = dto;
 
     try {
-      return await this.dataSource.transaction(async (manager: EntityManager) => {
+      const saved = await this.dataSource.transaction(async (manager: EntityManager) => {
         const product = manager.create(Product, {
           ...productData,
           categoryId: dto.categoryId ?? null,
@@ -82,6 +83,8 @@ export class ProductCommandService {
 
         return saved;
       });
+      await this.invalidateProductCollectionsCache();
+      return saved;
     } catch (err) {
       this.rethrowIfDuplicateKey(err);
       throw err;
@@ -171,6 +174,14 @@ export class ProductCommandService {
     await Promise.all([
       this.cacheService.del(getProductDetailCacheKey(productId)),
       this.cacheService.delPattern(PRODUCT_LIST_CACHE_PATTERN),
+      this.cacheService.delPattern(PRODUCT_BULK_CACHE_PATTERN),
+    ]);
+  }
+
+  private async invalidateProductCollectionsCache(): Promise<void> {
+    await Promise.all([
+      this.cacheService.delPattern(PRODUCT_LIST_CACHE_PATTERN),
+      this.cacheService.delPattern(PRODUCT_BULK_CACHE_PATTERN),
     ]);
   }
 

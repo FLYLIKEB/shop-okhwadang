@@ -63,6 +63,7 @@ export class CartService {
       )
       .leftJoinAndSelect('cartItem.option', 'option')
       .where('cartItem.userId = :userId', { userId })
+      .andWhere('product.status = :status', { status: ProductStatus.ACTIVE })
       .orderBy('cartItem.createdAt', 'DESC')
       .getMany();
 
@@ -101,7 +102,11 @@ export class CartService {
   }
 
   async add(userId: number, dto: AddToCartDto, locale?: string): Promise<CartResponse> {
-    await findOrThrow(this.productRepository, { id: dto.productId }, '상품을 찾을 수 없습니다.');
+    await findOrThrow(
+      this.productRepository,
+      { id: dto.productId, status: ProductStatus.ACTIVE },
+      '상품을 찾을 수 없습니다.',
+    );
 
     if (dto.productOptionId != null) {
       const option = await this.productOptionRepository.findOne({
