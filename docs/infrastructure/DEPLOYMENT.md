@@ -6,6 +6,15 @@
 - **API 경로**: 브라우저는 `ockhwadang.com/api/*`만 호출. Next.js middleware(`src/middleware.ts`)가 Vercel Edge에서 `BACKEND_URL`로 런타임 프록시. Vercel Edge는 IP 직접 fetch를 금지하므로 반드시 도메인(`api.ockhwadang.com`) 경유.
 - **CDN 서브도메인**: `https://cdn.ockhwadang.com` → CloudFront → S3 `okhwadang-assets`
 
+## 상품 이미지 캐시 정책
+
+- 신규 업로드 S3 객체는 `Cache-Control: public, max-age=31536000, immutable` 메타데이터를 붙인다.
+- 업로드 파일명은 UUID 기반이므로 이미지를 교체할 때 기존 key를 덮어쓰지 말고 새 URL을 발급한다.
+- 운영 `AWS_CDN_URL`은 CloudFront 도메인 또는 `https://cdn.ockhwadang.com`을 가리켜야 한다.
+- CloudFront 캐시 정책은 S3 origin의 `Cache-Control` 헤더를 존중해야 한다. 장애 대응 외에는 무효화보다 새 URL 발급을 우선한다.
+- 기존 S3 객체에는 신규 코드가 소급 적용되지 않는다. 기존 상품 이미지까지 같은 정책을 적용해야 하면 AWS 콘솔/CLI로 객체 메타데이터를 일괄 교체하거나 관리자에서 이미지를 재업로드한다.
+- 프론트 `next/image` 최적화 캐시는 `next.config.ts`의 `images.minimumCacheTTL`로 최소 1일을 유지한다. 신규 S3 이미지처럼 origin `Cache-Control`이 더 길면 최적화 이미지 변형도 더 긴 upstream TTL을 따를 수 있으므로, 변경된 이미지는 반드시 새 URL로 교체한다.
+
 ### Vercel 환경변수
 - `BACKEND_URL=http://api.ockhwadang.com` (Cloudflare Proxied → EC2 Nginx :80 → NestJS :3000, HTTP)
 - `SITE_URL=https://ockhwadang.com`

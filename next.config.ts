@@ -10,6 +10,7 @@ const withBundleAnalyzer = createBundleAnalyzer({
 const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   images: {
+    minimumCacheTTL: 86400,
     remotePatterns: [
       { protocol: 'https', hostname: '*.amazonaws.com' },
       { protocol: 'https', hostname: 'cdn.ockhwadang.com' },

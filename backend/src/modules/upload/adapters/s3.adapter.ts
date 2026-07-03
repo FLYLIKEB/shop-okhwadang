@@ -8,6 +8,8 @@ import {
 import { StorageAdapter, UploadedFile } from '../interfaces/storage.interface';
 import { STORAGE_CONFIG, StorageConfig } from '../../../config/storage.config';
 
+const IMAGE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+
 @Injectable()
 export class S3StorageAdapter implements StorageAdapter {
   private readonly logger = new Logger(S3StorageAdapter.name);
@@ -54,6 +56,7 @@ export class S3StorageAdapter implements StorageAdapter {
         Key: key,
         Body: buffer,
         ContentType: mimetype,
+        CacheControl: IMAGE_CACHE_CONTROL,
       }),
     );
 

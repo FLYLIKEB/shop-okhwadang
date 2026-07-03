@@ -73,6 +73,7 @@ describe('S3StorageAdapter', () => {
         Key: 'products/photo.jpg',
         Body: buffer,
         ContentType: 'image/jpeg',
+        CacheControl: 'public, max-age=31536000, immutable',
       });
       expect(s3Module.__mockSend).toHaveBeenCalledTimes(1);
       expect(result.filename).toBe('products/photo.jpg');
@@ -122,6 +123,7 @@ describe('S3StorageAdapter', () => {
           Key: 'categories/cat.png',
           Bucket: 'test-bucket',
           ContentType: 'image/png',
+          CacheControl: 'public, max-age=31536000, immutable',
         }),
       );
       expect(result.filename).toBe('categories/cat.png');
