@@ -4,7 +4,7 @@ import { isIP } from 'node:net';
 import * as path from 'node:path';
 import { UploadService } from './upload.service';
 import { UploadedFile } from './interfaces/storage.interface';
-import { MAX_UPLOAD_FILE_SIZE_BYTES } from './upload.constants';
+import { MAX_UPLOAD_FILE_SIZE_BYTES, MAX_UPLOAD_FILE_SIZE_LABEL } from './upload.constants';
 
 const MAX_REDIRECTS = 3;
 const DOWNLOAD_TIMEOUT_MS = 10_000;
@@ -49,7 +49,9 @@ export class RemoteImageIngestService {
 
       const contentLength = Number(response.headers.get('content-length') ?? 0);
       if (contentLength > MAX_UPLOAD_FILE_SIZE_BYTES) {
-        throw new BadRequestException(`이미지 크기가 5MB를 초과합니다: ${current.href}`);
+        throw new BadRequestException(
+          `이미지 크기가 ${MAX_UPLOAD_FILE_SIZE_LABEL}를 초과합니다: ${current.href}`,
+        );
       }
 
       return { buffer: await this.readLimitedBody(response, current), finalUrl: current };
@@ -112,7 +114,9 @@ export class RemoteImageIngestService {
         totalBytes += chunk.length;
         if (totalBytes > MAX_UPLOAD_FILE_SIZE_BYTES) {
           await reader.cancel();
-          throw new BadRequestException(`이미지 크기가 5MB를 초과합니다: ${url.href}`);
+          throw new BadRequestException(
+            `이미지 크기가 ${MAX_UPLOAD_FILE_SIZE_LABEL}를 초과합니다: ${url.href}`,
+          );
         }
         chunks.push(chunk);
       }
