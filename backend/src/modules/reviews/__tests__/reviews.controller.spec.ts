@@ -4,8 +4,7 @@ import request from 'supertest';
 import { ReviewsController } from '../reviews.controller';
 import { ReviewsService } from '../reviews.service';
 import { UploadService } from '../../upload/upload.service';
-
-const REVIEW_MAX_FILE_SIZE = 10 * 1024 * 1024;
+import { MAX_UPLOAD_FILE_SIZE_BYTES, MAX_UPLOAD_INPUT_FILE_SIZE_BYTES } from '../../upload/upload.constants';
 
 function expectMulterRejected(status: number): void {
   expect([HttpStatus.BAD_REQUEST, HttpStatus.PAYLOAD_TOO_LARGE]).toContain(status);
@@ -17,7 +16,10 @@ describe('ReviewsController multipart limits', () => {
 
   beforeAll(async () => {
     uploadService = {
-      uploadImage: jest.fn(),
+      uploadImage: jest.fn().mockResolvedValue({
+        url: 'https://cdn.example.com/uploads/review.jpg',
+        filename: 'review.jpg',
+      }),
     };
 
     const reviewsService = {
@@ -48,8 +50,29 @@ describe('ReviewsController multipart limits', () => {
     await app.close();
   });
 
+
+
+  it('passes review images over the 20MB threshold to UploadService for resizing', async () => {
+    const overResizeThreshold = Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      Buffer.alloc(MAX_UPLOAD_FILE_SIZE_BYTES + 1 - 4),
+    ]);
+
+    const res = await request(app.getHttpServer())
+      .post('/reviews/upload-image')
+      .attach('file', overResizeThreshold, {
+        filename: 'needs-resize.png',
+        contentType: 'image/png',
+      });
+
+    expect(res.status).toBe(HttpStatus.CREATED);
+    expect(uploadService.uploadImage).toHaveBeenCalledWith(
+      expect.objectContaining({ size: MAX_UPLOAD_FILE_SIZE_BYTES + 1 }),
+    );
+  });
+
   it('blocks oversized review image upload before UploadService.uploadImage', async () => {
-    const oversized = Buffer.alloc(REVIEW_MAX_FILE_SIZE + 1);
+    const oversized = Buffer.alloc(MAX_UPLOAD_INPUT_FILE_SIZE_BYTES + 1);
 
     const res = await request(app.getHttpServer())
       .post('/reviews/upload-image')

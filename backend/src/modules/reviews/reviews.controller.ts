@@ -35,15 +35,16 @@ import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthenticatedRequestWithAuthUser } from '../../common/interfaces/auth-user.interface';
 import { UploadService } from '../upload/upload.service';
-
-const REVIEW_ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
-const REVIEW_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+import {
+  ALLOWED_IMAGE_MIME_TYPES,
+  MAX_UPLOAD_INPUT_FILE_SIZE_BYTES,
+} from '../upload/upload.constants';
 
 const REVIEW_IMAGE_UPLOAD_INTERCEPTOR = FileInterceptor(
   'file',
   createSingleFileMemoryUploadOptions({
-    fileSize: REVIEW_MAX_FILE_SIZE,
-    allowedMimeTypes: REVIEW_ALLOWED_MIME_TYPES,
+    fileSize: MAX_UPLOAD_INPUT_FILE_SIZE_BYTES,
+    allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
     invalidMimeMessage: '허용되지 않는 파일 형식입니다. (jpg, png, webp만 허용)',
   }),
 );
@@ -97,7 +98,7 @@ export class ReviewsController {
   @Post('upload-image')
   @Throttle({ global: { limit: 5, ttl: 60000 } })
   @ApiCookieAuth()
-  @ApiOperation({ summary: '후기 이미지 업로드', description: '후기에 사용할 이미지를 업로드합니다. (jpg, png, webp만 허용, 최대 10MB)' })
+  @ApiOperation({ summary: '후기 이미지 업로드', description: '후기에 사용할 이미지를 업로드합니다. (jpg, png, webp만 허용, 20MB 초과 시 자동 리사이징, 최대 50MB)' })
   @ApiResponse({ status: 201, description: '이미지 업로드 성공' })
   @ApiResponse({ status: 400, description: '파일 없음 또는 잘못된 파일 형식' })
   @ApiResponse({ status: 401, description: '인증 필요' })
@@ -118,12 +119,8 @@ export class ReviewsController {
       throw new BadRequestException('파일이 필요합니다.');
     }
 
-    if (!REVIEW_ALLOWED_MIME_TYPES.some((mimeType) => mimeType === file.mimetype)) {
+    if (!ALLOWED_IMAGE_MIME_TYPES.some((mimeType) => mimeType === file.mimetype)) {
       throw new BadRequestException('허용되지 않는 파일 형식입니다. (jpg, png, webp만 허용)');
-    }
-
-    if (file.size > REVIEW_MAX_FILE_SIZE) {
-      throw new BadRequestException('파일 크기는 10MB 이하여야 합니다.');
     }
 
     return this.uploadService.uploadImage(file);

@@ -15,8 +15,8 @@ import { MockStorageAdapter } from './adapters/mock.adapter';
 import { S3StorageAdapter } from './adapters/s3.adapter';
 import {
   ALLOWED_IMAGE_MIME_TYPES,
-  MAX_UPLOAD_FILE_SIZE_BYTES,
-  MAX_UPLOAD_FILE_SIZE_LABEL,
+  MAX_UPLOAD_INPUT_FILE_SIZE_BYTES,
+  MAX_UPLOAD_INPUT_FILE_SIZE_LABEL,
   MAX_UPLOAD_IMAGE_HEIGHT,
   MAX_UPLOAD_IMAGE_WIDTH,
 } from './upload.constants';
@@ -158,9 +158,9 @@ export class UploadService {
       );
     }
 
-    if (file.size > MAX_UPLOAD_FILE_SIZE_BYTES) {
+    if (file.size > MAX_UPLOAD_INPUT_FILE_SIZE_BYTES) {
       throw new PayloadTooLargeException(
-        `파일 크기는 ${MAX_UPLOAD_FILE_SIZE_LABEL}를 초과할 수 없습니다.`,
+        `파일 크기는 ${MAX_UPLOAD_INPUT_FILE_SIZE_LABEL}를 초과할 수 없습니다.`,
       );
     }
 
