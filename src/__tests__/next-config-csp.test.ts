@@ -75,3 +75,11 @@ describe('Next.js CSP headers', () => {
     expect(frameSrc).toContain('https://hooks.stripe.com');
   });
 });
+
+describe('Next.js image cache policy', () => {
+  it('keeps optimized remote product images cached beyond the default TTL', () => {
+    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
+
+    expect(source).toContain('minimumCacheTTL: 86400');
+  });
+});
