@@ -832,7 +832,6 @@
       "naverCommerce": {
         "title": "네이버 커머스API 상품 업데이트",
         "description": "엑셀 파일 없이 네이버 커머스API에서 스마트스토어 상품을 조회해 SKU가 일치하는 기존 자사몰 상품만 업데이트 후보로 미리보기합니다.",
-        "credentialsHint": "필요 환경변수: NAVER_COMMERCE_APP_ID, NAVER_COMMERCE_APP_SECRET. 실제 시크릿 값은 응답과 로그에 표시하지 않습니다.",
         "previewButton": "API 미리보기",
         "previewing": "조회 중...",
         "commitButton": "API 결과 반영",
@@ -1513,11 +1512,7 @@
     "title": "배송/교환/환불 정책",
     "description": "상품 상세의 요약 안내보다 더 자세한 배송, 교환·반품, 환불 기준을 안내합니다.",
     "effectiveDate": "시행일: 2026년 6월 12일",
-    "sectionKeys": [
-      "shipping",
-      "exchangeReturn",
-      "refund"
-    ],
+    "sectionKeys": ["shipping", "exchangeReturn", "refund"],
     "sections": {
       "shipping": {
         "title": "배송 정책",
