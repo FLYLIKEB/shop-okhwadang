@@ -11,12 +11,18 @@ const mockWriteFile = fs.writeFile as jest.MockedFunction<typeof fs.writeFile>;
 describe('LocalStorageAdapter', () => {
   let adapter: LocalStorageAdapter;
   const uploadDir = path.join(process.cwd(), 'uploads');
+  const originalEnv = process.env;
 
   beforeEach(() => {
+    process.env = { ...originalEnv, PORT: '3000' };
     adapter = new LocalStorageAdapter();
     jest.clearAllMocks();
     mockMkdir.mockResolvedValue(undefined);
     mockWriteFile.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   describe('save()', () => {
@@ -26,7 +32,7 @@ describe('LocalStorageAdapter', () => {
         path.join(uploadDir, 'image.jpg'),
         Buffer.from('data'),
       );
-      expect(result.url).toBe('/uploads/image.jpg');
+      expect(result.url).toBe('http://localhost:3000/uploads/image.jpg');
       expect(result.filename).toBe('uploads/image.jpg');
     });
 
@@ -64,8 +70,16 @@ it('슬래시 포함 경로 → BadRequestException', async () => {
 
     it('url에 safeName 사용 (원본 파일명 그대로)', async () => {
       const result = await adapter.save('photo.png', Buffer.from(''), 'image/png');
-      expect(result.url).toBe('/uploads/photo.png');
+      expect(result.url).toBe('http://localhost:3000/uploads/photo.png');
       expect(result.filename).toBe('uploads/photo.png');
+    });
+
+    it('BACKEND_PUBLIC_URL 이 있으면 해당 origin을 사용한다', async () => {
+      process.env.BACKEND_PUBLIC_URL = 'https://api.ockhwadang.com/';
+
+      const result = await adapter.save('photo.png', Buffer.from(''), 'image/png');
+
+      expect(result.url).toBe('https://api.ockhwadang.com/uploads/photo.png');
     });
   });
 });

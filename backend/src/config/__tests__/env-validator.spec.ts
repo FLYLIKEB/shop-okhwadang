@@ -18,6 +18,8 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   RESEND_API_KEY: 're_abc123',
   PAYMENT_GATEWAY: 'toss',
   STORAGE_PROVIDER: 's3',
+  AWS_S3_BUCKET_NAME: 'okhwadang-assets',
+  AWS_REGION: 'ap-northeast-2',
   KAKAO_CLIENT_ID: 'kakao-client',
   KAKAO_CLIENT_SECRET: 'kakao-secret',
   KAKAO_REDIRECT_URI: 'https://ockhwadang.com/auth/kakao/callback',
@@ -76,6 +78,22 @@ describe('validateEnv', () => {
     delete env.MESSAGE_PROVIDER;
 
     expect(validateEnv(env).map((e) => e.key)).not.toContain('MESSAGE_PROVIDER');
+  });
+
+  it('STORAGE_PROVIDER=s3 이면 버킷 이름이 필요하다', () => {
+    const env = makeFullEnv();
+    delete env.AWS_S3_BUCKET_NAME;
+    delete env.AWS_S3_BUCKET;
+
+    expect(validateEnv(env).map((e) => e.key)).toContain('AWS_S3_BUCKET_NAME');
+  });
+
+  it('STORAGE_PROVIDER=s3 에서 AWS_ACCESS_KEY_ID 없이도 IAM Role 사용을 허용한다', () => {
+    const env = makeFullEnv();
+    delete env.AWS_ACCESS_KEY_ID;
+    delete env.AWS_SECRET_ACCESS_KEY;
+
+    expect(validateEnv(env)).toEqual([]);
   });
 
   it('값이 빈 문자열이면 에러 반환', () => {

@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   S3Client,
+  type S3ClientConfig,
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
@@ -24,13 +25,15 @@ export class S3StorageAdapter implements StorageAdapter {
     this.region = config.s3.region;
     this.cdnUrl = config.s3.cdnUrl;
 
-    this.client = new S3Client({
-      region: this.region,
-      credentials: {
+    const clientConfig: S3ClientConfig = { region: this.region };
+    if (config.s3.accessKeyId && config.s3.secretAccessKey) {
+      clientConfig.credentials = {
         accessKeyId: config.s3.accessKeyId,
         secretAccessKey: config.s3.secretAccessKey,
-      },
-    });
+      };
+    }
+
+    this.client = new S3Client(clientConfig);
 
     this.logger.log(`S3 adapter initialized: bucket=${this.bucket}, region=${this.region}`);
   }

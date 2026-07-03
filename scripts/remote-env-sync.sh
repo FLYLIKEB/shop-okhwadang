@@ -189,6 +189,29 @@ case "$SUBCMD" in
       exit 1
     fi
 
+    STORAGE_PROVIDER_VALUE=$(echo "$REMOTE_ENV_CONTENT" | awk -F= '/^STORAGE_PROVIDER=/{print tolower($2); exit}' | tr -d '[:space:]')
+    if [ "$STORAGE_PROVIDER_VALUE" = "s3" ]; then
+      if ! echo "$REMOTE_ENV_CONTENT" | grep -qE '^(AWS_S3_BUCKET_NAME|AWS_S3_BUCKET)=.+'; then
+        echo "ERROR: STORAGE_PROVIDER=s3 이지만 AWS_S3_BUCKET_NAME 또는 AWS_S3_BUCKET 이 없습니다." >&2
+        exit 1
+      fi
+
+      if echo "$REMOTE_ENV_CONTENT" | grep -qE '^AWS_ACCESS_KEY_ID=.+' &&
+         echo "$REMOTE_ENV_CONTENT" | grep -qE '^AWS_SECRET_ACCESS_KEY=.+'; then
+        echo "✓ S3 credentials: access keys present"
+      else
+        IAM_ROLE_STATUS=$(ssh -i "$BASTION_KEY_EXPANDED" $SSH_OPTS \
+          "$BASTION_USER@$BASTION_HOST" 'set -e; TOKEN=$(curl -sS -m 2 -X PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 60" || true); if [ -n "$TOKEN" ]; then CODE=$(curl -sS -o /tmp/iam-role-name.txt -w "%{http_code}" -m 2 -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/ || true); else CODE=$(curl -sS -o /tmp/iam-role-name.txt -w "%{http_code}" -m 2 http://169.254.169.254/latest/meta-data/iam/security-credentials/ || true); fi; if [ "$CODE" = "200" ] && [ -s /tmp/iam-role-name.txt ]; then echo present; else echo missing; fi; rm -f /tmp/iam-role-name.txt')
+        if [ "$IAM_ROLE_STATUS" = "present" ]; then
+          echo "✓ S3 credentials: EC2 IAM Role present"
+        else
+          echo "ERROR: STORAGE_PROVIDER=s3 이지만 AWS access keys도 없고 EC2 IAM Role도 확인되지 않습니다." >&2
+          echo "  해결: AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY 를 원격 .env/GitHub Secret에 설정하거나 EC2 IAM Role을 부여하세요." >&2
+          exit 1
+        fi
+      fi
+    fi
+
     echo "✓ 원격 .env 필수 키 검증 통과 ($(echo "$REQUIRED_KEYS" | wc -w | tr -d ' ')개 확인)"
     ;;
   *)

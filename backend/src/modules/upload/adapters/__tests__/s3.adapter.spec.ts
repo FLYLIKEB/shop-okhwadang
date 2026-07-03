@@ -55,6 +55,15 @@ describe('S3StorageAdapter', () => {
         },
       });
     });
+
+    it('access key가 없으면 IAM Role/default credential chain을 쓰도록 credentials를 생략한다', () => {
+      new S3StorageAdapter({
+        ...baseConfig,
+        s3: { ...baseConfig.s3, accessKeyId: '', secretAccessKey: '' },
+      });
+
+      expect(S3Client).toHaveBeenCalledWith({ region: 'ap-northeast-2' });
+    });
   });
 
   describe('save()', () => {
