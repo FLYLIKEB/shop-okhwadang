@@ -33,7 +33,7 @@ export function createStorageConfig(env: NodeJS.ProcessEnv = process.env): Stora
   return {
     provider: resolveStorageProvider(env.STORAGE_PROVIDER),
     s3: {
-      bucket: env.AWS_S3_BUCKET_NAME ?? '',
+      bucket: env.AWS_S3_BUCKET_NAME ?? env.AWS_S3_BUCKET ?? '',
       region: env.AWS_REGION ?? 'ap-northeast-2',
       cdnUrl: env.AWS_CDN_URL ?? null,
       accessKeyId: env.AWS_ACCESS_KEY_ID ?? '',

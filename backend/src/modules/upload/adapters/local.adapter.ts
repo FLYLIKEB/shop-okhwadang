@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { StorageAdapter, UploadedFile } from '../interfaces/storage.interface';
 
+const DEFAULT_LOCAL_UPLOAD_BASE_URL = 'http://localhost:3000';
+
 @Injectable()
 export class LocalStorageAdapter implements StorageAdapter {
   private readonly uploadDir = path.join(process.cwd(), 'uploads');
@@ -27,9 +29,26 @@ export class LocalStorageAdapter implements StorageAdapter {
       throw new BadRequestException('잘못된 파일명입니다.');
     }
     await fs.writeFile(filePath, buffer);
+    const relativeUrl = `/${urlPath}/${safeName}`;
     return {
-      url: `/${urlPath}/${safeName}`,
+      url: `${getLocalUploadBaseUrl()}${relativeUrl}`,
       filename: `${urlPath}/${safeName}`,
     };
   }
+}
+
+function getLocalUploadBaseUrl(): string {
+  const configured =
+    process.env.BACKEND_PUBLIC_URL ??
+    process.env.BACKEND_URL ??
+    process.env.API_PUBLIC_URL;
+
+  if (configured?.trim()) {
+    return configured.trim().replace(/\/$/, '');
+  }
+
+  const port = process.env.PORT || '3000';
+  return port === '3000'
+    ? DEFAULT_LOCAL_UPLOAD_BASE_URL
+    : `http://localhost:${port}`;
 }

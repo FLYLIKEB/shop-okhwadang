@@ -90,6 +90,16 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidation
     }
   }
 
+  if ((env.STORAGE_PROVIDER ?? '').trim().toLowerCase() === 's3') {
+    const bucket = env.AWS_S3_BUCKET_NAME ?? env.AWS_S3_BUCKET;
+    if (!bucket?.trim()) {
+      errors.push({
+        key: 'AWS_S3_BUCKET_NAME',
+        reason: 'STORAGE_PROVIDER=s3 일 때 AWS_S3_BUCKET_NAME 또는 AWS_S3_BUCKET 이 필요합니다',
+      });
+    }
+  }
+
   return errors;
 }
 

@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 import 'dotenv/config';
 import * as Sentry from '@sentry/node';
+import * as express from 'express';
+import * as path from 'path';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger, BadRequestException, RequestMethod } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
@@ -55,6 +57,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(cookieParser());
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Nginx/Vercel/CloudFront 등 프록시 뒤에서 X-Forwarded-For 의 첫 IP 를 req.ip 로 인식.
   // ThrottlerGuard 가 진짜 클라이언트 IP 기준으로 동작하도록 보장.

@@ -4,6 +4,7 @@ import {
   BadRequestException,
   PayloadTooLargeException,
   Logger,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import * as path from 'path';
@@ -38,6 +39,15 @@ export class UploadService {
     const provider = storageConfig.provider;
     switch (provider) {
       case 's3':
+        if (!isCompleteS3Config(storageConfig)) {
+          const message = 'STORAGE_PROVIDER=s3 requires AWS_S3_BUCKET_NAME (or AWS_S3_BUCKET). Configure AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY or an EC2 IAM role for credentials.';
+          if (process.env.NODE_ENV === 'production') {
+            throw new Error(message);
+          }
+          this.logger.warn(`${message} Falling back to local storage in non-production.`);
+          this.adapter = localAdapter;
+          break;
+        }
         this.adapter = s3Adapter;
         break;
       case 'mock':
@@ -91,7 +101,16 @@ export class UploadService {
       })
       .toBuffer();
 
-    return this.adapter[saveMethod](filename, resized, file.mimetype);
+    try {
+      return await this.adapter[saveMethod](filename, resized, file.mimetype);
+    } catch (err) {
+      if (isAwsCredentialError(err)) {
+        throw new InternalServerErrorException(
+          '이미지 저장소 인증 정보가 올바르지 않습니다. AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY 또는 STORAGE_PROVIDER 설정을 확인해 주세요.',
+        );
+      }
+      throw err;
+    }
   }
 
   private validateFile(file: Express.Multer.File | undefined): asserts file is Express.Multer.File {
@@ -114,6 +133,15 @@ export class UploadService {
       throw new BadRequestException('허용되지 않는 이미지 형식입니다.');
     }
   }
+}
+
+function isCompleteS3Config(config: StorageConfig): boolean {
+  return Boolean(config.s3.bucket.trim());
+}
+
+function isAwsCredentialError(err: unknown): boolean {
+  return err instanceof Error &&
+    /Access Key \(AKID\)|authorization header is malformed|credential/i.test(err.message);
 }
 
 function isAllowedImageMimeType(mimeType: string): mimeType is (typeof ALLOWED_IMAGE_MIME_TYPES)[number] {

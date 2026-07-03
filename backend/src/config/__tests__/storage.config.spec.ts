@@ -35,4 +35,13 @@ describe('createStorageConfig', () => {
       cdnUrl: 'https://cdn.example.com',
     });
   });
+
+  it('AWS_S3_BUCKET_NAME 이 없으면 AWS_S3_BUCKET 을 사용한다', () => {
+    const config = createStorageConfig({
+      STORAGE_PROVIDER: 's3',
+      AWS_S3_BUCKET: 'legacy-bucket',
+    });
+
+    expect(config.s3.bucket).toBe('legacy-bucket');
+  });
 });
