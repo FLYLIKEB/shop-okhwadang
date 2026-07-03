@@ -814,6 +814,19 @@
           "productLink": "View product #{id}",
           "notLinked": "New product"
         }
+      },
+      "naverCommerce": {
+        "title": "Naver Commerce API product update",
+        "description": "Fetch SmartStore products from the Naver Commerce API without Excel and preview updates only for existing store products with matching SKUs.",
+        "credentialsHint": "Required environment variables: NAVER_COMMERCE_APP_ID and NAVER_COMMERCE_APP_SECRET. Secret values are never shown in responses or logs.",
+        "previewButton": "Preview API sync",
+        "previewing": "Fetching...",
+        "commitButton": "Apply API result",
+        "committing": "Applying...",
+        "previewSuccess": "Naver Commerce API products validated.",
+        "previewError": "Failed to validate Naver Commerce API products.",
+        "commitSuccess": "Naver Commerce API products applied to the store.",
+        "commitError": "Failed to apply Naver Commerce API products."
       }
     },
     "productForm": {
@@ -1450,7 +1463,11 @@
     "title": "Shipping, Exchange & Refund Policy",
     "description": "Detailed shipping, exchange/return, and refund standards beyond the product-detail summary.",
     "effectiveDate": "Effective date: June 12, 2026",
-    "sectionKeys": ["shipping", "exchangeReturn", "refund"],
+    "sectionKeys": [
+      "shipping",
+      "exchangeReturn",
+      "refund"
+    ],
     "sections": {
       "shipping": {
         "title": "Shipping Policy",

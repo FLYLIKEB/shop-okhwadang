@@ -43,7 +43,7 @@ export interface SmartStoreImportResult {
   rows: SmartStoreImportRowResult[];
 }
 
-interface ParsedSmartStoreRow {
+export interface SmartStoreParsedProductRow {
   rowNumber: number;
   identifier: string | null;
   productName: string | null;
@@ -60,6 +60,11 @@ interface ParsedSmartStoreRow {
 }
 
 const MAX_IMPORT_ROWS = 500;
+
+interface SmartStoreParsedRowsProcessOptions {
+  unmatchedAction?: SmartStoreImportAction;
+  unmatchedSkipMessage?: (identifier: string | null) => string;
+}
 
 type SmartStoreImportFormat = 'smartstore-list-export' | 'smartstore-bulk-edit';
 
@@ -126,9 +131,31 @@ export class SmartStoreProductImportService {
     return this.process(file, true);
   }
 
+  async previewParsedRows(
+    parsedRows: SmartStoreParsedProductRow[],
+    options: SmartStoreParsedRowsProcessOptions = {},
+  ): Promise<SmartStoreImportResult> {
+    return this.processParsedRows(parsedRows, false, options);
+  }
+
+  async commitParsedRows(
+    parsedRows: SmartStoreParsedProductRow[],
+    options: SmartStoreParsedRowsProcessOptions = {},
+  ): Promise<SmartStoreImportResult> {
+    return this.processParsedRows(parsedRows, true, options);
+  }
+
   private async process(file: Express.Multer.File, commit: boolean): Promise<SmartStoreImportResult> {
     this.assertExcelFile(file);
     const parsedRows = await this.parseWorkbook(file.buffer);
+    return this.processParsedRows(parsedRows, commit);
+  }
+
+  private async processParsedRows(
+    parsedRows: SmartStoreParsedProductRow[],
+    commit: boolean,
+    options: SmartStoreParsedRowsProcessOptions = {},
+  ): Promise<SmartStoreImportResult> {
     const identifiers = parsedRows
       .map((row) => row.identifier)
       .filter((identifier): identifier is string => Boolean(identifier));
@@ -150,15 +177,19 @@ export class SmartStoreProductImportService {
       if (parsed.identifier && duplicateIdentifiers.has(parsed.identifier)) {
         errors.push(`파일 안에서 중복된 상품 식별자입니다: ${parsed.identifier}`);
       }
+      const hasBlockingErrors = errors.length > 0;
 
       const existing = parsed.identifier ? existingBySku.get(parsed.identifier) : undefined;
-      const action: SmartStoreImportAction = errors.length > 0 ? 'skip' : existing ? 'update' : 'create';
+      const action: SmartStoreImportAction = hasBlockingErrors ? 'skip' : existing ? 'update' : (options.unmatchedAction ?? 'create');
+      if (!existing && !hasBlockingErrors && action === 'skip') {
+        errors.push(options.unmatchedSkipMessage?.(parsed.identifier) ?? '일치하는 자사몰 상품이 없어 스킵합니다.');
+      }
       const rowResult: SmartStoreImportRowResult = {
         rowNumber: parsed.rowNumber,
         identifier: parsed.identifier,
         productName: parsed.productName,
         action,
-        status: errors.length > 0 ? 'failed' : commit ? 'success' : 'valid',
+        status: hasBlockingErrors ? 'failed' : commit && action !== 'skip' ? 'success' : 'valid',
         productId: existing?.id,
         optionCount: parsed.optionCount,
         galleryImageCount: parsed.galleryImageCount,
@@ -171,7 +202,7 @@ export class SmartStoreProductImportService {
         errors,
       };
 
-      if (commit && errors.length === 0 && parsed.dto) {
+      if (commit && !hasBlockingErrors && action !== 'skip' && parsed.dto) {
         try {
           const dto = await this.resolveRemoteImages(parsed.dto, ingestCache);
           const saved = existing
@@ -199,7 +230,7 @@ export class SmartStoreProductImportService {
     assertXlsxFile(file, '스마트스토어 상품');
   }
 
-  private async parseWorkbook(buffer: Buffer): Promise<ParsedSmartStoreRow[]> {
+  private async parseWorkbook(buffer: Buffer): Promise<SmartStoreParsedProductRow[]> {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer);
     const format = this.detectFormat(workbook);
@@ -208,7 +239,7 @@ export class SmartStoreProductImportService {
       throw new BadRequestException('필수 컬럼을 찾을 수 없습니다: 상품명, 판매가. 지원 포맷은 스마트스토어 상품목록 다운로드형 또는 일괄수정 XLSX형입니다.');
     }
 
-    const rows: ParsedSmartStoreRow[] = [];
+    const rows: SmartStoreParsedProductRow[] = [];
     const seenDataRows = format.worksheet.rowCount - format.dataStartRowNumber + 1;
     if (seenDataRows > MAX_IMPORT_ROWS) {
       throw new BadRequestException(`한 번에 최대 ${MAX_IMPORT_ROWS}개 상품까지만 업로드할 수 있습니다.`);
@@ -275,7 +306,7 @@ export class SmartStoreProductImportService {
     return headerMap;
   }
 
-  private parseRow(row: ExcelJS.Row, rowNumber: number, headerMap: HeaderMap): ParsedSmartStoreRow {
+  private parseRow(row: ExcelJS.Row, rowNumber: number, headerMap: HeaderMap): SmartStoreParsedProductRow {
     const productNumber = this.getCell(row, headerMap.productNumber);
     const sellerCode = this.getCell(row, headerMap.sellerCode);
     const productName = this.getCell(row, headerMap.name);

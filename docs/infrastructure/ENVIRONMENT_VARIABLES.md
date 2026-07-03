@@ -142,6 +142,9 @@ backend/.env.example      # 키 목록 (커밋 O, 값 없음)
 | `NAVERPAY_CLIENT_ID` | — | NaverPay client ID (프로덕션 체크아웃 필수) |
 | `NAVERPAY_CLIENT_SECRET` | — | NaverPay client secret (프로덕션 체크아웃 필수) |
 | `NAVERPAY_CHAIN_ID` | — | NaverPay chain ID (프로덕션 체크아웃 필수) |
+| `NAVER_COMMERCE_APP_ID` | — | 네이버 커머스API 애플리케이션 ID (스마트스토어 상품 동기화용) |
+| `NAVER_COMMERCE_APP_SECRET` | — | 네이버 커머스API 애플리케이션 시크릿. 실제 값은 secret/env에만 보관 |
+| `NAVER_COMMERCE_API_BASE_URL` | `https://api.commerce.naver.com/external` | 네이버 커머스API 호스트 override (테스트/장애 대응용) |
 | `PAYPAL_CLIENT_ID` | — | PayPal REST API client ID (프로덕션 체크아웃 필수) |
 | `PAYPAL_CLIENT_SECRET` | — | PayPal REST API client secret (프로덕션 체크아웃 필수) |
 | `PAYPAL_WEBHOOK_ID` | — | PayPal webhook signature verification ID |
