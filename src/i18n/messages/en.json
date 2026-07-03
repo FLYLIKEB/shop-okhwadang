@@ -914,13 +914,153 @@
       "archives": "Archives",
       "business": "Business Info",
       "close": "Close sidebar",
-      "cmsGroup": "CMS"
+      "cmsGroup": "CMS",
+      "reviews": "Reviews"
     },
     "navigation": {
       "title": "Navigation Management"
     },
     "categories": {
       "title": "Category Management"
+    },
+    "reviews": {
+      "title": "Review Management",
+      "loading": "Loading reviews.",
+      "noReviews": "No reviews found.",
+      "loadError": "Failed to load reviews.",
+      "emptyValue": "-",
+      "status": {
+        "visible": "Visible",
+        "hidden": "Hidden",
+        "best": "Best"
+      },
+      "filters": {
+        "searchLabel": "Search",
+        "searchPlaceholder": "Search product, product no., review no., reviewer, or content",
+        "searchButton": "Search",
+        "ratingLabel": "Rating",
+        "ratingAll": "All",
+        "ratingOption": "{rating} stars",
+        "mediaLabel": "Photo/video",
+        "mediaAll": "All",
+        "mediaOnly": "With media",
+        "textOnly": "Text only",
+        "reviewTypeLabel": "Review type",
+        "reviewTypePlaceholder": "General, one-month",
+        "visibilityAria": "Review visibility filter",
+        "visibility": {
+          "all": "All",
+          "visible": "Visible",
+          "hidden": "Hidden"
+        }
+      },
+      "bulk": {
+        "selectedCount": "{count} selected",
+        "hide": "Hide selected",
+        "show": "Show selected",
+        "selectFirst": "Select reviews to update.",
+        "hideSuccess": "Hidden {count} reviews.",
+        "showSuccess": "Shown {count} reviews.",
+        "error": "Bulk update failed."
+      },
+      "table": {
+        "selectAll": "Select all reviews on this page",
+        "selectOne": "Select review {id}",
+        "product": "Product",
+        "rating": "Rating",
+        "ratingValue": "{rating} stars",
+        "content": "Content",
+        "reviewer": "Reviewer",
+        "reviewedAt": "Reviewed at",
+        "media": "Media",
+        "mediaValue": "{count}",
+        "mediaFailure": "Failed {count}",
+        "status": "Status",
+        "actions": "Actions",
+        "unmatchedProduct": "No linked product",
+        "noContent": "No content"
+      },
+      "actions": {
+        "detail": "Details",
+        "hide": "Hide",
+        "show": "Show",
+        "hideSuccess": "Review hidden.",
+        "showSuccess": "Review shown.",
+        "visibilityError": "Failed to update review visibility."
+      },
+      "detail": {
+        "title": "Review detail: {id}",
+        "close": "Close",
+        "product": "Product",
+        "orderNo": "Order item no.",
+        "reviewType": "Review type",
+        "helpfulCount": "Helpful count",
+        "sourceDisplayStatus": "Source display status",
+        "importBatchId": "Import batch",
+        "content": "Review content",
+        "relatedContent": "Related review content",
+        "media": "Stored media"
+      },
+      "import": {
+        "title": "Naver SmartStore review Excel upload",
+        "description": "Validate a SmartStore review workbook, match product numbers to naver-product-number SKUs, and import reviews.",
+        "scopeDetails": {
+          "match": "Product numbers match internal product SKUs in naver-product-number form.",
+          "upsert": "Re-uploads update by review number without creating duplicates.",
+          "media": "Photo/video URLs are stored in storage while keeping original URLs.",
+          "manualVisibility": "Manual hidden/visible states are preserved on re-upload."
+        },
+        "fileLabel": "Select SmartStore review Excel file",
+        "previewButton": "Preview",
+        "commitButton": "Commit",
+        "previewing": "Validating...",
+        "committing": "Committing...",
+        "selectFileFirst": "Select an Excel file first.",
+        "previewSuccess": "Review workbook validation completed.",
+        "previewError": "Review workbook validation failed.",
+        "commitSuccess": "Review workbook import completed.",
+        "commitError": "Review workbook import failed.",
+        "batchId": "Import batch: {id}",
+        "summary": {
+          "total": "Total",
+          "create": "Create",
+          "update": "Update",
+          "skip": "Skip",
+          "success": "Success",
+          "failure": "Failure",
+          "mediaFailure": "Media failures"
+        },
+        "showTopRows": "Show top rows",
+        "showAllRows": "Show all {count}",
+        "showFailedRows": "Show failed rows",
+        "showAllResults": "Show all results",
+        "mediaCount": "{success}/{total}",
+        "columns": {
+          "row": "Row",
+          "externalReviewId": "Review no.",
+          "externalProductKey": "Product key",
+          "productName": "Product name",
+          "action": "Action",
+          "rating": "Rating",
+          "media": "Media",
+          "result": "Result"
+        },
+        "actions": {
+          "create": "Create",
+          "update": "Update",
+          "skip": "Skip"
+        },
+        "status": {
+          "valid": "Valid",
+          "failed": "Failed",
+          "success": "Imported"
+        }
+      },
+      "error": {
+        "title": "Could not load review management.",
+        "description": "Please try again shortly.",
+        "retry": "Retry"
+      }
     }
   },
   "search": {
@@ -1310,11 +1450,7 @@
     "title": "Shipping, Exchange & Refund Policy",
     "description": "Detailed shipping, exchange/return, and refund standards beyond the product-detail summary.",
     "effectiveDate": "Effective date: June 12, 2026",
-    "sectionKeys": [
-      "shipping",
-      "exchangeReturn",
-      "refund"
-    ],
+    "sectionKeys": ["shipping", "exchangeReturn", "refund"],
     "sections": {
       "shipping": {
         "title": "Shipping Policy",
