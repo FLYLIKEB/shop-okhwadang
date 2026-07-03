@@ -1,13 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { useLightboxInteraction } from '@/components/shared/hooks/useLightboxInteraction';
 
 function mouseEvent(clientX: number, clientY: number) {
-  return { clientX, clientY } as React.MouseEvent;
+  return { clientX, clientY, preventDefault: vi.fn() } as unknown as React.MouseEvent;
 }
 
 function touchEvent(clientX: number, clientY: number) {
-  return { touches: [{ clientX, clientY }] } as unknown as React.TouchEvent;
+  return { touches: [{ clientX, clientY }], cancelable: true, preventDefault: vi.fn() } as unknown as React.TouchEvent;
 }
 
 describe('useLightboxInteraction', () => {
@@ -35,6 +35,7 @@ describe('useLightboxInteraction', () => {
     });
 
     expect(result.current.lightboxPan).toEqual({ x: 150, y: -150 });
+    expect(result.current.lightboxDragMovedRef.current).toBe(true);
 
     act(() => {
       result.current.handleLightboxMouseUp();
@@ -64,5 +65,6 @@ describe('useLightboxInteraction', () => {
     expect(result.current.lightboxZoomed).toBe(false);
     expect(result.current.lightboxPan).toEqual({ x: 0, y: 0 });
     expect(result.current.lightboxPanRef.current).toEqual({ x: 0, y: 0 });
+    expect(result.current.lightboxDragMovedRef.current).toBe(false);
   });
 });

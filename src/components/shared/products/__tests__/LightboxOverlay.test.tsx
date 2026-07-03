@@ -14,6 +14,7 @@ function makeBaseProps(overrides: Partial<React.ComponentProps<typeof LightboxOv
   // 기본 ref 들
   const lightboxPanRef = { current: { x: 0, y: 0 } } as React.MutableRefObject<{ x: number; y: number }>;
   const isDragging = { current: false } as React.MutableRefObject<boolean>;
+  const lightboxDragMovedRef = { current: false } as React.MutableRefObject<boolean>;
 
   return {
     images: sampleImages,
@@ -34,6 +35,7 @@ function makeBaseProps(overrides: Partial<React.ComponentProps<typeof LightboxOv
     handleLightboxTouchMove: vi.fn(),
     handleLightboxTouchEnd: vi.fn(),
     isDragging,
+    lightboxDragMovedRef,
     ...overrides,
   };
 }
@@ -56,6 +58,19 @@ describe('LightboxOverlay', () => {
     const overlay = screen.getByText('1 / 3').closest('.product-lightbox-top-layer');
     expect(overlay).toBeInTheDocument();
     expect(overlay?.parentElement).toBe(document.body);
+  });
+
+
+  it('긴 세로 이미지도 뷰포트 안에 맞도록 고정 contain 영역을 사용한다', () => {
+    render(<LightboxOverlay {...makeBaseProps()} />);
+    const image = screen.getByAltText('이미지1');
+    const interactiveContainer = image.closest('[style*="cursor"]') as HTMLElement;
+    const imageFrame = image.parentElement as HTMLElement;
+
+    expect(interactiveContainer).toHaveClass('h-[85vh]', 'w-[90vw]', 'overflow-hidden');
+    expect(imageFrame).toHaveClass('h-full', 'w-full');
+    expect(image).toHaveClass('object-contain');
+    expect(image).toHaveAttribute('draggable', 'false');
   });
 
   it('이미지 1장이면 prev/next 버튼/도트 미렌더', () => {
@@ -139,6 +154,20 @@ describe('LightboxOverlay', () => {
     expect(setLightboxZoomed).not.toHaveBeenCalled();
   });
 
+
+  it('드래그로 pan 한 직후 발생한 click은 확대 토글로 처리하지 않는다', async () => {
+    const setLightboxZoomed = vi.fn();
+    const lightboxDragMovedRef = { current: true } as React.MutableRefObject<boolean>;
+    render(<LightboxOverlay {...makeBaseProps({ lightboxZoomed: true, lightboxDragMovedRef, setLightboxZoomed })} />);
+
+    const image = screen.getByAltText('이미지1');
+    const interactiveContainer = image.closest('[style*="cursor"]') as HTMLElement;
+    await userEvent.click(interactiveContainer);
+
+    expect(setLightboxZoomed).not.toHaveBeenCalled();
+    expect(lightboxDragMovedRef.current).toBe(false);
+  });
+
   it('확대 상태 cursor는 드래그 여부에 따라 grab/grabbing으로 표시된다', () => {
     const { unmount } = render(<LightboxOverlay {...makeBaseProps({ lightboxZoomed: true })} />);
     const grabbedImage = screen.getByAltText('이미지1');
@@ -203,29 +232,32 @@ describe('useLightboxInteraction', () => {
       result.current.handleLightboxMouseDown({
         clientX: 0,
         clientY: 0,
-      } as React.MouseEvent);
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent);
     });
     act(() => {
       result.current.handleLightboxMouseMove({
         clientX: 50,
         clientY: 30,
-      } as React.MouseEvent);
+        preventDefault: vi.fn(),
+      } as unknown as React.MouseEvent);
     });
     expect(result.current.lightboxPan).toEqual({ x: 50, y: 30 });
+    expect(result.current.lightboxDragMovedRef.current).toBe(true);
   });
 
   it('mouseMove pan 은 maxPan=150 으로 클램핑', () => {
     const { result } = renderHook(() => useLightboxInteraction());
     act(() => result.current.setLightboxZoomed(true));
-    act(() => result.current.handleLightboxMouseDown({ clientX: 0, clientY: 0 } as React.MouseEvent));
-    act(() => result.current.handleLightboxMouseMove({ clientX: 9999, clientY: -9999 } as React.MouseEvent));
+    act(() => result.current.handleLightboxMouseDown({ clientX: 0, clientY: 0, preventDefault: vi.fn() } as unknown as React.MouseEvent));
+    act(() => result.current.handleLightboxMouseMove({ clientX: 9999, clientY: -9999, preventDefault: vi.fn() } as unknown as React.MouseEvent));
     expect(result.current.lightboxPan).toEqual({ x: 150, y: -150 });
   });
 
   it('zoomed=false 면 mouseMove 무시', () => {
     const { result } = renderHook(() => useLightboxInteraction());
     act(() => {
-      result.current.handleLightboxMouseMove({ clientX: 100, clientY: 100 } as React.MouseEvent);
+      result.current.handleLightboxMouseMove({ clientX: 100, clientY: 100, preventDefault: vi.fn() } as unknown as React.MouseEvent);
     });
     expect(result.current.lightboxPan).toEqual({ x: 0, y: 0 });
   });
@@ -233,7 +265,7 @@ describe('useLightboxInteraction', () => {
   it('mouseUp → isDragging.current=false', () => {
     const { result } = renderHook(() => useLightboxInteraction());
     act(() => result.current.setLightboxZoomed(true));
-    act(() => result.current.handleLightboxMouseDown({ clientX: 0, clientY: 0 } as React.MouseEvent));
+    act(() => result.current.handleLightboxMouseDown({ clientX: 0, clientY: 0, preventDefault: vi.fn() } as unknown as React.MouseEvent));
     expect(result.current.isDragging.current).toBe(true);
     act(() => result.current.handleLightboxMouseUp());
     expect(result.current.isDragging.current).toBe(false);
@@ -242,8 +274,8 @@ describe('useLightboxInteraction', () => {
   it('resetLightboxState → zoom 초기화 + pan 초기화', () => {
     const { result } = renderHook(() => useLightboxInteraction());
     act(() => result.current.setLightboxZoomed(true));
-    act(() => result.current.handleLightboxMouseDown({ clientX: 0, clientY: 0 } as React.MouseEvent));
-    act(() => result.current.handleLightboxMouseMove({ clientX: 30, clientY: 30 } as React.MouseEvent));
+    act(() => result.current.handleLightboxMouseDown({ clientX: 0, clientY: 0, preventDefault: vi.fn() } as unknown as React.MouseEvent));
+    act(() => result.current.handleLightboxMouseMove({ clientX: 30, clientY: 30, preventDefault: vi.fn() } as unknown as React.MouseEvent));
     expect(result.current.lightboxPan).toEqual({ x: 30, y: 30 });
 
     act(() => result.current.resetLightboxState());
@@ -263,6 +295,8 @@ describe('useLightboxInteraction', () => {
     act(() => {
       result.current.handleLightboxTouchMove({
         touches: [{ clientX: 500, clientY: -500 }],
+        cancelable: true,
+        preventDefault: vi.fn(),
       } as unknown as React.TouchEvent);
     });
     expect(result.current.lightboxPan).toEqual({ x: 100, y: -100 });
