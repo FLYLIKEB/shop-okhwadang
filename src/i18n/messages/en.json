@@ -747,7 +747,7 @@
         "title": "Import SmartStore Product Excel",
         "description": "Validate a SmartStore Excel file, then create new products and update existing SKU matches.",
         "supportedFormats": "Supported formats: product-list export XLSX and bulk-edit XLSX (bulk-edit sheet).",
-        "supportedScope": "Scope: basic product fields, options (single/combination), representative/additional images, and detail images. Images are downloaded and re-uploaded to store storage.",
+        "supportedScope": "Import scope: product identifier/SKU, name, price and sale price, stock, sales/display status, shipping/free-shipping flag, product notice information, options, representative/additional images, and detail images.",
         "fileLabel": "SmartStore product Excel file",
         "previewButton": "Preview upload",
         "previewing": "Validating...",
@@ -778,7 +778,12 @@
           "options": "Options",
           "galleryImages": "Images",
           "detailImages": "Detail images",
-          "result": "Result"
+          "result": "Result",
+          "price": "Price",
+          "discount": "Discount",
+          "freeShipping": "Free shipping",
+          "noticeInfo": "Notice info",
+          "matchedProduct": "Matched product"
         },
         "actions": {
           "create": "Create",
@@ -789,6 +794,25 @@
           "valid": "Valid",
           "failed": "Failed",
           "success": "Success"
+        },
+        "scopeDetails": {
+          "identity": "Identifier/SKU: seller product code is used first. If absent, the SmartStore product number is stored as naver-{product number}. Existing SKU matches are updated; unmatched rows create new products.",
+          "pricing": "Pricing/discounts: sales price becomes the base product price. An explicit sale-price column is used first; otherwise immediate discount value plus discount unit (%, KRW) is calculated into the store sale price.",
+          "shipping": "Shipping: free shipping types are imported as free-shipping products. Paid/conditional/quantity-tier/range-tier shipping, or a base shipping fee greater than zero, is imported as not free shipping.",
+          "stockStatus": "Stock/status: stock quantity is imported, and sales/display status determines active, sold-out, or hidden product state. Zero stock is treated as sold out.",
+          "notice": "Product notice information: manufacturer, manually entered origin, A/S phone, and A/S guide are copied into the store product notice fields. SmartStore product import currently stores the default notice type as teaware.",
+          "options": "Options: single and combination option exports import option names, option values, option price adjustments, option stock quantities, and option enabled/disabled state. Disabled/N/no/X options are skipped.",
+          "images": "Images: the representative image becomes the thumbnail, additional images become gallery images, and detail-image columns plus img tags inside detail HTML become detail images. Images are uploaded to the store S3/CloudFront storage while preserving the original bytes.",
+          "limits": "Limits: only .xlsx files are supported, and up to 500 product rows are processed per import. Preview only validates; clicking Apply to store performs the actual product and image writes."
+        },
+        "previewValues": {
+          "yes": "Yes",
+          "no": "No",
+          "unknown": "Unknown",
+          "discountApplied": "Yes ({salePrice})",
+          "discountNone": "No",
+          "productLink": "View product #{id}",
+          "notLinked": "New product"
         }
       }
     },

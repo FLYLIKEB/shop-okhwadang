@@ -50,6 +50,11 @@ export interface SmartStoreProductImportRow {
   optionCount: number;
   galleryImageCount: number;
   detailImageCount: number;
+  price: number | null;
+  salePrice: number | null;
+  hasDiscount: boolean;
+  isFreeShipping: boolean | null;
+  hasNoticeInfo: boolean;
   errors: string[];
 }
 

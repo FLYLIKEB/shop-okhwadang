@@ -21,6 +21,11 @@ export interface SmartStoreImportRowResult {
   optionCount: number;
   galleryImageCount: number;
   detailImageCount: number;
+  price: number | null;
+  salePrice: number | null;
+  hasDiscount: boolean;
+  isFreeShipping: boolean | null;
+  hasNoticeInfo: boolean;
   errors: string[];
 }
 
@@ -44,6 +49,11 @@ interface ParsedSmartStoreRow {
   optionCount: number;
   galleryImageCount: number;
   detailImageCount: number;
+  price: number | null;
+  salePrice: number | null;
+  hasDiscount: boolean;
+  isFreeShipping: boolean | null;
+  hasNoticeInfo: boolean;
   errors: string[];
 }
 
@@ -151,6 +161,11 @@ export class SmartStoreProductImportService {
         optionCount: parsed.optionCount,
         galleryImageCount: parsed.galleryImageCount,
         detailImageCount: parsed.detailImageCount,
+        price: parsed.price,
+        salePrice: parsed.salePrice,
+        hasDiscount: parsed.hasDiscount,
+        isFreeShipping: parsed.isFreeShipping,
+        hasNoticeInfo: parsed.hasNoticeInfo,
         errors,
       };
 
@@ -335,6 +350,11 @@ export class SmartStoreProductImportService {
       optionCount: options?.length ?? 0,
       galleryImageCount: galleryUrls.length,
       detailImageCount: detailUrls.length,
+      price,
+      salePrice: salePrice ?? null,
+      hasDiscount: salePrice !== undefined && price !== null && salePrice < price,
+      isFreeShipping: isFreeShipping ?? null,
+      hasNoticeInfo: Boolean(noticeInfo),
       errors,
     };
   }

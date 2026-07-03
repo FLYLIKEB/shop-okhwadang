@@ -126,8 +126,15 @@ describe('SmartStoreProductImportService', () => {
       ['13629303355', '옥화당 자사호 홍위주니 연자호 100cc', 500000, 15, '옥화당', '중국산(옥화당)', '무료', 0, 5000, '01029080393', '품질 보증 및 관리 안내', 20, '%'],
     ], '일괄수정');
 
-    await service.commit(createFile(buffer));
+    const result = await service.commit(createFile(buffer));
 
+    expect(result.rows[0]).toEqual(expect.objectContaining({
+      price: 500000,
+      salePrice: 400000,
+      hasDiscount: true,
+      isFreeShipping: true,
+      hasNoticeInfo: true,
+    }));
     expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
       sku: 'naver-13629303355',
       price: 500000,
@@ -154,8 +161,15 @@ describe('SmartStoreProductImportService', () => {
       ['SKU-PAID', '유료 배송 상품', 30000, '유료', 3000, 5000, '원'],
     ]);
 
-    await service.commit(createFile(buffer));
+    const result = await service.commit(createFile(buffer));
 
+    expect(result.rows[0]).toEqual(expect.objectContaining({
+      price: 30000,
+      salePrice: 25000,
+      hasDiscount: true,
+      isFreeShipping: false,
+      hasNoticeInfo: false,
+    }));
     expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
       sku: 'SKU-PAID',
       salePrice: 25000,

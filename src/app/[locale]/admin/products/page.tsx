@@ -169,6 +169,23 @@ export default function AdminProductsPage() {
             <p className="text-sm text-muted-foreground">{t('import.description')}</p>
             <p className="text-sm text-muted-foreground">{t('import.supportedFormats')}</p>
             <p className="text-sm text-muted-foreground">{t('import.supportedScope')}</p>
+            <ul className="grid gap-1.5 rounded-md bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground sm:grid-cols-2">
+              {[
+                'identity',
+                'pricing',
+                'shipping',
+                'stockStatus',
+                'notice',
+                'options',
+                'images',
+                'limits',
+              ].map((key) => (
+                <li key={key} className="flex gap-2">
+                  <span aria-hidden="true" className="mt-1 size-1.5 flex-shrink-0 rounded-full bg-foreground/40" />
+                  <span>{t(`import.scopeDetails.${key}`)}</span>
+                </li>
+              ))}
+            </ul>
             <input
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -240,6 +257,11 @@ export default function AdminProductsPage() {
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.identifier')}</th>
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.productName')}</th>
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.action')}</th>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.matchedProduct')}</th>
+                      <th className="px-3 py-2 text-right">{t('import.previewColumns.price')}</th>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.discount')}</th>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.freeShipping')}</th>
+                      <th className="px-3 py-2 text-left">{t('import.previewColumns.noticeInfo')}</th>
                       <th className="px-3 py-2 text-right">{t('import.previewColumns.options')}</th>
                       <th className="px-3 py-2 text-right">{t('import.previewColumns.galleryImages')}</th>
                       <th className="px-3 py-2 text-right">{t('import.previewColumns.detailImages')}</th>
@@ -253,6 +275,32 @@ export default function AdminProductsPage() {
                         <td className="px-3 py-2">{row.identifier ?? '-'}</td>
                         <td className="px-3 py-2">{row.productName ?? '-'}</td>
                         <td className="px-3 py-2">{t(`import.actions.${row.action}`)}</td>
+                        <td className="px-3 py-2">
+                          {row.productId ? (
+                            <Link
+                              href={`/admin/products/${row.productId}/edit`}
+                              className="font-medium text-primary underline-offset-2 hover:underline"
+                            >
+                              {t('import.previewValues.productLink', { id: row.productId })}
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground">{t('import.previewValues.notLinked')}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-right">{row.price != null ? formatCurrency(row.price) : '-'}</td>
+                        <td className="px-3 py-2">
+                          {row.hasDiscount && row.salePrice != null
+                            ? t('import.previewValues.discountApplied', { salePrice: formatCurrency(row.salePrice) })
+                            : t('import.previewValues.discountNone')}
+                        </td>
+                        <td className="px-3 py-2">
+                          {row.isFreeShipping == null
+                            ? t('import.previewValues.unknown')
+                            : row.isFreeShipping
+                              ? t('import.previewValues.yes')
+                              : t('import.previewValues.no')}
+                        </td>
+                        <td className="px-3 py-2">{row.hasNoticeInfo ? t('import.previewValues.yes') : t('import.previewValues.no')}</td>
                         <td className="px-3 py-2 text-right">{row.optionCount ?? 0}</td>
                         <td className="px-3 py-2 text-right">{row.galleryImageCount ?? 0}</td>
                         <td className="px-3 py-2 text-right">{row.detailImageCount ?? 0}</td>
