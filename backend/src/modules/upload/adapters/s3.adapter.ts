@@ -55,7 +55,6 @@ export class S3StorageAdapter implements StorageAdapter {
         Key: key,
         Body: buffer,
         ContentType: mimetype,
-        ACL: 'public-read' as const,
       }),
     );
 

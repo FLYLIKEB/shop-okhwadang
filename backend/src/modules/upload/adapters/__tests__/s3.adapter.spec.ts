@@ -78,7 +78,6 @@ describe('S3StorageAdapter', () => {
         Key: 'products/photo.jpg',
         Body: buffer,
         ContentType: 'image/jpeg',
-        ACL: 'public-read',
       });
       expect(s3Module.__mockSend).toHaveBeenCalledTimes(1);
       expect(result.filename).toBe('products/photo.jpg');
@@ -157,7 +156,6 @@ describe('S3StorageAdapter', () => {
           Key: 'categories/cat.png',
           Bucket: 'test-bucket',
           ContentType: 'image/png',
-          ACL: 'public-read',
         }),
       );
       expect(result.filename).toBe('categories/cat.png');
