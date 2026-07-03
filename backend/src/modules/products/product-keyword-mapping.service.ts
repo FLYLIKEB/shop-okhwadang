@@ -76,6 +76,8 @@ const STATIC_RULES: StaticKeywordRule[] = [
   attribute('clay_type', 'benshan_luni', '본산녹니', ['본산녹니'], 230),
   attribute('clay_type', 'old_qingshuini', '노청수니', ['노청수니'], 230),
   attribute('clay_type', 'old_duanni', '노단니', ['노단니', '老段泥', 'old duanni'], 230),
+  attribute('clay_type', 'tiechengzao_hongni', '철성조홍니', ['철성조홍니'], 230),
+  attribute('clay_type', 'old_zini', '노자니', ['노자니'], 230),
   attribute('clay_type', 'dicaoqing', '저조청', ['저조청', '底槽青'], 220),
   attribute('clay_type', 'qinghuini', '청회니', ['청회니', '青灰泥'], 220),
   attribute('clay_type', 'qingshuini', '청수니', ['청수니'], 210),
@@ -100,6 +102,9 @@ const STATIC_RULES: StaticKeywordRule[] = [
   attribute('teapot_shape', 'xubian', '허편', ['허편', '虛扁'], 200),
   attribute('teapot_shape', 'hanwa', '한와호', ['한와호'], 200),
   attribute('teapot_shape', 'tieqiu', '철구호', ['철구호'], 200),
+  attribute('teapot_shape', 'banhu', '반호', ['반호'], 200),
+  attribute('teapot_shape', 'julunzhu', '거륜주', ['거륜주'], 200),
+  attribute('teapot_shape', 'yixing', '이형호', ['이형호'], 200),
 
   attribute('craft_method', 'handmade', '전수공', ['전수공'], 150),
   attribute('clay_origin', 'huanglongshan', '황룡산', ['황룡산'], 150),
@@ -158,7 +163,7 @@ export class ProductKeywordMappingService {
   }
 
   private selectAttributes(normalizedName: string, warnings: string[]): ProductKeywordAttributeMapping[] {
-    const matches = this.findMatches<AttributeKeywordRule>(normalizedName, 'attribute');
+    const matches = this.dedupeAttributeMatches(this.findMatches<AttributeKeywordRule>(normalizedName, 'attribute'));
     const byCode = new Map<string, Array<MatchedRule<AttributeKeywordRule>>>();
     matches.forEach((match) => {
       const items = byCode.get(match.rule.code) ?? [];
@@ -166,7 +171,7 @@ export class ProductKeywordMappingService {
       byCode.set(match.rule.code, items);
     });
 
-    return [...byCode.entries()].map(([code, items]) => {
+    const attributes = [...byCode.entries()].map(([code, items]) => {
       const selected = this.selectBest(items);
       items
         .filter((match) => match.rule.value !== selected.rule.value)
@@ -180,6 +185,35 @@ export class ProductKeywordMappingService {
         keyword: selected.keyword,
       };
     });
+
+    const capacity = this.extractCapacityAttribute(normalizedName);
+    if (capacity && !attributes.some((attribute) => attribute.code === 'capacity')) {
+      attributes.push(capacity);
+    }
+    return attributes;
+  }
+
+  private dedupeAttributeMatches(matches: Array<MatchedRule<AttributeKeywordRule>>): Array<MatchedRule<AttributeKeywordRule>> {
+    const byValue = new Map<string, Array<MatchedRule<AttributeKeywordRule>>>();
+    matches.forEach((match) => {
+      const key = `${match.rule.code}\u0000${match.rule.value}`;
+      const items = byValue.get(key) ?? [];
+      items.push(match);
+      byValue.set(key, items);
+    });
+    return [...byValue.values()].map((items) => this.selectBest(items));
+  }
+
+  private extractCapacityAttribute(normalizedName: string): ProductKeywordAttributeMapping | null {
+    const capacityMatch = /\b(\d{2,4})\s?(cc|ml)\b/i.exec(normalizedName);
+    if (!capacityMatch) return null;
+    const value = `${capacityMatch[1]}${capacityMatch[2].toLowerCase()}`;
+    return {
+      code: 'capacity',
+      value,
+      displayValue: value,
+      keyword: capacityMatch[0],
+    };
   }
 
   private selectNoticeInfoType(normalizedName: string): ProductNoticeInfoType | undefined {
