@@ -135,9 +135,9 @@ export class AdminReviewsService {
       qb.andWhere(
         new Brackets((sub) => {
           sub
-            .where('review.external_review_id LIKE :search', { search: `%${search}%` })
-            .orWhere('review.external_product_id LIKE :search', { search: `%${search}%` })
-            .orWhere('review.reviewer_name_masked LIKE :search', { search: `%${search}%` })
+            .where('review.externalReviewId LIKE :search', { search: `%${search}%` })
+            .orWhere('review.externalProductId LIKE :search', { search: `%${search}%` })
+            .orWhere('review.reviewerNameMasked LIKE :search', { search: `%${search}%` })
             .orWhere('review.content LIKE :search', { search: `%${search}%` })
             .orWhere('product.name LIKE :search', { search: `%${search}%` })
             .orWhere('product.sku LIKE :search', { search: `%${search}%` });
@@ -146,27 +146,27 @@ export class AdminReviewsService {
     }
 
     if (query.visibility === 'visible') {
-      qb.andWhere('review.is_visible = :visible', { visible: true });
+      qb.andWhere('review.isVisible = :visible', { visible: true });
     }
     if (query.visibility === 'hidden') {
-      qb.andWhere('review.is_visible = :visible', { visible: false });
+      qb.andWhere('review.isVisible = :visible', { visible: false });
     }
     if (query.rating) {
       qb.andWhere('review.rating = :rating', { rating: query.rating });
     }
     if (query.reviewType?.trim()) {
-      qb.andWhere('review.review_type = :reviewType', { reviewType: query.reviewType.trim() });
+      qb.andWhere('review.reviewType = :reviewType', { reviewType: query.reviewType.trim() });
     }
     if (query.importBatchId?.trim()) {
-      qb.andWhere('review.import_batch_id = :importBatchId', {
+      qb.andWhere('review.importBatchId = :importBatchId', {
         importBatchId: query.importBatchId.trim(),
       });
     }
     if (query.hasMedia === 'true') {
-      qb.andWhere('review.image_urls IS NOT NULL AND JSON_LENGTH(review.image_urls) > 0');
+      qb.andWhere('review.imageUrls IS NOT NULL AND JSON_LENGTH(review.imageUrls) > 0');
     }
     if (query.hasMedia === 'false') {
-      qb.andWhere('(review.image_urls IS NULL OR JSON_LENGTH(review.image_urls) = 0)');
+      qb.andWhere('(review.imageUrls IS NULL OR JSON_LENGTH(review.imageUrls) = 0)');
     }
   }
 
@@ -174,16 +174,16 @@ export class AdminReviewsService {
     const order = String(query.order ?? 'DESC').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
     switch (query.sort ?? 'reviewedAt') {
       case 'rating':
-        qb.orderBy('review.rating', order).addOrderBy('review.reviewed_at', 'DESC');
+        qb.orderBy('review.rating', order).addOrderBy('review.reviewedAt', 'DESC');
         break;
       case 'helpful':
-        qb.orderBy('review.helpful_count', order).addOrderBy('review.reviewed_at', 'DESC');
+        qb.orderBy('review.helpfulCount', order).addOrderBy('review.reviewedAt', 'DESC');
         break;
       case 'importedAt':
-        qb.orderBy('review.last_synced_at', order).addOrderBy('review.reviewed_at', 'DESC');
+        qb.orderBy('review.lastSyncedAt', order).addOrderBy('review.reviewedAt', 'DESC');
         break;
       default:
-        qb.orderBy('review.reviewed_at', order);
+        qb.orderBy('review.reviewedAt', order);
     }
   }
 
