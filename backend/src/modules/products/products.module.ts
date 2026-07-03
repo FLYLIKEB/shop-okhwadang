@@ -21,6 +21,7 @@ import { CategoriesController } from './categories.controller';
 import { AttributesController } from './attributes.controller';
 import { CacheModule } from '../cache/cache.module';
 import { RestockAlertsModule } from '../restock-alerts/restock-alerts.module';
+import { UploadModule } from '../upload/upload.module';
 import { RecentlyViewedProduct } from './entities/recently-viewed-product.entity';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 
@@ -39,6 +40,7 @@ import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guar
     ]),
     CacheModule,
     RestockAlertsModule,
+    UploadModule,
   ],
   providers: [
     ProductsService,

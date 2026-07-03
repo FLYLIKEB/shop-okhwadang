@@ -240,6 +240,9 @@ export default function AdminProductsPage() {
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.identifier')}</th>
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.productName')}</th>
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.action')}</th>
+                      <th className="px-3 py-2 text-right">{t('import.previewColumns.options')}</th>
+                      <th className="px-3 py-2 text-right">{t('import.previewColumns.galleryImages')}</th>
+                      <th className="px-3 py-2 text-right">{t('import.previewColumns.detailImages')}</th>
                       <th className="px-3 py-2 text-left">{t('import.previewColumns.result')}</th>
                     </tr>
                   </thead>
@@ -250,6 +253,9 @@ export default function AdminProductsPage() {
                         <td className="px-3 py-2">{row.identifier ?? '-'}</td>
                         <td className="px-3 py-2">{row.productName ?? '-'}</td>
                         <td className="px-3 py-2">{t(`import.actions.${row.action}`)}</td>
+                        <td className="px-3 py-2 text-right">{row.optionCount ?? 0}</td>
+                        <td className="px-3 py-2 text-right">{row.galleryImageCount ?? 0}</td>
+                        <td className="px-3 py-2 text-right">{row.detailImageCount ?? 0}</td>
                         <td className="px-3 py-2">
                           {row.errors.length > 0 ? row.errors.join(', ') : t(`import.status.${row.status}`)}
                         </td>

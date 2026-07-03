@@ -747,7 +747,7 @@
         "title": "스마트스토어 상품 엑셀 가져오기",
         "description": "스마트스토어에서 다운로드한 엑셀을 검증한 뒤 신규 상품을 추가하고 기존 SKU 상품을 수정합니다.",
         "supportedFormats": "지원 포맷: 상품목록 다운로드형 XLSX, 일괄수정 XLSX(일괄수정 시트).",
-        "supportedScope": "1차 지원 범위: 기본 상품 필드만 반영합니다. 옵션, 상세 이미지, 추가 이미지 확장은 후속 과제입니다.",
+        "supportedScope": "지원 범위: 기본 상품 필드, 옵션(단독형/조합형), 대표/추가 이미지, 상세 이미지를 반영합니다. 이미지는 다운로드 후 자사몰 스토리지에 업로드됩니다.",
         "fileLabel": "스마트스토어 상품 엑셀 파일",
         "previewButton": "업로드 미리보기",
         "previewing": "검증 중...",
@@ -775,6 +775,9 @@
           "identifier": "식별자",
           "productName": "상품명",
           "action": "작업",
+          "options": "옵션",
+          "galleryImages": "이미지",
+          "detailImages": "상세 이미지",
           "result": "결과"
         },
         "actions": {

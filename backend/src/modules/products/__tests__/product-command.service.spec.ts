@@ -4,6 +4,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ObjectLiteral, Repository } from 'typeorm';
 import { ProductCommandService } from '../product-command.service';
 import { Product } from '../entities/product.entity';
+import { ProductOption } from '../entities/product-option.entity';
 import { CacheService } from '../../cache/cache.service';
 import { RestockAlertsService } from '../../restock-alerts/restock-alerts.service';
 
@@ -25,6 +26,7 @@ interface ManagerMock {
   create: jest.Mock;
   save: jest.Mock;
   delete: jest.Mock;
+  find: jest.Mock;
 }
 
 describe('ProductCommandService', () => {
@@ -48,6 +50,7 @@ describe('ProductCommandService', () => {
       create: jest.fn(),
       save: jest.fn(),
       delete: jest.fn().mockResolvedValue(undefined),
+      find: jest.fn().mockResolvedValue([]),
     };
     dataSource = {
       transaction: jest.fn().mockImplementation(async (cb: (m: ManagerMock) => Promise<unknown>) => cb(manager)),
@@ -130,6 +133,31 @@ describe('ProductCommandService', () => {
       expect(manager.save).toHaveBeenCalledTimes(2); // product + images batch
     });
 
+    it('옵션 함께 생성 시 ProductOption 저장', async () => {
+      const created = { id: 5 } as Product;
+      manager.create.mockImplementation((_entity: unknown, data: Record<string, unknown>) => data);
+      manager.save.mockResolvedValue(created);
+
+      await service.create({
+        name: 'p',
+        slug: 'p-opt',
+        price: 100,
+        options: [
+          { name: '용량', value: '100cc', priceAdjustment: 5000, stock: 3 },
+          { name: '용량', value: '200cc' },
+        ],
+      });
+
+      expect(manager.create).toHaveBeenCalledWith(
+        ProductOption,
+        expect.objectContaining({ name: '용량', value: '100cc', priceAdjustment: 5000, stock: 3, sortOrder: 0 }),
+      );
+      expect(manager.create).toHaveBeenCalledWith(
+        ProductOption,
+        expect.objectContaining({ name: '용량', value: '200cc', priceAdjustment: 0, stock: 0, sortOrder: 1 }),
+      );
+    });
+
     it('ER_DUP_ENTRY 에러는 ConflictException 으로 변환', async () => {
       const dupErr = Object.assign(new Error('Duplicate entry'), { code: 'ER_DUP_ENTRY' });
       manager.create.mockReturnValue({ id: 1 } as Product);
@@ -186,6 +214,43 @@ describe('ProductCommandService', () => {
       await service.update(1, { name: 'newName' });
 
       expect(restockAlerts.processProductRestock).not.toHaveBeenCalled();
+    });
+
+    it('옵션 수정 시 기존 (name,value) 매칭은 갱신하고 미매칭은 삭제', async () => {
+      const existing = { id: 1, stock: 0 } as Product;
+      productRepo.findOne.mockResolvedValue(existing);
+      manager.save.mockResolvedValue(existing);
+      manager.create.mockImplementation((_entity: unknown, data: Record<string, unknown>) => data);
+      manager.find.mockResolvedValue([
+        { id: 11, productId: 1, name: '용량', value: '100cc', priceAdjustment: 0, stock: 1, sortOrder: 0 },
+        { id: 12, productId: 1, name: '용량', value: '300cc', priceAdjustment: 0, stock: 1, sortOrder: 1 },
+      ]);
+
+      await service.update(1, {
+        options: [
+          { name: '용량', value: '100cc', priceAdjustment: 2000, stock: 5 },
+          { name: '용량', value: '500cc', stock: 2 },
+        ],
+      });
+
+      // 매칭(100cc) 갱신 + 신규(500cc) 저장
+      expect(manager.save).toHaveBeenCalledWith(ProductOption, expect.arrayContaining([
+        expect.objectContaining({ id: 11, priceAdjustment: 2000, stock: 5 }),
+        expect.objectContaining({ name: '용량', value: '500cc', stock: 2 }),
+      ]));
+      // 미매칭(300cc) 삭제
+      expect(manager.delete).toHaveBeenCalledWith(ProductOption, { id: expect.anything() });
+    });
+
+    it('options 미지정 시 옵션을 건드리지 않음', async () => {
+      const existing = { id: 1, stock: 0 } as Product;
+      productRepo.findOne.mockResolvedValue(existing);
+      manager.save.mockResolvedValue(existing);
+
+      await service.update(1, { name: 'newName' });
+
+      expect(manager.find).not.toHaveBeenCalled();
+      expect(manager.delete).not.toHaveBeenCalled();
     });
 
     it('이미지 교체 시 manager.delete 가 먼저 호출됨', async () => {

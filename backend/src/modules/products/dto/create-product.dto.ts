@@ -139,6 +139,34 @@ export class ProductDetailImageInputDto {
   sortOrder?: number;
 }
 
+export class ProductOptionInputDto {
+  @ApiProperty({ example: '용량', description: '옵션명' })
+  @IsString({ message: '옵션명을 입력해 주세요.' })
+  @MaxLength(100, { message: '옵션명은 최대 100자까지 입력 가능합니다.' })
+  name!: string;
+
+  @ApiProperty({ example: '100cc', description: '옵션값' })
+  @IsString({ message: '옵션값을 입력해 주세요.' })
+  @MaxLength(100, { message: '옵션값은 최대 100자까지 입력 가능합니다.' })
+  value!: string;
+
+  @ApiPropertyOptional({ example: 5000, description: '옵션 가격 조정 (원)' })
+  @IsOptional()
+  @IsNumber({}, { message: '옵션 가격 조정은 숫자여야 합니다.' })
+  priceAdjustment?: number;
+
+  @ApiPropertyOptional({ example: 10, description: '옵션 재고 수량' })
+  @IsOptional()
+  @IsNumber({}, { message: '옵션 재고는 숫자여야 합니다.' })
+  @Min(0, { message: '옵션 재고는 0 이상이어야 합니다.' })
+  stock?: number;
+
+  @ApiPropertyOptional({ example: 0, description: '정렬 순서' })
+  @IsOptional()
+  @IsNumber()
+  sortOrder?: number;
+}
+
 export class CreateProductDto {
   @ApiProperty({ example: 1, description: '카테고리 ID', required: false })
   @IsOptional()
@@ -252,4 +280,11 @@ export class CreateProductDto {
   @ValidateNested({ each: true })
   @Type(() => ProductDetailImageInputDto)
   detailImages?: ProductDetailImageInputDto[];
+
+  @ApiPropertyOptional({ type: [ProductOptionInputDto], description: '상품 옵션 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductOptionInputDto)
+  options?: ProductOptionInputDto[];
 }

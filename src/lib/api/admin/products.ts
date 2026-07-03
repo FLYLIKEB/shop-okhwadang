@@ -47,6 +47,9 @@ export interface SmartStoreProductImportRow {
   action: SmartStoreImportAction;
   status: SmartStoreImportStatus;
   productId?: number;
+  optionCount: number;
+  galleryImageCount: number;
+  detailImageCount: number;
   errors: string[];
 }
 
