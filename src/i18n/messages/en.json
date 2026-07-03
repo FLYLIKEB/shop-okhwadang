@@ -609,7 +609,12 @@
     "expandImage": "Enlarge image",
     "expandedImageAlt": "Enlarged image",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "translate": "Translate",
+    "translating": "Translating...",
+    "showOriginal": "Show original",
+    "machineTranslated": "Machine-translated review.",
+    "translateError": "Failed to translate this review."
   },
   "shipping": {
     "title": "Register Tracking Number",

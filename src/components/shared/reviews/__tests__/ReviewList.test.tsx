@@ -3,10 +3,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ReviewList from '../ReviewList'
 
 const mockGetByProduct = vi.fn()
+const mockTranslateContent = vi.fn()
 
 vi.mock('@/lib/api', () => ({
   reviewsApi: {
     getByProduct: (...args: unknown[]) => mockGetByProduct(...args),
+    translateContent: (...args: unknown[]) => mockTranslateContent(...args),
   },
 }))
 
@@ -48,7 +50,9 @@ describe('ReviewList', () => {
   }
 
   beforeEach(() => {
+    document.documentElement.lang = 'ko'
     mockGetByProduct.mockResolvedValue(mockResponse)
+    mockTranslateContent.mockResolvedValue({ translatedText: 'Really good', sourceLocale: 'ko', targetLocale: 'en' })
   })
 
   it('renders reviews after loading', async () => {
@@ -85,6 +89,29 @@ describe('ReviewList', () => {
     })
     expect(screen.getByText('네이버 스마트스토어')).toBeInTheDocument()
     expect(screen.getByText('네이버 스마트스토어 1개 포함')).toBeInTheDocument()
+  })
+
+
+
+  it('translates Korean review content inline on English storefront', async () => {
+    document.documentElement.lang = 'en'
+    render(<ReviewList productId={5} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('정말 좋아요')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Translate' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Really good')).toBeInTheDocument()
+    })
+    expect(mockTranslateContent).toHaveBeenCalledWith({
+      text: '정말 좋아요',
+      sourceLocale: 'ko',
+      targetLocale: 'en',
+    })
+    expect(screen.getByText('Machine-translated review.')).toBeInTheDocument()
   })
 
   it('shows empty state when no reviews', async () => {

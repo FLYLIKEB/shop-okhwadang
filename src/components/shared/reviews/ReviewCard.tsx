@@ -2,6 +2,7 @@
 
 import { useState, memo } from 'react'
 import Image from 'next/image'
+import { reviewsApi } from '@/lib/api'
 import type { ReviewItem } from '@/lib/api'
 import StarRating from './StarRating'
 import { getClientLocale } from '@/utils/clientLocale'
@@ -11,9 +12,17 @@ interface ReviewCardProps {
   review: ReviewItem
 }
 
+function detectReviewSourceLocale(content: string): 'ko' | 'en' {
+  return /[\u3131-\u318E\uAC00-\uD7A3]/.test(content) ? 'ko' : 'en'
+}
+
 const ReviewCardComponent = memo(function ReviewCard({ review }: ReviewCardProps) {
   const locale = getClientLocale()
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
+  const [translatedContent, setTranslatedContent] = useState<string | null>(null)
+  const [showTranslation, setShowTranslation] = useState(false)
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [translationError, setTranslationError] = useState<string | null>(null)
 
   const formattedDate = new Date(review.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR', {
     year: 'numeric',
@@ -22,6 +31,36 @@ const ReviewCardComponent = memo(function ReviewCard({ review }: ReviewCardProps
   })
 
   const isSmartStoreReview = review.source === 'smartstore'
+  const content = review.content?.trim() ?? ''
+  const sourceLocale = content ? detectReviewSourceLocale(content) : locale
+  const canTranslate = Boolean(content) && sourceLocale !== locale
+  const visibleContent = showTranslation && translatedContent ? translatedContent : review.content
+
+  const handleTranslate = async () => {
+    if (!content || !canTranslate) return
+
+    if (translatedContent) {
+      setShowTranslation((value) => !value)
+      setTranslationError(null)
+      return
+    }
+
+    setIsTranslating(true)
+    setTranslationError(null)
+    try {
+      const result = await reviewsApi.translateContent({
+        text: content,
+        sourceLocale,
+        targetLocale: locale,
+      })
+      setTranslatedContent(result.translatedText)
+      setShowTranslation(true)
+    } catch {
+      setTranslationError(localMessage('review.translateError'))
+    } finally {
+      setIsTranslating(false)
+    }
+  }
 
   return (
     <div className="border-b border-border py-4 last:border-b-0">
@@ -39,7 +78,31 @@ const ReviewCardComponent = memo(function ReviewCard({ review }: ReviewCardProps
       </div>
 
       {review.content && (
-        <p className="mt-2 text-sm text-foreground leading-relaxed">{review.content}</p>
+        <div className="mt-2 space-y-1">
+          <div className="flex flex-wrap items-start gap-x-2 gap-y-1">
+            <p className="text-sm text-foreground leading-relaxed">{visibleContent}</p>
+            {canTranslate && (
+              <button
+                type="button"
+                onClick={handleTranslate}
+                disabled={isTranslating}
+                className="text-xs font-medium text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground disabled:cursor-wait disabled:opacity-60"
+              >
+                {isTranslating
+                  ? localMessage('review.translating')
+                  : showTranslation
+                    ? localMessage('review.showOriginal')
+                    : localMessage('review.translate')}
+              </button>
+            )}
+          </div>
+          {showTranslation && translatedContent && (
+            <p className="text-[11px] text-muted-foreground">{localMessage('review.machineTranslated')}</p>
+          )}
+          {translationError && (
+            <p className="text-xs text-destructive">{translationError}</p>
+          )}
+        </div>
       )}
 
       {review.imageUrls && review.imageUrls.length > 0 && (

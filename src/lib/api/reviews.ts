@@ -30,6 +30,18 @@ export interface ReviewListResponse {
   pagination: { page: number; limit: number; total: number };
 }
 
+export interface TranslateReviewRequest {
+  text: string;
+  sourceLocale: 'ko' | 'en';
+  targetLocale: 'ko' | 'en';
+}
+
+export interface TranslateReviewResponse {
+  translatedText: string;
+  sourceLocale: 'ko' | 'en';
+  targetLocale: 'ko' | 'en';
+}
+
 export type ReviewSort = 'recent' | 'rating_high' | 'rating_low';
 
 export interface ReviewQueryParams {
@@ -58,6 +70,8 @@ export const reviewsApi = {
     apiClient.get<ReviewListResponse>('/reviews', {
       params: { productId, ...params } as Record<string, string | number | undefined>,
     }),
+  translateContent: (data: TranslateReviewRequest) =>
+    apiClient.post<TranslateReviewResponse>('/reviews/translate', data),
   create: (data: CreateReviewData) =>
     apiClient.post<ReviewItem>('/reviews', data),
   update: (id: number, data: UpdateReviewData) =>

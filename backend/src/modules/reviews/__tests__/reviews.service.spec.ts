@@ -261,6 +261,45 @@ describe('ReviewsService', () => {
     });
   });
 
+
+
+  describe('translateReviewContent', () => {
+    const originalFetch = global.fetch;
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it('translates review content through the translation service', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue([[["Really good", "정말 좋아요", null, null]]]),
+      } as unknown as Response);
+
+      const result = await service.translateReviewContent({
+        text: '정말 좋아요',
+        sourceLocale: 'ko',
+        targetLocale: 'en',
+      });
+
+      expect(result).toEqual({
+        translatedText: 'Really good',
+        sourceLocale: 'ko',
+        targetLocale: 'en',
+      });
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('translate.googleapis.com/translate_a/single'),
+        expect.objectContaining({ headers: { accept: 'application/json' } }),
+      );
+    });
+
+    it('rejects blank review translation requests', async () => {
+      await expect(
+        service.translateReviewContent({ text: '   ', sourceLocale: 'ko', targetLocale: 'en' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
   describe('importSmartStoreReviews', () => {
     it('should upsert SmartStore reviews by external review id', async () => {
       mockExternalRepo.findOne
