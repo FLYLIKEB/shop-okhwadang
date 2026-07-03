@@ -32,6 +32,7 @@ export class ShippingController {
   }
 
   @Post('track')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '배송 추적', description: '운송장 번호로 배송을 추적합니다.' })
   @ApiResponse({ status: 200, description: '배송 추적 성공' })

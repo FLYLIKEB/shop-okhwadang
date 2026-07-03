@@ -49,16 +49,16 @@ export class UploadService {
     this.logger.log(`StorageAdapter: ${provider}`);
   }
 
-  uploadImage(file: Express.Multer.File): Promise<UploadedFile> {
+  uploadImage(file: Express.Multer.File | undefined): Promise<UploadedFile> {
     return this.uploadWithPipeline(file, 'save');
   }
 
-  uploadCategoryImage(file: Express.Multer.File): Promise<UploadedFile> {
+  uploadCategoryImage(file: Express.Multer.File | undefined): Promise<UploadedFile> {
     return this.uploadWithPipeline(file, 'saveCategoryImage');
   }
 
   private async uploadWithPipeline(
-    file: Express.Multer.File,
+    file: Express.Multer.File | undefined,
     saveMethod: 'save' | 'saveCategoryImage',
   ): Promise<UploadedFile> {
     this.validateFile(file);
@@ -78,7 +78,11 @@ export class UploadService {
     return this.adapter[saveMethod](filename, resized, file.mimetype);
   }
 
-  private validateFile(file: Express.Multer.File): void {
+  private validateFile(file: Express.Multer.File | undefined): asserts file is Express.Multer.File {
+    if (!file) {
+      throw new BadRequestException('업로드할 파일을 첨부해주세요.');
+    }
+
     if (!isAllowedImageMimeType(file.mimetype)) {
       throw new BadRequestException(
         '허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)',

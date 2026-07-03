@@ -14,6 +14,9 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next-intl', () => ({
+  useFormatter: () => ({
+    dateTime: (date: Date) => date.toISOString(),
+  }),
   useTranslations: (namespace: keyof typeof koMessages) => (
     key: string,
     values?: Record<string, string | number>,

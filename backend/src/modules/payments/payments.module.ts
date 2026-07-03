@@ -5,6 +5,7 @@ import { PaymentWebhookEvent } from './entities/payment-webhook-event.entity';
 import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order } from '../orders/entities/order.entity';
+import { OrderEventsModule } from '../orders/order-events.module';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
@@ -35,8 +36,22 @@ export type CheckoutGatewayName = 'naverpay' | 'paypal';
  * - ko: 네이버페이 기본, PayPal 추가 선택지
  * - 그 외: PayPal 기본, 네이버페이 추가 선택지
  */
+function getEnabledCheckoutGateways(env: NodeJS.ProcessEnv = process.env): CheckoutGatewayName[] {
+  const configured = env.CHECKOUT_ENABLED_GATEWAYS;
+  if (!configured || configured.trim() === '') return ['naverpay', 'paypal'];
+
+  const gateways = configured
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(isCheckoutGatewayName);
+
+  return [...new Set(gateways)];
+}
+
 export function getAvailableGatewaysByLocale(locale: string): CheckoutGatewayName[] {
-  return locale === 'ko' ? ['naverpay', 'paypal'] : ['paypal', 'naverpay'];
+  const localeOrder: CheckoutGatewayName[] = locale === 'ko' ? ['naverpay', 'paypal'] : ['paypal', 'naverpay'];
+  const enabled = getEnabledCheckoutGateways();
+  return localeOrder.filter((gateway) => enabled.includes(gateway));
 }
 
 export function resolveGatewayByLocale(locale: string): CheckoutGatewayName {
@@ -97,7 +112,7 @@ const gatewayProviders = [
 ];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory])],
+  imports: [TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory]), OrderEventsModule],
   controllers: [PaymentsController, AdminOrderRefundsController, AdminPaymentWebhooksController],
   providers: [...gatewayProviders, PaymentsService, { provide: 'PaymentsService', useExisting: PaymentsService }],
   exports: [PaymentsService, 'PaymentsService'],

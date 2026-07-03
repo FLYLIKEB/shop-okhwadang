@@ -91,9 +91,9 @@ describe('CouponSelector', () => {
     await userEvent.selectOptions(screen.getByLabelText('쿠폰 선택'), '1');
 
     await waitFor(() => {
-      expect(calculateMock).toHaveBeenCalledWith({ orderAmount: 100000, userCouponId: 1 });
+      expect(calculateMock).toHaveBeenCalledWith({ orderAmount: 100000, userCouponId: 1, pointsToUse: 0 });
     });
-    expect(onDiscountChange).toHaveBeenCalledWith(discountResult, 1);
+    expect(onDiscountChange).toHaveBeenCalledWith(discountResult, 1, 0);
   });
 
   it('빈 값 선택 → onDiscountChange(null, undefined)', async () => {
@@ -111,7 +111,7 @@ describe('CouponSelector', () => {
     onDiscountChange.mockClear();
     await userEvent.selectOptions(select, '');
 
-    expect(onDiscountChange).toHaveBeenLastCalledWith(null, undefined);
+    expect(onDiscountChange).toHaveBeenLastCalledWith(null, undefined, 0);
     expect(calculateMock).not.toHaveBeenCalled();
   });
 
@@ -127,7 +127,7 @@ describe('CouponSelector', () => {
     await waitFor(() => {
       expect(toastErrorMock).toHaveBeenCalled();
     });
-    expect(onDiscountChange).toHaveBeenLastCalledWith(null, undefined);
+    expect(onDiscountChange).toHaveBeenLastCalledWith(null, undefined, 0);
   });
 
   it('쿠폰 목록이 비어있으면 안내 문구 표시', async () => {

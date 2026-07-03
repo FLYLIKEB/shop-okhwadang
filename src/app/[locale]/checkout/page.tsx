@@ -9,7 +9,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
-import type { CartItem, CheckoutGatewayName, PreparePaymentResponse, ShippingQuoteResponse, UserAddress } from '@/lib/api';
+import type { CartItem, CheckoutGatewayName, PreparePaymentResponse, ShippingQuoteResponse, UserAddress, CalculateDiscountResponse } from '@/lib/api';
 import { shippingApi, usersApi } from '@/lib/api';
 import { SESSION_KEYS } from '@/constants/storage';
 import type { Locale } from '@/i18n/routing';
@@ -17,6 +17,7 @@ import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/c
 import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMethodSelector';
 import { AddressSelectorSection } from '@/components/shared/checkout/AddressSelectorSection';
 import { OrderSummarySection } from '@/components/shared/checkout/OrderSummarySection';
+import CouponSelector from '@/components/shared/checkout/CouponSelector';
 import {
   AddressDetailInputSection,
   AddressInputSection,
@@ -42,6 +43,31 @@ export interface FormErrors {
   recipientPhone?: string;
   zipcode?: string;
   address?: string;
+}
+
+
+function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
+  return value === 'naverpay' || value === 'paypal';
+}
+
+function getEnabledCheckoutGateways(): CheckoutGatewayName[] {
+  const configured = process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS;
+  if (!configured || configured.trim() === '') return ['naverpay', 'paypal'];
+  const gateways = configured
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(isCheckoutGatewayName);
+  return [...new Set(gateways)];
+}
+
+function getGatewayOptions(locale: Locale): CheckoutGatewayName[] {
+  const localeOrder: CheckoutGatewayName[] = locale === 'ko' ? ['naverpay', 'paypal'] : ['paypal', 'naverpay'];
+  const enabled = getEnabledCheckoutGateways();
+  return localeOrder.filter((gateway) => enabled.includes(gateway));
+}
+
+function getDefaultGateway(locale: Locale): CheckoutGatewayName {
+  return getGatewayOptions(locale)[0] ?? 'naverpay';
 }
 
 function normalizeInputValue(value: unknown): string {
@@ -72,9 +98,7 @@ export default function CheckoutPage({
   const [sessionChecked, setSessionChecked] = useState(false);
   const [step, setStep] = useState<PaymentStep>('idle');
   const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
-  const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(
-    locale === 'ko' ? 'naverpay' : 'paypal',
-  );
+  const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(() => getDefaultGateway(locale));
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
   const [currentOrderNumber, setCurrentOrderNumber] = useState('');
   const [confirmedGrandTotal, setConfirmedGrandTotal] = useState<number | null>(null);
@@ -90,6 +114,9 @@ export default function CheckoutPage({
   const [errors, setErrors] = useState<FormErrors>({});
   const [requiredConsent, setRequiredConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
+  const [discountResult, setDiscountResult] = useState<CalculateDiscountResponse | null>(null);
+  const [selectedUserCouponId, setSelectedUserCouponId] = useState<number | undefined>();
+  const [pointsUsed, setPointsUsed] = useState(0);
   const paymentRef = useRef<PaymentGatewayHandle>(null);
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | 'manual' | null>(null);
@@ -98,7 +125,8 @@ export default function CheckoutPage({
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
   const shippingFee = shippingQuote?.shippingFee ?? 0;
   const freeShippingThreshold = shippingQuote?.threshold ?? 0;
-  const estimatedGrandTotal = totalAmount + shippingFee;
+  const discountAmount = discountResult ? discountResult.couponDiscount + discountResult.pointsDiscount : 0;
+  const estimatedGrandTotal = Math.max(totalAmount + shippingFee - discountAmount, 0);
   const grandTotal = confirmedGrandTotal ?? estimatedGrandTotal;
 
   const stepLabels: Record<PaymentStep, string> = {
@@ -109,9 +137,7 @@ export default function CheckoutPage({
     success: t('steps.success'),
   };
   const loadAddressErrorMessage = t('loadAddressError');
-  const gatewayOptions: CheckoutGatewayName[] = locale === 'ko'
-    ? ['naverpay', 'paypal']
-    : ['paypal', 'naverpay'];
+  const gatewayOptions = getGatewayOptions(locale);
 
   const fillFormFromAddress = (addr: UserAddress) => {
     setForm({
@@ -125,7 +151,7 @@ export default function CheckoutPage({
   };
 
   useEffect(() => {
-    setSelectedGateway(locale === 'ko' ? 'naverpay' : 'paypal');
+    setSelectedGateway(getDefaultGateway(locale));
   }, [locale]);
 
   useEffect(() => {
@@ -237,6 +263,8 @@ export default function CheckoutPage({
     currentOrderNumber,
     requiredConsent,
     marketingConsent,
+    selectedUserCouponId,
+    pointsUsed,
     setStep,
     setPrepareResult,
     setCurrentOrderId,
@@ -311,9 +339,18 @@ export default function CheckoutPage({
               </div>
             </section>
 
-            <section className="rounded-lg border p-6 opacity-70">
+            <section className="rounded-lg border p-6">
               <h2 className="typo-h3">{t('couponPoints')}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{t('couponPointsComingSoon')}</p>
+              <div className="mt-4">
+                <CouponSelector
+                  orderAmount={totalAmount}
+                  onDiscountChange={(result, userCouponId, appliedPoints = 0) => {
+                    setDiscountResult(result);
+                    setSelectedUserCouponId(userCouponId);
+                    setPointsUsed(appliedPoints);
+                  }}
+                />
+              </div>
             </section>
 
             <section className="rounded-lg border p-6">
@@ -356,6 +393,7 @@ export default function CheckoutPage({
               locale={locale}
               shippingFee={shippingFee}
               freeShippingThreshold={freeShippingThreshold}
+              discountAmount={discountAmount}
             />
             <div className="hidden rounded-lg border border-border p-4 md:block">
               <div className="mb-2 flex items-end justify-between">

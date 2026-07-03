@@ -153,11 +153,13 @@ export function registerShippingSuite(getApp: () => INestApplication) {
     });
 
     describe('POST /api/shipping/track', () => {
-      it('no JWT → 401', () => {
-        return request(app.getHttpServer())
+      it('no JWT → 200 (public tracking lookup)', async () => {
+        const res = await request(app.getHttpServer())
           .post('/api/shipping/track')
           .send({ carrier: 'mock', trackingNumber: '123' })
-          .expect(401);
+          .expect(200);
+
+        expect(res.body).toEqual(expect.objectContaining({ carrier: 'mock', trackingNumber: '123' }));
       });
 
       it('유효한 carrier + trackingNumber → 200, steps 배열', async () => {

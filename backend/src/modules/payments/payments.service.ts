@@ -35,6 +35,7 @@ import { PaymentConfirmationService } from './services/payment-confirmation.serv
 import { PaymentRefundService } from './services/payment-refund.service';
 import { PaymentWebhookService } from './services/payment-webhook.service';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../config/payment.config';
+import { OrderEventEmitter } from '../orders/order-event.emitter';
 
 @Injectable()
 export class PaymentsService {
@@ -67,6 +68,8 @@ export class PaymentsService {
     @Optional()
     private readonly messageNotificationService: MessageNotificationService | undefined,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
+    @Optional()
+    private readonly orderEventEmitter: OrderEventEmitter | undefined,
     private readonly dataSource: DataSource,
   ) {
     this.paymentConfirmationService = new PaymentConfirmationService({
@@ -80,6 +83,7 @@ export class PaymentsService {
       resolveGatewayByType: (gatewayType) => this.resolveGatewayByType(gatewayType),
       logger: this.logger,
       defaultCarrier: this.paymentConfig.defaultCarrier,
+      orderEventEmitter: this.orderEventEmitter,
     });
     this.paymentRefundService = new PaymentRefundService({
       paymentRepository: this.paymentRepository,

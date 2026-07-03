@@ -3,6 +3,7 @@ import {
   assertEnv,
   REQUIRED_PROD_ENV_KEYS,
   CHECKOUT_PROD_ENV_KEYS,
+  getRequiredCheckoutEnvKeys,
 } from '../env-validator';
 
 const makeFullEnv = (): NodeJS.ProcessEnv => ({
@@ -39,14 +40,24 @@ describe('validateEnv', () => {
     expect(validateEnv(makeFullEnv())).toEqual([]);
   });
 
-  it('프로덕션 체크아웃에서 PayPal/NaverPay 키 누락을 배포 전 검출', () => {
+  it('활성화된 프로덕션 체크아웃 provider 키 누락만 배포 전 검출', () => {
     const env = makeFullEnv();
+    env.CHECKOUT_ENABLED_GATEWAYS = 'naverpay';
     delete env.PAYPAL_CLIENT_SECRET;
     delete env.NAVERPAY_CHAIN_ID;
 
     const errorKeys = validateEnv(env).map((e) => e.key);
-    expect(errorKeys).toContain('PAYPAL_CLIENT_SECRET');
+    expect(errorKeys).not.toContain('PAYPAL_CLIENT_SECRET');
     expect(errorKeys).toContain('NAVERPAY_CHAIN_ID');
+  });
+
+  it('CHECKOUT_ENABLED_GATEWAYS가 없으면 PAYMENT_GATEWAY provider 키만 필수로 검증한다', () => {
+    const env = makeFullEnv();
+    env.PAYMENT_GATEWAY = 'paypal';
+    delete env.NAVERPAY_CHAIN_ID;
+
+    expect(getRequiredCheckoutEnvKeys(env)).toEqual(['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET']);
+    expect(validateEnv(env).map((e) => e.key)).not.toContain('NAVERPAY_CHAIN_ID');
   });
 
   it('누락된 키가 있으면 해당 키 에러 반환', () => {
@@ -79,7 +90,7 @@ describe('validateEnv', () => {
   });
 
   it('REQUIRED_PROD_ENV_KEYS에 있는 모든 키를 검증', () => {
-    const env: NodeJS.ProcessEnv = { NODE_ENV: 'production' };
+    const env: NodeJS.ProcessEnv = { NODE_ENV: 'production', CHECKOUT_ENABLED_GATEWAYS: 'naverpay,paypal' };
     const errors = validateEnv(env);
     // NODE_ENV는 있으므로 나머지 키들이 모두 에러로 나와야 함
     const missing = [...REQUIRED_PROD_ENV_KEYS, ...CHECKOUT_PROD_ENV_KEYS].filter(

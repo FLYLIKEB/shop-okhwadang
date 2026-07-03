@@ -10,6 +10,7 @@ interface OrderSummarySectionProps {
   locale: Locale;
   shippingFee: number;
   freeShippingThreshold: number;
+  discountAmount?: number;
 }
 
 export function OrderSummarySection({
@@ -17,10 +18,11 @@ export function OrderSummarySection({
   locale,
   shippingFee,
   freeShippingThreshold,
+  discountAmount = 0,
 }: OrderSummarySectionProps) {
   const t = useTranslations('checkout');
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const grandTotal = totalAmount + shippingFee;
+  const grandTotal = Math.max(totalAmount + shippingFee - discountAmount, 0);
   const remainingForFreeShipping = Math.max(freeShippingThreshold - totalAmount, 0);
   const freeShippingProgress = freeShippingThreshold > 0
     ? Math.min((totalAmount / freeShippingThreshold) * 100, 100)
@@ -70,6 +72,12 @@ export function OrderSummarySection({
           <span className="text-muted-foreground">{t('shippingFee')}</span>
           <span className="typo-price">{shippingFee === 0 ? t('freeShipping') : formatCurrency(shippingFee, locale)}</span>
         </div>
+        {discountAmount > 0 && (
+          <div className="mt-2 flex justify-between">
+            <span className="text-muted-foreground">{t('discountAmount')}</span>
+            <span className="typo-price text-destructive">-{formatCurrency(discountAmount, locale)}</span>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 border-t pt-4">

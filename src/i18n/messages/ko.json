@@ -465,7 +465,12 @@
     "addressPlaceholder": "서울특별시 강남구 테헤란로 123",
     "stripeSetupError": "Stripe 설정이 올바르지 않습니다.",
     "paymentMethodLoadError": "결제 수단을 불러오는데 실패했습니다.",
-    "loadingPaymentMethods": "결제 수단 불러오는 중..."
+    "loadingPaymentMethods": "결제 수단 불러오는 중...",
+    "discountAmount": "할인 금액",
+    "pointsUse": "적립금 사용",
+    "pointsPlaceholder": "사용할 적립금",
+    "applyPoints": "적용",
+    "pointsBalance": "사용 가능 적립금: {amount}"
   },
   "order": {
     "orderHistory": "주문 내역",
@@ -1357,5 +1362,28 @@
     "clayAria": "니료 필터",
     "priceMinOrMore": "{amount} 이상",
     "priceMaxOrLess": "{amount} 이하"
+  },
+  "cookieSettings": {
+    "metaTitle": "쿠키 설정 — 옥화당",
+    "eyebrow": "개인정보 설정",
+    "title": "쿠키 설정",
+    "description": "옥화당은 서비스 운영에 필요한 쿠키를 사용하며, 분석·광고 목적 쿠키는 브라우저 설정에서 제한할 수 있습니다.",
+    "essential": {
+      "title": "필수 쿠키",
+      "body": "로그인, 장바구니, 결제 보안처럼 서비스 제공에 반드시 필요한 쿠키입니다. 필수 쿠키를 차단하면 일부 기능이 정상 동작하지 않을 수 있습니다.",
+      "status": "필수 쿠키는 항상 사용됩니다."
+    },
+    "analytics": {
+      "title": "분석 및 맞춤형 광고 쿠키",
+      "body": "방문 기록과 기기 정보를 활용해 서비스 품질을 개선하고 맞춤형 경험을 제공할 수 있습니다.",
+      "browserGuide": "현재 사이트 내 별도 토글은 제공하지 않으며, 아래 브라우저 설정에서 저장 또는 추적을 제한할 수 있습니다."
+    },
+    "browser": {
+      "title": "브라우저별 거부 방법",
+      "chrome": "Chrome: 설정 > 개인정보 및 보안 > 쿠키 및 기타 사이트 데이터",
+      "safari": "Safari: 환경설정 > 개인정보 보호 > 쿠키 및 웹사이트 데이터 관리",
+      "edge": "Edge: 설정 > 쿠키 및 사이트 권한 > 쿠키 및 사이트 데이터 관리",
+      "firefox": "Firefox: 설정 > 개인정보 및 보안 > 쿠키와 사이트 데이터"
+    }
   }
 }
