@@ -69,7 +69,7 @@ export default function ProductImageUploader({
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
             <span className="text-4xl">+</span>
             <p className="text-sm">클릭하거나 드래그하여 이미지 업로드</p>
-            <p className="text-xs">JPEG, PNG, WebP · 최대 5MB</p>
+            <p className="text-xs">JPEG, PNG, WebP · 최대 10MB</p>
           </div>
         )}
         {uploading && (

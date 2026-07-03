@@ -133,9 +133,23 @@ describe('RemoteImageIngestService', () => {
     await expect(service.ingest('https://cdn.example.com/missing.jpg')).rejects.toThrow(BadRequestException);
   });
 
+  it('accepts downloads at the 10MB size limit', async () => {
+    fetchMock.mockResolvedValue(createFetchResponse({
+      headers: { 'content-length': String(10 * 1024 * 1024) },
+      body: Buffer.alloc(10 * 1024 * 1024, 1),
+    }));
+
+    await service.ingest('https://cdn.example.com/large.jpg');
+
+    expect(uploadService.uploadOriginalImageBuffer).toHaveBeenCalledWith(
+      expect.objectContaining({ length: 10 * 1024 * 1024 }),
+      expect.stringContaining('large.jpg'),
+    );
+  });
+
   it('rejects downloads exceeding the size limit via content-length', async () => {
     fetchMock.mockResolvedValue(createFetchResponse({
-      headers: { 'content-length': String(20 * 1024 * 1024) },
+      headers: { 'content-length': String(10 * 1024 * 1024 + 1) },
     }));
 
     await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
@@ -144,7 +158,7 @@ describe('RemoteImageIngestService', () => {
 
   it('rejects downloads whose body exceeds the size limit', async () => {
     fetchMock.mockResolvedValue(createFetchResponse({
-      body: Buffer.alloc(6 * 1024 * 1024, 1),
+      body: Buffer.alloc(10 * 1024 * 1024 + 1, 1),
     }));
 
     await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
@@ -160,7 +174,7 @@ describe('RemoteImageIngestService', () => {
       body: {
         getReader: () => ({
           read: jest.fn()
-            .mockResolvedValueOnce({ done: false, value: Buffer.alloc(5 * 1024 * 1024) })
+            .mockResolvedValueOnce({ done: false, value: Buffer.alloc(10 * 1024 * 1024) })
             .mockResolvedValueOnce({ done: false, value: Buffer.alloc(1) }),
           cancel,
           releaseLock: jest.fn(),
