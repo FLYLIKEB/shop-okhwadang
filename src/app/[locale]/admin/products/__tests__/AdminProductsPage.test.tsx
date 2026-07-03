@@ -20,8 +20,14 @@ vi.mock('next-intl', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
-    <a href={href} {...props}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -123,6 +129,7 @@ describe('AdminProductsPage', () => {
     render(<AdminProductsPage />);
 
     expect(await screen.findByText('옥화당 자사호')).toBeInTheDocument();
+    expect(screen.queryByText('naverCommerce.credentialsHint')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.previewButton' }));
 
     await waitFor(() => {

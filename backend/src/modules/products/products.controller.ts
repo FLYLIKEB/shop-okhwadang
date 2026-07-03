@@ -39,7 +39,7 @@ import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { CreateRestockAlertDto } from '../restock-alerts/dto/create-restock-alert.dto';
 import { RecentlyViewedService } from './recently-viewed.service';
 import { SmartStoreProductImportService } from './smartstore-product-import.service';
-import { NaverCommerceProductImportService } from './naver-commerce-product-import.service';
+import { NaverCommerceImportJobService } from './naver-commerce-import-job.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createSingleFileMemoryUploadOptions } from '../../common/multer/single-file-upload.options';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
@@ -52,12 +52,15 @@ export class ProductsController {
     private readonly restockAlertsService: RestockAlertsService,
     private readonly recentlyViewedService: RecentlyViewedService,
     private readonly smartStoreProductImportService: SmartStoreProductImportService,
-    private readonly naverCommerceProductImportService: NaverCommerceProductImportService,
+    private readonly naverCommerceImportJobService: NaverCommerceImportJobService,
   ) {}
 
   @Get()
   @Public()
-  @ApiOperation({ summary: '상품 목록 조회', description: '상품 목록을 페이지네이션 및 필터링하여 조회합니다.' })
+  @ApiOperation({
+    summary: '상품 목록 조회',
+    description: '상품 목록을 페이지네이션 및 필터링하여 조회합니다.',
+  })
   @ApiResponse({ status: 200, description: '상품 목록 조회 성공' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: '페이지 번호' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 개수' })
@@ -70,7 +73,10 @@ export class ProductsController {
 
   @Get('autocomplete')
   @Public()
-  @ApiOperation({ summary: '상품 자동완성', description: '검색어 기반 상품 자동완성 제안어를 반환합니다.' })
+  @ApiOperation({
+    summary: '상품 자동완성',
+    description: '검색어 기반 상품 자동완성 제안어를 반환합니다.',
+  })
   @ApiResponse({ status: 200, description: '자동완성 결과 반환 성공' })
   @ApiQuery({ name: 'q', required: true, type: String, description: '검색어' })
   autocomplete(@Query('q') q: string) {
@@ -80,7 +86,10 @@ export class ProductsController {
   @Post('bulk')
   @HttpCode(HttpStatus.OK)
   @Public()
-  @ApiOperation({ summary: '상품 벌크 조회', description: '여러 상품 ID로 상품 목록을 한 번에 조회합니다.' })
+  @ApiOperation({
+    summary: '상품 벌크 조회',
+    description: '여러 상품 ID로 상품 목록을 한 번에 조회합니다.',
+  })
   @ApiResponse({ status: 200, description: '상품 목록 조회 성공' })
   @ApiResponse({ status: 400, description: '잘못된 요청' })
   bulkLookup(@Body() dto: BulkProductsDto, @Request() req: RequestWithAuthUser) {
@@ -92,7 +101,10 @@ export class ProductsController {
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @ApiCookieAuth()
-  @ApiOperation({ summary: '상품 상세 조회', description: '상품 ID로 상품 상세 정보를 조회합니다.' })
+  @ApiOperation({
+    summary: '상품 상세 조회',
+    description: '상품 ID로 상품 상세 정보를 조회합니다.',
+  })
   @ApiResponse({ status: 200, description: '상품 상세 조회 성공' })
   @ApiResponse({ status: 404, description: '상품을 찾을 수 없음' })
   @ApiParam({ name: 'id', type: Number, description: '상품 ID' })
@@ -106,29 +118,34 @@ export class ProductsController {
     const result = await this.productsService.findOne(id, isAdmin, locale);
 
     if (req.user?.id) {
-      this.recentlyViewedService
-        .upsert(req.user.id, id)
-        .catch(() => undefined);
+      this.recentlyViewedService.upsert(req.user.id, id).catch(() => undefined);
     }
 
     return result;
   }
 
-
   @Post('imports/smartstore/preview')
   @Roles('admin')
   @ApiCookieAuth()
-  @ApiOperation({ summary: '스마트스토어 상품 엑셀 미리보기', description: '스마트스토어 상품 엑셀 파일을 검증하고 생성/수정 예정 내역을 반환합니다.' })
+  @ApiOperation({
+    summary: '스마트스토어 상품 엑셀 미리보기',
+    description: '스마트스토어 상품 엑셀 파일을 검증하고 생성/수정 예정 내역을 반환합니다.',
+  })
   @ApiResponse({ status: 201, description: '상품 가져오기 미리보기 성공' })
   @ApiResponse({ status: 400, description: '잘못된 파일 또는 상품 데이터' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } })
-  @UseInterceptors(FileInterceptor(
-    'file',
-    createSingleFileMemoryUploadOptions({ fileSize: 10 * 1024 * 1024 }),
-  ))
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+      required: ['file'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', createSingleFileMemoryUploadOptions({ fileSize: 10 * 1024 * 1024 })),
+  )
   previewSmartStoreImport(@UploadedFile() file: Express.Multer.File) {
     return this.smartStoreProductImportService.preview(file);
   }
@@ -136,44 +153,74 @@ export class ProductsController {
   @Post('imports/smartstore/commit')
   @Roles('admin')
   @ApiCookieAuth()
-  @ApiOperation({ summary: '스마트스토어 상품 엑셀 반영', description: '검증된 스마트스토어 상품 엑셀 파일로 자사몰 상품을 생성하거나 수정합니다.' })
+  @ApiOperation({
+    summary: '스마트스토어 상품 엑셀 반영',
+    description: '검증된 스마트스토어 상품 엑셀 파일로 자사몰 상품을 생성하거나 수정합니다.',
+  })
   @ApiResponse({ status: 201, description: '상품 가져오기 반영 성공' })
   @ApiResponse({ status: 400, description: '잘못된 파일 또는 상품 데이터' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } })
-  @UseInterceptors(FileInterceptor(
-    'file',
-    createSingleFileMemoryUploadOptions({ fileSize: 10 * 1024 * 1024 }),
-  ))
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+      required: ['file'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', createSingleFileMemoryUploadOptions({ fileSize: 10 * 1024 * 1024 })),
+  )
   commitSmartStoreImport(@UploadedFile() file: Express.Multer.File) {
     return this.smartStoreProductImportService.commit(file);
   }
 
-
   @Post('imports/naver-commerce/preview')
   @Roles('admin')
   @ApiCookieAuth()
-  @ApiOperation({ summary: '네이버 커머스API 상품 업데이트 미리보기', description: '네이버 커머스API로 스마트스토어 상품을 조회하고 SKU가 일치하는 자사몰 상품 업데이트 예정 내역을 반환합니다.' })
-  @ApiResponse({ status: 201, description: '네이버 커머스API 가져오기 미리보기 성공' })
-  @ApiResponse({ status: 400, description: '네이버 커머스API 자격증명 누락 또는 잘못된 요청' })
+  @ApiOperation({
+    summary: '네이버 커머스API 상품 업데이트 미리보기',
+    description:
+      '네이버 커머스API로 스마트스토어 상품을 조회하고 SKU가 일치하는 자사몰 상품 업데이트 예정 내역을 반환합니다.',
+  })
+  @ApiResponse({ status: 201, description: '네이버 커머스API 미리보기 작업 시작' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   previewNaverCommerceImport() {
-    return this.naverCommerceProductImportService.preview();
+    return this.naverCommerceImportJobService.start('preview');
   }
 
   @Post('imports/naver-commerce/commit')
   @Roles('admin')
   @ApiCookieAuth()
-  @ApiOperation({ summary: '네이버 커머스API 상품 업데이트 반영', description: '네이버 커머스API 미리보기와 동일한 매칭/매핑 기준으로 SKU가 일치하는 자사몰 상품을 업데이트합니다.' })
-  @ApiResponse({ status: 201, description: '네이버 커머스API 가져오기 반영 성공' })
-  @ApiResponse({ status: 400, description: '네이버 커머스API 자격증명 누락 또는 잘못된 요청' })
+  @ApiOperation({
+    summary: '네이버 커머스API 상품 업데이트 반영',
+    description:
+      '네이버 커머스API 미리보기와 동일한 매칭/매핑 기준으로 SKU가 일치하는 자사몰 상품을 업데이트합니다.',
+  })
+  @ApiResponse({ status: 201, description: '네이버 커머스API 반영 작업 시작' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   commitNaverCommerceImport() {
-    return this.naverCommerceProductImportService.commit();
+    return this.naverCommerceImportJobService.start('commit');
+  }
+
+  @Get('imports/naver-commerce/jobs/:id')
+  @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: '네이버 커머스API 작업 상태 조회',
+    description:
+      '비동기로 시작한 네이버 커머스API 미리보기/반영 작업 상태와 완료 결과를 반환합니다.',
+  })
+  @ApiParam({ name: 'id', type: String, description: '작업 ID' })
+  @ApiResponse({ status: 200, description: '네이버 커머스API 작업 상태 조회 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiResponse({ status: 404, description: '작업 없음 또는 만료됨' })
+  getNaverCommerceImportJob(@Param('id') id: string) {
+    return this.naverCommerceImportJobService.get(id);
   }
 
   @Post()
@@ -189,7 +236,10 @@ export class ProductsController {
 
   @Post(':id/restock-alert')
   @ApiCookieAuth()
-  @ApiOperation({ summary: '재입고 알림 신청', description: '품절된 상품 또는 옵션의 재입고 알림을 신청합니다.' })
+  @ApiOperation({
+    summary: '재입고 알림 신청',
+    description: '품절된 상품 또는 옵션의 재입고 알림을 신청합니다.',
+  })
   @ApiResponse({ status: 201, description: '재입고 알림 신청 성공' })
   @ApiResponse({ status: 400, description: '이미 재고가 있거나 잘못된 요청' })
   @ApiResponse({ status: 401, description: '인증 필요' })

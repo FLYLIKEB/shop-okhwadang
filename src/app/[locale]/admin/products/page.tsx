@@ -27,7 +27,9 @@ export default function AdminProductsPage() {
   const [smartStoreFile, setSmartStoreFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<SmartStoreProductImportResult | null>(null);
   const [importResult, setImportResult] = useState<SmartStoreProductImportResult | null>(null);
-  const [activeImportSource, setActiveImportSource] = useState<'smartstore-excel' | 'naver-commerce' | null>(null);
+  const [activeImportSource, setActiveImportSource] = useState<
+    'smartstore-excel' | 'naver-commerce' | null
+  >(null);
   const [showAllImportRows, setShowAllImportRows] = useState(false);
   const [showFailedImportRowsOnly, setShowFailedImportRowsOnly] = useState(false);
   const { page, setPage, filters, setFilter } = useAdminListPage({
@@ -92,17 +94,21 @@ export default function AdminProductsPage() {
     { successMessage: t('import.commitSuccess'), errorMessage: t('import.commitError') },
   );
 
-  const { execute: previewNaverCommerceImport, isLoading: previewingNaverCommerce } = useAsyncAction(
-    async () => {
-      const result = await adminProductsApi.previewNaverCommerceImport();
-      setImportPreview(result);
-      setImportResult(null);
-      setActiveImportSource('naver-commerce');
-      setShowAllImportRows(false);
-      setShowFailedImportRowsOnly(false);
-    },
-    { successMessage: t('naverCommerce.previewSuccess'), errorMessage: t('naverCommerce.previewError') },
-  );
+  const { execute: previewNaverCommerceImport, isLoading: previewingNaverCommerce } =
+    useAsyncAction(
+      async () => {
+        const result = await adminProductsApi.previewNaverCommerceImport();
+        setImportPreview(result);
+        setImportResult(null);
+        setActiveImportSource('naver-commerce');
+        setShowAllImportRows(false);
+        setShowFailedImportRowsOnly(false);
+      },
+      {
+        successMessage: t('naverCommerce.previewSuccess'),
+        errorMessage: t('naverCommerce.previewError'),
+      },
+    );
 
   const { execute: commitNaverCommerceImport, isLoading: committingNaverCommerce } = useAsyncAction(
     async () => {
@@ -112,7 +118,10 @@ export default function AdminProductsPage() {
       setActiveImportSource('naver-commerce');
       void fetchProducts();
     },
-    { successMessage: t('naverCommerce.commitSuccess'), errorMessage: t('naverCommerce.commitError') },
+    {
+      successMessage: t('naverCommerce.commitSuccess'),
+      errorMessage: t('naverCommerce.commitError'),
+    },
   );
 
   const { execute: toggleStatus } = useAsyncAction(
@@ -181,20 +190,21 @@ export default function AdminProductsPage() {
     ? allImportRows.filter((row) => row.status === 'failed')
     : allImportRows;
   const importRows = showAllImportRows ? visibleImportRows : visibleImportRows.slice(0, 5);
-  const isImporting = previewingImport || committingImport || previewingNaverCommerce || committingNaverCommerce;
+  const isImporting =
+    previewingImport || committingImport || previewingNaverCommerce || committingNaverCommerce;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
       <AdminPageHeader
         title={t('title')}
-        action={(
+        action={
           <Link
             href="/admin/products/new"
             className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
           >
             {t('addProduct')}
           </Link>
-        )}
+        }
       />
 
       <section className="rounded-lg border bg-card p-4 shadow-sm">
@@ -216,7 +226,10 @@ export default function AdminProductsPage() {
                 'limits',
               ].map((key) => (
                 <li key={key} className="flex gap-2">
-                  <span aria-hidden="true" className="mt-1 size-1.5 flex-shrink-0 rounded-full bg-foreground/40" />
+                  <span
+                    aria-hidden="true"
+                    className="mt-1 size-1.5 flex-shrink-0 rounded-full bg-foreground/40"
+                  />
                   <span>{t(`import.scopeDetails.${key}`)}</span>
                 </li>
               ))}
@@ -241,7 +254,12 @@ export default function AdminProductsPage() {
             <button
               type="button"
               onClick={handleCommitImport}
-              disabled={!smartStoreFile || isImporting || !importPreview || activeImportSource !== 'smartstore-excel'}
+              disabled={
+                !smartStoreFile ||
+                isImporting ||
+                !importPreview ||
+                activeImportSource !== 'smartstore-excel'
+              }
               className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {committingImport ? t('import.committing') : t('import.commitButton')}
@@ -254,7 +272,6 @@ export default function AdminProductsPage() {
             <div className="space-y-1">
               <h3 className="font-semibold typo-body-sm">{t('naverCommerce.title')}</h3>
               <p className="text-sm text-muted-foreground">{t('naverCommerce.description')}</p>
-              <p className="text-sm text-muted-foreground">{t('naverCommerce.credentialsHint')}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
@@ -263,7 +280,9 @@ export default function AdminProductsPage() {
                 disabled={isImporting}
                 className="rounded border px-4 py-2 text-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {previewingNaverCommerce ? t('naverCommerce.previewing') : t('naverCommerce.previewButton')}
+                {previewingNaverCommerce
+                  ? t('naverCommerce.previewing')
+                  : t('naverCommerce.previewButton')}
               </button>
               <button
                 type="button"
@@ -271,7 +290,9 @@ export default function AdminProductsPage() {
                 disabled={isImporting || !importPreview || activeImportSource !== 'naver-commerce'}
                 className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {committingNaverCommerce ? t('naverCommerce.committing') : t('naverCommerce.commitButton')}
+                {committingNaverCommerce
+                  ? t('naverCommerce.committing')
+                  : t('naverCommerce.commitButton')}
               </button>
             </div>
           </div>
@@ -280,12 +301,27 @@ export default function AdminProductsPage() {
         {importSummary && (
           <div className="mt-4 space-y-3 rounded-lg bg-secondary/40 p-4 text-sm">
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
-              <ImportSummaryItem label={t('import.summary.total')} value={importSummary.totalRows} />
-              <ImportSummaryItem label={t('import.summary.create')} value={importSummary.createCount} />
-              <ImportSummaryItem label={t('import.summary.update')} value={importSummary.updateCount} />
+              <ImportSummaryItem
+                label={t('import.summary.total')}
+                value={importSummary.totalRows}
+              />
+              <ImportSummaryItem
+                label={t('import.summary.create')}
+                value={importSummary.createCount}
+              />
+              <ImportSummaryItem
+                label={t('import.summary.update')}
+                value={importSummary.updateCount}
+              />
               <ImportSummaryItem label={t('import.summary.skip')} value={importSummary.skipCount} />
-              <ImportSummaryItem label={t('import.summary.success')} value={importSummary.successCount} />
-              <ImportSummaryItem label={t('import.summary.failure')} value={importSummary.failureCount} />
+              <ImportSummaryItem
+                label={t('import.summary.success')}
+                value={importSummary.successCount}
+              />
+              <ImportSummaryItem
+                label={t('import.summary.failure')}
+                value={importSummary.failureCount}
+              />
             </div>
             {importRows.length > 0 && (
               <div className="space-y-2">
@@ -296,7 +332,9 @@ export default function AdminProductsPage() {
                       onClick={() => setShowAllImportRows((value) => !value)}
                       className="rounded border px-3 py-1 text-xs hover:bg-secondary"
                     >
-                      {showAllImportRows ? t('import.showTopRows') : t('import.showAllRows', { count: visibleImportRows.length })}
+                      {showAllImportRows
+                        ? t('import.showTopRows')
+                        : t('import.showAllRows', { count: visibleImportRows.length })}
                     </button>
                   )}
                   {allImportRows.some((row) => row.status === 'failed') && (
@@ -308,75 +346,109 @@ export default function AdminProductsPage() {
                       }}
                       className="rounded border px-3 py-1 text-xs hover:bg-secondary"
                     >
-                      {showFailedImportRowsOnly ? t('import.showAllResults') : t('import.showFailedRows')}
+                      {showFailedImportRowsOnly
+                        ? t('import.showAllResults')
+                        : t('import.showFailedRows')}
                     </button>
                   )}
                 </div>
                 <div className="overflow-x-auto rounded border bg-background">
                   <table className="w-full text-xs">
-                  <thead className="bg-secondary">
-                    <tr>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.row')}</th>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.identifier')}</th>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.productName')}</th>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.action')}</th>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.matchedProduct')}</th>
-                      <th className="px-3 py-2 text-right">{t('import.previewColumns.price')}</th>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.discount')}</th>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.freeShipping')}</th>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.noticeInfo')}</th>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.automaticMapping')}</th>
-                      <th className="px-3 py-2 text-right">{t('import.previewColumns.options')}</th>
-                      <th className="px-3 py-2 text-right">{t('import.previewColumns.galleryImages')}</th>
-                      <th className="px-3 py-2 text-right">{t('import.previewColumns.detailImages')}</th>
-                      <th className="px-3 py-2 text-left">{t('import.previewColumns.result')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {importRows.map((row) => (
-                      <tr key={`${row.rowNumber}-${row.identifier ?? 'empty'}`}>
-                        <td className="px-3 py-2">{row.rowNumber}</td>
-                        <td className="px-3 py-2">{row.identifier ?? '-'}</td>
-                        <td className="px-3 py-2">{row.productName ?? '-'}</td>
-                        <td className="px-3 py-2">{t(`import.actions.${row.action}`)}</td>
-                        <td className="px-3 py-2">
-                          {row.productId ? (
-                            <Link
-                              href={`/admin/products/${row.productId}/edit`}
-                              className="font-medium text-primary underline-offset-2 hover:underline"
-                            >
-                              {t('import.previewValues.productLink', { id: row.productId })}
-                            </Link>
-                          ) : (
-                            <span className="text-muted-foreground">{t('import.previewValues.notLinked')}</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-right">{row.price != null ? formatCurrency(row.price) : '-'}</td>
-                        <td className="px-3 py-2">
-                          {row.hasDiscount && row.salePrice != null
-                            ? t('import.previewValues.discountApplied', { salePrice: formatCurrency(row.salePrice) })
-                            : t('import.previewValues.discountNone')}
-                        </td>
-                        <td className="px-3 py-2">
-                          {row.isFreeShipping == null
-                            ? t('import.previewValues.unknown')
-                            : row.isFreeShipping
+                    <thead className="bg-secondary">
+                      <tr>
+                        <th className="px-3 py-2 text-left">{t('import.previewColumns.row')}</th>
+                        <th className="px-3 py-2 text-left">
+                          {t('import.previewColumns.identifier')}
+                        </th>
+                        <th className="px-3 py-2 text-left">
+                          {t('import.previewColumns.productName')}
+                        </th>
+                        <th className="px-3 py-2 text-left">{t('import.previewColumns.action')}</th>
+                        <th className="px-3 py-2 text-left">
+                          {t('import.previewColumns.matchedProduct')}
+                        </th>
+                        <th className="px-3 py-2 text-right">{t('import.previewColumns.price')}</th>
+                        <th className="px-3 py-2 text-left">
+                          {t('import.previewColumns.discount')}
+                        </th>
+                        <th className="px-3 py-2 text-left">
+                          {t('import.previewColumns.freeShipping')}
+                        </th>
+                        <th className="px-3 py-2 text-left">
+                          {t('import.previewColumns.noticeInfo')}
+                        </th>
+                        <th className="px-3 py-2 text-left">
+                          {t('import.previewColumns.automaticMapping')}
+                        </th>
+                        <th className="px-3 py-2 text-right">
+                          {t('import.previewColumns.options')}
+                        </th>
+                        <th className="px-3 py-2 text-right">
+                          {t('import.previewColumns.galleryImages')}
+                        </th>
+                        <th className="px-3 py-2 text-right">
+                          {t('import.previewColumns.detailImages')}
+                        </th>
+                        <th className="px-3 py-2 text-left">{t('import.previewColumns.result')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {importRows.map((row) => (
+                        <tr key={`${row.rowNumber}-${row.identifier ?? 'empty'}`}>
+                          <td className="px-3 py-2">{row.rowNumber}</td>
+                          <td className="px-3 py-2">{row.identifier ?? '-'}</td>
+                          <td className="px-3 py-2">{row.productName ?? '-'}</td>
+                          <td className="px-3 py-2">{t(`import.actions.${row.action}`)}</td>
+                          <td className="px-3 py-2">
+                            {row.productId ? (
+                              <Link
+                                href={`/admin/products/${row.productId}/edit`}
+                                className="font-medium text-primary underline-offset-2 hover:underline"
+                              >
+                                {t('import.previewValues.productLink', { id: row.productId })}
+                              </Link>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {t('import.previewValues.notLinked')}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {row.price != null ? formatCurrency(row.price) : '-'}
+                          </td>
+                          <td className="px-3 py-2">
+                            {row.hasDiscount && row.salePrice != null
+                              ? t('import.previewValues.discountApplied', {
+                                  salePrice: formatCurrency(row.salePrice),
+                                })
+                              : t('import.previewValues.discountNone')}
+                          </td>
+                          <td className="px-3 py-2">
+                            {row.isFreeShipping == null
+                              ? t('import.previewValues.unknown')
+                              : row.isFreeShipping
+                                ? t('import.previewValues.yes')
+                                : t('import.previewValues.no')}
+                          </td>
+                          <td className="px-3 py-2">
+                            {row.hasNoticeInfo
                               ? t('import.previewValues.yes')
                               : t('import.previewValues.no')}
-                        </td>
-                        <td className="px-3 py-2">{row.hasNoticeInfo ? t('import.previewValues.yes') : t('import.previewValues.no')}</td>
-                        <td className="min-w-56 px-3 py-2">
-                          <ImportMappingSummary row={row} t={t} />
-                        </td>
-                        <td className="px-3 py-2 text-right">{row.optionCount ?? 0}</td>
-                        <td className="px-3 py-2 text-right">{row.galleryImageCount ?? 0}</td>
-                        <td className="px-3 py-2 text-right">{row.detailImageCount ?? 0}</td>
-                        <td className="px-3 py-2">
-                          {row.errors.length > 0 ? row.errors.join(', ') : t(`import.status.${row.status}`)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
+                          </td>
+                          <td className="min-w-56 px-3 py-2">
+                            <ImportMappingSummary row={row} t={t} />
+                          </td>
+                          <td className="px-3 py-2 text-right">{row.optionCount ?? 0}</td>
+                          <td className="px-3 py-2 text-right">{row.galleryImageCount ?? 0}</td>
+                          <td className="px-3 py-2 text-right">{row.detailImageCount ?? 0}</td>
+                          <td className="px-3 py-2">
+                            {row.errors.length > 0
+                              ? row.errors.join(', ')
+                              : t(`import.status.${row.status}`)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
               </div>
@@ -488,15 +560,25 @@ function ImportMappingSummary({
   }
 
   const parts = [
-    mapping.category ? t('import.mappingValues.category', { value: mapping.category.displayName }) : null,
+    mapping.category
+      ? t('import.mappingValues.category', { value: mapping.category.displayName })
+      : null,
     ...mapping.attributes.map((attribute) => `${attribute.code}: ${attribute.displayValue}`),
     ...mapping.options.map((option) => `${option.name}: ${option.value}`),
-    mapping.noticeInfoType ? t('import.mappingValues.noticeInfo', { value: t(`import.noticeInfoTypes.${mapping.noticeInfoType}`) }) : null,
+    mapping.noticeInfoType
+      ? t('import.mappingValues.noticeInfo', {
+          value: t(`import.noticeInfoTypes.${mapping.noticeInfoType}`),
+        })
+      : null,
   ].filter((value): value is string => Boolean(value));
 
   return (
     <div className="space-y-1">
-      <span className={mapping.status === 'needs_review' ? 'font-medium text-amber-700' : 'font-medium text-tea'}>
+      <span
+        className={
+          mapping.status === 'needs_review' ? 'font-medium text-amber-700' : 'font-medium text-tea'
+        }
+      >
         {t(`import.mappingStatus.${mapping.status}`)}
       </span>
       <p className="text-muted-foreground">{parts.join(' · ')}</p>
