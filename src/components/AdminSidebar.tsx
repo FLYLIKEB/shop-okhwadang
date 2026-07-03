@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   FileText,
   Settings,
+  Languages,
   ChevronDown,
   Home,
   X,
@@ -39,6 +40,7 @@ type NavItem = NavLeafItem | NavGroup;
 
 const NAV_ITEMS: NavItem[] = [
   { labelKey: 'dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { labelKey: 'localization', href: '/admin/localization', icon: Languages },
   {
     labelKey: 'productsGroup',
     icon: Package,
