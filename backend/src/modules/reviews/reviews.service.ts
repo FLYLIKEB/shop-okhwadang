@@ -145,11 +145,15 @@ export class ReviewsService {
     switch (sort) {
       case 'rating_high':
         qb.orderBy('review.rating', 'DESC').addOrderBy('review.createdAt', 'DESC');
-        externalQb.orderBy('externalReview.rating', 'DESC').addOrderBy('externalReview.reviewedAt', 'DESC');
+        externalQb
+          .orderBy('externalReview.rating', 'DESC')
+          .addOrderBy('externalReview.reviewedAt', 'DESC');
         break;
       case 'rating_low':
         qb.orderBy('review.rating', 'ASC').addOrderBy('review.createdAt', 'DESC');
-        externalQb.orderBy('externalReview.rating', 'ASC').addOrderBy('externalReview.reviewedAt', 'DESC');
+        externalQb
+          .orderBy('externalReview.rating', 'ASC')
+          .addOrderBy('externalReview.reviewedAt', 'DESC');
         break;
       default:
         qb.orderBy('review.createdAt', 'DESC');
@@ -172,7 +176,11 @@ export class ReviewsService {
     };
   }
 
-  private compareReviews(a: ReviewResponse, b: ReviewResponse, sort: ReviewQueryDto['sort']): number {
+  private compareReviews(
+    a: ReviewResponse,
+    b: ReviewResponse,
+    sort: ReviewQueryDto['sort'],
+  ): number {
     if (sort === 'rating_high' && b.rating !== a.rating) return b.rating - a.rating;
     if (sort === 'rating_low' && a.rating !== b.rating) return a.rating - b.rating;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -344,10 +352,17 @@ export class ReviewsService {
       return saved;
     });
 
-    this.logger.log(`Review created: id=${result.id}, userId=${userId}, productId=${dto.productId}`);
+    this.logger.log(
+      `Review created: id=${result.id}, userId=${userId}, productId=${dto.productId}`,
+    );
 
     // Reload with user
-    const loaded = await findOrThrow(this.reviewRepo, { id: result.id }, '리뷰를 찾을 수 없습니다.', ['user']);
+    const loaded = await findOrThrow(
+      this.reviewRepo,
+      { id: result.id },
+      '리뷰를 찾을 수 없습니다.',
+      ['user'],
+    );
 
     return this.toResponse(loaded);
   }
@@ -371,7 +386,11 @@ export class ReviewsService {
   async remove(id: number, userId: number, userRole: string): Promise<void> {
     const review = await findOrThrow(this.reviewRepo, { id }, '리뷰를 찾을 수 없습니다.');
 
-    if (Number(review.userId) !== Number(userId) && userRole !== 'admin' && userRole !== 'super_admin') {
+    if (
+      Number(review.userId) !== Number(userId) &&
+      userRole !== 'admin' &&
+      userRole !== 'super_admin'
+    ) {
       throw new ForbiddenException('권한이 없습니다.');
     }
 
@@ -434,14 +453,17 @@ export class ReviewsService {
       `UPDATE products p
        LEFT JOIN (
          SELECT product_id, COUNT(*) AS review_count, COALESCE(AVG(rating), 0) AS avg_rating
-         FROM reviews
-         WHERE product_id = ? AND is_visible = 1
+         FROM (
+           SELECT product_id, rating FROM reviews WHERE product_id = ? AND is_visible = 1
+           UNION ALL
+           SELECT product_id, rating FROM external_reviews WHERE product_id = ? AND is_visible = 1
+         ) all_reviews
          GROUP BY product_id
        ) rs ON rs.product_id = p.id
        SET p.review_count = COALESCE(rs.review_count, 0),
            p.avg_rating = COALESCE(rs.avg_rating, 0)
        WHERE p.id = ?`,
-      [productId, productId],
+      [productId, productId, productId],
     );
   }
 }

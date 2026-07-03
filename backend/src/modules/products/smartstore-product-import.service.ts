@@ -8,6 +8,8 @@ import { CreateProductDto, ProductNoticeInfoType, ProductOptionInputDto } from '
 import { UpdateProductDto } from './dto/update-product.dto';
 import { RemoteImageIngestService } from '../upload/remote-image-ingest.service';
 import { UploadedFile } from '../upload/interfaces/storage.interface';
+import { assertXlsxFile, cellToString, normalizeExcelHeader } from '../../common/imports/excel-import.util';
+import { buildNaverExternalProductKey } from '../../common/imports/external-source.util';
 
 export type SmartStoreImportAction = 'create' | 'update' | 'skip';
 
@@ -194,17 +196,7 @@ export class SmartStoreProductImportService {
   }
 
   private assertExcelFile(file: Express.Multer.File | undefined): asserts file is Express.Multer.File {
-    if (!file) {
-      throw new BadRequestException('업로드할 엑셀 파일을 선택해 주세요.');
-    }
-    const hasXlsxName = file.originalname.toLowerCase().endsWith('.xlsx');
-    const hasXlsxMime = [
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/octet-stream',
-    ].includes(file.mimetype);
-    if (!hasXlsxName || !hasXlsxMime) {
-      throw new BadRequestException('스마트스토어 상품 엑셀(.xlsx) 파일만 업로드할 수 있습니다.');
-    }
+    assertXlsxFile(file, '스마트스토어 상품');
   }
 
   private async parseWorkbook(buffer: Buffer): Promise<ParsedSmartStoreRow[]> {
@@ -544,7 +536,7 @@ export class SmartStoreProductImportService {
   }
 
   private buildIdentifier(sellerCode: string, productNumber: string): string | null {
-    const raw = sellerCode || (productNumber ? `naver-${productNumber}` : '');
+    const raw = sellerCode || buildNaverExternalProductKey(productNumber) || '';
     const normalized = raw.trim();
     return normalized || null;
   }
@@ -683,22 +675,11 @@ export class SmartStoreProductImportService {
   }
 
   private cellToString(value: ExcelJS.CellValue): string {
-    if (value === null || value === undefined) return '';
-    if (value instanceof Date) return value.toISOString();
-    if (typeof value === 'object') {
-      if ('text' in value && typeof value.text === 'string') return value.text;
-      if ('result' in value) return this.cellToString(value.result as ExcelJS.CellValue);
-      if ('richText' in value && Array.isArray(value.richText)) {
-        return value.richText.map((part) => part.text).join('');
-      }
-      if ('hyperlink' in value && typeof value.hyperlink === 'string') return value.hyperlink;
-      return String(value);
-    }
-    return String(value);
+    return cellToString(value);
   }
 
   private normalizeHeader(header: string): string {
-    return header.replace(/[\s_()\[\]{}./-]/g, '').toLowerCase();
+    return normalizeExcelHeader(header);
   }
 
   private parseMoney(value: string): number | null {

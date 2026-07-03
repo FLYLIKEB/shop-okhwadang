@@ -914,13 +914,153 @@
       "archives": "아카이브관리",
       "business": "사업자 정보",
       "close": "사이드바 닫기",
-      "cmsGroup": "CMS"
+      "cmsGroup": "CMS",
+      "reviews": "리뷰관리"
     },
     "navigation": {
       "title": "네비게이션 관리"
     },
     "categories": {
       "title": "카테고리 관리"
+    },
+    "reviews": {
+      "title": "리뷰 관리",
+      "loading": "리뷰를 불러오는 중입니다.",
+      "noReviews": "등록된 리뷰가 없습니다.",
+      "loadError": "리뷰 목록을 불러오지 못했습니다.",
+      "emptyValue": "-",
+      "status": {
+        "visible": "노출",
+        "hidden": "숨김",
+        "best": "베스트"
+      },
+      "filters": {
+        "searchLabel": "검색",
+        "searchPlaceholder": "상품명, 상품번호, 리뷰글번호, 등록자, 본문 검색",
+        "searchButton": "검색",
+        "ratingLabel": "평점",
+        "ratingAll": "전체",
+        "ratingOption": "{rating}점",
+        "mediaLabel": "포토/영상",
+        "mediaAll": "전체",
+        "mediaOnly": "포토만",
+        "textOnly": "텍스트만",
+        "reviewTypeLabel": "리뷰구분",
+        "reviewTypePlaceholder": "일반, 한달사용",
+        "visibilityAria": "리뷰 노출 상태 필터",
+        "visibility": {
+          "all": "전체",
+          "visible": "노출",
+          "hidden": "숨김"
+        }
+      },
+      "bulk": {
+        "selectedCount": "선택 {count}개",
+        "hide": "선택 숨김",
+        "show": "선택 노출",
+        "selectFirst": "처리할 리뷰를 선택해 주세요.",
+        "hideSuccess": "{count}개 리뷰를 숨김 처리했습니다.",
+        "showSuccess": "{count}개 리뷰를 노출 처리했습니다.",
+        "error": "일괄 처리에 실패했습니다."
+      },
+      "table": {
+        "selectAll": "현재 페이지 리뷰 전체 선택",
+        "selectOne": "리뷰 {id} 선택",
+        "product": "상품",
+        "rating": "평점",
+        "ratingValue": "{rating}점",
+        "content": "내용",
+        "reviewer": "등록자",
+        "reviewedAt": "등록일",
+        "media": "포토/영상",
+        "mediaValue": "{count}개",
+        "mediaFailure": "실패 {count}개",
+        "status": "상태",
+        "actions": "관리",
+        "unmatchedProduct": "연결 상품 없음",
+        "noContent": "내용 없음"
+      },
+      "actions": {
+        "detail": "상세",
+        "hide": "숨김",
+        "show": "노출",
+        "hideSuccess": "리뷰를 숨김 처리했습니다.",
+        "showSuccess": "리뷰를 노출 처리했습니다.",
+        "visibilityError": "리뷰 상태 변경에 실패했습니다."
+      },
+      "detail": {
+        "title": "리뷰 상세: {id}",
+        "close": "닫기",
+        "product": "상품",
+        "orderNo": "상품주문번호",
+        "reviewType": "리뷰구분",
+        "helpfulCount": "도움수",
+        "sourceDisplayStatus": "원본 전시상태",
+        "importBatchId": "업로드 배치",
+        "content": "리뷰 내용",
+        "relatedContent": "관련 리뷰 내용",
+        "media": "저장된 미디어"
+      },
+      "import": {
+        "title": "네이버 스마트스토어 리뷰 엑셀 업로드",
+        "description": "스마트스토어 리뷰 엑셀을 검증한 뒤 상품번호를 naver-상품번호 SKU와 자동 매칭해 리뷰를 등록합니다.",
+        "scopeDetails": {
+          "match": "상품번호는 내부 상품 SKU naver-상품번호와 매칭합니다.",
+          "upsert": "리뷰글번호 기준으로 재업로드 시 중복 생성 없이 갱신합니다.",
+          "media": "포토/영상 URL은 스토리지에 적재하고 원본 URL도 보존합니다.",
+          "manualVisibility": "기존 리뷰의 수동 숨김/노출 상태는 재업로드로 덮어쓰지 않습니다."
+        },
+        "fileLabel": "스마트스토어 리뷰 엑셀 파일 선택",
+        "previewButton": "미리보기",
+        "commitButton": "반영하기",
+        "previewing": "검증 중...",
+        "committing": "반영 중...",
+        "selectFileFirst": "엑셀 파일을 먼저 선택해 주세요.",
+        "previewSuccess": "리뷰 엑셀 검증이 완료되었습니다.",
+        "previewError": "리뷰 엑셀 검증에 실패했습니다.",
+        "commitSuccess": "리뷰 엑셀 반영이 완료되었습니다.",
+        "commitError": "리뷰 엑셀 반영에 실패했습니다.",
+        "batchId": "업로드 배치: {id}",
+        "summary": {
+          "total": "전체",
+          "create": "생성",
+          "update": "수정",
+          "skip": "스킵",
+          "success": "성공",
+          "failure": "실패",
+          "mediaFailure": "미디어 실패"
+        },
+        "showTopRows": "상위 행만 보기",
+        "showAllRows": "전체 {count}개 보기",
+        "showFailedRows": "실패 행만 보기",
+        "showAllResults": "전체 결과 보기",
+        "mediaCount": "{success}/{total}",
+        "columns": {
+          "row": "행",
+          "externalReviewId": "리뷰글번호",
+          "externalProductKey": "상품 매칭키",
+          "productName": "상품명",
+          "action": "작업",
+          "rating": "평점",
+          "media": "미디어",
+          "result": "결과"
+        },
+        "actions": {
+          "create": "생성",
+          "update": "수정",
+          "skip": "스킵"
+        },
+        "status": {
+          "valid": "검증 성공",
+          "failed": "실패",
+          "success": "반영 성공"
+        }
+      },
+      "error": {
+        "title": "리뷰 관리 화면을 불러오지 못했습니다.",
+        "description": "잠시 후 다시 시도해 주세요.",
+        "retry": "다시 시도"
+      }
     }
   },
   "search": {
@@ -1310,11 +1450,7 @@
     "title": "배송/교환/환불 정책",
     "description": "상품 상세의 요약 안내보다 더 자세한 배송, 교환·반품, 환불 기준을 안내합니다.",
     "effectiveDate": "시행일: 2026년 6월 12일",
-    "sectionKeys": [
-      "shipping",
-      "exchangeReturn",
-      "refund"
-    ],
+    "sectionKeys": ["shipping", "exchangeReturn", "refund"],
     "sections": {
       "shipping": {
         "title": "배송 정책",

@@ -53,6 +53,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { labelKey: 'orders', href: '/admin/orders' },
       { labelKey: 'members', href: '/admin/members' },
+      { labelKey: 'reviews', href: '/admin/reviews' },
       { labelKey: 'inquiries', href: '/admin/inquiries' },
     ],
   },
@@ -98,8 +99,8 @@ type SidebarContentProps = {
 function SidebarContent({ onClose }: SidebarContentProps) {
   const pathname = usePathname();
   const t = useTranslations('admin.sidebar');
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
-    () => getInitialOpenGroups(pathname),
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    getInitialOpenGroups(pathname),
   );
 
   const toggleGroup = (labelKey: string) => {
@@ -225,11 +226,7 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
       {/* 모바일: 오버레이 사이드바 */}
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={onClose}
-            aria-hidden="true"
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
           <div className="relative z-50 h-full">
             <SidebarContent onClose={onClose} />
           </div>

@@ -35,6 +35,7 @@ export * from './journals';
 // Admin modules
 export * from './admin/categories';
 export * from './admin/products';
+export * from './admin/reviews';
 export * from './admin/orders';
 export * from './admin/members';
 export * from './admin/dashboard';
