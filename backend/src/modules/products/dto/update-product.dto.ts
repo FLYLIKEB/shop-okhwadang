@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
-import { ProductImageInputDto, ProductDetailImageInputDto, ProductNoticeInfoDto } from './create-product.dto';
+import { ProductImageInputDto, ProductDetailImageInputDto, ProductNoticeInfoDto, ProductOptionInputDto } from './create-product.dto';
 
 export class UpdateProductDto {
   @ApiProperty({ example: 1, description: '카테고리 ID', required: false })
@@ -120,4 +120,11 @@ export class UpdateProductDto {
   @ValidateNested({ each: true })
   @Type(() => ProductDetailImageInputDto)
   detailImages?: ProductDetailImageInputDto[];
+
+  @ApiPropertyOptional({ type: [ProductOptionInputDto], description: '상품 옵션 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductOptionInputDto)
+  options?: ProductOptionInputDto[];
 }

@@ -3,11 +3,12 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, ObjectLiteral, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, ObjectLiteral, Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { ProductImage } from './entities/product-image.entity';
 import { ProductDetailImage } from './entities/product-detail-image.entity';
-import { CreateProductDto } from './dto/create-product.dto';
+import { ProductOption } from './entities/product-option.entity';
+import { CreateProductDto, ProductOptionInputDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { CacheService } from '../cache/cache.service';
@@ -29,7 +30,7 @@ export class ProductCommandService {
   ) {}
 
   async create(dto: CreateProductDto): Promise<Product> {
-    const { images, detailImages, ...productData } = dto;
+    const { images, detailImages, options, ...productData } = dto;
 
     try {
       return await this.dataSource.transaction(async (manager: EntityManager) => {
@@ -75,6 +76,10 @@ export class ProductCommandService {
           });
         }
 
+        if (options !== undefined) {
+          await this.syncProductOptions(manager, saved.id, options);
+        }
+
         return saved;
       });
     } catch (err) {
@@ -84,7 +89,7 @@ export class ProductCommandService {
   }
 
   async update(id: number, dto: UpdateProductDto): Promise<Product> {
-    const { images, detailImages, ...productData } = dto;
+    const { images, detailImages, options, ...productData } = dto;
     const product = await this.findById(id);
     const previousStock = product.stock;
     Object.assign(product, productData);
@@ -125,6 +130,10 @@ export class ProductCommandService {
               isActive: true,
             }),
           });
+        }
+
+        if (options !== undefined) {
+          await this.syncProductOptions(manager, id, options);
         }
 
         return updatedProduct;
@@ -192,6 +201,46 @@ export class ProductCommandService {
 
     const entities = items.map((item, index) => manager.create(entityClass, mapInputToEntity(item, index)));
     await manager.save(entityClass, entities);
+  }
+
+  // 옵션은 cart_items 가 FK 로 참조하므로 전체 삭제 후 재생성 대신 (name, value) 기준으로 동기화한다.
+  private async syncProductOptions(
+    manager: EntityManager,
+    productId: number,
+    options: ProductOptionInputDto[],
+  ): Promise<void> {
+    const existing = await manager.find(ProductOption, { where: { productId } });
+    const existingByKey = new Map(existing.map((option) => [`${option.name}\u0000${option.value}`, option]));
+    const matchedIds = new Set<number>();
+    const toSave: ProductOption[] = [];
+
+    options.forEach((input, index) => {
+      const matched = existingByKey.get(`${input.name}\u0000${input.value}`);
+      if (matched) {
+        matchedIds.add(matched.id);
+        matched.priceAdjustment = input.priceAdjustment ?? 0;
+        matched.stock = input.stock ?? 0;
+        matched.sortOrder = input.sortOrder ?? index;
+        toSave.push(matched);
+        return;
+      }
+      toSave.push(manager.create(ProductOption, {
+        productId,
+        name: input.name,
+        value: input.value,
+        priceAdjustment: input.priceAdjustment ?? 0,
+        stock: input.stock ?? 0,
+        sortOrder: input.sortOrder ?? index,
+      }));
+    });
+
+    const removedIds = existing.filter((option) => !matchedIds.has(option.id)).map((option) => option.id);
+    if (removedIds.length > 0) {
+      await manager.delete(ProductOption, { id: In(removedIds) });
+    }
+    if (toSave.length > 0) {
+      await manager.save(ProductOption, toSave);
+    }
   }
 
   private rethrowIfDuplicateKey(err: unknown): void {

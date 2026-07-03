@@ -747,7 +747,7 @@
         "title": "Import SmartStore Product Excel",
         "description": "Validate a SmartStore Excel file, then create new products and update existing SKU matches.",
         "supportedFormats": "Supported formats: product-list export XLSX and bulk-edit XLSX (bulk-edit sheet).",
-        "supportedScope": "Initial scope: basic product fields only. Options, detail images, and additional-image expansion remain follow-up work.",
+        "supportedScope": "Scope: basic product fields, options (single/combination), representative/additional images, and detail images. Images are downloaded and re-uploaded to store storage.",
         "fileLabel": "SmartStore product Excel file",
         "previewButton": "Preview upload",
         "previewing": "Validating...",
@@ -775,6 +775,9 @@
           "identifier": "Identifier",
           "productName": "Product",
           "action": "Action",
+          "options": "Options",
+          "galleryImages": "Images",
+          "detailImages": "Detail images",
           "result": "Result"
         },
         "actions": {

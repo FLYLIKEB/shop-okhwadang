@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UploadController } from './upload.controller';
 import { UploadService } from './upload.service';
+import { RemoteImageIngestService } from './remote-image-ingest.service';
 import { LocalStorageAdapter } from './adapters/local.adapter';
 import { MockStorageAdapter } from './adapters/mock.adapter';
 import { S3StorageAdapter } from './adapters/s3.adapter';
@@ -11,10 +12,11 @@ import { storageConfigProvider } from '../../config/storage.config';
   providers: [
     storageConfigProvider,
     UploadService,
+    RemoteImageIngestService,
     LocalStorageAdapter,
     MockStorageAdapter,
     S3StorageAdapter,
   ],
-  exports: [UploadService],
+  exports: [UploadService, RemoteImageIngestService],
 })
 export class UploadModule {}

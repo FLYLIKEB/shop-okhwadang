@@ -57,6 +57,22 @@ export class UploadService {
     return this.uploadWithPipeline(file, 'saveCategoryImage');
   }
 
+  uploadImageBuffer(buffer: Buffer, originalname: string): Promise<UploadedFile> {
+    const detectedMime = detectMimeFromMagicBytes(buffer);
+    if (!detectedMime) {
+      throw new BadRequestException(
+        '허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)',
+      );
+    }
+    const file = {
+      buffer,
+      originalname,
+      mimetype: detectedMime,
+      size: buffer.length,
+    } as Express.Multer.File;
+    return this.uploadWithPipeline(file, 'save');
+  }
+
   private async uploadWithPipeline(
     file: Express.Multer.File | undefined,
     saveMethod: 'save' | 'saveCategoryImage',
