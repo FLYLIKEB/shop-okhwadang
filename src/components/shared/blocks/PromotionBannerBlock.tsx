@@ -139,9 +139,10 @@ export default function PromotionBannerBlock({ content }: Props) {
 
 function CountdownTimer({ endDate }: { endDate: string }) {
   const t = useTranslations('promotion');
-  const [remaining, setRemaining] = useState(calcRemaining(endDate));
+  const [remaining, setRemaining] = useState(createInitialRemaining);
 
   useEffect(() => {
+    setRemaining(calcRemaining(endDate));
     const interval = setInterval(() => {
       setRemaining(calcRemaining(endDate));
     }, 1000);
@@ -169,6 +170,10 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
       <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
+}
+
+function createInitialRemaining() {
+  return { total: 1, days: 0, hours: 0, minutes: 0, seconds: 0 };
 }
 
 function calcRemaining(endDate: string) {

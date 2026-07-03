@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { ordersApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
 import { formatCurrency, type Locale } from '@/utils/currency';
+import { formatLongDate } from '@/utils/date';
 import { handleApiError } from '@/utils/error';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -110,11 +111,7 @@ export default function OrdersPage() {
                           tMy('additionalItems', { count: order.items.length - 1 })}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(order.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
+                        {formatLongDate(order.createdAt, locale)}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
