@@ -16,7 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { createSingleFileMemoryUploadOptions } from '../../common/multer/single-file-upload.options';
 import {
   ALLOWED_IMAGE_MIME_TYPES,
-  MAX_UPLOAD_FILE_SIZE_BYTES,
+  MAX_UPLOAD_INPUT_FILE_SIZE_BYTES,
 } from './upload.constants';
 import { UploadService } from './upload.service';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -34,7 +34,7 @@ const IMAGE_UPLOAD_BODY_SCHEMA = {
 const FILE_UPLOAD_INTERCEPTOR = FileInterceptor(
   'file',
   createSingleFileMemoryUploadOptions({
-    fileSize: MAX_UPLOAD_FILE_SIZE_BYTES,
+    fileSize: MAX_UPLOAD_INPUT_FILE_SIZE_BYTES,
     allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
     invalidMimeMessage: '허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)',
   }),

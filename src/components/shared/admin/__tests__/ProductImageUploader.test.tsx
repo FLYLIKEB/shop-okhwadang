@@ -16,10 +16,10 @@ vi.mock('sonner', () => ({
 }));
 
 describe('ProductImageUploader', () => {
-  it('shows the 10MB image upload limit in the helper copy', () => {
+  it('shows the 20MB image upload limit in the helper copy', () => {
     render(<ProductImageUploader imageUrl="" onChange={vi.fn()} />);
 
-    expect(screen.getByText('JPEG, PNG, WebP · 최대 10MB')).toBeInTheDocument();
-    expect(screen.queryByText(/최대 5MB/)).not.toBeInTheDocument();
+    expect(screen.getByText('JPEG, PNG, WebP · 20MB 초과 시 자동 리사이징')).toBeInTheDocument();
+    expect(screen.queryByText(/최대 10MB|최대 5MB/)).not.toBeInTheDocument();
   });
 });

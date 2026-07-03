@@ -10,6 +10,10 @@ function createUploadServiceMock() {
       url: 'https://cdn.example.com/uploads/uuid.jpg',
       filename: 'uuid.jpg',
     }),
+    uploadImageBuffer: jest.fn().mockResolvedValue({
+      url: 'https://cdn.example.com/uploads/resized.jpg',
+      filename: 'resized.jpg',
+    }),
   };
 }
 
@@ -133,39 +137,57 @@ describe('RemoteImageIngestService', () => {
     await expect(service.ingest('https://cdn.example.com/missing.jpg')).rejects.toThrow(BadRequestException);
   });
 
-  it('accepts downloads at the 10MB size limit', async () => {
+  it('preserves original downloads at the 20MB size threshold', async () => {
     fetchMock.mockResolvedValue(createFetchResponse({
-      headers: { 'content-length': String(10 * 1024 * 1024) },
-      body: Buffer.alloc(10 * 1024 * 1024, 1),
+      headers: { 'content-length': String(20 * 1024 * 1024) },
+      bodyChunks: [JPEG_BUFFER, Buffer.alloc(20 * 1024 * 1024 - JPEG_BUFFER.length, 1)],
     }));
 
     await service.ingest('https://cdn.example.com/large.jpg');
 
     expect(uploadService.uploadOriginalImageBuffer).toHaveBeenCalledWith(
-      expect.objectContaining({ length: 10 * 1024 * 1024 }),
+      expect.objectContaining({ length: 20 * 1024 * 1024 }),
       expect.stringContaining('large.jpg'),
     );
   });
 
-  it('rejects downloads exceeding the size limit via content-length', async () => {
+  it('resizes downloads that exceed the 20MB threshold', async () => {
     fetchMock.mockResolvedValue(createFetchResponse({
-      headers: { 'content-length': String(10 * 1024 * 1024 + 1) },
+      headers: { 'content-length': String(20 * 1024 * 1024 + 1) },
+      bodyChunks: [JPEG_BUFFER, Buffer.alloc(20 * 1024 * 1024 + 1 - JPEG_BUFFER.length, 1)],
+    }));
+
+    const result = await service.ingest('https://cdn.example.com/large.jpg');
+
+    expect(uploadService.uploadOriginalImageBuffer).not.toHaveBeenCalled();
+    expect(uploadService.uploadImageBuffer).toHaveBeenCalledWith(
+      expect.objectContaining({ length: 20 * 1024 * 1024 + 1 }),
+      expect.stringContaining('large.jpg'),
+    );
+    expect(result.url).toBe('https://cdn.example.com/uploads/resized.jpg');
+  });
+
+  it('rejects downloads exceeding the absolute input limit via content-length', async () => {
+    fetchMock.mockResolvedValue(createFetchResponse({
+      headers: { 'content-length': String(50 * 1024 * 1024 + 1) },
     }));
 
     await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
     expect(uploadService.uploadOriginalImageBuffer).not.toHaveBeenCalled();
+    expect(uploadService.uploadImageBuffer).not.toHaveBeenCalled();
   });
 
-  it('rejects downloads whose body exceeds the size limit', async () => {
+  it('rejects downloads whose body exceeds the absolute input limit', async () => {
     fetchMock.mockResolvedValue(createFetchResponse({
-      body: Buffer.alloc(10 * 1024 * 1024 + 1, 1),
+      bodyChunks: [JPEG_BUFFER, Buffer.alloc(50 * 1024 * 1024 + 1 - JPEG_BUFFER.length, 1)],
     }));
 
     await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
     expect(uploadService.uploadOriginalImageBuffer).not.toHaveBeenCalled();
+    expect(uploadService.uploadImageBuffer).not.toHaveBeenCalled();
   });
 
-  it('stops reading as soon as streamed response exceeds the size limit', async () => {
+  it('stops reading as soon as streamed response exceeds the absolute input limit', async () => {
     const cancel = jest.fn().mockResolvedValue(undefined);
     fetchMock.mockResolvedValue({
       status: 200,
@@ -174,7 +196,7 @@ describe('RemoteImageIngestService', () => {
       body: {
         getReader: () => ({
           read: jest.fn()
-            .mockResolvedValueOnce({ done: false, value: Buffer.alloc(10 * 1024 * 1024) })
+            .mockResolvedValueOnce({ done: false, value: Buffer.alloc(50 * 1024 * 1024) })
             .mockResolvedValueOnce({ done: false, value: Buffer.alloc(1) }),
           cancel,
           releaseLock: jest.fn(),

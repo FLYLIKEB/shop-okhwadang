@@ -100,16 +100,26 @@ describe('UploadService', () => {
     await expect(service.uploadImage(file)).rejects.toThrow(BadRequestException);
   });
 
-  it('파일 크기 제한 — 10MB 이하 허용', async () => {
-    const file = makeFile({ size: 10 * 1024 * 1024 });
+  it('파일 크기 제한 — 20MB 이하 허용', async () => {
+    const file = makeFile({ size: 20 * 1024 * 1024 });
     const result = await service.uploadImage(file);
 
     expect(result.url).toBeDefined();
   });
 
-  it('파일 크기 초과 — 10MB 초과 거부', async () => {
-    const file = makeFile({ size: 10 * 1024 * 1024 + 1 });
+  it('파일 크기 초과 — 20MB 초과도 리사이징 경로로 허용', async () => {
+    const file = makeFile({ size: 20 * 1024 * 1024 + 1 });
+    const result = await service.uploadImage(file);
+
+    expect(result.url).toBeDefined();
+  });
+
+  it('입력 안전 한도 초과 — 50MB 초과 거부', async () => {
+    const file = makeFile({ size: 50 * 1024 * 1024 + 1 });
     await expect(service.uploadImage(file)).rejects.toThrow(PayloadTooLargeException);
+    await expect(service.uploadImage(file)).rejects.toThrow(
+      '파일 크기는 50MB를 초과할 수 없습니다.',
+    );
   });
 
   it('UUID 재명명 확인 — 원본 파일명과 다름', async () => {
@@ -183,18 +193,25 @@ describe('UploadService', () => {
       );
     });
 
-    it('파일 크기 제한 — 10MB 이하 허용', async () => {
-      const file = makeFile({ size: 10 * 1024 * 1024 });
+    it('파일 크기 제한 — 20MB 이하 허용', async () => {
+      const file = makeFile({ size: 20 * 1024 * 1024 });
       const result = await service.uploadCategoryImage(file);
 
       expect(result.url).toBeDefined();
     });
 
-    it('파일 크기 초과 — 10MB 초과 거부', async () => {
-      const file = makeFile({ size: 10 * 1024 * 1024 + 1 });
+    it('파일 크기 초과 — 20MB 초과도 리사이징 경로로 허용', async () => {
+      const file = makeFile({ size: 20 * 1024 * 1024 + 1 });
+      const result = await service.uploadCategoryImage(file);
+
+      expect(result.url).toBeDefined();
+    });
+
+    it('입력 안전 한도 초과 — 50MB 초과 거부', async () => {
+      const file = makeFile({ size: 50 * 1024 * 1024 + 1 });
       await expect(service.uploadCategoryImage(file)).rejects.toThrow(PayloadTooLargeException);
       await expect(service.uploadCategoryImage(file)).rejects.toThrow(
-        '파일 크기는 10MB를 초과할 수 없습니다.',
+        '파일 크기는 50MB를 초과할 수 없습니다.',
       );
     });
 

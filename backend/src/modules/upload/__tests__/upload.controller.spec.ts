@@ -2,7 +2,7 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { UploadController } from '../upload.controller';
-import { MAX_UPLOAD_FILE_SIZE_BYTES } from '../upload.constants';
+import { MAX_UPLOAD_INPUT_FILE_SIZE_BYTES } from '../upload.constants';
 import { UploadService } from '../upload.service';
 
 const PNG_1X1 = Buffer.from(
@@ -42,7 +42,7 @@ describe('UploadController multipart limits', () => {
   });
 
   it('blocks oversized admin image upload before UploadService.uploadImage', async () => {
-    const oversized = Buffer.alloc(MAX_UPLOAD_FILE_SIZE_BYTES + 1);
+    const oversized = Buffer.alloc(MAX_UPLOAD_INPUT_FILE_SIZE_BYTES + 1);
 
     const res = await request(app.getHttpServer())
       .post('/upload/image')
@@ -56,7 +56,7 @@ describe('UploadController multipart limits', () => {
   });
 
   it('blocks oversized category image upload before UploadService.uploadCategoryImage', async () => {
-    const oversized = Buffer.alloc(MAX_UPLOAD_FILE_SIZE_BYTES + 1);
+    const oversized = Buffer.alloc(MAX_UPLOAD_INPUT_FILE_SIZE_BYTES + 1);
 
     const res = await request(app.getHttpServer())
       .post('/upload/category-image')

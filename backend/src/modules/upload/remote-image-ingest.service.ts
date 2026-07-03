@@ -4,7 +4,11 @@ import { isIP } from 'node:net';
 import * as path from 'node:path';
 import { UploadService } from './upload.service';
 import { UploadedFile } from './interfaces/storage.interface';
-import { MAX_UPLOAD_FILE_SIZE_BYTES, MAX_UPLOAD_FILE_SIZE_LABEL } from './upload.constants';
+import {
+  MAX_UPLOAD_FILE_SIZE_BYTES,
+  MAX_UPLOAD_INPUT_FILE_SIZE_BYTES,
+  MAX_UPLOAD_INPUT_FILE_SIZE_LABEL,
+} from './upload.constants';
 
 const MAX_REDIRECTS = 3;
 const DOWNLOAD_TIMEOUT_MS = 10_000;
@@ -15,7 +19,13 @@ export class RemoteImageIngestService {
 
   async ingest(url: string): Promise<UploadedFile> {
     const { buffer, finalUrl } = await this.download(url);
-    return this.uploadService.uploadOriginalImageBuffer(buffer, this.filenameFromUrl(finalUrl));
+    const filename = this.filenameFromUrl(finalUrl);
+
+    if (buffer.length > MAX_UPLOAD_FILE_SIZE_BYTES) {
+      return this.uploadService.uploadImageBuffer(buffer, filename);
+    }
+
+    return this.uploadService.uploadOriginalImageBuffer(buffer, filename);
   }
 
   private async download(rawUrl: string): Promise<{ buffer: Buffer; finalUrl: URL }> {
@@ -48,9 +58,9 @@ export class RemoteImageIngestService {
       }
 
       const contentLength = Number(response.headers.get('content-length') ?? 0);
-      if (contentLength > MAX_UPLOAD_FILE_SIZE_BYTES) {
+      if (contentLength > MAX_UPLOAD_INPUT_FILE_SIZE_BYTES) {
         throw new BadRequestException(
-          `이미지 크기가 ${MAX_UPLOAD_FILE_SIZE_LABEL}를 초과합니다: ${current.href}`,
+          `이미지 크기가 ${MAX_UPLOAD_INPUT_FILE_SIZE_LABEL}를 초과합니다: ${current.href}`,
         );
       }
 
@@ -112,10 +122,10 @@ export class RemoteImageIngestService {
 
         const chunk = Buffer.from(value);
         totalBytes += chunk.length;
-        if (totalBytes > MAX_UPLOAD_FILE_SIZE_BYTES) {
+        if (totalBytes > MAX_UPLOAD_INPUT_FILE_SIZE_BYTES) {
           await reader.cancel();
           throw new BadRequestException(
-            `이미지 크기가 ${MAX_UPLOAD_FILE_SIZE_LABEL}를 초과합니다: ${url.href}`,
+            `이미지 크기가 ${MAX_UPLOAD_INPUT_FILE_SIZE_LABEL}를 초과합니다: ${url.href}`,
           );
         }
         chunks.push(chunk);
