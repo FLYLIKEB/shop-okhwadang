@@ -89,4 +89,8 @@ export const adminProductsApi = {
     apiClient.uploadFile<SmartStoreProductImportResult>('/products/imports/smartstore/preview', file),
   commitSmartStoreImport: (file: File) =>
     apiClient.uploadFile<SmartStoreProductImportResult>('/products/imports/smartstore/commit', file),
+  previewNaverCommerceImport: () =>
+    apiClient.post<SmartStoreProductImportResult>('/products/imports/naver-commerce/preview'),
+  commitNaverCommerceImport: () =>
+    apiClient.post<SmartStoreProductImportResult>('/products/imports/naver-commerce/commit'),
 };

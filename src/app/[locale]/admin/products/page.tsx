@@ -27,6 +27,7 @@ export default function AdminProductsPage() {
   const [smartStoreFile, setSmartStoreFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<SmartStoreProductImportResult | null>(null);
   const [importResult, setImportResult] = useState<SmartStoreProductImportResult | null>(null);
+  const [activeImportSource, setActiveImportSource] = useState<'smartstore-excel' | 'naver-commerce' | null>(null);
   const [showAllImportRows, setShowAllImportRows] = useState(false);
   const [showFailedImportRowsOnly, setShowFailedImportRowsOnly] = useState(false);
   const { page, setPage, filters, setFilter } = useAdminListPage({
@@ -75,6 +76,7 @@ export default function AdminProductsPage() {
       const result = await adminProductsApi.previewSmartStoreImport(file);
       setImportPreview(result);
       setImportResult(null);
+      setActiveImportSource('smartstore-excel');
     },
     { successMessage: t('import.previewSuccess'), errorMessage: t('import.previewError') },
   );
@@ -84,9 +86,33 @@ export default function AdminProductsPage() {
       const result = await adminProductsApi.commitSmartStoreImport(file);
       setImportResult(result);
       setImportPreview(null);
+      setActiveImportSource('smartstore-excel');
       void fetchProducts();
     },
     { successMessage: t('import.commitSuccess'), errorMessage: t('import.commitError') },
+  );
+
+  const { execute: previewNaverCommerceImport, isLoading: previewingNaverCommerce } = useAsyncAction(
+    async () => {
+      const result = await adminProductsApi.previewNaverCommerceImport();
+      setImportPreview(result);
+      setImportResult(null);
+      setActiveImportSource('naver-commerce');
+      setShowAllImportRows(false);
+      setShowFailedImportRowsOnly(false);
+    },
+    { successMessage: t('naverCommerce.previewSuccess'), errorMessage: t('naverCommerce.previewError') },
+  );
+
+  const { execute: commitNaverCommerceImport, isLoading: committingNaverCommerce } = useAsyncAction(
+    async () => {
+      const result = await adminProductsApi.commitNaverCommerceImport();
+      setImportResult(result);
+      setImportPreview(null);
+      setActiveImportSource('naver-commerce');
+      void fetchProducts();
+    },
+    { successMessage: t('naverCommerce.commitSuccess'), errorMessage: t('naverCommerce.commitError') },
   );
 
   const { execute: toggleStatus } = useAsyncAction(
@@ -112,6 +138,7 @@ export default function AdminProductsPage() {
     setSmartStoreFile(file);
     setImportPreview(null);
     setImportResult(null);
+    setActiveImportSource(null);
     setShowAllImportRows(false);
     setShowFailedImportRowsOnly(false);
   };
@@ -132,6 +159,14 @@ export default function AdminProductsPage() {
     void commitSmartStoreImport(smartStoreFile);
   };
 
+  const handlePreviewNaverCommerce = () => {
+    void previewNaverCommerceImport();
+  };
+
+  const handleCommitNaverCommerce = () => {
+    void commitNaverCommerceImport();
+  };
+
   const handleToggleStatus = (product: Product) => void toggleStatus(product);
 
   const handleDelete = (product: Product) => {
@@ -146,7 +181,7 @@ export default function AdminProductsPage() {
     ? allImportRows.filter((row) => row.status === 'failed')
     : allImportRows;
   const importRows = showAllImportRows ? visibleImportRows : visibleImportRows.slice(0, 5);
-  const isImporting = previewingImport || committingImport;
+  const isImporting = previewingImport || committingImport || previewingNaverCommerce || committingNaverCommerce;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
@@ -206,11 +241,39 @@ export default function AdminProductsPage() {
             <button
               type="button"
               onClick={handleCommitImport}
-              disabled={!smartStoreFile || isImporting || !importPreview}
+              disabled={!smartStoreFile || isImporting || !importPreview || activeImportSource !== 'smartstore-excel'}
               className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {committingImport ? t('import.committing') : t('import.commitButton')}
             </button>
+          </div>
+        </div>
+
+        <div className="mt-4 border-t pt-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-1">
+              <h3 className="font-semibold typo-body-sm">{t('naverCommerce.title')}</h3>
+              <p className="text-sm text-muted-foreground">{t('naverCommerce.description')}</p>
+              <p className="text-sm text-muted-foreground">{t('naverCommerce.credentialsHint')}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handlePreviewNaverCommerce}
+                disabled={isImporting}
+                className="rounded border px-4 py-2 text-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {previewingNaverCommerce ? t('naverCommerce.previewing') : t('naverCommerce.previewButton')}
+              </button>
+              <button
+                type="button"
+                onClick={handleCommitNaverCommerce}
+                disabled={isImporting || !importPreview || activeImportSource !== 'naver-commerce'}
+                className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {committingNaverCommerce ? t('naverCommerce.committing') : t('naverCommerce.commitButton')}
+              </button>
+            </div>
           </div>
         </div>
 

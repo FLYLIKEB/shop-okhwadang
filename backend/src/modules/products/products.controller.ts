@@ -39,6 +39,7 @@ import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { CreateRestockAlertDto } from '../restock-alerts/dto/create-restock-alert.dto';
 import { RecentlyViewedService } from './recently-viewed.service';
 import { SmartStoreProductImportService } from './smartstore-product-import.service';
+import { NaverCommerceProductImportService } from './naver-commerce-product-import.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createSingleFileMemoryUploadOptions } from '../../common/multer/single-file-upload.options';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
@@ -51,6 +52,7 @@ export class ProductsController {
     private readonly restockAlertsService: RestockAlertsService,
     private readonly recentlyViewedService: RecentlyViewedService,
     private readonly smartStoreProductImportService: SmartStoreProductImportService,
+    private readonly naverCommerceProductImportService: NaverCommerceProductImportService,
   ) {}
 
   @Get()
@@ -147,6 +149,31 @@ export class ProductsController {
   ))
   commitSmartStoreImport(@UploadedFile() file: Express.Multer.File) {
     return this.smartStoreProductImportService.commit(file);
+  }
+
+
+  @Post('imports/naver-commerce/preview')
+  @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '네이버 커머스API 상품 업데이트 미리보기', description: '네이버 커머스API로 스마트스토어 상품을 조회하고 SKU가 일치하는 자사몰 상품 업데이트 예정 내역을 반환합니다.' })
+  @ApiResponse({ status: 201, description: '네이버 커머스API 가져오기 미리보기 성공' })
+  @ApiResponse({ status: 400, description: '네이버 커머스API 자격증명 누락 또는 잘못된 요청' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  previewNaverCommerceImport() {
+    return this.naverCommerceProductImportService.preview();
+  }
+
+  @Post('imports/naver-commerce/commit')
+  @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '네이버 커머스API 상품 업데이트 반영', description: '네이버 커머스API 미리보기와 동일한 매칭/매핑 기준으로 SKU가 일치하는 자사몰 상품을 업데이트합니다.' })
+  @ApiResponse({ status: 201, description: '네이버 커머스API 가져오기 반영 성공' })
+  @ApiResponse({ status: 400, description: '네이버 커머스API 자격증명 누락 또는 잘못된 요청' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  commitNaverCommerceImport() {
+    return this.naverCommerceProductImportService.commit();
   }
 
   @Post()

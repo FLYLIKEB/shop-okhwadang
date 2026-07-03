@@ -1,7 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { adminProductsApi } from '@/lib/api/admin/products';
 import { apiClient } from '@/lib/api/core';
 import { productsApi } from '@/lib/api/products';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('productsApi', () => {
   it('passes attrs to the product list request params', async () => {
@@ -12,7 +16,6 @@ describe('productsApi', () => {
     expect(getSpy).toHaveBeenCalledWith('/products', {
       params: { attrs: 'clay_type:junni', price_min: 10000 },
     });
-    getSpy.mockRestore();
   });
 });
 
@@ -25,6 +28,19 @@ describe('adminProductsApi', () => {
     expect(getSpy).toHaveBeenCalledWith('/admin/products/42', {
       params: undefined,
     });
-    getSpy.mockRestore();
+  });
+
+  it('calls Naver Commerce preview and commit endpoints without raw fetches', async () => {
+    const response = {
+      summary: { totalRows: 0, createCount: 0, updateCount: 0, skipCount: 0, successCount: 0, failureCount: 0 },
+      rows: [],
+    };
+    const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue(response);
+
+    await adminProductsApi.previewNaverCommerceImport();
+    await adminProductsApi.commitNaverCommerceImport();
+
+    expect(postSpy).toHaveBeenNthCalledWith(1, '/products/imports/naver-commerce/preview');
+    expect(postSpy).toHaveBeenNthCalledWith(2, '/products/imports/naver-commerce/commit');
   });
 });
