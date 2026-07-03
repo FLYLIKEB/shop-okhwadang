@@ -8,6 +8,7 @@ NestJS-specific patterns and utilities. Complements `backend/CLAUDE.md`.
 - **Shipping**: `ShippingProvider` interface → `MockShippingAdapter` and `CjShippingAdapter`; `hanjin`/`lotte` currently fall back to mock. CarrierCode type supports `'mock' | 'cj' | 'hanjin' | 'lotte'`.
 - **Storage**: `local` / `s3`. Selected by `STORAGE_PROVIDER` env.
 - **Notification/Email**: `EmailProvider` adapters → mock, Resend, SES stub. Selected by `NOTIFICATION_PROVIDER`; `mock` is blocked in production.
+- **리뷰 번역 (예외 — adapter 없음)**: `ReviewsService.translateReviewContent`가 keyless Google Translate 비공식 endpoint(`translate.googleapis.com/translate_a/single?client=gtx`)를 직접 호출. env/API key 불필요, 5초 타임아웃, `@Throttle` 30/min, 실패는 502(BadGatewayException)로 매핑. 무SLA 엔드포인트임을 인지한 의도적 KISS 선택 — 유료 API 어댑터화는 실제 장애가 반복될 때만 검토.
 
 ## Payment Gateway Selection
 
