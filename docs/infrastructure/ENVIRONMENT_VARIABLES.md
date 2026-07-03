@@ -2,19 +2,19 @@
 
 ## 프론트엔드 (Next.js)
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
+| 변수          | 기본값                  | 설명                                                                                 |
+| ------------- | ----------------------- | ------------------------------------------------------------------------------------ |
 | `BACKEND_URL` | `http://localhost:3000` | NestJS 백엔드 URL (`src/middleware.ts` 런타임 프록시와 서버 컴포넌트 fetch에서 사용) |
 
 ---
 
 ## Vercel Functions (프록시)
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `BACKEND_URL` | `http://<EC2_IP>:3000` | 백엔드 서버 URL |
-| `BACKEND_TIMEOUT_MS` | `10000` | 프록시 타임아웃 (ms) |
-| `LOG_PROXY_REQUESTS` | `true` | 프록시 요청 로깅 여부 |
+| 변수                 | 기본값                 | 설명                  |
+| -------------------- | ---------------------- | --------------------- |
+| `BACKEND_URL`        | `http://<EC2_IP>:3000` | 백엔드 서버 URL       |
+| `BACKEND_TIMEOUT_MS` | `10000`                | 프록시 타임아웃 (ms)  |
+| `LOG_PROXY_REQUESTS` | `true`                 | 프록시 요청 로깅 여부 |
 
 ---
 
@@ -22,73 +22,73 @@
 
 ### 서버
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
+| 변수       | 기본값        | 설명                          |
+| ---------- | ------------- | ----------------------------- |
 | `NODE_ENV` | `development` | 환경 (development/production) |
-| `PORT` | `3000` | 서버 포트 |
+| `PORT`     | `3000`        | 서버 포트                     |
 
 ### 데이터베이스
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `DATABASE_URL` | — | 프로덕션 DB 연결 URL |
-| `LOCAL_DATABASE_URL` | — | 로컬 개발 DB 연결 URL |
-| `TEST_DATABASE_URL` | — | 테스트 DB 연결 URL (DB명에 `test` 필수) |
-| `DB_SYNCHRONIZE` | `false` | TypeORM 동기화 (개발만 `true`) |
-| `DB_SSL_ENABLED` | `false` | SSL 활성화 여부 |
+| 변수                 | 기본값  | 설명                                    |
+| -------------------- | ------- | --------------------------------------- |
+| `DATABASE_URL`       | —       | 프로덕션 DB 연결 URL                    |
+| `LOCAL_DATABASE_URL` | —       | 로컬 개발 DB 연결 URL                   |
+| `TEST_DATABASE_URL`  | —       | 테스트 DB 연결 URL (DB명에 `test` 필수) |
+| `DB_SYNCHRONIZE`     | `false` | TypeORM 동기화 (개발만 `true`)          |
+| `DB_SSL_ENABLED`     | `false` | SSL 활성화 여부                         |
 
 ### 인증
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `JWT_SECRET` | — | JWT 시크릿 키 |
-| `JWT_EXPIRES_IN` | `1h` | Access Token 만료 시간 |
-| `JWT_REFRESH_EXPIRES_IN` | `7d` | Refresh Token 만료 시간 |
+| 변수                     | 기본값 | 설명                    |
+| ------------------------ | ------ | ----------------------- |
+| `JWT_SECRET`             | —      | JWT 시크릿 키           |
+| `JWT_EXPIRES_IN`         | `1h`   | Access Token 만료 시간  |
+| `JWT_REFRESH_EXPIRES_IN` | `7d`   | Refresh Token 만료 시간 |
 
 ### OAuth
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `KAKAO_CLIENT_ID` | — | 카카오 앱 키 |
-| `KAKAO_CLIENT_SECRET` | — | 카카오 시크릿 |
-| `GOOGLE_CLIENT_ID` | — | 구글 클라이언트 ID |
-| `GOOGLE_CLIENT_SECRET` | — | 구글 시크릿 |
+| 변수                   | 기본값 | 설명               |
+| ---------------------- | ------ | ------------------ |
+| `KAKAO_CLIENT_ID`      | —      | 카카오 앱 키       |
+| `KAKAO_CLIENT_SECRET`  | —      | 카카오 시크릿      |
+| `GOOGLE_CLIENT_ID`     | —      | 구글 클라이언트 ID |
+| `GOOGLE_CLIENT_SECRET` | —      | 구글 시크릿        |
 
 ### CORS
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `FRONTEND_URL` | — | 프론트엔드 URL (CORS) |
-| `FRONTEND_URLS` | — | 여러 프론트엔드 URL (쉼표 구분) |
+| 변수            | 기본값 | 설명                            |
+| --------------- | ------ | ------------------------------- |
+| `FRONTEND_URL`  | —      | 프론트엔드 URL (CORS)           |
+| `FRONTEND_URLS` | —      | 여러 프론트엔드 URL (쉼표 구분) |
 
 ### 결제
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `PAYMENT_GATEWAY` | `mock` | PG 어댑터 선택 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`). `mock`은 프로덕션 차단 |
-| `TOSS_SECRET_KEY` | — | 토스페이먼츠 시크릿 키 |
-| `TOSS_CLIENT_KEY` | — | 토스페이먼츠 클라이언트 키 |
-| `STRIPE_SECRET_KEY` | — | Stripe 시크릿 키 |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | — | Stripe 공개 키 |
-| `STRIPE_WEBHOOK_SECRET` | — | Stripe 웹훅 서명 키 |
+| 변수                                 | 기본값 | 설명                                                                                         |
+| ------------------------------------ | ------ | -------------------------------------------------------------------------------------------- |
+| `PAYMENT_GATEWAY`                    | `mock` | PG 어댑터 선택 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`). `mock`은 프로덕션 차단 |
+| `TOSS_SECRET_KEY`                    | —      | 토스페이먼츠 시크릿 키                                                                       |
+| `TOSS_CLIENT_KEY`                    | —      | 토스페이먼츠 클라이언트 키                                                                   |
+| `STRIPE_SECRET_KEY`                  | —      | Stripe 시크릿 키                                                                             |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | —      | Stripe 공개 키                                                                               |
+| `STRIPE_WEBHOOK_SECRET`              | —      | Stripe 웹훅 서명 키                                                                          |
 
 ### 스토리지
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
+| 변수               | 기본값  | 설명                         |
+| ------------------ | ------- | ---------------------------- |
 | `STORAGE_PROVIDER` | `local` | 스토리지 (`local`/`s3`/`r2`) |
-| `S3_BUCKET` | — | S3 버킷명 |
-| `S3_REGION` | — | S3 리전 |
-| `S3_ACCESS_KEY` | — | S3 액세스 키 |
-| `S3_SECRET_KEY` | — | S3 시크릿 키 |
+| `S3_BUCKET`        | —       | S3 버킷명                    |
+| `S3_REGION`        | —       | S3 리전                      |
+| `S3_ACCESS_KEY`    | —       | S3 액세스 키                 |
+| `S3_SECRET_KEY`    | —       | S3 시크릿 키                 |
 
 ### 알림 (이메일)
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `NOTIFICATION_PROVIDER` | `mock` | 이메일 어댑터 (`mock`/`resend`/`ses`). 프로덕션에서는 `mock` 금지 |
-| `RESEND_API_KEY` | — | Resend API 키 (`NOTIFICATION_PROVIDER=resend` 시 필수) |
-| `EMAIL_FROM` | `no-reply@okhwadang.com` | 발신자 이메일 주소 |
+| 변수                    | 기본값                   | 설명                                                              |
+| ----------------------- | ------------------------ | ----------------------------------------------------------------- |
+| `NOTIFICATION_PROVIDER` | `mock`                   | 이메일 어댑터 (`mock`/`resend`/`ses`). 프로덕션에서는 `mock` 금지 |
+| `RESEND_API_KEY`        | —                        | Resend API 키 (`NOTIFICATION_PROVIDER=resend` 시 필수)            |
+| `EMAIL_FROM`            | `no-reply@okhwadang.com` | 발신자 이메일 주소                                                |
 
 ### Cache
 
@@ -103,26 +103,26 @@
 
 ### Lightsail MySQL
 
-| 변수 | 설명 |
-|------|------|
-| `LIGHTSAIL_DB_NAME` | DB 인스턴스 이름 |
-| `LIGHTSAIL_DB_REGION` | 리전 (`ap-northeast-2`) |
-| `LIGHTSAIL_DB_HOST` | MySQL endpoint 호스트 |
-| `LIGHTSAIL_DB_PORT` | 3306 |
-| `LIGHTSAIL_DB_INITIAL_SCHEMA` | 초기 스키마 (`commerce`) |
-| `LIGHTSAIL_DB_MASTER_USERNAME` | 관리 계정 (`dbadmin`) |
-| `LIGHTSAIL_DB_MASTER_PASSWORD` | 관리 계정 패스워드 |
-| `APP_DB_USER` | 앱 계정 (`okhwadang_app`) |
-| `APP_DB_PASSWORD` | 앱 계정 패스워드 |
-| `DATABASE_URL` | 앱 계정 기반 완성된 URL |
+| 변수                           | 설명                      |
+| ------------------------------ | ------------------------- |
+| `LIGHTSAIL_DB_NAME`            | DB 인스턴스 이름          |
+| `LIGHTSAIL_DB_REGION`          | 리전 (`ap-northeast-2`)   |
+| `LIGHTSAIL_DB_HOST`            | MySQL endpoint 호스트     |
+| `LIGHTSAIL_DB_PORT`            | 3306                      |
+| `LIGHTSAIL_DB_INITIAL_SCHEMA`  | 초기 스키마 (`commerce`)  |
+| `LIGHTSAIL_DB_MASTER_USERNAME` | 관리 계정 (`dbadmin`)     |
+| `LIGHTSAIL_DB_MASTER_PASSWORD` | 관리 계정 패스워드        |
+| `APP_DB_USER`                  | 앱 계정 (`okhwadang_app`) |
+| `APP_DB_PASSWORD`              | 앱 계정 패스워드          |
+| `DATABASE_URL`                 | 앱 계정 기반 완성된 URL   |
 
 ### EC2 bastion (로컬 SSH 터널용)
 
-| 변수 | 설명 |
-|------|------|
-| `BASTION_HOST` | EC2 public IP |
-| `BASTION_USER` | SSH user (`ec2-user`) |
-| `BASTION_KEY` | SSH private key 경로 (`~/okhwadang-ec2-key.pem`) |
+| 변수           | 설명                                             |
+| -------------- | ------------------------------------------------ |
+| `BASTION_HOST` | EC2 public IP                                    |
+| `BASTION_USER` | SSH user (`ec2-user`)                            |
+| `BASTION_KEY`  | SSH private key 경로 (`~/okhwadang-ec2-key.pem`) |
 
 사용법은 [`REMOTE_DB_ACCESS.md`](./REMOTE_DB_ACCESS.md) 참조.
 
@@ -145,6 +145,10 @@ backend/.env.example      # 키 목록 (커밋 O, 값 없음)
 | `NAVER_COMMERCE_APP_ID` | — | 네이버 커머스API 애플리케이션 ID (스마트스토어 상품 동기화용) |
 | `NAVER_COMMERCE_APP_SECRET` | — | 네이버 커머스API 애플리케이션 시크릿. 실제 값은 secret/env에만 보관 |
 | `NAVER_COMMERCE_API_BASE_URL` | `https://api.commerce.naver.com/external` | 네이버 커머스API 호스트 override (테스트/장애 대응용) |
+| `NAVER_COMMERCE_MAX_SYNC_PRODUCTS` | `500` | 네이버 커머스API 동기화에서 한 번에 목록 조회/상세 조회할 최대 상품 수 |
+| `NAVER_COMMERCE_DETAIL_REQUEST_DELAY_MS` | `700` | 네이버 상품 상세 API 연속 호출 사이 대기 시간(ms). 4개 이상 조회 시 요청 제한을 피하기 위한 throttle |
+| `NAVER_COMMERCE_RETRY_ATTEMPTS` | `3` | 네이버 API 429/503 등 일시 제한 응답 재시도 횟수 |
+| `NAVER_COMMERCE_RETRY_BASE_DELAY_MS` | `1000` | 네이버 API 일시 제한 응답 재시도 지수 백오프 시작 대기 시간(ms) |
 | `PAYPAL_CLIENT_ID` | — | PayPal REST API client ID (프로덕션 체크아웃 필수) |
 | `PAYPAL_CLIENT_SECRET` | — | PayPal REST API client secret (프로덕션 체크아웃 필수) |
 | `PAYPAL_WEBHOOK_ID` | — | PayPal webhook signature verification ID |

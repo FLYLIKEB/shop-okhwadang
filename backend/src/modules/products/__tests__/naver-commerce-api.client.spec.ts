@@ -3,10 +3,10 @@ import { NaverCommerceApiClient } from '../naver-commerce-api.client';
 
 const ORIGINAL_ENV = process.env;
 
-function jsonResponse(body: unknown, status = 200): Response {
+function jsonResponse(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   });
 }
 
@@ -17,6 +17,9 @@ describe('NaverCommerceApiClient', () => {
       NAVER_COMMERCE_APP_ID: 'test-client-id',
       NAVER_COMMERCE_APP_SECRET: '$2a$10$abcdefghijklmnopqrstuv',
       NAVER_COMMERCE_API_BASE_URL: 'https://naver-commerce.test/external',
+      NAVER_COMMERCE_DETAIL_REQUEST_DELAY_MS: '0',
+      NAVER_COMMERCE_RETRY_ATTEMPTS: '0',
+      NAVER_COMMERCE_RETRY_BASE_DELAY_MS: '0',
     };
     jest.spyOn(Date, 'now').mockReturnValue(1643961623299);
   });
@@ -100,6 +103,104 @@ describe('NaverCommerceApiClient', () => {
     const products = await client.fetchProductsWithDetails();
 
     expect(products[0]).toMatchObject({ detailProduct: null, error: 'detail failed' });
+  });
+
+  it('throttles detail requests after the first product so Naver does not reject 4+ bursts', async () => {
+    process.env.NAVER_COMMERCE_DETAIL_REQUEST_DELAY_MS = '25';
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ access_token: 'access-token', expires_in: 10_800 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          contents: [
+            { originProductNo: 1001 },
+            { originProductNo: 1002 },
+            { originProductNo: 1003 },
+            { originProductNo: 1004 },
+          ],
+          totalPages: 1,
+          last: true,
+        }),
+      )
+      .mockResolvedValue(jsonResponse({ originProduct: { name: '상세 상품' } }));
+    global.fetch = fetchMock;
+
+    const client = new NaverCommerceApiClient();
+    const products = await client.fetchProductsWithDetails();
+
+    expect(products).toHaveLength(4);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(3);
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 25);
+    expect(fetchMock).toHaveBeenCalledTimes(6);
+  });
+
+  it('retries temporary Naver rate-limit errors before recording a product-level detail error', async () => {
+    process.env.NAVER_COMMERCE_RETRY_ATTEMPTS = '2';
+    process.env.NAVER_COMMERCE_RETRY_BASE_DELAY_MS = '0';
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ access_token: 'access-token', expires_in: 10_800 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          contents: [{ originProductNo: 1001 }, { originProductNo: 1002 }],
+          totalPages: 1,
+          last: true,
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ originProduct: { name: '상세 상품 A' } }))
+      .mockResolvedValueOnce(
+        jsonResponse({ message: '요청이 많아 서비스를 일시적으로 사용할 수 없습니다.' }, 503, {
+          'retry-after': '0',
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ message: '요청이 많아 서비스를 일시적으로 사용할 수 없습니다.' }, 503),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ message: '요청이 많아 서비스를 일시적으로 사용할 수 없습니다.' }, 503),
+      );
+    global.fetch = fetchMock;
+
+    const client = new NaverCommerceApiClient();
+    const products = await client.fetchProductsWithDetails();
+
+    expect(products).toHaveLength(2);
+    expect(products[0]).toMatchObject({
+      detailProduct: { originProduct: { name: '상세 상품 A' } },
+    });
+    expect(products[1]).toMatchObject({
+      detailProduct: null,
+      error: '요청이 많아 서비스를 일시적으로 사용할 수 없습니다.',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(6);
+  });
+
+  it('limits the product search size from NAVER_COMMERCE_MAX_SYNC_PRODUCTS', async () => {
+    process.env.NAVER_COMMERCE_MAX_SYNC_PRODUCTS = '3';
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ access_token: 'access-token', expires_in: 10_800 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          contents: [
+            { originProductNo: 1001 },
+            { originProductNo: 1002 },
+            { originProductNo: 1003 },
+          ],
+          totalPages: 10,
+          last: false,
+        }),
+      )
+      .mockResolvedValue(jsonResponse({ originProduct: { name: '상세 상품' } }));
+    global.fetch = fetchMock;
+
+    const client = new NaverCommerceApiClient();
+    const products = await client.fetchProductsWithDetails();
+
+    expect(products).toHaveLength(3);
+    const searchBody = fetchMock.mock.calls[1][1].body as string;
+    expect(JSON.parse(searchBody)).toMatchObject({ page: 1, size: 3 });
   });
 
   it('returns a safe error when the configured client secret cannot sign token requests', async () => {
