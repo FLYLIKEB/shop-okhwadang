@@ -68,19 +68,29 @@ export class UploadService {
   }
 
   uploadImageBuffer(buffer: Buffer, originalname: string): Promise<UploadedFile> {
+    const file = this.createFileFromBuffer(buffer, originalname);
+    return this.uploadWithPipeline(file, 'save');
+  }
+
+  uploadOriginalImageBuffer(buffer: Buffer, originalname: string): Promise<UploadedFile> {
+    const file = this.createFileFromBuffer(buffer, originalname);
+    return this.uploadOriginal(file, 'save');
+  }
+
+  private createFileFromBuffer(buffer: Buffer, originalname: string): Express.Multer.File {
     const detectedMime = detectMimeFromMagicBytes(buffer);
     if (!detectedMime) {
       throw new BadRequestException(
         '허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)',
       );
     }
-    const file = {
+
+    return {
       buffer,
       originalname,
       mimetype: detectedMime,
       size: buffer.length,
     } as Express.Multer.File;
-    return this.uploadWithPipeline(file, 'save');
   }
 
   private async uploadWithPipeline(
@@ -103,6 +113,29 @@ export class UploadService {
 
     try {
       return await this.adapter[saveMethod](filename, resized, file.mimetype);
+    } catch (err) {
+      if (isAwsCredentialError(err)) {
+        throw new InternalServerErrorException(
+          '이미지 저장소 인증 정보가 올바르지 않습니다. AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY 또는 STORAGE_PROVIDER 설정을 확인해 주세요.',
+        );
+      }
+      throw err;
+    }
+  }
+
+  private async uploadOriginal(
+    file: Express.Multer.File,
+    saveMethod: 'save' | 'saveCategoryImage',
+  ): Promise<UploadedFile> {
+    this.validateFile(file);
+
+    const ext =
+      path.extname(file.originalname).toLowerCase() ||
+      `.${file.mimetype.split('/')[1]}`;
+    const filename = `${randomUUID()}${ext}`;
+
+    try {
+      return await this.adapter[saveMethod](filename, file.buffer, file.mimetype);
     } catch (err) {
       if (isAwsCredentialError(err)) {
         throw new InternalServerErrorException(

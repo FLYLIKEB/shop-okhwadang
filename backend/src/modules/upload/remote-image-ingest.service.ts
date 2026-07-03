@@ -15,7 +15,7 @@ export class RemoteImageIngestService {
 
   async ingest(url: string): Promise<UploadedFile> {
     const { buffer, finalUrl } = await this.download(url);
-    return this.uploadService.uploadImageBuffer(buffer, this.filenameFromUrl(finalUrl));
+    return this.uploadService.uploadOriginalImageBuffer(buffer, this.filenameFromUrl(finalUrl));
   }
 
   private async download(rawUrl: string): Promise<{ buffer: Buffer; finalUrl: URL }> {

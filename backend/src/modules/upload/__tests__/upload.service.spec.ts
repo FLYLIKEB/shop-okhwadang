@@ -78,6 +78,18 @@ describe('UploadService', () => {
 
 
 
+
+  it('원격 원본 버퍼 업로드는 sharp 리사이즈/재인코딩을 건너뛴다', async () => {
+    const sharpMock = jest.requireMock('sharp') as jest.Mock;
+    sharpMock.mockClear();
+
+    const result = await service.uploadOriginalImageBuffer(JPEG_MAGIC, 'naver-original.jpg');
+
+    expect(sharpMock).not.toHaveBeenCalled();
+    expect(result.url).toContain('/uploads/mock/');
+    expect(result.filename).toMatch(/^[0-9a-f-]+\.jpg$/);
+  });
+
   it('파일이 누락되면 400 BadRequest로 거부한다', async () => {
     await expect(service.uploadImage(undefined)).rejects.toThrow(BadRequestException);
     await expect(service.uploadImage(undefined)).rejects.toThrow('업로드할 파일을 첨부해주세요.');

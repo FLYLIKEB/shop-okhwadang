@@ -6,7 +6,7 @@ const JPEG_BUFFER = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]
 
 function createUploadServiceMock() {
   return {
-    uploadImageBuffer: jest.fn().mockResolvedValue({
+    uploadOriginalImageBuffer: jest.fn().mockResolvedValue({
       url: 'https://cdn.example.com/uploads/uuid.jpg',
       filename: 'uuid.jpg',
     }),
@@ -53,11 +53,11 @@ describe('RemoteImageIngestService', () => {
     fetchMock.mockRestore();
   });
 
-  it('downloads a remote image and uploads it through the upload pipeline', async () => {
+  it('downloads a remote image and uploads the original buffer without reprocessing', async () => {
     const result = await service.ingest('https://shop1.phinf.naver.net/some/path/image.jpg');
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(uploadService.uploadImageBuffer).toHaveBeenCalledWith(
+    expect(uploadService.uploadOriginalImageBuffer).toHaveBeenCalledWith(
       expect.any(Buffer),
       expect.stringContaining('image.jpg'),
     );
@@ -139,7 +139,7 @@ describe('RemoteImageIngestService', () => {
     }));
 
     await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
-    expect(uploadService.uploadImageBuffer).not.toHaveBeenCalled();
+    expect(uploadService.uploadOriginalImageBuffer).not.toHaveBeenCalled();
   });
 
   it('rejects downloads whose body exceeds the size limit', async () => {
@@ -148,7 +148,7 @@ describe('RemoteImageIngestService', () => {
     }));
 
     await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
-    expect(uploadService.uploadImageBuffer).not.toHaveBeenCalled();
+    expect(uploadService.uploadOriginalImageBuffer).not.toHaveBeenCalled();
   });
 
   it('stops reading as soon as streamed response exceeds the size limit', async () => {
@@ -170,7 +170,7 @@ describe('RemoteImageIngestService', () => {
 
     await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
     expect(cancel).toHaveBeenCalled();
-    expect(uploadService.uploadImageBuffer).not.toHaveBeenCalled();
+    expect(uploadService.uploadOriginalImageBuffer).not.toHaveBeenCalled();
   });
 
   it('wraps network failures in BadRequestException', async () => {
