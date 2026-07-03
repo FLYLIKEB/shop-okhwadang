@@ -36,6 +36,11 @@ describe('S3StorageAdapter', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     s3Module.__mockSend.mockResolvedValue({});
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true } as Response);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('생성자', () => {
@@ -88,6 +93,38 @@ describe('S3StorageAdapter', () => {
       const result = await adapter.save('photo.jpg', Buffer.from(''), 'image/jpeg');
 
       expect(result.url).toBe('https://cdn.example.com/products/photo.jpg');
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        'https://cdn.example.com/products/photo.jpg',
+        expect.objectContaining({ method: 'HEAD' }),
+      );
+    });
+
+    it('cdnUrl 이 접근 불가하면 S3 직접 URL로 fallback', async () => {
+      jest.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false } as Response);
+      const adapter = new S3StorageAdapter({
+        ...baseConfig,
+        s3: { ...baseConfig.s3, cdnUrl: 'https://cdn.example.com' },
+      });
+
+      const result = await adapter.save('photo.jpg', Buffer.from(''), 'image/jpeg');
+
+      expect(result.url).toBe(
+        'https://test-bucket.s3.ap-northeast-2.amazonaws.com/products/photo.jpg',
+      );
+    });
+
+    it('cdnUrl 확인 요청이 실패해도 S3 업로드 성공 URL을 반환', async () => {
+      jest.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('CloudFront 403'));
+      const adapter = new S3StorageAdapter({
+        ...baseConfig,
+        s3: { ...baseConfig.s3, cdnUrl: 'https://cdn.example.com' },
+      });
+
+      const result = await adapter.save('photo.jpg', Buffer.from(''), 'image/jpeg');
+
+      expect(result.url).toBe(
+        'https://test-bucket.s3.ap-northeast-2.amazonaws.com/products/photo.jpg',
+      );
     });
 
     it('S3 전송 실패 시 reject', async () => {
