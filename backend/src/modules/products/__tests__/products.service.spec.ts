@@ -10,6 +10,7 @@ import { Category } from '../entities/category.entity';
 import { ProductImage } from '../entities/product-image.entity';
 import { ProductDetailImage } from '../entities/product-detail-image.entity';
 import { Review } from '../../reviews/entities/review.entity';
+import { ExternalReview } from '../../reviews/entities/external-review.entity';
 import { AttributeType } from '../entities/attribute-type.entity';
 import { ProductAttribute } from '../entities/product-attribute.entity';
 import { ProductSort } from '../dto/query-products.dto';
@@ -79,6 +80,19 @@ describe('ProductsService', () => {
         },
         {
           provide: getRepositoryToken(Review),
+          useValue: {
+            createQueryBuilder: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnThis(),
+              addSelect: jest.fn().mockReturnThis(),
+              where: jest.fn().mockReturnThis(),
+              andWhere: jest.fn().mockReturnThis(),
+              groupBy: jest.fn().mockReturnThis(),
+              getRawMany: jest.fn().mockResolvedValue([]),
+            }),
+          },
+        },
+        {
+          provide: getRepositoryToken(ExternalReview),
           useValue: {
             createQueryBuilder: jest.fn().mockReturnValue({
               select: jest.fn().mockReturnThis(),

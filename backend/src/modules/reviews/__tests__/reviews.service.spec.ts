@@ -138,7 +138,12 @@ describe('ReviewsService', () => {
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         addOrderBy: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+        getRawOne: jest.fn().mockResolvedValue({ avg: null, cnt: '0' }),
+        getRawMany: jest.fn().mockResolvedValue([]),
         getCount: jest.fn().mockResolvedValue(0),
       };
       mockRepo.createQueryBuilder.mockReturnValue(qb);
@@ -173,9 +178,15 @@ describe('ReviewsService', () => {
       };
       const externalQb = {
         where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         addOrderBy: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+        getRawOne: jest.fn().mockResolvedValue({ avg: null, cnt: '0' }),
+        getRawMany: jest.fn().mockResolvedValue([]),
         getCount: jest.fn().mockResolvedValue(0),
       };
       mockRepo.createQueryBuilder.mockReturnValue(qb);
@@ -186,7 +197,7 @@ describe('ReviewsService', () => {
       expect(qb.orderBy).toHaveBeenCalledWith('review.rating', 'DESC');
     });
 
-    it('should merge SmartStore reviews into the product review list without internal average stats', async () => {
+    it('should include SmartStore reviews in product average stats and distribution', async () => {
       const internalReview = { ...mockReview, id: 1, rating: 4, createdAt: new Date('2026-03-01T12:00:00Z') };
       const externalReview = {
         id: 9,
@@ -220,7 +231,12 @@ describe('ReviewsService', () => {
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         addOrderBy: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[externalReview], 1]),
+        getRawOne: jest.fn().mockResolvedValue({ avg: '5.0', cnt: '1' }),
+        getRawMany: jest.fn().mockResolvedValue([{ rating: 5, count: '1' }]),
         getCount: jest.fn().mockResolvedValue(1),
       };
       mockRepo.createQueryBuilder.mockReturnValue(qb);
@@ -235,11 +251,12 @@ describe('ReviewsService', () => {
         userName: '네**',
         orderItemId: null,
       });
-      expect(result.stats.averageRating).toBe(4);
+      expect(result.stats.averageRating).toBe(4.5);
       expect(result.stats.totalCount).toBe(2);
       expect(result.stats.internalCount).toBe(1);
       expect(result.stats.externalCount).toBe(1);
-      expect(result.stats.distribution['5']).toBe(0);
+      expect(result.stats.distribution['5']).toBe(1);
+      expect(result.stats.distribution['4']).toBe(1);
       expect(result.pagination.total).toBe(2);
     });
   });
@@ -287,6 +304,10 @@ describe('ReviewsService', () => {
         externalReviewId: 'naver-2',
         isVisible: false,
       }));
+      expect(mockManager.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE products p'),
+        [5, 5, 5],
+      );
     });
   });
 

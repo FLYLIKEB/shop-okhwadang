@@ -13,6 +13,7 @@ import {
 import { Product, ProductStatus } from './entities/product.entity';
 import { Category } from './entities/category.entity';
 import { Review } from '../reviews/entities/review.entity';
+import { ExternalReview } from '../reviews/entities/external-review.entity';
 import { AttributeType } from './entities/attribute-type.entity';
 import { QueryProductsDto, ProductSort } from './dto/query-products.dto';
 import { CacheService } from '../cache/cache.service';
@@ -38,6 +39,8 @@ export class ProductQueryService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Review)
     private readonly reviewRepository: Repository<Review>,
+    @InjectRepository(ExternalReview)
+    private readonly externalReviewRepository: Repository<ExternalReview>,
     @InjectRepository(AttributeType)
     private readonly attributeTypeRepository: Repository<AttributeType>,
     private readonly cacheService: CacheService,
@@ -240,21 +243,43 @@ export class ProductQueryService {
       return new Map();
     }
 
-    const stats = await this.reviewRepository
-      .createQueryBuilder('review')
-      .select('review.product_id', 'productId')
-      .addSelect('AVG(review.rating)', 'avgRating')
-      .addSelect('COUNT(review.id)', 'reviewCount')
-      .where('review.product_id IN (:...productIds)', { productIds })
-      .andWhere('review.is_visible = :visible', { visible: true })
-      .groupBy('review.product_id')
-      .getRawMany<{ productId: string; avgRating: string; reviewCount: string }>();
+    const [internalStats, externalStats] = await Promise.all([
+      this.reviewRepository
+        .createQueryBuilder('review')
+        .select('review.product_id', 'productId')
+        .addSelect('AVG(review.rating)', 'avgRating')
+        .addSelect('COUNT(review.id)', 'reviewCount')
+        .where('review.product_id IN (:...productIds)', { productIds })
+        .andWhere('review.is_visible = :visible', { visible: true })
+        .groupBy('review.product_id')
+        .getRawMany<{ productId: string; avgRating: string; reviewCount: string }>(),
+      this.externalReviewRepository
+        .createQueryBuilder('externalReview')
+        .select('externalReview.product_id', 'productId')
+        .addSelect('AVG(externalReview.rating)', 'avgRating')
+        .addSelect('COUNT(externalReview.id)', 'reviewCount')
+        .where('externalReview.product_id IN (:...productIds)', { productIds })
+        .andWhere('externalReview.is_visible = :visible', { visible: true })
+        .groupBy('externalReview.product_id')
+        .getRawMany<{ productId: string; avgRating: string; reviewCount: string }>(),
+    ]);
+
+    const aggregates = new Map<number, { ratingSum: number; reviewCount: number }>();
+    for (const row of [...internalStats, ...externalStats]) {
+      const productId = parseInt(row.productId, 10);
+      const reviewCount = parseInt(row.reviewCount, 10);
+      const avgRating = row.avgRating ? parseFloat(row.avgRating) : 0;
+      const current = aggregates.get(productId) ?? { ratingSum: 0, reviewCount: 0 };
+      current.ratingSum += avgRating * reviewCount;
+      current.reviewCount += reviewCount;
+      aggregates.set(productId, current);
+    }
 
     const map = new Map<number, { rating: number; reviewCount: number }>();
-    for (const row of stats) {
-      map.set(parseInt(row.productId, 10), {
-        rating: row.avgRating ? parseFloat(parseFloat(row.avgRating).toFixed(1)) : 0,
-        reviewCount: parseInt(row.reviewCount, 10),
+    for (const [productId, stats] of aggregates) {
+      map.set(productId, {
+        rating: stats.reviewCount ? parseFloat((stats.ratingSum / stats.reviewCount).toFixed(1)) : 0,
+        reviewCount: stats.reviewCount,
       });
     }
     return map;

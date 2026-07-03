@@ -187,54 +187,73 @@ export class ReviewsService {
   }
 
   async getStats(productId?: number): Promise<ReviewStats> {
-    const qb = this.reviewRepo
+    const internalStatsQb = this.reviewRepo
       .createQueryBuilder('review')
       .where('review.is_visible = :visible', { visible: true });
+    const externalStatsQb = this.externalReviewRepo
+      .createQueryBuilder('externalReview')
+      .where('externalReview.is_visible = :visible', { visible: true });
 
     if (productId) {
-      qb.andWhere('review.product_id = :productId', { productId });
+      internalStatsQb.andWhere('review.product_id = :productId', { productId });
+      externalStatsQb.andWhere('externalReview.product_id = :productId', { productId });
     }
 
-    const result = await qb
-      .select('AVG(review.rating)', 'avg')
-      .addSelect('COUNT(*)', 'cnt')
-      .getRawOne<{ avg: string | null; cnt: string }>();
+    const [internalResult, externalResult] = await Promise.all([
+      internalStatsQb
+        .select('AVG(review.rating)', 'avg')
+        .addSelect('COUNT(*)', 'cnt')
+        .getRawOne<{ avg: string | null; cnt: string }>(),
+      externalStatsQb
+        .select('AVG(externalReview.rating)', 'avg')
+        .addSelect('COUNT(*)', 'cnt')
+        .getRawOne<{ avg: string | null; cnt: string }>(),
+    ]);
 
-    const avgRating = result?.avg ? parseFloat(parseFloat(result.avg).toFixed(1)) : 0;
-    const totalCount = result?.cnt ? parseInt(result.cnt, 10) : 0;
+    const internalCount = internalResult?.cnt ? parseInt(internalResult.cnt, 10) : 0;
+    const externalCount = externalResult?.cnt ? parseInt(externalResult.cnt, 10) : 0;
+    const totalCount = internalCount + externalCount;
+    const internalAvg = internalResult?.avg ? parseFloat(internalResult.avg) : 0;
+    const externalAvg = externalResult?.avg ? parseFloat(externalResult.avg) : 0;
+    const averageRating = totalCount
+      ? parseFloat(
+          (((internalAvg * internalCount) + (externalAvg * externalCount)) / totalCount).toFixed(1),
+        )
+      : 0;
 
-    const distQb = this.reviewRepo
+    const internalDistQb = this.reviewRepo
       .createQueryBuilder('review')
       .select('review.rating', 'rating')
       .addSelect('COUNT(*)', 'count')
       .where('review.is_visible = :visible', { visible: true })
       .groupBy('review.rating');
-
-    if (productId) {
-      distQb.andWhere('review.product_id = :productId', { productId });
-    }
-
-    const distRows = await distQb.getRawMany<{ rating: number; count: string }>();
-    const distribution: Record<string, number> = { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 };
-    for (const row of distRows) {
-      distribution[String(row.rating)] = parseInt(row.count, 10);
-    }
-
-    const externalQb = this.externalReviewRepo
+    const externalDistQb = this.externalReviewRepo
       .createQueryBuilder('externalReview')
-      .where('externalReview.is_visible = :visible', { visible: true });
+      .select('externalReview.rating', 'rating')
+      .addSelect('COUNT(*)', 'count')
+      .where('externalReview.is_visible = :visible', { visible: true })
+      .groupBy('externalReview.rating');
 
     if (productId) {
-      externalQb.andWhere('externalReview.product_id = :productId', { productId });
+      internalDistQb.andWhere('review.product_id = :productId', { productId });
+      externalDistQb.andWhere('externalReview.product_id = :productId', { productId });
     }
 
-    const externalCount = await externalQb.getCount();
+    const [internalDistRows, externalDistRows] = await Promise.all([
+      internalDistQb.getRawMany<{ rating: number; count: string }>(),
+      externalDistQb.getRawMany<{ rating: number; count: string }>(),
+    ]);
+    const distribution: Record<string, number> = { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 };
+    for (const row of [...internalDistRows, ...externalDistRows]) {
+      const key = String(row.rating);
+      distribution[key] = (distribution[key] ?? 0) + parseInt(row.count, 10);
+    }
 
     return {
-      averageRating: avgRating,
-      totalCount: totalCount + externalCount,
+      averageRating,
+      totalCount,
       distribution,
-      internalCount: totalCount,
+      internalCount,
       externalCount,
     };
   }
@@ -273,6 +292,10 @@ export class ReviewsService {
 
       if (patch.isVisible === false) hidden += 1;
     }
+
+    await this.dataSource.transaction((manager) =>
+      this.refreshProductReviewStats(manager, dto.productId),
+    );
 
     this.logger.log(
       `SmartStore reviews imported: productId=${dto.productId}, received=${dto.reviews.length}, created=${created}, updated=${updated}`,
