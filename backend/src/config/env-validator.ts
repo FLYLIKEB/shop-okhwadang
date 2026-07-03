@@ -22,14 +22,44 @@ export const REQUIRED_PROD_ENV_KEYS = [
   'KAKAO_REDIRECT_URI',
 ] as const;
 
+export const CHECKOUT_PROVIDER_ENV_KEYS = {
+  naverpay: [
+    'NAVERPAY_PARTNER_ID',
+    'NAVERPAY_CLIENT_ID',
+    'NAVERPAY_CLIENT_SECRET',
+    'NAVERPAY_CHAIN_ID',
+  ],
+  paypal: [
+    'PAYPAL_CLIENT_ID',
+    'PAYPAL_CLIENT_SECRET',
+  ],
+} as const;
+
 export const CHECKOUT_PROD_ENV_KEYS = [
-  'NAVERPAY_PARTNER_ID',
-  'NAVERPAY_CLIENT_ID',
-  'NAVERPAY_CLIENT_SECRET',
-  'NAVERPAY_CHAIN_ID',
-  'PAYPAL_CLIENT_ID',
-  'PAYPAL_CLIENT_SECRET',
+  ...CHECKOUT_PROVIDER_ENV_KEYS.naverpay,
+  ...CHECKOUT_PROVIDER_ENV_KEYS.paypal,
 ] as const;
+
+type CheckoutProvider = keyof typeof CHECKOUT_PROVIDER_ENV_KEYS;
+
+function isCheckoutProvider(value: string): value is CheckoutProvider {
+  return value === 'naverpay' || value === 'paypal';
+}
+
+function getEnabledCheckoutProviders(env: NodeJS.ProcessEnv): CheckoutProvider[] {
+  const configured = env.CHECKOUT_ENABLED_GATEWAYS ?? env.PAYMENT_GATEWAY ?? '';
+  const providers = configured
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(isCheckoutProvider);
+  return [...new Set(providers)];
+}
+
+export function getRequiredCheckoutEnvKeys(env: NodeJS.ProcessEnv): RequiredEnvKey[] {
+  return getEnabledCheckoutProviders(env).flatMap((provider) => [
+    ...CHECKOUT_PROVIDER_ENV_KEYS[provider],
+  ]);
+}
 
 export type RequiredEnvKey =
   | (typeof REQUIRED_PROD_ENV_KEYS)[number]
@@ -53,7 +83,7 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidation
 
   const errors: EnvValidationError[] = [];
 
-  for (const key of [...REQUIRED_PROD_ENV_KEYS, ...CHECKOUT_PROD_ENV_KEYS]) {
+  for (const key of [...REQUIRED_PROD_ENV_KEYS, ...getRequiredCheckoutEnvKeys(env)]) {
     const value = env[key];
     if (value === undefined || value === null || value.trim() === '') {
       errors.push({ key, reason: '값이 없거나 비어 있습니다' });
@@ -89,7 +119,7 @@ export function assertEnv(env: NodeJS.ProcessEnv = process.env): void {
   write('    2. 로컬에서 원격 동기화: bash scripts/remote-env-sync.sh push');
   write('    3. 키 목록 검증: bash scripts/remote-env-sync.sh verify');
   write(
-    '    4. PayPal/NaverPay는 체크아웃에 항상 노출되므로 프로덕션에서 client key/secret이 필요합니다.',
+    '    4. CHECKOUT_ENABLED_GATEWAYS 또는 PAYMENT_GATEWAY로 활성화한 결제수단의 키만 필수입니다.',
   );
   write(line.trimEnd());
   write('');

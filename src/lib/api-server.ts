@@ -33,9 +33,23 @@ interface CollectionsResponse {
 }
 
 
+interface BackendFetchPolicy {
+  revalidate?: number;
+  tags?: string[];
+}
+
+const CACHE_POLICIES = {
+  catalog: { revalidate: 60, tags: ['catalog'] },
+  product: { revalidate: 60, tags: ['catalog', 'product'] },
+  categories: { revalidate: 300, tags: ['catalog', 'categories'] },
+  cms: { revalidate: 300, tags: ['cms'] },
+  settings: { revalidate: 300, tags: ['settings', 'theme'] },
+} as const satisfies Record<string, BackendFetchPolicy>;
+
 async function fetchFromBackend<T>(
   endpoint: string,
   params?: Record<string, string | number | undefined>,
+  policy?: BackendFetchPolicy,
 ): Promise<T> {
   let url = `${BACKEND_URL}/api${endpoint}`;
 
@@ -52,7 +66,8 @@ async function fetchFromBackend<T>(
     }
   }
 
-  const response = await fetch(url, { cache: 'no-store' });
+  const shouldUseCachePolicy = Boolean(policy) && process.env.CI !== 'true';
+  const response = await fetch(url, shouldUseCachePolicy ? { next: policy } : { cache: 'no-store' });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
@@ -77,16 +92,17 @@ export function fetchProducts(params?: {
   return fetchFromBackend<ProductListResponse>(
     '/products',
     params as Record<string, string | number | undefined>,
+    CACHE_POLICIES.catalog,
   );
 }
 
 export function fetchCategories(locale?: string) {
-  return fetchFromBackend<Category[]>('/categories', locale ? { locale } : undefined);
+  return fetchFromBackend<Category[]>('/categories', locale ? { locale } : undefined, CACHE_POLICIES.categories);
 }
 
 export const fetchProduct = cache(async (id: number, locale?: string): Promise<ProductDetail | null> => {
   try {
-    return await fetchFromBackend<ProductDetail>(`/products/${id}`, locale ? { locale } : undefined);
+    return await fetchFromBackend<ProductDetail>(`/products/${id}`, locale ? { locale } : undefined, CACHE_POLICIES.product);
   } catch (err) {
     if (err instanceof BackendHttpError && err.status === 404) {
       return null;
@@ -97,7 +113,7 @@ export const fetchProduct = cache(async (id: number, locale?: string): Promise<P
 
 export async function fetchPage(slug: string, locale?: string): Promise<Page | null> {
   try {
-    return await fetchFromBackend<Page>(`/pages/${slug}`, locale ? { locale } : undefined);
+    return await fetchFromBackend<Page>(`/pages/${slug}`, locale ? { locale } : undefined, { ...CACHE_POLICIES.cms, tags: [...CACHE_POLICIES.cms.tags, `page:${slug}`] });
   } catch {
     return null;
   }
@@ -106,14 +122,14 @@ export async function fetchPage(slug: string, locale?: string): Promise<Page | n
 
 export async function fetchJournal(slug: string, locale?: string): Promise<Journal | null> {
   try {
-    return await fetchFromBackend<Journal>(`/journals/${slug}`, locale ? { locale } : undefined);
+    return await fetchFromBackend<Journal>(`/journals/${slug}`, locale ? { locale } : undefined, { ...CACHE_POLICIES.cms, tags: [...CACHE_POLICIES.cms.tags, `journal:${slug}`] });
   } catch {
     return null;
   }
 }
 
 export function fetchCollections(locale?: string) {
-  return fetchFromBackend<CollectionsResponse>('/collections', locale ? { locale } : undefined);
+  return fetchFromBackend<CollectionsResponse>('/collections', locale ? { locale } : undefined, CACHE_POLICIES.categories);
 }
 
 
@@ -121,11 +137,11 @@ export function fetchSettings(group?: string, locale?: string) {
   const params: Record<string, string | undefined> = {};
   if (group) params.group = group;
   if (locale) params.locale = locale;
-  return fetchFromBackend<SiteSetting[]>('/settings', Object.keys(params).length ? params : undefined);
+  return fetchFromBackend<SiteSetting[]>('/settings', Object.keys(params).length ? params : undefined, CACHE_POLICIES.settings);
 }
 
 export function fetchSettingsMap(locale?: string) {
-  return fetchFromBackend<Record<string, string>>('/settings/map', locale ? { locale } : undefined);
+  return fetchFromBackend<Record<string, string>>('/settings/map', locale ? { locale } : undefined, CACHE_POLICIES.settings);
 }
 
 export interface AnnouncementBarItem {
@@ -141,7 +157,7 @@ export interface AnnouncementBarItem {
 
 export async function fetchAnnouncementBars(locale?: string): Promise<AnnouncementBarItem[]> {
   try {
-    return await fetchFromBackend<AnnouncementBarItem[]>('/announcement-bars', locale ? { locale } : undefined);
+    return await fetchFromBackend<AnnouncementBarItem[]>('/announcement-bars', locale ? { locale } : undefined, { revalidate: 60, tags: ['announcement-bars'] });
   } catch {
     return [];
   }

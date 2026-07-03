@@ -251,6 +251,40 @@ describe('useCheckout - 폼 검증', () => {
     );
   });
 
+
+
+  it('선택한 쿠폰과 적립금을 주문 생성 payload에 포함한다', async () => {
+    mockOrdersCreate.mockResolvedValue(mockOrder);
+    mockPaymentsPrepare.mockResolvedValue({
+      paymentId: 1,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      amount: 30000,
+      gateway: 'mock',
+      clientKey: 'mock_client_key',
+    } satisfies PreparePaymentResponse);
+    mockPaymentsConfirm.mockResolvedValue({
+      paymentId: 1,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      status: 'confirmed',
+      method: 'mock',
+      amount: 30000,
+      paidAt: '2026-04-25T00:00:00Z',
+    });
+
+    const { options } = makeOptions({ selectedUserCouponId: 7, pointsUsed: 1500 });
+    const { result } = renderHook(() => useCheckout(options));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeFormEvent());
+    });
+
+    expect(mockOrdersCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ userCouponId: 7, pointsUsed: 1500 }),
+    );
+  });
+
   it('주소가 비어 있으면 주문 생성을 호출하지 않는다', async () => {
     const { options } = makeOptions({
       form: { ...validForm, address: '   ' },
@@ -268,6 +302,50 @@ describe('useCheckout - 폼 검증', () => {
 describe('useCheckout - Mock 결제 흐름', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+
+
+  it('배송비가 포함된 서버 order.totalAmount를 결제 금액으로 그대로 사용한다', async () => {
+    const orderWithShipping: OrderResponse = {
+      ...mockOrder,
+      totalAmount: 33000,
+      shippingFee: 3000,
+    };
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 1,
+      orderId: orderWithShipping.id,
+      orderNumber: orderWithShipping.orderNumber,
+      amount: 33000,
+      gateway: 'mock',
+      clientKey: 'mock_client_key',
+    };
+    mockOrdersCreate.mockResolvedValue(orderWithShipping);
+    mockPaymentsPrepare.mockResolvedValue(prepareResult);
+    mockPaymentsConfirm.mockResolvedValue({
+      paymentId: 1,
+      orderId: orderWithShipping.id,
+      orderNumber: orderWithShipping.orderNumber,
+      status: 'confirmed',
+      method: 'mock',
+      amount: 33000,
+      paidAt: '2026-04-25T00:00:00Z',
+    });
+
+    const { options } = makeOptions({ grandTotal: 33000 });
+    const { result } = renderHook(() => useCheckout(options));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeFormEvent());
+    });
+
+    expect(options.setConfirmedGrandTotal).toHaveBeenCalledWith(33000);
+    expect(options.setConfirmedGrandTotal).not.toHaveBeenCalledWith(36000);
+    expect(mockPaymentsConfirm).toHaveBeenCalledWith({
+      orderId: orderWithShipping.id,
+      paymentKey: `mock-${orderWithShipping.orderNumber}`,
+      amount: 33000,
+    });
   });
 
   it('mock_client_key 응답 시 결제 확인까지 자동 진행 후 라우팅', async () => {

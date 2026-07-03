@@ -80,6 +80,8 @@ export interface CreateOrderBody {
   memo?: string | null;
   policyConsents?: PolicyConsentSnapshot[];
   marketingConsent?: boolean;
+  pointsUsed?: number;
+  userCouponId?: number;
 }
 
 export const ordersApi = {

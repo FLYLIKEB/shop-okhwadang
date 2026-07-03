@@ -19,13 +19,11 @@ import { NotificationDispatchHelper } from '../notification/notification-dispatc
 import { CouponsService } from '../coupons/coupons.service';
 import { CalculateDiscountDto } from '../coupons/dto/calculate-discount.dto';
 import { ShippingFeeCalculatorService } from '../shipping/services/shipping-fee-calculator.service';
-import { OrderEventEmitter } from './order-event.emitter';
 import {
   PolicyConsent,
   PolicyConsentContext,
   PolicyConsentSnapshot,
 } from '../pages/entities/policy-consent.entity';
-import { OrderCompletedEvent } from './events/order-completed.event';
 import { applyLocale } from '../../common/utils/locale.util';
 
 interface OrderItemBuildResult {
@@ -67,7 +65,6 @@ export class OrdersService {
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly couponsService: CouponsService,
     private readonly shippingFeeCalculator: ShippingFeeCalculatorService,
-    private readonly orderEventEmitter: OrderEventEmitter,
   ) {}
 
   private generateOrderNumber(): string {
@@ -448,17 +445,6 @@ export class OrdersService {
   ): Promise<void> {
     try {
       const { savedOrder, totalPayable, recipientName } = payload;
-
-      const priorOrderCount = await this.orderRepository.count({ where: { userId } });
-      const isFirstPurchase = priorOrderCount <= 1;
-      this.orderEventEmitter.emitOrderCompleted(
-        new OrderCompletedEvent(
-          userId,
-          Number(savedOrder.id),
-          savedOrder.orderNumber,
-          isFirstPurchase,
-        ),
-      );
 
       void this.notifyOrderCreated(
         userId,

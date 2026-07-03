@@ -11,10 +11,11 @@ import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import { toastMessage } from '@/utils/toastMessages';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 
 function OrderCompleteContent({ locale }: { locale: string }) {
   const t = useTranslations('orderComplete');
+  const format = useFormatter();
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
@@ -68,7 +69,7 @@ function OrderCompleteContent({ locale }: { locale: string }) {
         </p>
         <p className="text-sm text-muted-foreground">
           {t('orderDate')}{' '}
-          {new Date(order.createdAt).toLocaleString(locale === 'en' ? 'en-US' : 'ko-KR', {
+          {format.dateTime(new Date(order.createdAt), {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',

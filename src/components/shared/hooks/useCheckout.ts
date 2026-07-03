@@ -26,6 +26,8 @@ export interface UseCheckoutOptions {
   currentOrderNumber: string;
   requiredConsent?: boolean;
   marketingConsent?: boolean;
+  selectedUserCouponId?: number;
+  pointsUsed?: number;
   setErrors: (errors: FormErrors) => void;
   setStep: (step: PaymentStep) => void;
   setPrepareResult: (result: PreparePaymentResponse | null) => void;
@@ -175,10 +177,12 @@ export function useCheckout(options: UseCheckoutOptions) {
           addressDetail: addressDetail || null,
           memo: memo || null,
           marketingConsent: options.marketingConsent ?? false,
+          userCouponId: options.selectedUserCouponId,
+          pointsUsed: options.pointsUsed && options.pointsUsed > 0 ? options.pointsUsed : undefined,
         },
       );
 
-      const confirmedTotal = Number(order.totalAmount) + Number(order.shippingFee);
+      const confirmedTotal = Number(order.totalAmount);
       options.setConfirmedGrandTotal(confirmedTotal);
 
       options.setStep('preparing_payment');

@@ -465,7 +465,12 @@
     "addressPlaceholder": "123 Main St, Seoul",
     "stripeSetupError": "Stripe is not configured correctly.",
     "paymentMethodLoadError": "Failed to load payment methods.",
-    "loadingPaymentMethods": "Loading payment methods..."
+    "loadingPaymentMethods": "Loading payment methods...",
+    "discountAmount": "Discount",
+    "pointsUse": "Use points",
+    "pointsPlaceholder": "Points to use",
+    "applyPoints": "Apply",
+    "pointsBalance": "Available points: {amount}"
   },
   "order": {
     "orderHistory": "Order History",
@@ -1357,5 +1362,28 @@
     "clayAria": "Clay filter",
     "priceMinOrMore": "{amount} or more",
     "priceMaxOrLess": "{amount} or less"
+  },
+  "cookieSettings": {
+    "metaTitle": "Cookie Settings — Ockhwadang",
+    "eyebrow": "Privacy settings",
+    "title": "Cookie Settings",
+    "description": "Ockhwadang uses cookies required to operate the service. Analytics or advertising cookies can be limited in your browser settings.",
+    "essential": {
+      "title": "Essential cookies",
+      "body": "These cookies are required for login, cart, checkout security, and other core service features. Blocking them may prevent parts of the service from working correctly.",
+      "status": "Essential cookies are always used."
+    },
+    "analytics": {
+      "title": "Analytics and personalized advertising cookies",
+      "body": "Visit and device information may be used to improve service quality and provide a personalized experience.",
+      "browserGuide": "This site does not currently provide a separate in-site toggle. You can restrict storage or tracking in the browser settings below."
+    },
+    "browser": {
+      "title": "How to refuse cookies by browser",
+      "chrome": "Chrome: Settings > Privacy and security > Cookies and other site data",
+      "safari": "Safari: Preferences > Privacy > Manage Website Data",
+      "edge": "Edge: Settings > Cookies and site permissions > Manage cookies and site data",
+      "firefox": "Firefox: Settings > Privacy & Security > Cookies and Site Data"
+    }
   }
 }

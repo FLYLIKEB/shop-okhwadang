@@ -45,6 +45,7 @@ const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   update: jest.fn().mockResolvedValue({}),
   findOne: jest.fn().mockResolvedValue(null),
   save: jest.fn().mockResolvedValue({}),
+  count: jest.fn().mockResolvedValue(1),
   create: jest
     .fn()
     .mockImplementation((_entity: unknown, data: unknown) => data),
@@ -75,6 +76,7 @@ interface BuildArgs {
   resolveGateway?: jest.Mock;
   notifyDispatch?: jest.Mock;
   notificationSend?: jest.Mock;
+  orderEventEmit?: jest.Mock;
 }
 
 const buildService = (args: BuildArgs = {}) => {
@@ -107,6 +109,8 @@ const buildService = (args: BuildArgs = {}) => {
   const notificationSend =
     args.notificationSend ?? jest.fn().mockResolvedValue(undefined);
 
+  const orderEventEmit = args.orderEventEmit ?? jest.fn();
+
   const service = new PaymentConfirmationService({
     paymentRepository: paymentRepo as never,
     orderRepository: orderRepo as never,
@@ -121,6 +125,7 @@ const buildService = (args: BuildArgs = {}) => {
     resolveGatewayByType,
     logger: new Logger('PaymentConfirmationService.spec'),
     defaultCarrier: 'mock',
+    orderEventEmitter: { emitOrderCompleted: orderEventEmit } as never,
   });
 
   return {
@@ -133,6 +138,7 @@ const buildService = (args: BuildArgs = {}) => {
     resolveGatewayByType,
     notificationDispatch,
     notificationSend,
+    orderEventEmit,
   };
 };
 

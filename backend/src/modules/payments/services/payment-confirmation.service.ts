@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ConfirmPaymentDto } from '../dto/confirm-payment.dto';
 import { Payment, PaymentMethod, PaymentStatus, PaymentGatewayType } from '../entities/payment.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
@@ -16,6 +16,8 @@ import { NotificationDispatchHelper } from '../../notification/notification-disp
 import { assertOwnership } from '../../../common/utils/ownership.util';
 import { findOrThrow } from '../../../common/utils/repository.util';
 import { restoreOrderStock } from '../../orders/order-stock.util';
+import { OrderEventEmitter } from '../../orders/order-event.emitter';
+import { OrderCompletedEvent } from '../../orders/events/order-completed.event';
 
 type ResolveGatewayByType = (gatewayType: PaymentGatewayType) => PaymentGateway;
 
@@ -30,6 +32,7 @@ interface PaymentConfirmationDependencies {
   resolveGatewayByType: ResolveGatewayByType;
   logger: Logger;
   defaultCarrier: string;
+  orderEventEmitter?: OrderEventEmitter;
 }
 
 export class PaymentConfirmationService {
@@ -74,6 +77,7 @@ export class PaymentConfirmationService {
         payment.order.orderNumber,
       );
 
+      let isFirstPurchase = false;
       await this.deps.dataSource.transaction(async (manager) => {
         await manager.update(Payment, payment.id, {
           status: PaymentStatus.CONFIRMED,
@@ -85,6 +89,22 @@ export class PaymentConfirmationService {
 
         await manager.update(Order, dto.orderId, { status: OrderStatus.PAID });
 
+        if (this.deps.orderEventEmitter) {
+          const paidOrderCount = await manager.count(Order, {
+            where: {
+              userId: payment.order.userId,
+              status: In([
+                OrderStatus.PAID,
+                OrderStatus.PREPARING,
+                OrderStatus.SHIPPED,
+                OrderStatus.DELIVERED,
+                OrderStatus.COMPLETED,
+              ]),
+            },
+          });
+          isFirstPurchase = paidOrderCount <= 1;
+        }
+
         const existing = await manager.findOne(Shipping, { where: { orderId: dto.orderId } });
         if (!existing) {
           await manager.save(Shipping, {
@@ -94,6 +114,15 @@ export class PaymentConfirmationService {
           });
         }
       });
+
+      this.deps.orderEventEmitter?.emitOrderCompleted(
+        new OrderCompletedEvent(
+          payment.order.userId,
+          dto.orderId,
+          payment.order.orderNumber,
+          isFirstPurchase,
+        ),
+      );
 
       this.deps.logger.log(`Payment confirmed: orderId=${dto.orderId}`);
 

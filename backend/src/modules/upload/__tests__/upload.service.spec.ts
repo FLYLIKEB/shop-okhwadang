@@ -76,6 +76,13 @@ describe('UploadService', () => {
     expect(result.url).toBeDefined();
   });
 
+
+
+  it('파일이 누락되면 400 BadRequest로 거부한다', async () => {
+    await expect(service.uploadImage(undefined)).rejects.toThrow(BadRequestException);
+    await expect(service.uploadImage(undefined)).rejects.toThrow('업로드할 파일을 첨부해주세요.');
+  });
+
   it('MIME 검증 실패 — gif 거부', async () => {
     const file = makeFile({ mimetype: 'image/gif', originalname: 'anim.gif' });
     await expect(service.uploadImage(file)).rejects.toThrow(BadRequestException);
@@ -142,7 +149,14 @@ describe('UploadService', () => {
       expect(result.filename).toMatch(/^categories\/.+\.png$/);
     });
 
-    it('MIME 검증 실패 — gif 거부', async () => {
+
+
+  it('파일이 누락되면 400 BadRequest로 거부한다', async () => {
+    await expect(service.uploadImage(undefined)).rejects.toThrow(BadRequestException);
+    await expect(service.uploadImage(undefined)).rejects.toThrow('업로드할 파일을 첨부해주세요.');
+  });
+
+  it('MIME 검증 실패 — gif 거부', async () => {
       const file = makeFile({ mimetype: 'image/gif', originalname: 'anim.gif' });
       await expect(service.uploadCategoryImage(file)).rejects.toThrow(BadRequestException);
       await expect(service.uploadCategoryImage(file)).rejects.toThrow(

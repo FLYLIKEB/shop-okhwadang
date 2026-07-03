@@ -118,17 +118,14 @@ export default function CheckoutSuccessPage({
   params: Promise<{ locale: Locale }>;
 }) {
   const { locale } = use(params);
+  const t = useTranslations('checkoutResult');
 
   return (
     <Suspense
       fallback={
         <div className="mx-auto max-w-lg px-4 py-16 text-center">
-          <h1 className="mb-4 text-xl font-bold">
-            {locale === 'en' ? 'Processing payment...' : '결제 처리 중...'}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {locale === 'en' ? 'Please wait a moment.' : '잠시만 기다려주세요.'}
-          </p>
+          <h1 className="mb-4 text-xl font-bold">{t('processingTitle')}</h1>
+          <p className="text-sm text-muted-foreground">{t('processingDescription')}</p>
         </div>
       }
     >
