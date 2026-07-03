@@ -942,7 +942,8 @@
       "business": "Business Info",
       "close": "Close sidebar",
       "cmsGroup": "CMS",
-      "reviews": "Reviews"
+      "reviews": "Reviews",
+      "localization": "Localization"
     },
     "navigation": {
       "title": "Navigation Management"
@@ -1087,6 +1088,41 @@
         "title": "Could not load review management.",
         "description": "Please try again shortly.",
         "retry": "Retry"
+      }
+    },
+    "localization": {
+      "title": "Localization Coverage",
+      "description": "Review customer-facing data that falls back to Korean or imported source text in the English storefront.",
+      "fallbackTitle": "Fallback policy",
+      "defaultPolicy": "General store data",
+      "smartStorePolicy": "SmartStore reviews",
+      "koFallback": "Show Korean source text when no English translation is available.",
+      "sourceTextFallback": "Show imported source text and manage it as translation-review work.",
+      "summaryRatio": "{complete}/{total} complete",
+      "missingTitle": "Translation work queue",
+      "missingDescription": "Shows up to 50 items. Add English values from each edit screen.",
+      "loading": "Loading localization coverage.",
+      "empty": "No missing English translations found.",
+      "loadError": "Could not load localization coverage.",
+      "edit": "Edit",
+      "notAvailable": "Review policy",
+      "koFallbackPolicy": "Korean fallback",
+      "sourceTextFallbackPolicy": "Source-text fallback",
+      "kinds": {
+        "product": "Products",
+        "category": "Categories",
+        "page": "Pages",
+        "pageBlock": "CMS blocks",
+        "navigation": "Navigation",
+        "externalReview": "SmartStore reviews",
+        "productOption": "Product options"
+      },
+      "table": {
+        "kind": "Type",
+        "item": "Item",
+        "fields": "Missing fields",
+        "policy": "Policy",
+        "action": "Action"
       }
     }
   },

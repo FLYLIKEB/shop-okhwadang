@@ -47,3 +47,4 @@ export * from './admin/settings';
 export * from './admin/collections';
 export * from './admin/archives';
 export * from './admin/journals';
+export * from './admin/localization';

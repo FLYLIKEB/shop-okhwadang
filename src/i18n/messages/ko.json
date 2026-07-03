@@ -942,7 +942,8 @@
       "business": "사업자 정보",
       "close": "사이드바 닫기",
       "cmsGroup": "CMS",
-      "reviews": "리뷰관리"
+      "reviews": "리뷰관리",
+      "localization": "번역 상태"
     },
     "navigation": {
       "title": "네비게이션 관리"
@@ -1087,6 +1088,41 @@
         "title": "리뷰 관리 화면을 불러오지 못했습니다.",
         "description": "잠시 후 다시 시도해 주세요.",
         "retry": "다시 시도"
+      }
+    },
+    "localization": {
+      "title": "번역 상태",
+      "description": "영문 스토어에서 한국어 또는 원문 fallback이 발생할 사용자 노출 데이터를 확인합니다.",
+      "fallbackTitle": "Fallback 정책",
+      "defaultPolicy": "일반 스토어 데이터",
+      "smartStorePolicy": "스마트스토어 리뷰",
+      "koFallback": "영문 번역값이 없으면 한국어 원문을 표시합니다.",
+      "sourceTextFallback": "가져온 원문을 표시하고 번역 검수 대상으로 관리합니다.",
+      "summaryRatio": "{complete}/{total} 완료",
+      "missingTitle": "번역 필요 항목",
+      "missingDescription": "최대 50개 항목을 표시합니다. 각 항목의 편집 화면에서 영문 값을 입력하세요.",
+      "loading": "번역 상태를 불러오는 중입니다.",
+      "empty": "누락된 영문 번역이 없습니다.",
+      "loadError": "번역 상태를 불러오지 못했습니다.",
+      "edit": "수정",
+      "notAvailable": "관리 정책 확인",
+      "koFallbackPolicy": "한국어 fallback",
+      "sourceTextFallbackPolicy": "원문 fallback",
+      "kinds": {
+        "product": "상품",
+        "category": "카테고리",
+        "page": "페이지",
+        "pageBlock": "CMS 블록",
+        "navigation": "네비게이션",
+        "externalReview": "스마트스토어 리뷰",
+        "productOption": "상품 옵션"
+      },
+      "table": {
+        "kind": "유형",
+        "item": "항목",
+        "fields": "누락 필드",
+        "policy": "정책",
+        "action": "작업"
       }
     }
   },
