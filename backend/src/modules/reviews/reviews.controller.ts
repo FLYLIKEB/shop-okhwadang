@@ -30,6 +30,7 @@ import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
+import { TranslateReviewDto } from './dto/translate-review.dto';
 import { ImportSmartStoreReviewsDto } from './dto/import-smartstore-reviews.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -81,6 +82,17 @@ export class ReviewsController {
   @ApiResponse({ status: 403, description: '관리자 권한 필요' })
   importSmartStoreReviews(@Body() dto: ImportSmartStoreReviewsDto) {
     return this.reviewsService.importSmartStoreReviews(dto);
+  }
+
+  @Public()
+  @Post('translate')
+  @Throttle({ global: { limit: 30, ttl: 60000 } })
+  @ApiOperation({ summary: '리뷰 원문 번역', description: '리뷰 원문을 현재 상점 언어에 맞게 번역합니다.' })
+  @ApiResponse({ status: 201, description: '리뷰 번역 성공' })
+  @ApiResponse({ status: 400, description: '잘못된 번역 요청' })
+  @ApiResponse({ status: 502, description: '번역 서비스 오류' })
+  translate(@Body() dto: TranslateReviewDto) {
+    return this.reviewsService.translateReviewContent(dto);
   }
 
   @Post()

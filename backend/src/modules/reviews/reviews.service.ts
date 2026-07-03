@@ -1,5 +1,6 @@
 import {
   Injectable,
+  BadGatewayException,
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -25,6 +26,17 @@ const REVIEW_POINT_REWARD_KEY = 'review_point_reward';
 const PHOTO_REVIEW_BONUS_KEY = 'photo_review_bonus';
 const DEFAULT_REVIEW_POINT_REWARD = 100;
 const DEFAULT_PHOTO_REVIEW_BONUS = 0;
+const REVIEW_TRANSLATION_TIMEOUT_MS = 5000;
+
+function extractGoogleTranslateText(payload: unknown): string | null {
+  if (!Array.isArray(payload) || !Array.isArray(payload[0])) return null;
+
+  const translatedParts = payload[0]
+    .map((part) => (Array.isArray(part) && typeof part[0] === 'string' ? part[0] : ''))
+    .filter((part) => part.length > 0);
+
+  return translatedParts.length > 0 ? translatedParts.join('') : null;
+}
 
 export interface ReviewResponse {
   id: number;
@@ -256,6 +268,56 @@ export class ReviewsService {
       internalCount,
       externalCount,
     };
+  }
+
+
+  async translateReviewContent(dto: {
+    text: string;
+    sourceLocale: 'ko' | 'en';
+    targetLocale: 'ko' | 'en';
+  }): Promise<{ translatedText: string; sourceLocale: 'ko' | 'en'; targetLocale: 'ko' | 'en' }> {
+    const text = dto.text.trim();
+    if (!text) {
+      throw new BadRequestException('번역할 리뷰 원문이 필요합니다.');
+    }
+
+    if (dto.sourceLocale === dto.targetLocale) {
+      return { translatedText: text, sourceLocale: dto.sourceLocale, targetLocale: dto.targetLocale };
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REVIEW_TRANSLATION_TIMEOUT_MS);
+    const params = new URLSearchParams({
+      client: 'gtx',
+      sl: dto.sourceLocale,
+      tl: dto.targetLocale,
+      dt: 't',
+      q: text,
+    });
+
+    try {
+      const response = await fetch(`https://translate.googleapis.com/translate_a/single?${params.toString()}`, {
+        signal: controller.signal,
+        headers: { accept: 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new BadGatewayException('리뷰 번역 서비스 응답이 올바르지 않습니다.');
+      }
+
+      const translatedText = extractGoogleTranslateText(await response.json());
+      if (!translatedText) {
+        throw new BadGatewayException('리뷰 번역 결과를 읽지 못했습니다.');
+      }
+
+      return { translatedText, sourceLocale: dto.sourceLocale, targetLocale: dto.targetLocale };
+    } catch (error) {
+      if (error instanceof BadGatewayException) throw error;
+      this.logger.warn(`Review translation failed: ${(error as Error).message}`);
+      throw new BadGatewayException('리뷰 번역에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async importSmartStoreReviews(dto: ImportSmartStoreReviewsDto): Promise<SmartStoreImportResult> {

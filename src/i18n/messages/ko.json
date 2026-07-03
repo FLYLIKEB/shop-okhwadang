@@ -609,7 +609,12 @@
     "expandImage": "이미지 확대",
     "expandedImageAlt": "확대 이미지",
     "previous": "이전",
-    "next": "다음"
+    "next": "다음",
+    "translate": "번역하기",
+    "translating": "번역 중...",
+    "showOriginal": "원문 보기",
+    "machineTranslated": "자동 번역된 리뷰입니다.",
+    "translateError": "리뷰 번역에 실패했습니다."
   },
   "shipping": {
     "title": "운송장 등록",
