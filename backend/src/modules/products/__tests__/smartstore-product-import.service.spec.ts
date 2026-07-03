@@ -113,6 +113,56 @@ describe('SmartStoreProductImportService', () => {
     }));
   });
 
+  it('maps SmartStore shipping, discount, and notice columns from bulk-edit exports', async () => {
+    const repository = createRepositoryMock([]);
+    const commandService = createCommandServiceMock();
+    const service = createService(repository, commandService);
+    const buffer = await createWorkbookBuffer([
+      ['상품 기본정보', '상품 기본정보', '상품 기본정보', '상품 기본정보', '상품 주요정보', '상품 주요정보', '배송정보', '배송정보', '배송정보', 'A/S, 특이사항', 'A/S, 특이사항', '할인/혜택정보', '할인/혜택정보'],
+      ['상품번호', '상품명', '판매가', '재고수량', '제조사', '원산지 직접입력', '배송비유형', '기본배송비', '반품배송비', 'A/S 전화번호', 'A/S 안내', '즉시할인 값 (기본할인)', '즉시할인 단위 (기본할인)'],
+      ['필수', '필수', '필수', '필수', '비필수', '조건부필수', '조건부필수', '조건부필수', '조건부필수', '조건부필수', '조건부필수', '비필수', '비필수'],
+      ['작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드', '작성 가이드'],
+      ['', '', '', '', '', '', '', '', '', '', '', '', ''],
+      ['13629303355', '옥화당 자사호 홍위주니 연자호 100cc', 500000, 15, '옥화당', '중국산(옥화당)', '무료', 0, 5000, '01029080393', '품질 보증 및 관리 안내', 20, '%'],
+    ], '일괄수정');
+
+    await service.commit(createFile(buffer));
+
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+      sku: 'naver-13629303355',
+      price: 500000,
+      salePrice: 400000,
+      isFreeShipping: true,
+      noticeInfo: expect.objectContaining({
+        type: 'teaware',
+        productName: '옥화당 자사호 홍위주니 연자호 100cc',
+        manufacturer: '옥화당',
+        countryOfOrigin: '중국산(옥화당)',
+        origin: '중국산(옥화당)',
+        asContact: '01029080393 / 품질 보증 및 관리 안내',
+        warrantyPolicy: '품질 보증 및 관리 안내',
+      }),
+    }));
+  });
+
+  it('maps non-free SmartStore shipping and won discounts', async () => {
+    const repository = createRepositoryMock([]);
+    const commandService = createCommandServiceMock();
+    const service = createService(repository, commandService);
+    const buffer = await createWorkbookBuffer([
+      ['판매자상품코드', '상품명', '판매가', '배송비유형', '기본배송비', '즉시할인 값 (기본할인)', '즉시할인 단위 (기본할인)'],
+      ['SKU-PAID', '유료 배송 상품', 30000, '유료', 3000, 5000, '원'],
+    ]);
+
+    await service.commit(createFile(buffer));
+
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+      sku: 'SKU-PAID',
+      salePrice: 25000,
+      isFreeShipping: false,
+    }));
+  });
+
   it('updates existing products without changing slug or clearing omitted optional fields', async () => {
     const existing = { id: 7, sku: 'SKU-2', slug: 'old-product' } as Product;
     const repository = createRepositoryMock([existing]);

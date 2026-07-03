@@ -4,7 +4,7 @@ import * as ExcelJS from 'exceljs';
 import { In, Repository } from 'typeorm';
 import { Product, ProductStatus } from './entities/product.entity';
 import { ProductCommandService } from './product-command.service';
-import { CreateProductDto, ProductOptionInputDto } from './dto/create-product.dto';
+import { CreateProductDto, ProductNoticeInfoType, ProductOptionInputDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { RemoteImageIngestService } from '../upload/remote-image-ingest.service';
 import { UploadedFile } from '../upload/interfaces/storage.interface';
@@ -64,6 +64,8 @@ const HEADER_ALIASES = {
   name: ['상품명', '상품 이름', '제품명'],
   price: ['판매가', '상품가격', '가격', '정상가'],
   salePrice: ['할인가', '즉시할인가', '할인 판매가'],
+  immediateDiscountValue: ['즉시할인 값 (기본할인)', '즉시할인값(기본할인)', '즉시할인 값', '기본할인 값'],
+  immediateDiscountUnit: ['즉시할인 단위 (기본할인)', '즉시할인단위(기본할인)', '즉시할인 단위', '기본할인 단위'],
   stock: ['재고수량', '재고', '재고량'],
   salesStatus: ['판매상태'],
   displayStatus: ['전시상태'],
@@ -73,6 +75,12 @@ const HEADER_ALIASES = {
   detailImages: ['상세이미지', '상세 이미지', '상세이미지 URL', '상세 이미지 URL'],
   description: ['상세설명', '상품상세', '상품 상세', '상세페이지', '상세 HTML'],
   shortDescription: ['요약설명', '짧은설명', '간단설명'],
+  manufacturer: ['제조사', '제조자', '제조자/수입자'],
+  origin: ['원산지 직접입력', '원산지', '제조국', '생산지'],
+  asPhone: ['A/S 전화번호', 'AS 전화번호', '고객센터 전화번호', '소비자상담 전화번호'],
+  asGuide: ['A/S 안내', 'AS 안내', '품질보증기준', 'A/S 책임자와 전화번호'],
+  shippingFeeType: ['배송비유형', '배송비 유형'],
+  baseShippingFee: ['기본배송비', '기본 배송비'],
   optionType: ['옵션형태'],
   optionNames: ['옵션명'],
   optionValues: ['옵션값'],
@@ -274,8 +282,10 @@ export class SmartStoreProductImportService {
     if (price === null || price < 1) errors.push('판매가는 1원 이상이어야 합니다.');
 
     const stock = this.parseInteger(this.getCell(row, headerMap.stock));
-    const salePrice = this.parseMoney(this.getCell(row, headerMap.salePrice));
+    const salePrice = this.resolveSalePrice(row, headerMap, price);
     const description = this.getCell(row, headerMap.description);
+    const isFreeShipping = this.parseFreeShipping(row, headerMap);
+    const noticeInfo = this.buildNoticeInfo(row, headerMap, productName);
 
     const options = this.parseOptions(row, headerMap, errors);
     const representativeImage = this.getCell(row, headerMap.representativeImage);
@@ -308,6 +318,8 @@ export class SmartStoreProductImportService {
           ),
           shortDescription: this.getCell(row, headerMap.shortDescription) || undefined,
           description: description || undefined,
+          isFreeShipping,
+          noticeInfo,
           images: this.buildImages(productName, galleryUrls),
           detailImages: detailUrls.length > 0
             ? detailUrls.map((url, index) => ({ url, alt: productName, sortOrder: index }))
@@ -525,6 +537,58 @@ export class SmartStoreProductImportService {
       sortOrder: index,
       isThumbnail: index === 0,
     }));
+  }
+
+  private resolveSalePrice(row: ExcelJS.Row, headerMap: HeaderMap, price: number | null): number | undefined {
+    const explicitSalePrice = this.parseMoney(this.getCell(row, headerMap.salePrice));
+    if (explicitSalePrice !== null) return explicitSalePrice;
+
+    if (price === null) return undefined;
+    const discountValue = this.parseMoney(this.getCell(row, headerMap.immediateDiscountValue));
+    if (discountValue === null || discountValue <= 0) return undefined;
+
+    const discountUnit = this.getCell(row, headerMap.immediateDiscountUnit).replace(/\s/g, '');
+    if (discountUnit === '%') {
+      return Math.max(0, Math.round(price * (100 - discountValue) / 100));
+    }
+    if (discountUnit === '원' || !discountUnit) {
+      return Math.max(0, price - discountValue);
+    }
+    return undefined;
+  }
+
+  private parseFreeShipping(row: ExcelJS.Row, headerMap: HeaderMap): boolean | undefined {
+    const feeType = this.getCell(row, headerMap.shippingFeeType).replace(/\s/g, '').toLowerCase();
+    if (feeType.includes('무료') && !feeType.includes('조건부')) return true;
+    if (feeType.includes('유료') || feeType.includes('조건부') || feeType.includes('수량별') || feeType.includes('구간별')) return false;
+
+    const baseShippingFee = this.parseMoney(this.getCell(row, headerMap.baseShippingFee));
+    if (baseShippingFee === 0) return true;
+    if (baseShippingFee !== null && baseShippingFee > 0) return false;
+    return undefined;
+  }
+
+  private buildNoticeInfo(
+    row: ExcelJS.Row,
+    headerMap: HeaderMap,
+    productName: string,
+  ): CreateProductDto['noticeInfo'] {
+    const manufacturer = this.getCell(row, headerMap.manufacturer);
+    const origin = this.getCell(row, headerMap.origin);
+    const asPhone = this.getCell(row, headerMap.asPhone);
+    const asGuide = this.getCell(row, headerMap.asGuide);
+
+    if (!manufacturer && !origin && !asPhone && !asGuide) return undefined;
+
+    return {
+      type: ProductNoticeInfoType.TEAWARE,
+      productName,
+      manufacturer: manufacturer || undefined,
+      countryOfOrigin: origin || undefined,
+      origin: origin || undefined,
+      asContact: [asPhone, asGuide].filter(Boolean).join(' / ') || undefined,
+      warrantyPolicy: asGuide || undefined,
+    };
   }
 
   private mapStatus(rawSalesStatus: string, rawDisplayStatus: string, stock: number): ProductStatus {
