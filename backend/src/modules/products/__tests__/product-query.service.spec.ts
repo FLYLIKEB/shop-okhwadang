@@ -7,6 +7,7 @@ import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
 import { AttributeType } from '../entities/attribute-type.entity';
 import { Review } from '../../reviews/entities/review.entity';
+import { ExternalReview } from '../../reviews/entities/external-review.entity';
 import { CacheService } from '../../cache/cache.service';
 import { ProductSort } from '../dto/query-products.dto';
 
@@ -69,15 +70,18 @@ describe('ProductQueryService', () => {
   let productRepo: RepoMock<Product>;
   let categoryRepo: RepoMock<Category>;
   let reviewRepo: RepoMock<Review>;
+  let externalReviewRepo: RepoMock<ExternalReview>;
   let attrTypeRepo: RepoMock<AttributeType>;
   let cacheService: { get: jest.Mock; set: jest.Mock; del: jest.Mock; delPattern: jest.Mock };
   let qb: QueryBuilderMock;
   let reviewQb: QueryBuilderMock;
+  let externalReviewQb: QueryBuilderMock;
 
   beforeEach(async () => {
     productRepo = createRepoMock<Product>();
     categoryRepo = createRepoMock<Category>();
     reviewRepo = createRepoMock<Review>();
+    externalReviewRepo = createRepoMock<ExternalReview>();
     attrTypeRepo = createRepoMock<AttributeType>();
     cacheService = {
       get: jest.fn().mockResolvedValue(null),
@@ -88,9 +92,13 @@ describe('ProductQueryService', () => {
 
     qb = createQueryBuilderMock();
     reviewQb = createQueryBuilderMock();
+    externalReviewQb = createQueryBuilderMock();
 
     productRepo.createQueryBuilder.mockReturnValue(qb as unknown as SelectQueryBuilder<Product>);
     reviewRepo.createQueryBuilder.mockReturnValue(reviewQb as unknown as SelectQueryBuilder<Review>);
+    externalReviewRepo.createQueryBuilder.mockReturnValue(
+      externalReviewQb as unknown as SelectQueryBuilder<ExternalReview>,
+    );
     categoryRepo.find.mockResolvedValue([]);
     attrTypeRepo.createQueryBuilder.mockReturnValue(qb as unknown as SelectQueryBuilder<AttributeType>);
 
@@ -100,6 +108,7 @@ describe('ProductQueryService', () => {
         { provide: getRepositoryToken(Product), useValue: productRepo },
         { provide: getRepositoryToken(Category), useValue: categoryRepo },
         { provide: getRepositoryToken(Review), useValue: reviewRepo },
+        { provide: getRepositoryToken(ExternalReview), useValue: externalReviewRepo },
         { provide: getRepositoryToken(AttributeType), useValue: attrTypeRepo },
         { provide: CacheService, useValue: cacheService },
       ],
@@ -313,6 +322,21 @@ describe('ProductQueryService', () => {
       await service.findOne(1);
 
       expect(cacheService.set).toHaveBeenCalled();
+    });
+
+    it('상품 상세 평점에 스마트스토어 리뷰를 함께 반영한다', async () => {
+      qb.getOne.mockResolvedValue({ id: 1, status: ProductStatus.ACTIVE } as Product);
+      reviewQb.getRawMany.mockResolvedValue([
+        { productId: '1', avgRating: '4.0', reviewCount: '1' },
+      ]);
+      externalReviewQb.getRawMany.mockResolvedValue([
+        { productId: '1', avgRating: '5.0', reviewCount: '1' },
+      ]);
+
+      const result = await service.findOne(1);
+
+      expect(result.rating).toBe(4.5);
+      expect(result.reviewCount).toBe(2);
     });
 
     it('cache hit 인 draft 상품이라도 비관리자는 NotFoundException', async () => {

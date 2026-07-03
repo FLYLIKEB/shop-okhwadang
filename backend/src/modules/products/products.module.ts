@@ -6,6 +6,7 @@ import { ProductOption } from './entities/product-option.entity';
 import { ProductImage } from './entities/product-image.entity';
 import { ProductDetailImage } from './entities/product-detail-image.entity';
 import { Review } from '../reviews/entities/review.entity';
+import { ExternalReview } from '../reviews/entities/external-review.entity';
 import { AttributeType } from './entities/attribute-type.entity';
 import { ProductAttribute } from './entities/product-attribute.entity';
 import { ProductsService } from './products.service';
@@ -36,6 +37,7 @@ import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guar
       ProductImage,
       ProductDetailImage,
       Review,
+      ExternalReview,
       AttributeType,
       ProductAttribute,
       RecentlyViewedProduct,

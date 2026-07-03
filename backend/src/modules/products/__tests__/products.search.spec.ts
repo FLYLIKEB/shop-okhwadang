@@ -8,6 +8,7 @@ import { ProductCommandService } from '../product-command.service';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { Category } from '../entities/category.entity';
 import { Review } from '../../reviews/entities/review.entity';
+import { ExternalReview } from '../../reviews/entities/external-review.entity';
 import { ProductImage } from '../entities/product-image.entity';
 import { ProductDetailImage } from '../entities/product-detail-image.entity';
 import { AttributeType } from '../entities/attribute-type.entity';
@@ -27,6 +28,9 @@ function makeFulltextError(): QueryFailedError {
 }
 
 const mockSelect = jest.fn().mockReturnThis();
+const mockAddSelect = jest.fn().mockReturnThis();
+const mockGroupBy = jest.fn().mockReturnThis();
+const mockGetRawMany = jest.fn().mockResolvedValue([]);
 const mockOrderBy = jest.fn().mockReturnThis();
 const mockAddOrderBy = jest.fn().mockReturnThis();
 const mockAndWhere = jest.fn().mockReturnThis();
@@ -42,6 +46,9 @@ const mockInnerJoin = jest.fn().mockReturnThis();
 
 const mockQueryBuilder = {
   select: mockSelect,
+  addSelect: mockAddSelect,
+  groupBy: mockGroupBy,
+  getRawMany: mockGetRawMany,
   leftJoinAndSelect: mockLeftJoinAndSelect,
   andWhere: mockAndWhere,
   where: mockWhere,
@@ -88,6 +95,10 @@ describe('ProductsService — Search', () => {
           useValue: { createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder) },
         },
         {
+          provide: getRepositoryToken(ExternalReview),
+          useValue: { createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder) },
+        },
+        {
           provide: getRepositoryToken(ProductImage),
           useValue: mockRepository,
         },
@@ -121,6 +132,9 @@ describe('ProductsService — Search', () => {
     service = module.get<ProductsService>(ProductsService);
     mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
     mockSelect.mockReturnThis();
+    mockAddSelect.mockReturnThis();
+    mockGroupBy.mockReturnThis();
+    mockGetRawMany.mockResolvedValue([]);
     mockLeftJoinAndSelect.mockReturnThis();
     mockAndWhere.mockReturnThis();
     mockWhere.mockReturnThis();
