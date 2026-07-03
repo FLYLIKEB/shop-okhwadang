@@ -745,9 +745,9 @@
       "statusFilterAria": "Product status filter",
       "import": {
         "title": "Import SmartStore Product Excel",
-        "description": "Validate a SmartStore Excel file, then create new products and update existing SKU matches.",
-        "supportedFormats": "Supported formats: product-list export XLSX and bulk-edit XLSX (bulk-edit sheet).",
-        "supportedScope": "Import scope: product identifier/SKU, name, price and sale price, stock, sales/display status, shipping/free-shipping flag, product notice information, options, representative/additional images, and detail images.",
+        "description": "Preview-validate a SmartStore product-list or bulk-edit XLSX first, then update products whose SKU matches the seller code/product number identifier and create the rest.",
+        "supportedFormats": "Supported format: .xlsx only. Product-list exports use the first sheet with headers on row 1/data from row 2; bulk-edit files use the SmartStore bulk-edit sheet with headers on row 2/data from row 6.",
+        "supportedScope": "Required fields: product name, sale price, and either product number or seller product code. Up to 500 rows; imports core fields, stock/status, shipping/free-shipping flags, product notice information, single/combination options, representative/additional image URLs, detail image URLs, and img tags in detail HTML. On commit, remote images are saved to store storage.",
         "fileLabel": "SmartStore product Excel file",
         "previewButton": "Preview upload",
         "previewing": "Validating...",

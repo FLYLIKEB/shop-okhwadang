@@ -1,5 +1,6 @@
 'use client'
 
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { ZoomIn, ZoomOut, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/components/ui/utils'
@@ -56,9 +57,12 @@ export default function LightboxOverlay({
 
   const selectedImage = images[selectedIndex]
 
-  return (
+  /* v8 ignore next -- defensive SSR guard for the body portal target */
+  if (typeof document === 'undefined') return null
+
+  return createPortal((
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-lightbox-in"
+      className="product-lightbox-top-layer fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-lightbox-in"
       onClick={onClose}
       onTouchStart={handleLightboxTouchStart}
       onTouchMove={handleLightboxTouchMove}
@@ -176,5 +180,5 @@ export default function LightboxOverlay({
         </div>
       )}
     </div>
-  )
+  ), document.body)
 }

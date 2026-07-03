@@ -190,6 +190,11 @@ body.overflow-hidden .mobile-sticky-cta {
   pointer-events: none;
 }
 
+/* 상품 이미지 확대 보기: 헤더/모바일 네비/관리자 HUD보다 위에 렌더되는 최상단 레이어 */
+.product-lightbox-top-layer {
+  z-index: 110;
+}
+
 /* ── Layout utilities ──────────────────────────────────────────── */
 @utility layout-container {
   width: 100%;
