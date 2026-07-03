@@ -1421,12 +1421,12 @@ export interface SeedNiloType {
 }
 
 export const niloTypes: SeedNiloType[] = [
-  { name: 'Junni', nameKo: '주니', color: '#8B4513', region: '복건성 이싱 황룡산', description: '주철질의 대표 니료로, 적색 내지 황갈색을 띱니다. 내열성과 보온성이 뛰어나며, 차의 풍미를 극대화합니다.', characteristics: '["적색~황갈색","주철질","내열성 우수","보온성 우수","차 풍미 극대화"]', productUrl: '/products?clay=junni', sortOrder: 1, isActive: true },
-  { name: 'Danji', nameKo: '단니', color: '#D4A574', region: '의흥 황룡산', description: '황토계열의 단단한 니료로, 밝은 황금빛을 띱니다. 은은한 향과 부드러운 맛을 표현하는 데 적합합니다.', characteristics: '["황금빛","황토질","경도 높음","은은한 향","부드러운 맛"]', productUrl: '/products?clay=danji', sortOrder: 2, isActive: true },
-  { name: 'Jani', nameKo: '자니', color: '#2F4F4F', region: '의흥 황룡산', description: '청자질의 대표 니료로, 청록색 내지 암청색을 띱니다. 깊은 향과 시원한 맛을 자랑합니다.', characteristics: '["청록색~암청색","청자질","투기성 우수","깊은 향","시원한 맛"]', productUrl: '/products?clay=jani', sortOrder: 3, isActive: true },
-  { name: 'Heugni', nameKo: '흑니', color: '#1C1C1C', region: '의흥 황룡산', description: '흑색 도자기 전용 니료로, 검은색을 띱니다. 떫은맛을 줄이고 깊은 맛을내는 특성이 있습니다.', characteristics: '["검은색","흑토질","세련된 맛","떫은맛 감소","깊은 맛"]', productUrl: '/products?clay=heugni', sortOrder: 4, isActive: true },
-  { name: 'Cheongsu', nameKo: '청수니', color: '#4682B4', region: '장쑤성 이싱', description: '청수(정선) 지역 특유의 청백색 니료입니다. 산뜻한 맛과 깨끗한 향이 특징입니다.', characteristics: '["청백색","청수질","산뜻한 맛","깨끗한 향","Blanc de Chine"]', productUrl: '/products?clay=cheongsu', sortOrder: 5, isActive: true },
-  { name: 'Nokni', nameKo: '녹니', color: '#556B2F', region: '운남성', description: '녹토계열의 독특한 니료로, 녹색기를 띱니다. 건강과 풍미를 동시에 생각하는 이들에게 사랑받습니다.', characteristics: '["녹토질","녹색기","건강 지향","톡쏘는 맛","특유의 신선함"]', productUrl: '/products?clay=nokni', sortOrder: 6, isActive: true },
+  { name: 'Junni', nameKo: '주니', color: '#8B4513', region: '복건성 이싱 황룡산', description: '주철질의 대표 니료로, 적색 내지 황갈색을 띱니다. 내열성과 보온성이 뛰어나며, 차의 풍미를 극대화합니다.', characteristics: '["적색~황갈색","주철질","내열성 우수","보온성 우수","차 풍미 극대화"]', productUrl: '/products?attrs=clay_type:junni', sortOrder: 1, isActive: true },
+  { name: 'Danji', nameKo: '단니', color: '#D4A574', region: '의흥 황룡산', description: '황토계열의 단단한 니료로, 밝은 황금빛을 띱니다. 은은한 향과 부드러운 맛을 표현하는 데 적합합니다.', characteristics: '["황금빛","황토질","경도 높음","은은한 향","부드러운 맛"]', productUrl: '/products?attrs=clay_type:danji', sortOrder: 2, isActive: true },
+  { name: 'Jani', nameKo: '자니', color: '#2F4F4F', region: '의흥 황룡산', description: '청자질의 대표 니료로, 청록색 내지 암청색을 띱니다. 깊은 향과 시원한 맛을 자랑합니다.', characteristics: '["청록색~암청색","청자질","투기성 우수","깊은 향","시원한 맛"]', productUrl: '/products?attrs=clay_type:jani', sortOrder: 3, isActive: true },
+  { name: 'Heugni', nameKo: '흑니', color: '#1C1C1C', region: '의흥 황룡산', description: '흑색 도자기 전용 니료로, 검은색을 띱니다. 떫은맛을 줄이고 깊은 맛을내는 특성이 있습니다.', characteristics: '["검은색","흑토질","세련된 맛","떫은맛 감소","깊은 맛"]', productUrl: '/products?attrs=clay_type:heugni', sortOrder: 4, isActive: true },
+  { name: 'Cheongsu', nameKo: '청수니', color: '#4682B4', region: '장쑤성 이싱', description: '청수(정선) 지역 특유의 청백색 니료입니다. 산뜻한 맛과 깨끗한 향이 특징입니다.', characteristics: '["청백색","청수질","산뜻한 맛","깨끗한 향","Blanc de Chine"]', productUrl: '/products?attrs=clay_type:cheongsu', sortOrder: 5, isActive: true },
+  { name: 'Nokni', nameKo: '녹니', color: '#556B2F', region: '운남성', description: '녹토계열의 독특한 니료로, 녹색기를 띱니다. 건강과 풍미를 동시에 생각하는 이들에게 사랑받습니다.', characteristics: '["녹토질","녹색기","건강 지향","톡쏘는 맛","특유의 신선함"]', productUrl: '/products?attrs=clay_type:nokni', sortOrder: 6, isActive: true },
 ];
 
 // ============================================================
