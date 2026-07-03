@@ -17,13 +17,21 @@ function createFetchResponse(overrides: {
   status?: number;
   headers?: Record<string, string>;
   body?: Buffer;
+  bodyChunks?: Buffer[];
 } = {}): Response {
-  const body = overrides.body ?? JPEG_BUFFER;
+  const bodyChunks = overrides.bodyChunks ?? [overrides.body ?? JPEG_BUFFER];
   return {
     status: overrides.status ?? 200,
     ok: (overrides.status ?? 200) >= 200 && (overrides.status ?? 200) < 300,
     headers: new Headers(overrides.headers ?? {}),
-    arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
+    body: new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const chunk of bodyChunks) {
+          controller.enqueue(chunk);
+        }
+        controller.close();
+      },
+    }),
   } as unknown as Response;
 }
 
@@ -140,6 +148,28 @@ describe('RemoteImageIngestService', () => {
     }));
 
     await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
+    expect(uploadService.uploadImageBuffer).not.toHaveBeenCalled();
+  });
+
+  it('stops reading as soon as streamed response exceeds the size limit', async () => {
+    const cancel = jest.fn().mockResolvedValue(undefined);
+    fetchMock.mockResolvedValue({
+      status: 200,
+      ok: true,
+      headers: new Headers(),
+      body: {
+        getReader: () => ({
+          read: jest.fn()
+            .mockResolvedValueOnce({ done: false, value: Buffer.alloc(5 * 1024 * 1024) })
+            .mockResolvedValueOnce({ done: false, value: Buffer.alloc(1) }),
+          cancel,
+          releaseLock: jest.fn(),
+        }),
+      },
+    } as unknown as Response);
+
+    await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
+    expect(cancel).toHaveBeenCalled();
     expect(uploadService.uploadImageBuffer).not.toHaveBeenCalled();
   });
 

@@ -360,9 +360,9 @@ export class SmartStoreProductImportService {
     errors: string[],
   ): ProductOptionInputDto[] {
     const valueLines = this.splitLines(valuesRaw);
-    const priceLines = this.splitLines(this.getCell(row, headerMap.optionPrices));
-    const stockLines = this.splitLines(this.getCell(row, headerMap.optionStocks));
-    const usableLines = this.splitLines(this.getCell(row, headerMap.optionUsables));
+    const priceLines = this.splitLinesPreservingEmpty(this.getCellPreservingLineBoundaries(row, headerMap.optionPrices));
+    const stockLines = this.splitLinesPreservingEmpty(this.getCellPreservingLineBoundaries(row, headerMap.optionStocks));
+    const usableLines = this.splitLinesPreservingEmpty(this.getCellPreservingLineBoundaries(row, headerMap.optionUsables));
     const options: ProductOptionInputDto[] = [];
 
     valueLines.forEach((line, index) => {
@@ -395,9 +395,9 @@ export class SmartStoreProductImportService {
 
     if (names.length === 1) {
       const values = this.splitList(valuesRaw);
-      const prices = this.splitList(this.getCell(row, headerMap.optionPrices));
-      const stocks = this.splitList(this.getCell(row, headerMap.optionStocks));
-      const usables = this.splitList(this.getCell(row, headerMap.optionUsables));
+      const prices = this.splitListPreservingEmpty(this.getCellPreservingLineBoundaries(row, headerMap.optionPrices));
+      const stocks = this.splitListPreservingEmpty(this.getCellPreservingLineBoundaries(row, headerMap.optionStocks));
+      const usables = this.splitListPreservingEmpty(this.getCellPreservingLineBoundaries(row, headerMap.optionUsables));
       values.forEach((value, index) => {
         if (!this.isOptionUsable(usables[index])) return;
         options.push({
@@ -416,15 +416,15 @@ export class SmartStoreProductImportService {
       errors.push('옵션값 줄 수가 옵션명 개수와 일치하지 않습니다.');
       return options;
     }
-    const priceLines = this.splitLines(this.getCell(row, headerMap.optionPrices));
-    const stockLines = this.splitLines(this.getCell(row, headerMap.optionStocks));
-    const usableLines = this.splitLines(this.getCell(row, headerMap.optionUsables));
+    const priceLines = this.splitLinesPreservingEmpty(this.getCellPreservingLineBoundaries(row, headerMap.optionPrices));
+    const stockLines = this.splitLinesPreservingEmpty(this.getCellPreservingLineBoundaries(row, headerMap.optionStocks));
+    const usableLines = this.splitLinesPreservingEmpty(this.getCellPreservingLineBoundaries(row, headerMap.optionUsables));
 
     names.forEach((name, nameIndex) => {
       const values = this.splitByComma(valueLines[nameIndex] ?? '');
-      const prices = this.splitByComma(priceLines[nameIndex] ?? '');
-      const stocks = this.splitByComma(stockLines[nameIndex] ?? '');
-      const usables = this.splitByComma(usableLines[nameIndex] ?? '');
+      const prices = this.splitByCommaPreservingEmpty(priceLines[nameIndex] ?? '');
+      const stocks = this.splitByCommaPreservingEmpty(stockLines[nameIndex] ?? '');
+      const usables = this.splitByCommaPreservingEmpty(usableLines[nameIndex] ?? '');
       values.forEach((value, valueIndex) => {
         if (!this.isOptionUsable(usables[valueIndex])) return;
         options.push({
@@ -593,6 +593,11 @@ export class SmartStoreProductImportService {
     return this.cellToString(row.getCell(columnNumber).value).trim();
   }
 
+  private getCellPreservingLineBoundaries(row: ExcelJS.Row, columnNumber: number | undefined): string {
+    if (!columnNumber) return '';
+    return this.cellToString(row.getCell(columnNumber).value).replace(/^[ \t]+|[ \t]+$/g, '');
+  }
+
   private cellToString(value: ExcelJS.CellValue): string {
     if (value === null || value === undefined) return '';
     if (value instanceof Date) return value.toISOString();
@@ -641,6 +646,13 @@ export class SmartStoreProductImportService {
       .filter(Boolean);
   }
 
+  private splitLinesPreservingEmpty(value: string): string[] {
+    if (!value) return [];
+    return value
+      .split(/\r?\n/)
+      .map((part) => part.trim());
+  }
+
   private splitByComma(value: string): string[] {
     if (!value) return [];
     return value
@@ -649,12 +661,26 @@ export class SmartStoreProductImportService {
       .filter(Boolean);
   }
 
+  private splitByCommaPreservingEmpty(value: string): string[] {
+    if (!value) return [];
+    return value
+      .split(',')
+      .map((part) => part.trim());
+  }
+
   private splitList(value: string): string[] {
     if (!value) return [];
     return value
       .split(/[\r\n,]/)
       .map((part) => part.trim())
       .filter(Boolean);
+  }
+
+  private splitListPreservingEmpty(value: string): string[] {
+    if (!value) return [];
+    return value
+      .split(/[\r\n,]/)
+      .map((part) => part.trim());
   }
 
   private slugify(value: string): string {

@@ -286,6 +286,44 @@ describe('SmartStoreProductImportService', () => {
       }));
     });
 
+    it('keeps option price and stock alignment when optional cells contain blanks', async () => {
+      const repository = createRepositoryMock([]);
+      const commandService = createCommandServiceMock();
+      const service = createService(repository, commandService);
+      const buffer = await createWorkbookBuffer([
+        ['판매자상품코드', '상품명', '판매가', '옵션형태', '옵션명', '옵션값', '옵션가', '옵션 재고수량', '옵션 사용여부'],
+        ['SKU-1', '빈 옵션 보조값 상품', 10000, '단독형', '용량', '100cc,200cc,300cc', ',3000,', '5,,9', 'Y,,N'],
+      ]);
+
+      await service.commit(createFile(buffer));
+
+      expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+        options: [
+          expect.objectContaining({ value: '100cc', priceAdjustment: 0, stock: 5 }),
+          expect.objectContaining({ value: '200cc', priceAdjustment: 3000, stock: 0 }),
+        ],
+      }));
+    });
+
+    it('keeps 조합형 option line alignment when price or stock lines are blank', async () => {
+      const repository = createRepositoryMock([]);
+      const commandService = createCommandServiceMock();
+      const service = createService(repository, commandService);
+      const buffer = await createWorkbookBuffer([
+        ['판매자상품코드', '상품명', '판매가', '옵션형태', '옵션명', '옵션값', '옵션가', '옵션 재고수량'],
+        ['SKU-1', '조합형 빈 보조값 상품', 10000, '조합형', '색상,용량', '홍니,100cc\n자니,200cc', '\n5000', '3\n'],
+      ]);
+
+      await service.commit(createFile(buffer));
+
+      expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+        options: [
+          expect.objectContaining({ value: '홍니/100cc', priceAdjustment: 0, stock: 3 }),
+          expect.objectContaining({ value: '자니/200cc', priceAdjustment: 5000, stock: 0 }),
+        ],
+      }));
+    });
+
     it('skips options marked 사용안함 and keeps 설정안함 rows optionless', async () => {
       const repository = createRepositoryMock([]);
       const commandService = createCommandServiceMock();

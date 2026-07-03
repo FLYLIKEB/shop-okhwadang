@@ -52,12 +52,7 @@ export class RemoteImageIngestService {
         throw new BadRequestException(`이미지 크기가 5MB를 초과합니다: ${current.href}`);
       }
 
-      const arrayBuffer = await response.arrayBuffer();
-      if (arrayBuffer.byteLength > MAX_UPLOAD_FILE_SIZE_BYTES) {
-        throw new BadRequestException(`이미지 크기가 5MB를 초과합니다: ${current.href}`);
-      }
-
-      return { buffer: Buffer.from(arrayBuffer), finalUrl: current };
+      return { buffer: await this.readLimitedBody(response, current), finalUrl: current };
     }
 
     throw new BadRequestException(`이미지 리다이렉트 횟수가 너무 많습니다: ${rawUrl}`);
@@ -96,6 +91,36 @@ export class RemoteImageIngestService {
     } catch {
       throw new BadRequestException(`이미지 호스트를 확인할 수 없습니다: ${hostname}`);
     }
+  }
+
+  private async readLimitedBody(response: Response, url: URL): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    let totalBytes = 0;
+
+    if (!response.body) {
+      throw new BadRequestException(`이미지 응답 본문이 없습니다: ${url.href}`);
+    }
+
+    const reader = response.body.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+
+        const chunk = Buffer.from(value);
+        totalBytes += chunk.length;
+        if (totalBytes > MAX_UPLOAD_FILE_SIZE_BYTES) {
+          await reader.cancel();
+          throw new BadRequestException(`이미지 크기가 5MB를 초과합니다: ${url.href}`);
+        }
+        chunks.push(chunk);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return Buffer.concat(chunks, totalBytes);
   }
 
   private filenameFromUrl(url: URL): string {
