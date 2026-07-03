@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { WishlistService } from '../wishlist.service';
 import { Wishlist } from '../entities/wishlist.entity';
+import { Product } from '../../products/entities/product.entity';
 
 const mockRepo = {
   findAndCount: jest.fn(),
@@ -10,6 +11,10 @@ const mockRepo = {
   create: jest.fn(),
   save: jest.fn(),
   remove: jest.fn(),
+};
+
+const mockProductRepo = {
+  findOne: jest.fn(),
 };
 
 describe('WishlistService', () => {
@@ -20,11 +25,13 @@ describe('WishlistService', () => {
       providers: [
         WishlistService,
         { provide: getRepositoryToken(Wishlist), useValue: mockRepo },
+        { provide: getRepositoryToken(Product), useValue: mockProductRepo },
       ],
     }).compile();
 
     service = module.get<WishlistService>(WishlistService);
     jest.clearAllMocks();
+    mockProductRepo.findOne.mockResolvedValue({ id: 5, status: 'active' });
   });
 
   describe('findAll', () => {
@@ -49,6 +56,11 @@ describe('WishlistService', () => {
 
       const result = await service.findAll(10);
 
+      expect(mockRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 10, product: { status: 'active' } },
+        }),
+      );
       expect(result.total).toBe(1);
       expect(result.data).toHaveLength(1);
       expect(result.data[0].productId).toBe(5);
@@ -59,6 +71,10 @@ describe('WishlistService', () => {
     it('should return isWishlisted=true when item exists', async () => {
       mockRepo.findOne.mockResolvedValue({ id: 1, userId: 10, productId: 5 });
       const result = await service.check(10, 5);
+      expect(mockRepo.findOne).toHaveBeenCalledWith({
+        where: { userId: 10, productId: 5, product: { status: 'active' } },
+        relations: ['product'],
+      });
       expect(result.isWishlisted).toBe(true);
       expect(result.wishlistId).toBe(1);
     });
@@ -80,6 +96,9 @@ describe('WishlistService', () => {
 
       const result = await service.create(10, { productId: 5 });
 
+      expect(mockProductRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 5, status: 'active' },
+      });
       expect(result.id).toBe(1);
       expect(result.productId).toBe(5);
     });
@@ -88,6 +107,13 @@ describe('WishlistService', () => {
       mockRepo.findOne.mockResolvedValue({ id: 1 });
 
       await expect(service.create(10, { productId: 5 })).rejects.toThrow(ConflictException);
+    });
+
+    it('should throw NotFoundException when product is hidden', async () => {
+      mockProductRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.create(10, { productId: 5 })).rejects.toThrow(NotFoundException);
+      expect(mockRepo.create).not.toHaveBeenCalled();
     });
   });
 

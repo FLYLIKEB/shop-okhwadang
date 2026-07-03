@@ -88,7 +88,10 @@ describe('RecentlyViewedService', () => {
       await service.findAll(10, 200);
 
       expect(mockRepo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 100 }),
+        expect.objectContaining({
+          take: 100,
+          where: expect.objectContaining({ product: { status: 'active' } }),
+        }),
       );
     });
 

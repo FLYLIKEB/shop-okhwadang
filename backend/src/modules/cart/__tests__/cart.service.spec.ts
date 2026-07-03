@@ -29,6 +29,7 @@ const buildQueryBuilder = (items: CartItem[]) => {
   const qb = {
     leftJoinAndSelect: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue(items),
   };
@@ -78,12 +79,14 @@ describe('CartService', () => {
         },
       ] as CartItem[];
 
-      mockCartItemRepo.createQueryBuilder.mockReturnValue(
-        buildQueryBuilder(mockItems),
-      );
+      const qb = buildQueryBuilder(mockItems);
+      mockCartItemRepo.createQueryBuilder.mockReturnValue(qb);
 
       const result = await service.findAll(1);
 
+      expect(qb.andWhere).toHaveBeenCalledWith('product.status = :status', {
+        status: 'active',
+      });
       expect(result.items).toHaveLength(1);
       expect(result.items[0].unitPrice).toBe(25000);
       expect(result.items[0].subtotal).toBe(50000);
@@ -116,6 +119,9 @@ describe('CartService', () => {
 
       await service.add(1, { productId: 1, productOptionId: null, quantity: 1 });
 
+      expect(mockProductRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 1, status: 'active' },
+      });
       expect(mockCartItemRepo.create).toHaveBeenCalledWith({
         userId: 1,
         productId: 1,
@@ -148,6 +154,18 @@ describe('CartService', () => {
       await expect(
         service.add(1, { productId: 999999, productOptionId: null, quantity: 1 }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('does not add hidden products to cart', async () => {
+      mockProductRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.add(1, { productId: 2, productOptionId: null, quantity: 1 }),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockProductRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 2, status: 'active' },
+      });
+      expect(mockCartItemRepo.create).not.toHaveBeenCalled();
     });
   });
 

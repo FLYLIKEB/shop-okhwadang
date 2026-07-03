@@ -340,6 +340,30 @@ describe('ProductQueryService', () => {
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(1);
     });
+
+    it('비관리자 bulk cache hit 에도 hidden 상품을 반환하지 않는다', async () => {
+      cacheService.get.mockResolvedValue([
+        { id: 1, status: ProductStatus.ACTIVE } as Product,
+        { id: 2, status: ProductStatus.HIDDEN } as Product,
+      ]);
+
+      const result = await service.findBulk([1, 2], false);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+      expect(productRepo.createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it('관리자 bulk cache 는 hidden 상품도 반환한다', async () => {
+      cacheService.get.mockResolvedValue([
+        { id: 1, status: ProductStatus.ACTIVE } as Product,
+        { id: 2, status: ProductStatus.HIDDEN } as Product,
+      ]);
+
+      const result = await service.findBulk([1, 2], true);
+
+      expect(result).toHaveLength(2);
+    });
   });
 
   describe('autocomplete', () => {

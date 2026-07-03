@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RecentlyViewedProduct } from './entities/recently-viewed-product.entity';
+import { ProductStatus } from './entities/product.entity';
 
 export interface RecentlyViewedItem {
   productId: number;
@@ -47,7 +48,7 @@ export class RecentlyViewedService {
     const safeLimit = Math.min(Math.max(1, limit), 100);
 
     const [items, total] = await this.recentlyViewedRepo.findAndCount({
-      where: { userId },
+      where: { userId, product: { status: ProductStatus.ACTIVE } },
       relations: ['product', 'product.images'],
       order: { viewedAt: 'DESC' },
       take: safeLimit,
