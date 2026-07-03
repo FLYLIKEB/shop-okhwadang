@@ -52,15 +52,13 @@ export class HealthService {
     const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
     const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
-    if (!bucket || !region) {
+    if (!bucket || !region || !accessKeyId || !secretAccessKey) {
       return 'skipped';
     }
 
     const clientConfig = {
       region,
-      ...(accessKeyId && secretAccessKey
-        ? { credentials: { accessKeyId, secretAccessKey } }
-        : {}),
+      credentials: { accessKeyId, secretAccessKey },
     };
     const client = new S3Client({
       ...clientConfig,
