@@ -851,6 +851,7 @@
         "stockSources": {
           "product_stock": "Product stock source",
           "option_stock_total": "Option stock total",
+          "single_option_collapsed": "Single option → product stock",
           "default_zero": "Default 0"
         }
       },

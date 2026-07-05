@@ -8,10 +8,10 @@ import { ProductStatus } from './entities/product.entity';
 import { NaverCommerceApiClient, NaverCommerceFetchedProduct } from './naver-commerce-api.client';
 import {
   SmartStoreImportResult,
-  SmartStoreImportStockSource,
   SmartStoreParsedProductRow,
   SmartStoreProductImportService,
 } from './smartstore-product-import.service';
+import { resolveImportOptionsStock } from './product-import-stock.util';
 import { buildNaverExternalProductKey } from '../../common/imports/external-source.util';
 
 @Injectable()
@@ -117,9 +117,11 @@ export class NaverCommerceProductImportService {
       ]),
     );
     const noticeInfo = this.buildNoticeInfo(product, productName);
-    const options = this.buildOptions(product);
-    const optionStockTotal = this.sumOptionStock(options);
-    const { stock, stockSource } = this.resolveImportStock(rawStock, optionStockTotal);
+    const parsedOptions = this.buildOptions(product);
+    const { options, stock, optionStockTotal, stockSource } = resolveImportOptionsStock(
+      rawStock,
+      parsedOptions,
+    );
 
     if (!identifier) errors.push('네이버 상품번호 또는 판매자 상품코드가 필요합니다.');
     if (!productName) errors.push('네이버 상품명이 필요합니다.');
@@ -352,24 +354,6 @@ export class NaverCommerceProductImportService {
     if (value === false || value === 0) return true;
     if (typeof value !== 'string') return false;
     return ['N', 'NO', 'FALSE', '사용안함', 'X'].includes(value.toUpperCase());
-  }
-
-  private sumOptionStock(options: ProductOptionInputDto[] | undefined): number | null {
-    if (!options || options.length === 0) return null;
-    return options.reduce((sum, option) => sum + (option.stock ?? 0), 0);
-  }
-
-  private resolveImportStock(
-    rawStock: number | null,
-    optionStockTotal: number | null,
-  ): { stock: number; stockSource: SmartStoreImportStockSource } {
-    if (optionStockTotal !== null) {
-      return { stock: optionStockTotal, stockSource: 'option_stock_total' };
-    }
-    if (rawStock !== null) {
-      return { stock: rawStock, stockSource: 'product_stock' };
-    }
-    return { stock: 0, stockSource: 'default_zero' };
   }
 
   private mapStatus(status: string | null, stock: number): ProductStatus {

@@ -151,7 +151,9 @@ describe('NaverCommerceProductImportService', () => {
       identifier: 'SKU-1',
       action: 'update',
       productId: 7,
-      optionCount: 1,
+      optionCount: 0,
+      stock: 2,
+      stockSource: 'single_option_collapsed',
       galleryImageCount: 2,
       isFreeShipping: true,
       hasNoticeInfo: true,
@@ -197,7 +199,9 @@ describe('NaverCommerceProductImportService', () => {
         isVisibleEn: false,
         description: '<p>상세</p>',
         noticeInfo: expect.objectContaining({ manufacturer: '옥화당', countryOfOrigin: '중국' }),
-        options: [expect.objectContaining({ name: '용량', value: '100cc', stock: 2 })],
+        // 단일 원본 옵션(용량 100cc)은 상품 재고(2)로 흡수되어 제거되고,
+        // 상품명 키워드에서 파생된 용량 옵션(110cc)만 남는다. (issue #1036)
+        options: [expect.objectContaining({ name: '용량', value: '110cc' })],
         images: [
           expect.objectContaining({
             url: expect.stringContaining(encodeURIComponent('https://img.example.com/rep.jpg')),
