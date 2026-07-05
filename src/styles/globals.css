@@ -624,6 +624,7 @@ h3 {
   font-size: var(--font-size-body-sm);
   line-height: var(--line-height-body);
   color: var(--color-foreground);
+  text-align: center;
 }
 
 .product-detail-html .se-main-container,
@@ -632,6 +633,8 @@ h3 {
 .product-detail-html .se-section,
 .product-detail-html .se-module {
   max-width: 100%;
+  margin-inline: auto;
+  text-align: center;
 }
 
 .product-detail-html .se-component {
@@ -650,13 +653,10 @@ h3 {
 }
 
 .product-detail-html .se-text-paragraph-align-left,
-.product-detail-html .se-section-align-left {
-  text-align: left;
-}
-
+.product-detail-html .se-section-align-left,
 .product-detail-html .se-text-paragraph-align-right,
 .product-detail-html .se-section-align-right {
-  text-align: right;
+  text-align: center;
 }
 
 .product-detail-html .se-fs-fs11 { font-size: 0.6875rem; }
@@ -707,4 +707,6 @@ h3 {
 .product-detail-html .se-module-image-link {
   display: inline-block;
   max-width: 100%;
+  margin-inline: auto;
+  text-align: center;
 }

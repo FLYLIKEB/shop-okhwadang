@@ -216,11 +216,11 @@ export default function ProductTabs({ description, descriptionImages, productId,
         {activeTab === 'details' && (
           <div className="flex flex-col gap-6">
             {descriptionImages.length > 0 && !descriptionContainsEmbeddedMedia && (
-              <div className="flex flex-col gap-0">
+              <div className="flex flex-col items-center gap-0">
                 {descriptionImages.map((image, index) => (
                   <div
                     key={image.id}
-                    className="relative w-full overflow-hidden bg-muted"
+                    className="relative w-full max-w-4xl overflow-hidden bg-muted"
                     style={{ aspectRatio: '3/2' }}
                   >
                     <Image

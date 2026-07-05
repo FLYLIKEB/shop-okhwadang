@@ -77,6 +77,7 @@ describe('ProductTabs SmartEditor detail HTML', () => {
 
     await screen.findByText('연자호');
 
+    expect(document.querySelector('.product-detail-html')).toBeTruthy();
     const paragraph = document.querySelector('.se-text-paragraph-align-center');
     expect(paragraph).toBeTruthy();
     expect(paragraph?.getAttribute('style')).toContain('line-height: 1.8');
@@ -107,5 +108,7 @@ describe('ProductTabs SmartEditor detail HTML', () => {
       expect(screen.getByText('텍스트 설명')).toBeInTheDocument();
     });
     expect(screen.getByAltText('separate detail image')).toBeInTheDocument();
+    expect(screen.getByAltText('separate detail image').closest('.relative')).toHaveClass('max-w-4xl');
+    expect(screen.getByAltText('separate detail image').closest('.flex')).toHaveClass('items-center');
   });
 });
