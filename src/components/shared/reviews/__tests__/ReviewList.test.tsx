@@ -187,7 +187,8 @@ describe('ReviewList', () => {
     render(<ReviewList productId={5} />)
 
     expect(await screen.findByText('정말 좋아요')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '답글 달기' }))
+    expect(screen.queryByText('관리자 답글 관리')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '답글달기' }))
     fireEvent.change(screen.getByPlaceholderText('고객에게 표시할 답글을 입력하세요.'), {
       target: { value: '소중한 후기 감사합니다.' },
     })
@@ -204,12 +205,47 @@ describe('ReviewList', () => {
     expect(await screen.findByText('소중한 후기 감사합니다.')).toBeInTheDocument()
   })
 
+  it('lets admins delete an existing product-review reply inline', async () => {
+    mockUser = { id: 1, role: 'admin' }
+    mockGetByProduct.mockResolvedValue({
+      ...mockResponse,
+      data: [
+        {
+          ...mockResponse.data[0],
+          adminReplyContent: '기존 답글입니다.',
+          adminReplyAuthor: '옥화당',
+          adminRepliedAt: '2026-07-05T00:00:00.000Z',
+        },
+      ],
+    })
+    mockSetReply.mockResolvedValue({
+      id: 1,
+      source: 'internal',
+      adminReplyContent: null,
+      adminReplyAuthor: null,
+      adminRepliedAt: null,
+    })
+
+    render(<ReviewList productId={5} />)
+
+    expect(await screen.findByText('기존 답글입니다.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+
+    await waitFor(() => {
+      expect(mockSetReply).toHaveBeenCalledWith(1, null, undefined, 'internal')
+    })
+    await waitFor(() => {
+      expect(screen.queryByText('기존 답글입니다.')).not.toBeInTheDocument()
+    })
+    expect(screen.queryByRole('button', { name: '삭제' })).not.toBeInTheDocument()
+  })
+
   it('does not show admin reply controls to non-admin users', async () => {
     mockUser = { id: 2, role: 'user' }
 
     render(<ReviewList productId={5} />)
 
     expect(await screen.findByText('정말 좋아요')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '답글 달기' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '답글달기' })).not.toBeInTheDocument()
   })
 })
