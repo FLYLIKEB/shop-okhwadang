@@ -63,6 +63,10 @@ export class NaverCommerceProductImportService {
     const sellerCode = this.firstString(product, [
       'sellerManagementCode',
       'originProduct.sellerManagementCode',
+      'originProduct.detailAttribute.sellerCodeInfo.sellerManagementCode',
+      'originProduct.detailAttribute.sellerManagementCode',
+      'detailAttribute.sellerCodeInfo.sellerManagementCode',
+      'detailAttribute.sellerManagementCode',
       'channelProducts.0.sellerManagementCode',
       'channelProducts.0.sellerManagementCodeNo',
     ]);
