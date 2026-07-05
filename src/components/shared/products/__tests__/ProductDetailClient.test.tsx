@@ -297,6 +297,64 @@ describe('ProductDetailClient', () => {
     expect(screen.getByText('품절')).toBeInTheDocument();
   });
 
+  it('상품속성 배지를 표시하고 속성 필터 링크로 연결한다', () => {
+    render(
+      <ProductDetailClient
+        product={{
+          ...productWithoutOptions,
+          attributes: [
+            {
+              id: 101,
+              attributeTypeId: 1,
+              value: 'old_duanni',
+              displayValue: '노단니',
+              sortOrder: 0,
+              attributeType: {
+                id: 1,
+                code: 'clay_type',
+                name: 'Clay Type',
+                nameKo: '니료',
+                inputType: 'select',
+                isFilterable: true,
+                isSearchable: false,
+                validValues: null,
+                sortOrder: 1,
+              },
+            },
+            {
+              id: 102,
+              attributeTypeId: 2,
+              value: 'lianzi',
+              displayValue: '연자호',
+              sortOrder: 1,
+              attributeType: {
+                id: 2,
+                code: 'teapot_shape',
+                name: 'Shape',
+                nameKo: '모양',
+                inputType: 'select',
+                isFilterable: true,
+                isSearchable: false,
+                validValues: null,
+                sortOrder: 2,
+              },
+            },
+          ],
+        }}
+        locale="ko"
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: '진흙: old_duanni' })).toHaveAttribute(
+      'href',
+      '/ko/products?attrs=clay_type:old_duanni',
+    );
+    expect(screen.getByRole('link', { name: '모양: lianzi' })).toHaveAttribute(
+      'href',
+      '/ko/products?attrs=teapot_shape:lianzi',
+    );
+  });
+
   it('찜 추가 → wishlistApi.add 호출 + 성공 토스트', async () => {
     render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
     // wishlist check 결과 처리 대기

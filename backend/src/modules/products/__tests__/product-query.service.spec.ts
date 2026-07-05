@@ -208,6 +208,20 @@ describe('ProductQueryService', () => {
     });
   });
 
+  describe('findAll - 속성 relation', () => {
+    it('상품 목록 응답에 product_attributes 와 attributeType 을 포함한다', async () => {
+      qb.getManyAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAll({});
+
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('product.attributes', 'attribute');
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
+        'attribute.attributeType',
+        'attributeType',
+      );
+    });
+  });
+
   describe('findAll - 카테고리 트리', () => {
     it('categoryId 지정 시 자식 카테고리 ID 까지 조건에 포함', async () => {
       categoryRepo.find.mockResolvedValue([
@@ -327,6 +341,19 @@ describe('ProductQueryService', () => {
       expect(productRepo.increment).toHaveBeenCalledWith({ id: 1 }, 'viewCount', 1);
     });
 
+    it('상품 상세 응답에 product_attributes 와 attributeType 을 포함한다', async () => {
+      qb.getOne.mockResolvedValue({ id: 1, status: ProductStatus.ACTIVE } as Product);
+      reviewQb.getRawMany.mockResolvedValue([]);
+
+      await service.findOne(1);
+
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('product.attributes', 'attribute');
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
+        'attribute.attributeType',
+        'attributeType',
+      );
+    });
+
     it('cache 에 저장되는지 확인', async () => {
       qb.getOne.mockResolvedValue({ id: 1, status: ProductStatus.ACTIVE } as Product);
       reviewQb.getRawMany.mockResolvedValue([]);
@@ -375,6 +402,19 @@ describe('ProductQueryService', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(1);
+    });
+
+    it('bulk 상품 응답에 product_attributes 와 attributeType 을 포함한다', async () => {
+      qb.getMany.mockResolvedValue([{ id: 1, status: ProductStatus.ACTIVE } as Product]);
+      reviewQb.getRawMany.mockResolvedValue([]);
+
+      await service.findBulk([1], false);
+
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('product.attributes', 'attribute');
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
+        'attribute.attributeType',
+        'attributeType',
+      );
     });
 
     it('비관리자 bulk cache hit 에도 hidden 상품을 반환하지 않는다', async () => {

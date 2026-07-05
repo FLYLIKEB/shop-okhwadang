@@ -346,6 +346,66 @@ describe('ProductFormPage', () => {
       expect(payload).not.toHaveProperty('descriptionJa');
       expect(payload).not.toHaveProperty('descriptionZh');
     });
+
+    it('수정 모드에서 기존 상품속성을 입력값으로 표시한다', async () => {
+      const { attributesApi } = await import('@/lib/api');
+      vi.mocked(attributesApi.getTypes).mockResolvedValue([
+        {
+          id: 1,
+          code: 'clay_type',
+          name: '니료',
+          nameKo: '니료',
+          nameEn: 'Clay type',
+          inputType: 'select',
+          isFilterable: true,
+          isSearchable: true,
+          validValues: ['old_duanni'],
+          parentId: null,
+          relatedTypeIds: null,
+          sortOrder: 0,
+          isActive: true,
+        },
+      ]);
+
+      render(
+        <ProductFormPage
+          mode="edit"
+          product={{
+            id: 1,
+            name: '테스트 상품',
+            slug: 'test-product',
+            price: 10000,
+            salePrice: null,
+            status: 'draft',
+            isFeatured: false,
+            viewCount: 0,
+            category: null,
+            images: [],
+            description: null,
+            shortDescription: null,
+            rating: 0,
+            reviewCount: 0,
+            stock: 0,
+            sku: null,
+            options: [],
+            detailImages: [],
+            noticeInfo: null,
+            attributes: [
+              {
+                id: 11,
+                attributeTypeId: 1,
+                value: 'old_duanni',
+                displayValue: '노단니',
+                sortOrder: 0,
+              },
+            ],
+          }}
+        />,
+      );
+
+      expect(await screen.findByDisplayValue('old_duanni')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('노단니')).toBeInTheDocument();
+    });
     it('수정 모드에서 기존 상품고시정보를 모두 비우면 noticeInfo=null을 전송한다', async () => {
       const { adminProductsApi } = await import('@/lib/api');
       vi.mocked(adminProductsApi.update).mockResolvedValue({
