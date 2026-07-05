@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ProductTabs from '@/components/shared/products/ProductTabs'
@@ -74,10 +74,13 @@ describe('ProductTabs', () => {
     mockCreate.mockResolvedValue({ id: 1 })
   })
 
-  it('default tab shows description content', () => {
+  it('default tab shows description content', async () => {
     render(<ProductTabs description="<p>상품 상세 내용입니다.</p>" descriptionImages={[]} />)
     expect(screen.getByText('상세정보')).toBeInTheDocument()
-    const detailContent = document.querySelector('.prose')
+    await waitFor(() => {
+      expect(screen.getByText('상품 상세 내용입니다.')).toBeInTheDocument()
+    })
+    const detailContent = document.querySelector('.product-detail-html')
     expect(detailContent).toBeInTheDocument()
   })
 

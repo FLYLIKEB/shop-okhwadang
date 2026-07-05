@@ -615,3 +615,96 @@ h3 {
 [data-sonner-progress-bar] {
   background-color: var(--color-primary) !important;
 }
+
+/* ── SmartStore/Naver SmartEditor detail HTML compatibility ─────── */
+.product-detail-html {
+  width: 100%;
+  overflow-wrap: anywhere;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body);
+  color: var(--color-foreground);
+}
+
+.product-detail-html .se-main-container,
+.product-detail-html .se-component,
+.product-detail-html .se-component-content,
+.product-detail-html .se-section,
+.product-detail-html .se-module {
+  max-width: 100%;
+}
+
+.product-detail-html .se-component {
+  margin-block: 0.75rem;
+}
+
+.product-detail-html p,
+.product-detail-html .se-text-paragraph {
+  margin: 0;
+  min-height: 1em;
+}
+
+.product-detail-html .se-text-paragraph-align-center,
+.product-detail-html .se-section-align-center {
+  text-align: center;
+}
+
+.product-detail-html .se-text-paragraph-align-left,
+.product-detail-html .se-section-align-left {
+  text-align: left;
+}
+
+.product-detail-html .se-text-paragraph-align-right,
+.product-detail-html .se-section-align-right {
+  text-align: right;
+}
+
+.product-detail-html .se-fs-fs11 { font-size: 0.6875rem; }
+.product-detail-html .se-fs-fs13 { font-size: 0.8125rem; }
+.product-detail-html .se-fs-fs15 { font-size: 0.9375rem; }
+.product-detail-html .se-fs-fs16 { font-size: 1rem; }
+.product-detail-html .se-fs-fs19 { font-size: 1.1875rem; }
+.product-detail-html .se-fs-fs24 { font-size: 1.5rem; }
+.product-detail-html .se-fs-fs28 { font-size: 1.75rem; }
+.product-detail-html .se-fs-fs30 { font-size: 1.875rem; }
+.product-detail-html .se-fs-fs34 { font-size: 2.125rem; }
+.product-detail-html .se-fs-fs38 { font-size: 2.375rem; }
+
+.product-detail-html .se-ff-system {
+  font-family: var(--font-body);
+}
+
+.product-detail-html b,
+.product-detail-html strong {
+  font-weight: 700;
+}
+
+.product-detail-html hr,
+.product-detail-html .se-hr {
+  width: min(100%, 42rem);
+  margin: 1.25rem auto;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.product-detail-html img,
+.product-detail-html video,
+.product-detail-html iframe,
+.product-detail-html .se-image-resource {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+.product-detail-html iframe,
+.product-detail-html video {
+  width: min(100%, 56rem);
+  aspect-ratio: 16 / 9;
+  background: var(--color-muted);
+}
+
+.product-detail-html .se-module-image-link {
+  display: inline-block;
+  max-width: 100%;
+}
