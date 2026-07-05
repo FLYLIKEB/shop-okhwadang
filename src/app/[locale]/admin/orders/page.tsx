@@ -12,6 +12,7 @@ import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
+import { localMessage } from '@/utils/localMessages';
 
 const STATUS_FILTERS = [
   { label: '전체', value: '' },
@@ -43,6 +44,8 @@ export default function AdminOrdersPage() {
     filters,
     setFilter,
     submitSearch,
+    resetFilters,
+    hasActiveFilters,
   } = useAdminListPage({
     initialFilters: {
       status: '',
@@ -96,13 +99,20 @@ export default function AdminOrdersPage() {
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
       <AdminPageHeader title="주문 관리" />
 
-      <AdminFilterChips
-        items={STATUS_FILTERS}
-        value={filters.status}
-        onToggle={(value) => setFilter('status', value)}
-        ariaLabel="주문 상태 필터"
-        size="sm"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <AdminFilterChips
+          items={STATUS_FILTERS}
+          value={filters.status}
+          onToggle={(value) => setFilter('status', value)}
+          ariaLabel="주문 상태 필터"
+          size="sm"
+        />
+        {hasActiveFilters && (
+          <button type="button" onClick={resetFilters} className="rounded-md border px-3 py-1 typo-button text-muted-foreground hover:bg-muted">
+            {localMessage('admin.common.resetFilters')}
+          </button>
+        )}
+      </div>
 
 
       {serviceRequests.length > 0 && (

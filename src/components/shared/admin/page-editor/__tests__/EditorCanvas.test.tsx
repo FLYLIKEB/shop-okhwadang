@@ -144,7 +144,7 @@ describe('EditorCanvas', () => {
     expect(onToggleVisibility).toHaveBeenCalledWith(1);
   });
 
-  it('삭제 버튼 + confirm → onDeleteBlock(id)', async () => {
+  it('삭제 버튼 + 전용 모달 확인 → onDeleteBlock(id)', async () => {
     const onDeleteBlock = vi.fn();
     render(
       <EditorCanvas
@@ -158,12 +158,11 @@ describe('EditorCanvas', () => {
     );
     const deleteButtons = screen.getAllByRole('button', { name: '블록 삭제' });
     await userEvent.click(deleteButtons[1]);
-    expect(window.confirm).toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: '삭제' }));
     expect(onDeleteBlock).toHaveBeenCalledWith(2);
   });
 
-  it('삭제 버튼 + confirm=false → onDeleteBlock 호출 안 됨', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('삭제 모달 취소 → onDeleteBlock 호출 안 됨', async () => {
     const onDeleteBlock = vi.fn();
     render(
       <EditorCanvas
@@ -176,6 +175,7 @@ describe('EditorCanvas', () => {
       />,
     );
     await userEvent.click(screen.getAllByRole('button', { name: '블록 삭제' })[0]);
+    await userEvent.click(screen.getByRole('button', { name: '취소' }));
     expect(onDeleteBlock).not.toHaveBeenCalled();
   });
 

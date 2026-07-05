@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -16,10 +16,17 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
+import { adminInquiriesApi, adminOrdersApi } from '@/lib/api';
 
 type NavLeaf = {
   labelKey: string;
   href: string;
+  badgeKey?: keyof AdminWorkBadges;
+};
+
+type AdminWorkBadges = {
+  pendingInquiries: number;
+  paidOrders: number;
 };
 
 type NavGroup = {
@@ -54,10 +61,10 @@ const NAV_ITEMS: NavItem[] = [
     labelKey: 'operationsGroup',
     icon: ShoppingBag,
     children: [
-      { labelKey: 'orders', href: '/admin/orders' },
+      { labelKey: 'orders', href: '/admin/orders?status=paid', badgeKey: 'paidOrders' },
       { labelKey: 'members', href: '/admin/members' },
       { labelKey: 'reviews', href: '/admin/reviews' },
-      { labelKey: 'inquiries', href: '/admin/inquiries' },
+      { labelKey: 'inquiries', href: '/admin/inquiries?status=pending', badgeKey: 'pendingInquiries' },
     ],
   },
   {
@@ -87,7 +94,7 @@ function isNavGroup(item: NavItem): item is NavGroup {
 function getInitialOpenGroups(pathname: string): Record<string, boolean> {
   return NAV_ITEMS.reduce<Record<string, boolean>>((acc, item) => {
     if (isNavGroup(item)) {
-      acc[item.labelKey] = item.children.some((c) => pathname.startsWith(c.href));
+      acc[item.labelKey] = item.children.some((c) => pathname.startsWith(c.href.split('?')[0]));
     }
     return acc;
   }, {});
@@ -103,6 +110,24 @@ function SidebarContent({ onClose }: SidebarContentProps) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     getInitialOpenGroups(pathname),
   );
+  const [badges, setBadges] = useState<AdminWorkBadges>({ pendingInquiries: 0, paidOrders: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([
+      adminInquiriesApi.getAll({ status: 'pending', limit: 1 }),
+      adminOrdersApi.getList({ status: 'paid', limit: 1 }),
+    ]).then(([inquiries, orders]) => {
+      if (cancelled) return;
+      setBadges({
+        pendingInquiries: inquiries.status === 'fulfilled' ? inquiries.value.counts.pending : 0,
+        paidOrders: orders.status === 'fulfilled' ? orders.value.total : 0,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const toggleGroup = (labelKey: string) => {
     setOpenGroups((prev) => ({ ...prev, [labelKey]: !prev[labelKey] }));
@@ -137,7 +162,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
           {NAV_ITEMS.map((item) => {
             if (isNavGroup(item)) {
               const isOpen = openGroups[item.labelKey] ?? false;
-              const isGroupActive = item.children.some((c) => pathname.startsWith(c.href));
+              const isGroupActive = item.children.some((c) => pathname.startsWith(c.href.split('?')[0]));
               return (
                 <li key={item.labelKey}>
                   <button
@@ -161,21 +186,27 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                   {isOpen && (
                     <ul className="mt-1 space-y-1 pl-9">
                       {item.children.map((child) => {
+                        const childPath = child.href.split('?')[0];
                         const isActive =
-                          pathname === child.href || pathname.startsWith(child.href + '/');
+                          pathname === childPath || pathname.startsWith(childPath + '/');
                         return (
                           <li key={child.href}>
                             <Link
                               href={child.href}
                               onClick={onClose}
                               className={cn(
-                                'block rounded-md px-3 py-1.5 text-sm transition-colors',
+                                'flex items-center justify-between rounded-md px-3 py-1.5 typo-body-sm transition-colors',
                                 isActive
                                   ? 'bg-foreground text-background'
                                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                               )}
                             >
-                              {t(child.labelKey)}
+                              <span>{t(child.labelKey)}</span>
+                              {child.badgeKey && badges[child.badgeKey] > 0 && (
+                                <span className="ml-2 rounded-full bg-destructive px-2 py-0.5 typo-label text-destructive-foreground">
+                                  {badges[child.badgeKey]}
+                                </span>
+                              )}
                             </Link>
                           </li>
                         );
@@ -186,7 +217,8 @@ function SidebarContent({ onClose }: SidebarContentProps) {
               );
             }
 
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const itemPath = item.href.split('?')[0];
+            const isActive = pathname === itemPath || pathname.startsWith(itemPath + '/');
             return (
               <li key={item.href}>
                 <Link

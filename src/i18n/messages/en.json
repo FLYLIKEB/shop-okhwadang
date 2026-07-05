@@ -873,7 +873,13 @@
       "hidden": "hidden",
       "localeVisibilityChanged": "{locale} page is now {status}.",
       "localeVisibilityChangeError": "Failed to change locale visibility.",
-      "localeVisibilityAria": "Manage locale visibility for {name}"
+      "localeVisibilityAria": "Manage locale visibility for {name}",
+      "deleteDialog": {
+        "title": "Delete product",
+        "description": "Delete \"{name}\". It will no longer appear in product lists or detail pages, and restoring it requires registering it again.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      }
     },
     "productForm": {
       "createTitle": "Add Product",
@@ -1203,6 +1209,63 @@
       "emptyText": "Click or drag to upload an image",
       "helperText": "JPEG, PNG, WebP · auto-resize above 20MB",
       "uploading": "Uploading..."
+    },
+    "common": {
+      "brand": "Commerce Admin",
+      "openMenu": "Open menu",
+      "viewShop": "View shop",
+      "quickSearch": "Quick search",
+      "logout": "Log out",
+      "roles": {
+        "admin": "Admin",
+        "superAdmin": "Super admin",
+        "unknown": "Admin"
+      },
+      "sections": {
+        "dashboard": "Dashboard",
+        "products": "Products",
+        "categories": "Categories",
+        "orders": "Orders",
+        "members": "Members",
+        "reviews": "Reviews",
+        "inquiries": "Inquiries",
+        "pages": "Pages",
+        "navigation": "Navigation",
+        "localization": "Localization",
+        "attributes": "Attributes",
+        "collections": "Collections",
+        "settings": "Settings"
+      },
+      "resetFilters": "Reset filters",
+      "pagination": {
+        "ariaLabel": "Admin pagination",
+        "status": "Page {current} of {total}",
+        "first": "First",
+        "previous": "Previous",
+        "next": "Next",
+        "last": "Last"
+      }
+    },
+    "pages": {
+      "loading": "Loading page editor...",
+      "emptyTitle": "Select a page to edit",
+      "emptyDescription": "Choose a page from the list or create a new page, then add blocks.",
+      "resetFilters": "Reset filters",
+      "publishDialog": {
+        "publishTitle": "Publish page",
+        "unpublishTitle": "Unpublish page",
+        "publishDescription": "Publishing this page makes it visible on the storefront immediately.",
+        "unpublishDescription": "Unpublishing this page hides it from visitors.",
+        "publishConfirm": "Publish",
+        "unpublishConfirm": "Unpublish",
+        "cancel": "Cancel"
+      },
+      "blockDeleteDialog": {
+        "title": "Delete block",
+        "description": "Remove the {type} block from this page draft.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      }
     }
   },
   "search": {

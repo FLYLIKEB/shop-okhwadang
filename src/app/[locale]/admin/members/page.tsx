@@ -11,6 +11,7 @@ import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
+import { localMessage } from '@/utils/localMessages';
 
 const ROLE_FILTERS = [
   { label: '전체', value: '' },
@@ -40,6 +41,8 @@ export default function AdminMembersPage() {
     filters,
     setFilter,
     submitSearch,
+    resetFilters,
+    hasActiveFilters,
   } = useAdminListPage({
     initialFilters: {
       role: '',
@@ -76,13 +79,20 @@ export default function AdminMembersPage() {
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
       <AdminPageHeader title="회원 관리" />
 
-      <AdminFilterChips
-        items={ROLE_FILTERS}
-        value={filters.role}
-        onToggle={(value) => setFilter('role', value)}
-        ariaLabel="회원 역할 필터"
-        size="sm"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <AdminFilterChips
+          items={ROLE_FILTERS}
+          value={filters.role}
+          onToggle={(value) => setFilter('role', value)}
+          ariaLabel="회원 역할 필터"
+          size="sm"
+        />
+        {hasActiveFilters && (
+          <button type="button" onClick={resetFilters} className="rounded-md border px-3 py-1 typo-button text-muted-foreground hover:bg-muted">
+            {localMessage('admin.common.resetFilters')}
+          </button>
+        )}
+      </div>
 
       <div className="flex flex-wrap items-end gap-4">
         <AdminSearchForm

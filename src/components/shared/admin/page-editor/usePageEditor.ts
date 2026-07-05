@@ -81,10 +81,6 @@ export function usePageEditor({
 
   const handleTogglePublish = async () => {
     if (!selectedPage) return;
-    const message = selectedPage.is_published
-      ? '이 페이지를 비공개로 전환합니다.\n방문자에게 보이지 않게 됩니다. 계속하시겠습니까?'
-      : '이 페이지를 공개하면 쇼핑몰에 바로 노출됩니다.\n계속하시겠습니까?';
-    if (!window.confirm(message)) return;
     try {
       const updated = await adminPagesApi.update(selectedPage.id, {
         is_published: !selectedPage.is_published,
