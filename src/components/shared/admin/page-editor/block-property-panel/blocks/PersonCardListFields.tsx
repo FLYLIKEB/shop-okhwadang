@@ -3,6 +3,7 @@
 import SectionHeadingFields from './SectionHeadingFields';
 import { ImageUploadField, ItemListEditor, StringField, createEditorId } from './GenericItemFields';
 import { createContentUpdater } from '../FormFields';
+import { localMessage } from '@/utils/localMessages';
 import type { PersonCardItem } from '@/lib/api';
 
 interface PersonCardListFieldsProps {
@@ -29,7 +30,7 @@ export default function PersonCardListFields({ content, onChange }: PersonCardLi
         getTitle={(item, index) => item.name || `항목 ${index + 1}`}
         renderItem={(item, _index, updateItem) => (
           <div className="space-y-2">
-            <ImageUploadField label="이미지 URL" value={item.imageUrl} onChange={(value) => updateItem({ imageUrl: value })} />
+            <ImageUploadField label={localMessage('admin.imageUpload.label')} value={item.imageUrl} onChange={(value) => updateItem({ imageUrl: value })} />
             <StringField label="직함" value={item.title ?? ''} onChange={(value) => updateItem({ title: value })} />
             <StringField label="이름" value={item.name} onChange={(value) => updateItem({ name: value })} />
             <StringField label="지역" value={item.region ?? ''} onChange={(value) => updateItem({ region: value })} />

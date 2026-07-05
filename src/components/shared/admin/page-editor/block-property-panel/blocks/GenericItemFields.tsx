@@ -1,11 +1,8 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { toast } from 'sonner';
-import { apiClient, type UploadedFile } from '@/lib/api';
-import { handleApiError } from '@/utils/error';
 import { NumberField, SelectField, StringField } from '../FormFields';
-import { toastMessage } from '@/utils/toastMessages';
+import ProductImageUploader from '@/components/shared/admin/ProductImageUploader';
 
 export interface EditableItem {
   id: string;
@@ -132,40 +129,18 @@ export function ImageUploadField({
   value: string;
   onChange: (value: string) => void;
 }) {
-  const [uploading, setUploading] = useState(false);
-
-  const upload = async (file: File) => {
-    setUploading(true);
-    try {
-      const uploaded = await apiClient.uploadFile<UploadedFile>('/upload/image', file);
-      onChange(uploaded.url);
-      toast.success(toastMessage('blockImageUploaded'));
-    } catch (error) {
-      toast.error(handleApiError(error));
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return (
     <div className="space-y-2">
-      <StringField label={label} value={value} onChange={onChange} placeholder="https://..." />
-      <input
-        type="file"
-        accept="image/*"
-        disabled={uploading}
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) void upload(file);
-          event.target.value = '';
-        }}
-        className="w-full text-xs text-muted-foreground file:mr-2 file:rounded-md file:border file:border-input file:bg-background file:px-2 file:py-1 file:text-xs"
-        aria-label={`${label} 업로드`}
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      <ProductImageUploader
+        imageUrl={value}
+        onChange={onChange}
+        altText={label}
       />
-      {uploading && <p className="text-xs text-muted-foreground">업로드 중...</p>}
     </div>
   );
 }
+
 
 export { NumberField, SelectField, StringField };
 

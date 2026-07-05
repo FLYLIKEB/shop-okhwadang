@@ -4,8 +4,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import FormInput from '@/components/ui/FormInput';
+import ProductImageUploader from '@/components/shared/admin/ProductImageUploader';
 import type { AdminCategory, CreateCategoryData } from '@/lib/api';
 import { useFormModal } from '@/components/shared/hooks/useFormModal';
+import { localMessage } from '@/utils/localMessages';
 
 interface CategoryFormModalProps {
   open: boolean;
@@ -187,13 +189,14 @@ export default function CategoryFormModal({
             onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
           />
 
-          <FormInput
-            id="category-image-url"
-            label="이미지 URL"
-            value={form.imageUrl ?? ''}
-            onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-            placeholder="https://example.com/image.jpg"
-          />
+          <div className="space-y-1">
+            <label className="text-sm font-medium">{localMessage('admin.imageUpload.label')}</label>
+            <ProductImageUploader
+              imageUrl={form.imageUrl ?? ''}
+              onChange={(url) => setForm({ ...form, imageUrl: url })}
+              altText={localMessage('admin.categories.imageAlt')}
+            />
+          </div>
 
           <div className="flex items-center gap-2">
             <input

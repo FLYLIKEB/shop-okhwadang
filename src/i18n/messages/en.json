@@ -967,7 +967,8 @@
       "title": "Navigation Management"
     },
     "categories": {
-      "title": "Category Management"
+      "title": "Category Management",
+      "imageAlt": "Category image"
     },
     "reviews": {
       "title": "Review Management",
@@ -1173,6 +1174,13 @@
       "deleteSuccess": "Attribute deleted.",
       "deleteError": "Failed to delete attribute.",
       "empty": "No attributes yet."
+    },
+    "imageUpload": {
+      "label": "Image",
+      "alt": "Uploaded image",
+      "emptyText": "Click or drag to upload an image",
+      "helperText": "JPEG, PNG, WebP · auto-resize above 20MB",
+      "uploading": "Uploading..."
     }
   },
   "search": {
@@ -1562,7 +1570,11 @@
     "title": "Shipping, Exchange & Refund Policy",
     "description": "Detailed shipping, exchange/return, and refund standards beyond the product-detail summary.",
     "effectiveDate": "Effective date: June 12, 2026",
-    "sectionKeys": ["shipping", "exchangeReturn", "refund"],
+    "sectionKeys": [
+      "shipping",
+      "exchangeReturn",
+      "refund"
+    ],
     "sections": {
       "shipping": {
         "title": "Shipping Policy",

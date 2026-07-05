@@ -43,6 +43,23 @@ describe('BlockPropertyPanel', () => {
     expect(onUpdateContent).toHaveBeenLastCalledWith(3, expect.objectContaining({ columns: 4 }));
   });
 
+
+  it('프로모션 배너 이미지는 URL 텍스트 입력 대신 직접 업로드 UI를 사용한다', () => {
+    const onUpdateContent = vi.fn();
+    const block: DraftBlock = {
+      id: 4,
+      type: 'promotion_banner',
+      content: { title: '프로모션', image_url: '' },
+      sort_order: 0,
+      is_visible: true,
+    };
+
+    render(<BlockPropertyPanel block={block} onUpdateContent={onUpdateContent} />);
+
+    expect(screen.queryByLabelText('이미지 URL')).not.toBeInTheDocument();
+    expect(screen.getByText('클릭하거나 드래그하여 이미지 업로드')).toBeInTheDocument();
+  });
+
   it('프로모션 배너 종료일은 렌더러 계약인 end_date로 저장한다', async () => {
     const onUpdateContent = vi.fn();
     const block: DraftBlock = {

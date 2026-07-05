@@ -126,6 +126,21 @@ describe('CategoryFormModal', () => {
     );
   });
 
+
+  it('이미지 URL 텍스트 입력 대신 직접 업로드 UI를 렌더링한다', () => {
+    render(
+      <CategoryFormModal
+        open={true}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+        categories={[]}
+      />,
+    );
+
+    expect(screen.queryByLabelText('이미지 URL')).not.toBeInTheDocument();
+    expect(screen.getByText('클릭하거나 드래그하여 이미지 업로드')).toBeInTheDocument();
+  });
+
   it('상위 카테고리 목록 렌더링', () => {
     render(
       <CategoryFormModal
