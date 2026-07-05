@@ -76,12 +76,12 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
     }
   };
 
-  const handleSaveReply = async () => {
+  const updateReply = async (contentToSave: string | null, successMessageKey: string) => {
     setIsSavingReply(true);
     try {
       const updated = await adminReviewsApi.setReply(
         review.id,
-        replyContent,
+        contentToSave,
         undefined,
         review.source ?? 'internal',
       );
@@ -94,13 +94,17 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
       onReplySaved?.(nextReview);
       setReplyContent(updated.adminReplyContent ?? '');
       setIsReplyEditorOpen(false);
-      toast.success(localMessage('review.adminReplySaveSuccess'));
+      toast.success(localMessage(successMessageKey));
     } catch (err) {
       toast.error(handleApiError(err, localMessage('review.adminReplySaveError')));
     } finally {
       setIsSavingReply(false);
     }
   };
+
+  const handleSaveReply = () => updateReply(replyContent, 'review.adminReplySaveSuccess');
+
+  const handleDeleteReply = () => updateReply(null, 'review.adminReplyDeleteSuccess');
 
   return (
     <div className="border-b border-border py-4 last:border-b-0">
@@ -146,8 +150,8 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
       )}
 
       {review.adminReplyContent && (
-        <div className="mt-3 rounded-md border bg-muted/30 p-3">
-          <p className="typo-label text-muted-foreground">{localMessage('review.adminReply')}</p>
+        <div className="mt-3 pl-3">
+          <p className="text-xs font-medium text-muted-foreground">{localMessage('review.adminReply')}</p>
           <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
             {review.adminReplyContent}
           </p>
@@ -155,36 +159,38 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
       )}
 
       {canManageReply && (
-        <div className="mt-3 rounded-md border border-dashed bg-background p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="typo-label text-muted-foreground">
-                {localMessage('review.adminReplyManageTitle')}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {localMessage('review.adminReplyManageDescription')}
-              </p>
-            </div>
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap items-center gap-3 text-xs">
             <button
               type="button"
               onClick={() => {
                 setReplyContent(review.adminReplyContent ?? '');
                 setIsReplyEditorOpen((value) => !value);
               }}
-              className="rounded border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+              className="font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
             >
-              {review.adminReplyContent
-                ? localMessage('review.adminReplyEdit')
-                : localMessage('review.adminReplyWrite')}
+              {localMessage('review.adminReplyWrite')}
             </button>
+            {review.adminReplyContent && (
+              <button
+                type="button"
+                onClick={() => void handleDeleteReply()}
+                disabled={isSavingReply}
+                className="font-medium text-muted-foreground underline-offset-2 hover:text-destructive hover:underline disabled:opacity-50"
+              >
+                {isSavingReply
+                  ? localMessage('review.adminReplyDeleting')
+                  : localMessage('review.adminReplyDelete')}
+              </button>
+            )}
           </div>
           {isReplyEditorOpen && (
-            <div className="mt-3 space-y-2">
+            <div className="space-y-2">
               <textarea
                 value={replyContent}
                 onChange={(event) => setReplyContent(event.target.value)}
                 rows={3}
-                className="w-full rounded border bg-background p-3 text-sm"
+                className="w-full rounded-md border border-border/70 bg-background p-3 text-sm outline-none transition-colors focus:border-foreground/40"
                 placeholder={localMessage('review.adminReplyPlaceholder')}
               />
               <div className="flex gap-2">
@@ -192,7 +198,7 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
                   type="button"
                   onClick={() => void handleSaveReply()}
                   disabled={isSavingReply}
-                  className="rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                  className="rounded bg-foreground px-3 py-1.5 text-xs font-medium text-background disabled:opacity-50"
                 >
                   {isSavingReply
                     ? localMessage('review.adminReplySaving')
@@ -205,7 +211,7 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
                     setIsReplyEditorOpen(false);
                   }}
                   disabled={isSavingReply}
-                  className="rounded border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                  className="px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
                 >
                   {localMessage('review.adminReplyCancel')}
                 </button>

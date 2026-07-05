@@ -616,16 +616,16 @@
     "machineTranslated": "Machine-translated review.",
     "translateError": "Failed to translate this review.",
     "adminReply": "Ockhwadang reply",
-    "adminReplyManageTitle": "Manage admin reply",
-    "adminReplyManageDescription": "This reply is shown to customers on the product review.",
     "adminReplyWrite": "Write reply",
-    "adminReplyEdit": "Edit reply",
     "adminReplyPlaceholder": "Write the reply shown to customers.",
     "adminReplySave": "Save reply",
     "adminReplySaving": "Saving...",
     "adminReplyCancel": "Cancel",
     "adminReplySaveSuccess": "Reply saved.",
-    "adminReplySaveError": "Failed to save reply."
+    "adminReplySaveError": "Failed to save reply.",
+    "adminReplyDelete": "Delete",
+    "adminReplyDeleting": "Deleting...",
+    "adminReplyDeleteSuccess": "Reply deleted."
   },
   "shipping": {
     "title": "Register Tracking Number",
