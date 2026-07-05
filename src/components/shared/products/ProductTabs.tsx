@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/components/ui/utils'
 import ReviewsTab from '@/components/shared/reviews/ReviewsTab'
 import { localMessage } from '@/utils/localMessages'
+import { hasEmbeddedDetailMedia, sanitizeProductDetailHtml } from '@/lib/product-detail-html'
 
 interface ProductTabsProps {
   description: string | null
@@ -162,12 +163,12 @@ export default function ProductTabs({ description, descriptionImages, productId,
 
   useEffect(() => {
     import('dompurify').then((mod) => {
-      setSanitized(mod.default.sanitize(description ?? '', {
-        ALLOWED_TAGS: ['p','br','strong','em','ul','ol','li','h2','h3','h4','a','img'],
-        ALLOWED_ATTR: ['href','src','alt','target','rel'],
-      }))
+      const DOMPurify = mod.default ?? mod
+      setSanitized(sanitizeProductDetailHtml(DOMPurify, description))
     })
   }, [description])
+
+  const descriptionContainsEmbeddedMedia = hasEmbeddedDetailMedia(description)
 
   // 한 세션 동안 같은 (사용자, 탭 진입) 조건에서 중복 호출을 막는 가드.
   // GlobalLoadingContext / useAsyncAction 의 reference 안정화로도 방어되지만,
@@ -214,7 +215,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
       <div className="py-6">
         {activeTab === 'details' && (
           <div className="flex flex-col gap-6">
-            {descriptionImages.length > 0 && (
+            {descriptionImages.length > 0 && !descriptionContainsEmbeddedMedia && (
               <div className="flex flex-col gap-0">
                 {descriptionImages.map((image, index) => (
                   <div
@@ -235,7 +236,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
               </div>
             )}
             <div
-              className="prose prose-sm max-w-none"
+              className="product-detail-html max-w-none"
               dangerouslySetInnerHTML={{ __html: sanitized }}
             />
             <ProductNoticeInfoGuide noticeInfo={noticeInfo} />
