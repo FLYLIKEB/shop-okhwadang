@@ -119,6 +119,31 @@ function buildNoticeInfoPayload(
   ) as ProductNoticeInfo;
 }
 
+function uniqueAttributeValues(values: Array<string | null | undefined>): string[] {
+  return Array.from(
+    new Set(values.map((value) => value?.trim() ?? '').filter((value) => value.length > 0)),
+  );
+}
+
+async function loadAttributeValueOptions(
+  attributeTypes: AttributeType[],
+): Promise<Record<string, string[]>> {
+  const settledValues = await Promise.allSettled(
+    attributeTypes.map((type) => attributesApi.getTypeValues(type.code)),
+  );
+
+  return Object.fromEntries(
+    attributeTypes.map((type, index) => {
+      const remoteValues = settledValues[index];
+      const existingValues = remoteValues?.status === 'fulfilled' ? remoteValues.value : [];
+      return [
+        String(type.id),
+        uniqueAttributeValues([...(type.validValues ?? []), ...existingValues]),
+      ] as const;
+    }),
+  );
+}
+
 function NoticeInfoSection({ noticeInfo, set }: { noticeInfo: ProductNoticeInfo; set: Setter }) {
   const updateNoticeInfo = (key: NoticeInfoKey, value: string) => {
     if (key === 'type') {
@@ -393,12 +418,15 @@ function VisibilitySection({
 function ProductAttributesSection({
   attributes,
   attributeTypes,
+  attributeValueOptions,
   set,
 }: {
   attributes: ProductAttributeDraft[];
   attributeTypes: AttributeType[];
+  attributeValueOptions: Record<string, string[]>;
   set: Setter;
 }) {
+  const t = useTranslations('admin.productForm');
   const typeOptions = attributeTypes.map((type) => ({
     value: String(type.id),
     label: `${type.name} (${type.code})`,
@@ -411,10 +439,27 @@ function ProductAttributesSection({
     );
   };
 
+  const selectExistingValue = (index: number, value: string) => {
+    set(
+      'attributes',
+      attributes.map((attr, i) => {
+        if (i !== index) return attr;
+        return {
+          ...attr,
+          value,
+          displayValue: value,
+        };
+      }),
+    );
+  };
+
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">상품 속성</h2>
+        <div>
+          <h2 className="text-sm font-semibold">상품 속성</h2>
+          <p className="mt-1 text-xs text-muted-foreground">{t('attributePickerHelp')}</p>
+        </div>
         <button
           type="button"
           onClick={() =>
@@ -426,43 +471,72 @@ function ProductAttributesSection({
         </button>
       </div>
       {attributes.length === 0 && <p className="text-sm text-muted-foreground">속성이 없습니다.</p>}
-      {attributes.map((attribute, index) => (
-        <div
-          key={index}
-          className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1fr_1fr_1fr_auto]"
-        >
-          <SelectField
-            label="속성"
-            value={attribute.attributeTypeId}
-            onChange={(value) => update(index, 'attributeTypeId', value)}
-            options={[{ value: '', label: '선택' }, ...typeOptions]}
-          />
-          <TextField
-            label="값"
-            value={attribute.value}
-            onChange={(value) => update(index, 'value', value)}
-            placeholder="zhuni"
-          />
-          <TextField
-            label="표시값"
-            value={attribute.displayValue}
-            onChange={(value) => update(index, 'displayValue', value)}
-            placeholder="주니"
-          />
-          <button
-            type="button"
-            onClick={() =>
-              set(
-                'attributes',
-                attributes.filter((_, i) => i !== index),
-              )
-            }
-            className="self-end rounded px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
-          >
-            삭제
-          </button>
-        </div>
-      ))}
+      {attributes.map((attribute, index) => {
+        const existingValues = attributeValueOptions[attribute.attributeTypeId] ?? [];
+        return (
+          <div key={index} className="space-y-3 rounded-lg border p-3">
+            <div className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
+              <SelectField
+                label="속성"
+                value={attribute.attributeTypeId}
+                onChange={(value) => update(index, 'attributeTypeId', value)}
+                options={[{ value: '', label: '선택' }, ...typeOptions]}
+              />
+              <TextField
+                label="값"
+                value={attribute.value}
+                onChange={(value) => update(index, 'value', value)}
+                placeholder="zhuni"
+              />
+              <TextField
+                label="표시값"
+                value={attribute.displayValue}
+                onChange={(value) => update(index, 'displayValue', value)}
+                placeholder="주니"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  set(
+                    'attributes',
+                    attributes.filter((_, i) => i !== index),
+                  )
+                }
+                className="self-end rounded px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+              >
+                삭제
+              </button>
+            </div>
+            {attribute.attributeTypeId && existingValues.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t('existingAttributeValues')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {existingValues.map((value) => {
+                    const selected = attribute.value === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => selectExistingValue(index, value)}
+                        className={
+                          selected
+                            ? 'rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground'
+                            : 'rounded-full border px-3 py-1 text-xs hover:bg-secondary'
+                        }
+                        aria-pressed={selected}
+                      >
+                        {value}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </section>
   );
 }
@@ -472,6 +546,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [attributeTypes, setAttributeTypes] = useState<AttributeType[]>([]);
+  const [attributeValueOptions, setAttributeValueOptions] = useState<Record<string, string[]>>({});
   const hadNoticeInfo = product?.noticeInfo != null;
   const [form, setForm] = useState<ProductFormData>({
     categoryId: product?.category?.id != null ? String(product.category.id) : '',
@@ -513,10 +588,12 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
   useEffect(() => {
     let cancelled = false;
     Promise.all([adminCategoriesApi.getAll(), attributesApi.getTypes()])
-      .then(([categoryItems, attributeItems]) => {
+      .then(async ([categoryItems, attributeItems]) => {
+        const valueOptions = await loadAttributeValueOptions(attributeItems);
         if (cancelled) return;
         setCategories(categoryItems);
         setAttributeTypes(attributeItems);
+        setAttributeValueOptions(valueOptions);
       })
       .catch((err: unknown) => {
         toast.error(handleApiError(err, toastMessage('productMetaLoadError')));
@@ -625,6 +702,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         <ProductAttributesSection
           attributes={form.attributes}
           attributeTypes={attributeTypes}
+          attributeValueOptions={attributeValueOptions}
           set={set}
         />
 

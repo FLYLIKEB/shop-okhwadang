@@ -24,6 +24,7 @@ vi.mock('@/lib/api', () => ({
   },
   attributesApi: {
     getTypes: vi.fn().mockResolvedValue([]),
+    getTypeValues: vi.fn().mockResolvedValue([]),
   },
   uploadApi: {
     uploadImage: vi.fn(),
@@ -119,6 +120,79 @@ describe('ProductFormPage', () => {
           }),
         );
       });
+    });
+
+    it('기존 속성 값을 태그처럼 선택해서 상품 속성 payload에 포함한다', async () => {
+      const { adminProductsApi, attributesApi } = await import('@/lib/api');
+      vi.mocked(attributesApi.getTypes).mockResolvedValue([
+        {
+          id: 1,
+          code: 'clay_type',
+          name: '니료',
+          nameKo: '니료',
+          nameEn: 'Clay type',
+          inputType: 'select',
+          isFilterable: true,
+          isSearchable: true,
+          validValues: ['hongni', 'zhuni'],
+          parentId: null,
+          relatedTypeIds: null,
+          sortOrder: 0,
+          isActive: true,
+        },
+      ]);
+      vi.mocked(attributesApi.getTypeValues).mockResolvedValue(['zhuni', 'duanni']);
+      vi.mocked(adminProductsApi.create).mockResolvedValue({
+        id: 1,
+        name: '테스트 상품',
+        slug: 'test-product',
+        price: 10000,
+        salePrice: null,
+        status: 'draft',
+        isFeatured: false,
+        viewCount: 0,
+        category: null,
+        images: [],
+        description: null,
+        shortDescription: null,
+        rating: 0,
+        reviewCount: 0,
+        stock: 0,
+        sku: null,
+        options: [],
+        detailImages: [],
+        noticeInfo: null,
+      });
+
+      render(<ProductFormPage mode="create" />);
+
+      await waitFor(() => expect(attributesApi.getTypeValues).toHaveBeenCalledWith('clay_type'));
+      fireEvent.click(screen.getByText('+ 속성 추가'));
+      fireEvent.change(screen.getByDisplayValue('선택'), { target: { value: '1' } });
+      fireEvent.click(screen.getByText('duanni'));
+
+      fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), {
+        target: { value: '테스트 상품' },
+      });
+      fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), {
+        target: { value: 'test-product' },
+      });
+      fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
+      fireEvent.click(screen.getByText('등록하기'));
+
+      await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalled());
+      expect(adminProductsApi.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          attributes: [
+            {
+              attributeTypeId: 1,
+              value: 'duanni',
+              displayValue: 'duanni',
+              sortOrder: 0,
+            },
+          ],
+        }),
+      );
     });
 
     it('무료배송 상품 체크 시 create payload에 isFreeShipping=true를 포함한다', async () => {
