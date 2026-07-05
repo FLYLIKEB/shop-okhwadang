@@ -74,6 +74,15 @@ describe('Next.js CSP headers', () => {
     expect(connectSrc).toContain('https://api.stripe.com');
     expect(frameSrc).toContain('https://hooks.stripe.com');
   });
+
+  it('allows SmartStore product images from the exact Naver image origin', () => {
+    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
+    const imgSrc = getCspDirective(source, 'img-src');
+
+    expect(source).toContain("{ protocol: 'https', hostname: 'shop-phinf.pstatic.net' }");
+    expect(imgSrc).toContain('https://shop-phinf.pstatic.net');
+    expect(imgSrc).not.toContain('https://*.pstatic.net');
+  });
 });
 
 describe('Next.js image cache policy', () => {
