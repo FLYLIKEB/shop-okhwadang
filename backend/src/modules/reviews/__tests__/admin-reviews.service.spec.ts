@@ -174,4 +174,63 @@ describe('AdminReviewsService', () => {
     expect(result.adminReplyContent).toBe('감사합니다');
   });
 
+  it('saves and clears replies for external reviews by default', async () => {
+    const review = {
+      id: 5,
+      source: 'smartstore',
+      externalReviewId: '5008298806',
+      externalProductId: '13629303355',
+      productId: 9,
+      product: { id: 9, name: '상품', sku: 'SKU-9' },
+      reviewType: '일반',
+      rating: 5,
+      content: '좋아요',
+      reviewerNameMasked: 'da**',
+      helpfulCount: 0,
+      imageUrls: null,
+      mediaAssets: [],
+      sourceDisplayStatus: null,
+      isVisible: true,
+      isBest: false,
+      reviewedAt: new Date('2026-01-01T00:00:00.000Z'),
+      sourceUpdatedAt: null,
+      lastSyncedAt: new Date('2026-01-02T00:00:00.000Z'),
+      importBatchId: null,
+      orderNo: null,
+      relatedReviewExternalId: null,
+      relatedReviewContent: null,
+      adminReplyContent: null,
+      adminReplyAuthor: null,
+      adminRepliedAt: null,
+    } as unknown as ExternalReview;
+    externalReviewRepository.findOne.mockResolvedValue(review);
+    externalReviewRepository.save.mockImplementation(async (entity: unknown) => entity as ExternalReview);
+
+    const saved = await service.setReply(5, ' 답글입니다 ', '관리자', 'smartstore');
+
+    expect(externalReviewRepository.findOne).toHaveBeenCalledWith({
+      where: { id: 5 },
+      relations: ['product'],
+    });
+    expect(externalReviewRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        adminReplyContent: '답글입니다',
+        adminReplyAuthor: '관리자',
+        adminRepliedAt: expect.any(Date),
+      }),
+    );
+    expect(saved.adminReplyContent).toBe('답글입니다');
+
+    const cleared = await service.setReply(5, '   ', '관리자', 'smartstore');
+
+    expect(externalReviewRepository.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        adminReplyContent: null,
+        adminReplyAuthor: null,
+        adminRepliedAt: null,
+      }),
+    );
+    expect(cleared.adminReplyContent).toBeNull();
+  });
+
 });

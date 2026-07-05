@@ -6,6 +6,7 @@ import type { AdminReviewItem } from '@/lib/api';
 const mockUseAdminGuard = vi.fn();
 const mockGetList = vi.fn();
 const mockSetVisibility = vi.fn();
+const mockSetReply = vi.fn();
 const mockBulkSetVisibility = vi.fn();
 const mockPreviewSmartStoreImport = vi.fn();
 const mockCommitSmartStoreImport = vi.fn();
@@ -38,6 +39,7 @@ vi.mock('@/lib/api', () => ({
   adminReviewsApi: {
     getList: (...args: unknown[]) => mockGetList(...args),
     setVisibility: (...args: unknown[]) => mockSetVisibility(...args),
+    setReply: (...args: unknown[]) => mockSetReply(...args),
     bulkSetVisibility: (...args: unknown[]) => mockBulkSetVisibility(...args),
     previewSmartStoreImport: (...args: unknown[]) => mockPreviewSmartStoreImport(...args),
     commitSmartStoreImport: (...args: unknown[]) => mockCommitSmartStoreImport(...args),
@@ -88,6 +90,13 @@ describe('AdminReviewsPage', () => {
     });
     mockGetList.mockResolvedValue({ items: [makeReview()], total: 1, page: 1, limit: 20 });
     mockSetVisibility.mockResolvedValue(makeReview({ isVisible: false }));
+    mockSetReply.mockResolvedValue(
+      makeReview({
+        adminReplyContent: '소중한 후기 감사합니다.',
+        adminReplyAuthor: '옥화당',
+        adminRepliedAt: '2026-07-05T00:00:00.000Z',
+      }),
+    );
     mockBulkSetVisibility.mockResolvedValue({ updated: 1 });
     mockPreviewSmartStoreImport.mockResolvedValue({
       importBatchId: null,
@@ -286,6 +295,26 @@ describe('AdminReviewsPage', () => {
       expect(mockBulkSetVisibility).toHaveBeenCalledWith(
         [{ id: 1, source: 'naver-smartstore' }],
         false,
+      );
+    });
+  });
+
+  it('saves an admin reply for the selected review with its source', async () => {
+    render(<AdminReviewsPage />);
+    await screen.findByText('아주 좋아요');
+
+    fireEvent.click(screen.getByRole('button', { name: 'actions.detail' }));
+    fireEvent.change(screen.getByPlaceholderText('reply.placeholder'), {
+      target: { value: '소중한 후기 감사합니다.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'reply.save' }));
+
+    await waitFor(() => {
+      expect(mockSetReply).toHaveBeenCalledWith(
+        1,
+        '소중한 후기 감사합니다.',
+        undefined,
+        'naver-smartstore',
       );
     });
   });
