@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
 import ImageGallery from '@/components/shared/products/ImageGallery'
@@ -59,5 +60,23 @@ describe('ImageGallery', () => {
   it('shows fallback message when images are empty', () => {
     render(<ImageGallery images={[]} />)
     expect(screen.getByText('등록된 이미지가 없습니다')).toBeInTheDocument()
+  })
+
+  it('uses the explicit locale instead of ambient document language for SSR-stable text', () => {
+    document.documentElement.lang = 'ko'
+
+    render(<ImageGallery images={mockImages} locale="en" />)
+
+    expect(screen.getByText('Zoom')).toBeInTheDocument()
+    expect(screen.queryByText('확대')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Select image 2' })).toBeInTheDocument()
+  })
+
+  it('server-renders English gallery copy when the route locale is English', () => {
+    const html = renderToString(<ImageGallery images={mockImages} locale="en" />)
+
+    expect(html).toContain('Zoom')
+    expect(html).toContain('Open image 1 enlarged')
+    expect(html).not.toContain('확대')
   })
 })

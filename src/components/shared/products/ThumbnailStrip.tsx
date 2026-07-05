@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { cn } from '@/components/ui/utils'
 import { localMessage } from '@/utils/localMessages'
+import type { Locale } from '@/utils/currency'
 
 interface ThumbnailStripProps {
   images: Array<{
@@ -15,6 +16,7 @@ interface ThumbnailStripProps {
   selectedIndex: number
   onSelectIndex: (index: number) => void
   thumbnailRef: React.RefObject<HTMLDivElement | null>
+  locale: Locale
 }
 
 export default function ThumbnailStrip({
@@ -22,6 +24,7 @@ export default function ThumbnailStrip({
   selectedIndex,
   onSelectIndex,
   thumbnailRef,
+  locale,
 }: ThumbnailStripProps) {
   return (
     <div ref={thumbnailRef} className="relative">
@@ -37,11 +40,11 @@ export default function ThumbnailStrip({
                 ? 'ring-2 ring-primary border-transparent'
                 : 'border-transparent hover:border-border',
             )}
-            aria-label={localMessage('product.selectImage', { index: index + 1 })}
+            aria-label={localMessage('product.selectImage', { index: index + 1 }, locale)}
           >
             <Image
               src={image.url}
-              alt={image.alt ?? localMessage('product.productImage', { index: index + 1 })}
+              alt={image.alt ?? localMessage('product.productImage', { index: index + 1 }, locale)}
               fill
               sizes="64px"
               className="object-cover"

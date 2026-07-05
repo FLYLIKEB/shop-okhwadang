@@ -8,6 +8,7 @@ import { useLightboxInteraction } from '@/components/shared/hooks/useLightboxInt
 import { useUrlQueryState } from '@/hooks/useUrlModal'
 import { handleApiError } from '@/utils/error'
 import { localMessage } from '@/utils/localMessages'
+import type { Locale } from '@/utils/currency'
 import LightboxOverlay from './LightboxOverlay'
 import ThumbnailStrip from './ThumbnailStrip'
 
@@ -24,6 +25,7 @@ interface ImageGalleryProps {
   isLoading?: boolean
   error?: Error | null
   onRetry?: () => void
+  locale?: Locale
 }
 
 function ImageGallerySkeleton() {
@@ -39,12 +41,12 @@ function ImageGallerySkeleton() {
   )
 }
 
-function ImageGalleryError({ error, onRetry }: { error: Error; onRetry?: () => void }) {
+function ImageGalleryError({ error, onRetry, locale }: { error: Error; onRetry?: () => void; locale: Locale }) {
   return (
     <div className="aspect-square w-full rounded-lg bg-muted flex flex-col items-center justify-center gap-4 text-muted-foreground">
       <div className="text-center">
-        <p className="text-sm font-medium text-foreground mb-1">{localMessage('product.imageLoadError')}</p>
-        <p className="text-xs text-muted-foreground">{handleApiError(error, localMessage('product.unknownImageError'))}</p>
+        <p className="text-sm font-medium text-foreground mb-1">{localMessage('product.imageLoadError', undefined, locale)}</p>
+        <p className="text-xs text-muted-foreground">{handleApiError(error, localMessage('product.unknownImageError', undefined, locale))}</p>
       </div>
       {onRetry && (
         <button
@@ -52,14 +54,14 @@ function ImageGalleryError({ error, onRetry }: { error: Error; onRetry?: () => v
           onClick={onRetry}
           className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
         >
-          {localMessage('product.retry')}
+          {localMessage('product.retry', undefined, locale)}
         </button>
       )}
     </div>
   )
 }
 
-export default function ImageGallery({ images: rawImages, isLoading, error, onRetry }: ImageGalleryProps) {
+export default function ImageGallery({ images: rawImages, isLoading, error, onRetry, locale = 'ko' }: ImageGalleryProps) {
   const images = rawImages.length > 0 ? rawImages : []
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
@@ -236,7 +238,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
   }
 
   if (error) {
-    return <ImageGalleryError error={error} onRetry={onRetry} />
+    return <ImageGalleryError error={error} onRetry={onRetry} locale={locale} />
   }
 
   if (images.length === 0) {
@@ -245,7 +247,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
         <svg className="w-10 h-10 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <span className="text-sm text-muted-foreground">{localMessage('product.noImages')}</span>
+        <span className="text-sm text-muted-foreground">{localMessage('product.noImages', undefined, locale)}</span>
       </div>
     )
   }
@@ -269,12 +271,12 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
                 onClick={() => setLightboxParam(String(index), 'push')}
                 role="button"
                 tabIndex={index === selectedIndex ? 0 : -1}
-                aria-label={localMessage('product.zoomImage', { index: index + 1 })}
+                aria-label={localMessage('product.zoomImage', { index: index + 1 }, locale)}
                 onKeyDown={(e) => e.key === 'Enter' && setLightboxParam(String(index), 'push')}
               >
                 <Image
                   src={image.url}
-                  alt={image.alt ?? localMessage('product.productImage', { index: index + 1 })}
+                  alt={image.alt ?? localMessage('product.productImage', { index: index + 1 }, locale)}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className={cn(
@@ -304,7 +306,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
             <div className="absolute inset-0 flex items-end justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
               <span className="flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm">
                 <ZoomIn className="size-3" />
-                {localMessage('product.zoom')}
+                {localMessage('product.zoom', undefined, locale)}
               </span>
             </div>
           )}
@@ -316,7 +318,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
                 onClick={(e) => { e.stopPropagation(); goPrev() }}
                 className="absolute left-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity"
                 style={{ background: 'transparent' }}
-                aria-label={localMessage('product.prevProduct')}
+                aria-label={localMessage('product.prevProduct', undefined, locale)}
               >
                 <span className="flex items-center justify-center w-10 h-20 rounded-md bg-black/40 text-white text-2xl font-bold shadow hover:bg-black/60 transition-colors">
                   ‹
@@ -327,7 +329,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
                 onClick={(e) => { e.stopPropagation(); goNext() }}
                 className="absolute right-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity"
                 style={{ background: 'transparent' }}
-                aria-label={localMessage('product.nextProduct')}
+                aria-label={localMessage('product.nextProduct', undefined, locale)}
               >
                 <span className="flex items-center justify-center w-10 h-20 rounded-md bg-black/40 text-white text-2xl font-bold shadow hover:bg-black/60 transition-colors">
                   ›
@@ -343,6 +345,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
             selectedIndex={selectedIndex}
             onSelectIndex={handleSelectIndex}
             thumbnailRef={thumbnailRef}
+            locale={locale}
           />
         )}
       </div>
@@ -367,6 +370,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
         handleLightboxTouchEnd={handleLightboxTouchEnd}
         isDragging={isDragging}
         lightboxDragMovedRef={lightboxDragMovedRef}
+        locale={locale}
       />
     </>
   )

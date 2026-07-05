@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { ZoomIn, ZoomOut, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/components/ui/utils'
 import { localMessage } from '@/utils/localMessages'
+import type { Locale } from '@/utils/currency'
 
 interface LightboxOverlayProps {
   images: Array<{
@@ -32,6 +33,7 @@ interface LightboxOverlayProps {
   handleLightboxTouchEnd: (e: React.TouchEvent) => void
   isDragging: React.MutableRefObject<boolean>
   lightboxDragMovedRef: React.MutableRefObject<boolean>
+  locale: Locale
 }
 
 export default function LightboxOverlay({
@@ -54,6 +56,7 @@ export default function LightboxOverlay({
   handleLightboxTouchEnd,
   isDragging,
   lightboxDragMovedRef,
+  locale,
 }: LightboxOverlayProps) {
   if (!lightboxOpen) return null
 
@@ -74,7 +77,7 @@ export default function LightboxOverlay({
         type="button"
         onClick={onClose}
         className="absolute right-4 top-4 rounded-full bg-white/10 hover:bg-white/20 p-3 text-white transition-colors z-50"
-        aria-label={localMessage('product.close')}
+        aria-label={localMessage('product.close', undefined, locale)}
       >
         <X className="size-6" />
       </button>
@@ -93,7 +96,7 @@ export default function LightboxOverlay({
           'absolute right-16 top-4 rounded-full p-3 text-white transition-colors z-50',
           lightboxZoomed ? 'bg-white/30 hover:bg-white/40' : 'bg-white/10 hover:bg-white/20',
         )}
-        aria-label={lightboxZoomed ? localMessage('product.zoomOut') : localMessage('product.zoomIn')}
+        aria-label={lightboxZoomed ? localMessage('product.zoomOut', undefined, locale) : localMessage('product.zoomIn', undefined, locale)}
       >
         {lightboxZoomed ? <ZoomOut className="size-6" /> : <ZoomIn className="size-6" />}
       </button>
@@ -120,7 +123,7 @@ export default function LightboxOverlay({
         <div className="relative h-full w-full">
           <Image
             src={selectedImage.url}
-            alt={selectedImage.alt ?? localMessage('product.defaultImage')}
+            alt={selectedImage.alt ?? localMessage('product.defaultImage', undefined, locale)}
             fill
             sizes="90vw"
             className="object-contain select-none"
@@ -141,7 +144,7 @@ export default function LightboxOverlay({
               onPrev()
             }}
             className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
-            aria-label={localMessage('product.prevImage')}
+            aria-label={localMessage('product.prevImage', undefined, locale)}
           >
             <ChevronLeft className="size-8" />
           </button>
@@ -152,7 +155,7 @@ export default function LightboxOverlay({
               onNext()
             }}
             className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
-            aria-label={localMessage('product.nextImage')}
+            aria-label={localMessage('product.nextImage', undefined, locale)}
           >
             <ChevronRight className="size-8" />
           </button>
@@ -177,7 +180,7 @@ export default function LightboxOverlay({
                 'size-2 rounded-full transition-all',
                 i === selectedIndex ? 'bg-white scale-125' : 'bg-white/40',
               )}
-              aria-label={localMessage('product.imageDot', { index: i + 1 })}
+              aria-label={localMessage('product.imageDot', { index: i + 1 }, locale)}
             />
           ))}
         </div>
