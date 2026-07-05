@@ -851,6 +851,7 @@
         "stockSources": {
           "product_stock": "상품 재고 원본",
           "option_stock_total": "옵션 재고 합계",
+          "single_option_collapsed": "단일 옵션 → 상품 재고",
           "default_zero": "기본값 0"
         }
       },

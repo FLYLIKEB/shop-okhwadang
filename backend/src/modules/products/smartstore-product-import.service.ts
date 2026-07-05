@@ -19,9 +19,13 @@ import {
   ProductKeywordMappingService,
   ProductKeywordOptionMapping,
 } from './product-keyword-mapping.service';
+import {
+  resolveImportOptionsStock,
+  SmartStoreImportStockSource,
+} from './product-import-stock.util';
 
 export type SmartStoreImportAction = 'create' | 'update' | 'skip';
-export type SmartStoreImportStockSource = 'product_stock' | 'option_stock_total' | 'default_zero';
+export type { SmartStoreImportStockSource } from './product-import-stock.util';
 
 export interface SmartStoreImportRowResult {
   rowNumber: number;
@@ -373,9 +377,11 @@ export class SmartStoreProductImportService {
     const isFreeShipping = this.parseFreeShipping(row, headerMap);
     const noticeInfo = this.buildNoticeInfo(row, headerMap, productName);
 
-    const options = this.parseOptions(row, headerMap, errors);
-    const optionStockTotal = this.sumOptionStock(options);
-    const { stock, stockSource } = this.resolveImportStock(rawStock, optionStockTotal);
+    const parsedOptions = this.parseOptions(row, headerMap, errors);
+    const { options, stock, optionStockTotal, stockSource } = resolveImportOptionsStock(
+      rawStock,
+      parsedOptions,
+    );
     const representativeImage = this.getCell(row, headerMap.representativeImage);
     const additionalImages = this.splitImageUrls(this.getCell(row, headerMap.additionalImages));
     const galleryUrls = this.collectValidImageUrls(
@@ -683,24 +689,6 @@ export class SmartStoreProductImportService {
     });
 
     return options;
-  }
-
-  private sumOptionStock(options: ProductOptionInputDto[] | undefined): number | null {
-    if (!options || options.length === 0) return null;
-    return options.reduce((sum, option) => sum + (option.stock ?? 0), 0);
-  }
-
-  private resolveImportStock(
-    rawStock: number | null,
-    optionStockTotal: number | null,
-  ): { stock: number; stockSource: SmartStoreImportStockSource } {
-    if (optionStockTotal !== null) {
-      return { stock: optionStockTotal, stockSource: 'option_stock_total' };
-    }
-    if (rawStock !== null) {
-      return { stock: rawStock, stockSource: 'product_stock' };
-    }
-    return { stock: 0, stockSource: 'default_zero' };
   }
 
   private isOptionUsable(raw: string | undefined): boolean {

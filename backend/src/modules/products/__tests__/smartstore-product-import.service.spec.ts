@@ -188,14 +188,17 @@ describe('SmartStoreProductImportService', () => {
     const service = createService(repository, commandService);
     const buffer = await createWorkbookBuffer([
       ['판매자상품코드', '상품명', '판매가', '옵션형태', '옵션명', '옵션값'],
-      ['SKU-1', '옥화당 자사호 노단니 연자호 120cc', 10000, '단독형', '색상', '노단니'],
+      ['SKU-1', '옥화당 자사호 노단니 연자호 120cc', 10000, '단독형', '색상', '노단니,자니'],
     ]);
 
     const result = await service.commit(createFile(buffer));
 
     expect(result.rows[0].mappingWarnings.join(' ')).toContain('명시 옵션');
     expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
-      options: [expect.objectContaining({ name: '색상', value: '노단니' })],
+      options: [
+        expect.objectContaining({ name: '색상', value: '노단니' }),
+        expect.objectContaining({ name: '색상', value: '자니' }),
+      ],
     }));
   });
 
@@ -578,18 +581,46 @@ describe('SmartStoreProductImportService', () => {
       const service = createService(repository, commandService);
       const buffer = await createWorkbookBuffer([
         ['판매자상품코드', '상품명', '판매가', '옵션형태', '옵션명', '옵션값', '옵션 사용여부'],
-        ['SKU-1', '옵션 상품', 10000, '단독형', '용량', '100cc,200cc', 'Y,N'],
+        ['SKU-1', '옵션 상품', 10000, '단독형', '용량', '100cc,200cc,300cc', 'Y,N,Y'],
         ['SKU-2', '단일 상품', 5000, '설정안함', '', '', ''],
       ]);
 
       await service.commit(createFile(buffer));
 
+      // 사용안함(N)으로 표시된 200cc는 제외되고 사용 가능한 100cc/300cc 두 옵션만 남는다.
       expect(commandService.create).toHaveBeenNthCalledWith(1, expect.objectContaining({
-        options: [expect.objectContaining({ value: '100cc' })],
+        options: [
+          expect.objectContaining({ value: '100cc' }),
+          expect.objectContaining({ value: '300cc' }),
+        ],
       }));
       expect(commandService.create).toHaveBeenNthCalledWith(2, expect.not.objectContaining({
         options: expect.anything(),
       }));
+    });
+
+    it('collapses a single usable option into product stock (issue #1036)', async () => {
+      const repository = createRepositoryMock([]);
+      const commandService = createCommandServiceMock();
+      const service = createService(repository, commandService);
+      const buffer = await createWorkbookBuffer([
+        ['판매자상품코드', '상품명', '판매가', '재고수량', '옵션형태', '옵션명', '옵션값', '옵션 재고수량'],
+        ['SKU-1', '단독 옵션 상품', 10000, 0, '단독형', '색상', '노단니', '4'],
+      ]);
+
+      const result = await service.commit(createFile(buffer));
+
+      expect(result.rows[0]).toMatchObject({
+        optionCount: 0,
+        stock: 4,
+        stockSource: 'single_option_collapsed',
+      });
+      expect(commandService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ stock: 4, status: ProductStatus.ACTIVE }),
+      );
+      expect(commandService.create).toHaveBeenCalledWith(
+        expect.not.objectContaining({ options: expect.anything() }),
+      );
     });
 
     it('reports option value count mismatch as a row error', async () => {
@@ -777,13 +808,16 @@ describe('SmartStoreProductImportService', () => {
       const service = createService(repository, commandService);
       const buffer = await createWorkbookBuffer([
         ['판매자상품코드', '상품명', '판매가', '옵션형태', '옵션명', '옵션값', '대표이미지'],
-        ['SKU-2', '기존 상품 갱신', 9000, '단독형', '용량', '100cc', 'https://img.example.com/rep.jpg'],
+        ['SKU-2', '기존 상품 갱신', 9000, '단독형', '용량', '100cc,200cc', 'https://img.example.com/rep.jpg'],
       ]);
 
       await service.commit(createFile(buffer));
 
       expect(commandService.update).toHaveBeenCalledWith(7, expect.objectContaining({
-        options: [expect.objectContaining({ name: '용량', value: '100cc' })],
+        options: [
+          expect.objectContaining({ name: '용량', value: '100cc' }),
+          expect.objectContaining({ name: '용량', value: '200cc' }),
+        ],
         images: [expect.objectContaining({ url: ingestedUrl('https://img.example.com/rep.jpg'), isThumbnail: true })],
       }));
     });
