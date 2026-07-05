@@ -31,6 +31,7 @@ export * from './promotions';
 export * from './banners';
 export * from './settings';
 export * from './journals';
+export * from './collections';
 
 // Admin modules
 export * from './admin/categories';
@@ -44,7 +45,5 @@ export * from './admin/navigation';
 export * from './admin/faqs';
 export * from './admin/inquiries';
 export * from './admin/settings';
-export * from './admin/collections';
-export * from './admin/archives';
 export * from './admin/journals';
 export * from './admin/localization';

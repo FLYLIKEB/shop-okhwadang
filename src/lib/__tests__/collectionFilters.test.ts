@@ -20,7 +20,7 @@ describe('getCollectionFilterValue', () => {
     expect(getCollectionFilterValue(baseCollection, 'clay_type')).toBe('jani');
   });
 
-  it('falls back to collection.name when productUrl has no matching attrs value', () => {
+  it('returns collection.name when productUrl has no attrs (no hardcoded fallback map)', () => {
     expect(getCollectionFilterValue({ ...baseCollection, productUrl: '/products?categoryId=1' }, 'clay_type')).toBe('자니');
   });
 
@@ -34,4 +34,12 @@ describe('getCollectionFilterValue', () => {
     }, 'teapot_shape')).toBe('인왕');
   });
 
+  it('returns collection.name when attrs has no matching attribute code', () => {
+    expect(
+      getCollectionFilterValue(
+        { ...baseCollection, name: 'seoshi', type: CollectionType.SHAPE, productUrl: '/products?attrs=clay_type:jani' },
+        'teapot_shape',
+      ),
+    ).toBe('seoshi');
+  });
 });

@@ -20,8 +20,6 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
     const userEmail = `cms-user-${unique}@test.com`;
     const settingKey = `cms-setting-${unique}`;
     const collectionUrl = `/products?collection=${unique}`;
-    const niloUrl = `/products?nilo=${unique}`;
-    const artistUrl = `/products?artist=${unique}`;
     const journalSlug = `journal-${unique}`;
     const faqCategory = `카테고리-${unique}`;
     const noticeTitle = `공지-${unique}`;
@@ -29,13 +27,9 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
     const bannerTitle = `배너-${unique}`;
 
     let adminCookies: string[];
-    let userCookies: string[];
     let adminUserId: number;
     let userUserId: number;
     let collectionId: number;
-    let niloTypeId: number;
-    let processStepId: number;
-    let artistId: number;
     let journalId: number;
     let faqId: number;
     let noticeId: number;
@@ -62,7 +56,6 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
         [userEmail, passwordHash, 'CMS 사용자'],
       );
       userUserId = Number(userInsert.insertId);
-      userCookies = buildAccessCookie(jwtService, userUserId, userEmail, 'user');
 
       await dataSource.query(
         `INSERT INTO site_settings (
@@ -79,34 +72,21 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
       await dataSource.query('DELETE FROM notices WHERE title = ?', [noticeTitle]);
       await dataSource.query('DELETE FROM faqs WHERE category = ?', [faqCategory]);
       await dataSource.query('DELETE FROM journal_entries WHERE slug = ?', [journalSlug]);
-      await dataSource.query('DELETE FROM artists WHERE product_url = ?', [artistUrl]);
-      await dataSource.query('DELETE FROM process_steps WHERE title = ?', [`공정-${unique}`]);
-      await dataSource.query('DELETE FROM nilo_types WHERE product_url = ?', [niloUrl]);
       await dataSource.query('DELETE FROM collections WHERE product_url = ?', [collectionUrl]);
       await dataSource.query('DELETE FROM site_settings WHERE setting_key = ?', [settingKey]);
       await dataSource.query('DELETE FROM users WHERE id IN (?, ?)', [adminUserId, userUserId]);
     });
 
-    it('collections: admin can create/reorder/delete and public list returns it', async () => {
-      const createRes = await request(app.getHttpServer())
-        .post('/api/admin/collections')
-        .set('Cookie', adminCookies)
-        .send({
-          type: 'clay',
-          name: `컬렉션-${unique}`,
-          nameKo: `컬렉션-${unique}`,
-          productUrl: collectionUrl,
-          sortOrder: 1,
-          isActive: true,
-        })
-        .expect(201);
-      collectionId = Number((createRes.body as { id: number }).id);
-
-      await request(app.getHttpServer())
-        .post('/api/admin/collections')
-        .set('Cookie', userCookies)
-        .send({ type: 'clay', name: '실패', productUrl: 'https://example.com/x' })
-        .expect(403);
+    it('collections: public clay list returns active seeded collections', async () => {
+      // 컬렉션/아카이브 어드민 CRUD 는 CMS(page_blocks)로 편입되어 제거됨.
+      // public /collections 엔드포인트는 상품 필터(FilterSidebar)에서 여전히 사용되므로
+      // SQL 시드로 직접 넣고 공개 조회만 검증한다.
+      const insert = await dataSource.query(
+        `INSERT INTO collections (type, name, nameKo, product_url, sort_order, is_active, created_at, updated_at)
+         VALUES ('clay', ?, ?, ?, 1, 1, NOW(), NOW())`,
+        [`컬렉션-${unique}`, `컬렉션-${unique}`, collectionUrl],
+      );
+      collectionId = Number(insert.insertId);
 
       await request(app.getHttpServer())
         .get('/api/collections/clay')
@@ -114,86 +94,6 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
         .expect((res) => {
           expect((res.body as Array<{ id: number }>).some((item) => Number(item.id) === collectionId)).toBe(true);
         });
-
-      await request(app.getHttpServer())
-        .patch('/api/admin/collections/reorder')
-        .set('Cookie', adminCookies)
-        .send({ orders: [{ id: collectionId, sortOrder: 7 }] })
-        .expect(200);
-
-      await request(app.getHttpServer())
-        .get('/api/admin/collections')
-        .set('Cookie', adminCookies)
-        .expect(200)
-        .expect((res) => {
-          const collection = (res.body as Array<{ id: number; sortOrder: number }>).find((item) => Number(item.id) === collectionId);
-          expect(collection?.sortOrder).toBe(7);
-        });
-
-      await request(app.getHttpServer())
-        .delete(`/api/admin/collections/${collectionId}`)
-        .set('Cookie', adminCookies)
-        .expect(204);
-    });
-
-    it('archives: admin can manage archive records and public endpoint returns them', async () => {
-      const niloRes = await request(app.getHttpServer())
-        .post('/api/admin/archives/nilo-types')
-        .set('Cookie', adminCookies)
-        .send({
-          name: `Nilo ${unique}`,
-          nameKo: `니로 ${unique}`,
-          color: '#8B4513',
-          region: 'Jeju',
-          description: '설명',
-          characteristics: ['부드러움'],
-          productUrl: niloUrl,
-          sortOrder: 0,
-          isActive: true,
-        })
-        .expect(201);
-      niloTypeId = Number((niloRes.body as { id: number }).id);
-
-      const stepRes = await request(app.getHttpServer())
-        .post('/api/admin/archives/process-steps')
-        .set('Cookie', adminCookies)
-        .send({ step: 99, title: `공정-${unique}`, description: '설명', detail: '상세' })
-        .expect(201);
-      processStepId = Number((stepRes.body as { id: number }).id);
-
-      const artistRes = await request(app.getHttpServer())
-        .post('/api/admin/archives/artists')
-        .set('Cookie', adminCookies)
-        .send({
-          name: `작가-${unique}`,
-          title: '명인',
-          region: '서울',
-          story: '이야기',
-          specialty: '차',
-          productUrl: artistUrl,
-          sortOrder: 0,
-          isActive: true,
-        })
-        .expect(201);
-      artistId = Number((artistRes.body as { id: number }).id);
-
-      await request(app.getHttpServer())
-        .get('/api/archives')
-        .expect(200)
-        .expect((res) => {
-          const body = res.body as {
-            niloTypes: Array<{ id: number }>;
-            processSteps: Array<{ id: number }>;
-            artists: Array<{ id: number }>;
-          };
-          expect(body.niloTypes.some((item) => Number(item.id) === niloTypeId)).toBe(true);
-          expect(body.processSteps.some((item) => Number(item.id) === processStepId)).toBe(true);
-          expect(body.artists.some((item) => Number(item.id) === artistId)).toBe(true);
-        });
-
-      await request(app.getHttpServer()).delete(`/api/admin/archives/artists/${artistId}`).set('Cookie', adminCookies).expect(204);
-      await request(app.getHttpServer()).delete(`/api/admin/archives/process-steps/${processStepId}`).set('Cookie', adminCookies).expect(204);
-      await request(app.getHttpServer()).delete(`/api/admin/archives/nilo-types/${niloTypeId}`).set('Cookie', adminCookies).expect(204);
     });
 
     it('journal/faqs/notices: admin can publish content and public endpoints can read it', async () => {
