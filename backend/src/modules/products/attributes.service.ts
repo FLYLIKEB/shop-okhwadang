@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AttributeType, AttributeInputType } from './entities/attribute-type.entity';
@@ -31,6 +31,7 @@ export class AttributesService {
   async findAllAttributeTypes(locale?: string): Promise<AttributeType[]> {
     const types = await this.attributeTypeRepository.find({
       where: { isActive: true },
+      relations: ['parent', 'children'],
       order: { sortOrder: 'ASC', id: 'ASC' },
     });
     return types.map((t) => this.applyLocaleToAttributeType(t, locale));
@@ -56,6 +57,8 @@ export class AttributesService {
       throw new ConflictException(`AttributeType with code '${dto.code}' already exists`);
     }
 
+    await this.validateAttributeTypeLinks(null, dto.parentId, dto.relatedTypeIds);
+
     const type = this.attributeTypeRepository.create({
       code: dto.code,
       name: dto.name,
@@ -65,6 +68,8 @@ export class AttributesService {
       isFilterable: dto.isFilterable ?? false,
       isSearchable: dto.isSearchable ?? false,
       validValues: dto.validValues ?? null,
+      parentId: dto.parentId ?? null,
+      relatedTypeIds: dto.relatedTypeIds ?? null,
       sortOrder: dto.sortOrder ?? 0,
     });
 
@@ -81,6 +86,8 @@ export class AttributesService {
       }
     }
 
+    await this.validateAttributeTypeLinks(id, dto.parentId, dto.relatedTypeIds);
+
     Object.assign(type, {
       ...(dto.code !== undefined && { code: dto.code }),
       ...(dto.name !== undefined && { name: dto.name }),
@@ -90,6 +97,8 @@ export class AttributesService {
       ...(dto.isFilterable !== undefined && { isFilterable: dto.isFilterable }),
       ...(dto.isSearchable !== undefined && { isSearchable: dto.isSearchable }),
       ...(dto.validValues !== undefined && { validValues: dto.validValues }),
+      ...(dto.parentId !== undefined && { parentId: dto.parentId }),
+      ...(dto.relatedTypeIds !== undefined && { relatedTypeIds: dto.relatedTypeIds }),
       ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
     });
 
@@ -99,6 +108,51 @@ export class AttributesService {
   async deleteAttributeType(id: number): Promise<void> {
     const type = await this.findAttributeTypeById(id);
     await this.attributeTypeRepository.remove(type);
+  }
+
+  private async validateAttributeTypeLinks(
+    currentId: number | null,
+    parentId?: number | null,
+    relatedTypeIds?: number[] | null,
+  ): Promise<void> {
+    if (parentId !== undefined && parentId !== null) {
+      if (currentId !== null && parentId === currentId) {
+        throw new BadRequestException('AttributeType cannot be its own parent');
+      }
+
+      let parent = await this.attributeTypeRepository.findOne({ where: { id: parentId } });
+      if (!parent) {
+        throw new NotFoundException(`Parent AttributeType ID ${parentId} not found`);
+      }
+
+      const visited = new Set<number>();
+      while (parent?.parentId) {
+        if (currentId !== null && parent.parentId === currentId) {
+          throw new BadRequestException('AttributeType parent cycle is not allowed');
+        }
+        if (visited.has(parent.parentId)) {
+          throw new BadRequestException('AttributeType parent cycle is not allowed');
+        }
+        visited.add(parent.parentId);
+        parent = await this.attributeTypeRepository.findOne({ where: { id: parent.parentId } });
+      }
+    }
+
+    if (relatedTypeIds !== undefined && relatedTypeIds !== null) {
+      if (currentId !== null && relatedTypeIds.includes(currentId)) {
+        throw new BadRequestException('AttributeType cannot relate to itself');
+      }
+      const uniqueIds = [...new Set(relatedTypeIds)];
+      if (uniqueIds.length !== relatedTypeIds.length) {
+        throw new BadRequestException('relatedTypeIds must not contain duplicates');
+      }
+      for (const relatedId of uniqueIds) {
+        const related = await this.attributeTypeRepository.findOne({ where: { id: relatedId } });
+        if (!related) {
+          throw new NotFoundException(`Related AttributeType ID ${relatedId} not found`);
+        }
+      }
+    }
   }
 
   // ─── Product Attributes ────────────────────────────────────────────

@@ -61,11 +61,15 @@ export interface AttributeType {
   code: string;
   name: string;
   nameKo: string | null;
+  nameEn?: string | null;
   inputType: 'text' | 'select' | 'range';
   isFilterable: boolean;
   isSearchable: boolean;
   validValues: string[] | null;
+  parentId?: number | null;
+  relatedTypeIds?: number[] | null;
   sortOrder: number;
+  isActive?: boolean;
 }
 
 export interface ProductOption {
@@ -145,6 +149,11 @@ export const attributesApi = {
   getTypeByCode: (code: string) => apiClient.get<AttributeType | null>(`/attributes/types/code/${code}`),
   getTypeValues: (code: string) => apiClient.get<string[]>(`/attributes/types/${code}/values`),
   getProductAttributes: (productId: number) => apiClient.get<ProductAttribute[]>(`/attributes/products/${productId}`),
+  createType: (data: Partial<AttributeType> & { code: string; name: string }) =>
+    apiClient.post<AttributeType>('/attributes/types', data),
+  updateType: (id: number, data: Partial<AttributeType>) =>
+    apiClient.patch<AttributeType>(`/attributes/types/${id}`, data),
+  deleteType: (id: number) => apiClient.delete<void>(`/attributes/types/${id}`),
 };
 
 export const homeApi = {

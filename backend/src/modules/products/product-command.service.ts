@@ -8,8 +8,10 @@ import { Product } from './entities/product.entity';
 import { ProductImage } from './entities/product-image.entity';
 import { ProductDetailImage } from './entities/product-detail-image.entity';
 import { ProductOption } from './entities/product-option.entity';
+import { ProductAttribute } from './entities/product-attribute.entity';
 import { CreateProductDto, ProductOptionInputDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { SetProductAttributeItemDto } from './dto/product-attribute.dto';
 import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { CacheService } from '../cache/cache.service';
 import { findOrThrow } from '../../common/utils/repository.util';
@@ -31,7 +33,7 @@ export class ProductCommandService {
   ) {}
 
   async create(dto: CreateProductDto): Promise<Product> {
-    const { images, detailImages, options, ...productData } = dto;
+    const { images, detailImages, options, attributes, ...productData } = dto;
 
     try {
       const saved = await this.dataSource.transaction(async (manager: EntityManager) => {
@@ -81,6 +83,10 @@ export class ProductCommandService {
           await this.syncProductOptions(manager, saved.id, options);
         }
 
+        if (attributes !== undefined) {
+          await this.syncProductAttributes(manager, saved.id, attributes);
+        }
+
         return saved;
       });
       await this.invalidateProductCollectionsCache();
@@ -92,7 +98,7 @@ export class ProductCommandService {
   }
 
   async update(id: number, dto: UpdateProductDto): Promise<Product> {
-    const { images, detailImages, options, ...productData } = dto;
+    const { images, detailImages, options, attributes, ...productData } = dto;
     const product = await this.findById(id);
     const previousStock = product.stock;
     Object.assign(product, productData);
@@ -137,6 +143,10 @@ export class ProductCommandService {
 
         if (options !== undefined) {
           await this.syncProductOptions(manager, id, options);
+        }
+
+        if (attributes !== undefined) {
+          await this.syncProductAttributes(manager, id, attributes);
         }
 
         return updatedProduct;
@@ -252,6 +262,29 @@ export class ProductCommandService {
     if (toSave.length > 0) {
       await manager.save(ProductOption, toSave);
     }
+  }
+
+  private async syncProductAttributes(
+    manager: EntityManager,
+    productId: number,
+    attributes: SetProductAttributeItemDto[],
+  ): Promise<void> {
+    await manager.delete(ProductAttribute, { productId });
+
+    if (!attributes.length) {
+      return;
+    }
+
+    const entities = attributes.map((attr, index) =>
+      manager.create(ProductAttribute, {
+        productId,
+        attributeTypeId: attr.attributeTypeId,
+        value: attr.value,
+        displayValue: attr.displayValue ?? attr.value,
+        sortOrder: attr.sortOrder ?? index,
+      }),
+    );
+    await manager.save(ProductAttribute, entities);
   }
 
   private rethrowIfDuplicateKey(err: unknown): void {

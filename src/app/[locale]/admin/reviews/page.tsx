@@ -14,6 +14,7 @@ import { adminReviewsApi } from '@/lib/api';
 import type { AdminReviewItem, AdminReviewsParams, SmartStoreReviewImportResult } from '@/lib/api';
 
 const PAGE_SIZE = 20;
+const reviewKey = (review: Pick<AdminReviewItem, 'id' | 'source'>) => `${review.source}:${review.id}`;
 
 type ReviewFilters = {
   visibility: 'all' | 'visible' | 'hidden';
@@ -28,8 +29,9 @@ export default function AdminReviewsPage() {
   const { isAdmin } = useAdminGuard();
   const [reviews, setReviews] = useState<AdminReviewItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set());
   const [selectedReview, setSelectedReview] = useState<AdminReviewItem | null>(null);
+  const [replyContent, setReplyContent] = useState('');
   const [smartStoreFile, setSmartStoreFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<SmartStoreReviewImportResult | null>(null);
   const [importResult, setImportResult] = useState<SmartStoreReviewImportResult | null>(null);
@@ -78,7 +80,7 @@ export default function AdminReviewsPage() {
       const response = await adminReviewsApi.getList(params);
       setReviews(response.items);
       setTotal(response.total);
-      setSelectedIds(new Set());
+      setSelectedKeys(new Set());
     },
     { errorMessage: t('loadError') },
   );
@@ -116,22 +118,43 @@ export default function AdminReviewsPage() {
   );
 
   const { execute: setVisibility } = useAsyncAction(
-    async ({ id, isVisible }: { id: number; isVisible: boolean }) => {
-      await adminReviewsApi.setVisibility(id, isVisible);
+    async ({ id, isVisible, source }: { id: number; isVisible: boolean; source: string }) => {
+      await adminReviewsApi.setVisibility(id, isVisible, source);
       toast.success(isVisible ? t('actions.showSuccess') : t('actions.hideSuccess'));
       void fetchReviews();
     },
     { errorMessage: t('actions.visibilityError') },
   );
 
+  const { execute: saveReply, isLoading: savingReply } = useAsyncAction(
+    async () => {
+      if (!selectedReview) return;
+      const updated = await adminReviewsApi.setReply(
+        selectedReview.id,
+        replyContent,
+        undefined,
+        selectedReview.source,
+      );
+      setSelectedReview(updated);
+      setReviews((items) =>
+        items.map((item) => (reviewKey(item) === reviewKey(updated) ? updated : item)),
+      );
+      toast.success(t('reply.saveSuccess'));
+    },
+    { errorMessage: t('reply.saveError') },
+  );
+
   const { execute: bulkSetVisibility, isLoading: bulkUpdating } = useAsyncAction(
     async (isVisible: boolean) => {
-      const ids = [...selectedIds];
-      if (ids.length === 0) {
+      const keys = [...selectedKeys];
+      if (keys.length === 0) {
         toast.error(t('bulk.selectFirst'));
         return;
       }
-      const result = await adminReviewsApi.bulkSetVisibility(ids, isVisible);
+      const selectedItems = reviews
+        .filter((review) => keys.includes(reviewKey(review)))
+        .map((review) => ({ id: review.id, source: review.source }));
+      const result = await adminReviewsApi.bulkSetVisibility(selectedItems, isVisible);
       toast.success(
         isVisible
           ? t('bulk.showSuccess', { count: result.updated })
@@ -167,21 +190,22 @@ export default function AdminReviewsPage() {
     void commitSmartStoreImport(smartStoreFile);
   };
 
-  const toggleSelected = (id: number) => {
-    setSelectedIds((prev) => {
+  const toggleSelected = (review: AdminReviewItem) => {
+    const key = reviewKey(review);
+    setSelectedKeys((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
 
   const toggleAllVisibleRows = () => {
-    setSelectedIds((prev) => {
-      const visibleIds = reviews.map((review) => review.id);
-      const allSelected = visibleIds.length > 0 && visibleIds.every((id) => prev.has(id));
-      if (allSelected) return new Set([...prev].filter((id) => !visibleIds.includes(id)));
-      return new Set([...prev, ...visibleIds]);
+    setSelectedKeys((prev) => {
+      const visibleKeys = reviews.map((review) => reviewKey(review));
+      const allSelected = visibleKeys.length > 0 && visibleKeys.every((key) => prev.has(key));
+      if (allSelected) return new Set([...prev].filter((key) => !visibleKeys.includes(key)));
+      return new Set([...prev, ...visibleKeys]);
     });
   };
 
@@ -194,7 +218,7 @@ export default function AdminReviewsPage() {
   const importRows = showAllImportRows ? visibleImportRows : visibleImportRows.slice(0, 5);
   const isImporting = previewingImport || committingImport;
   const allVisibleRowsSelected =
-    reviews.length > 0 && reviews.every((review) => selectedIds.has(review.id));
+    reviews.length > 0 && reviews.every((review) => selectedKeys.has(reviewKey(review)));
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
@@ -423,13 +447,13 @@ export default function AdminReviewsPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="typo-body-sm text-muted-foreground">
-            {t('bulk.selectedCount', { count: selectedIds.size })}
+            {t('bulk.selectedCount', { count: selectedKeys.size })}
           </p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => void bulkSetVisibility(false)}
-              disabled={selectedIds.size === 0 || bulkUpdating}
+              disabled={selectedKeys.size === 0 || bulkUpdating}
               className="rounded border px-3 py-1.5 typo-body-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('bulk.hide')}
@@ -437,7 +461,7 @@ export default function AdminReviewsPage() {
             <button
               type="button"
               onClick={() => void bulkSetVisibility(true)}
-              disabled={selectedIds.size === 0 || bulkUpdating}
+              disabled={selectedKeys.size === 0 || bulkUpdating}
               className="rounded border px-3 py-1.5 typo-body-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('bulk.show')}
@@ -479,12 +503,12 @@ export default function AdminReviewsPage() {
             </thead>
             <tbody className="divide-y">
               {reviews.map((review) => (
-                <tr key={review.id} className="hover:bg-secondary/30">
+                <tr key={reviewKey(review)} className="hover:bg-secondary/30">
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
-                      checked={selectedIds.has(review.id)}
-                      onChange={() => toggleSelected(review.id)}
+                      checked={selectedKeys.has(reviewKey(review))}
+                      onChange={() => toggleSelected(review)}
                       aria-label={t('table.selectOne', { id: review.externalReviewId })}
                     />
                   </td>
@@ -540,7 +564,10 @@ export default function AdminReviewsPage() {
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"
-                        onClick={() => setSelectedReview(review)}
+                        onClick={() => {
+                          setSelectedReview(review);
+                          setReplyContent(review.adminReplyContent ?? '');
+                        }}
                         className="rounded border px-2 py-1 text-xs hover:bg-secondary"
                       >
                         {t('actions.detail')}
@@ -548,7 +575,11 @@ export default function AdminReviewsPage() {
                       <button
                         type="button"
                         onClick={() =>
-                          void setVisibility({ id: review.id, isVisible: !review.isVisible })
+                          void setVisibility({
+                            id: review.id,
+                            isVisible: !review.isVisible,
+                            source: review.source,
+                          })
                         }
                         className="rounded border px-2 py-1 text-xs hover:bg-secondary"
                       >
@@ -617,6 +648,24 @@ export default function AdminReviewsPage() {
               </p>
             </div>
           )}
+          <div className="mt-4 space-y-2">
+            <h3 className="typo-label text-muted-foreground">{t('reply.title')}</h3>
+            <textarea
+              value={replyContent}
+              onChange={(event) => setReplyContent(event.target.value)}
+              rows={4}
+              className="w-full rounded border bg-background p-3 typo-body-sm"
+              placeholder={t('reply.placeholder')}
+            />
+            <button
+              type="button"
+              onClick={() => void saveReply()}
+              disabled={savingReply}
+              className="rounded bg-primary px-4 py-2 typo-body-sm text-primary-foreground disabled:opacity-50"
+            >
+              {t('reply.save')}
+            </button>
+          </div>
           {selectedReview.imageUrls && selectedReview.imageUrls.length > 0 && (
             <div className="mt-4 space-y-2">
               <h3 className="typo-label text-muted-foreground">{t('detail.media')}</h3>

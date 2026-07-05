@@ -5,6 +5,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
 } from 'typeorm';
 
 export enum AttributeInputType {
@@ -56,6 +59,12 @@ export class AttributeType {
   @Column({ type: 'json', nullable: true, name: 'valid_values' })
   validValues!: string[] | null;
 
+  @Column({ name: 'parent_id', type: 'int', nullable: true })
+  parentId!: number | null;
+
+  @Column({ name: 'related_type_ids', type: 'json', nullable: true })
+  relatedTypeIds!: number[] | null;
+
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder!: number;
 
@@ -67,4 +76,14 @@ export class AttributeType {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
+
+  @ManyToOne(() => AttributeType, (type) => type.children, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'parent_id' })
+  parent!: AttributeType | null;
+
+  @OneToMany(() => AttributeType, (type) => type.parent)
+  children!: AttributeType[];
 }

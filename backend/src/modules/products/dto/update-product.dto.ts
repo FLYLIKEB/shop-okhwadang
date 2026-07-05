@@ -3,6 +3,7 @@ import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsAr
 import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
 import { ProductImageInputDto, ProductDetailImageInputDto, ProductNoticeInfoDto, ProductOptionInputDto } from './create-product.dto';
+import { SetProductAttributeItemDto } from './product-attribute.dto';
 
 export class UpdateProductDto {
   @ApiProperty({ example: 1, description: '카테고리 ID', required: false })
@@ -127,4 +128,11 @@ export class UpdateProductDto {
   @ValidateNested({ each: true })
   @Type(() => ProductOptionInputDto)
   options?: ProductOptionInputDto[];
+
+  @ApiPropertyOptional({ type: [SetProductAttributeItemDto], description: '상품 속성 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SetProductAttributeItemDto)
+  attributes?: SetProductAttributeItemDto[];
 }

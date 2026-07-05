@@ -47,6 +47,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { labelKey: 'products', href: '/admin/products' },
       { labelKey: 'categories', href: '/admin/categories' },
+      { labelKey: 'attributes', href: '/admin/attributes' },
     ],
   },
   {

@@ -29,6 +29,7 @@ import {
   BulkUpdateReviewVisibilityDto,
   UpdateReviewVisibilityDto,
 } from './dto/update-review-visibility.dto';
+import { UpdateReviewReplyDto } from './dto/update-review-reply.dto';
 import { AdminReviewsService } from './admin-reviews.service';
 import { SmartStoreReviewImportService } from './smartstore-review-import.service';
 
@@ -106,7 +107,8 @@ export class AdminReviewsController {
   @ApiOperation({ summary: '리뷰 일괄 숨김/노출 처리' })
   @ApiResponse({ status: 200, description: '일괄 처리 성공' })
   bulkSetVisibility(@Body() dto: BulkUpdateReviewVisibilityDto) {
-    return this.adminReviewsService.bulkSetVisibility(dto.ids, dto.isVisible);
+    const items = dto.items ?? dto.ids?.map((id) => ({ id, source: dto.source })) ?? [];
+    return this.adminReviewsService.bulkSetVisibility(items, dto.isVisible);
   }
 
   @Get(':id')
@@ -124,6 +126,15 @@ export class AdminReviewsController {
   @ApiResponse({ status: 200, description: '리뷰 숨김/노출 처리 성공' })
   @ApiParam({ name: 'id', type: Number, description: '외부 리뷰 ID' })
   setVisibility(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateReviewVisibilityDto) {
-    return this.adminReviewsService.setVisibility(id, dto.isVisible);
+    return this.adminReviewsService.setVisibility(id, dto.isVisible, dto.source);
+  }
+
+  @Patch(':id/reply')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '리뷰 답글 등록/수정' })
+  @ApiResponse({ status: 200, description: '리뷰 답글 저장 성공' })
+  @ApiParam({ name: 'id', type: Number, description: '외부 리뷰 ID' })
+  setReply(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateReviewReplyDto) {
+    return this.adminReviewsService.setReply(id, dto.content ?? null, dto.author, dto.source);
   }
 }

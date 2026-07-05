@@ -55,6 +55,17 @@ export class CreateAttributeTypeDto {
   @IsString({ each: true })
   validValues?: string[];
 
+  @ApiPropertyOptional({ example: 1, description: '상위 속성 유형 ID' })
+  @IsOptional()
+  @IsNumber()
+  parentId?: number | null;
+
+  @ApiPropertyOptional({ example: [2, 3], description: '연결된 속성 유형 ID 목록' })
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  relatedTypeIds?: number[];
+
   @ApiPropertyOptional({ example: 0, description: '정렬 순서' })
   @IsOptional()
   @IsNumber()
@@ -107,6 +118,17 @@ export class UpdateAttributeTypeDto {
   @IsArray()
   @IsString({ each: true })
   validValues?: string[];
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @IsNumber()
+  parentId?: number | null;
+
+  @ApiPropertyOptional({ example: [2, 3] })
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  relatedTypeIds?: number[];
 
   @ApiPropertyOptional()
   @IsOptional()

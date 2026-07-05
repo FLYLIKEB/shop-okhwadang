@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
+import { SetProductAttributeItemDto } from './product-attribute.dto';
 
 export { ProductStatus };
 
@@ -287,4 +288,11 @@ export class CreateProductDto {
   @ValidateNested({ each: true })
   @Type(() => ProductOptionInputDto)
   options?: ProductOptionInputDto[];
+
+  @ApiPropertyOptional({ type: [SetProductAttributeItemDto], description: '상품 속성 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SetProductAttributeItemDto)
+  attributes?: SetProductAttributeItemDto[];
 }

@@ -48,6 +48,9 @@ export interface AdminReviewItem {
   orderNo: string | null;
   relatedReviewExternalId: string | null;
   relatedReviewContent: string | null;
+  adminReplyContent: string | null;
+  adminReplyAuthor: string | null;
+  adminRepliedAt: string | null;
 }
 
 export interface AdminReviewListResponse {
@@ -106,10 +109,17 @@ export const adminReviewsApi = {
   getList: (params?: AdminReviewsParams) =>
     apiClient.get<AdminReviewListResponse>('/admin/reviews', { params: toParams(params) }),
   getById: (id: number) => apiClient.get<AdminReviewItem>(`/admin/reviews/${id}`),
-  setVisibility: (id: number, isVisible: boolean) =>
-    apiClient.patch<AdminReviewItem>(`/admin/reviews/${id}/visibility`, { isVisible }),
-  bulkSetVisibility: (ids: number[], isVisible: boolean) =>
-    apiClient.post<{ updated: number }>('/admin/reviews/bulk-visibility', { ids, isVisible }),
+  setVisibility: (id: number, isVisible: boolean, source?: string) =>
+    apiClient.patch<AdminReviewItem>(`/admin/reviews/${id}/visibility`, { isVisible, source }),
+  setReply: (id: number, content: string | null, author?: string, source?: string) =>
+    apiClient.patch<AdminReviewItem>(`/admin/reviews/${id}/reply`, { content, author, source }),
+  bulkSetVisibility: (items: Array<{ id: number; source: string }> | number[], isVisible: boolean) => {
+    const body =
+      typeof items[0] === 'number'
+        ? { ids: items as number[], isVisible }
+        : { items: items as Array<{ id: number; source: string }>, isVisible };
+    return apiClient.post<{ updated: number }>('/admin/reviews/bulk-visibility', body);
+  },
   previewSmartStoreImport: (file: File) =>
     apiClient.uploadFile<SmartStoreReviewImportResult>(
       '/admin/reviews/imports/smartstore/preview',

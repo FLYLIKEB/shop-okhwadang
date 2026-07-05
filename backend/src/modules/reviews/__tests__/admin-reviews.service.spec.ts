@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Column, DataSource, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { AdminReviewsService } from '../admin-reviews.service';
 import { ExternalReview } from '../entities/external-review.entity';
+import { Review } from '../entities/review.entity';
 
 @Entity('test_products')
 class TestProduct {
@@ -63,11 +64,19 @@ describe('AdminReviewsService', () => {
     manager: { query: jest.fn() },
   };
 
+  const reviewRepository = {
+    findOne: jest.fn(),
+    find: jest.fn(),
+    update: jest.fn(),
+    save: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminReviewsService,
         { provide: getRepositoryToken(ExternalReview), useValue: externalReviewRepository },
+        { provide: getRepositoryToken(Review), useValue: reviewRepository },
       ],
     }).compile();
 
@@ -81,6 +90,7 @@ describe('AdminReviewsService', () => {
     qb.take.mockReturnThis();
     qb.getManyAndCount.mockResolvedValue([[], 0]);
     externalReviewRepository.createQueryBuilder.mockReturnValue(qb);
+    reviewRepository.find.mockResolvedValue([]);
   });
 
   it('lists all visibility reviews using entity property paths for paginated sorting', async () => {
@@ -91,8 +101,7 @@ describe('AdminReviewsService', () => {
     expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('review.product', 'product');
     expect(qb.andWhere.mock.calls).toEqual([]);
     expect(qb.orderBy).toHaveBeenCalledWith('review.reviewedAt', 'DESC');
-    expect(qb.skip).toHaveBeenCalledWith(0);
-    expect(qb.take).toHaveBeenCalledWith(20);
+    expect(reviewRepository.find).toHaveBeenCalledWith({ relations: ['product', 'user'] });
   });
 
 
@@ -133,7 +142,36 @@ describe('AdminReviewsService', () => {
     expect(qb.andWhere).toHaveBeenCalledWith('review.isVisible = :visible', { visible: false });
     expect(qb.orderBy).toHaveBeenCalledWith('review.helpfulCount', 'ASC');
     expect(qb.addOrderBy).toHaveBeenCalledWith('review.reviewedAt', 'DESC');
-    expect(qb.skip).toHaveBeenCalledWith(10);
-    expect(qb.take).toHaveBeenCalledWith(10);
+    expect(reviewRepository.find).toHaveBeenCalledWith({ relations: ['product', 'user'] });
   });
+
+  it('saves replies for internal reviews when source identifies okhwadang', async () => {
+    const review = {
+      id: 3,
+      productId: 9,
+      rating: 5,
+      content: '좋아요',
+      imageUrls: null,
+      isVisible: true,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      product: { id: 9, name: '상품', sku: 'SKU-9' },
+      user: { name: '고객' },
+    } as unknown as Review;
+    reviewRepository.findOne.mockResolvedValue(review);
+    reviewRepository.save.mockImplementation(async (entity: unknown) => entity as Review);
+
+    const result = await service.setReply(3, ' 감사합니다 ', undefined, 'okhwadang');
+
+    expect(reviewRepository.findOne).toHaveBeenCalledWith({
+      where: { id: 3 },
+      relations: ['product', 'user'],
+    });
+    expect(reviewRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ adminReplyContent: '감사합니다', adminReplyAuthor: '옥화당' }),
+    );
+    expect(result.source).toBe('okhwadang');
+    expect(result.adminReplyContent).toBe('감사합니다');
+  });
+
 });

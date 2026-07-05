@@ -17,7 +17,8 @@ import { buildTree } from '../../common/utils/tree.util';
 import { applyLocale } from '../../common/utils/locale.util';
 
 const LOCALIZED_FIELDS = ['name', 'description'];
-const CACHE_KEY_ALL = 'categories:all';
+const CACHE_KEY_PUBLIC_TREE = 'categories:public-tree';
+const CACHE_KEY_ADMIN_TREE = 'categories:admin-tree';
 const CACHE_TTL = 3600;
 
 export interface CategoryTree extends Omit<Category, 'children' | 'products'> {
@@ -37,7 +38,7 @@ export class CategoriesService {
   ) {}
 
   async findTree(locale?: string): Promise<CategoryTree[]> {
-    const cached = await this.cacheService.get<CategoryTree[]>(CACHE_KEY_ALL);
+    const cached = await this.cacheService.get<CategoryTree[]>(CACHE_KEY_PUBLIC_TREE);
     if (cached) {
       return this.applyLocaleToTree(cached, locale);
     }
@@ -48,12 +49,12 @@ export class CategoriesService {
     });
 
     const tree = this.buildTree(all);
-    await this.cacheService.set(CACHE_KEY_ALL, tree, CACHE_TTL);
+    await this.cacheService.set(CACHE_KEY_PUBLIC_TREE, tree, CACHE_TTL);
     return this.applyLocaleToTree(tree, locale);
   }
 
   async findAll(locale?: string): Promise<CategoryTree[]> {
-    const cached = await this.cacheService.get<CategoryTree[]>(CACHE_KEY_ALL);
+    const cached = await this.cacheService.get<CategoryTree[]>(CACHE_KEY_ADMIN_TREE);
     if (cached) {
       return this.applyLocaleToTree(cached, locale);
     }
@@ -63,7 +64,7 @@ export class CategoriesService {
     });
 
     const tree = this.buildTree(all);
-    await this.cacheService.set(CACHE_KEY_ALL, tree, CACHE_TTL);
+    await this.cacheService.set(CACHE_KEY_ADMIN_TREE, tree, CACHE_TTL);
     return this.applyLocaleToTree(tree, locale);
   }
 
@@ -140,7 +141,7 @@ export class CategoriesService {
     });
 
     const saved = await this.categoryRepository.save(category);
-    await this.cacheService.del(CACHE_KEY_ALL);
+    await this.invalidateCategoryCaches();
     return saved;
   }
 
@@ -179,7 +180,7 @@ export class CategoriesService {
     });
 
     const saved = await this.categoryRepository.save(category);
-    await this.cacheService.del(CACHE_KEY_ALL);
+    await this.invalidateCategoryCaches();
     return saved;
   }
 
@@ -197,7 +198,7 @@ export class CategoriesService {
     }
 
     await this.categoryRepository.remove(category);
-    await this.cacheService.del(CACHE_KEY_ALL);
+    await this.invalidateCategoryCaches();
     this.logger.log(`Category(id: ${id}) deleted`);
   }
 
@@ -207,6 +208,13 @@ export class CategoriesService {
         this.categoryRepository.update(id, { sortOrder }),
       ),
     );
-    await this.cacheService.del(CACHE_KEY_ALL);
+    await this.invalidateCategoryCaches();
+  }
+
+  private async invalidateCategoryCaches(): Promise<void> {
+    await Promise.all([
+      this.cacheService.del(CACHE_KEY_PUBLIC_TREE),
+      this.cacheService.del(CACHE_KEY_ADMIN_TREE),
+    ]);
   }
 }

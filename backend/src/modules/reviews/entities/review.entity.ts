@@ -39,6 +39,15 @@ export class Review {
   @Column({ name: 'is_visible', type: 'boolean', default: true })
   isVisible!: boolean;
 
+  @Column({ name: 'admin_reply_content', type: 'text', nullable: true })
+  adminReplyContent!: string | null;
+
+  @Column({ name: 'admin_reply_author', type: 'varchar', length: 100, nullable: true })
+  adminReplyAuthor!: string | null;
+
+  @Column({ name: 'admin_replied_at', type: 'datetime', nullable: true })
+  adminRepliedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

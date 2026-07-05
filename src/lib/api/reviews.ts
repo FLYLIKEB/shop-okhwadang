@@ -13,6 +13,9 @@ export interface ReviewItem {
   content: string | null;
   imageUrls: string[] | null;
   isVisible: boolean;
+  adminReplyContent: string | null;
+  adminReplyAuthor: string | null;
+  adminRepliedAt: string | null;
   createdAt: string;
 }
 
