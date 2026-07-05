@@ -33,7 +33,6 @@ vi.mock('next/image', () => ({
 }));
 
 const timerContent: PromotionBannerContent = {
-  type: 'promotion_banner',
   title: 'Timer promotion',
   template: 'timer',
   end_date: '2030-01-02T03:04:05.000Z',
