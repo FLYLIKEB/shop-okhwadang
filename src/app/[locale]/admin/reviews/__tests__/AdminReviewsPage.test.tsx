@@ -284,6 +284,19 @@ describe('AdminReviewsPage', () => {
     expect(screen.getAllByText('table.noContent')).toHaveLength(2);
   });
 
+  it('shows selected review details above the review table', async () => {
+    render(<AdminReviewsPage />);
+    await screen.findByText('아주 좋아요');
+
+    fireEvent.click(screen.getByRole('button', { name: 'actions.detail' }));
+
+    const detailTitle = await screen.findByText('detail.title:{\"id\":\"5008298806\"}');
+    const tableHeader = screen.getByText('table.product');
+    expect(
+      Boolean(detailTitle.compareDocumentPosition(tableHeader) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ).toBe(true);
+  });
+
   it('bulk hides selected reviews through the admin API', async () => {
     render(<AdminReviewsPage />);
     await screen.findByText('아주 좋아요');

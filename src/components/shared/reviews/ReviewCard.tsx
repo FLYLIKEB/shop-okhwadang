@@ -2,27 +2,37 @@
 
 import { useState, memo } from 'react';
 import Image from 'next/image';
-import { reviewsApi } from '@/lib/api';
+import { adminReviewsApi, reviewsApi } from '@/lib/api';
 import type { ReviewItem } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import StarRating from './StarRating';
 import { getClientLocale } from '@/utils/clientLocale';
 import { localMessage } from '@/utils/localMessages';
+import { handleApiError } from '@/utils/error';
+import { toast } from 'sonner';
 
 interface ReviewCardProps {
   review: ReviewItem;
+  onReplySaved?: (review: ReviewItem) => void;
 }
 
 function detectReviewSourceLocale(content: string): 'ko' | 'en' {
   return /[\u3131-\u318E\uAC00-\uD7A3]/.test(content) ? 'ko' : 'en';
 }
 
-const ReviewCardComponent = memo(function ReviewCard({ review }: ReviewCardProps) {
+const ADMIN_ROLES = new Set(['admin', 'super_admin']);
+
+const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: ReviewCardProps) {
   const locale = getClientLocale();
+  const { user } = useAuth();
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
+  const [isReplyEditorOpen, setIsReplyEditorOpen] = useState(false);
+  const [replyContent, setReplyContent] = useState(review.adminReplyContent ?? '');
+  const [isSavingReply, setIsSavingReply] = useState(false);
 
   const formattedDate = new Date(review.createdAt).toLocaleDateString(
     locale === 'en' ? 'en-US' : 'ko-KR',
@@ -34,6 +44,7 @@ const ReviewCardComponent = memo(function ReviewCard({ review }: ReviewCardProps
   );
 
   const isSmartStoreReview = review.source === 'smartstore';
+  const canManageReply = Boolean(user && ADMIN_ROLES.has(user.role));
   const content = review.content?.trim() ?? '';
   const sourceLocale = content ? detectReviewSourceLocale(content) : locale;
   const canTranslate = Boolean(content) && sourceLocale !== locale;
@@ -62,6 +73,32 @@ const ReviewCardComponent = memo(function ReviewCard({ review }: ReviewCardProps
       setTranslationError(localMessage('review.translateError'));
     } finally {
       setIsTranslating(false);
+    }
+  };
+
+  const handleSaveReply = async () => {
+    setIsSavingReply(true);
+    try {
+      const updated = await adminReviewsApi.setReply(
+        review.id,
+        replyContent,
+        undefined,
+        review.source ?? 'internal',
+      );
+      const nextReview: ReviewItem = {
+        ...review,
+        adminReplyContent: updated.adminReplyContent,
+        adminReplyAuthor: updated.adminReplyAuthor,
+        adminRepliedAt: updated.adminRepliedAt,
+      };
+      onReplySaved?.(nextReview);
+      setReplyContent(updated.adminReplyContent ?? '');
+      setIsReplyEditorOpen(false);
+      toast.success(localMessage('review.adminReplySaveSuccess'));
+    } catch (err) {
+      toast.error(handleApiError(err, localMessage('review.adminReplySaveError')));
+    } finally {
+      setIsSavingReply(false);
     }
   };
 
@@ -114,6 +151,67 @@ const ReviewCardComponent = memo(function ReviewCard({ review }: ReviewCardProps
           <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
             {review.adminReplyContent}
           </p>
+        </div>
+      )}
+
+      {canManageReply && (
+        <div className="mt-3 rounded-md border border-dashed bg-background p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="typo-label text-muted-foreground">
+                {localMessage('review.adminReplyManageTitle')}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {localMessage('review.adminReplyManageDescription')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setReplyContent(review.adminReplyContent ?? '');
+                setIsReplyEditorOpen((value) => !value);
+              }}
+              className="rounded border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+            >
+              {review.adminReplyContent
+                ? localMessage('review.adminReplyEdit')
+                : localMessage('review.adminReplyWrite')}
+            </button>
+          </div>
+          {isReplyEditorOpen && (
+            <div className="mt-3 space-y-2">
+              <textarea
+                value={replyContent}
+                onChange={(event) => setReplyContent(event.target.value)}
+                rows={3}
+                className="w-full rounded border bg-background p-3 text-sm"
+                placeholder={localMessage('review.adminReplyPlaceholder')}
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleSaveReply()}
+                  disabled={isSavingReply}
+                  className="rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                >
+                  {isSavingReply
+                    ? localMessage('review.adminReplySaving')
+                    : localMessage('review.adminReplySave')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReplyContent(review.adminReplyContent ?? '');
+                    setIsReplyEditorOpen(false);
+                  }}
+                  disabled={isSavingReply}
+                  className="rounded border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                >
+                  {localMessage('review.adminReplyCancel')}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

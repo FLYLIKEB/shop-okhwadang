@@ -4,12 +4,29 @@ import ReviewList from '../ReviewList'
 
 const mockGetByProduct = vi.fn()
 const mockTranslateContent = vi.fn()
+const mockSetReply = vi.fn()
+let mockUser: { id: number; role: string } | null = null
 
 vi.mock('@/lib/api', () => ({
   reviewsApi: {
     getByProduct: (...args: unknown[]) => mockGetByProduct(...args),
     translateContent: (...args: unknown[]) => mockTranslateContent(...args),
   },
+  adminReviewsApi: {
+    setReply: (...args: unknown[]) => mockSetReply(...args),
+  },
+}))
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: mockUser,
+    isAuthenticated: Boolean(mockUser),
+    isLoading: false,
+  }),
+}))
+
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
 }))
 
 vi.mock('next-intl', () => ({
@@ -38,6 +55,9 @@ describe('ReviewList', () => {
         content: '정말 좋아요',
         imageUrls: null,
         isVisible: true,
+        adminReplyContent: null,
+        adminReplyAuthor: null,
+        adminRepliedAt: null,
         createdAt: '2026-03-01T12:00:00Z',
       },
     ],
@@ -51,8 +71,10 @@ describe('ReviewList', () => {
 
   beforeEach(() => {
     document.documentElement.lang = 'ko'
+    mockUser = null
     mockGetByProduct.mockResolvedValue(mockResponse)
     mockTranslateContent.mockResolvedValue({ translatedText: 'Really good', sourceLocale: 'ko', targetLocale: 'en' })
+    mockSetReply.mockReset()
   })
 
   it('renders reviews after loading', async () => {
@@ -150,5 +172,44 @@ describe('ReviewList', () => {
     await waitFor(() => {
       expect(mockGetByProduct).toHaveBeenCalledWith(5, expect.objectContaining({ sort: 'rating_high' }))
     })
+  })
+
+  it('lets admins write a product-review reply inline and updates the card', async () => {
+    mockUser = { id: 1, role: 'admin' }
+    mockSetReply.mockResolvedValue({
+      id: 1,
+      source: 'internal',
+      adminReplyContent: '소중한 후기 감사합니다.',
+      adminReplyAuthor: '옥화당',
+      adminRepliedAt: '2026-07-05T00:00:00.000Z',
+    })
+
+    render(<ReviewList productId={5} />)
+
+    expect(await screen.findByText('정말 좋아요')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '답글 달기' }))
+    fireEvent.change(screen.getByPlaceholderText('고객에게 표시할 답글을 입력하세요.'), {
+      target: { value: '소중한 후기 감사합니다.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '답글 저장' }))
+
+    await waitFor(() => {
+      expect(mockSetReply).toHaveBeenCalledWith(
+        1,
+        '소중한 후기 감사합니다.',
+        undefined,
+        'internal',
+      )
+    })
+    expect(await screen.findByText('소중한 후기 감사합니다.')).toBeInTheDocument()
+  })
+
+  it('does not show admin reply controls to non-admin users', async () => {
+    mockUser = { id: 2, role: 'user' }
+
+    render(<ReviewList productId={5} />)
+
+    expect(await screen.findByText('정말 좋아요')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '답글 달기' })).not.toBeInTheDocument()
   })
 })
