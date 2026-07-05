@@ -1,5 +1,6 @@
 export const PRODUCT_LIST_CACHE_PATTERN = 'products:list:*';
 export const PRODUCT_BULK_CACHE_PATTERN = 'products:bulk:*';
+export const PRODUCT_DETAIL_CACHE_PATTERN = 'products:detail:*';
 
 export function getProductListCacheKey(query: unknown, isAdmin: boolean): string {
   const hash = Buffer.from(JSON.stringify({ ...asRecord(query), isAdmin })).toString(
@@ -8,12 +9,12 @@ export function getProductListCacheKey(query: unknown, isAdmin: boolean): string
   return `products:list:${hash}`;
 }
 
-export function getProductDetailCacheKey(id: number): string {
-  return `products:detail:${id}`;
+export function getProductDetailCacheKey(id: number, isAdmin: boolean, locale?: string): string {
+  return `products:detail:${isAdmin ? 'admin' : 'public'}:${locale ?? 'ko'}:${id}`;
 }
 
-export function getProductBulkCacheKey(ids: number[], isAdmin: boolean): string {
-  return `products:bulk:${isAdmin ? 'admin' : 'public'}:${[...ids].sort().join(',')}`;
+export function getProductBulkCacheKey(ids: number[], isAdmin: boolean, locale?: string): string {
+  return `products:bulk:${isAdmin ? 'admin' : 'public'}:${locale ?? 'ko'}:${[...ids].sort().join(',')}`;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

@@ -134,6 +134,18 @@ export default function AdminProductsPage() {
     { errorMessage: t('statusChangeError') },
   );
 
+  const { execute: toggleLocaleVisibility } = useAsyncAction(
+    async ({ product, locale }: { product: Product; locale: 'ko' | 'en' }) => {
+      const field = locale === 'ko' ? 'isVisibleKo' : 'isVisibleEn';
+      const current = field === 'isVisibleKo' ? product.isVisibleKo ?? true : product.isVisibleEn ?? false;
+      const next = !current;
+      await adminProductsApi.update(product.id, { [field]: next });
+      toast.success(t('localeVisibilityChanged', { locale: locale.toUpperCase(), status: next ? t('visible') : t('hidden') }));
+      void fetchProducts();
+    },
+    { errorMessage: t('localeVisibilityChangeError') },
+  );
+
   const { execute: deleteProduct } = useAsyncAction(
     async (product: Product) => {
       await adminProductsApi.remove(product.id);
@@ -177,6 +189,9 @@ export default function AdminProductsPage() {
   };
 
   const handleToggleStatus = (product: Product) => void toggleStatus(product);
+
+  const handleToggleLocaleVisibility = (product: Product, locale: 'ko' | 'en') =>
+    void toggleLocaleVisibility({ product, locale });
 
   const handleDelete = (product: Product) => {
     if (!window.confirm(t('deleteConfirm', { name: product.name }))) return;
@@ -482,6 +497,7 @@ export default function AdminProductsPage() {
                 <th className="px-4 py-3 text-left">{t('columns.name')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.price')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.status')}</th>
+                <th className="px-4 py-3 text-left">{t('columns.localeVisibility')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.featured')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.freeShipping')}</th>
                 <th className="px-4 py-3 text-right">{t('columns.action')}</th>
@@ -495,6 +511,20 @@ export default function AdminProductsPage() {
                   <td className="px-4 py-3">{formatCurrency(product.price)}</td>
                   <td className="px-4 py-3">
                     <ProductStatusBadge status={product.status as ProductStatus} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1" aria-label={t('localeVisibilityAria', { name: product.name })}>
+                      <LocaleVisibilityButton
+                        label={t('localeKoShort')}
+                        visible={product.isVisibleKo ?? true}
+                        onClick={() => handleToggleLocaleVisibility(product, 'ko')}
+                      />
+                      <LocaleVisibilityButton
+                        label={t('localeEnShort')}
+                        visible={product.isVisibleEn ?? false}
+                        onClick={() => handleToggleLocaleVisibility(product, 'en')}
+                      />
+                    </div>
                   </td>
                   <td className="px-4 py-3">{product.isFeatured ? '✓' : '-'}</td>
                   <td className="px-4 py-3">
@@ -535,6 +565,32 @@ export default function AdminProductsPage() {
         </div>
       </PaginatedAdminTableShell>
     </div>
+  );
+}
+
+
+function LocaleVisibilityButton({
+  label,
+  visible,
+  onClick,
+}: {
+  label: string;
+  visible: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={visible}
+      className={
+        visible
+          ? 'rounded border border-tea bg-tea px-2 py-1 typo-label font-medium text-white'
+          : 'rounded border px-2 py-1 typo-label font-medium text-muted-foreground hover:bg-secondary'
+      }
+    >
+      {label}
+    </button>
   );
 }
 

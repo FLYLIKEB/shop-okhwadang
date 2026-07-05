@@ -49,7 +49,7 @@ export class ProductsService {
     return this.productQueryService.findBulk(ids, isAdmin, locale);
   }
 
-  autocomplete(q: string): Promise<{ id: number; name: string; slug: string }[]> {
-    return this.productQueryService.autocomplete(q);
+  autocomplete(q: string, locale?: string): Promise<{ id: number; name: string; slug: string }[]> {
+    return this.productQueryService.autocomplete(q, locale);
   }
 }

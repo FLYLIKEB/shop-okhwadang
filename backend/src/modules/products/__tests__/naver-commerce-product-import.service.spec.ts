@@ -193,6 +193,8 @@ describe('NaverCommerceProductImportService', () => {
         price: 50000,
         stock: 3,
         isFreeShipping: true,
+        isVisibleKo: true,
+        isVisibleEn: false,
         description: '<p>상세</p>',
         noticeInfo: expect.objectContaining({ manufacturer: '옥화당', countryOfOrigin: '중국' }),
         options: [expect.objectContaining({ name: '용량', value: '100cc', stock: 2 })],

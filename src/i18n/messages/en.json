@@ -736,7 +736,8 @@
         "status": "Status",
         "featured": "Featured",
         "freeShipping": "Free Shipping",
-        "action": "Action"
+        "action": "Action",
+        "localeVisibility": "Locale"
       },
       "actions": {
         "hide": "Hide",
@@ -856,7 +857,14 @@
         "previewError": "Failed to validate Naver Commerce API products.",
         "commitSuccess": "Naver Commerce API products applied to the store.",
         "commitError": "Failed to apply Naver Commerce API products."
-      }
+      },
+      "localeKoShort": "KO",
+      "localeEnShort": "EN",
+      "visible": "visible",
+      "hidden": "hidden",
+      "localeVisibilityChanged": "{locale} page is now {status}.",
+      "localeVisibilityChangeError": "Failed to change locale visibility.",
+      "localeVisibilityAria": "Manage locale visibility for {name}"
     },
     "productForm": {
       "createTitle": "Add Product",
@@ -894,7 +902,10 @@
       },
       "freeShippingProduct": "Free-shipping product",
       "attributePickerHelp": "Choose an existing value like a tag, or type a new value to save it.",
-      "existingAttributeValues": "Existing attribute values"
+      "existingAttributeValues": "Existing attribute values",
+      "visibleKo": "Visible on Korean page",
+      "visibleEn": "Visible on English page",
+      "localeVisibilityHelp": "Choose whether this product appears on each locale page. Imported products are Korean-only by default."
     },
     "members": {
       "title": "Member Management",

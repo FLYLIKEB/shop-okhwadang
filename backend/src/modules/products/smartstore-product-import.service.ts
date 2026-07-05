@@ -395,6 +395,8 @@ export class SmartStoreProductImportService {
           shortDescription: this.getCell(row, headerMap.shortDescription) || undefined,
           description: description || undefined,
           isFreeShipping,
+          isVisibleKo: true,
+          isVisibleEn: false,
           noticeInfo,
           images: this.buildImages(productName, galleryUrls),
           detailImages: detailUrls.length > 0

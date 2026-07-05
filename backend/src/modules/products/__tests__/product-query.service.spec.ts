@@ -331,6 +331,14 @@ describe('ProductQueryService', () => {
       await expect(service.findOne(2, false)).rejects.toThrow(NotFoundException);
     });
 
+
+
+    it('비관리자는 현재 locale에서 숨김 처리된 상품 상세를 조회할 수 없다', async () => {
+      qb.getOne.mockResolvedValue({ id: 1, status: ProductStatus.ACTIVE, isVisibleEn: false } as Product);
+
+      await expect(service.findOne(1, false, 'en')).rejects.toThrow(NotFoundException);
+    });
+
     it('정상 조회 후 viewCount 증가는 fire-and-forget', async () => {
       qb.getOne.mockResolvedValue({ id: 1, status: ProductStatus.ACTIVE } as Product);
       reviewQb.getRawMany.mockResolvedValue([]);
@@ -415,6 +423,19 @@ describe('ProductQueryService', () => {
         'attribute.attributeType',
         'attributeType',
       );
+    });
+
+    it('비관리자 bulk 조회는 현재 locale에서 숨김 처리된 상품을 제외한다', async () => {
+      qb.getMany.mockResolvedValue([
+        { id: 1, status: ProductStatus.ACTIVE, isVisibleEn: true } as Product,
+        { id: 2, status: ProductStatus.ACTIVE, isVisibleEn: false } as Product,
+      ]);
+      reviewQb.getRawMany.mockResolvedValue([]);
+
+      const result = await service.findBulk([1, 2], false, 'en');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
     });
 
     it('비관리자 bulk cache hit 에도 hidden 상품을 반환하지 않는다', async () => {

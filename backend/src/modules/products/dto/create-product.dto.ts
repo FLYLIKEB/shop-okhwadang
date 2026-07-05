@@ -233,6 +233,16 @@ export class CreateProductDto {
   @IsBoolean({ message: '무료배송 상품 여부는 불리언이어야 합니다.' })
   isFreeShipping?: boolean;
 
+  @ApiPropertyOptional({ example: true, description: '한국어 페이지 노출 여부' })
+  @IsOptional()
+  @IsBoolean({ message: '한국어 페이지 노출 여부는 불리언이어야 합니다.' })
+  isVisibleKo?: boolean;
+
+  @ApiPropertyOptional({ example: false, description: '영어 페이지 노출 여부' })
+  @IsOptional()
+  @IsBoolean({ message: '영어 페이지 노출 여부는 불리언이어야 합니다.' })
+  isVisibleEn?: boolean;
+
   @ApiPropertyOptional({ example: 'Ockhwadang Pu-erh Tea', description: '상품명 (영문)' })
   @IsOptional()
   @IsString({ message: '영문 상품명은 문자열이어야 합니다.' })

@@ -736,7 +736,8 @@
         "status": "상태",
         "featured": "추천",
         "freeShipping": "무료배송",
-        "action": "액션"
+        "action": "액션",
+        "localeVisibility": "언어노출"
       },
       "actions": {
         "hide": "숨기기",
@@ -856,7 +857,14 @@
         "previewError": "네이버 커머스API 상품 검증에 실패했습니다.",
         "commitSuccess": "네이버 커머스API 상품을 자사몰에 반영했습니다.",
         "commitError": "네이버 커머스API 상품 반영에 실패했습니다."
-      }
+      },
+      "localeKoShort": "한",
+      "localeEnShort": "EN",
+      "visible": "노출",
+      "hidden": "숨김",
+      "localeVisibilityChanged": "{locale} 페이지가 {status} 상태로 변경되었습니다.",
+      "localeVisibilityChangeError": "언어별 노출 상태 변경에 실패했습니다.",
+      "localeVisibilityAria": "{name} 언어별 노출 관리"
     },
     "productForm": {
       "createTitle": "상품 등록",
@@ -894,7 +902,10 @@
       },
       "freeShippingProduct": "무료배송 상품",
       "attributePickerHelp": "기존 값은 태그처럼 선택하고, 없으면 직접 입력해 새 값으로 저장하세요.",
-      "existingAttributeValues": "기존 속성 값"
+      "existingAttributeValues": "기존 속성 값",
+      "visibleKo": "한국어 페이지 노출",
+      "visibleEn": "영어 페이지 노출",
+      "localeVisibilityHelp": "언어별 공개 페이지에서 이 상품을 보여줄지 선택합니다. 가져온 상품은 기본적으로 한국어만 노출됩니다."
     },
     "members": {
       "title": "회원 관리",

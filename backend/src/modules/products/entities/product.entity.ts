@@ -49,6 +49,8 @@ export interface ProductNoticeInfo {
 @Index(['status'])
 @Index(['isFeatured'])
 @Index(['isFreeShipping'])
+@Index(['isVisibleKo'])
+@Index(['isVisibleEn'])
 @Index(['reviewCount'])
 @Index(['avgRating'])
 export class Product {
@@ -127,6 +129,12 @@ export class Product {
 
   @Column({ name: 'is_free_shipping', default: false })
   isFreeShipping!: boolean;
+
+  @Column({ name: 'is_visible_ko', default: true })
+  isVisibleKo!: boolean;
+
+  @Column({ name: 'is_visible_en', default: false })
+  isVisibleEn!: boolean;
 
   @Column({ name: 'view_count', default: 0 })
   viewCount!: number;

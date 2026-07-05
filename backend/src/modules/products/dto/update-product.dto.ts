@@ -73,6 +73,16 @@ export class UpdateProductDto {
   @IsBoolean()
   isFreeShipping?: boolean;
 
+  @ApiPropertyOptional({ example: true, description: '한국어 페이지 노출 여부' })
+  @IsOptional()
+  @IsBoolean()
+  isVisibleKo?: boolean;
+
+  @ApiPropertyOptional({ example: false, description: '영어 페이지 노출 여부' })
+  @IsOptional()
+  @IsBoolean()
+  isVisibleEn?: boolean;
+
   @ApiPropertyOptional({ example: 'Ockhwadang Pu-erh Tea', description: '상품명 (영문)' })
   @IsOptional()
   @IsString()
