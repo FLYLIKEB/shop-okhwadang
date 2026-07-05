@@ -21,6 +21,7 @@ import {
 } from './product-keyword-mapping.service';
 
 export type SmartStoreImportAction = 'create' | 'update' | 'skip';
+export type SmartStoreImportStockSource = 'product_stock' | 'option_stock_total' | 'default_zero';
 
 export interface SmartStoreImportRowResult {
   rowNumber: number;
@@ -37,6 +38,9 @@ export interface SmartStoreImportRowResult {
   hasDiscount: boolean;
   isFreeShipping: boolean | null;
   hasNoticeInfo: boolean;
+  stock: number | null;
+  optionStockTotal: number | null;
+  stockSource: SmartStoreImportStockSource;
   automaticMapping: SmartStoreAutomaticMappingResult;
   mappingWarnings: string[];
   errors: string[];
@@ -67,6 +71,9 @@ export interface SmartStoreParsedProductRow {
   hasDiscount: boolean;
   isFreeShipping: boolean | null;
   hasNoticeInfo: boolean;
+  stock: number | null;
+  optionStockTotal: number | null;
+  stockSource: SmartStoreImportStockSource;
   errors: string[];
 }
 
@@ -233,6 +240,9 @@ export class SmartStoreProductImportService {
         hasDiscount: parsed.hasDiscount,
         isFreeShipping: parsed.isFreeShipping,
         hasNoticeInfo: parsed.hasNoticeInfo,
+        stock: parsed.stock,
+        optionStockTotal: parsed.optionStockTotal,
+        stockSource: parsed.stockSource,
         automaticMapping: this.toRowAutomaticMapping(keywordMapping),
         mappingWarnings: keywordMapping.warnings,
         errors,
@@ -357,13 +367,15 @@ export class SmartStoreProductImportService {
     const price = this.parseMoney(this.getCell(row, headerMap.price));
     if (price === null || price < 1) errors.push('판매가는 1원 이상이어야 합니다.');
 
-    const stock = this.parseInteger(this.getCell(row, headerMap.stock));
+    const rawStock = this.parseInteger(this.getCell(row, headerMap.stock));
     const salePrice = this.resolveSalePrice(row, headerMap, price);
     const description = this.getCell(row, headerMap.description);
     const isFreeShipping = this.parseFreeShipping(row, headerMap);
     const noticeInfo = this.buildNoticeInfo(row, headerMap, productName);
 
     const options = this.parseOptions(row, headerMap, errors);
+    const optionStockTotal = this.sumOptionStock(options);
+    const { stock, stockSource } = this.resolveImportStock(rawStock, optionStockTotal);
     const representativeImage = this.getCell(row, headerMap.representativeImage);
     const additionalImages = this.splitImageUrls(this.getCell(row, headerMap.additionalImages));
     const galleryUrls = this.collectValidImageUrls(
@@ -418,6 +430,9 @@ export class SmartStoreProductImportService {
       hasDiscount: salePrice !== undefined && price !== null && salePrice < price,
       isFreeShipping: isFreeShipping ?? null,
       hasNoticeInfo: Boolean(noticeInfo),
+      stock,
+      optionStockTotal,
+      stockSource,
       errors,
     };
   }
@@ -668,6 +683,24 @@ export class SmartStoreProductImportService {
     });
 
     return options;
+  }
+
+  private sumOptionStock(options: ProductOptionInputDto[] | undefined): number | null {
+    if (!options || options.length === 0) return null;
+    return options.reduce((sum, option) => sum + (option.stock ?? 0), 0);
+  }
+
+  private resolveImportStock(
+    rawStock: number | null,
+    optionStockTotal: number | null,
+  ): { stock: number; stockSource: SmartStoreImportStockSource } {
+    if (optionStockTotal !== null) {
+      return { stock: optionStockTotal, stockSource: 'option_stock_total' };
+    }
+    if (rawStock !== null) {
+      return { stock: rawStock, stockSource: 'product_stock' };
+    }
+    return { stock: 0, stockSource: 'default_zero' };
   }
 
   private isOptionUsable(raw: string | undefined): boolean {

@@ -93,6 +93,9 @@ const naverResult: SmartStoreProductImportResult = {
       hasDiscount: false,
       isFreeShipping: true,
       hasNoticeInfo: true,
+      stock: 10,
+      optionStockTotal: 10,
+      stockSource: 'option_stock_total',
       automaticMapping: { status: 'none', attributes: [], options: [] },
       mappingWarnings: [],
       errors: [],
@@ -137,6 +140,11 @@ describe('AdminProductsPage', () => {
     });
     expect(await screen.findByText('SKU-1')).toBeInTheDocument();
     expect(screen.getByText('네이버 상품')).toBeInTheDocument();
+    expect(screen.getByText('import.previewColumns.stock')).toBeInTheDocument();
+    expect(screen.getByText('import.previewColumns.optionStockTotal')).toBeInTheDocument();
+    expect(screen.getByText('import.previewColumns.stockSource')).toBeInTheDocument();
+    expect(screen.getByText('import.stockSources.option_stock_total')).toBeInTheDocument();
+    expect(screen.getAllByText('10')).toHaveLength(2);
 
     fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.commitButton' }));
 

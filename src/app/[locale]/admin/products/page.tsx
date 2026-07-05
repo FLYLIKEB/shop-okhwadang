@@ -392,6 +392,15 @@ export default function AdminProductsPage() {
                         <th className="px-3 py-2 text-left">
                           {t('import.previewColumns.noticeInfo')}
                         </th>
+                        <th className="px-3 py-2 text-right">
+                          {t('import.previewColumns.stock')}
+                        </th>
+                        <th className="px-3 py-2 text-right">
+                          {t('import.previewColumns.optionStockTotal')}
+                        </th>
+                        <th className="px-3 py-2 text-left">
+                          {t('import.previewColumns.stockSource')}
+                        </th>
                         <th className="px-3 py-2 text-left">
                           {t('import.previewColumns.automaticMapping')}
                         </th>
@@ -449,6 +458,15 @@ export default function AdminProductsPage() {
                             {row.hasNoticeInfo
                               ? t('import.previewValues.yes')
                               : t('import.previewValues.no')}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {row.stock == null ? '-' : row.stock}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {row.optionStockTotal == null ? '-' : row.optionStockTotal}
+                          </td>
+                          <td className="px-3 py-2">
+                            {t(`import.stockSources.${row.stockSource}`)}
                           </td>
                           <td className="min-w-56 px-3 py-2">
                             <ImportMappingSummary row={row} t={t} />

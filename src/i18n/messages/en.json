@@ -800,6 +800,9 @@
           "discount": "Discount",
           "freeShipping": "Free shipping",
           "noticeInfo": "Notice info",
+          "stock": "Product stock",
+          "optionStockTotal": "Option stock total",
+          "stockSource": "Stock source",
           "matchedProduct": "Matched product",
           "automaticMapping": "Auto mapping"
         },
@@ -844,6 +847,11 @@
         "noticeInfoTypes": {
           "teaware": "Teaware",
           "tea": "Tea"
+        },
+        "stockSources": {
+          "product_stock": "Product stock source",
+          "option_stock_total": "Option stock total",
+          "default_zero": "Default 0"
         }
       },
       "naverCommerce": {

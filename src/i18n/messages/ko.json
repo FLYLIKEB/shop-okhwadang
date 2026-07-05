@@ -800,6 +800,9 @@
           "discount": "할인 반영",
           "freeShipping": "무료배송",
           "noticeInfo": "고시정보",
+          "stock": "상품 재고",
+          "optionStockTotal": "옵션 재고 합계",
+          "stockSource": "재고 출처",
           "matchedProduct": "연결 상품",
           "automaticMapping": "자동 매핑"
         },
@@ -844,6 +847,11 @@
         "noticeInfoTypes": {
           "teaware": "다구",
           "tea": "차류"
+        },
+        "stockSources": {
+          "product_stock": "상품 재고 원본",
+          "option_stock_total": "옵션 재고 합계",
+          "default_zero": "기본값 0"
         }
       },
       "naverCommerce": {
