@@ -83,6 +83,7 @@ function createService(
     repository,
     commandService,
     ingestService,
+    attributesService,
   };
 }
 
@@ -170,7 +171,10 @@ describe('NaverCommerceProductImportService', () => {
 
   it('commits only SKU-matched Naver products and never creates unmatched API rows', async () => {
     const existing = { id: 7, sku: 'SKU-1', slug: 'old-product' } as Product;
-    const { service, commandService, ingestService } = createService(NAVER_PRODUCTS, [existing]);
+    const { service, commandService, ingestService, attributesService } = createService(
+      NAVER_PRODUCTS,
+      [existing],
+    );
 
     const result = await service.commit();
 
@@ -205,6 +209,21 @@ describe('NaverCommerceProductImportService', () => {
       }),
     );
     expect(commandService.create).not.toHaveBeenCalled();
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(
+      7,
+      10,
+      expect.objectContaining({ value: 'old_duanni', displayValue: '노단니' }),
+    );
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(
+      7,
+      11,
+      expect.objectContaining({ value: 'lianzi', displayValue: '연자호' }),
+    );
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(
+      7,
+      12,
+      expect.objectContaining({ value: '110cc', displayValue: '110cc' }),
+    );
     expect(ingestService.ingest).toHaveBeenCalledTimes(2);
   });
 
@@ -238,6 +257,56 @@ describe('NaverCommerceProductImportService', () => {
       expect.objectContaining({ sku: 'naver-2001' }),
     );
     expect(commandService.create).not.toHaveBeenCalled();
+  });
+
+  it('uses seller management code from Naver origin detail attributes so keyword attributes apply to matched products', async () => {
+    const existing = {
+      id: 9,
+      sku: 'SELLER-DETAIL-1',
+      slug: 'detail-seller-code-product',
+    } as Product;
+    const fetchedProducts: NaverCommerceFetchedProduct[] = [
+      {
+        rowNumber: 1,
+        listProduct: { originProductNo: 3001 },
+        detailProduct: {
+          originProduct: {
+            name: '옥화당 자사호 노단니 연자호 120cc',
+            salePrice: 88000,
+            stockQuantity: 2,
+            detailAttribute: {
+              sellerCodeInfo: { sellerManagementCode: 'SELLER-DETAIL-1' },
+            },
+          },
+        },
+      },
+    ];
+    const { service, commandService, attributesService } = createService(fetchedProducts, [
+      existing,
+    ]);
+
+    const result = await service.commit();
+
+    expect(result.rows[0]).toMatchObject({
+      identifier: 'SELLER-DETAIL-1',
+      action: 'update',
+      productId: 9,
+      status: 'success',
+    });
+    expect(commandService.update).toHaveBeenCalledWith(
+      9,
+      expect.objectContaining({ sku: 'SELLER-DETAIL-1' }),
+    );
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(
+      9,
+      10,
+      expect.objectContaining({ value: 'old_duanni', displayValue: '노단니' }),
+    );
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(
+      9,
+      11,
+      expect.objectContaining({ value: 'lianzi', displayValue: '연자호' }),
+    );
   });
 
   it('marks product detail failures as row-level failures while keeping other rows processable', async () => {
