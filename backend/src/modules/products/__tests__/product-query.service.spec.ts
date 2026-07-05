@@ -129,7 +129,26 @@ describe('ProductQueryService', () => {
 
       const result = await service.findAll({});
 
-      expect(result).toBe(cached);
+      expect(result).toEqual(cached);
+      expect(productRepo.createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it('비관리자 cache hit 도 현재 locale 숨김 상품을 제외한다', async () => {
+      cacheService.get.mockResolvedValue({
+        items: [
+          { id: 1, status: ProductStatus.ACTIVE, isVisibleEn: true } as Product,
+          { id: 2, status: ProductStatus.ACTIVE, isVisibleEn: false } as Product,
+          { id: 3, status: ProductStatus.HIDDEN, isVisibleEn: true } as Product,
+        ],
+        total: 3,
+        page: 1,
+        limit: 20,
+      });
+
+      const result = await service.findAll({ locale: 'en' }, false);
+
+      expect(result.items.map((item) => item.id)).toEqual([1]);
+      expect(result.total).toBe(1);
       expect(productRepo.createQueryBuilder).not.toHaveBeenCalled();
     });
   });
@@ -273,17 +292,17 @@ describe('ProductQueryService', () => {
       qb.getMany.mockResolvedValue([{ id: 1, code: 'clay_type' } as AttributeType]);
       qb.getManyAndCount.mockResolvedValue([[], 0]);
 
-      await service.findAll({ attrs: 'clay_type:junni' });
+      await service.findAll({ attrs: 'clay_type:zhuni' });
 
       expect(qb.innerJoin).toHaveBeenCalledWith(
         'product.attributes',
         'pa_0',
         'pa_0.attributeTypeId = :typeId0 AND pa_0.value IN (:...attrValues0)',
-        { typeId0: 1, attrValues0: ['junni', 'zhuni', 'hongwei_zhuni'] },
+        { typeId0: 1, attrValues0: ['zhuni'] },
       );
     });
 
-    it('한국어 attrs 라벨을 같은 의미의 코드값 목록으로 정규화한다', async () => {
+    it('한국어 attrs 라벨도 코드 하드코딩 없이 전달값 그대로 필터링한다', async () => {
       qb.getMany.mockResolvedValue([{ id: 1, code: 'clay_type' } as AttributeType]);
       qb.getManyAndCount.mockResolvedValue([[], 0]);
 
@@ -293,7 +312,7 @@ describe('ProductQueryService', () => {
         'product.attributes',
         'pa_0',
         'pa_0.attributeTypeId = :typeId0 AND pa_0.value IN (:...attrValues0)',
-        { typeId0: 1, attrValues0: ['junni', 'zhuni', 'hongwei_zhuni'] },
+        { typeId0: 1, attrValues0: ['주니'] },
       );
     });
 

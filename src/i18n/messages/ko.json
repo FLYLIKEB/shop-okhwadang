@@ -1193,7 +1193,11 @@
       "saveError": "속성을 저장하지 못했습니다.",
       "deleteSuccess": "속성을 삭제했습니다.",
       "deleteError": "속성을 삭제하지 못했습니다.",
-      "empty": "등록된 속성이 없습니다."
+      "empty": "등록된 속성이 없습니다.",
+      "addValidValue": "허용값 추가",
+      "validValuePlaceholder": "허용값을 입력하고 Enter",
+      "noValidValues": "허용값 없음",
+      "removeValidValue": "{value} 제거"
     },
     "imageUpload": {
       "label": "이미지",

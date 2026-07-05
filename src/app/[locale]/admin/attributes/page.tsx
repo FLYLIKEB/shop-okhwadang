@@ -76,6 +76,7 @@ export default function AdminAttributesPage() {
   const { isAdmin } = useAdminGuard();
   const [attributes, setAttributes] = useState<AttributeType[]>([]);
   const [form, setForm] = useState<AttributeFormState>(emptyForm);
+  const [validValueDraft, setValidValueDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -102,6 +103,23 @@ export default function AdminAttributesPage() {
 
   const updateForm = <K extends keyof AttributeFormState>(key: K, value: AttributeFormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const validValueTags = useMemo(() => parseStringList(form.validValues), [form.validValues]);
+
+  const setValidValueTags = (values: string[]) => {
+    updateForm('validValues', Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).join('\n'));
+  };
+
+  const addValidValueDraft = () => {
+    const values = parseStringList(validValueDraft);
+    if (values.length === 0) return;
+    setValidValueTags([...validValueTags, ...values]);
+    setValidValueDraft('');
+  };
+
+  const removeValidValue = (value: string) => {
+    setValidValueTags(validValueTags.filter((item) => item !== value));
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -213,15 +231,54 @@ export default function AdminAttributesPage() {
             className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
           />
         </label>
-        <label className="space-y-1 md:col-span-2">
+        <div className="space-y-2 md:col-span-2">
           <span className="typo-label text-muted-foreground">{t('validValues')}</span>
-          <textarea
-            value={form.validValues}
-            onChange={(event) => updateForm('validValues', event.target.value)}
-            rows={3}
-            className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
-          />
-        </label>
+          <div className="flex flex-wrap gap-2 rounded border bg-background p-2">
+            {validValueTags.map((value) => (
+              <span
+                key={value}
+                className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 typo-label text-secondary-foreground"
+              >
+                {value}
+                <button
+                  type="button"
+                  onClick={() => removeValidValue(value)}
+                  aria-label={t('removeValidValue', { value })}
+                  className="rounded-full px-1 text-muted-foreground hover:text-destructive"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            {validValueTags.length === 0 && (
+              <span className="px-1 py-1 typo-body-sm text-muted-foreground">
+                {t('noValidValues')}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <input
+              aria-label={t('validValues')}
+              value={validValueDraft}
+              onChange={(event) => setValidValueDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  addValidValueDraft();
+                }
+              }}
+              placeholder={t('validValuePlaceholder')}
+              className="min-w-0 flex-1 rounded border bg-background px-3 py-2 typo-body-sm"
+            />
+            <button
+              type="button"
+              onClick={addValidValueDraft}
+              className="rounded border px-3 py-2 typo-body-sm hover:bg-secondary"
+            >
+              {t('addValidValue')}
+            </button>
+          </div>
+        </div>
         <label className="space-y-1">
           <span className="typo-label text-muted-foreground">{t('sortOrder')}</span>
           <input

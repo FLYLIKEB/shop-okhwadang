@@ -52,11 +52,11 @@ describe('SEO', () => {
       expect(urls).toContain('https://ockhwadang.com/en/products');
     });
 
-    it('includes product routes', async () => {
-      mockFetchProducts.mockResolvedValue({
+    it('includes product routes from each locale-specific product list', async () => {
+      mockFetchProducts.mockImplementation(({ locale }: { locale: string }) => Promise.resolve({
         items: [
           {
-            id: 1,
+            id: locale === 'ko' ? 1 : 2,
             name: 'Test Product',
             slug: 'test',
             price: 10000,
@@ -74,11 +74,14 @@ describe('SEO', () => {
         total: 1,
         page: 1,
         limit: 1000,
-      });
+      }));
       const result = await sitemap();
       const urls = result.map((r) => r.url);
+      expect(mockFetchProducts).toHaveBeenCalledWith({ limit: 1000, locale: 'ko' });
+      expect(mockFetchProducts).toHaveBeenCalledWith({ limit: 1000, locale: 'en' });
       expect(urls).toContain('https://ockhwadang.com/ko/products/1');
-      expect(urls).toContain('https://ockhwadang.com/en/products/1');
+      expect(urls).toContain('https://ockhwadang.com/en/products/2');
+      expect(urls).not.toContain('https://ockhwadang.com/en/products/1');
     });
 
     it('returns only static routes when fetchProducts fails', async () => {
