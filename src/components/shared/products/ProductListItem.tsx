@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
@@ -44,6 +44,7 @@ function ProductListItem({
   return (
     <Link
       href={`/products/${id}`}
+      locale={locale}
       className={cn(
         'group flex gap-4 overflow-hidden rounded-lg border border-border bg-card p-3 transition-shadow hover:shadow-md',
         isSoldout && 'opacity-75',

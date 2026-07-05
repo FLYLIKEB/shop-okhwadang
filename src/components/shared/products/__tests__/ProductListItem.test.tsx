@@ -10,6 +10,14 @@ vi.mock('next-intl', () => ({
     }[key] ?? key),
 }));
 
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, locale, children, ...props }: { href: string; locale?: string; children: React.ReactNode }) => (
+    <a href={locale ? `/${locale}${href}` : href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 const images: ProductImage[] = [{ id: 1, url: 'https://example.com/a.jpg', sortOrder: 0 } as ProductImage];
 
 function renderItem(overrides: Partial<React.ComponentProps<typeof ProductListItem>> = {}) {
@@ -25,6 +33,20 @@ function renderItem(overrides: Partial<React.ComponentProps<typeof ProductListIt
     />,
   );
 }
+
+describe('ProductListItem locale-aware navigation', () => {
+  it('links to the English product detail route when locale is en', () => {
+    renderItem({ locale: 'en' });
+
+    expect(screen.getByRole('link', { name: /자사호/ })).toHaveAttribute('href', '/en/products/1');
+  });
+
+  it('links to the Korean product detail route when locale is ko', () => {
+    renderItem({ locale: 'ko' });
+
+    expect(screen.getByRole('link', { name: /자사호/ })).toHaveAttribute('href', '/ko/products/1');
+  });
+});
 
 describe('ProductListItem free-shipping badge', () => {
   it('renders the free-shipping badge when isFreeShipping is true', () => {
