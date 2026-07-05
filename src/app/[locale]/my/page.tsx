@@ -10,6 +10,7 @@ import type { OrderResponse } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { formatCurrency, type Locale } from '@/utils/currency';
+import { formatDate } from '@/utils/date';
 import { handleApiError } from '@/utils/error';
 import {
   Package,
@@ -138,7 +139,7 @@ export default function MyPage() {
                       {order.items.length > 1 &&
                         t('additionalItems', { count: order.items.length - 1 })}
                       {' · '}
-                      {new Date(order.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
+                      {formatDate(order.createdAt, locale)}
                     </p>
                   </div>
                   <div className="text-right shrink-0 ml-4">

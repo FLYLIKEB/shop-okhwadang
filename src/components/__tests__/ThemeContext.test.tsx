@@ -1,7 +1,7 @@
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { ReactNode } from 'react';
-import { ThemeProvider, useTheme, THEME_STORAGE_KEY } from '@/contexts/ThemeContext';
+import { ThemeProvider, useTheme, THEME_STORAGE_KEY, getInitialTheme } from '@/contexts/ThemeContext';
 
 function ThemeDisplay() {
   const { theme, setTheme, toggleTheme } = useTheme();
@@ -45,14 +45,21 @@ describe('ThemeContext', () => {
     expect(document.documentElement.dataset.theme).toBe('light');
   });
 
-  it('ko 로케일은 localStorage 값을 반영한다', () => {
+  it('첫 렌더에서는 localStorage 값보다 로케일 기본값을 사용한다', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+
+    expect(getInitialTheme('ko')).toBe('dark');
+  });
+
+  it('ko 로케일은 hydration 이후 localStorage 값을 반영한다', async () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'light');
     render(
       <ThemeProvider locale="ko">
         <ThemeDisplay />
       </ThemeProvider>,
     );
-    expect(screen.getByTestId('theme').textContent).toBe('light');
+
+    expect(await screen.findByText('light')).toBeInTheDocument();
   });
 
   it('en 로케일은 localStorage에 dark가 있어도 light로 고정된다', () => {
