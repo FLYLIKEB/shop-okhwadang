@@ -882,7 +882,9 @@
         "slugRequired": "Please enter a slug.",
         "priceRequired": "Please enter a valid price."
       },
-      "freeShippingProduct": "Free-shipping product"
+      "freeShippingProduct": "Free-shipping product",
+      "attributePickerHelp": "Choose an existing value like a tag, or type a new value to save it.",
+      "existingAttributeValues": "Existing attribute values"
     },
     "members": {
       "title": "Member Management",
