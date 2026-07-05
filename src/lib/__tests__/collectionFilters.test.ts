@@ -21,17 +21,17 @@ describe('getCollectionFilterValue', () => {
   });
 
   it('falls back to collection.name when productUrl has no matching attrs value', () => {
-    expect(getCollectionFilterValue({ ...baseCollection, productUrl: '/products?categoryId=1' }, 'clay_type')).toBe('jani');
+    expect(getCollectionFilterValue({ ...baseCollection, productUrl: '/products?categoryId=1' }, 'clay_type')).toBe('자니');
   });
 
-  it('falls back from Korean shape labels to canonical attrs values', () => {
+  it('does not hardcode Korean shape labels when DB productUrl lacks attrs', () => {
     expect(getCollectionFilterValue({
       ...baseCollection,
       type: CollectionType.SHAPE,
       name: '인왕',
       nameKo: '인왕',
       productUrl: '/products?categoryId=20',
-    }, 'teapot_shape')).toBe('inwang');
+    }, 'teapot_shape')).toBe('인왕');
   });
 
 });

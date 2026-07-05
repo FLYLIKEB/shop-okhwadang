@@ -24,14 +24,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   try {
-    const result = await fetchProducts({ limit: 1000 });
-    const productRoutes: MetadataRoute.Sitemap = result.items.flatMap((p) =>
-      locales.map((locale) => ({
+    const productsByLocale = await Promise.all(
+      locales.map(async (locale) => ({
+        locale,
+        result: await fetchProducts({ limit: 1000, locale }),
+      })),
+    );
+    const productRoutes: MetadataRoute.Sitemap = productsByLocale.flatMap(({ locale, result }) =>
+      result.items.map((p) => ({
         url: `${SITE_URL}/${locale}/products/${p.id}`,
         lastModified: now,
         changeFrequency: 'weekly' as const,
         priority: 0.8,
-      }))
+      })),
     );
     return [...staticRoutes, ...productRoutes];
   } catch {

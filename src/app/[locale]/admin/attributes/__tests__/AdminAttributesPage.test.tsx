@@ -74,11 +74,18 @@ describe('AdminAttributesPage', () => {
     expect(await screen.findByText('clay_type')).toBeInTheDocument();
     expect(screen.getByText('clay_origin')).toBeInTheDocument();
 
+    fireEvent.click(screen.getByText('clay_type'));
+    expect(screen.getByText('zhuni')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'removeValidValue' })[0]);
+    expect(screen.queryByText('zhuni')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'create' }));
+
     fireEvent.change(screen.getByLabelText('code'), { target: { value: 'capacity' } });
     fireEvent.change(screen.getByLabelText('name'), { target: { value: '용량' } });
     fireEvent.change(screen.getByLabelText('nameEn'), { target: { value: 'Capacity' } });
     fireEvent.change(screen.getByLabelText('related'), { target: { value: '1, 2' } });
-    fireEvent.change(screen.getByLabelText('validValues'), { target: { value: '100ml\n150ml' } });
+    fireEvent.change(screen.getByLabelText('validValues'), { target: { value: '100ml, 150ml' } });
+    fireEvent.click(screen.getByRole('button', { name: 'addValidValue' }));
     fireEvent.click(screen.getByLabelText('filterable'));
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 

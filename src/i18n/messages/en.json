@@ -1193,7 +1193,11 @@
       "saveError": "Failed to save attribute.",
       "deleteSuccess": "Attribute deleted.",
       "deleteError": "Failed to delete attribute.",
-      "empty": "No attributes yet."
+      "empty": "No attributes yet.",
+      "addValidValue": "Add value",
+      "validValuePlaceholder": "Type a value and press Enter",
+      "noValidValues": "No valid values",
+      "removeValidValue": "Remove {value}"
     },
     "imageUpload": {
       "label": "Image",

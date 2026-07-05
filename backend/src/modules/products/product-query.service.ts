@@ -28,74 +28,6 @@ import {
 const CACHE_TTL_LIST = 300;
 const CACHE_TTL_DETAIL = 600;
 
-const ATTRIBUTE_FILTER_ALIASES: Record<string, Record<string, string[]>> = {
-  clay_type: {
-    주니: ['junni', 'zhuni', 'hongwei_zhuni'],
-    junni: ['junni', 'zhuni', 'hongwei_zhuni'],
-    zhuni: ['junni', 'zhuni', 'hongwei_zhuni'],
-    단니: ['danji', 'duanni', 'old_duanni'],
-    danji: ['danji', 'duanni', 'old_duanni'],
-    duanni: ['danji', 'duanni', 'old_duanni'],
-    자니: ['jani', 'zini', 'old_zini'],
-    jani: ['jani', 'zini', 'old_zini'],
-    zini: ['jani', 'zini', 'old_zini'],
-    흑니: ['heugni', 'heini'],
-    heugni: ['heugni', 'heini'],
-    heini: ['heugni', 'heini'],
-    청수니: ['cheongsu', 'qingshuini', 'old_qingshuini'],
-    cheongsu: ['cheongsu', 'qingshuini', 'old_qingshuini'],
-    qingshuini: ['cheongsu', 'qingshuini', 'old_qingshuini'],
-    녹니: ['nokni', 'luni', 'benshan_luni'],
-    nokni: ['nokni', 'luni', 'benshan_luni'],
-    luni: ['nokni', 'luni', 'benshan_luni'],
-    홍위주니: ['hongwei_zhuni'],
-    본산녹니: ['benshan_luni'],
-    노청수니: ['old_qingshuini'],
-    노단니: ['old_duanni'],
-    철성조홍니: ['tiechengzao_hongni'],
-    노자니: ['old_zini'],
-    저조청: ['dicaoqing'],
-    청회니: ['qinghuini'],
-    강파니: ['jiangponi'],
-    옥백니: ['yubaini'],
-    홍니: ['hongni', 'tiechengzao_hongni'],
-    자사: ['jani', 'zini', 'old_zini'],
-  },
-  teapot_shape: {
-    서시: ['seoshi', 'xishi'],
-    seoshi: ['seoshi', 'xishi'],
-    xishi: ['seoshi', 'xishi'],
-    석표: ['seokpyo', 'shipiao'],
-    seokpyo: ['seokpyo', 'shipiao'],
-    shipiao: ['seokpyo', 'shipiao'],
-    주형: ['juhu', 'zhuxing'],
-    juhu: ['juhu', 'zhuxing'],
-    zhuxing: ['juhu', 'zhuxing'],
-    편평: ['bianping'],
-    인왕: ['inwang'],
-    덕종: ['deokjong'],
-    수평: ['supeong', 'shuiping'],
-    supeong: ['supeong', 'shuiping'],
-    shuiping: ['supeong', 'shuiping'],
-    연자호: ['lianzi'],
-    평개연자호: ['pinggai_lianzi'],
-    서시호: ['xishi', 'seoshi'],
-    석표호: ['shipiao', 'seokpyo'],
-    방고호: ['fanggu'],
-    용단호: ['longdan'],
-    반월호: ['banyue'],
-    허편: ['xubian'],
-    한와호: ['hanwa'],
-    철구호: ['tieqiu'],
-    반호: ['banhu'],
-    거륜주: ['julunzhu'],
-    이형호: ['yixing'],
-  },
-};
-
-function uniqueValues(values: string[]): string[] {
-  return Array.from(new Set(values));
-}
 
 @Injectable()
 export class ProductQueryService {
@@ -124,6 +56,8 @@ export class ProductQueryService {
     page: number;
     limit: number;
   }> {
+    const { page = 1, limit = 20, sort = ProductSort.LATEST, q, status, locale } =
+      query;
     const cacheKey = getProductListCacheKey(query, isAdmin);
     const cached = await this.cacheService.get<{
       items: (Product & { rating: number; reviewCount: number })[];
@@ -133,11 +67,13 @@ export class ProductQueryService {
     }>(cacheKey);
 
     if (cached) {
-      return cached;
+      if (isAdmin) return cached;
+      const normalizedLocale = this.normalizeLocale(locale);
+      const items = this.filterVisibleForPublic(cached.items, false, normalizedLocale).map((product) =>
+        this.applyLocale(product, normalizedLocale),
+      ) as (Product & { rating: number; reviewCount: number })[];
+      return { ...cached, items, total: items.length };
     }
-
-    const { page = 1, limit = 20, sort = ProductSort.LATEST, q, status, locale } =
-      query;
 
     if (
       query.price_min !== undefined &&
@@ -641,9 +577,7 @@ export class ProductQueryService {
       if (code && value) {
         const normalizedCode = code.trim();
         const normalizedValue = decodeURIComponent(value.trim());
-        const aliases =
-          ATTRIBUTE_FILTER_ALIASES[normalizedCode]?.[normalizedValue] ?? [normalizedValue];
-        result.set(normalizedCode, uniqueValues(aliases));
+        result.set(normalizedCode, [normalizedValue]);
       }
     }
     return result;
