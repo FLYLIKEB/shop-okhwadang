@@ -141,7 +141,10 @@ describe('ProductFormPage', () => {
           isActive: true,
         },
       ]);
-      vi.mocked(attributesApi.getTypeValues).mockResolvedValue(['zhuni', 'duanni']);
+      vi.mocked(attributesApi.getTypeValues).mockResolvedValue([
+        { value: 'zhuni', displayValue: '주니' },
+        { value: 'duanni', displayValue: '단니' },
+      ]);
       vi.mocked(adminProductsApi.create).mockResolvedValue({
         id: 1,
         name: '테스트 상품',
@@ -169,7 +172,8 @@ describe('ProductFormPage', () => {
       await waitFor(() => expect(attributesApi.getTypeValues).toHaveBeenCalledWith('clay_type'));
       fireEvent.click(screen.getByText('+ 속성 추가'));
       fireEvent.change(screen.getByDisplayValue('선택'), { target: { value: '1' } });
-      fireEvent.click(screen.getByText('duanni'));
+      expect(screen.getByText('주니 (zhuni)')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('단니 (duanni)'));
 
       fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), {
         target: { value: '테스트 상품' },
@@ -187,7 +191,7 @@ describe('ProductFormPage', () => {
             {
               attributeTypeId: 1,
               value: 'duanni',
-              displayValue: 'duanni',
+              displayValue: '단니',
               sortOrder: 0,
             },
           ],

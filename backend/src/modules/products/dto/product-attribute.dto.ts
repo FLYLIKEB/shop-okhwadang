@@ -1,6 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsArray, Min, MaxLength } from 'class-validator';
 
+export interface AttributeValueOption {
+  value: string;
+  displayValue: string | null;
+}
+
 export class CreateProductAttributeDto {
   @ApiProperty({ example: 1 })
   @IsNumber()

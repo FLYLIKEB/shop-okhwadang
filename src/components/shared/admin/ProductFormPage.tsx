@@ -6,7 +6,13 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { adminCategoriesApi, adminProductsApi, attributesApi } from '@/lib/api';
-import type { AdminCategory, AttributeType, ProductDetail, ProductNoticeInfo } from '@/lib/api';
+import type {
+  AdminCategory,
+  AttributeType,
+  AttributeValueOption,
+  ProductDetail,
+  ProductNoticeInfo,
+} from '@/lib/api';
 import MultiImageUploader from './MultiImageUploader';
 import ProductOptionsEditor, { type ProductOptionDraft } from './ProductOptionsEditor';
 import { CheckboxField, SelectField, TextAreaField, TextField } from './FormField';
@@ -119,15 +125,46 @@ function buildNoticeInfoPayload(
   ) as ProductNoticeInfo;
 }
 
-function uniqueAttributeValues(values: Array<string | null | undefined>): string[] {
-  return Array.from(
-    new Set(values.map((value) => value?.trim() ?? '').filter((value) => value.length > 0)),
-  );
+interface ProductAttributeValueOption {
+  value: string;
+  displayValue: string | null;
+}
+
+function normalizeAttributeValueOption(
+  option: string | AttributeValueOption,
+): ProductAttributeValueOption {
+  if (typeof option === 'string') {
+    return { value: option.trim(), displayValue: null };
+  }
+  return {
+    value: option.value.trim(),
+    displayValue: option.displayValue?.trim() || null,
+  };
+}
+
+function uniqueAttributeValueOptions(
+  options: Array<string | AttributeValueOption>,
+): ProductAttributeValueOption[] {
+  const byValue = new Map<string, ProductAttributeValueOption>();
+  for (const option of options) {
+    const normalized = normalizeAttributeValueOption(option);
+    if (!normalized.value) continue;
+    const existing = byValue.get(normalized.value);
+    if (!existing || (!existing.displayValue && normalized.displayValue)) {
+      byValue.set(normalized.value, normalized);
+    }
+  }
+  return Array.from(byValue.values());
+}
+
+function formatAttributeValueLabel(option: ProductAttributeValueOption): string {
+  if (!option.displayValue || option.displayValue === option.value) return option.value;
+  return `${option.displayValue} (${option.value})`;
 }
 
 async function loadAttributeValueOptions(
   attributeTypes: AttributeType[],
-): Promise<Record<string, string[]>> {
+): Promise<Record<string, ProductAttributeValueOption[]>> {
   const settledValues = await Promise.allSettled(
     attributeTypes.map((type) => attributesApi.getTypeValues(type.code)),
   );
@@ -138,7 +175,7 @@ async function loadAttributeValueOptions(
       const existingValues = remoteValues?.status === 'fulfilled' ? remoteValues.value : [];
       return [
         String(type.id),
-        uniqueAttributeValues([...(type.validValues ?? []), ...existingValues]),
+        uniqueAttributeValueOptions([...(type.validValues ?? []), ...existingValues]),
       ] as const;
     }),
   );
@@ -423,7 +460,7 @@ function ProductAttributesSection({
 }: {
   attributes: ProductAttributeDraft[];
   attributeTypes: AttributeType[];
-  attributeValueOptions: Record<string, string[]>;
+  attributeValueOptions: Record<string, ProductAttributeValueOption[]>;
   set: Setter;
 }) {
   const t = useTranslations('admin.productForm');
@@ -439,15 +476,15 @@ function ProductAttributesSection({
     );
   };
 
-  const selectExistingValue = (index: number, value: string) => {
+  const selectExistingValue = (index: number, option: ProductAttributeValueOption) => {
     set(
       'attributes',
       attributes.map((attr, i) => {
         if (i !== index) return attr;
         return {
           ...attr,
-          value,
-          displayValue: value,
+          value: option.value,
+          displayValue: option.displayValue ?? option.value,
         };
       }),
     );
@@ -513,13 +550,14 @@ function ProductAttributesSection({
                   {t('existingAttributeValues')}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {existingValues.map((value) => {
-                    const selected = attribute.value === value;
+                  {existingValues.map((option) => {
+                    const selected = attribute.value === option.value;
+                    const label = formatAttributeValueLabel(option);
                     return (
                       <button
-                        key={value}
+                        key={option.value}
                         type="button"
-                        onClick={() => selectExistingValue(index, value)}
+                        onClick={() => selectExistingValue(index, option)}
                         className={
                           selected
                             ? 'rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground'
@@ -527,7 +565,7 @@ function ProductAttributesSection({
                         }
                         aria-pressed={selected}
                       >
-                        {value}
+                        {label}
                       </button>
                     );
                   })}
@@ -546,7 +584,9 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [attributeTypes, setAttributeTypes] = useState<AttributeType[]>([]);
-  const [attributeValueOptions, setAttributeValueOptions] = useState<Record<string, string[]>>({});
+  const [attributeValueOptions, setAttributeValueOptions] = useState<
+    Record<string, ProductAttributeValueOption[]>
+  >({});
   const hadNoticeInfo = product?.noticeInfo != null;
   const [form, setForm] = useState<ProductFormData>({
     categoryId: product?.category?.id != null ? String(product.category.id) : '',
