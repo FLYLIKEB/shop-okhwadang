@@ -481,6 +481,55 @@ describe('SmartStoreProductImportService', () => {
       }));
     });
 
+    it('derives product stock from option stocks when the SmartStore product stock cell is blank', async () => {
+      const repository = createRepositoryMock([]);
+      const commandService = createCommandServiceMock();
+      const service = createService(repository, commandService);
+      const buffer = await createWorkbookBuffer([
+        ['판매자상품코드', '상품명', '판매가', '재고수량', '옵션형태', '옵션명', '옵션값', '옵션 재고수량'],
+        ['SKU-1', '옵션 재고 합산 상품', 10000, '', '단독형', '용량', '100cc,200cc', '5,7'],
+      ]);
+
+      const result = await service.commit(createFile(buffer));
+
+      expect(result.rows[0]).toMatchObject({
+        stock: 12,
+        optionStockTotal: 12,
+        stockSource: 'option_stock_total',
+      });
+      expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+        stock: 12,
+        status: ProductStatus.ACTIVE,
+        options: [
+          expect.objectContaining({ value: '100cc', stock: 5 }),
+          expect.objectContaining({ value: '200cc', stock: 7 }),
+        ],
+      }));
+    });
+
+
+    it('uses option stock total for option products even when SmartStore product stock is zero', async () => {
+      const repository = createRepositoryMock([]);
+      const commandService = createCommandServiceMock();
+      const service = createService(repository, commandService);
+      const buffer = await createWorkbookBuffer([
+        ['판매자상품코드', '상품명', '판매가', '재고수량', '옵션형태', '옵션명', '옵션값', '옵션 재고수량'],
+        ['SKU-1', '옵션 재고 우선 상품', 10000, 0, '단독형', '용량', '100cc,200cc', '5,7'],
+      ]);
+
+      const result = await service.commit(createFile(buffer));
+
+      expect(result.rows[0]).toMatchObject({
+        stock: 12,
+        optionStockTotal: 12,
+        stockSource: 'option_stock_total',
+      });
+      expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+        stock: 12,
+        status: ProductStatus.ACTIVE,
+      }));
+    });
+
     it('keeps option price and stock alignment when optional cells contain blanks', async () => {
       const repository = createRepositoryMock([]);
       const commandService = createCommandServiceMock();

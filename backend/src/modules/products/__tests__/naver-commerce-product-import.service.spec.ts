@@ -95,7 +95,7 @@ const NAVER_PRODUCTS: NaverCommerceFetchedProduct[] = [
       originProduct: {
         name: '옥화당 자사호 황룡산 노단니 연자호 110cc',
         salePrice: 50000,
-        stockQuantity: 3,
+        stockQuantity: 0,
         statusType: 'SALE',
         detailContent: '<p>상세</p>',
         images: {
@@ -191,7 +191,7 @@ describe('NaverCommerceProductImportService', () => {
         name: '옥화당 자사호 황룡산 노단니 연자호 110cc',
         sku: 'SKU-1',
         price: 50000,
-        stock: 3,
+        stock: 2,
         isFreeShipping: true,
         description: '<p>상세</p>',
         noticeInfo: expect.objectContaining({ manufacturer: '옥화당', countryOfOrigin: '중국' }),
@@ -225,6 +225,57 @@ describe('NaverCommerceProductImportService', () => {
       expect.objectContaining({ value: '110cc', displayValue: '110cc' }),
     );
     expect(ingestService.ingest).toHaveBeenCalledTimes(2);
+  });
+
+  it('maps Naver Commerce detailAttribute option combinations and derives product stock when stockQuantity is omitted', async () => {
+    const existing = { id: 8, sku: 'SKU-OPTION', slug: 'option-product' } as Product;
+    const fetchedProducts: NaverCommerceFetchedProduct[] = [
+      {
+        rowNumber: 1,
+        listProduct: { originProductNo: 2001, channelProducts: [{ sellerManagementCode: 'SKU-OPTION' }] },
+        detailProduct: {
+          originProduct: {
+            name: '옵션 재고 상품',
+            salePrice: 10000,
+            statusType: 'SALE',
+            detailAttribute: {
+              optionInfo: {
+                optionCombinationGroupNames: {
+                  optionGroupName1: '색상',
+                  optionGroupName2: '용량',
+                },
+                optionCombinations: [
+                  { optionName1: '홍니', optionName2: '100cc', stockQuantity: 4, price: 0, usable: true },
+                  { optionName1: '자니', optionName2: '120cc', stockQuantity: 6, price: 2000, usable: true },
+                  { optionName1: '흑니', optionName2: '150cc', stockQuantity: 9, price: 3000, isUsable: false },
+                ],
+              },
+            },
+          },
+        },
+      },
+    ];
+    const { service, commandService } = createService(fetchedProducts, [existing]);
+
+    const result = await service.commit();
+
+    expect(result.rows[0]).toMatchObject({
+      stock: 10,
+      optionStockTotal: 10,
+      stockSource: 'option_stock_total',
+      optionCount: 2,
+    });
+    expect(commandService.update).toHaveBeenCalledWith(
+      8,
+      expect.objectContaining({
+        stock: 10,
+        status: 'active',
+        options: [
+          expect.objectContaining({ name: '색상/용량', value: '홍니/100cc', stock: 4 }),
+          expect.objectContaining({ name: '색상/용량', value: '자니/120cc', stock: 6, priceAdjustment: 2000 }),
+        ],
+      }),
+    );
   });
 
   it('uses the SmartStore channel product number as the fallback SKU-compatible identifier', async () => {

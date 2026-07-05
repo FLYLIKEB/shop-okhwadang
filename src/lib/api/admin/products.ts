@@ -67,6 +67,8 @@ export interface SmartStoreAutomaticMappingResult {
   noticeInfoType?: 'teaware' | 'tea';
 }
 
+export type SmartStoreImportStockSource = 'product_stock' | 'option_stock_total' | 'default_zero';
+
 export interface SmartStoreProductImportRow {
   rowNumber: number;
   identifier: string | null;
@@ -82,6 +84,9 @@ export interface SmartStoreProductImportRow {
   hasDiscount: boolean;
   isFreeShipping: boolean | null;
   hasNoticeInfo: boolean;
+  stock: number | null;
+  optionStockTotal: number | null;
+  stockSource: SmartStoreImportStockSource;
   automaticMapping: SmartStoreAutomaticMappingResult;
   mappingWarnings: string[];
   errors: string[];

@@ -8,6 +8,7 @@ import { ProductStatus } from './entities/product.entity';
 import { NaverCommerceApiClient, NaverCommerceFetchedProduct } from './naver-commerce-api.client';
 import {
   SmartStoreImportResult,
+  SmartStoreImportStockSource,
   SmartStoreParsedProductRow,
   SmartStoreProductImportService,
 } from './smartstore-product-import.service';
@@ -77,10 +78,12 @@ export class NaverCommerceProductImportService {
       'channelProducts.0.salePrice',
       'channelProducts.0.price',
     ]);
-    const stock = this.firstNumber(product, [
+    const rawStock = this.firstNumber(product, [
       'originProduct.stockQuantity',
       'stockQuantity',
       'originProduct.optionInfo.stockQuantity',
+      'originProduct.detailAttribute.optionInfo.stockQuantity',
+      'detailAttribute.optionInfo.stockQuantity',
       'channelProducts.0.stockQuantity',
     ]);
     const salePrice = this.resolveSalePrice(product, price);
@@ -115,6 +118,8 @@ export class NaverCommerceProductImportService {
     );
     const noticeInfo = this.buildNoticeInfo(product, productName);
     const options = this.buildOptions(product);
+    const optionStockTotal = this.sumOptionStock(options);
+    const { stock, stockSource } = this.resolveImportStock(rawStock, optionStockTotal);
 
     if (!identifier) errors.push('네이버 상품번호 또는 판매자 상품코드가 필요합니다.');
     if (!productName) errors.push('네이버 상품명이 필요합니다.');
@@ -166,6 +171,9 @@ export class NaverCommerceProductImportService {
       hasDiscount: salePrice !== undefined && price !== null && salePrice < price,
       isFreeShipping: this.resolveFreeShipping(product) ?? null,
       hasNoticeInfo: Boolean(noticeInfo),
+      stock,
+      optionStockTotal,
+      stockSource,
       errors,
     };
   }
@@ -284,24 +292,26 @@ export class NaverCommerceProductImportService {
   private buildOptions(product: Record<string, unknown>): ProductOptionInputDto[] | undefined {
     const combinations = this.firstArray(product, [
       'originProduct.optionInfo.optionCombinations',
+      'originProduct.detailAttribute.optionInfo.optionCombinations',
       'optionInfo.optionCombinations',
+      'detailAttribute.optionInfo.optionCombinations',
       'optionCombinations',
     ]);
     if (!combinations || combinations.length === 0) return undefined;
 
+    const groupNames = this.resolveOptionGroupNames(product);
     const options: ProductOptionInputDto[] = [];
     for (const item of combinations) {
       if (!this.isRecord(item)) continue;
-      const usable = this.firstString(item, ['usable', 'isUsable', 'useYn']);
-      if (usable && ['N', 'NO', 'FALSE', '사용안함'].includes(usable.toUpperCase())) continue;
-      const optionName = this.firstString(item, ['optionName', 'name']) ?? '옵션';
-      const optionValue = this.firstString(item, [
-        'optionValue',
-        'value',
-        'optionValue1',
-        'optionName1',
-      ]);
+      const usable = this.firstExistingValue(item, ['usable', 'isUsable', 'useYn']);
+      if (this.isNaverOptionDisabled(usable)) continue;
+      const optionParts = this.resolveOptionValueParts(item);
+      const optionValue = optionParts.join('/');
       if (!optionValue) continue;
+      const optionName =
+        groupNames.slice(0, optionParts.length).join('/') ||
+        this.firstString(item, ['optionName', 'name']) ||
+        '옵션';
       options.push({
         name: optionName,
         value: optionValue,
@@ -312,6 +322,52 @@ export class NaverCommerceProductImportService {
     }
 
     return options.length > 0 ? options : undefined;
+  }
+
+  private resolveOptionGroupNames(product: Record<string, unknown>): string[] {
+    const groupRecord = this.firstRecord(product, [
+      'originProduct.detailAttribute.optionInfo.optionCombinationGroupNames',
+      'originProduct.optionInfo.optionCombinationGroupNames',
+      'detailAttribute.optionInfo.optionCombinationGroupNames',
+      'optionInfo.optionCombinationGroupNames',
+      'optionCombinationGroupNames',
+    ]);
+    if (!groupRecord) return [];
+    return [1, 2, 3, 4]
+      .map((index) => this.firstString(groupRecord, [`optionGroupName${index}`]))
+      .filter((value): value is string => Boolean(value));
+  }
+
+  private resolveOptionValueParts(item: Record<string, unknown>): string[] {
+    const explicit = this.firstString(item, ['optionValue', 'value']);
+    if (explicit) return [explicit];
+    return [1, 2, 3, 4]
+      .map((index) => this.firstString(item, [`optionName${index}`, `optionValue${index}`]))
+      .filter((value): value is string => Boolean(value));
+  }
+
+  private isNaverOptionDisabled(value: unknown): boolean {
+    if (value === false || value === 0) return true;
+    if (typeof value !== 'string') return false;
+    return ['N', 'NO', 'FALSE', '사용안함', 'X'].includes(value.toUpperCase());
+  }
+
+  private sumOptionStock(options: ProductOptionInputDto[] | undefined): number | null {
+    if (!options || options.length === 0) return null;
+    return options.reduce((sum, option) => sum + (option.stock ?? 0), 0);
+  }
+
+  private resolveImportStock(
+    rawStock: number | null,
+    optionStockTotal: number | null,
+  ): { stock: number; stockSource: SmartStoreImportStockSource } {
+    if (optionStockTotal !== null) {
+      return { stock: optionStockTotal, stockSource: 'option_stock_total' };
+    }
+    if (rawStock !== null) {
+      return { stock: rawStock, stockSource: 'product_stock' };
+    }
+    return { stock: 0, stockSource: 'default_zero' };
   }
 
   private mapStatus(status: string | null, stock: number): ProductStatus {
@@ -364,10 +420,26 @@ export class NaverCommerceProductImportService {
     return this.firstString(record, paths);
   }
 
+  private firstExistingValue(record: Record<string, unknown>, paths: string[]): unknown {
+    for (const path of paths) {
+      const value = this.readPath(record, path);
+      if (value !== undefined && value !== null) return value;
+    }
+    return undefined;
+  }
+
   private firstArray(record: Record<string, unknown>, paths: string[]): unknown[] | null {
     for (const path of paths) {
       const value = this.readPath(record, path);
       if (Array.isArray(value)) return value;
+    }
+    return null;
+  }
+
+  private firstRecord(record: Record<string, unknown>, paths: string[]): Record<string, unknown> | null {
+    for (const path of paths) {
+      const value = this.readPath(record, path);
+      if (this.isRecord(value)) return value;
     }
     return null;
   }
