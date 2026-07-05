@@ -470,6 +470,100 @@ export default function AdminReviewsPage() {
         </div>
       </section>
 
+      {selectedReview && (
+        <section className="rounded-lg border bg-card p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="typo-body font-semibold">
+              {t('detail.title', { id: selectedReview.externalReviewId })}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setSelectedReview(null)}
+              className="rounded border px-3 py-1 typo-body-sm hover:bg-secondary"
+            >
+              {t('detail.close')}
+            </button>
+          </div>
+          <dl className="grid gap-3 typo-body-sm md:grid-cols-2">
+            <DetailItem
+              label={t('detail.product')}
+              value={selectedReview.product?.name ?? t('table.unmatchedProduct')}
+            />
+            <DetailItem
+              label={t('detail.orderNo')}
+              value={selectedReview.orderNo ?? t('emptyValue')}
+            />
+            <DetailItem
+              label={t('detail.reviewType')}
+              value={selectedReview.reviewType ?? t('emptyValue')}
+            />
+            <DetailItem
+              label={t('detail.helpfulCount')}
+              value={String(selectedReview.helpfulCount)}
+            />
+            <DetailItem
+              label={t('detail.sourceDisplayStatus')}
+              value={selectedReview.sourceDisplayStatus ?? t('emptyValue')}
+            />
+            <DetailItem
+              label={t('detail.importBatchId')}
+              value={selectedReview.importBatchId ?? t('emptyValue')}
+            />
+          </dl>
+          <div className="mt-4 space-y-2">
+            <h3 className="typo-label text-muted-foreground">{t('detail.content')}</h3>
+            <p className="whitespace-pre-wrap rounded border bg-background p-3 typo-body-sm">
+              {selectedReview.content ?? t('table.noContent')}
+            </p>
+          </div>
+          {selectedReview.relatedReviewContent && (
+            <div className="mt-4 space-y-2">
+              <h3 className="typo-label text-muted-foreground">{t('detail.relatedContent')}</h3>
+              <p className="whitespace-pre-wrap rounded border bg-background p-3 typo-body-sm">
+                {selectedReview.relatedReviewContent}
+              </p>
+            </div>
+          )}
+          <div className="mt-4 space-y-2">
+            <h3 className="typo-label text-muted-foreground">{t('reply.title')}</h3>
+            <textarea
+              value={replyContent}
+              onChange={(event) => setReplyContent(event.target.value)}
+              rows={4}
+              className="w-full rounded border bg-background p-3 typo-body-sm"
+              placeholder={t('reply.placeholder')}
+            />
+            <button
+              type="button"
+              onClick={() => void saveReply()}
+              disabled={savingReply}
+              className="rounded bg-primary px-4 py-2 typo-body-sm text-primary-foreground disabled:opacity-50"
+            >
+              {t('reply.save')}
+            </button>
+          </div>
+          {selectedReview.imageUrls && selectedReview.imageUrls.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <h3 className="typo-label text-muted-foreground">{t('detail.media')}</h3>
+              <ul className="space-y-1 typo-body-sm">
+                {selectedReview.imageUrls.map((url) => (
+                  <li key={url}>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary underline-offset-2 hover:underline"
+                    >
+                      {url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
+
       <PaginatedAdminTableShell
         loading={loading}
         loadingMessage={t('loading')}
@@ -594,99 +688,7 @@ export default function AdminReviewsPage() {
         </div>
       </PaginatedAdminTableShell>
 
-      {selectedReview && (
-        <section className="rounded-lg border bg-card p-4 shadow-sm">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="typo-body font-semibold">
-              {t('detail.title', { id: selectedReview.externalReviewId })}
-            </h2>
-            <button
-              type="button"
-              onClick={() => setSelectedReview(null)}
-              className="rounded border px-3 py-1 typo-body-sm hover:bg-secondary"
-            >
-              {t('detail.close')}
-            </button>
-          </div>
-          <dl className="grid gap-3 typo-body-sm md:grid-cols-2">
-            <DetailItem
-              label={t('detail.product')}
-              value={selectedReview.product?.name ?? t('table.unmatchedProduct')}
-            />
-            <DetailItem
-              label={t('detail.orderNo')}
-              value={selectedReview.orderNo ?? t('emptyValue')}
-            />
-            <DetailItem
-              label={t('detail.reviewType')}
-              value={selectedReview.reviewType ?? t('emptyValue')}
-            />
-            <DetailItem
-              label={t('detail.helpfulCount')}
-              value={String(selectedReview.helpfulCount)}
-            />
-            <DetailItem
-              label={t('detail.sourceDisplayStatus')}
-              value={selectedReview.sourceDisplayStatus ?? t('emptyValue')}
-            />
-            <DetailItem
-              label={t('detail.importBatchId')}
-              value={selectedReview.importBatchId ?? t('emptyValue')}
-            />
-          </dl>
-          <div className="mt-4 space-y-2">
-            <h3 className="typo-label text-muted-foreground">{t('detail.content')}</h3>
-            <p className="whitespace-pre-wrap rounded border bg-background p-3 typo-body-sm">
-              {selectedReview.content ?? t('table.noContent')}
-            </p>
-          </div>
-          {selectedReview.relatedReviewContent && (
-            <div className="mt-4 space-y-2">
-              <h3 className="typo-label text-muted-foreground">{t('detail.relatedContent')}</h3>
-              <p className="whitespace-pre-wrap rounded border bg-background p-3 typo-body-sm">
-                {selectedReview.relatedReviewContent}
-              </p>
-            </div>
-          )}
-          <div className="mt-4 space-y-2">
-            <h3 className="typo-label text-muted-foreground">{t('reply.title')}</h3>
-            <textarea
-              value={replyContent}
-              onChange={(event) => setReplyContent(event.target.value)}
-              rows={4}
-              className="w-full rounded border bg-background p-3 typo-body-sm"
-              placeholder={t('reply.placeholder')}
-            />
-            <button
-              type="button"
-              onClick={() => void saveReply()}
-              disabled={savingReply}
-              className="rounded bg-primary px-4 py-2 typo-body-sm text-primary-foreground disabled:opacity-50"
-            >
-              {t('reply.save')}
-            </button>
-          </div>
-          {selectedReview.imageUrls && selectedReview.imageUrls.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <h3 className="typo-label text-muted-foreground">{t('detail.media')}</h3>
-              <ul className="space-y-1 typo-body-sm">
-                {selectedReview.imageUrls.map((url) => (
-                  <li key={url}>
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-primary underline-offset-2 hover:underline"
-                    >
-                      {url}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
-      )}
+
     </div>
   );
 }

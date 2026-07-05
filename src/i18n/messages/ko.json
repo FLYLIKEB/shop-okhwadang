@@ -615,7 +615,17 @@
     "showOriginal": "원문 보기",
     "machineTranslated": "자동 번역된 리뷰입니다.",
     "translateError": "리뷰 번역에 실패했습니다.",
-    "adminReply": "옥화당 답글"
+    "adminReply": "옥화당 답글",
+    "adminReplyManageTitle": "관리자 답글 관리",
+    "adminReplyManageDescription": "이 답글은 상품상세 리뷰에 고객에게 표시됩니다.",
+    "adminReplyWrite": "답글 달기",
+    "adminReplyEdit": "답글 수정",
+    "adminReplyPlaceholder": "고객에게 표시할 답글을 입력하세요.",
+    "adminReplySave": "답글 저장",
+    "adminReplySaving": "저장 중...",
+    "adminReplyCancel": "취소",
+    "adminReplySaveSuccess": "답글을 저장했습니다.",
+    "adminReplySaveError": "답글을 저장하지 못했습니다."
   },
   "shipping": {
     "title": "운송장 등록",

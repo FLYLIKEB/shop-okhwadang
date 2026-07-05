@@ -46,6 +46,15 @@ export default function ReviewList({ productId }: ReviewListProps) {
   }, [productId, sort, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalPages = Math.ceil(total / limit)
+  const updateReviewReply = (updatedReview: ReviewItem) => {
+    setReviews((items) =>
+      items.map((item) => {
+        const itemSource = item.source ?? 'internal'
+        const updatedSource = updatedReview.source ?? 'internal'
+        return item.id === updatedReview.id && itemSource === updatedSource ? updatedReview : item
+      }),
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -84,7 +93,11 @@ export default function ReviewList({ productId }: ReviewListProps) {
       ) : (
         <div>
           {reviews.map((review) => (
-            <ReviewCard key={`${review.source ?? 'internal'}-${review.id}`} review={review} />
+            <ReviewCard
+              key={`${review.source ?? 'internal'}-${review.id}`}
+              review={review}
+              onReplySaved={updateReviewReply}
+            />
           ))}
         </div>
       )}
@@ -98,7 +111,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
             onClick={() => setPage((p) => p - 1)}
             className="rounded px-3 py-1 text-sm text-muted-foreground hover:bg-muted disabled:opacity-50"
           >
-            이전
+            {localMessage('review.previous')}
           </button>
           <span className="text-sm text-muted-foreground">
             {page} / {totalPages}
@@ -109,7 +122,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
             onClick={() => setPage((p) => p + 1)}
             className="rounded px-3 py-1 text-sm text-muted-foreground hover:bg-muted disabled:opacity-50"
           >
-            다음
+            {localMessage('review.next')}
           </button>
         </div>
       )}
