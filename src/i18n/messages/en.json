@@ -614,7 +614,8 @@
     "translating": "Translating...",
     "showOriginal": "Show original",
     "machineTranslated": "Machine-translated review.",
-    "translateError": "Failed to translate this review."
+    "translateError": "Failed to translate this review.",
+    "adminReply": "Ockhwadang reply"
   },
   "shipping": {
     "title": "Register Tracking Number",
@@ -947,7 +948,8 @@
       "close": "Close sidebar",
       "cmsGroup": "CMS",
       "reviews": "Reviews",
-      "localization": "Localization"
+      "localization": "Localization",
+      "attributes": "Attributes"
     },
     "navigation": {
       "title": "Navigation Management"
@@ -1092,6 +1094,13 @@
         "title": "Could not load review management.",
         "description": "Please try again shortly.",
         "retry": "Retry"
+      },
+      "reply": {
+        "title": "Admin reply",
+        "placeholder": "Write the reply shown to customers.",
+        "save": "Save reply",
+        "saveSuccess": "Reply saved.",
+        "saveError": "Failed to save reply."
       }
     },
     "localization": {
@@ -1128,6 +1137,30 @@
         "policy": "Policy",
         "action": "Action"
       }
+    },
+    "attributes": {
+      "title": "Product attributes",
+      "description": "Manage product attribute types, hierarchy, and links.",
+      "code": "Code",
+      "name": "Name",
+      "nameEn": "English name",
+      "inputType": "Input type",
+      "parent": "Parent attribute",
+      "related": "Related type IDs",
+      "validValues": "Valid values",
+      "sortOrder": "Sort",
+      "filterable": "Filterable",
+      "searchable": "Searchable",
+      "none": "None",
+      "create": "Add attribute",
+      "save": "Save",
+      "delete": "Delete",
+      "loadError": "Failed to load attributes.",
+      "saveSuccess": "Attribute saved.",
+      "saveError": "Failed to save attribute.",
+      "deleteSuccess": "Attribute deleted.",
+      "deleteError": "Failed to delete attribute.",
+      "empty": "No attributes yet."
     }
   },
   "search": {

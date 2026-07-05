@@ -72,6 +72,9 @@ const makeReview = (overrides: Partial<AdminReviewItem> = {}): AdminReviewItem =
   orderNo: '2026062172779571',
   relatedReviewExternalId: null,
   relatedReviewContent: null,
+  adminReplyContent: null,
+  adminReplyAuthor: null,
+  adminRepliedAt: null,
   ...overrides,
 });
 
@@ -165,7 +168,7 @@ describe('AdminReviewsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'actions.hide' }));
 
     await waitFor(() => {
-      expect(mockSetVisibility).toHaveBeenCalledWith(1, false);
+      expect(mockSetVisibility).toHaveBeenCalledWith(1, false, 'naver-smartstore');
     });
   });
 
@@ -280,7 +283,10 @@ describe('AdminReviewsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'bulk.hide' }));
 
     await waitFor(() => {
-      expect(mockBulkSetVisibility).toHaveBeenCalledWith([1], false);
+      expect(mockBulkSetVisibility).toHaveBeenCalledWith(
+        [{ id: 1, source: 'naver-smartstore' }],
+        false,
+      );
     });
   });
 });

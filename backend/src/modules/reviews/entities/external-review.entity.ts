@@ -79,6 +79,15 @@ export class ExternalReview {
   @Column({ name: 'is_best', type: 'boolean', default: false })
   isBest!: boolean;
 
+  @Column({ name: 'admin_reply_content', type: 'text', nullable: true })
+  adminReplyContent!: string | null;
+
+  @Column({ name: 'admin_reply_author', type: 'varchar', length: 100, nullable: true })
+  adminReplyAuthor!: string | null;
+
+  @Column({ name: 'admin_replied_at', type: 'datetime', nullable: true })
+  adminRepliedAt!: Date | null;
+
   @Column({ name: 'best_selected_at', type: 'datetime', nullable: true })
   bestSelectedAt!: Date | null;
 

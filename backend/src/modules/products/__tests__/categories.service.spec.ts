@@ -27,25 +27,26 @@ const mockCacheService = {
   delPattern: jest.fn(),
 };
 
-const makeCategory = (overrides: Partial<Category> = {}): Category => ({
-  id: 1,
-  name: '패션',
-  nameEn: null,
-  nameJa: null,
-  nameZh: null,
-  slug: 'fashion',
-  parentId: null,
-  sortOrder: 0,
-  isActive: true,
-  imageUrl: null,
-  description: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  parent: null as never,
-  children: [] as never,
-  products: [] as never,
-  ...overrides,
-} as Category);
+const makeCategory = (overrides: Partial<Category> = {}): Category =>
+  ({
+    id: 1,
+    name: '패션',
+    nameEn: null,
+    nameJa: null,
+    nameZh: null,
+    slug: 'fashion',
+    parentId: null,
+    sortOrder: 0,
+    isActive: true,
+    imageUrl: null,
+    description: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    parent: null as never,
+    children: [] as never,
+    products: [] as never,
+    ...overrides,
+  }) as Category;
 
 describe('CategoriesService', () => {
   let service: CategoriesService;
@@ -67,9 +68,39 @@ describe('CategoriesService', () => {
   describe('findTree', () => {
     it('캐시 미스 → DB 조회 후 캐시 저장', async () => {
       const categories: Partial<Category>[] = [
-        { id: 1, name: '패션', slug: 'fashion', parentId: null, sortOrder: 0, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
-        { id: 2, name: '남성', slug: 'men', parentId: 1, sortOrder: 0, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
-        { id: 3, name: '여성', slug: 'women', parentId: 1, sortOrder: 1, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 1,
+          name: '패션',
+          slug: 'fashion',
+          parentId: null,
+          sortOrder: 0,
+          isActive: true,
+          imageUrl: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 2,
+          name: '남성',
+          slug: 'men',
+          parentId: 1,
+          sortOrder: 0,
+          isActive: true,
+          imageUrl: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 3,
+          name: '여성',
+          slug: 'women',
+          parentId: 1,
+          sortOrder: 1,
+          isActive: true,
+          imageUrl: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ];
 
       mockCacheService.get.mockResolvedValue(null);
@@ -81,7 +112,7 @@ describe('CategoriesService', () => {
       expect(result[0].id).toBe(1);
       expect(result[0].children).toHaveLength(2);
       expect(mockCacheService.set).toHaveBeenCalledWith(
-        'categories:all',
+        'categories:public-tree',
         expect.any(Array),
         3600,
       );
@@ -89,7 +120,18 @@ describe('CategoriesService', () => {
 
     it('캐시 히트 → DB 조회 없이 캐시 데이터 반환', async () => {
       const cached: Partial<Category>[] = [
-        { id: 1, name: '패션', slug: 'fashion', parentId: null, sortOrder: 0, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date(), children: [] },
+        {
+          id: 1,
+          name: '패션',
+          slug: 'fashion',
+          parentId: null,
+          sortOrder: 0,
+          isActive: true,
+          imageUrl: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          children: [],
+        },
       ];
 
       mockCacheService.get.mockResolvedValue(cached);
@@ -113,8 +155,28 @@ describe('CategoriesService', () => {
 
     it('여러 루트 카테고리 반환', async () => {
       const categories: Partial<Category>[] = [
-        { id: 1, name: '패션', slug: 'fashion', parentId: null, sortOrder: 0, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
-        { id: 2, name: '전자기기', slug: 'electronics', parentId: null, sortOrder: 1, isActive: true, imageUrl: null, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 1,
+          name: '패션',
+          slug: 'fashion',
+          parentId: null,
+          sortOrder: 0,
+          isActive: true,
+          imageUrl: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 2,
+          name: '전자기기',
+          slug: 'electronics',
+          parentId: null,
+          sortOrder: 1,
+          isActive: true,
+          imageUrl: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ];
 
       mockCacheService.get.mockResolvedValue(null);
@@ -148,7 +210,8 @@ describe('CategoriesService', () => {
 
       expect(result).toBe(cat);
       expect(mockCategoryRepository.save).toHaveBeenCalled();
-      expect(mockCacheService.del).toHaveBeenCalledWith('categories:all');
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:public-tree');
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:admin-tree');
     });
 
     it('depth 4 시도 → BadRequestException', async () => {
@@ -168,18 +231,18 @@ describe('CategoriesService', () => {
       const cat = makeCategory();
       mockCategoryRepository.findOne.mockResolvedValue(cat);
 
-      await expect(
-        service.create({ name: '패션', slug: 'fashion' }),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.create({ name: '패션', slug: 'fashion' })).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('존재하지 않는 parentId → NotFoundException', async () => {
       mockCategoryRepository.find.mockResolvedValue([makeCategory({ id: 99, parentId: null })]);
       mockCategoryRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.create({ name: '테스트', slug: 'test', parentId: 99 }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.create({ name: '테스트', slug: 'test', parentId: 99 })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -192,7 +255,8 @@ describe('CategoriesService', () => {
       const result = await service.update(1, { name: '업데이트됨' });
 
       expect(result.name).toBe('업데이트됨');
-      expect(mockCacheService.del).toHaveBeenCalledWith('categories:all');
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:public-tree');
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:admin-tree');
     });
 
     it('존재하지 않는 카테고리 → NotFoundException', async () => {
@@ -236,7 +300,8 @@ describe('CategoriesService', () => {
 
       await expect(service.remove(1)).resolves.toBeUndefined();
       expect(mockCategoryRepository.remove).toHaveBeenCalledWith(cat);
-      expect(mockCacheService.del).toHaveBeenCalledWith('categories:all');
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:public-tree');
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:admin-tree');
     });
 
     it('존재하지 않는 카테고리 → NotFoundException', async () => {
@@ -250,12 +315,18 @@ describe('CategoriesService', () => {
     it('순서 일괄 업데이트 → 캐시 삭제', async () => {
       mockCategoryRepository.update.mockResolvedValue({ affected: 1 });
 
-      await service.reorder({ orders: [{ id: 1, sortOrder: 5 }, { id: 2, sortOrder: 10 }] });
+      await service.reorder({
+        orders: [
+          { id: 1, sortOrder: 5 },
+          { id: 2, sortOrder: 10 },
+        ],
+      });
 
       expect(mockCategoryRepository.update).toHaveBeenCalledTimes(2);
       expect(mockCategoryRepository.update).toHaveBeenCalledWith(1, { sortOrder: 5 });
       expect(mockCategoryRepository.update).toHaveBeenCalledWith(2, { sortOrder: 10 });
-      expect(mockCacheService.del).toHaveBeenCalledWith('categories:all');
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:public-tree');
+      expect(mockCacheService.del).toHaveBeenCalledWith('categories:admin-tree');
     });
   });
 });

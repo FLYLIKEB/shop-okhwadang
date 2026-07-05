@@ -26,6 +26,7 @@ const TOAST_MESSAGES = {
     productCreated: '상품이 등록되었습니다.',
     productUpdated: '상품이 수정되었습니다.',
     saveError: '저장에 실패했습니다.',
+    productMetaLoadError: '상품 관리 정보를 불러오지 못했습니다.',
     roleChanged: '역할이 {role}(으)로 변경되었습니다.',
     roleChangeError: '역할 변경에 실패했습니다.',
     couponDiscountError: '쿠폰 할인 계산에 실패했습니다.',
@@ -127,6 +128,7 @@ const TOAST_MESSAGES = {
     productCreated: 'Product created.',
     productUpdated: 'Product updated.',
     saveError: 'Failed to save.',
+    productMetaLoadError: 'Failed to load product management data.',
     roleChanged: 'Role changed to {role}.',
     roleChangeError: 'Failed to change role.',
     couponDiscountError: 'Failed to calculate coupon discount.',
@@ -216,7 +218,11 @@ export function getToastLocale(): ToastLocale {
   return locale === 'en' ? 'en' : 'ko';
 }
 
-export function toastMessage(key: ToastMessageKey, values?: Record<string, string | number>, locale: ToastLocale = getToastLocale()): string {
+export function toastMessage(
+  key: ToastMessageKey,
+  values?: Record<string, string | number>,
+  locale: ToastLocale = getToastLocale(),
+): string {
   const messages = locale === 'en' ? TOAST_MESSAGES.en : TOAST_MESSAGES.ko;
   let message: string = messages[key];
 

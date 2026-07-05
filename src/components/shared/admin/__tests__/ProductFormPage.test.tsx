@@ -19,6 +19,12 @@ vi.mock('@/lib/api', () => ({
     create: vi.fn(),
     update: vi.fn(),
   },
+  adminCategoriesApi: {
+    getAll: vi.fn().mockResolvedValue([]),
+  },
+  attributesApi: {
+    getTypes: vi.fn().mockResolvedValue([]),
+  },
   uploadApi: {
     uploadImage: vi.fn(),
   },
@@ -192,7 +198,7 @@ describe('ProductFormPage', () => {
         target: { value: 'test-product' },
       });
       fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
-      fireEvent.change(screen.getByDisplayValue('선택 안 함'), { target: { value: 'tea' } });
+      fireEvent.change(screen.getAllByDisplayValue('선택 안 함')[1], { target: { value: 'tea' } });
       fireEvent.change(screen.getByPlaceholderText('침출차'), { target: { value: '잎차' } });
       fireEvent.change(screen.getByPlaceholderText('직사광선을 피하고 서늘한 곳에 보관'), {
         target: { value: '냉암소 보관' },
@@ -256,7 +262,10 @@ describe('ProductFormPage', () => {
       fireEvent.click(screen.getByText('등록하기'));
 
       await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalled());
-      const payload = vi.mocked(adminProductsApi.create).mock.calls[0][0] as unknown as Record<string, unknown>;
+      const payload = vi.mocked(adminProductsApi.create).mock.calls[0][0] as unknown as Record<
+        string,
+        unknown
+      >;
       expect(payload.nameEn).toBe('Test product');
       expect(payload).not.toHaveProperty('nameJa');
       expect(payload).not.toHaveProperty('nameZh');

@@ -614,7 +614,8 @@
     "translating": "번역 중...",
     "showOriginal": "원문 보기",
     "machineTranslated": "자동 번역된 리뷰입니다.",
-    "translateError": "리뷰 번역에 실패했습니다."
+    "translateError": "리뷰 번역에 실패했습니다.",
+    "adminReply": "옥화당 답글"
   },
   "shipping": {
     "title": "운송장 등록",
@@ -947,7 +948,8 @@
       "close": "사이드바 닫기",
       "cmsGroup": "CMS",
       "reviews": "리뷰관리",
-      "localization": "번역 상태"
+      "localization": "번역 상태",
+      "attributes": "속성"
     },
     "navigation": {
       "title": "네비게이션 관리"
@@ -1092,6 +1094,13 @@
         "title": "리뷰 관리 화면을 불러오지 못했습니다.",
         "description": "잠시 후 다시 시도해 주세요.",
         "retry": "다시 시도"
+      },
+      "reply": {
+        "title": "관리자 답글",
+        "placeholder": "고객에게 표시할 답글을 입력하세요.",
+        "save": "답글 저장",
+        "saveSuccess": "답글을 저장했습니다.",
+        "saveError": "답글을 저장하지 못했습니다."
       }
     },
     "localization": {
@@ -1128,6 +1137,30 @@
         "policy": "정책",
         "action": "작업"
       }
+    },
+    "attributes": {
+      "title": "상품 속성 관리",
+      "description": "상품 속성 목록과 위계, 연결 관계를 관리합니다.",
+      "code": "코드",
+      "name": "이름",
+      "nameEn": "영문 이름",
+      "inputType": "입력 타입",
+      "parent": "상위 속성",
+      "related": "연결 속성 ID",
+      "validValues": "허용값",
+      "sortOrder": "정렬",
+      "filterable": "필터 사용",
+      "searchable": "검색 사용",
+      "none": "없음",
+      "create": "속성 추가",
+      "save": "저장",
+      "delete": "삭제",
+      "loadError": "속성 목록을 불러오지 못했습니다.",
+      "saveSuccess": "속성을 저장했습니다.",
+      "saveError": "속성을 저장하지 못했습니다.",
+      "deleteSuccess": "속성을 삭제했습니다.",
+      "deleteError": "속성을 삭제하지 못했습니다.",
+      "empty": "등록된 속성이 없습니다."
     }
   },
   "search": {

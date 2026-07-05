@@ -38,6 +38,7 @@ const mockSkip = jest.fn().mockReturnThis();
 const mockTake = jest.fn().mockReturnThis();
 const mockLimit = jest.fn().mockReturnThis();
 const mockLeftJoinAndSelect = jest.fn().mockReturnThis();
+const mockLeftJoin = jest.fn().mockReturnThis();
 const mockGetManyAndCount = jest.fn();
 const mockGetMany = jest.fn();
 const mockGetOne = jest.fn();
@@ -50,6 +51,7 @@ const mockQueryBuilder = {
   groupBy: mockGroupBy,
   getRawMany: mockGetRawMany,
   leftJoinAndSelect: mockLeftJoinAndSelect,
+  leftJoin: mockLeftJoin,
   andWhere: mockAndWhere,
   where: mockWhere,
   orderBy: mockOrderBy,
@@ -116,7 +118,12 @@ describe('ProductsService — Search', () => {
         },
         {
           provide: CacheService,
-          useValue: { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined), del: jest.fn().mockResolvedValue(undefined), delByPattern: jest.fn().mockResolvedValue(undefined) },
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            del: jest.fn().mockResolvedValue(undefined),
+            delByPattern: jest.fn().mockResolvedValue(undefined),
+          },
         },
         {
           provide: RestockAlertsService,
@@ -136,6 +143,7 @@ describe('ProductsService — Search', () => {
     mockGroupBy.mockReturnThis();
     mockGetRawMany.mockResolvedValue([]);
     mockLeftJoinAndSelect.mockReturnThis();
+    mockLeftJoin.mockReturnThis();
     mockAndWhere.mockReturnThis();
     mockWhere.mockReturnThis();
     mockOrderBy.mockReturnThis();
@@ -158,9 +166,7 @@ describe('ProductsService — Search', () => {
     });
 
     it('q 길이가 2 이상이면 repository 쿼리 실행', async () => {
-      const mockProducts = [
-        { id: 1, name: '나이키 운동화', slug: 'nike-shoes' } as Product,
-      ];
+      const mockProducts = [{ id: 1, name: '나이키 운동화', slug: 'nike-shoes' } as Product];
       mockGetMany.mockResolvedValue(mockProducts);
 
       const result = await service.autocomplete('나이키');
@@ -188,13 +194,13 @@ describe('ProductsService — Search', () => {
 
   describe('findAll — price range', () => {
     it('price_min > price_max → BadRequestException', async () => {
-      await expect(
-        service.findAll({ price_min: 50000, price_max: 10000 }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.findAll({ price_min: 50000, price_max: 10000 })).rejects.toThrow(
+        BadRequestException,
+      );
 
-      await expect(
-        service.findAll({ price_min: 50000, price_max: 10000 }),
-      ).rejects.toThrow('price_min은 price_max보다 클 수 없습니다.');
+      await expect(service.findAll({ price_min: 50000, price_max: 10000 })).rejects.toThrow(
+        'price_min은 price_max보다 클 수 없습니다.',
+      );
     });
 
     it('price_min만 있을 때 >= 조건 추가', async () => {
@@ -220,9 +226,7 @@ describe('ProductsService — Search', () => {
     it('price_min === price_max → 정상 처리 (같은 가격 허용)', async () => {
       mockGetManyAndCount.mockResolvedValue([[], 0]);
 
-      await expect(
-        service.findAll({ price_min: 10000, price_max: 10000 }),
-      ).resolves.not.toThrow();
+      await expect(service.findAll({ price_min: 10000, price_max: 10000 })).resolves.not.toThrow();
     });
   });
 
@@ -232,14 +236,12 @@ describe('ProductsService — Search', () => {
 
       await service.findAll({ q: '나이키', categoryId: 3 });
 
-      expect(mockAndWhere).toHaveBeenCalledWith(
-        'MATCH(product.name) AGAINST(:q IN BOOLEAN MODE)',
-        { q: '나이키' },
-      );
-      expect(mockAndWhere).toHaveBeenCalledWith(
-        'product.categoryId IN (:...categoryIds)',
-        { categoryIds: [3] },
-      );
+      expect(mockAndWhere).toHaveBeenCalledWith('MATCH(product.name) AGAINST(:q IN BOOLEAN MODE)', {
+        q: '나이키',
+      });
+      expect(mockAndWhere).toHaveBeenCalledWith('product.categoryId IN (:...categoryIds)', {
+        categoryIds: [3],
+      });
     });
 
     it('sort=popular → viewCount DESC 정렬', async () => {
@@ -261,9 +263,7 @@ describe('ProductsService — Search', () => {
 
   describe('findAll — LIKE fallback', () => {
     it('FULLTEXT 실패 시 errno 1191 → LIKE 폴백으로 정상 결과 반환', async () => {
-      mockGetManyAndCount
-        .mockRejectedValueOnce(makeFulltextError())
-        .mockResolvedValue([[], 0]);
+      mockGetManyAndCount.mockRejectedValueOnce(makeFulltextError()).mockResolvedValue([[], 0]);
 
       const result = await service.findAll({ q: '보이차', sort: ProductSort.PRICE_ASC });
 
@@ -271,9 +271,7 @@ describe('ProductsService — Search', () => {
     });
 
     it('LIKE 폴백 시에도 categoryId + price 필터 적용 → sort price DESC 적용', async () => {
-      mockGetManyAndCount
-        .mockRejectedValueOnce(makeFulltextError())
-        .mockResolvedValue([[], 0]);
+      mockGetManyAndCount.mockRejectedValueOnce(makeFulltextError()).mockResolvedValue([[], 0]);
 
       await service.findAll({
         q: '보이차',
@@ -287,9 +285,7 @@ describe('ProductsService — Search', () => {
     });
 
     it('FULLTEXT 실패(errno 1191) 후 LIKE 폴백에서도 검색어 조건이 유지됨', async () => {
-      mockGetManyAndCount
-        .mockRejectedValueOnce(makeFulltextError())
-        .mockResolvedValue([[], 0]);
+      mockGetManyAndCount.mockRejectedValueOnce(makeFulltextError()).mockResolvedValue([[], 0]);
 
       await service.findAll({ q: '보이차' });
 

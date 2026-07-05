@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
-import { adminProductsApi } from '@/lib/api';
-import type { ProductDetail, ProductNoticeInfo } from '@/lib/api';
+import { adminCategoriesApi, adminProductsApi, attributesApi } from '@/lib/api';
+import type { AdminCategory, AttributeType, ProductDetail, ProductNoticeInfo } from '@/lib/api';
 import MultiImageUploader from './MultiImageUploader';
 import ProductOptionsEditor, { type ProductOptionDraft } from './ProductOptionsEditor';
 import { CheckboxField, SelectField, TextAreaField, TextField } from './FormField';
@@ -23,6 +23,7 @@ interface DetailImage {
 }
 
 interface ProductFormData {
+  categoryId: string;
   name: string;
   slug: string;
   description: string;
@@ -37,9 +38,16 @@ interface ProductFormData {
   images: GalleryImage[];
   detailImages: DetailImage[];
   options: ProductOptionDraft[];
+  attributes: ProductAttributeDraft[];
   nameEn: string;
   descriptionEn: string;
   noticeInfo: ProductNoticeInfo;
+}
+
+interface ProductAttributeDraft {
+  attributeTypeId: string;
+  value: string;
+  displayValue: string;
 }
 
 interface ProductFormPageProps {
@@ -85,19 +93,33 @@ type Setter = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K
 
 type NoticeInfoKey = keyof ProductNoticeInfo;
 
-function buildNoticeInfoPayload(noticeInfo: ProductNoticeInfo, hadNoticeInfo: boolean): ProductNoticeInfo | null | undefined {
-  const entries = Object.entries(noticeInfo).filter(([, value]) => typeof value === 'string' && value.trim().length > 0);
-  if (entries.length === 0) return hadNoticeInfo ? null : undefined;
-  return Object.fromEntries(entries.map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value])) as ProductNoticeInfo;
+function flattenCategories(
+  categories: AdminCategory[],
+  depth = 0,
+): Array<{ value: string; label: string }> {
+  return categories.flatMap((category) => [
+    {
+      value: String(category.id),
+      label: `${'— '.repeat(depth)}${category.name}${category.isActive ? '' : ' (숨김)'}`,
+    },
+    ...flattenCategories(category.children ?? [], depth + 1),
+  ]);
 }
 
-function NoticeInfoSection({
-  noticeInfo,
-  set,
-}: {
-  noticeInfo: ProductNoticeInfo;
-  set: Setter;
-}) {
+function buildNoticeInfoPayload(
+  noticeInfo: ProductNoticeInfo,
+  hadNoticeInfo: boolean,
+): ProductNoticeInfo | null | undefined {
+  const entries = Object.entries(noticeInfo).filter(
+    ([, value]) => typeof value === 'string' && value.trim().length > 0,
+  );
+  if (entries.length === 0) return hadNoticeInfo ? null : undefined;
+  return Object.fromEntries(
+    entries.map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]),
+  ) as ProductNoticeInfo;
+}
+
+function NoticeInfoSection({ noticeInfo, set }: { noticeInfo: ProductNoticeInfo; set: Setter }) {
   const updateNoticeInfo = (key: NoticeInfoKey, value: string) => {
     if (key === 'type') {
       set('noticeInfo', {
@@ -106,7 +128,7 @@ function NoticeInfoSection({
         manufacturer: noticeInfo.manufacturer,
         countryOfOrigin: noticeInfo.countryOfOrigin,
         handlingPrecautions: noticeInfo.handlingPrecautions,
-        type: value === '' ? undefined : value as ProductNoticeInfo['type'],
+        type: value === '' ? undefined : (value as ProductNoticeInfo['type']),
       });
       return;
     }
@@ -179,7 +201,9 @@ function ImagesSection({
     <>
       <section className="space-y-2">
         <h2 className="text-sm font-semibold">갤러리 이미지</h2>
-        <p className="text-xs text-muted-foreground">상품 목록에 표시될 이미지입니다. 드래그하여 순서를 변경할 수 있습니다.</p>
+        <p className="text-xs text-muted-foreground">
+          상품 목록에 표시될 이미지입니다. 드래그하여 순서를 변경할 수 있습니다.
+        </p>
         <MultiImageUploader
           images={images}
           onChange={(imgs) => set('images', imgs)}
@@ -189,7 +213,9 @@ function ImagesSection({
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold">상품 상세 이미지</h2>
-        <p className="text-xs text-muted-foreground">상품 상세 페이지 하단에 표시될 이미지입니다.</p>
+        <p className="text-xs text-muted-foreground">
+          상품 상세 페이지 하단에 표시될 이미지입니다.
+        </p>
         <MultiImageUploader
           images={detailImages}
           onChange={(imgs) => set('detailImages', imgs)}
@@ -203,13 +229,22 @@ function ImagesSection({
 function BasicInfoSection({
   form,
   set,
+  categoryOptions,
 }: {
-  form: Pick<ProductFormData, 'name' | 'slug' | 'shortDescription' | 'description'>;
+  form: Pick<ProductFormData, 'categoryId' | 'name' | 'slug' | 'shortDescription' | 'description'>;
   set: Setter;
+  categoryOptions: Array<{ value: string; label: string }>;
 }) {
   return (
     <section className="space-y-4">
       <h2 className="text-sm font-semibold">기본 정보</h2>
+
+      <SelectField
+        label="카테고리"
+        value={form.categoryId}
+        onChange={(v) => set('categoryId', v)}
+        options={[{ value: '', label: '선택 안 함' }, ...categoryOptions]}
+      />
 
       <TextField
         label="상품명"
@@ -235,8 +270,8 @@ function BasicInfoSection({
         label="상세 설명"
         value={form.description}
         onChange={(v) => set('description', v)}
-        rows={5}
-        placeholder="상품 상세 설명"
+        rows={8}
+        placeholder="상품 상세 설명 (HTML 태그 사용 가능: p, br, strong, em, ul, ol, li, h2, h3, h4, a, img)"
       />
     </section>
   );
@@ -355,11 +390,91 @@ function VisibilitySection({
   );
 }
 
+function ProductAttributesSection({
+  attributes,
+  attributeTypes,
+  set,
+}: {
+  attributes: ProductAttributeDraft[];
+  attributeTypes: AttributeType[];
+  set: Setter;
+}) {
+  const typeOptions = attributeTypes.map((type) => ({
+    value: String(type.id),
+    label: `${type.name} (${type.code})`,
+  }));
+
+  const update = (index: number, field: keyof ProductAttributeDraft, value: string) => {
+    set(
+      'attributes',
+      attributes.map((attr, i) => (i === index ? { ...attr, [field]: value } : attr)),
+    );
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">상품 속성</h2>
+        <button
+          type="button"
+          onClick={() =>
+            set('attributes', [...attributes, { attributeTypeId: '', value: '', displayValue: '' }])
+          }
+          className="rounded-md bg-secondary px-3 py-1 text-sm hover:bg-secondary/80"
+        >
+          + 속성 추가
+        </button>
+      </div>
+      {attributes.length === 0 && <p className="text-sm text-muted-foreground">속성이 없습니다.</p>}
+      {attributes.map((attribute, index) => (
+        <div
+          key={index}
+          className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1fr_1fr_1fr_auto]"
+        >
+          <SelectField
+            label="속성"
+            value={attribute.attributeTypeId}
+            onChange={(value) => update(index, 'attributeTypeId', value)}
+            options={[{ value: '', label: '선택' }, ...typeOptions]}
+          />
+          <TextField
+            label="값"
+            value={attribute.value}
+            onChange={(value) => update(index, 'value', value)}
+            placeholder="zhuni"
+          />
+          <TextField
+            label="표시값"
+            value={attribute.displayValue}
+            onChange={(value) => update(index, 'displayValue', value)}
+            placeholder="주니"
+          />
+          <button
+            type="button"
+            onClick={() =>
+              set(
+                'attributes',
+                attributes.filter((_, i) => i !== index),
+              )
+            }
+            className="self-end rounded px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+          >
+            삭제
+          </button>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 export default function ProductFormPage({ mode, product }: ProductFormPageProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [attributeTypes, setAttributeTypes] = useState<AttributeType[]>([]);
   const hadNoticeInfo = product?.noticeInfo != null;
   const [form, setForm] = useState<ProductFormData>({
+    categoryId: product?.category?.id != null ? String(product.category.id) : '',
     name: product?.name ?? '',
     slug: product?.slug ?? '',
     description: product?.description ?? '',
@@ -372,13 +487,21 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     isFeatured: product?.isFeatured ?? false,
     isFreeShipping: product?.isFreeShipping ?? false,
     images: product?.images?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
-    detailImages: product?.detailImages?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
-    options: product?.options?.map((o) => ({
-      name: o.name,
-      value: o.value,
-      priceAdjustment: o.priceAdjustment,
-      stock: o.stock,
-    })) ?? [],
+    detailImages:
+      product?.detailImages?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
+    options:
+      product?.options?.map((o) => ({
+        name: o.name,
+        value: o.value,
+        priceAdjustment: o.priceAdjustment,
+        stock: o.stock,
+      })) ?? [],
+    attributes:
+      product?.attributes?.map((attr) => ({
+        attributeTypeId: String(attr.attributeTypeId),
+        value: attr.value,
+        displayValue: attr.displayValue ?? '',
+      })) ?? [],
     nameEn: '',
     descriptionEn: '',
     noticeInfo: { ...EMPTY_NOTICE_INFO, ...(product?.noticeInfo ?? {}) },
@@ -386,6 +509,24 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
 
   const set = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([adminCategoriesApi.getAll(), attributesApi.getTypes()])
+      .then(([categoryItems, attributeItems]) => {
+        if (cancelled) return;
+        setCategories(categoryItems);
+        setAttributeTypes(attributeItems);
+      })
+      .catch((err: unknown) => {
+        toast.error(handleApiError(err, toastMessage('productMetaLoadError')));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const categoryOptions = useMemo(() => flattenCategories(categories), [categories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -406,6 +547,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     setSubmitting(true);
     try {
       const payload = {
+        categoryId: form.categoryId ? Number(form.categoryId) : null,
         name: form.name.trim(),
         slug: form.slug.trim(),
         description: form.description || undefined,
@@ -431,6 +573,23 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
           alt: img.alt,
           sortOrder: index,
         })),
+        options: form.options
+          .filter((option) => option.name.trim() && option.value.trim())
+          .map((option, index) => ({
+            name: option.name.trim(),
+            value: option.value.trim(),
+            priceAdjustment: Number(option.priceAdjustment) || 0,
+            stock: Number(option.stock) || 0,
+            sortOrder: index,
+          })),
+        attributes: form.attributes
+          .filter((attribute) => attribute.attributeTypeId && attribute.value.trim())
+          .map((attribute, index) => ({
+            attributeTypeId: Number(attribute.attributeTypeId),
+            value: attribute.value.trim(),
+            displayValue: attribute.displayValue.trim() || attribute.value.trim(),
+            sortOrder: index,
+          })),
       };
 
       if (mode === 'create') {
@@ -450,24 +609,24 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-6 typo-h1">
-        {mode === 'create' ? '상품 등록' : '상품 수정'}
-      </h1>
+      <h1 className="mb-6 typo-h1">{mode === 'create' ? '상품 등록' : '상품 수정'}</h1>
 
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
         <ImagesSection images={form.images} detailImages={form.detailImages} set={set} />
-        <BasicInfoSection form={form} set={set} />
+        <BasicInfoSection form={form} set={set} categoryOptions={categoryOptions} />
         <MultilingualSection form={form} set={set} />
         <PricingSection form={form} set={set} />
         <VisibilitySection form={form} set={set} />
         <NoticeInfoSection noticeInfo={form.noticeInfo} set={set} />
 
         <section>
-          <ProductOptionsEditor
-            options={form.options}
-            onChange={(opts) => set('options', opts)}
-          />
+          <ProductOptionsEditor options={form.options} onChange={(opts) => set('options', opts)} />
         </section>
+        <ProductAttributesSection
+          attributes={form.attributes}
+          attributeTypes={attributeTypes}
+          set={set}
+        />
 
         <div className="flex justify-end gap-3 border-t pt-4">
           <button

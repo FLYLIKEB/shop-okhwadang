@@ -46,6 +46,7 @@ interface QueryBuilderMock {
 function createQueryBuilderMock(): QueryBuilderMock {
   const qb = {
     leftJoinAndSelect: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
     innerJoin: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
@@ -95,12 +96,16 @@ describe('ProductQueryService', () => {
     externalReviewQb = createQueryBuilderMock();
 
     productRepo.createQueryBuilder.mockReturnValue(qb as unknown as SelectQueryBuilder<Product>);
-    reviewRepo.createQueryBuilder.mockReturnValue(reviewQb as unknown as SelectQueryBuilder<Review>);
+    reviewRepo.createQueryBuilder.mockReturnValue(
+      reviewQb as unknown as SelectQueryBuilder<Review>,
+    );
     externalReviewRepo.createQueryBuilder.mockReturnValue(
       externalReviewQb as unknown as SelectQueryBuilder<ExternalReview>,
     );
     categoryRepo.find.mockResolvedValue([]);
-    attrTypeRepo.createQueryBuilder.mockReturnValue(qb as unknown as SelectQueryBuilder<AttributeType>);
+    attrTypeRepo.createQueryBuilder.mockReturnValue(
+      qb as unknown as SelectQueryBuilder<AttributeType>,
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -131,9 +136,9 @@ describe('ProductQueryService', () => {
 
   describe('findAll - 가격 필터', () => {
     it('price_min > price_max 면 BadRequestException', async () => {
-      await expect(
-        service.findAll({ price_min: 50000, price_max: 10000 }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.findAll({ price_min: 50000, price_max: 10000 })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('price_min/price_max 가 정상이면 andWhere 호출', async () => {
@@ -153,10 +158,9 @@ describe('ProductQueryService', () => {
 
       await service.findAll({ q: '보이차' });
 
-      expect(qb.andWhere).toHaveBeenCalledWith(
-        'MATCH(product.name) AGAINST(:q IN BOOLEAN MODE)',
-        { q: '보이차' },
-      );
+      expect(qb.andWhere).toHaveBeenCalledWith('MATCH(product.name) AGAINST(:q IN BOOLEAN MODE)', {
+        q: '보이차',
+      });
     });
 
     it('q 길이 < 2 → LIKE 검색', async () => {
@@ -164,10 +168,7 @@ describe('ProductQueryService', () => {
 
       await service.findAll({ q: '보' });
 
-      expect(qb.andWhere).toHaveBeenCalledWith(
-        'product.name LIKE :q',
-        { q: '%보%' },
-      );
+      expect(qb.andWhere).toHaveBeenCalledWith('product.name LIKE :q', { q: '%보%' });
     });
   });
 
@@ -217,10 +218,9 @@ describe('ProductQueryService', () => {
 
       await service.findAll({ categoryId: 1 });
 
-      expect(qb.andWhere).toHaveBeenCalledWith(
-        'product.categoryId IN (:...categoryIds)',
-        { categoryIds: [1, 11, 12] },
-      );
+      expect(qb.andWhere).toHaveBeenCalledWith('product.categoryId IN (:...categoryIds)', {
+        categoryIds: [1, 11, 12],
+      });
     });
   });
 
@@ -250,13 +250,9 @@ describe('ProductQueryService', () => {
 
       await service.findAll({}, true);
 
-      expect(qb.andWhere).not.toHaveBeenCalledWith(
-        'product.status = :status',
-        expect.anything(),
-      );
+      expect(qb.andWhere).not.toHaveBeenCalledWith('product.status = :status', expect.anything());
     });
   });
-
 
   describe('findAll - 속성 필터', () => {
     it('attrs 값으로 product_attributes inner join 조건을 적용한다', async () => {
@@ -295,7 +291,9 @@ describe('ProductQueryService', () => {
       await service.findAll({ attrs: 'missing_code:value' });
 
       expect(qb.innerJoin).not.toHaveBeenCalled();
-      expect(warnSpy).toHaveBeenCalledWith('Unknown product attribute filter code skipped: missing_code');
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Unknown product attribute filter code skipped: missing_code',
+      );
       warnSpy.mockRestore();
     });
   });
@@ -412,14 +410,14 @@ describe('ProductQueryService', () => {
     });
 
     it('정상 호출 시 LIKE 쿼리 + status=ACTIVE 조건', async () => {
-      qb.getMany.mockResolvedValue([
-        { id: 1, name: '보이차', slug: 'pu-erh' } as Product,
-      ]);
+      qb.getMany.mockResolvedValue([{ id: 1, name: '보이차', slug: 'pu-erh' } as Product]);
 
       const result = await service.autocomplete('보이');
 
       expect(qb.where).toHaveBeenCalledWith('p.name LIKE :q', { q: '보이%' });
-      expect(qb.andWhere).toHaveBeenCalledWith('p.status = :status', { status: ProductStatus.ACTIVE });
+      expect(qb.andWhere).toHaveBeenCalledWith('p.status = :status', {
+        status: ProductStatus.ACTIVE,
+      });
       expect(result).toEqual([{ id: 1, name: '보이차', slug: 'pu-erh' }]);
     });
   });

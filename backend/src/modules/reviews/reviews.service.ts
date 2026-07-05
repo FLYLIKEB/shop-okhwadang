@@ -51,6 +51,9 @@ export interface ReviewResponse {
   content: string | null;
   imageUrls: string[] | null;
   isVisible: boolean;
+  adminReplyContent: string | null;
+  adminReplyAuthor: string | null;
+  adminRepliedAt: Date | null;
   createdAt: Date;
 }
 
@@ -113,6 +116,9 @@ export class ReviewsService {
       content: review.content,
       imageUrls: review.imageUrls,
       isVisible: review.isVisible,
+      adminReplyContent: review.adminReplyContent,
+      adminReplyAuthor: review.adminReplyAuthor,
+      adminRepliedAt: review.adminRepliedAt,
       createdAt: review.createdAt,
     };
   }
@@ -131,6 +137,9 @@ export class ReviewsService {
       content: review.content,
       imageUrls: review.imageUrls,
       isVisible: review.isVisible,
+      adminReplyContent: review.adminReplyContent,
+      adminReplyAuthor: review.adminReplyAuthor,
+      adminRepliedAt: review.adminRepliedAt,
       createdAt: review.reviewedAt,
     };
   }

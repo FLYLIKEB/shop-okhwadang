@@ -19,6 +19,7 @@ export interface CreateProductData {
   status?: string;
   isFeatured?: boolean;
   isFreeShipping?: boolean;
+  categoryId?: number | null;
   nameEn?: string;
   descriptionEn?: string;
   noticeInfo?: ProductNoticeInfo | null;
@@ -31,6 +32,19 @@ export interface CreateProductData {
   detailImages?: Array<{
     url: string;
     alt?: string;
+    sortOrder?: number;
+  }>;
+  options?: Array<{
+    name: string;
+    value: string;
+    priceAdjustment?: number;
+    stock?: number;
+    sortOrder?: number;
+  }>;
+  attributes?: Array<{
+    attributeTypeId: number;
+    value: string;
+    displayValue?: string;
     sortOrder?: number;
   }>;
 }

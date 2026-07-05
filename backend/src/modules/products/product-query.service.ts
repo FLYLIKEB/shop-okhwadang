@@ -198,7 +198,8 @@ export class ProductQueryService {
       if (
         !isAdmin &&
         (cached.status === ProductStatus.DRAFT ||
-          cached.status === ProductStatus.HIDDEN)
+          cached.status === ProductStatus.HIDDEN ||
+          cached.category?.isActive === false)
       ) {
         throw new NotFoundException('상품을 찾을 수 없습니다.');
       }
@@ -221,7 +222,8 @@ export class ProductQueryService {
     if (
       !isAdmin &&
       (product.status === ProductStatus.DRAFT ||
-        product.status === ProductStatus.HIDDEN)
+        product.status === ProductStatus.HIDDEN ||
+        product.category?.isActive === false)
     ) {
       throw new NotFoundException('상품을 찾을 수 없습니다.');
     }
@@ -273,7 +275,10 @@ export class ProductQueryService {
 
     const filtered = isAdmin
       ? products
-      : products.filter((product) => product.status === ProductStatus.ACTIVE);
+      : products.filter((product) =>
+          product.status === ProductStatus.ACTIVE &&
+          (product.category == null || product.category.isActive),
+        );
 
     const localizedItems = filtered.map((product) => this.applyLocale(product, locale));
     const statsMap = await this.getReviewStats(
@@ -293,8 +298,12 @@ export class ProductQueryService {
     const results = await this.productRepository
       .createQueryBuilder('p')
       .select(['p.id', 'p.name', 'p.slug'])
+      .leftJoin('p.category', 'category')
       .where('p.name LIKE :q', { q: `${q}%` })
       .andWhere('p.status = :status', { status: ProductStatus.ACTIVE })
+      .andWhere('(p.category_id IS NULL OR category.is_active = :categoryActive)', {
+        categoryActive: true,
+      })
       .limit(10)
       .getMany();
 
@@ -360,7 +369,12 @@ export class ProductQueryService {
   ): T[] {
     return isAdmin
       ? items
-      : items.filter((product) => product.status === ProductStatus.ACTIVE);
+      : items.filter((product) =>
+          product.status === ProductStatus.ACTIVE &&
+          (!('category' in product) ||
+            product.category == null ||
+            (product.category as Category).isActive),
+        );
   }
 
   private applyReviewStats<T extends { id: number }>(
@@ -420,9 +434,13 @@ export class ProductQueryService {
       );
 
     if (!isAdmin) {
-      return qb.andWhere('product.status = :status', {
-        status: ProductStatus.ACTIVE,
-      });
+      return qb
+        .andWhere('product.status = :status', {
+          status: ProductStatus.ACTIVE,
+        })
+        .andWhere('(product.category_id IS NULL OR category.is_active = :categoryActive)', {
+          categoryActive: true,
+        });
     }
 
     if (status) {
