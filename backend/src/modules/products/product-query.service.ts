@@ -212,6 +212,8 @@ export class ProductQueryService {
       .leftJoinAndSelect('product.images', 'image')
       .leftJoinAndSelect('product.detailImages', 'detailImage')
       .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.attributes', 'attribute')
+      .leftJoinAndSelect('attribute.attributeType', 'attributeType')
       .where('product.id = :id', { id })
       .getOne();
 
@@ -270,6 +272,8 @@ export class ProductQueryService {
           isThumbnail: true,
         },
       )
+      .leftJoinAndSelect('product.attributes', 'attribute')
+      .leftJoinAndSelect('attribute.attributeType', 'attributeType')
       .where('product.id IN (:...ids)', { ids })
       .getMany();
 
@@ -431,7 +435,9 @@ export class ProductQueryService {
         'image',
         'image.is_thumbnail = :isThumbnail',
         { isThumbnail: true },
-      );
+      )
+      .leftJoinAndSelect('product.attributes', 'attribute')
+      .leftJoinAndSelect('attribute.attributeType', 'attributeType');
 
     if (!isAdmin) {
       return qb
