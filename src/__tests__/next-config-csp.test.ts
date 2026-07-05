@@ -11,14 +11,16 @@ function getCspDirective(source: string, directive: string): string {
 }
 
 describe('Next.js CSP headers', () => {
-  it('allows Google Analytics gtag script and collection endpoints', () => {
+  it('allows Google Analytics gtag script, collection endpoints, and audience image beacon', () => {
     const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
+    const imgSrc = getCspDirective(source, 'img-src');
 
     expect(source).toContain('https://www.googletagmanager.com');
     expect(source).toContain('https://www.google-analytics.com');
     expect(source).toContain('https://analytics.google.com');
     expect(source).toContain('https://www.google.com');
     expect(source).toContain('https://region1.google-analytics.com');
+    expect(imgSrc).toContain('https://www.google.co.kr');
   });
 
   it('allows documented PayPal checkout SDK sources and popup isolation', () => {

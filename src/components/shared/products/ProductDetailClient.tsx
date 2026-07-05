@@ -194,7 +194,7 @@ export default function ProductDetailClient({ product, locale = 'ko', clayCollec
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.2fr_1fr]">
         {/* Left: Image gallery */}
         <div className="md:sticky md:top-88 md:self-start">
-          <ImageGallery images={product.images} />
+          <ImageGallery images={product.images} locale={locale} />
         </div>
 
         {/* Right: Product info */}

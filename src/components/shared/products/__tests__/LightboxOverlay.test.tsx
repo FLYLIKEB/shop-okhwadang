@@ -10,7 +10,7 @@ const sampleImages = [
   { id: 3, url: '/img3.jpg', alt: null, sortOrder: 2, isThumbnail: false },
 ];
 
-function makeBaseProps(overrides: Partial<React.ComponentProps<typeof LightboxOverlay>> = {}) {
+function makeBaseProps(overrides: Partial<React.ComponentProps<typeof LightboxOverlay>> = {}): React.ComponentProps<typeof LightboxOverlay> {
   // 기본 ref 들
   const lightboxPanRef = { current: { x: 0, y: 0 } } as React.MutableRefObject<{ x: number; y: number }>;
   const isDragging = { current: false } as React.MutableRefObject<boolean>;
@@ -37,6 +37,7 @@ function makeBaseProps(overrides: Partial<React.ComponentProps<typeof LightboxOv
     isDragging,
     lightboxDragMovedRef,
     ...overrides,
+    locale: overrides.locale ?? 'ko',
   };
 }
 
