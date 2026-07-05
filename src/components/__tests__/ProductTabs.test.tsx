@@ -51,13 +51,18 @@ const translations: Record<string, string> = {
   'tabs.inquiryPanel.submit': '문의 등록',
   'tabs.inquiryPanel.submitting': '등록 중...',
   'tabs.inquiryPanel.statusPending': '접수',
+  'tabs.noticeInfo.eyebrow': '상품 정보',
+  'tabs.noticeInfo.title': '상품고시정보',
+  'tabs.noticeInfo.labels.foodType': '식품 유형',
+  'tabs.noticeInfo.labels.storageMethod': '보관방법',
   'tabs.inquiryPanel.statusAnswered': '답변완료',
   'tabs.inquiryPanel.answerLabel': '답변',
 }
 
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string, values?: Record<string, string | number>) => {
-    const template = translations[key] ?? key
+  useTranslations: (namespace?: string) => (key: string, values?: Record<string, string | number>) => {
+    const namespacedKey = namespace === 'product' || !namespace ? key : key.startsWith(`${namespace}.`) ? key : `${namespace.replace(/^product\./, '')}.${key}`
+    const template = translations[namespacedKey] ?? translations[key] ?? key
     if (!values) return template
     return Object.entries(values).reduce(
       (acc, [k, v]) => acc.replace(`{${k}}`, String(v)),
@@ -84,7 +89,8 @@ describe('ProductTabs', () => {
     expect(detailContent).toBeInTheDocument()
   })
 
-  it('shows product notice info in details tab', () => {
+  it('keeps product notice info collapsed by default and expands on click', async () => {
+    const user = userEvent.setup()
     render(
       <ProductTabs
         description="<p>상품 상세 내용입니다.</p>"
@@ -93,16 +99,21 @@ describe('ProductTabs', () => {
           type: 'tea',
           foodType: '침출차',
           producer: '옥화당',
-          storageMethod: '서늘한 곳 보관',
+          storageMethod: '서늘한 곳 보관\n직사광선을 피해주세요',
         }}
       />,
     )
 
     expect(screen.getByText('상품고시정보')).toBeInTheDocument()
-    expect(screen.getByText('식품 유형')).toBeInTheDocument()
-    expect(screen.getByText('침출차')).toBeInTheDocument()
-    expect(screen.getByText('보관방법')).toBeInTheDocument()
-    expect(screen.getByText('서늘한 곳 보관')).toBeInTheDocument()
+    expect(screen.queryByText('침출차')).not.toBeInTheDocument()
+
+    await user.click(screen.getByText('상품고시정보'))
+
+    expect(screen.getByText('식품 유형')).toBeVisible()
+    expect(screen.getByText('침출차')).toBeVisible()
+    expect(screen.getByText('보관방법')).toBeVisible()
+    expect(screen.getByText(/서늘한 곳 보관/)).toBeVisible()
+    expect(screen.getByText(/서늘한 곳 보관/)).toHaveClass('whitespace-pre-line')
   })
 
   it('clicking 리뷰 tab shows 준비 중입니다', async () => {

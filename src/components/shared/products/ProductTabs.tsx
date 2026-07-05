@@ -12,7 +12,6 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/components/ui/utils'
 import ReviewsTab from '@/components/shared/reviews/ReviewsTab'
-import { localMessage } from '@/utils/localMessages'
 import { hasEmbeddedDetailMedia, sanitizeProductDetailHtml } from '@/lib/product-detail-html'
 
 interface ProductTabsProps {
@@ -50,31 +49,81 @@ const TEAWARE_NOTICE_FIELDS: Array<keyof Omit<ProductNoticeInfo, 'type'>> = [
   'asContact',
 ]
 
-function ProductNoticeInfoGuide({ noticeInfo }: { noticeInfo?: ProductNoticeInfo | null }) {
-  if (!noticeInfo) return null
+type GuideRow<Key extends string> = {
+  key: Key
+  label: string
+  value: string
+}
 
-  const keys = noticeInfo.type === 'tea' ? TEA_NOTICE_FIELDS : TEAWARE_NOTICE_FIELDS
-  const rows = keys
-    .map((key) => ({ key, label: localMessage(`product.tabs.noticeInfo.labels.${key}`), value: noticeInfo[key] }))
-    .filter((row): row is { key: keyof Omit<ProductNoticeInfo, 'type'>; label: string; value: string } => typeof row.value === 'string' && row.value.trim().length > 0)
+function ProductGuideDisclosure<Key extends string>({
+  eyebrow,
+  title,
+  titleId,
+  rows,
+}: {
+  eyebrow: string
+  title: string
+  titleId: string
+  rows: Array<GuideRow<Key>>
+}) {
+  const [isOpen, setIsOpen] = useState(false)
 
   if (rows.length === 0) return null
 
   return (
-    <section className="rounded-lg border border-border bg-muted/20 p-5" aria-labelledby="product-notice-info-title">
-      <div className="mb-4">
-        <p className="typo-label text-muted-foreground">{localMessage('product.tabs.noticeInfo.eyebrow')}</p>
-        <h2 id="product-notice-info-title" className="typo-h2 text-foreground">{localMessage('product.tabs.noticeInfo.title')}</h2>
-      </div>
-      <dl className="grid gap-3 md:grid-cols-2">
-        {rows.map((row) => (
-          <div key={row.key} className="rounded-md bg-background/70 p-3">
-            <dt className="typo-label text-muted-foreground">{row.label}</dt>
-            <dd className="mt-1 typo-body-sm text-foreground">{row.value}</dd>
-          </div>
-        ))}
-      </dl>
+    <section className="border-t border-border/70 py-4 last:border-b" aria-labelledby={titleId}>
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-4 py-1 text-left"
+        aria-expanded={isOpen}
+        aria-controls={`${titleId}-content`}
+        onClick={() => setIsOpen((open) => !open)}
+      >
+        <span>
+          <span className="typo-label block text-muted-foreground">{eyebrow}</span>
+          <span id={titleId} className="typo-h2 block text-foreground">{title}</span>
+        </span>
+        <span
+          className={cn(
+            'text-xl leading-none text-muted-foreground transition-transform',
+            isOpen && 'rotate-45',
+          )}
+          aria-hidden="true"
+        >
+          +
+        </span>
+      </button>
+      {isOpen && (
+        <dl id={`${titleId}-content`} className="mt-4 divide-y divide-border/70">
+          {rows.map((row) => (
+            <div key={row.key} className="grid gap-1 py-3 md:grid-cols-[11rem_1fr] md:gap-6">
+              <dt className="typo-label text-muted-foreground">{row.label}</dt>
+              <dd className="typo-body-sm whitespace-pre-line text-foreground">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </section>
+  )
+}
+
+function ProductNoticeInfoGuide({ noticeInfo }: { noticeInfo?: ProductNoticeInfo | null }) {
+  const t = useTranslations('product.tabs.noticeInfo')
+
+  if (!noticeInfo) return null
+
+  const keys = noticeInfo.type === 'tea' ? TEA_NOTICE_FIELDS : TEAWARE_NOTICE_FIELDS
+  const rows = keys
+    .map((key) => ({ key, label: t(`labels.${key}`), value: noticeInfo[key] }))
+    .filter((row): row is { key: keyof Omit<ProductNoticeInfo, 'type'>; label: string; value: string } => typeof row.value === 'string' && row.value.trim().length > 0)
+
+  return (
+    <ProductGuideDisclosure
+      eyebrow={t('eyebrow')}
+      title={t('title')}
+      titleId="product-notice-info-title"
+      rows={rows}
+    />
   )
 }
 
@@ -83,24 +132,15 @@ function ProductPolicyGuide({ namespace, titleId }: { namespace: 'deliveryGuide'
   const items = namespace === 'deliveryGuide'
     ? ['method', 'area', 'period', 'dispatch', 'remoteArea'] as const
     : ['changeOfMindPeriod', 'sellerFault', 'customerFault', 'refundTiming', 'foodRestriction'] as const
+  const rows = items.map((item) => ({ key: item, label: t(`${item}.label`), value: t(`${item}.value`) }))
 
   return (
-    <section className="rounded-lg border border-border bg-muted/20 p-5" aria-labelledby={titleId}>
-      <div className="mb-4">
-        <p className="typo-label text-muted-foreground">{t('eyebrow')}</p>
-        <h2 id={titleId} className="typo-h2 text-foreground">
-          {t('title')}
-        </h2>
-      </div>
-      <dl className="grid gap-3 md:grid-cols-2">
-        {items.map((item) => (
-          <div key={item} className="rounded-md bg-background/70 p-3">
-            <dt className="typo-label text-muted-foreground">{t(`${item}.label`)}</dt>
-            <dd className="mt-1 typo-body-sm text-foreground">{t(`${item}.value`)}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+    <ProductGuideDisclosure
+      eyebrow={t('eyebrow')}
+      title={t('title')}
+      titleId={titleId}
+      rows={rows}
+    />
   )
 }
 
