@@ -67,9 +67,7 @@ const NAV_ITEMS: NavItem[] = [
       { labelKey: 'pages', href: '/admin/pages' },
       { labelKey: 'navigation', href: '/admin/navigation' },
       { labelKey: 'announcementBars', href: '/admin/announcement-bars' },
-      { labelKey: 'collections', href: '/admin/collections' },
       { labelKey: 'journal', href: '/admin/journal' },
-      { labelKey: 'archives', href: '/admin/archives' },
     ],
   },
   {

@@ -27,7 +27,6 @@ import { InquiriesModule } from './modules/inquiries/inquiries.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { CollectionsModule } from './modules/collections/collections.module';
-import { ArchivesModule } from './modules/archives/archives.module';
 import { JournalModule } from './modules/journal/journal.module';
 import { PointsModule } from './modules/points/points.module';
 import { NotificationModule } from './modules/notification/notification.module';
@@ -114,7 +113,6 @@ import { AuthConfigModule } from './config/auth-config.module';
     PromotionsModule,
     SettingsModule,
     CollectionsModule,
-    ArchivesModule,
     JournalModule,
     PointsModule,
     NotificationModule,
