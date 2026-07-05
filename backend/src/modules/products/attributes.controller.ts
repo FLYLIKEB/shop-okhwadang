@@ -12,17 +12,17 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiCookieAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiCookieAuth, ApiQuery } from '@nestjs/swagger';
 import { Public } from '../../common/decorators';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AttributesService } from './attributes.service';
 import { CreateAttributeTypeDto, UpdateAttributeTypeDto } from './dto/attribute-type.dto';
-import { CreateProductAttributeDto, UpdateProductAttributeDto, SetProductAttributesDto } from './dto/product-attribute.dto';
+import {
+  AttributeValueOption,
+  CreateProductAttributeDto,
+  UpdateProductAttributeDto,
+  SetProductAttributesDto,
+} from './dto/product-attribute.dto';
 import { AttributeType } from './entities/attribute-type.entity';
 import { ProductAttribute } from './entities/product-attribute.entity';
 
@@ -37,7 +37,9 @@ export class AttributesController {
   @Public()
   @ApiOperation({ summary: '모든 속성 유형 조회' })
   @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
-  async findAllTypes(@Query('locale', OptionalLocalePipe) locale?: string): Promise<AttributeType[]> {
+  async findAllTypes(
+    @Query('locale', OptionalLocalePipe) locale?: string,
+  ): Promise<AttributeType[]> {
     return this.attributesService.findAllAttributeTypes(locale);
   }
 
@@ -45,7 +47,9 @@ export class AttributesController {
   @Public()
   @ApiOperation({ summary: '필터 가능한 속성 유형만 조회' })
   @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
-  async findFilterableTypes(@Query('locale', OptionalLocalePipe) locale?: string): Promise<AttributeType[]> {
+  async findFilterableTypes(
+    @Query('locale', OptionalLocalePipe) locale?: string,
+  ): Promise<AttributeType[]> {
     return this.attributesService.getFilterableAttributes(locale);
   }
 
@@ -74,7 +78,7 @@ export class AttributesController {
   @Get('types/:code/values')
   @Public()
   @ApiOperation({ summary: '특정 타입의 가능한 값 목록 조회' })
-  async getTypeValues(@Param('code') code: string): Promise<string[]> {
+  async getTypeValues(@Param('code') code: string): Promise<AttributeValueOption[]> {
     return this.attributesService.getAttributeValuesByTypeCode(code);
   }
 
@@ -111,7 +115,9 @@ export class AttributesController {
   @Get('products/:productId')
   @Public()
   @ApiOperation({ summary: '상품 속성 조회' })
-  async findByProductId(@Param('productId', ParseIntPipe) productId: number): Promise<ProductAttribute[]> {
+  async findByProductId(
+    @Param('productId', ParseIntPipe) productId: number,
+  ): Promise<ProductAttribute[]> {
     return this.attributesService.findAttributesByProductId(productId);
   }
 

@@ -58,6 +58,11 @@ export interface ProductAttribute {
   attributeType?: AttributeType;
 }
 
+export interface AttributeValueOption {
+  value: string;
+  displayValue: string | null;
+}
+
 export interface AttributeType {
   id: number;
   code: string;
@@ -118,7 +123,8 @@ export interface ProductDetail extends Product {
 
 export type ProductListResponse = PaginatedResponse<Product>;
 
-export type ProductSort = 'latest' | 'price_asc' | 'price_desc' | 'popular' | 'review_count' | 'rating';
+export type ProductSort =
+  'latest' | 'price_asc' | 'price_desc' | 'popular' | 'review_count' | 'rating';
 
 export interface AutocompleteItem {
   id: number;
@@ -127,12 +133,28 @@ export interface AutocompleteItem {
 }
 
 export const productsApi = {
-  getList: (params?: { page?: number; limit?: number; sort?: ProductSort; categoryId?: number; q?: string; price_min?: number; price_max?: number; locale?: string; attrs?: string }) =>
-    apiClient.get<ProductListResponse>('/products', { params: params as Record<string, string | number | undefined> }),
+  getList: (params?: {
+    page?: number;
+    limit?: number;
+    sort?: ProductSort;
+    categoryId?: number;
+    q?: string;
+    price_min?: number;
+    price_max?: number;
+    locale?: string;
+    attrs?: string;
+  }) =>
+    apiClient.get<ProductListResponse>('/products', {
+      params: params as Record<string, string | number | undefined>,
+    }),
   getById: (id: number, locale?: string) =>
     apiClient.get<ProductDetail>(`/products/${id}`, { params: locale ? { locale } : undefined }),
   getBulk: (ids: number[], locale?: string) =>
-    apiClient.post<Product[]>('/products/bulk', { ids }, { params: locale ? { locale } : undefined }),
+    apiClient.post<Product[]>(
+      '/products/bulk',
+      { ids },
+      { params: locale ? { locale } : undefined },
+    ),
   autocomplete: (q: string) =>
     apiClient.get<AutocompleteItem[]>('/products/autocomplete', { params: { q } }),
 };
@@ -150,9 +172,12 @@ export const attributesApi = {
   getTypes: () => apiClient.get<AttributeType[]>('/attributes/types'),
   getFilterableTypes: () => apiClient.get<AttributeType[]>('/attributes/types/filterable'),
   getTypeById: (id: number) => apiClient.get<AttributeType>(`/attributes/types/${id}`),
-  getTypeByCode: (code: string) => apiClient.get<AttributeType | null>(`/attributes/types/code/${code}`),
-  getTypeValues: (code: string) => apiClient.get<string[]>(`/attributes/types/${code}/values`),
-  getProductAttributes: (productId: number) => apiClient.get<ProductAttribute[]>(`/attributes/products/${productId}`),
+  getTypeByCode: (code: string) =>
+    apiClient.get<AttributeType | null>(`/attributes/types/code/${code}`),
+  getTypeValues: (code: string) =>
+    apiClient.get<Array<string | AttributeValueOption>>(`/attributes/types/${code}/values`),
+  getProductAttributes: (productId: number) =>
+    apiClient.get<ProductAttribute[]>(`/attributes/products/${productId}`),
   createType: (data: Partial<AttributeType> & { code: string; name: string }) =>
     apiClient.post<AttributeType>('/attributes/types', data),
   updateType: (id: number, data: Partial<AttributeType>) =>
@@ -163,11 +188,17 @@ export const attributesApi = {
 export const homeApi = {
   getFeaturedProducts: () =>
     apiClient.get<ProductListResponse>('/products', {
-      params: { isFeatured: 'true', limit: 8, status: 'active' } as Record<string, string | number | undefined>,
+      params: { isFeatured: 'true', limit: 8, status: 'active' } as Record<
+        string,
+        string | number | undefined
+      >,
     }),
   getPopularProducts: () =>
     apiClient.get<ProductListResponse>('/products', {
-      params: { sort: 'popular', limit: 8, status: 'active' } as Record<string, string | number | undefined>,
+      params: { sort: 'popular', limit: 8, status: 'active' } as Record<
+        string,
+        string | number | undefined
+      >,
     }),
 };
 

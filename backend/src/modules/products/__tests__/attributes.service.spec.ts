@@ -5,9 +5,13 @@ import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
 import { AttributesService } from '../attributes.service';
 import { AttributeInputType, AttributeType } from '../entities/attribute-type.entity';
 import { ProductAttribute } from '../entities/product-attribute.entity';
+import { Collection } from '../../collections/entities/collection.entity';
 
 type RepoMock<T extends ObjectLiteral> = jest.Mocked<
-  Pick<Repository<T>, 'find' | 'findOne' | 'create' | 'save' | 'remove' | 'update' | 'delete' | 'createQueryBuilder'>
+  Pick<
+    Repository<T>,
+    'find' | 'findOne' | 'create' | 'save' | 'remove' | 'update' | 'delete' | 'createQueryBuilder'
+  >
 >;
 
 function createRepoMock<T extends ObjectLiteral>(): RepoMock<T> {
@@ -31,6 +35,7 @@ function createQueryBuilderMock(overrides: Record<string, unknown> = {}) {
     andWhere: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue([]),
     getRawMany: jest.fn().mockResolvedValue([]),
   };
@@ -42,16 +47,20 @@ describe('AttributesService', () => {
   let service: AttributesService;
   let typeRepo: RepoMock<AttributeType>;
   let attrRepo: RepoMock<ProductAttribute>;
+  let collectionRepo: RepoMock<Collection>;
 
   beforeEach(async () => {
     typeRepo = createRepoMock<AttributeType>();
     attrRepo = createRepoMock<ProductAttribute>();
+    collectionRepo = createRepoMock<Collection>();
+    collectionRepo.find.mockResolvedValue([]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AttributesService,
         { provide: getRepositoryToken(AttributeType), useValue: typeRepo },
         { provide: getRepositoryToken(ProductAttribute), useValue: attrRepo },
+        { provide: getRepositoryToken(Collection), useValue: collectionRepo },
       ],
     }).compile();
 
@@ -61,7 +70,12 @@ describe('AttributesService', () => {
   describe('createAttributeType', () => {
     it('기본값을 채워서 저장한다', async () => {
       typeRepo.findOne.mockResolvedValue(null as unknown as AttributeType);
-      const created = { id: 1, code: 'clay', name: '니료', inputType: AttributeInputType.TEXT } as unknown as AttributeType;
+      const created = {
+        id: 1,
+        code: 'clay',
+        name: '니료',
+        inputType: AttributeInputType.TEXT,
+      } as unknown as AttributeType;
       typeRepo.create.mockReturnValue(created);
       typeRepo.save.mockResolvedValue(created);
 
@@ -82,9 +96,9 @@ describe('AttributesService', () => {
     it('동일 code 가 이미 존재하면 ConflictException', async () => {
       typeRepo.findOne.mockResolvedValue({ id: 1, code: 'clay' } as AttributeType);
 
-      await expect(
-        service.createAttributeType({ code: 'clay', name: '니료' }),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.createAttributeType({ code: 'clay', name: '니료' })).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -92,7 +106,9 @@ describe('AttributesService', () => {
     it('없는 ID 수정 시 NotFoundException', async () => {
       typeRepo.findOne.mockResolvedValue(null as unknown as AttributeType);
 
-      await expect(service.updateAttributeType(999, { name: 'x' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateAttributeType(999, { name: 'x' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('code 변경 시 다른 동일 code 가 있으면 ConflictException', async () => {
@@ -100,7 +116,9 @@ describe('AttributesService', () => {
         .mockResolvedValueOnce({ id: 1, code: 'old', name: 'a' } as AttributeType) // findAttributeTypeById
         .mockResolvedValueOnce({ id: 2, code: 'new' } as AttributeType); // 충돌 검사
 
-      await expect(service.updateAttributeType(1, { code: 'new' })).rejects.toThrow(ConflictException);
+      await expect(service.updateAttributeType(1, { code: 'new' })).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('동일 code 변경 시도는 충돌 검사 스킵', async () => {
@@ -132,11 +150,13 @@ describe('AttributesService', () => {
 
     it('상품ID별로 그룹화한 Map을 반환한다', async () => {
       const qb = createQueryBuilderMock({
-        getMany: jest.fn().mockResolvedValue([
-          { id: 1, productId: 10, attributeTypeId: 1, value: 'a' } as ProductAttribute,
-          { id: 2, productId: 10, attributeTypeId: 2, value: 'b' } as ProductAttribute,
-          { id: 3, productId: 11, attributeTypeId: 1, value: 'c' } as ProductAttribute,
-        ]),
+        getMany: jest
+          .fn()
+          .mockResolvedValue([
+            { id: 1, productId: 10, attributeTypeId: 1, value: 'a' } as ProductAttribute,
+            { id: 2, productId: 10, attributeTypeId: 2, value: 'b' } as ProductAttribute,
+            { id: 3, productId: 11, attributeTypeId: 1, value: 'c' } as ProductAttribute,
+          ]),
       });
       attrRepo.createQueryBuilder.mockReturnValue(qb);
 
@@ -149,7 +169,13 @@ describe('AttributesService', () => {
 
   describe('createOrUpdateProductAttribute', () => {
     it('기존 값이 있으면 update', async () => {
-      const existing = { id: 1, productId: 1, attributeTypeId: 1, value: 'old', sortOrder: 0 } as ProductAttribute;
+      const existing = {
+        id: 1,
+        productId: 1,
+        attributeTypeId: 1,
+        value: 'old',
+        sortOrder: 0,
+      } as ProductAttribute;
       attrRepo.findOne.mockResolvedValue(existing);
       attrRepo.save.mockImplementation(async (entity: unknown) => entity as ProductAttribute);
 
@@ -182,17 +208,21 @@ describe('AttributesService', () => {
     it('없는 ID 수정 시 NotFoundException', async () => {
       attrRepo.findOne.mockResolvedValue(null as unknown as ProductAttribute);
 
-      await expect(
-        service.updateProductAttribute(999, { value: 'x' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateProductAttribute(999, { value: 'x' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('setProductAttributes', () => {
     it('기존 attributes 삭제 후 신규 일괄 저장', async () => {
-      attrRepo.delete.mockResolvedValue({ affected: 0 } as unknown as Awaited<ReturnType<Repository<ProductAttribute>['delete']>>);
+      attrRepo.delete.mockResolvedValue({ affected: 0 } as unknown as Awaited<
+        ReturnType<Repository<ProductAttribute>['delete']>
+      >);
       attrRepo.create.mockImplementation((dto: unknown) => dto as ProductAttribute);
-      (attrRepo.save as jest.Mock).mockImplementation(async (entities: unknown) => entities as ProductAttribute[]);
+      (attrRepo.save as jest.Mock).mockImplementation(
+        async (entities: unknown) => entities as ProductAttribute[],
+      );
 
       const result = await service.setProductAttributes(10, [
         { attributeTypeId: 1, value: 'a' },
@@ -204,7 +234,9 @@ describe('AttributesService', () => {
     });
 
     it('빈 배열이면 삭제만 수행하고 빈 배열 반환', async () => {
-      attrRepo.delete.mockResolvedValue({ affected: 0 } as unknown as Awaited<ReturnType<Repository<ProductAttribute>['delete']>>);
+      attrRepo.delete.mockResolvedValue({ affected: 0 } as unknown as Awaited<
+        ReturnType<Repository<ProductAttribute>['delete']>
+      >);
 
       const result = await service.setProductAttributes(10, []);
 
@@ -222,20 +254,36 @@ describe('AttributesService', () => {
       expect(result).toEqual([]);
     });
 
-    it('validValues 가 있으면 그것을 반환한다', async () => {
+    it('validValues 와 product_attributes 표시값을 병합해서 반환한다', async () => {
       typeRepo.findOne.mockResolvedValue({
         id: 1,
         code: 'clay',
         validValues: ['zhuni', 'duanni'],
       } as unknown as AttributeType);
 
+      const qb = createQueryBuilderMock({
+        getRawMany: jest.fn().mockResolvedValue([
+          { value: 'duanni', displayValue: 'duanni' },
+          { value: 'duanni', displayValue: '단니' },
+          { value: 'hongni', displayValue: '홍니' },
+        ]),
+      });
+      attrRepo.createQueryBuilder.mockReturnValue(qb);
+
+      collectionRepo.find.mockResolvedValue([
+        { name: 'Zhuni', nameKo: '주니', productUrl: '/products?attrs=clay:zhuni' } as Collection,
+      ]);
+
       const result = await service.getAttributeValuesByTypeCode('clay');
 
-      expect(result).toEqual(['zhuni', 'duanni']);
-      expect(attrRepo.createQueryBuilder).not.toHaveBeenCalled();
+      expect(result).toEqual([
+        { value: 'zhuni', displayValue: '주니' },
+        { value: 'duanni', displayValue: '단니' },
+        { value: 'hongni', displayValue: '홍니' },
+      ]);
     });
 
-    it('validValues 가 없으면 product_attributes 에서 distinct 조회', async () => {
+    it('validValues 가 없으면 product_attributes 에서 value/displayValue 를 조회한다', async () => {
       typeRepo.findOne.mockResolvedValue({
         id: 1,
         code: 'clay',
@@ -243,13 +291,19 @@ describe('AttributesService', () => {
       } as unknown as AttributeType);
 
       const qb = createQueryBuilderMock({
-        getRawMany: jest.fn().mockResolvedValue([{ value: 'a' }, { value: 'b' }]),
+        getRawMany: jest.fn().mockResolvedValue([
+          { value: 'a', displayValue: '에이' },
+          { value: 'b', displayValue: null },
+        ]),
       });
       attrRepo.createQueryBuilder.mockReturnValue(qb);
 
       const result = await service.getAttributeValuesByTypeCode('clay');
 
-      expect(result).toEqual(['a', 'b']);
+      expect(result).toEqual([
+        { value: 'a', displayValue: '에이' },
+        { value: 'b', displayValue: null },
+      ]);
     });
   });
 

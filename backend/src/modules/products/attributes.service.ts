@@ -1,11 +1,22 @@
-import { BadRequestException, Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { AttributeType, AttributeInputType } from './entities/attribute-type.entity';
 import { ProductAttribute } from './entities/product-attribute.entity';
 import { CreateAttributeTypeDto, UpdateAttributeTypeDto } from './dto/attribute-type.dto';
-import { CreateProductAttributeDto, UpdateProductAttributeDto } from './dto/product-attribute.dto';
+import {
+  AttributeValueOption,
+  CreateProductAttributeDto,
+  UpdateProductAttributeDto,
+} from './dto/product-attribute.dto';
 import { applyLocale } from '../../common/utils/locale.util';
+import { Collection } from '../collections/entities/collection.entity';
 
 @Injectable()
 export class AttributesService {
@@ -16,7 +27,38 @@ export class AttributesService {
     private readonly attributeTypeRepository: Repository<AttributeType>,
     @InjectRepository(ProductAttribute)
     private readonly productAttributeRepository: Repository<ProductAttribute>,
+    @InjectRepository(Collection)
+    private readonly collectionRepository: Repository<Collection>,
   ) {}
+
+  private getAttributeValueFromProductUrl(productUrl: string, code: string): string | null {
+    const [, query = ''] = productUrl.split('?');
+    if (!query) return null;
+    const params = new URLSearchParams(query);
+    const attrs = params.get('attrs');
+    if (!attrs) return null;
+
+    for (const pair of attrs.split(',')) {
+      const [attrCode, value] = pair.split(':');
+      if (attrCode === code && value) return decodeURIComponent(value);
+    }
+    return null;
+  }
+
+  private async getCollectionDisplayValuesByAttributeValue(
+    code: string,
+  ): Promise<Map<string, string>> {
+    const collections = await this.collectionRepository.find({
+      where: { productUrl: Like(`%attrs=${code}:%`) },
+    });
+    const displayValueByValue = new Map<string, string>();
+    for (const collection of collections) {
+      const value = this.getAttributeValueFromProductUrl(collection.productUrl, code);
+      const displayValue = collection.nameKo?.trim() || collection.name.trim();
+      if (value && displayValue) displayValueByValue.set(value, displayValue);
+    }
+    return displayValueByValue;
+  }
 
   private applyLocaleToAttributeType(entity: AttributeType, locale?: string): AttributeType {
     // ko 로케일: name 컬럼이 영문일 수 있으므로 nameKo 우선 적용
@@ -217,7 +259,10 @@ export class AttributesService {
     return this.createProductAttribute({ ...dto, productId });
   }
 
-  async updateProductAttribute(id: number, dto: UpdateProductAttributeDto): Promise<ProductAttribute> {
+  async updateProductAttribute(
+    id: number,
+    dto: UpdateProductAttributeDto,
+  ): Promise<ProductAttribute> {
     const attr = await this.productAttributeRepository.findOne({ where: { id } });
     if (!attr) {
       throw new NotFoundException(`ProductAttribute ID ${id} not found`);
@@ -246,7 +291,12 @@ export class AttributesService {
 
   async setProductAttributes(
     productId: number,
-    attributes: Array<{ attributeTypeId: number; value: string; displayValue?: string; sortOrder?: number }>,
+    attributes: Array<{
+      attributeTypeId: number;
+      value: string;
+      displayValue?: string;
+      sortOrder?: number;
+    }>,
   ): Promise<ProductAttribute[]> {
     // Delete existing
     await this.deleteAttributesByProductId(productId);
@@ -277,23 +327,40 @@ export class AttributesService {
     return types.map((t) => this.applyLocaleToAttributeType(t, locale));
   }
 
-  async getAttributeValuesByTypeCode(code: string): Promise<string[]> {
+  async getAttributeValuesByTypeCode(code: string): Promise<AttributeValueOption[]> {
     const type = await this.findAttributeTypeByCode(code);
     if (!type) {
       return [];
     }
-    if (type.validValues && type.validValues.length > 0) {
-      return type.validValues;
-    }
 
-    // Fetch unique values from product_attributes
     const result = await this.productAttributeRepository
       .createQueryBuilder('pa')
       .innerJoin('pa.attributeType', 'at', 'at.code = :code', { code })
-      .select('DISTINCT pa.value', 'value')
+      .select('pa.value', 'value')
+      .addSelect('pa.display_value', 'displayValue')
       .orderBy('pa.value', 'ASC')
-      .getRawMany();
+      .getRawMany<{ value: string; displayValue: string | null }>();
 
-    return result.map((r) => r.value);
+    const collectionDisplayValueByValue =
+      await this.getCollectionDisplayValuesByAttributeValue(code);
+    const displayValueByValue = new Map<string, string | null>();
+    for (const row of result) {
+      const displayValue = row.displayValue?.trim() || null;
+      const existing = displayValueByValue.get(row.value);
+      if (!existing || (displayValue && displayValue !== row.value)) {
+        displayValueByValue.set(row.value, displayValue);
+      }
+    }
+    for (const [value, displayValue] of collectionDisplayValueByValue) {
+      if (!displayValueByValue.get(value)) displayValueByValue.set(value, displayValue);
+    }
+    const values = [...(type.validValues ?? []), ...result.map((row) => row.value)];
+
+    return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).map(
+      (value) => ({
+        value,
+        displayValue: displayValueByValue.get(value) ?? null,
+      }),
+    );
   }
 }
