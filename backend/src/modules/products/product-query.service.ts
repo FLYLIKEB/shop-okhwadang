@@ -152,6 +152,7 @@ export class ProductQueryService {
     const qb = this.buildBaseQueryBuilder(
       isAdmin,
       status as ProductStatus | undefined,
+      locale,
     );
 
     if (q) {
@@ -191,7 +192,8 @@ export class ProductQueryService {
   }
 
   async findOne(id: number, isAdmin = false, locale?: string): Promise<Product & { rating: number; reviewCount: number }> {
-    const cacheKey = getProductDetailCacheKey(id);
+    const normalizedLocale = this.normalizeLocale(locale);
+    const cacheKey = getProductDetailCacheKey(id, isAdmin, normalizedLocale);
     const cached = await this.cacheService.get<Product & { rating: number; reviewCount: number }>(cacheKey);
 
     if (cached) {
@@ -199,11 +201,12 @@ export class ProductQueryService {
         !isAdmin &&
         (cached.status === ProductStatus.DRAFT ||
           cached.status === ProductStatus.HIDDEN ||
-          cached.category?.isActive === false)
+          cached.category?.isActive === false ||
+          !this.isVisibleInLocale(cached, normalizedLocale))
       ) {
         throw new NotFoundException('상품을 찾을 수 없습니다.');
       }
-      return this.applyLocale(cached, locale) as Product & { rating: number; reviewCount: number };
+      return this.applyLocale(cached, normalizedLocale) as Product & { rating: number; reviewCount: number };
     }
 
     const product = await this.productRepository
@@ -225,7 +228,8 @@ export class ProductQueryService {
       !isAdmin &&
       (product.status === ProductStatus.DRAFT ||
         product.status === ProductStatus.HIDDEN ||
-        product.category?.isActive === false)
+        product.category?.isActive === false ||
+        !this.isVisibleInLocale(product, normalizedLocale))
     ) {
       throw new NotFoundException('상품을 찾을 수 없습니다.');
     }
@@ -234,7 +238,7 @@ export class ProductQueryService {
       this.logger.warn(`view_count increment failed: ${err.message}`),
     );
 
-    const localized = this.applyLocale(product, locale);
+    const localized = this.applyLocale(product, normalizedLocale);
     const statsMap = await this.getReviewStats([id]);
     const itemsWithStats = this.applyReviewStats([localized], statsMap);
     await this.cacheService.set(cacheKey, itemsWithStats[0], CACHE_TTL_DETAIL);
@@ -250,14 +254,15 @@ export class ProductQueryService {
       return [];
     }
 
-    const cacheKey = getProductBulkCacheKey(ids, isAdmin);
+    const normalizedLocale = this.normalizeLocale(locale);
+    const cacheKey = getProductBulkCacheKey(ids, isAdmin, normalizedLocale);
     const cached = await this.cacheService.get<
       (Product & { rating: number; reviewCount: number })[]
     >(cacheKey);
 
     if (cached) {
-      const visible = this.filterVisibleForPublic(cached, isAdmin);
-      const localized = visible.map((product) => this.applyLocale(product, locale));
+      const visible = this.filterVisibleForPublic(cached, isAdmin, normalizedLocale);
+      const localized = visible.map((product) => this.applyLocale(product, normalizedLocale));
       return localized as (Product & { rating: number; reviewCount: number })[];
     }
 
@@ -281,10 +286,11 @@ export class ProductQueryService {
       ? products
       : products.filter((product) =>
           product.status === ProductStatus.ACTIVE &&
-          (product.category == null || product.category.isActive),
+          (product.category == null || product.category.isActive) &&
+          this.isVisibleInLocale(product, normalizedLocale),
         );
 
-    const localizedItems = filtered.map((product) => this.applyLocale(product, locale));
+    const localizedItems = filtered.map((product) => this.applyLocale(product, normalizedLocale));
     const statsMap = await this.getReviewStats(
       localizedItems.map((product) => Number(product.id)),
     );
@@ -294,7 +300,8 @@ export class ProductQueryService {
     return itemsWithStats;
   }
 
-  async autocomplete(q: string): Promise<{ id: number; name: string; slug: string }[]> {
+  async autocomplete(q: string, locale?: string): Promise<{ id: number; name: string; slug: string }[]> {
+    const normalizedLocale = this.normalizeLocale(locale);
     if (!q || q.length < 2) {
       return [];
     }
@@ -308,6 +315,10 @@ export class ProductQueryService {
       .andWhere('(p.category_id IS NULL OR category.is_active = :categoryActive)', {
         categoryActive: true,
       })
+      .andWhere(
+        normalizedLocale === 'en' ? 'p.is_visible_en = :localeVisible' : 'p.is_visible_ko = :localeVisible',
+        { localeVisible: true },
+      )
       .limit(10)
       .getMany();
 
@@ -370,6 +381,7 @@ export class ProductQueryService {
   private filterVisibleForPublic<T extends { status: ProductStatus }>(
     items: T[],
     isAdmin: boolean,
+    locale?: string,
   ): T[] {
     return isAdmin
       ? items
@@ -377,7 +389,8 @@ export class ProductQueryService {
           product.status === ProductStatus.ACTIVE &&
           (!('category' in product) ||
             product.category == null ||
-            (product.category as Category).isActive),
+            (product.category as Category).isActive) &&
+          this.isVisibleInLocale(product, locale),
         );
   }
 
@@ -403,6 +416,24 @@ export class ProductQueryService {
     return localized;
   }
 
+  private normalizeLocale(locale?: string): 'ko' | 'en' {
+    return locale === 'en' ? 'en' : 'ko';
+  }
+
+  private isVisibleInLocale(product: Partial<Product>, locale?: string): boolean {
+    return this.normalizeLocale(locale) === 'en'
+      ? product.isVisibleEn !== false
+      : product.isVisibleKo !== false;
+  }
+
+  private applyLocaleVisibilityFilter(qb: SelectQueryBuilder<Product>, locale?: string): void {
+    if (this.normalizeLocale(locale) === 'en') {
+      qb.andWhere('product.isVisibleEn = :localeVisible', { localeVisible: true });
+      return;
+    }
+    qb.andWhere('product.isVisibleKo = :localeVisible', { localeVisible: true });
+  }
+
   private async preResolveFilterData(query: QueryProductsDto): Promise<{
     categoryIds: number[] | undefined;
     attrTypeIdMap: Map<string, number>;
@@ -426,6 +457,7 @@ export class ProductQueryService {
   private buildBaseQueryBuilder(
     isAdmin: boolean,
     status?: ProductStatus,
+    locale?: string,
   ): SelectQueryBuilder<Product> {
     const qb = this.productRepository
       .createQueryBuilder('product')
@@ -440,13 +472,15 @@ export class ProductQueryService {
       .leftJoinAndSelect('attribute.attributeType', 'attributeType');
 
     if (!isAdmin) {
-      return qb
+      qb
         .andWhere('product.status = :status', {
           status: ProductStatus.ACTIVE,
         })
         .andWhere('(product.category_id IS NULL OR category.is_active = :categoryActive)', {
           categoryActive: true,
         });
+      this.applyLocaleVisibilityFilter(qb, locale);
+      return qb;
     }
 
     if (status) {
@@ -575,6 +609,7 @@ export class ProductQueryService {
     const likeQb = this.buildBaseQueryBuilder(
       isAdmin,
       status as ProductStatus | undefined,
+      locale,
     );
 
     if (q) {

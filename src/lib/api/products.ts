@@ -41,6 +41,8 @@ export interface Product {
   status: 'active' | 'soldout' | 'inactive' | 'draft' | 'hidden';
   isFeatured: boolean;
   isFreeShipping?: boolean;
+  isVisibleKo?: boolean;
+  isVisibleEn?: boolean;
   viewCount: number;
   category: Category | null;
   images: ProductImage[];
@@ -108,6 +110,8 @@ export interface ProductDetail extends Product {
   stock: number;
   sku: string | null;
   noticeInfo: ProductNoticeInfo | null;
+  nameEn?: string | null;
+  descriptionEn?: string | null;
   options: ProductOption[];
   detailImages: ProductDetailImage[];
 }

@@ -79,8 +79,11 @@ export class ProductsController {
   })
   @ApiResponse({ status: 200, description: '자동완성 결과 반환 성공' })
   @ApiQuery({ name: 'q', required: true, type: String, description: '검색어' })
-  autocomplete(@Query('q') q: string) {
-    return this.productsService.autocomplete(q);
+  autocomplete(
+    @Query('q') q: string,
+    @Query('locale', OptionalLocalePipe) locale: string | undefined,
+  ) {
+    return this.productsService.autocomplete(q, locale);
   }
 
   @Post('bulk')
@@ -92,9 +95,13 @@ export class ProductsController {
   })
   @ApiResponse({ status: 200, description: '상품 목록 조회 성공' })
   @ApiResponse({ status: 400, description: '잘못된 요청' })
-  bulkLookup(@Body() dto: BulkProductsDto, @Request() req: RequestWithAuthUser) {
+  bulkLookup(
+    @Body() dto: BulkProductsDto,
+    @Query('locale', OptionalLocalePipe) locale: string | undefined,
+    @Request() req: RequestWithAuthUser,
+  ) {
     const isAdmin = req.user?.role === 'admin';
-    return this.productsService.findBulk(dto.ids, isAdmin);
+    return this.productsService.findBulk(dto.ids, isAdmin, locale);
   }
 
   @Get(':id')

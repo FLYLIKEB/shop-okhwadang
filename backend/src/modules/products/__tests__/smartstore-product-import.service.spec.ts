@@ -239,6 +239,8 @@ describe('SmartStoreProductImportService', () => {
       price: 12000,
       stock: 3,
       status: ProductStatus.ACTIVE,
+      isVisibleKo: true,
+      isVisibleEn: false,
       description: '<p>상세</p>',
       images: [expect.objectContaining({ url: ingestedUrl('https://cdn.example.com/1.jpg'), isThumbnail: true })],
     }));
@@ -271,6 +273,8 @@ describe('SmartStoreProductImportService', () => {
       price: 500000,
       salePrice: 400000,
       isFreeShipping: true,
+      isVisibleKo: true,
+      isVisibleEn: false,
       noticeInfo: expect.objectContaining({
         type: 'teaware',
         productName: '옥화당 자사호 홍위주니 연자호 100cc',

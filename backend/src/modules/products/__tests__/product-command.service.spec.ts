@@ -98,6 +98,8 @@ describe('ProductCommandService', () => {
           categoryId: null,
           salePrice: null,
           sku: null,
+          isVisibleKo: true,
+          isVisibleEn: false,
         }),
       );
     });
@@ -192,8 +194,9 @@ describe('ProductCommandService', () => {
 
       await service.update(1, { name: 'new' });
 
-      expect(cacheService.del).toHaveBeenCalled();
-      expect(cacheService.delPattern).toHaveBeenCalled();
+      expect(cacheService.delPattern).toHaveBeenCalledWith('products:detail:*');
+      expect(cacheService.delPattern).toHaveBeenCalledWith('products:list:*');
+      expect(cacheService.delPattern).toHaveBeenCalledWith('products:bulk:*');
     });
 
     it('stock 변경 시 RestockAlertsService.processProductRestock 호출', async () => {
@@ -279,8 +282,9 @@ describe('ProductCommandService', () => {
       const result = await service.remove(1);
 
       expect(result).toEqual({ message: '삭제되었습니다.' });
-      expect(cacheService.del).toHaveBeenCalled();
-      expect(cacheService.delPattern).toHaveBeenCalled();
+      expect(cacheService.delPattern).toHaveBeenCalledWith('products:detail:*');
+      expect(cacheService.delPattern).toHaveBeenCalledWith('products:list:*');
+      expect(cacheService.delPattern).toHaveBeenCalledWith('products:bulk:*');
     });
   });
 });

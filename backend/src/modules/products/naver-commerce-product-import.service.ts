@@ -141,6 +141,8 @@ export class NaverCommerceProductImportService {
             ),
             description: description || undefined,
             isFreeShipping: this.resolveFreeShipping(product),
+            isVisibleKo: true,
+            isVisibleEn: false,
             noticeInfo,
             images: this.buildImages(productName, galleryUrls),
             detailImages: detailUrls.map((url, index) => ({

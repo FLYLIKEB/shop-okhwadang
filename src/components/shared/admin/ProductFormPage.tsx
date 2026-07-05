@@ -35,6 +35,8 @@ interface ProductFormData {
   status: 'draft' | 'active' | 'soldout' | 'hidden';
   isFeatured: boolean;
   isFreeShipping: boolean;
+  isVisibleKo: boolean;
+  isVisibleEn: boolean;
   images: GalleryImage[];
   detailImages: DetailImage[];
   options: ProductOptionDraft[];
@@ -384,7 +386,7 @@ function VisibilitySection({
   form,
   set,
 }: {
-  form: Pick<ProductFormData, 'status' | 'isFeatured' | 'isFreeShipping'>;
+  form: Pick<ProductFormData, 'status' | 'isFeatured' | 'isFreeShipping' | 'isVisibleKo' | 'isVisibleEn'>;
   set: Setter;
 }) {
   const t = useTranslations('admin.productForm');
@@ -405,6 +407,22 @@ function VisibilitySection({
         checked={form.isFeatured}
         onChange={(v) => set('isFeatured', v)}
       />
+
+      <div className="rounded-md border bg-secondary/30 p-3">
+        <p className="mb-2 text-xs text-muted-foreground">{t('localeVisibilityHelp')}</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <CheckboxField
+            label={t('visibleKo')}
+            checked={form.isVisibleKo}
+            onChange={(v) => set('isVisibleKo', v)}
+          />
+          <CheckboxField
+            label={t('visibleEn')}
+            checked={form.isVisibleEn}
+            onChange={(v) => set('isVisibleEn', v)}
+          />
+        </div>
+      </div>
 
       <CheckboxField
         label={t('freeShippingProduct')}
@@ -561,6 +579,8 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     status: (product?.status as ProductFormData['status']) ?? 'draft',
     isFeatured: product?.isFeatured ?? false,
     isFreeShipping: product?.isFreeShipping ?? false,
+    isVisibleKo: product?.isVisibleKo ?? true,
+    isVisibleEn: product?.isVisibleEn ?? false,
     images: product?.images?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
     detailImages:
       product?.detailImages?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
@@ -577,8 +597,8 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         value: attr.value,
         displayValue: attr.displayValue ?? '',
       })) ?? [],
-    nameEn: '',
-    descriptionEn: '',
+    nameEn: product?.nameEn ?? '',
+    descriptionEn: product?.descriptionEn ?? '',
     noticeInfo: { ...EMPTY_NOTICE_INFO, ...(product?.noticeInfo ?? {}) },
   });
 
@@ -636,6 +656,8 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         status: form.status,
         isFeatured: form.isFeatured,
         isFreeShipping: form.isFreeShipping,
+        isVisibleKo: form.isVisibleKo,
+        isVisibleEn: form.isVisibleEn,
         nameEn: form.nameEn.trim() || undefined,
         descriptionEn: form.descriptionEn.trim() || undefined,
         noticeInfo: buildNoticeInfoPayload(form.noticeInfo, hadNoticeInfo),

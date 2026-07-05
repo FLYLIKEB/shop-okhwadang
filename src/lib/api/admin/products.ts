@@ -19,6 +19,8 @@ export interface CreateProductData {
   status?: string;
   isFeatured?: boolean;
   isFreeShipping?: boolean;
+  isVisibleKo?: boolean;
+  isVisibleEn?: boolean;
   categoryId?: number | null;
   nameEn?: string;
   descriptionEn?: string;

@@ -16,8 +16,8 @@ import { RestockAlertsService } from '../restock-alerts/restock-alerts.service';
 import { CacheService } from '../cache/cache.service';
 import { findOrThrow } from '../../common/utils/repository.util';
 import {
-  getProductDetailCacheKey,
   PRODUCT_BULK_CACHE_PATTERN,
+  PRODUCT_DETAIL_CACHE_PATTERN,
   PRODUCT_LIST_CACHE_PATTERN,
 } from './product-cache.util';
 
@@ -42,6 +42,8 @@ export class ProductCommandService {
           categoryId: dto.categoryId ?? null,
           salePrice: dto.salePrice ?? null,
           sku: dto.sku ?? null,
+          isVisibleKo: dto.isVisibleKo ?? true,
+          isVisibleEn: dto.isVisibleEn ?? false,
         });
         const saved = await manager.save(product);
 
@@ -152,7 +154,7 @@ export class ProductCommandService {
         return updatedProduct;
       });
 
-      await this.invalidateProductCache(id);
+      await this.invalidateProductCache();
 
       if (dto.stock !== undefined) {
         await this.restockAlertsService.processProductRestock(
@@ -172,7 +174,7 @@ export class ProductCommandService {
   async remove(id: number): Promise<{ message: string }> {
     const product = await this.findById(id);
     await this.productRepository.remove(product);
-    await this.invalidateProductCache(id);
+    await this.invalidateProductCache();
     return { message: '삭제되었습니다.' };
   }
 
@@ -180,9 +182,9 @@ export class ProductCommandService {
     return findOrThrow(this.productRepository, { id }, '상품을 찾을 수 없습니다.');
   }
 
-  private async invalidateProductCache(productId: number): Promise<void> {
+  private async invalidateProductCache(): Promise<void> {
     await Promise.all([
-      this.cacheService.del(getProductDetailCacheKey(productId)),
+      this.cacheService.delPattern(PRODUCT_DETAIL_CACHE_PATTERN),
       this.cacheService.delPattern(PRODUCT_LIST_CACHE_PATTERN),
       this.cacheService.delPattern(PRODUCT_BULK_CACHE_PATTERN),
     ]);
