@@ -16,13 +16,17 @@ export type DraftAction =
   | { type: 'INIT'; blocks: PageBlock[]; title: string; slug: string }
   | { type: 'SET_TITLE'; title: string }
   | { type: 'SET_SLUG'; slug: string }
-  | { type: 'ADD_BLOCK'; blockType: PageBlock['type']; content: Record<string, unknown> }
+  | { type: 'ADD_BLOCK'; blockType: PageBlock['type']; content: Record<string, unknown>; id?: number }
   | { type: 'DELETE_BLOCK'; blockId: number }
   | { type: 'UPDATE_CONTENT'; blockId: number; content: Record<string, unknown> }
   | { type: 'TOGGLE_VISIBILITY'; blockId: number }
   | { type: 'REORDER'; activeId: number; overId: number };
 
 let nextTempId = -1;
+
+export function createDraftBlockId(): number {
+  return nextTempId--;
+}
 
 export function draftReducer(state: DraftState, action: DraftAction): DraftState {
   switch (action.type) {
@@ -43,7 +47,7 @@ export function draftReducer(state: DraftState, action: DraftAction): DraftState
       return { ...state, slug: action.slug, hasChanges: true };
 
     case 'ADD_BLOCK': {
-      const id = nextTempId--;
+      const id = action.id ?? createDraftBlockId();
       const newBlock: DraftBlock = {
         id,
         type: action.blockType,

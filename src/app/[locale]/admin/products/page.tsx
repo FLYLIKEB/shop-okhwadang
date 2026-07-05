@@ -14,6 +14,7 @@ import { ProductStatusBadge } from '@/components/shared/admin/StatusBadge';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
+import { ConfirmDialog } from '@/components/shared/admin/ConfirmDialog';
 
 const PAGE_SIZE = 20;
 
@@ -21,6 +22,7 @@ type ProductStatus = 'active' | 'soldout' | 'draft' | 'hidden';
 
 export default function AdminProductsPage() {
   const t = useTranslations('admin.products');
+  const tCommon = useTranslations('admin.common');
   const { isAdmin } = useAdminGuard();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
@@ -32,7 +34,8 @@ export default function AdminProductsPage() {
   >(null);
   const [showAllImportRows, setShowAllImportRows] = useState(false);
   const [showFailedImportRowsOnly, setShowFailedImportRowsOnly] = useState(false);
-  const { page, setPage, filters, setFilter } = useAdminListPage({
+  const [productPendingDelete, setProductPendingDelete] = useState<Product | null>(null);
+  const { page, setPage, filters, setFilter, resetFilters, hasActiveFilters } = useAdminListPage({
     initialFilters: {
       status: '',
     },
@@ -194,7 +197,13 @@ export default function AdminProductsPage() {
     void toggleLocaleVisibility({ product, locale });
 
   const handleDelete = (product: Product) => {
-    if (!window.confirm(t('deleteConfirm', { name: product.name }))) return;
+    setProductPendingDelete(product);
+  };
+
+  const confirmDeleteProduct = () => {
+    if (!productPendingDelete) return;
+    const product = productPendingDelete;
+    setProductPendingDelete(null);
     void deleteProduct(product);
   };
 
@@ -490,13 +499,20 @@ export default function AdminProductsPage() {
         )}
       </section>
 
-      <AdminFilterChips
-        items={statusFilters}
-        value={filters.status}
-        onToggle={(value) => setFilter('status', value)}
-        ariaLabel={t('statusFilterAria')}
-        size="sm"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <AdminFilterChips
+          items={statusFilters}
+          value={filters.status}
+          onToggle={(value) => setFilter('status', value)}
+          ariaLabel={t('statusFilterAria')}
+          size="sm"
+        />
+        {hasActiveFilters && (
+          <button type="button" onClick={resetFilters} className="rounded-md border px-3 py-1 typo-button text-muted-foreground hover:bg-muted">
+            {tCommon('resetFilters')}
+          </button>
+        )}
+      </div>
 
       <PaginatedAdminTableShell
         loading={loading}
@@ -582,6 +598,16 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </PaginatedAdminTableShell>
+      <ConfirmDialog
+        open={productPendingDelete !== null}
+        title={t('deleteDialog.title')}
+        description={t('deleteDialog.description', { name: productPendingDelete?.name ?? '' })}
+        confirmLabel={t('deleteDialog.confirm')}
+        cancelLabel={t('deleteDialog.cancel')}
+        destructive
+        onCancel={() => setProductPendingDelete(null)}
+        onConfirm={confirmDeleteProduct}
+      />
     </div>
   );
 }

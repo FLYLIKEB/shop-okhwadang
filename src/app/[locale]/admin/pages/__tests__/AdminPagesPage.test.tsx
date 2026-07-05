@@ -139,6 +139,7 @@ describe('AdminPagesPage', () => {
 
     const deleteBtn = screen.getByLabelText('블록 삭제');
     fireEvent.click(deleteBtn);
+    fireEvent.click(screen.getByRole('button', { name: '삭제' }));
 
     await waitFor(() => {
       expect(screen.queryByText('환영합니다')).not.toBeInTheDocument();

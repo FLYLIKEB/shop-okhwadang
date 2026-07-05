@@ -6,7 +6,7 @@ import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { adminPagesApi } from '@/lib/api';
 import type { Page } from '@/lib/api';
 import { useUnsavedChanges } from '@/components/shared/hooks/useUnsavedChanges';
-import { draftReducer } from '@/components/shared/admin/page-editor/useDraftReducer';
+import { createDraftBlockId, draftReducer } from '@/components/shared/admin/page-editor/useDraftReducer';
 import { usePageEditor } from '@/components/shared/admin/page-editor/usePageEditor';
 import PageListSidebar from '@/components/shared/admin/page-editor/PageListSidebar';
 import EditorTopBar from '@/components/shared/admin/page-editor/EditorTopBar';
@@ -14,6 +14,9 @@ import BlockPalette from '@/components/shared/admin/page-editor/BlockPalette';
 import EditorCanvas from '@/components/shared/admin/page-editor/EditorCanvas';
 import BlockPropertyPanel from '@/components/shared/admin/page-editor/BlockPropertyPanel';
 import PreviewModal from '@/components/shared/admin/page-editor/PreviewModal';
+import { ConfirmDialog } from '@/components/shared/admin/ConfirmDialog';
+import { AdminEmptyState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
+import { localMessage } from '@/utils/localMessages';
 
 export default function AdminPagesPage() {
   const { isLoading: authLoading, isAdmin } = useAdminGuard();
@@ -22,6 +25,7 @@ export default function AdminPagesPage() {
   const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [confirmPublishOpen, setConfirmPublishOpen] = useState(false);
 
   const [draft, dispatch] = useReducer(draftReducer, {
     title: '',
@@ -61,7 +65,7 @@ export default function AdminPagesPage() {
   if (authLoading || loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <span className="text-sm text-muted-foreground">로딩 중...</span>
+        <AdminLoadingState title={localMessage('admin.pages.loading')} />
       </div>
     );
   }
@@ -85,16 +89,18 @@ export default function AdminPagesPage() {
             saving={saving}
             onTitleChange={(title) => dispatch({ type: 'SET_TITLE', title })}
             onSlugChange={(slug) => dispatch({ type: 'SET_SLUG', slug })}
-            onTogglePublish={handleTogglePublish}
+            onTogglePublish={() => setConfirmPublishOpen(true)}
             onSave={handleSave}
             onDelete={handleDeletePage}
             onPreview={() => setShowPreview(true)}
           />
           <div className="flex flex-1 overflow-hidden">
             <BlockPalette
-              onAddBlock={(blockType, content) =>
-                dispatch({ type: 'ADD_BLOCK', blockType, content })
-              }
+              onAddBlock={(blockType, content) => {
+                const nextId = createDraftBlockId();
+                dispatch({ type: 'ADD_BLOCK', blockType, content, id: nextId });
+                setSelectedBlockId(nextId);
+              }}
             />
             <EditorCanvas
               blocks={draft.blocks}
@@ -120,21 +126,11 @@ export default function AdminPagesPage() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-muted-foreground">
-          <p className="text-base font-medium text-foreground">편집할 페이지를 선택하세요</p>
-          <p className="text-sm max-w-sm">
-            왼쪽 목록에서 페이지를 선택하면 블록 편집기가 열립니다.<br />
-            새 페이지는 왼쪽 상단 <b>+</b> 버튼으로 만들 수 있습니다.
-          </p>
-          <div className="mt-2 rounded-lg border bg-muted/40 px-6 py-4 text-xs text-left space-y-1.5 max-w-sm">
-            <p className="font-semibold text-foreground mb-2">블록이란?</p>
-            <p>🖼 <b>히어로 배너</b> — 페이지 최상단 큰 이미지 영역</p>
-            <p>🛍 <b>상품 그리드</b> — 상품을 격자 형태로 나열</p>
-            <p>🎠 <b>상품 캐러셀</b> — 상품을 슬라이드로 표시</p>
-            <p>🗂 <b>카테고리 내비</b> — 카테고리 바로가기 버튼</p>
-            <p>📢 <b>프로모션 배너</b> — 할인·이벤트 안내 띠 배너</p>
-            <p>📝 <b>텍스트</b> — 자유 형식 HTML 텍스트</p>
-          </div>
+        <div className="flex flex-1 items-center justify-center p-8">
+          <AdminEmptyState
+            title={localMessage('admin.pages.emptyTitle')}
+            description={localMessage('admin.pages.emptyDescription')}
+          />
         </div>
       )}
 
@@ -144,6 +140,21 @@ export default function AdminPagesPage() {
           onClose={() => setShowPreview(false)}
         />
       )}
+      <ConfirmDialog
+        open={confirmPublishOpen}
+        title={selectedPage?.is_published ? localMessage('admin.pages.publishDialog.unpublishTitle') : localMessage('admin.pages.publishDialog.publishTitle')}
+        description={selectedPage?.is_published
+          ? localMessage('admin.pages.publishDialog.unpublishDescription')
+          : localMessage('admin.pages.publishDialog.publishDescription')}
+        confirmLabel={selectedPage?.is_published ? localMessage('admin.pages.publishDialog.unpublishConfirm') : localMessage('admin.pages.publishDialog.publishConfirm')}
+        cancelLabel={localMessage('admin.pages.publishDialog.cancel')}
+        destructive={selectedPage?.is_published}
+        onCancel={() => setConfirmPublishOpen(false)}
+        onConfirm={() => {
+          setConfirmPublishOpen(false);
+          void handleTogglePublish();
+        }}
+      />
     </div>
   );
 }

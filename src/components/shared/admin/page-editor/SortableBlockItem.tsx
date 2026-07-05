@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
+import { ConfirmDialog } from '@/components/shared/admin/ConfirmDialog';
+import { localMessage } from '@/utils/localMessages';
 import type { PageBlock } from '@/lib/api';
 
 const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
@@ -82,6 +85,8 @@ export default function SortableBlockItem({
   onDelete,
   onToggleVisibility,
 }: SortableBlockItemProps) {
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -96,11 +101,7 @@ export default function SortableBlockItem({
     transition,
   };
 
-  const handleDelete = () => {
-    if (window.confirm('이 블록을 삭제하시겠습니까?\n저장 전까지 되돌릴 수 없습니다.')) {
-      onDelete();
-    }
-  };
+  const handleDelete = () => setConfirmDeleteOpen(true);
 
   return (
     <div
@@ -160,6 +161,19 @@ export default function SortableBlockItem({
       >
         <Trash2 className="h-4 w-4" />
       </button>
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title={localMessage('admin.pages.blockDeleteDialog.title')}
+        description={localMessage('admin.pages.blockDeleteDialog.description', { type: BLOCK_TYPE_LABELS[block.type] })}
+        confirmLabel={localMessage('admin.pages.blockDeleteDialog.confirm')}
+        cancelLabel={localMessage('admin.pages.blockDeleteDialog.cancel')}
+        destructive
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          setConfirmDeleteOpen(false);
+          onDelete();
+        }}
+      />
     </div>
   );
 }

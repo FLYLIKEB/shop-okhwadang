@@ -138,12 +138,29 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
 
 export default function BlockPalette({ onAddBlock }: BlockPaletteProps) {
   const [tooltip, setTooltip] = useState<BlockType | null>(null);
+  const [query, setQuery] = useState('');
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleBlockTypes = normalizedQuery
+    ? BLOCK_TYPES.filter(({ label, description, detail, type }) =>
+        [label, description, detail, type].some((value) => value.toLowerCase().includes(normalizedQuery)),
+      )
+    : BLOCK_TYPES;
 
   return (
-    <div className="w-52 shrink-0 overflow-y-auto border-r p-3">
-      <h3 className="mb-3 text-xs font-semibold uppercase text-muted-foreground">블록 추가</h3>
+    <div className="w-60 shrink-0 overflow-y-auto border-r p-3">
+      <h3 className="mb-3 typo-label font-semibold uppercase text-muted-foreground">블록 추가</h3>
+      <label className="mb-3 block">
+        <span className="sr-only">블록 검색</span>
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="블록 검색"
+          className="w-full rounded-md border px-3 py-2 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+      </label>
       <div className="space-y-1.5">
-        {BLOCK_TYPES.map(({ type, label, description, detail, icon: Icon }) => (
+        {visibleBlockTypes.map(({ type, label, description, detail, icon: Icon }) => (
           <div key={type} className="relative">
             <div className="flex items-stretch gap-1">
               <button
@@ -175,6 +192,11 @@ export default function BlockPalette({ onAddBlock }: BlockPaletteProps) {
             )}
           </div>
         ))}
+        {visibleBlockTypes.length === 0 && (
+          <p className="rounded-md border border-dashed p-3 text-center typo-body-sm text-muted-foreground">
+            검색 결과가 없습니다.
+          </p>
+        )}
       </div>
     </div>
   );

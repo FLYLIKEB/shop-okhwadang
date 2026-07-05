@@ -8,6 +8,21 @@ vi.mock('next/image', () => ({
   default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => React.createElement('img', props),
 }));
 
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+    push: vi.fn(),
+    refresh: vi.fn(),
+    replace: vi.fn(),
+  }),
+  notFound: vi.fn(),
+}));
+
 vi.mock('@/i18n/navigation', () => {
   const localizeHref = (href: unknown, locale?: string) => {
     const value = typeof href === 'string' ? href : String(href);

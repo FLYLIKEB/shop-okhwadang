@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import AdminPagination from './AdminPagination';
+import { AdminEmptyState, AdminLoadingState } from './AdminStates';
 
 interface PaginatedAdminTableShellProps {
   loading: boolean;
   loadingMessage?: string;
   isEmpty?: boolean;
   emptyMessage?: string;
+  emptyAction?: ReactNode;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -17,6 +19,7 @@ export function PaginatedAdminTableShell({
   loadingMessage = '불러오는 중...',
   isEmpty = false,
   emptyMessage = '데이터가 없습니다.',
+  emptyAction,
   currentPage,
   totalPages,
   onPageChange,
@@ -25,9 +28,9 @@ export function PaginatedAdminTableShell({
   return (
     <>
       {loading ? (
-        <p className="py-8 text-center text-muted-foreground">{loadingMessage}</p>
+        <AdminLoadingState title={loadingMessage} />
       ) : isEmpty ? (
-        <p className="py-8 text-center text-muted-foreground">{emptyMessage}</p>
+        <AdminEmptyState title={emptyMessage} action={emptyAction} />
       ) : (
         children
       )}
