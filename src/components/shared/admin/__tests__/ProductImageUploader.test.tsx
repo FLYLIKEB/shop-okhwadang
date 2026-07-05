@@ -1,10 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import ProductImageUploader from '../ProductImageUploader';
 
+const { uploadImageMock } = vi.hoisted(() => ({ uploadImageMock: vi.fn() }));
+
 vi.mock('@/lib/api', () => ({
   uploadApi: {
-    uploadImage: vi.fn(),
+    uploadImage: uploadImageMock,
   },
 }));
 
@@ -16,6 +19,23 @@ vi.mock('sonner', () => ({
 }));
 
 describe('ProductImageUploader', () => {
+  it('uploads a selected image and returns the stored URL', async () => {
+    uploadImageMock.mockResolvedValueOnce({ url: '/uploads/admin-image.webp' });
+    const onChange = vi.fn();
+    render(<ProductImageUploader imageUrl="" onChange={onChange} />);
+
+    const input = document.querySelector('input[type=\"file\"]');
+    expect(input).toBeInstanceOf(HTMLInputElement);
+
+    const file = new File(['image'], 'admin-image.webp', { type: 'image/webp' });
+    await userEvent.upload(input as HTMLInputElement, file);
+
+    await waitFor(() => {
+      expect(uploadImageMock).toHaveBeenCalledWith(file);
+      expect(onChange).toHaveBeenCalledWith('/uploads/admin-image.webp');
+    });
+  });
+
   it('shows the 20MB image upload limit in the helper copy', () => {
     render(<ProductImageUploader imageUrl="" onChange={vi.fn()} />);
 

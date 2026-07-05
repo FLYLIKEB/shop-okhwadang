@@ -967,7 +967,8 @@
       "title": "네비게이션 관리"
     },
     "categories": {
-      "title": "카테고리 관리"
+      "title": "카테고리 관리",
+      "imageAlt": "카테고리 이미지"
     },
     "reviews": {
       "title": "리뷰 관리",
@@ -1173,6 +1174,13 @@
       "deleteSuccess": "속성을 삭제했습니다.",
       "deleteError": "속성을 삭제하지 못했습니다.",
       "empty": "등록된 속성이 없습니다."
+    },
+    "imageUpload": {
+      "label": "이미지",
+      "alt": "업로드 이미지",
+      "emptyText": "클릭하거나 드래그하여 이미지 업로드",
+      "helperText": "JPEG, PNG, WebP · 20MB 초과 시 자동 리사이징",
+      "uploading": "업로드 중..."
     }
   },
   "search": {
@@ -1562,7 +1570,11 @@
     "title": "배송/교환/환불 정책",
     "description": "상품 상세의 요약 안내보다 더 자세한 배송, 교환·반품, 환불 기준을 안내합니다.",
     "effectiveDate": "시행일: 2026년 6월 12일",
-    "sectionKeys": ["shipping", "exchangeReturn", "refund"],
+    "sectionKeys": [
+      "shipping",
+      "exchangeReturn",
+      "refund"
+    ],
     "sections": {
       "shipping": {
         "title": "배송 정책",

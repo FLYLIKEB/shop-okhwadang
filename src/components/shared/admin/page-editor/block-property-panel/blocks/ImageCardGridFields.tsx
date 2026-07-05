@@ -3,6 +3,7 @@
 import SectionHeadingFields from './SectionHeadingFields';
 import { ImageUploadField, ItemListEditor, StringField, createEditorId } from './GenericItemFields';
 import { SelectField, createContentUpdater } from '../FormFields';
+import { localMessage } from '@/utils/localMessages';
 import type { ImageCardItem } from '@/lib/api';
 
 interface ImageCardGridFieldsProps {
@@ -35,7 +36,7 @@ export default function ImageCardGridFields({ content, onChange }: ImageCardGrid
         getTitle={(item, index) => item.name || `항목 ${index + 1}`}
         renderItem={(item, _index, updateItem) => (
           <div className="space-y-2">
-            <ImageUploadField label="이미지 URL" value={item.imageUrl} onChange={(value) => updateItem({ imageUrl: value })} />
+            <ImageUploadField label={localMessage('admin.imageUpload.label')} value={item.imageUrl} onChange={(value) => updateItem({ imageUrl: value })} />
             <StringField label="이름" value={item.name} onChange={(value) => updateItem({ name: value })} />
             <StringField label="설명 (HTML)" value={item.description} onChange={(value) => updateItem({ description: value })} multiline />
             <StringField label="링크 URL" value={item.href ?? ''} onChange={(value) => updateItem({ href: value })} />

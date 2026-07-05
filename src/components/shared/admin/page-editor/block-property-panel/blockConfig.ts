@@ -19,7 +19,7 @@ export const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
 
 export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
   hero_banner:
-    '페이지 최상단에 크게 표시되는 배너입니다. 제목·이미지·버튼을 설정하세요. 이미지 URL을 비우면 배경색만 표시됩니다.',
+    '페이지 최상단에 크게 표시되는 배너입니다. 제목·이미지·버튼을 설정하세요. 이미지를 비우면 배경색만 표시됩니다.',
   product_grid:
     '상품을 격자 형태로 나열합니다. 카테고리를 선택하면 해당 카테고리 상품이 표시됩니다. [직접 선택]은 상품을 수동으로 고르고, [자동 불러오기]는 카테고리에서 자동으로 불러옵니다.',
   product_carousel:

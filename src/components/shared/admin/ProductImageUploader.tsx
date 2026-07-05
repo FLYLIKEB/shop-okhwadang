@@ -5,15 +5,22 @@ import { toast } from 'sonner';
 import { uploadApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { toastMessage } from '@/utils/toastMessages';
+import { localMessage } from '@/utils/localMessages';
 
 interface ProductImageUploaderProps {
   imageUrl: string;
   onChange: (url: string) => void;
+  altText?: string;
+  emptyText?: string;
+  helperText?: string;
 }
 
 export default function ProductImageUploader({
   imageUrl,
   onChange,
+  altText = localMessage('admin.imageUpload.alt'),
+  emptyText = localMessage('admin.imageUpload.emptyText'),
+  helperText = localMessage('admin.imageUpload.helperText'),
 }: ProductImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -62,19 +69,19 @@ export default function ProductImageUploader({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageUrl}
-            alt="상품 이미지"
+            alt={altText}
             className="h-full w-full rounded-lg object-cover"
           />
         ) : (
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
             <span className="text-4xl">+</span>
-            <p className="text-sm">클릭하거나 드래그하여 이미지 업로드</p>
-            <p className="text-xs">JPEG, PNG, WebP · 20MB 초과 시 자동 리사이징</p>
+            <p className="text-sm">{emptyText}</p>
+            <p className="text-xs">{helperText}</p>
           </div>
         )}
         {uploading && (
           <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/70">
-            <span className="text-sm">업로드 중...</span>
+            <span className="text-sm">{localMessage('admin.imageUpload.uploading')}</span>
           </div>
         )}
       </div>
