@@ -79,6 +79,15 @@ describe('ProductTabs', () => {
     mockCreate.mockResolvedValue({ id: 1 })
   })
 
+  it('keeps the tab bar sticky below the runtime header offset', () => {
+    render(<ProductTabs description={null} descriptionImages={[]} />)
+
+    const tabBar = screen.getByRole('button', { name: '상세정보' }).parentElement
+
+    expect(tabBar).toHaveClass('sticky', 'sticky-below-header')
+    expect(tabBar).not.toHaveClass('top-88')
+  })
+
   it('default tab shows description content', async () => {
     render(<ProductTabs description="<p>상품 상세 내용입니다.</p>" descriptionImages={[]} />)
     expect(screen.getByText('상세정보')).toBeInTheDocument()
