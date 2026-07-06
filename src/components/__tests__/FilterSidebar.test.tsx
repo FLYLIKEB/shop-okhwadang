@@ -34,7 +34,7 @@ const translations: Record<string, string> = {
   'product.filter.priceRange': '가격 범위',
   'product.filter.priceMin': '최소',
   'product.filter.priceMax': '최대',
-  'product.filter.clayType': '니료(泥料)',
+  'product.filter.clayType': '니료',
   'product.filter.teapotShape': '모양',
   'product.filter.category': '카테고리',
   'common.all': '전체',

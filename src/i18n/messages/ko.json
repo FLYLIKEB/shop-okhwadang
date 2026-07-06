@@ -322,7 +322,7 @@
       "priceRange": "가격 범위",
       "priceMin": "최소",
       "priceMax": "최대",
-      "clayType": "니로(泥料)",
+      "clayType": "니료",
       "teapotShape": "형태",
       "category": "카테고리"
     },
@@ -1371,7 +1371,7 @@
   },
   "archivePage": {
     "metaTitle": "Archive — 니료 산지 기록 & 공정 스토리",
-    "metaDescription": "자사호의 원료인 니료(泥料) 산지 기록과 채토·연토·성형·소성 공정 스토리, 그리고 장인 인터뷰를 담은 아카이브입니다.",
+    "metaDescription": "자사호의 원료인 니료 산지 기록과 채토·연토·성형·소성 공정 스토리, 그리고 장인 인터뷰를 담은 아카이브입니다.",
     "heroEyebrow": "Archive",
     "heroTitle": "니료 산지 기록 & 공정 스토리",
     "heroDesc": "자사호의 생명은 흙에서 시작됩니다. 산지별 니료의 특성, 채토부터 소성까지의 공정, 그리고 흙과 함께 살아온 장인들의 이야기를 기록합니다.",
@@ -1397,7 +1397,7 @@
   },
   "collectionPage": {
     "metaTitle": "Collection — 니료별·모양별 큐레이션",
-    "metaDescription": "자사호를 니료(泥料)별, 모양별로 탐색하세요. 주니·단니·자니·흑니·청수니·녹니 컬렉션과 서시·석표·인왕·덕종·수평 형태별 큐레이션.",
+    "metaDescription": "자사호를 니료별, 모양별로 탐색하세요. 주니·단니·자니·흑니·청수니·녹니 컬렉션과 서시·석표·인왕·덕종·수평 형태별 큐레이션.",
     "metaOgTitle": "Collection — 옥화당",
     "metaOgDescription": "니료별·모양별 자사호 큐레이션 컬렉션",
     "heroEyebrow": "Collection",
@@ -1452,7 +1452,7 @@
     "zini": "자니(紫泥)",
     "heini": "흑니(黑泥)",
     "qingshuini": "청수니(靑水泥)",
-    "luni": "녹니(綠泥)"
+    "luni": "녹니"
   },
   "teapotShapes": {
     "all": "전체"

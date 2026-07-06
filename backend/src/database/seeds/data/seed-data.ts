@@ -1406,9 +1406,9 @@ export const journalEntries: SeedJournalEntry[] = [
 ];
 
 // ============================================================
-// 니로타입 (NiloType)
+// 니료타입 (ClayType)
 // ============================================================
-export interface SeedNiloType {
+export interface SeedClayType {
   name: string;
   nameKo: string;
   color: string;
@@ -1420,7 +1420,7 @@ export interface SeedNiloType {
   isActive: boolean;
 }
 
-export const niloTypes: SeedNiloType[] = [
+export const niloTypes: SeedClayType[] = [
   { name: 'Junni', nameKo: '주니', color: '#8B4513', region: '복건성 이싱 황룡산', description: '주철질의 대표 니료로, 적색 내지 황갈색을 띱니다. 내열성과 보온성이 뛰어나며, 차의 풍미를 극대화합니다.', characteristics: '["적색~황갈색","주철질","내열성 우수","보온성 우수","차 풍미 극대화"]', productUrl: '/products?attrs=clay_type:junni', sortOrder: 1, isActive: true },
   { name: 'Danji', nameKo: '단니', color: '#D4A574', region: '의흥 황룡산', description: '황토계열의 단단한 니료로, 밝은 황금빛을 띱니다. 은은한 향과 부드러운 맛을 표현하는 데 적합합니다.', characteristics: '["황금빛","황토질","경도 높음","은은한 향","부드러운 맛"]', productUrl: '/products?attrs=clay_type:danji', sortOrder: 2, isActive: true },
   { name: 'Jani', nameKo: '자니', color: '#2F4F4F', region: '의흥 황룡산', description: '청자질의 대표 니료로, 청록색 내지 암청색을 띱니다. 깊은 향과 시원한 맛을 자랑합니다.', characteristics: '["청록색~암청색","청자질","투기성 우수","깊은 향","시원한 맛"]', productUrl: '/products?attrs=clay_type:jani', sortOrder: 3, isActive: true },
@@ -1517,7 +1517,7 @@ export const pageBlocks: SeedPageBlock[] = JSON.parse(JSON.stringify([
         {
           title: '의흥 장인의 손끝에서',
           title_en: 'Crafted by Yixing Masters',
-          subtitle: '<b>중국 의흥(宜興) 황룡산</b> 자사니로 빚은 600년 전통의 자사호. 장인의 정성이 담긴 수공예품을 만나보세요.',
+          subtitle: '<b>중국 의흥(宜興) 황룡산</b> 자사니료 빚은 600년 전통의 자사호. 장인의 정성이 담긴 수공예품을 만나보세요.',
           subtitle_en: '<b>Zisha clay from Huanglong Mountain in Yixing, China</b> — 600 years of tradition shaped by hand. Meet the craft of devoted masters.',
           cta_text: '컬렉션 보기',
           cta_text_en: 'View Collection',

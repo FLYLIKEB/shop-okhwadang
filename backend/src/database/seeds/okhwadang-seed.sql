@@ -872,7 +872,7 @@ INSERT INTO journal_entries (slug, title, subtitle, category, date, read_time, s
 );
 
 -- ============================================================
--- 니로타입 (Nilo Types)
+-- 니료타입 (Clay Types)
 -- ============================================================
 INSERT INTO nilo_types (name, nameKo, color, region, description, characteristics, product_url, sort_order, is_active) VALUES
 ('Junni', '주니', '#8B4513', '복건성 이싱 황룡산', '주철질의 대표 니료로, 적색 내지 황갈색을 띱니다. 내열성과 보온성이 뛰어나며, 차의 풍미를 극대화합니다.', '["적색~황갈색","주철질","내열성 우수","보온성 우수","차 풍미 극대화"]', '/products?attrs=clay_type:junni', 1, 1),
@@ -912,7 +912,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'title', '',
   'template', 'slider',
   'slides', JSON_ARRAY(
-    JSON_OBJECT('title', '의흥 장인의 손끝에서', 'subtitle', '<b>중국 의흥(宜興) 황룡산</b> 자사니로 빚은 600년 전통의 자사호. 장인의 정성이 담긴 수공예품을 만나보세요.', 'cta_text', '컬렉션 보기', 'cta_url', '/products?categoryId=1', 'bg_color', '#1B3A4B', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
+    JSON_OBJECT('title', '의흥 장인의 손끝에서', 'subtitle', '<b>중국 의흥(宜興) 황룡산</b> 자사니료 빚은 600년 전통의 자사호. 장인의 정성이 담긴 수공예품을 만나보세요.', 'cta_text', '컬렉션 보기', 'cta_url', '/products?categoryId=1', 'bg_color', '#1B3A4B', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png'),
     JSON_OBJECT('title', '보이차의 깊은 여운', 'subtitle', '<b>운남성 고수차 산지</b>에서 직수입한 보이차. 세월이 빚어낸 <b>반장·빙도·대익</b>의 깊은 맛을 경험하세요.', 'cta_text', '아카이브 보기', 'cta_url', '/archive', 'bg_color', '#4A6741', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png'),
     JSON_OBJECT('title', '찻자리의 완성', 'subtitle', '<b>자사호와 다구</b>로 완성하는 나만의 다석. <b>경덕진 청화</b>, <b>천목유</b> 다완으로 찻자리의 품격을 높여보세요.', 'cta_text', '저널 보기', 'cta_url', '/journal', 'bg_color', '#2A2520', 'image_url', 'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png')
   )
