@@ -6,6 +6,7 @@ import type { Locale } from '@/i18n/routing';
 import type { PreparePaymentResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { SESSION_KEYS } from '@/constants/storage';
+import { SecureCardEntryShell } from './SecureCardEntryShell';
 
 export interface PaymentGatewayHandle {
   confirm: () => Promise<void>;
@@ -431,6 +432,10 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
         window.location.assign(prepareResult.redirectUrl);
       },
     }));
+
+    if (isEximbay) {
+      return <SecureCardEntryShell />;
+    }
 
     return (
       <label className="flex items-start gap-3 rounded-md border border-border p-3">

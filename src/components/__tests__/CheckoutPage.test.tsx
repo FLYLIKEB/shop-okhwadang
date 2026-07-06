@@ -32,6 +32,23 @@ vi.mock('next-intl', () => ({
       naverpayDomesticHint: '해외 사용자는 결제가 실패할 수 있습니다.',
       eximbayPayment: '카드 결제 (Visa/Master/JCB/Amex)',
       eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
+      cardPaymentTitle: 'Payment',
+      cardPaymentSubtitle: '일반 해외 커머스 방식의 카드 결제 화면입니다.',
+      creditCardTitle: 'Credit card',
+      cardBrandsLabel: '지원 카드 브랜드',
+      cardNumberLabel: '카드 번호',
+      cardNumberPlaceholder: 'Card number',
+      cardExpiryLabel: '유효기간',
+      cardExpiryPlaceholder: 'MM / YY',
+      cardCvcLabel: '보안코드',
+      cardCvcPlaceholder: 'Security code',
+      cardHolderLabel: '카드소유자명',
+      cardHolderPlaceholder: 'Name on card',
+      billingSameAsShipping: 'Use shipping address as billing address',
+      cardTermsAriaLabel: '카드 결제 약관 동의',
+      cardTermsAgreement: 'I agree to the payment terms and authorize the secure card payment.',
+      payNow: 'Pay now',
+      cardSecurePageNotice: '카드번호·유효기간·CVC는 저장되지 않습니다.',
       paypalRedirectHint: 'PayPal 승인 페이지로 이동합니다.',
       couponPoints: '쿠폰 / 적립금',
       couponPointsComingSoon: '쿠폰/적립금 적용은 추후 지원 예정입니다.',
@@ -237,7 +254,22 @@ describe('CheckoutPage', () => {
 
 
 
-  it('ko checkout은 네이버페이를 기본 선택하고 PayPal로 전환하면 prepare gateway=paypal 전달', async () => {
+  it('ko checkout은 카드 결제를 기본 선택하고 해외 커머스 카드 입력 shell을 표시한다', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+
+    await renderCheckoutPage();
+
+    expect(await screen.findByTestId('secure-card-entry-shell')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Credit card/)).toBeChecked();
+    expect(screen.getByPlaceholderText('Card number')).toHaveAttribute('readonly');
+    expect(screen.getByPlaceholderText('MM / YY')).toHaveAttribute('readonly');
+    expect(screen.getByPlaceholderText('Security code')).toHaveAttribute('readonly');
+    expect(screen.getByText('Use shipping address as billing address')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pay now' })).toBeInTheDocument();
+  });
+
+  it('ko checkout에서 PayPal로 전환하면 prepare gateway=paypal 전달', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
@@ -256,7 +288,7 @@ describe('CheckoutPage', () => {
     });
 
     await renderCheckoutPage();
-    expect(await screen.findByLabelText(/네이버페이/)).toBeChecked();
+    expect(await screen.findByLabelText(/Credit card/)).toBeChecked();
     await user.click(screen.getByLabelText(/PayPal/));
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');

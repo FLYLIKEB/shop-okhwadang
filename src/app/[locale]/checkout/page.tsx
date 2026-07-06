@@ -62,7 +62,7 @@ function getEnabledCheckoutGateways(): CheckoutGatewayName[] {
 
 function getGatewayOptions(locale: Locale): CheckoutGatewayName[] {
   const localeOrder: CheckoutGatewayName[] = locale === 'ko'
-    ? ['naverpay', 'eximbay', 'paypal']
+    ? ['eximbay', 'naverpay', 'paypal']
     : ['eximbay', 'paypal', 'naverpay'];
   const enabled = getEnabledCheckoutGateways();
   return localeOrder.filter((gateway) => enabled.includes(gateway));
@@ -336,6 +336,7 @@ export default function CheckoutPage({
                     gatewayOptions={gatewayOptions}
                     selectedGateway={selectedGateway}
                     onSelect={setSelectedGateway}
+                    showCardSubmitButton
                   />
                 )}
               </div>
