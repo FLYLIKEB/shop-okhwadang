@@ -11,6 +11,7 @@ const mockGetTypeValueOptions = vi.fn();
 const mockUpdateTypeValueOption = vi.fn();
 const mockLinkProductToTypeValue = vi.fn();
 const mockUnlinkProductFromTypeValue = vi.fn();
+const mockGetProducts = vi.fn();
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
@@ -21,6 +22,9 @@ vi.mock('@/components/shared/hooks/useAdminGuard', () => ({
 }));
 
 vi.mock('@/lib/api', () => ({
+  productsApi: {
+    getList: (...args: unknown[]) => mockGetProducts(...args),
+  },
   attributesApi: {
     getTypes: (...args: unknown[]) => mockGetTypes(...args),
     createType: (...args: unknown[]) => mockCreateType(...args),
@@ -74,6 +78,15 @@ describe('AdminAttributesPage', () => {
     mockCreateType.mockResolvedValue(attributes[0]);
     mockUpdateType.mockResolvedValue(attributes[1]);
     mockDeleteType.mockResolvedValue(undefined);
+    mockGetProducts.mockResolvedValue({
+      items: [
+        { id: 10, name: '옥화당 녹니호', slug: 'nokni-pot', status: 'active', category: { name: '자사호' } },
+        { id: 11, name: '옥화당 추가 상품', slug: 'extra-pot', status: 'active', category: { name: '자사호' } },
+      ],
+      total: 2,
+      page: 1,
+      limit: 100,
+    });
     mockGetTypeValueOptions.mockResolvedValue([
       {
         id: 1,
@@ -130,12 +143,11 @@ describe('AdminAttributesPage', () => {
     await waitFor(() => {
       expect(mockUpdateTypeValueOption).toHaveBeenCalledWith('clay_type', 'nokni', expect.objectContaining({ displayValue: '녹니 수정' }));
     });
-    fireEvent.change(screen.getByLabelText('productId'), { target: { value: '11' } });
-    fireEvent.click(screen.getByRole('button', { name: 'linkProduct' }));
+    fireEvent.click(await screen.findByRole('button', { name: /옥화당 추가 상품/ }));
     await waitFor(() => {
       expect(mockLinkProductToTypeValue).toHaveBeenCalledWith('clay_type', 'nokni', 11);
     });
-    fireEvent.click(screen.getAllByRole('button', { name: 'unlinkProduct' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: '선택 해제 옥화당 녹니호' }));
     await waitFor(() => {
       expect(mockUnlinkProductFromTypeValue).toHaveBeenCalledWith('clay_type', 'nokni', 10);
     });

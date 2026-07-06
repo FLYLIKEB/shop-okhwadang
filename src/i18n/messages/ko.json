@@ -1226,7 +1226,8 @@
       "productLinkSuccess": "상품을 연결했습니다.",
       "productLinkError": "상품을 연결하지 못했습니다.",
       "productUnlinkSuccess": "상품 연결을 제거했습니다.",
-      "productUnlinkError": "상품 연결을 제거하지 못했습니다."
+      "productUnlinkError": "상품 연결을 제거하지 못했습니다.",
+      "productSearchPlaceholder": "상품 검색으로 추가"
     },
     "imageUpload": {
       "label": "이미지",

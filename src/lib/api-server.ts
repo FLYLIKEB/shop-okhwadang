@@ -1,6 +1,6 @@
 import { cache } from 'react';
-import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, SiteSetting, Journal, AttributeValueOption } from '@/lib/api';
-import { toAttributeFilterOptions, type AttributeFilterOption } from '@/lib/attributeFilterOptions';
+import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, SiteSetting, Journal, AttributeType, AttributeValueOption } from '@/lib/api';
+import { toAttributeFilterOptions, type AttributeFilterGroup } from '@/lib/attributeFilterOptions';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
@@ -112,18 +112,29 @@ export async function fetchJournal(slug: string, locale?: string): Promise<Journ
 }
 
 
-export async function fetchCatalogFilterOptions(): Promise<{
-  clay: AttributeFilterOption[];
-  shape: AttributeFilterOption[];
-}> {
-  const [clayValues, shapeValues] = await Promise.all([
-    fetchFromBackend<Array<string | AttributeValueOption>>('/attributes/types/clay_type/values', undefined, CACHE_POLICIES.catalog),
-    fetchFromBackend<Array<string | AttributeValueOption>>('/attributes/types/teapot_shape/values', undefined, CACHE_POLICIES.catalog),
-  ]);
-  return {
-    clay: toAttributeFilterOptions(clayValues),
-    shape: toAttributeFilterOptions(shapeValues),
-  };
+export async function fetchCatalogFilterOptions(locale?: string): Promise<AttributeFilterGroup[]> {
+  const types = await fetchFromBackend<AttributeType[]>(
+    '/attributes/types/filterable',
+    locale ? { locale } : undefined,
+    CACHE_POLICIES.catalog,
+  );
+  const valueLists = await Promise.all(
+    types.map((type) =>
+      fetchFromBackend<Array<string | AttributeValueOption>>(
+        `/attributes/types/${type.code}/values`,
+        undefined,
+        CACHE_POLICIES.catalog,
+      ),
+    ),
+  );
+
+  return types
+    .map((type, index) => ({
+      code: type.code,
+      label: type.name,
+      options: toAttributeFilterOptions(valueLists[index] ?? []),
+    }))
+    .filter((group) => group.options.length > 0);
 }
 
 

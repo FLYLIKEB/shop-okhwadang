@@ -128,7 +128,7 @@ export class AttributesService {
       nameKo: dto.nameKo ?? null,
       nameEn: dto.nameEn ?? null,
       inputType: dto.inputType ?? AttributeInputType.TEXT,
-      isFilterable: dto.isFilterable ?? false,
+      isFilterable: dto.isFilterable ?? true,
       isSearchable: dto.isSearchable ?? false,
       validValues: dto.validValues ?? null,
       parentId: dto.parentId ?? null,
@@ -366,6 +366,18 @@ export class AttributesService {
     return displayValueByValue;
   }
 
+  private async getProductCountMap(type: AttributeType): Promise<Map<string, number>> {
+    const rows = await this.productAttributeRepository
+      .createQueryBuilder('pa')
+      .select('pa.value', 'value')
+      .addSelect('COUNT(DISTINCT pa.product_id)', 'productCount')
+      .where('pa.attribute_type_id = :attributeTypeId', { attributeTypeId: type.id })
+      .groupBy('pa.value')
+      .getRawMany<{ value: string; productCount: string }>();
+
+    return new Map(rows.map((row) => [row.value, Number(row.productCount) || 0]));
+  }
+
   private async findOrCreateValueOption(
     type: AttributeType,
     value: string,
@@ -402,6 +414,7 @@ export class AttributesService {
       order: { sortOrder: 'ASC', value: 'ASC' },
     });
     const displayValueByValue = await this.getDisplayValueMap(type);
+    const productCountByValue = await this.getProductCountMap(type);
     const canonicalDisplayValues = CANONICAL_ATTRIBUTE_DISPLAY_VALUES[code] ?? {};
     const values = Array.from(
       new Set([
@@ -440,7 +453,7 @@ export class AttributesService {
           option?.displayValue ?? displayValueByValue.get(value) ?? canonicalDisplayValues[value] ?? null,
         sortOrder: option?.sortOrder ?? 999,
         isActive: option?.isActive ?? true,
-        productCount: products.length,
+        productCount: productCountByValue.get(value) ?? products.length,
         products,
       };
     }).sort((a, b) => a.sortOrder - b.sortOrder || a.value.localeCompare(b.value));
@@ -561,6 +574,7 @@ export class AttributesService {
     }
 
     const displayValueByValue = await this.getDisplayValueMap(type);
+    const productCountByValue = await this.getProductCountMap(type);
     const options = await this.attributeValueOptionRepository.find({
       where: { attributeTypeId: type.id, isActive: true },
       order: { sortOrder: 'ASC', value: 'ASC' },
@@ -575,6 +589,7 @@ export class AttributesService {
         value,
         displayValue:
           optionByValue.get(value) ?? displayValueByValue.get(value) ?? canonicalDisplayValues[value] ?? null,
+        productCount: productCountByValue.get(value) ?? 0,
       }),
     );
   }

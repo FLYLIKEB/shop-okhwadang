@@ -12,9 +12,16 @@ interface EntitySelectorProps {
   onChange: (ids: number[]) => void;
   placeholder?: string;
   categoryId?: number;
+  selectedItems?: SelectedEntityItem[];
 }
 
 interface EntityItem {
+  id: number;
+  label: string;
+  sublabel?: string;
+}
+
+interface SelectedEntityItem {
   id: number;
   label: string;
   sublabel?: string;
@@ -38,6 +45,7 @@ export default function EntitySelector({
   onChange,
   placeholder,
   categoryId,
+  selectedItems = [],
 }: EntitySelectorProps) {
   const [allItems, setAllItems] = useState<EntityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,9 +82,11 @@ export default function EntitySelector({
     return () => { cancelled = true; };
   }, [type, categoryId]);
 
-  const selectedItems = useMemo(
-    () => selectedIds.map((id) => allItems.find((item) => item.id === id)).filter(Boolean) as EntityItem[],
-    [selectedIds, allItems],
+  const selectedDisplayItems = useMemo(
+    () => selectedIds
+      .map((id) => allItems.find((item) => item.id === id) ?? selectedItems.find((item) => item.id === id))
+      .filter(Boolean) as EntityItem[],
+    [selectedIds, allItems, selectedItems],
   );
 
   const filteredAvailable = useMemo(() => {
@@ -159,12 +169,12 @@ export default function EntitySelector({
           <span className="text-xs text-muted-foreground">선택됨 ({selectedIds.length})</span>
         </div>
         <div className="rounded border border-input bg-background max-h-48 overflow-y-auto">
-          {selectedItems.length === 0 ? (
+          {selectedDisplayItems.length === 0 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
               클릭으로 추가
             </div>
           ) : (
-            selectedItems.map((item, index) => (
+            selectedDisplayItems.map((item, index) => (
               <div
                 key={item.id}
                 className="flex items-center gap-1 border-b border-input last:border-b-0 px-2 py-1"
@@ -175,6 +185,7 @@ export default function EntitySelector({
                     type="button"
                     onClick={() => moveUp(index)}
                     disabled={index === 0}
+                    aria-label={`위로 이동 ${item.label}`}
                     className={cn('p-0.5 rounded hover:bg-muted', index === 0 && 'opacity-30 cursor-not-allowed')}
                   >
                     <ChevronUp className="h-3 w-3" />
@@ -182,14 +193,16 @@ export default function EntitySelector({
                   <button
                     type="button"
                     onClick={() => moveDown(index)}
-                    disabled={index === selectedItems.length - 1}
-                    className={cn('p-0.5 rounded hover:bg-muted', index === selectedItems.length - 1 && 'opacity-30 cursor-not-allowed')}
+                    disabled={index === selectedDisplayItems.length - 1}
+                    aria-label={`아래로 이동 ${item.label}`}
+                    className={cn('p-0.5 rounded hover:bg-muted', index === selectedDisplayItems.length - 1 && 'opacity-30 cursor-not-allowed')}
                   >
                     <ChevronDown className="h-3 w-3" />
                   </button>
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
+                    aria-label={`선택 해제 ${item.label}`}
                     className="p-0.5 rounded text-destructive hover:bg-destructive/10"
                   >
                     <X className="h-3 w-3" />

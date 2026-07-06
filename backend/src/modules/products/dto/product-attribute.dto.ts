@@ -4,6 +4,7 @@ import { IsString, IsOptional, IsNumber, IsArray, IsBoolean, Min, MaxLength } fr
 export interface AttributeValueOption {
   value: string;
   displayValue: string | null;
+  productCount?: number;
 }
 
 export class CreateProductAttributeDto {
