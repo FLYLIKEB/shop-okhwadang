@@ -157,7 +157,8 @@ export class NaverCommerceProductImportService {
               alt: productName,
               sortOrder: index,
             })),
-            options,
+            // 네이버 커머스 API는 원격 원본 전체 동기화이므로 옵션이 없으면 기존 로컬 자동 옵션을 제거한다.
+            options: options ?? [],
           };
 
     if (dto?.detailImages?.length === 0) delete dto.detailImages;

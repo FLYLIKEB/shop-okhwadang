@@ -233,6 +233,58 @@ describe('NaverCommerceProductImportService', () => {
     expect(ingestService.ingest).toHaveBeenCalledTimes(2);
   });
 
+  it('clears generated capacity options when Naver Commerce source has no options (issue #1054)', async () => {
+    const existing = { id: 35, sku: 'naver-13622684792', slug: 'naver-13622684792' } as Product;
+    const fetchedProducts: NaverCommerceFetchedProduct[] = [
+      {
+        rowNumber: 1,
+        listProduct: { originProductNo: 13622684792, channelProducts: [{ sellerManagementCode: 'naver-13622684792' }] },
+        detailProduct: {
+          originProduct: {
+            name: '옥화당 자사호 본산녹니 전수공 한와호 70cc',
+            salePrice: 1750000,
+            stockQuantity: 1,
+            statusType: 'SALE',
+            detailAttribute: {
+              manufacturerName: '옥화당',
+              originAreaInfo: { content: '중국산(옥화당)' },
+            },
+          },
+        },
+      },
+    ];
+    const { service, commandService, attributesService } = createService(fetchedProducts, [existing]);
+
+    const result = await service.commit();
+
+    expect(result.rows[0]).toMatchObject({
+      identifier: 'naver-13622684792',
+      action: 'update',
+      stock: 1,
+      optionCount: 0,
+      stockSource: 'product_stock',
+      automaticMapping: expect.objectContaining({
+        options: [],
+        attributes: expect.arrayContaining([
+          expect.objectContaining({ code: 'capacity', value: '70cc', attributeTypeId: 12 }),
+        ]),
+      }),
+    });
+    expect(commandService.update).toHaveBeenCalledWith(
+      35,
+      expect.objectContaining({
+        stock: 1,
+        noticeInfo: expect.objectContaining({ sizeCapacity: '70cc' }),
+        options: [],
+      }),
+    );
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(
+      35,
+      12,
+      expect.objectContaining({ value: '70cc', displayValue: '70cc' }),
+    );
+  });
+
   it('maps Naver Commerce detailAttribute option combinations and derives product stock when stockQuantity is omitted', async () => {
     const existing = { id: 8, sku: 'SKU-OPTION', slug: 'option-product' } as Product;
     const fetchedProducts: NaverCommerceFetchedProduct[] = [

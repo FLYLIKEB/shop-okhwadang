@@ -221,33 +221,10 @@ export class ProductKeywordMappingService {
     return matches.length > 0 ? this.selectBest(matches).rule.noticeInfoType : undefined;
   }
 
-  private extractOptions(normalizedName: string): ProductKeywordOptionMapping[] {
-    const options: ProductKeywordOptionMapping[] = [];
-    const capacityMatch = /\b(\d{2,4})\s?(cc|ml)\b/i.exec(normalizedName);
-    if (capacityMatch) {
-      options.push({
-        name: '용량',
-        value: `${capacityMatch[1]}${capacityMatch[2].toLowerCase()}`,
-        priceAdjustment: 0,
-        stock: 0,
-        sortOrder: 0,
-        keyword: capacityMatch[0],
-      });
-    }
-
-    const setMatch = /\b(\d+)\s?개\s?세트\b/.exec(normalizedName) ?? /\b세트\b/.exec(normalizedName);
-    if (setMatch) {
-      options.push({
-        name: '구성',
-        value: setMatch[1] ? `${setMatch[1]}개 세트` : '세트',
-        priceAdjustment: 0,
-        stock: 0,
-        sortOrder: options.length,
-        keyword: setMatch[0],
-      });
-    }
-
-    return options;
+  private extractOptions(_normalizedName: string): ProductKeywordOptionMapping[] {
+    // 상품명 키워드는 재고 정보를 갖지 않으므로 구매 옵션을 만들지 않는다.
+    // 용량 텍스트는 capacity attribute/noticeInfo 로만 반영한다. (issue #1054)
+    return [];
   }
 
   private findMatches<TRule extends StaticKeywordRule>(normalizedName: string, type: TRule['type']): Array<MatchedRule<TRule>> {
