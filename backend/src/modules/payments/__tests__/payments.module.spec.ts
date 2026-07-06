@@ -77,15 +77,15 @@ describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
   });
 });
 
-describe('locale gateway policy — Eximbay/PayPal/NaverPay ordering', () => {
-  it('ko → naverpay default, eximbay card, paypal fallback', () => {
+describe('locale gateway policy — express payments first and country-specific visibility', () => {
+  it('ko → naverpay default, paypal express, eximbay card fallback', () => {
     expect(resolveGatewayByLocale('ko')).toBe('naverpay');
-    expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'eximbay', 'paypal']);
+    expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'paypal', 'eximbay']);
   });
 
-  it('en and other locales → eximbay default, paypal/naverpay fallback', () => {
-    expect(resolveGatewayByLocale('en')).toBe('eximbay');
-    expect(resolveGatewayByLocale('ja')).toBe('eximbay');
-    expect(getAvailableGatewaysByLocale('en')).toEqual(['eximbay', 'paypal', 'naverpay']);
+  it('en and other locales → paypal default, eximbay card, no naverpay', () => {
+    expect(resolveGatewayByLocale('en')).toBe('paypal');
+    expect(resolveGatewayByLocale('ja')).toBe('paypal');
+    expect(getAvailableGatewaysByLocale('en')).toEqual(['paypal', 'eximbay']);
   });
 });

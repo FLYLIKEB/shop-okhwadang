@@ -29,11 +29,11 @@ vi.mock('next-intl', () => ({
       paypalPayment: 'PayPal',
       naverpayPayment: '네이버페이',
       naverpayDomesticBadge: '국내 전용',
-      naverpayDomesticHint: '해외 사용자는 결제가 실패할 수 있습니다.',
-      eximbayPayment: '카드 결제 (Visa/Master/JCB/Amex)',
+      naverpayDomesticHint: '국내 전용 간편결제',
+      eximbayPayment: 'Credit card',
       eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
       cardPaymentTitle: 'Payment',
-      cardPaymentSubtitle: '일반 해외 커머스 방식의 카드 결제 화면입니다.',
+      cardPaymentSubtitle: '카드 정보는 결제사의 보안 결제창에서 입력됩니다.',
       creditCardTitle: 'Credit card',
       cardBrandsLabel: '지원 카드 브랜드',
       cardNumberLabel: '카드 번호',
@@ -49,7 +49,7 @@ vi.mock('next-intl', () => ({
       cardTermsAgreement: 'I agree to the payment terms and authorize the secure card payment.',
       payNow: 'Pay now',
       cardSecurePageNotice: '카드번호·유효기간·CVC는 저장되지 않습니다.',
-      paypalRedirectHint: 'PayPal 승인 페이지로 이동합니다.',
+      paypalRedirectHint: 'PayPal',
       couponPoints: '쿠폰 / 적립금',
       couponPointsComingSoon: '쿠폰/적립금 적용은 추후 지원 예정입니다.',
       orderItems: '주문 상품',
@@ -254,14 +254,22 @@ describe('CheckoutPage', () => {
 
 
 
-  it('ko checkout은 카드 결제를 기본 선택하고 해외 커머스 카드 입력 shell을 표시한다', async () => {
+  it('ko checkout은 간편결제를 기본 선택하고 카드 선택 시 입력 shell을 표시한다', async () => {
+    const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
 
     await renderCheckoutPage();
 
+    expect(await screen.findByRole('radio', { name: /네이버페이/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /PayPal/ })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: /Credit card/ })).not.toBeChecked();
+    expect(screen.queryByTestId('secure-card-entry-shell')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: /Credit card/ }));
+
     expect(await screen.findByTestId('secure-card-entry-shell')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Credit card/)).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Credit card/ })).toBeChecked();
     expect(screen.getByPlaceholderText('Card number')).toHaveAttribute('readonly');
     expect(screen.getByPlaceholderText('MM / YY')).toHaveAttribute('readonly');
     expect(screen.getByPlaceholderText('Security code')).toHaveAttribute('readonly');
@@ -288,8 +296,8 @@ describe('CheckoutPage', () => {
     });
 
     await renderCheckoutPage();
-    expect(await screen.findByLabelText(/Credit card/)).toBeChecked();
-    await user.click(screen.getByLabelText(/PayPal/));
+    expect(await screen.findByRole('radio', { name: /네이버페이/ })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: /PayPal/ }));
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');

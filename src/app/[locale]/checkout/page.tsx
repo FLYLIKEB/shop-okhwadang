@@ -12,6 +12,7 @@ import { cn } from '@/components/ui/utils';
 import type { CartItem, CheckoutGatewayName, PreparePaymentResponse, ShippingQuoteResponse, UserAddress, CalculateDiscountResponse } from '@/lib/api';
 import { shippingApi, usersApi } from '@/lib/api';
 import { SESSION_KEYS } from '@/constants/storage';
+import { getDefaultCheckoutGateway, getGatewayOptionsByLocale } from '@/constants/checkoutPaymentMethods';
 import type { Locale } from '@/i18n/routing';
 import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
 import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMethodSelector';
@@ -46,32 +47,6 @@ export interface FormErrors {
 }
 
 
-function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
-  return value === 'naverpay' || value === 'eximbay' || value === 'paypal';
-}
-
-function getEnabledCheckoutGateways(): CheckoutGatewayName[] {
-  const configured = process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS;
-  if (!configured || configured.trim() === '') return ['naverpay', 'eximbay', 'paypal'];
-  const gateways = configured
-    .split(',')
-    .map((value) => value.trim().toLowerCase())
-    .filter(isCheckoutGatewayName);
-  return [...new Set(gateways)];
-}
-
-function getGatewayOptions(locale: Locale): CheckoutGatewayName[] {
-  const localeOrder: CheckoutGatewayName[] = locale === 'ko'
-    ? ['eximbay', 'naverpay', 'paypal']
-    : ['eximbay', 'paypal', 'naverpay'];
-  const enabled = getEnabledCheckoutGateways();
-  return localeOrder.filter((gateway) => enabled.includes(gateway));
-}
-
-function getDefaultGateway(locale: Locale): CheckoutGatewayName {
-  return getGatewayOptions(locale)[0] ?? 'naverpay';
-}
-
 function normalizeInputValue(value: unknown): string {
   if (value == null) return '';
   return String(value);
@@ -100,7 +75,7 @@ export default function CheckoutPage({
   const [sessionChecked, setSessionChecked] = useState(false);
   const [step, setStep] = useState<PaymentStep>('idle');
   const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
-  const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(() => getDefaultGateway(locale));
+  const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(() => getDefaultCheckoutGateway(locale));
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
   const [currentOrderNumber, setCurrentOrderNumber] = useState('');
   const [confirmedGrandTotal, setConfirmedGrandTotal] = useState<number | null>(null);
@@ -139,7 +114,7 @@ export default function CheckoutPage({
     success: t('steps.success'),
   };
   const loadAddressErrorMessage = t('loadAddressError');
-  const gatewayOptions = getGatewayOptions(locale);
+  const gatewayOptions = getGatewayOptionsByLocale(locale);
 
   const fillFormFromAddress = (addr: UserAddress) => {
     setForm({
@@ -153,7 +128,7 @@ export default function CheckoutPage({
   };
 
   useEffect(() => {
-    setSelectedGateway(getDefaultGateway(locale));
+    setSelectedGateway(getDefaultCheckoutGateway(locale));
   }, [locale]);
 
   useEffect(() => {

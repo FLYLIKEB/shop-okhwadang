@@ -18,6 +18,7 @@ import type { PaymentStep } from '@/components/shared/hooks/useCheckout';
 import { handleApiError } from '@/utils/error';
 import { toast } from 'sonner';
 import type { Locale } from '@/i18n/routing';
+import { getDefaultCheckoutGateway, getGatewayOptionsByLocale } from '@/constants/checkoutPaymentMethods';
 import { toastMessage } from '@/utils/toastMessages';
 
 const STATUS_TIMELINE = ['pending', 'paid', 'preparing', 'shipped', 'delivered'];
@@ -34,7 +35,7 @@ export default function OrderDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const checkoutLocale: Locale = locale === 'en' ? 'en' : 'ko';
   const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(
-    'eximbay',
+    () => getDefaultCheckoutGateway(checkoutLocale),
   );
   const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('idle');
@@ -62,7 +63,7 @@ export default function OrderDetailPage() {
   );
 
   useEffect(() => {
-    setSelectedGateway('eximbay');
+    setSelectedGateway(getDefaultCheckoutGateway(checkoutLocale));
     setPrepareResult(null);
     setPaymentStep('idle');
   }, [checkoutLocale]);
@@ -104,9 +105,7 @@ export default function OrderDetailPage() {
   }
 
   const currentStatusIndex = STATUS_TIMELINE.indexOf(order.status);
-  const gatewayOptions: CheckoutGatewayName[] = checkoutLocale === 'ko'
-    ? ['eximbay', 'naverpay', 'paypal']
-    : ['eximbay', 'paypal', 'naverpay'];
+  const gatewayOptions: CheckoutGatewayName[] = getGatewayOptionsByLocale(checkoutLocale);
   const stepLabels: Record<PaymentStep, string> = {
     idle: tCheckout('steps.idle'),
     creating_order: tCheckout('steps.creating_order'),

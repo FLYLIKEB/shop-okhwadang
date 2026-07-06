@@ -435,15 +435,15 @@
       "payment": "결제 수단",
       "complete": "결제 완료"
     },
-    "paymentMethodHint": "주문 정보 입력 후 결제 수단이 표시됩니다.",
+    "paymentMethodHint": "간편결제를 먼저 선택하고, 카드 결제가 필요하면 Credit card를 선택하세요.",
     "freeShipping": "무료",
     "freeShippingUnlocked": "무료배송이 적용되었습니다.",
     "freeShippingRemaining": "{amount} 더 담으면 무료배송",
     "paypalPayment": "PayPal",
     "naverpayPayment": "네이버페이",
     "naverpayDomesticBadge": "국내 전용",
-    "naverpayDomesticHint": "해외 사용자는 네이버페이 결제가 실패할 수 있습니다.",
-    "paypalRedirectHint": "PayPal 승인 페이지로 이동합니다.",
+    "naverpayDomesticHint": "국내 전용 간편결제",
+    "paypalRedirectHint": "PayPal",
     "externalPaymentUnavailable": "결제 페이지를 열 수 없습니다.",
     "consent": {
       "title": "필수 동의",
@@ -471,10 +471,10 @@
     "pointsPlaceholder": "사용할 적립금",
     "applyPoints": "적용",
     "pointsBalance": "사용 가능 적립금: {amount}",
-    "eximbayPayment": "카드 결제 (Visa/Master/JCB/Amex)",
+    "eximbayPayment": "Credit card",
     "eximbayHostedPaymentHint": "카드 정보는 Eximbay 보안 결제창에서 입력됩니다.",
     "cardPaymentTitle": "Payment",
-    "cardPaymentSubtitle": "일반 해외 커머스 방식의 카드 결제 화면입니다. 실제 카드 정보는 PG 보안 결제창에서만 입력됩니다.",
+    "cardPaymentSubtitle": "카드 정보는 결제사의 보안 결제창에서 입력됩니다.",
     "creditCardTitle": "Credit card",
     "cardBrandsLabel": "지원 카드 브랜드",
     "cardNumberLabel": "카드 번호",
@@ -489,7 +489,7 @@
     "cardTermsAriaLabel": "카드 결제 약관 동의",
     "cardTermsAgreement": "I agree to the payment terms and authorize the secure card payment.",
     "payNow": "Pay now",
-    "cardSecurePageNotice": "카드번호·유효기간·CVC는 옥화당 서버나 브라우저 상태에 저장되지 않으며, Pay now 이후 Eximbay 보안 결제창에서 입력됩니다."
+    "cardSecurePageNotice": "카드번호·유효기간·CVC는 옥화당 서버나 브라우저 상태에 저장되지 않습니다."
   },
   "order": {
     "orderHistory": "주문 내역",

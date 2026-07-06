@@ -174,7 +174,7 @@ export class PaymentsService {
 
     const locale = dto.locale ?? 'ko';
     const availableGateways = getAvailableGatewaysByLocale(locale);
-    const gatewayName = dto.gateway && isCheckoutGatewayName(dto.gateway)
+    const gatewayName = dto.gateway && isCheckoutGatewayName(dto.gateway) && availableGateways.includes(dto.gateway)
       ? dto.gateway
       : dto.locale
         ? resolveGatewayByLocale(locale)
