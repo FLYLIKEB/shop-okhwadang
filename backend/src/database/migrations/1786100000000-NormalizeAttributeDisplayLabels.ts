@@ -54,7 +54,7 @@ export class NormalizeAttributeDisplayLabels1786100000000 implements MigrationIn
     }
 
     await queryRunner.query(
-      `UPDATE attribute_types SET nameKo = '니료' WHERE code = 'clay_type'`,
+      `UPDATE attribute_types SET name_ko = '니료' WHERE code = 'clay_type'`,
     );
 
     if (await queryRunner.hasTable('page_blocks')) {
