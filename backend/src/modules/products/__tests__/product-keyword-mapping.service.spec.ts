@@ -12,9 +12,7 @@ describe('ProductKeywordMappingService', () => {
       expect.objectContaining({ code: 'clay_type', value: 'old_duanni', displayValue: '노단니' }),
       expect.objectContaining({ code: 'capacity', value: '120ml', displayValue: '120ml' }),
     ]));
-    expect(result.options).toEqual([
-      expect.objectContaining({ name: '용량', value: '120ml' }),
-    ]);
+    expect(result.options).toEqual([]);
   });
 
   it('prefers more specific clay keywords such as 노단니 over 단니', () => {
@@ -32,7 +30,7 @@ describe('ProductKeywordMappingService', () => {
     ]));
     expect(result.warnings.join(' ')).toContain('단니');
     expect(result.noticeInfoType).toBe(ProductNoticeInfoType.TEAWARE);
-    expect(result.options).toEqual([expect.objectContaining({ name: '용량', value: '110cc' })]);
+    expect(result.options).toEqual([]);
   });
 
   it('extracts all deterministic mappings from a SmartStore teapot product name', () => {
@@ -48,7 +46,7 @@ describe('ProductKeywordMappingService', () => {
       expect.objectContaining({ code: 'clay_origin', value: 'huanglongshan' }),
       expect.objectContaining({ code: 'capacity', value: '130cc' }),
     ]));
-    expect(result.options).toEqual([expect.objectContaining({ value: '130cc' })]);
+    expect(result.options).toEqual([]);
   });
 
 

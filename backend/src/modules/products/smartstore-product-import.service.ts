@@ -522,12 +522,14 @@ export class SmartStoreProductImportService {
   }
 
   private applyKeywordMapping(dto: CreateProductDto, mapping: ResolvedProductKeywordMapping): CreateProductDto {
-    const noticeInfo = mapping.noticeInfoType || mapping.options.length > 0
+    const capacity = mapping.attributes.find((attribute) => attribute.code === 'capacity');
+    const mappedSizeCapacity = capacity?.displayValue ?? capacity?.value;
+    const noticeInfo = mapping.noticeInfoType || mappedSizeCapacity
       ? {
           ...(dto.noticeInfo ?? {}),
           ...(mapping.noticeInfoType ? { type: mapping.noticeInfoType } : {}),
           productName: dto.noticeInfo?.productName ?? dto.name,
-          sizeCapacity: dto.noticeInfo?.sizeCapacity ?? mapping.options.find((option) => option.name === '용량')?.value,
+          sizeCapacity: dto.noticeInfo?.sizeCapacity ?? mappedSizeCapacity,
         }
       : dto.noticeInfo;
 

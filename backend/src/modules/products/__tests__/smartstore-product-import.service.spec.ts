@@ -133,7 +133,7 @@ describe('SmartStoreProductImportService', () => {
         expect.objectContaining({ code: 'teapot_shape', value: 'lianzi', displayValue: '연자호', attributeTypeId: 11 }),
         expect.objectContaining({ code: 'clay_origin', value: 'huanglongshan', displayValue: '황룡산', attributeTypeId: 14 }),
       ]),
-      options: [expect.objectContaining({ name: '용량', value: '110cc' })],
+      options: [],
       noticeInfoType: 'teaware',
     });
     expect(result.rows[0].mappingWarnings.join(' ')).toContain('단니');
@@ -141,7 +141,7 @@ describe('SmartStoreProductImportService', () => {
     expect(attributesService.createOrUpdateProductAttribute).not.toHaveBeenCalled();
   });
 
-  it('commits keyword mappings to categoryId, generated options, notice info, and product_attributes', async () => {
+  it('commits keyword mappings to categoryId, notice info, and product_attributes without generated purchase options', async () => {
     const repository = createRepositoryMock([]);
     const commandService = createCommandServiceMock();
     const attributesService = createAttributesServiceMock();
@@ -163,7 +163,9 @@ describe('SmartStoreProductImportService', () => {
     expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
       categoryId: 1,
       noticeInfo: expect.objectContaining({ type: 'teaware', productName: '옥화당 자사호 황룡산 강파니 방고호 130cc', sizeCapacity: '130cc' }),
-      options: [expect.objectContaining({ name: '용량', value: '130cc', priceAdjustment: 0, stock: 0 })],
+    }));
+    expect(commandService.create).toHaveBeenCalledWith(expect.not.objectContaining({
+      options: expect.anything(),
     }));
     expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(100, 10, expect.objectContaining({
       attributeTypeId: 10,
@@ -180,6 +182,11 @@ describe('SmartStoreProductImportService', () => {
       value: 'huanglongshan',
       displayValue: '황룡산',
     }));
+    expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(100, 12, expect.objectContaining({
+      attributeTypeId: 12,
+      value: '130cc',
+      displayValue: '130cc',
+    }));
   });
 
   it('keeps explicit SmartStore options over keyword option candidates', async () => {
@@ -191,9 +198,8 @@ describe('SmartStoreProductImportService', () => {
       ['SKU-1', '옥화당 자사호 노단니 연자호 120cc', 10000, '단독형', '색상', '노단니,자니'],
     ]);
 
-    const result = await service.commit(createFile(buffer));
+    await service.commit(createFile(buffer));
 
-    expect(result.rows[0].mappingWarnings.join(' ')).toContain('명시 옵션');
     expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
       options: [
         expect.objectContaining({ name: '색상', value: '노단니' }),
