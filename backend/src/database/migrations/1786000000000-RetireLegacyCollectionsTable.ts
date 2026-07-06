@@ -7,7 +7,9 @@ export class RetireLegacyCollectionsTable1786000000000 implements MigrationInter
     // The deployment DB user intentionally has no DROP privilege. Runtime code no
     // longer reads `collections`; clear the legacy rows so this table cannot keep
     // acting as a second catalog/CMS source of truth.
-    await queryRunner.query('DELETE FROM `collections`');
+    if (await queryRunner.hasTable('collections')) {
+      await queryRunner.query('DELETE FROM `collections`');
+    }
   }
 
   public async down(): Promise<void> {
