@@ -80,6 +80,26 @@ describe('ProductKeywordMappingService', () => {
     });
   });
 
+  it('uses canonical attribute values for common romanized aliases', () => {
+    const cases = [
+      ['옥화당 주니 서시호 120cc', 'clay_type', 'junni'],
+      ['옥화당 단니 석표호 120cc', 'clay_type', 'danji'],
+      ['옥화당 자니 수평호 120cc', 'clay_type', 'jani'],
+      ['옥화당 흑니 수평호 120cc', 'clay_type', 'heugni'],
+      ['옥화당 녹니 수평호 120cc', 'clay_type', 'nokni'],
+      ['옥화당 주니 서시호 120cc', 'teapot_shape', 'seoshi'],
+      ['옥화당 주니 석표호 120cc', 'teapot_shape', 'seokpyo'],
+      ['옥화당 주니 수평호 120cc', 'teapot_shape', 'supeong'],
+    ] as const;
+
+    cases.forEach(([name, code, value]) => {
+      const result = service.analyzeProductName(name);
+      expect(result.attributes).toEqual(expect.arrayContaining([
+        expect.objectContaining({ code, value }),
+      ]));
+    });
+  });
+
   it('maps tea names to tea notice information', () => {
     const result = service.analyzeProductName('옥화당 보이차 생차 200g');
 

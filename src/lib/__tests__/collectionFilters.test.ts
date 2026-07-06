@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CollectionType, type Collection } from '@/lib/api';
-import { getCollectionFilterValue } from '@/lib/collectionFilters';
+import { getCollectionFilterValue, uniqueCollectionsByFilterValue } from '@/lib/collectionFilters';
 
 const baseCollection: Collection = {
   id: 1,
@@ -41,5 +41,15 @@ describe('getCollectionFilterValue', () => {
         'teapot_shape',
       ),
     ).toBe('seoshi');
+  });
+
+  it('deduplicates collections by extracted filter value and keeps the newest row', () => {
+    const result = uniqueCollectionsByFilterValue([
+      { ...baseCollection, id: 2, name: '단니', productUrl: '/products?attrs=clay_type:danji', sortOrder: 2 },
+      { ...baseCollection, id: 14, name: '단니 신규', productUrl: '/products?attrs=clay_type:danji', sortOrder: 3 },
+      { ...baseCollection, id: 13, name: '자사', productUrl: '/products?attrs=clay_type:jani', sortOrder: 3 },
+    ], 'clay_type');
+
+    expect(result.map((item) => item.id)).toEqual([13, 14]);
   });
 });

@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import type { Collection } from '@/lib/api';
 import SegmentedOptionGroup from '@/components/shared/ui/SegmentedOptionGroup';
 import { getCompactCollectionLabel } from '@/lib/collectionDisplay';
-import { getCollectionFilterValue } from '@/lib/collectionFilters';
+import { getCollectionFilterValue, uniqueCollectionsByFilterValue } from '@/lib/collectionFilters';
 
 interface ClayTypeFilterProps {
   collections: Collection[];
@@ -20,7 +20,7 @@ export default function ClayTypeFilter({ collections, selected, onSelect }: Clay
     <SegmentedOptionGroup
       items={[
         { label: tCommon('all'), value: '' },
-        ...collections.map((item) => ({
+        ...uniqueCollectionsByFilterValue(collections, 'clay_type').map((item) => ({
           label: getCompactCollectionLabel(item),
           value: getCollectionFilterValue(item, 'clay_type'),
         })),

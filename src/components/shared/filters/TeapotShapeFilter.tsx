@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { Collection } from '@/lib/api';
 import { getCompactCollectionLabel } from '@/lib/collectionDisplay';
-import { getCollectionFilterValue } from '@/lib/collectionFilters';
+import { getCollectionFilterValue, uniqueCollectionsByFilterValue } from '@/lib/collectionFilters';
 
 interface TeapotShapeFilterProps {
   collections: Collection[];
@@ -31,7 +31,7 @@ export default function TeapotShapeFilter({ collections, selected, onSelect }: T
           {tCommon('all')}
         </span>
       </label>
-      {collections.map((item) => {
+      {uniqueCollectionsByFilterValue(collections, 'teapot_shape').map((item) => {
         const filterValue = getCollectionFilterValue(item, 'teapot_shape');
         return (
           <label key={item.id} className="flex cursor-pointer items-center gap-2">

@@ -26,3 +26,21 @@ export function getCollectionFilterValue(collection: Collection, attrCode: strin
 
   return collection.name;
 }
+
+export function uniqueCollectionsByFilterValue(
+  collections: Collection[],
+  attrCode: string,
+): Collection[] {
+  const byValue = new Map<string, Collection>();
+  for (const collection of collections) {
+    const value = getCollectionFilterValue(collection, attrCode);
+    const existing = byValue.get(value);
+    if (!existing || Number(collection.id) > Number(existing.id)) {
+      byValue.set(value, collection);
+    }
+  }
+  return Array.from(byValue.values()).sort((a, b) => {
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+    return Number(a.id) - Number(b.id);
+  });
+}
