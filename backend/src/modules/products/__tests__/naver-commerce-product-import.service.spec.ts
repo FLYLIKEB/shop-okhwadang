@@ -199,9 +199,9 @@ describe('NaverCommerceProductImportService', () => {
         isVisibleEn: false,
         description: '<p>상세</p>',
         noticeInfo: expect.objectContaining({ manufacturer: '옥화당', countryOfOrigin: '중국' }),
-        // 단일 원본 옵션(용량 100cc)은 상품 재고(2)로 흡수되어 제거되고,
-        // 상품명 키워드에서 파생된 용량 옵션(110cc)만 남는다. (issue #1036)
-        options: [expect.objectContaining({ name: '용량', value: '110cc' })],
+        // 단일 원본 옵션은 상품 재고로 흡수되고, 상품명 기반 옵션도 다시 생성하지 않는다.
+        // 빈 배열을 전달해 기존 0재고 옵션까지 제거한다. (issue #1052, regression of #1036)
+        options: [],
         images: [
           expect.objectContaining({
             url: expect.stringContaining(encodeURIComponent('https://img.example.com/rep.jpg')),

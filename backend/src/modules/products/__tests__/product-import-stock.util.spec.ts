@@ -9,7 +9,7 @@ describe('resolveImportOptionsStock', () => {
   it('collapses a single option into base stock and drops the option (issue #1036)', () => {
     const result = resolveImportOptionsStock(0, [option({ stock: 5 })]);
 
-    expect(result.options).toBeUndefined();
+    expect(result.options).toEqual([]);
     expect(result.stock).toBe(5);
     expect(result.optionStockTotal).toBeNull();
     expect(result.stockSource).toBe('single_option_collapsed');

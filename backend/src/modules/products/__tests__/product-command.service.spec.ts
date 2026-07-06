@@ -245,6 +245,20 @@ describe('ProductCommandService', () => {
       expect(manager.delete).toHaveBeenCalledWith(ProductOption, { id: expect.anything() });
     });
 
+    it('options 빈 배열 지정 시 기존 옵션을 모두 삭제하고 새 옵션을 저장하지 않음', async () => {
+      const existing = { id: 1, stock: 4 } as Product;
+      productRepo.findOne.mockResolvedValue(existing);
+      manager.save.mockResolvedValue(existing);
+      manager.find.mockResolvedValue([
+        { id: 11, productId: 1, name: '용량', value: '100cc', priceAdjustment: 0, stock: 0, sortOrder: 0 },
+      ]);
+
+      await service.update(1, { options: [] });
+
+      expect(manager.delete).toHaveBeenCalledWith(ProductOption, { id: expect.anything() });
+      expect(manager.save).not.toHaveBeenCalledWith(ProductOption, expect.anything());
+    });
+
     it('options 미지정 시 옵션을 건드리지 않음', async () => {
       const existing = { id: 1, stock: 0 } as Product;
       productRepo.findOne.mockResolvedValue(existing);

@@ -33,7 +33,9 @@ export function resolveImportOptionsStock(
     const singleOptionStock = options[0].stock ?? 0;
     const stock = Math.max(rawStock ?? 0, singleOptionStock);
     return {
-      options: undefined,
+      // 명시적으로 빈 배열을 전달해 후속 자동매핑이 단일 옵션을 다시 만들지 못하게 하고,
+      // 기존 상품 업데이트에서는 남아 있던 옵션을 제거한다.
+      options: [],
       stock,
       optionStockTotal: null,
       stockSource: 'single_option_collapsed',
