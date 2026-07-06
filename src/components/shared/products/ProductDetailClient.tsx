@@ -184,7 +184,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
       {/* 갤러리 + 정보 영역 */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.2fr_1fr]">
         {/* Left: Image gallery */}
-        <div className="md:sticky md:top-88 md:self-start">
+        <div className="md:sticky sticky-below-header md:self-start">
           <ImageGallery images={product.images} locale={locale} />
         </div>
 

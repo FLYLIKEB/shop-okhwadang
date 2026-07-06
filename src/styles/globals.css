@@ -38,6 +38,9 @@
   --font-size-label-sm: 0.5625rem;  /* 9px */
   --font-size-button: 0.875rem;    /* 14px */
 
+  /* Layout — Header publishes --header-bottom at runtime; sticky UI uses this stable contract. */
+  --sticky-header-offset: var(--header-bottom, var(--spacing-88, 5.5rem));
+
   /* Typography — line-height and weight scale */
   --line-height-heading: 1.25;
   --line-height-body: var(--db-line-height-base, 1.6);
@@ -196,6 +199,10 @@ body.overflow-hidden .mobile-sticky-cta {
 }
 
 /* ── Layout utilities ──────────────────────────────────────────── */
+@utility sticky-below-header {
+  top: var(--sticky-header-offset);
+}
+
 @utility layout-container {
   width: 100%;
   max-width: var(--layout-max-width);
