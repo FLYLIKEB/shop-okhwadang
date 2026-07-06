@@ -181,7 +181,7 @@ export default function CartPage() {
   );
 
   return (
-    <div className="layout-container layout-page pb-36 md:pb-8">
+    <div className="layout-container layout-page pb-36 lg:pb-8">
       <h1 className="typo-h1">{t('title')}</h1>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -210,7 +210,7 @@ export default function CartPage() {
             />
           ))}
 
-          <section className="mt-6 md:hidden">
+          <section className="mt-6 lg:hidden">
             <Accordion.Root type="single" collapsible className="rounded-lg border border-divider-soft">
               <Accordion.Item value="summary">
                 <Accordion.Header>
@@ -244,7 +244,7 @@ export default function CartPage() {
 
       <div
         className={cn(
-          'mobile-sticky-cta fixed z-40 border-t border-divider-soft bg-background md:hidden',
+          'mobile-sticky-cta fixed z-40 border-t border-divider-soft bg-background lg:hidden',
           isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
         )}
       >
