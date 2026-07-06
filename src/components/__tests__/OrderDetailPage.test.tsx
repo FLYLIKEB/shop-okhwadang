@@ -37,6 +37,23 @@ function makeTranslator(namespace?: string) {
     naverpayDomesticHint: '해외 사용자는 결제가 실패할 수 있습니다.',
     eximbayPayment: '카드 결제 (Visa/Master/JCB/Amex)',
     eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
+    cardPaymentTitle: 'Payment',
+    cardPaymentSubtitle: '일반 해외 커머스 방식의 카드 결제 화면입니다.',
+    creditCardTitle: 'Credit card',
+    cardBrandsLabel: '지원 카드 브랜드',
+    cardNumberLabel: '카드 번호',
+    cardNumberPlaceholder: 'Card number',
+    cardExpiryLabel: '유효기간',
+    cardExpiryPlaceholder: 'MM / YY',
+    cardCvcLabel: '보안코드',
+    cardCvcPlaceholder: 'Security code',
+    cardHolderLabel: '카드소유자명',
+    cardHolderPlaceholder: 'Name on card',
+    billingSameAsShipping: 'Use shipping address as billing address',
+    cardTermsAriaLabel: '카드 결제 약관 동의',
+    cardTermsAgreement: 'I agree to the payment terms and authorize the secure card payment.',
+    payNow: 'Pay now',
+    cardSecurePageNotice: '카드번호·유효기간·CVC는 저장되지 않습니다.',
     paypalRedirectHint: 'PayPal 승인 페이지로 이동합니다.',
     'steps.idle': '결제하기',
     'steps.creating_order': '주문 생성 중...',
@@ -124,8 +141,9 @@ describe('OrderDetailPage', () => {
 
     expect(await screen.findByText('ORD-16')).toBeInTheDocument();
     expect(screen.queryByTestId('shipping-timeline')).toBeNull();
-    expect(screen.getByLabelText(/네이버페이/)).toBeChecked();
-    expect(screen.getByLabelText(/카드 결제/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Credit card/)).toBeChecked();
+    expect(screen.getByPlaceholderText('Card number')).toHaveAttribute('readonly');
+    expect(screen.getByLabelText(/네이버페이/)).toBeInTheDocument();
     expect(screen.getByLabelText(/PayPal/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '결제하기' })).toBeInTheDocument();
     expect(screen.getByText('현금영수증/세금계산서 안내')).toBeInTheDocument();

@@ -34,7 +34,7 @@ export default function OrderDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const checkoutLocale: Locale = locale === 'en' ? 'en' : 'ko';
   const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(
-    checkoutLocale === 'ko' ? 'naverpay' : 'eximbay',
+    'eximbay',
   );
   const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('idle');
@@ -62,7 +62,7 @@ export default function OrderDetailPage() {
   );
 
   useEffect(() => {
-    setSelectedGateway(checkoutLocale === 'ko' ? 'naverpay' : 'eximbay');
+    setSelectedGateway('eximbay');
     setPrepareResult(null);
     setPaymentStep('idle');
   }, [checkoutLocale]);
@@ -105,7 +105,7 @@ export default function OrderDetailPage() {
 
   const currentStatusIndex = STATUS_TIMELINE.indexOf(order.status);
   const gatewayOptions: CheckoutGatewayName[] = checkoutLocale === 'ko'
-    ? ['naverpay', 'eximbay', 'paypal']
+    ? ['eximbay', 'naverpay', 'paypal']
     : ['eximbay', 'paypal', 'naverpay'];
   const stepLabels: Record<PaymentStep, string> = {
     idle: tCheckout('steps.idle'),
