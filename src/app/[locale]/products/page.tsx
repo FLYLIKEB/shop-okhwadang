@@ -102,7 +102,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
 
       <div className="md:hidden">
         <Suspense fallback={null}>
-          <MobileFilterBar categories={categories ?? []} shapeOptions={shapeOptions} />
+          <MobileFilterBar categories={categories ?? []} clayOptions={clayOptions} shapeOptions={shapeOptions} />
         </Suspense>
       </div>
 
