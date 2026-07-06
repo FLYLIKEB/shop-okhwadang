@@ -17,6 +17,50 @@ import {
 } from './dto/product-attribute.dto';
 import { applyLocale } from '../../common/utils/locale.util';
 
+const CANONICAL_ATTRIBUTE_DISPLAY_VALUES: Record<string, Record<string, string>> = {
+  clay_type: {
+    junni: '주니',
+    danji: '단니',
+    jani: '자니',
+    heugni: '흑니',
+    cheongsu: '청수니',
+    qinghuini: '청회니',
+    qingshuini: '청수니',
+    nokni: '녹니',
+    hongwei_zhuni: '홍위주니',
+    benshan_luni: '본산녹니',
+    old_qingshuini: '노청수니',
+    old_duanni: '노단니',
+    tiechengzao_hongni: '철성조홍니',
+    old_zini: '노자니',
+    dicaoqing: '저조청',
+    jiangponi: '강파니',
+    yubaini: '옥백니',
+    hongni: '홍니',
+    wuni: '오니',
+  },
+  teapot_shape: {
+    seoshi: '서시',
+    seokpyo: '석표',
+    juhu: '주형',
+    bianping: '편평',
+    inwang: '인왕',
+    deokjong: '덕종',
+    supeong: '수평',
+    pinggai_lianzi: '평개연자호',
+    lianzi: '연자호',
+    fanggu: '방고호',
+    longdan: '용단',
+    banyue: '반월',
+    xubian: '허편',
+    hanwa: '한와호',
+    tieqiu: '철구호',
+    banhu: '반호',
+    julunzhu: '거륜주',
+    yixing: '이형호',
+  },
+};
+
 @Injectable()
 export class AttributesService {
   private readonly logger = new Logger(AttributesService.name);
@@ -319,10 +363,12 @@ export class AttributesService {
     }
     const values = [...(type.validValues ?? []), ...result.map((row) => row.value)];
 
+    const canonicalDisplayValues = CANONICAL_ATTRIBUTE_DISPLAY_VALUES[code] ?? {};
+
     return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).map(
       (value) => ({
         value,
-        displayValue: displayValueByValue.get(value) ?? null,
+        displayValue: displayValueByValue.get(value) ?? canonicalDisplayValues[value] ?? null,
       }),
     );
   }

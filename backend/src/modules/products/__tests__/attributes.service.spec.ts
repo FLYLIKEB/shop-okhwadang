@@ -273,6 +273,29 @@ describe('AttributesService', () => {
       ]);
     });
 
+
+
+    it('필터 표준 속성값은 validValues 에만 있어도 한글 표시값을 보완한다', async () => {
+      typeRepo.findOne.mockResolvedValue({
+        id: 1,
+        code: 'clay_type',
+        validValues: ['nokni', 'dicaoqing', 'hongni'],
+      } as unknown as AttributeType);
+
+      const qb = createQueryBuilderMock({
+        getRawMany: jest.fn().mockResolvedValue([]),
+      });
+      attrRepo.createQueryBuilder.mockReturnValue(qb);
+
+      const result = await service.getAttributeValuesByTypeCode('clay_type');
+
+      expect(result).toEqual([
+        { value: 'nokni', displayValue: '녹니' },
+        { value: 'dicaoqing', displayValue: '저조청' },
+        { value: 'hongni', displayValue: '홍니' },
+      ]);
+    });
+
     it('validValues 가 없으면 product_attributes 에서 value/displayValue 를 조회한다', async () => {
       typeRepo.findOne.mockResolvedValue({
         id: 1,
