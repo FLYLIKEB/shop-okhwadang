@@ -7,19 +7,17 @@ import { useUrlModal } from '@/hooks/useUrlModal';
 import { buildAttrs, useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
 import CategoryTree from './CategoryTree';
 import PriceRangeFilter from './PriceRangeFilter';
-import ClayTypeFilter from './ClayTypeFilter';
-import TeapotShapeFilter from './TeapotShapeFilter';
+import AttributeValueFilter from './AttributeValueFilter';
 import FilterSection from './FilterSection';
 import type { Category } from '@/lib/api';
-import type { AttributeFilterOption } from '@/lib/attributeFilterOptions';
+import type { AttributeFilterGroup } from '@/lib/attributeFilterOptions';
 
 interface FilterSidebarProps {
   categories: Category[];
-  clayOptions: AttributeFilterOption[];
-  shapeOptions: AttributeFilterOption[];
+  filterGroups: AttributeFilterGroup[];
 }
 
-export default function FilterSidebar({ categories, clayOptions, shapeOptions }: FilterSidebarProps) {
+export default function FilterSidebar({ categories, filterGroups }: FilterSidebarProps) {
   const t = useTranslations('product.filter');
   const [mobileOpen, setMobileOpen] = useUrlModal('filters');
   const {
@@ -31,15 +29,13 @@ export default function FilterSidebar({ categories, clayOptions, shapeOptions }:
     resetQuery,
   } = useCatalogQueryParams();
 
-  const selectedClayType = attrs.get('clay_type');
-  const selectedShape = attrs.get('teapot_shape');
+  const selectedAttributeValues = filterGroups.map((group) => attrs.get(group.code));
 
   const hasActiveFilters =
     categoryId !== undefined ||
     priceMin !== undefined ||
     priceMax !== undefined ||
-    selectedClayType !== undefined ||
-    selectedShape !== undefined;
+    selectedAttributeValues.some((value) => value !== undefined);
 
   const handleCategorySelect = useCallback((id: number | undefined) => {
     updateQuery({ categoryId: id });
@@ -52,13 +48,8 @@ export default function FilterSidebar({ categories, clayOptions, shapeOptions }:
     });
   }, [updateQuery]);
 
-  const handleClayTypeSelect = useCallback((value: string | undefined) => {
-    const nextAttrs = buildAttrs(attrs, 'clay_type', value);
-    updateQuery({ attrs: nextAttrs });
-  }, [attrs, updateQuery]);
-
-  const handleShapeSelect = useCallback((value: string | undefined) => {
-    const nextAttrs = buildAttrs(attrs, 'teapot_shape', value);
+  const handleAttributeSelect = useCallback((code: string, value: string | undefined) => {
+    const nextAttrs = buildAttrs(attrs, code, value);
     updateQuery({ attrs: nextAttrs });
   }, [attrs, updateQuery]);
 
@@ -89,21 +80,16 @@ export default function FilterSidebar({ categories, clayOptions, shapeOptions }:
         />
       </FilterSection>
 
-      <FilterSection title={t('clayType')} defaultOpen={selectedClayType !== undefined}>
-        <ClayTypeFilter
-          options={clayOptions}
-          selected={selectedClayType}
-          onSelect={handleClayTypeSelect}
-        />
-      </FilterSection>
-
-      <FilterSection title={t('teapotShape')} defaultOpen={selectedShape !== undefined}>
-        <TeapotShapeFilter
-          options={shapeOptions}
-          selected={selectedShape}
-          onSelect={handleShapeSelect}
-        />
-      </FilterSection>
+      {filterGroups.map((group) => (
+        <FilterSection key={group.code} title={group.label} defaultOpen={attrs.get(group.code) !== undefined}>
+          <AttributeValueFilter
+            code={group.code}
+            options={group.options}
+            selected={attrs.get(group.code)}
+            onSelect={(value) => handleAttributeSelect(group.code, value)}
+          />
+        </FilterSection>
+      ))}
 
       <FilterSection title={t('priceRange')} defaultOpen={priceMin !== undefined || priceMax !== undefined}>
         <PriceRangeFilter

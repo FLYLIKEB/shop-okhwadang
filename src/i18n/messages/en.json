@@ -1226,7 +1226,8 @@
       "productLinkSuccess": "Product linked.",
       "productLinkError": "Failed to link product.",
       "productUnlinkSuccess": "Product link removed.",
-      "productUnlinkError": "Failed to remove product link."
+      "productUnlinkError": "Failed to remove product link.",
+      "productSearchPlaceholder": "Search products to add"
     },
     "imageUpload": {
       "label": "Image",

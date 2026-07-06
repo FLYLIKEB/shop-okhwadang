@@ -61,6 +61,7 @@ export interface ProductAttribute {
 export interface AttributeValueOption {
   value: string;
   displayValue: string | null;
+  productCount?: number;
 }
 
 export interface AttributeValueLinkedProduct {

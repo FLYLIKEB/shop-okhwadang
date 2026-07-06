@@ -4,11 +4,11 @@ import { toAttributeFilterOptions } from '@/lib/attributeFilterOptions';
 describe('toAttributeFilterOptions', () => {
   it('uses attrs values as the filter source and keeps display labels separate', () => {
     expect(toAttributeFilterOptions([
-      { value: 'zini', displayValue: '자니' },
-      { value: 'duanni', displayValue: '단니' },
+      { value: 'zini', displayValue: '자니', productCount: 2 },
+      { value: 'duanni', displayValue: '단니', productCount: 0 },
     ])).toEqual([
-      { value: 'zini', label: '자니' },
-      { value: 'duanni', label: '단니' },
+      { value: 'zini', label: '자니', productCount: 2 },
+      { value: 'duanni', label: '단니', productCount: 0 },
     ]);
   });
 
@@ -20,8 +20,8 @@ describe('toAttributeFilterOptions', () => {
       { value: 'duanni', displayValue: '단니' },
       { value: ' ', displayValue: '빈 값' },
     ])).toEqual([
-      { value: 'zini', label: '자니' },
-      { value: 'duanni', label: '단니' },
+      { value: 'zini', label: '자니', productCount: 0 },
+      { value: 'duanni', label: '단니', productCount: 0 },
     ]);
   });
 });

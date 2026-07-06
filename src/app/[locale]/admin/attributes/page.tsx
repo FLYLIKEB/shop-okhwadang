@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import EntitySelector from '@/components/shared/admin/page-editor/EntitySelector';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { attributesApi } from '@/lib/api';
 import type { AttributeType, ManagedAttributeValueOption } from '@/lib/api';
@@ -80,7 +81,6 @@ export default function AdminAttributesPage() {
   const [selectedAttribute, setSelectedAttribute] = useState<AttributeType | null>(null);
   const [valueOptions, setValueOptions] = useState<ManagedAttributeValueOption[]>([]);
   const [valueOptionDrafts, setValueOptionDrafts] = useState<Record<string, string>>({});
-  const [productIdDrafts, setProductIdDrafts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [loadingValues, setLoadingValues] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -97,7 +97,6 @@ export default function AdminAttributesPage() {
       setSelectedAttribute(attribute);
       setValueOptions(options);
       setValueOptionDrafts(Object.fromEntries(options.map((option) => [option.value, option.displayValue ?? ''])));
-      setProductIdDrafts({});
     } catch (err) {
       toast.error(handleApiError(err, t('valueOptionsLoadError')));
     } finally {
@@ -195,17 +194,27 @@ export default function AdminAttributesPage() {
     }
   };
 
-  const linkProduct = async (option: ManagedAttributeValueOption) => {
+  const linkProduct = async (option: ManagedAttributeValueOption, productId: number) => {
     if (!selectedAttribute) return;
-    const productId = Number(productIdDrafts[option.value]);
-    if (!Number.isFinite(productId) || productId <= 0) return;
     try {
       const updated = await attributesApi.linkProductToTypeValue(selectedAttribute.code, option.value, productId);
       setValueOptions((prev) => prev.map((item) => (item.value === option.value ? updated : item)));
-      setProductIdDrafts((prev) => ({ ...prev, [option.value]: '' }));
       toast.success(t('productLinkSuccess'));
     } catch (err) {
       toast.error(handleApiError(err, t('productLinkError')));
+    }
+  };
+
+  const handleLinkedProductsChange = (option: ManagedAttributeValueOption, nextProductIds: number[]) => {
+    const currentProductIds = option.products.map((product) => product.id);
+    const addedProductId = nextProductIds.find((id) => !currentProductIds.includes(id));
+    if (addedProductId !== undefined) {
+      void linkProduct(option, addedProductId);
+      return;
+    }
+    const removedProductId = currentProductIds.find((id) => !nextProductIds.includes(id));
+    if (removedProductId !== undefined) {
+      void unlinkProduct(option, removedProductId);
     }
   };
 
@@ -461,57 +470,22 @@ export default function AdminAttributesPage() {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-2">
                     <h3 className="typo-label text-muted-foreground">
                       {t('linkedProducts', { count: option.productCount })}
                     </h3>
-                    <div className="flex min-w-0 gap-2">
-                      <input
-                        aria-label={t('productId')}
-                        type="number"
-                        min="1"
-                        value={productIdDrafts[option.value] ?? ''}
-                        onChange={(event) => {
-                          const next = event.target.value;
-                          setProductIdDrafts((prev) => ({ ...prev, [option.value]: next }));
-                        }}
-                        placeholder={t('productIdPlaceholder')}
-                        className="min-w-0 rounded border bg-background px-3 py-2 typo-body-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => void linkProduct(option)}
-                        className="rounded border px-3 py-2 typo-body-sm hover:bg-secondary"
-                      >
-                        {t('linkProduct')}
-                      </button>
-                    </div>
+                    <EntitySelector
+                      type="product"
+                      selectedIds={option.products.map((product) => product.id)}
+                      selectedItems={option.products.map((product) => ({
+                        id: product.id,
+                        label: product.name,
+                        sublabel: product.slug,
+                      }))}
+                      onChange={(nextProductIds) => handleLinkedProductsChange(option, nextProductIds)}
+                      placeholder={t('productSearchPlaceholder')}
+                    />
                   </div>
-                  {option.products.length === 0 ? (
-                    <p className="rounded border border-dashed p-3 typo-body-sm text-muted-foreground">
-                      {t('noLinkedProducts')}
-                    </p>
-                  ) : (
-                    <ul className="grid gap-2 md:grid-cols-2">
-                      {option.products.map((product) => (
-                        <li
-                          key={product.id}
-                          className="flex items-center justify-between gap-2 rounded border px-3 py-2 typo-body-sm"
-                        >
-                          <span className="min-w-0 truncate">
-                            #{product.id} {product.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => void unlinkProduct(option, product.id)}
-                            className="shrink-0 rounded border px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
-                          >
-                            {t('unlinkProduct')}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
                 </div>
               </article>
             ))}

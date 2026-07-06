@@ -141,8 +141,8 @@ export function registerAttributesSuite(getApp: () => INestApplication) {
             expect(Array.isArray(res.body)).toBe(true);
             expect(res.body).toEqual(
               expect.arrayContaining([
-                { value: 'val1', displayValue: null },
-                { value: 'val2', displayValue: null },
+                { value: 'val1', displayValue: null, productCount: 0 },
+                { value: 'val2', displayValue: null, productCount: 0 },
               ]),
             );
           });

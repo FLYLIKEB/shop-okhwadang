@@ -37,6 +37,7 @@ function createQueryBuilderMock(overrides: Record<string, unknown> = {}) {
     orderBy: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     addSelect: jest.fn().mockReturnThis(),
+    groupBy: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue([]),
     getRawMany: jest.fn().mockResolvedValue([]),
   };
@@ -89,7 +90,7 @@ describe('AttributesService', () => {
           code: 'clay',
           name: '니료',
           inputType: AttributeInputType.TEXT,
-          isFilterable: false,
+          isFilterable: true,
           isSearchable: false,
           sortOrder: 0,
         }),
@@ -271,14 +272,22 @@ describe('AttributesService', () => {
           { value: 'hongni', displayValue: '홍니' },
         ]),
       });
-      attrRepo.createQueryBuilder.mockReturnValue(qb);
+      const countQb = createQueryBuilderMock({
+        getRawMany: jest.fn().mockResolvedValue([
+          { value: 'duanni', productCount: '2' },
+          { value: 'hongni', productCount: '1' },
+        ]),
+      });
+      attrRepo.createQueryBuilder
+        .mockReturnValueOnce(qb)
+        .mockReturnValueOnce(countQb);
 
       const result = await service.getAttributeValuesByTypeCode('clay');
 
       expect(result).toEqual([
-        { value: 'zhuni', displayValue: null },
-        { value: 'duanni', displayValue: '단니' },
-        { value: 'hongni', displayValue: '홍니' },
+        { value: 'zhuni', displayValue: null, productCount: 0 },
+        { value: 'duanni', displayValue: '단니', productCount: 2 },
+        { value: 'hongni', displayValue: '홍니', productCount: 1 },
       ]);
     });
 
@@ -294,14 +303,16 @@ describe('AttributesService', () => {
       const qb = createQueryBuilderMock({
         getRawMany: jest.fn().mockResolvedValue([]),
       });
-      attrRepo.createQueryBuilder.mockReturnValue(qb);
+      attrRepo.createQueryBuilder
+        .mockReturnValueOnce(qb)
+        .mockReturnValueOnce(createQueryBuilderMock({ getRawMany: jest.fn().mockResolvedValue([]) }));
 
       const result = await service.getAttributeValuesByTypeCode('clay_type');
 
       expect(result).toEqual([
-        { value: 'nokni', displayValue: '녹니' },
-        { value: 'dicaoqing', displayValue: '저조청' },
-        { value: 'hongni', displayValue: '홍니' },
+        { value: 'nokni', displayValue: '녹니', productCount: 0 },
+        { value: 'dicaoqing', displayValue: '저조청', productCount: 0 },
+        { value: 'hongni', displayValue: '홍니', productCount: 0 },
       ]);
     });
 
@@ -318,13 +329,15 @@ describe('AttributesService', () => {
           { value: 'b', displayValue: null },
         ]),
       });
-      attrRepo.createQueryBuilder.mockReturnValue(qb);
+      attrRepo.createQueryBuilder
+        .mockReturnValueOnce(qb)
+        .mockReturnValueOnce(createQueryBuilderMock({ getRawMany: jest.fn().mockResolvedValue([{ value: 'a', productCount: '1' }]) }));
 
       const result = await service.getAttributeValuesByTypeCode('clay');
 
       expect(result).toEqual([
-        { value: 'a', displayValue: '에이' },
-        { value: 'b', displayValue: null },
+        { value: 'a', displayValue: '에이', productCount: 1 },
+        { value: 'b', displayValue: null, productCount: 0 },
       ]);
     });
   });
@@ -341,6 +354,7 @@ describe('AttributesService', () => {
       optionRepo.find.mockResolvedValue([
         { id: 7, attributeTypeId: 1, value: 'nokni', displayValue: '녹니 수정', sortOrder: 0, isActive: true } as AttributeValueOptionEntity,
       ]);
+      attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({ getRawMany: jest.fn().mockResolvedValue([]) }));
       attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({ getRawMany: jest.fn().mockResolvedValue([]) }));
       attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({ getRawMany: jest.fn().mockResolvedValue([]) }));
       attrRepo.update.mockResolvedValue({ affected: 2 } as unknown as Awaited<ReturnType<Repository<ProductAttribute>['update']>>);
@@ -365,6 +379,9 @@ describe('AttributesService', () => {
         { id: 7, attributeTypeId: 1, value: 'nokni', displayValue: '녹니', sortOrder: 0, isActive: true } as AttributeValueOptionEntity,
       ]);
       attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({ getRawMany: jest.fn().mockResolvedValue([]) }));
+      attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({
+        getRawMany: jest.fn().mockResolvedValue([{ value: 'nokni', productCount: '1' }]),
+      }));
       attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({
         getRawMany: jest.fn().mockResolvedValue([{ value: 'nokni', id: '10', name: '상품', slug: 'p' }]),
       }));

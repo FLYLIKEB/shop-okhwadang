@@ -64,7 +64,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     [productsData, categories, filterOptions] = await Promise.all([
       fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured, locale: safeLocale, attrs }),
       fetchCategories(safeLocale),
-      fetchCatalogFilterOptions(),
+      fetchCatalogFilterOptions(safeLocale),
     ]);
   } catch {
     error = true;
@@ -73,8 +73,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     filterOptions = null;
   }
 
-  const clayOptions = filterOptions?.clay ?? [];
-  const shapeOptions = filterOptions?.shape ?? [];
+  const filterGroups = filterOptions ?? [];
 
   const selectedCategory = categoryId
     ? categories.find((c) => c.id === categoryId || c.children?.some((child) => child.id === categoryId))
@@ -102,14 +101,14 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
 
       <div className="md:hidden">
         <Suspense fallback={null}>
-          <MobileFilterBar categories={categories ?? []} clayOptions={clayOptions} shapeOptions={shapeOptions} />
+          <MobileFilterBar categories={categories ?? []} filterGroups={filterGroups} />
         </Suspense>
       </div>
 
       <div className="flex gap-8 pb-12">
         <div className="hidden md:block md:w-48 md:shrink-0">
           <Suspense fallback={null}>
-            <FilterSidebar categories={categories ?? []} clayOptions={clayOptions} shapeOptions={shapeOptions} />
+            <FilterSidebar categories={categories ?? []} filterGroups={filterGroups} />
           </Suspense>
         </div>
 

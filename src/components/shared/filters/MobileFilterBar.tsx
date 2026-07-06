@@ -5,18 +5,16 @@ import { useUrlModal } from '@/hooks/useUrlModal';
 import { buildAttrs, useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
 import SegmentedOptionGroup from '@/components/shared/ui/SegmentedOptionGroup';
 import PriceRangeFilter from './PriceRangeFilter';
-import ClayTypeFilter from './ClayTypeFilter';
-import TeapotShapeFilter from './TeapotShapeFilter';
+import AttributeValueFilter from './AttributeValueFilter';
 import type { Category } from '@/lib/api';
-import type { AttributeFilterOption } from '@/lib/attributeFilterOptions';
+import type { AttributeFilterGroup } from '@/lib/attributeFilterOptions';
 
 interface MobileFilterBarProps {
   categories: Category[];
-  clayOptions: AttributeFilterOption[];
-  shapeOptions: AttributeFilterOption[];
+  filterGroups: AttributeFilterGroup[];
 }
 
-export default function MobileFilterBar({ categories, clayOptions, shapeOptions }: MobileFilterBarProps) {
+export default function MobileFilterBar({ categories, filterGroups }: MobileFilterBarProps) {
   const t = useTranslations('product.filter');
   const tCommon = useTranslations('common');
   const [filterOpen, setFilterOpen] = useUrlModal('filters');
@@ -29,8 +27,6 @@ export default function MobileFilterBar({ categories, clayOptions, shapeOptions 
     resetQuery,
   } = useCatalogQueryParams();
 
-  const selectedClayType = attrs.get('clay_type');
-  const selectedShape = attrs.get('teapot_shape');
 
   const rootCategories = categories.filter((category) => category.parentId === null);
   const categoryItems = [
@@ -58,13 +54,8 @@ export default function MobileFilterBar({ categories, clayOptions, shapeOptions 
     });
   };
 
-  const handleClayTypeSelect = (value: string | undefined) => {
-    const nextAttrs = buildAttrs(attrs, 'clay_type', value);
-    updateQuery({ attrs: nextAttrs });
-  };
-
-  const handleShapeSelect = (value: string | undefined) => {
-    const nextAttrs = buildAttrs(attrs, 'teapot_shape', value);
+  const handleAttributeSelect = (code: string, value: string | undefined) => {
+    const nextAttrs = buildAttrs(attrs, code, value);
     updateQuery({ attrs: nextAttrs });
   };
 
@@ -91,23 +82,17 @@ export default function MobileFilterBar({ categories, clayOptions, shapeOptions 
 
       {filterOpen && (
         <div className="mt-4 space-y-4 rounded-lg border border-border bg-background p-4">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">{t('clayType')}</p>
-            <ClayTypeFilter
-              options={clayOptions}
-              selected={selectedClayType}
-              onSelect={handleClayTypeSelect}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">{t('teapotShape')}</p>
-            <TeapotShapeFilter
-              options={shapeOptions}
-              selected={selectedShape}
-              onSelect={handleShapeSelect}
-            />
-          </div>
+          {filterGroups.map((group) => (
+            <div key={group.code} className="space-y-2">
+              <p className="text-sm font-semibold text-foreground">{group.label}</p>
+              <AttributeValueFilter
+                code={group.code}
+                options={group.options}
+                selected={attrs.get(group.code)}
+                onSelect={(value) => handleAttributeSelect(group.code, value)}
+              />
+            </div>
+          ))}
 
           <PriceRangeFilter
             min={priceMin}
