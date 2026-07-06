@@ -289,7 +289,7 @@ export class NaverCommerceProductImportService {
       manufacturer: manufacturer ?? undefined,
       countryOfOrigin: origin ?? undefined,
       origin: origin ?? undefined,
-      asContact: [asPhone, asGuide].filter(Boolean).join(' / ') || undefined,
+      asContact: asPhone ?? undefined,
       warrantyPolicy: asGuide ?? undefined,
     };
   }

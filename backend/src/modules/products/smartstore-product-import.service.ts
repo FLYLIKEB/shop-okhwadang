@@ -131,8 +131,8 @@ const HEADER_ALIASES = {
   shortDescription: ['요약설명', '짧은설명', '간단설명'],
   manufacturer: ['제조사', '제조자', '제조자/수입자'],
   origin: ['원산지 직접입력', '원산지', '제조국', '생산지'],
-  asPhone: ['A/S 전화번호', 'AS 전화번호', '고객센터 전화번호', '소비자상담 전화번호'],
-  asGuide: ['A/S 안내', 'AS 안내', '품질보증기준', 'A/S 책임자와 전화번호'],
+  asPhone: ['A/S 전화번호', 'AS 전화번호', '고객센터 전화번호', '소비자상담 전화번호', 'A/S 책임자와 전화번호'],
+  asGuide: ['A/S 안내', 'AS 안내', '품질보증기준'],
   shippingFeeType: ['배송비유형', '배송비 유형'],
   baseShippingFee: ['기본배송비', '기본 배송비'],
   optionType: ['옵션형태'],
@@ -827,7 +827,7 @@ export class SmartStoreProductImportService {
       manufacturer: manufacturer || undefined,
       countryOfOrigin: origin || undefined,
       origin: origin || undefined,
-      asContact: [asPhone, asGuide].filter(Boolean).join(' / ') || undefined,
+      asContact: asPhone || undefined,
       warrantyPolicy: asGuide || undefined,
     };
   }
