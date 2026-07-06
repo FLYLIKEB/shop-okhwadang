@@ -35,6 +35,9 @@ function makeTranslator(namespace?: string) {
     naverpayPayment: '네이버페이',
     naverpayDomesticBadge: '국내 전용',
     naverpayDomesticHint: '해외 사용자는 결제가 실패할 수 있습니다.',
+    eximbayPayment: '카드 결제 (Visa/Master/JCB/Amex)',
+    eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
+    paypalRedirectHint: 'PayPal 승인 페이지로 이동합니다.',
     'steps.idle': '결제하기',
     'steps.creating_order': '주문 생성 중...',
     'steps.preparing_payment': '결제 준비 중...',
@@ -122,6 +125,7 @@ describe('OrderDetailPage', () => {
     expect(await screen.findByText('ORD-16')).toBeInTheDocument();
     expect(screen.queryByTestId('shipping-timeline')).toBeNull();
     expect(screen.getByLabelText(/네이버페이/)).toBeChecked();
+    expect(screen.getByLabelText(/카드 결제/)).toBeInTheDocument();
     expect(screen.getByLabelText(/PayPal/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '결제하기' })).toBeInTheDocument();
     expect(screen.getByText('현금영수증/세금계산서 안내')).toBeInTheDocument();
@@ -138,7 +142,7 @@ describe('OrderDetailPage', () => {
       gateway: 'paypal',
       clientKey: 'paypal-client',
       redirectUrl: 'https://www.paypal.com/checkoutnow?token=PAYPAL-16',
-      availableGateways: ['naverpay', 'paypal'],
+      availableGateways: ['naverpay', 'eximbay', 'paypal'],
     });
 
     render(<OrderDetailPage />);

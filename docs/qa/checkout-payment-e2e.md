@@ -68,3 +68,19 @@ Notes:
 ## Automation follow-up
 
 When sandbox credentials are available to CI, convert this checklist into browser E2E that stubs only provider-hosted pages and keeps real backend confirmation assertions.
+
+## Eximbay hosted card scenario
+
+Use this section when `eximbay` is enabled. Card PAN/CVC/expiry must be entered only in the Eximbay hosted payment page or SDK-controlled surface, never in Okhwadang inputs, logs, requests, or test fixtures.
+
+1. Set `CHECKOUT_ENABLED_GATEWAYS=naverpay,eximbay,paypal` and matching frontend `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` for locale ordering.
+2. Configure Eximbay sandbox keys in local/staging secrets only: `EXIMBAY_MERCHANT_ID`, `EXIMBAY_API_KEY`, `EXIMBAY_SECRET_KEY`, and `EXIMBAY_WEBHOOK_SECRET` if webhook/status URL testing is enabled.
+3. Select `카드 결제 (Visa/Master/JCB/Amex)` / `International card` at checkout.
+4. Confirm the Eximbay SDK opens its hosted payment page and the Okhwadang DOM contains no custom card-number, CVC, or expiry inputs.
+5. Complete sandbox authorization and verify return parameters are confirmed server-side before `/order/complete`.
+6. Verify callback tampering defenses:
+   - changed amount is rejected
+   - changed order number is rejected
+   - repeated success callback does not create duplicate shipping or double-confirm the payment
+7. Verify full cancel and partial refund from the admin flow; confirm Eximbay refund IDs are stored in `refunds.gateway_refund_id`.
+8. Re-send the same Eximbay webhook/status payload and verify `payment_webhook_events` records only one effective transition.

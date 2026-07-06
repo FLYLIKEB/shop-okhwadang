@@ -330,11 +330,12 @@ describe('PaymentRefundService', () => {
 
       await service.partialRefund(1, { amount: 10000, reason: '환불 사유' });
 
-      expect(gateway.partialCancel).toHaveBeenCalledWith({
+      expect(gateway.partialCancel).toHaveBeenCalledWith(expect.objectContaining({
         paymentKey: 'pk_abc',
         cancelAmount: 10000,
         cancelReason: '환불 사유',
-      });
+        originalAmount: 30000,
+      }));
     });
   });
 

@@ -30,6 +30,9 @@ vi.mock('next-intl', () => ({
       naverpayPayment: '네이버페이',
       naverpayDomesticBadge: '국내 전용',
       naverpayDomesticHint: '해외 사용자는 결제가 실패할 수 있습니다.',
+      eximbayPayment: '카드 결제 (Visa/Master/JCB/Amex)',
+      eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
+      paypalRedirectHint: 'PayPal 승인 페이지로 이동합니다.',
       couponPoints: '쿠폰 / 적립금',
       couponPointsComingSoon: '쿠폰/적립금 적용은 추후 지원 예정입니다.',
       orderItems: '주문 상품',
@@ -208,7 +211,7 @@ describe('CheckoutPage', () => {
     });
     vi.mocked(paymentsApi.prepare).mockResolvedValue({
       paymentId: 1, orderId: 1, orderNumber: 'ORD-001',
-      amount: 40000, gateway: 'mock', clientKey: 'mock_client_key', availableGateways: ['naverpay', 'paypal'],
+      amount: 40000, gateway: 'mock', clientKey: 'mock_client_key', availableGateways: ['naverpay', 'eximbay', 'paypal'],
     });
     vi.mocked(paymentsApi.confirm).mockResolvedValue({
       paymentId: 1, orderId: 1, orderNumber: 'ORD-001',
@@ -249,7 +252,7 @@ describe('CheckoutPage', () => {
       paymentId: 1, orderId: 1, orderNumber: 'ORD-001',
       amount: 40000, gateway: 'paypal', clientKey: 'paypal-client',
       redirectUrl: 'https://www.paypal.com/checkoutnow?token=PAYPAL-ORDER-1',
-      availableGateways: ['naverpay', 'paypal'],
+      availableGateways: ['naverpay', 'eximbay', 'paypal'],
     });
 
     await renderCheckoutPage();

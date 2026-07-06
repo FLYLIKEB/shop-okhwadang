@@ -3,6 +3,7 @@ export const SESSION_KEYS = {
   TOSS_CONTEXT: 'tossPaymentContext',
   PAYPAL_CONTEXT: 'paypalPaymentContext',
   NAVERPAY_CONTEXT: 'naverpayPaymentContext',
+  EXIMBAY_CONTEXT: 'eximbayPaymentContext',
   OAUTH_STATE: 'oauth_state',
 } as const;
 

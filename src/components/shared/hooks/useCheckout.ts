@@ -134,7 +134,7 @@ export function useCheckout(options: UseCheckoutOptions) {
     // If already prepared for a user-action gateway, trigger its confirm/redirect step.
     if (
       options.prepareResult
-      && ['stripe', 'paypal', 'naverpay'].includes(options.prepareResult.gateway)
+      && ['stripe', 'paypal', 'naverpay', 'eximbay'].includes(options.prepareResult.gateway)
     ) {
       await handlePreparedGatewayFlow();
       return;
@@ -217,7 +217,7 @@ export function useCheckout(options: UseCheckoutOptions) {
         return;
       }
 
-      if (result.gateway === 'paypal' || result.gateway === 'naverpay') {
+      if (result.gateway === 'paypal' || result.gateway === 'naverpay' || result.gateway === 'eximbay') {
         await handleExternalRedirectFlow(order.id, order.orderNumber, result);
         return;
       }

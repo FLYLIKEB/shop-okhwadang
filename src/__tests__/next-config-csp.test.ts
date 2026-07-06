@@ -77,6 +77,24 @@ describe('Next.js CSP headers', () => {
     expect(frameSrc).toContain('https://hooks.stripe.com');
   });
 
+  it('allows Eximbay hosted payment SDK/API/frame origins in checkout CSP directives', () => {
+    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
+    const scriptSrc = getCspDirective(source, 'script-src');
+    const connectSrc = getCspDirective(source, 'connect-src');
+    const frameSrc = getCspDirective(source, 'frame-src');
+
+    ['https://api-test.eximbay.com', 'https://api.eximbay.com'].forEach((origin) => {
+      expect(scriptSrc).toContain(origin);
+      expect(connectSrc).toContain(origin);
+      expect(frameSrc).toContain(origin);
+    });
+
+    ['https://pgonline-test.eximbay.com', 'https://pgonline.eximbay.com'].forEach((origin) => {
+      expect(connectSrc).toContain(origin);
+      expect(frameSrc).toContain(origin);
+    });
+  });
+
   it('allows SmartStore product images from the exact Naver image origin', () => {
     const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
     const imgSrc = getCspDirective(source, 'img-src');

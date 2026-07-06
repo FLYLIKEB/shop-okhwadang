@@ -2,13 +2,14 @@ import { Provider } from '@nestjs/common';
 
 export const PAYMENT_CONFIG = Symbol('PAYMENT_CONFIG');
 
-export type PaymentGatewayName = 'mock' | 'toss' | 'stripe' | 'inicis' | 'naverpay' | 'paypal';
+export type PaymentGatewayName = 'mock' | 'toss' | 'stripe' | 'inicis' | 'naverpay' | 'paypal' | 'eximbay';
 
 export interface PaymentConfig {
   nodeEnv: string;
   gateway: PaymentGatewayName;
   defaultCarrier: string;
   frontendUrl: string;
+  backendUrl: string;
   toss: {
     secretKey: string;
     clientKey: string;
@@ -37,6 +38,18 @@ export interface PaymentConfig {
     apiBaseUrl: string;
     krwPerUsd: number;
   };
+  eximbay: {
+    merchantId: string;
+    apiKey: string;
+    secretKey: string;
+    apiBaseUrl: string;
+    jsSdkUrl: string;
+    webhookSecret: string;
+    currency: string;
+    lang: string;
+    shopName: string;
+    krwPerUsd: number;
+  };
 }
 
 function isPaymentGatewayName(value: string): value is PaymentGatewayName {
@@ -46,7 +59,8 @@ function isPaymentGatewayName(value: string): value is PaymentGatewayName {
     value === 'stripe' ||
     value === 'inicis' ||
     value === 'naverpay' ||
-    value === 'paypal'
+    value === 'paypal' ||
+    value === 'eximbay'
   );
 }
 
@@ -54,6 +68,7 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
   const nodeEnv = env.NODE_ENV ?? 'development';
   const gateway = (env.PAYMENT_GATEWAY ?? 'mock').trim().toLowerCase();
   const paypalKrwPerUsd = parsePositiveNumber(env.PAYPAL_KRW_PER_USD, 1350);
+  const eximbayKrwPerUsd = parsePositiveNumber(env.EXIMBAY_KRW_PER_USD, paypalKrwPerUsd);
 
   if (nodeEnv === 'production' && (gateway === 'mock' || !env.PAYMENT_GATEWAY)) {
     throw new Error(
@@ -70,6 +85,7 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
     gateway,
     defaultCarrier: env.DEFAULT_CARRIER || 'mock',
     frontendUrl: (env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/$/, ''),
+    backendUrl: (env.BACKEND_URL ?? 'http://localhost:3000/api').replace(/\/$/, ''),
     toss: {
       secretKey: env.TOSS_SECRET_KEY ?? '',
       clientKey: env.TOSS_CLIENT_KEY ?? '',
@@ -100,6 +116,18 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
         ?? (nodeEnv === 'production' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com')
       ).replace(/\/$/, ''),
       krwPerUsd: paypalKrwPerUsd,
+    },
+    eximbay: {
+      merchantId: env.EXIMBAY_MERCHANT_ID ?? '',
+      apiKey: env.EXIMBAY_API_KEY ?? '',
+      secretKey: env.EXIMBAY_SECRET_KEY ?? '',
+      apiBaseUrl: (env.EXIMBAY_API_BASE_URL ?? 'https://api-test.eximbay.com').replace(/\/$/, ''),
+      jsSdkUrl: env.EXIMBAY_JS_SDK_URL ?? 'https://api-test.eximbay.com/v1/javascriptSDK.js',
+      webhookSecret: env.EXIMBAY_WEBHOOK_SECRET ?? '',
+      currency: (env.EXIMBAY_CURRENCY ?? 'KRW').trim().toUpperCase(),
+      lang: (env.EXIMBAY_LANG ?? '').trim().toUpperCase(),
+      shopName: env.EXIMBAY_SHOP_NAME ?? 'Okhwadang',
+      krwPerUsd: eximbayKrwPerUsd,
     },
   };
 }

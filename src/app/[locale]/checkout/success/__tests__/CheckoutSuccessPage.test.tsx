@@ -219,6 +219,35 @@ describe('CheckoutSuccessPage', () => {
       });
     });
 
+    it('Eximbay rescode=0000 callback은 원본 query string으로 서버 검증을 진행한다', async () => {
+      mockSearchParams.set('rescode', '0000');
+      mockSearchParams.set('order_id', 'ORD-001');
+      mockSearchParams.set('transaction_id', 'EXIMBAY-TX-1');
+      sessionStorage.setItem('eximbayPaymentContext', JSON.stringify(validPaymentContext));
+
+      mockConfirm.mockResolvedValue({
+        paymentId: 1,
+        orderId: 1,
+        orderNumber: 'ORD-001',
+        status: 'paid',
+        method: 'card',
+        amount: 40000,
+        paidAt: new Date().toISOString(),
+      });
+
+      await act(async () => {
+        render(<CheckoutSuccessPage params={makeParams()} />);
+      });
+
+      await waitFor(() => {
+        expect(mockConfirm).toHaveBeenCalledWith({
+          orderId: 1,
+          paymentKey: 'rescode=0000&order_id=ORD-001&transaction_id=EXIMBAY-TX-1',
+          amount: 40000,
+        });
+      });
+    });
+
     it('NaverPay resultCode 실패는 결제 확인 없이 cart로 이동한다', async () => {
       mockSearchParams.set('resultCode', 'UserCancel');
       mockSearchParams.set('resultMessage', '사용자 취소');

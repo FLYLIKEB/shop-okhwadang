@@ -47,12 +47,12 @@ export interface FormErrors {
 
 
 function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
-  return value === 'naverpay' || value === 'paypal';
+  return value === 'naverpay' || value === 'eximbay' || value === 'paypal';
 }
 
 function getEnabledCheckoutGateways(): CheckoutGatewayName[] {
   const configured = process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS;
-  if (!configured || configured.trim() === '') return ['naverpay', 'paypal'];
+  if (!configured || configured.trim() === '') return ['naverpay', 'eximbay', 'paypal'];
   const gateways = configured
     .split(',')
     .map((value) => value.trim().toLowerCase())
@@ -61,7 +61,9 @@ function getEnabledCheckoutGateways(): CheckoutGatewayName[] {
 }
 
 function getGatewayOptions(locale: Locale): CheckoutGatewayName[] {
-  const localeOrder: CheckoutGatewayName[] = locale === 'ko' ? ['naverpay', 'paypal'] : ['paypal', 'naverpay'];
+  const localeOrder: CheckoutGatewayName[] = locale === 'ko'
+    ? ['naverpay', 'eximbay', 'paypal']
+    : ['eximbay', 'paypal', 'naverpay'];
   const enabled = getEnabledCheckoutGateways();
   return localeOrder.filter((gateway) => enabled.includes(gateway));
 }

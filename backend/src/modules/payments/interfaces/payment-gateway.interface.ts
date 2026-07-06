@@ -27,6 +27,9 @@ export interface PartialCancelParams {
   paymentKey: string;
   cancelAmount: number;
   cancelReason: string;
+  originalAmount?: number;
+  orderNumber?: string;
+  rawResponse?: object | null;
 }
 
 export interface PartialCancelResult {
@@ -38,7 +41,7 @@ export interface PartialCancelResult {
 export interface PaymentGateway {
   prepare(orderId: string, amount: number, context?: PrepareContext): Promise<PrepareResult>;
   confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult>;
-  cancel(paymentKey: string, reason: string): Promise<CancelResult>;
+  cancel(paymentKey: string, reason: string, context?: Pick<PartialCancelParams, 'originalAmount' | 'orderNumber' | 'rawResponse'>): Promise<CancelResult>;
   partialCancel(params: PartialCancelParams): Promise<PartialCancelResult>;
   verifyWebhook(payload: unknown, signature: string): boolean | Promise<boolean>;
 }

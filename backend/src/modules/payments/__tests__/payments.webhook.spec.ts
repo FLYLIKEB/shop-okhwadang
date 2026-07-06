@@ -13,6 +13,7 @@ import { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
 import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
+import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
 import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { PAYMENT_CONFIG, createPaymentConfig } from '../../../config/payment.config';
@@ -39,6 +40,7 @@ describe('PaymentsService — webhook', () => {
   const mockWebhookManager = {
     findOne: jest.fn(),
     update: jest.fn(),
+    save: jest.fn(),
   };
   const mockDataSource = {
     transaction: jest.fn(
@@ -72,6 +74,7 @@ describe('PaymentsService — webhook', () => {
         { provide: KGInicisPaymentAdapter, useValue: mockGateway },
         { provide: NaverPayPaymentAdapter, useValue: mockGateway },
         { provide: PayPalPaymentAdapter, useValue: mockGateway },
+        { provide: EximbayPaymentAdapter, useValue: mockGateway },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: DataSource, useValue: mockDataSource },

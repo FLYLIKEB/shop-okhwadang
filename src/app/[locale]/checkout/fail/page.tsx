@@ -19,6 +19,7 @@ function CheckoutFailContent({ locale }: { locale: Locale }) {
   useEffect(() => {
     toast.error(message);
     sessionStorage.removeItem(SESSION_KEYS.TOSS_CONTEXT);
+    sessionStorage.removeItem(SESSION_KEYS.EXIMBAY_CONTEXT);
   }, [message]);
 
   return (

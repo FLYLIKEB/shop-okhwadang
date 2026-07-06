@@ -29,6 +29,9 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   NAVERPAY_CHAIN_ID: 'naver-chain',
   PAYPAL_CLIENT_ID: 'paypal-client',
   PAYPAL_CLIENT_SECRET: 'paypal-secret',
+  EXIMBAY_MERCHANT_ID: 'eximbay-mid',
+  EXIMBAY_API_KEY: 'eximbay-api-key',
+  EXIMBAY_SECRET_KEY: 'eximbay-secret',
 });
 
 describe('validateEnv', () => {
@@ -108,7 +111,7 @@ describe('validateEnv', () => {
   });
 
   it('REQUIRED_PROD_ENV_KEYS에 있는 모든 키를 검증', () => {
-    const env: NodeJS.ProcessEnv = { NODE_ENV: 'production', CHECKOUT_ENABLED_GATEWAYS: 'naverpay,paypal' };
+    const env: NodeJS.ProcessEnv = { NODE_ENV: 'production', CHECKOUT_ENABLED_GATEWAYS: 'naverpay,paypal,eximbay' };
     const errors = validateEnv(env);
     // NODE_ENV는 있으므로 나머지 키들이 모두 에러로 나와야 함
     const missing = [...REQUIRED_PROD_ENV_KEYS, ...CHECKOUT_PROD_ENV_KEYS].filter(
