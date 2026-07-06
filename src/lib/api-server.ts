@@ -117,8 +117,8 @@ export async function fetchCatalogFilterOptions(): Promise<{
   shape: AttributeFilterOption[];
 }> {
   const [clayValues, shapeValues] = await Promise.all([
-    fetchFromBackend<Array<string | AttributeValueOption>>('/attributes/types/clay_type/values', undefined, CACHE_POLICIES.categories),
-    fetchFromBackend<Array<string | AttributeValueOption>>('/attributes/types/teapot_shape/values', undefined, CACHE_POLICIES.categories),
+    fetchFromBackend<Array<string | AttributeValueOption>>('/attributes/types/clay_type/values', undefined, CACHE_POLICIES.catalog),
+    fetchFromBackend<Array<string | AttributeValueOption>>('/attributes/types/teapot_shape/values', undefined, CACHE_POLICIES.catalog),
   ]);
   return {
     clay: toAttributeFilterOptions(clayValues),
