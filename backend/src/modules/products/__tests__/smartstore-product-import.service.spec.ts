@@ -290,7 +290,26 @@ describe('SmartStoreProductImportService', () => {
         manufacturer: '옥화당',
         countryOfOrigin: '중국산(옥화당)',
         origin: '중국산(옥화당)',
-        asContact: '01029080393 / 품질 보증 및 관리 안내',
+        asContact: '01029080393',
+        warrantyPolicy: '품질 보증 및 관리 안내',
+      }),
+    }));
+  });
+
+  it('maps A/S 책임자와 전화번호 to asContact without copying it into warrantyPolicy', async () => {
+    const repository = createRepositoryMock([]);
+    const commandService = createCommandServiceMock();
+    const service = createService(repository, commandService);
+    const buffer = await createWorkbookBuffer([
+      ['판매자상품코드', '상품명', '판매가', 'A/S 책임자와 전화번호', '품질보증기준'],
+      ['SKU-AS', '옥화당 자사호 한와호 70cc', 10000, '고객센터 010-2908-0393', '품질 보증 및 관리 안내'],
+    ]);
+
+    await service.commit(createFile(buffer));
+
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+      noticeInfo: expect.objectContaining({
+        asContact: '고객센터 010-2908-0393',
         warrantyPolicy: '품질 보증 및 관리 안내',
       }),
     }));

@@ -198,7 +198,12 @@ describe('NaverCommerceProductImportService', () => {
         isVisibleKo: true,
         isVisibleEn: false,
         description: '<p>상세</p>',
-        noticeInfo: expect.objectContaining({ manufacturer: '옥화당', countryOfOrigin: '중국' }),
+        noticeInfo: expect.objectContaining({
+          manufacturer: '옥화당',
+          countryOfOrigin: '중국',
+          asContact: '010-0000-0000',
+          warrantyPolicy: '품질 보증 안내',
+        }),
         // 단일 원본 옵션은 상품 재고로 흡수되고, 상품명 기반 옵션도 다시 생성하지 않는다.
         // 빈 배열을 전달해 기존 0재고 옵션까지 제거한다. (issue #1052, regression of #1036)
         options: [],

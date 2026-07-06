@@ -345,11 +345,11 @@ describe('ProductDetailClient', () => {
       />,
     );
 
-    expect(screen.getByRole('link', { name: '진흙: old_duanni' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '진흙: 노단니' })).toHaveAttribute(
       'href',
       '/ko/products?attrs=clay_type:old_duanni',
     );
-    expect(screen.getByRole('link', { name: '모양: lianzi' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '모양: 연자호' })).toHaveAttribute(
       'href',
       '/ko/products?attrs=teapot_shape:lianzi',
     );
