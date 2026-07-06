@@ -10,15 +10,16 @@ import PriceRangeFilter from './PriceRangeFilter';
 import ClayTypeFilter from './ClayTypeFilter';
 import TeapotShapeFilter from './TeapotShapeFilter';
 import FilterSection from './FilterSection';
-import type { Category, Collection } from '@/lib/api';
+import type { Category } from '@/lib/api';
+import type { AttributeFilterOption } from '@/lib/attributeFilterOptions';
 
 interface FilterSidebarProps {
   categories: Category[];
-  clayCollections: Collection[];
-  shapeCollections: Collection[];
+  clayOptions: AttributeFilterOption[];
+  shapeOptions: AttributeFilterOption[];
 }
 
-export default function FilterSidebar({ categories, clayCollections, shapeCollections }: FilterSidebarProps) {
+export default function FilterSidebar({ categories, clayOptions, shapeOptions }: FilterSidebarProps) {
   const t = useTranslations('product.filter');
   const [mobileOpen, setMobileOpen] = useUrlModal('filters');
   const {
@@ -90,7 +91,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
 
       <FilterSection title={t('clayType')} defaultOpen={selectedClayType !== undefined}>
         <ClayTypeFilter
-          collections={clayCollections}
+          options={clayOptions}
           selected={selectedClayType}
           onSelect={handleClayTypeSelect}
         />
@@ -98,7 +99,7 @@ export default function FilterSidebar({ categories, clayCollections, shapeCollec
 
       <FilterSection title={t('teapotShape')} defaultOpen={selectedShape !== undefined}>
         <TeapotShapeFilter
-          collections={shapeCollections}
+          options={shapeOptions}
           selected={selectedShape}
           onSelect={handleShapeSelect}
         />

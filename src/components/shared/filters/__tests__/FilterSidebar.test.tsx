@@ -2,7 +2,8 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import FilterSidebar from '@/components/shared/filters/FilterSidebar';
-import { CollectionType, type Category, type Collection } from '@/lib/api';
+import type { Category } from '@/lib/api';
+import type { AttributeFilterOption } from '@/lib/attributeFilterOptions';
 
 const { updateQueryMock, resetQueryMock, useCatalogQueryParamsMock, setMobileOpenMock } = vi.hoisted(() => ({
   updateQueryMock: vi.fn(),
@@ -59,34 +60,12 @@ const categories: Category[] = [
   },
 ];
 
-const clayCollections: Collection[] = [
-  {
-    id: 11,
-    type: CollectionType.CLAY,
-    name: 'Zisha Collection',
-    nameKo: null,
-    color: null,
-    description: null,
-    imageUrl: null,
-    productUrl: '/products?attrs=clay_type:zini',
-    isActive: true,
-    sortOrder: 0,
-  },
+const clayOptions: AttributeFilterOption[] = [
+  { value: 'zini', label: 'Zisha' },
 ];
 
-const shapeCollections: Collection[] = [
-  {
-    id: 21,
-    type: CollectionType.SHAPE,
-    name: 'Byeonpyeong Collection',
-    nameKo: null,
-    color: null,
-    description: null,
-    imageUrl: null,
-    productUrl: '/products?attrs=teapot_shape:round',
-    isActive: true,
-    sortOrder: 0,
-  },
+const shapeOptions: AttributeFilterOption[] = [
+  { value: 'round', label: 'Byeonpyeong' },
 ];
 
 describe('FilterSidebar', () => {
@@ -105,7 +84,7 @@ describe('FilterSidebar', () => {
   });
 
   it('toggles the mobile filter panel', async () => {
-    render(<FilterSidebar categories={categories} clayCollections={clayCollections} shapeCollections={shapeCollections} />);
+    render(<FilterSidebar categories={categories} clayOptions={clayOptions} shapeOptions={shapeOptions} />);
 
     await userEvent.click(screen.getByRole('button', { name: '필터 닫기' }));
 
@@ -113,7 +92,7 @@ describe('FilterSidebar', () => {
   });
 
   it('applies category and price filters through query params', async () => {
-    render(<FilterSidebar categories={categories} clayCollections={clayCollections} shapeCollections={shapeCollections} />);
+    render(<FilterSidebar categories={categories} clayOptions={clayOptions} shapeOptions={shapeOptions} />);
 
     const filterRegions = screen.getAllByLabelText('상품 필터');
     await userEvent.click(within(filterRegions[0]).getByRole('button', { name: /다기/ }));
@@ -138,7 +117,7 @@ describe('FilterSidebar', () => {
       resetQuery: resetQueryMock,
     });
 
-    render(<FilterSidebar categories={categories} clayCollections={clayCollections} shapeCollections={shapeCollections} />);
+    render(<FilterSidebar categories={categories} clayOptions={clayOptions} shapeOptions={shapeOptions} />);
 
     expect(screen.queryByRole('button', { name: /Collection/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /Collection/ })).not.toBeInTheDocument();

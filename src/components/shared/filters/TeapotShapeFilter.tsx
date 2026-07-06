@@ -2,17 +2,15 @@
 
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
-import type { Collection } from '@/lib/api';
-import { getCompactCollectionLabel } from '@/lib/collectionDisplay';
-import { getCollectionFilterValue, uniqueCollectionsByFilterValue } from '@/lib/collectionFilters';
+import type { AttributeFilterOption } from '@/lib/attributeFilterOptions';
 
 interface TeapotShapeFilterProps {
-  collections: Collection[];
+  options: AttributeFilterOption[];
   selected: string | undefined;
   onSelect: (value: string | undefined) => void;
 }
 
-export default function TeapotShapeFilter({ collections, selected, onSelect }: TeapotShapeFilterProps) {
+export default function TeapotShapeFilter({ options, selected, onSelect }: TeapotShapeFilterProps) {
   const tCommon = useTranslations('common');
   return (
     <div className="flex flex-col gap-2">
@@ -31,10 +29,10 @@ export default function TeapotShapeFilter({ collections, selected, onSelect }: T
           {tCommon('all')}
         </span>
       </label>
-      {uniqueCollectionsByFilterValue(collections, 'teapot_shape').map((item) => {
-        const filterValue = getCollectionFilterValue(item, 'teapot_shape');
+      {options.map((item) => {
+        const filterValue = item.value;
         return (
-          <label key={item.id} className="flex cursor-pointer items-center gap-2">
+          <label key={item.value} className="flex cursor-pointer items-center gap-2">
             <input
               type="radio"
               name="teapot-shape"
@@ -46,7 +44,7 @@ export default function TeapotShapeFilter({ collections, selected, onSelect }: T
               'text-sm transition-colors',
               selected === filterValue ? 'font-medium text-foreground' : 'text-muted-foreground',
             )}>
-              {getCompactCollectionLabel(item)}
+              {item.label}
             </span>
           </label>
         );

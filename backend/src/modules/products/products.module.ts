@@ -20,7 +20,6 @@ import { NaverCommerceApiClient } from './naver-commerce-api.client';
 import { NaverCommerceProductImportService } from './naver-commerce-product-import.service';
 import { NaverCommerceImportJobService } from './naver-commerce-import-job.service';
 import { ProductKeywordMappingService } from './product-keyword-mapping.service';
-import { Collection } from '../collections/entities/collection.entity';
 import { ProductsController } from './products.controller';
 import { AdminProductsController } from './admin-products.controller';
 import { CategoriesController } from './categories.controller';
@@ -44,7 +43,6 @@ import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guar
       AttributeType,
       ProductAttribute,
       RecentlyViewedProduct,
-      Collection,
     ]),
     CacheModule,
     RestockAlertsModule,

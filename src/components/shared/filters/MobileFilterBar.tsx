@@ -6,15 +6,15 @@ import { buildAttrs, useCatalogQueryParams } from '@/components/shared/hooks/use
 import SegmentedOptionGroup from '@/components/shared/ui/SegmentedOptionGroup';
 import PriceRangeFilter from './PriceRangeFilter';
 import TeapotShapeFilter from './TeapotShapeFilter';
-import type { Category, Collection } from '@/lib/api';
+import type { Category } from '@/lib/api';
+import type { AttributeFilterOption } from '@/lib/attributeFilterOptions';
 
 interface MobileFilterBarProps {
   categories: Category[];
-  clayCollections: Collection[];
-  shapeCollections: Collection[];
+  shapeOptions: AttributeFilterOption[];
 }
 
-export default function MobileFilterBar({ categories, shapeCollections }: MobileFilterBarProps) {
+export default function MobileFilterBar({ categories, shapeOptions }: MobileFilterBarProps) {
   const t = useTranslations('product.filter');
   const tCommon = useTranslations('common');
   const [filterOpen, setFilterOpen] = useUrlModal('filters');
@@ -90,7 +90,7 @@ export default function MobileFilterBar({ categories, shapeCollections }: Mobile
           />
 
           <TeapotShapeFilter
-            collections={shapeCollections}
+            options={shapeOptions}
             selected={selectedShape}
             onSelect={handleShapeSelect}
           />

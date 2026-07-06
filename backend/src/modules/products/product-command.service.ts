@@ -91,7 +91,7 @@ export class ProductCommandService {
 
         return saved;
       });
-      await this.invalidateProductCollectionsCache();
+      await this.invalidateProductListCache();
       return saved;
     } catch (err) {
       this.rethrowIfDuplicateKey(err);
@@ -190,7 +190,7 @@ export class ProductCommandService {
     ]);
   }
 
-  private async invalidateProductCollectionsCache(): Promise<void> {
+  private async invalidateProductListCache(): Promise<void> {
     await Promise.all([
       this.cacheService.delPattern(PRODUCT_LIST_CACHE_PATTERN),
       this.cacheService.delPattern(PRODUCT_BULK_CACHE_PATTERN),

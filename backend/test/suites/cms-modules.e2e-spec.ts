@@ -19,7 +19,6 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
     const adminEmail = `cms-admin-${unique}@test.com`;
     const userEmail = `cms-user-${unique}@test.com`;
     const settingKey = `cms-setting-${unique}`;
-    const collectionUrl = `/products?collection=${unique}`;
     const journalSlug = `journal-${unique}`;
     const faqCategory = `카테고리-${unique}`;
     const noticeTitle = `공지-${unique}`;
@@ -29,7 +28,6 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
     let adminCookies: string[];
     let adminUserId: number;
     let userUserId: number;
-    let collectionId: number;
     let journalId: number;
     let faqId: number;
     let noticeId: number;
@@ -72,29 +70,10 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
       await dataSource.query('DELETE FROM notices WHERE title = ?', [noticeTitle]);
       await dataSource.query('DELETE FROM faqs WHERE category = ?', [faqCategory]);
       await dataSource.query('DELETE FROM journal_entries WHERE slug = ?', [journalSlug]);
-      await dataSource.query('DELETE FROM collections WHERE product_url = ?', [collectionUrl]);
       await dataSource.query('DELETE FROM site_settings WHERE setting_key = ?', [settingKey]);
       await dataSource.query('DELETE FROM users WHERE id IN (?, ?)', [adminUserId, userUserId]);
     });
 
-    it('collections: public clay list returns active seeded collections', async () => {
-      // 컬렉션/아카이브 어드민 CRUD 는 CMS(page_blocks)로 편입되어 제거됨.
-      // public /collections 엔드포인트는 상품 필터(FilterSidebar)에서 여전히 사용되므로
-      // SQL 시드로 직접 넣고 공개 조회만 검증한다.
-      const insert = await dataSource.query(
-        `INSERT INTO collections (type, name, nameKo, product_url, sort_order, is_active, created_at, updated_at)
-         VALUES ('clay', ?, ?, ?, 1, 1, NOW(), NOW())`,
-        [`컬렉션-${unique}`, `컬렉션-${unique}`, collectionUrl],
-      );
-      collectionId = Number(insert.insertId);
-
-      await request(app.getHttpServer())
-        .get('/api/collections/clay')
-        .expect(200)
-        .expect((res) => {
-          expect((res.body as Array<{ id: number }>).some((item) => Number(item.id) === collectionId)).toBe(true);
-        });
-    });
 
     it('journal/faqs/notices: admin can publish content and public endpoints can read it', async () => {
       const journalRes = await request(app.getHttpServer())

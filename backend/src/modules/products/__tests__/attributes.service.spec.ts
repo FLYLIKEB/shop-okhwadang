@@ -5,7 +5,6 @@ import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
 import { AttributesService } from '../attributes.service';
 import { AttributeInputType, AttributeType } from '../entities/attribute-type.entity';
 import { ProductAttribute } from '../entities/product-attribute.entity';
-import { Collection } from '../../collections/entities/collection.entity';
 
 type RepoMock<T extends ObjectLiteral> = jest.Mocked<
   Pick<
@@ -47,20 +46,15 @@ describe('AttributesService', () => {
   let service: AttributesService;
   let typeRepo: RepoMock<AttributeType>;
   let attrRepo: RepoMock<ProductAttribute>;
-  let collectionRepo: RepoMock<Collection>;
 
   beforeEach(async () => {
     typeRepo = createRepoMock<AttributeType>();
     attrRepo = createRepoMock<ProductAttribute>();
-    collectionRepo = createRepoMock<Collection>();
-    collectionRepo.find.mockResolvedValue([]);
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AttributesService,
         { provide: getRepositoryToken(AttributeType), useValue: typeRepo },
         { provide: getRepositoryToken(ProductAttribute), useValue: attrRepo },
-        { provide: getRepositoryToken(Collection), useValue: collectionRepo },
       ],
     }).compile();
 
@@ -270,14 +264,10 @@ describe('AttributesService', () => {
       });
       attrRepo.createQueryBuilder.mockReturnValue(qb);
 
-      collectionRepo.find.mockResolvedValue([
-        { name: 'Zhuni', nameKo: '주니', productUrl: '/products?attrs=clay:zhuni' } as Collection,
-      ]);
-
       const result = await service.getAttributeValuesByTypeCode('clay');
 
       expect(result).toEqual([
-        { value: 'zhuni', displayValue: '주니' },
+        { value: 'zhuni', displayValue: null },
         { value: 'duanni', displayValue: '단니' },
         { value: 'hongni', displayValue: '홍니' },
       ]);

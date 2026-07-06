@@ -1,5 +1,3 @@
-import type { Collection } from '@/lib/api';
-
 const COLLECTION_SUFFIX_PATTERN = /\s*(?:Collection|컬렉션)\s*$/i;
 const ENGLISH_SHAPE_SUFFIX_PATTERN = /\s+shape\b/gi;
 
@@ -10,7 +8,7 @@ export function compactDisplayLabel(label: string): string {
     .trim();
 }
 
-export function getCompactCollectionLabel(collection: Pick<Collection, 'name'>): string {
+export function getCompactCollectionLabel(collection: { name: string }): string {
   return compactDisplayLabel(collection.name);
 }
 

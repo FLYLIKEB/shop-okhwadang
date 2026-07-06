@@ -1,5 +1,6 @@
 import { cache } from 'react';
-import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, SiteSetting, Journal } from '@/lib/api';
+import type { ProductListResponse, ProductSort, Category, ProductDetail, Page, SiteSetting, Journal, AttributeValueOption } from '@/lib/api';
+import { toAttributeFilterOptions, type AttributeFilterOption } from '@/lib/attributeFilterOptions';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
 
@@ -13,24 +14,6 @@ class BackendHttpError extends Error {
   }
 }
 
-
-interface CollectionItem {
-  id: number;
-  type: 'clay' | 'shape';
-  name: string;
-  nameKo: string | null;
-  color: string | null;
-  description: string | null;
-  imageUrl: string | null;
-  productUrl: string;
-  sortOrder: number;
-  isActive: boolean;
-}
-
-interface CollectionsResponse {
-  clay: CollectionItem[];
-  shape: CollectionItem[];
-}
 
 
 interface BackendFetchPolicy {
@@ -128,8 +111,19 @@ export async function fetchJournal(slug: string, locale?: string): Promise<Journ
   }
 }
 
-export function fetchCollections(locale?: string) {
-  return fetchFromBackend<CollectionsResponse>('/collections', locale ? { locale } : undefined, CACHE_POLICIES.categories);
+
+export async function fetchCatalogFilterOptions(): Promise<{
+  clay: AttributeFilterOption[];
+  shape: AttributeFilterOption[];
+}> {
+  const [clayValues, shapeValues] = await Promise.all([
+    fetchFromBackend<Array<string | AttributeValueOption>>('/attributes/types/clay_type/values', undefined, CACHE_POLICIES.categories),
+    fetchFromBackend<Array<string | AttributeValueOption>>('/attributes/types/teapot_shape/values', undefined, CACHE_POLICIES.categories),
+  ]);
+  return {
+    clay: toAttributeFilterOptions(clayValues),
+    shape: toAttributeFilterOptions(shapeValues),
+  };
 }
 
 

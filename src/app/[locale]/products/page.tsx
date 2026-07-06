@@ -7,7 +7,7 @@ import FilterSidebar from '@/components/shared/filters/FilterSidebar';
 import MobileFilterBar from '@/components/shared/filters/MobileFilterBar';
 import Pagination from '@/components/shared/products/Pagination';
 import ProductSkeleton from '@/components/shared/products/ProductSkeleton';
-import { fetchProducts, fetchCategories, fetchCollections } from '@/lib/api-server';
+import { fetchProducts, fetchCategories, fetchCatalogFilterOptions } from '@/lib/api-server';
 import ProductErrorState from '@/components/shared/products/ProductErrorState';
 import type { ProductSort } from '@/lib/api';
 import type { Locale } from '@/utils/currency';
@@ -57,24 +57,24 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
 
   let productsData: Awaited<ReturnType<typeof fetchProducts>> | null = null;
   let categories: Awaited<ReturnType<typeof fetchCategories>> = [];
-  let collections: Awaited<ReturnType<typeof fetchCollections>> | null = null;
+  let filterOptions: Awaited<ReturnType<typeof fetchCatalogFilterOptions>> | null = null;
   let error = false;
 
   try {
-    [productsData, categories, collections] = await Promise.all([
+    [productsData, categories, filterOptions] = await Promise.all([
       fetchProducts({ page, limit: 20, sort, categoryId, q, price_min: priceMin, price_max: priceMax, isFeatured, locale: safeLocale, attrs }),
       fetchCategories(safeLocale),
-      fetchCollections(safeLocale),
+      fetchCatalogFilterOptions(),
     ]);
   } catch {
     error = true;
     productsData = null;
     categories = [];
-    collections = null;
+    filterOptions = null;
   }
 
-  const clayCollections = collections?.clay ?? [];
-  const shapeCollections = collections?.shape ?? [];
+  const clayOptions = filterOptions?.clay ?? [];
+  const shapeOptions = filterOptions?.shape ?? [];
 
   const selectedCategory = categoryId
     ? categories.find((c) => c.id === categoryId || c.children?.some((child) => child.id === categoryId))
@@ -102,14 +102,14 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
 
       <div className="md:hidden">
         <Suspense fallback={null}>
-          <MobileFilterBar categories={categories ?? []} clayCollections={clayCollections} shapeCollections={shapeCollections} />
+          <MobileFilterBar categories={categories ?? []} shapeOptions={shapeOptions} />
         </Suspense>
       </div>
 
       <div className="flex gap-8 pb-12">
         <div className="hidden md:block md:w-48 md:shrink-0">
           <Suspense fallback={null}>
-            <FilterSidebar categories={categories ?? []} clayCollections={clayCollections} shapeCollections={shapeCollections} />
+            <FilterSidebar categories={categories ?? []} clayOptions={clayOptions} shapeOptions={shapeOptions} />
           </Suspense>
         </div>
 
