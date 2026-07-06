@@ -5,6 +5,8 @@ import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
 import { AttributesService } from '../attributes.service';
 import { AttributeInputType, AttributeType } from '../entities/attribute-type.entity';
 import { ProductAttribute } from '../entities/product-attribute.entity';
+import { Product } from '../entities/product.entity';
+import { AttributeValueOptionEntity } from '../entities/attribute-value-option.entity';
 
 type RepoMock<T extends ObjectLiteral> = jest.Mocked<
   Pick<
@@ -46,19 +48,26 @@ describe('AttributesService', () => {
   let service: AttributesService;
   let typeRepo: RepoMock<AttributeType>;
   let attrRepo: RepoMock<ProductAttribute>;
+  let optionRepo: RepoMock<AttributeValueOptionEntity>;
+  let productRepo: RepoMock<Product>;
 
   beforeEach(async () => {
     typeRepo = createRepoMock<AttributeType>();
     attrRepo = createRepoMock<ProductAttribute>();
+    optionRepo = createRepoMock<AttributeValueOptionEntity>();
+    productRepo = createRepoMock<Product>();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AttributesService,
         { provide: getRepositoryToken(AttributeType), useValue: typeRepo },
         { provide: getRepositoryToken(ProductAttribute), useValue: attrRepo },
+        { provide: getRepositoryToken(AttributeValueOptionEntity), useValue: optionRepo },
+        { provide: getRepositoryToken(Product), useValue: productRepo },
       ],
     }).compile();
 
     service = module.get(AttributesService);
+    optionRepo.find.mockResolvedValue([]);
   });
 
   describe('createAttributeType', () => {
@@ -317,6 +326,53 @@ describe('AttributesService', () => {
         { value: 'a', displayValue: '에이' },
         { value: 'b', displayValue: null },
       ]);
+    });
+  });
+
+
+  describe('attribute value option management', () => {
+    const clayType = { id: 1, code: 'clay_type', validValues: ['nokni'] } as unknown as AttributeType;
+
+    it('속성값 표시 이름 수정 시 옵션을 만들고 연결 상품 표시값도 갱신한다', async () => {
+      typeRepo.findOne.mockResolvedValue(clayType);
+      optionRepo.findOne.mockResolvedValue(null as unknown as AttributeValueOptionEntity);
+      optionRepo.create.mockImplementation((dto: unknown) => dto as AttributeValueOptionEntity);
+      optionRepo.save.mockImplementation(async (entity: unknown) => ({ ...(entity as AttributeValueOptionEntity), id: 7 }));
+      optionRepo.find.mockResolvedValue([
+        { id: 7, attributeTypeId: 1, value: 'nokni', displayValue: '녹니 수정', sortOrder: 0, isActive: true } as AttributeValueOptionEntity,
+      ]);
+      attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({ getRawMany: jest.fn().mockResolvedValue([]) }));
+      attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({ getRawMany: jest.fn().mockResolvedValue([]) }));
+      attrRepo.update.mockResolvedValue({ affected: 2 } as unknown as Awaited<ReturnType<Repository<ProductAttribute>['update']>>);
+
+      const result = await service.updateAttributeValueOption('clay_type', 'nokni', { displayValue: '녹니 수정' });
+
+      expect(optionRepo.create).toHaveBeenCalledWith(expect.objectContaining({ value: 'nokni', displayValue: '녹니 수정' }));
+      expect(attrRepo.update).toHaveBeenCalledWith({ attributeTypeId: 1, value: 'nokni' }, { displayValue: '녹니 수정' });
+      expect(result.displayValue).toBe('녹니 수정');
+    });
+
+    it('상품을 속성값에 연결하면 기존 상품 속성값을 해당 설정으로 교체한다', async () => {
+      typeRepo.findOne.mockResolvedValue(clayType);
+      productRepo.findOne.mockResolvedValue({ id: 10, name: '상품', slug: 'p' } as Product);
+      optionRepo.findOne.mockResolvedValue({
+        id: 7, attributeTypeId: 1, value: 'nokni', displayValue: '녹니', sortOrder: 0, isActive: true,
+      } as AttributeValueOptionEntity);
+      optionRepo.save.mockImplementation(async (entity: unknown) => entity as AttributeValueOptionEntity);
+      attrRepo.findOne.mockResolvedValue({ productId: 10, attributeTypeId: 1, value: 'old' } as ProductAttribute);
+      attrRepo.save.mockImplementation(async (entity: unknown) => entity as ProductAttribute);
+      optionRepo.find.mockResolvedValue([
+        { id: 7, attributeTypeId: 1, value: 'nokni', displayValue: '녹니', sortOrder: 0, isActive: true } as AttributeValueOptionEntity,
+      ]);
+      attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({ getRawMany: jest.fn().mockResolvedValue([]) }));
+      attrRepo.createQueryBuilder.mockReturnValueOnce(createQueryBuilderMock({
+        getRawMany: jest.fn().mockResolvedValue([{ value: 'nokni', id: '10', name: '상품', slug: 'p' }]),
+      }));
+
+      const result = await service.linkProductToAttributeValue('clay_type', 'nokni', { productId: 10 });
+
+      expect(attrRepo.save).toHaveBeenCalledWith(expect.objectContaining({ value: 'nokni', displayValue: '녹니' }));
+      expect(result.products).toEqual([{ id: 10, name: '상품', slug: 'p' }]);
     });
   });
 

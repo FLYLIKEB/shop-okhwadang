@@ -7,6 +7,10 @@ const mockGetTypes = vi.fn();
 const mockCreateType = vi.fn();
 const mockUpdateType = vi.fn();
 const mockDeleteType = vi.fn();
+const mockGetTypeValueOptions = vi.fn();
+const mockUpdateTypeValueOption = vi.fn();
+const mockLinkProductToTypeValue = vi.fn();
+const mockUnlinkProductFromTypeValue = vi.fn();
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
@@ -22,6 +26,10 @@ vi.mock('@/lib/api', () => ({
     createType: (...args: unknown[]) => mockCreateType(...args),
     updateType: (...args: unknown[]) => mockUpdateType(...args),
     deleteType: (...args: unknown[]) => mockDeleteType(...args),
+    getTypeValueOptions: (...args: unknown[]) => mockGetTypeValueOptions(...args),
+    updateTypeValueOption: (...args: unknown[]) => mockUpdateTypeValueOption(...args),
+    linkProductToTypeValue: (...args: unknown[]) => mockLinkProductToTypeValue(...args),
+    unlinkProductFromTypeValue: (...args: unknown[]) => mockUnlinkProductFromTypeValue(...args),
   },
 }));
 
@@ -66,6 +74,47 @@ describe('AdminAttributesPage', () => {
     mockCreateType.mockResolvedValue(attributes[0]);
     mockUpdateType.mockResolvedValue(attributes[1]);
     mockDeleteType.mockResolvedValue(undefined);
+    mockGetTypeValueOptions.mockResolvedValue([
+      {
+        id: 1,
+        value: 'nokni',
+        displayValue: '녹니',
+        sortOrder: 1,
+        isActive: true,
+        productCount: 1,
+        products: [{ id: 10, name: '옥화당 녹니호', slug: 'nokni-pot' }],
+      },
+    ]);
+    mockUpdateTypeValueOption.mockResolvedValue({
+      id: 1,
+      value: 'nokni',
+      displayValue: '녹니 수정',
+      sortOrder: 1,
+      isActive: true,
+      productCount: 1,
+      products: [{ id: 10, name: '옥화당 녹니호', slug: 'nokni-pot' }],
+    });
+    mockLinkProductToTypeValue.mockResolvedValue({
+      id: 1,
+      value: 'nokni',
+      displayValue: '녹니 수정',
+      sortOrder: 1,
+      isActive: true,
+      productCount: 2,
+      products: [
+        { id: 10, name: '옥화당 녹니호', slug: 'nokni-pot' },
+        { id: 11, name: '옥화당 추가 상품', slug: 'extra-pot' },
+      ],
+    });
+    mockUnlinkProductFromTypeValue.mockResolvedValue({
+      id: 1,
+      value: 'nokni',
+      displayValue: '녹니 수정',
+      sortOrder: 1,
+      isActive: true,
+      productCount: 0,
+      products: [],
+    });
   });
 
   it('loads attributes and supports create, edit, and delete actions', async () => {
@@ -75,6 +124,21 @@ describe('AdminAttributesPage', () => {
     expect(screen.getByText('clay_origin')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('clay_type'));
+    expect(await screen.findByDisplayValue('녹니')).toBeInTheDocument();
+    fireEvent.change(screen.getByDisplayValue('녹니'), { target: { value: '녹니 수정' } });
+    fireEvent.click(screen.getByRole('button', { name: 'saveValueOption' }));
+    await waitFor(() => {
+      expect(mockUpdateTypeValueOption).toHaveBeenCalledWith('clay_type', 'nokni', expect.objectContaining({ displayValue: '녹니 수정' }));
+    });
+    fireEvent.change(screen.getByLabelText('productId'), { target: { value: '11' } });
+    fireEvent.click(screen.getByRole('button', { name: 'linkProduct' }));
+    await waitFor(() => {
+      expect(mockLinkProductToTypeValue).toHaveBeenCalledWith('clay_type', 'nokni', 11);
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: 'unlinkProduct' })[0]);
+    await waitFor(() => {
+      expect(mockUnlinkProductFromTypeValue).toHaveBeenCalledWith('clay_type', 'nokni', 10);
+    });
     expect(screen.getByText('zhuni')).toBeInTheDocument();
     fireEvent.click(screen.getAllByRole('button', { name: 'removeValidValue' })[0]);
     expect(screen.queryByText('zhuni')).not.toBeInTheDocument();

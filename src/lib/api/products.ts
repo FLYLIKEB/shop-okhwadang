@@ -63,6 +63,20 @@ export interface AttributeValueOption {
   displayValue: string | null;
 }
 
+export interface AttributeValueLinkedProduct {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface ManagedAttributeValueOption extends AttributeValueOption {
+  id: number | null;
+  sortOrder: number;
+  isActive: boolean;
+  productCount: number;
+  products: AttributeValueLinkedProduct[];
+}
+
 export interface AttributeType {
   id: number;
   code: string;
@@ -176,6 +190,14 @@ export const attributesApi = {
     apiClient.get<AttributeType | null>(`/attributes/types/code/${code}`),
   getTypeValues: (code: string) =>
     apiClient.get<Array<string | AttributeValueOption>>(`/attributes/types/${code}/values`),
+  getTypeValueOptions: (code: string) =>
+    apiClient.get<ManagedAttributeValueOption[]>(`/attributes/types/${code}/value-options`),
+  updateTypeValueOption: (code: string, value: string, data: { displayValue?: string; sortOrder?: number; isActive?: boolean }) =>
+    apiClient.patch<ManagedAttributeValueOption>(`/attributes/types/${code}/value-options/${encodeURIComponent(value)}`, data),
+  linkProductToTypeValue: (code: string, value: string, productId: number) =>
+    apiClient.post<ManagedAttributeValueOption>(`/attributes/types/${code}/value-options/${encodeURIComponent(value)}/products`, { productId }),
+  unlinkProductFromTypeValue: (code: string, value: string, productId: number) =>
+    apiClient.delete<ManagedAttributeValueOption>(`/attributes/types/${code}/value-options/${encodeURIComponent(value)}/products/${productId}`),
   getProductAttributes: (productId: number) =>
     apiClient.get<ProductAttribute[]>(`/attributes/products/${productId}`),
   createType: (data: Partial<AttributeType> & { code: string; name: string }) =>
