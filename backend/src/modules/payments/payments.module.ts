@@ -31,11 +31,11 @@ export function resolvePaymentGateway(config: PaymentConfig): string {
 export type CheckoutGatewayName = 'naverpay' | 'eximbay' | 'paypal';
 
 /**
- * 로케일 기반 결제 게이트웨이 노출 정책 (#769)
+ * 국가/로케일 기반 결제 게이트웨이 노출 정책 (#1066)
  *
- * 두 PG를 모두 제공하되 로케일별 ordering/default만 바꾼다.
- * - ko: 네이버페이 기본, Eximbay 카드, PayPal 추가 선택지
- * - 그 외: Eximbay 카드 기본, PayPal, 네이버페이 추가 선택지
+ * 간편결제를 우선 노출하고, 국내 전용 수단은 해외 사이트에서 숨긴다.
+ * - ko/KR: 네이버페이 기본, PayPal, Eximbay 카드
+ * - 글로벌: PayPal 기본, Eximbay 카드 (네이버페이 숨김)
  */
 function getEnabledCheckoutGateways(env: NodeJS.ProcessEnv = process.env): CheckoutGatewayName[] {
   const configured = env.CHECKOUT_ENABLED_GATEWAYS;
@@ -51,8 +51,8 @@ function getEnabledCheckoutGateways(env: NodeJS.ProcessEnv = process.env): Check
 
 export function getAvailableGatewaysByLocale(locale: string): CheckoutGatewayName[] {
   const localeOrder: CheckoutGatewayName[] = locale === 'ko'
-    ? ['naverpay', 'eximbay', 'paypal']
-    : ['eximbay', 'paypal', 'naverpay'];
+    ? ['naverpay', 'paypal', 'eximbay']
+    : ['paypal', 'eximbay'];
   const enabled = getEnabledCheckoutGateways();
   return localeOrder.filter((gateway) => enabled.includes(gateway));
 }

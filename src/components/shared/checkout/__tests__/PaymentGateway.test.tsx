@@ -13,12 +13,12 @@ vi.mock('next-intl', () => ({
       paypalPayment: 'PayPal',
       naverpayPayment: '네이버페이',
       naverpayDomesticBadge: '국내 전용',
-      naverpayDomesticHint: '해외 사용자는 결제가 실패할 수 있습니다.',
-      paypalRedirectHint: 'PayPal 승인 페이지로 이동합니다.',
-      eximbayPayment: '카드 결제 (Visa/Master/JCB/Amex)',
+      naverpayDomesticHint: '국내 전용 간편결제',
+      paypalRedirectHint: 'PayPal',
+      eximbayPayment: 'Credit card',
       eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
       cardPaymentTitle: 'Payment',
-      cardPaymentSubtitle: '일반 해외 커머스 방식의 카드 결제 화면입니다.',
+      cardPaymentSubtitle: '카드 정보는 결제사의 보안 결제창에서 입력됩니다.',
       creditCardTitle: 'Credit card',
       cardBrandsLabel: '지원 카드 브랜드',
       cardNumberLabel: '카드 번호',
@@ -171,8 +171,8 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByText('PayPal')).toBeInTheDocument();
-    expect(screen.getByText('PayPal 승인 페이지로 이동합니다.')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /PayPal/ })).toBeInTheDocument();
+    expect(screen.queryByText('PayPal 승인 페이지로 이동합니다.')).not.toBeInTheDocument();
   });
 
   it('gateway=naverpay → 국내 전용 배지를 표시', () => {
@@ -193,9 +193,9 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByText('네이버페이')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /네이버페이/ })).toBeInTheDocument();
     expect(screen.getByText('국내 전용')).toBeInTheDocument();
-    expect(screen.getByText('해외 사용자는 결제가 실패할 수 있습니다.')).toBeInTheDocument();
+    expect(screen.queryByText('해외 사용자는 결제가 실패할 수 있습니다.')).not.toBeInTheDocument();
   });
 
 
@@ -272,9 +272,9 @@ describe('PaymentGateway', () => {
     expect(screen.getByTestId('secure-card-entry-shell')).toBeInTheDocument();
     expect(screen.getByText('Payment')).toBeInTheDocument();
     expect(screen.getByText('Credit card')).toBeInTheDocument();
-    expect(screen.getByText('Visa')).toBeInTheDocument();
-    expect(screen.getByText('Mastercard')).toBeInTheDocument();
-    expect(screen.getByText('Amex')).toBeInTheDocument();
+    expect(screen.getByLabelText('Visa')).toBeInTheDocument();
+    expect(screen.getByLabelText('Mastercard')).toBeInTheDocument();
+    expect(screen.getByLabelText('American Express')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Card number')).toHaveAttribute('readonly');
     expect(screen.getByPlaceholderText('Security code')).toHaveAttribute('readonly');
     expect(screen.queryByRole('button', { name: 'Pay now' })).not.toBeInTheDocument();

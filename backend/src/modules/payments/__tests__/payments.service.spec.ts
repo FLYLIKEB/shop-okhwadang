@@ -254,7 +254,7 @@ describe('PaymentsService', () => {
       await expect(service.prepare({ orderId: 1 }, 10)).rejects.toThrow(ConflictException);
     });
 
-    it('locale=ko 기본 prepare → NAVERPAY 저장 + eximbay/paypal 선택지 반환 (#769/#1057)', async () => {
+    it('locale=ko 기본 prepare → NAVERPAY 저장 + paypal/eximbay 선택지 반환 (#769/#1057)', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
       mockPaymentRepo.findOne.mockResolvedValue(null);
@@ -266,29 +266,29 @@ describe('PaymentsService', () => {
       const result = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
 
       expect(result.gateway).toBe('naverpay');
-      expect(result.availableGateways).toEqual(['naverpay', 'eximbay', 'paypal']);
+      expect(result.availableGateways).toEqual(['naverpay', 'paypal', 'eximbay']);
       expect(mockNaverpayAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.NAVERPAY }),
       );
     });
 
-    it('locale=en 기본 prepare → EXIMBAY 저장 + paypal/naverpay 선택지 반환 (#1057)', async () => {
+    it('locale=en 기본 prepare → PAYPAL 저장 + 카드 선택지 반환 (#1057/#1066)', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
       mockPaymentRepo.findOne.mockResolvedValue(null);
-      const savedPayment = makePayment({ gateway: PaymentGatewayType.EXIMBAY });
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.PAYPAL });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockEximbayAdapter.prepare.mockResolvedValue({ clientKey: 'eximbay-mid', orderId: 'ORD-20240101-ABCD1' });
+      mockPaypalAdapter.prepare.mockResolvedValue({ clientKey: 'paypal-client', orderId: 'paypal-order-id' });
 
       const result = await service.prepare({ orderId: 1, locale: 'en' }, 10);
 
-      expect(result.gateway).toBe('eximbay');
-      expect(result.availableGateways).toEqual(['eximbay', 'paypal', 'naverpay']);
-      expect(mockEximbayAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'en' }));
+      expect(result.gateway).toBe('paypal');
+      expect(result.availableGateways).toEqual(['paypal', 'eximbay']);
+      expect(mockPaypalAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'en' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: PaymentGatewayType.EXIMBAY }),
+        expect.objectContaining({ gateway: PaymentGatewayType.PAYPAL }),
       );
     });
 
@@ -327,7 +327,7 @@ describe('PaymentsService', () => {
       const result = await service.prepare({ orderId: 1, locale: 'ko', gateway: 'eximbay' }, 10);
 
       expect(result.gateway).toBe('eximbay');
-      expect(result.availableGateways).toEqual(['naverpay', 'eximbay', 'paypal']);
+      expect(result.availableGateways).toEqual(['naverpay', 'paypal', 'eximbay']);
       expect(mockEximbayAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.EXIMBAY }),
@@ -473,20 +473,21 @@ describe('PaymentsService', () => {
       expect(recoveryManager.increment).toHaveBeenCalled();
     });
 
-    it('locale=en prepare → payment.gateway 가 EXIMBAY 로 저장되어야 함 (#1057)', async () => {
+    it('locale=en prepare → payment.gateway 가 PAYPAL 로 저장되고 네이버페이를 숨김 (#1057/#1066)', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
       mockPaymentRepo.findOne.mockResolvedValue(null);
-      const savedPayment = makePayment({ gateway: PaymentGatewayType.EXIMBAY });
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.PAYPAL });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockEximbayAdapter.prepare.mockResolvedValue({ clientKey: 'eximbay-mid', orderId: 'ORD-20240101-ABCD1' });
+      mockPaypalAdapter.prepare.mockResolvedValue({ clientKey: 'paypal-client', orderId: 'paypal-order-id' });
 
       const result = await service.prepare({ orderId: 1, locale: 'en' }, 10);
 
-      expect(result.gateway).toBe('eximbay');
+      expect(result.gateway).toBe('paypal');
+      expect(result.availableGateways).toEqual(['paypal', 'eximbay']);
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: PaymentGatewayType.EXIMBAY }),
+        expect.objectContaining({ gateway: PaymentGatewayType.PAYPAL }),
       );
       expect(mockPaymentRepo.create).not.toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.INICIS }),

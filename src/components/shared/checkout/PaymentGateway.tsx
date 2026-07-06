@@ -7,6 +7,7 @@ import type { PreparePaymentResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { SESSION_KEYS } from '@/constants/storage';
 import { SecureCardEntryShell } from './SecureCardEntryShell';
+import { PaymentMethodOption } from './PaymentMethodOption';
 
 export interface PaymentGatewayHandle {
   confirm: () => Promise<void>;
@@ -346,7 +347,6 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
     ref,
   ) {
     const t = useTranslations('checkout');
-    const isNaverPay = prepareResult.gateway === 'naverpay';
     const isEximbay = prepareResult.gateway === 'eximbay';
 
     useImperativeHandle(ref, () => ({
@@ -438,29 +438,11 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
     }
 
     return (
-      <label className="flex items-start gap-3 rounded-md border border-border p-3">
-        <input
-          type="radio"
-          name="paymentMethod"
-          value={prepareResult.gateway}
-          defaultChecked
-          readOnly
-          className="mt-1 accent-foreground"
-        />
-        <span className="layout-stack-xs">
-          <span className="flex items-center gap-2 typo-body-sm text-foreground">
-            {isNaverPay ? t('naverpayPayment') : isEximbay ? t('eximbayPayment') : t('paypalPayment')}
-            {isNaverPay && (
-              <span className="rounded-sm bg-muted px-2 py-0.5 typo-label text-muted-foreground" title={t('naverpayDomesticHint')}>
-                {t('naverpayDomesticBadge')}
-              </span>
-            )}
-          </span>
-          <span className="typo-label text-muted-foreground">
-            {isNaverPay ? t('naverpayDomesticHint') : isEximbay ? t('eximbayHostedPaymentHint') : t('paypalRedirectHint')}
-          </span>
-        </span>
-      </label>
+      <PaymentMethodOption
+        gateway={prepareResult.gateway === 'naverpay' ? 'naverpay' : 'paypal'}
+        selected
+        readOnly
+      />
     );
   },
 );

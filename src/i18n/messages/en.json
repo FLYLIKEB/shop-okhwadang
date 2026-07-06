@@ -435,15 +435,15 @@
       "payment": "Payment",
       "complete": "Done"
     },
-    "paymentMethodHint": "Payment methods appear after shipping info is complete.",
+    "paymentMethodHint": "Choose an express payment first, or select Credit card if you prefer card checkout.",
     "freeShipping": "Free",
     "freeShippingUnlocked": "Free shipping is now applied.",
     "freeShippingRemaining": "Add {amount} more for free shipping",
     "paypalPayment": "PayPal",
     "naverpayPayment": "Naver Pay",
     "naverpayDomesticBadge": "Korea only",
-    "naverpayDomesticHint": "Naver Pay may fail for overseas users.",
-    "paypalRedirectHint": "You will be redirected to PayPal approval.",
+    "naverpayDomesticHint": "Korea-only express payment",
+    "paypalRedirectHint": "PayPal",
     "externalPaymentUnavailable": "Unable to open the payment page.",
     "consent": {
       "title": "Required Consent",
@@ -471,10 +471,10 @@
     "pointsPlaceholder": "Points to use",
     "applyPoints": "Apply",
     "pointsBalance": "Available points: {amount}",
-    "eximbayPayment": "International card",
+    "eximbayPayment": "Credit card",
     "eximbayHostedPaymentHint": "Card details are entered only in Eximbay’s secure payment page.",
     "cardPaymentTitle": "Payment",
-    "cardPaymentSubtitle": "A familiar international card checkout layout. Actual card details are entered only in the payment provider’s secure page.",
+    "cardPaymentSubtitle": "Card details are entered only in the payment provider’s secure page.",
     "creditCardTitle": "Credit card",
     "cardBrandsLabel": "Supported card brands",
     "cardNumberLabel": "Card number",
@@ -489,7 +489,7 @@
     "cardTermsAriaLabel": "Card payment terms agreement",
     "cardTermsAgreement": "I agree to the payment terms and authorize the secure card payment.",
     "payNow": "Pay now",
-    "cardSecurePageNotice": "Card number, expiry date, and CVC are never stored in Okhwadang server or browser state; they are entered in Eximbay’s secure payment page after Pay now."
+    "cardSecurePageNotice": "Card number, expiry date, and CVC are never stored in Okhwadang server or browser state."
   },
   "order": {
     "orderHistory": "Order History",
