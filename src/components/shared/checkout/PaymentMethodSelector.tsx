@@ -17,6 +17,18 @@ export function PaymentMethodSelector({
 }: PaymentMethodSelectorProps) {
   const t = useTranslations('checkout');
 
+  const labels: Record<CheckoutGatewayName, string> = {
+    naverpay: t('naverpayPayment'),
+    eximbay: t('eximbayPayment'),
+    paypal: t('paypalPayment'),
+  };
+
+  const descriptions: Partial<Record<CheckoutGatewayName, string>> = {
+    naverpay: t('naverpayDomesticHint'),
+    eximbay: t('eximbayHostedPaymentHint'),
+    paypal: t('paypalRedirectHint'),
+  };
+
   return (
     <div className="layout-stack-sm">
       <p className="typo-body-sm text-muted-foreground">{t('paymentMethodHint')}</p>
@@ -39,7 +51,7 @@ export function PaymentMethodSelector({
             />
             <span className="layout-stack-xs">
               <span className="flex items-center gap-2 typo-body-sm text-foreground">
-                {t(gateway === 'naverpay' ? 'naverpayPayment' : 'paypalPayment')}
+                {labels[gateway]}
                 {gateway === 'naverpay' && (
                   <span
                     className="rounded-sm bg-muted px-2 py-0.5 typo-label text-muted-foreground"
@@ -49,8 +61,8 @@ export function PaymentMethodSelector({
                   </span>
                 )}
               </span>
-              {gateway === 'naverpay' && (
-                <span className="typo-label text-muted-foreground">{t('naverpayDomesticHint')}</span>
+              {descriptions[gateway] && (
+                <span className="typo-label text-muted-foreground">{descriptions[gateway]}</span>
               )}
             </span>
           </label>

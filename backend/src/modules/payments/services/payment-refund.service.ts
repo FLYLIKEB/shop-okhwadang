@@ -74,6 +74,7 @@ export class PaymentRefundService {
       this.deps.paymentRepository,
       { orderId },
       '결제 정보를 찾을 수 없습니다.',
+      ['order'],
     );
     const cancelGateway = this.deps.resolveGatewayByType(payment.gateway);
 
@@ -83,6 +84,9 @@ export class PaymentRefundService {
         paymentKey: payment.paymentKey!,
         cancelAmount: dto.amount,
         cancelReason: dto.reason,
+        originalAmount: Number(payment.amount),
+        orderNumber: payment.order?.orderNumber,
+        rawResponse: payment.rawResponse,
       });
     } catch (err) {
       await this.deps.refundRepository.update(refund.id, { status: RefundStatus.FAILED });
@@ -142,4 +146,3 @@ export class PaymentRefundService {
     return refund;
   }
 }
-

@@ -24,14 +24,21 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
     const naverPayResultCode = searchParams.get('resultCode');
     const naverPayPaymentId = searchParams.get('paymentId');
     const isNaverPayReturn = naverPayResultCode !== null || naverPayPaymentId !== null;
-    const paymentKey = paypalToken ?? naverPayPaymentId ?? searchParams.get('paymentKey');
+    const eximbayRescode = searchParams.get('rescode');
+    const eximbayTransactionId = searchParams.get('transaction_id');
+    const isEximbayReturn = eximbayRescode !== null || eximbayTransactionId !== null;
+    const paymentKey = paypalToken
+      ?? naverPayPaymentId
+      ?? (isEximbayReturn ? searchParams.toString() : searchParams.get('paymentKey'));
     const tossOrderId = searchParams.get('orderId');
     const amountParam = searchParams.get('amount');
     const contextKey = paypalToken
       ? SESSION_KEYS.PAYPAL_CONTEXT
       : isNaverPayReturn
         ? SESSION_KEYS.NAVERPAY_CONTEXT
-        : SESSION_KEYS.TOSS_CONTEXT;
+        : isEximbayReturn
+          ? SESSION_KEYS.EXIMBAY_CONTEXT
+          : SESSION_KEYS.TOSS_CONTEXT;
 
     if (isNaverPayReturn && naverPayResultCode !== 'Success') {
       toast.error(searchParams.get('resultMessage') ?? toastMessage('paymentInvalidInfo'));
@@ -39,7 +46,13 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
       return;
     }
 
-    if (!paymentKey || (!paypalToken && !isNaverPayReturn && (!tossOrderId || !amountParam))) {
+    if (isEximbayReturn && eximbayRescode !== '0000') {
+      toast.error(searchParams.get('resmsg') ?? toastMessage('paymentInvalidInfo'));
+      router.replace(`/${locale}/cart`);
+      return;
+    }
+
+    if (!paymentKey || (!paypalToken && !isNaverPayReturn && !isEximbayReturn && (!tossOrderId || !amountParam))) {
       toast.error(toastMessage('paymentInvalidInfo'));
       router.replace(`/${locale}/cart`);
       return;
@@ -58,7 +71,7 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
       amount: number;
     };
 
-    if (!paypalToken && !isNaverPayReturn) {
+    if (!paypalToken && !isNaverPayReturn && !isEximbayReturn) {
       const amount = Number(amountParam);
       if (amount !== ctx.amount) {
         toast.error(toastMessage('paymentAmountMismatch'));
@@ -75,6 +88,7 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
         sessionStorage.removeItem(SESSION_KEYS.TOSS_CONTEXT);
         sessionStorage.removeItem(SESSION_KEYS.PAYPAL_CONTEXT);
         sessionStorage.removeItem(SESSION_KEYS.NAVERPAY_CONTEXT);
+        sessionStorage.removeItem(SESSION_KEYS.EXIMBAY_CONTEXT);
         await refetch();
         router.replace(
           `/${locale}/order/complete?orderId=${ctx.orderId}&orderNumber=${ctx.orderNumber}`,

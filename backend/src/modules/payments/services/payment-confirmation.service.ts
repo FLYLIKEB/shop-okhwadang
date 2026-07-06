@@ -81,7 +81,7 @@ export class PaymentConfirmationService {
       await this.deps.dataSource.transaction(async (manager) => {
         await manager.update(Payment, payment.id, {
           status: PaymentStatus.CONFIRMED,
-          paymentKey: dto.paymentKey,
+          paymentKey: result.paymentKey,
           method: result.method as PaymentMethod,
           paidAt: new Date(),
           rawResponse: result.rawResponse as object,

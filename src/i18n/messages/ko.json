@@ -470,7 +470,9 @@
     "pointsUse": "적립금 사용",
     "pointsPlaceholder": "사용할 적립금",
     "applyPoints": "적용",
-    "pointsBalance": "사용 가능 적립금: {amount}"
+    "pointsBalance": "사용 가능 적립금: {amount}",
+    "eximbayPayment": "카드 결제 (Visa/Master/JCB/Amex)",
+    "eximbayHostedPaymentHint": "카드 정보는 Eximbay 보안 결제창에서 입력됩니다."
   },
   "order": {
     "orderHistory": "주문 내역",

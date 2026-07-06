@@ -61,6 +61,23 @@ export class PaymentsController {
     await this.paymentsService.handleWebhook(dto, buildPaymentWebhookSignature(headers));
     return { received: true };
   }
+
+  @Public()
+  @Post('webhook/eximbay')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Eximbay 결제 웹훅', description: 'Eximbay status_url/webhook 결제 상태를 수신합니다.' })
+  @ApiResponse({ status: 200, description: 'Eximbay 웹훅 수신 성공' })
+  @ApiHeader({ name: 'eximbay-webhook-signature', description: 'Eximbay HMAC 서명', required: true })
+  async eximbayWebhook(
+    @Body() payload: Record<string, unknown>,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+  ): Promise<{ received: boolean }> {
+    await this.paymentsService.handleEximbayWebhook(
+      payload,
+      getHeader(headers, 'eximbay-webhook-signature') ?? '',
+    );
+    return { received: true };
+  }
 }
 
 function buildPaymentWebhookSignature(headers: Record<string, string | string[] | undefined>): string {

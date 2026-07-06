@@ -56,6 +56,13 @@ export function extractWebhookIdempotencyKey(
       if (!id || !eventType) return null;
       return { gateway, eventId: id, eventType };
     }
+    case PaymentGatewayType.EXIMBAY: {
+      const transactionId = stringOf(payload.transactionId ?? payload.transaction_id ?? payload.paymentKey);
+      const orderId = stringOf(payload.orderId ?? payload.order_id);
+      const id = transactionId ?? orderId;
+      if (!id || !eventType) return null;
+      return { gateway, eventId: `${id}:${eventType}`, eventType };
+    }
     case PaymentGatewayType.INICIS: {
       const tid = stringOf(payload.tid);
       if (!tid || !eventType) return null;

@@ -17,6 +17,7 @@ import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from './adapters/inicis.adapter';
 import { NaverPayPaymentAdapter } from './adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from './adapters/paypal.adapter';
+import { EximbayPaymentAdapter } from './adapters/eximbay.adapter';
 import {
   PAYMENT_CONFIG,
   PaymentConfig,
@@ -27,18 +28,18 @@ export function resolvePaymentGateway(config: PaymentConfig): string {
   return config.gateway;
 }
 
-export type CheckoutGatewayName = 'naverpay' | 'paypal';
+export type CheckoutGatewayName = 'naverpay' | 'eximbay' | 'paypal';
 
 /**
  * 로케일 기반 결제 게이트웨이 노출 정책 (#769)
  *
  * 두 PG를 모두 제공하되 로케일별 ordering/default만 바꾼다.
- * - ko: 네이버페이 기본, PayPal 추가 선택지
- * - 그 외: PayPal 기본, 네이버페이 추가 선택지
+ * - ko: 네이버페이 기본, Eximbay 카드, PayPal 추가 선택지
+ * - 그 외: Eximbay 카드 기본, PayPal, 네이버페이 추가 선택지
  */
 function getEnabledCheckoutGateways(env: NodeJS.ProcessEnv = process.env): CheckoutGatewayName[] {
   const configured = env.CHECKOUT_ENABLED_GATEWAYS;
-  if (!configured || configured.trim() === '') return ['naverpay', 'paypal'];
+  if (!configured || configured.trim() === '') return ['naverpay', 'eximbay', 'paypal'];
 
   const gateways = configured
     .split(',')
@@ -49,7 +50,9 @@ function getEnabledCheckoutGateways(env: NodeJS.ProcessEnv = process.env): Check
 }
 
 export function getAvailableGatewaysByLocale(locale: string): CheckoutGatewayName[] {
-  const localeOrder: CheckoutGatewayName[] = locale === 'ko' ? ['naverpay', 'paypal'] : ['paypal', 'naverpay'];
+  const localeOrder: CheckoutGatewayName[] = locale === 'ko'
+    ? ['naverpay', 'eximbay', 'paypal']
+    : ['eximbay', 'paypal', 'naverpay'];
   const enabled = getEnabledCheckoutGateways();
   return localeOrder.filter((gateway) => enabled.includes(gateway));
 }
@@ -59,7 +62,7 @@ export function resolveGatewayByLocale(locale: string): CheckoutGatewayName {
 }
 
 export function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
-  return value === 'naverpay' || value === 'paypal';
+  return value === 'naverpay' || value === 'eximbay' || value === 'paypal';
 }
 
 const gatewayProviders = [
@@ -70,6 +73,7 @@ const gatewayProviders = [
   KGInicisPaymentAdapter,
   NaverPayPaymentAdapter,
   PayPalPaymentAdapter,
+  EximbayPaymentAdapter,
   {
     provide: 'PaymentGateway',
     useFactory: (
@@ -80,6 +84,7 @@ const gatewayProviders = [
       inicis: KGInicisPaymentAdapter,
       naverpay: NaverPayPaymentAdapter,
       paypal: PayPalPaymentAdapter,
+      eximbay: EximbayPaymentAdapter,
     ) => {
       const gateway = resolvePaymentGateway(config);
       switch (gateway) {
@@ -93,6 +98,8 @@ const gatewayProviders = [
           return naverpay;
         case 'paypal':
           return paypal;
+        case 'eximbay':
+          return eximbay;
         case 'mock':
           return mock;
         default:
@@ -107,6 +114,7 @@ const gatewayProviders = [
       KGInicisPaymentAdapter,
       NaverPayPaymentAdapter,
       PayPalPaymentAdapter,
+      EximbayPaymentAdapter,
     ],
   },
 ];

@@ -56,17 +56,36 @@ describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
       apiBaseUrl: 'https://api-m.sandbox.paypal.com',
     });
   });
+
+  it('PAYMENT_GATEWAY=eximbay → Eximbay 설정을 읽는다', () => {
+    const config = createPaymentConfig({
+      NODE_ENV: 'development',
+      PAYMENT_GATEWAY: 'eximbay',
+      EXIMBAY_MERCHANT_ID: 'eximbay-mid',
+      EXIMBAY_API_KEY: 'eximbay-api-key',
+      EXIMBAY_SECRET_KEY: 'eximbay-secret',
+    });
+
+    expect(config.gateway).toBe('eximbay');
+    expect(config.eximbay).toMatchObject({
+      merchantId: 'eximbay-mid',
+      apiKey: 'eximbay-api-key',
+      secretKey: 'eximbay-secret',
+      apiBaseUrl: 'https://api-test.eximbay.com',
+      jsSdkUrl: 'https://api-test.eximbay.com/v1/javascriptSDK.js',
+    });
+  });
 });
 
-describe('locale gateway policy — PayPal/NaverPay ordering', () => {
-  it('ko → naverpay default, paypal fallback', () => {
+describe('locale gateway policy — Eximbay/PayPal/NaverPay ordering', () => {
+  it('ko → naverpay default, eximbay card, paypal fallback', () => {
     expect(resolveGatewayByLocale('ko')).toBe('naverpay');
-    expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'paypal']);
+    expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'eximbay', 'paypal']);
   });
 
-  it('en and other locales → paypal default, naverpay fallback', () => {
-    expect(resolveGatewayByLocale('en')).toBe('paypal');
-    expect(resolveGatewayByLocale('ja')).toBe('paypal');
-    expect(getAvailableGatewaysByLocale('en')).toEqual(['paypal', 'naverpay']);
+  it('en and other locales → eximbay default, paypal/naverpay fallback', () => {
+    expect(resolveGatewayByLocale('en')).toBe('eximbay');
+    expect(resolveGatewayByLocale('ja')).toBe('eximbay');
+    expect(getAvailableGatewaysByLocale('en')).toEqual(['eximbay', 'paypal', 'naverpay']);
   });
 });

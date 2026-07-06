@@ -65,12 +65,22 @@
 
 | 변수                                 | 기본값 | 설명                                                                                         |
 | ------------------------------------ | ------ | -------------------------------------------------------------------------------------------- |
-| `PAYMENT_GATEWAY`                    | `mock` | PG 어댑터 선택 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`). `mock`은 프로덕션 차단 |
+| `PAYMENT_GATEWAY`                    | `mock` | PG 어댑터 선택 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`/`eximbay`). `mock`은 프로덕션 차단 |
 | `TOSS_SECRET_KEY`                    | —      | 토스페이먼츠 시크릿 키                                                                       |
 | `TOSS_CLIENT_KEY`                    | —      | 토스페이먼츠 클라이언트 키                                                                   |
 | `STRIPE_SECRET_KEY`                  | —      | Stripe 시크릿 키                                                                             |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | —      | Stripe 공개 키                                                                               |
 | `STRIPE_WEBHOOK_SECRET`              | —      | Stripe 웹훅 서명 키                                                                          |
+| `EXIMBAY_MERCHANT_ID`                | —      | Eximbay merchant ID (프로덕션 체크아웃 필수)                                                  |
+| `EXIMBAY_API_KEY`                    | —      | Eximbay Payment Preparation/Verify API key (프로덕션 체크아웃 필수)                           |
+| `EXIMBAY_SECRET_KEY`                 | —      | Eximbay API secret key (프로덕션 체크아웃 필수)                                                |
+| `EXIMBAY_WEBHOOK_SECRET`             | —      | Eximbay webhook HMAC secret                                                                   |
+| `EXIMBAY_API_BASE_URL`               | `https://api-test.eximbay.com` | Eximbay API base URL (production 계약 후 교체)                                    |
+| `EXIMBAY_JS_SDK_URL`                 | `https://api-test.eximbay.com/v1/javascriptSDK.js` | Eximbay hosted payment page SDK URL                            |
+| `EXIMBAY_CURRENCY`                   | `KRW`  | Eximbay 결제 통화 (`USD` 사용 시 `EXIMBAY_KRW_PER_USD`로 환산)                                |
+| `EXIMBAY_LANG`                       | locale 기반 | Eximbay 결제창 언어 강제 override (`KR`/`EN`)                                             |
+| `EXIMBAY_SHOP_NAME`                  | `Okhwadang` | Eximbay 결제창 상점명                                                                    |
+| `EXIMBAY_KRW_PER_USD`                | `1350` | Eximbay USD 결제를 위한 KRW→USD 환산 기준                                                     |
 
 ### 스토리지
 
@@ -154,3 +164,13 @@ backend/.env.example      # 키 목록 (커밋 O, 값 없음)
 | `PAYPAL_WEBHOOK_ID` | — | PayPal webhook signature verification ID |
 | `PAYPAL_API_BASE_URL` | sandbox/prod default | PayPal REST API base URL override |
 | `PAYPAL_KRW_PER_USD` | `1350` | PayPal USD 결제를 위한 KRW→USD 환산 기준 |
+| `EXIMBAY_MERCHANT_ID` | — | Eximbay merchant ID (프로덕션 체크아웃 필수) |
+| `EXIMBAY_API_KEY` | — | Eximbay API key (프로덕션 체크아웃 필수) |
+| `EXIMBAY_SECRET_KEY` | — | Eximbay API secret key (프로덕션 체크아웃 필수) |
+| `EXIMBAY_WEBHOOK_SECRET` | — | Eximbay webhook HMAC secret |
+| `EXIMBAY_API_BASE_URL` | `https://api-test.eximbay.com` | Eximbay API base URL |
+| `EXIMBAY_JS_SDK_URL` | `https://api-test.eximbay.com/v1/javascriptSDK.js` | Eximbay JS SDK URL |
+| `EXIMBAY_CURRENCY` | `KRW` | Eximbay 결제 통화 |
+| `EXIMBAY_LANG` | locale 기반 | Eximbay 결제창 언어 override |
+| `EXIMBAY_SHOP_NAME` | `Okhwadang` | Eximbay 결제창 상점명 |
+| `EXIMBAY_KRW_PER_USD` | `1350` | Eximbay USD 결제를 위한 KRW→USD 환산 기준 |

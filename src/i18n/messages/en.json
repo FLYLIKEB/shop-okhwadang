@@ -470,7 +470,9 @@
     "pointsUse": "Use points",
     "pointsPlaceholder": "Points to use",
     "applyPoints": "Apply",
-    "pointsBalance": "Available points: {amount}"
+    "pointsBalance": "Available points: {amount}",
+    "eximbayPayment": "International card",
+    "eximbayHostedPaymentHint": "Card details are entered only in Eximbay’s secure payment page."
   },
   "order": {
     "orderHistory": "Order History",

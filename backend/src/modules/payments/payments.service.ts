@@ -1,5 +1,5 @@
 import {
-  Injectable, BadRequestException, ConflictException, NotFoundException,
+  Injectable, BadRequestException, ConflictException, NotFoundException, UnauthorizedException,
   Logger, Inject, Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,6 +21,7 @@ import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from './adapters/inicis.adapter';
 import { NaverPayPaymentAdapter } from './adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from './adapters/paypal.adapter';
+import { EximbayPaymentAdapter } from './adapters/eximbay.adapter';
 import {
   getAvailableGatewaysByLocale,
   isCheckoutGatewayName,
@@ -64,6 +65,7 @@ export class PaymentsService {
     private readonly inicisAdapter: KGInicisPaymentAdapter,
     private readonly naverpayAdapter: NaverPayPaymentAdapter,
     private readonly paypalAdapter: PayPalPaymentAdapter,
+    private readonly eximbayAdapter: EximbayPaymentAdapter,
     private readonly notificationService: NotificationService,
     @Optional()
     private readonly messageNotificationService: MessageNotificationService | undefined,
@@ -99,6 +101,7 @@ export class PaymentsService {
       webhookEventRepository: this.webhookEventRepository,
       dataSource: this.dataSource,
       logger: this.logger,
+      defaultCarrier: this.paymentConfig.defaultCarrier,
     });
   }
 
@@ -108,6 +111,7 @@ export class PaymentsService {
     if (name === 'inicis') return this.inicisAdapter;
     if (name === 'naverpay') return this.naverpayAdapter;
     if (name === 'paypal') return this.paypalAdapter;
+    if (name === 'eximbay') return this.eximbayAdapter;
     return this.gateway;
   }
 
@@ -123,6 +127,8 @@ export class PaymentsService {
         return this.naverpayAdapter;
       case PaymentGatewayType.PAYPAL:
         return this.paypalAdapter;
+      case PaymentGatewayType.EXIMBAY:
+        return this.eximbayAdapter;
       case PaymentGatewayType.MOCK:
       default:
         return this.gateway;
@@ -141,6 +147,8 @@ export class PaymentsService {
         return PaymentGatewayType.NAVERPAY;
       case 'paypal':
         return PaymentGatewayType.PAYPAL;
+      case 'eximbay':
+        return PaymentGatewayType.EXIMBAY;
       case 'mock':
       default:
         return PaymentGatewayType.MOCK;
@@ -268,6 +276,7 @@ export class PaymentsService {
       this.paymentRepository,
       { orderId },
       '결제 정보를 찾을 수 없습니다.',
+      ['order'],
     );
 
     if (payment.status !== PaymentStatus.CONFIRMED) {
@@ -275,7 +284,11 @@ export class PaymentsService {
     }
 
     const cancelGateway = this.resolveGatewayByType(payment.gateway);
-    const result = await cancelGateway.cancel(payment.paymentKey!, reason);
+    const result = await cancelGateway.cancel(payment.paymentKey!, reason, {
+      originalAmount: Number(payment.amount),
+      orderNumber: payment.order?.orderNumber,
+      rawResponse: payment.rawResponse,
+    });
 
     await this.paymentRepository.update(payment.id, {
       status: PaymentStatus.REFUNDED,
@@ -300,6 +313,52 @@ export class PaymentsService {
     return this.paymentWebhookService.handleWebhook(payload, signature);
   }
 
+  async handleEximbayWebhook(payload: unknown, signature: string): Promise<void> {
+    if (!(await this.eximbayAdapter.verifyWebhook(payload, signature))) {
+      throw new UnauthorizedException('Eximbay 웹훅 서명 검증 실패');
+    }
+
+    const normalized = await this.normalizeEximbayWebhookPayload(payload);
+    const trustedEximbayGateway: PaymentGateway = {
+      prepare: (...args) => this.eximbayAdapter.prepare(...args),
+      confirm: (...args) => this.eximbayAdapter.confirm(...args),
+      cancel: (...args) => this.eximbayAdapter.cancel(...args),
+      partialCancel: (...args) => this.eximbayAdapter.partialCancel(...args),
+      verifyWebhook: () => true,
+    };
+    const eximbayWebhookService = new PaymentWebhookService({
+      gateway: trustedEximbayGateway,
+      gatewayType: PaymentGatewayType.EXIMBAY,
+      paymentRepository: this.paymentRepository,
+      webhookEventRepository: this.webhookEventRepository,
+      dataSource: this.dataSource,
+      logger: this.logger,
+      defaultCarrier: this.paymentConfig.defaultCarrier,
+    });
+
+    return eximbayWebhookService.handleWebhook(normalized, 'verified');
+  }
+
+  private async normalizeEximbayWebhookPayload(payload: unknown): Promise<Record<string, unknown>> {
+    const record = isRecord(payload) ? payload : {};
+    const rawOrderNumber = String(record.order_id ?? record.orderId ?? '');
+    const order = rawOrderNumber
+      ? await this.orderRepository.findOne({ where: { orderNumber: rawOrderNumber } })
+      : null;
+    const rescode = String(record.rescode ?? '');
+    const transactionId = String(record.transaction_id ?? record.transactionId ?? record.paymentKey ?? '');
+
+    return {
+      ...record,
+      orderId: order?.id ?? record.orderId,
+      orderNumber: rawOrderNumber,
+      paymentKey: transactionId,
+      transactionId,
+      eventType: 'EXIMBAY_PAYMENT_STATUS',
+      status: rescode === '0000' ? 'DONE' : String(record.status ?? record.resmsg ?? 'FAILED'),
+    };
+  }
+
   private async cancelConfirmedOrderPayment(
     payment: Payment,
     orderId: number,
@@ -316,7 +375,11 @@ export class PaymentsService {
     }
 
     const cancelGateway = this.resolveGatewayByType(payment.gateway);
-    const result = await cancelGateway.cancel(payment.paymentKey!, reason);
+    const result = await cancelGateway.cancel(payment.paymentKey!, reason, {
+      originalAmount: Number(payment.amount),
+      orderNumber: payment.order?.orderNumber,
+      rawResponse: payment.rawResponse,
+    });
 
     const applyCancellation = async (txManager: EntityManager): Promise<void> => {
       await txManager.update(Payment, payment.id, {
@@ -397,4 +460,8 @@ export class PaymentsService {
       description: `주문 ${order.orderNumber} 취소로 인한 적립금 복구`,
     });
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

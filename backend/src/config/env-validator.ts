@@ -33,17 +33,23 @@ export const CHECKOUT_PROVIDER_ENV_KEYS = {
     'PAYPAL_CLIENT_ID',
     'PAYPAL_CLIENT_SECRET',
   ],
+  eximbay: [
+    'EXIMBAY_MERCHANT_ID',
+    'EXIMBAY_API_KEY',
+    'EXIMBAY_SECRET_KEY',
+  ],
 } as const;
 
 export const CHECKOUT_PROD_ENV_KEYS = [
   ...CHECKOUT_PROVIDER_ENV_KEYS.naverpay,
   ...CHECKOUT_PROVIDER_ENV_KEYS.paypal,
+  ...CHECKOUT_PROVIDER_ENV_KEYS.eximbay,
 ] as const;
 
 type CheckoutProvider = keyof typeof CHECKOUT_PROVIDER_ENV_KEYS;
 
 function isCheckoutProvider(value: string): value is CheckoutProvider {
-  return value === 'naverpay' || value === 'paypal';
+  return value === 'naverpay' || value === 'paypal' || value === 'eximbay';
 }
 
 function getEnabledCheckoutProviders(env: NodeJS.ProcessEnv): CheckoutProvider[] {

@@ -20,6 +20,7 @@ export enum PaymentMethod {
   PHONE = 'phone',
   MOCK = 'mock',
   PAYPAL = 'paypal',
+  EXIMBAY = 'eximbay',
 }
 
 export enum PaymentGatewayType {
@@ -29,6 +30,7 @@ export enum PaymentGatewayType {
   STRIPE = 'stripe',
   NAVERPAY = 'naverpay',
   PAYPAL = 'paypal',
+  EXIMBAY = 'eximbay',
 }
 
 @Entity('payments')

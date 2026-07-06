@@ -1,6 +1,7 @@
 import { UnauthorizedException, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Payment, PaymentStatus, PaymentGatewayType } from '../entities/payment.entity';
+import { Shipping, ShippingStatus } from '../entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import {
   PaymentWebhookEvent,
@@ -22,6 +23,7 @@ interface PaymentWebhookDependencies {
   webhookEventRepository: Repository<PaymentWebhookEvent>;
   dataSource: DataSource;
   logger: Logger;
+  defaultCarrier?: string;
 }
 
 /**
@@ -187,6 +189,17 @@ export class PaymentWebhookService {
         rawResponse: payload as object,
       });
       await manager.update(Order, parsedOrderId, { status: matchedTransition.orderStatus });
+
+      if (matchedTransition.paymentStatus === PaymentStatus.CONFIRMED) {
+        const existingShipping = await manager.findOne(Shipping, { where: { orderId: parsedOrderId } });
+        if (!existingShipping) {
+          await manager.save(Shipping, {
+            orderId: parsedOrderId,
+            carrier: this.deps.defaultCarrier ?? 'mock',
+            status: ShippingStatus.PAYMENT_CONFIRMED,
+          });
+        }
+      }
 
       // 재고 복구 정책 (issue #723):
       // 취소·환불로 진입할 때만 한 번 복구. 이미 cancelled/refunded 였던 주문 (allowSameStatus 진입) 은

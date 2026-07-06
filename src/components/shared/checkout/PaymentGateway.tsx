@@ -37,14 +37,20 @@ interface NaverPayNamespace {
   };
 }
 
+interface EximbayNamespace {
+  request_pay: (params: Record<string, unknown>) => void;
+}
+
 declare global {
   interface Window {
     Naver?: NaverPayNamespace;
+    EXIMBAY?: EximbayNamespace;
   }
 }
 
 const NAVERPAY_SDK_SRC = 'https://nsp.pay.naver.com/sdk/js/naverpay.min.js';
 let naverPaySdkPromise: Promise<void> | null = null;
+let eximbaySdkPromise: Promise<void> | null = null;
 
 function loadNaverPaySdk(): Promise<void> {
   if (window.Naver?.Pay) return Promise.resolve();
@@ -79,6 +85,49 @@ function getGatewayPayloadString(
 ): string | undefined {
   const value = prepareResult.gatewayPayload?.[key];
   return typeof value === 'string' ? value : undefined;
+}
+
+function getGatewayPayloadObject(
+  prepareResult: PreparePaymentResponse,
+  key: string,
+): Record<string, unknown> {
+  const value = getGatewayPayloadString(prepareResult, key);
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function loadEximbaySdk(src: string): Promise<void> {
+  if (window.EXIMBAY?.request_pay) return Promise.resolve();
+  if (eximbaySdkPromise) return eximbaySdkPromise;
+
+  eximbaySdkPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
+    const script = existing ?? document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => {
+      if (window.EXIMBAY?.request_pay) {
+        resolve();
+      } else {
+        eximbaySdkPromise = null;
+        reject(new Error('eximbay_sdk_init_failed'));
+      }
+    };
+    script.onerror = () => {
+      eximbaySdkPromise = null;
+      reject(new Error('eximbay_sdk_load_failed'));
+    };
+    if (!existing) document.body.appendChild(script);
+  });
+
+  return eximbaySdkPromise;
 }
 
 interface PaymentGatewayProps {
@@ -288,7 +337,7 @@ const MockPaymentGateway = forwardRef<PaymentGatewayHandle, { locale: Locale }>(
   },
 );
 
-// ─── External redirect gateways (PayPal / NaverPay) ───────────────────────────
+// ─── External redirect/hosted gateways (PayPal / NaverPay / Eximbay) ──────────
 
 const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
   function ExternalRedirectGateway(
@@ -297,6 +346,7 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
   ) {
     const t = useTranslations('checkout');
     const isNaverPay = prepareResult.gateway === 'naverpay';
+    const isEximbay = prepareResult.gateway === 'eximbay';
 
     useImperativeHandle(ref, () => ({
       confirm: async () => {
@@ -341,6 +391,34 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
           return;
         }
 
+        if (prepareResult.gateway === 'eximbay') {
+          const fgkey = getGatewayPayloadString(prepareResult, 'fgkey');
+          const jsSdkUrl = getGatewayPayloadString(prepareResult, 'jsSdkUrl');
+          if (!fgkey || !jsSdkUrl) {
+            onError(t('externalPaymentUnavailable'));
+            return;
+          }
+
+          sessionStorage.setItem(
+            SESSION_KEYS.EXIMBAY_CONTEXT,
+            JSON.stringify({ orderId, orderNumber, amount }),
+          );
+
+          try {
+            await loadEximbaySdk(jsSdkUrl);
+            window.EXIMBAY?.request_pay({
+              fgkey,
+              payment: getGatewayPayloadObject(prepareResult, 'payment'),
+              merchant: getGatewayPayloadObject(prepareResult, 'merchant'),
+              buyer: getGatewayPayloadObject(prepareResult, 'buyer'),
+              url: getGatewayPayloadObject(prepareResult, 'url'),
+            });
+          } catch {
+            onError(t('externalPaymentUnavailable'));
+          }
+          return;
+        }
+
         if (!prepareResult.redirectUrl) {
           onError(t('externalPaymentUnavailable'));
           return;
@@ -366,7 +444,7 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
         />
         <span className="layout-stack-xs">
           <span className="flex items-center gap-2 typo-body-sm text-foreground">
-            {isNaverPay ? t('naverpayPayment') : t('paypalPayment')}
+            {isNaverPay ? t('naverpayPayment') : isEximbay ? t('eximbayPayment') : t('paypalPayment')}
             {isNaverPay && (
               <span className="rounded-sm bg-muted px-2 py-0.5 typo-label text-muted-foreground" title={t('naverpayDomesticHint')}>
                 {t('naverpayDomesticBadge')}
@@ -374,7 +452,7 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
             )}
           </span>
           <span className="typo-label text-muted-foreground">
-            {isNaverPay ? t('naverpayDomesticHint') : t('paypalRedirectHint')}
+            {isNaverPay ? t('naverpayDomesticHint') : isEximbay ? t('eximbayHostedPaymentHint') : t('paypalRedirectHint')}
           </span>
         </span>
       </label>
@@ -388,7 +466,7 @@ const PaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
   function PaymentGateway(props, ref) {
     const { prepareResult, locale } = props;
 
-    if (prepareResult.gateway === 'paypal' || prepareResult.gateway === 'naverpay') {
+    if (prepareResult.gateway === 'paypal' || prepareResult.gateway === 'naverpay' || prepareResult.gateway === 'eximbay') {
       return <ExternalRedirectGateway ref={ref} {...props} />;
     }
 
