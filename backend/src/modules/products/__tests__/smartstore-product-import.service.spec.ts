@@ -619,7 +619,7 @@ describe('SmartStoreProductImportService', () => {
         expect.objectContaining({ stock: 4, status: ProductStatus.ACTIVE }),
       );
       expect(commandService.create).toHaveBeenCalledWith(
-        expect.not.objectContaining({ options: expect.anything() }),
+        expect.objectContaining({ options: [] }),
       );
     });
 
