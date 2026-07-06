@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNumber, IsArray, Min, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsArray, IsBoolean, Min, MaxLength } from 'class-validator';
 
 export interface AttributeValueOption {
   value: string;
@@ -83,4 +83,43 @@ export class SetProductAttributesDto {
   })
   @IsArray()
   attributes!: SetProductAttributeItemDto[];
+}
+
+export interface AttributeValueLinkedProduct {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface ManagedAttributeValueOption extends AttributeValueOption {
+  id: number | null;
+  sortOrder: number;
+  isActive: boolean;
+  productCount: number;
+  products: AttributeValueLinkedProduct[];
+}
+
+export class UpdateAttributeValueOptionDto {
+  @ApiPropertyOptional({ example: '녹니', description: '표시 이름' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  displayValue?: string;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  sortOrder?: number;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class LinkAttributeValueProductDto {
+  @ApiProperty({ example: 1, description: '연결할 상품 ID' })
+  @IsNumber()
+  productId!: number;
 }

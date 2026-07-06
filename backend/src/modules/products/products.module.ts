@@ -9,6 +9,7 @@ import { Review } from '../reviews/entities/review.entity';
 import { ExternalReview } from '../reviews/entities/external-review.entity';
 import { AttributeType } from './entities/attribute-type.entity';
 import { ProductAttribute } from './entities/product-attribute.entity';
+import { AttributeValueOptionEntity } from './entities/attribute-value-option.entity';
 import { ProductsService } from './products.service';
 import { ProductQueryService } from './product-query.service';
 import { ProductCommandService } from './product-command.service';
@@ -42,6 +43,7 @@ import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guar
       ExternalReview,
       AttributeType,
       ProductAttribute,
+      AttributeValueOptionEntity,
       RecentlyViewedProduct,
     ]),
     CacheModule,

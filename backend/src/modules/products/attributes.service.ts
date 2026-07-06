@@ -9,10 +9,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AttributeType, AttributeInputType } from './entities/attribute-type.entity';
 import { ProductAttribute } from './entities/product-attribute.entity';
+import { Product } from './entities/product.entity';
+import { AttributeValueOptionEntity } from './entities/attribute-value-option.entity';
 import { CreateAttributeTypeDto, UpdateAttributeTypeDto } from './dto/attribute-type.dto';
 import {
   AttributeValueOption,
   CreateProductAttributeDto,
+  LinkAttributeValueProductDto,
+  ManagedAttributeValueOption,
+  UpdateAttributeValueOptionDto,
   UpdateProductAttributeDto,
 } from './dto/product-attribute.dto';
 import { applyLocale } from '../../common/utils/locale.util';
@@ -70,6 +75,10 @@ export class AttributesService {
     private readonly attributeTypeRepository: Repository<AttributeType>,
     @InjectRepository(ProductAttribute)
     private readonly productAttributeRepository: Repository<ProductAttribute>,
+    @InjectRepository(AttributeValueOptionEntity)
+    private readonly attributeValueOptionRepository: Repository<AttributeValueOptionEntity>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
   ) {}
 
   private applyLocaleToAttributeType(entity: AttributeType, locale?: string): AttributeType {
@@ -329,6 +338,212 @@ export class AttributesService {
     return this.productAttributeRepository.save(entities);
   }
 
+  private async findAttributeTypeByCodeOrThrow(code: string): Promise<AttributeType> {
+    const type = await this.attributeTypeRepository.findOne({ where: { code } });
+    if (!type) {
+      throw new NotFoundException(`AttributeType code ${code} not found`);
+    }
+    return type;
+  }
+
+  private async getDisplayValueMap(type: AttributeType): Promise<Map<string, string | null>> {
+    const rows = await this.productAttributeRepository
+      .createQueryBuilder('pa')
+      .select('pa.value', 'value')
+      .addSelect('pa.display_value', 'displayValue')
+      .where('pa.attribute_type_id = :attributeTypeId', { attributeTypeId: type.id })
+      .orderBy('pa.value', 'ASC')
+      .getRawMany<{ value: string; displayValue: string | null }>();
+
+    const displayValueByValue = new Map<string, string | null>();
+    for (const row of rows) {
+      const displayValue = row.displayValue?.trim() || null;
+      const existing = displayValueByValue.get(row.value);
+      if (!existing || (displayValue && displayValue !== row.value)) {
+        displayValueByValue.set(row.value, displayValue);
+      }
+    }
+    return displayValueByValue;
+  }
+
+  private async findOrCreateValueOption(
+    type: AttributeType,
+    value: string,
+    displayValue?: string,
+  ): Promise<AttributeValueOptionEntity> {
+    const normalizedValue = value.trim();
+    if (!normalizedValue) {
+      throw new BadRequestException('속성값은 비어 있을 수 없습니다.');
+    }
+
+    let option = await this.attributeValueOptionRepository.findOne({
+      where: { attributeTypeId: type.id, value: normalizedValue },
+    });
+
+    if (!option) {
+      option = this.attributeValueOptionRepository.create({
+        attributeTypeId: type.id,
+        value: normalizedValue,
+        displayValue: displayValue?.trim() || normalizedValue,
+        sortOrder: 0,
+        isActive: true,
+      });
+    }
+
+    return option;
+  }
+
+  // ─── Attribute Value Options ───────────────────────────────────────
+
+  async getManagedAttributeValueOptions(code: string): Promise<ManagedAttributeValueOption[]> {
+    const type = await this.findAttributeTypeByCodeOrThrow(code);
+    const options = await this.attributeValueOptionRepository.find({
+      where: { attributeTypeId: type.id },
+      order: { sortOrder: 'ASC', value: 'ASC' },
+    });
+    const displayValueByValue = await this.getDisplayValueMap(type);
+    const canonicalDisplayValues = CANONICAL_ATTRIBUTE_DISPLAY_VALUES[code] ?? {};
+    const values = Array.from(
+      new Set([
+        ...(type.validValues ?? []),
+        ...options.map((option) => option.value),
+        ...displayValueByValue.keys(),
+      ].map((value) => value.trim()).filter(Boolean)),
+    );
+    const optionByValue = new Map(options.map((option) => [option.value, option]));
+
+    const productRows = await this.productAttributeRepository
+      .createQueryBuilder('pa')
+      .innerJoin('pa.product', 'product')
+      .select('pa.value', 'value')
+      .addSelect('product.id', 'id')
+      .addSelect('product.name', 'name')
+      .addSelect('product.slug', 'slug')
+      .where('pa.attribute_type_id = :attributeTypeId', { attributeTypeId: type.id })
+      .orderBy('product.name', 'ASC')
+      .getRawMany<{ value: string; id: string; name: string; slug: string }>();
+
+    const productsByValue = new Map<string, ManagedAttributeValueOption['products']>();
+    for (const row of productRows) {
+      const products = productsByValue.get(row.value) ?? [];
+      products.push({ id: Number(row.id), name: row.name, slug: row.slug });
+      productsByValue.set(row.value, products);
+    }
+
+    return values.map((value) => {
+      const option = optionByValue.get(value);
+      const products = productsByValue.get(value) ?? [];
+      return {
+        id: option?.id ?? null,
+        value,
+        displayValue:
+          option?.displayValue ?? displayValueByValue.get(value) ?? canonicalDisplayValues[value] ?? null,
+        sortOrder: option?.sortOrder ?? 999,
+        isActive: option?.isActive ?? true,
+        productCount: products.length,
+        products,
+      };
+    }).sort((a, b) => a.sortOrder - b.sortOrder || a.value.localeCompare(b.value));
+  }
+
+  async updateAttributeValueOption(
+    code: string,
+    value: string,
+    dto: UpdateAttributeValueOptionDto,
+  ): Promise<ManagedAttributeValueOption> {
+    const type = await this.findAttributeTypeByCodeOrThrow(code);
+    const option = await this.findOrCreateValueOption(type, value, dto.displayValue);
+
+    if (dto.displayValue !== undefined) {
+      const displayValue = dto.displayValue.trim();
+      if (!displayValue) {
+        throw new BadRequestException('표시 이름은 비어 있을 수 없습니다.');
+      }
+      option.displayValue = displayValue;
+    }
+    if (dto.sortOrder !== undefined) option.sortOrder = dto.sortOrder;
+    if (dto.isActive !== undefined) option.isActive = dto.isActive;
+
+    await this.attributeValueOptionRepository.save(option);
+
+    if (dto.displayValue !== undefined) {
+      await this.productAttributeRepository.update(
+        { attributeTypeId: type.id, value: option.value },
+        { displayValue: option.displayValue },
+      );
+    }
+
+    const options = await this.getManagedAttributeValueOptions(code);
+    const updated = options.find((item) => item.value === option.value);
+    if (!updated) {
+      throw new NotFoundException(`Attribute value ${option.value} not found`);
+    }
+    return updated;
+  }
+
+  async linkProductToAttributeValue(
+    code: string,
+    value: string,
+    dto: LinkAttributeValueProductDto,
+  ): Promise<ManagedAttributeValueOption> {
+    const type = await this.findAttributeTypeByCodeOrThrow(code);
+    const product = await this.productRepository.findOne({ where: { id: dto.productId } });
+    if (!product) {
+      throw new NotFoundException(`Product ID ${dto.productId} not found`);
+    }
+
+    const option = await this.findOrCreateValueOption(type, value);
+    await this.attributeValueOptionRepository.save(option);
+
+    const existing = await this.productAttributeRepository.findOne({
+      where: { productId: dto.productId, attributeTypeId: type.id },
+    });
+
+    if (existing) {
+      Object.assign(existing, {
+        value: option.value,
+        displayValue: option.displayValue,
+      });
+      await this.productAttributeRepository.save(existing);
+    } else {
+      await this.productAttributeRepository.save(
+        this.productAttributeRepository.create({
+          productId: dto.productId,
+          attributeTypeId: type.id,
+          value: option.value,
+          displayValue: option.displayValue,
+          sortOrder: 0,
+        }),
+      );
+    }
+
+    const options = await this.getManagedAttributeValueOptions(code);
+    const updated = options.find((item) => item.value === option.value);
+    if (!updated) {
+      throw new NotFoundException(`Attribute value ${option.value} not found`);
+    }
+    return updated;
+  }
+
+  async unlinkProductFromAttributeValue(
+    code: string,
+    value: string,
+    productId: number,
+  ): Promise<ManagedAttributeValueOption> {
+    const type = await this.findAttributeTypeByCodeOrThrow(code);
+    await this.productAttributeRepository.delete({
+      productId,
+      attributeTypeId: type.id,
+      value,
+    });
+    const options = await this.getManagedAttributeValueOptions(code);
+    const updated = options.find((item) => item.value === value);
+    if (!updated) {
+      throw new NotFoundException(`Attribute value ${value} not found`);
+    }
+    return updated;
+  }
+
   // ─── Filtering ──────────────────────────────────────────────────────
 
   async getFilterableAttributes(locale?: string): Promise<AttributeType[]> {
@@ -345,30 +560,21 @@ export class AttributesService {
       return [];
     }
 
-    const result = await this.productAttributeRepository
-      .createQueryBuilder('pa')
-      .innerJoin('pa.attributeType', 'at', 'at.code = :code', { code })
-      .select('pa.value', 'value')
-      .addSelect('pa.display_value', 'displayValue')
-      .orderBy('pa.value', 'ASC')
-      .getRawMany<{ value: string; displayValue: string | null }>();
-
-    const displayValueByValue = new Map<string, string | null>();
-    for (const row of result) {
-      const displayValue = row.displayValue?.trim() || null;
-      const existing = displayValueByValue.get(row.value);
-      if (!existing || (displayValue && displayValue !== row.value)) {
-        displayValueByValue.set(row.value, displayValue);
-      }
-    }
-    const values = [...(type.validValues ?? []), ...result.map((row) => row.value)];
+    const displayValueByValue = await this.getDisplayValueMap(type);
+    const options = await this.attributeValueOptionRepository.find({
+      where: { attributeTypeId: type.id, isActive: true },
+      order: { sortOrder: 'ASC', value: 'ASC' },
+    });
+    const optionByValue = new Map(options.map((option) => [option.value, option.displayValue]));
+    const values = [...(type.validValues ?? []), ...options.map((option) => option.value), ...displayValueByValue.keys()];
 
     const canonicalDisplayValues = CANONICAL_ATTRIBUTE_DISPLAY_VALUES[code] ?? {};
 
     return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).map(
       (value) => ({
         value,
-        displayValue: displayValueByValue.get(value) ?? canonicalDisplayValues[value] ?? null,
+        displayValue:
+          optionByValue.get(value) ?? displayValueByValue.get(value) ?? canonicalDisplayValues[value] ?? null,
       }),
     );
   }

@@ -30,6 +30,10 @@ describe('AttributesController RBAC', () => {
     findAttributeTypeById: jest.fn().mockResolvedValue({ id: 1, code: 'clay' }),
     findAttributeTypeByCode: jest.fn().mockResolvedValue({ id: 1, code: 'clay' }),
     getAttributeValuesByTypeCode: jest.fn().mockResolvedValue([]),
+    getManagedAttributeValueOptions: jest.fn().mockResolvedValue([]),
+    updateAttributeValueOption: jest.fn().mockResolvedValue({ value: 'nokni', displayValue: '녹니' }),
+    linkProductToAttributeValue: jest.fn().mockResolvedValue({ value: 'nokni', products: [{ id: 1, name: '상품', slug: 'p' }] }),
+    unlinkProductFromAttributeValue: jest.fn().mockResolvedValue({ value: 'nokni', products: [] }),
     createAttributeType: jest.fn().mockResolvedValue({ id: 1, code: 'clay' }),
     updateAttributeType: jest.fn().mockResolvedValue({ id: 1, code: 'clay', name: 'updated' }),
     deleteAttributeType: jest.fn().mockResolvedValue(undefined),
@@ -79,6 +83,22 @@ describe('AttributesController RBAC', () => {
       label: 'DELETE /api/attributes/types/:id',
       send: () => request(app.getHttpServer()).delete('/api/attributes/types/1'),
       successStatus: 204,
+    },
+
+    {
+      label: 'PATCH /api/attributes/types/:code/value-options/:value',
+      send: () => request(app.getHttpServer()).patch('/api/attributes/types/clay_type/value-options/nokni').send({ displayValue: '녹니' }),
+      successStatus: 200,
+    },
+    {
+      label: 'POST /api/attributes/types/:code/value-options/:value/products',
+      send: () => request(app.getHttpServer()).post('/api/attributes/types/clay_type/value-options/nokni/products').send({ productId: 1 }),
+      successStatus: 201,
+    },
+    {
+      label: 'DELETE /api/attributes/types/:code/value-options/:value/products/:productId',
+      send: () => request(app.getHttpServer()).delete('/api/attributes/types/clay_type/value-options/nokni/products/1'),
+      successStatus: 200,
     },
     {
       label: 'POST /api/attributes/products',

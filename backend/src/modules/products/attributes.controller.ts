@@ -20,8 +20,11 @@ import { CreateAttributeTypeDto, UpdateAttributeTypeDto } from './dto/attribute-
 import {
   AttributeValueOption,
   CreateProductAttributeDto,
-  UpdateProductAttributeDto,
+  LinkAttributeValueProductDto,
+  ManagedAttributeValueOption,
   SetProductAttributesDto,
+  UpdateAttributeValueOptionDto,
+  UpdateProductAttributeDto,
 } from './dto/product-attribute.dto';
 import { AttributeType } from './entities/attribute-type.entity';
 import { ProductAttribute } from './entities/product-attribute.entity';
@@ -80,6 +83,53 @@ export class AttributesController {
   @ApiOperation({ summary: '특정 타입의 가능한 값 목록 조회' })
   async getTypeValues(@Param('code') code: string): Promise<AttributeValueOption[]> {
     return this.attributesService.getAttributeValuesByTypeCode(code);
+  }
+
+
+  @Get('types/:code/value-options')
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '속성값 설정과 연결 상품 조회 (관리자)' })
+  async getManagedValueOptions(
+    @Param('code') code: string,
+  ): Promise<ManagedAttributeValueOption[]> {
+    return this.attributesService.getManagedAttributeValueOptions(code);
+  }
+
+  @Patch('types/:code/value-options/:value')
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '속성값 표시 이름 수정 (관리자)' })
+  async updateValueOption(
+    @Param('code') code: string,
+    @Param('value') value: string,
+    @Body() dto: UpdateAttributeValueOptionDto,
+  ): Promise<ManagedAttributeValueOption> {
+    return this.attributesService.updateAttributeValueOption(code, value, dto);
+  }
+
+  @Post('types/:code/value-options/:value/products')
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '속성값에 상품 연결 (관리자)' })
+  async linkProductToValueOption(
+    @Param('code') code: string,
+    @Param('value') value: string,
+    @Body() dto: LinkAttributeValueProductDto,
+  ): Promise<ManagedAttributeValueOption> {
+    return this.attributesService.linkProductToAttributeValue(code, value, dto);
+  }
+
+  @Delete('types/:code/value-options/:value/products/:productId')
+  @Roles('admin', 'super_admin')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '속성값 상품 연결 해제 (관리자)' })
+  async unlinkProductFromValueOption(
+    @Param('code') code: string,
+    @Param('value') value: string,
+    @Param('productId', ParseIntPipe) productId: number,
+  ): Promise<ManagedAttributeValueOption> {
+    return this.attributesService.unlinkProductFromAttributeValue(code, value, productId);
   }
 
   @Post('types')

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { attributesApi } from '@/lib/api';
-import type { AttributeType } from '@/lib/api';
+import type { AttributeType, ManagedAttributeValueOption } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 
 type InputType = AttributeType['inputType'];
@@ -77,7 +77,12 @@ export default function AdminAttributesPage() {
   const [attributes, setAttributes] = useState<AttributeType[]>([]);
   const [form, setForm] = useState<AttributeFormState>(emptyForm);
   const [validValueDraft, setValidValueDraft] = useState('');
+  const [selectedAttribute, setSelectedAttribute] = useState<AttributeType | null>(null);
+  const [valueOptions, setValueOptions] = useState<ManagedAttributeValueOption[]>([]);
+  const [valueOptionDrafts, setValueOptionDrafts] = useState<Record<string, string>>({});
+  const [productIdDrafts, setProductIdDrafts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [loadingValues, setLoadingValues] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const parentOptions = useMemo(
@@ -85,10 +90,30 @@ export default function AdminAttributesPage() {
     [attributes, form.id],
   );
 
+  const loadValueOptions = async (attribute: AttributeType) => {
+    setLoadingValues(true);
+    try {
+      const options = await attributesApi.getTypeValueOptions(attribute.code);
+      setSelectedAttribute(attribute);
+      setValueOptions(options);
+      setValueOptionDrafts(Object.fromEntries(options.map((option) => [option.value, option.displayValue ?? ''])));
+      setProductIdDrafts({});
+    } catch (err) {
+      toast.error(handleApiError(err, t('valueOptionsLoadError')));
+    } finally {
+      setLoadingValues(false);
+    }
+  };
+
   const loadAttributes = async () => {
     setLoading(true);
     try {
-      setAttributes(await attributesApi.getTypes());
+      const loadedAttributes = await attributesApi.getTypes();
+      setAttributes(loadedAttributes);
+      if (selectedAttribute) {
+        const refreshed = loadedAttributes.find((attribute) => attribute.id === selectedAttribute.id);
+        if (refreshed) await loadValueOptions(refreshed);
+      }
     } catch (err) {
       toast.error(handleApiError(err, t('loadError')));
     } finally {
@@ -150,11 +175,60 @@ export default function AdminAttributesPage() {
     }
   };
 
+  const handleValueOptionDraftChange = (value: string, displayValue: string) => {
+    setValueOptionDrafts((prev) => ({ ...prev, [value]: displayValue }));
+  };
+
+  const saveValueOption = async (option: ManagedAttributeValueOption) => {
+    if (!selectedAttribute) return;
+    try {
+      const updated = await attributesApi.updateTypeValueOption(selectedAttribute.code, option.value, {
+        displayValue: (valueOptionDrafts[option.value] ?? '').trim(),
+        sortOrder: option.sortOrder,
+        isActive: option.isActive,
+      });
+      setValueOptions((prev) => prev.map((item) => (item.value === option.value ? updated : item)));
+      setValueOptionDrafts((prev) => ({ ...prev, [option.value]: updated.displayValue ?? '' }));
+      toast.success(t('valueOptionSaveSuccess'));
+    } catch (err) {
+      toast.error(handleApiError(err, t('valueOptionSaveError')));
+    }
+  };
+
+  const linkProduct = async (option: ManagedAttributeValueOption) => {
+    if (!selectedAttribute) return;
+    const productId = Number(productIdDrafts[option.value]);
+    if (!Number.isFinite(productId) || productId <= 0) return;
+    try {
+      const updated = await attributesApi.linkProductToTypeValue(selectedAttribute.code, option.value, productId);
+      setValueOptions((prev) => prev.map((item) => (item.value === option.value ? updated : item)));
+      setProductIdDrafts((prev) => ({ ...prev, [option.value]: '' }));
+      toast.success(t('productLinkSuccess'));
+    } catch (err) {
+      toast.error(handleApiError(err, t('productLinkError')));
+    }
+  };
+
+  const unlinkProduct = async (option: ManagedAttributeValueOption, productId: number) => {
+    if (!selectedAttribute) return;
+    try {
+      const updated = await attributesApi.unlinkProductFromTypeValue(selectedAttribute.code, option.value, productId);
+      setValueOptions((prev) => prev.map((item) => (item.value === option.value ? updated : item)));
+      toast.success(t('productUnlinkSuccess'));
+    } catch (err) {
+      toast.error(handleApiError(err, t('productUnlinkError')));
+    }
+  };
+
   const handleDelete = async (attribute: AttributeType) => {
     try {
       await attributesApi.deleteType(attribute.id);
       toast.success(t('deleteSuccess'));
       if (form.id === attribute.id) setForm(emptyForm);
+      if (selectedAttribute?.id === attribute.id) {
+        setSelectedAttribute(null);
+        setValueOptions([]);
+      }
       await loadAttributes();
     } catch (err) {
       toast.error(handleApiError(err, t('deleteError')));
@@ -324,6 +398,127 @@ export default function AdminAttributesPage() {
         </div>
       </form>
 
+      <section className="space-y-4 rounded-lg border bg-card p-4">
+        <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="typo-h3">{t('valueOptionsTitle')}</h2>
+            <p className="typo-body-sm text-muted-foreground">
+              {selectedAttribute
+                ? t('valueOptionsDescriptionSelected', { name: selectedAttribute.name })
+                : t('valueOptionsDescription')}
+            </p>
+          </div>
+          {selectedAttribute && (
+            <button
+              type="button"
+              onClick={() => void loadValueOptions(selectedAttribute)}
+              className="rounded border px-3 py-2 typo-body-sm hover:bg-secondary"
+            >
+              {t('refreshValueOptions')}
+            </button>
+          )}
+        </div>
+        {!selectedAttribute && (
+          <p className="rounded border border-dashed p-4 text-center typo-body-sm text-muted-foreground">
+            {t('selectAttributeForValues')}
+          </p>
+        )}
+        {selectedAttribute && loadingValues && (
+          <p className="p-4 text-center typo-body-sm text-muted-foreground">{t('loadingValueOptions')}</p>
+        )}
+        {selectedAttribute && !loadingValues && valueOptions.length === 0 && (
+          <p className="rounded border border-dashed p-4 text-center typo-body-sm text-muted-foreground">
+            {t('emptyValueOptions')}
+          </p>
+        )}
+        {selectedAttribute && !loadingValues && valueOptions.length > 0 && (
+          <div className="space-y-3">
+            {valueOptions.map((option) => (
+              <article key={option.value} className="space-y-3 rounded-lg border p-3">
+                <div className="grid gap-3 md:grid-cols-3 md:items-end">
+                  <label className="space-y-1">
+                    <span className="typo-label text-muted-foreground">{t('valueCode')}</span>
+                    <input
+                      value={option.value}
+                      readOnly
+                      className="w-full rounded border bg-secondary px-3 py-2 typo-body-sm"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="typo-label text-muted-foreground">{t('displayValue')}</span>
+                    <input
+                      value={valueOptionDrafts[option.value] ?? ''}
+                      onChange={(event) => handleValueOptionDraftChange(option.value, event.target.value)}
+                      className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => void saveValueOption(option)}
+                    className="rounded bg-primary px-4 py-2 typo-body-sm text-primary-foreground"
+                  >
+                    {t('saveValueOption')}
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="typo-label text-muted-foreground">
+                      {t('linkedProducts', { count: option.productCount })}
+                    </h3>
+                    <div className="flex min-w-0 gap-2">
+                      <input
+                        aria-label={t('productId')}
+                        type="number"
+                        min="1"
+                        value={productIdDrafts[option.value] ?? ''}
+                        onChange={(event) => {
+                          const next = event.target.value;
+                          setProductIdDrafts((prev) => ({ ...prev, [option.value]: next }));
+                        }}
+                        placeholder={t('productIdPlaceholder')}
+                        className="min-w-0 rounded border bg-background px-3 py-2 typo-body-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void linkProduct(option)}
+                        className="rounded border px-3 py-2 typo-body-sm hover:bg-secondary"
+                      >
+                        {t('linkProduct')}
+                      </button>
+                    </div>
+                  </div>
+                  {option.products.length === 0 ? (
+                    <p className="rounded border border-dashed p-3 typo-body-sm text-muted-foreground">
+                      {t('noLinkedProducts')}
+                    </p>
+                  ) : (
+                    <ul className="grid gap-2 md:grid-cols-2">
+                      {option.products.map((product) => (
+                        <li
+                          key={product.id}
+                          className="flex items-center justify-between gap-2 rounded border px-3 py-2 typo-body-sm"
+                        >
+                          <span className="min-w-0 truncate">
+                            #{product.id} {product.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void unlinkProduct(option, product.id)}
+                            className="shrink-0 rounded border px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                          >
+                            {t('unlinkProduct')}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
       <div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full typo-body-sm">
           <thead className="bg-secondary">
@@ -340,7 +535,10 @@ export default function AdminAttributesPage() {
               <tr
                 key={attribute.id}
                 className="cursor-pointer hover:bg-secondary/30"
-                onClick={() => setForm(toForm(attribute))}
+                onClick={() => {
+                  setForm(toForm(attribute));
+                  void loadValueOptions(attribute);
+                }}
               >
                 <td className="px-4 py-3 font-medium">{attribute.code}</td>
                 <td className="px-4 py-3">{attribute.name}</td>
