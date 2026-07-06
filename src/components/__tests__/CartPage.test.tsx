@@ -154,6 +154,19 @@ describe('CartPage', () => {
     expect(screen.getByText('상품 B')).toBeInTheDocument();
   });
 
+  it('keeps order summary and selected-order CTA available below desktop breakpoint', () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1] });
+
+    const { container } = render(<CartPage />);
+
+    expect(container.querySelector('section.mt-6')).toHaveClass('lg:hidden');
+    expect(container.querySelector('.mobile-sticky-cta')).toHaveClass('lg:hidden');
+    expect(container.querySelector('aside')).toHaveClass('hidden', 'lg:block');
+    expect(screen.getAllByText('주문 요약').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByRole('button', { name: '선택 상품 주문하기' }).length).toBeGreaterThanOrEqual(2);
+  });
+
   it('calculates selected total for checked items', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true });
