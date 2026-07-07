@@ -16,6 +16,9 @@ export interface AdminLogResponse {
 export interface AdminLogQueryParams {
   type?: AdminLogType;
   lines?: number;
+  search?: string;
+  startAt?: string;
+  endAt?: string;
 }
 
 export const adminLogsApi = {

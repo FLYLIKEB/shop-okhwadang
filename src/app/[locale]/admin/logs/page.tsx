@@ -1,11 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { adminLogsApi, type AdminLogResponse, type AdminLogType } from '@/lib/api';
-import { parseAdminLogContent, type ParsedAdminLogEntry } from '@/lib/admin-log-format';
+import {
+  getAdminLogField,
+  parseAdminLogContent,
+  type ParsedAdminLogEntry,
+} from '@/lib/admin-log-format';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { handleApiError } from '@/utils/error';
@@ -13,6 +17,13 @@ import { cn } from '@/components/ui/utils';
 
 const LOG_TYPES: AdminLogType[] = ['normal', 'error'];
 const LINE_OPTIONS = [100, 500, 1000, 3000, 5000];
+const TIME_PRESETS = ['1h', '24h', '7d'] as const;
+
+interface AppliedLogFilters {
+  search: string;
+  startAt: string;
+  endAt: string;
+}
 
 function formatUpdatedAt(value: string | null): string {
   if (!value) return '-';
@@ -22,18 +33,43 @@ function formatUpdatedAt(value: string | null): string {
   }).format(new Date(value));
 }
 
+function toIsoOrUndefined(value: string): string | undefined {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+}
+
+function toDateTimeLocalValue(date: Date): string {
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
 export default function AdminLogsPage() {
   const t = useTranslations('admin.logs');
   const { user, isAdmin } = useAdminGuard();
   const [type, setType] = useState<AdminLogType>('normal');
   const [lines, setLines] = useState(500);
+  const [search, setSearch] = useState('');
+  const [startAt, setStartAt] = useState('');
+  const [endAt, setEndAt] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState<AppliedLogFilters>({
+    search: '',
+    startAt: '',
+    endAt: '',
+  });
   const [data, setData] = useState<AdminLogResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { execute: fetchLogs, isLoading } = useAsyncAction(
     async () => {
       setError(null);
-      const result = await adminLogsApi.get({ type, lines });
+      const result = await adminLogsApi.get({
+        type,
+        lines,
+        search: appliedFilters.search.trim() || undefined,
+        startAt: toIsoOrUndefined(appliedFilters.startAt),
+        endAt: toIsoOrUndefined(appliedFilters.endAt),
+      });
       setData(result);
     },
     {
@@ -45,10 +81,10 @@ export default function AdminLogsPage() {
   useEffect(() => {
     if (!isAdmin || user?.role !== 'super_admin') return;
     void fetchLogs();
-  }, [fetchLogs, isAdmin, type, lines, user?.role]);
+  }, [fetchLogs, isAdmin, type, lines, appliedFilters, user?.role]);
 
   const parsedEntries = useMemo(() => parseAdminLogContent(data?.content ?? ''), [data?.content]);
-  const logContent = useMemo(() => data?.content || t('empty'), [data?.content, t]);
+  const hasFilters = appliedFilters.search || appliedFilters.startAt || appliedFilters.endAt;
 
   if (isAdmin && user?.role !== 'super_admin') {
     return (
@@ -67,6 +103,27 @@ export default function AdminLogsPage() {
     } catch (err) {
       toast.error(handleApiError(err, t('copyError')));
     }
+  };
+
+  const applyFilters = () => {
+    setAppliedFilters({ search, startAt, endAt });
+  };
+
+  const clearFilters = () => {
+    setSearch('');
+    setStartAt('');
+    setEndAt('');
+    setAppliedFilters({ search: '', startAt: '', endAt: '' });
+  };
+
+  const applyTimePreset = (preset: (typeof TIME_PRESETS)[number]) => {
+    const now = new Date();
+    const start = new Date(now);
+    if (preset === '1h') start.setHours(now.getHours() - 1);
+    if (preset === '24h') start.setDate(now.getDate() - 1);
+    if (preset === '7d') start.setDate(now.getDate() - 7);
+    setStartAt(toDateTimeLocalValue(start));
+    setEndAt(toDateTimeLocalValue(now));
   };
 
   return (
@@ -135,6 +192,71 @@ export default function AdminLogsPage() {
         </div>
       </section>
 
+      <section className="rounded-lg border bg-card p-4">
+        <div className="grid gap-4 lg:grid-cols-4 lg:items-end">
+          <label className="grid gap-2 typo-body-sm font-medium">
+            {t('filters.search')}
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t('filters.searchPlaceholder')}
+              className="rounded-md border bg-background px-3 py-2 typo-body-sm"
+            />
+          </label>
+          <label className="grid gap-2 typo-body-sm font-medium">
+            {t('filters.startAt')}
+            <input
+              type="datetime-local"
+              value={startAt}
+              onChange={(event) => setStartAt(event.target.value)}
+              className="rounded-md border bg-background px-3 py-2 typo-body-sm"
+            />
+          </label>
+          <label className="grid gap-2 typo-body-sm font-medium">
+            {t('filters.endAt')}
+            <input
+              type="datetime-local"
+              value={endAt}
+              onChange={(event) => setEndAt(event.target.value)}
+              className="rounded-md border bg-background px-3 py-2 typo-body-sm"
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={applyFilters}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground"
+            >
+              <Search className="h-4 w-4" />
+              {t('filters.apply')}
+            </button>
+            <button
+              type="button"
+              onClick={clearFilters}
+              disabled={!hasFilters && !search && !startAt && !endAt}
+              className="rounded-md border px-4 py-2 typo-button text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t('filters.clear')}
+            </button>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2 typo-label text-muted-foreground">
+          <span>{t('filters.presets')}</span>
+          {TIME_PRESETS.map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => applyTimePreset(preset)}
+              className="rounded border px-2 py-1 transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {t(`filters.presetOptions.${preset}`)}
+            </button>
+          ))}
+          {hasFilters && <span>{t('filters.applied')}</span>}
+        </div>
+      </section>
+
       {error && (
         <div className="rounded-md bg-destructive/10 p-4 typo-body-sm text-destructive">
           {error}
@@ -157,20 +279,7 @@ export default function AdminLogsPage() {
             {t('loading')}
           </div>
         ) : (
-          <div className="max-h-[36rem] overflow-auto bg-muted/20 p-4">
-            <div className="mb-3 typo-label font-medium text-muted-foreground">{t('structuredView')}</div>
-            {parsedEntries.length > 0 ? (
-              <div className="space-y-3">
-                {parsedEntries.map((entry) => (
-                  <LogEntryCard key={`${entry.lineNumber}-${entry.raw.slice(0, 24)}`} entry={entry} />
-                ))}
-              </div>
-            ) : (
-              <pre className="whitespace-pre-wrap rounded-md bg-foreground p-4 font-mono typo-label leading-relaxed text-background">
-                {logContent}
-              </pre>
-            )}
-          </div>
+          <LogTable entries={parsedEntries} emptyText={t('empty')} />
         )}
       </section>
     </div>
@@ -189,53 +298,101 @@ function levelClassName(level: string | undefined): string {
   }
 }
 
-function LogEntryCard({ entry }: { entry: ParsedAdminLogEntry }) {
+function LogTable({ entries, emptyText }: { entries: ParsedAdminLogEntry[]; emptyText: string }) {
   const t = useTranslations('admin.logs');
 
-  if (!entry.parsed) {
-    return (
-      <article className="rounded-md border bg-background p-3">
-        <div className="mb-2 flex items-center gap-2 typo-label text-muted-foreground">
-          <span>{t('entry.lineNumber', { number: entry.lineNumber })}</span>
-          <span>{t('entry.raw')}</span>
-        </div>
-        <pre className="whitespace-pre-wrap break-words font-mono typo-label text-foreground">{entry.raw}</pre>
-      </article>
-    );
+  if (entries.length === 0) {
+    return <div className="p-8 text-center typo-body-sm text-muted-foreground">{emptyText}</div>;
   }
 
   return (
-    <article className={cn('rounded-md border p-3', levelClassName(entry.level))}>
-      <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded bg-foreground px-2 py-1 typo-label text-background">
-            {t('entry.lineNumber', { number: entry.lineNumber })}
-          </span>
-          {entry.level && <span className="rounded border px-2 py-1 typo-label uppercase">{entry.level}</span>}
-          <span className="typo-body-sm font-medium">{entry.summary}</span>
-        </div>
-        {entry.timestamp && <time className="typo-label text-muted-foreground">{entry.timestamp}</time>}
-      </div>
+    <div className="max-h-screen overflow-auto">
+      <table className="min-w-full divide-y divide-border typo-body-sm">
+        <thead className="sticky top-0 z-10 bg-muted text-left typo-label text-muted-foreground">
+          <tr>
+            <th scope="col" className="px-3 py-3 font-semibold">
+              {t('table.line')}
+            </th>
+            <th scope="col" className="px-3 py-3 font-semibold">
+              {t('table.time')}
+            </th>
+            <th scope="col" className="px-3 py-3 font-semibold">
+              {t('table.level')}
+            </th>
+            <th scope="col" className="px-3 py-3 font-semibold">
+              {t('table.transaction')}
+            </th>
+            <th scope="col" className="px-3 py-3 font-semibold">
+              {t('table.request')}
+            </th>
+            <th scope="col" className="px-3 py-3 font-semibold">
+              {t('table.message')}
+            </th>
+            <th scope="col" className="px-3 py-3 font-semibold">
+              {t('table.context')}
+            </th>
+            <th scope="col" className="px-3 py-3 font-semibold">
+              {t('table.details')}
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border bg-card">
+          {entries.map((entry) => (
+            <LogTableRow key={`${entry.lineNumber}-${entry.raw.slice(0, 24)}`} entry={entry} />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
-      <dl className="grid gap-2">
-        {entry.fields.map((field) => (
-          <div
-            key={`${entry.lineNumber}-${field.key}`}
-            className="grid gap-1 rounded border bg-background/80 p-2 md:grid-cols-[4rem_10rem_minmax(0,1fr)] md:items-start"
-          >
-            <dt className="typo-label text-muted-foreground">
-              {t('entry.order', { number: field.order })}
-            </dt>
-            <dd className="typo-label font-semibold text-foreground">
-              {t(`fields.${field.labelKey}`)}
-              {field.labelKey === 'extra' && <span className="ml-1 text-muted-foreground">({field.key})</span>}
-            </dd>
-            <dd className="min-w-0 whitespace-pre-wrap break-words font-mono typo-label text-foreground">
-              {field.formattedValue}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </article>
+function LogTableRow({ entry }: { entry: ParsedAdminLogEntry }) {
+  const t = useTranslations('admin.logs');
+  const transaction = getAdminLogField(entry, ['txId', 'transactionId', 'requestId', 'traceId']);
+  const request = [getAdminLogField(entry, ['method']), getAdminLogField(entry, ['path'])]
+    .filter(Boolean)
+    .join(' ');
+  const message = getAdminLogField(entry, ['msg', 'message', 'error']) || entry.summary;
+  const context = getAdminLogField(entry, ['context', 'service', 'event']);
+
+  return (
+    <tr className="align-top transition-colors hover:bg-muted/40">
+      <td className="whitespace-nowrap px-3 py-3 typo-label text-muted-foreground">
+        {t('entry.lineNumber', { number: entry.lineNumber })}
+      </td>
+      <td className="whitespace-nowrap px-3 py-3 font-mono typo-label">{entry.timestamp || '-'}</td>
+      <td className="px-3 py-3">
+        <span
+          className={cn(
+            'inline-flex rounded border px-2 py-1 typo-label uppercase',
+            levelClassName(entry.level),
+          )}
+        >
+          {entry.level || (entry.parsed ? '-' : t('entry.raw'))}
+        </span>
+      </td>
+      <td className="max-w-xs break-words px-3 py-3 font-mono typo-label">{transaction || '-'}</td>
+      <td className="max-w-xs break-words px-3 py-3 font-mono typo-label">{request || '-'}</td>
+      <td className="min-w-72 max-w-xl whitespace-pre-wrap break-words px-3 py-3">{message}</td>
+      <td className="max-w-xs break-words px-3 py-3 typo-label text-muted-foreground">
+        {context || '-'}
+      </td>
+      <td className="min-w-72 px-3 py-3">
+        <details className="group">
+          <summary className="cursor-pointer typo-label text-muted-foreground group-open:mb-2">
+            {t('table.showDetails')}
+          </summary>
+          <pre className="whitespace-pre-wrap break-words rounded-md bg-foreground p-3 font-mono typo-label text-background">
+            {entry.parsed
+              ? JSON.stringify(
+                  Object.fromEntries(entry.fields.map((field) => [field.key, field.value])),
+                  null,
+                  2,
+                )
+              : entry.raw}
+          </pre>
+        </details>
+      </td>
+    </tr>
   );
 }
