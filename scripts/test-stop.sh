@@ -22,10 +22,14 @@ fi
 echo -e "${BLUE}🛑 테스트 MySQL 컨테이너 종료...${NC}"
 cd "$BACKEND_DIR"
 docker compose --profile test down mysql-test 2>/dev/null || true
+docker rm -f okhwadang-mysql-test 2>/dev/null || true
 cd "$PROJECT_ROOT"
 
 echo -e "${YELLOW}⚠️  잔여 jest/vitest 워커 정리...${NC}"
 pkill -f "shop-okhwadang.*jest" 2>/dev/null || true
 pkill -f "shop-okhwadang.*vitest" 2>/dev/null || true
+sleep 0.5
+pkill -9 -f "shop-okhwadang.*jest" 2>/dev/null || true
+pkill -9 -f "shop-okhwadang.*vitest" 2>/dev/null || true
 
 echo -e "${GREEN}✅ 테스트 환경 정리 완료${NC}"
