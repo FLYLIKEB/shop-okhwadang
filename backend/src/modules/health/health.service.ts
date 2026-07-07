@@ -2,6 +2,20 @@ import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common'
 import { DataSource } from 'typeorm';
 import { S3Client, HeadBucketCommand } from '@aws-sdk/client-s3';
 
+export interface DependencyStatus {
+  status: 'connected' | 'disconnected';
+  reason?: string;
+}
+
+export interface HealthResponse {
+  status: 'ok' | 'error';
+  db: DependencyStatus;
+  storage: 'connected' | 'disconnected' | 'skipped' | 'unknown';
+  storageReason?: string;
+  uptime: number;
+  timestamp: string;
+}
+
 @Injectable()
 export class HealthService {
   private readonly logger = new Logger(HealthService.name);
@@ -16,34 +30,80 @@ export class HealthService {
     };
   }
 
-  async readiness() {
-    try {
-      if (!this.dataSource.isInitialized) {
-        throw new Error('Database not initialized');
-      }
-      await this.dataSource.query('SELECT 1');
+  async readiness(): Promise<HealthResponse> {
+    const timestamp = new Date().toISOString();
 
-      const storage = await this.checkStorage();
-      return {
-        status: 'ok',
-        db: 'connected',
-        storage,
-        uptime: process.uptime(),
-        timestamp: new Date().toISOString(),
-      };
+    try {
+      await this.checkDatabase();
     } catch (error) {
-      this.logger.error('Health check failed', error);
+      const reason = this.getDatabaseFailureReason(error);
+      this.logger.error(`Health check failed: database ${reason}`);
       throw new ServiceUnavailableException({
         status: 'error',
-        db: 'disconnected',
+        db: { status: 'disconnected', reason },
         storage: 'unknown',
-        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        timestamp,
       });
     }
+
+    const storage = await this.getStorageStatus();
+    return {
+      status: 'ok',
+      db: { status: 'connected' },
+      ...storage,
+      uptime: process.uptime(),
+      timestamp,
+    };
   }
 
   async check() {
     return this.readiness();
+  }
+
+  private async checkDatabase(): Promise<void> {
+    if (!this.dataSource.isInitialized) {
+      throw new Error('not_initialized');
+    }
+    await this.dataSource.query('SELECT 1');
+  }
+
+  private getDatabaseFailureReason(error: unknown): string {
+    if (error instanceof Error && error.message === 'not_initialized') {
+      return 'not_initialized';
+    }
+
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+      const code = (error as { code?: unknown }).code;
+      if (typeof code === 'string' && code.trim().length > 0) {
+        return code;
+      }
+    }
+
+    if (error instanceof Error && error.message.trim().length > 0) {
+      return 'query_failed';
+    }
+
+    return 'unknown';
+  }
+
+  private async getStorageStatus(): Promise<Pick<HealthResponse, 'storage' | 'storageReason'>> {
+    try {
+      return { storage: await this.checkStorage() };
+    } catch (error) {
+      const reason = this.getStorageFailureReason(error);
+      this.logger.warn(`Health check storage dependency failed: ${reason}`);
+      return { storage: 'disconnected', storageReason: reason };
+    }
+  }
+
+  private getStorageFailureReason(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'name' in error) {
+      const name = (error as { name?: unknown }).name;
+      if (typeof name === 'string' && name.trim().length > 0) return name;
+    }
+    if (error instanceof Error && error.message.trim().length > 0) return 'head_bucket_failed';
+    return 'unknown';
   }
 
   private async checkStorage(): Promise<'connected' | 'skipped'> {

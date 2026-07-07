@@ -70,7 +70,7 @@ describe('App (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.status).toBe('ok');
-          expect(res.body.db).toBe('connected');
+          expect(res.body.db).toEqual({ status: 'connected' });
           expect(res.body.timestamp).toBeDefined();
         });
     });

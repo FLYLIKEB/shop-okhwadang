@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Home from '@/app/[locale]/(routes)/page';
@@ -8,6 +8,9 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/',
+  notFound: () => {
+    throw new Error('NEXT_NOT_FOUND');
+  },
 }));
 
 vi.mock('@/i18n/navigation', () => ({
@@ -63,12 +66,33 @@ vi.mock('next-intl/server', async (importOriginal) => {
   };
 });
 
+const mockFetchPage = vi.hoisted(() => vi.fn().mockResolvedValue({
+  blocks: [
+    {
+      id: 1,
+      type: 'promotion_banner',
+      is_visible: true,
+      sort_order: 1,
+      content: {
+        title: '지금 바로 쇼핑하세요',
+        subtitle: '테스트 배너',
+        cta_text: null,
+        cta_url: null,
+      },
+    },
+  ],
+}));
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     isAuthenticated: false,
     user: null,
     logout: vi.fn(),
   }),
+}));
+
+vi.mock('@/lib/api-server', () => ({
+  fetchPage: mockFetchPage,
 }));
 
 vi.mock('@/contexts/CartContext', () => ({
@@ -92,26 +116,6 @@ vi.mock('embla-carousel-react', () => ({
 vi.mock('embla-carousel-autoplay', () => ({
   default: () => ({}),
 }));
-
-vi.mock('@/lib/api-server', () => ({
-  fetchPage: vi.fn().mockResolvedValue({
-    blocks: [
-      {
-        id: 1,
-        type: 'promotion_banner',
-        is_visible: true,
-        sort_order: 1,
-        content: {
-          title: '지금 바로 쇼핑하세요',
-          subtitle: '테스트 배너',
-          cta_text: null,
-          cta_url: null,
-        },
-      },
-    ],
-  }),
-}));
-
 
 // Next.js App Router: test individual components (no router wrapper needed)
 
@@ -145,9 +149,22 @@ describe('Footer', () => {
 });
 
 describe('Home page', () => {
+  beforeEach(() => {
+    mockFetchPage.mockClear();
+  });
+
   it('renders home page sections', async () => {
     const jsx = await Home({ params: Promise.resolve({ locale: 'ko' }) });
     render(jsx);
     expect(screen.getByText('지금 바로 쇼핑하세요')).toBeInTheDocument();
+    expect(mockFetchPage).toHaveBeenCalledWith('home', 'ko');
   });
+
+  it.each(['favicon.ico', 'robots.txt', 'sitemap.xml', 'logo.png'])(
+    'does not call CMS APIs when %s is matched as an invalid locale segment',
+    async (locale) => {
+      await expect(Home({ params: Promise.resolve({ locale }) })).rejects.toThrow('NEXT_NOT_FOUND');
+      expect(mockFetchPage).not.toHaveBeenCalled();
+    },
+  );
 });

@@ -42,7 +42,7 @@
 
 ### 배포 방식
 - `main` 브랜치 push 시 GitHub Actions → OIDC 인증 → SSM으로 EC2 명령어 실행
-- 배포 시작 시 `migration:run:prod` 자동 실행 후 PM2 재시작
+- 배포 시작 시 `npm run build` 후 `dist/main.js` 존재 여부와 `npm run preflight:prod` DB 연결 사전 점검을 통과해야 `migration:run:prod` 및 PM2 재시작을 진행
 
 ### 서버 구성
 - Amazon Linux 2023
@@ -73,8 +73,10 @@ permissions:
         "git pull origin main",
         "npm ci --omit=dev",
         "npm run build",
-        "npm run migration:run:prod",
-        "pm2 restart commerce",
+        "test -f dist/main.js",
+        "NODE_ENV=production npm run preflight:prod",
+        "NODE_ENV=production npm run migration:run:prod",
+        "pm2 restart ecosystem.config.js --env production --update-env || pm2 start ecosystem.config.js --env production",
         "pm2 save"
       ]
 ```
@@ -117,10 +119,34 @@ pm2 logs commerce   # 실시간 로그
 pm2 monit           # CPU/메모리 모니터링
 ```
 
+### PM2 실행 경로
+
+백엔드 프로세스는 항상 `backend/ecosystem.config.js`로 시작/재시작한다. 이 파일이 `cwd: __dirname`과 `script: './dist/main.js'`를 함께 관리하므로 다른 작업 디렉터리에서 PM2 명령을 실행해도 엔트리포인트가 흔들리지 않는다.
+
+```bash
+cd /app/shop-okhwadang/shop-okhwadang/backend
+npm run build
+test -f dist/main.js
+NODE_ENV=production npm run preflight:prod
+pm2 start ecosystem.config.js --env production
+pm2 save
+curl -s http://127.0.0.1:3000/api/health | jq '.db.status'
+```
+
+기존 PM2 dump가 예전 `dist/main.js` 직접 실행 경로를 들고 있으면 1회에 한해 정리한다.
+
+```bash
+pm2 delete commerce
+pm2 start ecosystem.config.js --env production
+pm2 save
+```
+
 ### 헬스 체크 수동 확인
 ```bash
 curl https://api.ockhwadang.com/api/health
 ```
+
+정상 응답은 `status=ok`와 `db.status=connected`를 포함한다. 스토리지(S3) 확인이 실패해도 DB 상태와 분리되어 `storage=disconnected` / `storageReason`으로 표시되며, DB 연결 실패만 `db.status=disconnected`와 503 응답으로 배포 smoke test를 실패시킨다.
 
 ---
 
@@ -190,9 +216,13 @@ sudo systemctl enable --now nginx
 #### 해결
 ```bash
 pm2 logs commerce --lines 50   # 에러 로그 확인
-pm2 restart commerce           # 재시작
-pm2 reload commerce            # 무중단 재시작
+pm2 restart ecosystem.config.js --env production --update-env  # 재시작
 ```
+
+### DB SSL / 재시도 설정
+
+- `DB_SSL_ENABLED=true`이면 `DB_SSL_CA_PATH`가 실제 CA 파일 경로를 가리켜야 하며, 배포 preflight와 TypeORM migration/app runtime 모두 같은 CA 파일을 읽는다.
+- 운영 TypeORM은 PM2 로그에서 연결 문제를 좁힐 수 있도록 `logging: ['error', 'warn']`, `DB_RETRY_ATTEMPTS`(기본 5), `DB_RETRY_DELAY_MS`(기본 3000)를 사용한다.
 
 ### Lightsail MySQL 연결 실패
 
@@ -222,5 +252,5 @@ NestJS(PM2)가 실행되지 않은 상태에서 Nginx가 프록시 시도.
 #### 해결
 ```bash
 pm2 status                     # commerce 프로세스 확인
-pm2 start dist/main.js --name commerce  # 프로세스 없으면 시작
+pm2 start ecosystem.config.js --env production  # 프로세스 없으면 시작
 ```

@@ -50,6 +50,9 @@ import { ContextualLogger } from './common/logging/contextual-logger.service';
       ssl: process.env.DB_SSL_ENABLED === 'true'
         ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH!) }
         : false,
+      retryAttempts: Number(process.env.DB_RETRY_ATTEMPTS ?? 5),
+      retryDelay: Number(process.env.DB_RETRY_DELAY_MS ?? 3000),
+      logging: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : false,
       autoLoadEntities: true,
       migrations: ['dist/database/migrations/*.js'],
     }),

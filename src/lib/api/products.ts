@@ -226,5 +226,5 @@ export const homeApi = {
 };
 
 export const healthApi = {
-  check: () => apiClient.get<{ status: string; db: string; timestamp: string }>('/health'),
+  check: () => apiClient.get<{ status: string; db: { status: 'connected' | 'disconnected'; reason?: string }; timestamp: string }>('/health'),
 };

@@ -24,7 +24,8 @@
     "migration:revert:prod": "typeorm migration:revert -d dist/database/typeorm.config.js",
     "migration:show:prod": "typeorm migration:show -d dist/database/typeorm.config.js",
     "seed": "ts-node src/database/seeds/run-seed.ts",
-    "seed:prod": "node dist/database/seeds/run-seed.js"
+    "seed:prod": "node dist/database/seeds/run-seed.js",
+    "preflight:prod": "node scripts/verify-production-runtime.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1078.0",
