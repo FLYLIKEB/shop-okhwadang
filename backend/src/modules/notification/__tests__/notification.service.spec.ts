@@ -43,7 +43,8 @@ describe('render helpers', () => {
     expect(email.subject).toContain('옥화당');
     expect(email.subject).toContain('ORD-20260417-AB12CD34');
     expect(email.text).toContain('홍길동');
-    expect(email.html).toContain('<h2>');
+    expect(email.html).toContain('<h1');
+    expect(email.html).toContain('옥화당');
   });
 
   it('renders English payment confirmation when locale is en', () => {
@@ -56,6 +57,31 @@ describe('render helpers', () => {
     });
     expect(email.subject).toContain('Ockhwadang');
     expect(email.text).toContain('Alice');
+  });
+
+
+  it('renders order items with escaped product links', () => {
+    const email = renderOrderConfirmed({
+      recipientName: '홍길동',
+      orderNumber: 'ORD-LINK',
+      totalAmount: 27000,
+      orderItems: [
+        {
+          productName: '서시호 <script>',
+          optionName: '용량: 100cc',
+          quantity: 2,
+          unitPrice: 13500,
+          productUrl: 'https://ockhwadang.com/ko/products/7?ref=email&x=<bad>',
+        },
+      ],
+    });
+
+    expect(email.text).toContain('서시호 <script>');
+    expect(email.text).toContain('상품 보기: https://ockhwadang.com/ko/products/7');
+    expect(email.html).toContain('주문 상품');
+    expect(email.html).toContain('href="https://ockhwadang.com/ko/products/7?ref=email&amp;x=&lt;bad&gt;"');
+    expect(email.html).not.toContain('서시호 <script>');
+    expect(email.html).toContain('서시호 &lt;script&gt;');
   });
 
   it('renders shipping update with carrier + tracking', () => {
