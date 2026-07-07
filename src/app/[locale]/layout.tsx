@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import AppShell from '@/components/AppShell';
 import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
 import Providers from '@/components/Providers';
-import { routing } from '@/i18n/routing';
-import type { Locale } from '@/i18n/routing';
+import { isLocale, routing } from '@/i18n/routing';
 import { getThemeStyle } from '@/lib/theme-style';
 
 const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
@@ -21,7 +21,10 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale;
+  if (!isLocale(locale)) {
+    notFound();
+  }
+  const safeLocale = locale;
 
   const languages: Record<string, string> = {};
   for (const loc of routing.locales) {
@@ -68,7 +71,10 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale;
+  if (!isLocale(locale)) {
+    notFound();
+  }
+  const safeLocale = locale;
 
   setRequestLocale(safeLocale);
 
