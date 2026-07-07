@@ -1356,7 +1356,40 @@
         "description": "원격 로그 화면을 표시하는 중 문제가 발생했습니다.",
         "retry": "다시 시도"
       },
-      "superAdminOnly": "원격 로그는 슈퍼 관리자만 조회할 수 있습니다."
+      "superAdminOnly": "원격 로그는 슈퍼 관리자만 조회할 수 있습니다.",
+      "structuredView": "구조화 보기",
+      "entry": {
+        "lineNumber": "#{number}",
+        "order": "{number}번째",
+        "raw": "원문"
+      },
+      "fields": {
+        "timestamp": "시간",
+        "level": "레벨",
+        "service": "서비스",
+        "context": "로그 위치",
+        "txId": "트랜잭션 ID",
+        "transactionId": "트랜잭션 ID(별칭)",
+        "userId": "회원 ID",
+        "memberId": "회원 ID(표시)",
+        "role": "권한",
+        "method": "HTTP 메서드",
+        "path": "요청 경로",
+        "statusCode": "상태 코드",
+        "durationMs": "처리 시간(ms)",
+        "event": "이벤트",
+        "outcome": "결과",
+        "ids": "관련 ID",
+        "message": "메시지",
+        "error": "에러",
+        "body": "요청 본문",
+        "stack": "스택",
+        "pid": "프로세스 ID",
+        "ip": "IP",
+        "userAgent": "User-Agent",
+        "meta": "메타",
+        "extra": "추가 필드"
+      }
     }
   },
   "search": {

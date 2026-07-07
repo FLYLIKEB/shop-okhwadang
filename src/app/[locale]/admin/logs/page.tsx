@@ -5,6 +5,7 @@ import { RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { adminLogsApi, type AdminLogResponse, type AdminLogType } from '@/lib/api';
+import { parseAdminLogContent, type ParsedAdminLogEntry } from '@/lib/admin-log-format';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { handleApiError } from '@/utils/error';
@@ -46,6 +47,7 @@ export default function AdminLogsPage() {
     void fetchLogs();
   }, [fetchLogs, isAdmin, type, lines, user?.role]);
 
+  const parsedEntries = useMemo(() => parseAdminLogContent(data?.content ?? ''), [data?.content]);
   const logContent = useMemo(() => data?.content || t('empty'), [data?.content, t]);
 
   if (isAdmin && user?.role !== 'super_admin') {
@@ -150,10 +152,90 @@ export default function AdminLogsPage() {
             {data?.truncated && <span>{t('truncated')}</span>}
           </div>
         </div>
-        <pre className="h-96 overflow-auto whitespace-pre-wrap bg-foreground p-4 font-mono typo-label leading-relaxed text-background">
-          {isLoading && !data ? t('loading') : logContent}
-        </pre>
+        {isLoading && !data ? (
+          <div className="h-96 bg-foreground p-4 font-mono typo-label text-background">
+            {t('loading')}
+          </div>
+        ) : (
+          <div className="max-h-[36rem] overflow-auto bg-muted/20 p-4">
+            <div className="mb-3 typo-label font-medium text-muted-foreground">{t('structuredView')}</div>
+            {parsedEntries.length > 0 ? (
+              <div className="space-y-3">
+                {parsedEntries.map((entry) => (
+                  <LogEntryCard key={`${entry.lineNumber}-${entry.raw.slice(0, 24)}`} entry={entry} />
+                ))}
+              </div>
+            ) : (
+              <pre className="whitespace-pre-wrap rounded-md bg-foreground p-4 font-mono typo-label leading-relaxed text-background">
+                {logContent}
+              </pre>
+            )}
+          </div>
+        )}
       </section>
     </div>
+  );
+}
+
+function levelClassName(level: string | undefined): string {
+  switch (level) {
+    case 'error':
+    case 'fatal':
+      return 'border-destructive/40 bg-destructive/5 text-destructive';
+    case 'warn':
+      return 'border-amber-300 bg-amber-50 text-amber-700';
+    default:
+      return 'border-border bg-background text-foreground';
+  }
+}
+
+function LogEntryCard({ entry }: { entry: ParsedAdminLogEntry }) {
+  const t = useTranslations('admin.logs');
+
+  if (!entry.parsed) {
+    return (
+      <article className="rounded-md border bg-background p-3">
+        <div className="mb-2 flex items-center gap-2 typo-label text-muted-foreground">
+          <span>{t('entry.lineNumber', { number: entry.lineNumber })}</span>
+          <span>{t('entry.raw')}</span>
+        </div>
+        <pre className="whitespace-pre-wrap break-words font-mono typo-label text-foreground">{entry.raw}</pre>
+      </article>
+    );
+  }
+
+  return (
+    <article className={cn('rounded-md border p-3', levelClassName(entry.level))}>
+      <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded bg-foreground px-2 py-1 typo-label text-background">
+            {t('entry.lineNumber', { number: entry.lineNumber })}
+          </span>
+          {entry.level && <span className="rounded border px-2 py-1 typo-label uppercase">{entry.level}</span>}
+          <span className="typo-body-sm font-medium">{entry.summary}</span>
+        </div>
+        {entry.timestamp && <time className="typo-label text-muted-foreground">{entry.timestamp}</time>}
+      </div>
+
+      <dl className="grid gap-2">
+        {entry.fields.map((field) => (
+          <div
+            key={`${entry.lineNumber}-${field.key}`}
+            className="grid gap-1 rounded border bg-background/80 p-2 md:grid-cols-[4rem_10rem_minmax(0,1fr)] md:items-start"
+          >
+            <dt className="typo-label text-muted-foreground">
+              {t('entry.order', { number: field.order })}
+            </dt>
+            <dd className="typo-label font-semibold text-foreground">
+              {t(`fields.${field.labelKey}`)}
+              {field.labelKey === 'extra' && <span className="ml-1 text-muted-foreground">({field.key})</span>}
+            </dd>
+            <dd className="min-w-0 whitespace-pre-wrap break-words font-mono typo-label text-foreground">
+              {field.formattedValue}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </article>
   );
 }

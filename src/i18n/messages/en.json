@@ -1356,7 +1356,40 @@
         "description": "A problem occurred while rendering the remote log page.",
         "retry": "Try again"
       },
-      "superAdminOnly": "Remote logs are available to super admins only."
+      "superAdminOnly": "Remote logs are available to super admins only.",
+      "structuredView": "Structured view",
+      "entry": {
+        "lineNumber": "#{number}",
+        "order": "{number}",
+        "raw": "Raw"
+      },
+      "fields": {
+        "timestamp": "Time",
+        "level": "Level",
+        "service": "Service",
+        "context": "Logger context",
+        "txId": "Transaction ID",
+        "transactionId": "Transaction ID (alias)",
+        "userId": "User ID",
+        "memberId": "Member ID",
+        "role": "Role",
+        "method": "HTTP method",
+        "path": "Request path",
+        "statusCode": "Status code",
+        "durationMs": "Duration (ms)",
+        "event": "Event",
+        "outcome": "Outcome",
+        "ids": "Related IDs",
+        "message": "Message",
+        "error": "Error",
+        "body": "Request body",
+        "stack": "Stack",
+        "pid": "Process ID",
+        "ip": "IP",
+        "userAgent": "User-Agent",
+        "meta": "Meta",
+        "extra": "Extra field"
+      }
     }
   },
   "search": {

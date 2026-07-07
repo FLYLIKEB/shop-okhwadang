@@ -1,6 +1,6 @@
 import { LoggingInterceptor } from './logging.interceptor';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 describe('LoggingInterceptor', () => {
   let interceptor: LoggingInterceptor;
@@ -11,6 +11,7 @@ describe('LoggingInterceptor', () => {
 
   const createMockContext = (
     body: Record<string, unknown>,
+    overrides: Record<string, unknown> = {},
   ): ExecutionContext =>
     ({
       switchToHttp: () => ({
@@ -18,11 +19,18 @@ describe('LoggingInterceptor', () => {
           method: 'POST',
           url: '/api/test',
           body,
+          params: {},
+          query: {},
+          ...overrides,
         }),
+        getResponse: () => ({ statusCode: 201 }),
       }),
       getClass: () => ({}),
       getHandler: () => ({}),
     }) as unknown as ExecutionContext;
+
+  const lastLogPayload = (spy: jest.SpyInstance): string =>
+    JSON.stringify(spy.mock.calls.at(-1)?.[0]);
 
   const mockCallHandler: CallHandler = {
     handle: () => of({ result: 'ok' }),
@@ -41,8 +49,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('secret123'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('secret123');
         done();
       },
     });
@@ -57,8 +65,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('Bearer token123'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('Bearer token123');
         done();
       },
     });
@@ -74,8 +82,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('4111111111111111'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('4111111111111111');
         done();
       },
     });
@@ -90,8 +98,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('nested-secret'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('nested-secret');
         done();
       },
     });
@@ -100,14 +108,14 @@ describe('LoggingInterceptor', () => {
   it('should pass through normal fields unchanged', (done) => {
     const logSpy = jest.spyOn(interceptor['logger'], 'log');
     const context = createMockContext({
-      name: 'John',
+      productName: 'John',
       quantity: 2,
     });
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('John'));
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('2'));
+        expect(lastLogPayload(logSpy)).toContain('John');
+        expect(lastLogPayload(logSpy)).toContain('2');
         done();
       },
     });
@@ -132,8 +140,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('4111111111111111'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('4111111111111111');
         done();
       },
     });
@@ -148,8 +156,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('987654321'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('987654321');
         done();
       },
     });
@@ -163,8 +171,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('111-222-333'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('111-222-333');
         done();
       },
     });
@@ -178,8 +186,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('5500005555555559'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('5500005555555559');
         done();
       },
     });
@@ -193,10 +201,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(
-          expect.stringContaining('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'),
-        );
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9');
         done();
       },
     });
@@ -210,9 +216,56 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(
-          expect.stringContaining('my-client-secret-value'),
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('my-client-secret-value');
+        done();
+      },
+    });
+  });
+
+  it('should include request ids, member id, status, and duration for easier PM2 tracing', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext(
+      { orderId: 'ORD-1', transactionId: 'TX-1', productName: 'tea' },
+      { user: { id: 42, role: 'user' }, query: { paymentKey: 'PAY-1' } },
+    );
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(expect.objectContaining({
+          event: 'http_request',
+          outcome: 'completed',
+          method: 'POST',
+          path: '/api/test',
+          statusCode: 201,
+          ids: expect.objectContaining({
+            orderId: 'ORD-1',
+            transactionId: 'TX-1',
+            paymentKey: 'PAY-1',
+          }),
+          durationMs: expect.any(Number),
+        }));
+        done();
+      },
+    });
+  });
+
+  it('should log failed requests with an error summary', (done) => {
+    const errorSpy = jest.spyOn(interceptor['logger'], 'error').mockImplementation();
+    const context = createMockContext({ orderId: 'ORD-2' });
+    const failingHandler: CallHandler = {
+      handle: () => throwError(() => new Error('boom')),
+    };
+
+    interceptor.intercept(context, failingHandler).subscribe({
+      error: () => {
+        expect(errorSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event: 'http_request',
+            outcome: 'failed',
+            error: { name: 'Error', message: 'boom' },
+          }),
+          expect.any(String),
         );
         done();
       },
@@ -227,8 +280,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('900101-1234567'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('900101-1234567');
         done();
       },
     });
@@ -242,8 +295,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('010-1234-5678'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('010-1234-5678');
         done();
       },
     });
@@ -257,10 +310,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(
-          expect.stringContaining('서울특별시 강남구 테헤란로 123'),
-        );
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('서울특별시 강남구 테헤란로 123');
         done();
       },
     });
@@ -274,8 +325,8 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[REDACTED]'));
-        expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('user@example.com'));
+        expect(lastLogPayload(logSpy)).toContain('[REDACTED]');
+        expect(lastLogPayload(logSpy)).not.toContain('user@example.com');
         done();
       },
     });
