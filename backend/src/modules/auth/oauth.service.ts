@@ -169,6 +169,7 @@ export class OAuthService {
     });
 
     if (existingAuth) {
+      await this.syncOAuthPlaceholderEmail(existingAuth.user, email);
       await this.markEmailVerifiedForOAuth(existingAuth.user);
       return { user: existingAuth.user, isNewUser: false };
     }
@@ -210,6 +211,25 @@ export class OAuthService {
     await this.userAuthRepository.save(auth);
 
     return { user, isNewUser };
+  }
+
+  private async syncOAuthPlaceholderEmail(user: User, email: string | null): Promise<void> {
+    if (!email || !this.isOAuthPlaceholderEmail(user.email)) {
+      return;
+    }
+
+    const existingUser = await this.userRepository.findOne({ where: { email } });
+    if (existingUser && Number(existingUser.id) !== Number(user.id)) {
+      this.logger.warn(`OAuth email sync skipped due to duplicate email: userId=${user.id}`);
+      return;
+    }
+
+    await this.userRepository.update(user.id, { email });
+    user.email = email;
+  }
+
+  private isOAuthPlaceholderEmail(email: string): boolean {
+    return /^\w+_[^@]+@oauth\.local$/.test(email);
   }
 
   private async markEmailVerifiedForOAuth(user: User): Promise<void> {

@@ -266,6 +266,7 @@ describe('AuthContext', () => {
     expect(redirectTo).toHaveBeenCalledWith(expect.stringContaining('https://kauth.kakao.com/oauth/authorize'));
     expect(redirectTo).toHaveBeenCalledWith(expect.stringContaining('client_id=kakao-client'));
     expect(redirectTo).toHaveBeenCalledWith(expect.stringContaining('redirect_uri=https%3A%2F%2Fshop.test%2Fauth%2Fkakao%2Fcallback'));
+    expect(redirectTo).toHaveBeenCalledWith(expect.stringContaining('scope=account_email%20profile_nickname'));
     expect(redirectTo).toHaveBeenCalledWith(expect.stringContaining(`state=${state}`));
   });
 

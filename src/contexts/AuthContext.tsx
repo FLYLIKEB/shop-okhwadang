@@ -136,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       redirectUri: process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI,
       redirectUriEnvKey: 'NEXT_PUBLIC_KAKAO_REDIRECT_URI',
       state,
+      scope: 'account_email profile_nickname',
     });
     sessionStorage.setItem(SESSION_KEYS.OAUTH_STATE, state);
     redirectTo(url);

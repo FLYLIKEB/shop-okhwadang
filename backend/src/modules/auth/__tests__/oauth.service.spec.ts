@@ -194,6 +194,53 @@ describe('OAuthService', () => {
       expect(result.user.email).toBe('existing@kakao.com');
     });
 
+    it('카카오 기존 oauth.local 사용자에게 이메일이 새로 제공되면 실제 이메일로 갱신한다', async () => {
+      mockHttpService.post.mockReturnValue(
+        of(makeAxiosResponse({ access_token: 'kakao-access-token' })),
+      );
+      mockHttpService.get.mockReturnValue(
+        of(makeAxiosResponse({
+          id: 12345,
+          kakao_account: { email: 'real@kakao.com', profile: { nickname: '기존유저' } },
+        })),
+      );
+      const existingUser = makeUser({ id: 1, email: 'kakao_12345@oauth.local', name: '기존유저' });
+      mockUserAuthRepository.findOne.mockResolvedValue(
+        makeUserAuth({ user: existingUser, userId: 1 }),
+      );
+      mockUserRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.handleKakao('auth-code');
+
+      expect(mockUserRepository.update).toHaveBeenCalledWith(1, { email: 'real@kakao.com' });
+      expect(result.isNewUser).toBe(false);
+      expect(result.user.email).toBe('real@kakao.com');
+      expect(mockTokenIssuerService.issueAndPersistRefresh).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'real@kakao.com' }),
+      );
+    });
+
+    it('카카오 oauth.local 이메일 갱신 시 동일 이메일의 다른 사용자가 있으면 갱신하지 않는다', async () => {
+      mockHttpService.post.mockReturnValue(
+        of(makeAxiosResponse({ access_token: 'kakao-access-token' })),
+      );
+      mockHttpService.get.mockReturnValue(
+        of(makeAxiosResponse({
+          id: 12345,
+          kakao_account: { email: 'duplicate@kakao.com', profile: { nickname: '기존유저' } },
+        })),
+      );
+      const existingUser = makeUser({ id: 1, email: 'kakao_12345@oauth.local', name: '기존유저' });
+      mockUserAuthRepository.findOne.mockResolvedValue(
+        makeUserAuth({ user: existingUser, userId: 1 }),
+      );
+      mockUserRepository.findOne.mockResolvedValue(makeUser({ id: 2, email: 'duplicate@kakao.com' }));
+
+      const result = await service.handleKakao('auth-code');
+
+      expect(mockUserRepository.update).not.toHaveBeenCalledWith(1, { email: 'duplicate@kakao.com' });
+      expect(result.user.email).toBe('kakao_12345@oauth.local');
+    });
 
     it('카카오 OAuth 설정이 비어 있으면 provider 요청 전에 명시적 설정 오류를 던진다', async () => {
       const module: TestingModule = await Test.createTestingModule({
