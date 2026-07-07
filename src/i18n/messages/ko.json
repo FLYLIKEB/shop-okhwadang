@@ -1394,7 +1394,7 @@
       },
       "filters": {
         "search": "검색어",
-        "searchPlaceholder": "트랜잭션 ID, 요청 ID, 메시지, 경로 검색",
+        "searchPlaceholder": "트랜잭션 ID, 요청 ID, IP, 메시지, 경로 검색",
         "startAt": "시작 시간",
         "endAt": "종료 시간",
         "apply": "검색",
@@ -1416,7 +1416,8 @@
         "message": "메시지",
         "context": "위치",
         "details": "상세",
-        "showDetails": "원문/필드 보기"
+        "showDetails": "원문/필드 보기",
+        "ip": "IP"
       }
     }
   },
