@@ -50,17 +50,24 @@ async function resolveJournal(
   slug: string,
   locale: 'ko' | 'en',
 ): Promise<RenderableJournal | null> {
+  const localEntry = getLocalizedJournalBySlug(slug, locale);
+  if (localEntry) {
+    return normalizeLocalJournal(localEntry);
+  }
+
   const apiJournal = await fetchJournal(slug, locale);
   if (apiJournal) {
     const tCategory = await getTranslations({ locale, namespace: 'journalCategories' });
     return normalizeApiJournal(apiJournal, tCategory);
   }
 
-  const fallbackEntry = getLocalizedJournalBySlug(slug, locale);
-  return fallbackEntry ? normalizeLocalJournal(fallbackEntry) : null;
+  return null;
 }
 
-function normalizeApiJournal(journal: Journal, tCategory: (key: string) => string): RenderableJournal {
+function normalizeApiJournal(
+  journal: Journal,
+  tCategory: (key: string) => string,
+): RenderableJournal {
   return {
     title: journal.title,
     subtitle: journal.subtitle,
@@ -141,17 +148,15 @@ export default async function JournalDetailPage({ params }: PageProps) {
             {entry.readTime ? (
               <>
                 <span className="text-xs text-background/40">·</span>
-                <span className="text-xs text-background/60">{entry.readTime} {t('readSuffix')}</span>
+                <span className="text-xs text-background/60">
+                  {entry.readTime} {t('readSuffix')}
+                </span>
               </>
             ) : null}
           </div>
-          <h1 className="font-display typo-h1 tracking-tight mb-3">
-            {entry.title}
-          </h1>
+          <h1 className="font-display typo-h1 tracking-tight mb-3">{entry.title}</h1>
           {entry.subtitle ? (
-            <p className="typo-h3 text-background/70 font-display">
-              {entry.subtitle}
-            </p>
+            <p className="typo-h3 text-background/70 font-display">{entry.subtitle}</p>
           ) : null}
         </div>
       </section>

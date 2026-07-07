@@ -62,6 +62,29 @@ describe('/[locale]/journal/[slug] detail page', () => {
     vi.clearAllMocks();
   });
 
+  it('renders a bundled local journal without calling the backend API', async () => {
+    const jsx = await JournalDetailPage({
+      params: Promise.resolve({ locale: 'en', slug: 'spring-tea-table' }),
+    });
+    render(jsx);
+
+    expect(mockFetchJournal).not.toHaveBeenCalled();
+    expect(screen.getByRole('heading', { name: 'A Spring Tea Table' })).toBeInTheDocument();
+    expect(screen.getByText('Tea Table')).toBeInTheDocument();
+  });
+
+  it('uses a bundled local journal for metadata without calling the backend API', async () => {
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ locale: 'en', slug: 'spring-tea-table' }),
+    });
+
+    expect(mockFetchJournal).not.toHaveBeenCalled();
+    expect(metadata.title).toBe('A Spring Tea Table — Journal');
+    expect(metadata.description).toBe(
+      'Tea table ideas for spring, from green and white tea pairings to teaware, cloth, and floral details.',
+    );
+  });
+
   it('fetches an API-created journal by slug and route locale before rendering', async () => {
     mockFetchJournal.mockResolvedValue(apiCreatedJournal);
 
@@ -87,5 +110,17 @@ describe('/[locale]/journal/[slug] detail page', () => {
     expect(mockFetchJournal).toHaveBeenCalledWith('cms-created-journal', 'en');
     expect(metadata.title).toBe('CMS Created Journal — Journal');
     expect(metadata.description).toBe('A journal entry created through the API.');
+  });
+
+  it('does not fall back to local content after a missing API journal for an unknown slug', async () => {
+    mockFetchJournal.mockResolvedValue(null);
+
+    await expect(
+      JournalDetailPage({
+        params: Promise.resolve({ locale: 'en', slug: 'unknown-cms-journal' }),
+      }),
+    ).rejects.toThrow('notFound');
+
+    expect(mockFetchJournal).toHaveBeenCalledWith('unknown-cms-journal', 'en');
   });
 });
