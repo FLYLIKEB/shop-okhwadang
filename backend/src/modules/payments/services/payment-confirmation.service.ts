@@ -18,6 +18,7 @@ import { findOrThrow } from '../../../common/utils/repository.util';
 import { restoreOrderStock } from '../../orders/order-stock.util';
 import { OrderEventEmitter } from '../../orders/order-event.emitter';
 import { OrderCompletedEvent } from '../../orders/events/order-completed.event';
+import { buildOrderEmailItems, buildOrderUrl } from '../../notification/order-email-context';
 
 type ResolveGatewayByType = (gatewayType: PaymentGatewayType) => PaymentGateway;
 
@@ -166,6 +167,14 @@ export class PaymentConfirmationService {
     amount: number,
     method: string,
   ): Promise<void> {
+    const order = typeof this.deps.orderRepository.findOne === 'function'
+      ? await this.deps.orderRepository.findOne({
+        where: { id: orderId },
+        relations: ['items'],
+      })
+      : null;
+    const locale = 'ko';
+
     await this.deps.notificationDispatchHelper.dispatch({
       event: 'payment.confirmed',
       userId,
@@ -178,6 +187,8 @@ export class PaymentConfirmationService {
           orderNumber,
           amount,
           method,
+          orderItems: buildOrderEmailItems(order, locale),
+          orderUrl: buildOrderUrl(orderId, locale),
         }),
     });
   }

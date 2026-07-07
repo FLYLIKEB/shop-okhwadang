@@ -8,6 +8,8 @@ import { NotificationService } from '../../notification/notification.service';
 import { SettingsService } from '../../settings/settings.service';
 import { MembershipService } from '../../membership/membership.service';
 import { canOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
+import { buildOrderEmailItems, buildOrderUrl } from '../../notification/order-email-context';
+import { renderOrderCancelled } from '../../notification/templates/render';
 
 interface OrderSchedulerJobDependencies {
   orderRepo: Repository<Order>;
@@ -51,7 +53,7 @@ export class OrderSchedulerJob {
 
     const deliveredOrders = await this.deps.orderRepo.find({
       where: { status: OrderStatus.DELIVERED, updatedAt: LessThan(cutoff) },
-      relations: { user: true },
+      relations: { user: true, items: true },
     });
 
     if (deliveredOrders.length === 0) {
@@ -81,6 +83,8 @@ export class OrderSchedulerJob {
             orderNumber: order.orderNumber,
             totalAmount: order.totalAmount,
             recipientName: order.recipientName,
+            orderItems: buildOrderEmailItems(order, 'ko'),
+            orderUrl: buildOrderUrl(Number(order.id), 'ko'),
           }),
         )
           .catch((err) => this.deps.logger.warn(`Failed to send confirmation email: ${String(err)}`));
@@ -127,12 +131,17 @@ export class OrderSchedulerJob {
 
       const user = await this.deps.userRepo.findOne({ where: { id: order.userId } });
       if (user?.email) {
+        const rendered = renderOrderCancelled({
+          recipientName: order.recipientName,
+          orderNumber: order.orderNumber,
+          reason: '결제 미완료 자동 취소',
+          orderItems: buildOrderEmailItems(order, 'ko'),
+          orderUrl: buildOrderUrl(Number(order.id), 'ko'),
+        });
         void Promise.resolve(
           this.deps.notificationService.sendEmail({
             to: user.email,
-            subject: `[옥화당] 주문 자동 취소 안내`,
-            text: `안녕하세요. 고객님의 주문(${order.orderNumber})이 결제 미완료로 자동 취소되었습니다.`,
-            html: `<p>안녕하세요.</p><p>고객님의 주문(<strong>${order.orderNumber}</strong>)이 결제 미완료로 자동 취소되었습니다.</p>`,
+            ...rendered,
           }),
         )
           .catch((err) => this.deps.logger.warn(`Failed to send cancellation email: ${String(err)}`));

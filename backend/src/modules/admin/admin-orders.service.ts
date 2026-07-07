@@ -19,6 +19,7 @@ import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 import { MessageNotificationService } from '../notification/message-notification.service';
 import { NotificationService } from '../notification/notification.service';
+import { buildOrderEmailItems, buildOrderUrl } from '../notification/order-email-context';
 
 @Injectable()
 export class AdminOrdersService {
@@ -247,6 +248,8 @@ export class AdminOrdersService {
         recipientName: order.recipientName,
         orderNumber: order.orderNumber,
         reason,
+        orderItems: buildOrderEmailItems(order, 'ko'),
+        orderUrl: buildOrderUrl(orderId, 'ko'),
       }),
       this.messageNotificationService.sendOrderCancelled(orderId, reason),
     ]).catch((err) => {

@@ -25,6 +25,7 @@ import { ShippingQuoteItemDto } from './dto/shipping-quote.dto';
 import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { assertShippingStatusTransition } from './policies/shipping-status-transition.policy';
+import { buildOrderEmailItems, buildOrderUrl } from '../notification/order-email-context';
 
 @Injectable()
 export class ShippingService {
@@ -213,6 +214,14 @@ export class ShippingService {
     carrier: string,
     trackingNumber: string,
   ): Promise<void> {
+    const order = typeof this.orderRepository.findOne === 'function'
+      ? await this.orderRepository.findOne({
+        where: { id: orderId },
+        relations: ['items'],
+      })
+      : null;
+    const locale = 'ko';
+
     await this.notificationDispatchHelper.dispatch({
       event: 'shipping.updated',
       userId,
@@ -225,6 +234,8 @@ export class ShippingService {
           orderNumber,
           carrier,
           trackingNumber,
+          orderItems: buildOrderEmailItems(order, locale),
+          orderUrl: buildOrderUrl(orderId, locale),
         }),
     });
   }

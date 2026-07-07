@@ -16,6 +16,7 @@ import { PointsService } from '../points/points.service';
 import { NotificationService } from '../notification/notification.service';
 import { MessageNotificationService } from '../notification/message-notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
+import { buildOrderEmailItems, buildOrderUrl } from '../notification/order-email-context';
 import { CouponsService } from '../coupons/coupons.service';
 import { CalculateDiscountDto } from '../coupons/dto/calculate-discount.dto';
 import { ShippingFeeCalculatorService } from '../shipping/services/shipping-fee-calculator.service';
@@ -452,7 +453,7 @@ export class OrdersService {
         savedOrder.orderNumber,
         totalPayable,
         recipientName,
-      );
+      ).catch((err) => this.logger.warn(`Failed to send order created email: ${String(err)}`));
       void this.messageNotificationService?.sendOrderCreated(Number(savedOrder.id));
     } catch (err) {
       this.logger.error('주문 post-commit 처리 실패 (주문 자체는 이미 커밋됨)', err as Error);
@@ -533,6 +534,14 @@ export class OrdersService {
     totalAmount: number,
     recipientName: string,
   ): Promise<void> {
+    const order = typeof this.orderRepository.findOne === 'function'
+      ? await this.orderRepository.findOne({
+        where: { id: orderId },
+        relations: ['items'],
+      })
+      : null;
+    const locale = 'ko';
+
     await this.notificationDispatchHelper.dispatch({
       event: 'order.confirmed',
       userId,
@@ -544,6 +553,8 @@ export class OrdersService {
           recipientName,
           orderNumber,
           totalAmount,
+          orderItems: buildOrderEmailItems(order, locale),
+          orderUrl: buildOrderUrl(orderId, locale),
         }),
     });
   }
