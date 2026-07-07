@@ -10,6 +10,7 @@ interface MessageTemplateInput {
   payment?: Payment | null;
   shipping?: Shipping | null;
   paymentMethod?: string;
+  cancelReason?: string;
 }
 
 type BuiltMessage = Omit<TransactionalMessage, 'to'>;
@@ -43,6 +44,16 @@ export function buildTransactionalMessage(
         fallbackText: `[옥화당] ${order.recipientName}님, 주문 ${order.orderNumber} 접수가 완료되었습니다. 결제금액: ${money(order.totalAmount)}`,
         smsFallbackEnabled,
       };
+    case 'ORDER_CANCELLED': {
+      const cancelReason = input.cancelReason ?? '';
+      return {
+        templateKey,
+        templateId,
+        variables: { ...variables, cancelReason },
+        fallbackText: `[옥화당] ${order.recipientName}님, 주문 ${order.orderNumber}이(가) 취소되었습니다. 취소 사유: ${cancelReason}`,
+        smsFallbackEnabled,
+      };
+    }
     case 'PAYMENT_CONFIRMED': {
       const method = input.paymentMethod ?? input.payment?.method ?? '결제';
       return {

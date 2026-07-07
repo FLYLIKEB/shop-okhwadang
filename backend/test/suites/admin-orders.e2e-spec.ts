@@ -209,12 +209,14 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
           .send({ status: 'paid' })
           .expect(200);
 
-        await request(app.getHttpServer())
-          .patch(`/api/admin/orders/${cancelOrderId}`)
+        const cancelRes = await request(app.getHttpServer())
+          .post(`/api/admin/orders/${cancelOrderId}/cancel`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ status: 'cancelled' })
-          .expect(200);
+          .send({ reason: '관리자 재고 복구 테스트' })
+          .expect(201);
 
+        expect(cancelRes.body.status).toBe('cancelled');
+        expect(cancelRes.body.cancelReason).toBe('관리자 재고 복구 테스트');
         expect(await getProductStock()).toBe(stockBeforeOrder);
       });
 
@@ -235,12 +237,14 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
           .send({ status: 'paid' })
           .expect(200);
 
-        await request(app.getHttpServer())
-          .patch(`/api/admin/orders/${pointsOrderId}`)
+        const cancelRes = await request(app.getHttpServer())
+          .post(`/api/admin/orders/${pointsOrderId}/cancel`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ status: 'cancelled' })
-          .expect(200);
+          .send({ reason: '관리자 포인트 복구 테스트' })
+          .expect(201);
 
+        expect(cancelRes.body.status).toBe('cancelled');
+        expect(cancelRes.body.cancelReason).toBe('관리자 포인트 복구 테스트');
         expect(await getLatestPointBalance()).toEqual({ balance: 5000, type: 'admin_adjust' });
       });
     });

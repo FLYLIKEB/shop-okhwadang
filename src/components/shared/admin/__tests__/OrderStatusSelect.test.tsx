@@ -19,6 +19,12 @@ describe('OrderStatusSelect status contract', () => {
     expect(screen.getByRole('option', { name: `→ ${ORDER_STATUS_LABELS.refund_requested}` })).toHaveValue('refund_requested');
   });
 
+  it('does not expose cancellation because admin cancellation requires a reason modal', () => {
+    render(<OrderStatusSelect orderId={1} currentStatus="paid" onStatusChange={vi.fn()} />);
+
+    expect(screen.queryByRole('option', { name: `→ ${ORDER_STATUS_LABELS.cancelled}` })).not.toBeInTheDocument();
+  });
+
   it('allows refund_requested orders to move to refunded', () => {
     render(<OrderStatusSelect orderId={1} currentStatus="refund_requested" onStatusChange={vi.fn()} />);
 

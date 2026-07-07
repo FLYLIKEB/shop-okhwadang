@@ -9,6 +9,8 @@ import { Shipping, ShippingStatus } from '../../payments/entities/shipping.entit
 import { PaymentsService } from '../../payments/payments.service';
 import { MembershipService } from '../../membership/membership.service';
 import { PointsService } from '../../points/points.service';
+import { NotificationService } from '../../notification/notification.service';
+import { MessageNotificationService } from '../../notification/message-notification.service';
 
 function createMockRepository() {
   const transactionManager = {
@@ -56,6 +58,8 @@ describe('AdminOrdersService', () => {
   let dataSource: jest.Mocked<DataSource>;
   let mockManager: ReturnType<typeof createMockManager>;
   let pointsService: jest.Mocked<PointsService>;
+  let notificationService: jest.Mocked<NotificationService>;
+  let messageNotificationService: jest.Mocked<MessageNotificationService>;
 
   beforeEach(async () => {
     orderRepo = createMockRepository();
@@ -64,10 +68,19 @@ describe('AdminOrdersService', () => {
     mockManager = createMockManager();
     paymentsService = {
       cancelAdmin: jest.fn(),
+      cancelPaidOrder: jest.fn(),
     } as unknown as jest.Mocked<PaymentsService>;
     pointsService = {
       getRunningBalanceInTx: jest.fn().mockResolvedValue(0),
     } as unknown as jest.Mocked<PointsService>;
+    notificationService = {
+      sendOrderCancelled: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<NotificationService>;
+    messageNotificationService = {
+      sendOrderCancelled: jest.fn().mockResolvedValue(undefined),
+      sendShippingStarted: jest.fn().mockResolvedValue(undefined),
+      sendShippingDelivered: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<MessageNotificationService>;
     dataSource = {
       transaction: jest.fn().mockImplementation((cb: (manager: unknown) => Promise<unknown>) => cb(mockManager)),
     } as unknown as jest.Mocked<DataSource>;
@@ -82,6 +95,8 @@ describe('AdminOrdersService', () => {
         { provide: DataSource, useValue: dataSource },
         { provide: MembershipService, useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined) } },
         { provide: PointsService, useValue: pointsService },
+        { provide: NotificationService, useValue: notificationService },
+        { provide: MessageNotificationService, useValue: messageNotificationService },
       ],
     }).compile();
 
@@ -191,13 +206,12 @@ describe('AdminOrdersService', () => {
       expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리');
     });
 
-    it('paid → cancelled: allowed', async () => {
-      orderRepo.findOne
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.CANCELLED });
+    it('paid → cancelled: generic status update requires dedicated cancel flow with reason', async () => {
+      orderRepo.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID });
 
-      await service.updateStatus(1, OrderStatus.CANCELLED);
-      expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
+      await expect(service.updateStatus(1, OrderStatus.CANCELLED))
+        .rejects.toThrow(BadRequestException);
+      expect(mockManager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
     });
 
     it('delivered → completed: allowed', async () => {
@@ -232,28 +246,6 @@ describe('AdminOrdersService', () => {
 
       await service.updateStatus(1, OrderStatus.REFUNDED);
       expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리');
-    });
-
-    it('CANCELLED 전환 시 재고 복구 (옵션 있는 항목은 옵션 재고만, 옵션 없는 항목은 상품 재고만)', async () => {
-      // 정책 (#723): 옵션이 있으면 옵션 재고만 원장으로 복구, 옵션이 없으면 상품 재고만 복구.
-      const items = [
-        { orderId: 1, productId: 10, productOptionId: 20, quantity: 3 },
-        { orderId: 1, productId: 11, productOptionId: null, quantity: 2 },
-      ];
-      orderRepo.findOne
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.CANCELLED });
-      mockManager.find.mockResolvedValue(items);
-
-      await service.updateStatus(1, OrderStatus.CANCELLED);
-
-      expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
-      // 옵션이 있는 첫 번째 항목: 옵션 재고만 복구.
-      expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 20 }, 'stock', 3);
-      // 옵션이 없는 두 번째 항목: 상품 재고만 복구.
-      expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 11 }, 'stock', 2);
-      // 정확히 두 번만 호출 — 옵션 상품의 product.stock 은 건드리지 않는다.
-      expect(mockManager.increment).toHaveBeenCalledTimes(2);
     });
 
     it('REFUNDED 전환 시 옵션 항목은 옵션 재고만 복구', async () => {
@@ -297,6 +289,86 @@ describe('AdminOrdersService', () => {
       orderRepo.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED });
       await expect(service.updateStatus(1, OrderStatus.REFUNDED))
         .rejects.toThrow(BadRequestException);
+    });
+  });
+
+
+  describe('cancelOrder', () => {
+    it('requires a cancellation reason', async () => {
+      await expect(service.cancelOrder(1, '   ')).rejects.toThrow(BadRequestException);
+    });
+
+    it('paid order: cancels confirmed payment in the same transaction and stores reason', async () => {
+      const order = {
+        id: 1,
+        userId: 10,
+        user: { email: 'customer@example.com' },
+        status: OrderStatus.PAID,
+        orderNumber: 'ORD-1',
+        recipientName: '홍길동',
+        pointsUsed: 0,
+      };
+      orderRepo.findOne
+        .mockResolvedValueOnce(order)
+        .mockResolvedValueOnce({ ...order, status: OrderStatus.CANCELLED, cancelReason: '품절' });
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1, status: PaymentStatus.CONFIRMED, order });
+      paymentsService.cancelPaidOrder = jest.fn().mockResolvedValue({
+        paymentId: 10,
+        status: PaymentStatus.CANCELLED,
+        cancelledAt: new Date(),
+        cancelReason: '품절',
+      });
+
+      await service.cancelOrder(1, ' 품절 ');
+
+      expect(paymentsService.cancelPaidOrder).toHaveBeenCalledWith(1, '품절', mockManager);
+      expect(mockManager.update).toHaveBeenCalledWith(Order, 1, expect.objectContaining({
+        cancelReason: '품절',
+        cancelledAt: expect.any(Date),
+      }));
+      expect(notificationService.sendOrderCancelled).toHaveBeenCalledWith('customer@example.com', expect.objectContaining({
+        orderNumber: 'ORD-1',
+        reason: '품절',
+      }));
+      expect(messageNotificationService.sendOrderCancelled).toHaveBeenCalledWith(1, '품절');
+    });
+
+    it('pending order: cancels order and pending payment without gateway cancellation', async () => {
+      const order = {
+        id: 1,
+        userId: 10,
+        user: { email: 'customer@example.com' },
+        status: OrderStatus.PENDING,
+        orderNumber: 'ORD-2',
+        recipientName: '김옥화',
+        pointsUsed: 0,
+      };
+      orderRepo.findOne
+        .mockResolvedValueOnce(order)
+        .mockResolvedValueOnce({ ...order, status: OrderStatus.CANCELLED, cancelReason: '고객 요청' });
+      paymentRepo.findOne.mockResolvedValue({ id: 20, orderId: 1, status: PaymentStatus.PENDING });
+      paymentsService.cancelPaidOrder = jest.fn();
+      mockManager.find.mockResolvedValue([
+        { orderId: 1, productId: 10, productOptionId: 20, quantity: 3 },
+        { orderId: 1, productId: 11, productOptionId: null, quantity: 2 },
+      ]);
+
+      await service.cancelOrder(1, '고객 요청');
+
+      expect(paymentsService.cancelPaidOrder).not.toHaveBeenCalled();
+      expect(mockManager.update).toHaveBeenCalledWith(Order, 1, expect.objectContaining({
+        status: OrderStatus.CANCELLED,
+        cancelReason: '고객 요청',
+        cancelledAt: expect.any(Date),
+      }));
+      expect(mockManager.update).toHaveBeenCalledWith(Payment, 20, expect.objectContaining({
+        status: PaymentStatus.CANCELLED,
+        cancelReason: '고객 요청',
+        cancelledAt: expect.any(Date),
+      }));
+      expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 20 }, 'stock', 3);
+      expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 11 }, 'stock', 2);
+      expect(mockManager.increment).toHaveBeenCalledTimes(2);
     });
   });
 

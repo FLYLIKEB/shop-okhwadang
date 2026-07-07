@@ -1,11 +1,11 @@
 import {
   Injectable, BadRequestException,
-  ConflictException, Logger, Optional,
+  ConflictException, Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
-import { Payment } from '../payments/entities/payment.entity';
+import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { restoreOrderStock } from '../orders/order-stock.util';
@@ -18,6 +18,7 @@ import { findOrThrow } from '../../common/utils/repository.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 import { MessageNotificationService } from '../notification/message-notification.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class AdminOrdersService {
@@ -34,8 +35,8 @@ export class AdminOrdersService {
     private readonly dataSource: DataSource,
     private readonly membershipService: MembershipService,
     private readonly pointsService: PointsService,
-    @Optional()
-    private readonly messageNotificationService: MessageNotificationService | undefined,
+    private readonly notificationService: NotificationService,
+    private readonly messageNotificationService: MessageNotificationService,
   ) {}
 
   async findAll(query: AdminOrderQueryDto): Promise<PaginatedResult<Order>> {
@@ -81,6 +82,10 @@ export class AdminOrdersService {
     const currentStatus = order.status;
     assertOrderStatusTransition(currentStatus, nextStatus);
 
+    if (nextStatus === OrderStatus.CANCELLED) {
+      throw new BadRequestException('주문 취소는 취소 사유를 입력하는 전용 취소 기능을 사용해주세요.');
+    }
+
     if (nextStatus === OrderStatus.SHIPPED) {
       const shipping = await this.shippingRepository.findOne({ where: { orderId } });
       if (!shipping || !shipping.trackingNumber) {
@@ -119,6 +124,76 @@ export class AdminOrdersService {
     return this.orderRepository.findOne({
       where: { id: orderId },
       relations: ['items', 'user'],
+    });
+  }
+
+
+  async cancelOrder(orderId: number, reason: string): Promise<Order | null> {
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+      throw new BadRequestException('취소 사유를 입력해주세요.');
+    }
+
+    const order = await findOrThrow(
+      this.orderRepository,
+      { id: orderId },
+      '주문을 찾을 수 없습니다.',
+      ['items', 'user'],
+    );
+
+    const currentStatus = order.status;
+    assertOrderStatusTransition(currentStatus, OrderStatus.CANCELLED);
+
+    const payment = await this.paymentRepository.findOne({ where: { orderId }, relations: ['order'] });
+    const cancelledAt = new Date();
+
+    if (payment?.status === PaymentStatus.CONFIRMED) {
+      await this.dataSource.transaction(async (manager) => {
+        await this.paymentsService.cancelPaidOrder(orderId, trimmedReason, manager);
+        await manager.update(Order, orderId, { cancelReason: trimmedReason, cancelledAt });
+      });
+    } else {
+      await this.dataSource.transaction(async (manager) => {
+        await manager.update(Order, orderId, {
+          status: OrderStatus.CANCELLED,
+          cancelReason: trimmedReason,
+          cancelledAt,
+        });
+
+        if (payment && payment.status === PaymentStatus.PENDING) {
+          await manager.update(Payment, payment.id, {
+            status: PaymentStatus.CANCELLED,
+            cancelReason: trimmedReason,
+            cancelledAt,
+          });
+        }
+
+        if (this.shouldRestoreStockAndPoints(currentStatus, OrderStatus.CANCELLED)) {
+          await this.restoreStock(manager, orderId);
+          await this.restorePoints(manager, order);
+        }
+      });
+    }
+
+    this.logger.log(`Order #${orderId} cancelled by admin: ${currentStatus} → ${OrderStatus.CANCELLED}`);
+    void this.sendCancellationNotifications(orderId, order, trimmedReason);
+
+    return this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ['items', 'user'],
+    });
+  }
+
+  private async sendCancellationNotifications(orderId: number, order: Order, reason: string): Promise<void> {
+    await Promise.all([
+      this.notificationService.sendOrderCancelled(order.user?.email ?? '', {
+        recipientName: order.recipientName,
+        orderNumber: order.orderNumber,
+        reason,
+      }),
+      this.messageNotificationService.sendOrderCancelled(orderId, reason),
+    ]).catch((err) => {
+      this.logger.warn(`Failed to send cancellation notification for order ${orderId}: ${String(err)}`);
     });
   }
 

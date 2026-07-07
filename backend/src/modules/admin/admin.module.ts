@@ -28,6 +28,7 @@ import { PaymentsModule } from '../payments/payments.module';
 import { AuditLogModule } from '../audit-logs/audit-log.module';
 import { MembershipModule } from '../membership/membership.module';
 import { PointsModule } from '../points/points.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { PointsModule } from '../points/points.module';
     AuditLogModule,
     MembershipModule,
     PointsModule,
+    NotificationModule,
   ],
   controllers: [
     AdminController,

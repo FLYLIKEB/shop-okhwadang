@@ -8,6 +8,7 @@ import { adminOrdersApi } from '@/lib/api';
 import type { AdminOrder, OrderServiceRequest, OrderServiceRequestStatus } from '@/lib/api';
 import { AdminOrdersTable } from '@/components/shared/admin/AdminOrdersTable';
 import { ShippingModal } from '@/components/shared/admin/ShippingModal';
+import { CancelOrderModal } from '@/components/shared/admin/CancelOrderModal';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
@@ -34,6 +35,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [total, setTotal] = useState(0);
   const [shippingOrder, setShippingOrder] = useState<AdminOrder | null>(null);
+  const [cancelOrder, setCancelOrder] = useState<AdminOrder | null>(null);
   const [serviceRequests, setServiceRequests] = useState<OrderServiceRequest[]>([]);
   const {
     page,
@@ -83,6 +85,11 @@ export default function AdminOrdersPage() {
 
   const handleShippingSuccess = () => {
     setShippingOrder(null);
+    void fetchOrders();
+  };
+
+  const handleCancelSuccess = () => {
+    setCancelOrder(null);
     void fetchOrders();
   };
 
@@ -192,8 +199,18 @@ export default function AdminOrdersPage() {
           orders={orders}
           onStatusChange={() => void fetchOrders()}
           onShippingRegister={(order) => setShippingOrder(order)}
+          onCancelOrder={(order) => setCancelOrder(order)}
         />
       </PaginatedAdminTableShell>
+
+      {cancelOrder && (
+        <CancelOrderModal
+          orderId={cancelOrder.id}
+          orderNumber={cancelOrder.orderNumber}
+          onClose={() => setCancelOrder(null)}
+          onSuccess={handleCancelSuccess}
+        />
+      )}
 
       {shippingOrder && (
         <ShippingModal

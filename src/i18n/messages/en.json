@@ -736,6 +736,19 @@
         "delivered": "Delivered",
         "cancelled": "Cancelled",
         "refunded": "Refunded"
+      },
+      "cancel": {
+        "action": "Cancel order",
+        "title": "Cancel order",
+        "description": "Cancel order {orderNumber} and notify the customer.",
+        "reasonLabel": "Cancellation reason",
+        "reasonPlaceholder": "Enter the cancellation reason that will be sent to the customer.",
+        "reasonRequired": "Please enter a cancellation reason.",
+        "close": "Close",
+        "submit": "Cancel order",
+        "submitting": "Processing...",
+        "success": "Order cancelled and customer notification was queued.",
+        "error": "Failed to cancel order."
       }
     },
     "products": {

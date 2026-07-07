@@ -61,6 +61,12 @@ export class Order {
   @Column({ type: 'varchar', length: 500, nullable: true })
   memo!: string | null;
 
+  @Column({ name: 'cancel_reason', type: 'varchar', length: 500, nullable: true })
+  cancelReason!: string | null;
+
+  @Column({ name: 'cancelled_at', type: 'datetime', nullable: true })
+  cancelledAt!: Date | null;
+
   @Column({ name: 'points_used', type: 'int', default: 0 })
   pointsUsed!: number;
 

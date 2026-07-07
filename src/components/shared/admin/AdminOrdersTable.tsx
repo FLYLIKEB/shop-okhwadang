@@ -4,14 +4,18 @@ import type { AdminOrder } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { OrderStatusSelect } from './OrderStatusSelect';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/constants/status';
+import { localMessage } from '@/utils/localMessages';
 
 interface AdminOrdersTableProps {
   orders: AdminOrder[];
   onStatusChange: () => void;
   onShippingRegister: (order: AdminOrder) => void;
+  onCancelOrder: (order: AdminOrder) => void;
 }
 
-export function AdminOrdersTable({ orders, onStatusChange, onShippingRegister }: AdminOrdersTableProps) {
+const CANCELLABLE_ORDER_STATUSES = new Set(['pending', 'paid', 'preparing']);
+
+export function AdminOrdersTable({ orders, onStatusChange, onShippingRegister, onCancelOrder }: AdminOrdersTableProps) {
   if (orders.length === 0) {
     return <p className="py-8 text-center text-muted-foreground">주문이 없습니다.</p>;
   }
@@ -46,6 +50,15 @@ export function AdminOrdersTable({ orders, onStatusChange, onShippingRegister }:
                 <OrderStatusSelect orderId={order.id} currentStatus={order.status} onStatusChange={onStatusChange} />
                 {(order.status === 'preparing' || order.status === 'paid') && (
                   <button type="button" onClick={() => onShippingRegister(order)} className="min-h-11 rounded border px-3 typo-button hover:bg-secondary">운송장</button>
+                )}
+                {CANCELLABLE_ORDER_STATUSES.has(order.status) && (
+                  <button
+                    type="button"
+                    onClick={() => onCancelOrder(order)}
+                    className="min-h-11 rounded border border-destructive px-3 typo-button text-destructive hover:bg-destructive/10"
+                  >
+                    {localMessage('admin.orders.cancel.action')}
+                  </button>
                 )}
               </div>
             </article>
@@ -100,10 +113,20 @@ export function AdminOrdersTable({ orders, onStatusChange, onShippingRegister }:
                   />
                   {(order.status === 'preparing' || order.status === 'paid') && (
                     <button
+                      type="button"
                       onClick={() => onShippingRegister(order)}
                       className="rounded border px-2 py-1 text-xs hover:bg-secondary"
                     >
                       운송장
+                    </button>
+                  )}
+                  {CANCELLABLE_ORDER_STATUSES.has(order.status) && (
+                    <button
+                      type="button"
+                      onClick={() => onCancelOrder(order)}
+                      className="rounded border border-destructive px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                    >
+                      {localMessage('admin.orders.cancel.action')}
                     </button>
                   )}
                 </div>

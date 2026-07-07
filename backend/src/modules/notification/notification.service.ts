@@ -3,6 +3,7 @@ import { EmailMessage, EmailProvider } from './interfaces/email-provider.interfa
 import {
   renderEmailVerification,
   renderInquiryAnswered,
+  renderOrderCancelled,
   renderOrderConfirmed,
   renderPaymentConfirmed,
   renderPasswordReset,
@@ -10,6 +11,7 @@ import {
   renderShippingUpdate,
   type EmailVerificationContext,
   type InquiryAnsweredContext,
+  type OrderCancelledContext,
   type OrderConfirmedContext,
   type PaymentConfirmedContext,
   type PasswordResetContext,
@@ -50,6 +52,11 @@ export class NotificationService {
 
   async sendOrderConfirmed(to: string, context: OrderConfirmedContext): Promise<void> {
     const rendered = renderOrderConfirmed(context);
+    await this.sendEmail({ to, ...rendered });
+  }
+
+  async sendOrderCancelled(to: string, context: OrderCancelledContext): Promise<void> {
+    const rendered = renderOrderCancelled(context);
     await this.sendEmail({ to, ...rendered });
   }
 

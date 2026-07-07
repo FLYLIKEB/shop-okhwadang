@@ -22,6 +22,7 @@ describe('SolapiMessageAdapter', () => {
         PAYMENT_CONFIRMED: 'tpl-payment',
         SHIPPING_STARTED: 'tpl-shipping-started',
         SHIPPING_DELIVERED: 'tpl-shipping-delivered',
+        ORDER_CANCELLED: 'tpl-order-cancelled',
       },
       solapi: {
         apiKey: 'api-key',

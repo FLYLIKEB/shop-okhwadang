@@ -16,7 +16,7 @@ import { buildTransactionalMessage } from './templates/message-templates';
 
 export const MESSAGE_PROVIDER_TOKEN = 'MessageProvider';
 
-type EventType = 'order.created' | 'payment.confirmed' | 'shipping.started' | 'shipping.delivered';
+type EventType = 'order.created' | 'payment.confirmed' | 'order.cancelled' | 'shipping.started' | 'shipping.delivered';
 
 interface DispatchContext {
   eventType: EventType;
@@ -27,6 +27,7 @@ interface DispatchContext {
   payment?: Payment | null;
   shipping?: Shipping | null;
   paymentMethod?: string;
+  cancelReason?: string;
 }
 
 @Injectable()
@@ -69,6 +70,19 @@ export class MessageNotificationService {
       order,
       payment,
       paymentMethod,
+    });
+  }
+
+  async sendOrderCancelled(orderId: number, cancelReason: string): Promise<void> {
+    const order = await this.findOrder(orderId);
+    if (!order) return;
+    await this.dispatch({
+      eventType: 'order.cancelled',
+      templateKey: 'ORDER_CANCELLED',
+      resourceType: 'order',
+      resourceId: orderId,
+      order,
+      cancelReason,
     });
   }
 
@@ -155,6 +169,7 @@ export class MessageNotificationService {
         payment: context.payment,
         shipping: context.shipping,
         paymentMethod: context.paymentMethod,
+        cancelReason: context.cancelReason,
         templateId,
         smsFallbackEnabled: this.config.message.smsFallbackEnabled,
       });
