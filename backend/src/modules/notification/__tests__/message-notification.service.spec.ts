@@ -32,6 +32,7 @@ describe('MessageNotificationService', () => {
         PAYMENT_CONFIRMED: 'tpl-payment',
         SHIPPING_STARTED: 'tpl-shipping-started',
         SHIPPING_DELIVERED: 'tpl-shipping-delivered',
+        ORDER_CANCELLED: 'tpl-order-cancelled',
       },
       solapi: { apiKey: '', apiSecret: '', apiBaseUrl: 'https://api.solapi.com' },
     },
@@ -128,6 +129,26 @@ describe('MessageNotificationService', () => {
 
     expect(provider.send).not.toHaveBeenCalled();
     expect(logRepository.save).not.toHaveBeenCalled();
+  });
+
+
+  it('주문 취소 메시지를 취소 사유와 함께 발송한다', async () => {
+    await service.sendOrderCancelled(10, '품절');
+
+    expect(provider.send).toHaveBeenCalledWith(expect.objectContaining({
+      to: '01012345678',
+      templateKey: 'ORDER_CANCELLED',
+      templateId: 'tpl-order-cancelled',
+      variables: expect.objectContaining({ cancelReason: '품절' }),
+      fallbackText: expect.stringContaining('품절'),
+    }));
+    expect(logRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+      eventType: 'order.cancelled',
+      resourceType: 'order',
+      resourceId: 10,
+      templateKey: 'ORDER_CANCELLED',
+      status: 'sent',
+    }));
   });
 
   it('provider 실패는 전파하지 않고 failed 로그를 저장한다', async () => {

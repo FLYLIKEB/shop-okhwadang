@@ -60,6 +60,24 @@ describe('createNotificationConfig', () => {
     ).toThrow('MESSAGE_SENDER_PHONE 환경변수가 필요합니다');
   });
 
+  it('solapi 선택 시 주문 취소 템플릿도 필수로 검증한다', () => {
+    expect(() =>
+      createNotificationConfig({
+        NODE_ENV: 'production',
+        NOTIFICATION_PROVIDER: 'resend',
+        MESSAGE_PROVIDER: 'solapi',
+        MESSAGE_SENDER_PHONE: '021234567',
+        MESSAGE_KAKAO_CHANNEL_ID: 'pf-id',
+        MESSAGE_SOLAPI_API_KEY: 'api-key',
+        MESSAGE_SOLAPI_API_SECRET: 'api-secret',
+        MESSAGE_TEMPLATE_ORDER_CREATED: 'tpl-order',
+        MESSAGE_TEMPLATE_PAYMENT_CONFIRMED: 'tpl-payment',
+        MESSAGE_TEMPLATE_SHIPPING_STARTED: 'tpl-shipping-started',
+        MESSAGE_TEMPLATE_SHIPPING_DELIVERED: 'tpl-shipping-delivered',
+      }),
+    ).toThrow('MESSAGE_TEMPLATE_ORDER_CANCELLED 환경변수가 필요합니다');
+  });
+
   it('solapi 필수 값이 모두 있으면 거래 메시지 설정을 반환한다', () => {
     const config = createNotificationConfig({
       NODE_ENV: 'production',
@@ -73,10 +91,12 @@ describe('createNotificationConfig', () => {
       MESSAGE_TEMPLATE_PAYMENT_CONFIRMED: 'tpl-payment',
       MESSAGE_TEMPLATE_SHIPPING_STARTED: 'tpl-shipping-started',
       MESSAGE_TEMPLATE_SHIPPING_DELIVERED: 'tpl-shipping-delivered',
+      MESSAGE_TEMPLATE_ORDER_CANCELLED: 'tpl-order-cancelled',
     });
 
     expect(config.message.provider).toBe('solapi');
     expect(config.message.senderPhone).toBe('021234567');
     expect(config.message.templates.SHIPPING_DELIVERED).toBe('tpl-shipping-delivered');
+    expect(config.message.templates.ORDER_CANCELLED).toBe('tpl-order-cancelled');
   });
 });

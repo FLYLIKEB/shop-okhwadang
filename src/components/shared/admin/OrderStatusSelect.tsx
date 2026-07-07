@@ -9,8 +9,8 @@ import { toastMessage } from '@/utils/toastMessages';
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ['paid'],
-  paid: ['preparing', 'cancelled', 'refunded'],
-  preparing: ['shipped', 'cancelled', 'refunded'],
+  paid: ['preparing', 'refunded'],
+  preparing: ['shipped', 'refunded'],
   shipped: ['delivered', 'refunded'],
   delivered: ['completed', 'refund_requested'],
   completed: [],

@@ -16,6 +16,7 @@ import { AuditLogInterceptor } from '../../common/interceptors/audit-log.interce
 import { AdminOrdersService } from './admin-orders.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { CancelOrderDto } from './dto/cancel-order.dto';
 import { RegisterShippingDto } from './dto/register-shipping.dto';
 import { OrderStatus } from '../orders/entities/order.entity';
 import { AuditAction } from '../audit-logs/entities/audit-log.entity';
@@ -55,6 +56,24 @@ export class AdminOrdersController {
     @Body() dto: UpdateOrderStatusDto,
   ) {
     return this.adminOrdersService.updateStatus(id, dto.status as OrderStatus);
+  }
+
+  @Post('orders/:id/cancel')
+  @UseInterceptors(AuditLogInterceptor)
+  @AuditLog({ action: AuditAction.ORDER_STATUS_UPDATE, resourceType: 'order' })
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '주문 취소', description: '관리자가 취소 사유를 기록하고 주문을 취소합니다.' })
+  @ApiResponse({ status: 201, description: '주문 취소 성공' })
+  @ApiResponse({ status: 400, description: '취소 불가 상태 또는 사유 누락' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
+  @ApiResponse({ status: 403, description: '권한 없음' })
+  @ApiResponse({ status: 404, description: '주문을 찾을 수 없음' })
+  @ApiParam({ name: 'id', type: Number, description: '주문 ID' })
+  cancelOrder(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CancelOrderDto,
+  ) {
+    return this.adminOrdersService.cancelOrder(id, dto.reason);
   }
 
   @Post('shipping/:orderId')

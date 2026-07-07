@@ -197,28 +197,24 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
     });
 
     describe('stock and point reversals', () => {
-      it('paid → cancelled restores reserved product stock', async () => {
+      it('pending → cancelled restores reserved product stock', async () => {
         const stockBeforeOrder = await getProductStock();
         const cancelOrderId = await createOrder();
 
         expect(await getProductStock()).toBe(stockBeforeOrder - 1);
 
-        await request(app.getHttpServer())
-          .patch(`/api/admin/orders/${cancelOrderId}`)
+        const cancelRes = await request(app.getHttpServer())
+          .post(`/api/admin/orders/${cancelOrderId}/cancel`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ status: 'paid' })
-          .expect(200);
+          .send({ reason: '관리자 재고 복구 테스트' })
+          .expect(201);
 
-        await request(app.getHttpServer())
-          .patch(`/api/admin/orders/${cancelOrderId}`)
-          .set('Cookie', cookieHeader(adminCookies))
-          .send({ status: 'cancelled' })
-          .expect(200);
-
+        expect(cancelRes.body.status).toBe('cancelled');
+        expect(cancelRes.body.cancelReason).toBe('관리자 재고 복구 테스트');
         expect(await getProductStock()).toBe(stockBeforeOrder);
       });
 
-      it('paid → cancelled restores spent points', async () => {
+      it('pending → cancelled restores spent points', async () => {
         await dataSource.query(
           `INSERT INTO point_history (user_id, type, amount, balance, description, expires_at, related_entity_type)
            VALUES (?, 'earn', 5000, 5000, '테스트 적립', DATE_ADD(NOW(), INTERVAL 30 DAY), 'order')`,
@@ -229,18 +225,14 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
 
         expect(await getLatestPointBalance()).toEqual({ balance: 3000, type: 'spend' });
 
-        await request(app.getHttpServer())
-          .patch(`/api/admin/orders/${pointsOrderId}`)
+        const cancelRes = await request(app.getHttpServer())
+          .post(`/api/admin/orders/${pointsOrderId}/cancel`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ status: 'paid' })
-          .expect(200);
+          .send({ reason: '관리자 포인트 복구 테스트' })
+          .expect(201);
 
-        await request(app.getHttpServer())
-          .patch(`/api/admin/orders/${pointsOrderId}`)
-          .set('Cookie', cookieHeader(adminCookies))
-          .send({ status: 'cancelled' })
-          .expect(200);
-
+        expect(cancelRes.body.status).toBe('cancelled');
+        expect(cancelRes.body.cancelReason).toBe('관리자 포인트 복구 테스트');
         expect(await getLatestPointBalance()).toEqual({ balance: 5000, type: 'admin_adjust' });
       });
     });

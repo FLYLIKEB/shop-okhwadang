@@ -3,6 +3,7 @@ export type TransactionalMessageChannel = 'kakao_alimtalk' | 'sms' | 'lms';
 export type MessageTemplateKey =
   | 'ORDER_CREATED'
   | 'PAYMENT_CONFIRMED'
+  | 'ORDER_CANCELLED'
   | 'SHIPPING_STARTED'
   | 'SHIPPING_DELIVERED';
 

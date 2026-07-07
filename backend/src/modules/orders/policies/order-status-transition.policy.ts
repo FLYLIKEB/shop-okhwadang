@@ -7,7 +7,7 @@ import {
 } from '../../../common/policies/state-transition.policy';
 
 export const ORDER_STATUS_TRANSITIONS: TransitionMap<OrderStatus> = {
-  [OrderStatus.PENDING]: [OrderStatus.PAID],
+  [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
   [OrderStatus.PAID]: [
     OrderStatus.PREPARING,
     OrderStatus.CANCELLED,

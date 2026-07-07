@@ -20,6 +20,7 @@ describe('ResendEmailAdapter', () => {
         PAYMENT_CONFIRMED: '',
         SHIPPING_STARTED: '',
         SHIPPING_DELIVERED: '',
+        ORDER_CANCELLED: '',
       },
       solapi: {
         apiKey: '',

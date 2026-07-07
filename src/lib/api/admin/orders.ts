@@ -11,6 +11,8 @@ export interface AdminOrder {
   address: string;
   createdAt: string;
   updatedAt: string;
+  cancelReason?: string | null;
+  cancelledAt?: string | null;
   user?: { id: number; email: string; name: string };
   items: {
     id: number;
@@ -54,6 +56,8 @@ export const adminOrdersApi = {
     }),
   updateStatus: (id: number, status: string) =>
     apiClient.patch<AdminOrder>(`/admin/orders/${id}`, { status }),
+  cancelOrder: (id: number, data: { reason: string }) =>
+    apiClient.post<AdminOrder>(`/admin/orders/${id}/cancel`, data),
   registerShipping: (orderId: number, data: { carrier: string; trackingNumber: string }) =>
     apiClient.post<AdminShipping>(`/admin/shipping/${orderId}`, data),
   getServiceRequests: (params?: AdminOrderServiceRequestQueryParams) =>

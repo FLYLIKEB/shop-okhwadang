@@ -68,6 +68,7 @@ export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): 
     env.MESSAGE_TEMPLATE_PAYMENT_CONFIRMED,
     env.MESSAGE_TEMPLATE_SHIPPING_STARTED,
     env.MESSAGE_TEMPLATE_SHIPPING_DELIVERED,
+    env.MESSAGE_TEMPLATE_ORDER_CANCELLED,
   ].some((value) => Boolean(value?.trim()));
 
   if (nodeEnv === 'production' && messageProvider === 'mock' && hasMessageTemplate) {
@@ -86,6 +87,7 @@ export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): 
       'MESSAGE_TEMPLATE_PAYMENT_CONFIRMED',
       'MESSAGE_TEMPLATE_SHIPPING_STARTED',
       'MESSAGE_TEMPLATE_SHIPPING_DELIVERED',
+      'MESSAGE_TEMPLATE_ORDER_CANCELLED',
     ]) {
       requireMessageEnv(env, key);
     }
@@ -111,6 +113,7 @@ export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): 
         PAYMENT_CONFIRMED: env.MESSAGE_TEMPLATE_PAYMENT_CONFIRMED ?? '',
         SHIPPING_STARTED: env.MESSAGE_TEMPLATE_SHIPPING_STARTED ?? '',
         SHIPPING_DELIVERED: env.MESSAGE_TEMPLATE_SHIPPING_DELIVERED ?? '',
+        ORDER_CANCELLED: env.MESSAGE_TEMPLATE_ORDER_CANCELLED ?? '',
       },
       solapi: {
         apiKey: env.MESSAGE_SOLAPI_API_KEY ?? '',

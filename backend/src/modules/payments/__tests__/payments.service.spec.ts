@@ -487,7 +487,7 @@ describe('PaymentsService', () => {
         service.confirm({ orderId: 1, paymentKey: 'fail_abc', amount: 30000 }, 10),
       ).rejects.toThrow('결제 승인에 실패했습니다.');
 
-      expect(recoveryManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
+      expect(recoveryManager.update).toHaveBeenCalledWith(Order, 1, expect.objectContaining({ status: OrderStatus.CANCELLED }));
       expect(recoveryManager.increment).toHaveBeenCalled();
     });
 
@@ -917,7 +917,11 @@ describe('PaymentsService', () => {
         cancelReason: '관리자 승인',
         rawResponse: { mock: true },
       });
-      expect(txManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
+      expect(txManager.update).toHaveBeenCalledWith(Order, 1, expect.objectContaining({
+        status: OrderStatus.CANCELLED,
+        cancelReason: '관리자 승인',
+        cancelledAt,
+      }));
       expect(txManager.increment).toHaveBeenCalledTimes(2);
       expect(txManager.save).toHaveBeenCalledWith(
         expect.anything(),

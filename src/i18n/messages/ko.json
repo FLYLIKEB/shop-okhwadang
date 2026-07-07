@@ -734,6 +734,19 @@
         "delivered": "배송완료",
         "cancelled": "주문취소",
         "refunded": "환불완료"
+      },
+      "cancel": {
+        "action": "주문 취소",
+        "title": "주문 취소",
+        "description": "주문 {orderNumber}을(를) 취소하고 고객에게 취소 현황을 알립니다.",
+        "reasonLabel": "취소 사유",
+        "reasonPlaceholder": "고객에게 전달할 취소 사유를 입력하세요.",
+        "reasonRequired": "취소 사유를 입력해주세요.",
+        "close": "닫기",
+        "submit": "취소 처리",
+        "submitting": "처리 중...",
+        "success": "주문이 취소되었고 고객 알림이 요청되었습니다.",
+        "error": "주문 취소에 실패했습니다."
       }
     },
     "products": {

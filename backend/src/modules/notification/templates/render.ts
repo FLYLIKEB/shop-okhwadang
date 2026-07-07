@@ -7,6 +7,13 @@ export interface OrderConfirmedContext {
   locale?: 'ko' | 'en';
 }
 
+export interface OrderCancelledContext {
+  recipientName: string;
+  orderNumber: string;
+  reason: string;
+  locale?: 'ko' | 'en';
+}
+
 export interface PaymentConfirmedContext {
   recipientName: string;
   orderNumber: string;
@@ -70,6 +77,19 @@ export function renderOrderConfirmed(ctx: OrderConfirmedContext): RenderedEmail 
   const text = isKo
     ? `${ctx.recipientName}님, 주문 ${ctx.orderNumber}이(가) 접수되었습니다. 결제금액: ${formatKRW(ctx.totalAmount)}`
     : `Hi ${ctx.recipientName}, your order ${ctx.orderNumber} has been received. Total: ${formatKRW(ctx.totalAmount)}`;
+  const html = `<div><h2>${escapeHtml(subject)}</h2><p>${escapeHtml(text)}</p></div>`;
+  return { subject, html, text };
+}
+
+
+export function renderOrderCancelled(ctx: OrderCancelledContext): RenderedEmail {
+  const isKo = (ctx.locale ?? 'ko') === 'ko';
+  const subject = isKo
+    ? `[옥화당] 주문이 취소되었습니다 (${ctx.orderNumber})`
+    : `[Ockhwadang] Order cancelled (${ctx.orderNumber})`;
+  const text = isKo
+    ? `${ctx.recipientName}님, 주문 ${ctx.orderNumber}이(가) 취소되었습니다. 취소 사유: ${ctx.reason}`
+    : `Hi ${ctx.recipientName}, your order ${ctx.orderNumber} has been cancelled. Reason: ${ctx.reason}`;
   const html = `<div><h2>${escapeHtml(subject)}</h2><p>${escapeHtml(text)}</p></div>`;
   return { subject, html, text };
 }
