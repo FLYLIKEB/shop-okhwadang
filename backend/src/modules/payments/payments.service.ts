@@ -187,15 +187,28 @@ export class PaymentsService {
         orderId: dto.orderId,
         amount: Number(order.totalAmount),
         status: PaymentStatus.PENDING,
-        method: PaymentMethod.MOCK,
-        gateway: this.gatewayNameToType(gatewayName),
+        method: gatewayName === 'bank_transfer' ? PaymentMethod.BANK_TRANSFER : PaymentMethod.MOCK,
+        gateway: gatewayName === 'bank_transfer' ? PaymentGatewayType.MOCK : this.gatewayNameToType(gatewayName),
       });
       payment = await this.paymentRepository.save(payment);
     } else {
       await this.paymentRepository.update(payment.id, {
-        gateway: this.gatewayNameToType(gatewayName),
+        method: gatewayName === 'bank_transfer' ? PaymentMethod.BANK_TRANSFER : PaymentMethod.MOCK,
+        gateway: gatewayName === 'bank_transfer' ? PaymentGatewayType.MOCK : this.gatewayNameToType(gatewayName),
       });
       payment = await findOrThrow(this.paymentRepository, { id: payment.id }, '결제 정보를 찾을 수 없습니다.');
+    }
+
+    if (gatewayName === 'bank_transfer') {
+      return {
+        paymentId: Number(payment.id),
+        orderId: dto.orderId,
+        orderNumber: order.orderNumber,
+        amount: Number(order.totalAmount),
+        gateway: gatewayName,
+        clientKey: 'bank_transfer',
+        availableGateways,
+      };
     }
 
     const result = await selectedGateway.prepare(String(dto.orderId), Number(order.totalAmount), {

@@ -222,13 +222,25 @@ export function useCheckout(options: UseCheckoutOptions) {
         return;
       }
 
+      if (result.gateway === 'bank_transfer') {
+        options.setCurrentOrderId(order.id);
+        options.setCurrentOrderNumber(order.orderNumber);
+        options.setPrepareResult(null);
+        options.setStep('success');
+        toast.success(toastMessage('bankTransferOrderReceived'));
+        sessionStorage.removeItem(SESSION_KEYS.CHECKOUT_ITEMS);
+        await refetch();
+        router.replace(`/${locale}/order/complete?orderId=${order.id}&orderNumber=${order.orderNumber}`);
+        return;
+      }
+
       // Mock flow
       await handleMockFlow(order.id, order.orderNumber);
     } catch (err) {
       toast.error(handleApiError(err, toastMessage('paymentError')));
       options.setStep('idle');
     }
-  }, [options, form, checkoutItems, locale, handlePreparedGatewayFlow, handleTossFlow, handleExternalRedirectFlow, handleMockFlow]);
+  }, [options, form, checkoutItems, locale, refetch, router, handlePreparedGatewayFlow, handleTossFlow, handleExternalRedirectFlow, handleMockFlow]);
 
   return {
     handleSubmit,

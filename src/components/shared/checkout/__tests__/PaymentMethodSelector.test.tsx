@@ -8,10 +8,9 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => {
     const dict: Record<string, string> = {
       paymentMethod: 'Payment Method',
-      paymentMethodHint: 'Choose an express payment first, or select Credit card if you prefer card checkout.',
       paypalPayment: 'PayPal',
       naverpayPayment: '네이버페이',
-      naverpayDomesticBadge: '국내 전용',
+      bankTransferPayment: '무통장입금',
       eximbayPayment: 'Credit card',
       cardPaymentTitle: 'Payment',
       cardPaymentSubtitle: 'Card details are entered only in the payment provider’s secure page.',
@@ -36,7 +35,7 @@ vi.mock('next-intl', () => ({
 }));
 
 describe('PaymentMethodSelector', () => {
-  it('ko 정책은 네이버페이 → PayPal → Credit card 순서이고 카드는 선택할 때만 열린다', async () => {
+  it('ko 정책은 네이버페이 → 무통장입금 → PayPal → Credit card 순서이고 카드는 선택할 때만 열린다', async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const options = getGatewayOptionsByLocale('ko');
@@ -50,8 +49,9 @@ describe('PaymentMethodSelector', () => {
       />,
     );
 
-    expect(options).toEqual(['naverpay', 'paypal', 'eximbay']);
+    expect(options).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
     expect(screen.getByRole('radio', { name: /네이버페이/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /무통장입금/ })).toBeInTheDocument();
     expect(screen.queryByTestId('secure-card-entry-shell')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: /Credit card/ }));
@@ -89,5 +89,6 @@ describe('PaymentMethodSelector', () => {
     expect(screen.getByRole('radio', { name: /PayPal/ })).toBeChecked();
     expect(screen.getByRole('radio', { name: /Credit card/ })).toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /네이버페이|Naver Pay/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /무통장입금|Bank transfer/ })).not.toBeInTheDocument();
   });
 });

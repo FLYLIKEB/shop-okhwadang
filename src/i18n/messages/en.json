@@ -435,14 +435,12 @@
       "payment": "Payment",
       "complete": "Done"
     },
-    "paymentMethodHint": "Choose an express payment first, or select Credit card if you prefer card checkout.",
     "freeShipping": "Free",
     "freeShippingUnlocked": "Free shipping is now applied.",
     "freeShippingRemaining": "Add {amount} more for free shipping",
     "paypalPayment": "PayPal",
     "naverpayPayment": "Naver Pay",
-    "naverpayDomesticBadge": "Korea only",
-    "naverpayDomesticHint": "Korea-only express payment",
+    "bankTransferPayment": "Bank transfer",
     "paypalRedirectHint": "PayPal",
     "externalPaymentUnavailable": "Unable to open the payment page.",
     "consent": {

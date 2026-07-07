@@ -30,11 +30,9 @@ function makeTranslator(namespace?: string) {
     taxReceiptGuideDescription: '현금영수증 또는 세금계산서가 필요하시면 주문번호를 포함해 고객센터로 요청해 주세요.',
     taxReceiptPersonal: '개인소득공제와 사업자지출증빙은 결제수단 정책에 따라 처리 범위가 달라질 수 있습니다.',
     taxInvoiceBusiness: '세금계산서는 사업자등록번호와 담당자 연락처를 함께 전달해 주세요.',
-    paymentMethodHint: '주문 정보 입력 후 결제 수단이 표시됩니다.',
     paypalPayment: 'PayPal',
     naverpayPayment: '네이버페이',
-    naverpayDomesticBadge: '국내 전용',
-    naverpayDomesticHint: '국내 전용 간편결제',
+    bankTransferPayment: '무통장입금',
     eximbayPayment: 'Credit card',
     eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
     cardPaymentTitle: 'Payment',
@@ -143,11 +141,38 @@ describe('OrderDetailPage', () => {
     expect(screen.queryByTestId('shipping-timeline')).toBeNull();
     expect(screen.getByRole('radio', { name: /네이버페이/ })).toBeChecked();
     expect(screen.queryByPlaceholderText('Card number')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /무통장입금/ })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Credit card/ })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /PayPal/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '결제하기' })).toBeInTheDocument();
     expect(screen.getByText('현금영수증/세금계산서 안내')).toBeInTheDocument();
     expect(screen.getByText(/주문번호를 포함해 고객센터로 요청/)).toBeInTheDocument();
+  });
+
+
+  it('결제대기 주문에서 무통장입금 선택 시 PaymentGateway로 전환하지 않고 주문을 갱신한다', async () => {
+    const user = userEvent.setup();
+    vi.mocked(paymentsApi.prepare).mockResolvedValue({
+      paymentId: 11,
+      orderId: 16,
+      orderNumber: 'ORD-16',
+      amount: 30000,
+      gateway: 'bank_transfer',
+      clientKey: 'bank_transfer',
+      availableGateways: ['naverpay', 'bank_transfer', 'paypal', 'eximbay'],
+    });
+
+    render(<OrderDetailPage />);
+
+    await screen.findByText('ORD-16');
+    await user.click(screen.getByRole('radio', { name: /무통장입금/ }));
+    await user.click(screen.getByRole('button', { name: '결제하기' }));
+
+    await waitFor(() => {
+      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 16, locale: 'ko', gateway: 'bank_transfer' });
+    });
+    expect(screen.queryByTestId('payment-gateway')).not.toBeInTheDocument();
+    expect(ordersApi.getById).toHaveBeenCalledTimes(2);
   });
 
   it('결제대기 주문에서 PayPal 선택 후 결제 준비 API를 호출하고 동일 PaymentGateway 컴포넌트로 전환한다', async () => {

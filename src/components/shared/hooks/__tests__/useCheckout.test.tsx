@@ -4,6 +4,7 @@ import type {
   CartItem,
   PreparePaymentResponse,
   OrderResponse,
+  CheckoutGatewayName,
 } from '@/lib/api';
 import type { ShippingForm } from '@/app/[locale]/checkout/page';
 import type { PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
@@ -90,7 +91,7 @@ const mockOrder: OrderResponse = {
 interface OptionsState {
   step: PaymentStep;
   prepareResult: PreparePaymentResponse | null;
-  selectedGateway: 'naverpay' | 'paypal';
+  selectedGateway: CheckoutGatewayName;
   currentOrderId: number | null;
   currentOrderNumber: string;
 }
@@ -401,6 +402,50 @@ describe('useCheckout - Mock 결제 흐름', () => {
     expect(options.setStep).toHaveBeenCalledWith('preparing_payment');
     expect(options.setStep).toHaveBeenCalledWith('confirming_payment');
     expect(options.setStep).toHaveBeenCalledWith('success');
+  });
+});
+
+
+describe('useCheckout - 무통장입금 흐름', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionStorage.clear();
+  });
+
+  it('bank_transfer 응답은 결제 승인 없이 주문 완료로 이동한다', async () => {
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 4,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      amount: 30000,
+      gateway: 'bank_transfer',
+      clientKey: 'bank_transfer',
+    };
+    sessionStorage.setItem('checkoutItems', JSON.stringify([mockItem]));
+    mockOrdersCreate.mockResolvedValue(mockOrder);
+    mockPaymentsPrepare.mockResolvedValue(prepareResult);
+
+    const { options, refetch } = makeOptions({ selectedGateway: 'bank_transfer' });
+    const { result } = renderHook(() => useCheckout(options));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeFormEvent());
+    });
+
+    expect(mockPaymentsPrepare).toHaveBeenCalledWith({
+      orderId: mockOrder.id,
+      locale: 'ko',
+      gateway: 'bank_transfer',
+    });
+    expect(mockPaymentsConfirm).not.toHaveBeenCalled();
+    expect(options.setPrepareResult).toHaveBeenCalledWith(null);
+    expect(options.setStep).toHaveBeenCalledWith('success');
+    expect(toast.success).toHaveBeenCalledWith('주문이 접수되었습니다. 무통장입금을 진행해 주세요.');
+    expect(sessionStorage.getItem('checkoutItems')).toBeNull();
+    expect(refetch).toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith(
+      `/ko/order/complete?orderId=${mockOrder.id}&orderNumber=${mockOrder.orderNumber}`,
+    );
   });
 });
 

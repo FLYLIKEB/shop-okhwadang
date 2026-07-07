@@ -78,9 +78,26 @@ describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
 });
 
 describe('locale gateway policy — express payments first and country-specific visibility', () => {
-  it('ko → naverpay default, paypal express, eximbay card fallback', () => {
+  it('ko → naverpay default, bank transfer, paypal, eximbay card fallback', () => {
     expect(resolveGatewayByLocale('ko')).toBe('naverpay');
-    expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'paypal', 'eximbay']);
+    expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
+  });
+
+
+  it('ko keeps bank transfer even when external gateways are configured by env', () => {
+    const previous = process.env.CHECKOUT_ENABLED_GATEWAYS;
+    process.env.CHECKOUT_ENABLED_GATEWAYS = 'naverpay,paypal,eximbay';
+
+    try {
+      expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
+      expect(getAvailableGatewaysByLocale('en')).toEqual(['paypal', 'eximbay']);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.CHECKOUT_ENABLED_GATEWAYS;
+      } else {
+        process.env.CHECKOUT_ENABLED_GATEWAYS = previous;
+      }
+    }
   });
 
   it('en and other locales → paypal default, eximbay card, no naverpay', () => {

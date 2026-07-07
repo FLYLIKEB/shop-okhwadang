@@ -28,30 +28,30 @@ export function resolvePaymentGateway(config: PaymentConfig): string {
   return config.gateway;
 }
 
-export type CheckoutGatewayName = 'naverpay' | 'eximbay' | 'paypal';
+export type CheckoutGatewayName = 'naverpay' | 'bank_transfer' | 'eximbay' | 'paypal';
 
 /**
  * 국가/로케일 기반 결제 게이트웨이 노출 정책 (#1066)
  *
- * 간편결제를 우선 노출하고, 국내 전용 수단은 해외 사이트에서 숨긴다.
- * - ko/KR: 네이버페이 기본, PayPal, Eximbay 카드
+ * 로케일별로 적합한 결제수단만 노출한다.
+ * - ko/KR: 네이버페이 기본, 무통장입금, PayPal, Eximbay 카드
  * - 글로벌: PayPal 기본, Eximbay 카드 (네이버페이 숨김)
  */
 function getEnabledCheckoutGateways(env: NodeJS.ProcessEnv = process.env): CheckoutGatewayName[] {
   const configured = env.CHECKOUT_ENABLED_GATEWAYS;
-  if (!configured || configured.trim() === '') return ['naverpay', 'eximbay', 'paypal'];
+  if (!configured || configured.trim() === '') return ['naverpay', 'bank_transfer', 'eximbay', 'paypal'];
 
   const gateways = configured
     .split(',')
     .map((value) => value.trim().toLowerCase())
     .filter(isCheckoutGatewayName);
 
-  return [...new Set(gateways)];
+  return [...new Set([...gateways, 'bank_transfer' as const])];
 }
 
 export function getAvailableGatewaysByLocale(locale: string): CheckoutGatewayName[] {
   const localeOrder: CheckoutGatewayName[] = locale === 'ko'
-    ? ['naverpay', 'paypal', 'eximbay']
+    ? ['naverpay', 'bank_transfer', 'paypal', 'eximbay']
     : ['paypal', 'eximbay'];
   const enabled = getEnabledCheckoutGateways();
   return localeOrder.filter((gateway) => enabled.includes(gateway));
@@ -62,7 +62,7 @@ export function resolveGatewayByLocale(locale: string): CheckoutGatewayName {
 }
 
 export function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
-  return value === 'naverpay' || value === 'eximbay' || value === 'paypal';
+  return value === 'naverpay' || value === 'bank_transfer' || value === 'eximbay' || value === 'paypal';
 }
 
 const gatewayProviders = [
