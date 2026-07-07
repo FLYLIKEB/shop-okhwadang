@@ -13,7 +13,7 @@ import {
 import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import type { PaymentsService } from '../../payments/payments.service';
-import { PaymentStatus } from '../../payments/entities/payment.entity';
+import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { UpdateOrderServiceRequestDto } from '../dto/update-order-service-request.dto';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order => ({
@@ -194,7 +194,79 @@ describe('OrderServiceRequestsService', () => {
     });
 
     expect(paymentsService.cancelPaidOrder).not.toHaveBeenCalled();
-    expect(manager.update).toHaveBeenCalledWith(Order, order.id, { status: OrderStatus.CANCELLED });
+    expect(manager.update).toHaveBeenCalledWith(Order, order.id, expect.objectContaining({
+      status: OrderStatus.CANCELLED,
+      cancelReason: request.reason,
+      cancelledAt: expect.any(Date),
+    }));
+    expect(manager.update).toHaveBeenCalledWith(
+      Payment,
+      { orderId: order.id, status: PaymentStatus.PENDING },
+      expect.objectContaining({ status: PaymentStatus.CANCELLED, cancelReason: request.reason }),
+    );
+  });
+
+  it('pending cancel request is completed immediately by the user without admin approval', async () => {
+    const order = makeOrder({ status: OrderStatus.PENDING, pointsUsed: 0 });
+    const request = makeRequest(order, { id: 77, status: OrderServiceRequestStatus.REQUESTED, reason: '단순 변심' });
+    const completed = makeRequest(order, {
+      id: 77,
+      status: OrderServiceRequestStatus.COMPLETED,
+      reason: '단순 변심',
+      adminNote: '결제대기 주문 사용자 즉시 취소',
+      processedAt: new Date(),
+    });
+    orderRepository.findOne.mockResolvedValue(order);
+    requestRepository.findOne
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(completed);
+    requestRepository.create.mockReturnValue(request);
+    manager.save.mockResolvedValue(completed);
+    manager.findOne.mockResolvedValue(order);
+
+    const result = await service.create(order.id, order.userId, {
+      type: OrderServiceRequestType.CANCEL,
+      reason: '단순 변심',
+      useShippingAddress: true,
+    });
+
+    expect(result).toBe(completed);
+    expect(requestRepository.save).not.toHaveBeenCalled();
+    expect(manager.save).toHaveBeenCalledWith(OrderServiceRequest, expect.objectContaining({
+      status: OrderServiceRequestStatus.COMPLETED,
+      adminNote: '결제대기 주문 사용자 즉시 취소',
+      processedAt: expect.any(Date),
+    }));
+    expect(manager.update).toHaveBeenCalledWith(Order, order.id, expect.objectContaining({
+      status: OrderStatus.CANCELLED,
+      cancelReason: '단순 변심',
+      cancelledAt: expect.any(Date),
+    }));
+    expect(manager.update).toHaveBeenCalledWith(
+      Payment,
+      { orderId: order.id, status: PaymentStatus.PENDING },
+      expect.objectContaining({ status: PaymentStatus.CANCELLED, cancelReason: '단순 변심' }),
+    );
+    expect(paymentsService.cancelPaidOrder).not.toHaveBeenCalled();
+  });
+
+
+  it('pending immediate cancellation rechecks pending status inside the transaction', async () => {
+    const order = makeOrder({ status: OrderStatus.PENDING, pointsUsed: 0 });
+    const request = makeRequest(order, { id: 78, status: OrderServiceRequestStatus.REQUESTED, reason: '단순 변심' });
+    orderRepository.findOne.mockResolvedValue(order);
+    requestRepository.findOne.mockResolvedValueOnce(null);
+    requestRepository.create.mockReturnValue(request);
+    manager.findOne.mockResolvedValueOnce(makeOrder({ status: OrderStatus.PAID }));
+
+    await expect(service.create(order.id, order.userId, {
+      type: OrderServiceRequestType.CANCEL,
+      reason: '단순 변심',
+      useShippingAddress: true,
+    })).rejects.toThrow('결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.');
+
+    expect(manager.save).not.toHaveBeenCalled();
+    expect(manager.update).not.toHaveBeenCalledWith(Order, order.id, expect.any(Object));
   });
 
   it('escapes HTML-like recipient names in received request notification email HTML', async () => {

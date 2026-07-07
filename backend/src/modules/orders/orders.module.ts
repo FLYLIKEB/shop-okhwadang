@@ -5,6 +5,7 @@ import { OrderServiceRequest } from './entities/order-service-request.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { PolicyConsent } from '../pages/entities/policy-consent.entity';
+import { Payment } from '../payments/entities/payment.entity';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { AdminOrderServiceRequestsController, OrderServiceRequestsController } from './order-service-requests.controller';
@@ -16,7 +17,7 @@ import { OrderServiceRequestsService } from './order-service-requests.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, OrderServiceRequest, PointHistory, PolicyConsent]),
+    TypeOrmModule.forFeature([Order, OrderItem, OrderServiceRequest, PointHistory, PolicyConsent, Payment]),
     PointsModule,
     CouponsModule,
     ShippingModule,

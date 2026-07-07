@@ -30,6 +30,30 @@ function makeTranslator(namespace?: string) {
     taxReceiptGuideDescription: '현금영수증 또는 세금계산서가 필요하시면 주문번호를 포함해 고객센터로 요청해 주세요.',
     taxReceiptPersonal: '개인소득공제와 사업자지출증빙은 결제수단 정책에 따라 처리 범위가 달라질 수 있습니다.',
     taxInvoiceBusiness: '세금계산서는 사업자등록번호와 담당자 연락처를 함께 전달해 주세요.',
+    'serviceRequests.title': '취소/교환/반품/환불 신청',
+    'serviceRequests.pendingCancelGuide': '결제대기 상태에서는 관리자 승인 없이 바로 주문을 취소할 수 있습니다.',
+    'serviceRequests.cancelGuide': '결제대기/결제완료 상태에서는 주문 취소를 신청할 수 있습니다.',
+    'serviceRequests.afterDeliveryGuide': '배송 완료 후 반품/교환/환불 신청을 접수할 수 있습니다.',
+    'serviceRequests.unavailableGuide': '현재 주문 상태에서는 온라인 신청이 제한됩니다.',
+    'serviceRequests.typeLabel': '신청 유형',
+    'serviceRequests.reasonLabel': '사유',
+    'serviceRequests.reasonPlaceholder': '취소 사유를 입력하세요.',
+    'serviceRequests.detailLabel': '상세 내용',
+    'serviceRequests.detailPlaceholder': '상세 내용을 입력하세요.',
+    'serviceRequests.submit': '신청 접수',
+    'serviceRequests.immediateCancelSubmit': '주문 바로 취소',
+    'serviceRequests.submitSuccess': '신청이 접수되었습니다.',
+    'serviceRequests.immediateCancelSuccess': '주문이 취소되었습니다.',
+    'serviceRequests.submitError': '신청에 실패했습니다.',
+    'serviceRequests.reasonRequired': '사유를 입력해주세요.',
+    'serviceRequests.types.cancel': '주문 취소',
+    'serviceRequests.types.return': '반품',
+    'serviceRequests.types.exchange': '교환',
+    'serviceRequests.types.refund': '환불',
+    'serviceRequests.status.requested': '접수',
+    'serviceRequests.status.approved': '승인',
+    'serviceRequests.status.rejected': '반려',
+    'serviceRequests.status.completed': '처리 완료',
     paypalPayment: 'PayPal',
     naverpayPayment: '네이버페이',
     bankTransferPayment: '무통장입금',
@@ -113,7 +137,7 @@ vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
 }));
 
 vi.mock('@/lib/api', () => ({
-  ordersApi: { getById: vi.fn() },
+  ordersApi: { getById: vi.fn(), getServiceRequests: vi.fn(), createServiceRequest: vi.fn() },
   paymentsApi: { prepare: vi.fn() },
 }));
 
@@ -140,6 +164,26 @@ describe('OrderDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(ordersApi.getById).mockResolvedValue(pendingOrder);
+    vi.mocked(ordersApi.getServiceRequests).mockResolvedValue([]);
+    vi.mocked(ordersApi.createServiceRequest).mockResolvedValue({
+      id: 1,
+      orderId: 16,
+      userId: 10,
+      type: 'cancel',
+      status: 'completed',
+      reason: '단순 변심',
+      detail: null,
+      imageUrls: null,
+      useShippingAddress: true,
+      pickupName: null,
+      pickupPhone: null,
+      pickupZipcode: null,
+      pickupAddress: null,
+      pickupAddressDetail: null,
+      adminNote: null,
+      processedAt: '2026-07-07T00:00:00.000Z',
+      createdAt: '2026-07-07T00:00:00.000Z',
+    });
   });
 
   it('결제대기 주문에서는 배송 추적을 숨기고 결제 수단 선택을 노출한다', async () => {
@@ -155,6 +199,30 @@ describe('OrderDetailPage', () => {
     expect(screen.getByRole('button', { name: '결제하기' })).toBeInTheDocument();
     expect(screen.getByText('현금영수증/세금계산서 안내')).toBeInTheDocument();
     expect(screen.getByText(/주문번호를 포함해 고객센터로 요청/)).toBeInTheDocument();
+  });
+
+
+  it('결제대기 주문에서 주문 바로 취소 신청을 즉시 완료 API로 접수한다', async () => {
+    const user = userEvent.setup();
+
+    render(<OrderDetailPage />);
+
+    expect(await screen.findByText('ORD-16')).toBeInTheDocument();
+    expect(screen.getByText('결제대기 상태에서는 관리자 승인 없이 바로 주문을 취소할 수 있습니다.')).toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText('취소 사유를 입력하세요.'), '단순 변심');
+    await user.click(screen.getByRole('button', { name: '주문 바로 취소' }));
+
+    await waitFor(() => {
+      expect(ordersApi.createServiceRequest).toHaveBeenCalledWith(16, {
+        type: 'cancel',
+        reason: '단순 변심',
+        detail: undefined,
+        useShippingAddress: true,
+      });
+    });
+    expect(ordersApi.getServiceRequests).toHaveBeenCalledWith(16);
+    expect(ordersApi.getById).toHaveBeenCalledTimes(2);
   });
 
 
