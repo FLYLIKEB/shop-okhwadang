@@ -134,54 +134,111 @@ export class AdminOrdersService {
       throw new BadRequestException('취소 사유를 입력해주세요.');
     }
 
-    const order = await findOrThrow(
-      this.orderRepository,
-      { id: orderId },
-      '주문을 찾을 수 없습니다.',
-      ['items', 'user'],
-    );
+    await this.acquireOrderCancellationLock(orderId);
+    let orderForNotification: Order;
 
-    const currentStatus = order.status;
-    assertOrderStatusTransition(currentStatus, OrderStatus.CANCELLED);
+    try {
+      const order = await findOrThrow(
+        this.orderRepository,
+        { id: orderId },
+        '주문을 찾을 수 없습니다.',
+        ['items', 'user'],
+      );
 
-    const payment = await this.paymentRepository.findOne({ where: { orderId }, relations: ['order'] });
-    const cancelledAt = new Date();
+      const currentStatus = order.status;
+      assertOrderStatusTransition(currentStatus, OrderStatus.CANCELLED);
 
-    if (payment?.status === PaymentStatus.CONFIRMED) {
-      await this.dataSource.transaction(async (manager) => {
-        await this.paymentsService.cancelPaidOrder(orderId, trimmedReason, manager);
-        await manager.update(Order, orderId, { cancelReason: trimmedReason, cancelledAt });
-      });
-    } else {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.update(Order, orderId, {
-          status: OrderStatus.CANCELLED,
-          cancelReason: trimmedReason,
-          cancelledAt,
-        });
+      const payment = await this.paymentRepository.findOne({ where: { orderId }, relations: ['order'] });
+      this.assertPaymentStateAllowsCancellation(currentStatus, payment);
 
-        if (payment && payment.status === PaymentStatus.PENDING) {
-          await manager.update(Payment, payment.id, {
-            status: PaymentStatus.CANCELLED,
+      if (payment?.status === PaymentStatus.CONFIRMED) {
+        await this.paymentsService.cancelPaidOrder(orderId, trimmedReason);
+      } else {
+        const cancelledAt = new Date();
+        await this.dataSource.transaction(async (manager) => {
+          const lockedOrder = await manager.findOne(Order, {
+            where: { id: orderId },
+            relations: ['user'],
+            lock: { mode: 'pessimistic_write' },
+          });
+
+          if (!lockedOrder) {
+            throw new BadRequestException('주문을 찾을 수 없습니다.');
+          }
+
+          assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
+
+          await manager.update(Order, orderId, {
+            status: OrderStatus.CANCELLED,
             cancelReason: trimmedReason,
             cancelledAt,
           });
-        }
 
-        if (this.shouldRestoreStockAndPoints(currentStatus, OrderStatus.CANCELLED)) {
-          await this.restoreStock(manager, orderId);
-          await this.restorePoints(manager, order);
-        }
-      });
+          if (payment && payment.status === PaymentStatus.PENDING) {
+            await manager.update(Payment, payment.id, {
+              status: PaymentStatus.CANCELLED,
+              cancelReason: trimmedReason,
+              cancelledAt,
+            });
+          }
+
+          if (this.shouldRestoreStockAndPoints(lockedOrder.status, OrderStatus.CANCELLED)) {
+            await this.restoreStock(manager, orderId);
+            await this.restorePoints(manager, lockedOrder);
+          }
+        });
+      }
+
+      this.logger.log(`Order #${orderId} cancelled by admin: ${currentStatus} → ${OrderStatus.CANCELLED}`);
+      orderForNotification = order;
+    } finally {
+      await this.releaseOrderCancellationLock(orderId);
     }
 
-    this.logger.log(`Order #${orderId} cancelled by admin: ${currentStatus} → ${OrderStatus.CANCELLED}`);
-    void this.sendCancellationNotifications(orderId, order, trimmedReason);
+    void this.sendCancellationNotifications(orderId, orderForNotification, trimmedReason);
 
     return this.orderRepository.findOne({
       where: { id: orderId },
       relations: ['items', 'user'],
     });
+  }
+
+  private assertPaymentStateAllowsCancellation(status: OrderStatus, payment: Payment | null): void {
+    if (payment?.status === PaymentStatus.PARTIAL_CANCELLED) {
+      throw new BadRequestException('부분 환불된 주문은 남은 결제 금액을 환불 처리한 뒤 취소해주세요.');
+    }
+
+    if ([OrderStatus.PAID, OrderStatus.PREPARING].includes(status)) {
+      if (!payment) {
+        throw new BadRequestException('결제 완료 주문의 결제 정보를 찾을 수 없습니다.');
+      }
+
+      if (payment.status !== PaymentStatus.CONFIRMED) {
+        throw new BadRequestException('현재 결제 상태에서는 주문 취소를 진행할 수 없습니다.');
+      }
+    }
+  }
+
+  private async acquireOrderCancellationLock(orderId: number): Promise<void> {
+    const lockName = this.orderCancellationLockName(orderId);
+    const rows = await this.dataSource.query('SELECT GET_LOCK(?, 10) AS acquired', [lockName]) as Array<{ acquired?: number | string }>;
+    const acquired = rows[0]?.acquired;
+    if (Number(acquired) !== 1) {
+      throw new ConflictException('주문 취소 처리가 이미 진행 중입니다. 잠시 후 다시 시도해주세요.');
+    }
+  }
+
+  private async releaseOrderCancellationLock(orderId: number): Promise<void> {
+    const lockName = this.orderCancellationLockName(orderId);
+    try {
+      await this.dataSource.query('SELECT RELEASE_LOCK(?)', [lockName]);
+    } catch (err) {
+      this.logger.warn(`Failed to release order cancellation lock for order ${orderId}: ${String(err)}`);
+    }
+  }
+
+  private orderCancellationLockName(orderId: number): string {
+    return `admin-order-cancel:${orderId}`;
   }
 
   private async sendCancellationNotifications(orderId: number, order: Order, reason: string): Promise<void> {

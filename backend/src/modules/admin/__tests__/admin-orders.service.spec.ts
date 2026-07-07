@@ -45,6 +45,7 @@ function createMockManager() {
   return {
     update: jest.fn().mockResolvedValue({}),
     find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn(),
     increment: jest.fn().mockResolvedValue({}),
   };
 }
@@ -82,6 +83,7 @@ describe('AdminOrdersService', () => {
       sendShippingDelivered: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<MessageNotificationService>;
     dataSource = {
+      query: jest.fn().mockResolvedValue([{ acquired: 1 }]),
       transaction: jest.fn().mockImplementation((cb: (manager: unknown) => Promise<unknown>) => cb(mockManager)),
     } as unknown as jest.Mocked<DataSource>;
 
@@ -321,16 +323,47 @@ describe('AdminOrdersService', () => {
 
       await service.cancelOrder(1, ' 품절 ');
 
-      expect(paymentsService.cancelPaidOrder).toHaveBeenCalledWith(1, '품절', mockManager);
-      expect(mockManager.update).toHaveBeenCalledWith(Order, 1, expect.objectContaining({
-        cancelReason: '품절',
-        cancelledAt: expect.any(Date),
-      }));
+      expect(paymentsService.cancelPaidOrder).toHaveBeenCalledWith(1, '품절');
       expect(notificationService.sendOrderCancelled).toHaveBeenCalledWith('customer@example.com', expect.objectContaining({
         orderNumber: 'ORD-1',
         reason: '품절',
       }));
       expect(messageNotificationService.sendOrderCancelled).toHaveBeenCalledWith(1, '품절');
+    });
+
+    it('rejects partial-cancelled payments instead of cancelling the order', async () => {
+      const order = {
+        id: 1,
+        userId: 10,
+        user: { email: 'customer@example.com' },
+        status: OrderStatus.PAID,
+        orderNumber: 'ORD-PARTIAL',
+        recipientName: '홍길동',
+        pointsUsed: 0,
+      };
+      orderRepo.findOne.mockResolvedValueOnce(order);
+      paymentRepo.findOne.mockResolvedValue({ id: 30, orderId: 1, status: PaymentStatus.PARTIAL_CANCELLED });
+
+      await expect(service.cancelOrder(1, '부분 환불 후 취소')).rejects.toThrow(BadRequestException);
+      expect(paymentsService.cancelPaidOrder).not.toHaveBeenCalled();
+      expect(mockManager.update).not.toHaveBeenCalledWith(Order, 1, expect.anything());
+    });
+
+    it('rejects paid orders without confirmed payment state', async () => {
+      const order = {
+        id: 1,
+        userId: 10,
+        user: { email: 'customer@example.com' },
+        status: OrderStatus.PAID,
+        orderNumber: 'ORD-NOPAY',
+        recipientName: '홍길동',
+        pointsUsed: 0,
+      };
+      orderRepo.findOne.mockResolvedValueOnce(order);
+      paymentRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.cancelOrder(1, '결제 정보 없음')).rejects.toThrow(BadRequestException);
+      expect(paymentsService.cancelPaidOrder).not.toHaveBeenCalled();
     });
 
     it('pending order: cancels order and pending payment without gateway cancellation', async () => {
@@ -347,6 +380,7 @@ describe('AdminOrdersService', () => {
         .mockResolvedValueOnce(order)
         .mockResolvedValueOnce({ ...order, status: OrderStatus.CANCELLED, cancelReason: '고객 요청' });
       paymentRepo.findOne.mockResolvedValue({ id: 20, orderId: 1, status: PaymentStatus.PENDING });
+      mockManager.findOne.mockResolvedValue(order);
       paymentsService.cancelPaidOrder = jest.fn();
       mockManager.find.mockResolvedValue([
         { orderId: 1, productId: 10, productOptionId: 20, quantity: 3 },

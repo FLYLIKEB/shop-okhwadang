@@ -388,7 +388,11 @@ export class PaymentsService {
         cancelReason: reason,
         rawResponse: result.rawResponse as object,
       });
-      await txManager.update(Order, orderId, { status: OrderStatus.CANCELLED });
+      await txManager.update(Order, orderId, {
+        status: OrderStatus.CANCELLED,
+        cancelReason: reason,
+        cancelledAt: result.cancelledAt,
+      });
       await restoreOrderStock(txManager, orderId);
       await this.restorePoints(txManager, payment.order);
     };

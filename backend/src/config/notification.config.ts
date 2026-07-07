@@ -87,6 +87,7 @@ export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): 
       'MESSAGE_TEMPLATE_PAYMENT_CONFIRMED',
       'MESSAGE_TEMPLATE_SHIPPING_STARTED',
       'MESSAGE_TEMPLATE_SHIPPING_DELIVERED',
+      'MESSAGE_TEMPLATE_ORDER_CANCELLED',
     ]) {
       requireMessageEnv(env, key);
     }
