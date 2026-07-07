@@ -134,6 +134,23 @@ describe('OrderCompletePage', () => {
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
   });
 
+
+  it('renders bank transfer account info when redirected from bank transfer checkout', async () => {
+    mockSearchParams = new URLSearchParams('orderId=1&orderNumber=ORD-20260325-ABCDE&payment=bank_transfer');
+    vi.mocked(ordersApi.getById).mockResolvedValue(sampleOrder);
+
+    await act(async () => {
+      render(<OrderCompletePage params={Promise.resolve({ locale: 'ko' })} />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('ORD-20260325-ABCDE')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('bank-transfer-account-info')).toBeInTheDocument();
+    expect(screen.getByText('123456-78-901234')).toBeInTheDocument();
+  });
+
   it('renders "쇼핑 계속하기" link pointing to /', async () => {
     vi.mocked(ordersApi.getById).mockResolvedValue(sampleOrder);
 

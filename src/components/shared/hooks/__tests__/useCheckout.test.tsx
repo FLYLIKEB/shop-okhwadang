@@ -444,7 +444,7 @@ describe('useCheckout - 무통장입금 흐름', () => {
     expect(sessionStorage.getItem('checkoutItems')).toBeNull();
     expect(refetch).toHaveBeenCalled();
     expect(mockReplace).toHaveBeenCalledWith(
-      `/ko/order/complete?orderId=${mockOrder.id}&orderNumber=${mockOrder.orderNumber}`,
+      `/ko/order/complete?orderId=${mockOrder.id}&orderNumber=${mockOrder.orderNumber}&payment=bank_transfer`,
     );
   });
 });

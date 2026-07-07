@@ -11,6 +11,14 @@ vi.mock('next-intl', () => ({
       paypalPayment: 'PayPal',
       naverpayPayment: '네이버페이',
       bankTransferPayment: '무통장입금',
+      bankTransferAccountTitle: '입금 계좌',
+      bankTransferBankLabel: '은행',
+      bankTransferBankName: '국민은행',
+      bankTransferAccountLabel: '계좌번호',
+      bankTransferAccountNumber: '123456-78-901234',
+      bankTransferHolderLabel: '예금주',
+      bankTransferAccountHolder: '옥화당',
+      bankTransferAccountNote: '주문 접수 후 위 계좌로 입금해 주세요. 입금 확인 후 상품 준비가 시작됩니다.',
       eximbayPayment: 'Credit card',
       cardPaymentTitle: 'Payment',
       cardPaymentSubtitle: 'Card details are entered only in the payment provider’s secure page.',
@@ -53,6 +61,22 @@ describe('PaymentMethodSelector', () => {
     expect(screen.getByRole('radio', { name: /네이버페이/ })).toBeChecked();
     expect(screen.getByRole('radio', { name: /무통장입금/ })).toBeInTheDocument();
     expect(screen.queryByTestId('secure-card-entry-shell')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bank-transfer-account-info')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: /무통장입금/ }));
+    expect(onSelect).toHaveBeenCalledWith('bank_transfer');
+
+    rerender(
+      <PaymentMethodSelector
+        gatewayOptions={options}
+        selectedGateway="bank_transfer"
+        onSelect={onSelect}
+        showCardSubmitButton
+      />,
+    );
+
+    expect(screen.getByTestId('bank-transfer-account-info')).toBeInTheDocument();
+    expect(screen.getByText('123456-78-901234')).toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: /Credit card/ }));
     expect(onSelect).toHaveBeenCalledWith('eximbay');

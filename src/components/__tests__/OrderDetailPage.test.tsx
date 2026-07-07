@@ -33,6 +33,14 @@ function makeTranslator(namespace?: string) {
     paypalPayment: 'PayPal',
     naverpayPayment: '네이버페이',
     bankTransferPayment: '무통장입금',
+    bankTransferAccountTitle: '입금 계좌',
+    bankTransferBankLabel: '은행',
+    bankTransferBankName: '국민은행',
+    bankTransferAccountLabel: '계좌번호',
+    bankTransferAccountNumber: '123456-78-901234',
+    bankTransferHolderLabel: '예금주',
+    bankTransferAccountHolder: '옥화당',
+    bankTransferAccountNote: '주문 접수 후 위 계좌로 입금해 주세요. 입금 확인 후 상품 준비가 시작됩니다.',
     eximbayPayment: 'Credit card',
     eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
     cardPaymentTitle: 'Payment',
@@ -166,6 +174,8 @@ describe('OrderDetailPage', () => {
 
     await screen.findByText('ORD-16');
     await user.click(screen.getByRole('radio', { name: /무통장입금/ }));
+    expect(screen.getByTestId('bank-transfer-account-info')).toBeInTheDocument();
+    expect(screen.getByText('123456-78-901234')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '결제하기' }));
 
     await waitFor(() => {
