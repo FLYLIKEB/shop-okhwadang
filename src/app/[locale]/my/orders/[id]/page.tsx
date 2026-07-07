@@ -181,6 +181,14 @@ export default function OrderDetailPage() {
         locale: checkoutLocale,
         gateway: selectedGateway,
       });
+      if (result.gateway === 'bank_transfer') {
+        setPrepareResult(null);
+        setPaymentStep('idle');
+        toast.success(toastMessage('bankTransferOrderReceived'));
+        void loadOrder();
+        return;
+      }
+
       setPrepareResult(result);
       setPaymentStep('idle');
     } catch (err) {

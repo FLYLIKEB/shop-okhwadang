@@ -12,8 +12,7 @@ vi.mock('next-intl', () => ({
       mockPayment: '테스트 결제 (Mock)',
       paypalPayment: 'PayPal',
       naverpayPayment: '네이버페이',
-      naverpayDomesticBadge: '국내 전용',
-      naverpayDomesticHint: '국내 전용 간편결제',
+      bankTransferPayment: '무통장입금',
       paypalRedirectHint: 'PayPal',
       eximbayPayment: 'Credit card',
       eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
@@ -175,7 +174,7 @@ describe('PaymentGateway', () => {
     expect(screen.queryByText('PayPal 승인 페이지로 이동합니다.')).not.toBeInTheDocument();
   });
 
-  it('gateway=naverpay → 국내 전용 배지를 표시', () => {
+  it('gateway=naverpay → 네이버페이만 표시', () => {
     const prepareResult: PreparePaymentResponse = {
       paymentId: 1,
       orderId: 1,
@@ -194,7 +193,6 @@ describe('PaymentGateway', () => {
       />,
     );
     expect(screen.getByRole('radio', { name: /네이버페이/ })).toBeInTheDocument();
-    expect(screen.getByText('국내 전용')).toBeInTheDocument();
     expect(screen.queryByText('해외 사용자는 결제가 실패할 수 있습니다.')).not.toBeInTheDocument();
   });
 

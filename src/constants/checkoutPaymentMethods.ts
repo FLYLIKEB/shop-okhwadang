@@ -9,24 +9,24 @@ export const CHECKOUT_PAYMENT_COUNTRY_BY_LOCALE = {
 } as const satisfies Record<Locale, CheckoutPaymentCountry>;
 
 export const CHECKOUT_PAYMENT_METHODS_BY_COUNTRY = {
-  KR: ['naverpay', 'paypal', 'eximbay'],
+  KR: ['naverpay', 'bank_transfer', 'paypal', 'eximbay'],
   GLOBAL: ['paypal', 'eximbay'],
 } as const satisfies Record<CheckoutPaymentCountry, readonly CheckoutGatewayName[]>;
 
 function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
-  return value === 'naverpay' || value === 'eximbay' || value === 'paypal';
+  return value === 'naverpay' || value === 'bank_transfer' || value === 'eximbay' || value === 'paypal';
 }
 
 export function getEnabledCheckoutGateways(): CheckoutGatewayName[] {
   const configured = process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS;
-  if (!configured || configured.trim() === '') return ['naverpay', 'eximbay', 'paypal'];
+  if (!configured || configured.trim() === '') return ['naverpay', 'bank_transfer', 'eximbay', 'paypal'];
 
   const gateways = configured
     .split(',')
     .map((value) => value.trim().toLowerCase())
     .filter(isCheckoutGatewayName);
 
-  return [...new Set(gateways)];
+  return [...new Set([...gateways, 'bank_transfer' as const])];
 }
 
 export function getCheckoutPaymentCountry(locale: Locale): CheckoutPaymentCountry {

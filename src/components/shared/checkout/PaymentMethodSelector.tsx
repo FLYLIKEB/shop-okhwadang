@@ -22,7 +22,6 @@ export function PaymentMethodSelector({
 
   return (
     <div className="layout-stack-sm">
-      <p className="typo-body-sm text-muted-foreground">{t('paymentMethodHint')}</p>
       <div className="layout-stack-md" role="radiogroup" aria-label={t('paymentMethod')}>
         <div className="grid gap-2">
           {gatewayOptions.map((gateway) => (

@@ -266,7 +266,7 @@ describe('PaymentsService', () => {
       const result = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
 
       expect(result.gateway).toBe('naverpay');
-      expect(result.availableGateways).toEqual(['naverpay', 'paypal', 'eximbay']);
+      expect(result.availableGateways).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
       expect(mockNaverpayAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.NAVERPAY }),
@@ -289,6 +289,24 @@ describe('PaymentsService', () => {
       expect(mockPaypalAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'en' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.PAYPAL }),
+      );
+    });
+
+    it('명시적 gateway=bank_transfer → pending 무통장입금 결제로 저장한다 (#1075)', async () => {
+      const order = makeOrder();
+      mockOrderRepo.findOne.mockResolvedValue(order);
+      mockPaymentRepo.findOne.mockResolvedValue(null);
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.MOCK, method: PaymentMethod.BANK_TRANSFER });
+      mockPaymentRepo.create.mockReturnValue(savedPayment);
+      mockPaymentRepo.save.mockResolvedValue(savedPayment);
+      const result = await service.prepare({ orderId: 1, locale: 'ko', gateway: 'bank_transfer' }, 10);
+
+      expect(result.gateway).toBe('bank_transfer');
+      expect(result.availableGateways).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
+      expect(result.clientKey).toBe('bank_transfer');
+      expect(mockDefaultGateway.prepare).not.toHaveBeenCalled();
+      expect(mockPaymentRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ method: PaymentMethod.BANK_TRANSFER, gateway: PaymentGatewayType.MOCK }),
       );
     });
 
@@ -327,7 +345,7 @@ describe('PaymentsService', () => {
       const result = await service.prepare({ orderId: 1, locale: 'ko', gateway: 'eximbay' }, 10);
 
       expect(result.gateway).toBe('eximbay');
-      expect(result.availableGateways).toEqual(['naverpay', 'paypal', 'eximbay']);
+      expect(result.availableGateways).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
       expect(mockEximbayAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.EXIMBAY }),

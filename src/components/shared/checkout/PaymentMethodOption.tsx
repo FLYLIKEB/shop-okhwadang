@@ -45,11 +45,6 @@ export function PaymentMethodOption({
           <PaymentBrandIcon brand={gateway} />
           <span>{label}</span>
         </span>
-        {gateway === 'naverpay' && (
-          <span className="rounded-sm border border-soft bg-muted px-2 py-0.5 typo-label text-muted-foreground">
-            {t('naverpayDomesticBadge')}
-          </span>
-        )}
       </span>
     </label>
   );
@@ -60,6 +55,7 @@ function getPaymentMethodLabel(
   t: ReturnType<typeof useTranslations>,
 ): string {
   if (gateway === 'naverpay') return t('naverpayPayment');
+  if (gateway === 'bank_transfer') return t('bankTransferPayment');
   if (gateway === 'paypal') return t('paypalPayment');
   return t('eximbayPayment');
 }
