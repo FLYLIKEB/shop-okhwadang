@@ -79,9 +79,9 @@ function OrderCompleteContent({ locale }: { locale: string }) {
         </p>
       </div>
 
-      <section className="rounded-lg border p-6 space-y-4 mb-8">
+      <section className="surface-card p-6 space-y-4 mb-8">
         <h2 className="font-semibold text-lg">{t('items')}</h2>
-        <ul className="divide-y text-sm">
+        <ul className="divide-y divide-soft text-sm">
           {order.items.map((item) => (
             <li key={item.id} className="py-3 flex justify-between gap-2">
               <div>
@@ -98,7 +98,7 @@ function OrderCompleteContent({ locale }: { locale: string }) {
           ))}
         </ul>
 
-        <div className="border-t pt-4 space-y-2 text-sm">
+        <div className="border-t border-soft pt-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('shippingFee')}</span>
             <span>{order.shippingFee === 0 ? t('free') : formatCurrency(order.shippingFee, locale === 'en' ? 'en' : 'ko')}</span>
@@ -111,7 +111,7 @@ function OrderCompleteContent({ locale }: { locale: string }) {
           )}
         </div>
 
-        <div className="border-t pt-4 flex justify-between font-bold">
+        <div className="border-t border-soft pt-4 flex justify-between font-bold">
           <span>{t('paymentAmount')}</span>
           <span>{formatCurrency(order.totalAmount, locale === 'en' ? 'en' : 'ko')}</span>
         </div>
@@ -120,7 +120,7 @@ function OrderCompleteContent({ locale }: { locale: string }) {
       <div className="flex gap-3">
         <Link
           href="/my/orders"
-          className="flex-1 rounded-md border py-3 text-center text-sm font-semibold hover:bg-muted transition-colors"
+          className="flex-1 rounded-md border border-soft py-3 text-center text-sm font-semibold hover:bg-muted transition-colors"
         >
           {t('viewOrders')}
         </Link>

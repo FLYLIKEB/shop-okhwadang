@@ -89,7 +89,7 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
         onChange={handleChange}
         disabled={calculating}
         className={cn(
-          'w-full rounded-md border px-3 py-2 text-sm',
+          'w-full rounded-md border field-soft px-3 py-2 text-sm',
           'focus:outline-none focus:ring-2 focus:ring-ring',
           calculating && 'opacity-50 cursor-not-allowed',
         )}
@@ -118,14 +118,14 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
           value={pointsInput}
           onChange={(event) => setPointsInput(event.target.value)}
           disabled={calculating || pointsBalance <= 0}
-          className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+          className="w-full rounded-md border field-soft px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           placeholder={localMessage('checkout.pointsPlaceholder')}
         />
         <button
           type="button"
           onClick={handleApplyPoints}
           disabled={calculating || pointsBalance <= 0}
-          className="rounded-md border px-4 py-2 text-sm font-medium transition-colors enabled:hover:bg-muted disabled:opacity-50"
+          className="rounded-md border border-soft px-4 py-2 text-sm font-medium transition-colors enabled:hover:bg-muted disabled:opacity-50"
         >
           {localMessage('checkout.applyPoints')}
         </button>

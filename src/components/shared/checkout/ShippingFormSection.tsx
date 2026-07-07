@@ -22,7 +22,7 @@ export function ShippingFormSection({ form, errors, onChange }: ShippingFormSect
         value={form.recipientName}
         onChange={onChange}
         placeholder={localMessage('checkout.recipientName')}
-        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+        className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
       {errors.recipientName && (
         <p className="typo-label text-destructive">{errors.recipientName}</p>
@@ -50,7 +50,7 @@ export function PhoneInputSection({ form, errors, onChange }: PhoneInputSectionP
         value={form.recipientPhone}
         onChange={onChange}
         placeholder="010-1234-5678"
-        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+        className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
       {errors.recipientPhone && (
         <p className="typo-label text-destructive">{errors.recipientPhone}</p>
@@ -79,7 +79,7 @@ export function ZipcodeInputSection({ form, errors, onChange }: ZipcodeInputSect
         onChange={onChange}
         placeholder="12345"
         maxLength={5}
-        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+        className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
       {errors.zipcode && (
         <p className="typo-label text-destructive">{errors.zipcode}</p>
@@ -107,7 +107,7 @@ export function AddressInputSection({ form, errors, onChange }: AddressInputSect
         value={form.address}
         onChange={onChange}
         placeholder={localMessage('checkout.addressPlaceholder')}
-        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+        className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
       {errors.address && (
         <p className="typo-label text-destructive">{errors.address}</p>
@@ -134,7 +134,7 @@ export function AddressDetailInputSection({ form, onChange }: AddressDetailInput
         value={form.addressDetail}
         onChange={onChange}
         placeholder={localMessage('checkout.addressDetailPlaceholder')}
-        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+        className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
     </div>
   );
@@ -158,7 +158,7 @@ export function MemoInputSection({ form, onChange }: MemoInputSectionProps) {
         onChange={onChange}
         placeholder={localMessage('checkout.shippingMemoPlaceholder')}
         rows={3}
-        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20 resize-none"
+        className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20 resize-none"
       />
     </div>
   );

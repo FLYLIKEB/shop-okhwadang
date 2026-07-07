@@ -75,6 +75,27 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 | `--radius-md` | 4px | Buttons, cards |
 | `--radius-lg` | 8px | Modals, large cards |
 
+## Surfaces & Borders
+
+옥화당의 기본 UI는 **진한 박스 라인보다 여백·타입·은은한 구분선**으로 구조를 만든다.
+고객-facing 화면에서 카드, 입력창, 요약 패널, 수동적인 안내 박스는 기본 `border`/`border-border` 대신 아래 공통 유틸리티를 우선 사용한다.
+
+| Utility | Usage |
+|---------|-------|
+| `surface-card` | 기본 카드/패널. `rounded-lg border bg-card` 대체 기본값 |
+| `border-soft` | 단일 구분선, dashed border, 작은 버튼/칩의 부담 없는 선색 |
+| `border-divider-soft` | 기존 구분선 호환 유틸. 신규 고객 화면은 `border-soft`를 우선한다 |
+| `field-soft` | 입력창/select/textarea 기본 선색과 배경 |
+| `divide-soft` | 리스트 내부 `divide-y` 구분선 완화 |
+
+### Border Rules
+
+- Default: `surface-card`, `border-soft`, `field-soft`, `divide-soft`를 사용한다.
+- Strong borders (`border-foreground`, plain `border`, `border-border`)은 **선택됨/활성/포커스/브랜드 CTA/오류**처럼 강조가 필요한 상태에만 사용한다.
+- 고객 화면의 큰 카드에 `shadow`를 추가하기보다 먼저 `surface-card` + 충분한 spacing으로 계층을 만든다.
+- Admin table처럼 정보 밀도와 스캔성이 중요한 화면은 기존 admin utilities(`admin-surface`, table dividers)를 우선한다.
+- 새 폼 컴포넌트는 공통 `FormInput`/`FormSelect` 또는 `field-soft`를 사용한다.
+
 ## Animation Utilities
 
 | Class | Description |
@@ -203,6 +224,7 @@ All CMS block `<section>` elements must use `py-16 md:py-24` — never `py-12`.
 - [ ] Font families: max 3种 (display, body, mono)
 - [ ] Colors use `--color-*` tokens (no hardcoded hex)
 - [ ] Border radius uses `radius-*` tokens
+- [ ] Customer-facing cards/fields/dividers use `surface-card`, `field-soft`, `border-soft`, or `divide-soft` by default
 - [ ] Animations use `animate-*` utilities
 - [ ] Interactive elements have focus states
 - [ ] Mobile touch targets are 44px+

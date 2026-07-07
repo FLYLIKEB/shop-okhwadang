@@ -116,7 +116,7 @@
   --admin-row-hover: color-mix(in srgb, var(--color-muted) 40%, transparent);
   --admin-row-height: 2.875rem;
   --admin-row-height-compact: 2.5rem;
-  --divider-soft: color-mix(in srgb, var(--color-border) 70%, var(--color-foreground) 30%);
+  --divider-soft: color-mix(in srgb, var(--color-border) 65%, var(--color-background) 35%);
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
@@ -253,6 +253,30 @@ body.overflow-hidden .mobile-sticky-cta {
 
 @utility bg-divider-soft {
   background-color: var(--divider-soft);
+}
+
+/* ── Minimal soft-line utilities ─────────────────────────────────
+   Default for customer-facing cards, form fields, dividers, and passive panels.
+   Use stronger border-* only for selected/active, destructive, or brand-emphasis states. */
+@utility surface-card {
+  border: 1px solid color-mix(in srgb, var(--color-border) 65%, var(--color-background) 35%);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-card);
+}
+
+@utility border-soft {
+  border-color: color-mix(in srgb, var(--color-border) 65%, var(--color-background) 35%);
+}
+
+@utility field-soft {
+  border-color: color-mix(in srgb, var(--color-border) 75%, var(--color-background) 25%);
+  background-color: var(--color-background);
+}
+
+@utility divide-soft {
+  & > :not(:last-child) {
+    border-color: color-mix(in srgb, var(--color-border) 65%, var(--color-background) 35%);
+  }
 }
 
 /* ── Typography utility classes ────────────────────────────────── */

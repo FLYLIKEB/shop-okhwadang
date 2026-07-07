@@ -9,6 +9,7 @@ Next.js 15 (App Router) + React 19 + TS + TailwindCSS v4. Inherits root CLAUDE.m
 - `@/` import alias, `cn()` for Tailwind merging
 - TypeScript strict — **`any` is forbidden**
 - shadcn/ui component patterns
+- Customer-facing cards, fields, and passive dividers should use the soft-line utilities from `DESIGN.md` (`surface-card`, `field-soft`, `border-soft`, `divide-soft`) instead of default strong borders, unless the element is active/selected/destructive/brand-emphasis.
 - All mutations must show sonner/toast feedback (success/failure)
 - OAuth callbacks: shared OAuthCallbackHandler — no per-provider copies
 - `console.log` in committed code is forbidden

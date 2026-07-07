@@ -24,7 +24,7 @@ export function AddressSelectorSection({
 
   if (addresses.length === 0) {
     return (
-      <div className="flex items-center justify-between rounded-md border border-dashed p-4">
+      <div className="flex items-center justify-between rounded-md border border-dashed border-soft p-4">
         <p className="text-sm text-muted-foreground">{localMessage('checkout.noSavedAddress')}</p>
         <button
           type="button"
@@ -38,7 +38,7 @@ export function AddressSelectorSection({
   }
 
   return (
-    <div className="space-y-2 border-b pb-4">
+    <div className="space-y-2 border-b border-soft pb-4">
       {addresses.map((addr) => (
         <label key={addr.id} className="flex items-start gap-3 cursor-pointer">
           <input

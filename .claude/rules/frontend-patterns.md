@@ -30,6 +30,7 @@ Reusable components (ImageGallery, ProductList, etc.) must accept:
 ## Typography & Scroll Logo
 
 - Typography: use `typo-h1`, `typo-h2`, `typo-body`, `typo-label`, `typo-button` utility classes — no raw `text-*` size overrides on headings. Font families: `font-display-ko` (Korean display), `font-body` (body text)
+- Surfaces/borders: customer-facing cards, fields, and passive dividers default to `surface-card`, `field-soft`, `border-soft`, and `divide-soft` from `src/styles/globals.css`; reserve stronger `border-foreground`, default `border`, or high-contrast lines for active, selected, destructive, or brand-emphasis states.
 - Scroll logo: HeroBanner wraps content in `<ScrollLogoProvider>`. Use `useScrollLogoTransition({ heroRef })` to get `heroLogoStyle` / `headerLogoStyle` / `progress` / `isHeroVisible` — do not duplicate scroll logic inline
 
 ## CMS Block Hooks

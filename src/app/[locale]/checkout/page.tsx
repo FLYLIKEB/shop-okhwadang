@@ -261,7 +261,7 @@ export default function CheckoutPage({
     <div className="layout-container layout-page pb-36 md:pb-8">
       <h1 className="typo-h1">{t('title')}</h1>
 
-      <ol className="mt-4 flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground md:max-w-xl">
+      <ol className="mt-4 flex flex-wrap items-center gap-2 rounded-md border border-soft bg-muted/20 px-3 py-2 text-xs text-muted-foreground md:max-w-xl">
         <li className="rounded-full bg-primary px-2.5 py-1 text-primary-foreground">{t('flow.shipping')}</li>
         <span aria-hidden>→</span>
         <li className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">{t('flow.payment')}</li>
@@ -272,7 +272,7 @@ export default function CheckoutPage({
       <form id="checkout-form" onSubmit={handleSubmit} className="mt-6">
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="layout-stack-md lg:col-span-2">
-            <section className="rounded-lg border p-6">
+            <section className="surface-card p-6">
               <h2 className="typo-h3">{t('shippingInfo')}</h2>
 
               <div className="mt-4 layout-stack-md">
@@ -293,7 +293,7 @@ export default function CheckoutPage({
               </div>
             </section>
 
-            <section className="rounded-lg border p-6">
+            <section className="surface-card p-6">
               <h2 className="typo-h3">{t('paymentMethod')}</h2>
               <div className="mt-4">
                 {prepareResult ? (
@@ -317,7 +317,7 @@ export default function CheckoutPage({
               </div>
             </section>
 
-            <section className="rounded-lg border p-6">
+            <section className="surface-card p-6">
               <h2 className="typo-h3">{t('couponPoints')}</h2>
               <div className="mt-4">
                 <CouponSelector
@@ -331,10 +331,10 @@ export default function CheckoutPage({
               </div>
             </section>
 
-            <section className="rounded-lg border p-6">
+            <section className="surface-card p-6">
               <h2 className="typo-h3">{t('consent.title')}</h2>
               <div className="mt-4 space-y-4">
-                <label className="flex gap-3 rounded-md border border-border bg-muted/20 p-3 text-sm text-foreground">
+                <label className="flex gap-3 rounded-md border border-soft bg-muted/20 p-3 text-sm text-foreground">
                   <input
                     type="checkbox"
                     checked={requiredConsent}
@@ -349,7 +349,7 @@ export default function CheckoutPage({
                     </span>
                   </span>
                 </label>
-                <label className="flex gap-3 rounded-md border border-border p-3 text-sm text-foreground">
+                <label className="flex gap-3 rounded-md border border-soft p-3 text-sm text-foreground">
                   <input
                     type="checkbox"
                     checked={marketingConsent}
@@ -373,7 +373,7 @@ export default function CheckoutPage({
               freeShippingThreshold={freeShippingThreshold}
               discountAmount={discountAmount}
             />
-            <div className="hidden rounded-lg border border-border p-4 md:block">
+            <div className="hidden surface-card p-4 md:block">
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
@@ -388,7 +388,7 @@ export default function CheckoutPage({
 
       <div
         className={cn(
-          'mobile-sticky-cta fixed z-40 border-t border-border bg-background md:hidden',
+          'mobile-sticky-cta fixed z-40 border-t border-soft bg-background md:hidden',
           isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
         )}
       >
