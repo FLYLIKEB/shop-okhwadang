@@ -26,11 +26,11 @@ export default function FormInput({
       <input
         id={id}
         className={cn(
-          'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none',
+          'w-full rounded-md border px-3 py-2 text-sm outline-none',
+          error ? 'border-destructive bg-background' : 'field-soft',
           'focus:ring-2 focus:ring-foreground/20',
           'placeholder:text-muted-foreground',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          error && 'border-destructive',
           className,
         )}
         {...props}

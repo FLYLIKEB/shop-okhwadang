@@ -156,7 +156,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+      <div className="mt-4 rounded-md border border-soft bg-muted/20 p-3">
         <p className="text-xs text-muted-foreground">
           {remainingForFreeShipping === 0
             ? t('freeShippingUnlocked')
@@ -171,7 +171,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="mt-4 border-t border-divider-soft pt-4">
+      <div className="mt-4 border-t border-soft pt-4">
         <div className="flex items-end justify-between">
           <span className="typo-title">{t('total')}</span>
           <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
@@ -186,7 +186,7 @@ export default function CartPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between border-b border-divider-soft pb-3">
+          <div className="mb-3 flex items-center justify-between border-b border-soft pb-3">
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -211,7 +211,7 @@ export default function CartPage() {
           ))}
 
           <section className="mt-6 md:hidden">
-            <Accordion.Root type="single" collapsible className="rounded-lg border border-divider-soft">
+            <Accordion.Root type="single" collapsible className="surface-card">
               <Accordion.Item value="summary">
                 <Accordion.Header>
                   <Accordion.Trigger className="group flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted/30">
@@ -224,7 +224,7 @@ export default function CartPage() {
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </Accordion.Trigger>
                 </Accordion.Header>
-                <Accordion.Content className="overflow-hidden border-t border-divider-soft data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                <Accordion.Content className="overflow-hidden border-t border-soft data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                   <div className="p-4">{orderSummaryContent}</div>
                 </Accordion.Content>
               </Accordion.Item>
@@ -232,7 +232,7 @@ export default function CartPage() {
           </section>
         </div>
 
-        <aside className="hidden h-fit rounded-lg border border-divider-soft p-6 lg:sticky lg:top-24 lg:block">
+        <aside className="hidden h-fit surface-card p-6 lg:sticky lg:top-24 lg:block">
           <h2 className="typo-h3">{t('orderSummary')}</h2>
           <div className="mt-4">{orderSummaryContent}</div>
 
@@ -244,7 +244,7 @@ export default function CartPage() {
 
       <div
         className={cn(
-          'mobile-sticky-cta fixed z-40 border-t border-divider-soft bg-background md:hidden',
+          'mobile-sticky-cta fixed z-40 border-t border-soft bg-background md:hidden',
           isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
         )}
       >

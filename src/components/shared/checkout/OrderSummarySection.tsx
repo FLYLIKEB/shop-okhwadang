@@ -29,10 +29,10 @@ export function OrderSummarySection({
     : 100;
 
   return (
-    <section className="rounded-lg border p-6">
+    <section className="surface-card p-6">
       <h2 className="typo-h3">{t('orderItems')}</h2>
 
-      <ul className="mt-4 divide-y text-sm">
+      <ul className="mt-4 divide-y divide-soft text-sm">
         {checkoutItems.map((item) => (
           <li key={item.id} className="space-y-0.5 py-3">
             <p className="font-medium">{item.product.name}</p>
@@ -48,7 +48,7 @@ export function OrderSummarySection({
         ))}
       </ul>
 
-      <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+      <div className="mt-4 rounded-md border border-soft bg-muted/20 p-3">
         <p className="text-xs text-muted-foreground">
           {remainingForFreeShipping === 0
             ? t('freeShippingUnlocked')
@@ -63,7 +63,7 @@ export function OrderSummarySection({
         </div>
       </div>
 
-      <div className="mt-4 border-t pt-4 text-sm">
+      <div className="mt-4 border-t border-soft pt-4 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t('productAmount')}</span>
           <span className="typo-price">{formatCurrency(totalAmount, locale)}</span>
@@ -80,7 +80,7 @@ export function OrderSummarySection({
         )}
       </div>
 
-      <div className="mt-4 border-t pt-4">
+      <div className="mt-4 border-t border-soft pt-4">
         <div className="flex items-end justify-between">
           <span className="typo-title">{t('total')}</span>
           <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>

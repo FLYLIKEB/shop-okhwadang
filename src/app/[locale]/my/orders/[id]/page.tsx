@@ -206,7 +206,7 @@ export default function OrderDetailPage() {
       <div className="space-y-6">
         {/* Status timeline */}
         {!['cancelled', 'refunded'].includes(order.status) && (
-          <section className="rounded-lg border p-6">
+          <section className="surface-card p-6">
             <h2 className="mb-4 text-base font-semibold">{t('shippingStatus')}</h2>
             <div className="flex items-center justify-between">
               {STATUS_TIMELINE.map((status, index) => (
@@ -245,7 +245,7 @@ export default function OrderDetailPage() {
 
         {/* Pending payment */}
         {isPaymentPending && (
-          <section className="rounded-lg border p-6">
+          <section className="surface-card p-6">
             <h2 className="mb-4 text-base font-semibold">{tCheckout('paymentMethod')}</h2>
             {prepareResult ? (
               <PaymentGateway
@@ -276,9 +276,9 @@ export default function OrderDetailPage() {
         )}
 
         {/* Order items */}
-        <section className="rounded-lg border p-6">
+        <section className="surface-card p-6">
           <h2 className="mb-4 text-base font-semibold">{t('orderItems')}</h2>
-          <ul className="divide-y">
+          <ul className="divide-y divide-soft">
             {order.items.map((item) => (
               <li key={item.id} className="py-3 text-sm">
                 <div className="flex justify-between gap-4">
@@ -301,7 +301,7 @@ export default function OrderDetailPage() {
         </section>
 
         {/* Order amounts */}
-        <section className="rounded-lg border p-6">
+        <section className="surface-card p-6">
           <h2 className="mb-4 text-base font-semibold">{t('paymentSummary')}</h2>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -320,7 +320,7 @@ export default function OrderDetailPage() {
                   : formatCurrency(order.shippingFee, locale)}
               </dd>
             </div>
-            <div className="flex justify-between border-t pt-2 font-bold">
+            <div className="flex justify-between border-t border-soft pt-2 font-bold">
               <dt>{t('total')}</dt>
               <dd>
                 {formatCurrency(
@@ -336,7 +336,7 @@ export default function OrderDetailPage() {
 
 
         {/* Cancellation / return / exchange / refund requests */}
-        <section className="rounded-lg border p-6">
+        <section className="surface-card p-6">
           <h2 className="mb-4 text-base font-semibold">{t('serviceRequests.title')}</h2>
           <p className="mb-4 text-sm text-muted-foreground">
             {canCancel ? t('serviceRequests.cancelGuide') : canAfterDeliveryRequest ? t('serviceRequests.afterDeliveryGuide') : t('serviceRequests.unavailableGuide')}
@@ -350,7 +350,7 @@ export default function OrderDetailPage() {
                   <select
                     value={requestType}
                     onChange={(event) => setRequestType(event.target.value as OrderServiceRequestType)}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="w-full rounded-md border field-soft px-3 py-2 text-sm"
                   >
                     {canCancel && <option value="cancel">{requestTypeLabels.cancel}</option>}
                     {canAfterDeliveryRequest && <option value="return">{requestTypeLabels.return}</option>}
@@ -364,7 +364,7 @@ export default function OrderDetailPage() {
                     value={requestReason}
                     onChange={(event) => setRequestReason(event.target.value)}
                     maxLength={100}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="w-full rounded-md border field-soft px-3 py-2 text-sm"
                     placeholder={t('serviceRequests.reasonPlaceholder')}
                   />
                 </label>
@@ -375,7 +375,7 @@ export default function OrderDetailPage() {
                   value={requestDetail}
                   onChange={(event) => setRequestDetail(event.target.value)}
                   rows={3}
-                  className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full resize-none rounded-md border field-soft px-3 py-2 text-sm"
                   placeholder={t('serviceRequests.detailPlaceholder')}
                 />
               </label>
@@ -388,7 +388,7 @@ export default function OrderDetailPage() {
           {serviceRequests.length > 0 && (
             <ul className="mt-4 space-y-2">
               {serviceRequests.map((request) => (
-                <li key={request.id} className="rounded-md border bg-card p-3 text-sm">
+                <li key={request.id} className="rounded-md border border-soft bg-card p-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">{requestTypeLabels[request.type]}</span>
                     <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{requestStatusLabels[request.status] ?? request.status}</span>
@@ -402,7 +402,7 @@ export default function OrderDetailPage() {
         </section>
 
         {/* Tax receipt / invoice guide */}
-        <section className="rounded-lg border p-6">
+        <section className="surface-card p-6">
           <h2 className="mb-4 text-base font-semibold">{t('taxReceiptGuideTitle')}</h2>
           <div className="space-y-3 text-sm text-muted-foreground">
             <p>{t('taxReceiptGuideDescription')}</p>
@@ -414,7 +414,7 @@ export default function OrderDetailPage() {
         </section>
 
         {/* Shipping address */}
-        <section className="rounded-lg border p-6">
+        <section className="surface-card p-6">
           <h2 className="mb-4 text-base font-semibold">{t('shippingAddress')}</h2>
           <dl className="space-y-1 text-sm">
             <div className="flex gap-4">

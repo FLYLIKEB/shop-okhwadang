@@ -22,9 +22,9 @@ export function SecureCardEntryShell({ showSubmitButton = false }: SecureCardEnt
         <p className="mt-1 typo-body-sm text-muted-foreground">{t('cardPaymentSubtitle')}</p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-foreground/80 bg-card text-card-foreground">
+      <div className="overflow-hidden surface-card text-card-foreground">
         <div className="flex min-h-14 items-center justify-between gap-3 bg-muted/45 px-4 py-3">
-          <span className="typo-body-sm font-bold text-foreground">{t('creditCardTitle')}</span>
+          <span className="typo-body-sm font-medium text-foreground">{t('creditCardTitle')}</span>
           <div className="flex shrink-0 items-center gap-1.5" aria-label={t('cardBrandsLabel')}>
             {CARD_BRANDS.map((brand) => (
               <PaymentBrandIcon key={brand} brand={brand} />
@@ -32,7 +32,7 @@ export function SecureCardEntryShell({ showSubmitButton = false }: SecureCardEnt
           </div>
         </div>
 
-        <div className="border-t border-border p-4">
+        <div className="border-t border-soft p-4">
           <div className="grid gap-3">
             <SecureInputPreview
               placeholder={t('cardNumberPlaceholder')}
@@ -69,7 +69,7 @@ export function SecureCardEntryShell({ showSubmitButton = false }: SecureCardEnt
         </div>
       </div>
 
-      <div className="border-t border-dashed border-border pt-4">
+      <div className="border-t border-dashed border-soft pt-4">
         <label className="flex items-start gap-3 typo-body-sm text-muted-foreground">
           <input
             type="checkbox"
@@ -108,7 +108,7 @@ function SecureInputPreview({
         tabIndex={-1}
         placeholder={placeholder}
         className={cn(
-          'min-h-11 w-full rounded-md border border-input bg-background px-3 typo-body-sm text-foreground placeholder:text-muted-foreground',
+          'min-h-11 w-full rounded-md border field-soft px-3 typo-body-sm text-foreground placeholder:text-muted-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           icon ? 'pr-10' : '',
         )}

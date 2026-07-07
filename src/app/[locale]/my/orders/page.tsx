@@ -81,7 +81,7 @@ export default function OrdersPage() {
           </button>
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-lg border p-12 text-center">
+        <div className="surface-card p-12 text-center">
           <p className="text-muted-foreground">{t('noOrders')}</p>
           <Link
             href="/products"
@@ -97,7 +97,7 @@ export default function OrdersPage() {
               <li key={order.id}>
                 <Link
                   href={`/my/orders/${order.id}`}
-                  className="block rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+                  className="block surface-card p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -128,7 +128,7 @@ export default function OrdersPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
+                className="rounded-md border border-soft px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
               >
                 {tMy('previousPage')}
               </button>
@@ -138,7 +138,7 @@ export default function OrdersPage() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
+                className="rounded-md border border-soft px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
               >
                 {tMy('nextPage')}
               </button>

@@ -24,10 +24,10 @@ export function PaymentMethodOption({
   return (
     <label
       className={cn(
-        'flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-border bg-card px-3 py-2 transition-colors',
+        'flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-soft bg-card px-3 py-2 transition-colors',
         'hover:border-foreground/30 hover:bg-muted/30',
         selected && 'border-foreground bg-muted/35',
-        readOnly && 'cursor-default hover:border-border hover:bg-card',
+        readOnly && 'cursor-default hover:border-soft hover:bg-card',
       )}
       aria-label={label}
     >
@@ -46,7 +46,7 @@ export function PaymentMethodOption({
           <span>{label}</span>
         </span>
         {gateway === 'naverpay' && (
-          <span className="rounded-sm border border-border bg-muted px-2 py-0.5 typo-label text-muted-foreground">
+          <span className="rounded-sm border border-soft bg-muted px-2 py-0.5 typo-label text-muted-foreground">
             {t('naverpayDomesticBadge')}
           </span>
         )}

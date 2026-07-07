@@ -72,7 +72,7 @@ export default function ShippingTimeline({ orderId }: Props) {
 
   if (loading) {
     return (
-      <section className="rounded-lg border p-6" aria-busy="true">
+      <section className="surface-card p-6" aria-busy="true">
         <h2 className="mb-4 text-base font-semibold">{t('title')}</h2>
         <div className="space-y-2">
           <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
@@ -104,7 +104,7 @@ export default function ShippingTimeline({ orderId }: Props) {
   const carrierName = getCarrierName(shipping.carrier, locale);
 
   return (
-    <section className="rounded-lg border p-6">
+    <section className="surface-card p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold">{t('title')}</h2>
         <div className="flex items-center gap-2">
