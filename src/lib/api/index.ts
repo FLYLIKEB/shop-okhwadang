@@ -46,3 +46,4 @@ export * from './admin/inquiries';
 export * from './admin/settings';
 export * from './admin/journals';
 export * from './admin/localization';
+export * from './admin/logs';

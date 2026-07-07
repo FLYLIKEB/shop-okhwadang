@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   Package,
@@ -22,6 +23,7 @@ type NavLeaf = {
   labelKey: string;
   href: string;
   badgeKey?: keyof AdminWorkBadges;
+  superAdminOnly?: boolean;
 };
 
 type AdminWorkBadges = {
@@ -65,6 +67,7 @@ const NAV_ITEMS: NavItem[] = [
       { labelKey: 'members', href: '/admin/members' },
       { labelKey: 'reviews', href: '/admin/reviews' },
       { labelKey: 'inquiries', href: '/admin/inquiries?status=pending', badgeKey: 'pendingInquiries' },
+      { labelKey: 'logs', href: '/admin/logs', superAdminOnly: true },
     ],
   },
   {
@@ -107,6 +110,7 @@ type SidebarContentProps = {
 function SidebarContent({ onClose }: SidebarContentProps) {
   const pathname = usePathname();
   const t = useTranslations('admin.sidebar');
+  const { user } = useAuth();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     getInitialOpenGroups(pathname),
   );
@@ -185,7 +189,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                   </button>
                   {isOpen && (
                     <ul className="mt-1 space-y-1 pl-9">
-                      {item.children.map((child) => {
+                      {item.children.filter((child) => !child.superAdminOnly || user?.role === 'super_admin').map((child) => {
                         const childPath = child.href.split('?')[0];
                         const isActive =
                           pathname === childPath || pathname.startsWith(childPath + '/');

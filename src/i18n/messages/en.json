@@ -1004,7 +1004,8 @@
       "cmsGroup": "CMS",
       "reviews": "Reviews",
       "localization": "Localization",
-      "attributes": "Attributes"
+      "attributes": "Attributes",
+      "logs": "Remote Logs"
     },
     "navigation": {
       "title": "Navigation Management"
@@ -1309,6 +1310,34 @@
         "confirm": "Delete",
         "cancel": "Cancel"
       }
+    },
+    "logs": {
+      "title": "Remote Logs",
+      "description": "View recent PM2 normal and error logs from the production server.",
+      "refresh": "Refresh",
+      "loadError": "Unable to load remote logs",
+      "empty": "No logs to display.",
+      "copy": "Copy",
+      "copySuccess": "Logs copied.",
+      "copyError": "Unable to copy logs.",
+      "lineCount": "Lines",
+      "lineOption": "{count} lines",
+      "summary": "{app} · {source}",
+      "summaryPending": "Loading log source",
+      "updatedAt": "Updated: {value}",
+      "loadedLines": "{count} lines shown",
+      "truncated": "Recent logs only",
+      "loading": "Loading logs...",
+      "types": {
+        "normal": "Normal",
+        "error": "Error"
+      },
+      "errorBoundary": {
+        "title": "Log page error",
+        "description": "A problem occurred while rendering the remote log page.",
+        "retry": "Try again"
+      },
+      "superAdminOnly": "Remote logs are available to super admins only."
     }
   },
   "search": {
