@@ -10,8 +10,10 @@ import { AdminMembersController } from './admin-members.controller';
 import { AdminMembersService } from './admin-members.service';
 import { AdminExportController } from './admin-export.controller';
 import { AdminLocalizationController } from './admin-localization.controller';
+import { AdminLogsController } from './admin-logs.controller';
 import { AdminExportService } from './admin-export.service';
 import { AdminLocalizationService } from './admin-localization.service';
+import { AdminLogsService } from './admin-logs.service';
 import { Order } from '../orders/entities/order.entity';
 import { OrderServiceRequest } from '../orders/entities/order-service-request.entity';
 import { Payment } from '../payments/entities/payment.entity';
@@ -57,6 +59,7 @@ import { PointsModule } from '../points/points.module';
     AdminMembersController,
     AdminExportController,
     AdminLocalizationController,
+    AdminLogsController,
   ],
   providers: [
     AdminService,
@@ -65,6 +68,7 @@ import { PointsModule } from '../points/points.module';
     AdminMembersService,
     AdminExportService,
     AdminLocalizationService,
+    AdminLogsService,
   ],
 })
 export class AdminModule {}

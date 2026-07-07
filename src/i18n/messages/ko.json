@@ -1004,7 +1004,8 @@
       "cmsGroup": "CMS",
       "reviews": "리뷰관리",
       "localization": "번역 상태",
-      "attributes": "속성"
+      "attributes": "속성",
+      "logs": "원격 로그"
     },
     "navigation": {
       "title": "네비게이션 관리"
@@ -1309,6 +1310,34 @@
         "confirm": "삭제",
         "cancel": "취소"
       }
+    },
+    "logs": {
+      "title": "원격 로그",
+      "description": "운영 서버의 PM2 일반 로그와 에러 로그를 최근 줄 수 기준으로 확인합니다.",
+      "refresh": "새로고침",
+      "loadError": "원격 로그를 불러올 수 없습니다",
+      "empty": "표시할 로그가 없습니다.",
+      "copy": "복사",
+      "copySuccess": "로그를 복사했습니다.",
+      "copyError": "로그를 복사할 수 없습니다.",
+      "lineCount": "조회 줄 수",
+      "lineOption": "{count}줄",
+      "summary": "{app} · {source}",
+      "summaryPending": "로그 소스를 불러오는 중",
+      "updatedAt": "수정: {value}",
+      "loadedLines": "{count}줄 표시",
+      "truncated": "최근 로그만 표시",
+      "loading": "로그 로딩 중...",
+      "types": {
+        "normal": "일반 로그",
+        "error": "에러 로그"
+      },
+      "errorBoundary": {
+        "title": "로그 화면 오류",
+        "description": "원격 로그 화면을 표시하는 중 문제가 발생했습니다.",
+        "retry": "다시 시도"
+      },
+      "superAdminOnly": "원격 로그는 슈퍼 관리자만 조회할 수 있습니다."
     }
   },
   "search": {
