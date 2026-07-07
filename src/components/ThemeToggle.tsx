@@ -3,7 +3,7 @@
 import { Moon, Sun } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
-import { getDefaultThemeForLocale, useTheme } from '@/contexts/ThemeContext';
+import { supportsSavedThemePreference, useTheme } from '@/contexts/ThemeContext';
 
 interface ThemeToggleProps {
   className?: string;
@@ -21,7 +21,7 @@ export default function ThemeToggle({ className, iconClassName }: ThemeTogglePro
   const { theme, toggleTheme } = useTheme();
   const t = useTranslations('header');
 
-  if (getDefaultThemeForLocale(locale) === 'light') {
+  if (!supportsSavedThemePreference(locale)) {
     return null;
   }
 

@@ -25,14 +25,14 @@ describe('ThemeContext', () => {
     delete document.documentElement.dataset.theme;
   });
 
-  it('ko 로케일 기본값은 dark', () => {
+  it('ko 로케일 기본값은 light', () => {
     render(
       <ThemeProvider locale="ko">
         <ThemeDisplay />
       </ThemeProvider>,
     );
-    expect(screen.getByTestId('theme').textContent).toBe('dark');
-    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(screen.getByTestId('theme').textContent).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
   });
 
   it('en 로케일 기본값은 light', () => {
@@ -46,20 +46,20 @@ describe('ThemeContext', () => {
   });
 
   it('첫 렌더에서는 localStorage 값보다 로케일 기본값을 사용한다', () => {
-    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
 
-    expect(getInitialTheme('ko')).toBe('dark');
+    expect(getInitialTheme('ko')).toBe('light');
   });
 
   it('ko 로케일은 hydration 이후 localStorage 값을 반영한다', async () => {
-    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     render(
       <ThemeProvider locale="ko">
         <ThemeDisplay />
       </ThemeProvider>,
     );
 
-    expect(await screen.findByText('light')).toBeInTheDocument();
+    expect(await screen.findByText('dark')).toBeInTheDocument();
   });
 
   it('en 로케일은 localStorage에 dark가 있어도 light로 고정된다', () => {
@@ -89,14 +89,7 @@ describe('ThemeContext', () => {
         <ThemeDisplay />
       </ThemeProvider>,
     );
-    expect(screen.getByTestId('theme').textContent).toBe('dark');
-
-    act(() => {
-      screen.getByText('toggle').click();
-    });
     expect(screen.getByTestId('theme').textContent).toBe('light');
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
-    expect(document.documentElement.dataset.theme).toBe('light');
 
     act(() => {
       screen.getByText('toggle').click();
@@ -104,6 +97,13 @@ describe('ThemeContext', () => {
     expect(screen.getByTestId('theme').textContent).toBe('dark');
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
+
+    act(() => {
+      screen.getByText('toggle').click();
+    });
+    expect(screen.getByTestId('theme').textContent).toBe('light');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
   });
 
   it('setTheme 직접 호출도 localStorage + dataset을 동기화한다', () => {

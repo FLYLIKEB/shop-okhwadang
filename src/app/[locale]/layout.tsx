@@ -105,11 +105,12 @@ export default async function LocaleLayout({
       }
     : undefined;
 
-  // SSR 단계에서 data-theme 기본값을 locale 기반으로 설정 — hydration mismatch 방지.
-  // 클라이언트의 FOUC 스크립트가 localStorage 에 저장된 사용자 선호가 있으면 즉시 덮어씀.
-  const initialTheme = safeLocale === 'ko' ? 'dark' : 'light';
+  // SSR 단계에서 data-theme 기본값을 light로 설정 — hydration mismatch 방지.
+  // ko 로케일은 클라이언트의 FOUC 스크립트가 localStorage 사용자 선호를 즉시 반영한다.
+  const initialTheme = 'light';
+  const respectsSavedTheme = safeLocale === 'ko';
 
-  const foucScript = `(function(){try{var d='${initialTheme}';var s=localStorage.getItem('theme');document.documentElement.dataset.theme=d==='light'?'light':(s==='dark'||s==='light'?s:d);}catch(e){document.documentElement.dataset.theme='${initialTheme}';}})();`;
+  const foucScript = `(function(){try{var d='${initialTheme}';var r=${respectsSavedTheme};var s=localStorage.getItem('theme');document.documentElement.dataset.theme=r&&(s==='dark'||s==='light')?s:d;}catch(e){document.documentElement.dataset.theme='${initialTheme}';}})();`;
 
   return (
     <html lang={safeLocale} data-theme={initialTheme} suppressHydrationWarning>

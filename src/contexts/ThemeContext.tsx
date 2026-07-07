@@ -11,7 +11,7 @@ export interface ThemeContextValue {
 }
 
 export const DEFAULT_THEME_BY_LOCALE: Record<string, Theme> = {
-  ko: 'dark',
+  ko: 'light',
   en: 'light',
 };
 
@@ -31,9 +31,13 @@ export function getInitialTheme(locale: string): Theme {
   return getDefaultThemeForLocale(locale);
 }
 
+export function supportsSavedThemePreference(locale: string): boolean {
+  return locale === 'ko';
+}
+
 function getSavedThemeAfterHydration(locale: string): Theme {
   const defaultTheme = getDefaultThemeForLocale(locale);
-  if (defaultTheme === 'light' || typeof window === 'undefined') {
+  if (!supportsSavedThemePreference(locale) || typeof window === 'undefined') {
     return defaultTheme;
   }
   try {

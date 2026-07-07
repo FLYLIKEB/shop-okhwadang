@@ -16,7 +16,7 @@
 
 /* ── Theme-scoped color tokens ─────────────────────────────────── */
 /* html[data-theme="dark"] = 공방 다크 테마 / html[data-theme="light"] = 웨지우드 라이트 테마
-   로케일별 기본값은 ThemeContext(DEFAULT_THEME_BY_LOCALE)에서 관리 */
+   기본 테마는 ThemeContext(DEFAULT_THEME_BY_LOCALE)에서 관리 */
 @import './tokens-dark.css';
 @import './tokens-light.css';
 
