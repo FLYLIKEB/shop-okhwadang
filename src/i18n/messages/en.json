@@ -1727,7 +1727,10 @@
         "approved": "Approved",
         "rejected": "Rejected",
         "completed": "Completed"
-      }
+      },
+      "pendingCancelGuide": "Pending orders can be cancelled immediately without admin approval.",
+      "immediateCancelSubmit": "Cancel order now",
+      "immediateCancelSuccess": "Your order has been cancelled."
     }
   },
   "checkoutResult": {

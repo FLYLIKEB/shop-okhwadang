@@ -18,6 +18,7 @@ import { NotificationDispatchHelper } from '../notification/notification-dispatc
 import { escapeHtml } from '../notification/templates/sanitize';
 import { restoreOrderStock } from './order-stock.util';
 import { PointHistory } from '../coupons/entities/point-history.entity';
+import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
 import { ModuleRef } from '@nestjs/core';
 
 const CANCELLABLE_STATUSES = new Set<OrderStatus>([OrderStatus.PENDING, OrderStatus.PAID]);
@@ -55,9 +56,30 @@ export class OrderServiceRequestsService {
       throw new BadRequestException('이미 처리 중인 신청이 있습니다.');
     }
 
+    const request = this.buildRequest(order, userId, dto);
+
+    if (dto.type === OrderServiceRequestType.CANCEL && order.status === OrderStatus.PENDING) {
+      const saved = await this.createCompletedPendingCancellation(order, request);
+      this.logger.log(`Pending order cancelled by user: requestId=${saved.id}, orderId=${orderId}`);
+      const completed = await this.findOneForUser(Number(saved.id), userId);
+      void this.notifyRequestStatusChanged(completed);
+      return completed;
+    }
+
+    const saved = await this.requestRepository.save(request);
+    this.logger.log(`Order service request created: id=${saved.id}, orderId=${orderId}, type=${dto.type}`);
+    void this.notifyRequestReceived(saved, order);
+    return this.findOneForUser(Number(saved.id), userId);
+  }
+
+  private buildRequest(
+    order: Order,
+    userId: number,
+    dto: CreateOrderServiceRequestDto,
+  ): OrderServiceRequest {
     const useShippingAddress = dto.useShippingAddress ?? true;
-    const request = this.requestRepository.create({
-      orderId,
+    return this.requestRepository.create({
+      orderId: Number(order.id),
       userId,
       type: dto.type,
       reason: dto.reason.trim(),
@@ -70,11 +92,37 @@ export class OrderServiceRequestsService {
       pickupAddress: useShippingAddress ? order.address : dto.pickupAddress ?? null,
       pickupAddressDetail: useShippingAddress ? order.addressDetail : dto.pickupAddressDetail ?? null,
     });
+  }
 
-    const saved = await this.requestRepository.save(request);
-    this.logger.log(`Order service request created: id=${saved.id}, orderId=${orderId}, type=${dto.type}`);
-    void this.notifyRequestReceived(saved, order);
-    return this.findOneForUser(Number(saved.id), userId);
+  private async createCompletedPendingCancellation(
+    order: Order,
+    request: OrderServiceRequest,
+  ): Promise<OrderServiceRequest> {
+    return this.dataSource.transaction(async (manager) => {
+      const lockedOrder = await manager.findOne(Order, {
+        where: { id: order.id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedOrder) throw new BadRequestException('주문을 찾을 수 없습니다.');
+      if (lockedOrder.status !== OrderStatus.PENDING) {
+        throw new BadRequestException('결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.');
+      }
+
+      const processedAt = new Date();
+      const saved = await manager.save(OrderServiceRequest, {
+        ...request,
+        status: OrderServiceRequestStatus.COMPLETED,
+        adminNote: '결제대기 주문 사용자 즉시 취소',
+        processedAt,
+      });
+
+      await this.applyCompletedRequest(manager, {
+        ...saved,
+        order: lockedOrder,
+      } as OrderServiceRequest);
+
+      return saved;
+    });
   }
 
   async findByOrderForUser(orderId: number, userId: number): Promise<OrderServiceRequest[]> {
@@ -197,7 +245,17 @@ export class OrderServiceRequestsService {
         return;
       }
 
-      await manager.update(Order, order.id, { status: OrderStatus.CANCELLED });
+      const cancelledAt = new Date();
+      await manager.update(Order, order.id, {
+        status: OrderStatus.CANCELLED,
+        cancelReason: request.reason,
+        cancelledAt,
+      });
+      await manager.update(
+        Payment,
+        { orderId: Number(order.id), status: PaymentStatus.PENDING },
+        { status: PaymentStatus.CANCELLED, cancelReason: request.reason, cancelledAt },
+      );
       await restoreOrderStock(manager, Number(order.id));
       await this.restorePoints(manager, order);
       return;

@@ -116,6 +116,7 @@ export default function OrderDetailPage() {
   const isPaymentPending = order.status === 'pending';
   const shouldShowShippingTracking = !['pending', 'cancelled', 'refunded'].includes(order.status);
   const payableAmount = Number(order.totalAmount);
+  const isImmediatePendingCancel = order.status === 'pending' && requestType === 'cancel';
   const canCancel = ['pending', 'paid'].includes(order.status);
   const canAfterDeliveryRequest = ['delivered', 'completed'].includes(order.status);
   const requestTypeLabels: Record<OrderServiceRequestType, string> = {
@@ -149,7 +150,9 @@ export default function OrderDetailPage() {
         detail: requestDetail.trim() || undefined,
         useShippingAddress: true,
       });
-      toast.success(t('serviceRequests.submitSuccess'));
+      toast.success(
+        isImmediatePendingCancel ? t('serviceRequests.immediateCancelSuccess') : t('serviceRequests.submitSuccess'),
+      );
       setRequestReason('');
       setRequestDetail('');
       const requests = await ordersApi.getServiceRequests(order.id);
@@ -347,7 +350,13 @@ export default function OrderDetailPage() {
         <section className="surface-card p-6">
           <h2 className="mb-4 text-base font-semibold">{t('serviceRequests.title')}</h2>
           <p className="mb-4 text-sm text-muted-foreground">
-            {canCancel ? t('serviceRequests.cancelGuide') : canAfterDeliveryRequest ? t('serviceRequests.afterDeliveryGuide') : t('serviceRequests.unavailableGuide')}
+            {order.status === 'pending'
+              ? t('serviceRequests.pendingCancelGuide')
+              : canCancel
+                ? t('serviceRequests.cancelGuide')
+                : canAfterDeliveryRequest
+                  ? t('serviceRequests.afterDeliveryGuide')
+                  : t('serviceRequests.unavailableGuide')}
           </p>
 
           {(canCancel || canAfterDeliveryRequest) && (
@@ -388,7 +397,7 @@ export default function OrderDetailPage() {
                 />
               </label>
               <Button type="button" onClick={submitServiceRequest}>
-                {t('serviceRequests.submit')}
+                {isImmediatePendingCancel ? t('serviceRequests.immediateCancelSubmit') : t('serviceRequests.submit')}
               </Button>
             </div>
           )}
