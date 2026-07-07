@@ -43,7 +43,7 @@ describe('SEO', () => {
 
   describe('sitemap.ts', () => {
     it('includes static routes', async () => {
-      mockFetchProducts.mockResolvedValue({ items: [], total: 0, page: 1, limit: 1000 });
+      mockFetchProducts.mockResolvedValue({ items: [], total: 0, page: 1, limit: 100 });
       const result = await sitemap();
       const urls = result.map((r) => r.url);
       expect(urls).toContain('https://ockhwadang.com/ko');
@@ -53,35 +53,91 @@ describe('SEO', () => {
     });
 
     it('includes product routes from each locale-specific product list', async () => {
-      mockFetchProducts.mockImplementation(({ locale }: { locale: string }) => Promise.resolve({
-        items: [
-          {
-            id: locale === 'ko' ? 1 : 2,
-            name: 'Test Product',
-            slug: 'test',
-            price: 10000,
-            salePrice: null,
-            shortDescription: null,
-            rating: 0,
-            reviewCount: 0,
-            status: 'active',
-            isFeatured: false,
-            viewCount: 0,
-            category: null,
-            images: [],
-          },
-        ],
-        total: 1,
-        page: 1,
-        limit: 1000,
-      }));
+      mockFetchProducts.mockImplementation(({ locale }: { locale: string }) =>
+        Promise.resolve({
+          items: [
+            {
+              id: locale === 'ko' ? 1 : 2,
+              name: 'Test Product',
+              slug: 'test',
+              price: 10000,
+              salePrice: null,
+              shortDescription: null,
+              rating: 0,
+              reviewCount: 0,
+              status: 'active',
+              isFeatured: false,
+              viewCount: 0,
+              category: null,
+              images: [],
+            },
+          ],
+          total: 1,
+          page: 1,
+          limit: 100,
+        }),
+      );
       const result = await sitemap();
       const urls = result.map((r) => r.url);
-      expect(mockFetchProducts).toHaveBeenCalledWith({ limit: 1000, locale: 'ko' });
-      expect(mockFetchProducts).toHaveBeenCalledWith({ limit: 1000, locale: 'en' });
+      expect(mockFetchProducts).toHaveBeenCalledWith({ page: 1, limit: 100, locale: 'ko' });
+      expect(mockFetchProducts).toHaveBeenCalledWith({ page: 1, limit: 100, locale: 'en' });
       expect(urls).toContain('https://ockhwadang.com/ko/products/1');
       expect(urls).toContain('https://ockhwadang.com/en/products/2');
       expect(urls).not.toContain('https://ockhwadang.com/en/products/1');
+    });
+
+    it('paginates product routes without exceeding the backend product limit', async () => {
+      mockFetchProducts.mockImplementation(({ page, locale }: { page: number; locale: string }) =>
+        Promise.resolve({
+          items:
+            page === 1
+              ? Array.from({ length: 100 }, (_, index) => ({
+                  id: locale === 'ko' ? index + 1 : index + 101,
+                  name: 'Test Product',
+                  slug: 'test',
+                  price: 10000,
+                  salePrice: null,
+                  shortDescription: null,
+                  rating: 0,
+                  reviewCount: 0,
+                  status: 'active',
+                  isFeatured: false,
+                  viewCount: 0,
+                  category: null,
+                  images: [],
+                }))
+              : [
+                  {
+                    id: locale === 'ko' ? 1000 : 2000,
+                    name: 'Last Product',
+                    slug: 'last',
+                    price: 10000,
+                    salePrice: null,
+                    shortDescription: null,
+                    rating: 0,
+                    reviewCount: 0,
+                    status: 'active',
+                    isFeatured: false,
+                    viewCount: 0,
+                    category: null,
+                    images: [],
+                  },
+                ],
+          total: 101,
+          page,
+          limit: 100,
+        }),
+      );
+
+      const result = await sitemap();
+      const urls = result.map((r) => r.url);
+
+      expect(mockFetchProducts).toHaveBeenCalledWith({ page: 1, limit: 100, locale: 'ko' });
+      expect(mockFetchProducts).toHaveBeenCalledWith({ page: 2, limit: 100, locale: 'ko' });
+      expect(mockFetchProducts).toHaveBeenCalledWith({ page: 1, limit: 100, locale: 'en' });
+      expect(mockFetchProducts).toHaveBeenCalledWith({ page: 2, limit: 100, locale: 'en' });
+      expect(urls).toContain('https://ockhwadang.com/ko/products/1000');
+      expect(urls).toContain('https://ockhwadang.com/en/products/2000');
     });
 
     it('returns only static routes when fetchProducts fails', async () => {
@@ -104,7 +160,16 @@ describe('SEO', () => {
         salePrice: 25000,
         stock: 10,
         sku: 'TEST-001',
-        images: [{ id: 1, url: '/images/test.jpg', alt: 'Test', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
+        images: [
+          {
+            id: 1,
+            url: '/images/test.jpg',
+            alt: 'Test',
+            sortOrder: 0,
+            isThumbnail: true,
+            isDescriptionImage: false,
+          },
+        ],
         detailImages: [],
         rating: 0,
         reviewCount: 0,
@@ -129,7 +194,8 @@ describe('SEO', () => {
           '@type': 'Offer',
           priceCurrency: 'KRW',
           price: product.salePrice ?? product.price,
-          availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          availability:
+            product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           seller: { '@type': 'Organization', name: '옥화당' },
         },
       };
@@ -148,7 +214,8 @@ describe('SEO', () => {
 
     it('shows OutOfStock when stock is 0', () => {
       const stock = 0;
-      const availability = stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
+      const availability =
+        stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
       expect(availability).toBe('https://schema.org/OutOfStock');
     });
   });
@@ -156,12 +223,15 @@ describe('SEO', () => {
   describe('root layout metadata', () => {
     it('includes 자사호 keyword in default title and keywords', async () => {
       const { metadata } = await import('@/app/layout');
-      const title = typeof metadata.title === 'object' && metadata.title !== null && 'default' in metadata.title
-        ? (metadata.title as { default: string }).default
-        : String(metadata.title);
+      const title =
+        typeof metadata.title === 'object' && metadata.title !== null && 'default' in metadata.title
+          ? (metadata.title as { default: string }).default
+          : String(metadata.title);
       expect(title).toContain('자사호');
       expect(metadata.description).toContain('자사호');
-      expect(metadata.keywords).toEqual(expect.arrayContaining(['자사호', '보이차', '다구', '옥화당']));
+      expect(metadata.keywords).toEqual(
+        expect.arrayContaining(['자사호', '보이차', '다구', '옥화당']),
+      );
     });
   });
 
@@ -176,7 +246,16 @@ describe('SEO', () => {
         salePrice: null,
         stock: 10,
         sku: 'TEST-001',
-        images: [{ id: 1, url: '/images/test.jpg', alt: 'Test', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
+        images: [
+          {
+            id: 1,
+            url: '/images/test.jpg',
+            alt: 'Test',
+            sortOrder: 0,
+            isThumbnail: true,
+            isDescriptionImage: false,
+          },
+        ],
         detailImages: [],
         rating: 0,
         reviewCount: 0,
@@ -189,7 +268,9 @@ describe('SEO', () => {
       });
 
       const { generateMetadata } = await import('@/app/[locale]/products/[id]/page');
-      const metadata = await generateMetadata({ params: Promise.resolve({ id: '1', locale: 'ko' }) });
+      const metadata = await generateMetadata({
+        params: Promise.resolve({ id: '1', locale: 'ko' }),
+      });
 
       expect(metadata.title).toBe('Test Product');
       expect(metadata.description).toBe('Short desc');
@@ -202,7 +283,9 @@ describe('SEO', () => {
       mockFetchProduct.mockResolvedValue(null);
 
       const { generateMetadata } = await import('@/app/[locale]/products/[id]/page');
-      const metadata = await generateMetadata({ params: Promise.resolve({ id: '999', locale: 'ko' }) });
+      const metadata = await generateMetadata({
+        params: Promise.resolve({ id: '999', locale: 'ko' }),
+      });
 
       expect(metadata.title).toBe('상품을 찾을 수 없습니다');
     });
