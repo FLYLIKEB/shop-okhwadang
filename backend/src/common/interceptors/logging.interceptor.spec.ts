@@ -122,9 +122,7 @@ describe('LoggingInterceptor', () => {
   });
 
   it('should handle null body gracefully', (done) => {
-    const context = createMockContext(
-      null as unknown as Record<string, unknown>,
-    );
+    const context = createMockContext(null as unknown as Record<string, unknown>);
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => done(),
@@ -223,28 +221,85 @@ describe('LoggingInterceptor', () => {
     });
   });
 
-  it('should include request ids, member id, status, and duration for easier PM2 tracing', (done) => {
+  it('should include request ids, member id, status, duration, and IP for easier PM2 tracing', (done) => {
     const logSpy = jest.spyOn(interceptor['logger'], 'log');
     const context = createMockContext(
       { orderId: 'ORD-1', transactionId: 'TX-1', productName: 'tea' },
-      { user: { id: 42, role: 'user' }, query: { paymentKey: 'PAY-1' } },
+      {
+        user: { id: 42, role: 'user' },
+        query: { paymentKey: 'PAY-1' },
+        ip: '203.0.113.10',
+      },
     );
 
     interceptor.intercept(context, mockCallHandler).subscribe({
       complete: () => {
-        expect(logSpy).toHaveBeenCalledWith(expect.objectContaining({
-          event: 'http_request',
-          outcome: 'completed',
-          method: 'POST',
-          path: '/api/test',
-          statusCode: 201,
-          ids: expect.objectContaining({
-            orderId: 'ORD-1',
-            transactionId: 'TX-1',
-            paymentKey: 'PAY-1',
+        expect(logSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event: 'http_request',
+            outcome: 'completed',
+            method: 'POST',
+            path: '/api/test',
+            statusCode: 201,
+            ids: expect.objectContaining({
+              orderId: 'ORD-1',
+              transactionId: 'TX-1',
+              paymentKey: 'PAY-1',
+            }),
+            ip: '203.0.113.10',
+            durationMs: expect.any(Number),
           }),
-          durationMs: expect.any(Number),
-        }));
+        );
+        done();
+      },
+    });
+  });
+
+  it('should prefer the Cloudflare visitor IP over proxy addresses', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext(
+      {},
+      {
+        headers: {
+          'cf-connecting-ip': '198.51.100.20',
+          'x-forwarded-for': '198.51.100.21, 172.70.38.94',
+        },
+        ip: '172.70.38.94',
+        socket: { remoteAddress: '10.0.0.1' },
+      },
+    );
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            ip: '198.51.100.20',
+          }),
+        );
+        done();
+      },
+    });
+  });
+
+  it('should use the first x-forwarded-for IP when Cloudflare IP is absent', (done) => {
+    const logSpy = jest.spyOn(interceptor['logger'], 'log');
+    const context = createMockContext(
+      {},
+      {
+        headers: {
+          'x-forwarded-for': '198.51.100.30, 172.70.38.94',
+        },
+        ip: '172.70.38.94',
+      },
+    );
+
+    interceptor.intercept(context, mockCallHandler).subscribe({
+      complete: () => {
+        expect(logSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            ip: '198.51.100.30',
+          }),
+        );
         done();
       },
     });

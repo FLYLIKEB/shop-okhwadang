@@ -1394,7 +1394,7 @@
       },
       "filters": {
         "search": "Search",
-        "searchPlaceholder": "Search transaction ID, request ID, message, or path",
+        "searchPlaceholder": "Search transaction ID, request ID, IP, message, or path",
         "startAt": "Start time",
         "endAt": "End time",
         "apply": "Search",
@@ -1416,7 +1416,8 @@
         "message": "Message",
         "context": "Context",
         "details": "Details",
-        "showDetails": "Show raw/fields"
+        "showDetails": "Show raw/fields",
+        "ip": "IP"
       }
     }
   },

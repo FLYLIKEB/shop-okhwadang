@@ -18,6 +18,7 @@ describe('admin log formatter', () => {
         durationMs: 13,
         event: 'http_request',
         ids: { orderId: 'ORD-1' },
+        ip: '203.0.113.10',
       }),
       1,
     );
@@ -37,10 +38,12 @@ describe('admin log formatter', () => {
       'event',
       'ids',
       'body',
+      'ip',
     ]);
     expect(entry.fields[0].order).toBe(1);
     expect(entry.summary).toContain('POST /api/orders');
     expect(getAdminLogField(entry, ['requestId', 'txId'])).toBe('req-1');
+    expect(getAdminLogField(entry, ['ip'])).toBe('203.0.113.10');
   });
 
   it('keeps legacy non-json log lines readable', () => {

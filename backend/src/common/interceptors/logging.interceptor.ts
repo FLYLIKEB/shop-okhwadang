@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, Logger, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { redactSensitiveFields } from '../utils/redaction.util';
@@ -33,10 +27,7 @@ type ResponseForLogging = {
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
 
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<unknown> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const req = context.switchToHttp().getRequest<RequestForLogging>();
     const res = context.switchToHttp().getResponse<ResponseForLogging>();
     const start = Date.now();
@@ -80,11 +71,59 @@ export class LoggingInterceptor implements NestInterceptor {
       path: req.originalUrl || req.url,
       statusCode: this.statusCodeOf(res, error),
       durationMs: Date.now() - start,
-      ip: req.ip ?? req.socket?.remoteAddress ?? null,
+      ip: this.clientIpOf(req),
       ids: this.extractUsefulIds(req),
       body: this.sanitizeAndTruncate(req.body),
       ...(error ? { error: this.errorSummary(error) } : {}),
     };
+  }
+
+  private clientIpOf(req: RequestForLogging): string | null {
+    return (
+      this.headerValue(req.headers, 'cf-connecting-ip') ??
+      this.firstForwardedIp(this.rawHeaderValue(req.headers, 'x-forwarded-for')) ??
+      this.headerValue(req.headers, 'x-real-ip') ??
+      this.cleanIp(req.ip) ??
+      this.cleanIp(req.socket?.remoteAddress) ??
+      null
+    );
+  }
+
+  private rawHeaderValue(
+    headers: RequestForLogging['headers'],
+    name: string,
+  ): string | string[] | undefined {
+    if (!headers) return undefined;
+    const direct = headers[name] ?? headers[name.toLowerCase()];
+    if (direct !== undefined) return direct;
+
+    const found = Object.entries(headers).find(([key]) => key.toLowerCase() === name.toLowerCase());
+    return found?.[1];
+  }
+
+  private headerValue(headers: RequestForLogging['headers'], name: string): string | null {
+    const raw = this.rawHeaderValue(headers, name);
+    const values = Array.isArray(raw) ? raw : [raw];
+    for (const value of values) {
+      const cleaned = this.cleanIp(value);
+      if (cleaned) return cleaned;
+    }
+    return null;
+  }
+
+  private firstForwardedIp(value: string | string[] | undefined): string | null {
+    const values = Array.isArray(value) ? value : [value];
+    for (const item of values) {
+      const first = item?.split(',')[0];
+      const cleaned = this.cleanIp(first);
+      if (cleaned) return cleaned;
+    }
+    return null;
+  }
+
+  private cleanIp(value: string | undefined): string | null {
+    const cleaned = value?.trim();
+    return cleaned ? cleaned : null;
   }
 
   private statusCodeOf(res: ResponseForLogging, error?: unknown): number | undefined {

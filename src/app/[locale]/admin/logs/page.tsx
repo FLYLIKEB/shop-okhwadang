@@ -323,6 +323,9 @@ function LogTable({ entries, emptyText }: { entries: ParsedAdminLogEntry[]; empt
               {t('table.transaction')}
             </th>
             <th scope="col" className="px-3 py-3 font-semibold">
+              {t('table.ip')}
+            </th>
+            <th scope="col" className="px-3 py-3 font-semibold">
               {t('table.request')}
             </th>
             <th scope="col" className="px-3 py-3 font-semibold">
@@ -349,6 +352,7 @@ function LogTable({ entries, emptyText }: { entries: ParsedAdminLogEntry[]; empt
 function LogTableRow({ entry }: { entry: ParsedAdminLogEntry }) {
   const t = useTranslations('admin.logs');
   const transaction = getAdminLogField(entry, ['txId', 'transactionId', 'requestId', 'traceId']);
+  const ip = getAdminLogField(entry, ['ip', 'clientIp', 'remoteAddress']);
   const request = [getAdminLogField(entry, ['method']), getAdminLogField(entry, ['path'])]
     .filter(Boolean)
     .join(' ');
@@ -372,6 +376,7 @@ function LogTableRow({ entry }: { entry: ParsedAdminLogEntry }) {
         </span>
       </td>
       <td className="max-w-xs break-words px-3 py-3 font-mono typo-label">{transaction || '-'}</td>
+      <td className="whitespace-nowrap px-3 py-3 font-mono typo-label">{ip || '-'}</td>
       <td className="max-w-xs break-words px-3 py-3 font-mono typo-label">{request || '-'}</td>
       <td className="min-w-72 max-w-xl whitespace-pre-wrap break-words px-3 py-3">{message}</td>
       <td className="max-w-xs break-words px-3 py-3 typo-label text-muted-foreground">
