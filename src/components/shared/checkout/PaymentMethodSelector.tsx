@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import type { CheckoutGatewayName } from '@/lib/api';
 import { SecureCardEntryShell } from './SecureCardEntryShell';
 import { PaymentMethodOption } from './PaymentMethodOption';
+import { BankTransferAccountInfo } from './BankTransferAccountInfo';
 
 interface PaymentMethodSelectorProps {
   gatewayOptions: CheckoutGatewayName[];
@@ -33,6 +34,10 @@ export function PaymentMethodSelector({
             />
           ))}
         </div>
+
+        {gatewayOptions.includes('bank_transfer') && selectedGateway === 'bank_transfer' && (
+          <BankTransferAccountInfo />
+        )}
 
         {gatewayOptions.includes('eximbay') && selectedGateway === 'eximbay' && (
           <SecureCardEntryShell showSubmitButton={showCardSubmitButton} />

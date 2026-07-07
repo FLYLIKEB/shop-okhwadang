@@ -230,7 +230,7 @@ export function useCheckout(options: UseCheckoutOptions) {
         toast.success(toastMessage('bankTransferOrderReceived'));
         sessionStorage.removeItem(SESSION_KEYS.CHECKOUT_ITEMS);
         await refetch();
-        router.replace(`/${locale}/order/complete?orderId=${order.id}&orderNumber=${order.orderNumber}`);
+        router.replace(`/${locale}/order/complete?orderId=${order.id}&orderNumber=${order.orderNumber}&payment=bank_transfer`);
         return;
       }
 

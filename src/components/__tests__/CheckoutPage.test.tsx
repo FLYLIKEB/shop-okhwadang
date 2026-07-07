@@ -28,6 +28,14 @@ vi.mock('next-intl', () => ({
       paypalPayment: 'PayPal',
       naverpayPayment: '네이버페이',
       bankTransferPayment: '무통장입금',
+      bankTransferAccountTitle: '입금 계좌',
+      bankTransferBankLabel: '은행',
+      bankTransferBankName: '국민은행',
+      bankTransferAccountLabel: '계좌번호',
+      bankTransferAccountNumber: '123456-78-901234',
+      bankTransferHolderLabel: '예금주',
+      bankTransferAccountHolder: '옥화당',
+      bankTransferAccountNote: '주문 접수 후 위 계좌로 입금해 주세요. 입금 확인 후 상품 준비가 시작됩니다.',
       eximbayPayment: 'Credit card',
       eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
       cardPaymentTitle: 'Payment',
@@ -252,7 +260,7 @@ describe('CheckoutPage', () => {
 
 
 
-  it('ko checkout은 간편결제를 기본 선택하고 카드 선택 시 입력 shell을 표시한다', async () => {
+  it('ko checkout은 간편결제를 기본 선택하고 무통장입금 안내와 카드 입력 shell을 조건부 표시한다', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
@@ -263,6 +271,12 @@ describe('CheckoutPage', () => {
     expect(screen.getByRole('radio', { name: /PayPal/ })).not.toBeChecked();
     expect(screen.getByRole('radio', { name: /Credit card/ })).not.toBeChecked();
     expect(screen.queryByTestId('secure-card-entry-shell')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bank-transfer-account-info')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: /무통장입금/ }));
+
+    expect(await screen.findByTestId('bank-transfer-account-info')).toBeInTheDocument();
+    expect(screen.getByText('123456-78-901234')).toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: /Credit card/ }));
 

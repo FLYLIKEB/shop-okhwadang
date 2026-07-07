@@ -11,6 +11,7 @@ import type { OrderResponse } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import { toastMessage } from '@/utils/toastMessages';
+import { BankTransferAccountInfo } from '@/components/shared/checkout/BankTransferAccountInfo';
 import { useFormatter, useTranslations } from 'next-intl';
 
 function OrderCompleteContent({ locale }: { locale: string }) {
@@ -20,6 +21,7 @@ function OrderCompleteContent({ locale }: { locale: string }) {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const orderNumber = searchParams.get('orderNumber');
+  const paymentMethod = searchParams.get('payment');
 
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,6 +80,12 @@ function OrderCompleteContent({ locale }: { locale: string }) {
           })}
         </p>
       </div>
+
+      {paymentMethod === 'bank_transfer' && (
+        <section className="surface-card p-6 mb-8">
+          <BankTransferAccountInfo />
+        </section>
+      )}
 
       <section className="surface-card p-6 space-y-4 mb-8">
         <h2 className="font-semibold text-lg">{t('items')}</h2>
