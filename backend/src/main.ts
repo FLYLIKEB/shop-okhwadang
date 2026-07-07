@@ -14,12 +14,15 @@ import { assertEnv } from './config/env-validator';
 import { resolveTrustProxy } from './config/trust-proxy';
 import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
 import { redactSensitiveFields } from './common/utils/redaction.util';
+import { ContextualLogger } from './common/logging/contextual-logger.service';
+import { requestContextMiddleware } from './common/logging/request-context.middleware';
 
 // 프로덕션 환경에서 필수 env 키 사전 검증 — 누락 시 명확한 에러 메시지와 함께 종료
 assertEnv();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(ContextualLogger));
   const logger = new Logger('Bootstrap');
   app.enableShutdownHooks();
 
@@ -55,6 +58,7 @@ async function bootstrap() {
     return value;
   });
 
+  app.use(requestContextMiddleware);
   app.use(helmet());
   app.use(cookieParser());
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));

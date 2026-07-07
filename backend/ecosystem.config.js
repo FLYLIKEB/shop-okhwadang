@@ -15,7 +15,6 @@ module.exports = {
       JWT_PUBLIC_KEY_FILE: '/app/shop-okhwadang/shop-okhwadang/backend/keys/jwt-public.pem',
     },
     max_memory_restart: '512M',
-    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     merge_logs: true,
   }]
 };

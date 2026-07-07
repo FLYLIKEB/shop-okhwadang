@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProductsModule } from './modules/products/products.module';
@@ -37,6 +37,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
 import { AuthConfigModule } from './config/auth-config.module';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ContextualLogger } from './common/logging/contextual-logger.service';
 
 @Module({
   imports: [
@@ -134,6 +136,11 @@ import { AuthConfigModule } from './config/auth-config.module';
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    ContextualLogger,
   ],
 })
 export class AppModule {}
