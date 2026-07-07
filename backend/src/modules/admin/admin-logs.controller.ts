@@ -12,11 +12,18 @@ export class AdminLogsController {
 
   @Get()
   @ApiCookieAuth()
-  @ApiOperation({ summary: '원격 PM2 로그 조회', description: '운영 서버의 최근 일반/에러 로그를 조회합니다.' })
+  @ApiOperation({
+    summary: '원격 PM2 로그 조회',
+    description: '운영 서버의 최근 일반/에러 로그를 조회합니다.',
+  })
   @ApiResponse({ status: 200, description: '원격 로그 조회 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   getLogs(@Query() query: AdminLogQueryDto) {
-    return this.adminLogsService.getLogs(query.type, query.lines);
+    return this.adminLogsService.getLogs(query.type, query.lines, {
+      search: query.search,
+      startAt: query.startAt,
+      endAt: query.endAt,
+    });
   }
 }

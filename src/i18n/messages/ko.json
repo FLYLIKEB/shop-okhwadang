@@ -1332,7 +1332,7 @@
     },
     "logs": {
       "title": "원격 로그",
-      "description": "운영 서버의 PM2 일반 로그와 에러 로그를 최근 줄 수 기준으로 확인합니다.",
+      "description": "운영 서버의 PM2 일반 로그와 에러 로그를 표로 확인하고, 검색어와 시간대로 필터링합니다.",
       "refresh": "새로고침",
       "loadError": "원격 로그를 불러올 수 없습니다",
       "empty": "표시할 로그가 없습니다.",
@@ -1388,7 +1388,35 @@
         "ip": "IP",
         "userAgent": "User-Agent",
         "meta": "메타",
-        "extra": "추가 필드"
+        "extra": "추가 필드",
+        "requestId": "요청 ID",
+        "traceId": "트레이스 ID"
+      },
+      "filters": {
+        "search": "검색어",
+        "searchPlaceholder": "트랜잭션 ID, 요청 ID, 메시지, 경로 검색",
+        "startAt": "시작 시간",
+        "endAt": "종료 시간",
+        "apply": "검색",
+        "clear": "초기화",
+        "presets": "빠른 시간대:",
+        "applied": "필터 적용됨",
+        "presetOptions": {
+          "1h": "최근 1시간",
+          "24h": "최근 24시간",
+          "7d": "최근 7일"
+        }
+      },
+      "table": {
+        "line": "줄",
+        "time": "시간",
+        "level": "레벨",
+        "transaction": "트랜잭션/요청 ID",
+        "request": "요청",
+        "message": "메시지",
+        "context": "위치",
+        "details": "상세",
+        "showDetails": "원문/필드 보기"
       }
     }
   },

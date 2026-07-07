@@ -1332,7 +1332,7 @@
     },
     "logs": {
       "title": "Remote Logs",
-      "description": "View recent PM2 normal and error logs from the production server.",
+      "description": "View PM2 normal and error logs from the production server in a table with keyword and time filters.",
       "refresh": "Refresh",
       "loadError": "Unable to load remote logs",
       "empty": "No logs to display.",
@@ -1388,7 +1388,35 @@
         "ip": "IP",
         "userAgent": "User-Agent",
         "meta": "Meta",
-        "extra": "Extra field"
+        "extra": "Extra field",
+        "requestId": "Request ID",
+        "traceId": "Trace ID"
+      },
+      "filters": {
+        "search": "Search",
+        "searchPlaceholder": "Search transaction ID, request ID, message, or path",
+        "startAt": "Start time",
+        "endAt": "End time",
+        "apply": "Search",
+        "clear": "Clear",
+        "presets": "Quick ranges:",
+        "applied": "Filters applied",
+        "presetOptions": {
+          "1h": "Last hour",
+          "24h": "Last 24 hours",
+          "7d": "Last 7 days"
+        }
+      },
+      "table": {
+        "line": "Line",
+        "time": "Time",
+        "level": "Level",
+        "transaction": "Transaction/Request ID",
+        "request": "Request",
+        "message": "Message",
+        "context": "Context",
+        "details": "Details",
+        "showDetails": "Show raw/fields"
       }
     }
   },

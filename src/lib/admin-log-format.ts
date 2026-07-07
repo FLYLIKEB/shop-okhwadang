@@ -5,6 +5,8 @@ const ORDERED_FIELD_KEYS = [
   'context',
   'txId',
   'transactionId',
+  'requestId',
+  'traceId',
   'userId',
   'memberId',
   'role',
@@ -32,6 +34,8 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
   context: 'context',
   txId: 'txId',
   transactionId: 'transactionId',
+  requestId: 'requestId',
+  traceId: 'traceId',
   userId: 'userId',
   memberId: 'memberId',
   role: 'role',
@@ -93,7 +97,9 @@ function buildSummary(record: Record<string, unknown>): string {
   const parts = [
     record.level,
     record.context,
-    record.method && record.path ? `${record.method} ${record.path}` : record.msg,
+    record.method && record.path
+      ? `${record.method} ${record.path}`
+      : (record.msg ?? record.message),
     record.statusCode ? `status=${record.statusCode}` : null,
     record.durationMs !== undefined ? `${record.durationMs}ms` : null,
   ].filter(Boolean);
@@ -160,7 +166,12 @@ export function parseAdminLogLine(line: string, lineNumber: number): ParsedAdmin
       fields,
       summary: buildSummary(record),
       level: typeof record.level === 'string' ? record.level : undefined,
-      timestamp: typeof record.ts === 'string' ? record.ts : undefined,
+      timestamp:
+        typeof record.ts === 'string'
+          ? record.ts
+          : typeof record.timestamp === 'string'
+            ? record.timestamp
+            : undefined,
     };
   } catch {
     return {
@@ -171,4 +182,14 @@ export function parseAdminLogLine(line: string, lineNumber: number): ParsedAdmin
       summary: line,
     };
   }
+}
+
+export function getAdminLogField(entry: ParsedAdminLogEntry, keys: readonly string[]): string {
+  for (const key of keys) {
+    const field = entry.fields.find((item) => item.key === key);
+    if (field && field.formattedValue !== '-') {
+      return field.formattedValue;
+    }
+  }
+  return '';
 }

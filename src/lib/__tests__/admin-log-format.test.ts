@@ -1,22 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { parseAdminLogContent, parseAdminLogLine } from '../admin-log-format';
+import { getAdminLogField, parseAdminLogContent, parseAdminLogLine } from '../admin-log-format';
 
 describe('admin log formatter', () => {
   it('parses structured JSON logs in the display order used by the admin UI', () => {
-    const entry = parseAdminLogLine(JSON.stringify({
-      body: { orderId: 'ORD-1' },
-      txId: 'tx-1',
-      level: 'log',
-      ts: '2026-07-07T05:03:19.700Z',
-      context: 'LoggingInterceptor',
-      memberId: 42,
-      method: 'POST',
-      path: '/api/orders',
-      statusCode: 201,
-      durationMs: 13,
-      event: 'http_request',
-      ids: { orderId: 'ORD-1' },
-    }), 1);
+    const entry = parseAdminLogLine(
+      JSON.stringify({
+        body: { orderId: 'ORD-1' },
+        txId: 'tx-1',
+        requestId: 'req-1',
+        level: 'log',
+        ts: '2026-07-07T05:03:19.700Z',
+        context: 'LoggingInterceptor',
+        memberId: 42,
+        method: 'POST',
+        path: '/api/orders',
+        statusCode: 201,
+        durationMs: 13,
+        event: 'http_request',
+        ids: { orderId: 'ORD-1' },
+      }),
+      1,
+    );
 
     expect(entry.parsed).toBe(true);
     expect(entry.fields.map((field) => field.key)).toEqual([
@@ -24,6 +28,7 @@ describe('admin log formatter', () => {
       'level',
       'context',
       'txId',
+      'requestId',
       'memberId',
       'method',
       'path',
@@ -35,6 +40,7 @@ describe('admin log formatter', () => {
     ]);
     expect(entry.fields[0].order).toBe(1);
     expect(entry.summary).toContain('POST /api/orders');
+    expect(getAdminLogField(entry, ['requestId', 'txId'])).toBe('req-1');
   });
 
   it('keeps legacy non-json log lines readable', () => {

@@ -31,7 +31,19 @@ describe('AdminLogsController access policy', () => {
     } as unknown as AdminLogsService;
     const controller = new AdminLogsController(service);
 
-    await expect(controller.getLogs({ type: 'error', lines: 100 })).resolves.toEqual({ content: 'ok' });
-    expect(service.getLogs).toHaveBeenCalledWith('error', 100);
+    await expect(
+      controller.getLogs({
+        type: 'error',
+        lines: 100,
+        search: 'tx-1',
+        startAt: '2026-07-07T00:00:00.000Z',
+        endAt: '2026-07-07T01:00:00.000Z',
+      }),
+    ).resolves.toEqual({ content: 'ok' });
+    expect(service.getLogs).toHaveBeenCalledWith('error', 100, {
+      search: 'tx-1',
+      startAt: '2026-07-07T00:00:00.000Z',
+      endAt: '2026-07-07T01:00:00.000Z',
+    });
   });
 });
