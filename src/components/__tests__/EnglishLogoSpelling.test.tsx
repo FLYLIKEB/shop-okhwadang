@@ -1,39 +1,26 @@
 import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import LogoSlider from '@/components/LogoSlider';
 import Logo from '@/components/shared/Logo';
 
-let mockLocale = 'ko';
+describe('English site logo', () => {
+  it('renders the shared image logo with an explicit English accessible label', () => {
+    render(<Logo alt="Ockhwadang" />);
 
-vi.mock('next-intl', () => ({
-  useLocale: () => mockLocale,
-}));
-
-afterEach(() => {
-  mockLocale = 'ko';
-});
-
-describe('English logo spelling', () => {
-  it('renders the English header wordmark as Ockhwadang', () => {
-    mockLocale = 'en';
-
-    render(<Logo />);
-
-    expect(screen.getByText('Ockhwadang')).toBeInTheDocument();
-    expect(screen.getByLabelText('Ockhwadang')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Ockhwadang' })).toHaveAttribute('src', '/logo-okhwadang.png');
+    expect(screen.queryByText('Ockhwadang')).not.toBeInTheDocument();
     expect(screen.queryByText('Okhwadang')).not.toBeInTheDocument();
   });
 
-  it('renders the English hero overlay wordmark as Ockhwadang', () => {
-    mockLocale = 'en';
-
+  it('renders the shared image logo for the decorative hero overlay', () => {
     render(<LogoSlider />);
 
-    expect(screen.getByText('Ockhwadang')).toBeInTheDocument();
+    expect(screen.getByRole('presentation', { hidden: true })).toHaveAttribute('src', '/logo-okhwadang.png');
+    expect(screen.queryByText('Ockhwadang')).not.toBeInTheDocument();
     expect(screen.queryByText('Okhwadang')).not.toBeInTheDocument();
   });
 
-  it('keeps the Korean image logo unchanged', () => {
+  it('keeps the Korean image logo default unchanged', () => {
     render(<Logo />);
 
     expect(screen.getByRole('img', { name: '옥화당' })).toHaveAttribute('src', '/logo-okhwadang.png');

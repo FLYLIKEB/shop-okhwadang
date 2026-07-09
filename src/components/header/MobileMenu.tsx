@@ -35,6 +35,7 @@ interface MobileMenuHeaderProps {
 
 function MobileMenuHeader({ onClose }: MobileMenuHeaderProps) {
   const tNav = useTranslations('navigation');
+  const tHeader = useTranslations('header');
   return (
     <div className="flex items-center px-4 h-14 shrink-0">
       <button
@@ -46,7 +47,7 @@ function MobileMenuHeader({ onClose }: MobileMenuHeaderProps) {
         <X className="h-5 w-5" />
       </button>
       <Link href="/" onClick={onClose} className="shrink-0">
-        <Logo variant="header" />
+        <Logo variant="header" alt={tHeader('okhwadang')} />
       </Link>
     </div>
   );

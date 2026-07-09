@@ -84,7 +84,7 @@ export default function Header() {
           {/* 로고 */}
           <Link href="/" className="shrink-0">
             <div style={scrollLogo?.headerLogoStyle}>
-              <Logo variant="header" />
+              <Logo variant="header" alt={t('okhwadang')} />
             </div>
           </Link>
 

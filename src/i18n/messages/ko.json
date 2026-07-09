@@ -87,7 +87,8 @@
     "languageSelector": "언어 선택",
     "languageList": "언어 목록",
     "menuBackTo": "{title} 메뉴로 돌아가기",
-    "openSubmenu": "{label} 하위 메뉴 열기"
+    "openSubmenu": "{label} 하위 메뉴 열기",
+    "okhwadang": "옥화당"
   },
   "footer": {
     "customerService": "고객센터",
