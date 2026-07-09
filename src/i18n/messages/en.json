@@ -87,7 +87,8 @@
     "languageSelector": "Select Language",
     "languageList": "Language list",
     "menuBackTo": "Back to {title} menu",
-    "openSubmenu": "Open {label} submenu"
+    "openSubmenu": "Open {label} submenu",
+    "okhwadang": "Ockhwadang"
   },
   "footer": {
     "customerService": "Customer Service",

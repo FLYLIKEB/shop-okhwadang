@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useLocale } from 'next-intl';
+import Logo from '@/components/Logo';
 
 /**
  * 히어로 섹션 위에 fixed로 표시되는 브랜드 워드마크.
@@ -9,7 +9,6 @@ import { useLocale } from 'next-intl';
  * 헤더의 로고가 페이드인되어 자연스럽게 이어진다.
  */
 export default function LogoSlider() {
-  const locale = useLocale();
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -35,18 +34,7 @@ export default function LogoSlider() {
         transition: 'opacity 0.3s ease, transform 0.3s ease',
       }}
     >
-      <span
-        style={{
-          fontFamily: 'var(--font-display, serif)',
-          fontWeight: 700,
-          fontSize: '1.25rem',
-          color: 'white',
-          letterSpacing: '-0.02em',
-          textShadow: '0 1px 8px rgba(0,0,0,0.4)',
-        }}
-      >
-        {locale === 'en' ? 'Ockhwadang' : '옥화당'}
-      </span>
+      <Logo variant="hero" alt="" priority={false} className="drop-shadow-lg" />
     </div>
   );
 }
