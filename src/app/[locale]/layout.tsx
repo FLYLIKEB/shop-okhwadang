@@ -7,6 +7,7 @@ import AppShell from '@/components/AppShell';
 import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
 import Providers from '@/components/Providers';
 import { isLocale, routing } from '@/i18n/routing';
+import { buildBackendApiUrl } from '@/lib/backend-url';
 import { getThemeStyle } from '@/lib/theme-style';
 
 const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
@@ -46,14 +47,11 @@ export async function generateMetadata({
 
 const GOOGLE_TAG_ID = 'G-ENSHH2TBSY';
 
-const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3000';
-
 async function getSettingsMap(locale?: string): Promise<Record<string, string> | null> {
   try {
-    const url = locale && locale !== 'ko'
-      ? `${BACKEND_URL}/api/settings/map?locale=${locale}`
-      : `${BACKEND_URL}/api/settings/map`;
-    const res = await fetch(url, {
+    const search =
+      locale && locale !== 'ko' ? `?${new URLSearchParams({ locale }).toString()}` : '';
+    const res = await fetch(buildBackendApiUrl('/settings/map', search), {
       cache: 'no-store',
     });
     if (!res.ok) return null;
@@ -116,7 +114,11 @@ export default async function LocaleLayout({
     <html lang={safeLocale} data-theme={initialTheme} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: foucScript }} />
-        <Script async src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`} strategy="afterInteractive" />
+        <Script
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`}
+          strategy="afterInteractive"
+        />
         <Script id="google-tag" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
