@@ -55,7 +55,6 @@ async function getStorefrontShellSnapshot(locale: string) {
     return buildStorefrontShellSnapshot(null, { fetchFailed: true });
   }
 }
-
 export default async function LocaleLayout({
   children,
   params,
