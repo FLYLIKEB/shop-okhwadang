@@ -7,13 +7,13 @@ This checklist is the launch fallback when automated browser E2E cannot safely r
 - Local stack is running with `bash scripts/start-local.sh` or the target staging environment is healthy.
 - Backend health returns 200: `curl http://localhost:3000/api/health`.
 - Frontend responds: `curl -I http://localhost:5173/ko`.
-- `CHECKOUT_ENABLED_GATEWAYS` / `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` match the provider(s) being tested.
+- `CHECKOUT_ENABLED_GATEWAYS` / `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` are identical for the scenario under test (`bank_transfer` is auto-added for `ko`).
 - Enabled provider credentials exist only in local/staging env files or secret stores.
 - Test product has enough stock and a non-free-shipping address is available.
 
 ## Success path per enabled provider
 
-Run once for each enabled production provider: NaverPay, PayPal, Toss, Stripe, or Mock.
+Run once for each gateway named in `CHECKOUT_ENABLED_GATEWAYS`, plus any hidden `PAYMENT_GATEWAY=stripe|toss` flow that is intentionally kept alive.
 
 1. Log in as a test customer.
 2. Add one product to cart with quantity that produces a non-zero shipping fee.

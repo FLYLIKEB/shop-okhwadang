@@ -1,5 +1,9 @@
 import type { Locale } from '@/i18n/routing';
 import type { CheckoutGatewayName } from '@/lib/api';
+import {
+  getAvailableCheckoutGateways,
+  getEnabledCheckoutGateways as getSharedEnabledCheckoutGateways,
+} from '../../backend/src/config/checkout-gateway-contract';
 
 export type CheckoutPaymentCountry = 'KR' | 'GLOBAL';
 
@@ -8,25 +12,8 @@ export const CHECKOUT_PAYMENT_COUNTRY_BY_LOCALE = {
   en: 'GLOBAL',
 } as const satisfies Record<Locale, CheckoutPaymentCountry>;
 
-export const CHECKOUT_PAYMENT_METHODS_BY_COUNTRY = {
-  KR: ['naverpay', 'bank_transfer', 'paypal', 'eximbay'],
-  GLOBAL: ['paypal', 'eximbay'],
-} as const satisfies Record<CheckoutPaymentCountry, readonly CheckoutGatewayName[]>;
-
-function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
-  return value === 'naverpay' || value === 'bank_transfer' || value === 'eximbay' || value === 'paypal';
-}
-
 export function getEnabledCheckoutGateways(): CheckoutGatewayName[] {
-  const configured = process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS;
-  if (!configured || configured.trim() === '') return ['naverpay', 'bank_transfer', 'eximbay', 'paypal'];
-
-  const gateways = configured
-    .split(',')
-    .map((value) => value.trim().toLowerCase())
-    .filter(isCheckoutGatewayName);
-
-  return [...new Set([...gateways, 'bank_transfer' as const])];
+  return getSharedEnabledCheckoutGateways(process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS);
 }
 
 export function getCheckoutPaymentCountry(locale: Locale): CheckoutPaymentCountry {
@@ -34,9 +21,7 @@ export function getCheckoutPaymentCountry(locale: Locale): CheckoutPaymentCountr
 }
 
 export function getGatewayOptionsByLocale(locale: Locale): CheckoutGatewayName[] {
-  const enabled = getEnabledCheckoutGateways();
-  const country = getCheckoutPaymentCountry(locale);
-  return CHECKOUT_PAYMENT_METHODS_BY_COUNTRY[country].filter((gateway) => enabled.includes(gateway));
+  return getAvailableCheckoutGateways(locale, process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS);
 }
 
 export function getDefaultCheckoutGateway(locale: Locale): CheckoutGatewayName {

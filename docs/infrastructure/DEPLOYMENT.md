@@ -16,8 +16,12 @@
 - 프론트 `next/image` 최적화 캐시는 `next.config.ts`의 `images.minimumCacheTTL`로 최소 1일을 유지한다. 신규 S3 이미지처럼 origin `Cache-Control`이 더 길면 최적화 이미지 변형도 더 긴 upstream TTL을 따를 수 있으므로, 변경된 이미지는 반드시 새 URL로 교체한다.
 
 ### Vercel 환경변수
+
 - `BACKEND_URL=http://api.ockhwadang.com` (Cloudflare Proxied → EC2 Nginx :80 → NestJS :3000, HTTP)
 - `SITE_URL=https://ockhwadang.com`
+- `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS=naverpay,paypal,eximbay` (frontend-visible checkout contract; `bank_transfer`는 ko 로케일에 자동 추가)
+- EC2 `CHECKOUT_ENABLED_GATEWAYS=naverpay,paypal,eximbay` (backend checkout contract; 프론트와 반드시 동일 목록 유지)
+- `PAYMENT_GATEWAY=stripe|toss` 를 숨김 플로우로 유지하면 해당 PG의 env 키와 CSP 허용 목록도 함께 살아난다.
 
 ## 배포 구조
 
@@ -41,10 +45,12 @@
 ## 백엔드 (AWS EC2 t3.small)
 
 ### 배포 방식
+
 - `main` 브랜치 push 시 GitHub Actions → OIDC 인증 → SSM으로 EC2 명령어 실행
 - 배포 시작 시 `npm run build` 후 `dist/main.js` 존재 여부와 `npm run preflight:prod` DB 연결 사전 점검을 통과해야 `migration:run:prod` 및 PM2 재시작을 진행
 
 ### 서버 구성
+
 - Amazon Linux 2023
 - PM2로 프로세스 관리
 - Nginx (HTTP → HTTPS 리다이렉트)
@@ -84,8 +90,9 @@ permissions:
 자세한 내용은 [`docs/infrastructure/GITHUB_ACTIONS_OIDC.md`](./GITHUB_ACTIONS_OIDC.md)를 참조하세요.
 
 ### GitHub Secrets 설정
-| Secret | 설명 |
-|---|---|
+
+| Secret     | 설명                                   |
+| ---------- | -------------------------------------- |
 | `EC2_HOST` | EC2 인스턴스 퍼블릭 IP (`3.38.168.41`) |
 
 > **SSH_PRIVATE_KEY, EC2_USER 등 불필요** - OIDC가 대신 처리
@@ -97,12 +104,15 @@ permissions:
 ## 데이터베이스 마이그레이션
 
 ### 배포 시 자동 실행
+
 배포 스크립트에 포함되어 있어 별도 실행 불필요:
+
 ```bash
 npm run migration:run:prod   # dist/database/migrations/*.js 적용
 ```
 
 ### 로컬에서 원격 DB 직접 접근 (SSH 터널)
+
 ```bash
 bash scripts/start-local.sh   # SSH 터널 포함 전체 스택 기동
 LOCAL_DATABASE_URL=mysql://root:__REDACTED_ROOT_PW__@127.0.0.1:3307/commerce npm run migration:run
@@ -113,6 +123,7 @@ LOCAL_DATABASE_URL=mysql://root:__REDACTED_ROOT_PW__@127.0.0.1:3307/commerce npm
 ## 모니터링
 
 ### PM2 대시보드
+
 ```bash
 pm2 status          # 프로세스 상태 확인
 pm2 logs commerce   # 실시간 로그
@@ -142,6 +153,7 @@ pm2 save
 ```
 
 ### 헬스 체크 수동 확인
+
 ```bash
 curl https://api.ockhwadang.com/api/health
 ```
@@ -211,9 +223,11 @@ sudo systemctl enable --now nginx
 ### EC2 — PM2 프로세스 비정상 종료
 
 #### 증상
+
 배포 후 `pm2 status`에서 프로세스가 `errored` 상태.
 
 #### 해결
+
 ```bash
 pm2 logs commerce --lines 50   # 에러 로그 확인
 pm2 restart ecosystem.config.js --env production --update-env  # 재시작
@@ -227,10 +241,12 @@ pm2 restart ecosystem.config.js --env production --update-env  # 재시작
 ### Lightsail MySQL 연결 실패
 
 #### 증상
+
 NestJS 기동 후 `Unable to connect to the database` 또는
 `ERROR 1045 Access denied for user 'okhwadang_app'@'<ip>'`.
 
 #### 확인 사항
+
 1. Lightsail DB 상태가 `available`인지 (`aws lightsail get-relational-database`)
 2. VPC peering이 `active`인지, EC2 route table에 `172.26.0.0/16` 경로가 있는지
 3. EC2에서 endpoint로 접속 시 나가는 소스 IP 확인:
@@ -247,9 +263,11 @@ NestJS 기동 후 `Unable to connect to the database` 또는
 ### Nginx 502 Bad Gateway
 
 #### 원인
+
 NestJS(PM2)가 실행되지 않은 상태에서 Nginx가 프록시 시도.
 
 #### 해결
+
 ```bash
 pm2 status                     # commerce 프로세스 확인
 pm2 start ecosystem.config.js --env production  # 프로세스 없으면 시작

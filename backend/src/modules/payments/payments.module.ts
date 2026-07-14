@@ -18,17 +18,18 @@ import { KGInicisPaymentAdapter } from './adapters/inicis.adapter';
 import { NaverPayPaymentAdapter } from './adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from './adapters/paypal.adapter';
 import { EximbayPaymentAdapter } from './adapters/eximbay.adapter';
+import { PAYMENT_CONFIG, PaymentConfig, paymentConfigProvider } from '../../config/payment.config';
 import {
-  PAYMENT_CONFIG,
-  PaymentConfig,
-  paymentConfigProvider,
-} from '../../config/payment.config';
+  getAvailableCheckoutGateways,
+  isCheckoutGatewayName as isSharedCheckoutGatewayName,
+  type CheckoutGatewayName,
+} from '../../config/checkout-gateway-contract';
 
 export function resolvePaymentGateway(config: PaymentConfig): string {
   return config.gateway;
 }
 
-export type CheckoutGatewayName = 'naverpay' | 'bank_transfer' | 'eximbay' | 'paypal';
+export { type CheckoutGatewayName } from '../../config/checkout-gateway-contract';
 
 /**
  * 국가/로케일 기반 결제 게이트웨이 노출 정책 (#1066)
@@ -37,24 +38,8 @@ export type CheckoutGatewayName = 'naverpay' | 'bank_transfer' | 'eximbay' | 'pa
  * - ko/KR: 네이버페이 기본, 무통장입금, PayPal, Eximbay 카드
  * - 글로벌: PayPal 기본, Eximbay 카드 (네이버페이 숨김)
  */
-function getEnabledCheckoutGateways(env: NodeJS.ProcessEnv = process.env): CheckoutGatewayName[] {
-  const configured = env.CHECKOUT_ENABLED_GATEWAYS;
-  if (!configured || configured.trim() === '') return ['naverpay', 'bank_transfer', 'eximbay', 'paypal'];
-
-  const gateways = configured
-    .split(',')
-    .map((value) => value.trim().toLowerCase())
-    .filter(isCheckoutGatewayName);
-
-  return [...new Set([...gateways, 'bank_transfer' as const])];
-}
-
 export function getAvailableGatewaysByLocale(locale: string): CheckoutGatewayName[] {
-  const localeOrder: CheckoutGatewayName[] = locale === 'ko'
-    ? ['naverpay', 'bank_transfer', 'paypal', 'eximbay']
-    : ['paypal', 'eximbay'];
-  const enabled = getEnabledCheckoutGateways();
-  return localeOrder.filter((gateway) => enabled.includes(gateway));
+  return getAvailableCheckoutGateways(locale, process.env.CHECKOUT_ENABLED_GATEWAYS);
 }
 
 export function resolveGatewayByLocale(locale: string): CheckoutGatewayName {
@@ -62,7 +47,7 @@ export function resolveGatewayByLocale(locale: string): CheckoutGatewayName {
 }
 
 export function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
-  return value === 'naverpay' || value === 'bank_transfer' || value === 'eximbay' || value === 'paypal';
+  return isSharedCheckoutGatewayName(value);
 }
 
 const gatewayProviders = [
@@ -120,9 +105,16 @@ const gatewayProviders = [
 ];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory]), OrderEventsModule],
+  imports: [
+    TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory]),
+    OrderEventsModule,
+  ],
   controllers: [PaymentsController, AdminOrderRefundsController, AdminPaymentWebhooksController],
-  providers: [...gatewayProviders, PaymentsService, { provide: 'PaymentsService', useExisting: PaymentsService }],
+  providers: [
+    ...gatewayProviders,
+    PaymentsService,
+    { provide: 'PaymentsService', useExisting: PaymentsService },
+  ],
   exports: [PaymentsService, 'PaymentsService'],
 })
 export class PaymentsModule {}

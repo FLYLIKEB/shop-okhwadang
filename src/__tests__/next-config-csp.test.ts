@@ -1,72 +1,71 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import nextConfig, { buildCheckoutContentSecurityPolicy } from '../../next.config';
 
-function getCspDirective(source: string, directive: string): string {
-  const cspLine = source
-    .split('\n')
-    .find((line) => line.trim().startsWith(`"${directive} `));
+function getCspDirective(csp: string, directive: string): string {
+  const prefix = `${directive} `;
+  const line = csp.split('; ').find((entry) => entry.startsWith(prefix));
 
-  expect(cspLine).toBeDefined();
-  return cspLine ?? '';
+  expect(line).toBeDefined();
+  return line ?? '';
 }
 
 describe('Next.js CSP headers', () => {
-  it('allows Google Analytics gtag script, collection endpoints, and audience image beacon', () => {
-    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
-    const imgSrc = getCspDirective(source, 'img-src');
+  it('keeps COOP popup isolation on every response header set', async () => {
+    const headers = await nextConfig.headers?.();
+    const rootHeaders = headers?.find((entry) => entry.source === '/(.*)')?.headers ?? [];
 
-    expect(source).toContain('https://www.googletagmanager.com');
-    expect(source).toContain('https://www.google-analytics.com');
-    expect(source).toContain('https://analytics.google.com');
-    expect(source).toContain('https://www.google.com');
-    expect(source).toContain('https://region1.google-analytics.com');
+    expect(rootHeaders).toContainEqual({
+      key: 'Cross-Origin-Opener-Policy',
+      value: 'same-origin-allow-popups',
+    });
+  });
+
+  it('allows Google Analytics gtag script, collection endpoints, and audience image beacon', () => {
+    const csp = buildCheckoutContentSecurityPolicy({});
+    const imgSrc = getCspDirective(csp, 'img-src');
+
+    expect(csp).toContain('https://www.googletagmanager.com');
+    expect(csp).toContain('https://www.google-analytics.com');
+    expect(csp).toContain('https://analytics.google.com');
+    expect(csp).toContain('https://www.google.com');
+    expect(csp).toContain('https://region1.google-analytics.com');
     expect(imgSrc).toContain('https://www.google.co.kr');
   });
 
-  it('allows documented PayPal checkout SDK sources and popup isolation', () => {
-    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
+  it('includes PayPal, NaverPay, and Eximbay origins for the default checkout contract', () => {
+    const csp = buildCheckoutContentSecurityPolicy({});
+    const scriptSrc = getCspDirective(csp, 'script-src');
+    const connectSrc = getCspDirective(csp, 'connect-src');
+    const frameSrc = getCspDirective(csp, 'frame-src');
 
-    expect(source).toContain("Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups");
-    expect(source).toContain('https://*.paypal.com');
-    expect(source).toContain('https://*.paypalobjects.com');
-    expect(source).toContain('https://*.venmo.com');
-    expect(source).toContain('child-src');
-    expect(source).toContain('frame-src');
-  });
-
-  it('allows NaverPay SDK and payment page origins in checkout CSP directives', () => {
-    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
-    const scriptSrc = getCspDirective(source, 'script-src');
-    const connectSrc = getCspDirective(source, 'connect-src');
-    const frameSrc = getCspDirective(source, 'frame-src');
+    ['https://*.paypal.com', 'https://*.paypalobjects.com', 'https://*.venmo.com'].forEach(
+      (origin) => {
+        expect(csp).toContain(origin);
+      },
+    );
 
     expect(scriptSrc).toContain('https://nsp.pay.naver.com');
-
     [
-      'https://nsp.pay.naver.com',
       'https://pay.naver.com',
       'https://m.pay.naver.com',
       'https://test-pay.naver.com',
       'https://test-m.pay.naver.com',
     ].forEach((origin) => {
       expect(connectSrc).toContain(origin);
+      expect(frameSrc).toContain(origin);
     });
 
-    [
-      'https://pay.naver.com',
-      'https://m.pay.naver.com',
-      'https://test-pay.naver.com',
-      'https://test-m.pay.naver.com',
-    ].forEach((origin) => {
+    ['https://api-test.eximbay.com', 'https://api.eximbay.com'].forEach((origin) => {
+      expect(scriptSrc).toContain(origin);
+      expect(connectSrc).toContain(origin);
       expect(frameSrc).toContain(origin);
     });
   });
 
-  it('allows Stripe.js, Stripe API, and 3DS frame origins in checkout CSP directives', () => {
-    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
-    const scriptSrc = getCspDirective(source, 'script-src');
-    const connectSrc = getCspDirective(source, 'connect-src');
-    const frameSrc = getCspDirective(source, 'frame-src');
+  it('adds Stripe sources when PAYMENT_GATEWAY=stripe keeps a hidden flow alive', () => {
+    const csp = buildCheckoutContentSecurityPolicy({ PAYMENT_GATEWAY: 'stripe' });
+    const scriptSrc = getCspDirective(csp, 'script-src');
+    const connectSrc = getCspDirective(csp, 'connect-src');
+    const frameSrc = getCspDirective(csp, 'frame-src');
 
     ['https://js.stripe.com', 'https://*.js.stripe.com'].forEach((origin) => {
       expect(scriptSrc).toContain(origin);
@@ -77,29 +76,22 @@ describe('Next.js CSP headers', () => {
     expect(frameSrc).toContain('https://hooks.stripe.com');
   });
 
-  it('allows Eximbay hosted payment SDK/API/frame origins in checkout CSP directives', () => {
-    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
-    const scriptSrc = getCspDirective(source, 'script-src');
-    const connectSrc = getCspDirective(source, 'connect-src');
-    const frameSrc = getCspDirective(source, 'frame-src');
+  it('drops NaverPay and Eximbay sources when checkout contract only enables paypal', () => {
+    const csp = buildCheckoutContentSecurityPolicy({ CHECKOUT_ENABLED_GATEWAYS: 'paypal' });
+    const scriptSrc = getCspDirective(csp, 'script-src');
+    const connectSrc = getCspDirective(csp, 'connect-src');
+    const frameSrc = getCspDirective(csp, 'frame-src');
 
-    ['https://api-test.eximbay.com', 'https://api.eximbay.com'].forEach((origin) => {
-      expect(scriptSrc).toContain(origin);
-      expect(connectSrc).toContain(origin);
-      expect(frameSrc).toContain(origin);
-    });
-
-    ['https://pgonline-test.eximbay.com', 'https://pgonline.eximbay.com'].forEach((origin) => {
-      expect(connectSrc).toContain(origin);
-      expect(frameSrc).toContain(origin);
-    });
+    expect(csp).toContain('https://*.paypal.com');
+    expect(scriptSrc).not.toContain('https://nsp.pay.naver.com');
+    expect(connectSrc).not.toContain('https://pay.naver.com');
+    expect(frameSrc).not.toContain('https://api.eximbay.com');
   });
 
-  it('allows SmartStore product images from the exact Naver image origin', () => {
-    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
-    const imgSrc = getCspDirective(source, 'img-src');
+  it('keeps SmartStore product images on the exact Naver image origin', () => {
+    const csp = buildCheckoutContentSecurityPolicy({});
+    const imgSrc = getCspDirective(csp, 'img-src');
 
-    expect(source).toContain("{ protocol: 'https', hostname: 'shop-phinf.pstatic.net' }");
     expect(imgSrc).toContain('https://shop-phinf.pstatic.net');
     expect(imgSrc).not.toContain('https://*.pstatic.net');
   });
@@ -107,8 +99,6 @@ describe('Next.js CSP headers', () => {
 
 describe('Next.js image cache policy', () => {
   it('keeps optimized remote product images cached beyond the default TTL', () => {
-    const source = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf8');
-
-    expect(source).toContain('minimumCacheTTL: 86400');
+    expect(nextConfig.images?.minimumCacheTTL).toBe(86400);
   });
 });

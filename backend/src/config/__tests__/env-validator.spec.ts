@@ -2,7 +2,6 @@ import {
   validateEnv,
   assertEnv,
   REQUIRED_PROD_ENV_KEYS,
-  CHECKOUT_PROD_ENV_KEYS,
   getRequiredCheckoutEnvKeys,
 } from '../env-validator';
 
@@ -17,12 +16,15 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   NOTIFICATION_PROVIDER: 'resend',
   RESEND_API_KEY: 're_abc123',
   PAYMENT_GATEWAY: 'toss',
+  CHECKOUT_ENABLED_GATEWAYS: 'naverpay,paypal,eximbay',
   STORAGE_PROVIDER: 's3',
   AWS_S3_BUCKET_NAME: 'okhwadang-assets',
   AWS_REGION: 'ap-northeast-2',
   KAKAO_CLIENT_ID: 'kakao-client',
   KAKAO_CLIENT_SECRET: 'kakao-secret',
   KAKAO_REDIRECT_URI: 'https://ockhwadang.com/auth/kakao/callback',
+  TOSS_SECRET_KEY: 'toss-secret',
+  TOSS_CLIENT_KEY: 'toss-client',
   NAVERPAY_PARTNER_ID: 'naver-partner',
   NAVERPAY_CLIENT_ID: 'naver-client',
   NAVERPAY_CLIENT_SECRET: 'naver-secret',
@@ -56,13 +58,37 @@ describe('validateEnv', () => {
     expect(errorKeys).toContain('NAVERPAY_CHAIN_ID');
   });
 
-  it('CHECKOUT_ENABLED_GATEWAYS가 없으면 PAYMENT_GATEWAY provider 키만 필수로 검증한다', () => {
+  it('CHECKOUT_ENABLED_GATEWAYS가 없으면 기본 checkout 계약 키를 검증한다', () => {
     const env = makeFullEnv();
-    env.PAYMENT_GATEWAY = 'paypal';
+    delete env.CHECKOUT_ENABLED_GATEWAYS;
     delete env.NAVERPAY_CHAIN_ID;
 
-    expect(getRequiredCheckoutEnvKeys(env)).toEqual(['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET']);
-    expect(validateEnv(env).map((e) => e.key)).not.toContain('NAVERPAY_CHAIN_ID');
+    expect(getRequiredCheckoutEnvKeys(env)).toEqual([
+      'NAVERPAY_PARTNER_ID',
+      'NAVERPAY_CLIENT_ID',
+      'NAVERPAY_CLIENT_SECRET',
+      'NAVERPAY_CHAIN_ID',
+      'PAYPAL_CLIENT_ID',
+      'PAYPAL_CLIENT_SECRET',
+      'EXIMBAY_MERCHANT_ID',
+      'EXIMBAY_API_KEY',
+      'EXIMBAY_SECRET_KEY',
+      'TOSS_SECRET_KEY',
+      'TOSS_CLIENT_KEY',
+    ]);
+    expect(validateEnv(env).map((e) => e.key)).toContain('NAVERPAY_CHAIN_ID');
+  });
+
+  it('hidden PAYMENT_GATEWAY=stripe flow adds only stripe backend keys on top of the checkout contract', () => {
+    const env = makeFullEnv();
+    env.PAYMENT_GATEWAY = 'stripe';
+    delete env.STRIPE_SECRET_KEY;
+    delete env.STRIPE_WEBHOOK_SECRET;
+
+    expect(getRequiredCheckoutEnvKeys(env)).toContain('STRIPE_SECRET_KEY');
+    expect(getRequiredCheckoutEnvKeys(env)).toContain('STRIPE_WEBHOOK_SECRET');
+    expect(validateEnv(env).map((e) => e.key)).toContain('STRIPE_SECRET_KEY');
+    expect(validateEnv(env).map((e) => e.key)).toContain('STRIPE_WEBHOOK_SECRET');
   });
 
   it('누락된 키가 있으면 해당 키 에러 반환', () => {
@@ -110,14 +136,17 @@ describe('validateEnv', () => {
     expect(errorKeys).toContain('JWT_SECRET');
   });
 
-  it('REQUIRED_PROD_ENV_KEYS에 있는 모든 키를 검증', () => {
-    const env: NodeJS.ProcessEnv = { NODE_ENV: 'production', CHECKOUT_ENABLED_GATEWAYS: 'naverpay,paypal,eximbay' };
+  it('REQUIRED_PROD_ENV_KEYS와 활성 checkout 계약 키를 모두 검증한다', () => {
+    const env: NodeJS.ProcessEnv = {
+      NODE_ENV: 'production',
+      CHECKOUT_ENABLED_GATEWAYS: 'naverpay,paypal,eximbay',
+    };
     const errors = validateEnv(env);
-    // NODE_ENV는 있으므로 나머지 키들이 모두 에러로 나와야 함
-    const missing = [...REQUIRED_PROD_ENV_KEYS, ...CHECKOUT_PROD_ENV_KEYS].filter(
+    const missing = [...REQUIRED_PROD_ENV_KEYS, ...getRequiredCheckoutEnvKeys(env)].filter(
       (k) => k !== 'NODE_ENV',
     );
     const errorKeys = errors.map((e) => e.key);
+
     for (const key of missing) {
       expect(errorKeys).toContain(key);
     }

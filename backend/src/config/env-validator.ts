@@ -1,3 +1,8 @@
+import {
+  CHECKOUT_GATEWAY_ENV_KEYS,
+  getRequiredCheckoutContractEnvKeys,
+} from './checkout-gateway-contract';
+
 /**
  * 프로덕션 환경에서 NestJS bootstrap 전 필수 env 키 검증.
  *
@@ -22,54 +27,20 @@ export const REQUIRED_PROD_ENV_KEYS = [
   'KAKAO_REDIRECT_URI',
 ] as const;
 
-export const CHECKOUT_PROVIDER_ENV_KEYS = {
-  naverpay: [
-    'NAVERPAY_PARTNER_ID',
-    'NAVERPAY_CLIENT_ID',
-    'NAVERPAY_CLIENT_SECRET',
-    'NAVERPAY_CHAIN_ID',
-  ],
-  paypal: [
-    'PAYPAL_CLIENT_ID',
-    'PAYPAL_CLIENT_SECRET',
-  ],
-  eximbay: [
-    'EXIMBAY_MERCHANT_ID',
-    'EXIMBAY_API_KEY',
-    'EXIMBAY_SECRET_KEY',
-  ],
-} as const;
-
 export const CHECKOUT_PROD_ENV_KEYS = [
-  ...CHECKOUT_PROVIDER_ENV_KEYS.naverpay,
-  ...CHECKOUT_PROVIDER_ENV_KEYS.paypal,
-  ...CHECKOUT_PROVIDER_ENV_KEYS.eximbay,
+  ...CHECKOUT_GATEWAY_ENV_KEYS.naverpay.backend,
+  ...CHECKOUT_GATEWAY_ENV_KEYS.paypal.backend,
+  ...CHECKOUT_GATEWAY_ENV_KEYS.eximbay.backend,
+  ...CHECKOUT_GATEWAY_ENV_KEYS.toss.backend,
+  ...CHECKOUT_GATEWAY_ENV_KEYS.stripe.backend,
 ] as const;
 
-type CheckoutProvider = keyof typeof CHECKOUT_PROVIDER_ENV_KEYS;
-
-function isCheckoutProvider(value: string): value is CheckoutProvider {
-  return value === 'naverpay' || value === 'paypal' || value === 'eximbay';
-}
-
-function getEnabledCheckoutProviders(env: NodeJS.ProcessEnv): CheckoutProvider[] {
-  const configured = env.CHECKOUT_ENABLED_GATEWAYS ?? env.PAYMENT_GATEWAY ?? '';
-  const providers = configured
-    .split(',')
-    .map((value) => value.trim().toLowerCase())
-    .filter(isCheckoutProvider);
-  return [...new Set(providers)];
-}
+export type RequiredEnvKey =
+  (typeof REQUIRED_PROD_ENV_KEYS)[number] | (typeof CHECKOUT_PROD_ENV_KEYS)[number];
 
 export function getRequiredCheckoutEnvKeys(env: NodeJS.ProcessEnv): RequiredEnvKey[] {
-  return getEnabledCheckoutProviders(env).flatMap((provider) => [
-    ...CHECKOUT_PROVIDER_ENV_KEYS[provider],
-  ]);
+  return getRequiredCheckoutContractEnvKeys(env) as RequiredEnvKey[];
 }
-
-export type RequiredEnvKey =
-  | (typeof REQUIRED_PROD_ENV_KEYS)[number]
-  | (typeof CHECKOUT_PROD_ENV_KEYS)[number];
 
 export interface EnvValidationError {
   key: string;
@@ -135,7 +106,7 @@ export function assertEnv(env: NodeJS.ProcessEnv = process.env): void {
   write('    2. 로컬에서 원격 동기화: bash scripts/remote-env-sync.sh push');
   write('    3. 키 목록 검증: bash scripts/remote-env-sync.sh verify');
   write(
-    '    4. CHECKOUT_ENABLED_GATEWAYS 또는 PAYMENT_GATEWAY로 활성화한 결제수단의 키만 필수입니다.',
+    '    4. CHECKOUT_ENABLED_GATEWAYS와 NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS를 같은 계약으로 유지하고, 해당 결제수단 키만 채웁니다.',
   );
   write(line.trimEnd());
   write('');
