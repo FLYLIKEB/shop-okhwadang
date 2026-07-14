@@ -1,6 +1,6 @@
 'use client';
 
-import { isHomePageContentError } from '@/lib/storefront-diagnostics';
+import { HOME_PAGE_CONTENT_ERROR_CODE, isHomePageContentError } from '@/lib/storefront-diagnostics';
 import { handleApiError } from '@/utils/error';
 import { localMessage } from '@/utils/localMessages';
 
@@ -17,8 +17,10 @@ export default function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
         recoveryHint: localMessage('ui.homeCmsMissingRecoveryHint'),
       }
     : null;
+
+  const homeCmsDetail = error.message || error.digest || HOME_PAGE_CONTENT_ERROR_CODE;
   const detailMessage = diagnostic
-    ? error.message
+    ? homeCmsDetail
     : handleApiError(error, localMessage('ui.unknownError'));
 
   return (

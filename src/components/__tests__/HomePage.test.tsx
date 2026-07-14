@@ -2,8 +2,12 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import HeroBannerBlock from '@/components/shared/blocks/HeroBannerBlock';
 import ProductGridBlock from '@/components/shared/blocks/ProductGridBlock';
+import ProductCarouselBlock from '@/components/shared/blocks/ProductCarouselBlock';
 import CategoryNavBlock from '@/components/shared/blocks/CategoryNavBlock';
-import type { HeroBannerContent, ProductGridContent, CategoryNavContent, Product, Category } from '@/lib/api';
+import { productsApi } from '@/lib/api';
+import type { HeroBannerContent, ProductGridContent, ProductCarouselContent, CategoryNavContent, Product, Category } from '@/lib/api';
+
+
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -81,6 +85,7 @@ vi.mock('@/lib/api', async () => {
     productsApi: {
       getList: vi.fn().mockResolvedValue({ items: [] }),
       getById: vi.fn(),
+      getBulk: vi.fn().mockResolvedValue([]),
     },
     categoriesApi: {
       getTree: vi.fn().mockResolvedValue([]),
@@ -238,6 +243,26 @@ describe('ProductGridBlock', () => {
     };
     const { container } = render(<ProductGridBlock content={content} />);
     expect(container.firstChild).toBeNull();
+  });
+});
+
+describe('ProductCarouselBlock', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('renders prefetched carousel products without client fetch', () => {
+    const content: ProductCarouselContent = {
+      title: '베스트 자사호',
+      template: 'default',
+      limit: 8,
+      prefetched_products: sampleProducts,
+    };
+
+    render(<ProductCarouselBlock content={content} />);
+
+    expect(screen.getByText('테스트 상품 1')).toBeInTheDocument();
+    expect(screen.getByText('테스트 상품 2')).toBeInTheDocument();
+    expect(vi.mocked(productsApi.getBulk)).not.toHaveBeenCalled();
+    expect(vi.mocked(productsApi.getList)).not.toHaveBeenCalled();
   });
 });
 

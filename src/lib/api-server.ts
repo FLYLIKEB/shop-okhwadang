@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import type {
+  Product,
   ProductListResponse,
   ProductSort,
   Category,
@@ -34,6 +35,7 @@ async function fetchFromBackend<T>(
   endpoint: string,
   params?: Record<string, string | number | undefined>,
   policy?: BackendFetchPolicy,
+  init?: RequestInit,
 ): Promise<T> {
   let url = buildBackendApiUrl(endpoint);
 
@@ -51,10 +53,10 @@ async function fetchFromBackend<T>(
   }
 
   const shouldUseCachePolicy = Boolean(policy) && process.env.CI !== 'true';
-  const response = await fetch(
-    url,
-    shouldUseCachePolicy ? { next: policy } : { cache: 'no-store' },
-  );
+  const response = await fetch(url, {
+    ...init,
+    ...(shouldUseCachePolicy ? { next: policy } : { cache: 'no-store' }),
+  });
 
   if (!response.ok) {
     throw await createApiHttpError(response);
@@ -79,6 +81,19 @@ export function fetchProducts(params?: {
     '/products',
     params as Record<string, string | number | undefined>,
     CACHE_POLICIES.catalog,
+  );
+}
+
+export function fetchProductsBulk(ids: number[], locale?: string) {
+  return fetchFromBackend<Product[]>(
+    '/products/bulk',
+    locale ? { locale } : undefined,
+    CACHE_POLICIES.catalog,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    },
   );
 }
 

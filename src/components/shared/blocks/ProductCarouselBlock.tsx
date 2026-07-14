@@ -23,7 +23,7 @@ export default function ProductCarouselBlock({ content }: Props) {
   const locale = params.locale as Locale;
   const t = useTranslations('product');
   const tCommon = useTranslations('common');
-  const { product_ids, category_id, sort, limit, template, title } = content;
+  const { product_ids, category_id, sort, limit, template, title, prefetched_products } = content;
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -33,7 +33,7 @@ export default function ProductCarouselBlock({ content }: Props) {
   const gap = 24;
 
   const { data: products, loading } = useBlockData<Product>({
-    prefetched: null,
+    prefetched: prefetched_products,
     fetch: async () => {
       if (product_ids && product_ids.length > 0) {
         return productsApi.getBulk(product_ids.slice(0, limit), locale);

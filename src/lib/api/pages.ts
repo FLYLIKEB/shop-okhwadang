@@ -74,6 +74,8 @@ export interface ProductCarouselContent {
   limit: number;
   template: 'default' | 'large';
   title?: string;
+  /** 서버에서 미리 가져온 상품 데이터 (fallback용) */
+  prefetched_products?: Product[];
 }
 
 export interface CategoryNavContent {
