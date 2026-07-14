@@ -61,6 +61,22 @@ describe('middleware backend admin-role fallback', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('allows /checkout when JWT_PUBLIC_KEY is unavailable but backend /auth/me confirms the session', async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: 9, role: 'user' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await middleware(makeRequest('/ko/checkout'));
+
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('redirects /admin when backend fallback returns a non-admin role', async () => {
     vi.stubGlobal(
       'fetch',

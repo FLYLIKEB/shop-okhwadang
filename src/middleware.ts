@@ -48,8 +48,28 @@ function withLocaleCookie(
 }
 
 const ADMIN_ROLES = new Set(['admin', 'super_admin']);
+const MEMBER_PROTECTED_PREFIXES = ['/my', '/checkout'] as const;
 
-type AdminRoleCheckResult = 'admin' | 'not-admin' | 'unverified';
+type JwtSessionCheckResult =
+  { status: 'valid'; role: string | null } | { status: 'invalid' | 'unverified' };
+
+function isMemberProtectedPath(pathnameWithoutLocale: string): boolean {
+  return MEMBER_PROTECTED_PREFIXES.some((prefix) => pathnameWithoutLocale.startsWith(prefix));
+}
+
+function redirectToLogin(
+  request: NextRequest,
+  localePrefix: string,
+  redirectTarget: string,
+): NextResponse {
+  const loginUrl = new URL(`${localePrefix}/login`, request.url);
+  loginUrl.searchParams.set('redirect', redirectTarget);
+  return NextResponse.redirect(loginUrl);
+}
+
+function redirectToLocaleHome(request: NextRequest, localePrefix: string): NextResponse {
+  return NextResponse.redirect(new URL(`${localePrefix}/`, request.url));
+}
 
 export function resetPublicKeyCache(): void {
   testPublicKey = null;
@@ -100,6 +120,10 @@ async function getPublicKey(): Promise<CryptoKey | null> {
 function hasConfiguredPublicKey(): boolean {
   return Boolean(testPublicKey ?? process.env.JWT_PUBLIC_KEY);
 }
+function isExpiredJwtPayload(payload: Record<string, unknown>): boolean {
+  const exp = payload.exp;
+  return typeof exp === 'number' && exp * 1000 <= Date.now();
+}
 
 async function verifyRS256(token: string): Promise<Record<string, unknown> | null> {
   try {
@@ -134,19 +158,32 @@ async function verifyRS256(token: string): Promise<Record<string, unknown> | nul
   }
 }
 
-async function hasAdminRoleByJwt(token: string): Promise<AdminRoleCheckResult> {
+async function getJwtSessionCheck(token: string): Promise<JwtSessionCheckResult> {
   const payload = await verifyRS256(token);
-  if (!payload) return 'unverified';
-  return typeof payload.role === 'string' && ADMIN_ROLES.has(payload.role) ? 'admin' : 'not-admin';
+  if (!payload) return { status: 'unverified' };
+
+  if (
+    (typeof payload.tokenType === 'string' && payload.tokenType !== 'access') ||
+    isExpiredJwtPayload(payload)
+  ) {
+    return { status: 'invalid' };
+  }
+
+  return {
+    status: 'valid',
+    role: typeof payload.role === 'string' ? payload.role : null,
+  };
 }
 
 function getBackendAuthMeUrl(): string | null {
   return buildConfiguredBackendApiUrl('/auth/me');
 }
 
-async function hasAdminRoleByBackend(cookieHeader: string | null): Promise<boolean> {
+async function fetchAuthenticatedProfile(
+  cookieHeader: string | null,
+): Promise<{ role?: unknown } | null> {
   const url = getBackendAuthMeUrl();
-  if (!url || !cookieHeader) return false;
+  if (!url || !cookieHeader) return null;
 
   try {
     const response = await fetch(url, {
@@ -154,25 +191,37 @@ async function hasAdminRoleByBackend(cookieHeader: string | null): Promise<boole
       cache: 'no-store',
     });
 
-    if (!response.ok) return false;
-
-    const profile = (await response.json()) as { role?: unknown };
-    return typeof profile.role === 'string' && ADMIN_ROLES.has(profile.role);
+    if (!response.ok) return null;
+    return (await response.json()) as { role?: unknown };
   } catch {
-    return false;
+    return null;
   }
 }
 
-async function hasAdminRole(token: string, cookieHeader: string | null): Promise<boolean> {
-  const jwtResult = await hasAdminRoleByJwt(token);
-  if (jwtResult === 'admin') return true;
-  if (jwtResult === 'not-admin' || hasConfiguredPublicKey()) return false;
+async function hasAuthenticatedSession(
+  token: string,
+  cookieHeader: string | null,
+): Promise<boolean> {
+  const jwtResult = await getJwtSessionCheck(token);
+  if (jwtResult.status === 'valid') return true;
+  if (jwtResult.status === 'invalid' || hasConfiguredPublicKey()) return false;
 
   // In local/Vercel deployments the Edge middleware may not have JWT_PUBLIC_KEY,
   // while the backend still has the private/public key pair and can validate the
   // httpOnly cookie. Fall back to the backend profile endpoint only when local
   // verification is impossible, not when a configured key rejects the token.
-  return hasAdminRoleByBackend(cookieHeader);
+  return Boolean(await fetchAuthenticatedProfile(cookieHeader));
+}
+
+async function hasAdminRole(token: string, cookieHeader: string | null): Promise<boolean> {
+  const jwtResult = await getJwtSessionCheck(token);
+  if (jwtResult.status === 'valid') {
+    return Boolean(jwtResult.role && ADMIN_ROLES.has(jwtResult.role));
+  }
+  if (jwtResult.status === 'invalid' || hasConfiguredPublicKey()) return false;
+
+  const profile = await fetchAuthenticatedProfile(cookieHeader);
+  return typeof profile?.role === 'string' && ADMIN_ROLES.has(profile.role);
 }
 
 export async function middleware(request: NextRequest) {
@@ -182,6 +231,8 @@ export async function middleware(request: NextRequest) {
   const localeMatch = pathname.match(localePattern);
   const localePrefix = localeMatch ? `/${localeMatch[1]}` : '';
   const pathnameWithoutLocale = localeMatch ? localeMatch[2] || '/' : pathname;
+  const redirectTarget = pathname + request.nextUrl.search;
+  const cookieHeader = request.headers.get('cookie');
   const finalizeResponse = (response: Response) =>
     withLocaleCookie(request, response, localePrefix, pathnameWithoutLocale);
 
@@ -191,20 +242,16 @@ export async function middleware(request: NextRequest) {
 
   if (pathnameWithoutLocale.startsWith('/admin')) {
     if (!token) {
-      const loginUrl = new URL(`${localePrefix}/login`, request.url);
-      loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
-      return finalizeResponse(NextResponse.redirect(loginUrl));
+      return finalizeResponse(redirectToLogin(request, localePrefix, redirectTarget));
     }
-    if (!(await hasAdminRole(token, request.headers.get('cookie')))) {
-      return finalizeResponse(NextResponse.redirect(new URL(`${localePrefix}/`, request.url)));
+    if (!(await hasAdminRole(token, cookieHeader))) {
+      return finalizeResponse(redirectToLocaleHome(request, localePrefix));
     }
   }
 
-  if (pathnameWithoutLocale.startsWith('/my') || pathnameWithoutLocale.startsWith('/checkout')) {
-    if (!token) {
-      const loginUrl = new URL(`${localePrefix}/login`, request.url);
-      loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
-      return finalizeResponse(NextResponse.redirect(loginUrl));
+  if (isMemberProtectedPath(pathnameWithoutLocale)) {
+    if (!token || !(await hasAuthenticatedSession(token, cookieHeader))) {
+      return finalizeResponse(redirectToLogin(request, localePrefix, redirectTarget));
     }
   }
 
