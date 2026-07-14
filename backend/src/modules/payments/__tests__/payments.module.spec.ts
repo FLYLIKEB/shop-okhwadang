@@ -90,6 +90,23 @@ describe('locale gateway policy — express payments first and country-specific 
     expect(getAvailableGatewaysByLocale('en', env)).toEqual(['paypal', 'eximbay']);
   });
 
+  it('ko hides disabled express gateways when only paypal is enabled', () => {
+    const previous = process.env.CHECKOUT_ENABLED_GATEWAYS;
+    process.env.CHECKOUT_ENABLED_GATEWAYS = 'paypal';
+
+    try {
+      expect(resolveGatewayByLocale('ko')).toBe('bank_transfer');
+      expect(getAvailableGatewaysByLocale('ko')).toEqual(['bank_transfer', 'paypal']);
+      expect(getAvailableGatewaysByLocale('en')).toEqual(['paypal']);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.CHECKOUT_ENABLED_GATEWAYS;
+      } else {
+        process.env.CHECKOUT_ENABLED_GATEWAYS = previous;
+      }
+    }
+  });
+
   it('en and other locales → paypal default, eximbay card, no naverpay', () => {
     expect(resolveGatewayByLocale('en')).toBe('paypal');
     expect(resolveGatewayByLocale('ja')).toBe('paypal');

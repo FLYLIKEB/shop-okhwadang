@@ -4,6 +4,10 @@
  * backend/.env.example에 # REQUIRED 주석이 붙은 키 목록과 동기화할 것.
  * 누락 시 명확한 에러 메시지 출력 후 프로세스 종료.
  */
+import {
+  CHECKOUT_GATEWAY_CONTRACT,
+  getRequiredCheckoutEnvKeys as getRequiredCheckoutEnvKeysFromContract,
+} from './checkout-gateway-contract';
 
 export const REQUIRED_PROD_ENV_KEYS = [
   'NODE_ENV',
@@ -23,21 +27,9 @@ export const REQUIRED_PROD_ENV_KEYS = [
 ] as const;
 
 export const CHECKOUT_PROVIDER_ENV_KEYS = {
-  naverpay: [
-    'NAVERPAY_PARTNER_ID',
-    'NAVERPAY_CLIENT_ID',
-    'NAVERPAY_CLIENT_SECRET',
-    'NAVERPAY_CHAIN_ID',
-  ],
-  paypal: [
-    'PAYPAL_CLIENT_ID',
-    'PAYPAL_CLIENT_SECRET',
-  ],
-  eximbay: [
-    'EXIMBAY_MERCHANT_ID',
-    'EXIMBAY_API_KEY',
-    'EXIMBAY_SECRET_KEY',
-  ],
+  naverpay: [...CHECKOUT_GATEWAY_CONTRACT.naverpay.requiredEnvKeys],
+  paypal: [...CHECKOUT_GATEWAY_CONTRACT.paypal.requiredEnvKeys],
+  eximbay: [...CHECKOUT_GATEWAY_CONTRACT.eximbay.requiredEnvKeys],
 } as const;
 
 export const CHECKOUT_PROD_ENV_KEYS = [
@@ -46,25 +38,10 @@ export const CHECKOUT_PROD_ENV_KEYS = [
   ...CHECKOUT_PROVIDER_ENV_KEYS.eximbay,
 ] as const;
 
-type CheckoutProvider = keyof typeof CHECKOUT_PROVIDER_ENV_KEYS;
-
-function isCheckoutProvider(value: string): value is CheckoutProvider {
-  return value === 'naverpay' || value === 'paypal' || value === 'eximbay';
-}
-
-function getEnabledCheckoutProviders(env: NodeJS.ProcessEnv): CheckoutProvider[] {
-  const configured = env.CHECKOUT_ENABLED_GATEWAYS ?? env.PAYMENT_GATEWAY ?? '';
-  const providers = configured
-    .split(',')
-    .map((value) => value.trim().toLowerCase())
-    .filter(isCheckoutProvider);
-  return [...new Set(providers)];
-}
-
 export function getRequiredCheckoutEnvKeys(env: NodeJS.ProcessEnv): RequiredEnvKey[] {
-  return getEnabledCheckoutProviders(env).flatMap((provider) => [
-    ...CHECKOUT_PROVIDER_ENV_KEYS[provider],
-  ]);
+  return getRequiredCheckoutEnvKeysFromContract(
+    env.CHECKOUT_ENABLED_GATEWAYS ?? env.PAYMENT_GATEWAY,
+  ) as RequiredEnvKey[];
 }
 
 export type RequiredEnvKey =
