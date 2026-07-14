@@ -4,7 +4,7 @@
 
 | 변수          | 기본값                  | 설명                                                                                 |
 | ------------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| `BACKEND_URL` | `http://localhost:3000` | NestJS 백엔드 URL (`src/middleware.ts` 런타임 프록시와 서버 컴포넌트 fetch에서 사용) |
+| `BACKEND_URL` | `http://localhost:3000` | NestJS 백엔드 URL (`src/middleware.ts` 런타임 프록시와 서버 컴포넌트 fetch에서 사용). 운영 Vercel 값은 `https://api.ockhwadang.com` |
 
 ---
 
@@ -12,7 +12,7 @@
 
 | 변수                 | 기본값                 | 설명                  |
 | -------------------- | ---------------------- | --------------------- |
-| `BACKEND_URL`        | `http://<EC2_IP>:3000` | 백엔드 서버 URL       |
+| `BACKEND_URL`        | `https://api.ockhwadang.com` | 백엔드 origin URL (Cloudflare Proxied + Full (strict)) |
 | `BACKEND_TIMEOUT_MS` | `10000`                | 프록시 타임아웃 (ms)  |
 | `LOG_PROXY_REQUESTS` | `true`                 | 프록시 요청 로깅 여부 |
 
@@ -26,6 +26,7 @@
 | ---------- | ------------- | ----------------------------- |
 | `NODE_ENV` | `development` | 환경 (development/production) |
 | `PORT`     | `3000`        | 서버 포트                     |
+| `BACKEND_URL` | `https://api.ockhwadang.com/api` | 백엔드 외부 기준 URL (결제 webhook/status_url, 업로드 절대 URL 생성에 사용). 프로덕션은 HTTPS만 허용 |
 
 ### 데이터베이스
 

@@ -2,8 +2,8 @@
 
 ## 도메인
 
-- **운영 도메인**: `https://ockhwadang.com` (Cloudflare DNS → Vercel, HTTPS는 Vercel/Cloudflare가 처리)
-- **API 경로**: 브라우저는 `ockhwadang.com/api/*`만 호출. Next.js middleware(`src/middleware.ts`)가 Vercel Edge에서 `BACKEND_URL`로 런타임 프록시. Vercel Edge는 IP 직접 fetch를 금지하므로 반드시 도메인(`api.ockhwadang.com`) 경유.
+- **운영 도메인**: `https://ockhwadang.com` (Cloudflare DNS → Vercel, 브라우저 진입부터 HTTPS 고정)
+- **API 경로**: 브라우저는 `ockhwadang.com/api/*`만 호출. Next.js middleware(`src/middleware.ts`)가 Vercel Edge에서 `BACKEND_URL=https://api.ockhwadang.com` 로 런타임 프록시하며, `api.ockhwadang.com` 은 Cloudflare Proxied + `Full (strict)` 로 EC2 origin 443에 연결한다. Vercel Edge는 IP 직접 fetch를 금지하므로 반드시 도메인 경유.
 - **CDN 서브도메인**: `https://cdn.ockhwadang.com` → CloudFront → S3 `okhwadang-assets`
 ### Cloudflare DNS TXT 레코드
 
@@ -43,8 +43,10 @@ nslookup -type=TXT _dmarc.ockhwadang.com
 - 기존 S3 객체에는 신규 코드가 소급 적용되지 않는다. 기존 상품 이미지까지 같은 정책을 적용해야 하면 AWS 콘솔/CLI로 객체 메타데이터를 일괄 교체하거나 관리자에서 이미지를 재업로드한다.
 - 프론트 `next/image` 최적화 캐시는 `next.config.ts`의 `images.minimumCacheTTL`로 최소 1일을 유지한다. 신규 S3 이미지처럼 origin `Cache-Control`이 더 길면 최적화 이미지 변형도 더 긴 upstream TTL을 따를 수 있으므로, 변경된 이미지는 반드시 새 URL로 교체한다.
 
-### Vercel 환경변수
-- `BACKEND_URL=http://api.ockhwadang.com` (Cloudflare Proxied → EC2 Nginx :80 → NestJS :3000, HTTP)
+### 운영 origin URL
+- 프론트/Vercel `BACKEND_URL=https://api.ockhwadang.com`
+- 백엔드/EC2 `.env.production` `BACKEND_URL=https://api.ockhwadang.com/api` (결제 webhook/status_url, 업로드 절대 URL 생성에 사용)
+- `api.ockhwadang.com` 은 Cloudflare **Proxied + SSL/TLS mode `Full (strict)`** 로 유지하고, EC2 nginx 443에는 Cloudflare Origin CA 또는 동등한 서버 인증서를 설치한다.
 - `SITE_URL=https://ockhwadang.com`
 
 ## 배포 구조
@@ -54,10 +56,12 @@ nslookup -type=TXT _dmarc.ockhwadang.com
     │
     ├── HTTPS ──→ Cloudflare ──→ Vercel CDN (Next.js SSR, ockhwadang.com)
     │                 │
-    │                 └── /api/* rewrites ──→ api.ockhwadang.com → AWS EC2 t3.small (NestJS :3000)
+    │                 └── /api/* rewrites ──→ HTTPS api.ockhwadang.com (Cloudflare Proxied)
     │                                              │
-    │                                              └── MySQL ──→ AWS Lightsail MySQL :3306
-    │                                                 (캐시는 백엔드 프로세스 내 in-memory)
+    │                                              └── HTTPS :443 ──→ AWS EC2 t3.small (Nginx → NestJS :3000)
+    │                                                                  │
+    │                                                                  └── MySQL ──→ AWS Lightsail MySQL :3306
+    │                                                                     (캐시는 백엔드 프로세스 내 in-memory)
     └──────────────────────────────────────────────────────────────────────────────────────────
 ```
 
@@ -75,7 +79,7 @@ nslookup -type=TXT _dmarc.ockhwadang.com
 ### 서버 구성
 - Amazon Linux 2023
 - PM2로 프로세스 관리
-- Nginx (HTTP → HTTPS 리다이렉트)
+- Nginx (443 TLS origin + 80 → 443 redirect)
 
 ### OIDC + SSM 배포 (현재 방식)
 
@@ -180,17 +184,27 @@ curl https://api.ockhwadang.com/api/health
 
 ## Nginx 설정 (EC2)
 
-HTTPS는 Vercel(Cloudflare)에서 종료되고, EC2 nginx는 **HTTP 80 → NestJS :3000** 리버스 프록시만 담당. SSL/certbot 불필요.
+EC2 nginx는 `api.ockhwadang.com` origin에서 TLS를 종료하고, 복호화된 요청만 `127.0.0.1:3000` NestJS로 전달한다. Cloudflare는 `Full (strict)` 모드여야 하며, 443 인증서는 Cloudflare Origin CA 또는 동등한 서버 인증서를 사용한다.
 
 ```bash
 sudo dnf install -y nginx
-sudo cp infra/nginx/commerce.conf /etc/nginx/conf.d/commerce.conf
+sudo install -d -m 700 /etc/ssl/cloudflare
+# origin.crt / origin.key 는 Cloudflare Origin CA(또는 동등한 서버 인증서)로 별도 배치
+sudo cp "$(git rev-parse --show-toplevel)/infra/nginx/commerce.conf" /etc/nginx/conf.d/commerce.conf
 sudo nginx -t
 sudo systemctl enable --now nginx
 ```
 
-> ⚠️ EC2 보안그룹은 80 포트를 0.0.0.0/0 에 허용해야 한다. (Vercel egress IP가 동적이라 IP 화이트리스트는 비현실적)
-> Vercel ↔ EC2 구간은 평문이므로, 민감 데이터가 많아지면 추후 Cloudflare Tunnel 또는 Origin Cert 도입을 검토.
+> ⚠️ EC2 보안그룹은 443만 Cloudflare IP range에서 허용한다. 80은 steady-state 에서 닫고, HTTP → HTTPS redirect 또는 인증서 발급 검증이 꼭 필요할 때만 임시로 연다.
+> ⚠️ 운영 전환 후 `http://api.ockhwadang.com` 직접 응답이 남아 있으면 안 된다. 허용되는 결과는 `301/308` HTTPS redirect 또는 명시적 차단뿐이다.
+
+### 전환 후 smoke check
+
+1. `curl -sS https://api.ockhwadang.com/api/health | jq '.status, .db.status'`
+2. `curl -I http://api.ockhwadang.com/api/health` → `301/308` redirect 또는 연결 거부
+3. 브라우저 DevTools Network 에서 로그인 후 `GET /api/auth/me` 가 HTTPS 로만 호출되고, 응답 `Set-Cookie` 에 `Secure; HttpOnly; SameSite=Strict` 가 유지되는지 확인
+4. 주문/결제 smoke: `POST /api/orders` 와 `POST /api/payments/prepare` 가 HTTPS 로만 성공하고, PG webhook/status URL 이 `https://api.ockhwadang.com/api/...` 로 남아 있는지 확인
+5. 관리자 smoke: `PUT /api/admin/settings` 저장이 HTTPS 로 2xx 응답하는지 확인
 
 자세한 설정은 [`infra/nginx/commerce.conf`](infra/nginx/commerce.conf)를 참조하세요.
 

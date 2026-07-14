@@ -231,7 +231,7 @@ ssh -i ~/okhwadang-ec2-key.pem ec2-user@3.38.168.41
 sudo tee /app/shop-okhwadang/backend/.env.production > /dev/null << 'EOF'
 NODE_ENV=production
 PORT=3000
-BACKEND_URL=http://3.38.168.41:3000
+BACKEND_URL=https://api.ockhwadang.com/api
 DB_SYNCHRONIZE=false
 DB_SSL_ENABLED=false
 DATABASE_URL=mysql://user:password@<lightsail-private-ip>:3306/commerce
