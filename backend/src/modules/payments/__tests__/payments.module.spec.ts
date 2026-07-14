@@ -1,5 +1,5 @@
 import { createPaymentConfig } from '../../../config/payment.config';
-import { getAvailableGatewaysByLocale, resolveGatewayByLocale } from '../payments.module';
+import { getAvailableGatewaysByLocale, resolveGatewayByLocale } from '../checkout-gateway.policy';
 
 describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
   it('NODE_ENV=production, PAYMENT_GATEWAY=mock → 시작 실패', () => {
@@ -83,21 +83,11 @@ describe('locale gateway policy — express payments first and country-specific 
     expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
   });
 
-
   it('ko keeps bank transfer even when external gateways are configured by env', () => {
-    const previous = process.env.CHECKOUT_ENABLED_GATEWAYS;
-    process.env.CHECKOUT_ENABLED_GATEWAYS = 'naverpay,paypal,eximbay';
+    const env = { CHECKOUT_ENABLED_GATEWAYS: 'naverpay,paypal,eximbay' } as NodeJS.ProcessEnv;
 
-    try {
-      expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
-      expect(getAvailableGatewaysByLocale('en')).toEqual(['paypal', 'eximbay']);
-    } finally {
-      if (previous === undefined) {
-        delete process.env.CHECKOUT_ENABLED_GATEWAYS;
-      } else {
-        process.env.CHECKOUT_ENABLED_GATEWAYS = previous;
-      }
-    }
+    expect(getAvailableGatewaysByLocale('ko', env)).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
+    expect(getAvailableGatewaysByLocale('en', env)).toEqual(['paypal', 'eximbay']);
   });
 
   it('en and other locales → paypal default, eximbay card, no naverpay', () => {

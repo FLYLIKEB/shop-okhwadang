@@ -10,8 +10,9 @@ import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { CouponsService } from '../../coupons/coupons.service';
 import { ShippingFeeCalculatorService } from '../../shipping/services/shipping-fee-calculator.service';
-import { OrderEventEmitter } from '../order-event.emitter';
 import { ProductStatus } from '../../products/entities/product.entity';
+import { OrderCreationWorkflowService } from '../order-creation.workflow.service';
+import { OrderPostCommitService } from '../order-post-commit.service';
 
 // Manager used inside dataSource.transaction — same shape as the previous queryRunner.manager mock
 const mockManager = {
@@ -72,6 +73,8 @@ describe('OrdersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrdersService,
+        OrderCreationWorkflowService,
+        OrderPostCommitService,
         { provide: getRepositoryToken(Order), useValue: mockOrderRepository },
         { provide: DataSource, useValue: mockDataSource },
         { provide: PointsService, useValue: mockPointsService },
@@ -79,7 +82,6 @@ describe('OrdersService', () => {
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: CouponsService, useValue: mockCouponsService },
         { provide: ShippingFeeCalculatorService, useValue: mockShippingFeeCalculator },
-        { provide: OrderEventEmitter, useValue: { emitOrderCompleted: jest.fn() } },
       ],
     }).compile();
 
