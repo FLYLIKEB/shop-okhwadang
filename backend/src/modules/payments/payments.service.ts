@@ -26,7 +26,7 @@ import {
   getAvailableGatewaysByLocale,
   isCheckoutGatewayName,
   resolveGatewayByLocale,
-} from './payments.module';
+} from './checkout-gateway.policy';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { NotificationService } from '../notification/notification.service';

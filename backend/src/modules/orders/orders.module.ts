@@ -14,6 +14,8 @@ import { CouponsModule } from '../coupons/coupons.module';
 import { ShippingModule } from '../shipping/shipping.module';
 import { OrderEventsModule } from './order-events.module';
 import { OrderServiceRequestsService } from './order-service-requests.service';
+import { OrderCreationWorkflowService } from './order-creation.workflow.service';
+import { OrderPostCommitService } from './order-post-commit.service';
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { OrderServiceRequestsService } from './order-service-requests.service';
     OrderEventsModule,
   ],
   controllers: [OrdersController, OrderServiceRequestsController, AdminOrderServiceRequestsController],
-  providers: [OrdersService, OrderServiceRequestsService],
+  providers: [OrdersService, OrderCreationWorkflowService, OrderPostCommitService, OrderServiceRequestsService],
   exports: [OrdersService, OrderServiceRequestsService, OrderEventsModule],
 })
 export class OrdersModule {}
