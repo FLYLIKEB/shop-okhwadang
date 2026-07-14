@@ -32,7 +32,7 @@ vi.mock('next-intl', () => ({
   },
 }));
 
-vi.mock('@/i18n/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({
     replace: replaceMock,
   }),
@@ -42,7 +42,6 @@ beforeEach(() => {
   mockLocale = 'ko';
   replaceMock = vi.fn();
   window.history.replaceState({}, '', 'http://localhost:3000/ko');
-  document.cookie = 'NEXT_LOCALE=; max-age=0; path=/';
 });
 
 afterEach(() => {
@@ -73,12 +72,12 @@ describe('LanguageSelector', () => {
     expect(screen.queryByText('中文')).not.toBeInTheDocument();
   });
 
-  it('selecting a different language navigates to the same internal path with locale option and closes dropdown', async () => {
+  it('selecting a different language navigates to the locale-prefixed path and closes dropdown', async () => {
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
     await user.click(screen.getByText('English'));
-    expect(replaceMock).toHaveBeenCalledWith('/', { locale: 'en' });
+    expect(replaceMock).toHaveBeenCalledWith('/en');
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
@@ -88,7 +87,7 @@ describe('LanguageSelector', () => {
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
     await user.click(screen.getByText('English'));
-    expect(replaceMock).toHaveBeenCalledWith('/products/123#details', { locale: 'en' });
+    expect(replaceMock).toHaveBeenCalledWith('/en/products/123#details');
   });
 
   it('selecting current locale does not navigate', async () => {
@@ -99,12 +98,13 @@ describe('LanguageSelector', () => {
     expect(replaceMock).not.toHaveBeenCalled();
   });
 
-  it('sets NEXT_LOCALE cookie on language change', async () => {
+  it('removes the language query state when switching locale', async () => {
+    window.history.replaceState({}, '', 'http://localhost:3000/ko/products?language=1&search=tea');
     const user = userEvent.setup();
     render(<LanguageSelector />);
     await user.click(screen.getByRole('button', { name: '언어 선택' }));
     await user.click(screen.getByText('English'));
-    expect(document.cookie).toContain('NEXT_LOCALE=en');
+    expect(replaceMock).toHaveBeenCalledWith('/en/products?search=tea');
   });
 
   it('closes dropdown on Escape key', async () => {
@@ -153,7 +153,7 @@ describe('LanguageSelector', () => {
     const user = userEvent.setup();
     render(<LanguageSelector variant="inline" />);
     await user.click(screen.getByRole('button', { name: 'English' }));
-    expect(replaceMock).toHaveBeenCalledWith('/', { locale: 'en' });
+    expect(replaceMock).toHaveBeenCalledWith('/en');
   });
 
   it('inline variant does not navigate when clicking current locale', async () => {

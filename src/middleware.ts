@@ -6,6 +6,44 @@ import { routing } from '@/i18n/routing';
 const intlMiddleware = createMiddleware(routing);
 
 const localePattern = new RegExp(`^/(${routing.locales.join('|')})(/.*)?$`);
+const LOCALE_COOKIE_NAME = 'NEXT_LOCALE';
+const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+function shouldUseSecureLocaleCookie(request: NextRequest): boolean {
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+  // Service risk: forcing `Secure` on plain HTTP breaks locale persistence in local/dev.
+  // Keep this tied to real HTTPS so production is hardened without making localhost fail.
+  return request.nextUrl.protocol === 'https:' || forwardedProto === 'https';
+}
+
+function withLocaleCookie(
+  request: NextRequest,
+  response: Response,
+  localePrefix: string,
+  pathnameWithoutLocale: string,
+): Response {
+  if (!localePrefix || pathnameWithoutLocale.startsWith('/api')) {
+    return response;
+  }
+
+  const nextResponse = response instanceof NextResponse
+    ? response
+    : new NextResponse(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      });
+
+  nextResponse.cookies.set(LOCALE_COOKIE_NAME, localePrefix.slice(1), {
+    path: '/',
+    maxAge: LOCALE_COOKIE_MAX_AGE,
+    sameSite: 'lax',
+    secure: shouldUseSecureLocaleCookie(request),
+    httpOnly: true,
+  });
+
+  return nextResponse;
+}
 
 const ADMIN_ROLES = new Set(['admin', 'super_admin']);
 
@@ -147,19 +185,20 @@ export async function middleware(request: NextRequest) {
   const localeMatch = pathname.match(localePattern);
   const localePrefix = localeMatch ? `/${localeMatch[1]}` : '';
   const pathnameWithoutLocale = localeMatch ? (localeMatch[2] || '/') : pathname;
+  const finalizeResponse = (response: Response) => withLocaleCookie(request, response, localePrefix, pathnameWithoutLocale);
 
   if (pathnameWithoutLocale === '/sitemap.xml' || pathnameWithoutLocale === '/robots.txt') {
-    return NextResponse.next();
+    return finalizeResponse(NextResponse.next());
   }
 
   if (pathnameWithoutLocale.startsWith('/admin')) {
     if (!token) {
       const loginUrl = new URL(`${localePrefix}/login`, request.url);
       loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
-      return NextResponse.redirect(loginUrl);
+      return finalizeResponse(NextResponse.redirect(loginUrl));
     }
     if (!(await hasAdminRole(token, request.headers.get('cookie')))) {
-      return NextResponse.redirect(new URL(`${localePrefix}/`, request.url));
+      return finalizeResponse(NextResponse.redirect(new URL(`${localePrefix}/`, request.url)));
     }
   }
 
@@ -167,7 +206,7 @@ export async function middleware(request: NextRequest) {
     if (!token) {
       const loginUrl = new URL(`${localePrefix}/login`, request.url);
       loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
-      return NextResponse.redirect(loginUrl);
+      return finalizeResponse(NextResponse.redirect(loginUrl));
     }
   }
 
@@ -176,10 +215,10 @@ export async function middleware(request: NextRequest) {
     const backendUrl = process.env.BACKEND_URL;
 
     if (!backendUrl) {
-      return NextResponse.json(
+      return finalizeResponse(NextResponse.json(
         { error: 'BACKEND_URL not configured' },
         { status: 500 }
-      );
+      ));
     }
 
     const apiPath = pathname.startsWith('/api')
@@ -227,19 +266,19 @@ export async function middleware(request: NextRequest) {
       }
       responseHeaders.set('X-Proxy-By', 'Next.js Middleware');
 
-      return new NextResponse(data, {
+      return finalizeResponse(new NextResponse(data, {
         status: response.status,
         headers: responseHeaders,
-      });
+      }));
     } catch (error) {
-      return NextResponse.json(
+      return finalizeResponse(NextResponse.json(
         { error: 'Backend unreachable', details: String(error) },
         { status: 502 }
-      );
+      ));
     }
   }
 
-  return intlMiddleware(request);
+  return finalizeResponse(intlMiddleware(request));
 }
 
 export const config = {

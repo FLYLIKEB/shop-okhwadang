@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useTransition } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter } from 'next/navigation';
 import { Globe } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { useUrlModal } from '@/hooks/useUrlModal';
@@ -47,14 +47,23 @@ function getInternalHref(): string {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+function getLocalizedHref(locale: Locale): string {
+  const href = getInternalHref();
+  if (href === '/') return `/${locale}`;
+  if (href.startsWith('/?') || href.startsWith('/#')) return `/${locale}${href.slice(1)}`;
+  return `/${locale}${href}`;
+}
+
 function switchLocale(
   locale: Locale,
   currentLocale: Locale,
-  onNavigate: (href: string, options: { locale: Locale }) => void,
+  onNavigate: (href: string) => void,
 ) {
   if (locale === currentLocale) return;
-  document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-  onNavigate(getInternalHref(), { locale });
+  // Service risk: `next-intl` locale navigation syncs NEXT_LOCALE via `document.cookie`,
+  // which cannot enforce HttpOnly. Keep this URL builder aligned if routing gains
+  // localized pathnames or domain-based locale routing, or language switches can break.
+  onNavigate(getLocalizedHref(locale));
 }
 
 /** 모바일 사이드바용 — 세그먼트 버튼, 드롭다운 없음 */
@@ -76,7 +85,7 @@ function InlineLanguageSelector({ className }: { className?: string }) {
               type="button"
               onClick={() => {
                 startTransition(() => {
-                  switchLocale(option.locale, currentLocale, (href, options) => router.replace(href, options));
+                  switchLocale(option.locale, currentLocale, (href) => router.replace(href));
                 });
               }}
               aria-pressed={isSelected}
@@ -112,7 +121,7 @@ function DropdownLanguageSelector({ className, compact = false }: { className?: 
   const handleSelect = (locale: Locale) => {
     setIsOpen(false, 'replace');
     startTransition(() => {
-      switchLocale(locale, currentLocale, (href, options) => router.replace(href, options));
+      switchLocale(locale, currentLocale, (href) => router.replace(href));
     });
   };
 

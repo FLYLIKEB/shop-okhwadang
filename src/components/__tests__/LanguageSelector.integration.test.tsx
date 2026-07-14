@@ -20,7 +20,7 @@ vi.mock('next-intl', () => ({
   },
 }));
 
-vi.mock('@/i18n/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({
     replace: replaceMock,
   }),
@@ -32,7 +32,6 @@ describe('LanguageSelector integration', () => {
     replaceMock.mockClear();
     historyBackSpy = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
     window.history.replaceState({}, '', 'http://localhost:3000/ko?search=1');
-    document.cookie = 'NEXT_LOCALE=; max-age=0; path=/';
   });
 
   afterEach(() => {
@@ -51,9 +50,8 @@ describe('LanguageSelector integration', () => {
     await user.click(screen.getByRole('button', { name: 'English' }));
 
     await waitFor(() => {
-      expect(replaceMock).toHaveBeenCalledWith('/?search=1', { locale: 'en' });
+      expect(replaceMock).toHaveBeenCalledWith('/en?search=1');
     });
     expect(historyBackSpy).not.toHaveBeenCalled();
-    expect(document.cookie).toContain('NEXT_LOCALE=en');
   });
 });
