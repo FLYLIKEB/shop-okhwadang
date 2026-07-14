@@ -8,6 +8,7 @@ import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
 import Providers from '@/components/Providers';
 import { isLocale, routing } from '@/i18n/routing';
 import { fetchSettingsMap as fetchBackendSettingsMap } from '@/lib/api-server';
+import { resolveFooterBusinessInfo, resolveMobileBottomNavVisible } from '@/lib/shell-settings';
 import { getThemeStyle } from '@/lib/theme-style';
 
 const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
@@ -54,7 +55,6 @@ async function getSettingsMap(locale?: string): Promise<Record<string, string> |
     return null;
   }
 }
-
 export default async function LocaleLayout({
   children,
   params,
@@ -76,26 +76,9 @@ export default async function LocaleLayout({
     getTranslations('navigation'),
   ]);
 
-  const themeStyle = await getThemeStyle(settingsMap);
-
-  const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible === 'true';
-
-  const businessInfo = settingsMap
-    ? {
-        companyName: settingsMap.business_company_name ?? '',
-        ceo: settingsMap.business_ceo ?? '',
-        address: settingsMap.business_address ?? '',
-        bizNo: settingsMap.business_registration_number ?? '',
-        mailOrderNo: settingsMap.business_mail_order_number ?? '',
-        phone: settingsMap.business_phone ?? '',
-        email: settingsMap.business_email ?? '',
-        hours: settingsMap.business_hours ?? '',
-        lunchTime: settingsMap.business_lunch_time ?? '',
-        holidays: settingsMap.business_holidays ?? '',
-        privacyOfficer: settingsMap.business_privacy_officer ?? '',
-        infoUrl: settingsMap.business_info_url ?? '',
-      }
-    : undefined;
+  const themeStyle = getThemeStyle(settingsMap);
+  const mobileBottomNavVisible = resolveMobileBottomNavVisible(settingsMap);
+  const businessInfo = resolveFooterBusinessInfo(settingsMap);
 
   // SSR 단계에서 data-theme 기본값을 light로 설정 — hydration mismatch 방지.
   // ko 로케일은 클라이언트의 FOUC 스크립트가 localStorage 사용자 선호를 즉시 반영한다.

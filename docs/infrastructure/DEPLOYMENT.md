@@ -209,6 +209,17 @@ curl https://api.ockhwadang.com/api/health
 
 정상 응답은 `status=ok`와 `db.status=connected`를 포함한다. 스토리지(S3) 확인이 실패해도 DB 상태와 분리되어 `storage=disconnected` / `storageReason`으로 표시되며, DB 연결 실패만 `db.status=disconnected`와 503 응답으로 배포 smoke test를 실패시킨다.
 
+### CMS / settings 정합성 스모크 체크
+```bash
+curl -s https://api.ockhwadang.com/api/pages/home?locale=ko | jq '{slug, blockCount: (.blocks | length)}'
+curl -s https://api.ockhwadang.com/api/settings/map?locale=ko | jq '{business_company_name, business_ceo, business_address, business_registration_number, business_mail_order_number, mobile_bottom_nav_visible}'
+```
+
+- `/api/health` 가 503 이거나 `db.status=disconnected` 면 런타임/인프라 장애다.
+- `/api/pages/home` 가 404 이거나 `blockCount=0` 이면 홈 CMS 데이터 정합성 문제다.
+- `/api/settings/map` 에서 필수 사업자 정보 키(`business_company_name`, `business_ceo`, `business_address`, `business_registration_number`, `business_mail_order_number`)가 비어 있으면 셸은 i18n 기본값으로 degraded mode fallback 한다.
+- 홈 CMS 데이터를 복구해야 하면 `scripts/run-seed.sh` 실행 또는 어드민에서 slug=`home` 페이지 블록을 재게시한 뒤 다시 확인한다.
+
 ---
 
 ## Nginx 설정 (EC2)

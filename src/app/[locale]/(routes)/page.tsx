@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
+import { createHomeCmsIntegrityError } from './home-integrity';
 import { fetchPage } from '@/lib/api-server';
 import { isLocale } from '@/i18n/routing';
 
@@ -54,10 +55,7 @@ export default async function Home({
 
   // 홈은 반드시 DB 에서 렌더. 폴백 금지 — 상단 주석 참조.
   if (!homePage?.blocks?.length) {
-    throw new Error(
-      `[home] DB 에 slug='home' 페이지가 없거나 블록이 비어있습니다 (locale=${locale}). ` +
-        `시드 데이터를 확인하세요: scripts/run-seed.sh`,
-    );
+    throw createHomeCmsIntegrityError(locale);
   }
 
   const blocks = homePage.blocks;

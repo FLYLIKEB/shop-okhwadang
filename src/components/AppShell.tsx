@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import type { FooterBusinessInfo } from '@/components/Footer';
+import type { FooterBusinessInfo } from '@/lib/shell-settings';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 import { MobileNavProvider } from '@/contexts/MobileNavContext';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';

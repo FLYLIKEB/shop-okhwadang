@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useNavigation } from '@/hooks/useNavigation';
+import type { FooterBusinessInfo } from '@/lib/shell-settings';
+
 import type { NavigationItem } from '@/lib/api';
 
 const InstagramIcon = ({ size = 18 }: { size?: number }) => (
@@ -57,21 +59,6 @@ function renderNavLinks(items: NavigationItem[]) {
       {item.label}
     </Link>
   ));
-}
-
-export interface FooterBusinessInfo {
-  companyName: string;
-  ceo: string;
-  address: string;
-  bizNo: string;
-  mailOrderNo: string;
-  phone: string;
-  email: string;
-  hours: string;
-  lunchTime: string;
-  holidays: string;
-  privacyOfficer: string;
-  infoUrl: string;
 }
 
 interface FooterProps {

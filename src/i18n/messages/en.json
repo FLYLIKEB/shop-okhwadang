@@ -1515,7 +1515,15 @@
         "subtitle": "Compose a quiet ritual with Yixing teapots and tea ware of your own.",
         "ctaText": "View Journal"
       }
-    ]
+    ],
+    "integrityError": {
+      "title": "Check the home CMS content.",
+      "description": "This is likely a slug=home page or block integrity problem, not a generic runtime outage.",
+      "checkPage": "Confirm the slug=home page is published in Admin > Pages.",
+      "checkBlocks": "Confirm the home page has at least one page_blocks entry.",
+      "checkSeed": "If recovery is needed, run scripts/run-seed.sh or republish the CMS page blocks before retrying.",
+      "errorLabel": "Original error"
+    }
   },
   "journalCategories": {
     "culture": "Tea Culture",
