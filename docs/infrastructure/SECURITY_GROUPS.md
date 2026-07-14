@@ -8,8 +8,8 @@ This document describes the security group rules for the shop-okhwadang AWS infr
 
 | Port | Protocol | Source | Description |
 |------|----------|--------|-------------|
-| 80 | TCP | 0.0.0.0/0 | HTTP - Vercel middleware가 `api.ockhwadang.com`(Cloudflare Proxied)으로 `/api/*` 프록시. Vercel Edge는 도메인 fetch만 허용하므로 서브도메인 경유 필수 |
-| 443 | TCP | Cloudflare IPv4 ranges | HTTPS (optional, Cloudflare Full/Strict 모드 사용 시) |
+| 80 | TCP | BLOCKED (steady state) | HTTP - 기본 차단. 필요 시 일시적으로만 열어 301/308 redirect 또는 인증서 발급 검증에 사용 |
+| 443 | TCP | Cloudflare IPv4/IPv6 ranges | HTTPS - `api.ockhwadang.com` origin. Cloudflare Proxied + Full (strict) 유지 |
 | 22 | TCP | <admin-ip>/32 | SSH - Admin access only (restrict to known IPs) |
 | 3000 | TCP | BLOCKED | Application port - Nginx proxy only |
 
@@ -45,17 +45,19 @@ EC2 (Private IP) ---:3306---> Lightsail MySQL
                     -------------------------------
                     |  Vercel (Next.js SSR/Edge)   |
                     |  middleware: /api/* proxy    |
-                    |  BACKEND_URL = http://api.ockhwadang.com |
+                    |  BACKEND_URL = https://api.ockhwadang.com |
                     -------------------------------
                               |
-                    -------------------------------
-                    | Cloudflare (api.ockhwadang.com, Proxied) |
-                    -------------------------------
+                    -----------------------------------------------
+                    | Cloudflare (api.ockhwadang.com, Proxied)   |
+                    | SSL/TLS mode = Full (strict)               |
+                    -----------------------------------------------
                               |
-                    -------------------------------
-                    |   EC2 (Nginx :80 → :3000)    |
-                    |   Port 3000 BLOCKED 외부에서   |
-                    -------------------------------
+                    -----------------------------------------------
+                    | EC2 (Nginx :443 TLS → :3000)               |
+                    | Port 80 blocked/redirect only              |
+                    | Port 3000 blocked externally               |
+                    -----------------------------------------------
                               |
                     -------------------------------
                     |       Lightsail MySQL        |
@@ -66,6 +68,8 @@ EC2 (Private IP) ---:3306---> Lightsail MySQL
 ## Security Best Practices
 
 1. **SSH Access**: Restrict to known admin IP addresses only
-2. **Application Port**: Port 3000 must remain blocked - all traffic goes through Nginx
-3. **Database**: Never expose MySQL to public internet
-4. **Monitoring**: Enable VPC Flow Logs to track rejected traffic
+2. **Origin TLS**: Keep Cloudflare `api.ockhwadang.com` in `Full (strict)` and install an origin certificate on EC2 nginx 443
+3. **HTTP Port 80**: Keep closed in steady state; open only temporarily for redirect/certificate validation if absolutely required
+4. **Application Port**: Port 3000 must remain blocked - all traffic goes through Nginx
+5. **Database**: Never expose MySQL to public internet
+6. **Monitoring**: Enable VPC Flow Logs to track rejected traffic

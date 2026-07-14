@@ -32,7 +32,7 @@
 | 스토리지 | AWS S3 + CloudFront | 이미지/미디어 CDN |
 | 인프라 | Docker Compose | 로컬 MySQL 관리 |
 | FE 배포 | Vercel Pro | Next.js SSR 자동 배포 |
-| BE 배포 | AWS EC2 t3.small + PM2 | Nginx (HTTP), HTTPS는 Cloudflare/Vercel 종료 |
+| BE 배포 | AWS EC2 t3.small + PM2 | Nginx (TLS 443 origin) + Cloudflare Full/Strict |
 | DB 호스팅 | AWS Lightsail MySQL | 7일 자동 백업 |
 | 테스트 | Vitest (FE) + Jest E2E (BE) | |
 | Node.js | 22.x | .nvmrc로 고정 |

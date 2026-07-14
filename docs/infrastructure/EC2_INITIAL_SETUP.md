@@ -100,7 +100,7 @@ nano .env.production
 ```env
 NODE_ENV=production
 PORT=3000
-BACKEND_URL=http://3.38.168.41:3000
+BACKEND_URL=https://api.ockhwadang.com/api
 
 DB_SYNCHRONIZE=false
 DB_SSL_ENABLED=false
@@ -170,30 +170,19 @@ pm2 startup
 
 ## 9. Nginx 설정
 
-```bash
-sudo nano /etc/nginx/conf.d/commerce.conf
-```
-
-```nginx
-server {
-    listen 80;
-    server_name 3.38.168.41;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-```
+EC2 origin은 `api.ockhwadang.com` 443에서 TLS를 받고 `127.0.0.1:3000` 으로만 전달한다. Cloudflare는 `Full (strict)` 로 맞추고, Origin CA 인증서(또는 동등한 서버 인증서)를 `/etc/ssl/cloudflare/origin.crt`, `/etc/ssl/cloudflare/origin.key` 에 배치한다.
 
 ```bash
+sudo dnf install -y nginx
+# origin.crt / origin.key 는 Cloudflare Origin CA(또는 동등한 서버 인증서)로 별도 배치
+sudo install -d -m 700 /etc/ssl/cloudflare
+sudo cp "$(git rev-parse --show-toplevel)/infra/nginx/commerce.conf" /etc/nginx/conf.d/commerce.conf
 sudo nginx -t
 sudo systemctl start nginx
 sudo systemctl enable nginx
 ```
+
+> `infra/nginx/commerce.conf` 는 `80 → 443` redirect 와 `443 ssl → 127.0.0.1:3000` 프록시를 함께 정의한다.
 
 ---
 
@@ -201,7 +190,8 @@ sudo systemctl enable nginx
 
 ```bash
 curl http://localhost:3000/api/health
-curl http://3.38.168.41:3000/api/health
+curl https://api.ockhwadang.com/api/health
+curl -I http://api.ockhwadang.com/api/health
 ```
 
 ---

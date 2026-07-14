@@ -4,16 +4,25 @@
 
 | 변수          | 기본값                  | 설명                                                                                                                                                                                                         |
 | ------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `BACKEND_URL` | `http://localhost:3000` | Next.js middleware 프록시와 SSR fetch가 공유하는 **백엔드 origin**. canonical contract는 `origin only` 이며 앱 코드가 `/api/*` 를 붙인다. 예: 로컬 `http://localhost:3000`, 운영 `http://api.ockhwadang.com` |
+| `BACKEND_URL` | `http://localhost:3000` | Next.js middleware 프록시와 SSR fetch가 공유하는 **백엔드 origin**. canonical contract는 `origin only` 이며 앱 코드가 `/api/*` 를 붙인다. 예: 로컬 `http://localhost:3000`, 운영 `https://api.ockhwadang.com` |
 | `SITE_URL`    | `http://localhost:5173` | canonical 프론트엔드 origin. 메타데이터/redirect/배포 smoke test 기준 URL                                                                                                                                    |
 
 ### 프록시 계약 메모
 
 - 브라우저/CSR은 항상 `/api/*` 만 호출한다.
 - middleware(`src/middleware.ts`)와 SSR helper(`src/lib/api-server.ts`, `src/app/[locale]/layout.tsx`)가 같은 `BACKEND_URL + /api/*` 규칙을 사용한다.
+- 프론트 운영값은 `https://api.ockhwadang.com` 으로 유지하고, Cloudflare는 `Full (strict)` 로 EC2 443 origin에 연결한다.
 - `BACKEND_URL`에 `/api` 를 붙여 넣는 구성이 남아 있어도 코드가 정규화하지만, 문서/환경은 **반드시 origin only** 로 정렬한다.
 
 ---
+
+## Vercel Functions (프록시)
+
+| 변수                 | 기본값                       | 설명                                                |
+| -------------------- | ---------------------------- | --------------------------------------------------- |
+| `BACKEND_URL`        | `https://api.ockhwadang.com` | 백엔드 origin URL (Cloudflare Proxied + Full (strict)) |
+| `BACKEND_TIMEOUT_MS` | `10000`                      | 프록시 타임아웃 (ms)                                |
+| `LOG_PROXY_REQUESTS` | `true`                       | 프록시 요청 로깅 여부                               |
 
 ---
 
@@ -25,6 +34,7 @@
 | ---------- | ------------- | ----------------------------- |
 | `NODE_ENV` | `development` | 환경 (development/production) |
 | `PORT`     | `3000`        | 서버 포트                     |
+| `BACKEND_URL` | `https://api.ockhwadang.com/api` | 백엔드 외부 기준 URL (결제 webhook/status_url, 업로드 절대 URL 생성에 사용). 프로덕션은 HTTPS만 허용 |
 
 ### 데이터베이스
 
