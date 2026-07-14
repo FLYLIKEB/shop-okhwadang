@@ -1,22 +1,29 @@
 import { getThemeStyle } from '@/lib/theme-style';
 
-const REQUIRED_STOREFRONT_SETTING_KEYS = ['mobile_bottom_nav_visible'] as const;
+const REQUIRED_STOREFRONT_SETTING_KEYS = [
+  'mobile_bottom_nav_visible',
+  'business_company_name',
+  'business_ceo',
+  'business_address',
+  'business_registration_number',
+  'business_mail_order_number',
+] as const;
 
 export type StorefrontShellIssue = 'settings_fetch_failed' | 'missing_required_settings';
 
 export interface StorefrontBusinessInfo {
-  companyName: string;
-  ceo: string;
-  address: string;
-  bizNo: string;
-  mailOrderNo: string;
-  phone: string;
-  email: string;
-  hours: string;
-  lunchTime: string;
-  holidays: string;
-  privacyOfficer: string;
-  infoUrl: string;
+  companyName?: string;
+  ceo?: string;
+  address?: string;
+  bizNo?: string;
+  mailOrderNo?: string;
+  phone?: string;
+  email?: string;
+  hours?: string;
+  lunchTime?: string;
+  holidays?: string;
+  privacyOfficer?: string;
+  infoUrl?: string;
 }
 
 export interface StorefrontShellSnapshot {
@@ -36,20 +43,30 @@ function hasSettingValue(settingsMap: Record<string, string> | null, key: string
 function buildBusinessInfo(settingsMap: Record<string, string> | null): StorefrontBusinessInfo | undefined {
   if (!settingsMap) return undefined;
 
-  return {
-    companyName: settingsMap.business_company_name ?? '',
-    ceo: settingsMap.business_ceo ?? '',
-    address: settingsMap.business_address ?? '',
-    bizNo: settingsMap.business_registration_number ?? '',
-    mailOrderNo: settingsMap.business_mail_order_number ?? '',
-    phone: settingsMap.business_phone ?? '',
-    email: settingsMap.business_email ?? '',
-    hours: settingsMap.business_hours ?? '',
-    lunchTime: settingsMap.business_lunch_time ?? '',
-    holidays: settingsMap.business_holidays ?? '',
-    privacyOfficer: settingsMap.business_privacy_officer ?? '',
-    infoUrl: settingsMap.business_info_url ?? '',
-  };
+  const businessInfo: StorefrontBusinessInfo = {};
+  const fieldMap = {
+    companyName: 'business_company_name',
+    ceo: 'business_ceo',
+    address: 'business_address',
+    bizNo: 'business_registration_number',
+    mailOrderNo: 'business_mail_order_number',
+    phone: 'business_phone',
+    email: 'business_email',
+    hours: 'business_hours',
+    lunchTime: 'business_lunch_time',
+    holidays: 'business_holidays',
+    privacyOfficer: 'business_privacy_officer',
+    infoUrl: 'business_info_url',
+  } as const satisfies Record<keyof StorefrontBusinessInfo, string>;
+
+  for (const [field, key] of Object.entries(fieldMap)) {
+    const value = settingsMap[key]?.trim();
+    if (value) {
+      businessInfo[field as keyof StorefrontBusinessInfo] = value;
+    }
+  }
+
+  return Object.keys(businessInfo).length > 0 ? businessInfo : undefined;
 }
 
 export function buildStorefrontShellSnapshot(
