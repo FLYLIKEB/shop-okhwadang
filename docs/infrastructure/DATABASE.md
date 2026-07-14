@@ -8,6 +8,10 @@
 - **Production**: `synchronize: true` strictly forbidden
 - **Charset**: `utf8mb4` / Collation: `utf8mb4_unicode_ci`
 
+### Quick links
+
+- [Database migration map](./DATABASE_MIGRATIONS.md) — current migration domains, schema/backfill/seed classification, and consolidation notes
+
 ---
 
 ## ER Diagram (Mermaid)
