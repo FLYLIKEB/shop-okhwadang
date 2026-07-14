@@ -3,9 +3,10 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
-import { SESSION_KEYS } from '@/constants/storage';
+import { LOCAL_KEYS, SESSION_KEYS } from '@/constants/storage';
 import { redirectTo } from '@/utils/navigation';
 import { toastMessage } from '@/utils/toastMessages';
+
 
 interface User {
   id: number;
@@ -84,14 +85,46 @@ export function buildOAuthAuthorizeUrl({
   return `${endpoint}?${encodeOAuthParams(params)}`;
 }
 
+function readAuthSessionHint(): 'present' | 'absent' | 'unknown' {
+  if (typeof window === 'undefined') return 'unknown';
+
+  try {
+    const value = window.localStorage.getItem(LOCAL_KEYS.AUTH_SESSION_HINT);
+    return value === 'present' || value === 'absent' ? value : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+
+function writeAuthSessionHint(present: boolean): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(LOCAL_KEYS.AUTH_SESSION_HINT, present ? 'present' : 'absent');
+  } catch {
+    // ignore storage errors
+  }
+}
+
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => readAuthSessionHint() !== 'absent');
 
   useEffect(() => {
+    if (readAuthSessionHint() === 'absent') {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
+
     authApi
       .me()
       .then((profile) => {
+        writeAuthSessionHint(true);
         setUser(profile);
         setIsLoading(false);
       })
@@ -100,16 +133,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authApi
           .refresh()
           .then(() => authApi.me())
-          .then((profile) => setUser(profile))
-          .catch(() => setUser(null))
+          .then((profile) => {
+            writeAuthSessionHint(true);
+            setUser(profile);
+          })
+          .catch(() => {
+            writeAuthSessionHint(false);
+            setUser(null);
+          })
           .finally(() => setIsLoading(false));
       });
   }, []);
+
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login(email, password);
     setUser(res.user);
     toast.success(toastMessage('loginSuccess'));
+    writeAuthSessionHint(true);
+
   }, []);
 
   const logout = useCallback(async () => {
@@ -119,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ignore server errors on logout
     }
     setUser(null);
+    writeAuthSessionHint(false);
     toast.success(toastMessage('logoutSuccess'));
   }, []);
 

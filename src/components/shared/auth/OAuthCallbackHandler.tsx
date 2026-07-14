@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { AuthTokenResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
-import { SESSION_KEYS } from '@/constants/storage';
+import { LOCAL_KEYS, SESSION_KEYS } from '@/constants/storage';
+
 import { toastMessage } from '@/utils/toastMessages';
 import { localMessage } from '@/utils/localMessages';
 
@@ -40,6 +41,11 @@ export default function OAuthCallbackHandler({ provider, apiMethod }: OAuthCallb
     apiMethod(code, state)
       .then(() => {
         toast.success(toastMessage('oauthLoginSuccess', { provider }));
+        try {
+          window.localStorage.setItem(LOCAL_KEYS.AUTH_SESSION_HINT, 'present');
+        } catch {
+          // ignore storage errors
+        }
         window.location.href = '/';
       })
       .catch((err: unknown) => {

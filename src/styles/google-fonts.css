@@ -5,6 +5,7 @@
   font-style: normal;
   font-display: swap;
   src: url('/fonts/google/NotoSerifKR-400.ttf') format('truetype');
+  unicode-range: U+1100-11FF, U+3130-318F, U+AC00-D7AF, U+3000-303F, U+FF00-FFEF;
 }
 @font-face {
   font-family: 'Noto Serif KR';
@@ -12,6 +13,7 @@
   font-style: normal;
   font-display: swap;
   src: url('/fonts/google/NotoSerifKR-700.ttf') format('truetype');
+  unicode-range: U+1100-11FF, U+3130-318F, U+AC00-D7AF, U+3000-303F, U+FF00-FFEF;
 }
 
 /* ── Cormorant Garamond ─────────────────────────────────────────── */
@@ -35,20 +37,6 @@
   font-style: normal;
   font-display: swap;
   src: url('/fonts/google/CormorantGaramond-600.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Cormorant Garamond';
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-  src: url('/fonts/google/CormorantGaramond-400i.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Cormorant Garamond';
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
-  src: url('/fonts/google/CormorantGaramond-600i.ttf') format('truetype');
 }
 
 /* ── DM Mono ───────────────────────────────────────────────────── */

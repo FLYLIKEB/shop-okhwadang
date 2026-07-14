@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
+import type { CategoryNavContent, JournalPreviewContent, PageBlock, ProductGridContent } from '@/lib/api';
 import { createHomePageContentError } from '@/lib/storefront-diagnostics';
-import { fetchPage } from '@/lib/api-server';
+import { fetchCategories, fetchJournals, fetchPage, fetchProducts } from '@/lib/api-server';
 import { isLocale } from '@/i18n/routing';
 
-export const dynamic = 'force-dynamic';
 
 /**
  * 홈페이지 렌더링 규칙 (필수)
@@ -42,6 +42,86 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+async function prefetchHomeBlocks(blocks: PageBlock[], locale: string): Promise<PageBlock[]> {
+  return Promise.all(
+    blocks.map(async (block) => {
+      try {
+        if (block.type === 'product_grid') {
+          const content = block.content as unknown as ProductGridContent;
+
+          if (Array.isArray(content.prefetched_products) || Array.isArray(content.product_ids)) {
+            return block;
+          }
+
+          const products = await fetchProducts({
+            categoryId: content.category_id,
+            sort: content.sort,
+            limit: content.limit,
+            locale,
+          });
+
+          return {
+            ...block,
+            content: {
+              ...content,
+              prefetched_products: products.items,
+            },
+          } satisfies PageBlock;
+        }
+
+        if (block.type === 'category_nav') {
+          const content = block.content as unknown as CategoryNavContent;
+
+          if (Array.isArray(content.prefetched_categories)) {
+            return block;
+          }
+
+          const categories = await fetchCategories(locale);
+          const categoryIds = content.category_ids ?? [];
+          const prefetchedCategories = categoryIds.length > 0
+            ? categories.filter((category) => categoryIds.includes(category.id))
+            : categories.filter((category) => category.parentId === null);
+
+          return {
+            ...block,
+            content: {
+              ...content,
+              prefetched_categories: prefetchedCategories,
+            },
+          } satisfies PageBlock;
+        }
+
+        if (block.type === 'journal_preview') {
+          const content = block.content as unknown as JournalPreviewContent;
+
+          if (Array.isArray(content.prefetched_journals)) {
+            return block;
+          }
+
+          const prefetchedJournals = await fetchJournals({
+            category: content.category,
+            limit: content.limit ?? 6,
+            locale,
+          });
+
+          return {
+            ...block,
+            content: {
+              ...content,
+              prefetched_journals: prefetchedJournals,
+            },
+          } satisfies PageBlock;
+        }
+
+        return block;
+      } catch {
+        return block;
+      }
+    }),
+  );
+}
+
+
 export default async function Home({
   params,
 }: {
@@ -58,7 +138,7 @@ export default async function Home({
     throw createHomePageContentError(locale);
   }
 
-  const blocks = homePage.blocks;
+  const blocks = await prefetchHomeBlocks(homePage.blocks, locale);
   const heroBlocks = blocks.filter((b) => b.type === 'hero_banner');
   const restBlocks = blocks.filter((b) => b.type !== 'hero_banner');
 

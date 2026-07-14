@@ -45,7 +45,7 @@ function buildStaticGnb(t: (key: string) => string): NavigationItem[] {
 
 const EMPTY_NAV: NavigationItem[] = [];
 
-export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
+export function useNavigation(group: 'gnb' | 'sidebar' | 'footer', initialItems?: NavigationItem[] | null) {
   const tNav = useTranslations('nav');
   const locale = useLocale();
   const productLabel = tNav('products');
@@ -65,10 +65,22 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
     return EMPTY_NAV;
   }, [archiveLabel, artistLabel, group, productLabel]);
 
-  const [items, setItems] = useState<NavigationItem[]>(fallback);
-  const [loading, setLoading] = useState(true);
+  const hasPrefetchedItems = initialItems !== null && initialItems !== undefined;
+  const prefetchedItems = hasPrefetchedItems ? initialItems : null;
+  const resolvedInitialItems = prefetchedItems && prefetchedItems.length > 0
+    ? prefetchedItems
+    : fallback;
+
+  const [items, setItems] = useState<NavigationItem[]>(resolvedInitialItems);
+  const [loading, setLoading] = useState(!hasPrefetchedItems);
 
   useEffect(() => {
+    if (prefetchedItems) {
+      setItems(prefetchedItems.length > 0 ? prefetchedItems : fallback);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     async function load() {
@@ -96,7 +108,7 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer') {
     return () => {
       cancelled = true;
     };
-  }, [fallback, group, locale]);
+  }, [fallback, group, hasPrefetchedItems, locale, prefetchedItems]);
 
   return { items, loading };
 }

@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import type { StorefrontBusinessInfo as FooterBusinessInfo } from '@/lib/storefront-shell';
+import type { NavigationItem } from '@/lib/api';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 import { MobileNavProvider } from '@/contexts/MobileNavContext';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
@@ -16,7 +17,13 @@ type AppShellProps = {
   mobileBottomNavVisible: boolean;
   announcementBar?: React.ReactNode;
   businessInfo?: FooterBusinessInfo;
+  navigationData?: {
+    gnb?: NavigationItem[] | null;
+    sidebar?: NavigationItem[] | null;
+    footer?: NavigationItem[] | null;
+  };
 };
+
 
 function isAdminPath(pathname: string): boolean {
   return /^\/(?:[a-z]{2}(?:-[A-Z]{2})?\/)?admin(?:\/|$)/.test(pathname);
@@ -43,6 +50,7 @@ export default function AppShell({
   mobileBottomNavVisible,
   announcementBar,
   businessInfo,
+  navigationData,
 }: AppShellProps) {
   const pathname = usePathname();
   const isAdminRoute = isAdminPath(pathname);
@@ -60,11 +68,11 @@ export default function AppShell({
     <MobileNavProvider initialVisible={mobileBottomNavVisible}>
       <div className="flex min-h-screen flex-col">
         {announcementBar}
-        <Header />
+        <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
         <main id="main-content" className="flex-1 pb-16 md:pb-0">
           {children}
         </main>
-        <Footer businessInfo={businessInfo} />
+        <Footer businessInfo={businessInfo} initialFooterItems={navigationData?.footer} />
         <MobileBottomNavWrapper visible={mobileBottomNavVisible} />
         <SharedToaster />
         <RecentlyViewedWidget />
