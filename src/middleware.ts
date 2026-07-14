@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { routing } from '@/i18n/routing';
+import { buildConfiguredBackendApiUrl } from '@/lib/backend-url';
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -26,13 +27,14 @@ function withLocaleCookie(
     return response;
   }
 
-  const nextResponse = response instanceof NextResponse
-    ? response
-    : new NextResponse(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-      });
+  const nextResponse =
+    response instanceof NextResponse
+      ? response
+      : new NextResponse(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        });
 
   nextResponse.cookies.set(LOCALE_COOKIE_NAME, localePrefix.slice(1), {
     path: '/',
@@ -112,9 +114,8 @@ async function verifyRS256(token: string): Promise<Record<string, unknown> | nul
     const key = await getPublicKey();
     if (!key) return null;
 
-    const signature = Uint8Array.from(
-      atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
-      (c) => c.charCodeAt(0),
+    const signature = Uint8Array.from(atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')), (c) =>
+      c.charCodeAt(0),
     ).buffer;
 
     const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
@@ -140,11 +141,7 @@ async function hasAdminRoleByJwt(token: string): Promise<AdminRoleCheckResult> {
 }
 
 function getBackendAuthMeUrl(): string | null {
-  const backendUrl = process.env.BACKEND_URL?.trim();
-  if (!backendUrl) return null;
-
-  const normalized = backendUrl.replace(/\/$/, '');
-  return normalized.endsWith('/api') ? `${normalized}/auth/me` : `${normalized}/api/auth/me`;
+  return buildConfiguredBackendApiUrl('/auth/me');
 }
 
 async function hasAdminRoleByBackend(cookieHeader: string | null): Promise<boolean> {
@@ -159,7 +156,7 @@ async function hasAdminRoleByBackend(cookieHeader: string | null): Promise<boole
 
     if (!response.ok) return false;
 
-    const profile = await response.json() as { role?: unknown };
+    const profile = (await response.json()) as { role?: unknown };
     return typeof profile.role === 'string' && ADMIN_ROLES.has(profile.role);
   } catch {
     return false;
@@ -184,8 +181,9 @@ export async function middleware(request: NextRequest) {
 
   const localeMatch = pathname.match(localePattern);
   const localePrefix = localeMatch ? `/${localeMatch[1]}` : '';
-  const pathnameWithoutLocale = localeMatch ? (localeMatch[2] || '/') : pathname;
-  const finalizeResponse = (response: Response) => withLocaleCookie(request, response, localePrefix, pathnameWithoutLocale);
+  const pathnameWithoutLocale = localeMatch ? localeMatch[2] || '/' : pathname;
+  const finalizeResponse = (response: Response) =>
+    withLocaleCookie(request, response, localePrefix, pathnameWithoutLocale);
 
   if (pathnameWithoutLocale === '/sitemap.xml' || pathnameWithoutLocale === '/robots.txt') {
     return finalizeResponse(NextResponse.next());
@@ -211,22 +209,15 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathnameWithoutLocale.startsWith('/api')) {
-    // Proxy to backend using runtime BACKEND_URL
-    const backendUrl = process.env.BACKEND_URL;
-
-    if (!backendUrl) {
-      return finalizeResponse(NextResponse.json(
-        { error: 'BACKEND_URL not configured' },
-        { status: 500 }
-      ));
-    }
-
-    const apiPath = pathname.startsWith('/api')
-      ? pathname
-      : pathname.replace(/^\/[a-z]{2}\/api/, '/api'); // handle /ko/api -> /api
+    // Proxy to backend using the canonical BACKEND_URL origin + /api/* contract.
 
     const search = new URL(request.url).search || request.nextUrl.search;
-    const url = `${backendUrl}${apiPath}${search}`;
+    const url = buildConfiguredBackendApiUrl(pathnameWithoutLocale, search);
+    if (!url) {
+      return finalizeResponse(
+        NextResponse.json({ error: 'BACKEND_URL not configured' }, { status: 500 }),
+      );
+    }
 
     // Forward request to backend
     const headers = new Headers();
@@ -266,15 +257,19 @@ export async function middleware(request: NextRequest) {
       }
       responseHeaders.set('X-Proxy-By', 'Next.js Middleware');
 
-      return finalizeResponse(new NextResponse(data, {
-        status: response.status,
-        headers: responseHeaders,
-      }));
+      return finalizeResponse(
+        new NextResponse(data, {
+          status: response.status,
+          headers: responseHeaders,
+        }),
+      );
     } catch (error) {
-      return finalizeResponse(NextResponse.json(
-        { error: 'Backend unreachable', details: String(error) },
-        { status: 502 }
-      ));
+      return finalizeResponse(
+        NextResponse.json(
+          { error: 'Backend unreachable', details: String(error) },
+          { status: 502 },
+        ),
+      );
     }
   }
 
