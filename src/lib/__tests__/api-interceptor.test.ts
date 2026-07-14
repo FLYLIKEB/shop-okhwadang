@@ -96,4 +96,14 @@ describe('ApiClient 401 interceptor', () => {
 
     await expect(apiClient.get('/products/99')).rejects.toThrow('잘못된 요청입니다.');
   });
+
+  it('배열형 에러 메시지는 CSR에서도 같은 문자열 규칙으로 합쳐진다', async () => {
+    fetchMock.mockResolvedValue(
+      makeResponse(400, { message: ['필수입니다.', '형식이 올바르지 않습니다.'] }),
+    );
+
+    await expect(apiClient.get('/products/99')).rejects.toThrow(
+      '필수입니다., 형식이 올바르지 않습니다.',
+    );
+  });
 });
