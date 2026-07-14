@@ -209,6 +209,27 @@ curl https://api.ockhwadang.com/api/health
 
 정상 응답은 `status=ok`와 `db.status=connected`를 포함한다. 스토리지(S3) 확인이 실패해도 DB 상태와 분리되어 `storage=disconnected` / `storageReason`으로 표시되며, DB 연결 실패만 `db.status=disconnected`와 503 응답으로 배포 smoke test를 실패시킨다.
 
+### CMS / settings degraded mode 점검
+
+배포 직후 홈 CMS 또는 settings API 이상 여부를 아래 순서로 바로 구분한다.
+
+1. 공개 홈(`/` 또는 `/en`)을 열어 다음 두 증상을 확인한다.
+   - 홈이 에러 화면으로 전환되고 `slug='home'` / `scripts/run-seed.sh` 문구가 보이면 **CMS 콘텐츠 결손**이다.
+   - 상단에 degraded mode 배너가 보이면 **settings API 또는 필수 설정 키 누락**이다.
+2. settings API 응답 확인:
+   ```bash
+   curl https://api.ockhwadang.com/api/settings/map | jq '.mobile_bottom_nav_visible'
+   ```
+   - 200 응답 + 문자열 값이면 필수 셸 설정은 정상이다.
+   - 5xx/timeout/null 이면 프런트는 degraded mode 로 동작한다.
+3. 홈 CMS 정합성 확인:
+   ```bash
+   curl https://api.ockhwadang.com/api/pages/home | jq '.blocks | length'
+   ```
+   - 1 이상이면 홈 블록이 존재한다.
+   - 0, `null`, 404 이면 `pages.slug=home` 또는 `page_blocks` 시드/게시 상태를 복구해야 한다.
+4. 로컬/스테이징에서 시드 복구가 필요하면 `bash scripts/run-seed.sh` 후 다시 2~3번을 반복한다.
+
 ---
 
 ## Nginx 설정 (EC2)
