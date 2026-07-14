@@ -520,6 +520,43 @@ npm run migration:show                                   # Show status
 5. Run E2E tests: `npm run test:e2e`
 6. **Commit entity + migration file together**
 
+### Intent Categories
+
+| Pattern | Classification | What belongs here | Required proof |
+|---|---|---|---|
+| `Create*`, `Add*`, `Remove*`, `Retire*` | Structural schema change | Table/column/index/constraint lifecycle, enum expansion, schema-only defaults | Entity diff review + E2E when runtime behavior changes |
+| `Backfill*`, `Migrate*`, `Normalize*`, `Deduplicate*`, `Align*`, `Fix*`, `Refresh*` | Data backfill / integrity repair | Existing-row rewrites, locale cleanup, seed correction, canonicalization, legacy cleanup | Idempotent `up()` logic + targeted regression test or inspected query/result |
+| `Seed*`, `Upsert*` | Baseline content seed | Canonical pages, navigation, site settings, starter content keyed by stable business identifiers | Upsert key review + doc update when operator-facing content meaning changes |
+
+### Current Migration Map (2026-07)
+
+| Domain | Representative window | Typical migrations |
+|---|---|---|
+| Identity / auth / audit | `1711100000000-CreateUsersTable.ts` → `1782000000000-AddUserDeletionAndLoginFailureFields.ts` | Users, OAuth identities, addresses, login lockouts, email/password reset, token blacklist, audit logs |
+| Catalog / product / attributes | `1711234567890-AddProductsAndCategories.ts` → `1786400000000-MarkAllAttributesFilterable.ts` | Product/category base tables, product i18n, detail images, dynamic attributes, filter URL normalization, attribute option dedupe |
+| Cart / orders / payments / shipping | `1774422597135-AddCartItemsTable.ts` → `1786500000000-AddOrderCancellationFields.ts` | Cart, orders, payments, shipping, refunds, payment gateway enums, webhook events, cancellation fields |
+| CMS / navigation / brand settings | `1774600000000-AddPagesAndPageBlocks.ts` → `1784600000000-AddCustomerCenterLunchHolidaySettings.ts` | Pages, blocks, navigation, notices/FAQs/inquiries, theme colors, policy pages, site/business/customer-center settings |
+| Archives / collections / merchandising content | `1776100000000-AddCollectionsTable.ts` → `1786000000000-RetireLegacyCollectionsTable.ts` | Collections, archives, journal, archive CMS blocks, locale backfills, legacy collection retirement |
+| Reviews / loyalty / notifications | `1774500000000-AddReviewsTable.ts` → `1785500001000-EnsureReviewReplyColumns.ts` | Reviews, review replies, review points, external reviews, restock alerts, point-history linkage, notification logs |
+
+### Naming Notes for Recent Clusters
+
+- `1776600000000` ~ `1778300000000`: i18n rollout + locale backfill cluster. Prefer one-way, idempotent data repair over reversible content corruption.
+- `1783300000000` ~ `1783900000000`: payment gateway expansion cluster. Keep enum additions separate from gateway-data rewrites so rollback scope stays obvious.
+- `1785300000000` ~ `1786400000000`: attribute normalization cluster. Treat dedupe/normalize migrations as integrity repairs, not seed refreshes.
+
+### Consolidation Candidates (not immediate work)
+
+- The i18n/content repair run from `1776600000000-AddEnglishColumns.ts` through `1778300000000-RemoveRemainingCjkAndBackfillLegacy.ts` is a candidate for future historical squashing after a fresh baseline snapshot is proven on a new environment.
+- The payment gateway rollout run from `1783300000000-AddStripeGatewayEnum.ts` through `1783900000000-AddPaypalPaymentEnums.ts` is a candidate for a compact baseline once every active environment no longer depends on intermediate enum states.
+- The attribute cleanup run from `1785300000000-AddKeywordMappingAttributeTypes.ts` through `1786400000000-MarkAllAttributesFilterable.ts` is a candidate for consolidation only after option/filter data has a verified, repeatable export/import path.
+
+### When Adding a New Migration
+
+1. Pick the filename prefix that matches the intent category above.
+2. Keep structural schema evolution separate from seed/backfill intent when both are needed.
+3. Update this map when a migration opens a new domain cluster or changes the classification guidance future authors should follow.
+
 ---
 
 ## DB Connection
