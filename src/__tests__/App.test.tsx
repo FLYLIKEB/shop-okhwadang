@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { HOME_PAGE_CONTENT_ERROR_CODE } from '@/lib/storefront-diagnostics';
 import Home from '@/app/[locale]/(routes)/page';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
@@ -158,6 +159,12 @@ describe('Home page', () => {
     render(jsx);
     expect(screen.getByText('지금 바로 쇼핑하세요')).toBeInTheDocument();
     expect(mockFetchPage).toHaveBeenCalledWith('home', 'ko');
+  });
+
+  it('throws an operator-facing error when home CMS content is missing', async () => {
+    mockFetchPage.mockResolvedValueOnce(null);
+
+    await expect(Home({ params: Promise.resolve({ locale: 'ko' }) })).rejects.toThrow(HOME_PAGE_CONTENT_ERROR_CODE);
   });
 
   it.each(['favicon.ico', 'robots.txt', 'sitemap.xml', 'logo.png'])(

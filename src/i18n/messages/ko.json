@@ -1878,7 +1878,14 @@
     "unknownError": "알 수 없는 오류가 발생했습니다.",
     "retry": "다시 시도",
     "blockError": "블록을 표시할 수 없습니다 ({type})",
-    "unknownBlock": "알 수 없는 블록 타입: {type}"
+    "unknownBlock": "알 수 없는 블록 타입: {type}",
+    "homeCmsMissingTitle": "홈 CMS 콘텐츠가 비어 있습니다",
+    "homeCmsMissingDescription": "slug='home' 페이지와 블록 게시 상태를 확인하세요.",
+    "homeCmsMissingRecoveryHint": "로컬/스테이징은 scripts/run-seed.sh 로 시드를 복구하고, 운영은 pages/page_blocks 정합성을 점검하세요.",
+    "storefrontShellDegradedTitle": "일부 운영 설정을 불러오지 못해 기본 셸로 표시 중입니다.",
+    "storefrontShellFetchFailedDescription": "settings API 응답이 없어 테마·사업자 정보·하단 네비게이션을 degraded mode 로 처리했습니다.",
+    "storefrontShellMissingRequiredSettings": "필수 설정 키가 누락되었습니다: {keys}",
+    "storefrontShellRecoveryHint": "관리자 설정 화면과 /api/settings/map 응답을 확인하세요."
   },
   "newsletter": {
     "emailPlaceholder": "이메일을 입력하세요",

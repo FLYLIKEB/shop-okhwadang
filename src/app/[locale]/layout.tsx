@@ -7,8 +7,8 @@ import AppShell from '@/components/AppShell';
 import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
 import Providers from '@/components/Providers';
 import { isLocale, routing } from '@/i18n/routing';
-import { fetchSettingsMap as fetchBackendSettingsMap } from '@/lib/api-server';
-import { getThemeStyle } from '@/lib/theme-style';
+import { fetchSettingsMap } from '@/lib/api-server';
+import { buildStorefrontShellSnapshot } from '@/lib/storefront-shell';
 
 const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
 
@@ -47,11 +47,12 @@ export async function generateMetadata({
 
 const GOOGLE_TAG_ID = 'G-ENSHH2TBSY';
 
-async function getSettingsMap(locale?: string): Promise<Record<string, string> | null> {
+async function getStorefrontShellSnapshot(locale: string) {
   try {
-    return await fetchBackendSettingsMap(locale);
+    const settingsMap = await fetchSettingsMap(locale);
+    return buildStorefrontShellSnapshot(settingsMap);
   } catch {
-    return null;
+    return buildStorefrontShellSnapshot(null, { fetchFailed: true });
   }
 }
 
@@ -70,32 +71,28 @@ export default async function LocaleLayout({
 
   setRequestLocale(safeLocale);
 
-  const [messages, settingsMap, tNav] = await Promise.all([
+  const [messages, shellSnapshot, tNav, tUi] = await Promise.all([
     getMessages(),
-    getSettingsMap(safeLocale),
+    getStorefrontShellSnapshot(safeLocale),
     getTranslations('navigation'),
+    getTranslations('ui'),
   ]);
 
-  const themeStyle = await getThemeStyle(settingsMap);
-
-  const mobileBottomNavVisible = settingsMap?.mobile_bottom_nav_visible === 'true';
-
-  const businessInfo = settingsMap
-    ? {
-        companyName: settingsMap.business_company_name ?? '',
-        ceo: settingsMap.business_ceo ?? '',
-        address: settingsMap.business_address ?? '',
-        bizNo: settingsMap.business_registration_number ?? '',
-        mailOrderNo: settingsMap.business_mail_order_number ?? '',
-        phone: settingsMap.business_phone ?? '',
-        email: settingsMap.business_email ?? '',
-        hours: settingsMap.business_hours ?? '',
-        lunchTime: settingsMap.business_lunch_time ?? '',
-        holidays: settingsMap.business_holidays ?? '',
-        privacyOfficer: settingsMap.business_privacy_officer ?? '',
-        infoUrl: settingsMap.business_info_url ?? '',
-      }
-    : undefined;
+  const degradedNotice = shellSnapshot.mode === 'degraded'
+    ? (
+      <div data-testid="storefront-shell-degraded-notice" className="border-b border-amber-200 bg-amber-50 text-amber-950">
+        <div className="layout-container py-3">
+          <p className="text-sm font-medium">{tUi('storefrontShellDegradedTitle')}</p>
+          <p className="mt-1 text-xs md:text-sm">
+            {shellSnapshot.issue === 'missing_required_settings'
+              ? tUi('storefrontShellMissingRequiredSettings', { keys: shellSnapshot.missingRequiredKeys.join(', ') })
+              : tUi('storefrontShellFetchFailedDescription')}
+          </p>
+          <p className="mt-1 text-xs text-amber-800">{tUi('storefrontShellRecoveryHint')}</p>
+        </div>
+      </div>
+    )
+    : null;
 
   // SSR 단계에서 data-theme 기본값을 light로 설정 — hydration mismatch 방지.
   // ko 로케일은 클라이언트의 FOUC 스크립트가 localStorage 사용자 선호를 즉시 반영한다.
@@ -121,7 +118,7 @@ export default async function LocaleLayout({
             gtag('config', '${GOOGLE_TAG_ID}');
           `}
         </Script>
-        {themeStyle ? <style>{themeStyle}</style> : null}
+        {shellSnapshot.themeStyle ? <style>{shellSnapshot.themeStyle}</style> : null}
       </head>
       <body>
         <a
@@ -134,9 +131,14 @@ export default async function LocaleLayout({
           <Providers locale={safeLocale}>
             <AppShell
               locale={safeLocale}
-              mobileBottomNavVisible={mobileBottomNavVisible}
-              announcementBar={<AnnouncementBar locale={safeLocale} />}
-              businessInfo={businessInfo}
+              mobileBottomNavVisible={shellSnapshot.mobileBottomNavVisible}
+              announcementBar={
+                <>
+                  {degradedNotice}
+                  <AnnouncementBar locale={safeLocale} />
+                </>
+              }
+              businessInfo={shellSnapshot.businessInfo}
             >
               {children}
             </AppShell>
