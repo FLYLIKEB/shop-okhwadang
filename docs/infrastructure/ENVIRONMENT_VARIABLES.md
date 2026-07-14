@@ -98,7 +98,7 @@
 | ----------------------- | ------------------------ | ----------------------------------------------------------------- |
 | `NOTIFICATION_PROVIDER` | `mock`                   | 이메일 어댑터 (`mock`/`resend`/`ses`). 프로덕션에서는 `mock` 금지 |
 | `RESEND_API_KEY`        | —                        | Resend API 키 (`NOTIFICATION_PROVIDER=resend` 시 필수)            |
-| `EMAIL_FROM`            | `no-reply@okhwadang.com` | 발신자 이메일 주소                                                |
+| `EMAIL_FROM`            | `no-reply@ockhwadang.com` | 발신자 이메일 주소. 운영 DNS(`ockhwadang.com`)의 SPF/DMARC 정책과 동일 도메인으로 유지 |
 
 ### Cache
 
