@@ -120,6 +120,7 @@
 
   /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
   --font-display: 'Noto Serif KR', 'Georgia', serif;
+  --font-display-latin: 'Cormorant Garamond', 'Georgia', serif;
   --font-body: var(--db-font-family-base, 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif);
   --font-mono: 'DM Mono', 'Courier New', monospace;
 
@@ -135,6 +136,9 @@
   --size-review-max-w: 90svw; /* 90vw - review card max width */
   --size-split-large: 30rem; /* 480px - split content large min height */
 
+}
+html:lang(en) {
+  --font-display: var(--font-display-latin);
 }
 
 /* ── Responsive typography — desktop overrides ─────────────────── */

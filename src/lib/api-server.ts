@@ -7,9 +7,12 @@ import type {
   Page,
   SiteSetting,
   Journal,
+  JournalCategory,
+  NavigationItem,
   AttributeType,
   AttributeValueOption,
 } from '@/lib/api';
+
 import { toAttributeFilterOptions, type AttributeFilterGroup } from '@/lib/attributeFilterOptions';
 import { ApiHttpError, createApiHttpError } from '@/lib/api-error';
 import { buildBackendApiUrl } from '@/lib/backend-url';
@@ -128,6 +131,28 @@ export async function fetchPage(slug: string, locale?: string): Promise<Page | n
 
 export async function fetchJournal(slug: string, locale?: string): Promise<Journal | null> {
   return fetchCmsResourceOrNullOn404<Journal>(`/journals/${slug}`, locale, `journal:${slug}`);
+}
+
+export function fetchNavigationGroup(group: NavigationItem['group'], locale?: string) {
+  return fetchFromBackend<NavigationItem[]>('/navigation', { group, locale }, CACHE_POLICIES.cms);
+}
+
+export async function fetchJournals(params?: {
+  category?: JournalCategory;
+  limit?: number;
+  locale?: string;
+}) {
+  const journals = await fetchFromBackend<Journal[]>(
+    '/journals',
+    params ? { category: params.category, locale: params.locale } : undefined,
+    CACHE_POLICIES.cms,
+  );
+
+  if (params?.limit === undefined) {
+    return journals;
+  }
+
+  return journals.slice(0, params.limit);
 }
 
 export async function fetchCatalogFilterOptions(locale?: string): Promise<AttributeFilterGroup[]> {

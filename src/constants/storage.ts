@@ -9,4 +9,5 @@ export const SESSION_KEYS = {
 
 export const LOCAL_KEYS = {
   VIEW_MODE: 'products-view-mode',
+  AUTH_SESSION_HINT: 'auth-session-hint',
 } as const;

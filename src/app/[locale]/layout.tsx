@@ -7,8 +7,9 @@ import AppShell from '@/components/AppShell';
 import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
 import Providers from '@/components/Providers';
 import { isLocale, routing } from '@/i18n/routing';
-import { fetchSettingsMap } from '@/lib/api-server';
+import { fetchNavigationGroup, fetchSettingsMap } from '@/lib/api-server';
 import { buildStorefrontShellSnapshot } from '@/lib/storefront-shell';
+
 
 const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
 
@@ -55,6 +56,21 @@ async function getStorefrontShellSnapshot(locale: string) {
     return buildStorefrontShellSnapshot(null, { fetchFailed: true });
   }
 }
+
+async function getPrefetchedNavigation(locale: string) {
+  const [gnb, sidebar, footer] = await Promise.allSettled([
+    fetchNavigationGroup('gnb', locale),
+    fetchNavigationGroup('sidebar', locale),
+    fetchNavigationGroup('footer', locale),
+  ]);
+
+  return {
+    gnb: gnb.status === 'fulfilled' ? gnb.value : null,
+    sidebar: sidebar.status === 'fulfilled' ? sidebar.value : null,
+    footer: footer.status === 'fulfilled' ? footer.value : null,
+  };
+}
+
 export default async function LocaleLayout({
   children,
   params,
@@ -70,12 +86,14 @@ export default async function LocaleLayout({
 
   setRequestLocale(safeLocale);
 
-  const [messages, shellSnapshot, tNav, tUi] = await Promise.all([
+  const [messages, shellSnapshot, navigationData, tNav, tUi] = await Promise.all([
     getMessages(),
     getStorefrontShellSnapshot(safeLocale),
+    getPrefetchedNavigation(safeLocale),
     getTranslations('navigation'),
     getTranslations('ui'),
   ]);
+
 
   const degradedNotice = shellSnapshot.mode === 'degraded'
     ? (
@@ -138,6 +156,7 @@ export default async function LocaleLayout({
                 </>
               }
               businessInfo={shellSnapshot.businessInfo}
+              navigationData={navigationData}
             >
               {children}
             </AppShell>

@@ -82,6 +82,7 @@ describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
+    localStorage.clear();
     vi.stubEnv('NEXT_PUBLIC_KAKAO_CLIENT_ID', 'kakao-client');
     vi.stubEnv('NEXT_PUBLIC_KAKAO_REDIRECT_URI', 'https://shop.test/auth/kakao/callback');
     vi.stubEnv('NEXT_PUBLIC_GOOGLE_CLIENT_ID', 'google-client');

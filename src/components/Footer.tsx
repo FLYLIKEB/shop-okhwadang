@@ -63,11 +63,12 @@ function renderNavLinks(items: NavigationItem[]) {
 
 interface FooterProps {
   businessInfo?: FooterBusinessInfo;
+  initialFooterItems?: NavigationItem[] | null;
 }
 
-export default function Footer({ businessInfo }: FooterProps) {
+export default function Footer({ businessInfo, initialFooterItems }: FooterProps) {
   const t = useTranslations('footer');
-  const { items: footerItems, loading } = useNavigation('footer');
+  const { items: footerItems, loading } = useNavigation('footer', initialFooterItems);
   const hasCmsData = !loading && footerItems.length > 0;
   const rootItems = hasCmsData ? footerItems.filter((item) => item.parent_id === null) : [];
   const currentYear = new Date().getFullYear();

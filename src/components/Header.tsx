@@ -19,15 +19,21 @@ import { CartBadge } from '@/components/header/CartBadge';
 import { MobileMenu } from '@/components/header/MobileMenu';
 import { MobileSearchOverlay } from '@/components/header/MobileSearchOverlay';
 import { DesktopNav } from '@/components/header/DesktopNav';
+import type { NavigationItem } from '@/lib/api';
 
-export default function Header() {
+interface HeaderProps {
+  initialNavItems?: NavigationItem[] | null;
+  initialSidebarItems?: NavigationItem[] | null;
+}
+
+export default function Header({ initialNavItems, initialSidebarItems }: HeaderProps) {
   const router = useRouter();
   const t = useTranslations('header');
   const tNav = useTranslations('navigation');
   const { isAuthenticated, user, logout } = useAuth();
   const { itemCount } = useCart();
-  const { items: navItems } = useNavigation('gnb');
-  const { items: sidebarItems } = useNavigation('sidebar');
+  const { items: navItems } = useNavigation('gnb', initialNavItems);
+  const { items: sidebarItems } = useNavigation('sidebar', initialSidebarItems);
   const [query, setQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useUrlModal('menu');
   const [isSearchOpen, setIsSearchOpen] = useUrlModal('search');
