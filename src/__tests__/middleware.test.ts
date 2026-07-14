@@ -7,62 +7,6 @@ vi.mock('@/i18n/routing', () => ({
   routing: { locales: ['ko', 'en'], defaultLocale: 'ko' },
 }));
 
-vi.mock('@/middleware', () => {
-  const mockHasAdminRole = (token: string) => {
-    if (token.includes('FORGED')) return Promise.resolve(false);
-    try {
-      const parts = token.split('.');
-      if (parts.length !== 3) return Promise.resolve(false);
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-      return Promise.resolve(payload.role === 'admin' || payload.role === 'super_admin');
-    } catch {
-      return Promise.resolve(false);
-    }
-  };
-
-  const localePattern = new RegExp(`^/(ko|en)(/.*)?$`);
-
-  return {
-    __esModule: true,
-    mockHasAdminRole,
-    middleware: (req: { url: string; cookies: { get: (name: string) => { value: string } | undefined } }) => {
-      const url = new URL(req.url);
-      const pathname = url.pathname;
-      const token = req.cookies.get('accessToken')?.value;
-      const search = url.search;
-
-      const localeMatch = pathname.match(localePattern);
-      const localePrefix = localeMatch ? `/${localeMatch[1]}` : '';
-      const pathnameWithoutLocale = localeMatch ? (localeMatch[2] || '/') : pathname;
-
-      if (pathnameWithoutLocale.startsWith('/admin')) {
-        if (!token) {
-          return new Response(null, { status: 307, headers: { location: `${localePrefix}/login?redirect=${encodeURIComponent(pathname + search)}` } });
-        }
-        return mockHasAdminRole(token).then((isAdmin) => {
-          if (!isAdmin) {
-            return new Response(null, { status: 307, headers: { location: `${localePrefix}/` } });
-          }
-          return new Response(null, { status: 200 });
-        });
-      }
-
-      if (pathnameWithoutLocale.startsWith('/my') || pathnameWithoutLocale.startsWith('/checkout')) {
-        if (!token) {
-          return new Response(null, { status: 307, headers: { location: `${localePrefix}/login?redirect=${encodeURIComponent(pathname + search)}` } });
-        }
-      }
-
-      if (pathnameWithoutLocale.startsWith('/api')) {
-        return new Response(null, { status: 200 });
-      }
-
-      return new Response(null, { status: 200 });
-    },
-    resetPublicKeyCache: () => {},
-    setTestPublicKey: () => {},
-  };
-});
 
 let testKeyPair: CryptoKeyPair;
 let testPublicKeyPem: string;
@@ -107,15 +51,15 @@ function makeForgedToken(payload: Record<string, unknown>): string {
 }
 
 import { middleware, resetPublicKeyCache, setTestPublicKey } from '@/middleware';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 beforeEach(() => {
   resetPublicKeyCache();
   setTestPublicKey(testPublicKeyPem);
 });
 
-function makeRequest(pathname: string, token?: string): NextRequest {
-  const url = `http://localhost${pathname}`;
+function makeRequest(pathname: string, token?: string, baseUrl = 'http://localhost'): NextRequest {
+  const url = `${baseUrl}${pathname}`;
   const req = new NextRequest(url);
   if (token) {
     req.cookies.set('accessToken', token);
@@ -218,6 +162,28 @@ describe('middleware', () => {
       expect(res.status).toBe(200);
     }
   });
+
+  it('sets NEXT_LOCALE with HttpOnly, SameSite and Secure on https locale-prefixed pages', async () => {
+    const req = makeRequest('/ko/products/1', undefined, 'https://ockhwadang.com');
+    const res = await middleware(req);
+    const localeCookie = (res as NextResponse).cookies.get('NEXT_LOCALE');
+
+    expect(localeCookie?.value).toBe('ko');
+    expect(localeCookie?.httpOnly).toBe(true);
+    expect(localeCookie?.sameSite).toBe('lax');
+    expect(localeCookie?.secure).toBe(true);
+  });
+
+  it('does not force Secure on plain-http localhost locale-prefixed pages', async () => {
+    const req = makeRequest('/ko/products/1');
+    const res = await middleware(req);
+    const localeCookie = (res as NextResponse).cookies.get('NEXT_LOCALE');
+
+    expect(localeCookie?.value).toBe('ko');
+    expect(localeCookie?.httpOnly).toBe(true);
+    expect(localeCookie?.secure).toBe(false);
+  });
+
 
   it('redirects locale-prefixed /ko/admin to /ko/login with full path in redirect', async () => {
     const req = makeRequest('/ko/admin');
