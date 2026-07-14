@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchPage, fetchSettingsMap } from '@/lib/api-server';
+import { fetchAnnouncementBars, fetchPage, fetchSettingsMap } from '@/lib/api-server';
 
 const ORIGINAL_BACKEND_URL = process.env.BACKEND_URL;
 const ORIGINAL_CI = process.env.CI;
@@ -56,5 +56,41 @@ describe('api-server backend URL contract', () => {
     expect(fetchMock).toHaveBeenCalledWith('https://backend.example/api/pages/home?locale=en', {
       next: { revalidate: 300, tags: ['cms', 'page:home'] },
     });
+  });
+
+  it('returns null for CMS pages only when the backend responds with 404', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Not Found' }), {
+        status: 404,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchPage('missing', 'en')).resolves.toBeNull();
+  });
+
+  it('re-throws non-404 CMS page failures instead of hiding them as null', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: '설정 동기화 실패' }), {
+        status: 500,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchPage('home', 'en')).rejects.toThrow('설정 동기화 실패');
+  });
+
+  it('keeps degraded mode only for non-critical announcement bars', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'temporarily unavailable' }), {
+        status: 503,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchAnnouncementBars('en')).resolves.toEqual([]);
   });
 });

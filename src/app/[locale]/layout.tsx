@@ -7,7 +7,7 @@ import AppShell from '@/components/AppShell';
 import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
 import Providers from '@/components/Providers';
 import { isLocale, routing } from '@/i18n/routing';
-import { buildBackendApiUrl } from '@/lib/backend-url';
+import { fetchSettingsMap as fetchBackendSettingsMap } from '@/lib/api-server';
 import { getThemeStyle } from '@/lib/theme-style';
 
 const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
@@ -49,13 +49,7 @@ const GOOGLE_TAG_ID = 'G-ENSHH2TBSY';
 
 async function getSettingsMap(locale?: string): Promise<Record<string, string> | null> {
   try {
-    const search =
-      locale && locale !== 'ko' ? `?${new URLSearchParams({ locale }).toString()}` : '';
-    const res = await fetch(buildBackendApiUrl('/settings/map', search), {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    return res.json();
+    return await fetchBackendSettingsMap(locale);
   } catch {
     return null;
   }

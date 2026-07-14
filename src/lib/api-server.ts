@@ -11,17 +11,8 @@ import type {
   AttributeValueOption,
 } from '@/lib/api';
 import { toAttributeFilterOptions, type AttributeFilterGroup } from '@/lib/attributeFilterOptions';
+import { ApiHttpError, createApiHttpError } from '@/lib/api-error';
 import { buildBackendApiUrl } from '@/lib/backend-url';
-
-class BackendHttpError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = 'BackendHttpError';
-  }
-}
 
 interface BackendFetchPolicy {
   revalidate?: number;
@@ -63,8 +54,7 @@ async function fetchFromBackend<T>(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
-    throw new BackendHttpError(error.message || `HTTP ${response.status}`, response.status);
+    throw await createApiHttpError(response);
   }
 
   return response.json() as Promise<T>;
@@ -106,7 +96,7 @@ export const fetchProduct = cache(
         CACHE_POLICIES.product,
       );
     } catch (err) {
-      if (err instanceof BackendHttpError && err.status === 404) {
+      if (err instanceof ApiHttpError && err.status === 404) {
         return null;
       }
       throw err;
@@ -114,26 +104,30 @@ export const fetchProduct = cache(
   },
 );
 
-export async function fetchPage(slug: string, locale?: string): Promise<Page | null> {
+async function fetchCmsResourceOrNullOn404<T>(
+  endpoint: string,
+  locale: string | undefined,
+  cacheTag: string,
+): Promise<T | null> {
   try {
-    return await fetchFromBackend<Page>(`/pages/${slug}`, locale ? { locale } : undefined, {
+    return await fetchFromBackend<T>(endpoint, locale ? { locale } : undefined, {
       ...CACHE_POLICIES.cms,
-      tags: [...CACHE_POLICIES.cms.tags, `page:${slug}`],
+      tags: [...CACHE_POLICIES.cms.tags, cacheTag],
     });
-  } catch {
-    return null;
+  } catch (err) {
+    if (err instanceof ApiHttpError && err.status === 404) {
+      return null;
+    }
+    throw err;
   }
 }
 
+export async function fetchPage(slug: string, locale?: string): Promise<Page | null> {
+  return fetchCmsResourceOrNullOn404<Page>(`/pages/${slug}`, locale, `page:${slug}`);
+}
+
 export async function fetchJournal(slug: string, locale?: string): Promise<Journal | null> {
-  try {
-    return await fetchFromBackend<Journal>(`/journals/${slug}`, locale ? { locale } : undefined, {
-      ...CACHE_POLICIES.cms,
-      tags: [...CACHE_POLICIES.cms.tags, `journal:${slug}`],
-    });
-  } catch {
-    return null;
-  }
+  return fetchCmsResourceOrNullOn404<Journal>(`/journals/${slug}`, locale, `journal:${slug}`);
 }
 
 export async function fetchCatalogFilterOptions(locale?: string): Promise<AttributeFilterGroup[]> {
@@ -193,6 +187,7 @@ export interface AnnouncementBarItem {
 
 export async function fetchAnnouncementBars(locale?: string): Promise<AnnouncementBarItem[]> {
   try {
+    // Announcement bars are non-critical chrome; degrade to [] when the backend is unavailable.
     return await fetchFromBackend<AnnouncementBarItem[]>(
       '/announcement-bars',
       locale ? { locale } : undefined,

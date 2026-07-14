@@ -3,6 +3,7 @@ import {
   GLOBAL_LOADING_END_EVENT,
   GLOBAL_LOADING_START_EVENT,
 } from '@/constants/global-loading';
+import { createApiHttpError, isEmptyApiResponse } from '@/lib/api-error';
 
 const API_BASE = '/api';
 
@@ -91,7 +92,9 @@ class ApiClient {
 
     const { headers: optionHeaders, ...restFetchOptions } = fetchOptions ?? {};
     const isFormData = restFetchOptions.body instanceof FormData;
-    const defaultHeaders: Record<string, string> = isFormData ? {} : { 'Content-Type': 'application/json' };
+    const defaultHeaders: Record<string, string> = isFormData
+      ? {}
+      : { 'Content-Type': 'application/json' };
     emitGlobalLoadingEvent(GLOBAL_LOADING_START_EVENT);
 
     try {
@@ -106,8 +109,7 @@ class ApiClient {
 
       if (response.status === 401) {
         if (AUTH_SKIP_REFRESH.has(endpoint)) {
-          const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
-          throw new Error(error.message || `HTTP ${response.status}`);
+          throw await createApiHttpError(response);
         }
         await _ensureTokenRefreshed();
         // Retry original request after token refresh
@@ -120,35 +122,19 @@ class ApiClient {
           },
         });
         if (!retryResponse.ok) {
-          const error = await retryResponse.json().catch(() => ({ message: '오류가 발생했습니다.' }));
-          throw new Error(error.message || `HTTP ${retryResponse.status}`);
+          throw await createApiHttpError(retryResponse);
         }
-        if (retryResponse.status === 204 || retryResponse.headers.get('content-length') === '0') {
+        if (isEmptyApiResponse(retryResponse)) {
           return undefined as T;
         }
         return retryResponse.json() as Promise<T>;
       }
 
-      if (response.status === 403) {
-        const error = await response.json().catch(() => ({ message: '접근 권한이 없습니다.' }));
-        const message = Array.isArray(error.message)
-          ? error.message.join(', ')
-          : (error.message || '접근 권한이 없습니다.');
-        if (message === 'Forbidden') {
-          throw new Error('접근 권한이 없습니다.');
-        }
-        throw new Error(message);
-      }
-
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: '오류가 발생했습니다.' }));
-        const message = Array.isArray(error.message)
-          ? error.message.join(', ')
-          : (error.message || `HTTP ${response.status}`);
-        throw new Error(message);
+        throw await createApiHttpError(response);
       }
 
-      if (response.status === 204 || response.headers.get('content-length') === '0') {
+      if (isEmptyApiResponse(response)) {
         return undefined as T;
       }
       return response.json() as Promise<T>;
