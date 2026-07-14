@@ -6,6 +6,7 @@
 | ------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `BACKEND_URL` | `http://localhost:3000` | Next.js middleware 프록시와 SSR fetch가 공유하는 **백엔드 origin**. canonical contract는 `origin only` 이며 앱 코드가 `/api/*` 를 붙인다. 예: 로컬 `http://localhost:3000`, 운영 `https://api.ockhwadang.com` |
 | `SITE_URL`    | `http://localhost:5173` | canonical 프론트엔드 origin. 메타데이터/redirect/배포 smoke test 기준 URL                                                                                                                                    |
+| `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` | `naverpay,paypal,eximbay` | 체크아웃 노출 계약. `backend/src/config/checkout-gateway-contract.ts` 기준으로 로케일별 결제수단 노출과 CSP를 함께 관리 |
 
 ### 프록시 계약 메모
 
@@ -72,24 +73,41 @@
 
 ### 결제
 
-| 변수                                 | 기본값                                             | 설명                                                                                                   |
-| ------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `PAYMENT_GATEWAY`                    | `mock`                                             | PG 어댑터 선택 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`/`eximbay`). `mock`은 프로덕션 차단 |
-| `TOSS_SECRET_KEY`                    | —                                                  | 토스페이먼츠 시크릿 키                                                                                 |
-| `TOSS_CLIENT_KEY`                    | —                                                  | 토스페이먼츠 클라이언트 키                                                                             |
-| `STRIPE_SECRET_KEY`                  | —                                                  | Stripe 시크릿 키                                                                                       |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | —                                                  | Stripe 공개 키                                                                                         |
-| `STRIPE_WEBHOOK_SECRET`              | —                                                  | Stripe 웹훅 서명 키                                                                                    |
-| `EXIMBAY_MERCHANT_ID`                | —                                                  | Eximbay merchant ID (프로덕션 체크아웃 필수)                                                           |
-| `EXIMBAY_API_KEY`                    | —                                                  | Eximbay Payment Preparation/Verify API key (프로덕션 체크아웃 필수)                                    |
-| `EXIMBAY_SECRET_KEY`                 | —                                                  | Eximbay API secret key (프로덕션 체크아웃 필수)                                                        |
-| `EXIMBAY_WEBHOOK_SECRET`             | —                                                  | Eximbay webhook HMAC secret                                                                            |
-| `EXIMBAY_API_BASE_URL`               | `https://api-test.eximbay.com`                     | Eximbay API base URL (production 계약 후 교체)                                                         |
-| `EXIMBAY_JS_SDK_URL`                 | `https://api-test.eximbay.com/v1/javascriptSDK.js` | Eximbay hosted payment page SDK URL                                                                    |
-| `EXIMBAY_CURRENCY`                   | `KRW`                                              | Eximbay 결제 통화 (`USD` 사용 시 `EXIMBAY_KRW_PER_USD`로 환산)                                         |
-| `EXIMBAY_LANG`                       | locale 기반                                        | Eximbay 결제창 언어 강제 override (`KR`/`EN`)                                                          |
-| `EXIMBAY_SHOP_NAME`                  | `Okhwadang`                                        | Eximbay 결제창 상점명                                                                                  |
-| `EXIMBAY_KRW_PER_USD`                | `1350`                                             | Eximbay USD 결제를 위한 KRW→USD 환산 기준                                                              |
+체크아웃 노출 계약의 단일 소스는 `backend/src/config/checkout-gateway-contract.ts`입니다. 게이트웨이 추가/제거 시 아래 변수와 `next.config.ts` CSP가 함께 갱신됩니다.
+
+| 변수 | 기본값 | 설명 |
+| --- | --- | --- |
+| `CHECKOUT_ENABLED_GATEWAYS` | `naverpay,paypal,eximbay` | 백엔드 체크아웃 노출 계약. 쉼표 구분. `bank_transfer`는 `ko` 체크아웃에서 항상 유지 |
+| `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` | `naverpay,paypal,eximbay` | 프론트 체크아웃 노출 계약. Vercel 빌드 시 CSP 허용 목록도 이 값 기준으로 계산 |
+| `PAYMENT_GATEWAY` | `mock` | 백엔드 기본 PG 어댑터 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`/`eximbay`). `mock`은 프로덕션 차단 |
+| `NAVERPAY_PARTNER_ID` | — | NaverPay partner ID (프로덕션 체크아웃 필수) |
+| `NAVERPAY_CLIENT_ID` | — | NaverPay client ID (프로덕션 체크아웃 필수) |
+| `NAVERPAY_CLIENT_SECRET` | — | NaverPay client secret (프로덕션 체크아웃 필수) |
+| `NAVERPAY_CHAIN_ID` | — | NaverPay chain ID (프로덕션 체크아웃 필수) |
+| `PAYPAL_CLIENT_ID` | — | PayPal REST API client ID (프로덕션 체크아웃 필수) |
+| `PAYPAL_CLIENT_SECRET` | — | PayPal REST API client secret (프로덕션 체크아웃 필수) |
+| `PAYPAL_WEBHOOK_ID` | — | PayPal webhook signature verification ID |
+| `PAYPAL_API_BASE_URL` | sandbox/prod default | PayPal REST API base URL override |
+| `PAYPAL_KRW_PER_USD` | `1350` | PayPal USD 결제를 위한 KRW→USD 환산 기준 |
+| `EXIMBAY_MERCHANT_ID` | — | Eximbay merchant ID (프로덕션 체크아웃 필수) |
+| `EXIMBAY_API_KEY` | — | Eximbay Payment Preparation/Verify API key (프로덕션 체크아웃 필수) |
+| `EXIMBAY_SECRET_KEY` | — | Eximbay API secret key (프로덕션 체크아웃 필수) |
+| `EXIMBAY_WEBHOOK_SECRET` | — | Eximbay webhook HMAC secret |
+| `EXIMBAY_API_BASE_URL` | `https://api-test.eximbay.com` | Eximbay API base URL (production 계약 후 교체) |
+| `EXIMBAY_JS_SDK_URL` | `https://api-test.eximbay.com/v1/javascriptSDK.js` | Eximbay hosted payment page SDK URL |
+| `EXIMBAY_CURRENCY` | `KRW` | Eximbay 결제 통화 (`USD` 사용 시 `EXIMBAY_KRW_PER_USD`로 환산) |
+| `EXIMBAY_LANG` | locale 기반 | Eximbay 결제창 언어 강제 override (`KR`/`EN`) |
+| `EXIMBAY_SHOP_NAME` | `Okhwadang` | Eximbay 결제창 상점명 |
+| `EXIMBAY_KRW_PER_USD` | `1350` | Eximbay USD 결제를 위한 KRW→USD 환산 기준 |
+| `TOSS_SECRET_KEY` | — | Toss adapter 시크릿 키 (기본 어댑터/레거시 결제 재시도용) |
+| `TOSS_CLIENT_KEY` | — | Toss adapter 클라이언트 키 |
+| `STRIPE_SECRET_KEY` | — | Stripe adapter 시크릿 키 |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | — | Stripe 공개 키 |
+| `STRIPE_WEBHOOK_SECRET` | — | Stripe 웹훅 서명 키 |
+| `INICIS_MID` | — | KG Inicis MID |
+| `INICIS_SIGN_KEY` | — | KG Inicis sign key |
+| `INICIS_API_KEY` | — | KG Inicis API key |
+| `INICIS_CLIENT_KEY` | — | KG Inicis client key |
 
 ### 스토리지
 
@@ -156,30 +174,3 @@ backend/.env.example      # 키 목록 (커밋 O, 값 없음)
 ```
 
 > **`.env` 파일은 절대 커밋하지 않습니다.** `.env.example`에 키 목록만 기록합니다.
-
-| `NAVERPAY_PARTNER_ID` | — | NaverPay partner ID (프로덕션 체크아웃 필수) |
-| `NAVERPAY_CLIENT_ID` | — | NaverPay client ID (프로덕션 체크아웃 필수) |
-| `NAVERPAY_CLIENT_SECRET` | — | NaverPay client secret (프로덕션 체크아웃 필수) |
-| `NAVERPAY_CHAIN_ID` | — | NaverPay chain ID (프로덕션 체크아웃 필수) |
-| `NAVER_COMMERCE_APP_ID` | — | 네이버 커머스API 애플리케이션 ID (스마트스토어 상품 동기화용) |
-| `NAVER_COMMERCE_APP_SECRET` | — | 네이버 커머스API 애플리케이션 시크릿. 실제 값은 secret/env에만 보관 |
-| `NAVER_COMMERCE_API_BASE_URL` | `https://api.commerce.naver.com/external` | 네이버 커머스API 호스트 override (테스트/장애 대응용) |
-| `NAVER_COMMERCE_MAX_SYNC_PRODUCTS` | `500` | 네이버 커머스API 동기화에서 한 번에 목록 조회/상세 조회할 최대 상품 수 |
-| `NAVER_COMMERCE_DETAIL_REQUEST_DELAY_MS` | `700` | 네이버 상품 상세 API 연속 호출 사이 대기 시간(ms). 4개 이상 조회 시 요청 제한을 피하기 위한 throttle |
-| `NAVER_COMMERCE_RETRY_ATTEMPTS` | `3` | 네이버 API 429/503 등 일시 제한 응답 재시도 횟수 |
-| `NAVER_COMMERCE_RETRY_BASE_DELAY_MS` | `1000` | 네이버 API 일시 제한 응답 재시도 지수 백오프 시작 대기 시간(ms) |
-| `PAYPAL_CLIENT_ID` | — | PayPal REST API client ID (프로덕션 체크아웃 필수) |
-| `PAYPAL_CLIENT_SECRET` | — | PayPal REST API client secret (프로덕션 체크아웃 필수) |
-| `PAYPAL_WEBHOOK_ID` | — | PayPal webhook signature verification ID |
-| `PAYPAL_API_BASE_URL` | sandbox/prod default | PayPal REST API base URL override |
-| `PAYPAL_KRW_PER_USD` | `1350` | PayPal USD 결제를 위한 KRW→USD 환산 기준 |
-| `EXIMBAY_MERCHANT_ID` | — | Eximbay merchant ID (프로덕션 체크아웃 필수) |
-| `EXIMBAY_API_KEY` | — | Eximbay API key (프로덕션 체크아웃 필수) |
-| `EXIMBAY_SECRET_KEY` | — | Eximbay API secret key (프로덕션 체크아웃 필수) |
-| `EXIMBAY_WEBHOOK_SECRET` | — | Eximbay webhook HMAC secret |
-| `EXIMBAY_API_BASE_URL` | `https://api-test.eximbay.com` | Eximbay API base URL |
-| `EXIMBAY_JS_SDK_URL` | `https://api-test.eximbay.com/v1/javascriptSDK.js` | Eximbay JS SDK URL |
-| `EXIMBAY_CURRENCY` | `KRW` | Eximbay 결제 통화 |
-| `EXIMBAY_LANG` | locale 기반 | Eximbay 결제창 언어 override |
-| `EXIMBAY_SHOP_NAME` | `Okhwadang` | Eximbay 결제창 상점명 |
-| `EXIMBAY_KRW_PER_USD` | `1350` | Eximbay USD 결제를 위한 KRW→USD 환산 기준 |

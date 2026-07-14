@@ -8,12 +8,13 @@ This checklist is the launch fallback when automated browser E2E cannot safely r
 - Backend health returns 200: `curl http://localhost:3000/api/health`.
 - Frontend responds: `curl -I http://localhost:5173/ko`.
 - `CHECKOUT_ENABLED_GATEWAYS` / `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` match the provider(s) being tested.
+- 계약 변경 전 `backend/src/config/checkout-gateway-contract.ts`와 `next.config.ts` generated CSP를 함께 검토한다.
 - Enabled provider credentials exist only in local/staging env files or secret stores.
 - Test product has enough stock and a non-free-shipping address is available.
 
 ## Success path per enabled provider
 
-Run once for each enabled production provider: NaverPay, PayPal, Toss, Stripe, or Mock.
+Run once for each enabled checkout provider: NaverPay, PayPal, Eximbay, or bank transfer. Toss/Stripe legacy retry flows are separate adapter checks, not the locale-exposed checkout contract.
 
 1. Log in as a test customer.
 2. Add one product to cart with quantity that produces a non-zero shipping fee.

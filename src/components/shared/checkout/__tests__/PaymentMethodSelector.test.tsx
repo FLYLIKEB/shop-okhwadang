@@ -115,4 +115,33 @@ describe('PaymentMethodSelector', () => {
     expect(screen.queryByRole('radio', { name: /네이버페이|Naver Pay/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /무통장입금|Bank transfer/ })).not.toBeInTheDocument();
   });
+
+  it('NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS로 비활성 게이트웨이를 숨긴다', () => {
+    const previous = process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS;
+    process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS = 'paypal';
+
+    try {
+      const options = getGatewayOptionsByLocale('ko');
+
+      render(
+        <PaymentMethodSelector
+          gatewayOptions={options}
+          selectedGateway={getDefaultCheckoutGateway('ko')}
+          onSelect={vi.fn()}
+        />,
+      );
+
+      expect(options).toEqual(['bank_transfer', 'paypal']);
+      expect(screen.getByRole('radio', { name: /무통장입금/ })).toBeChecked();
+      expect(screen.getByRole('radio', { name: /PayPal/ })).toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: /네이버페이|Naver Pay/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: /Credit card/ })).not.toBeInTheDocument();
+    } finally {
+      if (previous === undefined) {
+        delete process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS;
+      } else {
+        process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS = previous;
+      }
+    }
+  });
 });
