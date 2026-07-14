@@ -5,6 +5,34 @@
 - **운영 도메인**: `https://ockhwadang.com` (Cloudflare DNS → Vercel, HTTPS는 Vercel/Cloudflare가 처리)
 - **API 경로**: 브라우저는 `ockhwadang.com/api/*`만 호출. Next.js middleware(`src/middleware.ts`)가 Vercel Edge에서 `BACKEND_URL`로 런타임 프록시. Vercel Edge는 IP 직접 fetch를 금지하므로 반드시 도메인(`api.ockhwadang.com`) 경유.
 - **CDN 서브도메인**: `https://cdn.ockhwadang.com` → CloudFront → S3 `okhwadang-assets`
+### Cloudflare DNS TXT 레코드
+
+운영 저장소에는 Cloudflare DNS IaC가 없으므로, 아래 값이 **운영 콘솔에서 유지되어야 하는 source of truth** 다.
+
+| Host | Type | Value | 목적 |
+| --- | --- | --- | --- |
+| `@` | `TXT` | `v=spf1 include:_spf.resend.com ~all` | `EMAIL_FROM=@ockhwadang.com` 발신 도메인 SPF |
+| `_dmarc` | `TXT` | `v=DMARC1; p=none; adkim=s; aspf=s; pct=100` | DMARC 초기 모니터링 정책 |
+
+> ⚠️ 서비스 장애 가능성: SPF 값을 교체하면서 실제 발송 provider(include)를 빠뜨리면 정상 메일도 softfail/hardfail 될 수 있다.
+> ⚠️ 서비스 장애 가능성: DMARC를 `quarantine` 또는 `reject`로 바로 올리면 SPF/DKIM 정렬이 안 된 정상 메일이 스팸 처리되거나 반송될 수 있다. 우선 `p=none`으로 검증 후 단계적으로 강화한다.
+
+#### DNS 적용/검증 절차
+
+1. Cloudflare DNS에서 루트(`@`) TXT 레코드에 `v=spf1 include:_spf.resend.com ~all` 을 추가한다.
+2. Cloudflare DNS에서 `_dmarc` TXT 레코드에 `v=DMARC1; p=none; adkim=s; aspf=s; pct=100` 을 추가한다.
+3. 이미 다른 SPF 레코드가 있으면 **새 TXT를 추가하지 말고 기존 SPF 한 줄에 include를 합친다.** SPF는 도메인당 1개만 유효하다.
+4. 적용 후 아래 명령으로 authoritative 응답을 확인한다.
+
+```bash
+dig +short TXT ockhwadang.com
+dig +short TXT _dmarc.ockhwadang.com
+
+nslookup -type=TXT ockhwadang.com
+nslookup -type=TXT _dmarc.ockhwadang.com
+```
+
+5. 결과에 SPF/DMARC 문자열이 그대로 보이면 반영 완료다. 메일 provider가 늘어나면 `~all` 앞에 해당 provider `include:` 또는 `ip4:` 를 추가한 뒤 다시 검증한다.
 
 ## 상품 이미지 캐시 정책
 
