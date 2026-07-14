@@ -164,7 +164,9 @@ describe('Home page', () => {
   it('throws an operator-facing error when home CMS content is missing', async () => {
     mockFetchPage.mockResolvedValueOnce(null);
 
-    await expect(Home({ params: Promise.resolve({ locale: 'ko' }) })).rejects.toThrow(HOME_PAGE_CONTENT_ERROR_CODE);
+    await expect(Home({ params: Promise.resolve({ locale: 'ko' }) })).rejects.toMatchObject({
+      name: HOME_PAGE_CONTENT_ERROR_CODE,
+    });
   });
 
   it.each(['favicon.ico', 'robots.txt', 'sitemap.xml', 'logo.png'])(
