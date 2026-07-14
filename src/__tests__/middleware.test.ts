@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 
 vi.mock('next-intl/middleware', () => ({
-  default: () => (req: { url: string }) => new Response(null, { status: 200, headers: { location: req.url } }),
+  default: () => (req: { url: string }) =>
+    new Response(null, { status: 200, headers: { location: req.url } }),
 }));
 vi.mock('@/i18n/routing', () => ({
   routing: { locales: ['ko', 'en'], defaultLocale: 'ko' },
 }));
-
 
 let testKeyPair: CryptoKeyPair;
 let testPublicKeyPem: string;
@@ -85,7 +85,11 @@ describe('middleware', () => {
   });
 
   it('passes through /admin when accessToken cookie has valid super_admin role', async () => {
-    const superAdminToken = await makeSignedToken({ sub: 2, role: 'super_admin', tokenType: 'access' });
+    const superAdminToken = await makeSignedToken({
+      sub: 2,
+      role: 'super_admin',
+      tokenType: 'access',
+    });
     const req = makeRequest('/admin', superAdminToken);
     const res = await middleware(req);
     expect(res.status).toBe(200);
@@ -130,6 +134,31 @@ describe('middleware', () => {
 
   it('redirects /checkout to /login when no accessToken cookie', async () => {
     const req = makeRequest('/checkout');
+    const res = await middleware(req);
+    expect(res.status).toBe(307);
+    const location = res.headers.get('location');
+    expect(location).toContain('/login');
+    expect(location).toContain('redirect=%2Fcheckout');
+  });
+
+  it('redirects /my to /login when accessToken cookie has a forged signature', async () => {
+    const forgedUserToken = makeForgedToken({ sub: 5, role: 'user', tokenType: 'access' });
+    const req = makeRequest('/my', forgedUserToken);
+    const res = await middleware(req);
+    expect(res.status).toBe(307);
+    const location = res.headers.get('location');
+    expect(location).toContain('/login');
+    expect(location).toContain('redirect=%2Fmy');
+  });
+
+  it('redirects /checkout to /login when accessToken cookie is expired', async () => {
+    const expiredToken = await makeSignedToken({
+      sub: 6,
+      role: 'user',
+      tokenType: 'access',
+      exp: Math.floor(Date.now() / 1000) - 60,
+    });
+    const req = makeRequest('/checkout', expiredToken);
     const res = await middleware(req);
     expect(res.status).toBe(307);
     const location = res.headers.get('location');
@@ -183,7 +212,6 @@ describe('middleware', () => {
     expect(localeCookie?.httpOnly).toBe(true);
     expect(localeCookie?.secure).toBe(false);
   });
-
 
   it('redirects locale-prefixed /ko/admin to /ko/login with full path in redirect', async () => {
     const req = makeRequest('/ko/admin');
