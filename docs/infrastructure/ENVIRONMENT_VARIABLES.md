@@ -1,20 +1,28 @@
 # Environment Variables
 
-## 프론트엔드 (Next.js)
+## 프론트엔드 / Vercel 런타임
 
-| 변수          | 기본값                  | 설명                                                                                 |
-| ------------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| `BACKEND_URL` | `http://localhost:3000` | NestJS 백엔드 URL (`src/middleware.ts` 런타임 프록시와 서버 컴포넌트 fetch에서 사용). 운영 Vercel 값은 `https://api.ockhwadang.com` |
+| 변수          | 기본값                  | 설명                                                                                                                                                                                                         |
+| ------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `BACKEND_URL` | `http://localhost:3000` | Next.js middleware 프록시와 SSR fetch가 공유하는 **백엔드 origin**. canonical contract는 `origin only` 이며 앱 코드가 `/api/*` 를 붙인다. 예: 로컬 `http://localhost:3000`, 운영 `https://api.ockhwadang.com` |
+| `SITE_URL`    | `http://localhost:5173` | canonical 프론트엔드 origin. 메타데이터/redirect/배포 smoke test 기준 URL                                                                                                                                    |
+
+### 프록시 계약 메모
+
+- 브라우저/CSR은 항상 `/api/*` 만 호출한다.
+- middleware(`src/middleware.ts`)와 SSR helper(`src/lib/api-server.ts`, `src/app/[locale]/layout.tsx`)가 같은 `BACKEND_URL + /api/*` 규칙을 사용한다.
+- 프론트 운영값은 `https://api.ockhwadang.com` 으로 유지하고, Cloudflare는 `Full (strict)` 로 EC2 443 origin에 연결한다.
+- `BACKEND_URL`에 `/api` 를 붙여 넣는 구성이 남아 있어도 코드가 정규화하지만, 문서/환경은 **반드시 origin only** 로 정렬한다.
 
 ---
 
 ## Vercel Functions (프록시)
 
-| 변수                 | 기본값                 | 설명                  |
-| -------------------- | ---------------------- | --------------------- |
+| 변수                 | 기본값                       | 설명                                                |
+| -------------------- | ---------------------------- | --------------------------------------------------- |
 | `BACKEND_URL`        | `https://api.ockhwadang.com` | 백엔드 origin URL (Cloudflare Proxied + Full (strict)) |
-| `BACKEND_TIMEOUT_MS` | `10000`                | 프록시 타임아웃 (ms)  |
-| `LOG_PROXY_REQUESTS` | `true`                 | 프록시 요청 로깅 여부 |
+| `BACKEND_TIMEOUT_MS` | `10000`                      | 프록시 타임아웃 (ms)                                |
+| `LOG_PROXY_REQUESTS` | `true`                       | 프록시 요청 로깅 여부                               |
 
 ---
 
@@ -64,24 +72,24 @@
 
 ### 결제
 
-| 변수                                 | 기본값 | 설명                                                                                         |
-| ------------------------------------ | ------ | -------------------------------------------------------------------------------------------- |
-| `PAYMENT_GATEWAY`                    | `mock` | PG 어댑터 선택 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`/`eximbay`). `mock`은 프로덕션 차단 |
-| `TOSS_SECRET_KEY`                    | —      | 토스페이먼츠 시크릿 키                                                                       |
-| `TOSS_CLIENT_KEY`                    | —      | 토스페이먼츠 클라이언트 키                                                                   |
-| `STRIPE_SECRET_KEY`                  | —      | Stripe 시크릿 키                                                                             |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | —      | Stripe 공개 키                                                                               |
-| `STRIPE_WEBHOOK_SECRET`              | —      | Stripe 웹훅 서명 키                                                                          |
-| `EXIMBAY_MERCHANT_ID`                | —      | Eximbay merchant ID (프로덕션 체크아웃 필수)                                                  |
-| `EXIMBAY_API_KEY`                    | —      | Eximbay Payment Preparation/Verify API key (프로덕션 체크아웃 필수)                           |
-| `EXIMBAY_SECRET_KEY`                 | —      | Eximbay API secret key (프로덕션 체크아웃 필수)                                                |
-| `EXIMBAY_WEBHOOK_SECRET`             | —      | Eximbay webhook HMAC secret                                                                   |
-| `EXIMBAY_API_BASE_URL`               | `https://api-test.eximbay.com` | Eximbay API base URL (production 계약 후 교체)                                    |
-| `EXIMBAY_JS_SDK_URL`                 | `https://api-test.eximbay.com/v1/javascriptSDK.js` | Eximbay hosted payment page SDK URL                            |
-| `EXIMBAY_CURRENCY`                   | `KRW`  | Eximbay 결제 통화 (`USD` 사용 시 `EXIMBAY_KRW_PER_USD`로 환산)                                |
-| `EXIMBAY_LANG`                       | locale 기반 | Eximbay 결제창 언어 강제 override (`KR`/`EN`)                                             |
-| `EXIMBAY_SHOP_NAME`                  | `Okhwadang` | Eximbay 결제창 상점명                                                                    |
-| `EXIMBAY_KRW_PER_USD`                | `1350` | Eximbay USD 결제를 위한 KRW→USD 환산 기준                                                     |
+| 변수                                 | 기본값                                             | 설명                                                                                                   |
+| ------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `PAYMENT_GATEWAY`                    | `mock`                                             | PG 어댑터 선택 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`/`eximbay`). `mock`은 프로덕션 차단 |
+| `TOSS_SECRET_KEY`                    | —                                                  | 토스페이먼츠 시크릿 키                                                                                 |
+| `TOSS_CLIENT_KEY`                    | —                                                  | 토스페이먼츠 클라이언트 키                                                                             |
+| `STRIPE_SECRET_KEY`                  | —                                                  | Stripe 시크릿 키                                                                                       |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | —                                                  | Stripe 공개 키                                                                                         |
+| `STRIPE_WEBHOOK_SECRET`              | —                                                  | Stripe 웹훅 서명 키                                                                                    |
+| `EXIMBAY_MERCHANT_ID`                | —                                                  | Eximbay merchant ID (프로덕션 체크아웃 필수)                                                           |
+| `EXIMBAY_API_KEY`                    | —                                                  | Eximbay Payment Preparation/Verify API key (프로덕션 체크아웃 필수)                                    |
+| `EXIMBAY_SECRET_KEY`                 | —                                                  | Eximbay API secret key (프로덕션 체크아웃 필수)                                                        |
+| `EXIMBAY_WEBHOOK_SECRET`             | —                                                  | Eximbay webhook HMAC secret                                                                            |
+| `EXIMBAY_API_BASE_URL`               | `https://api-test.eximbay.com`                     | Eximbay API base URL (production 계약 후 교체)                                                         |
+| `EXIMBAY_JS_SDK_URL`                 | `https://api-test.eximbay.com/v1/javascriptSDK.js` | Eximbay hosted payment page SDK URL                                                                    |
+| `EXIMBAY_CURRENCY`                   | `KRW`                                              | Eximbay 결제 통화 (`USD` 사용 시 `EXIMBAY_KRW_PER_USD`로 환산)                                         |
+| `EXIMBAY_LANG`                       | locale 기반                                        | Eximbay 결제창 언어 강제 override (`KR`/`EN`)                                                          |
+| `EXIMBAY_SHOP_NAME`                  | `Okhwadang`                                        | Eximbay 결제창 상점명                                                                                  |
+| `EXIMBAY_KRW_PER_USD`                | `1350`                                             | Eximbay USD 결제를 위한 KRW→USD 환산 기준                                                              |
 
 ### 스토리지
 
@@ -95,10 +103,10 @@
 
 ### 알림 (이메일)
 
-| 변수                    | 기본값                   | 설명                                                              |
-| ----------------------- | ------------------------ | ----------------------------------------------------------------- |
-| `NOTIFICATION_PROVIDER` | `mock`                   | 이메일 어댑터 (`mock`/`resend`/`ses`). 프로덕션에서는 `mock` 금지 |
-| `RESEND_API_KEY`        | —                        | Resend API 키 (`NOTIFICATION_PROVIDER=resend` 시 필수)            |
+| 변수                    | 기본값                    | 설명                                                                                   |
+| ----------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
+| `NOTIFICATION_PROVIDER` | `mock`                    | 이메일 어댑터 (`mock`/`resend`/`ses`). 프로덕션에서는 `mock` 금지                      |
+| `RESEND_API_KEY`        | —                         | Resend API 키 (`NOTIFICATION_PROVIDER=resend` 시 필수)                                 |
 | `EMAIL_FROM`            | `no-reply@ockhwadang.com` | 발신자 이메일 주소. 운영 DNS(`ockhwadang.com`)의 SPF/DMARC 정책과 동일 도메인으로 유지 |
 
 ### Cache

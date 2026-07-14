@@ -3,16 +3,19 @@
 ## 도메인
 
 - **운영 도메인**: `https://ockhwadang.com` (Cloudflare DNS → Vercel, 브라우저 진입부터 HTTPS 고정)
-- **API 경로**: 브라우저는 `ockhwadang.com/api/*`만 호출. Next.js middleware(`src/middleware.ts`)가 Vercel Edge에서 `BACKEND_URL=https://api.ockhwadang.com` 로 런타임 프록시하며, `api.ockhwadang.com` 은 Cloudflare Proxied + `Full (strict)` 로 EC2 origin 443에 연결한다. Vercel Edge는 IP 직접 fetch를 금지하므로 반드시 도메인 경유.
+- **브라우저 API 경로**: 브라우저/CSR fetch는 `https://ockhwadang.com/api/*`만 호출한다.
+- **SSR/Edge 백엔드 origin**: `BACKEND_URL`은 **반드시 origin only** 로 넣는다. canonical 값은 `https://api.ockhwadang.com` 이며 `/api` suffix를 붙이지 않는다. `api.ockhwadang.com` 은 Cloudflare Proxied + `Full (strict)` 로 EC2 origin 443에 연결한다.
+- **프록시 계약**: Next.js middleware(`src/middleware.ts`)와 SSR helper(`src/lib/api-server.ts`, `src/app/[locale]/layout.tsx`)가 같은 `BACKEND_URL + /api/*` 규칙을 공유한다.
 - **CDN 서브도메인**: `https://cdn.ockhwadang.com` → CloudFront → S3 `okhwadang-assets`
+
 ### Cloudflare DNS TXT 레코드
 
 운영 저장소에는 Cloudflare DNS IaC가 없으므로, 아래 값이 **운영 콘솔에서 유지되어야 하는 source of truth** 다.
 
-| Host | Type | Value | 목적 |
-| --- | --- | --- | --- |
-| `@` | `TXT` | `v=spf1 include:_spf.resend.com ~all` | `EMAIL_FROM=@ockhwadang.com` 발신 도메인 SPF |
-| `_dmarc` | `TXT` | `v=DMARC1; p=none; adkim=s; aspf=s; pct=100` | DMARC 초기 모니터링 정책 |
+| Host     | Type  | Value                                        | 목적                                         |
+| -------- | ----- | -------------------------------------------- | -------------------------------------------- |
+| `@`      | `TXT` | `v=spf1 include:_spf.resend.com ~all`        | `EMAIL_FROM=@ockhwadang.com` 발신 도메인 SPF |
+| `_dmarc` | `TXT` | `v=DMARC1; p=none; adkim=s; aspf=s; pct=100` | DMARC 초기 모니터링 정책                     |
 
 > ⚠️ 서비스 장애 가능성: SPF 값을 교체하면서 실제 발송 provider(include)를 빠뜨리면 정상 메일도 softfail/hardfail 될 수 있다.
 > ⚠️ 서비스 장애 가능성: DMARC를 `quarantine` 또는 `reject`로 바로 올리면 SPF/DKIM 정렬이 안 된 정상 메일이 스팸 처리되거나 반송될 수 있다. 우선 `p=none`으로 검증 후 단계적으로 강화한다.
@@ -34,6 +37,23 @@ nslookup -type=TXT _dmarc.ockhwadang.com
 
 5. 결과에 SPF/DMARC 문자열이 그대로 보이면 반영 완료다. 메일 provider가 늘어나면 `~all` 앞에 해당 provider `include:` 또는 `ip4:` 를 추가한 뒤 다시 검증한다.
 
+## 프록시·SSR smoke test
+
+배포 직후 또는 `BACKEND_URL`/Cloudflare/Nginx 변경 직후 아래 순서로 확인한다.
+
+1. **프록시 헬스 체크** — `curl -i https://ockhwadang.com/api/health`
+   - 기대값: `200 OK`, `status=ok`, `db.status=connected`
+2. **직접 백엔드 헬스 체크** — `curl -i https://api.ockhwadang.com/api/health`
+   - 기대값: 프록시와 같은 health payload
+3. **SSR 경로 확인** — 브라우저 DevTools 또는 `curl -I https://ockhwadang.com/ko`
+   - 기대값: 홈 SSR 응답이 200이고, 서버 컴포넌트 fetch가 `BACKEND_URL + /api/*` 계약으로만 동작
+4. **사용자 보호 라우트 확인** — 로그아웃 상태에서 `https://ockhwadang.com/ko/checkout` 또는 `/ko/my`
+   - 기대값: `/ko/login?redirect=...` 로 redirect
+5. **관리자 보호 라우트 확인** — 로그인한 관리자 세션으로 `https://ockhwadang.com/ko/admin`
+   - 기대값: 200 응답 또는 관리자 화면 진입, 비관리자 세션은 `/ko/` 로 redirect
+
+> 로컬/프리뷰/운영 모두 동일하게 `BACKEND_URL`은 origin만 넣고, 앱 코드가 `/api/*`를 붙인다. 코드가 `/api/api/*` 또는 origin path 누락으로 동작하면 회귀다.
+
 ## 상품 이미지 캐시 정책
 
 - 신규 업로드 S3 객체는 `Cache-Control: public, max-age=31536000, immutable` 메타데이터를 붙인다.
@@ -44,7 +64,8 @@ nslookup -type=TXT _dmarc.ockhwadang.com
 - 프론트 `next/image` 최적화 캐시는 `next.config.ts`의 `images.minimumCacheTTL`로 최소 1일을 유지한다. 신규 S3 이미지처럼 origin `Cache-Control`이 더 길면 최적화 이미지 변형도 더 긴 upstream TTL을 따를 수 있으므로, 변경된 이미지는 반드시 새 URL로 교체한다.
 
 ### 운영 origin URL
-- 프론트/Vercel `BACKEND_URL=https://api.ockhwadang.com`
+
+- 프론트/Vercel `BACKEND_URL=https://api.ockhwadang.com` (**origin only — `/api` suffix 금지**)
 - 백엔드/EC2 `.env.production` `BACKEND_URL=https://api.ockhwadang.com/api` (결제 webhook/status_url, 업로드 절대 URL 생성에 사용)
 - `api.ockhwadang.com` 은 Cloudflare **Proxied + SSL/TLS mode `Full (strict)`** 로 유지하고, EC2 nginx 443에는 Cloudflare Origin CA 또는 동등한 서버 인증서를 설치한다.
 - `SITE_URL=https://ockhwadang.com`
@@ -56,12 +77,12 @@ nslookup -type=TXT _dmarc.ockhwadang.com
     │
     ├── HTTPS ──→ Cloudflare ──→ Vercel CDN (Next.js SSR, ockhwadang.com)
     │                 │
-    │                 └── /api/* rewrites ──→ HTTPS api.ockhwadang.com (Cloudflare Proxied)
-    │                                              │
-    │                                              └── HTTPS :443 ──→ AWS EC2 t3.small (Nginx → NestJS :3000)
-    │                                                                  │
-    │                                                                  └── MySQL ──→ AWS Lightsail MySQL :3306
-    │                                                                     (캐시는 백엔드 프로세스 내 in-memory)
+    │                 └── middleware + SSR fetch ──→ BACKEND_URL + /api/* ──→ HTTPS api.ockhwadang.com (Cloudflare Proxied)
+    │                                                                                 │
+    │                                                                                 └── HTTPS :443 ──→ AWS EC2 t3.small (Nginx → NestJS :3000)
+    │                                                                                                     │
+    │                                                                                                     └── MySQL ──→ AWS Lightsail MySQL :3306
+    │                                                                                                        (캐시는 백엔드 프로세스 내 in-memory)
     └──────────────────────────────────────────────────────────────────────────────────────────
 ```
 
@@ -73,10 +94,12 @@ nslookup -type=TXT _dmarc.ockhwadang.com
 ## 백엔드 (AWS EC2 t3.small)
 
 ### 배포 방식
+
 - `main` 브랜치 push 시 GitHub Actions → OIDC 인증 → SSM으로 EC2 명령어 실행
 - 배포 시작 시 `npm run build` 후 `dist/main.js` 존재 여부와 `npm run preflight:prod` DB 연결 사전 점검을 통과해야 `migration:run:prod` 및 PM2 재시작을 진행
 
 ### 서버 구성
+
 - Amazon Linux 2023
 - PM2로 프로세스 관리
 - Nginx (443 TLS origin + 80 → 443 redirect)
@@ -116,8 +139,9 @@ permissions:
 자세한 내용은 [`docs/infrastructure/GITHUB_ACTIONS_OIDC.md`](./GITHUB_ACTIONS_OIDC.md)를 참조하세요.
 
 ### GitHub Secrets 설정
-| Secret | 설명 |
-|---|---|
+
+| Secret     | 설명                                   |
+| ---------- | -------------------------------------- |
 | `EC2_HOST` | EC2 인스턴스 퍼블릭 IP (`3.38.168.41`) |
 
 > **SSH_PRIVATE_KEY, EC2_USER 등 불필요** - OIDC가 대신 처리
@@ -129,12 +153,15 @@ permissions:
 ## 데이터베이스 마이그레이션
 
 ### 배포 시 자동 실행
+
 배포 스크립트에 포함되어 있어 별도 실행 불필요:
+
 ```bash
 npm run migration:run:prod   # dist/database/migrations/*.js 적용
 ```
 
 ### 로컬에서 원격 DB 직접 접근 (SSH 터널)
+
 ```bash
 bash scripts/start-local.sh   # SSH 터널 포함 전체 스택 기동
 LOCAL_DATABASE_URL=mysql://root:__REDACTED_ROOT_PW__@127.0.0.1:3307/commerce npm run migration:run
@@ -145,6 +172,7 @@ LOCAL_DATABASE_URL=mysql://root:__REDACTED_ROOT_PW__@127.0.0.1:3307/commerce npm
 ## 모니터링
 
 ### PM2 대시보드
+
 ```bash
 pm2 status          # 프로세스 상태 확인
 pm2 logs commerce   # 실시간 로그
@@ -174,6 +202,7 @@ pm2 save
 ```
 
 ### 헬스 체크 수동 확인
+
 ```bash
 curl https://api.ockhwadang.com/api/health
 ```
@@ -253,9 +282,11 @@ sudo systemctl enable --now nginx
 ### EC2 — PM2 프로세스 비정상 종료
 
 #### 증상
+
 배포 후 `pm2 status`에서 프로세스가 `errored` 상태.
 
 #### 해결
+
 ```bash
 pm2 logs commerce --lines 50   # 에러 로그 확인
 pm2 restart ecosystem.config.js --env production --update-env  # 재시작
@@ -269,10 +300,12 @@ pm2 restart ecosystem.config.js --env production --update-env  # 재시작
 ### Lightsail MySQL 연결 실패
 
 #### 증상
+
 NestJS 기동 후 `Unable to connect to the database` 또는
 `ERROR 1045 Access denied for user 'okhwadang_app'@'<ip>'`.
 
 #### 확인 사항
+
 1. Lightsail DB 상태가 `available`인지 (`aws lightsail get-relational-database`)
 2. VPC peering이 `active`인지, EC2 route table에 `172.26.0.0/16` 경로가 있는지
 3. EC2에서 endpoint로 접속 시 나가는 소스 IP 확인:
@@ -289,9 +322,11 @@ NestJS 기동 후 `Unable to connect to the database` 또는
 ### Nginx 502 Bad Gateway
 
 #### 원인
+
 NestJS(PM2)가 실행되지 않은 상태에서 Nginx가 프록시 시도.
 
 #### 해결
+
 ```bash
 pm2 status                     # commerce 프로세스 확인
 pm2 start ecosystem.config.js --env production  # 프로세스 없으면 시작
