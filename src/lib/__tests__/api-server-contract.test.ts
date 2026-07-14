@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchAnnouncementBars, fetchPage, fetchSettingsMap } from '@/lib/api-server';
+import { fetchAnnouncementBars, fetchPage, fetchProduct, fetchSettingsMap } from '@/lib/api-server';
 
 const ORIGINAL_BACKEND_URL = process.env.BACKEND_URL;
 const ORIGINAL_CI = process.env.CI;
@@ -55,6 +55,22 @@ describe('api-server backend URL contract', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('https://backend.example/api/pages/home?locale=en', {
       next: { revalidate: 300, tags: ['cms', 'page:home'] },
+    });
+  });
+
+  it('builds product SSR URLs from the same backend contract', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 42, name: 'Tea' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchProduct(42, 'en');
+
+    expect(fetchMock).toHaveBeenCalledWith('https://backend.example/api/products/42?locale=en', {
+      next: { revalidate: 60, tags: ['catalog', 'product'] },
     });
   });
 
