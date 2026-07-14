@@ -1878,7 +1878,14 @@
     "unknownError": "An unknown error occurred.",
     "retry": "Try again",
     "blockError": "Unable to display this block ({type})",
-    "unknownBlock": "Unknown block type: {type}"
+    "unknownBlock": "Unknown block type: {type}",
+    "homeCmsMissingTitle": "Home CMS content is missing",
+    "homeCmsMissingDescription": "Check the published slug='home' page and its page blocks.",
+    "homeCmsMissingRecoveryHint": "For local or staging, restore seed data with scripts/run-seed.sh. In production, inspect pages/page_blocks integrity first.",
+    "storefrontShellDegradedTitle": "Some storefront settings could not be loaded, so the shell is running in degraded mode.",
+    "storefrontShellFetchFailedDescription": "The settings API did not respond, so theme, business info, and mobile navigation are using degraded defaults.",
+    "storefrontShellMissingRequiredSettings": "Required setting keys are missing: {keys}",
+    "storefrontShellRecoveryHint": "Check the admin settings screen and the /api/settings/map response."
   },
   "newsletter": {
     "emailPlaceholder": "Enter your email",
