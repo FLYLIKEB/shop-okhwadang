@@ -82,6 +82,8 @@ git pull --rebase origin <브랜치명>
 2. Migration 생성: `npm run migration:generate -- migrations/MigrationName`
 3. **엔티티 + Migration 파일 함께 커밋**
 4. E2E 테스트 통과 확인
+- 파일명으로 의도를 드러냅니다: `Create/Add/Remove/Retire`는 스키마 변경, `Backfill/Migrate/Normalize/Deduplicate/Align/Fix/Refresh`는 데이터 정합성 보정, `Seed/Upsert`는 기준 데이터 반영에 사용합니다.
+- 새 migration이 새로운 도메인 묶음을 열거나 분류 기준을 바꾸면 `docs/infrastructure/DATABASE.md`의 migration map도 함께 갱신합니다.
 
 참조: `.claude/rules/database.md`, `docs/infrastructure/DATABASE.md`
 
