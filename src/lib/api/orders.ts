@@ -23,6 +23,8 @@ export interface OrderResponse {
   address: string;
   addressDetail: string | null;
   memo: string | null;
+  guestEmailNormalized?: string | null;
+  orderLocale?: 'ko' | 'en';
   items: OrderItemResponse[];
   createdAt: string;
 }
@@ -78,10 +80,57 @@ export interface CreateOrderBody {
   address: string;
   addressDetail?: string | null;
   memo?: string | null;
+  orderLocale: 'ko' | 'en';
   policyConsents?: PolicyConsentSnapshot[];
   marketingConsent?: boolean;
   pointsUsed?: number;
   userCouponId?: number;
+}
+
+export interface CreateGuestOrderBody {
+  items: Array<{ productId: number; productOptionId: number | null; quantity: number }>;
+  recipientName: string;
+  recipientPhone: string;
+  zipcode: string;
+  address: string;
+  addressDetail?: string | null;
+  memo?: string | null;
+  guestEmail: string;
+  orderLocale: 'ko' | 'en';
+  policyConsents?: PolicyConsentSnapshot[];
+  marketingConsent?: boolean;
+}
+
+export interface GuestOrderCreateResponse {
+  order: OrderResponse;
+  guestAccessToken: string;
+  guestAccessTokenExpiresAt: string;
+}
+
+export interface GuestOrderLookupBody {
+  orderNumber: string;
+  email: string;
+  locale?: 'ko' | 'en';
+}
+
+export interface GuestOrderLookupResponse {
+  order: OrderResponse;
+  guestAccessToken: string;
+  guestAccessTokenExpiresAt: string;
+}
+
+function createGuestRequestOptions(
+  guestAccessToken: string,
+  options?: RequestOptions,
+): RequestOptions {
+  return {
+    ...options,
+    skipAuthRefresh: true,
+    headers: {
+      ...(options?.headers as Record<string, string> | undefined),
+      'X-Guest-Access-Token': guestAccessToken,
+    },
+  };
 }
 
 export const ordersApi = {
@@ -95,4 +144,25 @@ export const ordersApi = {
     apiClient.get<OrderServiceRequest[]>(`/orders/${orderId}/service-requests`),
   createServiceRequest: (orderId: number, body: CreateOrderServiceRequestBody) =>
     apiClient.post<OrderServiceRequest>(`/orders/${orderId}/service-requests`, body),
+};
+
+export const guestOrdersApi = {
+  create: (body: CreateGuestOrderBody, options?: RequestOptions) =>
+    apiClient.post<GuestOrderCreateResponse>('/guest/orders', body, {
+      ...options,
+      skipAuthRefresh: true,
+    }),
+  getById: (id: number, guestAccessToken: string, locale?: 'ko' | 'en', options?: RequestOptions) =>
+    apiClient.get<OrderResponse>(`/guest/orders/${id}`, {
+      ...createGuestRequestOptions(guestAccessToken, options),
+      params: {
+        ...(options?.params ?? {}),
+        locale,
+      },
+    }),
+  lookup: (body: GuestOrderLookupBody, options?: RequestOptions) =>
+    apiClient.post<GuestOrderLookupResponse>('/guest/orders/lookup', body, {
+      ...options,
+      skipAuthRefresh: true,
+    }),
 };

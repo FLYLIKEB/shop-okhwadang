@@ -8,6 +8,14 @@ import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { applyLocale } from '../../common/utils/locale.util';
 import { OrderCreationWorkflowService } from './order-creation.workflow.service';
 import { OrderPostCommitService } from './order-post-commit.service';
+function assertMemberOrderOwnership(order: Order, userId: number): void {
+  if (order.userId == null) {
+    throw new NotFoundException('주문을 찾을 수 없습니다.');
+  }
+
+  assertOwnership(order.userId, userId);
+}
+
 
 @Injectable()
 export class OrdersService {
@@ -82,7 +90,7 @@ export class OrdersService {
       throw new NotFoundException('주문을 찾을 수 없습니다.');
     }
 
-    assertOwnership(order.userId, userId);
+    assertMemberOrderOwnership(order, userId);
 
     return this.localizeOrder(order, locale);
   }

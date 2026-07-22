@@ -3,9 +3,19 @@ import {
   ConflictException,
   ForbiddenException,
   InternalServerErrorException,
-  Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { createPaymentConfig } from '../../../config/payment.config';
+import { NotificationService } from '../../notification/notification.service';
+import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
+import { TossPaymentAdapter } from '../adapters/toss.adapter';
+import { StripePaymentAdapter } from '../adapters/stripe.adapter';
+import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
+import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
+import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
+import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
+import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
 import { PaymentConfirmationService } from './payment-confirmation.service';
 import {
   Payment,
@@ -70,14 +80,27 @@ interface BuildArgs {
     update: jest.Mock;
   }>;
   orderRepo?: Partial<{ findOne: jest.Mock; update: jest.Mock }>;
-  shippingRepo?: Partial<{ findOne: jest.Mock }>;
   dataSource?: ReturnType<typeof makeDataSource>;
-  gateway?: Partial<PaymentGateway>;
-  resolveGateway?: jest.Mock;
+  defaultGateway?: Partial<PaymentGateway>;
+  tossGateway?: Partial<PaymentGateway>;
+  stripeGateway?: Partial<PaymentGateway>;
+  inicisGateway?: Partial<PaymentGateway>;
+  naverpayGateway?: Partial<PaymentGateway>;
+  paypalGateway?: Partial<PaymentGateway>;
+  eximbayGateway?: Partial<PaymentGateway>;
   notifyDispatch?: jest.Mock;
   notificationSend?: jest.Mock;
   orderEventEmit?: jest.Mock;
 }
+
+const makeGateway = (overrides: Partial<PaymentGateway> = {}): PaymentGateway => ({
+  prepare: jest.fn(),
+  confirm: jest.fn(),
+  cancel: jest.fn(),
+  partialCancel: jest.fn(),
+  verifyWebhook: jest.fn(),
+  ...overrides,
+}) as PaymentGateway;
 
 const buildService = (args: BuildArgs = {}) => {
   const paymentRepo = {
@@ -90,55 +113,64 @@ const buildService = (args: BuildArgs = {}) => {
     update: jest.fn().mockResolvedValue({}),
     ...args.orderRepo,
   };
-  const shippingRepo = {
-    findOne: jest.fn(),
-    ...args.shippingRepo,
-  };
   const dataSource = args.dataSource ?? makeDataSource();
-  const gateway: PaymentGateway = {
-    prepare: jest.fn(),
-    confirm: jest.fn(),
-    cancel: jest.fn(),
-    partialCancel: jest.fn(),
-    verifyWebhook: jest.fn(),
-    ...args.gateway,
-  } as PaymentGateway;
-  const resolveGatewayByType = args.resolveGateway ?? jest.fn(() => gateway);
+  const defaultGateway = makeGateway(args.defaultGateway);
+  const tossGateway = makeGateway(args.tossGateway);
+  const stripeGateway = makeGateway(args.stripeGateway);
+  const inicisGateway = makeGateway(args.inicisGateway);
+  const naverpayGateway = makeGateway(args.naverpayGateway);
+  const paypalGateway = makeGateway(args.paypalGateway);
+  const eximbayGateway = makeGateway(args.eximbayGateway);
   const notificationDispatch =
     args.notifyDispatch ?? jest.fn().mockResolvedValue(undefined);
   const notificationSend =
     args.notificationSend ?? jest.fn().mockResolvedValue(undefined);
-
   const orderEventEmit = args.orderEventEmit ?? jest.fn();
+  const guestOrderAccessService = {
+    getValidAccessOrThrow: jest.fn(),
+    withOrderAccessLock: jest.fn(),
+    rotateAccessTokenForOrder: jest.fn(),
+  };
 
-  const service = new PaymentConfirmationService({
-    paymentRepository: paymentRepo as never,
-    orderRepository: orderRepo as never,
-    shippingRepository: shippingRepo as never,
-    dataSource: dataSource as never,
-    notificationService: {
-      sendPaymentConfirmed: notificationSend,
-    } as never,
-    notificationDispatchHelper: {
-      dispatch: notificationDispatch,
-    } as never,
-    resolveGatewayByType,
-    logger: new Logger('PaymentConfirmationService.spec'),
-    defaultCarrier: 'mock',
-    orderEventEmitter: { emitOrderCompleted: orderEventEmit } as never,
-  });
+  const service = new PaymentConfirmationService(
+    paymentRepo as never,
+    orderRepo as never,
+    defaultGateway as never,
+    createPaymentConfig({
+      NODE_ENV: 'development',
+      PAYMENT_GATEWAY: 'mock',
+      DEFAULT_CARRIER: 'mock',
+    }),
+    tossGateway as unknown as TossPaymentAdapter,
+    stripeGateway as unknown as StripePaymentAdapter,
+    inicisGateway as unknown as KGInicisPaymentAdapter,
+    naverpayGateway as unknown as NaverPayPaymentAdapter,
+    paypalGateway as unknown as PayPalPaymentAdapter,
+    eximbayGateway as unknown as EximbayPaymentAdapter,
+    dataSource as never,
+    { sendPaymentConfirmed: notificationSend } as unknown as NotificationService,
+    undefined,
+    { dispatch: notificationDispatch } as unknown as NotificationDispatchHelper,
+    { emitOrderCompleted: orderEventEmit } as never,
+    guestOrderAccessService as unknown as GuestOrderAccessService,
+  );
 
   return {
     service,
     paymentRepo,
     orderRepo,
-    shippingRepo,
     dataSource,
-    gateway,
-    resolveGatewayByType,
+    defaultGateway,
+    tossGateway,
+    stripeGateway,
+    inicisGateway,
+    naverpayGateway,
+    paypalGateway,
+    eximbayGateway,
     notificationDispatch,
     notificationSend,
     orderEventEmit,
+    guestOrderAccessService,
   };
 };
 
@@ -150,10 +182,10 @@ describe('PaymentConfirmationService', () => {
   describe('confirm() — 정상 흐름', () => {
     it('PENDING 결제를 CONFIRMED 로 전환하고 paidAt 을 기록한다', async () => {
       const payment = makePayment();
-      const { service, paymentRepo, dataSource, gateway } = buildService({
+      const { service, paymentRepo, dataSource, defaultGateway } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
       });
-      (gateway.confirm as jest.Mock).mockResolvedValue({
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pay_abc',
         method: 'mock',
         amount: 30000,
@@ -195,10 +227,10 @@ describe('PaymentConfirmationService', () => {
 
     it('order 를 PAID 로 갱신하고 신규 shipping 을 생성한다', async () => {
       const payment = makePayment();
-      const { service, dataSource, gateway } = buildService({
+      const { service, dataSource, defaultGateway } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
       });
-      (gateway.confirm as jest.Mock).mockResolvedValue({
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pay_abc',
         method: 'mock',
         amount: 30000,
@@ -232,11 +264,11 @@ describe('PaymentConfirmationService', () => {
         findOne: jest.fn().mockResolvedValue(existingShipping),
       });
       const dataSource = makeDataSource(manager);
-      const { service, gateway } = buildService({
+      const { service, defaultGateway } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
         dataSource,
       });
-      (gateway.confirm as jest.Mock).mockResolvedValue({
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pay_abc',
         method: 'mock',
         amount: 30000,
@@ -279,14 +311,14 @@ describe('PaymentConfirmationService', () => {
 
     it('이미 CONFIRMED → ConflictException (이중 결제 방지)', async () => {
       const payment = makePayment({ status: PaymentStatus.CONFIRMED });
-      const { service, gateway } = buildService({
+      const { service, defaultGateway } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
       });
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
       ).rejects.toThrow(ConflictException);
-      expect(gateway.confirm).not.toHaveBeenCalled();
+      expect(defaultGateway.confirm).not.toHaveBeenCalled();
     });
 
     it('PENDING 외 상태 (FAILED) → BadRequestException', async () => {
@@ -302,33 +334,33 @@ describe('PaymentConfirmationService', () => {
 
     it('REFUNDED 상태 → BadRequestException (환불 후 재결제 거부)', async () => {
       const payment = makePayment({ status: PaymentStatus.REFUNDED });
-      const { service, gateway } = buildService({
+      const { service, defaultGateway } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
       });
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
       ).rejects.toThrow(BadRequestException);
-      expect(gateway.confirm).not.toHaveBeenCalled();
+      expect(defaultGateway.confirm).not.toHaveBeenCalled();
     });
 
     it('amount 가 주문 totalAmount 와 불일치 → BadRequestException', async () => {
       const payment = makePayment();
-      const { service, gateway } = buildService({
+      const { service, defaultGateway } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
       });
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 99999 }, 10),
       ).rejects.toThrow(BadRequestException);
-      expect(gateway.confirm).not.toHaveBeenCalled();
+      expect(defaultGateway.confirm).not.toHaveBeenCalled();
     });
   });
 
   describe('confirm() — 게이트웨이 분기/실패', () => {
     it('payment.gateway 값으로 어댑터를 라우팅한다 (TOSS)', async () => {
       const payment = makePayment({ gateway: PaymentGatewayType.TOSS });
-      const tossGateway: PaymentGateway = {
+      const tossAdapter: PaymentGateway = {
         prepare: jest.fn(),
         confirm: jest.fn().mockResolvedValue({
           paymentKey: 'pay_toss',
@@ -341,11 +373,9 @@ describe('PaymentConfirmationService', () => {
         partialCancel: jest.fn(),
         verifyWebhook: jest.fn(),
       };
-      const resolveGateway = jest.fn(() => tossGateway);
-
-      const { service } = buildService({
+      const { service, tossGateway } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
-        resolveGateway,
+        tossGateway: tossAdapter,
       });
 
       await service.confirm(
@@ -353,7 +383,6 @@ describe('PaymentConfirmationService', () => {
         10,
       );
 
-      expect(resolveGateway).toHaveBeenCalledWith(PaymentGatewayType.TOSS);
       expect(tossGateway.confirm).toHaveBeenCalledWith(
         'pay_toss',
         30000,
@@ -367,8 +396,8 @@ describe('PaymentConfirmationService', () => {
         findOne: jest.fn().mockResolvedValue(payment),
         update: jest.fn().mockResolvedValue({}),
       };
-      const { service, gateway, dataSource } = buildService({ paymentRepo });
-      (gateway.confirm as jest.Mock).mockRejectedValue(
+      const { service, defaultGateway, dataSource } = buildService({ paymentRepo });
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(
         new Error('gateway down'),
       );
 
@@ -407,11 +436,11 @@ describe('PaymentConfirmationService', () => {
         findOne: jest.fn().mockResolvedValue(payment),
         update: jest.fn().mockResolvedValue({}),
       };
-      const { service, gateway } = buildService({
+      const { service, defaultGateway } = buildService({
         paymentRepo,
         dataSource: dataSource as ReturnType<typeof makeDataSource>,
       });
-      (gateway.confirm as jest.Mock).mockResolvedValue({
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pk',
         method: 'mock',
         amount: 30000,
@@ -431,10 +460,10 @@ describe('PaymentConfirmationService', () => {
   describe('confirm() — 알림 디스패치', () => {
     it('성공 시 fire-and-forget 으로 결제완료 알림을 디스패치한다', async () => {
       const payment = makePayment();
-      const { service, gateway, notificationDispatch } = buildService({
+      const { service, defaultGateway, notificationDispatch } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
       });
-      (gateway.confirm as jest.Mock).mockResolvedValue({
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pk',
         method: 'mock',
         amount: 30000,
@@ -455,6 +484,70 @@ describe('PaymentConfirmationService', () => {
           mode: 'fire-and-forget',
         }),
       );
+    });
+  });
+
+  describe('confirmGuest() — duplicate loser local-truth handling', () => {
+    it('duplicate-like provider error + authoritative confirmed state → 409 without FAILED/CANCELLED recovery', async () => {
+      const guestOrder = makeOrder({
+        userId: null,
+        status: OrderStatus.PENDING,
+        orderLocale: 'ko',
+        guestEmailNormalized: 'guest@example.com',
+      } as Partial<Order>);
+      const payment = makePayment({ order: guestOrder });
+      const lockedPayment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        order: makeOrder({
+          userId: null,
+          status: OrderStatus.PAID,
+          orderLocale: 'ko',
+          guestEmailNormalized: 'guest@example.com',
+        } as Partial<Order>),
+      });
+      const manager = makeTransactionManager({
+        findOne: jest.fn().mockResolvedValue(lockedPayment),
+      });
+      const { service, defaultGateway, guestOrderAccessService } = buildService({
+        paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
+      });
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(new Error('already captured by provider'));
+      (guestOrderAccessService.getValidAccessOrThrow as jest.Mock).mockResolvedValue({ id: 1 });
+      (guestOrderAccessService.withOrderAccessLock as jest.Mock).mockImplementation(
+        async (_orderId: number, operation: (txManager: typeof manager) => Promise<unknown>) => operation(manager),
+      );
+
+      await expect(
+        service.confirmGuest(1, { paymentKey: 'pay_guest_dup', amount: 30000 }, 'guest-token'),
+      ).rejects.toThrow(ConflictException);
+      expect(manager.update).not.toHaveBeenCalledWith(Payment, lockedPayment.id, { status: PaymentStatus.FAILED });
+      expect(manager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
+    });
+
+    it('duplicate-like provider error + stale token after re-read → 401 without FAILED/CANCELLED recovery', async () => {
+      const guestOrder = makeOrder({
+        userId: null,
+        status: OrderStatus.PENDING,
+        orderLocale: 'ko',
+        guestEmailNormalized: 'guest@example.com',
+      } as Partial<Order>);
+      const payment = makePayment({ order: guestOrder });
+      const manager = makeTransactionManager();
+      const { service, defaultGateway, guestOrderAccessService } = buildService({
+        paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
+      });
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(new Error('duplicate payment request'));
+      (guestOrderAccessService.getValidAccessOrThrow as jest.Mock)
+        .mockResolvedValueOnce({ id: 1 })
+        .mockRejectedValueOnce(new UnauthorizedException('stale token'));
+      (guestOrderAccessService.withOrderAccessLock as jest.Mock).mockImplementation(
+        async (_orderId: number, operation: (txManager: typeof manager) => Promise<unknown>) => operation(manager),
+      );
+
+      await expect(
+        service.confirmGuest(1, { paymentKey: 'pay_guest_dup', amount: 30000 }, 'guest-token'),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(manager.update).not.toHaveBeenCalled();
     });
   });
 });

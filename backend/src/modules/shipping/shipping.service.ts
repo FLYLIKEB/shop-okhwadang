@@ -1,5 +1,5 @@
 import {
-  Injectable, BadRequestException,
+  Injectable, BadRequestException, ForbiddenException,
   Logger, Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,7 +25,7 @@ import { ShippingQuoteItemDto } from './dto/shipping-quote.dto';
 import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { assertShippingStatusTransition } from './policies/shipping-status-transition.policy';
-import { buildOrderEmailItems, buildOrderUrl } from '../notification/order-email-context';
+import { buildGuestOrderLookupUrl, buildOrderEmailItems, buildOrderUrl } from '../notification/order-email-context';
 
 @Injectable()
 export class ShippingService {
@@ -61,8 +61,11 @@ export class ShippingService {
     tracking: TrackingResult | null;
   }> {
     const order = await findOrThrow(this.orderRepository, { id: orderId }, '배송 정보를 찾을 수 없습니다.');
-    assertOwnership(order.userId, userId);
-
+    const orderUserId = this.getOrderUserId(order);
+    if (orderUserId === null) {
+      throw new ForbiddenException('접근 권한이 없습니다.');
+    }
+    assertOwnership(orderUserId, userId);
     const shipping = await findOrThrow(this.shippingRepository, { orderId }, '배송 정보를 찾을 수 없습니다.');
     const normalizedShipping = await this.syncShippingStatusFromOrder(order, shipping);
 
@@ -110,7 +113,7 @@ export class ShippingService {
   }
 
   async registerTracking(orderId: number, dto: RegisterTrackingDto): Promise<Shipping | null> {
-    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문 정보를 찾을 수 없습니다.');
+    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문 정보를 찾을 수 없습니다.', ['items', 'user']);
 
     const shipping = await findOrThrow(this.shippingRepository, { orderId }, '배송 정보를 찾을 수 없습니다.');
 
@@ -128,14 +131,17 @@ export class ShippingService {
     await this.orderRepository.update(orderId, { status: OrderStatus.PREPARING });
 
     void this.notifyShippingUpdate(
-      order.userId,
+      order,
       orderId,
       order.orderNumber,
       order.recipientName,
       dto.carrier,
       dto.trackingNumber,
     );
-    void this.messageNotificationService?.sendShippingStarted(orderId);
+
+    if (!this.isGuestOrder(order)) {
+      void this.messageNotificationService?.sendShippingStarted(orderId);
+    }
 
     return this.shippingRepository.findOne({ where: { orderId } });
   }
@@ -207,24 +213,38 @@ export class ShippingService {
   }
 
   private async notifyShippingUpdate(
-    userId: number,
+    order: Order,
     orderId: number,
     orderNumber: string,
     recipientName: string,
     carrier: string,
     trackingNumber: string,
   ): Promise<void> {
-    const order = typeof this.orderRepository.findOne === 'function'
+    const persistedOrder = typeof this.orderRepository.findOne === 'function'
       ? await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ['items'],
+        relations: ['items', 'user'],
       })
       : null;
-    const locale = 'ko';
+    const notificationOrder = persistedOrder ?? order;
+    const locale = this.getOrderLocale(notificationOrder);
+    const guestEmailNormalized = this.getGuestEmailNormalized(notificationOrder);
+    const orderUrl = this.resolveOrderUrl(orderId, notificationOrder);
+
+    if (this.isGuestOrder(notificationOrder) && !guestEmailNormalized) {
+      return;
+    }
 
     await this.notificationDispatchHelper.dispatch({
       event: 'shipping.updated',
-      userId,
+      ...(this.isGuestOrder(notificationOrder)
+        ? {
+          recipient: {
+            email: guestEmailNormalized!,
+            name: recipientName,
+          },
+        }
+        : { userId: this.getOrderUserId(notificationOrder)! }),
       resourceId: orderId,
       mode: 'fire-and-forget',
       logger: this.logger,
@@ -234,8 +254,9 @@ export class ShippingService {
           orderNumber,
           carrier,
           trackingNumber,
-          orderItems: buildOrderEmailItems(order, locale),
-          orderUrl: buildOrderUrl(orderId, locale),
+          locale,
+          orderItems: buildOrderEmailItems(notificationOrder, locale),
+          orderUrl,
         }),
     });
   }
@@ -261,7 +282,25 @@ export class ShippingService {
         { id: shipping.id, status: shipping.status },
         { status: ShippingStatus.DELIVERED, shippedAt, deliveredAt },
       );
-      void this.messageNotificationService?.sendShippingDelivered(Number(order.id));
+
+      if (this.isGuestOrder(order)) {
+        const email = this.getGuestEmailNormalized(order);
+        const locale = this.getOrderLocale(order);
+        if (email && shipping.trackingNumber) {
+          void this.notificationService.sendShippingUpdate(email, {
+            recipientName: order.recipientName,
+            orderNumber: order.orderNumber,
+            carrier: shipping.carrier ?? 'unknown',
+            trackingNumber: shipping.trackingNumber,
+            locale,
+            orderItems: buildOrderEmailItems(order, locale),
+            orderUrl: buildGuestOrderLookupUrl(locale),
+          });
+        }
+      } else {
+        void this.messageNotificationService?.sendShippingDelivered(Number(order.id));
+      }
+
       return { ...shipping, status: ShippingStatus.DELIVERED, shippedAt, deliveredAt };
     }
 
@@ -302,5 +341,29 @@ export class ShippingService {
 
       throw err;
     }
+  }
+
+  private isGuestOrder(order: Order): boolean {
+    return this.getOrderUserId(order) === null;
+  }
+
+  private getOrderUserId(order: Order): number | null {
+    const userId = (order as Order & { userId?: number | null }).userId;
+    return userId == null ? null : Number(userId);
+  }
+
+  private getGuestEmailNormalized(order: Order): string | null {
+    return (order as Order & { guestEmailNormalized?: string | null }).guestEmailNormalized ?? null;
+  }
+
+  private getOrderLocale(order: Order): 'ko' | 'en' {
+    return (order as Order & { orderLocale?: 'ko' | 'en' }).orderLocale ?? 'ko';
+  }
+
+  private resolveOrderUrl(orderId: number, order: Order): string | undefined {
+    const locale = this.getOrderLocale(order);
+    return this.isGuestOrder(order)
+      ? buildGuestOrderLookupUrl(locale)
+      : buildOrderUrl(orderId, locale);
   }
 }

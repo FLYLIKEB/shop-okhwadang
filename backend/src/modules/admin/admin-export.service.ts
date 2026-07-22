@@ -67,15 +67,15 @@ export class AdminExportService {
       format,
       filenamePrefix: 'orders',
       sheetName: '주문',
-      headerRow: ['ID', '주문번호', '상태', '수령인', '전화번호', '우편번호', '주소', '총금액', '할인금액', '배송비', '회원이메일', '생성일'],
-      columns: ['id', 'orderNumber', 'status', 'recipientName', 'recipientPhone', 'zipcode', 'address', 'totalAmount', 'discountAmount', 'shippingFee', 'userEmail', 'createdAt'],
+      headerRow: ['ID', '주문번호', '고객유형', '상태', '수령인', '전화번호', '우편번호', '주소', '총금액', '할인금액', '배송비', '회원이메일', '생성일'],
+      columns: ['id', 'orderNumber', 'customerType', 'status', 'recipientName', 'recipientPhone', 'zipcode', 'address', 'totalAmount', 'discountAmount', 'shippingFee', 'userEmail', 'createdAt'],
       queryBuilder: qb,
       mapRow: (order) => this.mapOrderRow(order, isMask),
     });
 
     this.logger.log(`Orders exported: format=${format}, mask=${isMask}`);
-  }
 
+  }
   async exportMembers(query: ExportQueryDto, res: Response): Promise<void> {
     const isMask = query.mask === 'true';
     const format = query.format ?? 'csv';
@@ -194,11 +194,14 @@ export class AdminExportService {
 
   private mapOrderRow(order: Order, isMask: boolean): ExportRow {
     const phone = isMask ? maskPhone(order.recipientPhone) : order.recipientPhone;
-    const email = isMask && order.user?.email ? maskEmail(order.user.email) : (order.user?.email ?? '');
+    const customerType = this.getOrderCustomerType(order);
+    const rawEmail = order.user?.email ?? this.getGuestEmailNormalized(order) ?? '';
+    const email = isMask && rawEmail ? maskEmail(rawEmail) : rawEmail;
 
     return {
       id: order.id,
       orderNumber: order.orderNumber,
+      customerType,
       status: order.status,
       recipientName: order.recipientName,
       recipientPhone: phone,
@@ -210,6 +213,19 @@ export class AdminExportService {
       userEmail: email,
       createdAt: order.createdAt.toISOString(),
     };
+  }
+
+  private getOrderCustomerType(order: Order): 'member' | 'guest' {
+    return this.getOrderUserId(order) === null ? 'guest' : 'member';
+  }
+
+  private getOrderUserId(order: Order): number | null {
+    const userId = (order as Order & { userId?: number | null }).userId;
+    return userId == null ? null : Number(userId);
+  }
+
+  private getGuestEmailNormalized(order: Order): string | null {
+    return (order as Order & { guestEmailNormalized?: string | null }).guestEmailNormalized ?? null;
   }
 
   private mapMemberRow(user: User, isMask: boolean): ExportRow {

@@ -16,7 +16,9 @@ import type { PaymentsService } from '../../payments/payments.service';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { UpdateOrderServiceRequestDto } from '../dto/update-order-service-request.dto';
 
-const makeOrder = (overrides: Partial<Order> = {}): Order => ({
+type MemberOrder = Order & { userId: number };
+
+const makeOrder = (overrides: Partial<Order> = {}): MemberOrder => ({
   id: 7,
   userId: 10,
   orderNumber: 'ORD-20260101-ABCDE',
@@ -35,10 +37,10 @@ const makeOrder = (overrides: Partial<Order> = {}): Order => ({
   updatedAt: new Date(),
   items: [],
   ...overrides,
-} as Order);
+}) as MemberOrder;
 
 const makeRequest = (
-  order: Order,
+  order: MemberOrder,
   overrides: Partial<OrderServiceRequest> = {},
 ): OrderServiceRequest => ({
   id: 55,
@@ -62,7 +64,7 @@ const makeRequest = (
   order,
   user: { id: order.userId, email: 'user@example.com', name: '홍길동' },
   ...overrides,
-} as unknown as OrderServiceRequest);
+}) as unknown as OrderServiceRequest;
 
 const makeRepository = () => ({
   findOne: jest.fn(),

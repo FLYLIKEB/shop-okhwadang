@@ -6,11 +6,32 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { useCart } from '@/contexts/CartContext';
-import { paymentsApi } from '@/lib/api';
+import { guestPaymentsApi, paymentsApi, type ConfirmPaymentResponse, type GuestConfirmPaymentResponse } from '@/lib/api';
 import type { Locale } from '@/i18n/routing';
 import { SESSION_KEYS } from '@/constants/storage';
 import { toastMessage } from '@/utils/toastMessages';
+import { ApiHttpError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
+
+interface HostedPaymentContext {
+  orderId: number;
+  orderNumber: string;
+  amount: number;
+  guestAccessToken?: string;
+  guestAccessTokenExpiresAt?: string;
+}
+
+function clearHostedProviderContexts(): void {
+  sessionStorage.removeItem(SESSION_KEYS.TOSS_CONTEXT);
+  sessionStorage.removeItem(SESSION_KEYS.PAYPAL_CONTEXT);
+  sessionStorage.removeItem(SESSION_KEYS.NAVERPAY_CONTEXT);
+  sessionStorage.removeItem(SESSION_KEYS.EXIMBAY_CONTEXT);
+}
+
+function clearCheckoutState(): void {
+  sessionStorage.removeItem(SESSION_KEYS.CHECKOUT_ITEMS);
+  clearHostedProviderContexts();
+}
 
 function CheckoutSuccessContent({ locale }: { locale: Locale }) {
   const router = useRouter();
@@ -52,7 +73,10 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
       return;
     }
 
-    if (!paymentKey || (!paypalToken && !isNaverPayReturn && !isEximbayReturn && (!tossOrderId || !amountParam))) {
+    if (
+      !paymentKey ||
+      (!paypalToken && !isNaverPayReturn && !isEximbayReturn && (!tossOrderId || !amountParam))
+    ) {
       toast.error(toastMessage('paymentInvalidInfo'));
       router.replace(`/${locale}/cart`);
       return;
@@ -65,11 +89,14 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
       return;
     }
 
-    const ctx = JSON.parse(raw) as {
-      orderId: number;
-      orderNumber: string;
-      amount: number;
-    };
+    let ctx: HostedPaymentContext;
+    try {
+      ctx = JSON.parse(raw) as HostedPaymentContext;
+    } catch {
+      toast.error(toastMessage('paymentContextMissing'));
+      router.replace(`/${locale}/cart`);
+      return;
+    }
 
     if (!paypalToken && !isNaverPayReturn && !isEximbayReturn) {
       const amount = Number(amountParam);
@@ -80,21 +107,51 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
       }
     }
 
-    paymentsApi
-      .confirm({ orderId: ctx.orderId, paymentKey, amount: ctx.amount })
-      .then(async () => {
+    const isGuestConfirmResponse = (
+      result: ConfirmPaymentResponse | GuestConfirmPaymentResponse,
+    ): result is GuestConfirmPaymentResponse => 'guestAccessToken' in result;
+
+    const confirmPromise: Promise<ConfirmPaymentResponse | GuestConfirmPaymentResponse> = ctx.guestAccessToken
+      ? guestPaymentsApi.confirm(
+          ctx.orderId,
+          { paymentKey, amount: ctx.amount },
+          ctx.guestAccessToken,
+        )
+      : paymentsApi.confirm({ orderId: ctx.orderId, paymentKey, amount: ctx.amount });
+
+    confirmPromise
+      .then(async (result) => {
         toast.success(toastMessage('paymentComplete'));
-        sessionStorage.removeItem(SESSION_KEYS.CHECKOUT_ITEMS);
-        sessionStorage.removeItem(SESSION_KEYS.TOSS_CONTEXT);
-        sessionStorage.removeItem(SESSION_KEYS.PAYPAL_CONTEXT);
-        sessionStorage.removeItem(SESSION_KEYS.NAVERPAY_CONTEXT);
-        sessionStorage.removeItem(SESSION_KEYS.EXIMBAY_CONTEXT);
+        clearCheckoutState();
+
+        if (isGuestConfirmResponse(result)) {
+          sessionStorage.setItem(
+            SESSION_KEYS.GUEST_ORDER_CONTEXT,
+            JSON.stringify({
+              orderId: result.orderId,
+              orderNumber: result.orderNumber,
+              guestAccessToken: result.guestAccessToken,
+              guestAccessTokenExpiresAt: result.guestAccessTokenExpiresAt,
+            }),
+          );
+        }
+
         await refetch();
         router.replace(
-          `/${locale}/order/complete?orderId=${ctx.orderId}&orderNumber=${ctx.orderNumber}`,
+          isGuestConfirmResponse(result)
+            ? `/${locale}/order/complete?orderId=${result.orderId}&orderNumber=${result.orderNumber}&flow=guest`
+            : `/${locale}/order/complete?orderId=${ctx.orderId}&orderNumber=${ctx.orderNumber}`,
         );
       })
       .catch((err: unknown) => {
+        if (ctx.guestAccessToken && err instanceof ApiHttpError && err.status === 401) {
+          clearCheckoutState();
+          sessionStorage.removeItem(SESSION_KEYS.GUEST_ORDER_CONTEXT);
+          toast.error(t('guestAccessExpired'));
+          router.replace(`/${locale}/order/lookup`);
+          return;
+        }
+
         toast.error(handleApiError(err, toastMessage('paymentConfirmError')));
         setProcessing(false);
       });
@@ -105,12 +162,10 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-4 text-xl font-bold text-destructive">{t('confirmFailedTitle')}</h1>
-        <p className="mb-6 text-sm text-muted-foreground">
-          {t('confirmFailedDescription')}
-        </p>
+        <p className="mb-6 text-sm text-muted-foreground">{t('confirmFailedDescription')}</p>
         <button
           onClick={() => router.replace(`/${locale}/cart`)}
-          className="rounded-md bg-foreground px-6 py-2 text-sm font-semibold text-background hover:opacity-90 transition-opacity"
+          className="rounded-md bg-foreground px-6 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90"
         >
           {t('backToCart')}
         </button>

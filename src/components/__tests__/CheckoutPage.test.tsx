@@ -80,6 +80,11 @@ vi.mock('next-intl', () => ({
       'consent.requiredDescription': '주문할 상품의 상품명, 가격, 배송정보, 교환·환불 규정을 확인했으며 구매에 동의합니다.',
       'consent.marketingLabel': '[선택] 마케팅 정보 수신에 동의합니다.',
       'consent.marketingDescription': '신상품, 프로모션, 이벤트 안내를 받을 수 있습니다.',
+      guestCheckoutTitle: '비회원 주문',
+      guestCheckoutDescription: '비회원 안내',
+      guestEmailLabel: '비회원 이메일',
+      guestEmailPlaceholder: 'you@example.com',
+      guestEmailDescription: '주문 안내와 비회원 주문조회에 사용할 이메일입니다.',
     };
     return dict[key] ?? key;
   },
@@ -137,7 +142,9 @@ vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
 // ---- api ----
 vi.mock('@/lib/api', () => ({
   ordersApi: { create: vi.fn(), getById: vi.fn() },
+  guestOrdersApi: { create: vi.fn(), getById: vi.fn(), lookup: vi.fn() },
   paymentsApi: { prepare: vi.fn(), confirm: vi.fn() },
+  guestPaymentsApi: { prepare: vi.fn(), confirm: vi.fn() },
   shippingApi: { quote: vi.fn().mockResolvedValue({ subtotal: 40000, zipcode: '00000', shippingFee: 0, isFreeShipping: true, isRemoteArea: false, threshold: 10, baseFee: 3000, remoteAreaSurcharge: 3000 }) },
   cartApi: { getList: vi.fn() },
   usersApi: { getAddresses: vi.fn().mockResolvedValue([]), updateAddress: vi.fn().mockResolvedValue({}) },
@@ -166,10 +173,13 @@ describe('CheckoutPage', () => {
     sessionStorage.clear();
   });
 
-  it('redirects to /login when not authenticated', async () => {
+  it('renders guest checkout without redirect when not authenticated', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: false, token: null, user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
-    expect(mockReplace).toHaveBeenCalledWith('/ko/login');
+    expect(mockReplace).not.toHaveBeenCalledWith('/ko/login');
+    expect(await screen.findByLabelText(/비회원 이메일/)).toBeInTheDocument();
+    expect(screen.queryByText('쿠폰 / 적립금')).not.toBeInTheDocument();
   });
 
   it('redirects to /cart when no sessionStorage items', async () => {

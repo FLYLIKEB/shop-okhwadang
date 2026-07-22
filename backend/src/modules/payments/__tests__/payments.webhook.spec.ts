@@ -17,6 +17,8 @@ import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
 import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { PAYMENT_CONFIG, createPaymentConfig } from '../../../config/payment.config';
+import { PaymentConfirmationService } from '../services/payment-confirmation.service';
+import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
 
 describe('PaymentsService — webhook', () => {
   let service: PaymentsService;
@@ -78,6 +80,15 @@ describe('PaymentsService — webhook', () => {
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: DataSource, useValue: mockDataSource },
+        {
+          provide: GuestOrderAccessService,
+          useValue: {
+            getValidAccessOrThrow: jest.fn(),
+            withOrderAccessLock: jest.fn(),
+            rotateAccessTokenForOrder: jest.fn(),
+          },
+        },
+        PaymentConfirmationService,
       ],
     }).compile();
 

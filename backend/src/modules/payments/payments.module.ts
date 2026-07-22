@@ -6,12 +6,16 @@ import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order } from '../orders/entities/order.entity';
 import { OrderEventsModule } from '../orders/order-events.module';
+import { OrdersModule } from '../orders/orders.module';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
+import { GuestPaymentsController } from './guest-payments.controller';
+import { GuestPaymentsService } from './guest-payments.service';
 import { AdminOrderRefundsController } from './admin-order-refunds.controller';
 import { AdminPaymentWebhooksController } from './admin-payment-webhooks.controller';
 import { gatewayProviders } from './payment-gateway.provider';
+import { PaymentConfirmationService } from './services/payment-confirmation.service';
 import {
   getCheckoutGatewayOptions,
   getDefaultCheckoutGateway,
@@ -35,9 +39,24 @@ export function resolveGatewayByLocale(locale: string): CheckoutGatewayName {
 export { isCheckoutGatewayName };
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory]), OrderEventsModule],
-  controllers: [PaymentsController, AdminOrderRefundsController, AdminPaymentWebhooksController],
-  providers: [...gatewayProviders, PaymentsService, { provide: 'PaymentsService', useExisting: PaymentsService }],
+  imports: [
+    TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory]),
+    OrderEventsModule,
+    OrdersModule,
+  ],
+  controllers: [
+    PaymentsController,
+    GuestPaymentsController,
+    AdminOrderRefundsController,
+    AdminPaymentWebhooksController,
+  ],
+  providers: [
+    ...gatewayProviders,
+    PaymentConfirmationService,
+    PaymentsService,
+    GuestPaymentsService,
+    { provide: 'PaymentsService', useExisting: PaymentsService },
+  ],
   exports: [PaymentsService, 'PaymentsService'],
 })
 export class PaymentsModule {}

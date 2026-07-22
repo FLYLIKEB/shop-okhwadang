@@ -19,6 +19,12 @@ export function buildOrderUrl(orderId: number, locale: 'ko' | 'en' = 'ko'): stri
   return `${baseUrl}/${locale}/my/orders/${orderId}`;
 }
 
+export function buildGuestOrderLookupUrl(locale: 'ko' | 'en' = 'ko'): string | undefined {
+  const baseUrl = normalizeFrontendUrl();
+  if (!baseUrl) return undefined;
+  return `${baseUrl}/${locale}/order/lookup`;
+}
+
 export function buildOrderEmailItems(
   orderOrItems: Pick<Order, 'items'> | OrderItem[] | null | undefined,
   locale: 'ko' | 'en' = 'ko',

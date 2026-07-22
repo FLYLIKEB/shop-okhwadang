@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import * as Accordion from '@radix-ui/react-accordion';
 import { faqsApi } from '@/lib/api';
@@ -12,25 +13,25 @@ import { cn } from '@/components/ui/utils';
 import { useTranslations } from 'next-intl';
 
 const CATEGORIES = [
-  { value: '전체', key: 'all' },
-  { value: '배송', key: 'shipping' },
-  { value: '결제', key: 'payment' },
-  { value: '교환/반품', key: 'exchange' },
-  { value: '회원', key: 'member' },
-  { value: '기타', key: 'other' },
-];
+  { key: 'all', value: '전체' },
+  { key: 'shipping', value: '배송' },
+  { key: 'payment', value: '결제' },
+  { key: 'exchange', value: '교환/반품' },
+  { key: 'member', value: '회원' },
+  { key: 'other', value: '기타' },
+] as const;
 
 export default function FaqPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale;
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const t = useTranslations('faqPage');
-  const [activeCategory, setActiveCategory] = useState('전체');
+  const [activeCategory, setActiveCategory] = useState<(typeof CATEGORIES)[number]['key']>('all');
 
   const { execute: loadFaqs, isLoading: loading } = useAsyncAction(
     async () => {
-      const cat = activeCategory === '전체' ? undefined : activeCategory;
-      const res = await faqsApi.getList(cat, locale);
+      const categoryValue = CATEGORIES.find((category) => category.key === activeCategory)?.value;
+      const res = await faqsApi.getList(categoryValue === '전체' ? undefined : categoryValue, locale);
       setFaqs(Array.isArray(res) ? res : (res?.data ?? []));
     },
     { errorMessage: t('loadError') },
@@ -42,18 +43,18 @@ export default function FaqPage() {
   }, [activeCategory, locale]);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="typo-h1 mb-6">{t('title')}</h1>
+    <div className="mx-auto max-w-3xl px-4 py-8">
+      <h1 className="mb-6 typo-h1">{t('title')}</h1>
 
-      <div className="flex gap-2 flex-wrap mb-6">
+      <div className="mb-6 flex flex-wrap gap-2">
         {CATEGORIES.map((cat) => (
           <button
-            key={cat.value}
-            onClick={() => setActiveCategory(cat.value)}
+            key={cat.key}
+            onClick={() => setActiveCategory(cat.key)}
             className={cn(
-              'px-4 py-1.5 rounded-full typo-button border transition-colors',
-              activeCategory === cat.value
-                ? 'bg-foreground text-background border-foreground'
+              'rounded-full border px-4 py-1.5 typo-button transition-colors',
+              activeCategory === cat.key
+                ? 'border-foreground bg-foreground text-background'
                 : 'border-border text-muted-foreground hover:border-foreground',
             )}
           >
@@ -63,9 +64,16 @@ export default function FaqPage() {
       </div>
 
       <section className="mb-6 rounded-lg border border-border bg-muted/20 p-5">
-        <h2 className="typo-h3 text-foreground">{t('memberOnlyOrderTitle')}</h2>
-        <p className="mt-2 typo-body text-muted-foreground">{t('memberOnlyOrderDescription')}</p>
-        <p className="mt-2 typo-body-sm text-muted-foreground">{t('memberOnlyOrderAction')}</p>
+        <h2 className="typo-h3 text-foreground">{t('orderLookupTitle')}</h2>
+        <p className="mt-2 typo-body text-muted-foreground">{t('orderLookupGuestDescription')}</p>
+        <Link
+          href={`/${locale}/order/lookup`}
+          className="mt-3 inline-flex text-sm font-semibold text-foreground underline underline-offset-4"
+        >
+          {t('orderLookupGuestAction')}
+        </Link>
+        <p className="mt-4 typo-body text-muted-foreground">{t('orderLookupMemberDescription')}</p>
+        <p className="mt-2 typo-body-sm text-muted-foreground">{t('orderLookupMemberAction')}</p>
       </section>
 
       {loading ? (
@@ -77,19 +85,19 @@ export default function FaqPage() {
       ) : (faqs?.length ?? 0) === 0 ? (
         <EmptyState title={t('empty')} />
       ) : (
-        <Accordion.Root type="single" collapsible className="divide-y divide-border border-t border-b">
+        <Accordion.Root type="single" collapsible className="divide-y divide-border border-b border-t">
           {faqs.map((faq) => (
             <Accordion.Item key={faq.id} value={String(faq.id)}>
               <Accordion.Header>
-                <Accordion.Trigger className="flex items-center justify-between w-full px-2 py-4 text-left typo-h3 text-foreground hover:bg-muted transition-colors">
+                <Accordion.Trigger className="flex w-full items-center justify-between px-2 py-4 text-left typo-h3 text-foreground transition-colors hover:bg-muted">
                   <span>{faq.question}</span>
-                  <span className="faq-arrow ml-4 shrink-0 text-muted-foreground transition-transform duration-200">▼</span>
+                  <span className="faq-arrow ml-4 shrink-0 text-muted-foreground transition-transform duration-200">
+                    ▼
+                  </span>
                 </Accordion.Trigger>
               </Accordion.Header>
-              <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                <div className="px-2 pb-4 typo-body text-muted-foreground bg-muted">
-                  {faq.answer}
-                </div>
+              <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                <div className="bg-muted px-2 pb-4 typo-body text-muted-foreground">{faq.answer}</div>
               </Accordion.Content>
             </Accordion.Item>
           ))}

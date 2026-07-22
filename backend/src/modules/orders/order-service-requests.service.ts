@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Order, OrderStatus } from './entities/order.entity';
@@ -29,6 +29,15 @@ interface PaymentCancellationService {
 }
 const ACTIVE_REQUEST_STATUSES = [OrderServiceRequestStatus.REQUESTED, OrderServiceRequestStatus.APPROVED];
 
+
+function assertMemberOwnedOrder(order: Order, userId: number): void {
+  if (order.userId == null) {
+    throw new ForbiddenException('비회원 주문은 주문 취소/반품/교환/환불 신청을 지원하지 않습니다.');
+  }
+
+  assertOwnership(order.userId, userId);
+}
+
 @Injectable()
 export class OrderServiceRequestsService {
   private readonly logger = new Logger(OrderServiceRequestsService.name);
@@ -46,7 +55,7 @@ export class OrderServiceRequestsService {
 
   async create(orderId: number, userId: number, dto: CreateOrderServiceRequestDto): Promise<OrderServiceRequest> {
     const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
-    assertOwnership(order.userId, userId);
+    assertMemberOwnedOrder(order, userId);
     this.assertRequestAllowed(order.status, dto.type);
 
     const existing = await this.requestRepository.findOne({
@@ -127,7 +136,7 @@ export class OrderServiceRequestsService {
 
   async findByOrderForUser(orderId: number, userId: number): Promise<OrderServiceRequest[]> {
     const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
-    assertOwnership(order.userId, userId);
+    assertMemberOwnedOrder(order, userId);
     return this.requestRepository.find({
       where: { orderId, userId },
       order: { createdAt: 'DESC' },
@@ -269,7 +278,7 @@ export class OrderServiceRequestsService {
   }
 
   private async restorePoints(manager: import('typeorm').EntityManager, order: Order): Promise<void> {
-    if (!order.pointsUsed || order.pointsUsed <= 0) return;
+    if (!order.pointsUsed || order.pointsUsed <= 0 || order.userId == null) return;
 
     const last = await manager.findOne(PointHistory, {
       where: { userId: order.userId },

@@ -2,9 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsArray, IsInt, IsOptional, IsString, MaxLength, Min,
-  ValidateNested, ValidateIf, IsNotEmpty, IsBoolean,
+  ValidateNested, ValidateIf, IsNotEmpty, IsBoolean, IsIn,
 } from 'class-validator';
-
 export class OrderItemDto {
   @ApiProperty({ example: 1, description: '상품 ID' })
   @IsInt({ message: '상품 ID는 정수여야 합니다.' })
@@ -85,6 +84,11 @@ export class CreateOrderDto {
   @IsString({ message: '배송 메모는 문자열이어야 합니다.' })
   @MaxLength(500, { message: '배송 메모는 최대 500자까지 입력 가능합니다.' })
   memo?: string | null;
+
+  @ApiProperty({ example: 'ko', enum: ['ko', 'en'], description: '주문 생성 시점 로케일', required: false })
+  @IsOptional()
+  @IsIn(['ko', 'en'], { message: '주문 로케일은 ko 또는 en이어야 합니다.' })
+  orderLocale?: 'ko' | 'en';
 
   @ApiProperty({ example: 1000, description: '사용할 포인트', required: false })
   @IsOptional()

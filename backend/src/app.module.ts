@@ -92,6 +92,56 @@ import { ContextualLogger } from './common/logging/contextual-logger.service';
           return `forgot-password:${req.ip}`;
         },
       },
+      {
+        name: 'guestCreate',
+        ttl: Number(process.env.THROTTLE_GUEST_CREATE_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_GUEST_CREATE_LIMIT ?? 3),
+        skipIf: (context) => {
+          const req = context.switchToHttp().getRequest<{ method?: string; originalUrl?: string }>();
+          const originalUrl = String(req.originalUrl ?? '');
+          return !(req.method === 'POST' && (originalUrl === '/api/guest/orders' || originalUrl.startsWith('/api/guest/orders?')));
+        },
+        getTracker: (req) => {
+          const rawEmail =
+            typeof req.body === 'object' && req.body !== null && 'guestEmail' in req.body
+              ? req.body.guestEmail
+              : undefined;
+
+          if (typeof rawEmail === 'string') {
+            const normalizedEmail = rawEmail.trim().toLowerCase();
+            if (normalizedEmail.length > 0) {
+              return `guest-create:${normalizedEmail}`;
+            }
+          }
+
+          return `guest-create:${req.ip}`;
+        },
+      },
+      {
+        name: 'guestLookup',
+        ttl: Number(process.env.THROTTLE_GUEST_LOOKUP_TTL ?? 60000),
+        limit: Number(process.env.THROTTLE_GUEST_LOOKUP_LIMIT ?? 5),
+        skipIf: (context) => {
+          const req = context.switchToHttp().getRequest<{ method?: string; originalUrl?: string }>();
+          const originalUrl = String(req.originalUrl ?? '');
+          return !(req.method === 'POST' && (originalUrl === '/api/guest/orders/lookup' || originalUrl.startsWith('/api/guest/orders/lookup?')));
+        },
+        getTracker: (req) => {
+          const rawEmail =
+            typeof req.body === 'object' && req.body !== null && 'email' in req.body
+              ? req.body.email
+              : undefined;
+
+          if (typeof rawEmail === 'string') {
+            const normalizedEmail = rawEmail.trim().toLowerCase();
+            if (normalizedEmail.length > 0) {
+              return `guest-lookup:${normalizedEmail}`;
+            }
+          }
+
+          return `guest-lookup:${req.ip}`;
+        },
+      },
     ]),
     CacheModule,
     ScheduleModule.forRoot(),

@@ -1,6 +1,6 @@
 import {
-  Injectable, BadRequestException, ConflictException, NotFoundException, UnauthorizedException,
-  Logger, Inject, Optional,
+  Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException, UnauthorizedException,
+  Logger, Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
@@ -29,19 +29,14 @@ import {
 } from './checkout-gateway.policy';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { findOrThrow } from '../../common/utils/repository.util';
-import { NotificationService } from '../notification/notification.service';
-import { MessageNotificationService } from '../notification/message-notification.service';
-import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { PaymentConfirmationService } from './services/payment-confirmation.service';
 import { PaymentRefundService } from './services/payment-refund.service';
 import { PaymentWebhookService } from './services/payment-webhook.service';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../config/payment.config';
-import { OrderEventEmitter } from '../orders/order-event.emitter';
 
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  private readonly paymentConfirmationService: PaymentConfirmationService;
   private readonly paymentRefundService: PaymentRefundService;
   private readonly paymentWebhookService: PaymentWebhookService;
 
@@ -66,27 +61,9 @@ export class PaymentsService {
     private readonly naverpayAdapter: NaverPayPaymentAdapter,
     private readonly paypalAdapter: PayPalPaymentAdapter,
     private readonly eximbayAdapter: EximbayPaymentAdapter,
-    private readonly notificationService: NotificationService,
-    @Optional()
-    private readonly messageNotificationService: MessageNotificationService | undefined,
-    private readonly notificationDispatchHelper: NotificationDispatchHelper,
-    @Optional()
-    private readonly orderEventEmitter: OrderEventEmitter | undefined,
+    private readonly paymentConfirmationService: PaymentConfirmationService,
     private readonly dataSource: DataSource,
   ) {
-    this.paymentConfirmationService = new PaymentConfirmationService({
-      paymentRepository: this.paymentRepository,
-      orderRepository: this.orderRepository,
-      shippingRepository: this.shippingRepository,
-      dataSource: this.dataSource,
-      notificationService: this.notificationService,
-      messageNotificationService: this.messageNotificationService,
-      notificationDispatchHelper: this.notificationDispatchHelper,
-      resolveGatewayByType: (gatewayType) => this.resolveGatewayByType(gatewayType),
-      logger: this.logger,
-      defaultCarrier: this.paymentConfig.defaultCarrier,
-      orderEventEmitter: this.orderEventEmitter,
-    });
     this.paymentRefundService = new PaymentRefundService({
       paymentRepository: this.paymentRepository,
       refundRepository: this.refundRepository,
@@ -166,59 +143,84 @@ export class PaymentsService {
     redirectUrl?: string;
     gatewayPayload?: Record<string, string | number | boolean>;
   }> {
-    const order = await findOrThrow(this.orderRepository, { id: dto.orderId }, '주문을 찾을 수 없습니다.');
-    assertOwnership(order.userId, userId);
-    if (order.status !== OrderStatus.PENDING) {
-      throw new ConflictException('이미 처리된 주문입니다.');
-    }
+const order = await findOrThrow(this.orderRepository, { id: dto.orderId }, '주문을 찾을 수 없습니다.');
+this.assertMemberOwnership(order.userId, userId);
 
-    const locale = dto.locale ?? 'ko';
-    const availableGateways = getAvailableGatewaysByLocale(locale);
-    const gatewayName = dto.gateway && isCheckoutGatewayName(dto.gateway) && availableGateways.includes(dto.gateway)
-      ? dto.gateway
-      : dto.locale
-        ? resolveGatewayByLocale(locale)
-        : this.paymentConfig.gateway;
-    const selectedGateway = this.resolveGatewayByName(gatewayName);
+return this.prepareForOrder(Number(order.id), {
+  locale: dto.locale,
+  gateway: dto.gateway,
+});
 
-    let payment = await this.paymentRepository.findOne({ where: { orderId: dto.orderId } });
-    if (!payment) {
-      payment = this.paymentRepository.create({
-        orderId: dto.orderId,
-        amount: Number(order.totalAmount),
-        status: PaymentStatus.PENDING,
-        method: gatewayName === 'bank_transfer' ? PaymentMethod.BANK_TRANSFER : PaymentMethod.MOCK,
-        gateway: gatewayName === 'bank_transfer' ? PaymentGatewayType.MOCK : this.gatewayNameToType(gatewayName),
-      });
-      payment = await this.paymentRepository.save(payment);
-    } else {
-      await this.paymentRepository.update(payment.id, {
-        method: gatewayName === 'bank_transfer' ? PaymentMethod.BANK_TRANSFER : PaymentMethod.MOCK,
-        gateway: gatewayName === 'bank_transfer' ? PaymentGatewayType.MOCK : this.gatewayNameToType(gatewayName),
-      });
-      payment = await findOrThrow(this.paymentRepository, { id: payment.id }, '결제 정보를 찾을 수 없습니다.');
-    }
+  }
 
-    if (gatewayName === 'bank_transfer') {
-      return {
-        paymentId: Number(payment.id),
-        orderId: dto.orderId,
-        orderNumber: order.orderNumber,
-        amount: Number(order.totalAmount),
-        gateway: gatewayName,
-        clientKey: 'bank_transfer',
-        availableGateways,
-      };
-    }
+  async prepareForOrder(
+    orderId: number,
+    options: Pick<PreparePaymentDto, 'locale' | 'gateway'>,
+  ): Promise<{
+    paymentId: number;
+    orderId: number;
+    orderNumber: string;
+    amount: number;
+    gateway: string;
+    clientKey: string;
+    availableGateways: string[];
+    redirectUrl?: string;
+    gatewayPayload?: Record<string, string | number | boolean>;
+  }> {
+const normalizedOrderId = Number(orderId);
+const order = await findOrThrow(this.orderRepository, { id: normalizedOrderId }, '주문을 찾을 수 없습니다.');
 
-    const result = await selectedGateway.prepare(String(dto.orderId), Number(order.totalAmount), {
+if (order.status !== OrderStatus.PENDING) {
+  throw new ConflictException('이미 처리된 주문입니다.');
+}
+
+const locale = options.locale ?? 'ko';
+const availableGateways = getAvailableGatewaysByLocale(locale);
+const gatewayName = options.gateway && isCheckoutGatewayName(options.gateway) && availableGateways.includes(options.gateway)
+  ? options.gateway
+  : options.locale
+    ? resolveGatewayByLocale(locale)
+    : this.paymentConfig.gateway;
+const selectedGateway = this.resolveGatewayByName(gatewayName);
+
+let payment = await this.paymentRepository.findOne({ where: { orderId: normalizedOrderId } });
+if (!payment) {
+  payment = this.paymentRepository.create({
+    orderId: normalizedOrderId,
+    amount: Number(order.totalAmount),
+    status: PaymentStatus.PENDING,
+    method: gatewayName === 'bank_transfer' ? PaymentMethod.BANK_TRANSFER : PaymentMethod.MOCK,
+    gateway: gatewayName === 'bank_transfer' ? PaymentGatewayType.MOCK : this.gatewayNameToType(gatewayName),
+  });
+  payment = await this.paymentRepository.save(payment);
+} else {
+  await this.paymentRepository.update(payment.id, {
+    method: gatewayName === 'bank_transfer' ? PaymentMethod.BANK_TRANSFER : PaymentMethod.MOCK,
+    gateway: gatewayName === 'bank_transfer' ? PaymentGatewayType.MOCK : this.gatewayNameToType(gatewayName),
+  });
+  payment = await findOrThrow(this.paymentRepository, { id: payment.id }, '결제 정보를 찾을 수 없습니다.');
+}
+
+if (gatewayName === 'bank_transfer') {
+  return {
+    paymentId: Number(payment.id),
+    orderId: normalizedOrderId,
+    orderNumber: order.orderNumber,
+    amount: Number(order.totalAmount),
+    gateway: gatewayName,
+    clientKey: 'bank_transfer',
+    availableGateways,
+  };
+}
+
+    const result = await selectedGateway.prepare(String(normalizedOrderId), Number(order.totalAmount), {
       locale,
       orderNumber: order.orderNumber,
     });
 
     return {
       paymentId: Number(payment.id),
-      orderId: dto.orderId,
+      orderId: normalizedOrderId,
       orderNumber: order.orderNumber,
       amount: Number(order.totalAmount),
       gateway: gatewayName,
@@ -248,7 +250,7 @@ export class PaymentsService {
     cancelReason: string;
   }> {
     const payment = await findOrThrow(this.paymentRepository, { orderId: dto.orderId }, '결제 정보를 찾을 수 없습니다.', ['order']);
-    assertOwnership(payment.order.userId, userId);
+    this.assertMemberOwnership(payment.order.userId, userId);
 
     if (payment.status !== PaymentStatus.CONFIRMED) {
       throw new BadRequestException('취소 가능한 상태가 아닙니다.');
@@ -461,7 +463,7 @@ export class PaymentsService {
   }
 
   private async restorePoints(manager: EntityManager, order: Order): Promise<void> {
-    if (!order.pointsUsed || order.pointsUsed <= 0) return;
+    if (!order.pointsUsed || order.pointsUsed <= 0 || order.userId === null) return;
 
     const last = await manager.findOne(PointHistory, {
       where: { userId: order.userId },
@@ -476,6 +478,14 @@ export class PaymentsService {
       orderId: Number(order.id),
       description: `주문 ${order.orderNumber} 취소로 인한 적립금 복구`,
     });
+  }
+
+  private assertMemberOwnership(orderUserId: number | null, userId: number): void {
+    if (orderUserId === null) {
+      throw new ForbiddenException('접근 권한이 없습니다.');
+    }
+
+    assertOwnership(orderUserId, userId);
   }
 }
 
