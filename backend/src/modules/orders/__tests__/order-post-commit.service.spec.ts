@@ -1,10 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { OrderPostCommitService } from '../order-post-commit.service';
 import { Order } from '../entities/order.entity';
-import { NotificationService } from '../../notification/notification.service';
-import { MessageNotificationService } from '../../notification/message-notification.service';
-import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import type { OrderPostCommitPayload } from '../order-creation.workflow.service';
 
 describe('OrderPostCommitService', () => {
