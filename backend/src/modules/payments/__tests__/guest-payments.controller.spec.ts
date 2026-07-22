@@ -38,10 +38,10 @@ describe('GuestPaymentsController', () => {
     expect(guestPaymentsService.confirm).toHaveBeenCalledWith(7, dto, 'upper-token');
   });
 
-  it('rejects prepare requests without a usable guest token header', () => {
-    expect(() => controller.prepare(7, {} as never, { 'x-guest-access-token': '   ' })).toThrow(
-      UnauthorizedException,
-    );
+  it('rejects prepare requests without a usable guest token header', async () => {
+    await expect(
+      Promise.resolve().then(() => controller.prepare(7, {} as never, { 'x-guest-access-token': '   ' })),
+    ).rejects.toThrow(UnauthorizedException);
     expect(guestPaymentsService.prepare).not.toHaveBeenCalled();
   });
 });

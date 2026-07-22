@@ -122,16 +122,17 @@ describe('GuestOrdersService', () => {
       guestAccessToken: 'issued-token',
       guestAccessTokenExpiresAt,
     });
+    const txManager = {} as EntityManager;
     dataSource.transaction.mockImplementation(async (callback: (manager: EntityManager) => Promise<unknown>) =>
-      callback({} as EntityManager),
+      callback(txManager),
     );
     jest.spyOn(service, 'findOne').mockResolvedValue(localizedOrder);
 
     const result = await service.create(dto);
 
     expect(guestOrderCreationWorkflow.assertCreatePayload).toHaveBeenCalledWith(dto);
-    expect(guestOrderCreationWorkflow.runCreateOrderTransaction).toHaveBeenCalled();
-    expect(guestOrderAccessService.issueAccessToken).toHaveBeenCalledWith(19, expect.anything());
+    expect(guestOrderCreationWorkflow.runCreateOrderTransaction).toHaveBeenCalledWith(txManager, dto);
+    expect(guestOrderAccessService.issueAccessToken).toHaveBeenCalledWith(19, txManager);
     expect(orderPostCommitService.dispatchOrderCreated).toHaveBeenCalledWith(null, postCommit);
     expect(service.findOne).toHaveBeenCalledWith(19, 'en');
     expect(result).toEqual({
