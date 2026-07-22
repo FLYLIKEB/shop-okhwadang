@@ -39,9 +39,9 @@ describe('GuestPaymentsController', () => {
   });
 
   it('rejects prepare requests without a usable guest token header', async () => {
-    await expect(
-      Promise.resolve().then(() => controller.prepare(7, {} as never, { 'x-guest-access-token': '   ' })),
-    ).rejects.toThrow(UnauthorizedException);
+    await expect(controller.prepare(7, {} as never, { 'x-guest-access-token': '   ' })).rejects.toThrow(
+      UnauthorizedException,
+    );
     expect(guestPaymentsService.prepare).not.toHaveBeenCalled();
   });
 });

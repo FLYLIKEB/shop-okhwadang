@@ -33,7 +33,7 @@ export class GuestPaymentsController {
   @ApiHeader({ name: 'X-Guest-Access-Token', required: true, description: '게스트 주문 접근 토큰' })
   @ApiResponse({ status: 201, description: '결제 준비 성공' })
   @ApiResponse({ status: 401, description: '게스트 접근 토큰 필요 또는 만료' })
-  prepare(
+  async prepare(
     @Param('id', ParseIntPipe) orderId: number,
     @Body() dto: GuestPreparePaymentDto,
     @Headers() headers: Record<string, string | string[] | undefined>,
@@ -50,7 +50,7 @@ export class GuestPaymentsController {
   @ApiResponse({ status: 200, description: '결제 승인 성공' })
   @ApiResponse({ status: 401, description: '게스트 접근 토큰 필요 또는 만료' })
   @ApiResponse({ status: 409, description: '이미 처리된 결제' })
-  confirm(
+  async confirm(
     @Param('id', ParseIntPipe) orderId: number,
     @Body() dto: GuestConfirmPaymentDto,
     @Headers() headers: Record<string, string | string[] | undefined>,
