@@ -9,7 +9,14 @@ import { useCart } from '@/contexts/CartContext';
 import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
-import type { CartItem, CheckoutGatewayName, PreparePaymentResponse, ShippingQuoteResponse, UserAddress, CalculateDiscountResponse } from '@/lib/api';
+import type {
+  CalculateDiscountResponse,
+  CartItem,
+  CheckoutGatewayName,
+  PreparePaymentResponse,
+  ShippingQuoteResponse,
+  UserAddress,
+} from '@/lib/api';
 import { shippingApi, usersApi } from '@/lib/api';
 import { SESSION_KEYS } from '@/constants/storage';
 import { getDefaultCheckoutGateway, getGatewayOptionsByLocale } from '@/constants/checkoutPaymentMethods';
@@ -44,8 +51,8 @@ export interface FormErrors {
   recipientPhone?: string;
   zipcode?: string;
   address?: string;
+  guestEmail?: string;
 }
-
 
 function normalizeInputValue(value: unknown): string {
   if (value == null) return '';
@@ -75,9 +82,13 @@ export default function CheckoutPage({
   const [sessionChecked, setSessionChecked] = useState(false);
   const [step, setStep] = useState<PaymentStep>('idle');
   const [prepareResult, setPrepareResult] = useState<PreparePaymentResponse | null>(null);
-  const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(() => getDefaultCheckoutGateway(locale));
+  const [selectedGateway, setSelectedGateway] = useState<CheckoutGatewayName>(() =>
+    getDefaultCheckoutGateway(locale),
+  );
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
   const [currentOrderNumber, setCurrentOrderNumber] = useState('');
+  const [currentGuestAccessToken, setCurrentGuestAccessToken] = useState('');
+  const [currentGuestAccessTokenExpiresAt, setCurrentGuestAccessTokenExpiresAt] = useState('');
   const [confirmedGrandTotal, setConfirmedGrandTotal] = useState<number | null>(null);
   const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResponse | null>(null);
   const [form, setForm] = useState<ShippingForm>({
@@ -88,6 +99,7 @@ export default function CheckoutPage({
     addressDetail: '',
     memo: '',
   });
+  const [guestEmail, setGuestEmail] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [requiredConsent, setRequiredConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
@@ -99,6 +111,7 @@ export default function CheckoutPage({
   const [selectedAddressId, setSelectedAddressId] = useState<number | 'manual' | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
 
+  const isGuestCheckout = !isAuthenticated;
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
   const shippingFee = shippingQuote?.shippingFee ?? 0;
   const freeShippingThreshold = shippingQuote?.threshold ?? 0;
@@ -133,16 +146,14 @@ export default function CheckoutPage({
 
   useEffect(() => {
     if (isLoading) return;
+
     setSessionChecked(false);
-    if (!isAuthenticated) {
-      router.replace(`/${locale}/login`);
-      return;
-    }
     const raw = sessionStorage.getItem(SESSION_KEYS.CHECKOUT_ITEMS);
     if (!raw) {
       router.replace(`/${locale}/cart`);
       return;
     }
+
     try {
       const parsed = JSON.parse(raw) as CartItem[];
       if (!Array.isArray(parsed) || parsed.length === 0) {
@@ -154,7 +165,7 @@ export default function CheckoutPage({
     } catch {
       router.replace(`/${locale}/cart`);
     }
-  }, [isAuthenticated, isLoading, locale, router]);
+  }, [isLoading, locale, router]);
 
   useEffect(() => {
     if (totalAmount <= 0) {
@@ -164,15 +175,16 @@ export default function CheckoutPage({
 
     let cancelled = false;
     const zipcode = /^\d{3,10}$/.test(form.zipcode.trim()) ? form.zipcode.trim() : '00000';
-    shippingApi.quote(
-      totalAmount,
-      zipcode,
-      checkoutItems.map((item) => ({
-        productId: item.productId,
-        productOptionId: item.productOptionId,
-        quantity: item.quantity,
-      })),
-    )
+    shippingApi
+      .quote(
+        totalAmount,
+        zipcode,
+        checkoutItems.map((item) => ({
+          productId: item.productId,
+          productOptionId: item.productOptionId,
+          quantity: item.quantity,
+        })),
+      )
       .then((quote) => {
         if (!cancelled) setShippingQuote(quote);
       })
@@ -228,9 +240,17 @@ export default function CheckoutPage({
     }
   };
 
+  const handleGuestEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setGuestEmail(e.target.value);
+    if (errors.guestEmail) {
+      setErrors((prev) => ({ ...prev, guestEmail: undefined }));
+    }
+  };
+
   const { handleSubmit, handlePaymentError } = useCheckout({
     checkoutItems,
     form,
+    guestEmail,
     grandTotal,
     locale,
     paymentRef,
@@ -238,21 +258,23 @@ export default function CheckoutPage({
     selectedGateway,
     currentOrderId,
     currentOrderNumber,
+    currentGuestAccessToken,
     requiredConsent,
     marketingConsent,
     selectedUserCouponId,
     pointsUsed,
+    isGuestCheckout,
     setStep,
     setPrepareResult,
     setCurrentOrderId,
     setCurrentOrderNumber,
+    setCurrentGuestAccessToken,
+    setCurrentGuestAccessTokenExpiresAt,
     setConfirmedGrandTotal,
     setErrors,
     refetch,
   });
 
-  // Keep the server render and the first client render identical for checkout.
-  // The actual order form depends on sessionStorage restored after OAuth redirects.
   if (!sessionChecked || checkoutItems.length === 0) {
     return null;
   }
@@ -276,13 +298,38 @@ export default function CheckoutPage({
               <h2 className="typo-h3">{t('shippingInfo')}</h2>
 
               <div className="mt-4 layout-stack-md">
-                <AddressSelectorSection
-                  addresses={addresses}
-                  selectedAddressId={selectedAddressId}
-                  addressLoading={addressLoading}
-                  onSelect={handleAddressSelect}
-                  locale={locale}
-                />
+                {isGuestCheckout ? (
+                  <div className="rounded-lg border border-soft bg-muted/20 p-4">
+                    <h3 className="text-sm font-semibold text-foreground">{t('guestCheckoutTitle')}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{t('guestCheckoutDescription')}</p>
+                    <label className="mt-4 block text-sm font-medium text-foreground" htmlFor="guestEmail">
+                      {t('guestEmailLabel')}
+                    </label>
+                    <input
+                      id="guestEmail"
+                      name="guestEmail"
+                      type="email"
+                      autoComplete="email"
+                      value={guestEmail}
+                      onChange={handleGuestEmailChange}
+                      placeholder={t('guestEmailPlaceholder')}
+                      className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    />
+                    {errors.guestEmail ? (
+                      <p className="mt-2 text-sm text-destructive">{errors.guestEmail}</p>
+                    ) : (
+                      <p className="mt-2 text-xs text-muted-foreground">{t('guestEmailDescription')}</p>
+                    )}
+                  </div>
+                ) : (
+                  <AddressSelectorSection
+                    addresses={addresses}
+                    selectedAddressId={selectedAddressId}
+                    addressLoading={addressLoading}
+                    onSelect={handleAddressSelect}
+                    locale={locale}
+                  />
+                )}
 
                 <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
                 <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
@@ -304,6 +351,8 @@ export default function CheckoutPage({
                     orderNumber={currentOrderNumber}
                     amount={grandTotal}
                     locale={locale}
+                    guestAccessToken={currentGuestAccessToken || undefined}
+                    guestAccessTokenExpiresAt={currentGuestAccessTokenExpiresAt || undefined}
                     onError={handlePaymentError}
                   />
                 ) : (
@@ -317,19 +366,21 @@ export default function CheckoutPage({
               </div>
             </section>
 
-            <section className="surface-card p-6">
-              <h2 className="typo-h3">{t('couponPoints')}</h2>
-              <div className="mt-4">
-                <CouponSelector
-                  orderAmount={totalAmount}
-                  onDiscountChange={(result, userCouponId, appliedPoints = 0) => {
-                    setDiscountResult(result);
-                    setSelectedUserCouponId(userCouponId);
-                    setPointsUsed(appliedPoints);
-                  }}
-                />
-              </div>
-            </section>
+            {!isGuestCheckout && (
+              <section className="surface-card p-6">
+                <h2 className="typo-h3">{t('couponPoints')}</h2>
+                <div className="mt-4">
+                  <CouponSelector
+                    orderAmount={totalAmount}
+                    onDiscountChange={(result, userCouponId, appliedPoints = 0) => {
+                      setDiscountResult(result);
+                      setSelectedUserCouponId(userCouponId);
+                      setPointsUsed(appliedPoints);
+                    }}
+                  />
+                </div>
+              </section>
+            )}
 
             <section className="surface-card p-6">
               <h2 className="typo-h3">{t('consent.title')}</h2>

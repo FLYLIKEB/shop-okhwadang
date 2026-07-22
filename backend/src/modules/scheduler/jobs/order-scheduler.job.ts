@@ -8,8 +8,7 @@ import { NotificationService } from '../../notification/notification.service';
 import { SettingsService } from '../../settings/settings.service';
 import { MembershipService } from '../../membership/membership.service';
 import { canOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
-import { buildOrderEmailItems, buildOrderUrl } from '../../notification/order-email-context';
-import { renderOrderCancelled } from '../../notification/templates/render';
+import { buildGuestOrderLookupUrl, buildOrderEmailItems, buildOrderUrl } from '../../notification/order-email-context';
 
 interface OrderSchedulerJobDependencies {
   orderRepo: Repository<Order>;
@@ -30,7 +29,7 @@ export class OrderSchedulerJob {
 
     const pendingOrders = await this.deps.orderRepo.find({
       where: { status: OrderStatus.PENDING, createdAt: LessThan(cutoff) },
-      relations: { items: true },
+      relations: { items: true, user: true },
     });
 
     if (pendingOrders.length === 0) {
@@ -73,18 +72,24 @@ export class OrderSchedulerJob {
 
       await this.deps.orderRepo.update(order.id, { status: OrderStatus.COMPLETED });
 
-      const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
-      void this.deps.membershipService.incrementAccumulatedAmount(order.userId, completedAmount)
-        .catch((err) => this.deps.logger.warn(`Failed to increment tier amount for user ${order.userId}: ${String(err)}`));
+      const userId = this.getOrderUserId(order);
+      if (userId !== null) {
+        const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
+        void this.deps.membershipService.incrementAccumulatedAmount(userId, completedAmount)
+          .catch((err) => this.deps.logger.warn(`Failed to increment tier amount for user ${userId}: ${String(err)}`));
+      }
 
-      if (order.user?.email) {
+      const email = order.user?.email ?? this.getGuestEmailNormalized(order);
+      if (email) {
+        const locale = this.getOrderLocale(order);
         void Promise.resolve(
-          this.deps.notificationService.sendOrderConfirmed(order.user.email, {
+          this.deps.notificationService.sendOrderConfirmed(email, {
             orderNumber: order.orderNumber,
             totalAmount: order.totalAmount,
             recipientName: order.recipientName,
-            orderItems: buildOrderEmailItems(order, 'ko'),
-            orderUrl: buildOrderUrl(Number(order.id), 'ko'),
+            locale,
+            orderItems: buildOrderEmailItems(order, locale),
+            orderUrl: this.resolveOrderUrl(Number(order.id), order),
           }),
         )
           .catch((err) => this.deps.logger.warn(`Failed to send confirmation email: ${String(err)}`));
@@ -129,19 +134,17 @@ export class OrderSchedulerJob {
 
       await queryRunner.commitTransaction();
 
-      const user = await this.deps.userRepo.findOne({ where: { id: order.userId } });
-      if (user?.email) {
-        const rendered = renderOrderCancelled({
-          recipientName: order.recipientName,
-          orderNumber: order.orderNumber,
-          reason: '결제 미완료 자동 취소',
-          orderItems: buildOrderEmailItems(order, 'ko'),
-          orderUrl: buildOrderUrl(Number(order.id), 'ko'),
-        });
+      const email = order.user?.email ?? this.getGuestEmailNormalized(order);
+      if (email) {
+        const locale = this.getOrderLocale(order);
         void Promise.resolve(
-          this.deps.notificationService.sendEmail({
-            to: user.email,
-            ...rendered,
+          this.deps.notificationService.sendOrderCancelled(email, {
+            recipientName: order.recipientName,
+            orderNumber: order.orderNumber,
+            reason: '결제 미완료 자동 취소',
+            locale,
+            orderItems: buildOrderEmailItems(order, locale),
+            orderUrl: this.resolveOrderUrl(Number(order.id), order),
           }),
         )
           .catch((err) => this.deps.logger.warn(`Failed to send cancellation email: ${String(err)}`));
@@ -165,5 +168,25 @@ export class OrderSchedulerJob {
     } catch {
       return defaultValue;
     }
+  }
+
+  private getOrderUserId(order: Order): number | null {
+    const userId = (order as Order & { userId?: number | null }).userId;
+    return userId == null ? null : Number(userId);
+  }
+
+  private getGuestEmailNormalized(order: Order): string | null {
+    return (order as Order & { guestEmailNormalized?: string | null }).guestEmailNormalized ?? null;
+  }
+
+  private getOrderLocale(order: Order): 'ko' | 'en' {
+    return (order as Order & { orderLocale?: 'ko' | 'en' }).orderLocale ?? 'ko';
+  }
+
+  private resolveOrderUrl(orderId: number, order: Order): string | undefined {
+    const locale = this.getOrderLocale(order);
+    return this.getOrderUserId(order) === null
+      ? buildGuestOrderLookupUrl(locale)
+      : buildOrderUrl(orderId, locale);
   }
 }

@@ -19,7 +19,7 @@ import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 import { MessageNotificationService } from '../notification/message-notification.service';
 import { NotificationService } from '../notification/notification.service';
-import { buildOrderEmailItems, buildOrderUrl } from '../notification/order-email-context';
+import { buildGuestOrderLookupUrl, buildOrderEmailItems, buildOrderUrl } from '../notification/order-email-context';
 
 @Injectable()
 export class AdminOrdersService {
@@ -56,7 +56,7 @@ export class AdminOrdersService {
 
     if (query.keyword) {
       qb.andWhere(
-        '(order.orderNumber LIKE :kw OR order.recipientName LIKE :kw OR user.email LIKE :kw)',
+        '(order.orderNumber LIKE :kw OR order.recipientName LIKE :kw OR user.email LIKE :kw OR order.guest_email_normalized LIKE :kw)',
         { kw: `%${query.keyword}%` },
       );
     }
@@ -69,7 +69,11 @@ export class AdminOrdersService {
       qb.andWhere('order.createdAt <= :endDate', { endDate: `${query.endDate} 23:59:59` });
     }
 
-    return paginate(qb, { page, limit });
+    const result = await paginate(qb, { page, limit });
+    return {
+      ...result,
+      items: result.items.map((order) => this.decorateOrder(order)),
+    };
   }
 
   async updateStatus(orderId: number, nextStatus: OrderStatus): Promise<Order | null> {
@@ -112,20 +116,28 @@ export class AdminOrdersService {
     });
 
     if (nextStatus === OrderStatus.DELIVERED) {
-      void this.messageNotificationService?.sendShippingDelivered(orderId);
+      if (this.isGuestOrder(order)) {
+        void this.sendDeliveredNotification(orderId, order);
+      } else {
+        void this.messageNotificationService?.sendShippingDelivered(orderId);
+      }
     }
 
     if (nextStatus === OrderStatus.COMPLETED) {
-      const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
-      void this.membershipService.incrementAccumulatedAmount(order.userId, completedAmount)
-        .catch((err) => this.logger.warn(`Failed to increment tier amount for user ${order.userId}: ${String(err)}`));
+      const userId = this.getOrderUserId(order);
+      if (userId !== null) {
+        const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
+        void this.membershipService.incrementAccumulatedAmount(userId, completedAmount)
+          .catch((err) => this.logger.warn(`Failed to increment tier amount for user ${userId}: ${String(err)}`));
+      }
     }
     this.logger.log(`Order #${orderId} status changed: ${currentStatus} → ${nextStatus}`);
 
-    return this.orderRepository.findOne({
+    const updatedOrder = await this.orderRepository.findOne({
       where: { id: orderId },
       relations: ['items', 'user'],
     });
+    return updatedOrder ? this.decorateOrder(updatedOrder) : null;
   }
 
 
@@ -198,10 +210,11 @@ export class AdminOrdersService {
 
     void this.sendCancellationNotifications(orderId, orderForNotification, trimmedReason);
 
-    return this.orderRepository.findOne({
+    const updatedOrder = await this.orderRepository.findOne({
       where: { id: orderId },
       relations: ['items', 'user'],
     });
+    return updatedOrder ? this.decorateOrder(updatedOrder) : null;
   }
 
   private assertPaymentStateAllowsCancellation(status: OrderStatus, payment: Payment | null): void {
@@ -243,15 +256,23 @@ export class AdminOrdersService {
   }
 
   private async sendCancellationNotifications(orderId: number, order: Order, reason: string): Promise<void> {
+    const locale = this.getOrderLocale(order);
+    const email = order.user?.email ?? this.getGuestEmailNormalized(order);
+
+    if (!email) {
+      return;
+    }
+
     await Promise.all([
-      this.notificationService.sendOrderCancelled(order.user?.email ?? '', {
+      this.notificationService.sendOrderCancelled(email, {
         recipientName: order.recipientName,
         orderNumber: order.orderNumber,
         reason,
-        orderItems: buildOrderEmailItems(order, 'ko'),
-        orderUrl: buildOrderUrl(orderId, 'ko'),
+        locale,
+        orderItems: buildOrderEmailItems(order, locale),
+        orderUrl: this.resolveOrderUrl(orderId, order),
       }),
-      this.messageNotificationService.sendOrderCancelled(orderId, reason),
+      ...(this.isGuestOrder(order) ? [] : [this.messageNotificationService.sendOrderCancelled(orderId, reason)]),
     ]).catch((err) => {
       this.logger.warn(`Failed to send cancellation notification for order ${orderId}: ${String(err)}`);
     });
@@ -292,18 +313,19 @@ export class AdminOrdersService {
   }
 
   private async restorePoints(manager: EntityManager, order: Order): Promise<void> {
-    if (!order.pointsUsed || order.pointsUsed <= 0) {
+    const userId = this.getOrderUserId(order);
+    if (userId === null || !order.pointsUsed || order.pointsUsed <= 0) {
       return;
     }
 
     const currentBalance = await this.pointsService.getRunningBalanceInTx(
       manager,
-      order.userId,
+      userId,
     );
     const restoredBalance = currentBalance + order.pointsUsed;
 
     await manager.save(PointHistory, {
-      userId: order.userId,
+      userId,
       type: 'admin_adjust',
       amount: order.pointsUsed,
       balance: restoredBalance,
@@ -313,7 +335,7 @@ export class AdminOrdersService {
   }
 
   async registerShipping(orderId: number, dto: RegisterShippingDto): Promise<Shipping | null> {
-    await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
+    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.', ['items', 'user']);
 
     const existing = await this.shippingRepository.findOne({ where: { orderId } });
     if (existing && existing.trackingNumber) {
@@ -337,8 +359,89 @@ export class AdminOrdersService {
     }
 
     this.logger.log(`Shipping registered for order #${orderId}: ${dto.carrier} ${dto.trackingNumber}`);
-    void this.messageNotificationService?.sendShippingStarted(orderId);
+    void this.sendShippingStartedNotification(orderId, order, dto.carrier, dto.trackingNumber);
 
     return this.shippingRepository.findOne({ where: { orderId } });
+  }
+
+  private decorateOrder(order: Order): Order {
+    const customerType = this.isGuestOrder(order) ? 'guest' : 'member';
+    return Object.assign(order, {
+      customerType,
+      guestEmailNormalized: this.getGuestEmailNormalized(order),
+      user: customerType === 'guest' ? null : (order.user ?? null),
+    });
+  }
+
+  private async sendDeliveredNotification(orderId: number, order: Order): Promise<void> {
+    const shipping = await this.shippingRepository.findOne({ where: { orderId } });
+    const email = this.getGuestEmailNormalized(order);
+    const locale = this.getOrderLocale(order);
+
+    if (!email || !shipping?.trackingNumber) {
+      return;
+    }
+
+    await this.notificationService.sendShippingUpdate(email, {
+      recipientName: order.recipientName,
+      orderNumber: order.orderNumber,
+      carrier: shipping.carrier ?? 'unknown',
+      trackingNumber: shipping.trackingNumber,
+      locale,
+      orderItems: buildOrderEmailItems(order, locale),
+      orderUrl: buildGuestOrderLookupUrl(locale),
+    });
+  }
+
+  private async sendShippingStartedNotification(
+    orderId: number,
+    order: Order,
+    carrier: string,
+    trackingNumber: string,
+  ): Promise<void> {
+    if (this.isGuestOrder(order)) {
+      const email = this.getGuestEmailNormalized(order);
+      const locale = this.getOrderLocale(order);
+      if (!email) {
+        return;
+      }
+
+      await this.notificationService.sendShippingUpdate(email, {
+        recipientName: order.recipientName,
+        orderNumber: order.orderNumber,
+        carrier,
+        trackingNumber,
+        locale,
+        orderItems: buildOrderEmailItems(order, locale),
+        orderUrl: buildGuestOrderLookupUrl(locale),
+      });
+      return;
+    }
+
+    void this.messageNotificationService?.sendShippingStarted(orderId);
+  }
+
+  private isGuestOrder(order: Order): boolean {
+    return this.getOrderUserId(order) === null;
+  }
+
+  private getOrderUserId(order: Order): number | null {
+    const userId = (order as Order & { userId?: number | null }).userId;
+    return userId == null ? null : Number(userId);
+  }
+
+  private getGuestEmailNormalized(order: Order): string | null {
+    return (order as Order & { guestEmailNormalized?: string | null }).guestEmailNormalized ?? null;
+  }
+
+  private getOrderLocale(order: Order): 'ko' | 'en' {
+    return (order as Order & { orderLocale?: 'ko' | 'en' }).orderLocale ?? 'ko';
+  }
+
+  private resolveOrderUrl(orderId: number, order: Order): string | undefined {
+    const locale = this.getOrderLocale(order);
+    return this.isGuestOrder(order)
+      ? buildGuestOrderLookupUrl(locale)
+      : buildOrderUrl(orderId, locale);
   }
 }

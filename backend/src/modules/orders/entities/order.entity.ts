@@ -1,6 +1,13 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,
-  ManyToOne, OneToMany, JoinColumn, Index,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { OrderItem } from './order-item.entity';
@@ -25,11 +32,17 @@ export class Order {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: number;
 
-  @Column({ name: 'user_id', type: 'bigint' })
-  userId!: number;
+  @Column({ name: 'user_id', type: 'bigint', nullable: true })
+  userId!: number | null;
+
+  @Column({ name: 'guest_email_normalized', type: 'varchar', length: 255, nullable: true })
+  guestEmailNormalized!: string | null;
 
   @Column({ name: 'order_number', length: 50, unique: true })
   orderNumber!: string;
+
+  @Column({ name: 'order_locale', type: 'enum', enum: ['ko', 'en'] })
+  orderLocale!: 'ko' | 'en';
 
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
   status!: OrderStatus;
@@ -76,9 +89,9 @@ export class Order {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 
-  @ManyToOne(() => User, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: User | null;
 
   @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
   items!: OrderItem[];

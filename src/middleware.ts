@@ -48,7 +48,7 @@ function withLocaleCookie(
 }
 
 const ADMIN_ROLES = new Set(['admin', 'super_admin']);
-const MEMBER_PROTECTED_PREFIXES = ['/my', '/checkout'] as const;
+const MEMBER_PROTECTED_PREFIXES = ['/my'] as const;
 
 type JwtSessionCheckResult =
   { status: 'valid'; role: string | null } | { status: 'invalid' | 'unverified' };

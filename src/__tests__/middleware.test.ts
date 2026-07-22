@@ -132,13 +132,10 @@ describe('middleware', () => {
     expect(location).toContain('redirect=%2Fmy');
   });
 
-  it('redirects /checkout to /login when no accessToken cookie', async () => {
+  it('passes through /checkout when no accessToken cookie', async () => {
     const req = makeRequest('/checkout');
     const res = await middleware(req);
-    expect(res.status).toBe(307);
-    const location = res.headers.get('location');
-    expect(location).toContain('/login');
-    expect(location).toContain('redirect=%2Fcheckout');
+    expect(res.status).toBe(200);
   });
 
   it('redirects /my to /login when accessToken cookie has a forged signature', async () => {
@@ -151,7 +148,7 @@ describe('middleware', () => {
     expect(location).toContain('redirect=%2Fmy');
   });
 
-  it('redirects /checkout to /login when accessToken cookie is expired', async () => {
+  it('passes through /checkout when accessToken cookie is expired', async () => {
     const expiredToken = await makeSignedToken({
       sub: 6,
       role: 'user',
@@ -160,28 +157,28 @@ describe('middleware', () => {
     });
     const req = makeRequest('/checkout', expiredToken);
     const res = await middleware(req);
-    expect(res.status).toBe(307);
-    const location = res.headers.get('location');
-    expect(location).toContain('/login');
-    expect(location).toContain('redirect=%2Fcheckout');
+    expect(res.status).toBe(200);
   });
 
-  it('redirects sub-paths like /admin/products and /my/orders', async () => {
-    for (const path of ['/admin/products', '/admin/settings', '/my/orders', '/checkout/success']) {
+  it('redirects protected admin/my sub-paths but leaves checkout sub-paths public', async () => {
+    for (const path of ['/admin/products', '/admin/settings', '/my/orders']) {
       const req = makeRequest(path);
       const res = await middleware(req);
       expect(res.status).toBe(307);
-      const location = res.headers.get('location');
-      expect(location).toContain('/login');
+      expect(res.headers.get('location')).toContain('/login');
+    }
+
+    for (const path of ['/checkout/success', '/checkout/fail']) {
+      const req = makeRequest(path);
+      const res = await middleware(req);
+      expect(res.status).toBe(200);
     }
   });
 
-  it('preserves query string in redirect param', async () => {
+  it('does not redirect public checkout query strings through login', async () => {
     const req = makeRequest('/checkout?coupon=ABC');
     const res = await middleware(req);
-    expect(res.status).toBe(307);
-    const location = res.headers.get('location');
-    expect(location).toContain('redirect=%2Fcheckout%3Fcoupon%3DABC');
+    expect(res.status).toBe(200);
   });
 
   it('passes through public routes without cookie', async () => {
@@ -222,13 +219,10 @@ describe('middleware', () => {
     expect(location).toContain('redirect=%2Fko%2Fadmin');
   });
 
-  it('redirects locale-prefixed /en/checkout to /en/login', async () => {
+  it('passes through locale-prefixed /en/checkout', async () => {
     const req = makeRequest('/en/checkout');
     const res = await middleware(req);
-    expect(res.status).toBe(307);
-    const location = res.headers.get('location');
-    expect(location).toContain('/en/login');
-    expect(location).toContain('redirect=%2Fen%2Fcheckout');
+    expect(res.status).toBe(200);
   });
 
   it('passes through locale-prefixed admin when token has admin role', async () => {

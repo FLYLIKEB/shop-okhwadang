@@ -7,7 +7,6 @@ import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/shared/EmptyState';
@@ -24,7 +23,6 @@ export default function CartPage() {
   const params = useParams<{ locale?: string }>();
   const locale = (params?.locale ?? 'ko') as Locale;
   const { isVisible: isNavVisible } = useMobileNav();
-  const { isAuthenticated } = useAuth();
   const { items, isLoading, updateQuantity, removeItem } = useCart();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResponse | null>(null);
@@ -105,10 +103,6 @@ export default function CartPage() {
     }
     const selectedItems = items.filter((item) => selectedIds.has(item.id));
     sessionStorage.setItem(SESSION_KEYS.CHECKOUT_ITEMS, JSON.stringify(selectedItems));
-    if (!isAuthenticated) {
-      router.push(`/${locale}/login?redirect=${encodeURIComponent(`/${locale}/checkout`)}`);
-      return;
-    }
     router.push(`/${locale}/checkout`);
   };
 

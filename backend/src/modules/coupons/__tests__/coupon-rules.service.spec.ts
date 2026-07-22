@@ -276,10 +276,12 @@ describe('CouponRulesService', () => {
       expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(100, [10]);
     });
 
-    it('첫 구매 이벤트(isFirstPurchase=true) 만 FIRST_PURCHASE 규칙을 적용한다', async () => {
-      let orderHandler: Handler<{ userId: number; isFirstPurchase: boolean }> | undefined;
+    it('첫 구매 이벤트는 member/customerType 가 맞는 경우에만 FIRST_PURCHASE 규칙을 적용한다', async () => {
+      let orderHandler:
+        | Handler<{ userId: number | null; isFirstPurchase: boolean; customerType: 'member' | 'guest' }>
+        | undefined;
       mockOrderEvents.onOrderCompleted.mockImplementation(
-        (cb: Handler<{ userId: number; isFirstPurchase: boolean }>) => {
+        (cb: Handler<{ userId: number | null; isFirstPurchase: boolean; customerType: 'member' | 'guest' }>) => {
           orderHandler = cb;
         },
       );
@@ -291,12 +293,12 @@ describe('CouponRulesService', () => {
       service.onModuleInit();
       expect(orderHandler).toBeDefined();
 
-      // 두 번째 이상 구매면 FIRST_PURCHASE 규칙은 적용되지 않는다.
-      await orderHandler!({ userId: 200, isFirstPurchase: false });
+      await orderHandler!({ userId: 200, isFirstPurchase: false, customerType: 'member' });
+      await orderHandler!({ userId: null, isFirstPurchase: true, customerType: 'guest' });
+      await orderHandler!({ userId: 200, isFirstPurchase: true, customerType: 'guest' });
       expect(mockCouponsService.issueCouponsForUser).not.toHaveBeenCalled();
 
-      // 첫 구매면 적용된다.
-      await orderHandler!({ userId: 200, isFirstPurchase: true });
+      await orderHandler!({ userId: 200, isFirstPurchase: true, customerType: 'member' });
       expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(200, [21]);
     });
 

@@ -429,7 +429,8 @@
       "recipientNameTooShort": "Please enter at least 2 characters for the name.",
       "phoneInvalid": "Please enter a valid phone number. (e.g. 010-1234-5678)",
       "zipcodeInvalid": "ZIP code must be 5 digits.",
-      "addressRequired": "Please enter your address."
+      "addressRequired": "Please enter your address.",
+      "guestEmailInvalid": "Please enter a valid email address."
     },
     "flow": {
       "shipping": "Shipping info",
@@ -496,7 +497,12 @@
     "cardTermsAriaLabel": "Card payment terms agreement",
     "cardTermsAgreement": "I agree to the payment terms and authorize the secure card payment.",
     "payNow": "Pay now",
-    "cardSecurePageNotice": "Card number, expiry date, and CVC are never stored in Okhwadang server or browser state."
+    "cardSecurePageNotice": "Card number, expiry date, and CVC are never stored in Okhwadang server or browser state.",
+    "guestCheckoutTitle": "Guest checkout",
+    "guestCheckoutDescription": "Enter the email address used for this order. You can use it later to look up your order without logging in.",
+    "guestEmailLabel": "Guest email",
+    "guestEmailPlaceholder": "you@example.com",
+    "guestEmailDescription": "We will use this email for order updates and guest order lookup."
   },
   "order": {
     "orderHistory": "Order History",
@@ -533,7 +539,9 @@
     "discount": "Discount",
     "paymentAmount": "Payment amount",
     "viewOrders": "View order history",
-    "continueShopping": "Continue shopping"
+    "continueShopping": "Continue shopping",
+    "guestPrimaryAction": "Look up guest orders",
+    "guestAccessHint": "Save your order number and email address to look up this guest order again."
   },
   "myPage": {
     "title": "My Page",
@@ -733,7 +741,9 @@
         "shipped": "Shipped",
         "delivered": "Delivered",
         "cancelled": "Cancelled",
-        "refunded": "Refunded"
+        "refunded": "Refunded",
+        "refund_requested": "Refund Requested",
+        "completed": "Completed"
       },
       "status": {
         "pending": "Pending",
@@ -742,7 +752,9 @@
         "shipped": "Shipped",
         "delivered": "Delivered",
         "cancelled": "Cancelled",
-        "refunded": "Refunded"
+        "refunded": "Refunded",
+        "refund_requested": "Refund Requested",
+        "completed": "Completed"
       },
       "cancel": {
         "action": "Cancel order",
@@ -756,6 +768,9 @@
         "submitting": "Processing...",
         "success": "Order cancelled and customer notification was queued.",
         "error": "Failed to cancel order."
+      },
+      "productSummary": {
+        "more": "{productName} and {count} more"
       }
     },
     "products": {
@@ -1773,7 +1788,8 @@
     "back": "Back",
     "errorCode": "Error code: {code}",
     "loading": "Loading...",
-    "defaultFailMessage": "Payment failed."
+    "defaultFailMessage": "Payment failed.",
+    "guestAccessExpired": "Your guest order access expired. Look up the order again to continue."
   },
   "contact": {
     "loadError": "Failed to load page.",
@@ -1796,7 +1812,12 @@
       "exchange": "Returns/Exchanges",
       "member": "Account",
       "other": "Other"
-    }
+    },
+    "orderLookupTitle": "How do I check an order after checkout?",
+    "orderLookupGuestDescription": "Guest orders can be checked from the guest order lookup page with the order number and email used at checkout.",
+    "orderLookupGuestAction": "Go to guest order lookup",
+    "orderLookupMemberDescription": "Member orders remain available from My Page after login.",
+    "orderLookupMemberAction": "Log in and review payment and shipping updates from your order history."
   },
   "notice": {
     "title": "Notices",
@@ -1921,5 +1942,23 @@
       "edge": "Edge: Settings > Cookies and site permissions > Manage cookies and site data",
       "firefox": "Firefox: Settings > Privacy & Security > Cookies and Site Data"
     }
+  },
+  "orderLookup": {
+    "eyebrow": "Guest support",
+    "title": "Guest order lookup",
+    "description": "Enter the order number and email address used at checkout to view your guest order.",
+    "orderNumberLabel": "Order number",
+    "orderNumberPlaceholder": "ORD-000001",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Look up order",
+    "submitting": "Looking up...",
+    "guestLookupSuccess": "Guest order found.",
+    "guestLookupNotFound": "We could not find a guest order matching that order number and email.",
+    "guestLookupValidationError": "Please check the order number and email address.",
+    "guestLookupError": "Unable to look up the guest order right now.",
+    "memberHintTitle": "Need your member order history?",
+    "memberHintDescription": "Sign in to see member orders, payment status, and shipping updates in My Page.",
+    "memberHintAction": "Go to login"
   }
 }

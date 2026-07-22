@@ -28,8 +28,8 @@ export class PolicyConsent {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: number;
 
-  @Column({ name: 'user_id', type: 'bigint' })
-  userId!: number;
+  @Column({ name: 'user_id', type: 'bigint', nullable: true })
+  userId!: number | null;
 
   @Column({ type: 'enum', enum: PolicyConsentContext })
   context!: PolicyConsentContext;
@@ -49,7 +49,7 @@ export class PolicyConsent {
   @CreateDateColumn({ name: 'consented_at' })
   consentedAt!: Date;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: User | null;
 }

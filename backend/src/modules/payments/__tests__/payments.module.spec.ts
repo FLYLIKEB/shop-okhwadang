@@ -1,5 +1,45 @@
+import { MODULE_METADATA } from '@nestjs/common/constants';
 import { createPaymentConfig } from '../../../config/payment.config';
+import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
+import { OrdersModule } from '../../orders/orders.module';
 import { getAvailableGatewaysByLocale, resolveGatewayByLocale } from '../checkout-gateway.policy';
+import { GuestPaymentsController } from '../guest-payments.controller';
+import { GuestPaymentsService } from '../guest-payments.service';
+import { PaymentsController } from '../payments.controller';
+import { PaymentsModule } from '../payments.module';
+import { PaymentsService } from '../payments.service';
+import { PaymentConfirmationService } from '../services/payment-confirmation.service';
+
+describe('PaymentsModule wiring', () => {
+  it('imports OrdersModule for guest payment dependencies', () => {
+    const imports = Reflect.getMetadata(MODULE_METADATA.IMPORTS, PaymentsModule) as unknown[];
+
+    expect(imports).toEqual(expect.arrayContaining([OrdersModule]));
+  });
+
+  it('registers guest payment controller and shared confirmation providers', () => {
+    const controllers = Reflect.getMetadata(MODULE_METADATA.CONTROLLERS, PaymentsModule) as unknown[];
+    const providers = Reflect.getMetadata(MODULE_METADATA.PROVIDERS, PaymentsModule) as Array<unknown>;
+
+    expect(controllers).toEqual(expect.arrayContaining([PaymentsController, GuestPaymentsController]));
+    expect(providers).toEqual(
+      expect.arrayContaining([PaymentConfirmationService, PaymentsService, GuestPaymentsService]),
+    );
+    expect(providers).toContainEqual({ provide: 'PaymentsService', useExisting: PaymentsService });
+  });
+
+  it('keeps explicit exports for member payments surface', () => {
+    const exportsList = Reflect.getMetadata(MODULE_METADATA.EXPORTS, PaymentsModule) as unknown[];
+
+    expect(exportsList).toEqual(expect.arrayContaining([PaymentsService, 'PaymentsService']));
+  });
+
+  it('OrdersModule explicitly exports GuestOrderAccessService for guest payment flows', () => {
+    const exportsList = Reflect.getMetadata(MODULE_METADATA.EXPORTS, OrdersModule) as unknown[];
+
+    expect(exportsList).toEqual(expect.arrayContaining([GuestOrderAccessService]));
+  });
+});
 
 describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
   it('NODE_ENV=production, PAYMENT_GATEWAY=mock → 시작 실패', () => {
@@ -8,9 +48,7 @@ describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
         NODE_ENV: 'production',
         PAYMENT_GATEWAY: 'mock',
       }),
-    ).toThrow(
-      'Mock payment gateway는 프로덕션에서 사용할 수 없습니다',
-    );
+    ).toThrow('Mock payment gateway는 프로덕션에서 사용할 수 없습니다');
   });
 
   it('NODE_ENV=production, PAYMENT_GATEWAY 미설정 → 시작 실패', () => {
@@ -18,9 +56,7 @@ describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
       createPaymentConfig({
         NODE_ENV: 'production',
       }),
-    ).toThrow(
-      'Mock payment gateway는 프로덕션에서 사용할 수 없습니다',
-    );
+    ).toThrow('Mock payment gateway는 프로덕션에서 사용할 수 없습니다');
   });
 
   it('NODE_ENV=development, PAYMENT_GATEWAY=mock → 정상 동작', () => {
@@ -28,6 +64,7 @@ describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
       NODE_ENV: 'development',
       PAYMENT_GATEWAY: 'mock',
     });
+
     expect(config.gateway).toBe('mock');
   });
 
@@ -36,6 +73,7 @@ describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
       NODE_ENV: 'production',
       PAYMENT_GATEWAY: 'toss',
     });
+
     expect(config.gateway).toBe('toss');
   });
 

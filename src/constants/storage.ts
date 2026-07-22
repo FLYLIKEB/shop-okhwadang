@@ -1,5 +1,6 @@
 export const SESSION_KEYS = {
   CHECKOUT_ITEMS: 'checkoutItems',
+  GUEST_ORDER_CONTEXT: 'guestOrderContext',
   TOSS_CONTEXT: 'tossPaymentContext',
   PAYPAL_CONTEXT: 'paypalPaymentContext',
   NAVERPAY_CONTEXT: 'naverpayPaymentContext',

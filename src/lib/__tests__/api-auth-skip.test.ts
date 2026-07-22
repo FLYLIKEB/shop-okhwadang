@@ -1,6 +1,6 @@
 /**
- * /auth/* 엔드포인트는 401 응답 시 토큰 갱신 인터셉터를 스킵해야 한다.
- * 회귀 시 무한 refresh 루프가 발생할 수 있어 별도 회귀 가드 테스트로 분리.
+ * /auth/* 엔드포인트와 guest wrapper 요청은 401 응답 시 토큰 갱신 인터셉터를 스킵해야 한다.
+ * 회귀 시 무한 refresh 루프 또는 비회원 주문 조회 흐름의 로그인 리다이렉트가 발생할 수 있어 별도 회귀 가드 테스트로 분리.
  * (memory: feedback_api_client.md)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -13,7 +13,7 @@ Object.defineProperty(window, 'location', {
   value: { href: '' },
 });
 
-import { apiClient, authApi } from '@/lib/api';
+import { apiClient, authApi, guestOrdersApi, guestPaymentsApi } from '@/lib/api';
 
 function makeResponse(status: number, body: unknown = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -104,6 +104,50 @@ describe('ApiClient — /auth/* 엔드포인트 401 인터셉터 스킵', () => 
     await expect(apiClient.post('/auth/google', { code: 'abc' })).rejects.toThrow();
 
     expect(refreshSpy).not.toHaveBeenCalled();
+  });
+
+  it('guest order lookup 401 응답 시 refresh 호출이나 로그인 리다이렉트 없이 종료', async () => {
+    const refreshSpy = vi.spyOn(authApi, 'refresh').mockResolvedValue({ message: 'ok' });
+    fetchMock.mockResolvedValueOnce(makeResponse(401, { message: 'Unauthorized' }));
+
+    await expect(
+      guestOrdersApi.lookup({ orderNumber: 'ORD-001', email: 'guest@example.com', locale: 'ko' }),
+    ).rejects.toThrow('Unauthorized');
+
+    expect(refreshSpy).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/guest/orders/lookup',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+      }),
+    );
+    expect(window.location.href).toBe('');
+  });
+
+  it('guest payment confirm 401 응답 시 refresh 재시도나 로그인 리다이렉트 없이 guest 헤더만 유지', async () => {
+    const refreshSpy = vi.spyOn(authApi, 'refresh').mockResolvedValue({ message: 'ok' });
+    fetchMock.mockResolvedValueOnce(makeResponse(401, { message: 'Unauthorized' }));
+
+    await expect(
+      guestPaymentsApi.confirm(7, { paymentKey: 'pay_123', amount: 52000 }, 'guest-token-123'),
+    ).rejects.toThrow('Unauthorized');
+
+    expect(refreshSpy).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/guest/orders/7/payments/confirm',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'X-Guest-Access-Token': 'guest-token-123',
+        }),
+      }),
+    );
+    expect(window.location.href).toBe('');
   });
 
   it('/auth/* 가 아닌 경로는 401 시 refresh 호출 (대조 케이스)', async () => {

@@ -138,14 +138,45 @@ interface PaymentGatewayProps {
   orderNumber: string;
   amount: number;
   locale: Locale;
+  guestAccessToken?: string;
+  guestAccessTokenExpiresAt?: string;
   onError: (message: string) => void;
+}
+
+function buildHostedPaymentContext({
+  orderId,
+  orderNumber,
+  amount,
+  guestAccessToken,
+  guestAccessTokenExpiresAt,
+}: Pick<
+  PaymentGatewayProps,
+  'orderId' | 'orderNumber' | 'amount' | 'guestAccessToken' | 'guestAccessTokenExpiresAt'
+>): {
+  orderId: number;
+  orderNumber: string;
+  amount: number;
+  guestAccessToken?: string;
+  guestAccessTokenExpiresAt?: string;
+} {
+  return {
+    orderId,
+    orderNumber,
+    amount,
+    ...(guestAccessToken
+      ? {
+          guestAccessToken,
+          guestAccessTokenExpiresAt,
+        }
+      : {}),
+  };
 }
 
 // ─── Toss Payments (ko) ───────────────────────────────────────────────────────
 
 const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
   function TossPaymentGateway(
-    { prepareResult, orderId, orderNumber, amount, locale, onError },
+    { prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError },
     ref,
   ) {
     const handlerRef = useRef<(() => Promise<void>) | null>(null);
@@ -161,7 +192,15 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
 
           sessionStorage.setItem(
             SESSION_KEYS.TOSS_CONTEXT,
-            JSON.stringify({ orderId, orderNumber, amount }),
+            JSON.stringify(
+              buildHostedPaymentContext({
+                orderId,
+                orderNumber,
+                amount,
+                guestAccessToken,
+                guestAccessTokenExpiresAt,
+              }),
+            ),
           );
 
           await payment.requestPayment({
@@ -182,7 +221,7 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
       return () => {
         handlerRef.current = null;
       };
-    }, [prepareResult.clientKey, orderId, orderNumber, amount, locale, onError]);
+    }, [prepareResult.clientKey, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError]);
 
     useImperativeHandle(ref, () => ({
       confirm: async () => {
@@ -343,7 +382,7 @@ const MockPaymentGateway = forwardRef<PaymentGatewayHandle, { locale: Locale }>(
 
 const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
   function ExternalRedirectGateway(
-    { prepareResult, orderId, orderNumber, amount, locale, onError },
+    { prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError },
     ref,
   ) {
     const t = useTranslations('checkout');
@@ -364,7 +403,15 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
 
           sessionStorage.setItem(
             SESSION_KEYS.NAVERPAY_CONTEXT,
-            JSON.stringify({ orderId, orderNumber, amount }),
+            JSON.stringify(
+              buildHostedPaymentContext({
+                orderId,
+                orderNumber,
+                amount,
+                guestAccessToken,
+                guestAccessTokenExpiresAt,
+              }),
+            ),
           );
 
           try {
@@ -402,7 +449,15 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
 
           sessionStorage.setItem(
             SESSION_KEYS.EXIMBAY_CONTEXT,
-            JSON.stringify({ orderId, orderNumber, amount }),
+            JSON.stringify(
+              buildHostedPaymentContext({
+                orderId,
+                orderNumber,
+                amount,
+                guestAccessToken,
+                guestAccessTokenExpiresAt,
+              }),
+            ),
           );
 
           try {
@@ -427,7 +482,15 @@ const ExternalRedirectGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayP
 
         sessionStorage.setItem(
           SESSION_KEYS.PAYPAL_CONTEXT,
-          JSON.stringify({ orderId, orderNumber, amount }),
+          JSON.stringify(
+            buildHostedPaymentContext({
+              orderId,
+              orderNumber,
+              amount,
+              guestAccessToken,
+              guestAccessTokenExpiresAt,
+            }),
+          ),
         );
         window.location.assign(prepareResult.redirectUrl);
       },

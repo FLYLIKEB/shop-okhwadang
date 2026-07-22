@@ -27,9 +27,18 @@ vi.mock('@/lib/api', () => ({
   ordersApi: {
     create: (...args: unknown[]) => mockOrdersCreate(...args),
   },
+  guestOrdersApi: {
+    create: vi.fn(),
+    getById: vi.fn(),
+    lookup: vi.fn(),
+  },
   paymentsApi: {
     prepare: (...args: unknown[]) => mockPaymentsPrepare(...args),
     confirm: (...args: unknown[]) => mockPaymentsConfirm(...args),
+  },
+  guestPaymentsApi: {
+    prepare: vi.fn(),
+    confirm: vi.fn(),
   },
 }));
 
@@ -112,6 +121,7 @@ function makeOptions(
   const options: UseCheckoutOptions = {
     checkoutItems: [mockItem],
     form: validForm,
+    guestEmail: '',
     grandTotal: 30000,
     locale: 'ko',
     paymentRef,
@@ -119,10 +129,16 @@ function makeOptions(
     selectedGateway: state.selectedGateway,
     currentOrderId: state.currentOrderId,
     currentOrderNumber: state.currentOrderNumber,
+    currentGuestAccessToken: '',
+    requiredConsent: true,
+    marketingConsent: false,
+    isGuestCheckout: false,
     setStep: vi.fn((s: PaymentStep) => { state.step = s; }),
     setPrepareResult: vi.fn((r) => { state.prepareResult = r; }),
     setCurrentOrderId: vi.fn((id) => { state.currentOrderId = id; }),
     setCurrentOrderNumber: vi.fn((n) => { state.currentOrderNumber = n; }),
+    setCurrentGuestAccessToken: vi.fn(),
+    setCurrentGuestAccessTokenExpiresAt: vi.fn(),
     setConfirmedGrandTotal: vi.fn(),
     setErrors: vi.fn(),
     refetch,

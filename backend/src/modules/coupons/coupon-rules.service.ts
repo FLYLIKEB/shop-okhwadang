@@ -46,7 +46,7 @@ export class CouponRulesService implements OnModuleInit {
     });
 
     this.orderEvents.onOrderCompleted(async (event) => {
-      if (event.isFirstPurchase) {
+      if (event.customerType === 'member' && event.userId !== null && event.isFirstPurchase) {
         try {
           await this.applyRulesForUser(CouponRuleTrigger.FIRST_PURCHASE, event.userId);
         } catch (err) {

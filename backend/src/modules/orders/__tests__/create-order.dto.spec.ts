@@ -8,6 +8,7 @@ const validPayload = {
   recipientPhone: '010-1234-5678',
   zipcode: '12345',
   address: '서울특별시 강남구',
+  orderLocale: 'en',
 };
 
 describe('CreateOrderDto', () => {
@@ -24,6 +25,18 @@ describe('CreateOrderDto', () => {
 
     expect(errors).toHaveLength(0);
     expect(dto.marketingConsent).toBe(true);
+  });
+
+  it('accepts orderLocale under whitelist validation', async () => {
+    const dto = plainToInstance(CreateOrderDto, validPayload);
+
+    const errors = await validate(dto, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+
+    expect(errors).toHaveLength(0);
+    expect(dto.orderLocale).toBe('en');
   });
 
   it('still rejects unknown checkout payload fields', async () => {

@@ -1,12 +1,19 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
+  Optional,
 } from '@nestjs/common';
-import { DataSource, In, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { ConfirmPaymentDto } from '../dto/confirm-payment.dto';
-import { Payment, PaymentMethod, PaymentStatus, PaymentGatewayType } from '../entities/payment.entity';
+import { GuestConfirmPaymentDto } from '../dto/guest-confirm-payment.dto';
+import { Payment, PaymentGatewayType, PaymentMethod, PaymentStatus } from '../entities/payment.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Shipping, ShippingStatus } from '../entities/shipping.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
@@ -18,79 +25,109 @@ import { findOrThrow } from '../../../common/utils/repository.util';
 import { restoreOrderStock } from '../../orders/order-stock.util';
 import { OrderEventEmitter } from '../../orders/order-event.emitter';
 import { OrderCompletedEvent } from '../../orders/events/order-completed.event';
-import { buildOrderEmailItems, buildOrderUrl } from '../../notification/order-email-context';
+import {
+  buildGuestOrderLookupUrl,
+  buildOrderEmailItems,
+  buildOrderUrl,
+} from '../../notification/order-email-context';
+import { PAYMENT_CONFIG, type PaymentConfig } from '../../../config/payment.config';
+import { TossPaymentAdapter } from '../adapters/toss.adapter';
+import { StripePaymentAdapter } from '../adapters/stripe.adapter';
+import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
+import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
+import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
+import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
+import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
 
-type ResolveGatewayByType = (gatewayType: PaymentGatewayType) => PaymentGateway;
+type CustomerType = 'member' | 'guest';
+type ConfirmResponse = {
+  paymentId: number;
+  orderId: number;
+  orderNumber: string;
+  status: PaymentStatus;
+  method: string;
+  amount: number;
+  paidAt: Date;
+};
+type GuestConfirmResponse = ConfirmResponse & {
+  guestAccessToken: string;
+  guestAccessTokenExpiresAt: string;
+};
+type PostCommitPayload = {
+  userId: number | null;
+  orderId: number;
+  orderNumber: string;
+  recipientName: string;
+  amount: number;
+  method: string;
+  locale: 'ko' | 'en';
+  customerType: CustomerType;
+  isFirstPurchase: boolean;
+  guestEmail: string | null;
+};
 
-interface PaymentConfirmationDependencies {
-  paymentRepository: Repository<Payment>;
-  orderRepository: Repository<Order>;
-  shippingRepository: Repository<Shipping>;
-  dataSource: DataSource;
-  notificationService: NotificationService;
-  messageNotificationService?: MessageNotificationService;
-  notificationDispatchHelper: NotificationDispatchHelper;
-  resolveGatewayByType: ResolveGatewayByType;
-  logger: Logger;
-  defaultCarrier: string;
-  orderEventEmitter?: OrderEventEmitter;
-}
-
+@Injectable()
 export class PaymentConfirmationService {
-  constructor(private readonly deps: PaymentConfirmationDependencies) {}
+  private readonly logger = new Logger(PaymentConfirmationService.name);
 
-  async confirm(
-    dto: ConfirmPaymentDto,
-    userId: number,
-  ): Promise<{
-    paymentId: number;
-    orderId: number;
-    orderNumber: string;
-    status: PaymentStatus;
-    method: string;
-    amount: number;
-    paidAt: Date;
-  }> {
+  constructor(
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
+    @InjectRepository(Order)
+    private readonly orderRepository: Repository<Order>,
+    @Inject('PaymentGateway')
+    private readonly gateway: PaymentGateway,
+    @Inject(PAYMENT_CONFIG)
+    private readonly paymentConfig: PaymentConfig,
+    private readonly tossAdapter: TossPaymentAdapter,
+    private readonly stripeAdapter: StripePaymentAdapter,
+    private readonly inicisAdapter: KGInicisPaymentAdapter,
+    private readonly naverpayAdapter: NaverPayPaymentAdapter,
+    private readonly paypalAdapter: PayPalPaymentAdapter,
+    private readonly eximbayAdapter: EximbayPaymentAdapter,
+    private readonly dataSource: DataSource,
+    private readonly notificationService: NotificationService,
+    @Optional()
+    private readonly messageNotificationService: MessageNotificationService | undefined,
+    private readonly notificationDispatchHelper: NotificationDispatchHelper,
+    @Optional()
+    private readonly orderEventEmitter: OrderEventEmitter | undefined,
+    private readonly guestOrderAccessService: GuestOrderAccessService,
+  ) {}
+
+  async confirm(dto: ConfirmPaymentDto, userId: number): Promise<ConfirmResponse> {
     const payment = await findOrThrow(
-      this.deps.paymentRepository,
+      this.paymentRepository,
       { orderId: dto.orderId },
       '결제 정보를 찾을 수 없습니다.',
       ['order'],
     );
-    assertOwnership(payment.order.userId, userId);
-
-    if (payment.status === PaymentStatus.CONFIRMED) {
-      throw new ConflictException('이미 승인된 결제입니다.');
-    }
-    if (payment.status !== PaymentStatus.PENDING) {
-      throw new BadRequestException('결제 승인이 불가능한 상태입니다.');
-    }
-
-    if (Number(payment.order.totalAmount) !== Number(dto.amount)) {
-      throw new BadRequestException('결제 금액이 일치하지 않습니다.');
-    }
+    this.assertMemberOwnership(payment.order.userId, userId);
+    this.assertConfirmablePayment(payment.order, payment, dto.amount);
 
     try {
-      const confirmGateway = this.deps.resolveGatewayByType(payment.gateway);
-      const result = await confirmGateway.confirm(
+      const result = await this.resolveGatewayByType(payment.gateway).confirm(
         dto.paymentKey,
         Number(payment.amount),
         payment.order.orderNumber,
       );
 
+      const paidAt = new Date();
+      let payload: PostCommitPayload | null = null;
       let isFirstPurchase = false;
-      await this.deps.dataSource.transaction(async (manager) => {
+
+      await this.dataSource.transaction(async (manager) => {
         await manager.update(Payment, payment.id, {
           status: PaymentStatus.CONFIRMED,
           paymentKey: result.paymentKey,
           method: result.method as PaymentMethod,
-          paidAt: new Date(),
+          paidAt,
           rawResponse: result.rawResponse as object,
         });
 
         await manager.update(Order, dto.orderId, { status: OrderStatus.PAID });
 
-        if (this.deps.orderEventEmitter) {
+        if (this.orderEventEmitter && payment.order.userId !== null) {
           const paidOrderCount = await manager.count(Order, {
             where: {
               userId: payment.order.userId,
@@ -106,36 +143,29 @@ export class PaymentConfirmationService {
           isFirstPurchase = paidOrderCount <= 1;
         }
 
-        const existing = await manager.findOne(Shipping, { where: { orderId: dto.orderId } });
-        if (!existing) {
+        const existingShipping = await manager.findOne(Shipping, { where: { orderId: dto.orderId } });
+        if (!existingShipping) {
           await manager.save(Shipping, {
             orderId: dto.orderId,
-            carrier: this.deps.defaultCarrier,
+            carrier: this.paymentConfig.defaultCarrier,
             status: ShippingStatus.PAYMENT_CONFIRMED,
           });
         }
+
+        payload = this.buildPostCommitPayload(payment.order, {
+          amount: Number(payment.amount),
+          customerType: 'member',
+          isFirstPurchase,
+          method: result.method,
+        });
       });
 
-      this.deps.orderEventEmitter?.emitOrderCompleted(
-        new OrderCompletedEvent(
-          payment.order.userId,
-          dto.orderId,
-          payment.order.orderNumber,
-          isFirstPurchase,
-        ),
-      );
+      if (!payload) {
+        throw new InternalServerErrorException('결제 승인 후처리 정보를 구성하지 못했습니다.');
+      }
 
-      this.deps.logger.log(`Payment confirmed: orderId=${dto.orderId}`);
-
-      void this.notifyPaymentConfirmed(
-        payment.order.userId,
-        dto.orderId,
-        payment.order.orderNumber,
-        payment.order.recipientName,
-        Number(payment.amount),
-        result.method,
-      );
-      void this.deps.messageNotificationService?.sendPaymentConfirmed(dto.orderId, result.method);
+      this.dispatchPostCommit(payload);
+      this.logger.log(`Payment confirmed: orderId=${dto.orderId} customerType=member`);
 
       return {
         paymentId: Number(payment.id),
@@ -144,52 +174,339 @@ export class PaymentConfirmationService {
         status: PaymentStatus.CONFIRMED,
         method: result.method,
         amount: Number(payment.amount),
-        paidAt: new Date(),
+        paidAt,
       };
     } catch (err) {
-      // #723: 결제 승인 실패 시 payment를 FAILED로, order를 CANCELLED로 마킹하고
-      // 주문 생성 시 차감했던 재고를 복구한다. 같은 트랜잭션으로 묶어 부분 커밋 방지.
-      await this.deps.dataSource.transaction(async (manager) => {
-        await manager.update(Payment, payment.id, { status: PaymentStatus.FAILED });
-        await manager.update(Order, dto.orderId, { status: OrderStatus.CANCELLED });
-        await restoreOrderStock(manager, dto.orderId);
+      await this.dataSource.transaction(async (manager) => {
+        await this.applyFailedPaymentRecovery(manager, payment.id, dto.orderId);
       });
-      if (err instanceof ConflictException || err instanceof BadRequestException) throw err;
+
+      if (err instanceof ConflictException || err instanceof BadRequestException) {
+        throw err;
+      }
       throw new InternalServerErrorException('결제 승인에 실패했습니다.');
     }
   }
 
-  private async notifyPaymentConfirmed(
-    userId: number,
+  async assertGuestAccessTokenActive(orderId: number, guestAccessToken: string): Promise<void> {
+    await this.guestOrderAccessService.getValidAccessOrThrow(orderId, guestAccessToken);
+  }
+
+  async confirmGuest(
     orderId: number,
-    orderNumber: string,
-    recipientName: string,
-    amount: number,
-    method: string,
-  ): Promise<void> {
-    const order = typeof this.deps.orderRepository.findOne === 'function'
-      ? await this.deps.orderRepository.findOne({
+    dto: GuestConfirmPaymentDto,
+    guestAccessToken: string,
+  ): Promise<GuestConfirmResponse> {
+    await this.assertGuestAccessTokenActive(orderId, guestAccessToken);
+
+    const payment = await findOrThrow(
+      this.paymentRepository,
+      { orderId },
+      '결제 정보를 찾을 수 없습니다.',
+      ['order'],
+    );
+    this.assertConfirmablePayment(payment.order, payment, dto.amount);
+
+    try {
+      const result = await this.resolveGatewayByType(payment.gateway).confirm(
+        dto.paymentKey,
+        Number(payment.amount),
+        payment.order.orderNumber,
+      );
+
+      const outcome = await this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
+        await this.guestOrderAccessService.getValidAccessOrThrow(orderId, guestAccessToken, manager);
+        const lockedPayment = await this.loadLockedPayment(orderId, manager);
+        const lockedOrder = lockedPayment.order;
+        const shipping = await manager.findOne(Shipping, {
+          where: { orderId },
+          lock: { mode: 'pessimistic_write' },
+        });
+
+        this.assertConfirmablePayment(lockedOrder, lockedPayment, dto.amount);
+
+        const paidAt = new Date();
+        await manager.update(Payment, lockedPayment.id, {
+          status: PaymentStatus.CONFIRMED,
+          paymentKey: result.paymentKey,
+          method: result.method as PaymentMethod,
+          paidAt,
+          rawResponse: result.rawResponse as object,
+        });
+        await manager.update(Order, orderId, { status: OrderStatus.PAID });
+
+        if (!shipping) {
+          await manager.save(Shipping, {
+            orderId,
+            carrier: this.paymentConfig.defaultCarrier,
+            status: ShippingStatus.PAYMENT_CONFIRMED,
+          });
+        }
+
+        const rotatedAccess = await this.guestOrderAccessService.rotateAccessTokenForOrder(
+          orderId,
+          guestAccessToken,
+          manager,
+        );
+        const payload = this.buildPostCommitPayload(lockedOrder, {
+          amount: Number(lockedPayment.amount),
+          customerType: 'guest',
+          isFirstPurchase: false,
+          method: result.method,
+        });
+
+        return {
+          payload,
+          response: {
+            paymentId: Number(lockedPayment.id),
+            orderId,
+            orderNumber: lockedOrder.orderNumber,
+            status: PaymentStatus.CONFIRMED,
+            method: result.method,
+            amount: Number(lockedPayment.amount),
+            paidAt,
+            guestAccessToken: rotatedAccess.guestAccessToken,
+            guestAccessTokenExpiresAt: rotatedAccess.guestAccessTokenExpiresAt.toISOString(),
+          },
+        };
+      });
+
+      this.dispatchPostCommit(outcome.payload);
+      this.logger.log(`Payment confirmed: orderId=${orderId} customerType=guest`);
+      return outcome.response;
+    } catch (err) {
+      return this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
+        await this.guestOrderAccessService.getValidAccessOrThrow(orderId, guestAccessToken, manager);
+        const lockedPayment = await this.loadLockedPayment(orderId, manager);
+
+        if (this.isDuplicateLikeGuestConfirmError(err)) {
+          if (lockedPayment.status === PaymentStatus.CONFIRMED || lockedPayment.order.status === OrderStatus.PAID) {
+            throw new ConflictException('이미 승인된 결제입니다.');
+          }
+        }
+
+        this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
+        await this.applyFailedPaymentRecovery(manager, lockedPayment.id, orderId);
+
+        if (err instanceof ConflictException || err instanceof BadRequestException) {
+          throw err;
+        }
+        throw new InternalServerErrorException('결제 승인에 실패했습니다.');
+      });
+    }
+  }
+
+  private assertConfirmablePayment(order: Order, payment: Payment, amount: number): void {
+    if (payment.status === PaymentStatus.CONFIRMED || order.status === OrderStatus.PAID) {
+      throw new ConflictException('이미 승인된 결제입니다.');
+    }
+    if (payment.status !== PaymentStatus.PENDING || order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('결제 승인이 불가능한 상태입니다.');
+    }
+    if (Number(order.totalAmount) !== Number(amount)) {
+      throw new BadRequestException('결제 금액이 일치하지 않습니다.');
+    }
+  }
+
+  private assertMemberOwnership(orderUserId: number | null, userId: number): void {
+    if (orderUserId === null) {
+      throw new ForbiddenException('접근 권한이 없습니다.');
+    }
+
+    assertOwnership(orderUserId, userId);
+  }
+
+  private assertPendingBeforeFailureRecovery(order: Order, payment: Payment): void {
+    if (payment.status === PaymentStatus.CONFIRMED || order.status === OrderStatus.PAID) {
+      throw new ConflictException('이미 승인된 결제입니다.');
+    }
+    if (payment.status !== PaymentStatus.PENDING || order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('결제 승인이 불가능한 상태입니다.');
+    }
+  }
+
+  private isDuplicateLikeGuestConfirmError(err: unknown): boolean {
+    if (err instanceof ConflictException) {
+      return true;
+    }
+
+    const details = [
+      err instanceof Error ? err.message : '',
+      this.readNestedErrorText(err, 'code'),
+      this.readNestedErrorText(err, 'type'),
+      this.readNestedErrorText(err, 'status'),
+      this.readNestedErrorText(err, 'statusCode'),
+      this.readNestedErrorText(err, 'response.status'),
+      this.readNestedErrorText(err, 'response.statusCode'),
+      this.readNestedErrorText(err, 'response.code'),
+      this.readNestedErrorText(err, 'response.errorCode'),
+      this.readNestedErrorText(err, 'response.message'),
+      this.readNestedErrorText(err, 'response.error'),
+      this.readNestedErrorText(err, 'body.code'),
+      this.readNestedErrorText(err, 'body.message'),
+      this.readNestedErrorText(err, 'rawResponse.code'),
+      this.readNestedErrorText(err, 'rawResponse.message'),
+    ]
+      .filter((value) => value.length > 0)
+      .join(' ')
+      .toLowerCase();
+
+    return [
+      'already',
+      'duplicate',
+      'idempot',
+      'captured',
+      'processed',
+      '409',
+      '422',
+      'conflict',
+    ].some((token) => details.includes(token));
+  }
+
+  private readNestedErrorText(err: unknown, path: string): string {
+    if (typeof err !== 'object' || err === null) {
+      return '';
+    }
+
+    const value = path.split('.').reduce<unknown>((current, key) => {
+      if (typeof current !== 'object' || current === null || !(key in current)) {
+        return undefined;
+      }
+
+      return (current as Record<string, unknown>)[key];
+    }, err);
+
+    return value === undefined || value === null ? '' : String(value);
+  }
+
+  private buildPostCommitPayload(
+    order: Order,
+    args: { amount: number; customerType: CustomerType; isFirstPurchase: boolean; method: string },
+  ): PostCommitPayload {
+    return {
+      userId: args.customerType === 'member' ? order.userId : null,
+      orderId: Number(order.id),
+      orderNumber: order.orderNumber,
+      recipientName: order.recipientName,
+      amount: args.amount,
+      method: args.method,
+      locale: order.orderLocale,
+      customerType: args.customerType,
+      isFirstPurchase: args.customerType === 'member' ? args.isFirstPurchase : false,
+      guestEmail: args.customerType === 'guest' ? order.guestEmailNormalized : null,
+    };
+  }
+
+  private dispatchPostCommit(payload: PostCommitPayload): void {
+    this.orderEventEmitter?.emitOrderCompleted(
+      new OrderCompletedEvent(
+        payload.userId,
+        payload.orderId,
+        payload.orderNumber,
+        payload.isFirstPurchase,
+        payload.customerType,
+      ),
+    );
+
+    void this.notifyPaymentConfirmed(payload).catch((err) => {
+      this.logger.warn(`Failed to send payment confirmed email: ${String(err)}`);
+    });
+
+    if (payload.customerType === 'member') {
+      void this.messageNotificationService?.sendPaymentConfirmed(payload.orderId, payload.method);
+    }
+  }
+
+  private async notifyPaymentConfirmed(payload: PostCommitPayload): Promise<void> {
+    const order = await this.loadOrderForNotification(payload.orderId);
+    const send = (recipient: { email: string }) =>
+      this.notificationService.sendPaymentConfirmed(recipient.email, {
+        recipientName: payload.recipientName,
+        orderNumber: payload.orderNumber,
+        amount: payload.amount,
+        method: payload.method,
+        locale: payload.locale,
+        orderItems: buildOrderEmailItems(order, payload.locale),
+        orderUrl: payload.customerType === 'member'
+          ? buildOrderUrl(payload.orderId, payload.locale)
+          : buildGuestOrderLookupUrl(payload.locale),
+      });
+
+    if (payload.customerType === 'member' && payload.userId !== null) {
+      await this.notificationDispatchHelper.dispatch({
+        event: 'payment.confirmed',
+        userId: payload.userId,
+        resourceId: payload.orderId,
+        mode: 'fire-and-forget',
+        logger: this.logger,
+        send,
+      });
+      return;
+    }
+
+    await this.notificationDispatchHelper.dispatch({
+      event: 'payment.confirmed',
+      recipient: {
+        email: payload.guestEmail ?? '',
+        name: payload.recipientName,
+      },
+      resourceId: payload.orderId,
+      mode: 'fire-and-forget',
+      logger: this.logger,
+      send,
+    });
+  }
+
+  private async loadOrderForNotification(orderId: number): Promise<Order | null> {
+    return typeof this.orderRepository.findOne === 'function'
+      ? this.orderRepository.findOne({
         where: { id: orderId },
         relations: ['items'],
       })
       : null;
-    const locale = 'ko';
+  }
 
-    await this.deps.notificationDispatchHelper.dispatch({
-      event: 'payment.confirmed',
-      userId,
-      resourceId: orderId,
-      mode: 'fire-and-forget',
-      logger: this.deps.logger,
-      send: (recipient) =>
-        this.deps.notificationService.sendPaymentConfirmed(recipient.email, {
-          recipientName,
-          orderNumber,
-          amount,
-          method,
-          orderItems: buildOrderEmailItems(order, locale),
-          orderUrl: buildOrderUrl(orderId, locale),
-        }),
+  private async loadLockedPayment(orderId: number, manager: EntityManager): Promise<Payment> {
+    const payment = await manager.findOne(Payment, {
+      where: { orderId },
+      relations: ['order'],
+      lock: { mode: 'pessimistic_write' },
     });
+
+    if (!payment) {
+      throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
+    }
+
+    return payment;
+  }
+
+  private async applyFailedPaymentRecovery(
+    manager: EntityManager,
+    paymentId: number,
+    orderId: number,
+  ): Promise<void> {
+    await manager.update(Payment, paymentId, { status: PaymentStatus.FAILED });
+    await manager.update(Order, orderId, { status: OrderStatus.CANCELLED });
+    await restoreOrderStock(manager, orderId);
+  }
+
+  private resolveGatewayByType(gatewayType: PaymentGatewayType): PaymentGateway {
+    switch (gatewayType) {
+      case PaymentGatewayType.TOSS:
+        return this.tossAdapter;
+      case PaymentGatewayType.STRIPE:
+        return this.stripeAdapter;
+      case PaymentGatewayType.INICIS:
+        return this.inicisAdapter;
+      case PaymentGatewayType.NAVERPAY:
+        return this.naverpayAdapter;
+      case PaymentGatewayType.PAYPAL:
+        return this.paypalAdapter;
+      case PaymentGatewayType.EXIMBAY:
+        return this.eximbayAdapter;
+      case PaymentGatewayType.MOCK:
+      default:
+        return this.gateway;
+    }
   }
 }

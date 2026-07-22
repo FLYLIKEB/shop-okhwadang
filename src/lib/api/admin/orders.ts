@@ -13,7 +13,9 @@ export interface AdminOrder {
   updatedAt: string;
   cancelReason?: string | null;
   cancelledAt?: string | null;
-  user?: { id: number; email: string; name: string };
+  customerType?: 'member' | 'guest';
+  guestEmailNormalized?: string | null;
+  user: { id: number; email: string; name: string } | null;
   items: {
     id: number;
     productName: string;

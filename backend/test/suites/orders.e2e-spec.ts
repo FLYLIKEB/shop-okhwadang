@@ -13,15 +13,26 @@ let app: INestApplication;
 let dataSource: DataSource;
 
 export function registerOrdersSuite(getApp: () => INestApplication) {
+
   describe('Orders (e2e)', () => {
     let userACookies: AuthCookies;
     let userBCookies: AuthCookies;
     let productId: number;
     let productOptionId: number;
+    let guestProductId: number;
     let orderId: number;
+    let guestOrderId: number;
+    let guestOrderNumber: string;
+    let guestAccessToken: string;
+    let previousGuestAccessToken: string;
+    let guestAccessTokenExpiresAt: string;
 
     const userAEmail = `orders-user-a-${Date.now()}@test.com`;
     const userBEmail = `orders-user-b-${Date.now()}@test.com`;
+    const guestEmail = `guest-orders-${Date.now()}@test.com`;
+    const throttleGuestCreateEmail = `guest-orders-create-throttle-${Date.now()}@test.com`;
+    const throttleGuestLookupEmail = `guest-orders-lookup-throttle-${Date.now()}@test.com`;
+
 
     beforeAll(async () => {
       app = getApp();
@@ -63,21 +74,35 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
         [productId],
       );
       productOptionId = (optResult as { insertId: number }).insertId;
+
+      const guestProductResult = await dataSource.query(`
+        INSERT INTO products (name, name_en, slug, price, sale_price, stock, status, is_visible_en)
+        VALUES ('비회원주문테스트상품', 'Guest Order Test Product', 'guest-orders-test-product-e2e', 18000, NULL, 10, 'active', 1)
+      `);
+      guestProductId = (guestProductResult as { insertId: number }).insertId;
     });
 
     afterAll(async () => {
       await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
-      await dataSource.query(`DELETE FROM order_items WHERE product_id = ?`, [productId]);
+      await dataSource.query(`DELETE FROM order_items WHERE product_id IN (?, ?)`, [productId, guestProductId]);
+      await dataSource.query(
+        `DELETE FROM guest_order_access WHERE order_id IN (
+          SELECT id FROM orders WHERE guest_email_normalized IN (?, ?, ?)
+        )`,
+        [guestEmail, throttleGuestCreateEmail, throttleGuestLookupEmail],
+      );
       await dataSource.query(
         `DELETE FROM orders WHERE user_id IN (
           SELECT id FROM users WHERE email IN (?, ?)
-        )`,
-        [userAEmail, userBEmail],
+        ) OR guest_email_normalized IN (?, ?, ?)`,
+        [userAEmail, userBEmail, guestEmail, throttleGuestCreateEmail, throttleGuestLookupEmail],
       );
       await dataSource.query(`DELETE FROM product_options WHERE product_id = ?`, [productId]);
-      await dataSource.query(`DELETE FROM products WHERE slug = 'orders-test-product-e2e'`);
+      await dataSource.query(`DELETE FROM products WHERE slug IN ('orders-test-product-e2e', 'guest-orders-test-product-e2e')`);
       await dataSource.query(`DELETE FROM users WHERE email IN (?, ?)`, [userAEmail, userBEmail]);
       await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
+
+
     });
 
     describe('POST /api/orders', () => {
@@ -90,6 +115,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             recipientPhone: '010-1234-5678',
             zipcode: '12345',
             address: '서울시 강남구',
+            orderLocale: 'ko',
           })
           .expect(401);
       });
@@ -104,12 +130,19 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             recipientPhone: '010-1234-5678',
             zipcode: '12345',
             address: '서울시 강남구',
+            orderLocale: 'en',
           })
           .expect(201);
 
         const body = res.body as { id: number; orderNumber: string; items: unknown[] };
         expect(body.orderNumber).toMatch(/^ORD-\d{8}-[A-Z0-9]{5}$/);
         orderId = body.id;
+
+        const orderRow = await dataSource.query(
+          `SELECT order_locale AS orderLocale FROM orders WHERE id = ?`,
+          [orderId],
+        ) as Array<{ orderLocale: 'ko' | 'en' }>;
+        expect(orderRow[0]?.orderLocale).toBe('en');
       });
 
       it('after order: products.stock decreased by quantity', async () => {
@@ -138,6 +171,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             recipientPhone: '010-1234-5678',
             zipcode: '12345',
             address: '서울시 강남구',
+            orderLocale: 'ko',
           })
           .expect(201);
 
@@ -164,6 +198,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             recipientPhone: '010-1234-5678',
             zipcode: '12345',
             address: '서울시 강남구',
+            orderLocale: 'ko',
           })
           .expect(400);
       });
@@ -178,6 +213,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             recipientPhone: '010-1234-5678',
             zipcode: '12345',
             address: '서울시 강남구',
+            orderLocale: 'ko',
           })
           .expect(400);
       });
@@ -192,6 +228,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             recipientPhone: '010-1234-5678',
             zipcode: '12345',
             address: '서울시 강남구',
+            orderLocale: 'ko',
             pointsUsed: 1,
           })
           .expect(400);
@@ -207,9 +244,149 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             recipientPhone: '010-1234-5678',
             zipcode: '12345',
             address: '서울시 강남구',
+            orderLocale: 'ko',
           })
           .expect(400);
       });
+    });
+
+    describe('Guest orders', () => {
+      it('guest create returns top-level token, expiry, and guest-safe order fields', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/api/guest/orders')
+          .send({
+            items: [{ productId: guestProductId, quantity: 1 }],
+            guestEmail: `  ${guestEmail.toUpperCase()}  `,
+            recipientName: '비회원 주문자',
+            recipientPhone: '010-9999-0000',
+            zipcode: '54321',
+            address: '서울시 마포구',
+            addressDetail: '202호',
+            memo: '경비실에 맡겨주세요',
+            orderLocale: 'en',
+            policyConsents: [{ slug: 'terms', version: 'v1', effectiveDate: '2026-07-22' }],
+            marketingConsent: true,
+          })
+          .expect(201);
+
+        const body = res.body as {
+          order: {
+            id: number;
+            orderNumber: string;
+            userId: number | null;
+            guestEmailNormalized: string | null;
+            orderLocale: 'ko' | 'en';
+            pointsUsed: number;
+            discountAmount: number;
+            items: unknown[];
+          };
+          guestAccessToken: string;
+          guestAccessTokenExpiresAt: string;
+        };
+
+        expect(body.order.orderNumber).toMatch(/^ORD-\d{8}-[A-Z0-9]{5}$/);
+        expect(body.order.userId).toBeNull();
+        expect(body.order.guestEmailNormalized).toBe(guestEmail);
+        expect(body.order.orderLocale).toBe('en');
+        expect(body.order.pointsUsed).toBe(0);
+        expect(Number(body.order.discountAmount)).toBe(0);
+        expect(Array.isArray(body.order.items)).toBe(true);
+        expect(body.guestAccessToken).toMatch(/^[a-f0-9]{64}$/);
+        expect(typeof body.guestAccessTokenExpiresAt).toBe('string');
+
+        guestOrderId = body.order.id;
+        guestOrderNumber = body.order.orderNumber;
+        guestAccessToken = body.guestAccessToken;
+        guestAccessTokenExpiresAt = body.guestAccessTokenExpiresAt;
+      });
+
+      it('guest create rejects crafted member-only discount fields', () => {
+        return request(app.getHttpServer())
+          .post('/api/guest/orders')
+          .send({
+            items: [{ productId: guestProductId, quantity: 1 }],
+            guestEmail,
+            recipientName: '비회원 주문자',
+            recipientPhone: '010-9999-0000',
+            zipcode: '54321',
+            address: '서울시 마포구',
+            orderLocale: 'en',
+            pointsUsed: 1000,
+            userCouponId: 1,
+          })
+          .expect(400);
+      });
+
+      it('guest detail requires X-Guest-Access-Token', () => {
+        return request(app.getHttpServer())
+          .get(`/api/guest/orders/${guestOrderId}`)
+          .expect(401);
+      });
+
+      it('guest detail accepts locale=en and localizes the order response', async () => {
+        const res = await request(app.getHttpServer())
+          .get(`/api/guest/orders/${guestOrderId}`)
+          .set('X-Guest-Access-Token', guestAccessToken)
+          .query({ locale: 'en' })
+          .expect(200);
+
+        const body = res.body as {
+          id: number;
+          items: Array<{ productName?: string; product?: { name?: string } }>;
+        };
+        const item = body.items[0];
+
+        expect(body.id).toBe(guestOrderId);
+        expect(item).toBeDefined();
+        expect(item.productName ?? item.product?.name).toBe('Guest Order Test Product');
+      });
+
+      it('guest lookup returns rotated top-level token and localized order response', async () => {
+        previousGuestAccessToken = guestAccessToken;
+        const res = await request(app.getHttpServer())
+          .post('/api/guest/orders/lookup')
+          .send({
+            orderNumber: guestOrderNumber,
+            email: guestEmail,
+            locale: 'en',
+          })
+          .expect(200);
+
+        const body = res.body as {
+          order: {
+            id: number;
+            items: Array<{ productName?: string; product?: { name?: string } }>;
+          };
+          guestAccessToken: string;
+          guestAccessTokenExpiresAt: string;
+        };
+
+        expect(body.order.id).toBe(guestOrderId);
+        expect(body.guestAccessToken).toMatch(/^[a-f0-9]{64}$/);
+        expect(body.guestAccessToken).not.toBe(previousGuestAccessToken);
+        expect(typeof body.guestAccessTokenExpiresAt).toBe('string');
+        expect(body.order.items[0].productName ?? body.order.items[0].product?.name).toBe('Guest Order Test Product');
+
+        guestAccessToken = body.guestAccessToken;
+        guestAccessTokenExpiresAt = body.guestAccessTokenExpiresAt;
+      });
+
+      it('guest lookup supersedes the prior token for detail access', async () => {
+        await request(app.getHttpServer())
+          .get(`/api/guest/orders/${guestOrderId}`)
+          .set('X-Guest-Access-Token', guestAccessToken)
+          .query({ locale: 'en' })
+          .expect(200);
+
+        await request(app.getHttpServer())
+          .get(`/api/guest/orders/${guestOrderId}`)
+          .set('X-Guest-Access-Token', previousGuestAccessToken)
+          .expect(401);
+
+        expect(typeof guestAccessTokenExpiresAt).toBe('string');
+      });
+
+
     });
 
     describe('GET /api/orders', () => {

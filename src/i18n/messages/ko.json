@@ -429,7 +429,8 @@
       "recipientNameTooShort": "이름은 2자 이상 입력해주세요.",
       "phoneInvalid": "올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)",
       "zipcodeInvalid": "우편번호는 5자리 숫자로 입력해주세요.",
-      "addressRequired": "주소를 입력해주세요."
+      "addressRequired": "주소를 입력해주세요.",
+      "guestEmailInvalid": "올바른 이메일 주소를 입력해주세요."
     },
     "flow": {
       "shipping": "배송 정보",
@@ -496,7 +497,12 @@
     "cardTermsAriaLabel": "카드 결제 약관 동의",
     "cardTermsAgreement": "I agree to the payment terms and authorize the secure card payment.",
     "payNow": "Pay now",
-    "cardSecurePageNotice": "카드번호·유효기간·CVC는 옥화당 서버나 브라우저 상태에 저장되지 않습니다."
+    "cardSecurePageNotice": "카드번호·유효기간·CVC는 옥화당 서버나 브라우저 상태에 저장되지 않습니다.",
+    "guestCheckoutTitle": "비회원 주문",
+    "guestCheckoutDescription": "주문에 사용할 이메일을 입력해 주세요. 로그인 없이도 같은 이메일과 주문번호로 비회원 주문을 다시 조회할 수 있습니다.",
+    "guestEmailLabel": "비회원 이메일",
+    "guestEmailPlaceholder": "you@example.com",
+    "guestEmailDescription": "주문 안내와 비회원 주문조회에 사용할 이메일입니다."
   },
   "order": {
     "orderHistory": "주문 내역",
@@ -533,7 +539,9 @@
     "discount": "할인",
     "paymentAmount": "결제 금액",
     "viewOrders": "주문 내역 보기",
-    "continueShopping": "쇼핑 계속하기"
+    "continueShopping": "쇼핑 계속하기",
+    "guestPrimaryAction": "비회원 주문조회",
+    "guestAccessHint": "주문번호와 이메일을 보관하면 비회원 주문을 다시 조회할 수 있습니다."
   },
   "myPage": {
     "title": "마이페이지",
@@ -733,7 +741,9 @@
         "shipped": "배송중",
         "delivered": "배송완료",
         "cancelled": "주문취소",
-        "refunded": "환불완료"
+        "refunded": "환불완료",
+        "refund_requested": "환불요청",
+        "completed": "구매확정"
       },
       "status": {
         "pending": "결제대기",
@@ -742,7 +752,9 @@
         "shipped": "배송중",
         "delivered": "배송완료",
         "cancelled": "주문취소",
-        "refunded": "환불완료"
+        "refunded": "환불완료",
+        "refund_requested": "환불요청",
+        "completed": "구매확정"
       },
       "cancel": {
         "action": "주문 취소",
@@ -756,6 +768,9 @@
         "submitting": "처리 중...",
         "success": "주문이 취소되었고 고객 알림이 요청되었습니다.",
         "error": "주문 취소에 실패했습니다."
+      },
+      "productSummary": {
+        "more": "{productName} 외 {count}건"
       }
     },
     "products": {
@@ -1773,7 +1788,8 @@
     "back": "돌아가기",
     "errorCode": "오류 코드: {code}",
     "loading": "로딩 중...",
-    "defaultFailMessage": "결제에 실패했습니다."
+    "defaultFailMessage": "결제에 실패했습니다.",
+    "guestAccessExpired": "비회원 주문 조회 권한이 만료되었습니다. 주문조회에서 다시 확인해 주세요."
   },
   "contact": {
     "loadError": "페이지를 불러오지 못했습니다.",
@@ -1796,7 +1812,12 @@
       "exchange": "교환/반품",
       "member": "회원",
       "other": "기타"
-    }
+    },
+    "orderLookupTitle": "주문 후 주문 상태는 어떻게 확인하나요?",
+    "orderLookupGuestDescription": "비회원 주문은 결제 시 사용한 이메일과 주문번호로 비회원 주문조회 페이지에서 확인할 수 있습니다.",
+    "orderLookupGuestAction": "비회원 주문조회로 이동",
+    "orderLookupMemberDescription": "회원 주문은 로그인 후 마이페이지 주문 내역에서 계속 확인할 수 있습니다.",
+    "orderLookupMemberAction": "로그인 후 주문 내역에서 결제 상태와 배송 상태를 확인해 주세요."
   },
   "notice": {
     "title": "공지사항",
@@ -1921,5 +1942,23 @@
       "edge": "Edge: 설정 > 쿠키 및 사이트 권한 > 쿠키 및 사이트 데이터 관리",
       "firefox": "Firefox: 설정 > 개인정보 및 보안 > 쿠키와 사이트 데이터"
     }
+  },
+  "orderLookup": {
+    "eyebrow": "비회원 고객 지원",
+    "title": "비회원 주문조회",
+    "description": "결제에 사용한 주문번호와 이메일을 입력하면 비회원 주문을 확인할 수 있습니다.",
+    "orderNumberLabel": "주문번호",
+    "orderNumberPlaceholder": "ORD-000001",
+    "emailLabel": "이메일",
+    "emailPlaceholder": "you@example.com",
+    "submit": "주문조회",
+    "submitting": "조회 중...",
+    "guestLookupSuccess": "비회원 주문을 찾았습니다.",
+    "guestLookupNotFound": "주문번호와 이메일이 일치하는 비회원 주문을 찾을 수 없습니다.",
+    "guestLookupValidationError": "주문번호와 이메일을 다시 확인해 주세요.",
+    "guestLookupError": "지금은 비회원 주문을 조회할 수 없습니다.",
+    "memberHintTitle": "회원 주문 내역이 필요하신가요?",
+    "memberHintDescription": "로그인하면 마이페이지에서 회원 주문, 결제 상태, 배송 현황을 확인할 수 있습니다.",
+    "memberHintAction": "로그인으로 이동"
   }
 }

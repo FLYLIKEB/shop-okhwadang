@@ -62,6 +62,7 @@ async function _ensureTokenRefreshed(): Promise<void> {
 
 export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | undefined>;
+  skipAuthRefresh?: boolean;
 }
 
 class ApiClient {
@@ -88,7 +89,7 @@ class ApiClient {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { params: _extractedParams, ...fetchOptions } = options ?? {};
+    const { params: _extractedParams, skipAuthRefresh = false, ...fetchOptions } = options ?? {};
 
     const { headers: optionHeaders, ...restFetchOptions } = fetchOptions ?? {};
     const isFormData = restFetchOptions.body instanceof FormData;
@@ -108,11 +109,10 @@ class ApiClient {
       });
 
       if (response.status === 401) {
-        if (AUTH_SKIP_REFRESH.has(endpoint)) {
+        if (skipAuthRefresh || AUTH_SKIP_REFRESH.has(endpoint)) {
           throw await createApiHttpError(response);
         }
         await _ensureTokenRefreshed();
-        // Retry original request after token refresh
         const retryResponse = await fetch(url, {
           ...restFetchOptions,
           credentials: 'include',
