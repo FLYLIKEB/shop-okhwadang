@@ -10,7 +10,8 @@ import {
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { PAYMENT_WEBHOOK_TRANSITIONS } from './payment-webhook-transition.policy';
 import { canOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
-import { restoreOrderStock } from '../../orders/order-stock.util';
+import { PointsService } from '../../points/points.service';
+import { runFirstTerminalTransitionRecovery } from './order-terminal-recovery.util';
 import {
   extractWebhookIdempotencyKey,
   isDuplicateKeyError,
@@ -23,6 +24,7 @@ interface PaymentWebhookDependencies {
   webhookEventRepository: Repository<PaymentWebhookEvent>;
   dataSource: DataSource;
   logger: Logger;
+  pointsService: Pick<PointsService, 'getRunningBalanceInTx'>;
   defaultCarrier?: string;
 }
 
@@ -165,6 +167,48 @@ export class PaymentWebhookService {
 
     let didMutate = false;
     await this.deps.dataSource.transaction(async (manager) => {
+      const isRestoreTarget =
+        matchedTransition.orderStatus === OrderStatus.CANCELLED
+        || matchedTransition.orderStatus === OrderStatus.REFUNDED;
+
+      if (isRestoreTarget) {
+        const recovery = await runFirstTerminalTransitionRecovery(manager, {
+          orderId: parsedOrderId,
+          nextOrderStatus: matchedTransition.orderStatus,
+          pointsService: this.deps.pointsService,
+          pointRestoreDescription: `주문 ${payment.orderId} ${matchedTransition.orderStatus === OrderStatus.REFUNDED ? '환불' : '취소'} 웹훅으로 인한 적립금 복구`,
+          applyMutations: async (lockedOrder) => {
+            if (
+              !canOrderStatusTransition(lockedOrder.status, matchedTransition.orderStatus, {
+                allowSameStatus: true,
+              })
+            ) {
+              this.deps.logger.warn(
+                `Webhook ignored: blocked transition ${lockedOrder.status} → ${matchedTransition.orderStatus} (orderId=${parsedOrderId})`,
+              );
+              return false;
+            }
+
+            await manager.update(Payment, payment.id, {
+              status: matchedTransition.paymentStatus as PaymentStatus,
+              paidAt: matchedTransition.setPaidAt ? payment.paidAt ?? new Date() : payment.paidAt,
+              cancelledAt: matchedTransition.setCancelledAt ? new Date() : payment.cancelledAt,
+              rawResponse: payload as object,
+            });
+            await manager.update(Order, parsedOrderId, { status: matchedTransition.orderStatus });
+            return true;
+          },
+        });
+
+        if (!recovery.lockedOrder) {
+          this.deps.logger.warn(`Webhook ignored: order not found (orderId=${parsedOrderId})`);
+          return;
+        }
+
+        didMutate = recovery.didMutate;
+        return;
+      }
+
       const order = await manager.findOne(Order, { where: { id: parsedOrderId } });
       if (!order) {
         this.deps.logger.warn(`Webhook ignored: order not found (orderId=${parsedOrderId})`);
@@ -201,18 +245,6 @@ export class PaymentWebhookService {
         }
       }
 
-      // 재고 복구 정책 (issue #723):
-      // 취소·환불로 진입할 때만 한 번 복구. 이미 cancelled/refunded 였던 주문 (allowSameStatus 진입) 은
-      // 이중 복구를 막기 위해 스킵한다.
-      const isRestoreTarget =
-        matchedTransition.orderStatus === OrderStatus.CANCELLED
-        || matchedTransition.orderStatus === OrderStatus.REFUNDED;
-      const wasAlreadyTerminal =
-        order.status === OrderStatus.CANCELLED
-        || order.status === OrderStatus.REFUNDED;
-      if (isRestoreTarget && !wasAlreadyTerminal) {
-        await restoreOrderStock(manager, parsedOrderId);
-      }
       didMutate = true;
     });
 

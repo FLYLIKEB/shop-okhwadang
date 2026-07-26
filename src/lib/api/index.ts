@@ -47,3 +47,6 @@ export * from './admin/settings';
 export * from './admin/journals';
 export * from './admin/localization';
 export * from './admin/logs';
+export * from './admin/coupons';
+export * from './admin/coupon-rules';
+export * from './admin/points';

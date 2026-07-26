@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Between, LessThanOrEqual, LessThan, MoreThanOrEqual } from 'typeorm';
+import { Repository, FindOptionsWhere, Between, LessThanOrEqual, LessThan, MoreThanOrEqual, EntityManager } from 'typeorm';
 import { AuditLog, AuditAction } from './entities/audit-log.entity';
 import { redactSensitiveFields } from '../../common/utils/redaction.util';
 
@@ -41,8 +41,8 @@ export class AuditLogService {
     private readonly auditLogRepository: Repository<AuditLog>,
   ) {}
 
-  async log(dto: CreateAuditLogDto): Promise<AuditLog> {
-    const entry = this.auditLogRepository.create({
+  private buildEntry(dto: CreateAuditLogDto): Partial<AuditLog> {
+    return {
       actorId: dto.actorId,
       actorRole: dto.actorRole,
       action: dto.action,
@@ -54,9 +54,20 @@ export class AuditLogService {
       userAgent: dto.userAgent ?? null,
       legalHold: dto.legalHold ?? false,
       legalHoldReason: dto.legalHoldReason ?? null,
-    });
+    };
+  }
+
+  async log(dto: CreateAuditLogDto): Promise<AuditLog> {
+    const entry = this.auditLogRepository.create(this.buildEntry(dto));
     const saved = await this.auditLogRepository.save(entry);
     this.logger.log(`Audit log created: ${dto.action} by ${dto.actorId} on ${dto.resourceType}`);
+    return saved;
+  }
+
+  async logWithManager(manager: EntityManager, dto: CreateAuditLogDto): Promise<AuditLog> {
+    const entry = manager.create(AuditLog, this.buildEntry(dto));
+    const saved = await manager.save(AuditLog, entry);
+    this.logger.log(`Audit log created in transaction: ${dto.action} by ${dto.actorId} on ${dto.resourceType}`);
     return saved;
   }
 

@@ -417,6 +417,7 @@
     "paymentSuccess": "Payment completed successfully.",
     "paymentError": "An error occurred during payment.",
     "loadAddressError": "Failed to load saved addresses.",
+    "pricingPreviewError": "Failed to refresh checkout pricing.",
     "orderName": "Order {orderNumber}",
     "steps": {
       "idle": "Pay Now",
@@ -475,6 +476,7 @@
     "paymentMethodLoadError": "Failed to load payment methods.",
     "loadingPaymentMethods": "Loading payment methods...",
     "discountAmount": "Discount",
+    "pointsUsed": "Points used",
     "pointsUse": "Use points",
     "pointsPlaceholder": "Points to use",
     "applyPoints": "Apply",
@@ -1040,7 +1042,10 @@
       "reviews": "Reviews",
       "localization": "Localization",
       "attributes": "Attributes",
-      "logs": "Remote Logs"
+      "logs": "Remote Logs",
+      "coupons": "Coupons",
+      "couponRules": "Coupon Rules",
+      "points": "Points"
     },
     "navigation": {
       "title": "Navigation Management"
@@ -1313,7 +1318,10 @@
         "localization": "Localization",
         "attributes": "Attributes",
         "collections": "Collections",
-        "settings": "Settings"
+        "settings": "Settings",
+        "coupons": "Coupons",
+        "couponRules": "Coupon Rules",
+        "points": "Points"
       },
       "resetFilters": "Reset filters",
       "pagination": {
@@ -1435,6 +1443,192 @@
         "showDetails": "Show raw/fields",
         "ip": "IP"
       }
+    },
+    "coupons": {
+      "title": "Coupons",
+      "description": "Manage coupon templates and issue them to members.",
+      "summary": "{count} templates",
+      "loading": "Loading coupons.",
+      "loadError": "Failed to load coupons.",
+      "empty": "No coupon templates yet.",
+      "searchPlaceholder": "Search by code or name",
+      "search": "Search",
+      "filters": {
+        "all": "All",
+        "active": "Active",
+        "inactive": "Inactive",
+        "ariaLabel": "Coupon status filter"
+      },
+      "table": {
+        "code": "Code",
+        "name": "Name",
+        "discount": "Discount",
+        "quantity": "Issued / limit",
+        "period": "Validity",
+        "status": "Status",
+        "actions": "Actions",
+        "minOrderAmount": "Min order {amount}",
+        "unlimited": "Unlimited",
+        "totalQuantity": "Limit {count}"
+      },
+      "discount": {
+        "percentage": "{value}% off",
+        "fixed": "{value} off",
+        "max": "Max {value}"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "createTitle": "Create coupon",
+      "editTitle": "Edit coupon",
+      "formDescription": "Create reusable coupon templates for checkout and admin issuance.",
+      "form": {
+        "code": "Coupon code",
+        "name": "Coupon name",
+        "type": "Discount type",
+        "value": "Discount value",
+        "minOrderAmount": "Minimum order amount",
+        "maxDiscount": "Max discount amount",
+        "totalQuantity": "Total quantity limit",
+        "startsAt": "Starts at",
+        "expiresAt": "Expires at",
+        "isActive": "Active template"
+      },
+      "types": {
+        "percentage": "Percentage",
+        "fixed": "Fixed amount"
+      },
+      "create": "Create coupon",
+      "update": "Save changes",
+      "saving": "Saving...",
+      "cancelEdit": "Cancel edit",
+      "edit": "Edit",
+      "delete": "Delete",
+      "createSuccess": "Coupon created.",
+      "createError": "Failed to create coupon.",
+      "updateSuccess": "Coupon updated.",
+      "updateError": "Failed to update coupon.",
+      "deleteSuccess": "Coupon deleted.",
+      "deleteError": "Failed to delete coupon.",
+      "issueTitle": "Issue coupon",
+      "issueDescription": "Issue an existing coupon template to a specific member.",
+      "issueForm": {
+        "coupon": "Coupon template",
+        "couponPlaceholder": "Select a coupon template",
+        "userId": "Member ID",
+        "userIdPlaceholder": "Enter member ID"
+      },
+      "issue": "Issue coupon",
+      "issuing": "Issuing...",
+      "issueSuccess": "Coupon issued.",
+      "issueError": "Failed to issue coupon."
+    },
+    "couponRules": {
+      "title": "Coupon Rules",
+      "description": "Connect coupon templates to automatic issuance triggers.",
+      "summary": "{count} rules",
+      "loading": "Loading coupon rules.",
+      "loadError": "Failed to load coupon rules.",
+      "empty": "No coupon rules yet.",
+      "table": {
+        "trigger": "Trigger",
+        "coupon": "Coupon template",
+        "conditions": "Conditions",
+        "status": "Status",
+        "actions": "Actions",
+        "couponFallback": "Coupon #{id}",
+        "noConditions": "No conditions"
+      },
+      "triggers": {
+        "signup": "Signup",
+        "first_purchase": "First purchase",
+        "birthday": "Birthday",
+        "tier_up": "Tier up"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "createTitle": "Create rule",
+      "editTitle": "Edit rule",
+      "formDescription": "Use JSON conditions only when a trigger requires extra constraints.",
+      "form": {
+        "trigger": "Trigger",
+        "couponTemplate": "Coupon template",
+        "couponTemplatePlaceholder": "Select a coupon template",
+        "conditionsJson": "Conditions JSON",
+        "conditionsPlaceholder": "{\"minTier\":\"Silver\"}",
+        "active": "Rule active",
+        "couponTemplateSearch": "Find coupon template",
+        "couponTemplateSearchPlaceholder": "Search by code or name"
+      },
+      "create": "Create rule",
+      "update": "Save changes",
+      "saving": "Saving...",
+      "cancelEdit": "Cancel edit",
+      "edit": "Edit",
+      "delete": "Delete",
+      "createSuccess": "Coupon rule created.",
+      "createError": "Failed to create coupon rule.",
+      "updateSuccess": "Coupon rule updated.",
+      "updateError": "Failed to update coupon rule.",
+      "deleteSuccess": "Coupon rule deleted.",
+      "deleteError": "Failed to delete coupon rule.",
+      "couponLabelLoadError": "Failed to load one or more coupon template labels."
+    },
+    "points": {
+      "title": "Points",
+      "description": "Review member point balances and adjustment history.",
+      "memberSelectorTitle": "Member selector",
+      "memberSelectorDescription": "Use the member search list, then keep the selected member in the deep-linked userId query.",
+      "memberSearchLabel": "Member search",
+      "memberSearchPlaceholder": "Search members by name or email",
+      "memberSearchEmpty": "No members found.",
+      "memberLookupError": "Failed to load member search results.",
+      "selectedUser": "Selected member",
+      "selectedUserFallback": "Member #{userId}",
+      "noUserSelected": "No member selected",
+      "balanceLabel": "Current balance",
+      "historyCountLabel": "History rows",
+      "selectMemberPrompt": "Select a member to review point history.",
+      "loading": "Loading points history.",
+      "loadError": "Failed to load points history.",
+      "empty": "No point history yet.",
+      "table": {
+        "createdAt": "Created at",
+        "type": "Type",
+        "sourceKind": "Source",
+        "amount": "Amount",
+        "balance": "Balance",
+        "description": "Description"
+      },
+      "types": {
+        "earn": "Earn",
+        "spend": "Spend",
+        "expire": "Expire",
+        "admin_adjust": "Admin adjust"
+      },
+      "sourceKinds": {
+        "review_reward_earn": "Review reward",
+        "review_reward_revoke": "Review reward revoke",
+        "order_use": "Order use",
+        "expiry": "Expiry",
+        "order_restore": "Order restore",
+        "manual_grant": "Manual grant",
+        "manual_debit": "Manual debit"
+      },
+      "descriptionFallback": "No description",
+      "adjustmentTitle": "Adjust points",
+      "adjustmentDescription": "Use a positive amount to add points or a negative amount to deduct points.",
+      "adjustmentAmount": "Adjustment amount",
+      "adjustmentAmountPlaceholder": "Example: 3000 or -3000",
+      "adjustmentReason": "Reason",
+      "adjustmentReasonPlaceholder": "Explain why this adjustment is needed",
+      "adjust": "Apply adjustment",
+      "adjusting": "Applying...",
+      "adjustmentSuccess": "Point adjustment saved.",
+      "adjustmentError": "Failed to save point adjustment."
     }
   },
   "search": {

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import FilterSidebar from '@/components/shared/filters/FilterSidebar';
@@ -80,13 +80,13 @@ describe('FilterSidebar', () => {
     });
   });
 
-  it('toggles the mobile filter panel', async () => {
-    render(<FilterSidebar categories={categories} filterGroups={filterGroups} />);
+it('toggles the mobile filter panel', async () => {
+  render(<FilterSidebar categories={categories} filterGroups={filterGroups} />);
 
-    await userEvent.click(screen.getByRole('button', { name: '필터 닫기' }));
+  fireEvent.click(screen.getByRole('button', { name: '필터 닫기' }));
 
-    expect(setMobileOpenMock).toHaveBeenCalledWith(false);
-  });
+  expect(setMobileOpenMock).toHaveBeenCalledWith(false);
+});
 
   it('applies category and price filters through query params', async () => {
     render(<FilterSidebar categories={categories} filterGroups={filterGroups} />);

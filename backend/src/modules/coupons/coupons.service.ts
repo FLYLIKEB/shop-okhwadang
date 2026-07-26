@@ -5,16 +5,18 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager } from 'typeorm';
+import { Repository, DataSource, EntityManager, Like } from 'typeorm';
 import { Coupon } from './entities/coupon.entity';
 import { UserCoupon } from './entities/user-coupon.entity';
 import { PointHistory } from './entities/point-history.entity';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { CalculateDiscountDto } from './dto/calculate-discount.dto';
 import { IssueCouponDto } from './dto/issue-coupon.dto';
+import { UpdateCouponDto } from './dto/update-coupon.dto';
+import { AdminCouponListQueryDto } from './dto/admin-coupon-list-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
-import { PointsService } from '../points/points.service';
+import { PointsService, PointHistoryResponseItem } from '../points/points.service';
 
 export interface CouponResponse {
   id: number;
@@ -31,6 +33,22 @@ export interface CouponResponse {
   usedAt: Date | null;
 }
 
+export interface AdminCouponResponse {
+  id: number;
+  code: string;
+  name: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  minOrderAmount: number;
+  maxDiscount: number | null;
+  totalQuantity: number | null;
+  issuedCount: number;
+  startsAt: Date;
+  expiresAt: Date;
+  isActive: boolean;
+  createdAt: Date;
+}
+
 export interface PointsInfo {
   balance: number;
   willExpireSoon: number;
@@ -39,6 +57,13 @@ export interface PointsInfo {
 export interface CouponListResponse {
   coupons: CouponResponse[];
   points: PointsInfo;
+}
+
+export interface AdminCouponListResponse {
+  items: AdminCouponResponse[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface CalculateDiscountResponse {
@@ -50,15 +75,6 @@ export interface CalculateDiscountResponse {
   totalPayable: number;
 }
 
-export interface PointHistoryItem {
-  id: number;
-  type: 'earn' | 'spend' | 'expire' | 'admin_adjust';
-  amount: number;
-  balance: number;
-  description: string | null;
-  createdAt: Date;
-}
-
 export interface IssueCouponBatchResult {
   couponId: number;
   issued: boolean;
@@ -67,7 +83,7 @@ export interface IssueCouponBatchResult {
 
 export interface PointsResponse {
   balance: number;
-  history: PointHistoryItem[];
+  history: PointHistoryResponseItem[];
 }
 
 const SHIPPING_FEE = 3000;
@@ -105,6 +121,43 @@ export class CouponsService {
     };
   }
 
+  private toAdminCouponResponse(coupon: Coupon): AdminCouponResponse {
+    return {
+      id: Number(coupon.id),
+      code: coupon.code,
+      name: coupon.name,
+      type: coupon.type,
+      value: Number(coupon.value),
+      minOrderAmount: Number(coupon.minOrderAmount),
+      maxDiscount: coupon.maxDiscount != null ? Number(coupon.maxDiscount) : null,
+      totalQuantity: coupon.totalQuantity != null ? Number(coupon.totalQuantity) : null,
+      issuedCount: Number(coupon.issuedCount),
+      startsAt: coupon.startsAt,
+      expiresAt: coupon.expiresAt,
+      isActive: coupon.isActive,
+      createdAt: coupon.createdAt,
+    };
+  }
+
+  private sameOptionalDate(input: string | undefined, value: Date): boolean {
+    return input !== undefined && new Date(input).getTime() === value.getTime();
+  }
+
+  private assertIssuedCouponMutability(coupon: Coupon, dto: UpdateCouponDto): void {
+    const immutableFieldChanged = (
+      (dto.type !== undefined && dto.type !== coupon.type)
+      || (dto.value !== undefined && dto.value !== Number(coupon.value))
+      || (dto.minOrderAmount !== undefined && dto.minOrderAmount !== Number(coupon.minOrderAmount))
+      || (dto.maxDiscount !== undefined && (dto.maxDiscount ?? null) !== (coupon.maxDiscount != null ? Number(coupon.maxDiscount) : null))
+      || (dto.startsAt !== undefined && !this.sameOptionalDate(dto.startsAt, coupon.startsAt))
+      || (dto.expiresAt !== undefined && !this.sameOptionalDate(dto.expiresAt, coupon.expiresAt))
+      || (dto.isActive !== undefined && dto.isActive !== coupon.isActive)
+    );
+
+    if (immutableFieldChanged) {
+      throw new BadRequestException('발급 이력이 있는 쿠폰은 할인/기간/활성 상태를 수정할 수 없습니다.');
+    }
+  }
 
   private assertCouponTemplateUsable(coupon: Coupon, now: Date): void {
     if (!coupon.isActive) {
@@ -153,6 +206,40 @@ export class CouponsService {
       coupons: userCoupons.map((uc) => this.toResponse(uc)),
       points: { balance, willExpireSoon: 0 },
     };
+  }
+
+  async findAdminCoupons(query: AdminCouponListQueryDto): Promise<AdminCouponListResponse> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+    const keyword = query.q?.trim();
+    const statusFilter = query.status === 'active' ? true : query.status === 'inactive' ? false : undefined;
+    const baseWhere: Record<string, unknown> = statusFilter === undefined ? {} : { isActive: statusFilter };
+    const where = keyword
+      ? [
+          { ...baseWhere, code: Like(`%${keyword}%`) },
+          { ...baseWhere, name: Like(`%${keyword}%`) },
+        ]
+      : (statusFilter === undefined ? undefined : baseWhere);
+
+    const [items, total] = await this.couponRepo.findAndCount({
+      where,
+      order: { createdAt: 'DESC', id: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    return {
+      items: items.map((coupon) => this.toAdminCouponResponse(coupon)),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async findAdminCoupon(id: number): Promise<AdminCouponResponse> {
+    const coupon = await findOrThrow(this.couponRepo, { id }, '쿠폰을 찾을 수 없습니다.');
+    return this.toAdminCouponResponse(coupon);
   }
 
   async calculate(userId: number, dto: CalculateDiscountDto): Promise<CalculateDiscountResponse> {
@@ -206,18 +293,11 @@ export class CouponsService {
 
     return {
       balance,
-      history: history.map((h) => ({
-        id: Number(h.id),
-        type: h.type,
-        amount: h.amount,
-        balance: h.balance,
-        description: h.description,
-        createdAt: h.createdAt,
-      })),
+      history: history.map((entry) => this.pointsService.toHistoryResponse(entry)),
     };
   }
 
-  async createCoupon(dto: CreateCouponDto): Promise<Coupon> {
+  async createCoupon(dto: CreateCouponDto): Promise<AdminCouponResponse> {
     const coupon = this.couponRepo.create({
       code: dto.code,
       name: dto.name,
@@ -233,7 +313,47 @@ export class CouponsService {
 
     const saved = await this.couponRepo.save(coupon);
     this.logger.log(`Coupon created: code=${saved.code}`);
-    return saved;
+    return this.toAdminCouponResponse(saved);
+  }
+
+  async updateCoupon(id: number, dto: UpdateCouponDto): Promise<AdminCouponResponse> {
+    const coupon = await findOrThrow(this.couponRepo, { id }, '쿠폰을 찾을 수 없습니다.');
+
+    if (coupon.issuedCount > 0) {
+      this.assertIssuedCouponMutability(coupon, dto);
+    }
+
+    if (dto.totalQuantity !== undefined) {
+      if (dto.totalQuantity !== null && dto.totalQuantity < coupon.issuedCount) {
+        throw new BadRequestException('총 발급 수량은 이미 발급된 수량보다 작을 수 없습니다.');
+      }
+      coupon.totalQuantity = dto.totalQuantity ?? null;
+    }
+
+    if (dto.code !== undefined) coupon.code = dto.code;
+    if (dto.name !== undefined) coupon.name = dto.name;
+    if (dto.type !== undefined) coupon.type = dto.type;
+    if (dto.value !== undefined) coupon.value = dto.value;
+    if (dto.minOrderAmount !== undefined) coupon.minOrderAmount = dto.minOrderAmount;
+    if (dto.maxDiscount !== undefined) coupon.maxDiscount = dto.maxDiscount ?? null;
+    if (dto.startsAt !== undefined) coupon.startsAt = new Date(dto.startsAt);
+    if (dto.expiresAt !== undefined) coupon.expiresAt = new Date(dto.expiresAt);
+    if (dto.isActive !== undefined) coupon.isActive = dto.isActive;
+
+    const saved = await this.couponRepo.save(coupon);
+    this.logger.log(`Coupon updated: id=${saved.id}`);
+    return this.toAdminCouponResponse(saved);
+  }
+
+  async removeCoupon(id: number): Promise<{ message: string }> {
+    const coupon = await findOrThrow(this.couponRepo, { id }, '쿠폰을 찾을 수 없습니다.');
+    if (coupon.issuedCount > 0) {
+      throw new BadRequestException('이미 발급된 쿠폰은 삭제할 수 없습니다.');
+    }
+
+    await this.couponRepo.remove(coupon);
+    this.logger.log(`Coupon removed: id=${coupon.id}`);
+    return { message: '쿠폰이 삭제되었습니다.' };
   }
 
   async issueCoupon(dto: IssueCouponDto): Promise<UserCoupon> {

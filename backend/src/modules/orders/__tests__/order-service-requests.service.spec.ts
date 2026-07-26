@@ -14,6 +14,7 @@ import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import type { PaymentsService } from '../../payments/payments.service';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
+import { PointsService } from '../../points/points.service';
 import { UpdateOrderServiceRequestDto } from '../dto/update-order-service-request.dto';
 
 type MemberOrder = Order & { userId: number };
@@ -125,6 +126,7 @@ describe('OrderServiceRequestsService', () => {
     };
     notificationService = { sendEmail: jest.fn().mockResolvedValue(undefined) };
     notificationDispatchHelper = { dispatch: jest.fn().mockResolvedValue(undefined) };
+    const pointsService = { getRunningBalanceInTx: jest.fn().mockResolvedValue(900) };
 
     const dataSource = {
       transaction: jest.fn((cb: (txManager: EntityManager) => Promise<unknown>) => cb(manager as unknown as EntityManager)),
@@ -139,6 +141,7 @@ describe('OrderServiceRequestsService', () => {
         { provide: NotificationService, useValue: notificationService },
         { provide: NotificationDispatchHelper, useValue: notificationDispatchHelper },
         { provide: ModuleRef, useValue: { get: jest.fn().mockReturnValue(paymentsService) } },
+        { provide: PointsService, useValue: pointsService },
       ],
     }).compile();
 
@@ -205,6 +208,31 @@ describe('OrderServiceRequestsService', () => {
       Payment,
       { orderId: order.id, status: PaymentStatus.PENDING },
       expect.objectContaining({ status: PaymentStatus.CANCELLED, cancelReason: request.reason }),
+    );
+  });
+
+  it('pending cancel request completion restores points through the shared terminal helper once', async () => {
+    const order = makeOrder({ status: OrderStatus.PENDING, pointsUsed: 400 });
+    const request = makeRequest(order);
+    const updated = makeRequest(order, { status: OrderServiceRequestStatus.COMPLETED });
+    requestRepository.findOne
+      .mockResolvedValueOnce(request)
+      .mockResolvedValueOnce(updated);
+    manager.findOne.mockResolvedValue(order);
+
+    await service.updateForAdmin(request.id, {
+      status: OrderServiceRequestStatus.COMPLETED,
+    });
+
+    expect(manager.save).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        userId: order.userId,
+        type: 'admin_adjust',
+        amount: 400,
+        balance: 1300,
+        orderId: order.id,
+      }),
     );
   });
 

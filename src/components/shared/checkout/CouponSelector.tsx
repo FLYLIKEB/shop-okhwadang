@@ -3,25 +3,20 @@
 import { useEffect, useState } from 'react';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { couponsApi } from '@/lib/api';
-import type { CouponItem, CalculateDiscountResponse } from '@/lib/api';
+import type { CouponItem } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
-import { toast } from 'sonner';
-import { handleApiError } from '@/utils/error';
-import { toastMessage } from '@/utils/toastMessages';
 import { getClientLocale } from '@/utils/clientLocale';
 import { localMessage } from '@/utils/localMessages';
 
 interface CouponSelectorProps {
-  orderAmount: number;
-  onDiscountChange: (result: CalculateDiscountResponse | null, userCouponId?: number, pointsUsed?: number) => void;
+  onSelectionChange: (userCouponId?: number, pointsToUse?: number) => void;
 }
 
-export default function CouponSelector({ orderAmount, onDiscountChange }: CouponSelectorProps) {
+export default function CouponSelector({ onSelectionChange }: CouponSelectorProps) {
   const locale = getClientLocale();
   const [coupons, setCoupons] = useState<CouponItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | ''>('');
-  const [calculating, setCalculating] = useState(false);
   const [pointsBalance, setPointsBalance] = useState(0);
   const [pointsInput, setPointsInput] = useState('');
 
@@ -38,38 +33,17 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
     void loadCoupons();
   }, [loadCoupons]);
 
-  const calculateDiscount = async (userCouponId?: number, pointsToUse = 0) => {
-    if (!userCouponId && pointsToUse <= 0) {
-      onDiscountChange(null, undefined, 0);
-      return;
-    }
-
-    setCalculating(true);
-    try {
-      const result = await couponsApi.calculate({ orderAmount, userCouponId, pointsToUse });
-      onDiscountChange(result, userCouponId, pointsToUse);
-    } catch (err) {
-      toast.error(handleApiError(err, toastMessage('couponDiscountError')));
-      onDiscountChange(null, undefined, 0);
-      setSelectedId('');
-      setPointsInput('');
-    } finally {
-      setCalculating(false);
-    }
-  };
-
-  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
+    const userCouponId = val === '' ? undefined : Number(val);
     setSelectedId(val === '' ? '' : Number(val));
-
-    const pointsToUse = Number(pointsInput) || 0;
-    await calculateDiscount(val === '' ? undefined : Number(val), pointsToUse);
+    onSelectionChange(userCouponId, Number(pointsInput) || 0);
   };
 
-  const handleApplyPoints = async () => {
+  const handleApplyPoints = () => {
     const pointsToUse = Math.min(Math.max(Number(pointsInput) || 0, 0), pointsBalance);
     setPointsInput(pointsToUse > 0 ? String(pointsToUse) : '');
-    await calculateDiscount(selectedId === '' ? undefined : Number(selectedId), pointsToUse);
+    onSelectionChange(selectedId === '' ? undefined : Number(selectedId), pointsToUse);
   };
 
   const selected = coupons.find((c) => c.id === selectedId);
@@ -87,11 +61,9 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
         id="coupon-select"
         value={selectedId}
         onChange={handleChange}
-        disabled={calculating}
         className={cn(
           'w-full rounded-md border field-soft px-3 py-2 text-sm',
           'focus:outline-none focus:ring-2 focus:ring-ring',
-          calculating && 'opacity-50 cursor-not-allowed',
         )}
       >
         <option value="">{localMessage('checkout.couponPlaceholder')}</option>
@@ -117,14 +89,14 @@ export default function CouponSelector({ orderAmount, onDiscountChange }: Coupon
           max={pointsBalance}
           value={pointsInput}
           onChange={(event) => setPointsInput(event.target.value)}
-          disabled={calculating || pointsBalance <= 0}
+          disabled={pointsBalance <= 0}
           className="w-full rounded-md border field-soft px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           placeholder={localMessage('checkout.pointsPlaceholder')}
         />
         <button
           type="button"
           onClick={handleApplyPoints}
-          disabled={calculating || pointsBalance <= 0}
+          disabled={pointsBalance <= 0}
           className="rounded-md border border-soft px-4 py-2 text-sm font-medium transition-colors enabled:hover:bg-muted disabled:opacity-50"
         >
           {localMessage('checkout.applyPoints')}

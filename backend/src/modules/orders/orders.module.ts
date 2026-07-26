@@ -45,6 +45,6 @@ import { OrderPostCommitService } from './order-post-commit.service';
     OrderPostCommitService,
     OrderServiceRequestsService,
   ],
-  exports: [OrdersService, GuestOrderAccessService, OrderServiceRequestsService, OrderEventsModule],
+  exports: [OrdersService, OrderCreationWorkflowService, GuestOrderAccessService, OrderServiceRequestsService, OrderEventsModule],
 })
 export class OrdersModule {}

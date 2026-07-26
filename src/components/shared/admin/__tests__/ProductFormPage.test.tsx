@@ -233,7 +233,9 @@ describe('ProductFormPage', () => {
         target: { value: 'test-product' },
       });
       fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
-      fireEvent.click(screen.getByLabelText('무료배송 상품'));
+      const freeShippingCheckbox = screen.getByLabelText('무료배송 상품') as HTMLInputElement;
+      fireEvent.click(freeShippingCheckbox);
+      expect(freeShippingCheckbox.checked).toBe(true);
       fireEvent.click(screen.getByText('등록하기'));
 
       await waitFor(() => {

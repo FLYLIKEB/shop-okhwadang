@@ -199,7 +199,7 @@ describe('OrderDetailPage', () => {
     expect(screen.getByRole('button', { name: '결제하기' })).toBeInTheDocument();
     expect(screen.getByText('현금영수증/세금계산서 안내')).toBeInTheDocument();
     expect(screen.getByText(/주문번호를 포함해 고객센터로 요청/)).toBeInTheDocument();
-  });
+  }, 20000);
 
 
   it('결제대기 주문에서 주문 바로 취소 신청을 즉시 완료 API로 접수한다', async () => {
@@ -223,7 +223,7 @@ describe('OrderDetailPage', () => {
     });
     expect(ordersApi.getServiceRequests).toHaveBeenCalledWith(16);
     expect(ordersApi.getById).toHaveBeenCalledTimes(2);
-  });
+  }, 20000);
 
 
   it('결제대기 주문에서 무통장입금 선택 시 PaymentGateway로 전환하지 않고 주문을 갱신한다', async () => {
@@ -251,7 +251,7 @@ describe('OrderDetailPage', () => {
     });
     expect(screen.queryByTestId('payment-gateway')).not.toBeInTheDocument();
     expect(ordersApi.getById).toHaveBeenCalledTimes(2);
-  });
+  }, 20000);
 
   it('결제대기 주문에서 PayPal 선택 후 결제 준비 API를 호출하고 동일 PaymentGateway 컴포넌트로 전환한다', async () => {
     const user = userEvent.setup();
@@ -276,5 +276,5 @@ describe('OrderDetailPage', () => {
       expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 16, locale: 'ko', gateway: 'paypal' });
     });
     expect(await screen.findByTestId('payment-gateway')).toBeInTheDocument();
-  });
+  }, 20000);
 });

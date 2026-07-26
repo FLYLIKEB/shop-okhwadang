@@ -7,9 +7,8 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
-import { PointHistory } from '../coupons/entities/point-history.entity';
-import { restoreOrderStock } from '../orders/order-stock.util';
 import { PaymentsService } from '../payments/payments.service';
+import { runFirstTerminalTransitionRecovery } from '../payments/services/order-terminal-recovery.util';
 import { MembershipService } from '../membership/membership.service';
 import { PointsService } from '../points/points.service';
 import { AdminOrderQueryDto } from './dto/admin-order-query.dto';
@@ -98,22 +97,43 @@ export class AdminOrdersService {
       }
     }
 
-    if (nextStatus === OrderStatus.REFUNDED) {
-      const payment = await this.paymentRepository.findOne({ where: { orderId } });
-      if (payment) {
-        await this.paymentsService.cancelAdmin(orderId, '관리자 환불 처리');
-      }
-    }
-
-    await this.dataSource.transaction(async (manager) => {
-      await manager.update(Order, orderId, { status: nextStatus });
-      await this.syncShippingStatus(manager, orderId, nextStatus);
-
-      if (this.shouldRestoreStockAndPoints(currentStatus, nextStatus)) {
-        await this.restoreStock(manager, orderId);
-        await this.restorePoints(manager, order);
-      }
+const applyStatusMutation = async (manager: EntityManager): Promise<void> => {
+  if (this.shouldRestoreStockAndPoints(currentStatus, nextStatus)) {
+    const recovery = await runFirstTerminalTransitionRecovery(manager, {
+      orderId,
+      nextOrderStatus: nextStatus,
+      pointsService: this.pointsService,
+      pointRestoreDescription: `주문 ${order.orderNumber} 취소/환불로 인한 적립금 복구`,
+applyMutations: async (lockedOrder) => {
+  assertOrderStatusTransition(lockedOrder.status, nextStatus);
+  await manager.update(Order, orderId, { status: nextStatus });
+  await this.syncShippingStatus(manager, orderId, nextStatus);
+  return true;
+},
     });
+
+    if (!recovery.lockedOrder) {
+      throw new BadRequestException('주문을 찾을 수 없습니다.');
+    }
+    return;
+  }
+
+  await manager.update(Order, orderId, { status: nextStatus });
+  await this.syncShippingStatus(manager, orderId, nextStatus);
+};
+
+if (nextStatus === OrderStatus.REFUNDED) {
+  const payment = await this.paymentRepository.findOne({ where: { orderId } });
+  if (payment) {
+    await this.paymentsService.cancelAdmin(orderId, '관리자 환불 처리', async (manager) => {
+      await applyStatusMutation(manager);
+    });
+  } else {
+    await this.dataSource.transaction(applyStatusMutation);
+  }
+} else {
+  await this.dataSource.transaction(applyStatusMutation);
+}
 
     if (nextStatus === OrderStatus.DELIVERED) {
       if (this.isGuestOrder(order)) {
@@ -169,35 +189,34 @@ export class AdminOrdersService {
       } else {
         const cancelledAt = new Date();
         await this.dataSource.transaction(async (manager) => {
-          const lockedOrder = await manager.findOne(Order, {
-            where: { id: orderId },
-            relations: ['user'],
-            lock: { mode: 'pessimistic_write' },
+          const recovery = await runFirstTerminalTransitionRecovery(manager, {
+            orderId,
+            nextOrderStatus: OrderStatus.CANCELLED,
+            pointsService: this.pointsService,
+            pointRestoreDescription: `주문 ${order.orderNumber} 취소/환불로 인한 적립금 복구`,
+            applyMutations: async (lockedOrder) => {
+              assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
+
+              await manager.update(Order, orderId, {
+                status: OrderStatus.CANCELLED,
+                cancelReason: trimmedReason,
+                cancelledAt,
+              });
+
+              if (payment && payment.status === PaymentStatus.PENDING) {
+                await manager.update(Payment, payment.id, {
+                  status: PaymentStatus.CANCELLED,
+                  cancelReason: trimmedReason,
+                  cancelledAt,
+                });
+              }
+
+              return true;
+            },
           });
 
-          if (!lockedOrder) {
+          if (!recovery.lockedOrder) {
             throw new BadRequestException('주문을 찾을 수 없습니다.');
-          }
-
-          assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
-
-          await manager.update(Order, orderId, {
-            status: OrderStatus.CANCELLED,
-            cancelReason: trimmedReason,
-            cancelledAt,
-          });
-
-          if (payment && payment.status === PaymentStatus.PENDING) {
-            await manager.update(Payment, payment.id, {
-              status: PaymentStatus.CANCELLED,
-              cancelReason: trimmedReason,
-              cancelledAt,
-            });
-          }
-
-          if (this.shouldRestoreStockAndPoints(lockedOrder.status, OrderStatus.CANCELLED)) {
-            await this.restoreStock(manager, orderId);
-            await this.restorePoints(manager, lockedOrder);
           }
         });
       }
@@ -304,35 +323,6 @@ export class AdminOrdersService {
     }
   }
 
-  /**
-   * 재고 복구는 `restoreOrderStock` 유틸 (`orders/order-stock.util.ts`) 에 위임.
-   * 정책 및 멱등성 설명은 유틸 docstring 참고.
-   */
-  private async restoreStock(manager: EntityManager, orderId: number): Promise<void> {
-    await restoreOrderStock(manager, orderId);
-  }
-
-  private async restorePoints(manager: EntityManager, order: Order): Promise<void> {
-    const userId = this.getOrderUserId(order);
-    if (userId === null || !order.pointsUsed || order.pointsUsed <= 0) {
-      return;
-    }
-
-    const currentBalance = await this.pointsService.getRunningBalanceInTx(
-      manager,
-      userId,
-    );
-    const restoredBalance = currentBalance + order.pointsUsed;
-
-    await manager.save(PointHistory, {
-      userId,
-      type: 'admin_adjust',
-      amount: order.pointsUsed,
-      balance: restoredBalance,
-      orderId: Number(order.id),
-      description: `주문 ${order.orderNumber} 취소/환불로 인한 적립금 복구`,
-    });
-  }
 
   async registerShipping(orderId: number, dto: RegisterShippingDto): Promise<Shipping | null> {
     const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.', ['items', 'user']);

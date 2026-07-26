@@ -65,6 +65,9 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { labelKey: 'orders', href: '/admin/orders?status=paid', badgeKey: 'paidOrders' },
       { labelKey: 'members', href: '/admin/members' },
+      { labelKey: 'coupons', href: '/admin/coupons' },
+      { labelKey: 'couponRules', href: '/admin/coupons/rules' },
+      { labelKey: 'points', href: '/admin/points' },
       { labelKey: 'reviews', href: '/admin/reviews' },
       { labelKey: 'inquiries', href: '/admin/inquiries?status=pending', badgeKey: 'pendingInquiries' },
       { labelKey: 'logs', href: '/admin/logs', superAdminOnly: true },

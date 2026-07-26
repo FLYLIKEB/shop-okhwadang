@@ -16,10 +16,11 @@ import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { escapeHtml } from '../notification/templates/sanitize';
-import { restoreOrderStock } from './order-stock.util';
-import { PointHistory } from '../coupons/entities/point-history.entity';
+import { runFirstTerminalTransitionRecovery } from '../payments/services/order-terminal-recovery.util';
+import { PointsService } from '../points/points.service';
 import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
 import { ModuleRef } from '@nestjs/core';
+import { assertOrderStatusTransition } from './policies/order-status-transition.policy';
 
 const CANCELLABLE_STATUSES = new Set<OrderStatus>([OrderStatus.PENDING, OrderStatus.PAID]);
 const AFTER_DELIVERY_REQUEST_STATUSES = new Set<OrderStatus>([OrderStatus.DELIVERED, OrderStatus.COMPLETED]);
@@ -51,6 +52,7 @@ export class OrderServiceRequestsService {
     private readonly notificationService: NotificationService,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
     private readonly moduleRef: ModuleRef,
+    private readonly pointsService: PointsService,
   ) {}
 
   async create(orderId: number, userId: number, dto: CreateOrderServiceRequestDto): Promise<OrderServiceRequest> {
@@ -255,18 +257,31 @@ export class OrderServiceRequestsService {
       }
 
       const cancelledAt = new Date();
-      await manager.update(Order, order.id, {
-        status: OrderStatus.CANCELLED,
-        cancelReason: request.reason,
-        cancelledAt,
+      const recovery = await runFirstTerminalTransitionRecovery(manager, {
+        orderId: Number(order.id),
+        nextOrderStatus: OrderStatus.CANCELLED,
+        pointsService: this.pointsService,
+        pointRestoreDescription: `주문 ${order.orderNumber} 고객 신청 처리로 인한 적립금 복구`,
+applyMutations: async (lockedOrder) => {
+  if (lockedOrder.status !== OrderStatus.PENDING) {
+    return false;
+  }
+
+  assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
+  await manager.update(Order, order.id, {
+    status: OrderStatus.CANCELLED,
+    cancelReason: request.reason,
+    cancelledAt,
+  });
+  await manager.update(
+    Payment,
+    { orderId: Number(order.id), status: PaymentStatus.PENDING },
+    { status: PaymentStatus.CANCELLED, cancelReason: request.reason, cancelledAt },
+  );
+  return true;
+},
       });
-      await manager.update(
-        Payment,
-        { orderId: Number(order.id), status: PaymentStatus.PENDING },
-        { status: PaymentStatus.CANCELLED, cancelReason: request.reason, cancelledAt },
-      );
-      await restoreOrderStock(manager, Number(order.id));
-      await this.restorePoints(manager, order);
+      if (!recovery.lockedOrder) throw new BadRequestException('주문을 찾을 수 없습니다.');
       return;
     }
 
@@ -277,23 +292,6 @@ export class OrderServiceRequestsService {
     }
   }
 
-  private async restorePoints(manager: import('typeorm').EntityManager, order: Order): Promise<void> {
-    if (!order.pointsUsed || order.pointsUsed <= 0 || order.userId == null) return;
-
-    const last = await manager.findOne(PointHistory, {
-      where: { userId: order.userId },
-      order: { createdAt: 'DESC', id: 'DESC' },
-    });
-    const balance = Number(last?.balance ?? 0) + Number(order.pointsUsed);
-    await manager.save(PointHistory, {
-      userId: order.userId,
-      type: 'admin_adjust',
-      amount: order.pointsUsed,
-      balance,
-      orderId: Number(order.id),
-      description: `주문 ${order.orderNumber} 고객 신청 처리로 인한 적립금 복구`,
-    });
-  }
 
   private async notifyRequestReceived(request: OrderServiceRequest, order: Order): Promise<void> {
     await this.notificationDispatchHelper.dispatch({

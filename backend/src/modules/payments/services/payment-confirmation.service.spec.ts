@@ -16,6 +16,7 @@ import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
 import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
 import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
+import { PointsService } from '../../points/points.service';
 import { PaymentConfirmationService } from './payment-confirmation.service';
 import {
   Payment,
@@ -53,13 +54,17 @@ const makePayment = (overrides: Partial<Payment> = {}): Payment =>
 
 const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   update: jest.fn().mockResolvedValue({}),
-  findOne: jest.fn().mockResolvedValue(null),
+  findOne: jest.fn().mockImplementation((entity: unknown) => {
+    if (entity === Order) {
+      return Promise.resolve(makeOrder({ pointsUsed: 0 }));
+    }
+    return Promise.resolve(null);
+  }),
   save: jest.fn().mockResolvedValue({}),
   count: jest.fn().mockResolvedValue(1),
   create: jest
     .fn()
     .mockImplementation((_entity: unknown, data: unknown) => data),
-  // 결제 승인 실패 catch 블록의 restoreOrderStock 호출용 (#723)
   find: jest.fn().mockResolvedValue([]),
   increment: jest.fn().mockResolvedValue({}),
   ...overrides,
@@ -131,6 +136,9 @@ const buildService = (args: BuildArgs = {}) => {
     withOrderAccessLock: jest.fn(),
     rotateAccessTokenForOrder: jest.fn(),
   };
+  const pointsService = {
+    getRunningBalanceInTx: jest.fn().mockResolvedValue(2000),
+  };
 
   const service = new PaymentConfirmationService(
     paymentRepo as never,
@@ -147,6 +155,7 @@ const buildService = (args: BuildArgs = {}) => {
     naverpayGateway as unknown as NaverPayPaymentAdapter,
     paypalGateway as unknown as PayPalPaymentAdapter,
     eximbayGateway as unknown as EximbayPaymentAdapter,
+    pointsService as unknown as PointsService,
     dataSource as never,
     { sendPaymentConfirmed: notificationSend } as unknown as NotificationService,
     undefined,
@@ -171,6 +180,7 @@ const buildService = (args: BuildArgs = {}) => {
     notificationSend,
     orderEventEmit,
     guestOrderAccessService,
+    pointsService,
   };
 };
 
@@ -454,6 +464,57 @@ describe('PaymentConfirmationService', () => {
       expect(recoveryManager.update).toHaveBeenCalledWith(Payment, payment.id, {
         status: PaymentStatus.FAILED,
       });
+    });
+
+    it('트랜잭션 내부 실패 복구 시 차감 포인트를 같은 트랜잭션에서 자동 복구한다', async () => {
+      const payment = makePayment({
+        order: makeOrder({ pointsUsed: 700, status: OrderStatus.PENDING }),
+      });
+      const failingManager = makeTransactionManager({
+        save: jest.fn().mockRejectedValue(new Error('shipping insert 실패')),
+      });
+      const recoveryManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Order) {
+            return Promise.resolve(makeOrder({ id: 1, userId: 10, orderNumber: 'ORD-20240101-ABCD1', pointsUsed: 700, status: OrderStatus.PENDING }));
+          }
+          return Promise.resolve(null);
+        }),
+      });
+      const dataSource = {
+        transaction: jest
+          .fn()
+          .mockImplementationOnce(async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager))
+          .mockImplementationOnce(async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(recoveryManager)),
+        _manager: recoveryManager,
+      };
+      const { service, defaultGateway } = buildService({
+        paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
+        dataSource: dataSource as ReturnType<typeof makeDataSource>,
+      });
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({
+        paymentKey: 'pk',
+        method: 'mock',
+        amount: 30000,
+        status: 'confirmed',
+        rawResponse: {},
+      });
+
+      await expect(
+        service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
+      ).rejects.toThrow(InternalServerErrorException);
+
+      expect(recoveryManager.save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          userId: 10,
+          type: 'admin_adjust',
+          amount: 700,
+          balance: 2700,
+          orderId: 1,
+          description: '주문 1 결제 승인 실패로 인한 적립금 복구',
+        }),
+      );
     });
   });
 

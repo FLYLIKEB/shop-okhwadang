@@ -29,13 +29,6 @@ interface OrderItemBuildResult {
   shippingItemPolicies: { isFreeShipping: boolean }[];
 }
 
-interface OrderPriceResult {
-  discountAmount: number;
-  discountedAmount: number;
-  shippingFee: number;
-  totalPayable: number;
-}
-
 interface SharedOrderCreatePayload {
   items: OrderItemDto[];
 }
@@ -52,6 +45,27 @@ interface SharedOrderAddressPayload {
 interface SharedPolicyConsentPayload {
   policyConsents?: PolicyConsentSnapshotDto[];
   marketingConsent?: boolean;
+}
+
+export interface CheckoutPricingAuthorityInput extends SharedOrderCreatePayload {
+  zipcode: string;
+  userCouponId?: number;
+  pointsToUse?: number;
+  locale?: OrderLocale;
+}
+
+export interface CheckoutPricingAuthorityResult {
+  subtotalAmount: number;
+  couponDiscount: number;
+  pointsDiscount: number;
+  shippingFee: number;
+  isFreeShipping: boolean;
+  isRemoteArea: boolean;
+  remoteAreaSurcharge: number;
+  totalPayable: number;
+  appliedUserCouponId?: number;
+  appliedPointsUsed: number;
+  freeShippingThreshold: number;
 }
 
 export interface PersistOrderInput extends SharedOrderAddressPayload {
@@ -90,24 +104,22 @@ export class OrderCreationWorkflowService {
     dto: CreateOrderDto,
     pointsToUse: number,
   ): Promise<OrderPostCommitPayload> {
-    await this.ensureSufficientPoints(manager, userId, pointsToUse);
-
     const { orderItems, subtotalAmount, shippingItemPolicies } = await this.validateAndReserveStock(manager, dto);
 
-    const pricing = await this.calculateDiscountAndShipping(
-      userId,
-      dto,
+    const pricing = await this.calculatePricing(manager, userId, {
+      zipcode: dto.zipcode,
       subtotalAmount,
-      pointsToUse,
       shippingItemPolicies,
-    );
+      userCouponId: dto.userCouponId,
+      pointsToUse,
+    });
 
     const savedOrder = await this.saveOrder(manager, {
       userId,
       totalAmount: pricing.totalPayable,
-      discountAmount: pricing.discountAmount,
+      discountAmount: pricing.couponDiscount,
       shippingFee: pricing.shippingFee,
-      pointsUsed: pointsToUse,
+      pointsUsed: pricing.appliedPointsUsed,
       guestEmailNormalized: null,
       orderLocale: this.resolveOrderLocale(dto),
       recipientName: dto.recipientName,
@@ -118,7 +130,7 @@ export class OrderCreationWorkflowService {
       memo: dto.memo ?? null,
     });
 
-    await this.applyCouponAndPoints(manager, userId, dto, pointsToUse, savedOrder);
+    await this.applyCouponAndPoints(manager, userId, dto.userCouponId, pricing.appliedPointsUsed, savedOrder);
     await this.savePolicyConsent(manager, userId, savedOrder, dto);
     await this.saveOrderItems(manager, orderItems, Number(savedOrder.id));
     await this.clearCartItems(manager, userId, dto);
@@ -127,6 +139,80 @@ export class OrderCreationWorkflowService {
       savedOrder,
       totalPayable: pricing.totalPayable,
       recipientName: dto.recipientName,
+    };
+  }
+
+  async previewPricing(
+    manager: EntityManager,
+    userId: number | null,
+    input: CheckoutPricingAuthorityInput,
+  ): Promise<CheckoutPricingAuthorityResult> {
+    const { subtotalAmount, shippingItemPolicies } = await this.buildOrderItems(manager, input, false);
+
+    return this.calculatePricing(manager, userId, {
+      zipcode: input.zipcode,
+      subtotalAmount,
+      shippingItemPolicies,
+      userCouponId: input.userCouponId,
+      pointsToUse: input.pointsToUse,
+    });
+  }
+
+  async calculatePricing(
+    manager: EntityManager,
+    userId: number | null,
+    input: {
+      zipcode: string;
+      subtotalAmount: number;
+      shippingItemPolicies: { isFreeShipping: boolean }[];
+      userCouponId?: number;
+      pointsToUse?: number;
+    },
+  ): Promise<CheckoutPricingAuthorityResult> {
+    const requestedPoints = input.pointsToUse ?? 0;
+
+    if (userId === null) {
+      if (input.userCouponId || requestedPoints > 0) {
+        throw new BadRequestException('비회원은 쿠폰이나 적립금을 사용할 수 없습니다.');
+      }
+    } else {
+      await this.ensureSufficientPoints(manager, userId, requestedPoints);
+    }
+
+    let couponDiscount = 0;
+    let pointsDiscount = 0;
+
+    if (userId !== null && (input.userCouponId || requestedPoints > 0)) {
+      const calculateDto: CalculateDiscountDto = {
+        orderAmount: input.subtotalAmount,
+        userCouponId: input.userCouponId,
+        pointsToUse: requestedPoints,
+      };
+      const discountResult = await this.couponsService.calculate(userId, calculateDto);
+      couponDiscount = discountResult.couponDiscount;
+      pointsDiscount = discountResult.pointsDiscount;
+    }
+
+    const shippingQuote = await this.shippingFeeCalculator.calculate(
+      input.subtotalAmount,
+      input.zipcode,
+      input.shippingItemPolicies,
+    );
+    const discountedMerchandiseSubtotal = Math.max(0, input.subtotalAmount - couponDiscount - pointsDiscount);
+    const totalPayable = discountedMerchandiseSubtotal + shippingQuote.shippingFee;
+
+    return {
+      subtotalAmount: input.subtotalAmount,
+      couponDiscount,
+      pointsDiscount,
+      shippingFee: shippingQuote.shippingFee,
+      isFreeShipping: shippingQuote.isFreeShipping,
+      isRemoteArea: shippingQuote.isRemoteArea,
+      remoteAreaSurcharge: shippingQuote.remoteAreaSurcharge,
+      totalPayable,
+      appliedUserCouponId: input.userCouponId,
+      appliedPointsUsed: pointsDiscount,
+      freeShippingThreshold: shippingQuote.threshold,
     };
   }
 
@@ -140,80 +226,7 @@ export class OrderCreationWorkflowService {
     manager: EntityManager,
     dto: SharedOrderCreatePayload,
   ): Promise<OrderItemBuildResult> {
-    const orderItems: Partial<OrderItem>[] = [];
-    const shippingItemPolicies: { isFreeShipping: boolean }[] = [];
-    let subtotalAmount = 0;
-
-    for (const item of dto.items) {
-      const product = await manager
-        .createQueryBuilder(Product, 'product')
-        .setLock('pessimistic_write')
-        .where('product.id = :id', { id: item.productId })
-        .getOne();
-
-      if (!product) {
-        throw new NotFoundException(`상품을 찾을 수 없습니다. (id: ${item.productId})`);
-      }
-
-      if (product.status !== ProductStatus.ACTIVE) {
-        throw new BadRequestException('판매 중인 상품만 주문할 수 있습니다.');
-      }
-
-      let optionName: string | null = null;
-      let priceAdjustment = 0;
-
-      if (item.productOptionId != null) {
-        const option = await manager
-          .createQueryBuilder(ProductOption, 'option')
-          .setLock('pessimistic_write')
-          .where('option.id = :id', { id: item.productOptionId })
-          .getOne();
-
-        if (!option || Number(option.productId) !== Number(item.productId)) {
-          throw new BadRequestException('해당 상품의 옵션을 찾을 수 없습니다.');
-        }
-
-        if (option.stock < item.quantity) {
-          throw new BadRequestException(
-            `재고가 부족합니다. (${product.name} - ${option.name}: ${option.value}: ${option.stock}개 남음)`,
-          );
-        }
-
-        optionName = `${option.name}: ${option.value}`;
-        priceAdjustment = Number(option.priceAdjustment);
-
-        await manager.update(ProductOption, option.id, {
-          stock: option.stock - item.quantity,
-        });
-      } else {
-        if (product.stock < item.quantity) {
-          throw new BadRequestException(
-            `재고가 부족합니다. (${product.name}: ${product.stock}개 남음)`,
-          );
-        }
-
-        await manager.update(Product, product.id, {
-          stock: product.stock - item.quantity,
-        });
-      }
-
-      const unitPrice = Number(product.salePrice ?? product.price) + priceAdjustment;
-      const subtotal = unitPrice * item.quantity;
-      subtotalAmount += subtotal;
-
-      orderItems.push({
-        productId: Number(item.productId),
-        productOptionId: item.productOptionId ?? null,
-        productName: product.name,
-        optionName,
-        price: unitPrice,
-        quantity: item.quantity,
-        isFreeShipping: product.isFreeShipping,
-      });
-      shippingItemPolicies.push({ isFreeShipping: product.isFreeShipping });
-    }
-
-    return { orderItems, subtotalAmount, shippingItemPolicies };
+    return this.buildOrderItems(manager, dto, true);
   }
 
   async calculateShippingFee(
@@ -316,6 +329,101 @@ export class OrderCreationWorkflowService {
     return (dto as CreateOrderDto & { orderLocale?: OrderLocale }).orderLocale === 'en' ? 'en' : 'ko';
   }
 
+  /**
+   * 재고 정책 (issue #723):
+   *   - 옵션이 있는 상품: `product_option.stock` 만이 판매 가능 수량의 원장이다.
+   *     주문 시 옵션 재고만 차감하고, 상품 총 재고 (`product.stock`) 는 건드리지 않는다.
+   *     상품 총 재고는 옵션 합으로의 집계값/표시용이며, 옵션 재고와 동시 차감 시
+   *     이중 차감 버그가 발생한다.
+   *   - 옵션이 없는 상품: `product.stock` 이 원장이며, 그대로 차감한다.
+   *
+   * 취소·환불 시 복구도 동일한 분기를 사용한다 (AdminOrdersService.restoreStock 참고).
+   */
+  private async buildOrderItems(
+    manager: EntityManager,
+    dto: SharedOrderCreatePayload,
+    reserveStock: boolean,
+  ): Promise<OrderItemBuildResult> {
+    const orderItems: Partial<OrderItem>[] = [];
+    const shippingItemPolicies: { isFreeShipping: boolean }[] = [];
+    let subtotalAmount = 0;
+
+    for (const item of dto.items) {
+      const product = await manager
+        .createQueryBuilder(Product, 'product')
+        .setLock(reserveStock ? 'pessimistic_write' : 'pessimistic_read')
+        .where('product.id = :id', { id: item.productId })
+        .getOne();
+
+      if (!product) {
+        throw new NotFoundException(`상품을 찾을 수 없습니다. (id: ${item.productId})`);
+      }
+
+      if (product.status !== ProductStatus.ACTIVE) {
+        throw new BadRequestException('판매 중인 상품만 주문할 수 있습니다.');
+      }
+
+      let optionName: string | null = null;
+      let priceAdjustment = 0;
+
+      if (item.productOptionId != null) {
+        const option = await manager
+          .createQueryBuilder(ProductOption, 'option')
+          .setLock(reserveStock ? 'pessimistic_write' : 'pessimistic_read')
+          .where('option.id = :id', { id: item.productOptionId })
+          .getOne();
+
+        if (!option || Number(option.productId) !== Number(item.productId)) {
+          throw new BadRequestException('해당 상품의 옵션을 찾을 수 없습니다.');
+        }
+
+        if (option.stock < item.quantity) {
+          throw new BadRequestException(
+            `재고가 부족합니다. (${product.name} - ${option.name}: ${option.value}: ${option.stock}개 남음)`,
+          );
+        }
+
+        optionName = `${option.name}: ${option.value}`;
+        priceAdjustment = Number(option.priceAdjustment);
+
+        if (reserveStock) {
+          await manager.update(ProductOption, option.id, {
+            stock: option.stock - item.quantity,
+          });
+        }
+      } else {
+        if (product.stock < item.quantity) {
+          throw new BadRequestException(
+            `재고가 부족합니다. (${product.name}: ${product.stock}개 남음)`,
+          );
+        }
+
+        if (reserveStock) {
+          await manager.update(Product, product.id, {
+            stock: product.stock - item.quantity,
+          });
+        }
+      }
+
+      const unitPrice = Number(product.salePrice ?? product.price) + priceAdjustment;
+      const subtotal = unitPrice * item.quantity;
+      subtotalAmount += subtotal;
+
+      orderItems.push({
+        productId: Number(item.productId),
+        productOptionId: item.productOptionId ?? null,
+        productName: product.name,
+        optionName,
+        price: unitPrice,
+        quantity: item.quantity,
+        isFreeShipping: product.isFreeShipping,
+      });
+      shippingItemPolicies.push({ isFreeShipping: product.isFreeShipping });
+    }
+
+    return { orderItems, subtotalAmount, shippingItemPolicies };
+  }
+
   private async ensureSufficientPoints(
     manager: EntityManager,
     userId: number,
@@ -329,68 +437,22 @@ export class OrderCreationWorkflowService {
     }
   }
 
-  /**
-   * 재고 정책 (issue #723):
-   *   - 옵션이 있는 상품: `product_option.stock` 만이 판매 가능 수량의 원장이다.
-   *     주문 시 옵션 재고만 차감하고, 상품 총 재고 (`product.stock`) 는 건드리지 않는다.
-   *     상품 총 재고는 옵션 합으로의 집계값/표시용이며, 옵션 재고와 동시 차감 시
-   *     이중 차감 버그가 발생한다.
-   *   - 옵션이 없는 상품: `product.stock` 이 원장이며, 그대로 차감한다.
-   *
-   * 취소·환불 시 복구도 동일한 분기를 사용한다 (AdminOrdersService.restoreStock 참고).
-   */
-  private async calculateDiscountAndShipping(
-    userId: number,
-    dto: CreateOrderDto,
-    subtotalAmount: number,
-    pointsToUse: number,
-    shippingItemPolicies: { isFreeShipping: boolean }[],
-  ): Promise<OrderPriceResult> {
-    let discountAmount = 0;
-    let discountedAmount = subtotalAmount;
-
-    if (dto.userCouponId || pointsToUse > 0) {
-      const calculateDto: CalculateDiscountDto = {
-        orderAmount: subtotalAmount,
-        userCouponId: dto.userCouponId,
-        pointsToUse,
-      };
-      const discountResult = await this.couponsService.calculate(userId, calculateDto);
-      discountAmount = discountResult.couponDiscount;
-      discountedAmount = discountResult.finalAmount;
-    }
-
-    const shippingFee = await this.calculateShippingFee(
-      subtotalAmount,
-      dto.zipcode,
-      shippingItemPolicies,
-    );
-    const totalPayable = discountedAmount + shippingFee;
-
-    return {
-      discountAmount,
-      discountedAmount,
-      shippingFee,
-      totalPayable,
-    };
-  }
-
   private async applyCouponAndPoints(
     manager: EntityManager,
     userId: number,
-    dto: CreateOrderDto,
-    pointsToUse: number,
+    userCouponId: number | undefined,
+    appliedPointsUsed: number,
     savedOrder: Order,
   ): Promise<void> {
-    if (dto.userCouponId) {
-      await this.couponsService.useCoupon(dto.userCouponId, userId, Number(savedOrder.id), manager);
+    if (userCouponId) {
+      await this.couponsService.useCoupon(userCouponId, userId, Number(savedOrder.id), manager);
     }
 
-    if (pointsToUse > 0) {
+    if (appliedPointsUsed > 0) {
       await this.pointsService.deductFifo(
         manager,
         userId,
-        pointsToUse,
+        appliedPointsUsed,
         `주문 사용 (${savedOrder.orderNumber})`,
         Number(savedOrder.id),
       );

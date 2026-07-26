@@ -31,20 +31,19 @@ export class GuestOrderCreationWorkflowService {
       dto,
     );
 
-    const shippingFee = await this.orderCreationWorkflow.calculateShippingFee(
+    const pricing = await this.orderCreationWorkflow.calculatePricing(manager, null, {
+      zipcode: dto.zipcode,
       subtotalAmount,
-      dto.zipcode,
       shippingItemPolicies,
-    );
-    const totalPayable = subtotalAmount + shippingFee;
+    });
     const guestEmailNormalized = this.normalizeGuestEmail(dto.guestEmail);
 
     const savedOrder = await this.orderCreationWorkflow.saveOrder(manager, {
       userId: null,
-      totalAmount: totalPayable,
-      discountAmount: 0,
-      shippingFee,
-      pointsUsed: 0,
+      totalAmount: pricing.totalPayable,
+      discountAmount: pricing.couponDiscount,
+      shippingFee: pricing.shippingFee,
+      pointsUsed: pricing.appliedPointsUsed,
       guestEmailNormalized,
       orderLocale: dto.orderLocale,
       recipientName: dto.recipientName,
@@ -60,7 +59,7 @@ export class GuestOrderCreationWorkflowService {
 
     return {
       savedOrder,
-      totalPayable,
+      totalPayable: pricing.totalPayable,
       recipientName: dto.recipientName,
       guestEmailNormalized,
       orderLocale: dto.orderLocale,

@@ -22,7 +22,7 @@ import { MessageNotificationService } from '../../notification/message-notificat
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { assertOwnership } from '../../../common/utils/ownership.util';
 import { findOrThrow } from '../../../common/utils/repository.util';
-import { restoreOrderStock } from '../../orders/order-stock.util';
+import { runFirstTerminalTransitionRecovery } from './order-terminal-recovery.util';
 import { OrderEventEmitter } from '../../orders/order-event.emitter';
 import { OrderCompletedEvent } from '../../orders/events/order-completed.event';
 import {
@@ -37,6 +37,8 @@ import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
 import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
 import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
+import { PointsService } from '../../points/points.service';
+import { assertOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
 import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
 
 type CustomerType = 'member' | 'guest';
@@ -85,6 +87,7 @@ export class PaymentConfirmationService {
     private readonly naverpayAdapter: NaverPayPaymentAdapter,
     private readonly paypalAdapter: PayPalPaymentAdapter,
     private readonly eximbayAdapter: EximbayPaymentAdapter,
+    private readonly pointsService: PointsService,
     private readonly dataSource: DataSource,
     private readonly notificationService: NotificationService,
     @Optional()
@@ -485,9 +488,26 @@ export class PaymentConfirmationService {
     paymentId: number,
     orderId: number,
   ): Promise<void> {
-    await manager.update(Payment, paymentId, { status: PaymentStatus.FAILED });
-    await manager.update(Order, orderId, { status: OrderStatus.CANCELLED });
-    await restoreOrderStock(manager, orderId);
+    const recovery = await runFirstTerminalTransitionRecovery(manager, {
+      orderId,
+      nextOrderStatus: OrderStatus.CANCELLED,
+      pointsService: this.pointsService,
+      pointRestoreDescription: `주문 ${orderId} 결제 승인 실패로 인한 적립금 복구`,
+applyMutations: async (lockedOrder) => {
+  if (lockedOrder.status !== OrderStatus.PENDING) {
+    return false;
+  }
+
+  assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
+  await manager.update(Payment, paymentId, { status: PaymentStatus.FAILED });
+  await manager.update(Order, orderId, { status: OrderStatus.CANCELLED });
+  return true;
+},
+    });
+
+    if (!recovery.lockedOrder) {
+      throw new NotFoundException('주문을 찾을 수 없습니다.');
+    }
   }
 
   private resolveGatewayByType(gatewayType: PaymentGatewayType): PaymentGateway {

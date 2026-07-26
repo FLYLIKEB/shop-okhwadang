@@ -41,8 +41,8 @@ export interface UseCheckoutOptions {
   currentGuestAccessToken: string;
   requiredConsent?: boolean;
   marketingConsent?: boolean;
-  selectedUserCouponId?: number;
-  pointsUsed?: number;
+  appliedUserCouponId?: number;
+  appliedPointsUsed?: number;
   isGuestCheckout: boolean;
   setErrors: (errors: FormErrors) => void;
   setStep: (step: PaymentStep) => void;
@@ -155,6 +155,7 @@ export function useCheckout(options: UseCheckoutOptions) {
     async (
       orderId: number,
       orderNumber: string,
+      amountToConfirm: number,
       guestAccessToken?: string,
     ): Promise<void> => {
       options.setStep('confirming_payment');
@@ -165,7 +166,7 @@ export function useCheckout(options: UseCheckoutOptions) {
         }
         const result: GuestConfirmPaymentResponse = await guestPaymentsApi.confirm(
           orderId,
-          { paymentKey: `mock-${orderNumber}`, amount: grandTotal },
+          { paymentKey: `mock-${orderNumber}`, amount: amountToConfirm },
           guestAccessToken,
         );
         const guestContext = {
@@ -186,7 +187,7 @@ export function useCheckout(options: UseCheckoutOptions) {
         return;
       }
 
-      await paymentsApi.confirm({ orderId, paymentKey: `mock-${orderNumber}`, amount: grandTotal });
+      await paymentsApi.confirm({ orderId, paymentKey: `mock-${orderNumber}`, amount: amountToConfirm });
       clearHostedProviderContexts();
       options.setStep('success');
       toast.success(toastMessage('paymentComplete'));
@@ -194,7 +195,7 @@ export function useCheckout(options: UseCheckoutOptions) {
       await refetch();
       router.replace(`/${locale}/order/complete?orderId=${orderId}&orderNumber=${orderNumber}`);
     },
-    [grandTotal, locale, refetch, router, options],
+    [locale, refetch, router, options],
   );
 
   const handleSubmit = useCallback(
@@ -297,8 +298,8 @@ export function useCheckout(options: UseCheckoutOptions) {
             memo: memo || null,
             orderLocale: locale,
             marketingConsent: options.marketingConsent ?? false,
-            userCouponId: options.selectedUserCouponId,
-            pointsUsed: options.pointsUsed && options.pointsUsed > 0 ? options.pointsUsed : undefined,
+            userCouponId: options.appliedUserCouponId,
+            pointsUsed: options.appliedPointsUsed && options.appliedPointsUsed > 0 ? options.appliedPointsUsed : undefined,
           });
 
           orderId = order.id;
@@ -383,7 +384,7 @@ export function useCheckout(options: UseCheckoutOptions) {
           return;
         }
 
-        await handleMockFlow(orderId, orderNumber, guestAccessToken || undefined);
+        await handleMockFlow(orderId, orderNumber, confirmedTotal, guestAccessToken || undefined);
       } catch (err) {
         toast.error(handleApiError(err, toastMessage('paymentError')));
         options.setStep('idle');

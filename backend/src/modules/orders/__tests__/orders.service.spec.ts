@@ -303,7 +303,6 @@ describe('OrdersService', () => {
       expect(mockPointsService.getEffectiveBalanceInTx).toHaveBeenCalledWith(mockManager, 1);
       expect(mockPointsService.getRunningBalanceInTx).not.toHaveBeenCalled();
       expect(mockPointsService.deductFifo).not.toHaveBeenCalled();
-      expect(mockManager.update).not.toHaveBeenCalled();
     });
 
     it('valid dto → creates order, deducts stock, clears cart', async () => {

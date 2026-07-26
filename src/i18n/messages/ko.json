@@ -417,6 +417,7 @@
     "paymentSuccess": "결제가 완료되었습니다.",
     "paymentError": "결제 중 오류가 발생했습니다.",
     "loadAddressError": "저장된 주소를 불러오는데 실패했습니다.",
+    "pricingPreviewError": "주문 금액을 다시 계산하지 못했습니다.",
     "orderName": "주문 {orderNumber}",
     "steps": {
       "idle": "결제하기",
@@ -475,6 +476,7 @@
     "paymentMethodLoadError": "결제 수단을 불러오는데 실패했습니다.",
     "loadingPaymentMethods": "결제 수단 불러오는 중...",
     "discountAmount": "할인 금액",
+    "pointsUsed": "사용 적립금",
     "pointsUse": "적립금 사용",
     "pointsPlaceholder": "사용할 적립금",
     "applyPoints": "적용",
@@ -1040,7 +1042,10 @@
       "reviews": "리뷰관리",
       "localization": "번역 상태",
       "attributes": "속성",
-      "logs": "원격 로그"
+      "logs": "원격 로그",
+      "coupons": "쿠폰관리",
+      "couponRules": "쿠폰 규칙",
+      "points": "적립금관리"
     },
     "navigation": {
       "title": "네비게이션 관리"
@@ -1313,7 +1318,10 @@
         "localization": "번역 상태",
         "attributes": "속성 관리",
         "collections": "컬렉션 관리",
-        "settings": "설정"
+        "settings": "설정",
+        "coupons": "쿠폰 관리",
+        "couponRules": "쿠폰 규칙",
+        "points": "적립금 관리"
       },
       "resetFilters": "필터 초기화",
       "pagination": {
@@ -1435,6 +1443,192 @@
         "showDetails": "원문/필드 보기",
         "ip": "IP"
       }
+    },
+    "coupons": {
+      "title": "쿠폰 관리",
+      "description": "쿠폰 템플릿을 관리하고 특정 회원에게 발급합니다.",
+      "summary": "템플릿 {count}개",
+      "loading": "쿠폰을 불러오는 중입니다.",
+      "loadError": "쿠폰을 불러오지 못했습니다.",
+      "empty": "등록된 쿠폰 템플릿이 없습니다.",
+      "searchPlaceholder": "코드 또는 이름 검색",
+      "search": "검색",
+      "filters": {
+        "all": "전체",
+        "active": "활성",
+        "inactive": "비활성",
+        "ariaLabel": "쿠폰 상태 필터"
+      },
+      "table": {
+        "code": "코드",
+        "name": "이름",
+        "discount": "할인",
+        "quantity": "발급 / 한도",
+        "period": "유효기간",
+        "status": "상태",
+        "actions": "작업",
+        "minOrderAmount": "최소 주문 {amount}",
+        "unlimited": "무제한",
+        "totalQuantity": "한도 {count}개"
+      },
+      "discount": {
+        "percentage": "{value}% 할인",
+        "fixed": "{value} 할인",
+        "max": "최대 {value}"
+      },
+      "status": {
+        "active": "활성",
+        "inactive": "비활성"
+      },
+      "createTitle": "쿠폰 등록",
+      "editTitle": "쿠폰 수정",
+      "formDescription": "체크아웃과 관리자 발급에 재사용할 쿠폰 템플릿을 관리합니다.",
+      "form": {
+        "code": "쿠폰 코드",
+        "name": "쿠폰 이름",
+        "type": "할인 타입",
+        "value": "할인 값",
+        "minOrderAmount": "최소 주문 금액",
+        "maxDiscount": "최대 할인 금액",
+        "totalQuantity": "총 발급 한도",
+        "startsAt": "시작일",
+        "expiresAt": "만료일",
+        "isActive": "활성 템플릿"
+      },
+      "types": {
+        "percentage": "정률",
+        "fixed": "정액"
+      },
+      "create": "쿠폰 등록",
+      "update": "변경 저장",
+      "saving": "저장 중...",
+      "cancelEdit": "수정 취소",
+      "edit": "수정",
+      "delete": "삭제",
+      "createSuccess": "쿠폰을 등록했습니다.",
+      "createError": "쿠폰 등록에 실패했습니다.",
+      "updateSuccess": "쿠폰을 수정했습니다.",
+      "updateError": "쿠폰 수정에 실패했습니다.",
+      "deleteSuccess": "쿠폰을 삭제했습니다.",
+      "deleteError": "쿠폰 삭제에 실패했습니다.",
+      "issueTitle": "쿠폰 발급",
+      "issueDescription": "기존 쿠폰 템플릿을 특정 회원에게 발급합니다.",
+      "issueForm": {
+        "coupon": "쿠폰 템플릿",
+        "couponPlaceholder": "쿠폰 템플릿 선택",
+        "userId": "회원 ID",
+        "userIdPlaceholder": "회원 ID를 입력하세요"
+      },
+      "issue": "쿠폰 발급",
+      "issuing": "발급 중...",
+      "issueSuccess": "쿠폰을 발급했습니다.",
+      "issueError": "쿠폰 발급에 실패했습니다."
+    },
+    "couponRules": {
+      "title": "쿠폰 규칙",
+      "description": "자동 발급 트리거와 쿠폰 템플릿을 연결합니다.",
+      "summary": "규칙 {count}개",
+      "loading": "쿠폰 규칙을 불러오는 중입니다.",
+      "loadError": "쿠폰 규칙을 불러오지 못했습니다.",
+      "empty": "등록된 쿠폰 규칙이 없습니다.",
+      "table": {
+        "trigger": "트리거",
+        "coupon": "쿠폰 템플릿",
+        "conditions": "조건",
+        "status": "상태",
+        "actions": "작업",
+        "couponFallback": "쿠폰 #{id}",
+        "noConditions": "조건 없음"
+      },
+      "triggers": {
+        "signup": "회원가입",
+        "first_purchase": "첫 구매",
+        "birthday": "생일",
+        "tier_up": "등급 상승"
+      },
+      "status": {
+        "active": "활성",
+        "inactive": "비활성"
+      },
+      "createTitle": "규칙 등록",
+      "editTitle": "규칙 수정",
+      "formDescription": "추가 조건이 필요한 트리거만 JSON 조건을 입력하세요.",
+      "form": {
+        "trigger": "트리거",
+        "couponTemplate": "쿠폰 템플릿",
+        "couponTemplatePlaceholder": "쿠폰 템플릿 선택",
+        "conditionsJson": "조건 JSON",
+        "conditionsPlaceholder": "{\"minTier\":\"Silver\"}",
+        "active": "규칙 활성화",
+        "couponTemplateSearch": "쿠폰 템플릿 찾기",
+        "couponTemplateSearchPlaceholder": "코드 또는 이름으로 검색"
+      },
+      "create": "규칙 등록",
+      "update": "변경 저장",
+      "saving": "저장 중...",
+      "cancelEdit": "수정 취소",
+      "edit": "수정",
+      "delete": "삭제",
+      "createSuccess": "쿠폰 규칙을 등록했습니다.",
+      "createError": "쿠폰 규칙 등록에 실패했습니다.",
+      "updateSuccess": "쿠폰 규칙을 수정했습니다.",
+      "updateError": "쿠폰 규칙 수정에 실패했습니다.",
+      "deleteSuccess": "쿠폰 규칙을 삭제했습니다.",
+      "deleteError": "쿠폰 규칙 삭제에 실패했습니다.",
+      "couponLabelLoadError": "하나 이상의 쿠폰 템플릿 이름을 불러오지 못했습니다."
+    },
+    "points": {
+      "title": "적립금 관리",
+      "description": "회원 적립금 잔액과 조정 이력을 확인합니다.",
+      "memberSelectorTitle": "회원 선택",
+      "memberSelectorDescription": "회원 검색 결과에서 대상을 선택하고, 선택 상태는 userId 쿼리 딥링크로 유지합니다.",
+      "memberSearchLabel": "회원 검색",
+      "memberSearchPlaceholder": "이름 또는 이메일 검색",
+      "memberSearchEmpty": "검색 결과가 없습니다.",
+      "memberLookupError": "회원 검색 결과를 불러오지 못했습니다.",
+      "selectedUser": "선택된 회원",
+      "selectedUserFallback": "회원 #{userId}",
+      "noUserSelected": "선택된 회원 없음",
+      "balanceLabel": "현재 잔액",
+      "historyCountLabel": "이력 건수",
+      "selectMemberPrompt": "회원 한 명을 선택해 적립금 이력을 확인하세요.",
+      "loading": "적립금 이력을 불러오는 중입니다.",
+      "loadError": "적립금 이력을 불러오지 못했습니다.",
+      "empty": "적립금 이력이 없습니다.",
+      "table": {
+        "createdAt": "생성 시각",
+        "type": "유형",
+        "sourceKind": "출처",
+        "amount": "변동 금액",
+        "balance": "잔액",
+        "description": "설명"
+      },
+      "types": {
+        "earn": "적립",
+        "spend": "사용",
+        "expire": "만료",
+        "admin_adjust": "관리자 조정"
+      },
+      "sourceKinds": {
+        "review_reward_earn": "리뷰 적립",
+        "review_reward_revoke": "리뷰 적립 회수",
+        "order_use": "주문 사용",
+        "expiry": "만료 차감",
+        "order_restore": "주문 복구",
+        "manual_grant": "수동 적립",
+        "manual_debit": "수동 차감"
+      },
+      "descriptionFallback": "설명 없음",
+      "adjustmentTitle": "적립금 조정",
+      "adjustmentDescription": "양수는 적립, 음수는 차감으로 처리됩니다.",
+      "adjustmentAmount": "조정 금액",
+      "adjustmentAmountPlaceholder": "예: 3000 또는 -3000",
+      "adjustmentReason": "사유",
+      "adjustmentReasonPlaceholder": "조정 사유를 입력하세요",
+      "adjust": "조정 적용",
+      "adjusting": "적용 중...",
+      "adjustmentSuccess": "적립금 조정을 저장했습니다.",
+      "adjustmentError": "적립금 조정 저장에 실패했습니다."
     }
   },
   "search": {
