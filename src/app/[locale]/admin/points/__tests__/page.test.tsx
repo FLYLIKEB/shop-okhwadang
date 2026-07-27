@@ -54,7 +54,7 @@ describe('AdminPointsPage', () => {
       isLoading: false,
       isAdmin: true,
     });
-    mockMembersGetList.mockImplementation((params?: { page?: number; limit?: number }) => {
+    mockMembersGetList.mockImplementation((params?: { page?: number; limit?: number; q?: string }) => {
       const page = params?.page ?? 1;
 
       if (page === 2) {
@@ -62,7 +62,7 @@ describe('AdminPointsPage', () => {
           items: [],
           total: 1,
           page: 2,
-          limit: 100,
+          limit: 20,
         });
       }
 
@@ -81,7 +81,7 @@ describe('AdminPointsPage', () => {
         ],
         total: 1,
         page: 1,
-        limit: 100,
+        limit: 20,
       });
     });
 mockGetUserSummary.mockResolvedValue({ userId: 42, balance: 9000 });
@@ -140,9 +140,9 @@ expect(screen.getByText('리뷰 적립')).toBeInTheDocument();
 expect(screen.getByRole('button', { name: 'next' })).toBeEnabled();
 });
 
-it('loads every member page so deep-linked users outside page 1 remain selectable', async () => {
+it('loads just enough member pages so deep-linked users outside page 1 remain selectable', async () => {
   currentSearchParams = new URLSearchParams('userId=84');
-  mockMembersGetList.mockImplementation((params?: { page?: number; limit?: number }) => {
+  mockMembersGetList.mockImplementation((params?: { page?: number; limit?: number; q?: string }) => {
     const page = params?.page ?? 1;
 
     if (page === 2) {
@@ -159,9 +159,9 @@ it('loads every member page so deep-linked users outside page 1 remain selectabl
             updatedAt: '2026-07-25T00:00:00.000Z',
           },
         ],
-        total: 2,
+        total: 21,
         page: 2,
-        limit: 100,
+        limit: 20,
       });
     }
 
@@ -178,21 +178,31 @@ it('loads every member page so deep-linked users outside page 1 remain selectabl
           updatedAt: '2026-07-25T00:00:00.000Z',
         },
       ],
-      total: 2,
+      total: 21,
       page: 1,
-      limit: 100,
+      limit: 20,
     });
   });
 
   render(<AdminPointsPage />);
 
   await waitFor(() => {
-    expect(mockMembersGetList).toHaveBeenCalledWith({ q: undefined, page: 1, limit: 100 });
-    expect(mockMembersGetList).toHaveBeenCalledWith({ q: undefined, page: 2, limit: 100 });
+    expect(mockMembersGetList).toHaveBeenCalledWith({ q: undefined, page: 1, limit: 20 });
+    expect(mockMembersGetList).toHaveBeenCalledWith({ page: 2, limit: 20 });
   });
 
-  expect(await screen.findByText('두번째 회원')).toBeInTheDocument();
-  expect(screen.getByText('second@example.com')).toBeInTheDocument();
+  expect(await screen.findByText('두번째 회원 · second@example.com')).toBeInTheDocument();
+});
+
+it('keeps member search to the first result page per keystroke', async () => {
+  render(<AdminPointsPage />);
+
+  fireEvent.change(screen.getByLabelText('memberSearchLabel'), { target: { value: '두번째' } });
+
+  await waitFor(() => {
+    expect(mockMembersGetList).toHaveBeenCalledWith({ q: '두번째', page: 1, limit: 20 });
+  });
+  expect(mockMembersGetList).not.toHaveBeenCalledWith({ q: '두번째', page: 2, limit: 20 });
 });
 
 it('navigates point history pages for the selected member', async () => {

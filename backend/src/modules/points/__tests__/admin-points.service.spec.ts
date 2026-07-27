@@ -128,8 +128,6 @@ describe('PointsService admin contract', () => {
     manager.findOne.mockReset();
     manager.findOne
       .mockResolvedValueOnce({ id: 42 })
-      .mockResolvedValueOnce({ balance: 1200 })
-      .mockResolvedValueOnce({ balance: 1200 })
       .mockResolvedValueOnce({
         id: 92,
         userId: 42,

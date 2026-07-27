@@ -55,6 +55,9 @@ const makePayment = (overrides: Partial<Payment> = {}): Payment =>
 const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   update: jest.fn().mockResolvedValue({}),
   findOne: jest.fn().mockImplementation((entity: unknown) => {
+    if (entity === Payment) {
+      return Promise.resolve(makePayment());
+    }
     if (entity === Order) {
       return Promise.resolve(makeOrder({ pointsUsed: 0 }));
     }
@@ -475,6 +478,9 @@ describe('PaymentConfirmationService', () => {
       });
       const recoveryManager = makeTransactionManager({
         findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Payment) {
+            return Promise.resolve(payment);
+          }
           if (entity === Order) {
             return Promise.resolve(makeOrder({ id: 1, userId: 10, orderNumber: 'ORD-20240101-ABCD1', pointsUsed: 700, status: OrderStatus.PENDING }));
           }
@@ -515,6 +521,31 @@ describe('PaymentConfirmationService', () => {
           description: '주문 1 결제 승인 실패로 인한 적립금 복구',
         }),
       );
+    });
+  });
+
+  describe('confirm() — duplicate loser local-truth handling', () => {
+    it('duplicate-like provider error + authoritative confirmed state → 409 without FAILED/CANCELLED recovery', async () => {
+      const payment = makePayment();
+      const lockedPayment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        order: makeOrder({ status: OrderStatus.PAID }),
+      });
+      const manager = makeTransactionManager({
+        findOne: jest.fn().mockResolvedValue(lockedPayment),
+      });
+      const dataSource = makeDataSource(manager);
+      const { service, defaultGateway } = buildService({
+        paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
+        dataSource,
+      });
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(new Error('already captured by provider'));
+
+      await expect(
+        service.confirm({ orderId: 1, paymentKey: 'pay_dup', amount: 30000 }, 10),
+      ).rejects.toThrow(ConflictException);
+      expect(manager.update).not.toHaveBeenCalledWith(Payment, lockedPayment.id, { status: PaymentStatus.FAILED });
+      expect(manager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
     });
   });
 

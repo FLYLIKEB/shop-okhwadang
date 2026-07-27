@@ -283,9 +283,8 @@ describe('PointsService', () => {
   describe('adjustPointsManually', () => {
     it('creates positive adjustments as earn rows with one-year expiry and audit in one transaction', async () => {
       const createdAt = new Date('2026-01-02T00:00:00.000Z');
-      mockEntityManager.findOne
-        .mockResolvedValueOnce({ id: 42 })
-        .mockResolvedValueOnce({ balance: 1000 });
+      mockEntityManager.findOne.mockResolvedValueOnce({ id: 42 });
+      mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '1000' });
       mockEntityManager.save.mockResolvedValue({
         id: 88,
         userId: 42,
@@ -335,8 +334,6 @@ describe('PointsService', () => {
     it('creates negative adjustments as spend rows without expiry and rejects insufficient balance', async () => {
       mockEntityManager.findOne
         .mockResolvedValueOnce({ id: 42 })
-        .mockResolvedValueOnce({ balance: 1200 })
-        .mockResolvedValueOnce({ balance: 1200 })
         .mockResolvedValueOnce({
           id: 91,
           userId: 42,
@@ -366,6 +363,7 @@ describe('PointsService', () => {
       }));
       expect(result).toMatchObject({ pointHistoryId: 91, auditLogId: 501, balanceAfter: 900, delta: -300 });
     });
+
 
     it('rejects zero adjustments', async () => {
       await expect(
@@ -404,6 +402,10 @@ describe('PointsService', () => {
   });
 
   describe('deductFifo', () => {
+
+  beforeEach(() => {
+    mockEntityManager.findOne.mockReset();
+  });
     it('should create a spend record with correct balance and return new balance', async () => {
       mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '5000' });
       mockEntityManager.findOne.mockResolvedValue({ balance: 5000 });

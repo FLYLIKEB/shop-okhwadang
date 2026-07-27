@@ -49,6 +49,9 @@ const makePayment = (overrides: Partial<Payment> = {}): Payment =>
 const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   update: jest.fn().mockResolvedValue({}),
   findOne: jest.fn().mockImplementation((entity: unknown) => {
+    if (entity === Payment) {
+      return Promise.resolve(makePayment());
+    }
     if (entity === Order) {
       return Promise.resolve(makeOrder({ pointsUsed: 0 }));
     }
