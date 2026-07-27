@@ -70,29 +70,26 @@ export default function AdminPointsPage() {
       });
 
       let nextOptions = firstPage.items;
-      if (selectedMember == null && userId != null) {
-        let exact = nextOptions.find((item) => item.id === userId);
-
-        if (!exact && trimmedKeyword === '') {
-          const totalPages = Math.max(1, Math.ceil(firstPage.total / firstPage.limit));
-          for (let page = 2; page <= totalPages; page += 1) {
-            const response = await adminMembersApi.getList({ page, limit: MEMBER_SEARCH_PAGE_SIZE });
-            exact = response.items.find((item) => item.id === userId);
-            if (exact) {
-              nextOptions = [...nextOptions, exact];
-              break;
-            }
-            if (response.items.length === 0) {
-              break;
-            }
+      let exact = nextOptions.find((item) => item.id === userId);
+      if (!exact && trimmedKeyword === '' && userId != null) {
+        if (selectedMember?.id === userId) {
+          exact = selectedMember;
+        } else {
+          try {
+            exact = await adminMembersApi.getById(userId);
+          } catch {
+            exact = undefined;
           }
         }
-
-        if (exact) {
-          setSelectedMember(exact);
+        const exactId = exact?.id;
+        if (exactId != null && !nextOptions.some((item) => item.id === exactId)) {
+          nextOptions = [...nextOptions, exact as AdminMember];
         }
       }
 
+      if (selectedMember == null && exact) {
+        setSelectedMember(exact);
+      }
       setMemberOptions(nextOptions);
     } catch (err) {
       toast.error(handleApiError(err, t('memberLookupError')));

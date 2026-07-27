@@ -47,6 +47,16 @@ export class AdminMembersController {
     return this.adminMembersService.findAll(query);
   }
 
+  @Get('members/:id')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '회원 단건 조회', description: '회원 한 명의 기본 정보를 조회합니다.' })
+  @ApiResponse({ status: 200, description: '회원 조회 성공' })
+  @ApiResponse({ status: 404, description: '회원을 찾을 수 없음' })
+  @ApiParam({ name: 'id', type: Number, description: '회원 ID' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.adminMembersService.findOne(id);
+  }
+
   @Patch('members/:id')
   @UseInterceptors(AuditLogInterceptor)
   @AuditLog({ action: AuditAction.MEMBER_ROLE_CHANGE, resourceType: 'member' })

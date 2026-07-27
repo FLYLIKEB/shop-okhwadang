@@ -5,6 +5,7 @@ import AdminPointsPage from '../page';
 const mockPush = vi.fn();
 const mockUseAdminGuard = vi.fn();
 const mockMembersGetList = vi.fn();
+const mockGetMemberById = vi.fn();
 const mockGetUserSummary = vi.fn();
 const mockGetUserHistory = vi.fn();
 const mockCreateAdjustment = vi.fn();
@@ -33,6 +34,7 @@ vi.mock('@/components/shared/hooks/useAdminGuard', () => ({
 vi.mock('@/lib/api', () => ({
   adminMembersApi: {
     getList: (...args: unknown[]) => mockMembersGetList(...args),
+    getById: (...args: unknown[]) => mockGetMemberById(...args),
   },
   adminPointsApi: {
     getUserSummary: (...args: unknown[]) => mockGetUserSummary(...args),
@@ -84,6 +86,17 @@ describe('AdminPointsPage', () => {
         limit: 20,
       });
     });
+    mockGetMemberById.mockResolvedValue({
+      id: 42,
+      email: 'member@example.com',
+      name: '회원',
+      phone: null,
+      role: 'user',
+      isActive: true,
+      createdAt: '2026-07-25T00:00:00.000Z',
+      updatedAt: '2026-07-25T00:00:00.000Z',
+    });
+
 mockGetUserSummary.mockResolvedValue({ userId: 42, balance: 9000 });
 mockGetUserHistory.mockImplementation((_: number, params?: { page?: number; limit?: number }) => {
   if (params?.page === 2) {
@@ -140,55 +153,41 @@ expect(screen.getByText('리뷰 적립')).toBeInTheDocument();
 expect(screen.getByRole('button', { name: 'next' })).toBeEnabled();
 });
 
-it('loads just enough member pages so deep-linked users outside page 1 remain selectable', async () => {
+it('loads the deep-linked member directly when page 1 does not include it', async () => {
   currentSearchParams = new URLSearchParams('userId=84');
-  mockMembersGetList.mockImplementation((params?: { page?: number; limit?: number; q?: string }) => {
-    const page = params?.page ?? 1;
-
-    if (page === 2) {
-      return Promise.resolve({
-        items: [
-          {
-            id: 84,
-            email: 'second@example.com',
-            name: '두번째 회원',
-            phone: null,
-            role: 'user',
-            isActive: true,
-            createdAt: '2026-07-25T00:00:00.000Z',
-            updatedAt: '2026-07-25T00:00:00.000Z',
-          },
-        ],
-        total: 21,
-        page: 2,
-        limit: 20,
-      });
-    }
-
-    return Promise.resolve({
-      items: [
-        {
-          id: 42,
-          email: 'member@example.com',
-          name: '회원',
-          phone: null,
-          role: 'user',
-          isActive: true,
-          createdAt: '2026-07-25T00:00:00.000Z',
-          updatedAt: '2026-07-25T00:00:00.000Z',
-        },
-      ],
-      total: 21,
-      page: 1,
-      limit: 20,
-    });
+  mockMembersGetList.mockResolvedValue({
+    items: [
+      {
+        id: 42,
+        email: 'member@example.com',
+        name: '회원',
+        phone: null,
+        role: 'user',
+        isActive: true,
+        createdAt: '2026-07-25T00:00:00.000Z',
+        updatedAt: '2026-07-25T00:00:00.000Z',
+      },
+    ],
+    total: 21,
+    page: 1,
+    limit: 20,
+  });
+  mockGetMemberById.mockResolvedValue({
+    id: 84,
+    email: 'second@example.com',
+    name: '두번째 회원',
+    phone: null,
+    role: 'user',
+    isActive: true,
+    createdAt: '2026-07-25T00:00:00.000Z',
+    updatedAt: '2026-07-25T00:00:00.000Z',
   });
 
   render(<AdminPointsPage />);
 
   await waitFor(() => {
     expect(mockMembersGetList).toHaveBeenCalledWith({ q: undefined, page: 1, limit: 20 });
-    expect(mockMembersGetList).toHaveBeenCalledWith({ page: 2, limit: 20 });
+    expect(mockGetMemberById).toHaveBeenCalledWith(84);
   });
 
   expect(await screen.findByText('두번째 회원 · second@example.com')).toBeInTheDocument();

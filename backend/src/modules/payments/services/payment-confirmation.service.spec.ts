@@ -423,27 +423,16 @@ describe('PaymentConfirmationService', () => {
       });
     });
 
-    it('트랜잭션 내부 실패 → payment FAILED 마킹', async () => {
+    it('트랜잭션 내부 실패 → confirmation reconciliation marker persisted', async () => {
       const payment = makePayment();
       const failingManager = makeTransactionManager({
         save: jest.fn().mockRejectedValue(new Error('shipping insert 실패')),
       });
-      const recoveryManager = makeTransactionManager();
-      // 첫 번째 트랜잭션은 save 실패 (성공 path), 두 번째는 catch 블록 (FAILED 마킹 + 재고 복구)
       const dataSource = {
-        transaction: jest
-          .fn()
-          .mockImplementationOnce(
-            async (
-              fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>,
-            ) => fn(failingManager),
-          )
-          .mockImplementationOnce(
-            async (
-              fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>,
-            ) => fn(recoveryManager),
-          ),
-        _manager: recoveryManager,
+        transaction: jest.fn(
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+        ),
+        _manager: failingManager,
       };
       const paymentRepo = {
         findOne: jest.fn().mockResolvedValue(payment),
@@ -463,39 +452,41 @@ describe('PaymentConfirmationService', () => {
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
-      ).rejects.toThrow(InternalServerErrorException);
-      expect(recoveryManager.update).toHaveBeenCalledWith(Payment, payment.id, {
-        status: PaymentStatus.FAILED,
-      });
+      ).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
+      expect(paymentRepo.update).toHaveBeenCalledWith(payment.id, expect.objectContaining({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pk',
+        method: 'mock',
+        rawResponse: expect.objectContaining({
+          gatewayConfirmationSucceeded: true,
+          reconciliationRequired: true,
+          orderId: 1,
+          error: 'shipping insert 실패',
+        }),
+      }));
+      expect(failingManager.update).not.toHaveBeenCalledWith(Payment, payment.id, { status: PaymentStatus.FAILED });
+      expect(failingManager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
     });
 
-    it('트랜잭션 내부 실패 복구 시 차감 포인트를 같은 트랜잭션에서 자동 복구한다', async () => {
+    it('트랜잭션 내부 실패 후에는 차감 포인트 복구를 수행하지 않는다', async () => {
       const payment = makePayment({
         order: makeOrder({ pointsUsed: 700, status: OrderStatus.PENDING }),
       });
       const failingManager = makeTransactionManager({
         save: jest.fn().mockRejectedValue(new Error('shipping insert 실패')),
       });
-      const recoveryManager = makeTransactionManager({
-        findOne: jest.fn().mockImplementation((entity: unknown) => {
-          if (entity === Payment) {
-            return Promise.resolve(payment);
-          }
-          if (entity === Order) {
-            return Promise.resolve(makeOrder({ id: 1, userId: 10, orderNumber: 'ORD-20240101-ABCD1', pointsUsed: 700, status: OrderStatus.PENDING }));
-          }
-          return Promise.resolve(null);
-        }),
-      });
+      const paymentRepo = {
+        findOne: jest.fn().mockResolvedValue(payment),
+        update: jest.fn().mockResolvedValue({}),
+      };
       const dataSource = {
-        transaction: jest
-          .fn()
-          .mockImplementationOnce(async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager))
-          .mockImplementationOnce(async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(recoveryManager)),
-        _manager: recoveryManager,
+        transaction: jest.fn(
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+        ),
+        _manager: failingManager,
       };
       const { service, defaultGateway } = buildService({
-        paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
+        paymentRepo,
         dataSource: dataSource as ReturnType<typeof makeDataSource>,
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
@@ -508,19 +499,70 @@ describe('PaymentConfirmationService', () => {
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
-      ).rejects.toThrow(InternalServerErrorException);
+      ).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
 
-      expect(recoveryManager.save).toHaveBeenCalledWith(
+      expect(failingManager.save).not.toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           userId: 10,
           type: 'admin_adjust',
           amount: 700,
-          balance: 2700,
           orderId: 1,
-          description: '주문 1 결제 승인 실패로 인한 적립금 복구',
         }),
       );
+    });
+
+    it('트랜잭션 내부 실패 복구 시 차감 포인트를 같은 트랜잭션에서 자동 복구한다', async () => {
+      const payment = makePayment({
+        order: makeOrder({ pointsUsed: 700, status: OrderStatus.PENDING }),
+      });
+      const failingManager = makeTransactionManager({
+        save: jest.fn().mockRejectedValue(new Error('shipping insert 실패')),
+      });
+      const paymentRepo = {
+        findOne: jest.fn().mockResolvedValue(payment),
+        update: jest.fn().mockResolvedValue({}),
+      };
+      const dataSource = {
+        transaction: jest.fn(
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+        ),
+        _manager: failingManager,
+      };
+      const { service, defaultGateway } = buildService({
+        paymentRepo,
+        dataSource: dataSource as ReturnType<typeof makeDataSource>,
+      });
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({
+        paymentKey: 'pk',
+        method: 'mock',
+        amount: 30000,
+        status: 'confirmed',
+        rawResponse: {},
+      });
+
+      await expect(
+        service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
+      ).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
+
+      expect(failingManager.save).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          userId: 10,
+          type: 'admin_adjust',
+          amount: 700,
+          orderId: 1,
+        }),
+      );
+      expect(paymentRepo.update).toHaveBeenCalledWith(payment.id, expect.objectContaining({
+        status: PaymentStatus.CONFIRMED,
+        rawResponse: expect.objectContaining({
+          gatewayConfirmationSucceeded: true,
+          reconciliationRequired: true,
+          orderId: 1,
+          error: 'shipping insert 실패',
+        }),
+      }));
     });
   });
 

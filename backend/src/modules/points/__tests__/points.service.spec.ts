@@ -281,16 +281,18 @@ describe('PointsService', () => {
   });
 
   describe('adjustPointsManually', () => {
-    it('creates positive adjustments as earn rows with one-year expiry and audit in one transaction', async () => {
+    it('creates positive adjustments as earn rows with one-year expiry and effective balance metadata', async () => {
       const createdAt = new Date('2026-01-02T00:00:00.000Z');
-      mockEntityManager.findOne.mockResolvedValueOnce({ id: 42 });
+      mockEntityManager.findOne
+        .mockResolvedValueOnce({ id: 42 })
+        .mockResolvedValueOnce({ balance: 2000 });
       mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '1000' });
       mockEntityManager.save.mockResolvedValue({
         id: 88,
         userId: 42,
         type: 'earn',
         amount: 500,
-        balance: 1500,
+        balance: 2500,
         description: '관리자 수동 포인트 조정: CS 보상 지급',
         createdAt,
         orderId: null,
@@ -307,7 +309,7 @@ describe('PointsService', () => {
         userId: 42,
         type: 'earn',
         amount: 500,
-        balance: 1500,
+        balance: 2500,
         description: '관리자 수동 포인트 조정: CS 보상 지급',
         expiresAt: expect.any(Date),
       }));
@@ -331,15 +333,17 @@ describe('PointsService', () => {
       });
     });
 
-    it('creates negative adjustments as spend rows without expiry and rejects insufficient balance', async () => {
+    it('creates negative adjustments with running-ledger rows and effective balance metadata', async () => {
       mockEntityManager.findOne
         .mockResolvedValueOnce({ id: 42 })
+        .mockResolvedValueOnce({ balance: 2000 })
+        .mockResolvedValueOnce({ balance: 2000 })
         .mockResolvedValueOnce({
           id: 91,
           userId: 42,
           type: 'spend',
           amount: -300,
-          balance: 900,
+          balance: 1700,
           description: '관리자 수동 포인트 조정: 사후 차감',
           createdAt: new Date(),
           orderId: null,
@@ -357,7 +361,7 @@ describe('PointsService', () => {
       expect(mockEntityManager.save).toHaveBeenCalledWith(PointHistory, expect.objectContaining({
         type: 'spend',
         amount: -300,
-        balance: 900,
+        balance: 1700,
         orderId: null,
         description: '관리자 수동 포인트 조정: 사후 차감',
       }));

@@ -264,16 +264,19 @@ export class PointsService {
       await this.assertUserExistsInTx(manager, dto.userId);
 
       const beforeBalance = await this.getEffectiveBalanceInTx(manager, dto.userId);
+      const beforeRunningBalance = await this.getRunningBalanceInTx(manager, dto.userId);
       const description = `${MANUAL_POINT_ADJUSTMENT_PREFIX}${dto.reason}`;
 
       let entry: PointHistory;
+      let balanceAfter: number;
       if (dto.delta > 0) {
-        const newBalance = beforeBalance + dto.delta;
+        const newRunningBalance = beforeRunningBalance + dto.delta;
+        balanceAfter = beforeBalance + dto.delta;
         entry = await manager.save(PointHistory, {
           userId: dto.userId,
           type: 'earn',
           amount: dto.delta,
-          balance: newBalance,
+          balance: newRunningBalance,
           description,
           expiresAt: addOneYear(new Date()),
           orderId: null,
@@ -281,14 +284,8 @@ export class PointsService {
           relatedEntityId: null,
         });
       } else {
-        await this.deductFifo(
-          manager,
-          dto.userId,
-          Math.abs(dto.delta),
-          description,
-          null,
-          beforeBalance,
-        );
+        await this.deductFifo(manager, dto.userId, Math.abs(dto.delta), description, null);
+        balanceAfter = beforeBalance - Math.abs(dto.delta);
         const savedEntry = await manager.findOne(PointHistory, {
           where: { userId: dto.userId },
           order: { createdAt: 'DESC', id: 'DESC' },
@@ -312,7 +309,7 @@ export class PointsService {
         afterJson: {
           userId: dto.userId,
           delta: dto.delta,
-          balanceAfter: Number(entry.balance),
+          balanceAfter,
           reason: dto.reason,
           pointHistoryId: Number(entry.id),
         },
@@ -325,7 +322,7 @@ export class PointsService {
         auditLogId: Number(auditLog.id),
         userId: dto.userId,
         delta: dto.delta,
-        balanceAfter: Number(entry.balance),
+        balanceAfter,
         description: entry.description,
         createdAt: entry.createdAt,
       };
@@ -347,14 +344,13 @@ export class PointsService {
     amount: number,
     description: string,
     orderId: number | null = null,
-    balanceBase?: number,
   ): Promise<number> {
     const effectiveBalance = await this.getEffectiveBalanceInTx(manager, userId);
     if (amount > effectiveBalance) {
       throw new BadRequestException('적립금이 부족합니다.');
     }
 
-    const currentBalance = balanceBase ?? await this.getRunningBalanceInTx(manager, userId);
+    const currentBalance = await this.getRunningBalanceInTx(manager, userId);
     const newBalance = currentBalance - amount;
 
     await manager.save(PointHistory, {
