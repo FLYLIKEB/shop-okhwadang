@@ -7,6 +7,7 @@ import { Shipping } from './entities/shipping.entity';
 import { Order } from '../orders/entities/order.entity';
 import { OrderEventsModule } from '../orders/order-events.module';
 import { OrdersModule } from '../orders/orders.module';
+import { PointsModule } from '../points/points.module';
 import { PointHistory } from '../coupons/entities/point-history.entity';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
@@ -43,6 +44,7 @@ export { isCheckoutGatewayName };
     TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory]),
     OrderEventsModule,
     OrdersModule,
+    PointsModule,
   ],
   controllers: [
     PaymentsController,

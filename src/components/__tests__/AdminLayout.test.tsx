@@ -3,11 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AdminLayout from '@/app/[locale]/admin/layout';
 
 const mockReplace = vi.fn();
+let mockPathname = '/admin/dashboard';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace }),
-  usePathname: () => '/admin/dashboard',
+  usePathname: () => mockPathname,
 }));
+
 
 const mockUseAuth = vi.fn();
 vi.mock('@/contexts/AuthContext', () => ({
@@ -38,7 +40,9 @@ vi.mock('next-intl', async (importOriginal) => {
 
 beforeEach(() => {
   mockReplace.mockClear();
+  mockPathname = '/admin/dashboard';
 });
+
 
 describe('AdminLayout', () => {
   it('user=null (not authenticated) → redirects to /login', () => {
@@ -99,10 +103,26 @@ describe('AdminSidebar', () => {
     fireEvent.click(screen.getByText('운영'));
     expect(screen.getByText('주문관리')).toBeInTheDocument();
     expect(screen.getByText('회원관리')).toBeInTheDocument();
+    expect(screen.getByText('쿠폰관리')).toBeInTheDocument();
+    expect(screen.getByText('쿠폰 규칙')).toBeInTheDocument();
+    expect(screen.getByText('적립금관리')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('CMS'));
     expect(screen.getByText('페이지관리')).toBeInTheDocument();
     expect(screen.getByText('네비게이션관리')).toBeInTheDocument();
     expect(screen.getByText('안내바관리')).toBeInTheDocument();
+  });
+
+  it('shows the coupon rules section title in the header for nested coupon routes', () => {
+    mockPathname = '/admin/coupons/rules';
+    mockUseAuth.mockReturnValue({
+      user: { id: 2, name: '관리자', email: 'a@test.com', role: 'admin' },
+      isLoading: false,
+      logout: vi.fn(),
+    });
+
+    render(<AdminLayout><span /></AdminLayout>);
+
+    expect(screen.getByText('쿠폰 규칙')).toBeInTheDocument();
   });
 });

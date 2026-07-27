@@ -1,4 +1,5 @@
 import { Logger, UnauthorizedException } from '@nestjs/common';
+import { PointsService } from '../../points/points.service';
 import { PaymentWebhookService } from './payment-webhook.service';
 import { Payment, PaymentStatus, PaymentGatewayType } from '../entities/payment.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
@@ -8,9 +9,9 @@ import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 const makeWebhookManager = (overrides: Record<string, jest.Mock> = {}) => ({
   findOne: jest.fn(),
   update: jest.fn().mockResolvedValue({}),
-  // 재고 복구 (issue #723) — restoreOrderStock 유틸이 manager.find / manager.increment 를 호출.
   find: jest.fn().mockResolvedValue([]),
   increment: jest.fn().mockResolvedValue({}),
+  save: jest.fn().mockResolvedValue({}),
   ...overrides,
 });
 
@@ -52,6 +53,9 @@ const buildService = (args: BuildArgs = {}) => {
   );
   const dataSource = { transaction } as never;
   const logger = new Logger('PaymentWebhookService.spec');
+  const pointsService = {
+    getRunningBalanceInTx: jest.fn().mockResolvedValue(1200),
+  } as Pick<PointsService, 'getRunningBalanceInTx'>;
 
   const service = new PaymentWebhookService({
     gateway,
@@ -60,9 +64,10 @@ const buildService = (args: BuildArgs = {}) => {
     webhookEventRepository: webhookEventRepo as never,
     dataSource,
     logger,
+    pointsService,
   });
 
-  return { service, gateway, paymentRepo, webhookEventRepo, manager, transaction, logger };
+  return { service, gateway, paymentRepo, webhookEventRepo, manager, transaction, logger, pointsService };
 };
 
 describe('PaymentWebhookService', () => {
@@ -231,6 +236,35 @@ describe('PaymentWebhookService', () => {
       // Payment/Order update 는 멱등(allowSameStatus)으로 호출될 수 있으나,
       // restoreOrderStock 은 절대 호출되어선 안 된다.
       expect(manager.increment).not.toHaveBeenCalled();
+    });
+
+    it('CANCEL 웹훅은 첫 terminal 전이에서만 포인트 복구 행을 기록한다', async () => {
+      const order = { id: 7, status: OrderStatus.PAID, userId: 10, orderNumber: 'ORD-7', pointsUsed: 500 };
+      const manager = makeWebhookManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Order) return Promise.resolve(order);
+          return Promise.resolve(null);
+        }),
+        find: jest.fn().mockResolvedValue([]),
+        save: jest.fn().mockResolvedValue({}),
+      });
+      const { service, gateway, paymentRepo, pointsService } = buildService({ manager });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7, paidAt: new Date(), cancelledAt: null });
+
+      await service.handleWebhook({ orderId: 7, status: 'CANCELLED' }, 'valid_sig');
+
+      expect(pointsService.getRunningBalanceInTx).toHaveBeenCalledWith(manager, 10);
+      expect(manager.save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          userId: 10,
+          type: 'admin_adjust',
+          amount: 500,
+          balance: 1700,
+          orderId: 7,
+        }),
+      );
     });
 
     it('eventType 이 우선 매칭된다 (eventType > status > type)', async () => {
@@ -422,21 +456,18 @@ describe('PaymentWebhookService', () => {
       );
     });
 
-    it('이미 CANCELLED 인 주문에 CANCEL 재수신 → SUCCESS (allowSameStatus update 가 수행됨)', async () => {
-      // allowSameStatus=true 정책상 update 가 한 번 호출되므로 SUCCESS.
-      // 재고 복구는 멱등성으로 막혀있음.
+    it('이미 CANCELLED 인 주문에 CANCEL 재수신 → IGNORED (추가 terminal mutation 없이 no-op)', async () => {
       const manager = makeWebhookManager({
         findOne: jest.fn().mockResolvedValue({ id: 7, status: OrderStatus.CANCELLED }),
       });
-      const { service, gateway, paymentRepo, webhookEventRepo } = buildService({ manager });
+      const { service, gateway, webhookEventRepo } = buildService({ manager });
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
-      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
 
       await service.handleWebhook({ orderId: 7, status: 'CANCELLED' }, 'valid_sig');
 
       expect(webhookEventRepo.update).toHaveBeenCalledWith(
         1,
-        expect.objectContaining({ result: PaymentWebhookResult.SUCCESS }),
+        expect.objectContaining({ result: PaymentWebhookResult.IGNORED }),
       );
       expect(manager.increment).not.toHaveBeenCalled();
     });

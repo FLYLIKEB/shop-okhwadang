@@ -18,6 +18,7 @@ import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
 import { NotificationService } from '../../notification/notification.service';
 import { NotificationDispatchHelper } from '../../notification/notification-dispatch.helper';
 import { PAYMENT_CONFIG, createPaymentConfig } from '../../../config/payment.config';
+import { PointsService } from '../../points/points.service';
 import { PaymentConfirmationService } from '../services/payment-confirmation.service';
 import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
 import { User } from '../../users/entities/user.entity';
@@ -47,10 +48,14 @@ const makePayment = (overrides: Partial<Payment> = {}): Payment =>
 
 const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   update: jest.fn().mockResolvedValue({}),
-  findOne: jest.fn().mockResolvedValue(null),
+  findOne: jest.fn().mockImplementation((entity: unknown) => {
+    if (entity === Order) {
+      return Promise.resolve(makeOrder({ pointsUsed: 0 }));
+    }
+    return Promise.resolve(null);
+  }),
   save: jest.fn().mockResolvedValue({}),
   create: jest.fn().mockImplementation((_entity: unknown, data: unknown) => data),
-  // 재고 복구 (issue #723) — restoreOrderStock 유틸이 manager.find / manager.increment 를 호출.
   find: jest.fn().mockResolvedValue([]),
   increment: jest.fn().mockResolvedValue({}),
   ...overrides,
@@ -181,6 +186,9 @@ describe('PaymentsService', () => {
   };
 
   let mockDataSource: ReturnType<typeof makeDataSourceMock>;
+  const mockPointsService = {
+    getRunningBalanceInTx: jest.fn().mockResolvedValue(2000),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -218,6 +226,7 @@ describe('PaymentsService', () => {
         { provide: PayPalPaymentAdapter, useValue: mockPaypalAdapter },
         { provide: EximbayPaymentAdapter, useValue: mockEximbayAdapter },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
+        { provide: PointsService, useValue: mockPointsService },
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: DataSource, useValue: mockDataSource },
         {
@@ -884,6 +893,67 @@ describe('PaymentsService', () => {
       });
     });
 
+it('cancelAdmin() persists reconciliation marker when order sync fails after gateway refund', async () => {
+  const order = makeOrder({ status: OrderStatus.REFUND_REQUESTED, pointsUsed: 0 });
+  const payment = makePayment({
+    status: PaymentStatus.CONFIRMED,
+    paymentKey: 'pay_refund',
+    order,
+  });
+  const refundedAt = new Date();
+  const syncError = new Error('refund sync failed');
+  mockPaymentRepo.findOne.mockResolvedValue(payment);
+  mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: refundedAt, rawResponse: { refund: true } });
+  mockDataSource.transaction.mockRejectedValueOnce(syncError);
+
+  await expect(
+    service.cancelAdmin(1, '관리자 환불 처리', async () => {
+      throw syncError;
+    }),
+  ).rejects.toThrow(syncError);
+
+  expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, {
+    status: PaymentStatus.REFUNDED,
+    cancelledAt: refundedAt,
+    cancelReason: '관리자 환불 처리',
+    rawResponse: expect.objectContaining({
+      gatewayRefundSucceeded: true,
+      reconciliationRequired: true,
+      orderId: 1,
+      rawResponse: { refund: true },
+      error: 'refund sync failed',
+    }),
+  });
+});
+
+it('cancelAdmin() updates payment before running admin refund sync in one transaction', async () => {
+  const order = makeOrder({ status: OrderStatus.REFUND_REQUESTED, pointsUsed: 0 });
+  const payment = makePayment({
+    status: PaymentStatus.CONFIRMED,
+    paymentKey: 'pay_refund',
+    order,
+  });
+  const refundedAt = new Date();
+  const txManager = makeTransactionManager();
+  mockPaymentRepo.findOne.mockResolvedValue(payment);
+  mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: refundedAt, rawResponse: { refund: true } });
+  mockDataSource.transaction.mockImplementationOnce(
+    async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(txManager),
+  );
+  const postGatewaySync = jest.fn().mockResolvedValue(undefined);
+
+  const result = await service.cancelAdmin(1, '관리자 환불 처리', postGatewaySync);
+
+  expect(result.status).toBe(PaymentStatus.REFUNDED);
+  expect(txManager.update).toHaveBeenCalledWith(Payment, payment.id, {
+    status: PaymentStatus.REFUNDED,
+    cancelledAt: refundedAt,
+    cancelReason: '관리자 환불 처리',
+    rawResponse: { refund: true },
+  });
+  expect(postGatewaySync).toHaveBeenCalledWith(txManager, refundedAt);
+});
+
     it('cancelPaidOrder()는 전달받은 트랜잭션에서 PG 취소 후 Payment/Order/stock/points를 함께 갱신한다 (#898)', async () => {
       const order = makeOrder({
         status: OrderStatus.PAID,
@@ -902,7 +972,8 @@ describe('PaymentsService', () => {
       const txManager = makeTransactionManager({
         findOne: jest.fn().mockImplementation((entity: unknown) => {
           if (entity === Payment) return Promise.resolve(payment);
-          return Promise.resolve({ balance: 2000 });
+          if (entity === Order) return Promise.resolve(order);
+          return Promise.resolve(null);
         }),
         find: jest.fn().mockResolvedValue(items),
         increment: jest.fn().mockResolvedValue({}),
@@ -944,6 +1015,54 @@ describe('PaymentsService', () => {
           orderId: order.id,
         }),
       );
+    });
+
+    it('cancelPaidOrder() rejects stale locked transitions before terminal cancellation side effects run', async () => {
+      const order = makeOrder({
+        status: OrderStatus.PAID,
+        pointsUsed: 1000,
+      });
+      const payment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pay_abc',
+        order,
+      });
+      const cancelledAt = new Date();
+      const txManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Payment) return Promise.resolve(payment);
+          if (entity === Order) return Promise.resolve(makeOrder({
+            id: order.id,
+            userId: order.userId,
+            orderNumber: order.orderNumber,
+            status: OrderStatus.SHIPPED,
+            pointsUsed: order.pointsUsed,
+            totalAmount: order.totalAmount,
+          }));
+          return Promise.resolve(null);
+        }),
+      });
+      mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt, rawResponse: { mock: true } });
+
+      await expect(
+        service.cancelPaidOrder(1, '관리자 승인', txManager as unknown as EntityManager),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(txManager.update).not.toHaveBeenCalled();
+      expect(txManager.increment).not.toHaveBeenCalled();
+      expect(txManager.save).not.toHaveBeenCalled();
+      expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, {
+        status: PaymentStatus.CANCELLED,
+        cancelledAt,
+        cancelReason: '관리자 승인',
+        rawResponse: expect.objectContaining({
+          gatewayCancellationSucceeded: true,
+          reconciliationRequired: true,
+          orderId: 1,
+          rawResponse: { mock: true },
+          error: expect.any(String),
+        }),
+      });
     });
   });
 });

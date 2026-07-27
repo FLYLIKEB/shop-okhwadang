@@ -8,24 +8,28 @@ import type { Locale } from '@/i18n/routing';
 interface OrderSummarySectionProps {
   checkoutItems: CartItem[];
   locale: Locale;
+  subtotalAmount: number;
   shippingFee: number;
   freeShippingThreshold: number;
-  discountAmount?: number;
+  couponDiscount?: number;
+  pointsUsed?: number;
+  totalPayable: number;
 }
 
 export function OrderSummarySection({
   checkoutItems,
   locale,
+  subtotalAmount,
   shippingFee,
   freeShippingThreshold,
-  discountAmount = 0,
+  couponDiscount = 0,
+  pointsUsed = 0,
+  totalPayable,
 }: OrderSummarySectionProps) {
   const t = useTranslations('checkout');
-  const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const grandTotal = Math.max(totalAmount + shippingFee - discountAmount, 0);
-  const remainingForFreeShipping = Math.max(freeShippingThreshold - totalAmount, 0);
+  const remainingForFreeShipping = Math.max(freeShippingThreshold - subtotalAmount, 0);
   const freeShippingProgress = freeShippingThreshold > 0
-    ? Math.min((totalAmount / freeShippingThreshold) * 100, 100)
+    ? Math.min((subtotalAmount / freeShippingThreshold) * 100, 100)
     : 100;
 
   return (
@@ -66,16 +70,22 @@ export function OrderSummarySection({
       <div className="mt-4 border-t border-soft pt-4 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t('productAmount')}</span>
-          <span className="typo-price">{formatCurrency(totalAmount, locale)}</span>
+          <span className="typo-price">{formatCurrency(subtotalAmount, locale)}</span>
         </div>
         <div className="mt-2 flex justify-between">
           <span className="text-muted-foreground">{t('shippingFee')}</span>
           <span className="typo-price">{shippingFee === 0 ? t('freeShipping') : formatCurrency(shippingFee, locale)}</span>
         </div>
-        {discountAmount > 0 && (
+        {couponDiscount > 0 && (
           <div className="mt-2 flex justify-between">
             <span className="text-muted-foreground">{t('discountAmount')}</span>
-            <span className="typo-price text-destructive">-{formatCurrency(discountAmount, locale)}</span>
+            <span className="typo-price text-destructive">-{formatCurrency(couponDiscount, locale)}</span>
+          </div>
+        )}
+        {pointsUsed > 0 && (
+          <div className="mt-2 flex justify-between">
+            <span className="text-muted-foreground">{t('pointsUsed')}</span>
+            <span className="typo-price text-destructive">-{formatCurrency(pointsUsed, locale)}</span>
           </div>
         )}
       </div>
@@ -83,7 +93,7 @@ export function OrderSummarySection({
       <div className="mt-4 border-t border-soft pt-4">
         <div className="flex items-end justify-between">
           <span className="typo-title">{t('total')}</span>
-          <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
+          <span className="typo-price-lg text-foreground">{formatCurrency(totalPayable, locale)}</span>
         </div>
       </div>
     </section>

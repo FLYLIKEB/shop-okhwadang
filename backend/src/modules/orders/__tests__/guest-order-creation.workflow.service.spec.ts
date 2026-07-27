@@ -17,7 +17,7 @@ describe('GuestOrderCreationWorkflowService', () => {
     marketingConsent: true,
   };
 
-  it('persists guest-safe order fields and reuses only identity-agnostic helpers', async () => {
+  it('persists guest-safe order fields while delegating pricing authority to the shared workflow', async () => {
     const manager = { marker: 'tx-manager' };
     const savedOrder = {
       id: 321,
@@ -34,14 +34,21 @@ describe('GuestOrderCreationWorkflowService', () => {
         subtotalAmount: 42000,
         shippingItemPolicies,
       }),
-      calculateShippingFee: jest.fn().mockResolvedValue(3000),
+      calculatePricing: jest.fn().mockResolvedValue({
+        subtotalAmount: 42000,
+        couponDiscount: 0,
+        pointsDiscount: 0,
+        shippingFee: 3000,
+        isFreeShipping: false,
+        isRemoteArea: false,
+        remoteAreaSurcharge: 3000,
+        totalPayable: 45000,
+        appliedPointsUsed: 0,
+        freeShippingThreshold: 50000,
+      }),
       saveOrder: jest.fn().mockResolvedValue(savedOrder),
       savePolicyConsent: jest.fn().mockResolvedValue(undefined),
       saveOrderItems: jest.fn().mockResolvedValue(undefined),
-      ensureSufficientPoints: jest.fn(),
-      calculateDiscountAndShipping: jest.fn(),
-      applyCouponAndPoints: jest.fn(),
-      clearCartItems: jest.fn(),
     };
 
     const service = new GuestOrderCreationWorkflowService(sharedWorkflow as never);
@@ -49,7 +56,11 @@ describe('GuestOrderCreationWorkflowService', () => {
     const result = await service.runCreateOrderTransaction(manager as never, dto);
 
     expect(sharedWorkflow.validateAndReserveStock).toHaveBeenCalledWith(manager, dto);
-    expect(sharedWorkflow.calculateShippingFee).toHaveBeenCalledWith(42000, dto.zipcode, shippingItemPolicies);
+    expect(sharedWorkflow.calculatePricing).toHaveBeenCalledWith(manager, null, {
+      zipcode: dto.zipcode,
+      subtotalAmount: 42000,
+      shippingItemPolicies,
+    });
     expect(sharedWorkflow.saveOrder).toHaveBeenCalledWith(manager, {
       userId: null,
       totalAmount: 45000,
@@ -67,10 +78,6 @@ describe('GuestOrderCreationWorkflowService', () => {
     });
     expect(sharedWorkflow.savePolicyConsent).toHaveBeenCalledWith(manager, null, savedOrder, dto);
     expect(sharedWorkflow.saveOrderItems).toHaveBeenCalledWith(manager, orderItems, 321);
-    expect(sharedWorkflow.ensureSufficientPoints).not.toHaveBeenCalled();
-    expect(sharedWorkflow.calculateDiscountAndShipping).not.toHaveBeenCalled();
-    expect(sharedWorkflow.applyCouponAndPoints).not.toHaveBeenCalled();
-    expect(sharedWorkflow.clearCartItems).not.toHaveBeenCalled();
     expect(result).toEqual({
       savedOrder,
       totalPayable: 45000,

@@ -40,6 +40,15 @@ export interface CalculateDiscountResponse {
   totalPayable: number;
 }
 
+export type PointHistorySourceKind =
+  | 'review_reward_earn'
+  | 'review_reward_revoke'
+  | 'order_use'
+  | 'expiry'
+  | 'order_restore'
+  | 'manual_grant'
+  | 'manual_debit';
+
 export interface PointHistoryItem {
   id: number;
   type: 'earn' | 'spend' | 'expire' | 'admin_adjust';
@@ -47,6 +56,7 @@ export interface PointHistoryItem {
   balance: number;
   description: string | null;
   createdAt: string;
+  sourceKind: PointHistorySourceKind;
 }
 
 export interface PointsResponse {

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import AnnouncementBar from '@/components/shared/layout/AnnouncementBar';
 import * as apiServer from '@/lib/api-server';
 
@@ -12,13 +12,6 @@ vi.mock('next-intl', () => ({
 }));
 
 describe('AnnouncementBar', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
 
   it('SSR에서 locale 파라미터로 안내 문구를 조회해 렌더링한다', async () => {
     vi.spyOn(apiServer, 'fetchAnnouncementBars').mockResolvedValue([

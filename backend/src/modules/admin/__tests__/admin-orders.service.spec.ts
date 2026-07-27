@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { AdminOrdersService } from '../admin-orders.service';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
@@ -47,6 +47,7 @@ function createMockManager() {
     find: jest.fn().mockResolvedValue([]),
     findOne: jest.fn(),
     increment: jest.fn().mockResolvedValue({}),
+    save: jest.fn().mockResolvedValue({}),
   };
 }
 
@@ -192,85 +193,102 @@ describe('AdminOrdersService', () => {
         .rejects.toThrow(BadRequestException);
     });
 
-    it('paid → refunded: should call paymentsService.cancelAdmin (PG cancel)', async () => {
-      orderRepo.findOne
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
-      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });
-      paymentsService.cancelAdmin.mockResolvedValue({
-        paymentId: 10,
-        status: PaymentStatus.REFUNDED,
-        cancelledAt: new Date(),
-        cancelReason: '관리자 환불 처리',
-      });
+it('paid → refunded: should call paymentsService.cancelAdmin (PG cancel)', async () => {
+  orderRepo.findOne
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
+  paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });
+  paymentsService.cancelAdmin.mockImplementation(async (_orderId, _reason, postGatewaySync) => {
+    if (postGatewaySync) {
+      await postGatewaySync(mockManager as unknown as EntityManager, new Date());
+    }
+    return {
+      paymentId: 10,
+      status: PaymentStatus.REFUNDED,
+      cancelledAt: new Date(),
+      cancelReason: '관리자 환불 처리',
+    };
+  });
+  mockManager.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID, pointsUsed: 0, userId: null });
 
-      await service.updateStatus(1, OrderStatus.REFUNDED);
-      expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리');
-    });
+  await service.updateStatus(1, OrderStatus.REFUNDED);
+  expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리', expect.any(Function));
+  expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.REFUNDED });
+});
 
-    it('paid → cancelled: generic status update requires dedicated cancel flow with reason', async () => {
-      orderRepo.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID });
+it('paid → cancelled: generic status update requires dedicated cancel flow with reason', async () => {
+  orderRepo.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID });
 
-      await expect(service.updateStatus(1, OrderStatus.CANCELLED))
-        .rejects.toThrow(BadRequestException);
-      expect(mockManager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
-    });
+  await expect(service.updateStatus(1, OrderStatus.CANCELLED))
+    .rejects.toThrow(BadRequestException);
+  expect(mockManager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
+});
 
-    it('delivered → completed: allowed', async () => {
-      orderRepo.findOne
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED })
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.COMPLETED });
+it('delivered → completed: allowed', async () => {
+  orderRepo.findOne
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED })
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.COMPLETED });
 
-      await service.updateStatus(1, OrderStatus.COMPLETED);
-      expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.COMPLETED });
-    });
+  await service.updateStatus(1, OrderStatus.COMPLETED);
+  expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.COMPLETED });
+});
 
-    it('delivered → refund_requested: allowed', async () => {
-      orderRepo.findOne
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED })
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED });
+it('delivered → refund_requested: allowed', async () => {
+  orderRepo.findOne
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED })
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED });
 
-      await service.updateStatus(1, OrderStatus.REFUND_REQUESTED);
-      expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.REFUND_REQUESTED });
-    });
+  await service.updateStatus(1, OrderStatus.REFUND_REQUESTED);
+  expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.REFUND_REQUESTED });
+});
 
-    it('refund_requested → refunded: should call paymentsService.cancelAdmin', async () => {
-      orderRepo.findOne
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED })
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
-      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });
-      paymentsService.cancelAdmin.mockResolvedValue({
-        paymentId: 10,
-        status: PaymentStatus.REFUNDED,
-        cancelledAt: new Date(),
-        cancelReason: '관리자 환불 처리',
-      });
+it('refund_requested → refunded: should call paymentsService.cancelAdmin', async () => {
+  orderRepo.findOne
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED })
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
+  paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });
+  paymentsService.cancelAdmin.mockImplementation(async (_orderId, _reason, postGatewaySync) => {
+    if (postGatewaySync) {
+      await postGatewaySync(mockManager as unknown as EntityManager, new Date());
+    }
+    return {
+      paymentId: 10,
+      status: PaymentStatus.REFUNDED,
+      cancelledAt: new Date(),
+      cancelReason: '관리자 환불 처리',
+    };
+  });
+  mockManager.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED, pointsUsed: 0, userId: null });
 
-      await service.updateStatus(1, OrderStatus.REFUNDED);
-      expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리');
-    });
+  await service.updateStatus(1, OrderStatus.REFUNDED);
+  expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리', expect.any(Function));
+  expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.REFUNDED });
+});
 
-    it('REFUNDED 전환 시 옵션 항목은 옵션 재고만 복구', async () => {
-      const items = [
-        { orderId: 1, productId: 5, productOptionId: 50, quantity: 1 },
-      ];
-      orderRepo.findOne
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED })
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
-      paymentRepo.findOne.mockResolvedValue({ id: 99, orderId: 1 });
-      paymentsService.cancelAdmin.mockResolvedValue({
-        paymentId: 99,
-        status: PaymentStatus.REFUNDED,
-        cancelledAt: new Date(),
-        cancelReason: '관리자 환불 처리',
-      });
-      mockManager.find.mockResolvedValue(items);
+it('REFUNDED 전환 시 결제 환불 경로를 우선 사용한다', async () => {
+  orderRepo.findOne
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED, orderNumber: 'ORD-1' })
+    .mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
+  paymentRepo.findOne.mockResolvedValue({ id: 99, orderId: 1 });
+  paymentsService.cancelAdmin.mockImplementation(async (_orderId, _reason, postGatewaySync) => {
+    if (postGatewaySync) {
+      await postGatewaySync(mockManager as unknown as EntityManager, new Date());
+    }
+    return {
+      paymentId: 99,
+      status: PaymentStatus.REFUNDED,
+      cancelledAt: new Date(),
+      cancelReason: '관리자 환불 처리',
+    };
+  });
+  mockManager.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUND_REQUESTED, pointsUsed: 0, userId: null });
 
-      await service.updateStatus(1, OrderStatus.REFUNDED);
+  await service.updateStatus(1, OrderStatus.REFUNDED);
 
-      expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 50 }, 'stock', 1);
-      expect(mockManager.increment).toHaveBeenCalledTimes(1);
-    });
+  expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(1, '관리자 환불 처리', expect.any(Function));
+  expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.REFUNDED });
+  expect(mockManager.increment).not.toHaveBeenCalled();
+});
 
     it('이미 CANCELLED 상태인 주문은 재고 복구가 두 번 실행되지 않는다 (멱등성)', async () => {
       // 상태 머신상 CANCELLED → 다른 상태 전이는 차단되므로 (terminal),
@@ -403,6 +421,38 @@ describe('AdminOrdersService', () => {
       expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 20 }, 'stock', 3);
       expect(mockManager.increment).toHaveBeenCalledWith(expect.anything(), { id: 11 }, 'stock', 2);
       expect(mockManager.increment).toHaveBeenCalledTimes(2);
+    });
+
+    it('pending order cancel restores points through the shared first-terminal helper once', async () => {
+      const order = {
+        id: 1,
+        userId: 10,
+        user: { email: 'customer@example.com' },
+        status: OrderStatus.PENDING,
+        orderNumber: 'ORD-POINTS',
+        recipientName: '김옥화',
+        pointsUsed: 300,
+      };
+      orderRepo.findOne
+        .mockResolvedValueOnce(order)
+        .mockResolvedValueOnce({ ...order, status: OrderStatus.CANCELLED, cancelReason: '고객 요청' });
+      paymentRepo.findOne.mockResolvedValue({ id: 20, orderId: 1, status: PaymentStatus.PENDING });
+      mockManager.findOne.mockResolvedValue(order);
+      mockManager.find.mockResolvedValue([]);
+
+      await service.cancelOrder(1, '고객 요청');
+
+      expect(pointsService.getRunningBalanceInTx).toHaveBeenCalledWith(mockManager as unknown as EntityManager, 10);
+      expect(mockManager.save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          userId: 10,
+          type: 'admin_adjust',
+          amount: 300,
+          balance: 300,
+          orderId: 1,
+        }),
+      );
     });
   });
 

@@ -16,12 +16,14 @@ const makeCouponRule = (overrides: Partial<CouponRule> = {}): CouponRule =>
     id: 1,
     trigger: CouponRuleTrigger.SIGNUP,
     couponTemplateId: 10,
+    couponTemplate: { id: 10, code: 'WELCOME10', name: '신규가입 10%' } as unknown as CouponRule['couponTemplate'],
     conditionsJson: null,
     active: true,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
   });
+
 
 describe('CouponRulesService', () => {
   let service: CouponRulesService;
@@ -32,6 +34,7 @@ describe('CouponRulesService', () => {
     create: jest.fn(),
     save: jest.fn(),
     remove: jest.fn(),
+    findAndCount: jest.fn(),
   };
 
   const mockUserRepo = {
@@ -99,13 +102,29 @@ describe('CouponRulesService', () => {
   });
 
   describe('findAll', () => {
-    it('returns all rules ordered by createdAt DESC', async () => {
+    it('returns a paginated rule slice ordered by createdAt DESC with coupon summaries', async () => {
       const rules = [makeCouponRule()];
-      mockCouponRuleRepo.find.mockResolvedValue(rules);
+      mockCouponRuleRepo.findAndCount.mockResolvedValue([rules, 21]);
 
-      const result = await service.findAll();
-      expect(result).toEqual(rules);
-      expect(mockCouponRuleRepo.find).toHaveBeenCalledWith({ order: { createdAt: 'DESC' } });
+      const result = await service.findAll({ page: 2, limit: 20 });
+      expect(result).toEqual({
+        items: [
+          expect.objectContaining({
+            id: 1,
+            couponTemplateId: 10,
+            couponTemplate: expect.objectContaining({ id: 10, code: 'WELCOME10', name: '신규가입 10%' }),
+          }),
+        ],
+        total: 21,
+        page: 2,
+        limit: 20,
+      });
+      expect(mockCouponRuleRepo.findAndCount).toHaveBeenCalledWith({
+        relations: ['couponTemplate'],
+        order: { createdAt: 'DESC', id: 'DESC' },
+        skip: 20,
+        take: 20,
+      });
     });
   });
 
@@ -115,7 +134,11 @@ describe('CouponRulesService', () => {
       mockCouponRuleRepo.findOne.mockResolvedValue(rule);
 
       const result = await service.findOne(1);
-      expect(result).toEqual(rule);
+      expect(result).toEqual(expect.objectContaining({
+        id: 1,
+        couponTemplateId: 10,
+        couponTemplate: expect.objectContaining({ id: 10, code: 'WELCOME10', name: '신규가입 10%' }),
+      }));
     });
 
     it('throws NotFoundException if not found', async () => {
@@ -123,18 +146,22 @@ describe('CouponRulesService', () => {
       await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
     });
   });
-
   describe('create', () => {
-    it('creates and saves a coupon rule', async () => {
+    it('creates and returns a coupon rule with coupon summary', async () => {
       const rule = makeCouponRule();
       mockCouponRuleRepo.create.mockReturnValue(rule);
       mockCouponRuleRepo.save.mockResolvedValue(rule);
+      mockCouponRuleRepo.findOne.mockResolvedValue(rule);
 
       const result = await service.create({
         trigger: CouponRuleTrigger.SIGNUP,
         couponTemplateId: 10,
       });
-      expect(result).toEqual(rule);
+      expect(result).toEqual(expect.objectContaining({
+        id: 1,
+        couponTemplateId: 10,
+        couponTemplate: expect.objectContaining({ id: 10, code: 'WELCOME10', name: '신규가입 10%' }),
+      }));
       expect(mockCouponRuleRepo.create).toHaveBeenCalled();
       expect(mockCouponRuleRepo.save).toHaveBeenCalledWith(rule);
     });
@@ -143,6 +170,7 @@ describe('CouponRulesService', () => {
       const rule = makeCouponRule({ active: true });
       mockCouponRuleRepo.create.mockReturnValue(rule);
       mockCouponRuleRepo.save.mockResolvedValue(rule);
+      mockCouponRuleRepo.findOne.mockResolvedValue(rule);
 
       await service.create({ trigger: CouponRuleTrigger.FIRST_PURCHASE, couponTemplateId: 5 });
 

@@ -290,7 +290,7 @@ describe('useCheckout - 폼 검증', () => {
       paidAt: '2026-04-25T00:00:00Z',
     });
 
-    const { options } = makeOptions({ selectedUserCouponId: 7, pointsUsed: 1500 });
+    const { options } = makeOptions({ appliedUserCouponId: 7, appliedPointsUsed: 1500 });
     const { result } = renderHook(() => useCheckout(options));
 
     await act(async () => {

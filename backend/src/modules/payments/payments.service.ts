@@ -9,8 +9,7 @@ import { PaymentWebhookEvent } from './entities/payment-webhook-event.entity';
 import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
-import { restoreOrderStock } from '../orders/order-stock.util';
-import { PointHistory } from '../coupons/entities/point-history.entity';
+import { PointsService } from '../points/points.service';
 import { PaymentGateway } from './interfaces/payment-gateway.interface';
 import { PreparePaymentDto } from './dto/prepare-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
@@ -32,6 +31,8 @@ import { findOrThrow } from '../../common/utils/repository.util';
 import { PaymentConfirmationService } from './services/payment-confirmation.service';
 import { PaymentRefundService } from './services/payment-refund.service';
 import { PaymentWebhookService } from './services/payment-webhook.service';
+import { runFirstTerminalTransitionRecovery } from './services/order-terminal-recovery.util';
+import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../config/payment.config';
 
 @Injectable()
@@ -61,6 +62,7 @@ export class PaymentsService {
     private readonly naverpayAdapter: NaverPayPaymentAdapter,
     private readonly paypalAdapter: PayPalPaymentAdapter,
     private readonly eximbayAdapter: EximbayPaymentAdapter,
+    private readonly pointsService: PointsService,
     private readonly paymentConfirmationService: PaymentConfirmationService,
     private readonly dataSource: DataSource,
   ) {
@@ -77,6 +79,7 @@ export class PaymentsService {
       paymentRepository: this.paymentRepository,
       webhookEventRepository: this.webhookEventRepository,
       dataSource: this.dataSource,
+      pointsService: this.pointsService,
       logger: this.logger,
       defaultCarrier: this.paymentConfig.defaultCarrier,
     });
@@ -281,44 +284,61 @@ if (gatewayName === 'bank_transfer') {
     return this.cancelConfirmedOrderPayment(payment, orderId, reason, manager);
   }
 
-  async cancelAdmin(orderId: number, reason: string): Promise<{
-    paymentId: number;
-    status: PaymentStatus;
-    cancelledAt: Date;
-    cancelReason: string;
-  }> {
-    const payment = await findOrThrow(
-      this.paymentRepository,
-      { orderId },
-      '결제 정보를 찾을 수 없습니다.',
-      ['order'],
-    );
+async cancelAdmin(
+  orderId: number,
+  reason: string,
+  postGatewaySync?: (manager: EntityManager, cancelledAt: Date) => Promise<void>,
+): Promise<{
+  paymentId: number;
+  status: PaymentStatus;
+  cancelledAt: Date;
+  cancelReason: string;
+}> {
+  const payment = await findOrThrow(
+    this.paymentRepository,
+    { orderId },
+    '결제 정보를 찾을 수 없습니다.',
+    ['order'],
+  );
 
-    if (payment.status !== PaymentStatus.CONFIRMED) {
-      throw new BadRequestException('환불 가능한 상태가 아닙니다.');
-    }
+  if (payment.status !== PaymentStatus.CONFIRMED) {
+    throw new BadRequestException('환불 가능한 상태가 아닙니다.');
+  }
 
-    const cancelGateway = this.resolveGatewayByType(payment.gateway);
-    const result = await cancelGateway.cancel(payment.paymentKey!, reason, {
-      originalAmount: Number(payment.amount),
-      orderNumber: payment.order?.orderNumber,
-      rawResponse: payment.rawResponse,
-    });
+  const cancelGateway = this.resolveGatewayByType(payment.gateway);
+  const result = await cancelGateway.cancel(payment.paymentKey!, reason, {
+    originalAmount: Number(payment.amount),
+    orderNumber: payment.order?.orderNumber,
+    rawResponse: payment.rawResponse,
+  });
 
-    await this.paymentRepository.update(payment.id, {
+  const applyRefund = async (txManager: EntityManager): Promise<void> => {
+    await txManager.update(Payment, payment.id, {
       status: PaymentStatus.REFUNDED,
       cancelledAt: result.cancelledAt,
       cancelReason: reason,
       rawResponse: result.rawResponse as object,
     });
 
-    return {
-      paymentId: Number(payment.id),
-      status: PaymentStatus.REFUNDED,
-      cancelledAt: result.cancelledAt,
-      cancelReason: reason,
-    };
+    if (postGatewaySync) {
+      await postGatewaySync(txManager, result.cancelledAt);
+    }
+  };
+
+  try {
+    await this.dataSource.transaction(applyRefund);
+  } catch (err) {
+    await this.persistAdminRefundReconciliation(payment, orderId, reason, result, err);
+    throw err;
   }
+
+  return {
+    paymentId: Number(payment.id),
+    status: PaymentStatus.REFUNDED,
+    cancelledAt: result.cancelledAt,
+    cancelReason: reason,
+  };
+}
 
   async partialRefund(orderId: number, dto: CreateRefundDto): Promise<Refund> {
     return this.paymentRefundService.partialRefund(orderId, dto);
@@ -347,6 +367,7 @@ if (gatewayName === 'bank_transfer') {
       paymentRepository: this.paymentRepository,
       webhookEventRepository: this.webhookEventRepository,
       dataSource: this.dataSource,
+      pointsService: this.pointsService,
       logger: this.logger,
       defaultCarrier: this.paymentConfig.defaultCarrier,
     });
@@ -397,19 +418,31 @@ if (gatewayName === 'bank_transfer') {
     });
 
     const applyCancellation = async (txManager: EntityManager): Promise<void> => {
-      await txManager.update(Payment, payment.id, {
-        status: PaymentStatus.CANCELLED,
-        cancelledAt: result.cancelledAt,
-        cancelReason: reason,
-        rawResponse: result.rawResponse as object,
+      const recovery = await runFirstTerminalTransitionRecovery(txManager, {
+        orderId,
+        nextOrderStatus: OrderStatus.CANCELLED,
+        pointsService: this.pointsService,
+        pointRestoreDescription: `주문 ${payment.order.orderNumber} 취소로 인한 적립금 복구`,
+        applyMutations: async (lockedOrder) => {
+          assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
+          await txManager.update(Payment, payment.id, {
+            status: PaymentStatus.CANCELLED,
+            cancelledAt: result.cancelledAt,
+            cancelReason: reason,
+            rawResponse: result.rawResponse as object,
+          });
+          await txManager.update(Order, orderId, {
+            status: OrderStatus.CANCELLED,
+            cancelReason: reason,
+            cancelledAt: result.cancelledAt,
+          });
+          return true;
+        },
       });
-      await txManager.update(Order, orderId, {
-        status: OrderStatus.CANCELLED,
-        cancelReason: reason,
-        cancelledAt: result.cancelledAt,
-      });
-      await restoreOrderStock(txManager, orderId);
-      await this.restorePoints(txManager, payment.order);
+
+      if (!recovery.lockedOrder) {
+        throw new NotFoundException('주문을 찾을 수 없습니다.');
+      }
     };
 
     try {
@@ -462,23 +495,35 @@ if (gatewayName === 'bank_transfer') {
     }
   }
 
-  private async restorePoints(manager: EntityManager, order: Order): Promise<void> {
-    if (!order.pointsUsed || order.pointsUsed <= 0 || order.userId === null) return;
+private async persistAdminRefundReconciliation(
+  payment: Payment,
+  orderId: number,
+  reason: string,
+  result: { cancelledAt: Date; rawResponse?: unknown },
+  err: unknown,
+): Promise<void> {
+  const reconciliationPayload = {
+    gatewayRefundSucceeded: true,
+    reconciliationRequired: true,
+    orderId,
+    rawResponse: result.rawResponse,
+    error: err instanceof Error ? err.message : String(err),
+  };
 
-    const last = await manager.findOne(PointHistory, {
-      where: { userId: order.userId },
-      order: { createdAt: 'DESC', id: 'DESC' },
+  try {
+    await this.paymentRepository.update(payment.id, {
+      status: PaymentStatus.REFUNDED,
+      cancelledAt: result.cancelledAt,
+      cancelReason: reason,
+      rawResponse: reconciliationPayload,
     });
-    const balance = Number(last?.balance ?? 0) + Number(order.pointsUsed);
-    await manager.save(PointHistory, {
-      userId: order.userId,
-      type: 'admin_adjust',
-      amount: order.pointsUsed,
-      balance,
-      orderId: Number(order.id),
-      description: `주문 ${order.orderNumber} 취소로 인한 적립금 복구`,
-    });
+  } catch (persistErr) {
+    this.logger.error(
+      `Failed to persist refund reconciliation for payment ${payment.id}: ${String(persistErr)}`,
+    );
   }
+}
+
 
   private assertMemberOwnership(orderUserId: number | null, userId: number): void {
     if (orderUserId === null) {

@@ -12,6 +12,7 @@ import { PointsModule } from '../points/points.module';
 import { MembershipModule } from '../membership/membership.module';
 import { AuthEventsModule } from '../auth/auth-events.module';
 import { OrderEventsModule } from '../orders/order-events.module';
+import { AuditLogModule } from '../audit-logs/audit-log.module';
 import { User } from '../users/entities/user.entity';
 import { SchedulerLockService } from '../../common/services/scheduler-lock.service';
 
@@ -22,6 +23,7 @@ import { SchedulerLockService } from '../../common/services/scheduler-lock.servi
     MembershipModule,
     AuthEventsModule,
     OrderEventsModule,
+    AuditLogModule,
   ],
   controllers: [CouponsController, AdminCouponsController, AdminCouponRulesController],
   providers: [CouponsService, CouponRulesService, SchedulerLockService],

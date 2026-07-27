@@ -10,14 +10,12 @@ import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/utils';
 import type {
-  CalculateDiscountResponse,
   CartItem,
   CheckoutGatewayName,
   PreparePaymentResponse,
-  ShippingQuoteResponse,
   UserAddress,
 } from '@/lib/api';
-import { shippingApi, usersApi } from '@/lib/api';
+import { usersApi } from '@/lib/api';
 import { SESSION_KEYS } from '@/constants/storage';
 import { getDefaultCheckoutGateway, getGatewayOptionsByLocale } from '@/constants/checkoutPaymentMethods';
 import type { Locale } from '@/i18n/routing';
@@ -35,7 +33,12 @@ import {
   ZipcodeInputSection,
 } from '@/components/shared/checkout/ShippingFormSection';
 import { useCheckout, type PaymentStep } from '@/components/shared/hooks/useCheckout';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { formatCurrency } from '@/utils/currency';
+import {
+  checkoutPricingApi,
+  type CheckoutPricingPreviewResponse,
+} from '@/lib/api/checkout-pricing';
 
 export interface ShippingForm {
   recipientName: string;
@@ -90,7 +93,7 @@ export default function CheckoutPage({
   const [currentGuestAccessToken, setCurrentGuestAccessToken] = useState('');
   const [currentGuestAccessTokenExpiresAt, setCurrentGuestAccessTokenExpiresAt] = useState('');
   const [confirmedGrandTotal, setConfirmedGrandTotal] = useState<number | null>(null);
-  const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResponse | null>(null);
+  const [pricingPreview, setPricingPreview] = useState<CheckoutPricingPreviewResponse | null>(null);
   const [form, setForm] = useState<ShippingForm>({
     recipientName: '',
     recipientPhone: '',
@@ -103,9 +106,8 @@ export default function CheckoutPage({
   const [errors, setErrors] = useState<FormErrors>({});
   const [requiredConsent, setRequiredConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
-  const [discountResult, setDiscountResult] = useState<CalculateDiscountResponse | null>(null);
-  const [selectedUserCouponId, setSelectedUserCouponId] = useState<number | undefined>();
-  const [pointsUsed, setPointsUsed] = useState(0);
+  const [requestedUserCouponId, setRequestedUserCouponId] = useState<number | undefined>();
+  const [requestedPointsToUse, setRequestedPointsToUse] = useState(0);
   const paymentRef = useRef<PaymentGatewayHandle>(null);
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | 'manual' | null>(null);
@@ -113,11 +115,12 @@ export default function CheckoutPage({
 
   const isGuestCheckout = !isAuthenticated;
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const shippingFee = shippingQuote?.shippingFee ?? 0;
-  const freeShippingThreshold = shippingQuote?.threshold ?? 0;
-  const discountAmount = discountResult ? discountResult.couponDiscount + discountResult.pointsDiscount : 0;
-  const estimatedGrandTotal = Math.max(totalAmount + shippingFee - discountAmount, 0);
-  const grandTotal = confirmedGrandTotal ?? estimatedGrandTotal;
+  const couponDiscount = pricingPreview?.couponDiscount ?? 0;
+  const appliedPointsUsed = pricingPreview?.appliedPointsUsed ?? 0;
+  const shippingFee = pricingPreview?.shippingFee ?? 0;
+  const freeShippingThreshold = pricingPreview?.freeShippingThreshold ?? 0;
+  const grandTotal = confirmedGrandTotal ?? pricingPreview?.totalPayable ?? totalAmount;
+  const isPricingReady = confirmedGrandTotal !== null || pricingPreview !== null;
 
   const stepLabels: Record<PaymentStep, string> = {
     idle: t('steps.idle'),
@@ -128,6 +131,34 @@ export default function CheckoutPage({
   };
   const loadAddressErrorMessage = t('loadAddressError');
   const gatewayOptions = getGatewayOptionsByLocale(locale);
+  const { execute: previewPricing, isLoading: pricingPreviewLoading } = useAsyncAction(
+    async ({
+      zipcode,
+      userCouponId,
+      pointsToUse,
+      locale: quoteLocale,
+    }: {
+      zipcode: string;
+      userCouponId?: number;
+      pointsToUse?: number;
+      locale: Locale;
+    }) =>
+      checkoutPricingApi.preview({
+        items: checkoutItems.map((item) => ({
+          productId: item.productId,
+          productOptionId: item.productOptionId,
+          quantity: item.quantity,
+        })),
+        zipcode,
+        userCouponId,
+        pointsToUse,
+        locale: quoteLocale,
+      }),
+    {
+      onError: () => setPricingPreview(null),
+      errorMessage: t('pricingPreviewError'),
+    },
+  );
 
   const fillFormFromAddress = (addr: UserAddress) => {
     setForm({
@@ -168,34 +199,45 @@ export default function CheckoutPage({
   }, [isLoading, locale, router]);
 
   useEffect(() => {
-    if (totalAmount <= 0) {
-      setShippingQuote(null);
+    if (isGuestCheckout) {
+      setRequestedUserCouponId(undefined);
+      setRequestedPointsToUse(0);
+    }
+  }, [isGuestCheckout]);
+
+  useEffect(() => {
+    if (!sessionChecked || checkoutItems.length === 0) {
+      setPricingPreview(null);
       return;
     }
 
-    let cancelled = false;
-    const zipcode = /^\d{3,10}$/.test(form.zipcode.trim()) ? form.zipcode.trim() : '00000';
-    shippingApi
-      .quote(
-        totalAmount,
-        zipcode,
-        checkoutItems.map((item) => ({
-          productId: item.productId,
-          productOptionId: item.productOptionId,
-          quantity: item.quantity,
-        })),
-      )
-      .then((quote) => {
-        if (!cancelled) setShippingQuote(quote);
-      })
-      .catch(() => {
-        if (!cancelled) setShippingQuote(null);
-      });
+    let active = true;
+    const zipcode = /^\d{5}$/.test(form.zipcode.trim()) ? form.zipcode.trim() : '00000';
+
+    void previewPricing({
+      zipcode,
+      userCouponId: isGuestCheckout ? undefined : requestedUserCouponId,
+      pointsToUse: !isGuestCheckout && requestedPointsToUse > 0 ? requestedPointsToUse : undefined,
+      locale,
+    }).then((preview) => {
+      if (active && preview) {
+        setPricingPreview(preview);
+      }
+    });
 
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, [checkoutItems, totalAmount, form.zipcode]);
+  }, [
+    checkoutItems,
+    form.zipcode,
+    isGuestCheckout,
+    locale,
+    previewPricing,
+    requestedPointsToUse,
+    requestedUserCouponId,
+    sessionChecked,
+  ]);
 
   useEffect(() => {
     if (isLoading || !isAuthenticated) return;
@@ -261,8 +303,8 @@ export default function CheckoutPage({
     currentGuestAccessToken,
     requiredConsent,
     marketingConsent,
-    selectedUserCouponId,
-    pointsUsed,
+    appliedUserCouponId: pricingPreview?.appliedUserCouponId,
+    appliedPointsUsed,
     isGuestCheckout,
     setStep,
     setPrepareResult,
@@ -371,11 +413,9 @@ export default function CheckoutPage({
                 <h2 className="typo-h3">{t('couponPoints')}</h2>
                 <div className="mt-4">
                   <CouponSelector
-                    orderAmount={totalAmount}
-                    onDiscountChange={(result, userCouponId, appliedPoints = 0) => {
-                      setDiscountResult(result);
-                      setSelectedUserCouponId(userCouponId);
-                      setPointsUsed(appliedPoints);
+                    onSelectionChange={(userCouponId, pointsToUse = 0) => {
+                      setRequestedUserCouponId(userCouponId);
+                      setRequestedPointsToUse(pointsToUse);
                     }}
                   />
                 </div>
@@ -420,16 +460,23 @@ export default function CheckoutPage({
             <OrderSummarySection
               checkoutItems={checkoutItems}
               locale={locale}
+              subtotalAmount={totalAmount}
               shippingFee={shippingFee}
               freeShippingThreshold={freeShippingThreshold}
-              discountAmount={discountAmount}
+              couponDiscount={couponDiscount}
+              pointsUsed={appliedPointsUsed}
+              totalPayable={grandTotal}
             />
             <div className="hidden surface-card p-4 md:block">
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
               </div>
-              <Button type="submit" disabled={step !== 'idle' || !requiredConsent} className="w-full">
+              <Button
+                type="submit"
+                disabled={step !== 'idle' || !requiredConsent || !isPricingReady || pricingPreviewLoading}
+                className="w-full"
+              >
                 {stepLabels[step]}
               </Button>
             </div>
@@ -448,7 +495,12 @@ export default function CheckoutPage({
             <span className="text-xs text-muted-foreground">{t('total')}</span>
             <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
           </div>
-          <Button type="submit" form="checkout-form" className="w-full" disabled={step !== 'idle' || !requiredConsent}>
+          <Button
+            type="submit"
+            form="checkout-form"
+            className="w-full"
+            disabled={step !== 'idle' || !requiredConsent || !isPricingReady || pricingPreviewLoading}
+          >
             {stepLabels[step]}
           </Button>
         </div>

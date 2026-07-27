@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { forwardRef, Suspense, useImperativeHandle } from 'react';
 import CheckoutPage from '@/app/[locale]/checkout/page';
 import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
+import { checkoutPricingApi } from '@/lib/api/checkout-pricing';
 import type { CartItem, UserAddress } from '@/lib/api';
 
 const makeParams = () => Promise.resolve({ locale: 'ko' as const });
@@ -57,16 +58,18 @@ vi.mock('next-intl', () => ({
       cardSecurePageNotice: '카드번호·유효기간·CVC는 저장되지 않습니다.',
       paypalRedirectHint: 'PayPal',
       couponPoints: '쿠폰 / 적립금',
-      couponPointsComingSoon: '쿠폰/적립금 적용은 추후 지원 예정입니다.',
       orderItems: '주문 상품',
       productAmount: '상품 금액',
       shippingFee: '배송비',
+      discountAmount: '할인 금액',
+      pointsUsed: '사용 적립금',
       total: '합계',
       pay: '결제하기',
       loadAddressError: '저장된 주소를 불러오는데 실패했습니다.',
       freeShipping: '무료',
       freeShippingUnlocked: '무료배송이 적용되었습니다.',
       freeShippingRemaining: '무료배송 임계',
+      pricingPreviewError: '주문 금액을 다시 계산하지 못했습니다.',
       'flow.shipping': '배송 정보',
       'flow.payment': '결제 수단',
       'flow.complete': '결제 완료',
@@ -90,7 +93,6 @@ vi.mock('next-intl', () => ({
   },
 }));
 
-// ---- next/navigation ----
 const mockReplace = vi.fn();
 const mockPush = vi.fn();
 const mockRouter = { replace: mockReplace, push: mockPush };
@@ -100,12 +102,10 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
 }));
 
-// ---- sonner ----
 vi.mock('sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn(), info: vi.fn() },
 }));
 
-// ---- contexts ----
 const mockUseAuth = vi.fn();
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
@@ -126,12 +126,10 @@ vi.mock('@/contexts/MobileNavContext', () => ({
   useMobileNav: () => ({ isVisible: false }),
 }));
 
-// ---- i18n/routing ----
 vi.mock('@/i18n/routing', () => ({
   routing: { locales: ['ko', 'en'], defaultLocale: 'ko' },
 }));
 
-// ---- PaymentGateway ----
 vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
   default: forwardRef(function MockPaymentGateway(_props: unknown, ref) {
     useImperativeHandle(ref, () => ({ confirm: mockPaymentGatewayConfirm }));
@@ -139,15 +137,29 @@ vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
   }),
 }));
 
-// ---- api ----
+vi.mock('@/components/shared/checkout/CouponSelector', () => ({
+  default: ({ onSelectionChange }: { onSelectionChange: (userCouponId?: number, pointsToUse?: number) => void }) => (
+    <div>
+      <button type="button" onClick={() => onSelectionChange(7, 2000)}>
+        혜택 적용
+      </button>
+    </div>
+  ),
+}));
+
 vi.mock('@/lib/api', () => ({
   ordersApi: { create: vi.fn(), getById: vi.fn() },
   guestOrdersApi: { create: vi.fn(), getById: vi.fn(), lookup: vi.fn() },
   paymentsApi: { prepare: vi.fn(), confirm: vi.fn() },
   guestPaymentsApi: { prepare: vi.fn(), confirm: vi.fn() },
-  shippingApi: { quote: vi.fn().mockResolvedValue({ subtotal: 40000, zipcode: '00000', shippingFee: 0, isFreeShipping: true, isRemoteArea: false, threshold: 10, baseFee: 3000, remoteAreaSurcharge: 3000 }) },
   cartApi: { getList: vi.fn() },
   usersApi: { getAddresses: vi.fn().mockResolvedValue([]), updateAddress: vi.fn().mockResolvedValue({}) },
+}));
+
+vi.mock('@/lib/api/checkout-pricing', () => ({
+  checkoutPricingApi: {
+    preview: vi.fn(),
+  },
 }));
 
 const sampleItem: CartItem = {
@@ -155,6 +167,19 @@ const sampleItem: CartItem = {
   unitPrice: 20000, subtotal: 40000,
   product: { id: 10, name: '테스트 상품', slug: 'test-product', price: 20000, salePrice: null, status: 'active', images: [] },
   option: null,
+};
+
+const defaultPreview = {
+  subtotalAmount: 40000,
+  couponDiscount: 0,
+  pointsDiscount: 0,
+  shippingFee: 0,
+  isFreeShipping: true,
+  isRemoteArea: false,
+  remoteAreaSurcharge: 0,
+  totalPayable: 40000,
+  appliedPointsUsed: 0,
+  freeShippingThreshold: 50000,
 };
 
 async function renderCheckoutPage() {
@@ -171,6 +196,7 @@ describe('CheckoutPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
+    vi.mocked(checkoutPricingApi.preview).mockResolvedValue(defaultPreview);
   });
 
   it('renders guest checkout without redirect when not authenticated', async () => {
@@ -180,6 +206,15 @@ describe('CheckoutPage', () => {
     expect(mockReplace).not.toHaveBeenCalledWith('/ko/login');
     expect(await screen.findByLabelText(/비회원 이메일/)).toBeInTheDocument();
     expect(screen.queryByText('쿠폰 / 적립금')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(checkoutPricingApi.preview).toHaveBeenCalledWith({
+        items: [{ productId: 10, productOptionId: null, quantity: 2 }],
+        zipcode: '00000',
+        userCouponId: undefined,
+        pointsToUse: undefined,
+        locale: 'ko',
+      });
+    });
   });
 
   it('redirects to /cart when no sessionStorage items', async () => {
@@ -195,6 +230,42 @@ describe('CheckoutPage', () => {
     expect(await screen.findByLabelText(/받는 분 이름/)).toBeInTheDocument();
     expect(screen.getByLabelText(/연락처/)).toBeInTheDocument();
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
+  });
+
+  it('uses preview totals and keeps coupon discount / points / shipping split visible', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+    vi.mocked(checkoutPricingApi.preview)
+      .mockResolvedValueOnce(defaultPreview)
+      .mockResolvedValueOnce({
+        ...defaultPreview,
+        couponDiscount: 5000,
+        pointsDiscount: 2000,
+        shippingFee: 3000,
+        totalPayable: 36000,
+        appliedUserCouponId: 7,
+        appliedPointsUsed: 2000,
+      });
+
+    await renderCheckoutPage();
+    await screen.findByText('테스트 상품');
+    await user.click(screen.getByRole('button', { name: '혜택 적용' }));
+
+    await waitFor(() => {
+      expect(checkoutPricingApi.preview).toHaveBeenLastCalledWith({
+        items: [{ productId: 10, productOptionId: null, quantity: 2 }],
+        zipcode: '00000',
+        userCouponId: 7,
+        pointsToUse: 2000,
+        locale: 'ko',
+      });
+    });
+
+    expect(await screen.findByText(/-₩5,000/)).toBeInTheDocument();
+    expect(screen.getByText('사용 적립금')).toBeInTheDocument();
+    expect(screen.getByText(/-₩2,000/)).toBeInTheDocument();
+    expect(screen.getAllByText(/₩36,000/)[0]).toBeInTheDocument();
   });
 
   it('keeps desktop order summary and submit CTA inside the same sticky aside', async () => {
@@ -268,8 +339,6 @@ describe('CheckoutPage', () => {
     expect(paymentsApi.confirm).toHaveBeenCalledOnce();
   });
 
-
-
   it('ko checkout은 간편결제를 기본 선택하고 무통장입금 안내와 카드 입력 shell을 조건부 표시한다', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
@@ -337,8 +406,6 @@ describe('CheckoutPage', () => {
     });
   });
 
-  // ---- Address loading & selection tests ----
-
   const defaultAddress: UserAddress = {
     id: 1,
     userId: 1,
@@ -396,7 +463,6 @@ describe('CheckoutPage', () => {
     expect(screen.getByLabelText(/^주소/)).toHaveValue('서울특별시 강남구 역삼동');
     expect(screen.getByLabelText(/상세 주소/)).toHaveValue('101호');
   });
-
 
   it('숫자형 zipcode 주소도 문자열로 정규화해 폼에 채운다', async () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([
@@ -488,7 +554,6 @@ describe('CheckoutPage', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalled();
     });
-    // Form should remain empty for manual entry
     expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('');
   });
 });

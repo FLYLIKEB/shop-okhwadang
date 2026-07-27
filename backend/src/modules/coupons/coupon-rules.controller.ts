@@ -9,16 +9,19 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiCookieAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { CouponRulesService } from './coupon-rules.service';
 import { CreateCouponRuleDto } from './dto/create-coupon-rule.dto';
 import { UpdateCouponRuleDto } from './dto/update-coupon-rule.dto';
+import { AdminCouponRuleListQueryDto } from './dto/admin-coupon-rule-list-query.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('관리자 - 쿠폰 규칙')
@@ -31,8 +34,10 @@ export class AdminCouponRulesController {
   @ApiCookieAuth()
   @ApiOperation({ summary: '쿠폰 규칙 목록 조회' })
   @ApiResponse({ status: 200, description: '목록 조회 성공' })
-  findAll() {
-    return this.couponRulesService.findAll();
+  @ApiQuery({ name: 'page', required: false, type: Number, description: '페이지 번호' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 개수' })
+  findAll(@Query() query: AdminCouponRuleListQueryDto) {
+    return this.couponRulesService.findAll(query);
   }
 
   @Get(':id')

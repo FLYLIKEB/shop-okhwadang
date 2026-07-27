@@ -13,8 +13,8 @@ describe('CouponsService', () => {
   let service: CouponsService;
 
   const now = new Date();
-  const future = new Date(now.getTime() + 86400000 * 30);
-  const past = new Date(now.getTime() - 86400000);
+  const future = new Date(now.getTime() + 31 * 24 * 60 * 60 * 1000);
+  const past = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000);
 
   const mockPercentageCoupon: Coupon = {
     id: 1,
@@ -62,8 +62,10 @@ describe('CouponsService', () => {
 
   const mockCouponRepo = {
     findOne: jest.fn(),
+    findAndCount: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    remove: jest.fn(),
   };
 
   const mockUserCouponRepo = {
@@ -84,6 +86,16 @@ describe('CouponsService', () => {
 
   const mockPointsService = {
     getUserPointBalance: jest.fn(),
+    toHistoryResponse: jest.fn((entry: PointHistory) => ({
+      id: Number(entry.id),
+      userId: Number(entry.userId),
+      type: entry.type,
+      amount: Number(entry.amount),
+      balance: Number(entry.balance),
+      description: entry.description,
+      createdAt: entry.createdAt,
+      sourceKind: entry.orderId != null ? 'order_use' : 'manual_grant',
+    })),
   };
 
   beforeEach(async () => {
@@ -121,6 +133,88 @@ describe('CouponsService', () => {
     it('fixed 쿠폰: 주문액이 할인액보다 적으면 주문액만큼만', () => {
       const discount = service.computeCouponDiscount(2000, mockFixedCoupon);
       expect(discount).toBe(2000);
+    });
+  });
+
+  describe('admin coupon contract', () => {
+    it('returns paginated admin coupon list', async () => {
+      mockCouponRepo.findAndCount.mockResolvedValue([[mockPercentageCoupon, mockFixedCoupon], 2]);
+
+      await expect(service.findAdminCoupons({ page: 2, limit: 1 })).resolves.toEqual({
+        items: [
+          expect.objectContaining({ id: 1, value: 10, issuedCount: 0 }),
+          expect.objectContaining({ id: 2, value: 3000, totalQuantity: null }),
+        ],
+        total: 2,
+        page: 2,
+        limit: 1,
+      });
+      expect(mockCouponRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({
+        order: { createdAt: 'DESC', id: 'DESC' },
+        skip: 1,
+        take: 1,
+      }));
+    });
+
+    it('passes search and status filters through the admin coupon query', async () => {
+      mockCouponRepo.findAndCount.mockResolvedValue([[], 0]);
+
+      await service.findAdminCoupons({ page: 1, limit: 20, q: 'WELCOME', status: 'active' });
+
+      const options = mockCouponRepo.findAndCount.mock.calls.at(-1)?.[0] as {
+        where?: Array<{ isActive?: boolean; code?: { value: string }; name?: { value: string } }>;
+      };
+      expect(options.where).toHaveLength(2);
+      expect(options.where?.[0]).toMatchObject({ isActive: true });
+      expect(options.where?.[1]).toMatchObject({ isActive: true });
+      expect(String(options.where?.[0]?.code?.value)).toBe('%WELCOME%');
+      expect(String(options.where?.[1]?.name?.value)).toBe('%WELCOME%');
+    });
+
+    it('loads admin coupon detail', async () => {
+      mockCouponRepo.findOne.mockResolvedValue(mockPercentageCoupon);
+
+      await expect(service.findAdminCoupon(1)).resolves.toEqual(expect.objectContaining({ id: 1, code: 'PERCENT10' }));
+    });
+  });
+
+  describe('coupon mutability after issuance', () => {
+    it('rejects pricing/lifecycle updates once issuedCount > 0', async () => {
+      mockCouponRepo.findOne.mockResolvedValue({ ...mockPercentageCoupon, issuedCount: 3 });
+
+      await expect(service.updateCoupon(1, { value: 15 })).rejects.toThrow(BadRequestException);
+      expect(mockCouponRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('allows totalQuantity changes only when staying >= issuedCount', async () => {
+      mockCouponRepo.findOne.mockResolvedValue({ ...mockPercentageCoupon, issuedCount: 3, totalQuantity: 10 });
+      mockCouponRepo.save.mockImplementation(async (coupon: Coupon) => coupon);
+
+      await expect(service.updateCoupon(1, { totalQuantity: 3 })).resolves.toEqual(
+        expect.objectContaining({ totalQuantity: 3, issuedCount: 3 }),
+      );
+    });
+
+    it('rejects totalQuantity below issuedCount', async () => {
+      mockCouponRepo.findOne.mockResolvedValue({ ...mockPercentageCoupon, issuedCount: 3, totalQuantity: 10 });
+
+      await expect(service.updateCoupon(1, { totalQuantity: 2 })).rejects.toThrow(BadRequestException);
+    });
+
+    it('blocks deleting issued coupons to avoid cascading user coupon loss', async () => {
+      mockCouponRepo.findOne.mockResolvedValue({ ...mockPercentageCoupon, issuedCount: 1 });
+
+      await expect(service.removeCoupon(1)).rejects.toThrow(BadRequestException);
+      expect(mockCouponRepo.remove).not.toHaveBeenCalled();
+    });
+
+    it('allows mutable fields when issuance has not started', async () => {
+      mockCouponRepo.findOne.mockResolvedValue({ ...mockPercentageCoupon, issuedCount: 0 });
+      mockCouponRepo.save.mockImplementation(async (coupon: Coupon) => coupon);
+
+      await expect(service.updateCoupon(1, { value: 15, isActive: false })).resolves.toEqual(
+        expect.objectContaining({ value: 15, isActive: false }),
+      );
     });
   });
 
@@ -174,28 +268,17 @@ describe('CouponsService', () => {
     });
   });
 
-  // 정책 고정: 쿠폰·포인트 운영 정책 (이슈 #726)
-  // 1) 발급 쿠폰 1개 + 포인트 동시 사용
-  // 2) 쿠폰 적용 후 포인트 차감 순서
-  // 3) FIFO 포인트 차감
-  // 4) 기본 만료 1년
-  // 5) 자동 발급 트리거: 회원가입/첫 구매/생일/등급업
   describe('정책 고정 — 쿠폰·포인트 동시 사용', () => {
     it('CalculateDiscountDto 는 단일 userCouponId 만 받는다 (다중 쿠폰 적용 불가 — 구조적 제약)', () => {
       const dto: CalculateDiscountDto = { orderAmount: 10000, userCouponId: 1, pointsToUse: 0 };
-      // userCouponId 는 number(단수) 타입. 배열을 허용하지 않는 것이 정책의 구조적 보장이다.
       expect(typeof dto.userCouponId).toBe('number');
-      // 컴파일 타임 가드: 아래 줄을 number[]로 바꾸면 타입 에러가 나야 한다는 사실을 코멘트로 고정.
-      // const invalid: CalculateDiscountDto = { orderAmount: 1, userCouponId: [1, 2] }; // ts(2322)
     });
 
     it('쿠폰 + 포인트 동시 사용: 쿠폰 먼저 적용 후 포인트 차감 (할인 순서 고정)', async () => {
-      const uc = mockUserCoupon(mockPercentageCoupon); // 10% 할인, max 5000
+      const uc = mockUserCoupon(mockPercentageCoupon);
       mockUserCouponRepo.findOne.mockResolvedValue(uc);
       mockPointsService.getUserPointBalance.mockResolvedValue(2000);
 
-      // 주문액 50000원, 쿠폰 10% 할인 → 5000원 할인 (max 5000 적용)
-      // 그 후 포인트 2000 차감 → 50000 - 5000 - 2000 = 43000
       const result = await service.calculate(10, {
         orderAmount: 50000,
         userCouponId: 1,
@@ -206,16 +289,14 @@ describe('CouponsService', () => {
       expect(result.couponDiscount).toBe(5000);
       expect(result.pointsDiscount).toBe(2000);
       expect(result.finalAmount).toBe(43000);
-      // 쿠폰 + 포인트가 합산되어야 한다 (둘 다 적용)
       expect(result.couponDiscount + result.pointsDiscount).toBe(7000);
     });
 
     it('쿠폰 적용 후 남은 금액보다 큰 포인트는 남은 금액까지만 차감된다', async () => {
-      const uc = mockUserCoupon(mockFixedCoupon); // 3000원 정액 쿠폰
+      const uc = mockUserCoupon(mockFixedCoupon);
       mockUserCouponRepo.findOne.mockResolvedValue(uc);
       mockPointsService.getUserPointBalance.mockResolvedValue(50000);
 
-      // 주문액 10000, 쿠폰 -3000 → 7000 남음. 포인트 10000 사용 시도 → 7000 으로 cap.
       const result = await service.calculate(10, {
         orderAmount: 10000,
         userCouponId: 2,
@@ -267,16 +348,17 @@ describe('CouponsService', () => {
   });
 
   describe('getPoints', () => {
-    it('적립금 잔액 조회', async () => {
+    it('적립금 잔액 조회 with sourceKind mapping', async () => {
       mockPointsService.getUserPointBalance.mockResolvedValue(5000);
       mockPointHistoryRepo.find.mockResolvedValue([
-        { id: 1, type: 'earn', amount: 5000, balance: 5000, description: '주문 적립', createdAt: now },
+        { id: 1, userId: 10, type: 'spend', amount: -1000, balance: 5000, description: '주문 사용', createdAt: now, orderId: 55 },
       ]);
 
       const result = await service.getPoints(10);
       expect(result.balance).toBe(5000);
       expect(result.history).toHaveLength(1);
-      expect(result.history[0].type).toBe('earn');
+      expect(result.history[0]).toMatchObject({ type: 'spend', sourceKind: 'order_use' });
+      expect(mockPointsService.toHistoryResponse).toHaveBeenCalled();
     });
 
     it('적립금 내역 없으면 잔액 0', async () => {

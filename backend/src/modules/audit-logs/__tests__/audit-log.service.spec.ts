@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { EntityManager } from 'typeorm';
 import { AuditLogService, CreateAuditLogDto } from '../audit-log.service';
 import { AuditLog, AuditAction } from '../entities/audit-log.entity';
 
@@ -114,6 +115,67 @@ describe('AuditLogService', () => {
         }),
       );
     });
+  });
+
+  describe('logWithManager', () => {
+    it('writes audit rows through the provided transaction manager', async () => {
+      const manager = {
+        create: jest.fn(),
+        save: jest.fn(),
+      };
+      const dto: CreateAuditLogDto = {
+        actorId: 7,
+        actorRole: 'admin',
+        action: AuditAction.POINT_MANUAL_ADJUSTMENT,
+        resourceType: 'point',
+        resourceId: 42,
+        beforeJson: { balance: 1000 },
+        afterJson: { balance: 1500, reason: 'CS 보상 지급' },
+      };
+      const created = { id: 11, ...dto, createdAt: new Date() };
+      manager.create.mockReturnValue(created);
+      manager.save.mockResolvedValue(created);
+
+      await expect(service.logWithManager(manager as unknown as EntityManager, dto)).resolves.toEqual(created);
+      expect(manager.create).toHaveBeenCalledWith(AuditLog, expect.objectContaining({
+        action: AuditAction.POINT_MANUAL_ADJUSTMENT,
+        resourceId: 42,
+      }));
+      expect(manager.save).toHaveBeenCalledWith(AuditLog, created);
+    });
+
+  it('redacts sensitive fields and preserves request metadata on manager-bound writes', async () => {
+    const manager = {
+      create: jest.fn(),
+      save: jest.fn(),
+    };
+    const dto: CreateAuditLogDto = {
+      actorId: 7,
+      actorRole: 'admin',
+      action: AuditAction.POINT_MANUAL_ADJUSTMENT,
+      resourceType: 'point_history',
+      resourceId: 91,
+      beforeJson: { email: 'member@example.com', balance: 1200 },
+      afterJson: { token: 'secret-token', balanceAfter: 900 },
+      ip: '203.0.113.10',
+      userAgent: 'jest-agent',
+    };
+    const created = { id: 12, ...dto, createdAt: new Date() };
+    manager.create.mockReturnValue(created);
+    manager.save.mockResolvedValue(created);
+
+    await service.logWithManager(manager as unknown as EntityManager, dto);
+
+    expect(manager.create).toHaveBeenCalledWith(
+      AuditLog,
+      expect.objectContaining({
+        ip: '203.0.113.10',
+        userAgent: 'jest-agent',
+        beforeJson: { email: '[REDACTED]', balance: 1200 },
+        afterJson: { token: '[REDACTED]', balanceAfter: 900 },
+      }),
+    );
+  });
   });
 
   describe('findAll', () => {
@@ -236,7 +298,6 @@ describe('AuditLogService', () => {
     });
   });
 
-
   describe('retention cleanup', () => {
     it('deletes logs older than 3 years while preserving legal holds', async () => {
       mockRepository.delete.mockResolvedValue({ affected: 3 });
@@ -244,11 +305,12 @@ describe('AuditLogService', () => {
 
       const result = await service.purgeExpiredLogs(now);
 
+      expect(result.deleted).toBe(3);
+      expect(result.cutoff.toISOString()).toBe('2023-05-03T00:00:00.000Z');
       expect(mockRepository.delete).toHaveBeenCalledWith({
         createdAt: expect.any(Object),
         legalHold: false,
       });
-      expect(result).toEqual({ deleted: 3, cutoff: new Date('2023-05-03T00:00:00.000Z') });
     });
   });
 });
