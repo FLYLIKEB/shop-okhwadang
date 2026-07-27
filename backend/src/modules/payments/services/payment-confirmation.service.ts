@@ -8,6 +8,7 @@ import {
   Logger,
   NotFoundException,
   Optional,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
@@ -184,9 +185,17 @@ export class PaymentConfirmationService {
         });
       });
     } catch (err) {
+      if (
+        err instanceof ConflictException
+        || err instanceof BadRequestException
+        || err instanceof UnauthorizedException
+      ) {
+        throw err;
+      }
       await this.persistConfirmationReconciliation(payment.id, dto.orderId, result, paidAt, err);
       throw new InternalServerErrorException('결제 승인 후 동기화에 실패했습니다.');
     }
+
 
     if (!payload) {
       throw new InternalServerErrorException('결제 승인 후처리 정보를 구성하지 못했습니다.');
@@ -315,6 +324,13 @@ export class PaymentConfirmationService {
       this.logger.log(`Payment confirmed: orderId=${orderId} customerType=guest`);
       return outcome.response;
     } catch (err) {
+      if (
+        err instanceof ConflictException
+        || err instanceof BadRequestException
+        || err instanceof UnauthorizedException
+      ) {
+        throw err;
+      }
       await this.persistConfirmationReconciliation(payment.id, orderId, result, paidAt, err);
       throw new InternalServerErrorException('결제 승인 후 동기화에 실패했습니다.');
     }
