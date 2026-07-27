@@ -89,12 +89,16 @@ describe('PointsService admin contract', () => {
   });
 
   it('returns admin adjustment response with audit metadata and delta fields', async () => {
+    manager.findOne.mockReset();
+    manager.findOne
+      .mockResolvedValueOnce({ id: 42 })
+      .mockResolvedValueOnce({ balance: 2200 });
     manager.save.mockResolvedValueOnce({
       id: 91,
       userId: 42,
       type: 'earn',
       amount: 500,
-      balance: 1700,
+      balance: 2700,
       description: '관리자 수동 포인트 조정: CS 보상 지급',
       createdAt: new Date('2026-07-25T00:00:00.000Z'),
       orderId: null,
@@ -128,12 +132,14 @@ describe('PointsService admin contract', () => {
     manager.findOne.mockReset();
     manager.findOne
       .mockResolvedValueOnce({ id: 42 })
+      .mockResolvedValueOnce({ balance: 2000 })
+      .mockResolvedValueOnce({ balance: 2000 })
       .mockResolvedValueOnce({
         id: 92,
         userId: 42,
         type: 'spend',
         amount: -300,
-        balance: 900,
+        balance: 1700,
         description: '관리자 수동 포인트 조정: 사후 차감',
         createdAt: new Date('2026-07-25T00:00:00.000Z'),
         orderId: null,
@@ -177,12 +183,16 @@ describe('PointsService admin contract', () => {
   });
 
   it('propagates audit failure so the transaction can roll back', async () => {
+    manager.findOne.mockReset();
+    manager.findOne
+      .mockResolvedValueOnce({ id: 42 })
+      .mockResolvedValueOnce({ balance: 2200 });
     manager.save.mockResolvedValueOnce({
       id: 93,
       userId: 42,
       type: 'earn',
       amount: 500,
-      balance: 1700,
+      balance: 2700,
       description: '관리자 수동 포인트 조정: 감사 실패',
       createdAt: new Date('2026-07-25T00:00:00.000Z'),
       orderId: null,

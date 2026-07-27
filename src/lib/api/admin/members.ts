@@ -26,6 +26,7 @@ export const adminMembersApi = {
     apiClient.get<AdminMemberListResponse>('/admin/members', {
       params: params as Record<string, string | number | undefined>,
     }),
+  getById: (id: number) => apiClient.get<AdminMember>(`/admin/members/${id}`),
   updateRole: (id: number, role: string) =>
     apiClient.patch<AdminMember>(`/admin/members/${id}`, { role }),
 };

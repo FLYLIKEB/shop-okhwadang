@@ -81,6 +81,11 @@ export class AdminMembersService {
     };
   }
 
+  async findOne(id: number): Promise<SafeUser> {
+    const user = await findOrThrow(this.userRepository, { id }, '회원을 찾을 수 없습니다.');
+    return toSafeUser(user);
+  }
+
   async updateRole(
     targetId: number,
     newRole: UserRole,

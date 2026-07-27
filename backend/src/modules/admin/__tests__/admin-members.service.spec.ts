@@ -71,6 +71,23 @@ describe('AdminMembersService', () => {
     });
   });
 
+  describe('findOne', () => {
+    it('should return a safe user for an existing member', async () => {
+      userRepo.findOne.mockResolvedValue(makeUser({ id: 7, email: 'member@example.com', name: '회원' }));
+
+      await expect(service.findOne(7)).resolves.toEqual(expect.objectContaining({
+        id: 7,
+        email: 'member@example.com',
+        name: '회원',
+      }));
+    });
+
+    it('should throw NotFoundException when the member does not exist', async () => {
+      userRepo.findOne.mockResolvedValue(null);
+      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('updateRole', () => {
     it('should throw NotFoundException for non-existent user', async () => {
       userRepo.findOne.mockResolvedValue(null);
