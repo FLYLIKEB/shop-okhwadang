@@ -431,7 +431,7 @@ describe('PaymentsService', () => {
       expect(manager.save).toHaveBeenCalled();
     });
 
-    it('shipping save 실패 → 트랜잭션 롤백 → payment FAILED 마킹 → InternalServerErrorException', async () => {
+    it('shipping save 실패 → confirmation reconciliation marker persisted', async () => {
       const payment = makePayment();
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.confirm.mockResolvedValue({
@@ -442,24 +442,28 @@ describe('PaymentsService', () => {
         rawResponse: { mock: true },
       });
 
-      // 첫 번째 트랜잭션은 save 실패, 두 번째 (catch 블록의 FAILED 마킹+재고 복구) 는 정상 진행
       const failingManager = makeTransactionManager({
         save: jest.fn().mockRejectedValue(new Error('DB 오류 — shipping insert 실패')),
       });
-      const recoveryManager = makeTransactionManager();
-      mockDataSource.transaction
-        .mockImplementationOnce(
-          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
-        )
-        .mockImplementationOnce(
-          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(recoveryManager),
-        );
+      mockDataSource.transaction.mockImplementationOnce(
+        async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+      );
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10),
-      ).rejects.toThrow(InternalServerErrorException);
+      ).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
 
-      expect(recoveryManager.update).toHaveBeenCalledWith(Payment, payment.id, { status: PaymentStatus.FAILED });
+      expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, expect.objectContaining({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pay_abc',
+        method: 'mock',
+        rawResponse: expect.objectContaining({
+          gatewayConfirmationSucceeded: true,
+          reconciliationRequired: true,
+          orderId: 1,
+          error: 'DB 오류 — shipping insert 실패',
+        }),
+      }));
     });
 
     it('amount mismatch → BadRequestException', async () => {

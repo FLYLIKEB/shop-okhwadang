@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsString, MaxLength, Min } from 'class-validator';
 
+const MANUAL_POINT_REASON_MAX_LENGTH = 230;
+
 export class ManualPointAdjustmentDto {
   @ApiProperty({ example: 42, description: '조정 대상 사용자 ID' })
   @IsInt()
@@ -13,6 +15,6 @@ export class ManualPointAdjustmentDto {
 
   @ApiProperty({ example: 'CS 보상 지급', description: '조정 사유' })
   @IsString()
-  @MaxLength(255)
+  @MaxLength(MANUAL_POINT_REASON_MAX_LENGTH)
   reason!: string;
 }

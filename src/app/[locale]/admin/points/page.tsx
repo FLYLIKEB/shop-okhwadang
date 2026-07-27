@@ -78,12 +78,12 @@ export default function AdminPointsPage() {
           try {
             exact = await adminMembersApi.getById(userId);
           } catch {
-            exact = null;
+            exact = undefined;
           }
         }
-
-        if (exact && !nextOptions.some((item) => item.id === exact.id)) {
-          nextOptions = [...nextOptions, exact];
+        const exactId = exact?.id;
+        if (exactId != null && !nextOptions.some((item) => item.id === exactId)) {
+          nextOptions = [...nextOptions, exact as AdminMember];
         }
       }
 

@@ -108,17 +108,38 @@ export class PaymentConfirmationService {
     this.assertMemberOwnership(payment.order.userId, userId);
     this.assertConfirmablePayment(payment.order, payment, dto.amount);
 
+    let result: Awaited<ReturnType<PaymentGateway['confirm']>>;
     try {
-      const result = await this.resolveGatewayByType(payment.gateway).confirm(
+      result = await this.resolveGatewayByType(payment.gateway).confirm(
         dto.paymentKey,
         Number(payment.amount),
         payment.order.orderNumber,
       );
+    } catch (err) {
+      await this.dataSource.transaction(async (manager) => {
+        const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
 
-      const paidAt = new Date();
-      let payload: PostCommitPayload | null = null;
-      let isFirstPurchase = false;
+        if (this.isDuplicateLikeConfirmError(err)) {
+          if (lockedPayment.status === PaymentStatus.CONFIRMED || lockedPayment.order.status === OrderStatus.PAID) {
+            throw new ConflictException('이미 승인된 결제입니다.');
+          }
+        }
 
+        this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
+        await this.applyFailedPaymentRecovery(manager, lockedPayment.id, dto.orderId);
+      });
+
+      if (err instanceof ConflictException || err instanceof BadRequestException) {
+        throw err;
+      }
+      throw new InternalServerErrorException('결제 승인에 실패했습니다.');
+    }
+
+    const paidAt = new Date();
+    let payload: PostCommitPayload | null = null;
+    let isFirstPurchase = false;
+
+    try {
       await this.dataSource.transaction(async (manager) => {
         await manager.update(Payment, payment.id, {
           status: PaymentStatus.CONFIRMED,
@@ -162,42 +183,27 @@ export class PaymentConfirmationService {
           method: result.method,
         });
       });
-
-      if (!payload) {
-        throw new InternalServerErrorException('결제 승인 후처리 정보를 구성하지 못했습니다.');
-      }
-
-      this.dispatchPostCommit(payload);
-      this.logger.log(`Payment confirmed: orderId=${dto.orderId} customerType=member`);
-
-      return {
-        paymentId: Number(payment.id),
-        orderId: dto.orderId,
-        orderNumber: payment.order.orderNumber,
-        status: PaymentStatus.CONFIRMED,
-        method: result.method,
-        amount: Number(payment.amount),
-        paidAt,
-      };
     } catch (err) {
-      await this.dataSource.transaction(async (manager) => {
-        const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
-
-        if (this.isDuplicateLikeConfirmError(err)) {
-          if (lockedPayment.status === PaymentStatus.CONFIRMED || lockedPayment.order.status === OrderStatus.PAID) {
-            throw new ConflictException('이미 승인된 결제입니다.');
-          }
-        }
-
-        this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
-        await this.applyFailedPaymentRecovery(manager, lockedPayment.id, dto.orderId);
-      });
-
-      if (err instanceof ConflictException || err instanceof BadRequestException) {
-        throw err;
-      }
-      throw new InternalServerErrorException('결제 승인에 실패했습니다.');
+      await this.persistConfirmationReconciliation(payment.id, dto.orderId, result, paidAt, err);
+      throw new InternalServerErrorException('결제 승인 후 동기화에 실패했습니다.');
     }
+
+    if (!payload) {
+      throw new InternalServerErrorException('결제 승인 후처리 정보를 구성하지 못했습니다.');
+    }
+
+    this.dispatchPostCommit(payload);
+    this.logger.log(`Payment confirmed: orderId=${dto.orderId} customerType=member`);
+
+    return {
+      paymentId: Number(payment.id),
+      orderId: dto.orderId,
+      orderNumber: payment.order.orderNumber,
+      status: PaymentStatus.CONFIRMED,
+      method: result.method,
+      amount: Number(payment.amount),
+      paidAt,
+    };
   }
 
   async assertGuestAccessTokenActive(orderId: number, guestAccessToken: string): Promise<void> {
@@ -219,13 +225,36 @@ export class PaymentConfirmationService {
     );
     this.assertConfirmablePayment(payment.order, payment, dto.amount);
 
+    let result: Awaited<ReturnType<PaymentGateway['confirm']>>;
     try {
-      const result = await this.resolveGatewayByType(payment.gateway).confirm(
+      result = await this.resolveGatewayByType(payment.gateway).confirm(
         dto.paymentKey,
         Number(payment.amount),
         payment.order.orderNumber,
       );
+    } catch (err) {
+      return this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
+        await this.guestOrderAccessService.getValidAccessOrThrow(orderId, guestAccessToken, manager);
+        const lockedPayment = await this.loadLockedPayment(orderId, manager);
 
+        if (this.isDuplicateLikeConfirmError(err)) {
+          if (lockedPayment.status === PaymentStatus.CONFIRMED || lockedPayment.order.status === OrderStatus.PAID) {
+            throw new ConflictException('이미 승인된 결제입니다.');
+          }
+        }
+
+        this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
+        await this.applyFailedPaymentRecovery(manager, lockedPayment.id, orderId);
+
+        if (err instanceof ConflictException || err instanceof BadRequestException) {
+          throw err;
+        }
+        throw new InternalServerErrorException('결제 승인에 실패했습니다.');
+      });
+    }
+
+    const paidAt = new Date();
+    try {
       const outcome = await this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
         await this.guestOrderAccessService.getValidAccessOrThrow(orderId, guestAccessToken, manager);
         const lockedPayment = await this.loadLockedPayment(orderId, manager);
@@ -237,7 +266,6 @@ export class PaymentConfirmationService {
 
         this.assertConfirmablePayment(lockedOrder, lockedPayment, dto.amount);
 
-        const paidAt = new Date();
         await manager.update(Payment, lockedPayment.id, {
           status: PaymentStatus.CONFIRMED,
           paymentKey: result.paymentKey,
@@ -287,24 +315,8 @@ export class PaymentConfirmationService {
       this.logger.log(`Payment confirmed: orderId=${orderId} customerType=guest`);
       return outcome.response;
     } catch (err) {
-      return this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
-        await this.guestOrderAccessService.getValidAccessOrThrow(orderId, guestAccessToken, manager);
-        const lockedPayment = await this.loadLockedPayment(orderId, manager);
-
-        if (this.isDuplicateLikeConfirmError(err)) {
-          if (lockedPayment.status === PaymentStatus.CONFIRMED || lockedPayment.order.status === OrderStatus.PAID) {
-            throw new ConflictException('이미 승인된 결제입니다.');
-          }
-        }
-
-        this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
-        await this.applyFailedPaymentRecovery(manager, lockedPayment.id, orderId);
-
-        if (err instanceof ConflictException || err instanceof BadRequestException) {
-          throw err;
-        }
-        throw new InternalServerErrorException('결제 승인에 실패했습니다.');
-      });
+      await this.persistConfirmationReconciliation(payment.id, orderId, result, paidAt, err);
+      throw new InternalServerErrorException('결제 승인 후 동기화에 실패했습니다.');
     }
   }
 
@@ -478,6 +490,32 @@ export class PaymentConfirmationService {
       : null;
   }
 
+
+  private async persistConfirmationReconciliation(
+    paymentId: number,
+    orderId: number,
+    result: Awaited<ReturnType<PaymentGateway['confirm']>>,
+    paidAt: Date,
+    err: unknown,
+  ): Promise<void> {
+    try {
+      await this.paymentRepository.update(paymentId, {
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: result.paymentKey,
+        method: result.method as PaymentMethod,
+        paidAt,
+        rawResponse: {
+          gatewayConfirmationSucceeded: true,
+          reconciliationRequired: true,
+          orderId,
+          rawResponse: result.rawResponse,
+          error: err instanceof Error ? err.message : String(err),
+        } as object,
+      });
+    } catch (persistErr) {
+      this.logger.error(`Failed to persist payment confirmation reconciliation for payment ${paymentId}: ${String(persistErr)}`);
+    }
+  }
   private async loadLockedPayment(orderId: number, manager: EntityManager): Promise<Payment> {
     const payment = await manager.findOne(Payment, {
       where: { orderId },
