@@ -263,7 +263,7 @@ export class PointsService {
     return this.dataSource.transaction(async (manager) => {
       await this.assertUserExistsInTx(manager, dto.userId);
 
-      const beforeBalance = await this.getRunningBalanceInTx(manager, dto.userId);
+      const beforeBalance = await this.getEffectiveBalanceInTx(manager, dto.userId);
       const description = `${MANUAL_POINT_ADJUSTMENT_PREFIX}${dto.reason}`;
 
       let entry: PointHistory;
@@ -281,7 +281,14 @@ export class PointsService {
           relatedEntityId: null,
         });
       } else {
-        await this.deductFifo(manager, dto.userId, Math.abs(dto.delta), description, null);
+        await this.deductFifo(
+          manager,
+          dto.userId,
+          Math.abs(dto.delta),
+          description,
+          null,
+          beforeBalance,
+        );
         const savedEntry = await manager.findOne(PointHistory, {
           where: { userId: dto.userId },
           order: { createdAt: 'DESC', id: 'DESC' },
@@ -340,13 +347,14 @@ export class PointsService {
     amount: number,
     description: string,
     orderId: number | null = null,
+    balanceBase?: number,
   ): Promise<number> {
     const effectiveBalance = await this.getEffectiveBalanceInTx(manager, userId);
     if (amount > effectiveBalance) {
       throw new BadRequestException('적립금이 부족합니다.');
     }
 
-    const currentBalance = await this.getRunningBalanceInTx(manager, userId);
+    const currentBalance = balanceBase ?? await this.getRunningBalanceInTx(manager, userId);
     const newBalance = currentBalance - amount;
 
     await manager.save(PointHistory, {

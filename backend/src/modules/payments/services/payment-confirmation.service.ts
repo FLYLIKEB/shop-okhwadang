@@ -181,7 +181,16 @@ export class PaymentConfirmationService {
       };
     } catch (err) {
       await this.dataSource.transaction(async (manager) => {
-        await this.applyFailedPaymentRecovery(manager, payment.id, dto.orderId);
+        const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
+
+        if (this.isDuplicateLikeConfirmError(err)) {
+          if (lockedPayment.status === PaymentStatus.CONFIRMED || lockedPayment.order.status === OrderStatus.PAID) {
+            throw new ConflictException('이미 승인된 결제입니다.');
+          }
+        }
+
+        this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
+        await this.applyFailedPaymentRecovery(manager, lockedPayment.id, dto.orderId);
       });
 
       if (err instanceof ConflictException || err instanceof BadRequestException) {
@@ -282,7 +291,7 @@ export class PaymentConfirmationService {
         await this.guestOrderAccessService.getValidAccessOrThrow(orderId, guestAccessToken, manager);
         const lockedPayment = await this.loadLockedPayment(orderId, manager);
 
-        if (this.isDuplicateLikeGuestConfirmError(err)) {
+        if (this.isDuplicateLikeConfirmError(err)) {
           if (lockedPayment.status === PaymentStatus.CONFIRMED || lockedPayment.order.status === OrderStatus.PAID) {
             throw new ConflictException('이미 승인된 결제입니다.');
           }
@@ -328,7 +337,7 @@ export class PaymentConfirmationService {
     }
   }
 
-  private isDuplicateLikeGuestConfirmError(err: unknown): boolean {
+  private isDuplicateLikeConfirmError(err: unknown): boolean {
     if (err instanceof ConflictException) {
       return true;
     }

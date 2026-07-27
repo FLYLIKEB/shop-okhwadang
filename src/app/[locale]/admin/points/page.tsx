@@ -31,7 +31,7 @@ const SOURCE_KIND_TONES: Record<AdminPointSourceKind, string> = {
 };
 
 const HISTORY_PAGE_SIZE = 50;
-const MEMBER_PAGE_SIZE = 100;
+const MEMBER_SEARCH_PAGE_SIZE = 20;
 
 function parseUserId(value: string | null): number | null {
   if (!value) return null;
@@ -62,30 +62,38 @@ export default function AdminPointsPage() {
 
   const loadMembers = useCallback(async (keyword: string) => {
     try {
-      const allMembers: AdminMember[] = [];
-      let page = 1;
-      let total = 0;
+      const trimmedKeyword = keyword.trim();
+      const firstPage = await adminMembersApi.getList({
+        q: trimmedKeyword || undefined,
+        page: 1,
+        limit: MEMBER_SEARCH_PAGE_SIZE,
+      });
 
-      do {
-        const response = await adminMembersApi.getList({
-          q: keyword || undefined,
-          page,
-          limit: MEMBER_PAGE_SIZE,
-        });
-        allMembers.push(...response.items);
-        total = response.total;
-        page += 1;
-
-        if (response.items.length === 0) {
-          break;
-        }
-      } while (allMembers.length < total);
-
-      setMemberOptions(allMembers);
+      let nextOptions = firstPage.items;
       if (selectedMember == null && userId != null) {
-        const exact = allMembers.find((item) => item.id === userId);
-        if (exact) setSelectedMember(exact);
+        let exact = nextOptions.find((item) => item.id === userId);
+
+        if (!exact && trimmedKeyword === '') {
+          const totalPages = Math.max(1, Math.ceil(firstPage.total / firstPage.limit));
+          for (let page = 2; page <= totalPages; page += 1) {
+            const response = await adminMembersApi.getList({ page, limit: MEMBER_SEARCH_PAGE_SIZE });
+            exact = response.items.find((item) => item.id === userId);
+            if (exact) {
+              nextOptions = [...nextOptions, exact];
+              break;
+            }
+            if (response.items.length === 0) {
+              break;
+            }
+          }
+        }
+
+        if (exact) {
+          setSelectedMember(exact);
+        }
       }
+
+      setMemberOptions(nextOptions);
     } catch (err) {
       toast.error(handleApiError(err, t('memberLookupError')));
     }
