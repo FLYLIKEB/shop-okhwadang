@@ -37,7 +37,7 @@ const makeOrder = (overrides: Partial<Order> = {}): Order =>
     totalAmount: 30000,
     recipientName: '홍길동',
     ...overrides,
-  } as unknown as Order);
+  }) as unknown as Order;
 
 const makePayment = (overrides: Partial<Payment> = {}): Payment =>
   ({
@@ -50,7 +50,7 @@ const makePayment = (overrides: Partial<Payment> = {}): Payment =>
     paymentKey: null,
     order: makeOrder(),
     ...overrides,
-  } as unknown as Payment);
+  }) as unknown as Payment;
 
 const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   update: jest.fn().mockResolvedValue({}),
@@ -65,9 +65,7 @@ const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
   }),
   save: jest.fn().mockResolvedValue({}),
   count: jest.fn().mockResolvedValue(1),
-  create: jest
-    .fn()
-    .mockImplementation((_entity: unknown, data: unknown) => data),
+  create: jest.fn().mockImplementation((_entity: unknown, data: unknown) => data),
   find: jest.fn().mockResolvedValue([]),
   increment: jest.fn().mockResolvedValue({}),
   ...overrides,
@@ -75,9 +73,7 @@ const makeTransactionManager = (overrides: Record<string, jest.Mock> = {}) => ({
 
 const makeDataSource = (manager = makeTransactionManager()) => ({
   transaction: jest.fn(
-    async (
-      fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>,
-    ) => fn(manager),
+    async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(manager),
   ),
   _manager: manager,
 });
@@ -101,14 +97,15 @@ interface BuildArgs {
   orderEventEmit?: jest.Mock;
 }
 
-const makeGateway = (overrides: Partial<PaymentGateway> = {}): PaymentGateway => ({
-  prepare: jest.fn(),
-  confirm: jest.fn(),
-  cancel: jest.fn(),
-  partialCancel: jest.fn(),
-  verifyWebhook: jest.fn(),
-  ...overrides,
-}) as PaymentGateway;
+const makeGateway = (overrides: Partial<PaymentGateway> = {}): PaymentGateway =>
+  ({
+    prepare: jest.fn(),
+    confirm: jest.fn(),
+    cancel: jest.fn(),
+    partialCancel: jest.fn(),
+    verifyWebhook: jest.fn(),
+    ...overrides,
+  }) as PaymentGateway;
 
 const buildService = (args: BuildArgs = {}) => {
   const paymentRepo = {
@@ -129,10 +126,8 @@ const buildService = (args: BuildArgs = {}) => {
   const naverpayGateway = makeGateway(args.naverpayGateway);
   const paypalGateway = makeGateway(args.paypalGateway);
   const eximbayGateway = makeGateway(args.eximbayGateway);
-  const notificationDispatch =
-    args.notifyDispatch ?? jest.fn().mockResolvedValue(undefined);
-  const notificationSend =
-    args.notificationSend ?? jest.fn().mockResolvedValue(undefined);
+  const notificationDispatch = args.notifyDispatch ?? jest.fn().mockResolvedValue(undefined);
+  const notificationSend = args.notificationSend ?? jest.fn().mockResolvedValue(undefined);
   const orderEventEmit = args.orderEventEmit ?? jest.fn();
   const guestOrderAccessService = {
     getValidAccessOrThrow: jest.fn(),
@@ -251,10 +246,7 @@ describe('PaymentConfirmationService', () => {
         rawResponse: { mock: true },
       });
 
-      await service.confirm(
-        { orderId: 1, paymentKey: 'pay_abc', amount: 30000 },
-        10,
-      );
+      await service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10);
 
       const manager = dataSource._manager;
       expect(manager.update).toHaveBeenCalledWith(Order, 1, {
@@ -274,7 +266,15 @@ describe('PaymentConfirmationService', () => {
       const payment = makePayment();
       const existingShipping = { id: 5, orderId: 1 } as Shipping;
       const manager = makeTransactionManager({
-        findOne: jest.fn().mockResolvedValue(existingShipping),
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Payment) {
+            return Promise.resolve(payment);
+          }
+          if (entity === Shipping) {
+            return Promise.resolve(existingShipping);
+          }
+          return Promise.resolve(null);
+        }),
       });
       const dataSource = makeDataSource(manager);
       const { service, defaultGateway } = buildService({
@@ -289,10 +289,7 @@ describe('PaymentConfirmationService', () => {
         rawResponse: { mock: true },
       });
 
-      await service.confirm(
-        { orderId: 1, paymentKey: 'pay_abc', amount: 30000 },
-        10,
-      );
+      await service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10);
 
       expect(manager.save).not.toHaveBeenCalled();
     });
@@ -391,16 +388,9 @@ describe('PaymentConfirmationService', () => {
         tossGateway: tossAdapter,
       });
 
-      await service.confirm(
-        { orderId: 1, paymentKey: 'pay_toss', amount: 30000 },
-        10,
-      );
+      await service.confirm({ orderId: 1, paymentKey: 'pay_toss', amount: 30000 }, 10);
 
-      expect(tossGateway.confirm).toHaveBeenCalledWith(
-        'pay_toss',
-        30000,
-        'ORD-20240101-ABCD1',
-      );
+      expect(tossGateway.confirm).toHaveBeenCalledWith('pay_toss', 30000, 'ORD-20240101-ABCD1');
     });
 
     it('게이트웨이가 던지면 payment 를 FAILED 로 마킹하고 InternalServerErrorException', async () => {
@@ -410,9 +400,7 @@ describe('PaymentConfirmationService', () => {
         update: jest.fn().mockResolvedValue({}),
       };
       const { service, defaultGateway, dataSource } = buildService({ paymentRepo });
-      (defaultGateway.confirm as jest.Mock).mockRejectedValue(
-        new Error('gateway down'),
-      );
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(new Error('gateway down'));
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
@@ -430,7 +418,8 @@ describe('PaymentConfirmationService', () => {
       });
       const dataSource = {
         transaction: jest.fn(
-          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) =>
+            fn(failingManager),
         ),
         _manager: failingManager,
       };
@@ -453,19 +442,26 @@ describe('PaymentConfirmationService', () => {
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
       ).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
-      expect(paymentRepo.update).toHaveBeenCalledWith(payment.id, expect.objectContaining({
-        status: PaymentStatus.CONFIRMED,
-        paymentKey: 'pk',
-        method: 'mock',
-        rawResponse: expect.objectContaining({
-          gatewayConfirmationSucceeded: true,
-          reconciliationRequired: true,
-          orderId: 1,
-          error: 'shipping insert 실패',
+      expect(paymentRepo.update).toHaveBeenCalledWith(
+        payment.id,
+        expect.objectContaining({
+          status: PaymentStatus.CONFIRMED,
+          paymentKey: 'pk',
+          method: 'mock',
+          rawResponse: expect.objectContaining({
+            gatewayConfirmationSucceeded: true,
+            reconciliationRequired: true,
+            orderId: 1,
+            error: 'shipping insert 실패',
+          }),
         }),
-      }));
-      expect(failingManager.update).not.toHaveBeenCalledWith(Payment, payment.id, { status: PaymentStatus.FAILED });
-      expect(failingManager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
+      );
+      expect(failingManager.update).not.toHaveBeenCalledWith(Payment, payment.id, {
+        status: PaymentStatus.FAILED,
+      });
+      expect(failingManager.update).not.toHaveBeenCalledWith(Order, 1, {
+        status: OrderStatus.CANCELLED,
+      });
     });
 
     it('트랜잭션 내부 실패 후에는 차감 포인트 복구를 수행하지 않는다', async () => {
@@ -481,7 +477,8 @@ describe('PaymentConfirmationService', () => {
       };
       const dataSource = {
         transaction: jest.fn(
-          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) =>
+            fn(failingManager),
         ),
         _manager: failingManager,
       };
@@ -525,7 +522,8 @@ describe('PaymentConfirmationService', () => {
       };
       const dataSource = {
         transaction: jest.fn(
-          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) =>
+            fn(failingManager),
         ),
         _manager: failingManager,
       };
@@ -554,18 +552,127 @@ describe('PaymentConfirmationService', () => {
           orderId: 1,
         }),
       );
-      expect(paymentRepo.update).toHaveBeenCalledWith(payment.id, expect.objectContaining({
+      expect(paymentRepo.update).toHaveBeenCalledWith(
+        payment.id,
+        expect.objectContaining({
+          status: PaymentStatus.CONFIRMED,
+          rawResponse: expect.objectContaining({
+            gatewayConfirmationSucceeded: true,
+            reconciliationRequired: true,
+            orderId: 1,
+            error: 'shipping insert 실패',
+          }),
+        }),
+      );
+    });
+
+    it('gateway success + stale cancelled local state → confirmation reconciliation marker persisted without resurrecting order', async () => {
+      const payment = makePayment();
+      const lockedPayment = makePayment({
+        status: PaymentStatus.CANCELLED,
+        order: makeOrder({ status: OrderStatus.CANCELLED }),
+      });
+      const manager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Payment) {
+            return Promise.resolve(lockedPayment);
+          }
+          if (entity === Shipping) {
+            return Promise.resolve(null);
+          }
+          return Promise.resolve(null);
+        }),
+      });
+      const dataSource = {
+        transaction: jest.fn(
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) =>
+            fn(manager),
+        ),
+        _manager: manager,
+      };
+      const paymentRepo = {
+        findOne: jest.fn().mockResolvedValue(payment),
+        update: jest.fn().mockResolvedValue({}),
+      };
+      const { service, defaultGateway } = buildService({
+        paymentRepo,
+        dataSource: dataSource as ReturnType<typeof makeDataSource>,
+      });
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({
+        paymentKey: 'pk',
+        method: 'mock',
+        amount: 30000,
+        status: 'confirmed',
+        rawResponse: { provider: true },
+      });
+
+      await expect(
+        service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
+      ).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
+
+      expect(paymentRepo.update).toHaveBeenCalledWith(
+        payment.id,
+        expect.objectContaining({
+          status: PaymentStatus.CONFIRMED,
+          rawResponse: expect.objectContaining({
+            gatewayConfirmationSucceeded: true,
+            reconciliationRequired: true,
+            rawResponse: { provider: true },
+          }),
+        }),
+      );
+      expect(manager.update).not.toHaveBeenCalled();
+    });
+
+    it('reconcileConfirmedPayment() replays local sync and restores provider raw response', async () => {
+      const payment = makePayment({
         status: PaymentStatus.CONFIRMED,
-        rawResponse: expect.objectContaining({
+        method: PaymentMethod.MOCK,
+        paidAt: new Date('2026-07-27T11:30:00.000Z'),
+        rawResponse: {
           gatewayConfirmationSucceeded: true,
           reconciliationRequired: true,
-          orderId: 1,
-          error: 'shipping insert 실패',
+          rawResponse: { provider: true },
+        },
+        order: makeOrder({ status: OrderStatus.PENDING }),
+      });
+      const manager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Payment) {
+            return Promise.resolve(payment);
+          }
+          if (entity === Shipping) {
+            return Promise.resolve(null);
+          }
+          return Promise.resolve(null);
         }),
-      }));
+        count: jest.fn().mockResolvedValue(1),
+      });
+      const dataSource = makeDataSource(manager);
+      const { service, orderEventEmit, notificationDispatch } = buildService({
+        paymentRepo: {
+          findOne: jest.fn().mockResolvedValue(payment),
+          update: jest.fn().mockResolvedValue({}),
+        },
+        dataSource,
+      });
+
+      await service.reconcileConfirmedPayment(1);
+
+      expect(manager.update).toHaveBeenCalledWith(Payment, payment.id, {
+        rawResponse: { provider: true },
+      });
+      expect(manager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.PAID });
+      expect(orderEventEmit).toHaveBeenCalledTimes(1);
+      expect(notificationDispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'payment.confirmed',
+          userId: 10,
+          resourceId: 1,
+        }),
+      );
     });
   });
-
   describe('confirm() — duplicate loser local-truth handling', () => {
     it('duplicate-like provider error + authoritative confirmed state → 409 without FAILED/CANCELLED recovery', async () => {
       const payment = makePayment();
@@ -581,13 +688,53 @@ describe('PaymentConfirmationService', () => {
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
         dataSource,
       });
-      (defaultGateway.confirm as jest.Mock).mockRejectedValue(new Error('already captured by provider'));
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(
+        new Error('already captured by provider'),
+      );
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pay_dup', amount: 30000 }, 10),
       ).rejects.toThrow(ConflictException);
-      expect(manager.update).not.toHaveBeenCalledWith(Payment, lockedPayment.id, { status: PaymentStatus.FAILED });
+      expect(manager.update).not.toHaveBeenCalledWith(Payment, lockedPayment.id, {
+        status: PaymentStatus.FAILED,
+      });
       expect(manager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
+    });
+  });
+
+  describe('confirm() — duplicate-like reconciliation fallback', () => {
+    it('duplicate-like provider error + pending local state → 409 with confirmation reconciliation marker', async () => {
+      const payment = makePayment();
+      const lockedPayment = makePayment();
+      const manager = makeTransactionManager({
+        findOne: jest.fn().mockResolvedValue(lockedPayment),
+      });
+      const dataSource = makeDataSource(manager);
+      const { service, defaultGateway } = buildService({
+        paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
+        dataSource,
+      });
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(new Error('already captured by provider'));
+
+      await expect(
+        service.confirm({ orderId: 1, paymentKey: 'pay_dup_pending', amount: 30000 }, 10),
+      ).rejects.toThrow(ConflictException);
+      expect(manager.update).toHaveBeenCalledWith(
+        Payment,
+        lockedPayment.id,
+        expect.objectContaining({
+          status: PaymentStatus.CONFIRMED,
+          paymentKey: 'pay_dup_pending',
+          rawResponse: expect.objectContaining({
+            gatewayConfirmationDuplicateLike: true,
+            reconciliationRequired: true,
+            duplicateLike: true,
+          }),
+        }),
+      );
+      expect(manager.update).not.toHaveBeenCalledWith(Payment, lockedPayment.id, {
+        status: PaymentStatus.FAILED,
+      });
     });
   });
 
@@ -605,10 +752,7 @@ describe('PaymentConfirmationService', () => {
         rawResponse: {},
       });
 
-      await service.confirm(
-        { orderId: 1, paymentKey: 'pk', amount: 30000 },
-        10,
-      );
+      await service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10);
 
       expect(notificationDispatch).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -645,16 +789,21 @@ describe('PaymentConfirmationService', () => {
       const { service, defaultGateway, guestOrderAccessService } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
       });
-      (defaultGateway.confirm as jest.Mock).mockRejectedValue(new Error('already captured by provider'));
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(
+        new Error('already captured by provider'),
+      );
       (guestOrderAccessService.getValidAccessOrThrow as jest.Mock).mockResolvedValue({ id: 1 });
       (guestOrderAccessService.withOrderAccessLock as jest.Mock).mockImplementation(
-        async (_orderId: number, operation: (txManager: typeof manager) => Promise<unknown>) => operation(manager),
+        async (_orderId: number, operation: (txManager: typeof manager) => Promise<unknown>) =>
+          operation(manager),
       );
 
       await expect(
         service.confirmGuest(1, { paymentKey: 'pay_guest_dup', amount: 30000 }, 'guest-token'),
       ).rejects.toThrow(ConflictException);
-      expect(manager.update).not.toHaveBeenCalledWith(Payment, lockedPayment.id, { status: PaymentStatus.FAILED });
+      expect(manager.update).not.toHaveBeenCalledWith(Payment, lockedPayment.id, {
+        status: PaymentStatus.FAILED,
+      });
       expect(manager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.CANCELLED });
     });
 
@@ -670,18 +819,115 @@ describe('PaymentConfirmationService', () => {
       const { service, defaultGateway, guestOrderAccessService } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
       });
-      (defaultGateway.confirm as jest.Mock).mockRejectedValue(new Error('duplicate payment request'));
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(
+        new Error('already captured by provider'),
+      );
       (guestOrderAccessService.getValidAccessOrThrow as jest.Mock)
         .mockResolvedValueOnce({ id: 1 })
         .mockRejectedValueOnce(new UnauthorizedException('stale token'));
       (guestOrderAccessService.withOrderAccessLock as jest.Mock).mockImplementation(
-        async (_orderId: number, operation: (txManager: typeof manager) => Promise<unknown>) => operation(manager),
+        async (_orderId: number, operation: (txManager: typeof manager) => Promise<unknown>) =>
+          operation(manager),
       );
 
       await expect(
         service.confirmGuest(1, { paymentKey: 'pay_guest_dup', amount: 30000 }, 'guest-token'),
       ).rejects.toThrow(UnauthorizedException);
       expect(manager.update).not.toHaveBeenCalled();
+    });
+    it('gateway success + stale token during locked recheck → 401 with confirmation reconciliation marker', async () => {
+      const guestOrder = makeOrder({
+        userId: null,
+        status: OrderStatus.PENDING,
+        orderLocale: 'ko',
+        guestEmailNormalized: 'guest@example.com',
+      } as Partial<Order>);
+      const payment = makePayment({ order: guestOrder });
+      const manager = makeTransactionManager({
+        findOne: jest.fn().mockResolvedValue(payment),
+      });
+      const paymentRepo = {
+        findOne: jest.fn().mockResolvedValue(payment),
+        update: jest.fn().mockResolvedValue({}),
+      };
+      const dataSource = makeDataSource(manager);
+      const { service, defaultGateway, guestOrderAccessService } = buildService({
+        paymentRepo,
+        dataSource,
+      });
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({
+        paymentKey: 'pay_guest_success',
+        method: 'mock',
+        amount: 30000,
+        status: 'confirmed',
+        rawResponse: { provider: true },
+      });
+      (guestOrderAccessService.getValidAccessOrThrow as jest.Mock)
+        .mockResolvedValueOnce({ id: 1 })
+        .mockRejectedValueOnce(new UnauthorizedException('stale token'));
+      (guestOrderAccessService.withOrderAccessLock as jest.Mock).mockImplementation(
+        async (_orderId: number, operation: (txManager: typeof manager) => Promise<unknown>) =>
+          operation(manager),
+      );
+
+      await expect(
+        service.confirmGuest(1, { paymentKey: 'pay_guest_success', amount: 30000 }, 'guest-token'),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(paymentRepo.update).toHaveBeenCalledWith(
+        payment.id,
+        expect.objectContaining({
+          status: PaymentStatus.CONFIRMED,
+          rawResponse: expect.objectContaining({
+            gatewayConfirmationSucceeded: true,
+            reconciliationRequired: true,
+            orderId: 1,
+            rawResponse: { provider: true },
+            error: 'stale token',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('confirmGuest() — duplicate-like reconciliation fallback', () => {
+    it('duplicate-like provider error + pending local state → 409 with confirmation reconciliation marker', async () => {
+      const guestOrder = makeOrder({
+        userId: null,
+        status: OrderStatus.PENDING,
+        orderLocale: 'ko',
+        guestEmailNormalized: 'guest@example.com',
+      } as Partial<Order>);
+      const payment = makePayment({ order: guestOrder });
+      const lockedPayment = makePayment({ order: guestOrder });
+      const manager = makeTransactionManager({
+        findOne: jest.fn().mockResolvedValue(lockedPayment),
+      });
+      const { service, defaultGateway, guestOrderAccessService } = buildService({
+        paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
+      });
+      (defaultGateway.confirm as jest.Mock).mockRejectedValue(new Error('already captured by provider'));
+      (guestOrderAccessService.getValidAccessOrThrow as jest.Mock).mockResolvedValue({ id: 1 });
+      (guestOrderAccessService.withOrderAccessLock as jest.Mock).mockImplementation(
+        async (_orderId: number, operation: (txManager: typeof manager) => Promise<unknown>) =>
+          operation(manager),
+      );
+
+      await expect(
+        service.confirmGuest(1, { paymentKey: 'pay_guest_dup_pending', amount: 30000 }, 'guest-token'),
+      ).rejects.toThrow(ConflictException);
+      expect(manager.update).toHaveBeenCalledWith(
+        Payment,
+        lockedPayment.id,
+        expect.objectContaining({
+          status: PaymentStatus.CONFIRMED,
+          paymentKey: 'pay_guest_dup_pending',
+          rawResponse: expect.objectContaining({
+            gatewayConfirmationDuplicateLike: true,
+            reconciliationRequired: true,
+            duplicateLike: true,
+          }),
+        }),
+      );
     });
   });
 });

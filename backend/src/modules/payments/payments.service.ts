@@ -1,10 +1,22 @@
 import {
-  Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException, UnauthorizedException,
-  Logger, Inject,
+  Injectable,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+  UnauthorizedException,
+  InternalServerErrorException,
+  Logger,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import { Payment, PaymentStatus, PaymentGatewayType, PaymentMethod } from './entities/payment.entity';
+import {
+  Payment,
+  PaymentStatus,
+  PaymentGatewayType,
+  PaymentMethod,
+} from './entities/payment.entity';
 import { PaymentWebhookEvent } from './entities/payment-webhook-event.entity';
 import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
@@ -35,6 +47,16 @@ import { runFirstTerminalTransitionRecovery } from './services/order-terminal-re
 import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../config/payment.config';
 
+
+class AmbiguousGatewayOutcomeError extends Error {
+  constructor(
+    readonly kind: 'cancel' | 'refund',
+    readonly rawResponse: unknown,
+    readonly source: unknown,
+  ) {
+    super(`${kind} gateway outcome ambiguous`);
+  }
+}
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
@@ -134,8 +156,33 @@ export class PaymentsService {
         return PaymentGatewayType.MOCK;
     }
   }
+  private gatewayTypeToCheckoutGatewayName(
+    gatewayType: PaymentGatewayType,
+    fallback: string,
+  ): string {
+    switch (gatewayType) {
+      case PaymentGatewayType.TOSS:
+        return 'toss';
+      case PaymentGatewayType.STRIPE:
+        return 'stripe';
+      case PaymentGatewayType.INICIS:
+        return 'inicis';
+      case PaymentGatewayType.NAVERPAY:
+        return 'naverpay';
+      case PaymentGatewayType.PAYPAL:
+        return 'paypal';
+      case PaymentGatewayType.EXIMBAY:
+        return 'eximbay';
+      case PaymentGatewayType.MOCK:
+      default:
+        return fallback;
+    }
+  }
 
-  async prepare(dto: PreparePaymentDto, userId: number): Promise<{
+  async prepare(
+    dto: PreparePaymentDto,
+    userId: number,
+  ): Promise<{
     paymentId: number;
     orderId: number;
     orderNumber: string;
@@ -146,14 +193,17 @@ export class PaymentsService {
     redirectUrl?: string;
     gatewayPayload?: Record<string, string | number | boolean>;
   }> {
-const order = await findOrThrow(this.orderRepository, { id: dto.orderId }, '주문을 찾을 수 없습니다.');
-this.assertMemberOwnership(order.userId, userId);
+    const order = await findOrThrow(
+      this.orderRepository,
+      { id: dto.orderId },
+      '주문을 찾을 수 없습니다.',
+    );
+    this.assertMemberOwnership(order.userId, userId);
 
-return this.prepareForOrder(Number(order.id), {
-  locale: dto.locale,
-  gateway: dto.gateway,
-});
-
+    return this.prepareForOrder(Number(order.id), {
+      locale: dto.locale,
+      gateway: dto.gateway,
+    });
   }
 
   async prepareForOrder(
@@ -170,63 +220,89 @@ return this.prepareForOrder(Number(order.id), {
     redirectUrl?: string;
     gatewayPayload?: Record<string, string | number | boolean>;
   }> {
-const normalizedOrderId = Number(orderId);
-const order = await findOrThrow(this.orderRepository, { id: normalizedOrderId }, '주문을 찾을 수 없습니다.');
+    const normalizedOrderId = Number(orderId);
+    const locale = options.locale ?? 'ko';
+    const availableGateways = getAvailableGatewaysByLocale(locale);
+    const gatewayName =
+      options.gateway &&
+      isCheckoutGatewayName(options.gateway) &&
+      availableGateways.includes(options.gateway)
+        ? options.gateway
+        : options.locale
+          ? resolveGatewayByLocale(locale)
+          : this.paymentConfig.gateway;
+    const prepared = await this.dataSource.transaction(async (manager) => {
+      const order = await manager.findOne(Order, {
+        where: { id: normalizedOrderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!order) {
+        throw new NotFoundException('주문을 찾을 수 없습니다.');
+      }
+      if (order.status !== OrderStatus.PENDING) {
+        throw new ConflictException('이미 처리된 주문입니다.');
+      }
 
-if (order.status !== OrderStatus.PENDING) {
-  throw new ConflictException('이미 처리된 주문입니다.');
-}
+      let payment = await manager.findOne(Payment, {
+        where: { orderId: normalizedOrderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      let effectiveGatewayName: string = gatewayName;
+      if (!payment) {
+        payment = manager.create(Payment, {
+          orderId: normalizedOrderId,
+          amount: Number(order.totalAmount),
+          status: PaymentStatus.PENDING,
+          method: gatewayName === 'bank_transfer' ? PaymentMethod.BANK_TRANSFER : PaymentMethod.MOCK,
+          gateway:
+            gatewayName === 'bank_transfer'
+              ? PaymentGatewayType.MOCK
+              : this.gatewayNameToType(gatewayName),
+        });
+        payment = await manager.save(Payment, payment);
+      } else {
+        if (payment.status === PaymentStatus.CONFIRMED) {
+          throw new ConflictException('이미 승인된 결제입니다.');
+        }
 
-const locale = options.locale ?? 'ko';
-const availableGateways = getAvailableGatewaysByLocale(locale);
-const gatewayName = options.gateway && isCheckoutGatewayName(options.gateway) && availableGateways.includes(options.gateway)
-  ? options.gateway
-  : options.locale
-    ? resolveGatewayByLocale(locale)
-    : this.paymentConfig.gateway;
-const selectedGateway = this.resolveGatewayByName(gatewayName);
+        effectiveGatewayName =
+          payment.method === PaymentMethod.BANK_TRANSFER
+            ? 'bank_transfer'
+            : this.gatewayTypeToCheckoutGatewayName(payment.gateway, gatewayName);
+      }
 
-let payment = await this.paymentRepository.findOne({ where: { orderId: normalizedOrderId } });
-if (!payment) {
-  payment = this.paymentRepository.create({
-    orderId: normalizedOrderId,
-    amount: Number(order.totalAmount),
-    status: PaymentStatus.PENDING,
-    method: gatewayName === 'bank_transfer' ? PaymentMethod.BANK_TRANSFER : PaymentMethod.MOCK,
-    gateway: gatewayName === 'bank_transfer' ? PaymentGatewayType.MOCK : this.gatewayNameToType(gatewayName),
-  });
-  payment = await this.paymentRepository.save(payment);
-} else {
-  await this.paymentRepository.update(payment.id, {
-    method: gatewayName === 'bank_transfer' ? PaymentMethod.BANK_TRANSFER : PaymentMethod.MOCK,
-    gateway: gatewayName === 'bank_transfer' ? PaymentGatewayType.MOCK : this.gatewayNameToType(gatewayName),
-  });
-  payment = await findOrThrow(this.paymentRepository, { id: payment.id }, '결제 정보를 찾을 수 없습니다.');
-}
+      return {
+        paymentId: Number(payment.id),
+        orderNumber: order.orderNumber,
+        amount: Number(order.totalAmount),
+        gatewayName: effectiveGatewayName,
+      };
+    });
 
-if (gatewayName === 'bank_transfer') {
-  return {
-    paymentId: Number(payment.id),
-    orderId: normalizedOrderId,
-    orderNumber: order.orderNumber,
-    amount: Number(order.totalAmount),
-    gateway: gatewayName,
-    clientKey: 'bank_transfer',
-    availableGateways,
-  };
-}
+    if (prepared.gatewayName === 'bank_transfer') {
+      return {
+        paymentId: prepared.paymentId,
+        orderId: normalizedOrderId,
+        orderNumber: prepared.orderNumber,
+        amount: prepared.amount,
+        gateway: prepared.gatewayName,
+        clientKey: 'bank_transfer',
+        availableGateways,
+      };
+    }
 
-    const result = await selectedGateway.prepare(String(normalizedOrderId), Number(order.totalAmount), {
+    const selectedGateway = this.resolveGatewayByName(prepared.gatewayName);
+    const result = await selectedGateway.prepare(String(normalizedOrderId), prepared.amount, {
       locale,
-      orderNumber: order.orderNumber,
+      orderNumber: prepared.orderNumber,
     });
 
     return {
-      paymentId: Number(payment.id),
+      paymentId: prepared.paymentId,
       orderId: normalizedOrderId,
-      orderNumber: order.orderNumber,
-      amount: Number(order.totalAmount),
-      gateway: gatewayName,
+      orderNumber: prepared.orderNumber,
+      amount: prepared.amount,
+      gateway: prepared.gatewayName,
       clientKey: result.clientKey,
       availableGateways,
       ...(result.redirectUrl ? { redirectUrl: result.redirectUrl } : {}),
@@ -234,7 +310,10 @@ if (gatewayName === 'bank_transfer') {
     };
   }
 
-  async confirm(dto: ConfirmPaymentDto, userId: number): Promise<{
+  async confirm(
+    dto: ConfirmPaymentDto,
+    userId: number,
+  ): Promise<{
     paymentId: number;
     orderId: number;
     orderNumber: string;
@@ -246,13 +325,25 @@ if (gatewayName === 'bank_transfer') {
     return this.paymentConfirmationService.confirm(dto, userId);
   }
 
-  async cancel(dto: CancelPaymentDto, userId: number): Promise<{
+  async reconcileConfirmedPayment(orderId: number): Promise<void> {
+    await this.paymentConfirmationService.reconcileConfirmedPayment(orderId);
+  }
+
+  async cancel(
+    dto: CancelPaymentDto,
+    userId: number,
+  ): Promise<{
     paymentId: number;
     status: PaymentStatus;
     cancelledAt: Date;
     cancelReason: string;
   }> {
-    const payment = await findOrThrow(this.paymentRepository, { orderId: dto.orderId }, '결제 정보를 찾을 수 없습니다.', ['order']);
+    const payment = await findOrThrow(
+      this.paymentRepository,
+      { orderId: dto.orderId },
+      '결제 정보를 찾을 수 없습니다.',
+      ['order'],
+    );
     this.assertMemberOwnership(payment.order.userId, userId);
 
     if (payment.status !== PaymentStatus.CONFIRMED) {
@@ -284,61 +375,105 @@ if (gatewayName === 'bank_transfer') {
     return this.cancelConfirmedOrderPayment(payment, orderId, reason, manager);
   }
 
-async cancelAdmin(
-  orderId: number,
-  reason: string,
-  postGatewaySync?: (manager: EntityManager, cancelledAt: Date) => Promise<void>,
-): Promise<{
-  paymentId: number;
-  status: PaymentStatus;
-  cancelledAt: Date;
-  cancelReason: string;
-}> {
-  const payment = await findOrThrow(
-    this.paymentRepository,
-    { orderId },
-    '결제 정보를 찾을 수 없습니다.',
-    ['order'],
-  );
+  async cancelAdmin(
+    orderId: number,
+    reason: string,
+    postGatewaySync?: (manager: EntityManager, cancelledAt: Date) => Promise<void>,
+  ): Promise<{
+    paymentId: number;
+    status: PaymentStatus;
+    cancelledAt: Date;
+    cancelReason: string;
+  }> {
+    const payment = await findOrThrow(
+      this.paymentRepository,
+      { orderId },
+      '결제 정보를 찾을 수 없습니다.',
+      ['order'],
+    );
 
-  if (payment.status !== PaymentStatus.CONFIRMED) {
-    throw new BadRequestException('환불 가능한 상태가 아닙니다.');
-  }
-
-  const cancelGateway = this.resolveGatewayByType(payment.gateway);
-  const result = await cancelGateway.cancel(payment.paymentKey!, reason, {
-    originalAmount: Number(payment.amount),
-    orderNumber: payment.order?.orderNumber,
-    rawResponse: payment.rawResponse,
-  });
-
-  const applyRefund = async (txManager: EntityManager): Promise<void> => {
-    await txManager.update(Payment, payment.id, {
-      status: PaymentStatus.REFUNDED,
-      cancelledAt: result.cancelledAt,
-      cancelReason: reason,
-      rawResponse: result.rawResponse as object,
-    });
-
-    if (postGatewaySync) {
-      await postGatewaySync(txManager, result.cancelledAt);
+    if (payment.status !== PaymentStatus.CONFIRMED) {
+      throw new BadRequestException('환불 가능한 상태가 아닙니다.');
     }
-  };
 
-  try {
-    await this.dataSource.transaction(applyRefund);
-  } catch (err) {
-    await this.persistAdminRefundReconciliation(payment, orderId, reason, result, err);
-    throw err;
+    let gatewayResult: { cancelledAt: Date; rawResponse?: unknown } | null = null;
+    let lockedPaymentSnapshot = payment;
+    const applyRefund = async (txManager: EntityManager): Promise<void> => {
+      const lockedPayment = await txManager.findOne(Payment, {
+        where: { orderId },
+        relations: ['order'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedPayment) {
+        throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
+      }
+      if (lockedPayment.status !== PaymentStatus.CONFIRMED) {
+        throw new BadRequestException('환불 가능한 상태가 아닙니다.');
+      }
+
+      lockedPaymentSnapshot = lockedPayment;
+      const cancelGateway = this.resolveGatewayByType(lockedPayment.gateway);
+      try {
+        gatewayResult = await cancelGateway.cancel(lockedPayment.paymentKey!, reason, {
+          originalAmount: Number(lockedPayment.amount),
+          orderNumber: lockedPayment.order?.orderNumber,
+          rawResponse: lockedPayment.rawResponse,
+        });
+      } catch (err) {
+        if (!isDuplicateLikeGatewayOutcomeError(err)) {
+          throw err;
+        }
+        throw new AmbiguousGatewayOutcomeError(
+          'refund',
+          extractGatewayErrorPayload(err) ?? lockedPayment.rawResponse,
+          err,
+        );
+      }
+
+      await txManager.update(Payment, lockedPayment.id, {
+        status: PaymentStatus.REFUNDED,
+        cancelledAt: gatewayResult.cancelledAt,
+        cancelReason: reason,
+        rawResponse: normalizeGatewayRawResponse(gatewayResult.rawResponse),
+      });
+
+      if (postGatewaySync) {
+        await postGatewaySync(txManager, gatewayResult.cancelledAt);
+      }
+    };
+
+    try {
+      await this.dataSource.transaction(applyRefund);
+    } catch (err) {
+      if (err instanceof AmbiguousGatewayOutcomeError) {
+        await this.persistAmbiguousRefundOutcome(
+          lockedPaymentSnapshot,
+          orderId,
+          reason,
+          err.rawResponse,
+          err.source,
+        );
+        throw new InternalServerErrorException('환불 상태 확인이 필요합니다.');
+      }
+      if (gatewayResult) {
+        await this.persistAdminRefundReconciliation(
+          lockedPaymentSnapshot,
+          orderId,
+          reason,
+          gatewayResult,
+          err,
+        );
+      }
+      throw err;
+    }
+
+    return {
+      paymentId: Number(lockedPaymentSnapshot.id),
+      status: PaymentStatus.REFUNDED,
+      cancelledAt: gatewayResult!.cancelledAt,
+      cancelReason: reason,
+    };
   }
-
-  return {
-    paymentId: Number(payment.id),
-    status: PaymentStatus.REFUNDED,
-    cancelledAt: result.cancelledAt,
-    cancelReason: reason,
-  };
-}
 
   async partialRefund(orderId: number, dto: CreateRefundDto): Promise<Refund> {
     return this.paymentRefundService.partialRefund(orderId, dto);
@@ -382,7 +517,9 @@ async cancelAdmin(
       ? await this.orderRepository.findOne({ where: { orderNumber: rawOrderNumber } })
       : null;
     const rescode = String(record.rescode ?? '');
-    const transactionId = String(record.transaction_id ?? record.transactionId ?? record.paymentKey ?? '');
+    const transactionId = String(
+      record.transaction_id ?? record.transactionId ?? record.paymentKey ?? '',
+    );
 
     return {
       ...record,
@@ -406,35 +543,59 @@ async cancelAdmin(
     cancelledAt: Date;
     cancelReason: string;
   }> {
-    if (payment.status !== PaymentStatus.CONFIRMED) {
-      throw new BadRequestException('취소 가능한 상태가 아닙니다.');
-    }
-
-    const cancelGateway = this.resolveGatewayByType(payment.gateway);
-    const result = await cancelGateway.cancel(payment.paymentKey!, reason, {
-      originalAmount: Number(payment.amount),
-      orderNumber: payment.order?.orderNumber,
-      rawResponse: payment.rawResponse,
-    });
+    let gatewayResult: { cancelledAt: Date; rawResponse?: unknown } | null = null;
+    let lockedPaymentSnapshot = payment;
 
     const applyCancellation = async (txManager: EntityManager): Promise<void> => {
+      const lockedPayment = await txManager.findOne(Payment, {
+        where: { orderId },
+        relations: ['order'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedPayment) {
+        throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
+      }
+      if (lockedPayment.status !== PaymentStatus.CONFIRMED) {
+        throw new BadRequestException('취소 가능한 상태가 아닙니다.');
+      }
+
+      lockedPaymentSnapshot = lockedPayment;
+      assertOrderStatusTransition(lockedPayment.order.status, OrderStatus.CANCELLED);
+      const cancelGateway = this.resolveGatewayByType(lockedPayment.gateway);
+      try {
+        gatewayResult = await cancelGateway.cancel(lockedPayment.paymentKey!, reason, {
+          originalAmount: Number(lockedPayment.amount),
+          orderNumber: lockedPayment.order?.orderNumber,
+          rawResponse: lockedPayment.rawResponse,
+        });
+      } catch (err) {
+        if (!isDuplicateLikeGatewayOutcomeError(err)) {
+          throw err;
+        }
+        throw new AmbiguousGatewayOutcomeError(
+          'cancel',
+          extractGatewayErrorPayload(err) ?? lockedPayment.rawResponse,
+          err,
+        );
+      }
+
       const recovery = await runFirstTerminalTransitionRecovery(txManager, {
         orderId,
         nextOrderStatus: OrderStatus.CANCELLED,
         pointsService: this.pointsService,
-        pointRestoreDescription: `주문 ${payment.order.orderNumber} 취소로 인한 적립금 복구`,
+        pointRestoreDescription: `주문 ${lockedPayment.order.orderNumber} 취소로 인한 적립금 복구`,
         applyMutations: async (lockedOrder) => {
           assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
-          await txManager.update(Payment, payment.id, {
+          await txManager.update(Payment, lockedPayment.id, {
             status: PaymentStatus.CANCELLED,
-            cancelledAt: result.cancelledAt,
+            cancelledAt: gatewayResult!.cancelledAt,
             cancelReason: reason,
-            rawResponse: result.rawResponse as object,
+            rawResponse: normalizeGatewayRawResponse(gatewayResult!.rawResponse),
           });
           await txManager.update(Order, orderId, {
             status: OrderStatus.CANCELLED,
             cancelReason: reason,
-            cancelledAt: result.cancelledAt,
+            cancelledAt: gatewayResult!.cancelledAt,
           });
           return true;
         },
@@ -449,19 +610,35 @@ async cancelAdmin(
       if (manager) {
         await applyCancellation(manager);
       } else {
-        // PG 취소 성공 후 결제 상태/주문 상태/재고/포인트 복구를 한 트랜잭션으로 묶는다.
-        // 재고 복구 정책 및 멱등성: `orders/order-stock.util.ts` 참고.
         await this.dataSource.transaction(applyCancellation);
       }
     } catch (err) {
-      await this.persistCancellationReconciliation(payment, orderId, reason, result, err);
+      if (err instanceof AmbiguousGatewayOutcomeError) {
+        await this.persistAmbiguousCancellationOutcome(
+          lockedPaymentSnapshot,
+          orderId,
+          reason,
+          err.rawResponse,
+          err.source,
+        );
+        throw new InternalServerErrorException('결제 취소 상태 확인이 필요합니다.');
+      }
+      if (gatewayResult) {
+        await this.persistCancellationReconciliation(
+          lockedPaymentSnapshot,
+          orderId,
+          reason,
+          gatewayResult,
+          err,
+        );
+      }
       throw err;
     }
 
     return {
-      paymentId: Number(payment.id),
+      paymentId: Number(lockedPaymentSnapshot.id),
       status: PaymentStatus.CANCELLED,
-      cancelledAt: result.cancelledAt,
+      cancelledAt: gatewayResult!.cancelledAt,
       cancelReason: reason,
     };
   }
@@ -481,49 +658,76 @@ async cancelAdmin(
       error: err instanceof Error ? err.message : String(err),
     };
 
-    try {
-      await this.paymentRepository.update(payment.id, {
-        status: PaymentStatus.CANCELLED,
-        cancelledAt: result.cancelledAt,
-        cancelReason: reason,
-        rawResponse: reconciliationPayload,
-      });
-    } catch (persistErr) {
-      this.logger.error(
-        `Failed to persist cancellation reconciliation for payment ${payment.id}: ${String(persistErr)}`,
-      );
-    }
+    await this.paymentRepository.update(payment.id, {
+      status: PaymentStatus.CANCELLED,
+      cancelledAt: result.cancelledAt,
+      cancelReason: reason,
+      rawResponse: reconciliationPayload,
+    });
   }
 
-private async persistAdminRefundReconciliation(
-  payment: Payment,
-  orderId: number,
-  reason: string,
-  result: { cancelledAt: Date; rawResponse?: unknown },
-  err: unknown,
-): Promise<void> {
-  const reconciliationPayload = {
-    gatewayRefundSucceeded: true,
-    reconciliationRequired: true,
-    orderId,
-    rawResponse: result.rawResponse,
-    error: err instanceof Error ? err.message : String(err),
-  };
+  private async persistAdminRefundReconciliation(
+    payment: Payment,
+    orderId: number,
+    reason: string,
+    result: { cancelledAt: Date; rawResponse?: unknown },
+    err: unknown,
+  ): Promise<void> {
+    const reconciliationPayload = {
+      gatewayRefundSucceeded: true,
+      reconciliationRequired: true,
+      orderId,
+      rawResponse: result.rawResponse,
+      error: err instanceof Error ? err.message : String(err),
+    };
 
-  try {
     await this.paymentRepository.update(payment.id, {
       status: PaymentStatus.REFUNDED,
       cancelledAt: result.cancelledAt,
       cancelReason: reason,
       rawResponse: reconciliationPayload,
     });
-  } catch (persistErr) {
-    this.logger.error(
-      `Failed to persist refund reconciliation for payment ${payment.id}: ${String(persistErr)}`,
-    );
   }
-}
 
+  private async persistAmbiguousCancellationOutcome(
+    payment: Payment,
+    orderId: number,
+    reason: string,
+    rawResponse: unknown,
+    err: unknown,
+  ): Promise<void> {
+    await this.paymentRepository.update(payment.id, {
+      status: PaymentStatus.CONFIRMED,
+      cancelReason: reason,
+      rawResponse: {
+        gatewayCancellationAmbiguous: true,
+        reconciliationRequired: true,
+        orderId,
+        rawResponse,
+        error: err instanceof Error ? err.message : String(err),
+      } as object,
+    });
+  }
+
+  private async persistAmbiguousRefundOutcome(
+    payment: Payment,
+    orderId: number,
+    reason: string,
+    rawResponse: unknown,
+    err: unknown,
+  ): Promise<void> {
+    await this.paymentRepository.update(payment.id, {
+      status: PaymentStatus.CONFIRMED,
+      cancelReason: reason,
+      rawResponse: {
+        gatewayRefundAmbiguous: true,
+        reconciliationRequired: true,
+        orderId,
+        rawResponse,
+        error: err instanceof Error ? err.message : String(err),
+      } as object,
+    });
+  }
 
   private assertMemberOwnership(orderUserId: number | null, userId: number): void {
     if (orderUserId === null) {
@@ -536,4 +740,71 @@ private async persistAdminRefundReconciliation(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeGatewayRawResponse(rawResponse: unknown): object {
+  return isRecord(rawResponse) ? rawResponse : { duplicateLike: true };
+}
+
+
+function isDuplicateLikeGatewayOutcomeError(err: unknown): boolean {
+  const details = [
+    err instanceof Error ? err.message : '',
+    readGatewayErrorText(err, 'code'),
+    readGatewayErrorText(err, 'type'),
+    readGatewayErrorText(err, 'status'),
+    readGatewayErrorText(err, 'statusCode'),
+    readGatewayErrorText(err, 'response.status'),
+    readGatewayErrorText(err, 'response.statusCode'),
+    readGatewayErrorText(err, 'response.code'),
+    readGatewayErrorText(err, 'response.errorCode'),
+    readGatewayErrorText(err, 'response.message'),
+    readGatewayErrorText(err, 'response.error'),
+    readGatewayErrorText(err, 'body.code'),
+    readGatewayErrorText(err, 'body.message'),
+    readGatewayErrorText(err, 'rawResponse.code'),
+    readGatewayErrorText(err, 'rawResponse.message'),
+  ]
+    .filter((value) => value.length > 0)
+    .join(' ')
+    .toLowerCase();
+
+  return (
+    details.includes('already cancelled') ||
+    details.includes('already canceled') ||
+    details.includes('already refunded') ||
+    ((details.includes('duplicate') || details.includes('idempot')) &&
+      (details.includes('cancel') || details.includes('refund')))
+  );
+}
+
+
+function extractGatewayErrorPayload(err: unknown): Record<string, unknown> | null {
+  if (!isRecord(err)) {
+    return null;
+  }
+
+  const candidates: unknown[] = [err.rawResponse, err.response, err.body, err];
+  for (const candidate of candidates) {
+    if (isRecord(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+function readGatewayErrorText(err: unknown, path: string): string {
+  if (typeof err !== 'object' || err === null) {
+    return '';
+  }
+
+  const value = path.split('.').reduce<unknown>((current, key) => {
+    if (typeof current !== 'object' || current === null || !(key in current)) {
+      return undefined;
+    }
+
+    return (current as Record<string, unknown>)[key];
+  }, err);
+
+  return value === undefined || value === null ? '' : String(value);
 }

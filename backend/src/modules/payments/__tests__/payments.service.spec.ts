@@ -195,8 +195,45 @@ describe('PaymentsService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockDataSource = makeDataSourceMock();
-
+    const defaultManager = makeTransactionManager({
+      findOne: jest.fn().mockImplementation((entity: unknown, options: unknown) => {
+        if (entity === Payment) {
+          return mockPaymentRepo.findOne(options as never);
+        }
+        if (entity === Order) {
+          return mockOrderRepo.findOne(options as never);
+        }
+        if (entity === Shipping) {
+          return mockShippingRepo.findOne(options as never);
+        }
+        return Promise.resolve(null);
+      }),
+      create: jest.fn().mockImplementation((entity: unknown, data: unknown) => {
+        if (entity === Payment) {
+          return mockPaymentRepo.create(data as never);
+        }
+        return data;
+      }),
+      save: jest.fn().mockImplementation((entity: unknown, data?: unknown) => {
+        if (entity === Payment) {
+          return mockPaymentRepo.save((data ?? entity) as never);
+        }
+        if (entity === Shipping) {
+          return mockShippingRepo.save((data ?? entity) as never);
+        }
+        return Promise.resolve(data ?? entity);
+      }),
+      update: jest.fn().mockImplementation((entity: unknown, criteria: unknown, partial: unknown) => {
+        if (entity === Payment) {
+          return mockPaymentRepo.update(criteria as never, partial as never);
+        }
+        if (entity === Order) {
+          return mockOrderRepo.update(criteria as never, partial as never);
+        }
+        return Promise.resolve({});
+      }),
+    });
+    mockDataSource = makeDataSourceMock(defaultManager);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
@@ -350,6 +387,16 @@ describe('PaymentsService', () => {
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.PAYPAL }),
       );
+    });
+
+    it('reconciliation-confirmed pending order → ConflictException without reopening checkout', async () => {
+      const order = makeOrder();
+      mockOrderRepo.findOne.mockResolvedValue(order);
+      mockPaymentRepo.findOne.mockResolvedValue(makePayment({ status: PaymentStatus.CONFIRMED }));
+
+      await expect(service.prepare({ orderId: 1, locale: 'ko' }, 10)).rejects.toThrow(ConflictException);
+      expect(mockPaymentRepo.update).not.toHaveBeenCalled();
+      expect(mockDefaultGateway.prepare).not.toHaveBeenCalled();
     });
 
     it('명시적 gateway=eximbay → EXIMBAY 로 저장하고 카드 결제 payload를 반환한다 (#1057)', async () => {
@@ -847,6 +894,11 @@ describe('PaymentsService', () => {
         { orderId: 1, productId: 12, productOptionId: null, quantity: 5 },
       ];
       const txManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Payment) return Promise.resolve(payment);
+          if (entity === Order) return Promise.resolve(payment.order);
+          return Promise.resolve(null);
+        }),
         find: jest.fn().mockResolvedValue(items),
         increment: jest.fn().mockResolvedValue({}),
       });
@@ -875,9 +927,19 @@ describe('PaymentsService', () => {
       });
       const cancelledAt = new Date();
       const syncError = new Error('db sync failed');
+      const txManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Payment) return Promise.resolve(payment);
+          if (entity === Order) return Promise.resolve(payment.order);
+          return Promise.resolve(null);
+        }),
+      });
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt, rawResponse: { mock: true } });
-      mockDataSource.transaction.mockRejectedValueOnce(syncError);
+      mockDataSource.transaction.mockImplementationOnce(async (fn: (m: typeof txManager) => Promise<unknown>) => {
+        await fn(txManager);
+        throw syncError;
+      });
 
       await expect(service.cancelPaidOrder(1, '관리자 승인')).rejects.toThrow(syncError);
 
@@ -909,9 +971,15 @@ it('cancelAdmin() persists reconciliation marker when order sync fails after gat
   });
   const refundedAt = new Date();
   const syncError = new Error('refund sync failed');
+  const txManager = makeTransactionManager({
+    findOne: jest.fn().mockResolvedValue(payment),
+  });
   mockPaymentRepo.findOne.mockResolvedValue(payment);
   mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: refundedAt, rawResponse: { refund: true } });
-  mockDataSource.transaction.mockRejectedValueOnce(syncError);
+  mockDataSource.transaction.mockImplementationOnce(async (fn: (m: typeof txManager) => Promise<unknown>) => {
+    await fn(txManager);
+    throw syncError;
+  });
 
   await expect(
     service.cancelAdmin(1, '관리자 환불 처리', async () => {
@@ -941,7 +1009,9 @@ it('cancelAdmin() updates payment before running admin refund sync in one transa
     order,
   });
   const refundedAt = new Date();
-  const txManager = makeTransactionManager();
+  const txManager = makeTransactionManager({
+    findOne: jest.fn().mockResolvedValue(payment),
+  });
   mockPaymentRepo.findOne.mockResolvedValue(payment);
   mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: refundedAt, rawResponse: { refund: true } });
   mockDataSource.transaction.mockImplementationOnce(
