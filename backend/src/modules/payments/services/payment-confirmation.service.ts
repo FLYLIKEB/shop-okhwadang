@@ -14,7 +14,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { ConfirmPaymentDto } from '../dto/confirm-payment.dto';
 import { GuestConfirmPaymentDto } from '../dto/guest-confirm-payment.dto';
-import { Payment, PaymentGatewayType, PaymentMethod, PaymentStatus } from '../entities/payment.entity';
+import {
+  Payment,
+  PaymentGatewayType,
+  PaymentMethod,
+  PaymentStatus,
+} from '../entities/payment.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Shipping, ShippingStatus } from '../entities/shipping.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
@@ -121,9 +126,21 @@ export class PaymentConfirmationService {
         const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
 
         if (this.isDuplicateLikeConfirmError(err)) {
-          if (lockedPayment.status === PaymentStatus.CONFIRMED || lockedPayment.order.status === OrderStatus.PAID) {
+          if (
+            lockedPayment.status === PaymentStatus.CONFIRMED ||
+            lockedPayment.order.status === OrderStatus.PAID
+          ) {
             throw new ConflictException('이미 승인된 결제입니다.');
           }
+
+          await this.persistDuplicateConfirmationReconciliation(
+            manager,
+            lockedPayment,
+            dto.orderId,
+            dto.paymentKey,
+            err,
+          );
+          throw new ConflictException('이미 승인된 결제입니다.');
         }
 
         this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
@@ -137,25 +154,32 @@ export class PaymentConfirmationService {
     }
 
     const paidAt = new Date();
-    let payload: PostCommitPayload | null = null;
-    let isFirstPurchase = false;
 
     try {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.update(Payment, payment.id, {
+      const outcome = await this.dataSource.transaction(async (manager) => {
+        const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
+        const lockedOrder = lockedPayment.order;
+        const existingShipping = await manager.findOne(Shipping, {
+          where: { orderId: dto.orderId },
+          lock: { mode: 'pessimistic_write' },
+        });
+
+        this.assertConfirmablePayment(lockedOrder, lockedPayment, dto.amount);
+
+        await manager.update(Payment, lockedPayment.id, {
           status: PaymentStatus.CONFIRMED,
           paymentKey: result.paymentKey,
           method: result.method as PaymentMethod,
           paidAt,
           rawResponse: result.rawResponse as object,
         });
-
         await manager.update(Order, dto.orderId, { status: OrderStatus.PAID });
 
-        if (this.orderEventEmitter && payment.order.userId !== null) {
+        let isFirstPurchase = false;
+        if (this.orderEventEmitter && lockedOrder.userId !== null) {
           const paidOrderCount = await manager.count(Order, {
             where: {
-              userId: payment.order.userId,
+              userId: lockedOrder.userId,
               status: In([
                 OrderStatus.PAID,
                 OrderStatus.PREPARING,
@@ -168,7 +192,6 @@ export class PaymentConfirmationService {
           isFirstPurchase = paidOrderCount <= 1;
         }
 
-        const existingShipping = await manager.findOne(Shipping, { where: { orderId: dto.orderId } });
         if (!existingShipping) {
           await manager.save(Shipping, {
             orderId: dto.orderId,
@@ -177,42 +200,37 @@ export class PaymentConfirmationService {
           });
         }
 
-        payload = this.buildPostCommitPayload(payment.order, {
-          amount: Number(payment.amount),
+        const payload = this.buildPostCommitPayload(lockedOrder, {
+          amount: Number(lockedPayment.amount),
           customerType: 'member',
           isFirstPurchase,
           method: result.method,
         });
+
+        return {
+          payload,
+          response: {
+            paymentId: Number(lockedPayment.id),
+            orderId: dto.orderId,
+            orderNumber: lockedOrder.orderNumber,
+            status: PaymentStatus.CONFIRMED,
+            method: result.method,
+            amount: Number(lockedPayment.amount),
+            paidAt,
+          },
+        };
       });
+
+      this.dispatchPostCommit(outcome.payload);
+      this.logger.log(`Payment confirmed: orderId=${dto.orderId} customerType=member`);
+      return outcome.response;
     } catch (err) {
-      if (
-        err instanceof ConflictException
-        || err instanceof BadRequestException
-        || err instanceof UnauthorizedException
-      ) {
+      if (err instanceof ConflictException || err instanceof UnauthorizedException) {
         throw err;
       }
       await this.persistConfirmationReconciliation(payment.id, dto.orderId, result, paidAt, err);
       throw new InternalServerErrorException('결제 승인 후 동기화에 실패했습니다.');
     }
-
-
-    if (!payload) {
-      throw new InternalServerErrorException('결제 승인 후처리 정보를 구성하지 못했습니다.');
-    }
-
-    this.dispatchPostCommit(payload);
-    this.logger.log(`Payment confirmed: orderId=${dto.orderId} customerType=member`);
-
-    return {
-      paymentId: Number(payment.id),
-      orderId: dto.orderId,
-      orderNumber: payment.order.orderNumber,
-      status: PaymentStatus.CONFIRMED,
-      method: result.method,
-      amount: Number(payment.amount),
-      paidAt,
-    };
   }
 
   async assertGuestAccessTokenActive(orderId: number, guestAccessToken: string): Promise<void> {
@@ -243,13 +261,29 @@ export class PaymentConfirmationService {
       );
     } catch (err) {
       return this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
-        await this.guestOrderAccessService.getValidAccessOrThrow(orderId, guestAccessToken, manager);
+        await this.guestOrderAccessService.getValidAccessOrThrow(
+          orderId,
+          guestAccessToken,
+          manager,
+        );
         const lockedPayment = await this.loadLockedPayment(orderId, manager);
 
         if (this.isDuplicateLikeConfirmError(err)) {
-          if (lockedPayment.status === PaymentStatus.CONFIRMED || lockedPayment.order.status === OrderStatus.PAID) {
+          if (
+            lockedPayment.status === PaymentStatus.CONFIRMED ||
+            lockedPayment.order.status === OrderStatus.PAID
+          ) {
             throw new ConflictException('이미 승인된 결제입니다.');
           }
+
+          await this.persistDuplicateConfirmationReconciliation(
+            manager,
+            lockedPayment,
+            orderId,
+            dto.paymentKey,
+            err,
+          );
+          throw new ConflictException('이미 승인된 결제입니다.');
         }
 
         this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
@@ -264,76 +298,164 @@ export class PaymentConfirmationService {
 
     const paidAt = new Date();
     try {
-      const outcome = await this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
-        await this.guestOrderAccessService.getValidAccessOrThrow(orderId, guestAccessToken, manager);
-        const lockedPayment = await this.loadLockedPayment(orderId, manager);
-        const lockedOrder = lockedPayment.order;
-        const shipping = await manager.findOne(Shipping, {
-          where: { orderId },
-          lock: { mode: 'pessimistic_write' },
-        });
-
-        this.assertConfirmablePayment(lockedOrder, lockedPayment, dto.amount);
-
-        await manager.update(Payment, lockedPayment.id, {
-          status: PaymentStatus.CONFIRMED,
-          paymentKey: result.paymentKey,
-          method: result.method as PaymentMethod,
-          paidAt,
-          rawResponse: result.rawResponse as object,
-        });
-        await manager.update(Order, orderId, { status: OrderStatus.PAID });
-
-        if (!shipping) {
-          await manager.save(Shipping, {
+      const outcome = await this.guestOrderAccessService.withOrderAccessLock(
+        orderId,
+        async (manager) => {
+          await this.guestOrderAccessService.getValidAccessOrThrow(
             orderId,
-            carrier: this.paymentConfig.defaultCarrier,
-            status: ShippingStatus.PAYMENT_CONFIRMED,
+            guestAccessToken,
+            manager,
+          );
+          const lockedPayment = await this.loadLockedPayment(orderId, manager);
+          const lockedOrder = lockedPayment.order;
+          const shipping = await manager.findOne(Shipping, {
+            where: { orderId },
+            lock: { mode: 'pessimistic_write' },
           });
-        }
 
-        const rotatedAccess = await this.guestOrderAccessService.rotateAccessTokenForOrder(
-          orderId,
-          guestAccessToken,
-          manager,
-        );
-        const payload = this.buildPostCommitPayload(lockedOrder, {
-          amount: Number(lockedPayment.amount),
-          customerType: 'guest',
-          isFirstPurchase: false,
-          method: result.method,
-        });
+          this.assertConfirmablePayment(lockedOrder, lockedPayment, dto.amount);
 
-        return {
-          payload,
-          response: {
-            paymentId: Number(lockedPayment.id),
-            orderId,
-            orderNumber: lockedOrder.orderNumber,
+          await manager.update(Payment, lockedPayment.id, {
             status: PaymentStatus.CONFIRMED,
-            method: result.method,
-            amount: Number(lockedPayment.amount),
+            paymentKey: result.paymentKey,
+            method: result.method as PaymentMethod,
             paidAt,
-            guestAccessToken: rotatedAccess.guestAccessToken,
-            guestAccessTokenExpiresAt: rotatedAccess.guestAccessTokenExpiresAt.toISOString(),
-          },
-        };
-      });
+            rawResponse: result.rawResponse as object,
+          });
+          await manager.update(Order, orderId, { status: OrderStatus.PAID });
+
+          if (!shipping) {
+            await manager.save(Shipping, {
+              orderId,
+              carrier: this.paymentConfig.defaultCarrier,
+              status: ShippingStatus.PAYMENT_CONFIRMED,
+            });
+          }
+
+          const rotatedAccess = await this.guestOrderAccessService.rotateAccessTokenForOrder(
+            orderId,
+            guestAccessToken,
+            manager,
+          );
+          const payload = this.buildPostCommitPayload(lockedOrder, {
+            amount: Number(lockedPayment.amount),
+            customerType: 'guest',
+            isFirstPurchase: false,
+            method: result.method,
+          });
+
+          return {
+            payload,
+            response: {
+              paymentId: Number(lockedPayment.id),
+              orderId,
+              orderNumber: lockedOrder.orderNumber,
+              status: PaymentStatus.CONFIRMED,
+              method: result.method,
+              amount: Number(lockedPayment.amount),
+              paidAt,
+              guestAccessToken: rotatedAccess.guestAccessToken,
+              guestAccessTokenExpiresAt: rotatedAccess.guestAccessTokenExpiresAt.toISOString(),
+            },
+          };
+        },
+      );
 
       this.dispatchPostCommit(outcome.payload);
       this.logger.log(`Payment confirmed: orderId=${orderId} customerType=guest`);
       return outcome.response;
     } catch (err) {
-      if (
-        err instanceof ConflictException
-        || err instanceof BadRequestException
-        || err instanceof UnauthorizedException
-      ) {
+      if (err instanceof ConflictException) {
         throw err;
       }
       await this.persistConfirmationReconciliation(payment.id, orderId, result, paidAt, err);
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
       throw new InternalServerErrorException('결제 승인 후 동기화에 실패했습니다.');
     }
+  }
+
+  async reconcileConfirmedPayment(orderId: number): Promise<void> {
+    const payment = await findOrThrow(
+      this.paymentRepository,
+      { orderId },
+      '결제 정보를 찾을 수 없습니다.',
+      ['order'],
+    );
+
+    if (
+      payment.status !== PaymentStatus.CONFIRMED ||
+      payment.order.status !== OrderStatus.PENDING ||
+      !this.readConfirmationReconciliation(payment.rawResponse)
+    ) {
+      throw new BadRequestException('재동기화 가능한 결제 상태가 아닙니다.');
+    }
+
+    const outcome = await this.dataSource.transaction(async (manager) => {
+      const lockedPayment = await this.loadLockedPayment(orderId, manager);
+      const lockedOrder = lockedPayment.order;
+      const reconciliation = this.readConfirmationReconciliation(lockedPayment.rawResponse);
+      const existingShipping = await manager.findOne(Shipping, {
+        where: { orderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (
+        lockedPayment.status !== PaymentStatus.CONFIRMED ||
+        lockedOrder.status !== OrderStatus.PENDING ||
+        !reconciliation
+      ) {
+        throw new BadRequestException('재동기화 가능한 결제 상태가 아닙니다.');
+      }
+
+      const providerRawResponse = this.unwrapConfirmationRawResponse(lockedPayment.rawResponse);
+      if (providerRawResponse) {
+        await manager.update(Payment, lockedPayment.id, {
+          rawResponse: providerRawResponse,
+        });
+      }
+
+      await manager.update(Order, orderId, { status: OrderStatus.PAID });
+
+      let isFirstPurchase = false;
+      const customerType: CustomerType = lockedOrder.userId === null ? 'guest' : 'member';
+      if (this.orderEventEmitter && customerType === 'member') {
+        const paidOrderCount = await manager.count(Order, {
+          where: {
+            userId: Number(lockedOrder.userId),
+            status: In([
+              OrderStatus.PAID,
+              OrderStatus.PREPARING,
+              OrderStatus.SHIPPED,
+              OrderStatus.DELIVERED,
+              OrderStatus.COMPLETED,
+            ]),
+          },
+        });
+        isFirstPurchase = paidOrderCount <= 1;
+      }
+
+      if (!existingShipping) {
+        await manager.save(Shipping, {
+          orderId,
+          carrier: this.paymentConfig.defaultCarrier,
+          status: ShippingStatus.PAYMENT_CONFIRMED,
+        });
+      }
+
+      return this.buildPostCommitPayload(lockedOrder, {
+        amount: Number(lockedPayment.amount),
+        customerType,
+        isFirstPurchase,
+        method: lockedPayment.method,
+      });
+    });
+
+    this.dispatchPostCommit(outcome);
+    this.logger.log(
+      `Payment reconciliation replayed: orderId=${orderId} customerType=${outcome.customerType}`,
+    );
   }
 
   private assertConfirmablePayment(order: Order, payment: Payment, amount: number): void {
@@ -366,9 +488,6 @@ export class PaymentConfirmationService {
   }
 
   private isDuplicateLikeConfirmError(err: unknown): boolean {
-    if (err instanceof ConflictException) {
-      return true;
-    }
 
     const details = [
       err instanceof Error ? err.message : '',
@@ -391,16 +510,32 @@ export class PaymentConfirmationService {
       .join(' ')
       .toLowerCase();
 
-    return [
-      'already',
-      'duplicate',
-      'idempot',
-      'captured',
-      'processed',
-      '409',
-      '422',
-      'conflict',
-    ].some((token) => details.includes(token));
+    return (
+      details.includes('already captured') ||
+      details.includes('already approved') ||
+      details.includes('already paid') ||
+      ((details.includes('duplicate') || details.includes('idempot')) &&
+        details.includes('captured'))
+    );
+  }
+
+  private extractProviderErrorPayload(err: unknown): Record<string, unknown> | null {
+    if (typeof err !== 'object' || err === null) {
+      return null;
+    }
+
+    const candidates: unknown[] = [
+      (err as Record<string, unknown>).rawResponse,
+      (err as Record<string, unknown>).response,
+      (err as Record<string, unknown>).body,
+    ];
+    for (const candidate of candidates) {
+      if (typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate)) {
+        return candidate as Record<string, unknown>;
+      }
+    }
+
+    return null;
   }
 
   private readNestedErrorText(err: unknown, path: string): string {
@@ -467,9 +602,10 @@ export class PaymentConfirmationService {
         method: payload.method,
         locale: payload.locale,
         orderItems: buildOrderEmailItems(order, payload.locale),
-        orderUrl: payload.customerType === 'member'
-          ? buildOrderUrl(payload.orderId, payload.locale)
-          : buildGuestOrderLookupUrl(payload.locale),
+        orderUrl:
+          payload.customerType === 'member'
+            ? buildOrderUrl(payload.orderId, payload.locale)
+            : buildGuestOrderLookupUrl(payload.locale),
       });
 
     if (payload.customerType === 'member' && payload.userId !== null) {
@@ -500,13 +636,42 @@ export class PaymentConfirmationService {
   private async loadOrderForNotification(orderId: number): Promise<Order | null> {
     return typeof this.orderRepository.findOne === 'function'
       ? this.orderRepository.findOne({
-        where: { id: orderId },
-        relations: ['items'],
-      })
+          where: { id: orderId },
+          relations: ['items'],
+        })
       : null;
   }
 
+  private readConfirmationReconciliation(rawResponse: unknown): Record<string, unknown> | null {
+    if (typeof rawResponse !== 'object' || rawResponse === null || Array.isArray(rawResponse)) {
+      return null;
+    }
 
+    const record = rawResponse as Record<string, unknown>;
+    if (
+      record.reconciliationRequired !== true ||
+      (record.gatewayConfirmationSucceeded !== true &&
+        record.gatewayConfirmationDuplicateLike !== true)
+    ) {
+      return null;
+    }
+
+    return record;
+  }
+
+  private unwrapConfirmationRawResponse(rawResponse: unknown): object | null {
+    const reconciliation = this.readConfirmationReconciliation(rawResponse);
+    const providerRawResponse = reconciliation?.rawResponse;
+    if (
+      typeof providerRawResponse !== 'object' ||
+      providerRawResponse === null ||
+      Array.isArray(providerRawResponse)
+    ) {
+      return null;
+    }
+
+    return providerRawResponse as object;
+  }
   private async persistConfirmationReconciliation(
     paymentId: number,
     orderId: number,
@@ -514,23 +679,41 @@ export class PaymentConfirmationService {
     paidAt: Date,
     err: unknown,
   ): Promise<void> {
-    try {
-      await this.paymentRepository.update(paymentId, {
-        status: PaymentStatus.CONFIRMED,
-        paymentKey: result.paymentKey,
-        method: result.method as PaymentMethod,
-        paidAt,
-        rawResponse: {
-          gatewayConfirmationSucceeded: true,
-          reconciliationRequired: true,
-          orderId,
-          rawResponse: result.rawResponse,
-          error: err instanceof Error ? err.message : String(err),
-        } as object,
-      });
-    } catch (persistErr) {
-      this.logger.error(`Failed to persist payment confirmation reconciliation for payment ${paymentId}: ${String(persistErr)}`);
-    }
+    await this.paymentRepository.update(paymentId, {
+      status: PaymentStatus.CONFIRMED,
+      paymentKey: result.paymentKey,
+      method: result.method as PaymentMethod,
+      paidAt,
+      rawResponse: {
+        gatewayConfirmationSucceeded: true,
+        reconciliationRequired: true,
+        orderId,
+        rawResponse: result.rawResponse,
+        error: err instanceof Error ? err.message : String(err),
+      } as object,
+    });
+  }
+
+  private async persistDuplicateConfirmationReconciliation(
+    manager: EntityManager,
+    payment: Payment,
+    orderId: number,
+    paymentKey: string,
+    err: unknown,
+  ): Promise<void> {
+    await manager.update(Payment, payment.id, {
+      status: PaymentStatus.CONFIRMED,
+      paymentKey,
+      paidAt: payment.paidAt ?? new Date(),
+      rawResponse: {
+        gatewayConfirmationDuplicateLike: true,
+        reconciliationRequired: true,
+        orderId,
+        duplicateLike: true,
+        rawResponse: this.extractProviderErrorPayload(err),
+        error: err instanceof Error ? err.message : String(err),
+      } as object,
+    });
   }
   private async loadLockedPayment(orderId: number, manager: EntityManager): Promise<Payment> {
     const payment = await manager.findOne(Payment, {
@@ -556,16 +739,16 @@ export class PaymentConfirmationService {
       nextOrderStatus: OrderStatus.CANCELLED,
       pointsService: this.pointsService,
       pointRestoreDescription: `주문 ${orderId} 결제 승인 실패로 인한 적립금 복구`,
-applyMutations: async (lockedOrder) => {
-  if (lockedOrder.status !== OrderStatus.PENDING) {
-    return false;
-  }
+      applyMutations: async (lockedOrder) => {
+        if (lockedOrder.status !== OrderStatus.PENDING) {
+          return false;
+        }
 
-  assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
-  await manager.update(Payment, paymentId, { status: PaymentStatus.FAILED });
-  await manager.update(Order, orderId, { status: OrderStatus.CANCELLED });
-  return true;
-},
+        assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
+        await manager.update(Payment, paymentId, { status: PaymentStatus.FAILED });
+        await manager.update(Order, orderId, { status: OrderStatus.CANCELLED });
+        return true;
+      },
     });
 
     if (!recovery.lockedOrder) {

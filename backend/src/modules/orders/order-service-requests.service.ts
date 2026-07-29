@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Order, OrderStatus } from './entities/order.entity';
 import {
   OrderServiceRequest,
@@ -23,17 +23,35 @@ import { ModuleRef } from '@nestjs/core';
 import { assertOrderStatusTransition } from './policies/order-status-transition.policy';
 
 const CANCELLABLE_STATUSES = new Set<OrderStatus>([OrderStatus.PENDING, OrderStatus.PAID]);
-const AFTER_DELIVERY_REQUEST_STATUSES = new Set<OrderStatus>([OrderStatus.DELIVERED, OrderStatus.COMPLETED]);
+const AFTER_DELIVERY_REQUEST_STATUSES = new Set<OrderStatus>([
+  OrderStatus.DELIVERED,
+  OrderStatus.COMPLETED,
+]);
 
 interface PaymentCancellationService {
-  cancelPaidOrder(orderId: number, reason: string): Promise<unknown>;
+  cancelPaidOrder(orderId: number, reason: string, manager?: EntityManager): Promise<unknown>;
 }
-const ACTIVE_REQUEST_STATUSES = [OrderServiceRequestStatus.REQUESTED, OrderServiceRequestStatus.APPROVED];
+const ACTIVE_REQUEST_STATUSES = [
+  OrderServiceRequestStatus.REQUESTED,
+  OrderServiceRequestStatus.APPROVED,
+];
 
+class GatewayCancellationRequiredError extends Error {
+  constructor() {
+    super('gateway cancellation required');
+    Object.setPrototypeOf(this, GatewayCancellationRequiredError.prototype);
+  }
+}
+
+function isGatewayCancellationRequiredError(err: unknown): boolean {
+  return err instanceof Error && err.message === 'gateway cancellation required';
+}
 
 function assertMemberOwnedOrder(order: Order, userId: number): void {
   if (order.userId == null) {
-    throw new ForbiddenException('비회원 주문은 주문 취소/반품/교환/환불 신청을 지원하지 않습니다.');
+    throw new ForbiddenException(
+      '비회원 주문은 주문 취소/반품/교환/환불 신청을 지원하지 않습니다.',
+    );
   }
 
   assertOwnership(order.userId, userId);
@@ -55,8 +73,16 @@ export class OrderServiceRequestsService {
     private readonly pointsService: PointsService,
   ) {}
 
-  async create(orderId: number, userId: number, dto: CreateOrderServiceRequestDto): Promise<OrderServiceRequest> {
-    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
+  async create(
+    orderId: number,
+    userId: number,
+    dto: CreateOrderServiceRequestDto,
+  ): Promise<OrderServiceRequest> {
+    const order = await findOrThrow(
+      this.orderRepository,
+      { id: orderId },
+      '주문을 찾을 수 없습니다.',
+    );
     assertMemberOwnedOrder(order, userId);
     this.assertRequestAllowed(order.status, dto.type);
 
@@ -77,8 +103,27 @@ export class OrderServiceRequestsService {
       return completed;
     }
 
-    const saved = await this.requestRepository.save(request);
-    this.logger.log(`Order service request created: id=${saved.id}, orderId=${orderId}, type=${dto.type}`);
+    const saved = await this.dataSource.transaction(async (manager) => {
+      const lockedOrder = await manager.findOne(Order, {
+        where: { id: orderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedOrder) {
+        throw new BadRequestException('주문을 찾을 수 없습니다.');
+      }
+
+      const existingRequest = await manager.findOne(OrderServiceRequest, {
+        where: ACTIVE_REQUEST_STATUSES.map((status) => ({ orderId, userId, type: dto.type, status })),
+      });
+      if (existingRequest) {
+        throw new BadRequestException('이미 처리 중인 신청이 있습니다.');
+      }
+
+      return manager.save(OrderServiceRequest, request);
+    });
+    this.logger.log(
+      `Order service request created: id=${saved.id}, orderId=${orderId}, type=${dto.type}`,
+    );
     void this.notifyRequestReceived(saved, order);
     return this.findOneForUser(Number(saved.id), userId);
   }
@@ -97,47 +142,138 @@ export class OrderServiceRequestsService {
       detail: dto.detail?.trim() || null,
       imageUrls: dto.imageUrls ?? null,
       useShippingAddress,
-      pickupName: useShippingAddress ? order.recipientName : dto.pickupName ?? null,
-      pickupPhone: useShippingAddress ? order.recipientPhone : dto.pickupPhone ?? null,
-      pickupZipcode: useShippingAddress ? order.zipcode : dto.pickupZipcode ?? null,
-      pickupAddress: useShippingAddress ? order.address : dto.pickupAddress ?? null,
-      pickupAddressDetail: useShippingAddress ? order.addressDetail : dto.pickupAddressDetail ?? null,
+      pickupName: useShippingAddress ? order.recipientName : (dto.pickupName ?? null),
+      pickupPhone: useShippingAddress ? order.recipientPhone : (dto.pickupPhone ?? null),
+      pickupZipcode: useShippingAddress ? order.zipcode : (dto.pickupZipcode ?? null),
+      pickupAddress: useShippingAddress ? order.address : (dto.pickupAddress ?? null),
+      pickupAddressDetail: useShippingAddress
+        ? order.addressDetail
+        : (dto.pickupAddressDetail ?? null),
     });
+  }
+
+  private isGatewayCancellationReconciliation(payment: Payment | null): boolean {
+    if (
+      !payment ||
+      typeof payment.rawResponse !== 'object' ||
+      payment.rawResponse === null ||
+      Array.isArray(payment.rawResponse)
+    ) {
+      return false;
+    }
+
+    const rawResponse = payment.rawResponse as Record<string, unknown>;
+    return (
+      rawResponse.reconciliationRequired === true &&
+      rawResponse.gatewayCancellationSucceeded === true
+    );
+  }
+
+  private isGatewayCancellationAmbiguous(payment: Payment | null): boolean {
+    if (
+      !payment ||
+      payment.status !== PaymentStatus.CONFIRMED ||
+      typeof payment.rawResponse !== 'object' ||
+      payment.rawResponse === null ||
+      Array.isArray(payment.rawResponse)
+    ) {
+      return false;
+    }
+
+    const rawResponse = payment.rawResponse as Record<string, unknown>;
+    return (
+      rawResponse.reconciliationRequired === true &&
+      rawResponse.gatewayCancellationAmbiguous === true
+    );
   }
 
   private async createCompletedPendingCancellation(
     order: Order,
     request: OrderServiceRequest,
   ): Promise<OrderServiceRequest> {
-    return this.dataSource.transaction(async (manager) => {
-      const lockedOrder = await manager.findOne(Order, {
-        where: { id: order.id },
-        lock: { mode: 'pessimistic_write' },
+    const saveCompletedRequest = async (
+      allowCancelledState = false,
+    ): Promise<OrderServiceRequest> =>
+      this.dataSource.transaction(async (manager) => {
+        const lockedOrder = await manager.findOne(Order, {
+          where: { id: order.id },
+          lock: { mode: 'pessimistic_write' },
+        });
+        const lockedPayment = await manager.findOne(Payment, {
+          where: { orderId: Number(order.id) },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!lockedOrder) throw new BadRequestException('주문을 찾을 수 없습니다.');
+        if (
+          ![
+            OrderStatus.PENDING,
+            OrderStatus.PAID,
+            ...(allowCancelledState ? [OrderStatus.CANCELLED] : []),
+          ].includes(lockedOrder.status)
+        ) {
+          throw new BadRequestException(
+            '결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.',
+          );
+        }
+        if (
+          lockedOrder.status === OrderStatus.PAID &&
+          lockedPayment?.status !== PaymentStatus.CONFIRMED &&
+          !this.isGatewayCancellationReconciliation(lockedPayment)
+        ) {
+          throw new BadRequestException(
+            '결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.',
+          );
+        }
+        const existingRequest = await manager.findOne(OrderServiceRequest, {
+          where: ACTIVE_REQUEST_STATUSES.map((status) => ({
+            orderId: Number(order.id),
+            userId: request.userId,
+            type: request.type,
+            status,
+          })),
+        });
+        if (existingRequest) {
+          throw new BadRequestException('이미 처리 중인 신청이 있습니다.');
+        }
+
+        if (this.isGatewayCancellationAmbiguous(lockedPayment)) {
+          throw new BadRequestException('결제 취소 상태 확인이 필요합니다. 수동 확인 후 다시 시도해주세요.');
+        }
+
+        const processedAt = new Date();
+        const saved = await manager.save(OrderServiceRequest, {
+          ...request,
+          status: OrderServiceRequestStatus.COMPLETED,
+          adminNote: '결제대기 주문 사용자 즉시 취소',
+          processedAt,
+        });
+
+        await this.applyCompletedRequest(manager, {
+          ...saved,
+          order: lockedOrder,
+        } as OrderServiceRequest);
+
+        return saved;
       });
-      if (!lockedOrder) throw new BadRequestException('주문을 찾을 수 없습니다.');
-      if (lockedOrder.status !== OrderStatus.PENDING) {
-        throw new BadRequestException('결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.');
+
+    try {
+      return await saveCompletedRequest();
+    } catch (err) {
+      if (!isGatewayCancellationRequiredError(err)) {
+        throw err;
       }
+    }
 
-      const processedAt = new Date();
-      const saved = await manager.save(OrderServiceRequest, {
-        ...request,
-        status: OrderServiceRequestStatus.COMPLETED,
-        adminNote: '결제대기 주문 사용자 즉시 취소',
-        processedAt,
-      });
-
-      await this.applyCompletedRequest(manager, {
-        ...saved,
-        order: lockedOrder,
-      } as OrderServiceRequest);
-
-      return saved;
-    });
+    await this.getPaymentsService().cancelPaidOrder(Number(order.id), request.reason);
+    return saveCompletedRequest(true);
   }
 
   async findByOrderForUser(orderId: number, userId: number): Promise<OrderServiceRequest[]> {
-    const order = await findOrThrow(this.orderRepository, { id: orderId }, '주문을 찾을 수 없습니다.');
+    const order = await findOrThrow(
+      this.orderRepository,
+      { id: orderId },
+      '주문을 찾을 수 없습니다.',
+    );
     assertMemberOwnedOrder(order, userId);
     return this.requestRepository.find({
       where: { orderId, userId },
@@ -156,7 +292,9 @@ export class OrderServiceRequestsService {
     return request;
   }
 
-  async findAllForAdmin(query: AdminOrderServiceRequestQueryDto = {}): Promise<PaginatedResult<OrderServiceRequest>> {
+  async findAllForAdmin(
+    query: AdminOrderServiceRequestQueryDto = {},
+  ): Promise<PaginatedResult<OrderServiceRequest>> {
     const qb = this.requestRepository
       .createQueryBuilder('request')
       .leftJoinAndSelect('request.order', 'order')
@@ -169,7 +307,10 @@ export class OrderServiceRequestsService {
     return paginate(qb, { page: query.page ?? 1, limit: query.limit ?? 20 });
   }
 
-  async updateForAdmin(id: number, dto: UpdateOrderServiceRequestDto): Promise<OrderServiceRequest> {
+  async updateForAdmin(
+    id: number,
+    dto: UpdateOrderServiceRequestDto,
+  ): Promise<OrderServiceRequest> {
     const request = await findOrThrow(
       this.requestRepository,
       { id },
@@ -178,28 +319,51 @@ export class OrderServiceRequestsService {
     );
 
     const adminNote = dto.adminNote?.trim() || null;
+    let shouldNotify = true;
+    const applyStatusUpdate = async (): Promise<void> => {
+      await this.dataSource.transaction(async (manager) => {
+        const lockedRequest = await manager.findOne(OrderServiceRequest, {
+          where: { id },
+          relations: ['order', 'user'],
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!lockedRequest) {
+          throw new BadRequestException('신청 내역을 찾을 수 없습니다.');
+        }
+        if (lockedRequest.status === dto.status && lockedRequest.adminNote === adminNote) {
+          shouldNotify = false;
+          return;
+        }
 
-    // 유료 주문의 취소 신청 완료는 외부 PG 취소를 포함하므로, 신청 상태 업데이트
-    // 트랜잭션을 연 채로 네트워크 호출을 수행하지 않는다. 결제 취소 서비스가 PG
-    // 성공 후 Payment/Order/stock/points 동기화를 자체 트랜잭션으로 처리한다.
-    if (this.isPaidCancelCompletion(request, dto.status)) {
+        if (dto.status === OrderServiceRequestStatus.COMPLETED) {
+          await this.applyCompletedRequest(manager, lockedRequest);
+        }
+
+        await manager.update(OrderServiceRequest, id, {
+          status: dto.status,
+          adminNote,
+          processedAt: dto.status === OrderServiceRequestStatus.REQUESTED ? null : new Date(),
+        });
+      });
+    };
+
+    try {
+      await applyStatusUpdate();
+    } catch (err) {
+      if (
+        !isGatewayCancellationRequiredError(err) ||
+        dto.status !== OrderServiceRequestStatus.COMPLETED ||
+        request.type !== OrderServiceRequestType.CANCEL
+      ) {
+        throw err;
+      }
+
       await this.getPaymentsService().cancelPaidOrder(
         Number(request.orderId),
         adminNote || `고객 취소 신청 처리: ${request.reason}`,
       );
+      await applyStatusUpdate();
     }
-
-    await this.dataSource.transaction(async (manager) => {
-      await manager.update(OrderServiceRequest, id, {
-        status: dto.status,
-        adminNote,
-        processedAt: dto.status === OrderServiceRequestStatus.REQUESTED ? null : new Date(),
-      });
-
-      if (dto.status === OrderServiceRequestStatus.COMPLETED) {
-        await this.applyCompletedRequest(manager, request);
-      }
-    });
 
     const updated = await findOrThrow(
       this.requestRepository,
@@ -207,7 +371,9 @@ export class OrderServiceRequestsService {
       '신청 내역을 찾을 수 없습니다.',
       ['order', 'user'],
     );
-    void this.notifyRequestStatusChanged(updated);
+    if (shouldNotify) {
+      void this.notifyRequestStatusChanged(updated);
+    }
     return updated;
   }
 
@@ -215,19 +381,12 @@ export class OrderServiceRequestsService {
     return this.moduleRef.get<PaymentCancellationService>('PaymentsService', { strict: false });
   }
 
-  private isPaidCancelCompletion(
-    request: OrderServiceRequest,
-    nextStatus: OrderServiceRequestStatus,
-  ): boolean {
-    return nextStatus === OrderServiceRequestStatus.COMPLETED
-      && request.type === OrderServiceRequestType.CANCEL
-      && request.order?.status === OrderStatus.PAID;
-  }
-
   private assertRequestAllowed(orderStatus: OrderStatus, type: OrderServiceRequestType): void {
     if (type === OrderServiceRequestType.CANCEL) {
       if (!CANCELLABLE_STATUSES.has(orderStatus)) {
-        throw new BadRequestException('배송 준비 이후에는 주문 취소 신청이 제한됩니다. 고객센터로 문의해주세요.');
+        throw new BadRequestException(
+          '배송 준비 이후에는 주문 취소 신청이 제한됩니다. 고객센터로 문의해주세요.',
+        );
       }
       return;
     }
@@ -244,54 +403,80 @@ export class OrderServiceRequestsService {
     const order = await manager.findOne(Order, {
       where: { id: request.orderId },
       relations: ['items'],
+      lock: { mode: 'pessimistic_write' },
     });
     if (!order) throw new BadRequestException('주문을 찾을 수 없습니다.');
 
     if (request.type === OrderServiceRequestType.CANCEL) {
-      if (![OrderStatus.PENDING, OrderStatus.PAID].includes(order.status)) return;
+      const lockedPayment = await manager.findOne(Payment, {
+        where: { orderId: Number(order.id) },
+        lock: { mode: 'pessimistic_write' },
+      });
+      const usesGatewayCancellationReconciliation =
+        this.isGatewayCancellationReconciliation(lockedPayment);
 
-      if (order.status === OrderStatus.PAID) {
-        // Paid cancellations are handled before this transaction by PaymentsService
-        // so the external gateway call is not made while this request transaction is open.
-        return;
+      if (this.isGatewayCancellationAmbiguous(lockedPayment)) {
+        throw new BadRequestException('결제 취소 상태 확인이 필요합니다. 수동 확인 후 다시 시도해주세요.');
       }
 
-      const cancelledAt = new Date();
+      if (lockedPayment?.status === PaymentStatus.CONFIRMED) {
+        throw new GatewayCancellationRequiredError();
+      }
+
+      if (order.status === OrderStatus.CANCELLED) {
+        return;
+      }
+      if (![OrderStatus.PENDING, OrderStatus.PAID].includes(order.status)) {
+        throw new BadRequestException('결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.');
+      }
+      if (order.status === OrderStatus.PAID && !usesGatewayCancellationReconciliation) {
+        throw new BadRequestException('결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.');
+      }
+
+      const cancelledAt = lockedPayment?.cancelledAt ?? new Date();
       const recovery = await runFirstTerminalTransitionRecovery(manager, {
         orderId: Number(order.id),
         nextOrderStatus: OrderStatus.CANCELLED,
         pointsService: this.pointsService,
         pointRestoreDescription: `주문 ${order.orderNumber} 고객 신청 처리로 인한 적립금 복구`,
-applyMutations: async (lockedOrder) => {
-  if (lockedOrder.status !== OrderStatus.PENDING) {
-    return false;
-  }
+        applyMutations: async (lockedOrder) => {
+          const canCancelLocally =
+            lockedOrder.status === OrderStatus.PENDING ||
+            (lockedOrder.status === OrderStatus.PAID && usesGatewayCancellationReconciliation);
+          if (!canCancelLocally) {
+            return false;
+          }
 
-  assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
-  await manager.update(Order, order.id, {
-    status: OrderStatus.CANCELLED,
-    cancelReason: request.reason,
-    cancelledAt,
-  });
-  await manager.update(
-    Payment,
-    { orderId: Number(order.id), status: PaymentStatus.PENDING },
-    { status: PaymentStatus.CANCELLED, cancelReason: request.reason, cancelledAt },
-  );
-  return true;
-},
+          assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
+          await manager.update(Order, order.id, {
+            status: OrderStatus.CANCELLED,
+            cancelReason: request.reason,
+            cancelledAt,
+          });
+          await manager.update(
+            Payment,
+            { orderId: Number(order.id), status: PaymentStatus.PENDING },
+            { status: PaymentStatus.CANCELLED, cancelReason: request.reason, cancelledAt },
+          );
+          return true;
+        },
       });
       if (!recovery.lockedOrder) throw new BadRequestException('주문을 찾을 수 없습니다.');
+      if (!recovery.didMutate) {
+        throw new BadRequestException('결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.');
+      }
       return;
     }
 
-    if (request.type === OrderServiceRequestType.REFUND || request.type === OrderServiceRequestType.RETURN) {
+    if (
+      request.type === OrderServiceRequestType.REFUND ||
+      request.type === OrderServiceRequestType.RETURN
+    ) {
       if (order.status === OrderStatus.DELIVERED || order.status === OrderStatus.COMPLETED) {
         await manager.update(Order, order.id, { status: OrderStatus.REFUND_REQUESTED });
       }
     }
   }
-
 
   private async notifyRequestReceived(request: OrderServiceRequest, order: Order): Promise<void> {
     await this.notificationDispatchHelper.dispatch({
