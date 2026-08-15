@@ -397,6 +397,7 @@ export default function CheckoutPage({
                     guestAccessToken={currentGuestAccessToken || undefined}
                     guestAccessTokenExpiresAt={currentGuestAccessTokenExpiresAt || undefined}
                     onError={handlePaymentError}
+                    autoConfirm={locale === 'ko' && prepareResult.gateway === 'toss'}
                   />
                 ) : locale === 'ko' && selectedGateway === 'toss' ? (
                   <TossPaymentWidgetPreview
