@@ -67,6 +67,28 @@ describe('validateEnv', () => {
     expect(validateEnv(env).map((e) => e.key)).not.toContain('NAVERPAY_CHAIN_ID');
   });
 
+  it('Stripe 활성화는 키와 최신의 유효한 환율 견적 설정을 요구한다', () => {
+    const env = makeFullEnv();
+    env.PAYMENT_GATEWAY = 'stripe';
+
+    expect(validateEnv(env).map((error) => error.key)).toEqual(
+      expect.arrayContaining([
+        'STRIPE_SECRET_KEY',
+        'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+        'STRIPE_KRW_PER_USD',
+        'STRIPE_KRW_PER_USD_UPDATED_AT',
+      ]),
+    );
+
+    Object.assign(env, {
+      STRIPE_SECRET_KEY: 'sk_test',
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test',
+      STRIPE_KRW_PER_USD: '1350.25',
+      STRIPE_KRW_PER_USD_UPDATED_AT: new Date().toISOString(),
+    });
+    expect(validateEnv(env)).toEqual([]);
+  });
+
   it('누락된 키가 있으면 해당 키 에러 반환', () => {
     const env = makeFullEnv();
     delete env.NOTIFICATION_PROVIDER;

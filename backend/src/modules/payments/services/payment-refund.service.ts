@@ -12,6 +12,11 @@ import { Refund, RefundStatus } from '../entities/refund.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { findOrThrow } from '../../../common/utils/repository.util';
+import {
+  allocateStripeRefundCents,
+  readStripePaymentQuote,
+  StripeMoneyPolicyError,
+} from '../stripe-money.policy';
 
 type ResolveGatewayByType = (gatewayType: PaymentGatewayType) => PaymentGateway;
 
@@ -54,10 +59,33 @@ export class PaymentRefundService {
         ) {
           throw new BadRequestException('환불 작업 키가 다른 요청에 이미 사용되었습니다.');
         }
-        return { payment, refund: existingRefund, isNew: false };
+        const priorRefundsResult = await manager
+          .createQueryBuilder(Refund, 'r')
+          .select('COALESCE(SUM(r.amount), 0)', 'total')
+          .where('r.paymentId = :paymentId AND r.id != :refundId AND r.status IN (:...statuses)', {
+            paymentId: payment.id,
+            refundId: existingRefund.id,
+            statuses: [RefundStatus.PENDING, RefundStatus.COMPLETED],
+          })
+          .getRawOne<{ total: string }>();
+        return {
+          payment,
+          refund: existingRefund,
+          isNew: false,
+          priorRefundedAmount: Number(priorRefundsResult?.total ?? 0),
+        };
       }
       if (payment.status !== PaymentStatus.CONFIRMED && payment.status !== PaymentStatus.PARTIAL_CANCELLED) {
         throw new BadRequestException('환불 가능한 상태가 아닙니다.');
+      }
+
+      if (payment.gateway === PaymentGatewayType.STRIPE) {
+        const pendingRefund = await manager.findOne(Refund, {
+          where: { paymentId: Number(payment.id), status: RefundStatus.PENDING },
+        });
+        if (pendingRefund) {
+          throw new BadRequestException('Stripe 환불 처리 중인 요청이 있습니다.');
+        }
       }
 
       // The payment lock serializes reservations; pending refunds reserve money too.
@@ -89,7 +117,42 @@ export class PaymentRefundService {
         // can retry this operation. Non-idempotent providers then fail closed.
         gatewayAttemptedAt: new Date(),
       });
-      return { payment, refund: await manager.save(Refund, pendingRefund), isNew: true };
+      if (payment.gateway === PaymentGatewayType.STRIPE) {
+        try {
+          const quote = readStripePaymentQuote(payment.rawResponse);
+          const completedRefundsResult = await manager
+            .createQueryBuilder(Refund, 'r')
+            .select('COALESCE(SUM(r.amount), 0)', 'localTotal')
+            .addSelect('COALESCE(SUM(r.providerMinorAmount), 0)', 'providerTotal')
+            .where('r.paymentId = :paymentId AND r.status = :status', {
+              paymentId: payment.id,
+              status: RefundStatus.COMPLETED,
+            })
+            .getRawOne<{ localTotal: string; providerTotal: string }>();
+          const completedLocalAmount = Number(completedRefundsResult?.localTotal ?? 0);
+          const completedProviderAmount = Number(completedRefundsResult?.providerTotal ?? 0);
+          const providerMinorAmount = dto.amount === Number(payment.amount) - completedLocalAmount
+            ? quote.providerAmount - completedProviderAmount
+            : allocateStripeRefundCents(quote, completedLocalAmount, dto.amount);
+          if (providerMinorAmount <= 0) {
+            throw new BadRequestException('Stripe 환불 금액이 최소 단위에 미달합니다.');
+          }
+          pendingRefund.providerMinorAmount = providerMinorAmount;
+          pendingRefund.localCumulativeOffset = completedLocalAmount;
+        } catch (err) {
+          if (err instanceof BadRequestException) throw err;
+          if (err instanceof StripeMoneyPolicyError) {
+            throw new BadRequestException('Stripe 환불 견적 정보가 유효하지 않습니다.');
+          }
+          throw err;
+        }
+      }
+      return {
+        payment,
+        refund: await manager.save(Refund, pendingRefund),
+        isNew: true,
+        priorRefundedAmount: reservedAmount,
+      };
     });
 
     let refund = reservation.refund;
@@ -120,6 +183,8 @@ export class PaymentRefundService {
           cancelReason: refund.reason,
           idempotencyKey: refund.idempotencyKey,
           originalAmount: Number(payment.amount),
+          priorRefundedAmount: reservation.priorRefundedAmount,
+          providerRefundAmount: refund.providerMinorAmount ?? undefined,
           orderNumber: payment.order?.orderNumber,
           rawResponse: payment.rawResponse,
         });

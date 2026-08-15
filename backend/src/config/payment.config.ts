@@ -18,6 +18,8 @@ export interface PaymentConfig {
     secretKey: string;
     publishableKey: string;
     webhookSecret: string;
+    krwPerUsd: string;
+    krwPerUsdUpdatedAt: string;
   };
   inicis: {
     mid: string;
@@ -94,6 +96,8 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
       secretKey: env.STRIPE_SECRET_KEY ?? '',
       publishableKey: env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '',
       webhookSecret: env.STRIPE_WEBHOOK_SECRET ?? '',
+      krwPerUsd: env.STRIPE_KRW_PER_USD?.trim() ?? '',
+      krwPerUsdUpdatedAt: env.STRIPE_KRW_PER_USD_UPDATED_AT?.trim() ?? '',
     },
     inicis: {
       mid: env.INICIS_MID ?? '',

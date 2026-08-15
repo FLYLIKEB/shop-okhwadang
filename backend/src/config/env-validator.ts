@@ -8,6 +8,7 @@ import {
   CHECKOUT_GATEWAY_CONTRACT,
   getRequiredCheckoutEnvKeys as getRequiredCheckoutEnvKeysFromContract,
 } from './checkout-gateway-contract';
+import { validateStripeExchangeRate } from '../modules/payments/stripe-money.policy';
 
 export const REQUIRED_PROD_ENV_KEYS = [
   'NODE_ENV',
@@ -71,6 +72,31 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidation
     const value = env[key];
     if (value === undefined || value === null || value.trim() === '') {
       errors.push({ key, reason: '값이 없거나 비어 있습니다' });
+    }
+  }
+  if ((env.PAYMENT_GATEWAY ?? '').trim().toLowerCase() === 'stripe') {
+    for (const key of [
+      'STRIPE_SECRET_KEY',
+      'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+      'STRIPE_KRW_PER_USD',
+      'STRIPE_KRW_PER_USD_UPDATED_AT',
+    ]) {
+      if (!env[key]?.trim()) {
+        errors.push({ key, reason: 'Stripe 활성화에 필요합니다' });
+      }
+    }
+    if (env.STRIPE_KRW_PER_USD?.trim() && env.STRIPE_KRW_PER_USD_UPDATED_AT?.trim()) {
+      try {
+        validateStripeExchangeRate({
+          krwPerUsd: env.STRIPE_KRW_PER_USD.trim(),
+          krwPerUsdUpdatedAt: env.STRIPE_KRW_PER_USD_UPDATED_AT.trim(),
+        });
+      } catch (err) {
+        errors.push({
+          key: 'STRIPE_KRW_PER_USD',
+          reason: err instanceof Error ? err.message : '유효하지 않은 Stripe 환율 설정입니다',
+        });
+      }
     }
   }
 

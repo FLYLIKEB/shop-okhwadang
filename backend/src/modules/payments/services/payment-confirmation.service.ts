@@ -123,8 +123,8 @@ export class PaymentConfirmationService {
     try {
       const gateway = this.resolveGatewayByType(payment.gateway);
       result = idempotencyKey
-        ? await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber, { idempotencyKey })
-        : await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
+        ? await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber, { idempotencyKey, rawResponse: payment.rawResponse })
+        : await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber, { rawResponse: payment.rawResponse });
     } catch (err) {
       await this.dataSource.transaction(async (manager) => {
         const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
@@ -177,7 +177,9 @@ export class PaymentConfirmationService {
           paymentKey: result.paymentKey,
           method: result.method as PaymentMethod,
           paidAt,
-          rawResponse: result.rawResponse as object,
+          rawResponse: lockedPayment.gateway === PaymentGatewayType.STRIPE
+            ? { ...(lockedPayment.rawResponse ?? {}), stripePaymentIntent: result.rawResponse }
+            : result.rawResponse,
         });
         await manager.update(Order, dto.orderId, { status: OrderStatus.PAID });
 
@@ -265,8 +267,8 @@ export class PaymentConfirmationService {
     try {
       const gateway = this.resolveGatewayByType(payment.gateway);
       result = idempotencyKey
-        ? await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber, { idempotencyKey })
-        : await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
+        ? await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber, { idempotencyKey, rawResponse: payment.rawResponse })
+        : await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber, { rawResponse: payment.rawResponse });
     } catch (err) {
       return this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
         await this.guestOrderAccessService.getValidAccessOrThrow(
@@ -330,7 +332,9 @@ export class PaymentConfirmationService {
             paymentKey: result.paymentKey,
             method: result.method as PaymentMethod,
             paidAt,
-            rawResponse: result.rawResponse as object,
+            rawResponse: lockedPayment.gateway === PaymentGatewayType.STRIPE
+              ? { ...(lockedPayment.rawResponse ?? {}), stripePaymentIntent: result.rawResponse }
+              : result.rawResponse,
           });
           await manager.update(Order, orderId, { status: OrderStatus.PAID });
 
