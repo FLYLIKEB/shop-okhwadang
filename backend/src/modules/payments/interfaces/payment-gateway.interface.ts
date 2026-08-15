@@ -13,6 +13,10 @@ export interface ConfirmContext {
 export interface PrepareResult {
   clientKey: string;
   orderId: string;
+  providerTransactionId?: string;
+  providerOrderReference?: string;
+  providerAmount?: number;
+  providerCurrency?: string;
   redirectUrl?: string;
   gatewayPayload?: Record<string, string | number | boolean>;
   rawResponse?: object;
@@ -20,6 +24,10 @@ export interface PrepareResult {
 
 export interface ConfirmResult {
   paymentKey: string;
+  providerTransactionId?: string;
+  providerOrderReference?: string;
+  providerAmount?: number;
+  providerCurrency?: string;
   method: string;
   amount: number;
   status: string;

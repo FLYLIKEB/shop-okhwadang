@@ -14,7 +14,7 @@ This checklist is the launch fallback when automated browser E2E cannot safely r
 
 ## Success path per enabled provider
 
-Run once for each enabled checkout provider: NaverPay, PayPal, Eximbay, or bank transfer. Toss/Stripe legacy retry flows are separate adapter checks, not the locale-exposed checkout contract.
+Run once for each enabled checkout provider: Toss, PayPal, Eximbay, or bank transfer. Stripe legacy retry flows are separate adapter checks, not the locale-exposed checkout contract.
 
 1. Log in as a test customer.
 2. Add one product to cart with quantity that produces a non-zero shipping fee.
@@ -74,7 +74,7 @@ When sandbox credentials are available to CI, convert this checklist into browse
 
 Use this section when `eximbay` is enabled. Card PAN/CVC/expiry must be entered only in the Eximbay hosted payment page or SDK-controlled surface, never in Okhwadang inputs, logs, requests, or test fixtures.
 
-1. Set `CHECKOUT_ENABLED_GATEWAYS=naverpay,eximbay,paypal` and matching frontend `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` for locale ordering.
+1. Set `CHECKOUT_ENABLED_GATEWAYS=toss,eximbay,paypal` and matching frontend `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` for locale ordering.
 2. Configure Eximbay sandbox keys in local/staging secrets only: `EXIMBAY_MERCHANT_ID`, `EXIMBAY_API_KEY`, `EXIMBAY_SECRET_KEY`, and `EXIMBAY_WEBHOOK_SECRET` if webhook/status URL testing is enabled.
 3. Select `카드 결제 (Visa/Master/JCB/Amex)` / `International card` at checkout.
 4. Confirm the Eximbay SDK opens its hosted payment page and the Okhwadang DOM contains no custom card-number, CVC, or expiry inputs.

@@ -40,11 +40,50 @@ describe('TossPaymentAdapter', () => {
     });
 
     it('forwards the stable operation key to Toss', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ method: 'card' }) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          paymentKey: 'pk123',
+          orderId: 'ORD-TEST-001',
+          totalAmount: 10000,
+          currency: 'KRW',
+          method: 'card',
+          status: 'DONE',
+        }),
+      });
       await adapter.confirm('pk123', 10000, 'ORD-TEST-001', { idempotencyKey: 'confirm-operation-key' });
       expect(mockFetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
         headers: expect.objectContaining({ 'Idempotency-Key': 'confirm-operation-key' }),
       }));
+    });
+
+    it('authoritative response without a transaction ID fails closed', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ orderId: 'ORD-TEST-001', totalAmount: 10000, currency: 'KRW' }),
+      });
+
+      await expect(adapter.confirm('client-supplied-key', 10000, 'ORD-TEST-001')).rejects.toThrow(
+        BadGatewayException,
+      );
+    });
+
+    it('WAITING_FOR_DEPOSIT 응답은 결제 완료로 인정하지 않는다', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          paymentKey: 'pk123',
+          orderId: 'ORD-TEST-001',
+          totalAmount: 10000,
+          currency: 'KRW',
+          method: 'virtual_account',
+          status: 'WAITING_FOR_DEPOSIT',
+        }),
+      });
+
+      await expect(adapter.confirm('pk123', 10000, 'ORD-TEST-001')).rejects.toThrow(
+        BadGatewayException,
+      );
     });
 
     it('토스 API 5xx → BadGatewayException', async () => {
@@ -117,6 +156,11 @@ describe('TossPaymentAdapter', () => {
       const result = await adapter.prepare('ORDER-123', 50000);
       expect(result.clientKey).toBe('test_ck_abc');
       expect(result.orderId).toBe('ORDER-123');
+      expect(result).toMatchObject({
+        providerOrderReference: 'ORDER-123',
+        providerAmount: 50000,
+        providerCurrency: 'KRW',
+      });
     });
   });
 

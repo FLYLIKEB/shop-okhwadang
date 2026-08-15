@@ -31,7 +31,7 @@ export enum PaymentWebhookResult {
  * Idempotency key (gateway 별):
  *   - Toss: `eventId` 우선 → 없으면 `paymentKey + ':' + eventType` 폴백
  *   - Stripe: `event.id`
- *   - NaverPay: `paymentId` (취소면 `:cancel` suffix 로 cancel 이벤트 분리)
+
  *   - KGInicis: `tid` (취소면 `:cancel` suffix)
  *   - Mock: `orderId + ':' + eventType` (테스트/개발용)
  */

@@ -30,8 +30,9 @@ interface PayPalOrderResponse {
   create_time?: string;
   update_time?: string;
   purchase_units?: Array<{
+    reference_id?: string;
     payments?: {
-      captures?: Array<{ id?: string }>;
+      captures?: Array<{ id?: string; status?: string; amount?: { value?: string; currency_code?: string } }>;
     };
   }>;
 }
@@ -92,6 +93,10 @@ export class PayPalPaymentAdapter implements PaymentGateway {
     return {
       clientKey: this.clientId,
       orderId: paypalOrderId,
+      providerTransactionId: paypalOrderId,
+      providerOrderReference: orderId,
+      providerAmount: Number(formatPayPalUsdAmount(amount, this.krwPerUsd)),
+      providerCurrency: 'USD',
       redirectUrl,
     };
   }
@@ -114,9 +119,27 @@ export class PayPalPaymentAdapter implements PaymentGateway {
       );
       throw new BadGatewayException('PayPal 결제 승인 실패');
     }
+    const units = body.purchase_units ?? [];
+    if (units.length !== 1 || units[0].reference_id !== orderId) {
+      throw new BadGatewayException('PayPal 결제 주문 참조가 일치하지 않습니다.');
+    }
+    const captures = units[0].payments?.captures ?? [];
+    if (captures.length !== 1 || captures[0].status !== 'COMPLETED') {
+      throw new BadGatewayException('PayPal 결제 캡처 상태가 유효하지 않습니다.');
+    }
+    const capture = captures[0];
+    const providerAmount = Number(capture.amount?.value);
+    const providerCurrency = capture.amount?.currency_code;
+    if (!capture.id || !Number.isFinite(providerAmount) || !providerCurrency) {
+      throw new BadGatewayException('PayPal 결제 캡처 증거가 없습니다.');
+    }
 
     return {
       paymentKey,
+      providerTransactionId: body.id,
+      providerOrderReference: units[0].reference_id,
+      providerAmount,
+      providerCurrency,
       method: 'paypal',
       amount,
       status: 'confirmed',

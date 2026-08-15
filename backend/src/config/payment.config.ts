@@ -2,7 +2,7 @@ import { Provider } from '@nestjs/common';
 
 export const PAYMENT_CONFIG = Symbol('PAYMENT_CONFIG');
 
-export type PaymentGatewayName = 'mock' | 'toss' | 'stripe' | 'inicis' | 'naverpay' | 'paypal' | 'eximbay';
+export type PaymentGatewayName = 'mock' | 'toss' | 'stripe' | 'inicis' | 'paypal' | 'eximbay';
 
 export interface PaymentConfig {
   nodeEnv: string;
@@ -26,12 +26,6 @@ export interface PaymentConfig {
     signKey: string;
     apiKey: string;
     clientKey: string;
-  };
-  naverpay: {
-    partnerId: string;
-    clientId: string;
-    clientSecret: string;
-    chainId: string;
   };
   paypal: {
     clientId: string;
@@ -60,7 +54,6 @@ function isPaymentGatewayName(value: string): value is PaymentGatewayName {
     value === 'toss' ||
     value === 'stripe' ||
     value === 'inicis' ||
-    value === 'naverpay' ||
     value === 'paypal' ||
     value === 'eximbay'
   );
@@ -104,12 +97,6 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
       signKey: env.INICIS_SIGN_KEY ?? '',
       apiKey: env.INICIS_API_KEY ?? '',
       clientKey: env.INICIS_CLIENT_KEY ?? '',
-    },
-    naverpay: {
-      partnerId: env.NAVERPAY_PARTNER_ID ?? '',
-      clientId: env.NAVERPAY_CLIENT_ID ?? '',
-      clientSecret: env.NAVERPAY_CLIENT_SECRET ?? '',
-      chainId: env.NAVERPAY_CHAIN_ID ?? '',
     },
     paypal: {
       clientId: env.PAYPAL_CLIENT_ID ?? '',

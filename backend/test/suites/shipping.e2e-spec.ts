@@ -89,17 +89,20 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       orderAmount = Number((orderRes.body as { totalAmount: number | string }).totalAmount);
 
       // Confirm payment to auto-create shipping record
-      await request(app.getHttpServer())
+      const prepareRes = await request(app.getHttpServer())
         .post('/api/payments/prepare')
           .set('Idempotency-Key', e2eIdempotencyKey('payment'))
         .set('Cookie', cookieHeader(userCookies))
         .send({ orderId });
+      const paymentKey = (prepareRes.body as { gatewayPayload?: { paymentKey?: string } })
+        .gatewayPayload?.paymentKey;
+      expect(paymentKey).toBeTruthy();
 
       await request(app.getHttpServer())
         .post('/api/payments/confirm')
           .set('Idempotency-Key', e2eIdempotencyKey('payment'))
         .set('Cookie', cookieHeader(userCookies))
-        .send({ orderId, paymentKey: 'mock_key_123', amount: orderAmount });
+        .send({ orderId, paymentKey, amount: orderAmount });
     });
 
     afterAll(async () => {

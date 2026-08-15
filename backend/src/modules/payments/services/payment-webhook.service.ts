@@ -165,6 +165,21 @@ export class PaymentWebhookService {
       };
     }
 
+    // A signed event alone is not settlement evidence. Gateway callbacks have
+    // heterogeneous payloads and must be normalized/retrieved by the adapter
+    // before they can satisfy the immutable preparation binding. Until that
+    // authoritative evidence is available, never let a webhook create PAID.
+    if (matchedTransition.paymentStatus === PaymentStatus.CONFIRMED) {
+      this.deps.logger.warn(
+        `Webhook ignored: settlement binding evidence unavailable (orderId=${parsedOrderId})`,
+      );
+      return {
+        result: PaymentWebhookResult.IGNORED,
+        paymentId: Number(payment.id),
+        orderId: parsedOrderId,
+      };
+    }
+
     let didMutate = false;
     await this.deps.dataSource.transaction(async (manager) => {
       const isRestoreTarget =

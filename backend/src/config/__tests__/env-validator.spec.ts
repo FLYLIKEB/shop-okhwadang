@@ -25,10 +25,6 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   KAKAO_CLIENT_ID: 'kakao-client',
   KAKAO_CLIENT_SECRET: 'kakao-secret',
   KAKAO_REDIRECT_URI: 'https://ockhwadang.com/auth/kakao/callback',
-  NAVERPAY_PARTNER_ID: 'naver-partner',
-  NAVERPAY_CLIENT_ID: 'naver-client',
-  NAVERPAY_CLIENT_SECRET: 'naver-secret',
-  NAVERPAY_CHAIN_ID: 'naver-chain',
   PAYPAL_CLIENT_ID: 'paypal-client',
   PAYPAL_CLIENT_SECRET: 'paypal-secret',
   EXIMBAY_MERCHANT_ID: 'eximbay-mid',
@@ -47,24 +43,20 @@ describe('validateEnv', () => {
     expect(validateEnv(makeFullEnv())).toEqual([]);
   });
 
-  it('활성화된 프로덕션 체크아웃 provider 키 누락만 배포 전 검출', () => {
+  it('unknown disabled checkout providers do not add validation requirements', () => {
     const env = makeFullEnv();
-    env.CHECKOUT_ENABLED_GATEWAYS = 'naverpay';
+    env.CHECKOUT_ENABLED_GATEWAYS = 'disabled-provider';
     delete env.PAYPAL_CLIENT_SECRET;
-    delete env.NAVERPAY_CHAIN_ID;
 
     const errorKeys = validateEnv(env).map((e) => e.key);
     expect(errorKeys).not.toContain('PAYPAL_CLIENT_SECRET');
-    expect(errorKeys).toContain('NAVERPAY_CHAIN_ID');
   });
 
   it('CHECKOUT_ENABLED_GATEWAYS가 없으면 PAYMENT_GATEWAY provider 키만 필수로 검증한다', () => {
     const env = makeFullEnv();
     env.PAYMENT_GATEWAY = 'paypal';
-    delete env.NAVERPAY_CHAIN_ID;
 
     expect(getRequiredCheckoutEnvKeys(env)).toEqual(['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET']);
-    expect(validateEnv(env).map((e) => e.key)).not.toContain('NAVERPAY_CHAIN_ID');
   });
 
   it('Stripe 활성화는 키와 최신의 유효한 환율 견적 설정을 요구한다', () => {
@@ -137,7 +129,7 @@ describe('validateEnv', () => {
   });
 
   it('REQUIRED_PROD_ENV_KEYS에 있는 모든 키를 검증', () => {
-    const env: NodeJS.ProcessEnv = { NODE_ENV: 'production', CHECKOUT_ENABLED_GATEWAYS: 'naverpay,paypal,eximbay' };
+    const env: NodeJS.ProcessEnv = { NODE_ENV: 'production', CHECKOUT_ENABLED_GATEWAYS: 'paypal,eximbay' };
     const errors = validateEnv(env);
     // NODE_ENV는 있으므로 나머지 키들이 모두 에러로 나와야 함
     const missing = [...REQUIRED_PROD_ENV_KEYS, ...CHECKOUT_PROD_ENV_KEYS].filter(

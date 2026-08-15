@@ -57,33 +57,6 @@ describe('extractWebhookIdempotencyKey', () => {
     });
   });
 
-  describe('NaverPay', () => {
-    it('paymentId + eventType 결합', () => {
-      const key = extractWebhookIdempotencyKey(
-        PaymentGatewayType.NAVERPAY,
-        { paymentId: 'np-1', eventType: 'CANCEL' },
-      );
-      expect(key).toEqual({
-        gateway: PaymentGatewayType.NAVERPAY,
-        eventId: 'np-1:CANCEL',
-        eventType: 'CANCEL',
-      });
-    });
-
-    it('동일 paymentId 라도 confirm/cancel 이 분리됨', () => {
-      const confirm = extractWebhookIdempotencyKey(
-        PaymentGatewayType.NAVERPAY,
-        { paymentId: 'np-1', eventType: 'DONE' },
-      );
-      const cancel = extractWebhookIdempotencyKey(
-        PaymentGatewayType.NAVERPAY,
-        { paymentId: 'np-1', eventType: 'CANCEL' },
-      );
-      expect(confirm?.eventId).not.toEqual(cancel?.eventId);
-    });
-  });
-
-
   describe('PayPal', () => {
     it('webhook id + event_type 사용', () => {
       const key = extractWebhookIdempotencyKey(

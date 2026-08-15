@@ -32,7 +32,6 @@ import { ReconcileRefundDto } from './dto/reconcile-refund.dto';
 import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from './adapters/inicis.adapter';
-import { NaverPayPaymentAdapter } from './adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from './adapters/paypal.adapter';
 import { EximbayPaymentAdapter } from './adapters/eximbay.adapter';
 import {
@@ -84,7 +83,6 @@ export class PaymentsService {
     private readonly tossAdapter: TossPaymentAdapter,
     private readonly stripeAdapter: StripePaymentAdapter,
     private readonly inicisAdapter: KGInicisPaymentAdapter,
-    private readonly naverpayAdapter: NaverPayPaymentAdapter,
     private readonly paypalAdapter: PayPalPaymentAdapter,
     private readonly eximbayAdapter: EximbayPaymentAdapter,
     private readonly pointsService: PointsService,
@@ -115,7 +113,6 @@ export class PaymentsService {
     if (name === 'toss') return this.tossAdapter;
     if (name === 'stripe') return this.stripeAdapter;
     if (name === 'inicis') return this.inicisAdapter;
-    if (name === 'naverpay') return this.naverpayAdapter;
     if (name === 'paypal') return this.paypalAdapter;
     if (name === 'eximbay') return this.eximbayAdapter;
     return this.gateway;
@@ -129,8 +126,6 @@ export class PaymentsService {
         return this.stripeAdapter;
       case PaymentGatewayType.INICIS:
         return this.inicisAdapter;
-      case PaymentGatewayType.NAVERPAY:
-        return this.naverpayAdapter;
       case PaymentGatewayType.PAYPAL:
         return this.paypalAdapter;
       case PaymentGatewayType.EXIMBAY:
@@ -149,8 +144,6 @@ export class PaymentsService {
         return PaymentGatewayType.STRIPE;
       case 'inicis':
         return PaymentGatewayType.INICIS;
-      case 'naverpay':
-        return PaymentGatewayType.NAVERPAY;
       case 'paypal':
         return PaymentGatewayType.PAYPAL;
       case 'eximbay':
@@ -171,8 +164,6 @@ export class PaymentsService {
         return 'stripe';
       case PaymentGatewayType.INICIS:
         return 'inicis';
-      case PaymentGatewayType.NAVERPAY:
-        return 'naverpay';
       case PaymentGatewayType.PAYPAL:
         return 'paypal';
       case PaymentGatewayType.EXIMBAY:
@@ -301,6 +292,12 @@ export class PaymentsService {
     });
 
     if (prepared.gatewayName === 'bank_transfer') {
+      await this.paymentRepository.update(prepared.paymentId, {
+        providerOrderReference: prepared.orderNumber,
+        expectedProviderAmount: prepared.amount,
+        expectedProviderCurrency: 'KRW',
+        localOrderReference: prepared.orderNumber,
+      });
       return {
         paymentId: prepared.paymentId,
         orderId: normalizedOrderId,
@@ -313,6 +310,21 @@ export class PaymentsService {
     }
 
     const selectedGateway = this.resolveGatewayByName(prepared.gatewayName);
+    const existingPreparation = await this.paymentRepository.findOne({
+      where: { id: prepared.paymentId },
+    });
+    const storedArtifact = readPreparedClientArtifact(existingPreparation?.rawResponse);
+    if (existingPreparation?.providerOrderReference && storedArtifact) {
+      return {
+        paymentId: prepared.paymentId,
+        orderId: normalizedOrderId,
+        orderNumber: prepared.orderNumber,
+        amount: prepared.amount,
+        gateway: prepared.gatewayName,
+        availableGateways,
+        ...storedArtifact,
+      };
+    }
     let result = await selectedGateway.prepare(String(normalizedOrderId), prepared.amount, {
       locale,
       orderNumber: prepared.orderNumber,
@@ -320,7 +332,9 @@ export class PaymentsService {
       // protect API replay only and must not produce additional Stripe intents.
       idempotencyKey: prepared.gatewayName === 'stripe'
         ? `stripe-payment-${prepared.paymentId}`
-        : options.idempotencyKey,
+        : options.idempotencyKey
+          ? `payment-${prepared.paymentId}-${options.idempotencyKey}`
+          : undefined,
       rawResponse: (await this.paymentRepository.findOne({ where: { id: prepared.paymentId } }))?.rawResponse,
     });
     if (result.rawResponse && prepared.gatewayName === 'stripe') {
@@ -342,9 +356,59 @@ export class PaymentsService {
           rawResponse: winningRawResponse,
         });
       }
-    } else if (result.rawResponse) {
-      await this.paymentRepository.update(prepared.paymentId, { rawResponse: result.rawResponse });
     }
+    if (
+      !result.providerOrderReference ||
+      !Number.isFinite(result.providerAmount) ||
+      result.providerAmount === undefined ||
+      !result.providerCurrency
+    ) {
+      throw new BadRequestException('결제 게이트웨이가 거래 바인딩을 증명할 수 없습니다.');
+    }
+    const gatewayPayload = result.gatewayPayload || prepared.gatewayName === 'toss'
+      ? {
+          ...result.gatewayPayload,
+          ...(prepared.gatewayName === 'toss'
+            ? { customerKey: options.customerKey ?? 'ANONYMOUS' }
+            : {}),
+        }
+      : undefined;
+    await this.dataSource.transaction(async (manager) => {
+      const payment = await manager.findOne(Payment, {
+        where: { id: prepared.paymentId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!payment) throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
+      if (payment.providerOrderReference) {
+        if (
+          payment.providerOrderReference !== result.providerOrderReference ||
+          payment.providerTransactionId !== (result.providerTransactionId ?? null) ||
+          Number(payment.expectedProviderAmount) !== Number(result.providerAmount) ||
+          payment.expectedProviderCurrency !== result.providerCurrency ||
+          payment.localOrderReference !== prepared.orderNumber
+        ) {
+          throw new ConflictException('준비된 결제 거래 정보가 일치하지 않습니다.');
+        }
+        return;
+      }
+      await manager.update(Payment, payment.id, {
+        providerTransactionId: result.providerTransactionId ?? null,
+        providerOrderReference: result.providerOrderReference,
+        expectedProviderAmount: result.providerAmount,
+        expectedProviderCurrency: result.providerCurrency!.toUpperCase(),
+        localOrderReference: prepared.orderNumber,
+        rawResponse: payment.gateway === PaymentGatewayType.STRIPE
+          ? payment.rawResponse
+          : {
+              providerPreparation: result.rawResponse ?? null,
+              clientArtifact: {
+                clientKey: result.clientKey,
+                ...(result.redirectUrl ? { redirectUrl: result.redirectUrl } : {}),
+                ...(gatewayPayload ? { gatewayPayload } : {}),
+              },
+            },
+      });
+    });
 
     return {
       paymentId: prepared.paymentId,
@@ -356,12 +420,9 @@ export class PaymentsService {
       availableGateways,
       ...(result.redirectUrl ? { redirectUrl: result.redirectUrl } : {}),
       ...(
-        result.gatewayPayload || prepared.gatewayName === 'toss'
+        gatewayPayload
           ? {
-              gatewayPayload: {
-                ...result.gatewayPayload,
-                customerKey: options.customerKey ?? 'ANONYMOUS',
-              },
+              gatewayPayload,
             }
           : {}
       ),
@@ -825,6 +886,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function normalizeGatewayRawResponse(rawResponse: unknown): object {
   return isRecord(rawResponse) ? rawResponse : { duplicateLike: true };
+}
+
+function readPreparedClientArtifact(
+  rawResponse: unknown,
+): { clientKey: string; redirectUrl?: string; gatewayPayload?: Record<string, string | number | boolean> } | null {
+  if (!isRecord(rawResponse) || !isRecord(rawResponse.clientArtifact)) return null;
+  const artifact = rawResponse.clientArtifact;
+  if (typeof artifact.clientKey !== 'string') return null;
+  return {
+    clientKey: artifact.clientKey,
+    ...(typeof artifact.redirectUrl === 'string' ? { redirectUrl: artifact.redirectUrl } : {}),
+    ...(isRecord(artifact.gatewayPayload) ? {
+      gatewayPayload: artifact.gatewayPayload as Record<string, string | number | boolean>,
+    } : {}),
+  };
 }
 
 

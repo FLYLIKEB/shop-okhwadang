@@ -12,7 +12,6 @@ import { NotificationDispatchHelper } from '../../notification/notification-disp
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
-import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
 import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
 import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
@@ -48,6 +47,11 @@ const makePayment = (overrides: Partial<Payment> = {}): Payment =>
     method: PaymentMethod.MOCK,
     gateway: PaymentGatewayType.MOCK,
     paymentKey: null,
+    providerTransactionId: null,
+    providerOrderReference: 'ORD-20240101-ABCD1',
+    expectedProviderAmount: 30000,
+    expectedProviderCurrency: 'KRW',
+    localOrderReference: 'ORD-20240101-ABCD1',
     order: makeOrder(),
     ...overrides,
   }) as unknown as Payment;
@@ -89,7 +93,6 @@ interface BuildArgs {
   tossGateway?: Partial<PaymentGateway>;
   stripeGateway?: Partial<PaymentGateway>;
   inicisGateway?: Partial<PaymentGateway>;
-  naverpayGateway?: Partial<PaymentGateway>;
   paypalGateway?: Partial<PaymentGateway>;
   eximbayGateway?: Partial<PaymentGateway>;
   notifyDispatch?: jest.Mock;
@@ -123,7 +126,6 @@ const buildService = (args: BuildArgs = {}) => {
   const tossGateway = makeGateway(args.tossGateway);
   const stripeGateway = makeGateway(args.stripeGateway);
   const inicisGateway = makeGateway(args.inicisGateway);
-  const naverpayGateway = makeGateway(args.naverpayGateway);
   const paypalGateway = makeGateway(args.paypalGateway);
   const eximbayGateway = makeGateway(args.eximbayGateway);
   const notificationDispatch = args.notifyDispatch ?? jest.fn().mockResolvedValue(undefined);
@@ -150,7 +152,6 @@ const buildService = (args: BuildArgs = {}) => {
     tossGateway as unknown as TossPaymentAdapter,
     stripeGateway as unknown as StripePaymentAdapter,
     inicisGateway as unknown as KGInicisPaymentAdapter,
-    naverpayGateway as unknown as NaverPayPaymentAdapter,
     paypalGateway as unknown as PayPalPaymentAdapter,
     eximbayGateway as unknown as EximbayPaymentAdapter,
     pointsService as unknown as PointsService,
@@ -171,7 +172,6 @@ const buildService = (args: BuildArgs = {}) => {
     tossGateway,
     stripeGateway,
     inicisGateway,
-    naverpayGateway,
     paypalGateway,
     eximbayGateway,
     notificationDispatch,
@@ -188,6 +188,18 @@ describe('PaymentConfirmationService', () => {
   });
 
   describe('confirm() — 정상 흐름', () => {
+    it('rejects bank transfer confirmation from a client payment key', async () => {
+      const payment = makePayment({ method: PaymentMethod.BANK_TRANSFER });
+      const { service, defaultGateway } = buildService({
+        paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
+      });
+
+      await expect(
+        service.confirm({ orderId: 1, paymentKey: 'arbitrary-client-key', amount: 30000 }, 10),
+      ).rejects.toThrow(BadRequestException);
+      expect(defaultGateway.confirm).not.toHaveBeenCalled();
+    });
+
     it('PENDING 결제를 CONFIRMED 로 전환하고 paidAt 을 기록한다', async () => {
       const payment = makePayment();
       const { service, paymentRepo, dataSource, defaultGateway } = buildService({
@@ -195,6 +207,10 @@ describe('PaymentConfirmationService', () => {
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pay_abc',
+        providerTransactionId: 'pay_abc',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -240,6 +256,10 @@ describe('PaymentConfirmationService', () => {
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pay_abc',
+        providerTransactionId: 'pay_abc',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -283,6 +303,10 @@ describe('PaymentConfirmationService', () => {
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pay_abc',
+        providerTransactionId: 'pay_abc',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -374,6 +398,10 @@ describe('PaymentConfirmationService', () => {
         prepare: jest.fn(),
         confirm: jest.fn().mockResolvedValue({
           paymentKey: 'pay_toss',
+          providerTransactionId: 'pay_toss',
+          providerOrderReference: 'ORD-20240101-ABCD1',
+          providerAmount: 30000,
+          providerCurrency: 'KRW',
           method: 'card',
           amount: 30000,
           status: 'confirmed',
@@ -438,6 +466,10 @@ describe('PaymentConfirmationService', () => {
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pk',
+        providerTransactionId: 'pk',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -493,6 +525,10 @@ describe('PaymentConfirmationService', () => {
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pk',
+        providerTransactionId: 'pk',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -538,6 +574,10 @@ describe('PaymentConfirmationService', () => {
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pk',
+        providerTransactionId: 'pk',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -605,6 +645,10 @@ describe('PaymentConfirmationService', () => {
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pk',
+        providerTransactionId: 'pk',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -707,8 +751,8 @@ describe('PaymentConfirmationService', () => {
     });
   });
 
-  describe('confirm() — duplicate-like reconciliation fallback', () => {
-    it('duplicate-like provider error + pending local state → 409 with confirmation reconciliation marker', async () => {
+  describe('confirm() — duplicate-like provider error', () => {
+    it('duplicate-like provider error + pending local state → 409 without a local paid transition', async () => {
       const payment = makePayment();
       const lockedPayment = makePayment();
       const manager = makeTransactionManager({
@@ -724,22 +768,8 @@ describe('PaymentConfirmationService', () => {
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pay_dup_pending', amount: 30000 }, 10),
       ).rejects.toThrow(ConflictException);
-      expect(manager.update).toHaveBeenCalledWith(
-        Payment,
-        lockedPayment.id,
-        expect.objectContaining({
-          status: PaymentStatus.CONFIRMED,
-          paymentKey: 'pay_dup_pending',
-          rawResponse: expect.objectContaining({
-            gatewayConfirmationDuplicateLike: true,
-            reconciliationRequired: true,
-            duplicateLike: true,
-          }),
-        }),
-      );
-      expect(manager.update).not.toHaveBeenCalledWith(Payment, lockedPayment.id, {
-        status: PaymentStatus.FAILED,
-      });
+      expect(manager.update).not.toHaveBeenCalled();
+
     });
   });
 
@@ -751,6 +781,10 @@ describe('PaymentConfirmationService', () => {
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pk',
+        providerTransactionId: 'pk',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -869,6 +903,10 @@ describe('PaymentConfirmationService', () => {
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
         paymentKey: 'pay_guest_success',
+        providerTransactionId: 'pay_guest_success',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -901,8 +939,8 @@ describe('PaymentConfirmationService', () => {
     });
   });
 
-  describe('confirmGuest() — duplicate-like reconciliation fallback', () => {
-    it('duplicate-like provider error + pending local state → 409 with confirmation reconciliation marker', async () => {
+  describe('confirmGuest() — duplicate-like provider error', () => {
+    it('duplicate-like provider error + pending local state → 409 without a local paid transition', async () => {
       const guestOrder = makeOrder({
         userId: null,
         status: OrderStatus.PENDING,
@@ -927,19 +965,7 @@ describe('PaymentConfirmationService', () => {
       await expect(
         service.confirmGuest(1, { paymentKey: 'pay_guest_dup_pending', amount: 30000 }, 'guest-token'),
       ).rejects.toThrow(ConflictException);
-      expect(manager.update).toHaveBeenCalledWith(
-        Payment,
-        lockedPayment.id,
-        expect.objectContaining({
-          status: PaymentStatus.CONFIRMED,
-          paymentKey: 'pay_guest_dup_pending',
-          rawResponse: expect.objectContaining({
-            gatewayConfirmationDuplicateLike: true,
-            reconciliationRequired: true,
-            duplicateLike: true,
-          }),
-        }),
-      );
+      expect(manager.update).not.toHaveBeenCalled();
     });
   });
 });

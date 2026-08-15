@@ -93,7 +93,15 @@ export class StripePaymentAdapter implements PaymentGateway {
         ) {
           throw new BadGatewayException('저장된 Stripe PaymentIntent를 안전하게 재사용할 수 없습니다.');
         }
-        return { clientKey: paymentIntent.client_secret, orderId, rawResponse: context.rawResponse };
+        return {
+          clientKey: paymentIntent.client_secret,
+          orderId,
+          providerTransactionId: quote.paymentIntentId,
+          providerOrderReference: quote.orderNumber,
+          providerAmount: quote.providerAmount,
+          providerCurrency: quote.providerCurrency,
+          rawResponse: context.rawResponse,
+        };
       } catch (err) {
         if (err instanceof StripeMoneyPolicyError) {
           throw new BadGatewayException('Stripe 결제 견적 정보가 유효하지 않습니다.');
@@ -149,6 +157,10 @@ export class StripePaymentAdapter implements PaymentGateway {
       return {
         clientKey: paymentIntent.client_secret,
         orderId,
+        providerTransactionId: paymentIntent.id,
+        providerOrderReference: context.orderNumber,
+        providerAmount: money.providerAmount,
+        providerCurrency: money.providerCurrency,
         rawResponse: { stripeQuote: quote },
       };
     } catch (err) {
@@ -205,6 +217,10 @@ export class StripePaymentAdapter implements PaymentGateway {
 
       return {
         paymentKey,
+        providerTransactionId: paymentIntent.id,
+        providerOrderReference: paymentIntent.metadata.orderId,
+        providerAmount: paymentIntent.amount_received,
+        providerCurrency: paymentIntent.currency,
         method,
         amount,
         status: 'confirmed',

@@ -28,7 +28,7 @@ export enum PaymentGatewayType {
   TOSS = 'toss',
   INICIS = 'inicis',
   STRIPE = 'stripe',
-  NAVERPAY = 'naverpay',
+
   PAYPAL = 'paypal',
   EXIMBAY = 'eximbay',
 }
@@ -44,6 +44,21 @@ export class Payment {
 
   @Column({ name: 'payment_key', type: 'varchar', length: 255, unique: true, nullable: true })
   paymentKey!: string | null;
+
+  @Column({ name: 'provider_transaction_id', type: 'varchar', length: 255, nullable: true })
+  providerTransactionId!: string | null;
+
+  @Column({ name: 'provider_order_reference', type: 'varchar', length: 255, nullable: true })
+  providerOrderReference!: string | null;
+
+  @Column({ name: 'expected_provider_amount', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  expectedProviderAmount!: number | null;
+
+  @Column({ name: 'expected_provider_currency', type: 'varchar', length: 8, nullable: true })
+  expectedProviderCurrency!: string | null;
+
+  @Column({ name: 'local_order_reference', type: 'varchar', length: 255, nullable: true })
+  localOrderReference!: string | null;
 
   @Column({
     type: 'enum',

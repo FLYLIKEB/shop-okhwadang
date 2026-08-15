@@ -74,18 +74,21 @@ export function registerRefundsSuite(getApp: () => INestApplication) {
       orderAmount = Number((orderRes.body as { totalAmount: number | string }).totalAmount);
 
       // Prepare payment
-      await request(app.getHttpServer())
+      const prepareRes = await request(app.getHttpServer())
         .post('/api/payments/prepare')
           .set('Idempotency-Key', e2eIdempotencyKey('payment'))
         .set('Cookie', cookieHeader(userCookies))
         .send({ orderId });
+      const paymentKey = (prepareRes.body as { gatewayPayload?: { paymentKey?: string } })
+        .gatewayPayload?.paymentKey;
+      expect(paymentKey).toBeTruthy();
 
       // Confirm payment (mock)
       await request(app.getHttpServer())
         .post('/api/payments/confirm')
           .set('Idempotency-Key', e2eIdempotencyKey('payment'))
         .set('Cookie', cookieHeader(userCookies))
-        .send({ orderId, paymentKey: 'pay_mock_refund_test', amount: orderAmount })
+        .send({ orderId, paymentKey, amount: orderAmount })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201)
             throw new Error(`Confirm failed: ${r.status} ${JSON.stringify(r.body)}`);

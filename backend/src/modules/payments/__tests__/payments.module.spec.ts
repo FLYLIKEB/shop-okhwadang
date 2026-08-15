@@ -145,7 +145,7 @@ describe('locale gateway policy — country-specific visibility', () => {
     }
   });
 
-  it('en and other locales → paypal default, eximbay card, no naverpay', () => {
+  it('en and other locales → paypal default and eximbay card', () => {
     expect(resolveGatewayByLocale('en')).toBe('paypal');
     expect(resolveGatewayByLocale('ja')).toBe('paypal');
     expect(getAvailableGatewaysByLocale('en')).toEqual(['paypal', 'eximbay']);

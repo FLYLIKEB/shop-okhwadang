@@ -133,6 +133,9 @@ export class EximbayPaymentAdapter implements PaymentGateway {
     return {
       clientKey: this.merchantId,
       orderId: orderNumber,
+      providerOrderReference: orderNumber,
+      providerAmount: Number(this.formatAmount(amount)),
+      providerCurrency: this.currency,
       gatewayPayload: {
         fgkey,
         jsSdkUrl: this.jsSdkUrl,
@@ -165,7 +168,7 @@ export class EximbayPaymentAdapter implements PaymentGateway {
     const callbackOrderId = callback.get('order_id') ?? orderId;
     const retrieve = await this.retrieveByOrderId(callbackOrderId, amount, transactionId);
     const payment = retrieve.payment;
-    if (!payment || retrieve.rescode !== SUCCESS_RESCODE || !['SALE', 'AUTH'].includes(payment.status ?? '')) {
+    if (!payment || retrieve.rescode !== SUCCESS_RESCODE || payment.status !== 'SALE') {
       this.logger.error(`Eximbay retrieve declined: orderId=${orderId}, status=${String(payment?.status)}`);
       throw new BadGatewayException('Eximbay 결제 조회 실패');
     }
@@ -176,7 +179,11 @@ export class EximbayPaymentAdapter implements PaymentGateway {
     }
 
     return {
-      paymentKey: payment.transaction_id ?? transactionId,
+      paymentKey: requireEximbayTransactionId(payment.transaction_id),
+      providerTransactionId: requireEximbayTransactionId(payment.transaction_id),
+      providerOrderReference: payment.order_id,
+      providerAmount: Number(payment.amount),
+      providerCurrency: payment.currency,
       method: 'card',
       amount,
       status: 'confirmed',
@@ -333,6 +340,13 @@ export class EximbayPaymentAdapter implements PaymentGateway {
     if (this.currency === 'USD') return (Number(amount) / this.krwPerUsd).toFixed(2);
     return String(amount);
   }
+}
+
+function requireEximbayTransactionId(value: unknown): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new BadGatewayException('Eximbay 결제 거래 식별자가 없습니다.');
+  }
+  return value;
 }
 
 function redactSensitive(value: unknown): unknown {

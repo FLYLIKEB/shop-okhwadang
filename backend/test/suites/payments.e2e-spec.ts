@@ -19,6 +19,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
     let productId: number;
     let orderId: number;
     let orderAmount: number;
+    let preparedPaymentKey: string;
     const guestOrderIds: number[] = [];
 
     const userEmail = `payments-user-${Date.now()}@test.com`;
@@ -159,10 +160,17 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
             if (r.status !== 200 && r.status !== 201) throw new Error(`Expected 200/201 got ${r.status}: ${JSON.stringify(r.body)}`);
           });
 
-        const body = res.body as { clientKey: string; orderId: number; amount: number };
+        const body = res.body as {
+          clientKey: string;
+          orderId: number;
+          amount: number;
+          gatewayPayload?: { paymentKey?: string };
+        };
         expect(body.clientKey).toBeDefined();
         expect(body.orderId).toBe(orderId);
         expect(body.amount).toBe(orderAmount);
+        preparedPaymentKey = body.gatewayPayload?.paymentKey ?? '';
+        expect(preparedPaymentKey).toBeTruthy();
       });
 
       it('same payment preparation key replays the stored response', async () => {
@@ -183,7 +191,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
           .post('/api/payments/confirm')
           .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
-          .send({ orderId, paymentKey: 'pay_mock_key', amount: orderAmount })
+          .send({ orderId, paymentKey: preparedPaymentKey, amount: orderAmount })
           .expect((r) => {
             if (r.status !== 200 && r.status !== 201) throw new Error(`Expected 200/201 got ${r.status}: ${JSON.stringify(r.body)}`);
           });
@@ -217,20 +225,48 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
             zipcode: '12345',
             address: '서울시 강남구',
           });
-        const mismatchOrderId = (orderRes.body as { id: number }).id;
+        if (orderRes.status !== 201) {
+          throw new Error(
+            `Mismatch order create failed: ${orderRes.status} ${JSON.stringify(orderRes.body)}`,
+          );
+        }
+        const mismatchOrder = orderRes.body as {
+          id?: number;
+          orderNumber?: string;
+          order?: { id: number; orderNumber: string };
+        };
+        const mismatchOrderId = Number(mismatchOrder.id ?? mismatchOrder.order?.id);
+        const mismatchOrderNumber =
+          mismatchOrder.orderNumber ?? mismatchOrder.order?.orderNumber;
+        expect(Number.isInteger(mismatchOrderId)).toBe(true);
+        expect(mismatchOrderNumber).toBeTruthy();
 
         // Prepare it first
-        await request(app.getHttpServer())
+        const mismatchPrepare = await request(app.getHttpServer())
           .post('/api/payments/prepare')
           .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
           .send({ orderId: mismatchOrderId });
+        if (![200, 201].includes(mismatchPrepare.status)) {
+          throw new Error(
+            `Mismatch prepare failed: ${mismatchPrepare.status} ${JSON.stringify(mismatchPrepare.body)}`,
+          );
+        }
+        const mismatchPaymentKey = `mock-${mismatchOrderNumber}`;
+
+        // A transaction prepared for the first order cannot settle this order.
+        await request(app.getHttpServer())
+          .post('/api/payments/confirm')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment-cross-order'))
+          .set('Cookie', cookieHeader(userCookies))
+          .send({ orderId: mismatchOrderId, paymentKey: preparedPaymentKey, amount: orderAmount })
+          .expect(500);
 
         await request(app.getHttpServer())
           .post('/api/payments/confirm')
           .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
-          .send({ orderId: mismatchOrderId, paymentKey: 'pay_mismatch', amount: 99999 })
+          .send({ orderId: mismatchOrderId, paymentKey: mismatchPaymentKey, amount: 99999 })
           .expect(400);
 
         // Cleanup
@@ -246,7 +282,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
           .post('/api/payments/confirm')
           .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
-          .send({ orderId, paymentKey: 'pay_mock_key', amount: orderAmount })
+          .send({ orderId, paymentKey: preparedPaymentKey, amount: orderAmount })
           .expect(409);
       });
     });
@@ -324,7 +360,10 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/confirm`)
           .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .set('X-Guest-Access-Token', guestOrder.guestAccessToken)
-          .send({ paymentKey: 'pay_guest_mock_key', amount: guestOrder.orderAmount })
+          .send({
+            paymentKey: `mock-${guestOrder.orderNumber}`,
+            amount: guestOrder.orderAmount,
+          })
           .expect((r) => {
             if (r.status !== 200 && r.status !== 201) throw new Error(`Expected 200/201 got ${r.status}: ${JSON.stringify(r.body)}`);
           });
@@ -370,7 +409,10 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
           });
 
         const raceKey = e2eIdempotencyKey('guest-payment-race');
-        const racePayload = { paymentKey: 'pay_guest_race', amount: guestOrder.orderAmount };
+        const racePayload = {
+          paymentKey: `mock-${guestOrder.orderNumber}`,
+          amount: guestOrder.orderAmount,
+        };
         const [firstResult, secondResult] = await Promise.allSettled([
           request(app.getHttpServer())
             .post(`/api/guest/orders/${guestOrder.orderId}/payments/confirm`)

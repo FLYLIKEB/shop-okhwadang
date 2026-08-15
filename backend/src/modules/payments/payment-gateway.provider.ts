@@ -2,7 +2,6 @@ import { MockPaymentAdapter } from './adapters/mock.adapter';
 import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from './adapters/inicis.adapter';
-import { NaverPayPaymentAdapter } from './adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from './adapters/paypal.adapter';
 import { EximbayPaymentAdapter } from './adapters/eximbay.adapter';
 import {
@@ -20,7 +19,6 @@ export interface PaymentGatewayAdapters {
   toss: TossPaymentAdapter;
   stripe: StripePaymentAdapter;
   inicis: KGInicisPaymentAdapter;
-  naverpay: NaverPayPaymentAdapter;
   paypal: PayPalPaymentAdapter;
   eximbay: EximbayPaymentAdapter;
 }
@@ -37,8 +35,6 @@ export function selectPaymentGatewayAdapter(
       return adapters.stripe;
     case 'inicis':
       return adapters.inicis;
-    case 'naverpay':
-      return adapters.naverpay;
     case 'paypal':
       return adapters.paypal;
     case 'eximbay':
@@ -58,7 +54,6 @@ export const paymentGatewayProvider = {
     toss: TossPaymentAdapter,
     stripe: StripePaymentAdapter,
     inicis: KGInicisPaymentAdapter,
-    naverpay: NaverPayPaymentAdapter,
     paypal: PayPalPaymentAdapter,
     eximbay: EximbayPaymentAdapter,
   ) => selectPaymentGatewayAdapter(config, {
@@ -66,7 +61,6 @@ export const paymentGatewayProvider = {
     toss,
     stripe,
     inicis,
-    naverpay,
     paypal,
     eximbay,
   }),
@@ -76,7 +70,6 @@ export const paymentGatewayProvider = {
     TossPaymentAdapter,
     StripePaymentAdapter,
     KGInicisPaymentAdapter,
-    NaverPayPaymentAdapter,
     PayPalPaymentAdapter,
     EximbayPaymentAdapter,
   ],
@@ -88,7 +81,6 @@ export const gatewayProviders = [
   TossPaymentAdapter,
   StripePaymentAdapter,
   KGInicisPaymentAdapter,
-  NaverPayPaymentAdapter,
   PayPalPaymentAdapter,
   EximbayPaymentAdapter,
   paymentGatewayProvider,

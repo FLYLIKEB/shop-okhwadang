@@ -52,6 +52,10 @@ describe('PayPalPaymentAdapter', () => {
       expect(result).toEqual({
         clientKey: 'paypal-client',
         orderId: 'PAYPAL-ORDER-1',
+        providerTransactionId: 'PAYPAL-ORDER-1',
+        providerOrderReference: 'ORDER-123',
+        providerAmount: 7.41,
+        providerCurrency: 'USD',
         redirectUrl: 'https://www.paypal.com/checkoutnow?token=PAYPAL-ORDER-1',
       });
       expect(mockFetch).toHaveBeenLastCalledWith(
@@ -72,7 +76,15 @@ describe('PayPalPaymentAdapter', () => {
   describe('confirm', () => {
     it('forwards the stable operation key to PayPal capture', async () => {
       mockAccessToken();
-      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'PAYPAL-ORDER-1', status: 'COMPLETED' }) });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 'PAYPAL-ORDER-1', status: 'COMPLETED',
+          purchase_units: [{ reference_id: 'ORDER-123', payments: { captures: [{
+            id: 'CAPTURE-1', status: 'COMPLETED', amount: { value: '7.41', currency_code: 'USD' },
+          }] } }],
+        }),
+      });
       await adapter.confirm('PAYPAL-ORDER-1', 10000, 'ORDER-123', { idempotencyKey: 'confirm-operation-key' });
       expect(mockFetch).toHaveBeenLastCalledWith(expect.any(String), expect.objectContaining({
         headers: expect.objectContaining({ 'PayPal-Request-Id': 'confirm-operation-key' }),
@@ -86,7 +98,9 @@ describe('PayPalPaymentAdapter', () => {
         json: async () => ({
           id: 'PAYPAL-ORDER-1',
           status: 'COMPLETED',
-          purchase_units: [{ payments: { captures: [{ id: 'CAPTURE-1' }] } }],
+          purchase_units: [{ reference_id: 'ORDER-123', payments: { captures: [{
+            id: 'CAPTURE-1', status: 'COMPLETED', amount: { value: '7.41', currency_code: 'USD' },
+          }] } }],
         }),
       });
 
@@ -95,6 +109,10 @@ describe('PayPalPaymentAdapter', () => {
       expect(result.status).toBe('confirmed');
       expect(result.method).toBe('paypal');
       expect(result.paymentKey).toBe('PAYPAL-ORDER-1');
+      expect(result).toMatchObject({
+        providerTransactionId: 'PAYPAL-ORDER-1', providerOrderReference: 'ORDER-123',
+        providerAmount: 7.41, providerCurrency: 'USD',
+      });
       expect(mockFetch).toHaveBeenLastCalledWith(
         'https://api-m.sandbox.paypal.com/v2/checkout/orders/PAYPAL-ORDER-1/capture',
         expect.objectContaining({ method: 'POST' }),

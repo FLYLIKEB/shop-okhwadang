@@ -1,4 +1,4 @@
-export type CheckoutGatewayName = 'toss' | 'naverpay' | 'bank_transfer' | 'eximbay' | 'paypal';
+export type CheckoutGatewayName = 'toss' | 'bank_transfer' | 'eximbay' | 'paypal';
 export type CheckoutLocale = 'ko' | 'en';
 export type CheckoutGatewayCspDirective =
   | 'style-src'
@@ -34,36 +34,6 @@ export const CHECKOUT_GATEWAY_CONTRACT = {
       ],
       'child-src': ['https://*.tosspayments.com'],
       'frame-src': ['https://*.tosspayments.com'],
-    },
-  },
-  naverpay: {
-    requiredEnvKeys: [
-      'NAVERPAY_PARTNER_ID',
-      'NAVERPAY_CLIENT_ID',
-      'NAVERPAY_CLIENT_SECRET',
-      'NAVERPAY_CHAIN_ID',
-    ],
-    csp: {
-      'script-src': ['https://nsp.pay.naver.com'],
-      'connect-src': [
-        'https://nsp.pay.naver.com',
-        'https://pay.naver.com',
-        'https://m.pay.naver.com',
-        'https://test-pay.naver.com',
-        'https://test-m.pay.naver.com',
-      ],
-      'child-src': [
-        'https://pay.naver.com',
-        'https://m.pay.naver.com',
-        'https://test-pay.naver.com',
-        'https://test-m.pay.naver.com',
-      ],
-      'frame-src': [
-        'https://pay.naver.com',
-        'https://m.pay.naver.com',
-        'https://test-pay.naver.com',
-        'https://test-m.pay.naver.com',
-      ],
     },
   },
   bank_transfer: {
@@ -121,7 +91,7 @@ export const CHECKOUT_GATEWAY_CHANGE_FILES = [
 ] as const;
 
 export function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
-  return value === 'toss' || value === 'naverpay' || value === 'bank_transfer' || value === 'eximbay' || value === 'paypal';
+  return value === 'toss' || value === 'bank_transfer' || value === 'eximbay' || value === 'paypal';
 }
 
 export function parseConfiguredCheckoutGateways(configured: string | undefined | null): CheckoutGatewayName[] {

@@ -31,8 +31,14 @@ export class TossPaymentAdapter implements PaymentGateway {
     return `Basic ${Buffer.from(`${this.secretKey}:`).toString('base64')}`;
   }
 
-  async prepare(orderId: string, _amount: number): Promise<PrepareResult> {
-    return { clientKey: this.clientKey, orderId };
+  async prepare(orderId: string, amount: number, context?: { orderNumber?: string }): Promise<PrepareResult> {
+    return {
+      clientKey: this.clientKey,
+      orderId,
+      providerOrderReference: context?.orderNumber ?? orderId,
+      providerAmount: amount,
+      providerCurrency: 'KRW',
+    };
   }
 
   async confirm(paymentKey: string, amount: number, orderId: string, context?: { idempotencyKey?: string }): Promise<ConfirmResult> {
@@ -58,9 +64,19 @@ export class TossPaymentAdapter implements PaymentGateway {
     }
 
     const body = (await response.json()) as Record<string, unknown>;
+    if (body.status !== 'DONE') {
+      this.logger.error(
+        `Toss confirm incomplete: status=${String(body.status)}, paymentKey=${paymentKey}`,
+      );
+      throw new BadGatewayException('토스 결제가 완료되지 않았습니다.');
+    }
 
     return {
       paymentKey,
+      providerTransactionId: requireProviderTransactionId(body.paymentKey),
+      providerOrderReference: String(body.orderId ?? ''),
+      providerAmount: Number(body.totalAmount),
+      providerCurrency: String(body.currency ?? ''),
       method: (body.method as string) ?? 'card',
       amount,
       status: 'confirmed',
@@ -148,4 +164,11 @@ export class TossPaymentAdapter implements PaymentGateway {
     if (expected.length !== provided.length) return false;
     return crypto.timingSafeEqual(expected, provided);
   }
+}
+
+function requireProviderTransactionId(value: unknown): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new BadGatewayException('토스 결제 거래 식별자가 없습니다.');
+  }
+  return value;
 }

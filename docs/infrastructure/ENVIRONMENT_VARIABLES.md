@@ -82,11 +82,7 @@
 | `NEXT_PUBLIC_TOSS_CLIENT_KEY` | — | Toss 결제위젯 클라이언트 키. 운영 배포 전에 문서용 테스트 키를 실제 상점 키로 교체 |
 | `TOSS_CLIENT_KEY` | — | 백엔드가 결제 준비 응답으로 전달하는 Toss 결제위젯 클라이언트 키 |
 | `TOSS_SECRET_KEY` | — | Toss 승인·취소 API 시크릿 키. 클라이언트 키와 같은 상점 키 쌍을 사용 |
-| `PAYMENT_GATEWAY` | `mock` | 백엔드 기본 PG 어댑터 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`/`eximbay`). `mock`은 프로덕션 차단 |
-| `NAVERPAY_PARTNER_ID` | — | NaverPay partner ID (프로덕션 체크아웃 필수) |
-| `NAVERPAY_CLIENT_ID` | — | NaverPay client ID (프로덕션 체크아웃 필수) |
-| `NAVERPAY_CLIENT_SECRET` | — | NaverPay client secret (프로덕션 체크아웃 필수) |
-| `NAVERPAY_CHAIN_ID` | — | NaverPay chain ID (프로덕션 체크아웃 필수) |
+| `PAYMENT_GATEWAY` | `mock` | 백엔드 기본 PG 어댑터 (`mock`/`toss`/`stripe`/`inicis`/`paypal`/`eximbay`). `mock`은 프로덕션 차단 |
 | `PAYPAL_CLIENT_ID` | — | PayPal REST API client ID (프로덕션 체크아웃 필수) |
 | `PAYPAL_CLIENT_SECRET` | — | PayPal REST API client secret (프로덕션 체크아웃 필수) |
 | `PAYPAL_WEBHOOK_ID` | — | PayPal webhook signature verification ID |
