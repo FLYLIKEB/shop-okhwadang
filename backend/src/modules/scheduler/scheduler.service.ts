@@ -19,6 +19,7 @@ import { MaintenanceSchedulerJob } from './jobs/maintenance-scheduler.job';
 import { PointSchedulerJob } from './jobs/point-scheduler.job';
 import { UserLifecycleSchedulerJob } from './jobs/user-lifecycle-scheduler.job';
 import { SchedulerLockService } from '../../common/services/scheduler-lock.service';
+import { PointsService } from '../points/points.service';
 
 @Injectable()
 export class SchedulerService {
@@ -50,6 +51,7 @@ export class SchedulerService {
     private readonly notificationService: NotificationService,
     private readonly settingsService: SettingsService,
     private readonly membershipService: MembershipService,
+    private readonly pointsService: PointsService,
     private readonly schedulerLockService: SchedulerLockService,
   ) {
     this.orderSchedulerJob = new OrderSchedulerJob({
@@ -59,6 +61,7 @@ export class SchedulerService {
       notificationService: this.notificationService,
       settingsService: this.settingsService,
       membershipService: this.membershipService,
+      pointsService: this.pointsService,
       logger: this.logger,
     });
     this.maintenanceSchedulerJob = new MaintenanceSchedulerJob({

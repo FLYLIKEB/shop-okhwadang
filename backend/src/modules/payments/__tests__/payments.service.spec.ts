@@ -508,7 +508,7 @@ describe('PaymentsService', () => {
       expect(result.status).toBe(PaymentStatus.CONFIRMED);
     });
 
-    it('confirm() — dataSource.transaction() 이 1회 호출되어야 함', async () => {
+    it('confirm() reserves then finalizes in separate transactions', async () => {
       const payment = makePayment();
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.confirm.mockResolvedValue({
@@ -525,7 +525,7 @@ describe('PaymentsService', () => {
 
       await service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10);
 
-      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(2);
     });
 
     it('confirm() — 트랜잭션 내에서 payment·order·shipping 모두 업데이트', async () => {
@@ -571,22 +571,38 @@ describe('PaymentsService', () => {
       });
 
       const failingManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Order) return Promise.resolve(payment.order);
+          if (entity === Payment) return Promise.resolve(payment);
+          return Promise.resolve(null);
+        }),
         save: jest.fn().mockRejectedValue(new Error('DB 오류 — shipping insert 실패')),
       });
-      mockDataSource.transaction.mockImplementationOnce(
-        async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
-      );
+      const reservationManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Order) return Promise.resolve(payment.order);
+          if (entity === Payment) return Promise.resolve(payment);
+          return Promise.resolve(null);
+        }),
+        update: jest.fn().mockImplementation((_entity: unknown, _id: unknown, changes: Partial<Payment>) => {
+          Object.assign(payment, changes);
+          return Promise.resolve({});
+        }),
+      });
+      mockDataSource.transaction
+        .mockImplementationOnce(
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(reservationManager),
+        )
+        .mockImplementationOnce(
+          async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(failingManager),
+        );
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10),
       ).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
 
       expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, expect.objectContaining({
-        status: PaymentStatus.CONFIRMED,
-        paymentKey: 'pay_abc',
-        method: 'mock',
         rawResponse: expect.objectContaining({
-          gatewayConfirmationSucceeded: true,
           reconciliationRequired: true,
           orderId: 1,
           error: 'DB 오류 — shipping insert 실패',
@@ -608,42 +624,83 @@ describe('PaymentsService', () => {
       ).rejects.toThrow(ConflictException);
     });
 
-    it('gateway throws → InternalServerErrorException, payment marked failed', async () => {
+    it('gateway throws → InternalServerErrorException while payment remains CONFIRMING', async () => {
       const payment = makePayment();
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.confirm.mockRejectedValue(new Error('gateway error'));
 
-      const recoveryManager = makeTransactionManager();
+      const reservationManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Order) return Promise.resolve(payment.order);
+          if (entity === Payment) return Promise.resolve(payment);
+          return Promise.resolve(null);
+        }),
+        update: jest.fn().mockImplementation((_entity: unknown, _id: unknown, changes: Partial<Payment>) => {
+          Object.assign(payment, changes);
+          return Promise.resolve({});
+        }),
+      });
       mockDataSource.transaction.mockImplementationOnce(
-        async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(recoveryManager),
+        async (fn: (m: typeof reservationManager) => Promise<unknown>) => fn(reservationManager),
       );
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'fail_abc', amount: 30000 }, 10),
       ).rejects.toThrow('결제 승인에 실패했습니다.');
-      expect(recoveryManager.update).toHaveBeenCalledWith(Payment, payment.id, { status: PaymentStatus.FAILED });
+      expect(payment).toMatchObject({
+        status: PaymentStatus.CONFIRMING,
+        confirmationOperationKey: 'fail_abc',
+      });
     });
 
-    it('gateway throws → order CANCELLED 마킹 + 재고 복구 (#723)', async () => {
+    it('gateway throws → no cancellation or stock recovery while outcome is ambiguous', async () => {
       const payment = makePayment();
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.confirm.mockRejectedValue(new Error('gateway error'));
 
+      const reservationManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Order) return Promise.resolve(payment.order);
+          if (entity === Payment) return Promise.resolve(payment);
+          return Promise.resolve(null);
+        }),
+        update: jest.fn().mockImplementation((_entity: unknown, _id: unknown, changes: Partial<Payment>) => {
+          Object.assign(payment, changes);
+          return Promise.resolve({});
+        }),
+      });
       const recoveryManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Order) return Promise.resolve(payment.order);
+          if (entity === Payment) return Promise.resolve(payment);
+          return Promise.resolve(null);
+        }),
         find: jest.fn().mockResolvedValue([
           { id: 11, orderId: 1, productId: 100, productOptionId: 200, quantity: 2 },
         ]),
       });
-      mockDataSource.transaction.mockImplementationOnce(
-        async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(recoveryManager),
-      );
+      mockDataSource.transaction
+        .mockImplementationOnce(
+          async (fn: (m: typeof reservationManager) => Promise<unknown>) => fn(reservationManager),
+        )
+        .mockImplementationOnce(
+          async (fn: (m: typeof recoveryManager) => Promise<unknown>) => fn(recoveryManager),
+        );
 
       await expect(
         service.confirm({ orderId: 1, paymentKey: 'fail_abc', amount: 30000 }, 10),
       ).rejects.toThrow('결제 승인에 실패했습니다.');
 
-      expect(recoveryManager.update).toHaveBeenCalledWith(Order, 1, expect.objectContaining({ status: OrderStatus.CANCELLED }));
-      expect(recoveryManager.increment).toHaveBeenCalled();
+      expect(recoveryManager.update).not.toHaveBeenCalledWith(
+        Order,
+        1,
+        expect.objectContaining({ status: OrderStatus.CANCELLED }),
+      );
+      expect(recoveryManager.increment).not.toHaveBeenCalled();
+      expect(payment).toMatchObject({
+        status: PaymentStatus.CONFIRMING,
+        confirmationOperationKey: 'fail_abc',
+      });
     });
 
     it('locale=en prepare → payment.gateway 가 PAYPAL 로 저장되고 네이버페이를 숨김 (#1057/#1066)', async () => {
@@ -985,6 +1042,34 @@ describe('PaymentsService', () => {
       expect(result.status).toBe(PaymentStatus.CANCELLED);
     });
 
+    it('locks Order before Payment for a customer cancellation', async () => {
+      const order = makeOrder({ status: OrderStatus.PAID, pointsUsed: 0 });
+      const payment = makePayment({
+        status: PaymentStatus.CONFIRMED,
+        paymentKey: 'pay_abc',
+        order,
+      });
+      const txManager = makeTransactionManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => {
+          if (entity === Order) return Promise.resolve(order);
+          if (entity === Payment) return Promise.resolve(payment);
+          return Promise.resolve(null);
+        }),
+      });
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+      mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: new Date(), rawResponse: { mock: true } });
+      mockDataSource.transaction.mockImplementationOnce(
+        async (fn: (manager: typeof txManager) => Promise<unknown>) => fn(txManager),
+      );
+
+      await service.cancel({ orderId: 1 }, 10);
+
+      expect(txManager.findOne.mock.calls.slice(0, 2).map(([entity]) => entity)).toEqual([
+        Order,
+        Payment,
+      ]);
+    });
+
     it('pending payment → BadRequestException', async () => {
       mockPaymentRepo.findOne.mockResolvedValue(makePayment({ status: PaymentStatus.PENDING }));
       await expect(service.cancel({ orderId: 1 }, 10)).rejects.toThrow(BadRequestException);
@@ -1162,6 +1247,34 @@ it('cancelAdmin() updates payment before running admin refund sync in one transa
   expect(postGatewaySync).toHaveBeenCalledWith(txManager, refundedAt);
 });
 
+it('cancelAdmin() locks Order before Payment for the refund transaction', async () => {
+  const order = makeOrder({ status: OrderStatus.REFUND_REQUESTED, pointsUsed: 0 });
+  const payment = makePayment({
+    status: PaymentStatus.CONFIRMED,
+    paymentKey: 'pay_refund',
+    order,
+  });
+  const txManager = makeTransactionManager({
+    findOne: jest.fn().mockImplementation((entity: unknown) => {
+      if (entity === Order) return Promise.resolve(order);
+      if (entity === Payment) return Promise.resolve(payment);
+      return Promise.resolve(null);
+    }),
+  });
+  mockPaymentRepo.findOne.mockResolvedValue(payment);
+  mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: new Date(), rawResponse: { refund: true } });
+  mockDataSource.transaction.mockImplementationOnce(
+    async (fn: (manager: typeof txManager) => Promise<unknown>) => fn(txManager),
+  );
+
+  await service.cancelAdmin(1, '관리자 환불 처리');
+
+  expect(txManager.findOne.mock.calls.slice(0, 2).map(([entity]) => entity)).toEqual([
+    Order,
+    Payment,
+  ]);
+});
+
     it('cancelPaidOrder()는 전달받은 트랜잭션에서 PG 취소 후 Payment/Order/stock/points를 함께 갱신한다 (#898)', async () => {
       const order = makeOrder({
         status: OrderStatus.PAID,
@@ -1259,18 +1372,8 @@ it('cancelAdmin() updates payment before running admin refund sync in one transa
       expect(txManager.update).not.toHaveBeenCalled();
       expect(txManager.increment).not.toHaveBeenCalled();
       expect(txManager.save).not.toHaveBeenCalled();
-      expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, {
-        status: PaymentStatus.CANCELLED,
-        cancelledAt,
-        cancelReason: '관리자 승인',
-        rawResponse: expect.objectContaining({
-          gatewayCancellationSucceeded: true,
-          reconciliationRequired: true,
-          orderId: 1,
-          rawResponse: { mock: true },
-          error: expect.any(String),
-        }),
-      });
+      expect(mockDefaultGateway.cancel).not.toHaveBeenCalled();
+      expect(mockPaymentRepo.update).not.toHaveBeenCalled();
     });
   });
 });

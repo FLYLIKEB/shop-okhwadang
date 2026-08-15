@@ -6,6 +6,7 @@ import { Order } from '../../orders/entities/order.entity';
 
 export enum PaymentStatus {
   PENDING = 'pending',
+  CONFIRMING = 'confirming',
   CONFIRMED = 'confirmed',
   CANCELLED = 'cancelled',
   PARTIAL_CANCELLED = 'partial_cancelled',
@@ -92,6 +93,9 @@ export class Payment {
 
   @Column({ name: 'cancel_reason', type: 'varchar', length: 500, nullable: true })
   cancelReason!: string | null;
+
+  @Column({ name: 'confirmation_operation_key', type: 'varchar', length: 255, nullable: true })
+  confirmationOperationKey!: string | null;
 
   @Column({ name: 'raw_response', type: 'json', nullable: true })
   rawResponse!: object | null;

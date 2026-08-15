@@ -536,9 +536,15 @@ export class PaymentsService {
     let gatewayResult: { cancelledAt: Date; rawResponse?: unknown } | null = null;
     let lockedPaymentSnapshot = payment;
     const applyRefund = async (txManager: EntityManager): Promise<void> => {
+      const lockedOrder = await txManager.findOne(Order, {
+        where: { id: orderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedOrder) {
+        throw new NotFoundException('주문을 찾을 수 없습니다.');
+      }
       const lockedPayment = await txManager.findOne(Payment, {
         where: { orderId },
-        relations: ['order'],
         lock: { mode: 'pessimistic_write' },
       });
       if (!lockedPayment) {
@@ -547,6 +553,7 @@ export class PaymentsService {
       if (lockedPayment.status !== PaymentStatus.CONFIRMED) {
         throw new BadRequestException('환불 가능한 상태가 아닙니다.');
       }
+      lockedPayment.order = lockedOrder;
 
       lockedPaymentSnapshot = lockedPayment;
       const cancelGateway = this.resolveGatewayByType(lockedPayment.gateway);
@@ -689,9 +696,15 @@ export class PaymentsService {
     let lockedPaymentSnapshot = payment;
 
     const applyCancellation = async (txManager: EntityManager): Promise<void> => {
+      const lockedOrder = await txManager.findOne(Order, {
+        where: { id: orderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedOrder) {
+        throw new NotFoundException('주문을 찾을 수 없습니다.');
+      }
       const lockedPayment = await txManager.findOne(Payment, {
         where: { orderId },
-        relations: ['order'],
         lock: { mode: 'pessimistic_write' },
       });
       if (!lockedPayment) {
@@ -700,6 +713,7 @@ export class PaymentsService {
       if (lockedPayment.status !== PaymentStatus.CONFIRMED) {
         throw new BadRequestException('취소 가능한 상태가 아닙니다.');
       }
+      lockedPayment.order = lockedOrder;
 
       lockedPaymentSnapshot = lockedPayment;
       assertOrderStatusTransition(lockedPayment.order.status, OrderStatus.CANCELLED);

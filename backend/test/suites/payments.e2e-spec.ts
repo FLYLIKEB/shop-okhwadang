@@ -254,6 +254,13 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         }
         const mismatchPaymentKey = `mock-${mismatchOrderNumber}`;
 
+        await request(app.getHttpServer())
+          .post('/api/payments/confirm')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
+          .set('Cookie', cookieHeader(userCookies))
+          .send({ orderId: mismatchOrderId, paymentKey: mismatchPaymentKey, amount: 99999 })
+          .expect(400);
+
         // A transaction prepared for the first order cannot settle this order.
         await request(app.getHttpServer())
           .post('/api/payments/confirm')
@@ -261,13 +268,6 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
           .set('Cookie', cookieHeader(userCookies))
           .send({ orderId: mismatchOrderId, paymentKey: preparedPaymentKey, amount: orderAmount })
           .expect(500);
-
-        await request(app.getHttpServer())
-          .post('/api/payments/confirm')
-          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
-          .set('Cookie', cookieHeader(userCookies))
-          .send({ orderId: mismatchOrderId, paymentKey: mismatchPaymentKey, amount: 99999 })
-          .expect(400);
 
         // Cleanup
         await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');

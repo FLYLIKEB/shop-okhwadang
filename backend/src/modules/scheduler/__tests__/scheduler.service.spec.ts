@@ -6,6 +6,7 @@ import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { OrderItem } from '../../orders/entities/order-item.entity';
 import { Product } from '../../products/entities/product.entity';
 import { ProductOption } from '../../products/entities/product-option.entity';
+import { Payment } from '../../payments/entities/payment.entity';
 import { Coupon } from '../../coupons/entities/coupon.entity';
 import { PointHistory } from '../../coupons/entities/point-history.entity';
 import { User } from '../../users/entities/user.entity';
@@ -14,6 +15,7 @@ import { NotificationService } from '../../notification/notification.service';
 import { SettingsService } from '../../settings/settings.service';
 import { MembershipService } from '../../membership/membership.service';
 import { SchedulerLockService } from '../../../common/services/scheduler-lock.service';
+import { PointsService } from '../../points/points.service';
 
 const mockQueryRunner = {
   connect: jest.fn(),
@@ -27,6 +29,7 @@ const mockQueryRunner = {
     save: jest.fn(),
     update: jest.fn(),
     findOne: jest.fn(),
+    find: jest.fn(),
     increment: jest.fn(),
     getRepository: jest.fn(),
   },
@@ -82,6 +85,7 @@ const mockRecentlyViewedRepo = {
 const mockNotificationService = {
   sendEmail: jest.fn(),
   sendOrderConfirmed: jest.fn(),
+  sendOrderCancelled: jest.fn(),
 };
 
 const mockSettingsService = {
@@ -112,6 +116,7 @@ describe('SchedulerService', () => {
     mockQueryRunner.manager.save.mockReset();
     mockQueryRunner.manager.update.mockReset();
     mockQueryRunner.manager.findOne.mockReset();
+    mockQueryRunner.manager.find.mockReset();
     mockQueryRunner.manager.increment.mockReset();
     mockQueryRunner.manager.getRepository.mockReset();
     mockSchedulerLockService.runWithLock.mockReset();
@@ -137,6 +142,7 @@ describe('SchedulerService', () => {
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: MembershipService, useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined), evaluateAllUserTiers: jest.fn().mockResolvedValue(undefined) } },
+        { provide: PointsService, useValue: { getRunningBalanceInTx: jest.fn().mockResolvedValue(0) } },
         { provide: SchedulerLockService, useValue: mockSchedulerLockService },
       ],
     }).compile();
@@ -191,6 +197,115 @@ describe('SchedulerService', () => {
       await service.handlePendingOrderCancellation();
 
       expect(mockOrderRepo.find).toHaveBeenCalled();
+    });
+
+    it('skips a persisted CONFIRMING payment while its provider call is paused, allowing confirmation to win', async () => {
+      mockSettingsService.getMap.mockResolvedValue({ scheduler_pending_cancel_hours: '24' });
+      mockOrderRepo.find.mockResolvedValue([{ id: 1, orderNumber: 'ORD-STALE', status: OrderStatus.PENDING }]);
+      mockQueryRunner.manager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING })
+        .mockResolvedValueOnce({ id: 10, orderId: 1, status: 'confirming' });
+
+      await service.handlePendingOrderCancellation();
+
+      expect(mockQueryRunner.manager.update).not.toHaveBeenCalled();
+      expect(mockQueryRunner.manager.increment).not.toHaveBeenCalled();
+      expect(mockQueryRunner.manager.save).not.toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+
+      // The provider call completes after cron has observed CONFIRMING. No scheduler
+      // recovery ran, so the confirmation can persist its terminal state without restoring stock.
+      mockQueryRunner.manager.findOne.mockReset();
+      mockQueryRunner.manager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
+        .mockResolvedValueOnce({ id: 10, orderId: 1, status: 'confirmed' });
+      mockOrderRepo.find.mockResolvedValue([{ id: 1, orderNumber: 'ORD-STALE', status: OrderStatus.PENDING }]);
+
+      await service.handlePendingOrderCancellation();
+
+      expect(mockQueryRunner.manager.increment).not.toHaveBeenCalled();
+      expect(mockQueryRunner.manager.save).not.toHaveBeenCalled();
+    });
+
+    it('recovers stock and deducted points exactly once for the winning cancellation', async () => {
+      mockSettingsService.getMap.mockResolvedValue({ scheduler_pending_cancel_hours: '24' });
+      mockOrderRepo.find.mockResolvedValue([{
+        id: 1,
+        orderNumber: 'ORD-RECOVER',
+        status: OrderStatus.PENDING,
+        userId: 9,
+        pointsUsed: 500,
+      }]);
+      mockQueryRunner.manager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING })
+        .mockResolvedValueOnce({ id: 10, orderId: 1, status: 'pending' })
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: 9, pointsUsed: 500 });
+      mockQueryRunner.manager.find.mockResolvedValue([{ productId: 5, productOptionId: null, quantity: 2 }]);
+
+      await service.handlePendingOrderCancellation();
+
+      expect(mockQueryRunner.manager.increment).toHaveBeenCalledWith(Product, { id: 5 }, 'stock', 2);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(PointHistory, expect.objectContaining({
+        userId: 9,
+        amount: 500,
+        orderId: 1,
+      }));
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.manager.findOne.mock.calls.slice(0, 2).map(([entity]) => entity))
+        .toEqual([Order, Payment]);
+    });
+
+    it('does not recover an already terminal order on retry', async () => {
+      mockSettingsService.getMap.mockResolvedValue({ scheduler_pending_cancel_hours: '24' });
+      mockOrderRepo.find.mockResolvedValue([{ id: 1, orderNumber: 'ORD-RETRY', status: OrderStatus.PENDING }]);
+      mockQueryRunner.manager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.CANCELLED })
+        .mockResolvedValueOnce({ id: 10, orderId: 1, status: 'cancelled' });
+
+      await service.handlePendingOrderCancellation();
+
+      expect(mockQueryRunner.manager.increment).not.toHaveBeenCalled();
+      expect(mockQueryRunner.manager.save).not.toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+    });
+
+    it('cancels and recovers an expired pending order with no payment record', async () => {
+      mockSettingsService.getMap.mockResolvedValue({ scheduler_pending_cancel_hours: '24' });
+      mockOrderRepo.find.mockResolvedValue([{ id: 1, orderNumber: 'ORD-NO-PAYMENT', status: OrderStatus.PENDING }]);
+      mockQueryRunner.manager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: null, pointsUsed: 0 })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: null, pointsUsed: 0 });
+      mockQueryRunner.manager.find.mockResolvedValue([{ productId: 5, productOptionId: null, quantity: 2 }]);
+
+      await service.handlePendingOrderCancellation();
+
+      expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(
+        Order,
+        1,
+        { status: OrderStatus.CANCELLED },
+      );
+      expect(mockQueryRunner.manager.update).not.toHaveBeenCalledWith(
+        Payment,
+        expect.anything(),
+        expect.anything(),
+      );
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+    });
+
+    it('rolls back the terminal transition when recovery fails', async () => {
+      mockSettingsService.getMap.mockResolvedValue({ scheduler_pending_cancel_hours: '24' });
+      mockOrderRepo.find.mockResolvedValue([{ id: 1, orderNumber: 'ORD-ROLLBACK', status: OrderStatus.PENDING }]);
+      mockQueryRunner.manager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING })
+        .mockResolvedValueOnce({ id: 10, orderId: 1, status: 'pending' })
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: null, pointsUsed: 0 });
+      mockQueryRunner.manager.find.mockRejectedValueOnce(new Error('stock recovery failed'));
+
+      await expect(service.handlePendingOrderCancellation()).rejects.toThrow('stock recovery failed');
+
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
     });
   });
 

@@ -1,14 +1,15 @@
 import { DataSource, LessThan, Repository } from 'typeorm';
 import { Logger } from '@nestjs/common';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
-import { Product } from '../../products/entities/product.entity';
-import { ProductOption } from '../../products/entities/product-option.entity';
 import { User } from '../../users/entities/user.entity';
 import { NotificationService } from '../../notification/notification.service';
 import { SettingsService } from '../../settings/settings.service';
 import { MembershipService } from '../../membership/membership.service';
 import { canOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
 import { buildGuestOrderLookupUrl, buildOrderEmailItems, buildOrderUrl } from '../../notification/order-email-context';
+import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
+import { PointsService } from '../../points/points.service';
+import { runFirstTerminalTransitionRecovery } from '../../payments/services/order-terminal-recovery.util';
 
 interface OrderSchedulerJobDependencies {
   orderRepo: Repository<Order>;
@@ -17,6 +18,7 @@ interface OrderSchedulerJobDependencies {
   notificationService: NotificationService;
   settingsService: SettingsService;
   membershipService: MembershipService;
+  pointsService: Pick<PointsService, 'getRunningBalanceInTx'>;
   logger: Logger;
 }
 
@@ -40,7 +42,7 @@ export class OrderSchedulerJob {
     this.deps.logger.log(`[cron:pending-order-cancel] Cancelling ${pendingOrders.length} pending orders`);
 
     for (const order of pendingOrders) {
-      await this.cancelOrderAndRestoreStock(order);
+      await this.cancelOrderAndRecover(order);
     }
 
     this.deps.logger.log(`[cron:pending-order-cancel] Completed cancelling ${pendingOrders.length} orders`);
@@ -99,38 +101,59 @@ export class OrderSchedulerJob {
     this.deps.logger.log(`[cron:delivered-order-confirm] Completed confirming ${deliveredOrders.length} orders`);
   }
 
-  private async cancelOrderAndRestoreStock(order: Order): Promise<void> {
-    if (!canOrderStatusTransition(order.status, OrderStatus.CANCELLED)) {
-      this.deps.logger.warn(
-        `[cron:pending-order-cancel] transition blocked: ${order.status} → ${OrderStatus.CANCELLED} (order=${order.orderNumber})`,
-      );
-      return;
-    }
-
+  private async cancelOrderAndRecover(order: Order): Promise<void> {
     const queryRunner = this.deps.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      for (const item of order.items) {
-        if (item.productOptionId) {
-          await queryRunner.manager.increment(
-            ProductOption,
-            { id: item.productOptionId },
-            'stock',
-            item.quantity,
-          );
-        } else {
-          await queryRunner.manager.increment(
-            Product,
-            { id: item.productId },
-            'stock',
-            item.quantity,
-          );
-        }
+      const lockedOrder = await queryRunner.manager.findOne(Order, {
+        where: { id: order.id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedOrder) {
+        await queryRunner.rollbackTransaction();
+        return;
       }
 
-      await queryRunner.manager.update(Order, order.id, { status: OrderStatus.CANCELLED });
+      const lockedPayment = await queryRunner.manager.findOne(Payment, {
+        where: { orderId: Number(order.id) },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (
+        lockedOrder.status !== OrderStatus.PENDING
+        || (lockedPayment && lockedPayment.status !== PaymentStatus.PENDING)
+      ) {
+        await queryRunner.rollbackTransaction();
+        return;
+      }
+
+      const recovery = await runFirstTerminalTransitionRecovery(queryRunner.manager, {
+        orderId: Number(order.id),
+        nextOrderStatus: OrderStatus.CANCELLED,
+        pointsService: this.deps.pointsService,
+        pointRestoreDescription: `주문 ${order.orderNumber} 결제 미완료 자동 취소로 인한 적립금 복구`,
+        applyMutations: async (recoveredOrder) => {
+          if (recoveredOrder.status !== OrderStatus.PENDING) {
+            return false;
+          }
+
+          if (lockedPayment) {
+            await queryRunner.manager.update(Payment, lockedPayment.id, {
+              status: PaymentStatus.CANCELLED,
+              cancelledAt: new Date(),
+              cancelReason: '결제 미완료 자동 취소',
+            });
+          }
+          await queryRunner.manager.update(Order, recoveredOrder.id, { status: OrderStatus.CANCELLED });
+          return true;
+        },
+      });
+
+      if (!recovery.didMutate) {
+        await queryRunner.rollbackTransaction();
+        return;
+      }
 
       await queryRunner.commitTransaction();
 
