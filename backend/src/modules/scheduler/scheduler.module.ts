@@ -14,6 +14,7 @@ import { SettingsModule } from '../settings/settings.module';
 import { NotificationModule } from '../notification/notification.module';
 import { MembershipModule } from '../membership/membership.module';
 import { SchedulerLockService } from '../../common/services/scheduler-lock.service';
+import { PointsModule } from '../points/points.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SchedulerLockService } from '../../common/services/scheduler-lock.servi
     SettingsModule,
     NotificationModule,
     MembershipModule,
+    PointsModule,
   ],
   providers: [SchedulerService, SchedulerLockService],
   exports: [SchedulerService],

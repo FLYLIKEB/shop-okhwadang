@@ -1,5 +1,6 @@
 import { EntityManager } from 'typeorm';
 import { PointHistory } from '../../coupons/entities/point-history.entity';
+import { UserCoupon } from '../../coupons/entities/user-coupon.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { restoreOrderStock } from '../../orders/order-stock.util';
 import { PointsService } from '../../points/points.service';
@@ -9,6 +10,7 @@ interface FirstTerminalTransitionRecoveryOptions {
   nextOrderStatus: OrderStatus;
   pointsService: Pick<PointsService, 'getRunningBalanceInTx'>;
   pointRestoreDescription: string;
+  lockBeforeRecovery?: (lockedOrder: Order) => Promise<boolean>;
   applyMutations: (lockedOrder: Order) => Promise<boolean>;
 }
 
@@ -31,6 +33,10 @@ export async function runFirstTerminalTransitionRecovery(
     return { lockedOrder: null, didMutate: false, didRestore: false };
   }
 
+  if (options.lockBeforeRecovery && !(await options.lockBeforeRecovery(lockedOrder))) {
+    return { lockedOrder, didMutate: false, didRestore: false };
+  }
+
   const wasAlreadyTerminal = isRestoreTerminalStatus(lockedOrder.status);
   if (wasAlreadyTerminal && isRestoreTerminalStatus(options.nextOrderStatus)) {
     return { lockedOrder, didMutate: false, didRestore: false };
@@ -43,6 +49,7 @@ export async function runFirstTerminalTransitionRecovery(
   }
 
   await restoreOrderStock(manager, options.orderId);
+  await restoreAppliedCoupon(manager, options.orderId);
   await restoreAppliedPoints(manager, lockedOrder, options.pointsService, options.pointRestoreDescription);
 
   return { lockedOrder, didMutate, didRestore: true };
@@ -50,6 +57,14 @@ export async function runFirstTerminalTransitionRecovery(
 
 function isRestoreTerminalStatus(status: OrderStatus): boolean {
   return status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED;
+}
+
+async function restoreAppliedCoupon(manager: EntityManager, orderId: number): Promise<void> {
+  await manager.update(
+    UserCoupon,
+    { orderId, status: 'used' },
+    { status: 'available', usedAt: null, orderId: null },
+  );
 }
 
 async function restoreAppliedPoints(

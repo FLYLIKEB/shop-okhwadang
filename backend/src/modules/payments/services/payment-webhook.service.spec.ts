@@ -140,7 +140,11 @@ describe('PaymentWebhookService', () => {
 
     it('CANCEL 이벤트 → Payment CANCELLED + Order CANCELLED + cancelledAt 기록', async () => {
       const manager = makeWebhookManager({
-        findOne: jest.fn().mockResolvedValue({ id: 7, status: 'paid' }),
+        findOne: jest.fn().mockImplementation((entity: unknown) => Promise.resolve(
+          entity === Order
+            ? { id: 7, status: 'paid' }
+            : { id: 10, orderId: 7, status: PaymentStatus.CONFIRMED, paidAt: new Date(), cancelledAt: null },
+        )),
       });
       const { service, gateway, paymentRepo } = buildService({ manager });
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
@@ -171,7 +175,11 @@ describe('PaymentWebhookService', () => {
 
     it('REFUND 이벤트 → Payment REFUNDED + Order REFUNDED', async () => {
       const manager = makeWebhookManager({
-        findOne: jest.fn().mockResolvedValue({ id: 7, status: 'paid' }),
+        findOne: jest.fn().mockImplementation((entity: unknown) => Promise.resolve(
+          entity === Order
+            ? { id: 7, status: 'paid' }
+            : { id: 10, orderId: 7, status: PaymentStatus.CONFIRMED, paidAt: new Date(), cancelledAt: null },
+        )),
       });
       const { service, gateway, paymentRepo } = buildService({ manager });
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
@@ -242,7 +250,13 @@ describe('PaymentWebhookService', () => {
       const manager = makeWebhookManager({
         findOne: jest.fn().mockImplementation((entity: unknown) => {
           if (entity === Order) return Promise.resolve(order);
-          return Promise.resolve(null);
+          return Promise.resolve({
+            id: 10,
+            orderId: 7,
+            status: PaymentStatus.CONFIRMED,
+            paidAt: new Date(),
+            cancelledAt: null,
+          });
         }),
         find: jest.fn().mockResolvedValue([]),
         save: jest.fn().mockResolvedValue({}),
@@ -263,6 +277,74 @@ describe('PaymentWebhookService', () => {
           balance: 1700,
           orderId: 7,
         }),
+      );
+    });
+
+    it('cancellation locks the current Order before Payment and ignores a CONFIRMING payment without recovery', async () => {
+      const order = { id: 7, status: OrderStatus.PAID, userId: 10, pointsUsed: 500 };
+      const confirmingPayment = {
+        id: 10,
+        orderId: 7,
+        status: PaymentStatus.CONFIRMING,
+        paidAt: null,
+        cancelledAt: null,
+      };
+      const manager = makeWebhookManager({
+        findOne: jest.fn().mockImplementation((entity: unknown, _options: unknown) => Promise.resolve(
+          entity === Order ? order : confirmingPayment,
+        )),
+        find: jest.fn().mockResolvedValue([{ orderId: 7, productId: 11, quantity: 1 }]),
+      });
+      const { service, gateway, paymentRepo, pointsService } = buildService({ manager });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7, status: PaymentStatus.CONFIRMED });
+
+      await service.handleWebhook({ orderId: 7, status: 'CANCELLED' }, 'valid_sig');
+
+      expect(manager.findOne).toHaveBeenNthCalledWith(
+        1,
+        Order,
+        expect.objectContaining({ lock: { mode: 'pessimistic_write' } }),
+      );
+      expect(manager.findOne).toHaveBeenNthCalledWith(
+        2,
+        Payment,
+        expect.objectContaining({ lock: { mode: 'pessimistic_write' } }),
+      );
+      expect(manager.update).not.toHaveBeenCalled();
+      expect(manager.increment).not.toHaveBeenCalled();
+      expect(pointsService.getRunningBalanceInTx).not.toHaveBeenCalled();
+    });
+
+    it('uses the locked payment rather than a stale pre-transaction payment snapshot', async () => {
+      const stalePayment = {
+        id: 10,
+        orderId: 7,
+        status: PaymentStatus.CONFIRMED,
+        paidAt: new Date('2026-01-01T00:00:00Z'),
+        cancelledAt: null,
+      };
+      const lockedPayment = {
+        ...stalePayment,
+        paidAt: new Date('2026-02-01T00:00:00Z'),
+      };
+      const manager = makeWebhookManager({
+        findOne: jest.fn().mockImplementation((entity: unknown) => Promise.resolve(
+          entity === Order
+            ? { id: 7, status: OrderStatus.PAID }
+            : lockedPayment,
+        )),
+      });
+      const { service, gateway, paymentRepo } = buildService({ manager });
+      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      paymentRepo.findOne.mockResolvedValue(stalePayment);
+
+      await service.handleWebhook({ orderId: 7, status: 'CANCELLED' }, 'valid_sig');
+
+      expect(manager.update).toHaveBeenCalledWith(
+        Payment,
+        lockedPayment.id,
+        expect.objectContaining({ paidAt: lockedPayment.paidAt }),
       );
     });
 

@@ -187,12 +187,37 @@ export class PaymentWebhookService {
         || matchedTransition.orderStatus === OrderStatus.REFUNDED;
 
       if (isRestoreTarget) {
+        let lockedPayment: Payment | null = null;
         const recovery = await runFirstTerminalTransitionRecovery(manager, {
           orderId: parsedOrderId,
           nextOrderStatus: matchedTransition.orderStatus,
           pointsService: this.deps.pointsService,
-          pointRestoreDescription: `주문 ${payment.orderId} ${matchedTransition.orderStatus === OrderStatus.REFUNDED ? '환불' : '취소'} 웹훅으로 인한 적립금 복구`,
+          pointRestoreDescription: `주문 ${parsedOrderId} ${matchedTransition.orderStatus === OrderStatus.REFUNDED ? '환불' : '취소'} 웹훅으로 인한 적립금 복구`,
+          lockBeforeRecovery: async () => {
+            lockedPayment = await manager.findOne(Payment, {
+              where: { orderId: parsedOrderId },
+              lock: { mode: 'pessimistic_write' },
+            });
+
+            if (!lockedPayment) {
+              this.deps.logger.warn(`Webhook ignored: payment not found (orderId=${parsedOrderId})`);
+              return false;
+            }
+
+            if (lockedPayment.status === PaymentStatus.CONFIRMING) {
+              this.deps.logger.warn(
+                `Webhook ignored: payment confirmation in progress (orderId=${parsedOrderId})`,
+              );
+              return false;
+            }
+
+            return true;
+          },
           applyMutations: async (lockedOrder) => {
+            if (!lockedPayment) {
+              return false;
+            }
+
             if (
               !canOrderStatusTransition(lockedOrder.status, matchedTransition.orderStatus, {
                 allowSameStatus: true,
@@ -204,10 +229,10 @@ export class PaymentWebhookService {
               return false;
             }
 
-            await manager.update(Payment, payment.id, {
+            await manager.update(Payment, lockedPayment.id, {
               status: matchedTransition.paymentStatus as PaymentStatus,
-              paidAt: matchedTransition.setPaidAt ? payment.paidAt ?? new Date() : payment.paidAt,
-              cancelledAt: matchedTransition.setCancelledAt ? new Date() : payment.cancelledAt,
+              paidAt: matchedTransition.setPaidAt ? lockedPayment.paidAt ?? new Date() : lockedPayment.paidAt,
+              cancelledAt: matchedTransition.setCancelledAt ? new Date() : lockedPayment.cancelledAt,
               rawResponse: payload as object,
             });
             await manager.update(Order, parsedOrderId, { status: matchedTransition.orderStatus });
