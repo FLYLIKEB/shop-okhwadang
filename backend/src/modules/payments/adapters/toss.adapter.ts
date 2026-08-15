@@ -13,6 +13,8 @@ import { PAYMENT_CONFIG, PaymentConfig } from '../../../config/payment.config';
 
 @Injectable()
 export class TossPaymentAdapter implements PaymentGateway {
+  readonly supportsRefundIdempotency = true;
+
   private readonly logger = new Logger(TossPaymentAdapter.name);
   private readonly secretKey: string;
   private readonly clientKey: string;
@@ -103,6 +105,9 @@ export class TossPaymentAdapter implements PaymentGateway {
         headers: {
           Authorization: this.authHeader,
           'Content-Type': 'application/json',
+          ...(params.idempotencyKey
+            ? { 'Idempotency-Key': params.idempotencyKey }
+            : {}),
         },
         body: JSON.stringify({
           cancelReason: params.cancelReason,

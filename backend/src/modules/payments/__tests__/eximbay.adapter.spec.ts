@@ -100,6 +100,7 @@ describe('EximbayPaymentAdapter', () => {
       paymentKey: 'EXIMBAY-TX-1',
       cancelAmount: 10000,
       cancelReason: '고객 요청',
+      idempotencyKey: 'refund-operation-1',
       rawResponse: {
         retrieve: {
           rescode: '0000',
@@ -115,8 +116,15 @@ describe('EximbayPaymentAdapter', () => {
     });
 
     expect(result.refundId).toBe('EXIMBAY-REFUND-1');
-    const request = JSON.parse(fetchMock.mock.calls[0][1]?.body as string) as Record<string, { refund_amount?: string }>;
+    const request = JSON.parse(fetchMock.mock.calls[0][1]?.body as string) as Record<string, {
+      refund_amount?: string;
+      refund_id?: string;
+    }>;
     expect(request.refund.refund_amount).toBe('10000');
+    expect(request.refund.refund_id).toBe(
+      `okhwadang-${crypto.createHash('sha256').update('refund-operation-1').digest('hex').slice(0, 54)}`,
+    );
+    expect(request.refund.refund_id).toHaveLength(64);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

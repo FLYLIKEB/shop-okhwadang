@@ -28,6 +28,7 @@ import { PreparePaymentDto } from './dto/prepare-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import { CancelPaymentDto } from './dto/cancel-payment.dto';
 import { CreateRefundDto } from './dto/create-refund.dto';
+import { ReconcileRefundDto } from './dto/reconcile-refund.dto';
 import { TossPaymentAdapter } from './adapters/toss.adapter';
 import { StripePaymentAdapter } from './adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from './adapters/inicis.adapter';
@@ -495,6 +496,10 @@ export class PaymentsService {
 
   async partialRefund(orderId: number, dto: CreateRefundDto): Promise<Refund> {
     return this.paymentRefundService.partialRefund(orderId, dto);
+  }
+
+  async reconcileRefund(refundId: number, dto: ReconcileRefundDto): Promise<Refund> {
+    return this.paymentRefundService.reconcileRefund(refundId, dto);
   }
 
   async handleWebhook(payload: unknown, signature: string): Promise<void> {

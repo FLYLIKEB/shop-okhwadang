@@ -27,6 +27,7 @@ export interface PartialCancelParams {
   paymentKey: string;
   cancelAmount: number;
   cancelReason: string;
+  idempotencyKey?: string;
   originalAmount?: number;
   orderNumber?: string;
   rawResponse?: object | null;
@@ -39,6 +40,7 @@ export interface PartialCancelResult {
 }
 
 export interface PaymentGateway {
+  readonly supportsRefundIdempotency?: boolean;
   prepare(orderId: string, amount: number, context?: PrepareContext): Promise<PrepareResult>;
   confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult>;
   cancel(paymentKey: string, reason: string, context?: Pick<PartialCancelParams, 'originalAmount' | 'orderNumber' | 'rawResponse'>): Promise<CancelResult>;

@@ -105,14 +105,14 @@ export function registerRefundsSuite(getApp: () => INestApplication) {
         return request(app.getHttpServer())
           .post(`/api/admin/orders/${orderId}/refunds`)
           .set('Cookie', cookieHeader(userCookies))
-          .send({ amount: 10000, reason: '테스트 환불' })
+          .send({ amount: 10000, reason: '테스트 환불', idempotencyKey: 'refund-e2e-user' })
           .expect(403);
       });
 
       it('인증 없음 → 401', async () => {
         return request(app.getHttpServer())
           .post(`/api/admin/orders/${orderId}/refunds`)
-          .send({ amount: 10000, reason: '테스트 환불' })
+          .send({ amount: 10000, reason: '테스트 환불', idempotencyKey: 'refund-e2e-unauthenticated' })
           .expect(401);
       });
 
@@ -120,7 +120,7 @@ export function registerRefundsSuite(getApp: () => INestApplication) {
         const res = await request(app.getHttpServer())
           .post(`/api/admin/orders/${orderId}/refunds`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ amount: 10000, reason: '부분 환불 테스트' })
+          .send({ amount: 10000, reason: '부분 환불 테스트', idempotencyKey: 'refund-e2e-success' })
           .expect((r) => {
             if (r.status !== 200 && r.status !== 201)
               throw new Error(`Expected 201 got ${r.status}: ${JSON.stringify(r.body)}`);
@@ -142,7 +142,7 @@ export function registerRefundsSuite(getApp: () => INestApplication) {
         return request(app.getHttpServer())
           .post(`/api/admin/orders/${orderId}/refunds`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ amount: 99999, reason: '초과 환불' })
+          .send({ amount: 99999, reason: '초과 환불', idempotencyKey: 'refund-e2e-over-limit' })
           .expect(400);
       });
 
@@ -150,7 +150,7 @@ export function registerRefundsSuite(getApp: () => INestApplication) {
         return request(app.getHttpServer())
           .post(`/api/admin/orders/999999999/refunds`)
           .set('Cookie', cookieHeader(adminCookies))
-          .send({ amount: 1000, reason: '없는 주문' })
+          .send({ amount: 1000, reason: '없는 주문', idempotencyKey: 'refund-e2e-missing-order' })
           .expect(400);
       });
     });

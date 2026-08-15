@@ -14,6 +14,7 @@ import { PAYMENT_CONFIG, PaymentConfig } from '../../../config/payment.config';
 
 @Injectable()
 export class StripePaymentAdapter implements PaymentGateway {
+  readonly supportsRefundIdempotency = true;
   private readonly logger = new Logger(StripePaymentAdapter.name);
   private readonly stripe: Stripe | null;
   private readonly publishableKey: string;
@@ -115,12 +116,18 @@ export class StripePaymentAdapter implements PaymentGateway {
 
   async partialCancel(params: PartialCancelParams): Promise<PartialCancelResult> {
     try {
-      const refund = await this.ensureStripe().refunds.create({
+      const refundParams = {
         payment_intent: params.paymentKey,
         amount: params.cancelAmount,
-        reason: 'requested_by_customer',
+        reason: 'requested_by_customer' as const,
         metadata: { reason: params.cancelReason },
-      });
+      };
+      const refund = params.idempotencyKey
+        ? await this.ensureStripe().refunds.create(
+          refundParams,
+          { idempotencyKey: params.idempotencyKey },
+        )
+        : await this.ensureStripe().refunds.create(refundParams);
 
       return {
         refundId: refund.id,
