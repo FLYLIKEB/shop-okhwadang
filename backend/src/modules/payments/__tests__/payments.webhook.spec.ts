@@ -11,7 +11,6 @@ import { Shipping } from '../entities/shipping.entity';
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
-import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
 import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
 import { NotificationService } from '../../notification/notification.service';
@@ -76,7 +75,6 @@ describe('PaymentsService — webhook', () => {
         { provide: TossPaymentAdapter, useValue: mockGateway },
         { provide: StripePaymentAdapter, useValue: mockGateway },
         { provide: KGInicisPaymentAdapter, useValue: mockGateway },
-        { provide: NaverPayPaymentAdapter, useValue: mockGateway },
         { provide: PayPalPaymentAdapter, useValue: mockGateway },
         { provide: EximbayPaymentAdapter, useValue: mockGateway },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
@@ -147,19 +145,19 @@ describe('PaymentsService — webhook', () => {
     expect(Object.keys(logged)).toEqual(['orderId', 'status', 'type']);
   });
 
-  it('허용 전이(pending → paid)면 payment/order 상태를 함께 갱신한다', async () => {
+  it('authoritative binding evidence absent from a signed callback leaves payment/order pending', async () => {
     mockGateway.verifyWebhook.mockReturnValue(true);
     mockRepo.findOne.mockResolvedValue({ id: 10, orderId: 7, paidAt: null });
     mockWebhookManager.findOne.mockResolvedValue({ id: 7, status: 'pending' });
 
     await service.handleWebhook({ orderId: 7, status: 'DONE' }, 'valid_sig');
 
-    expect(mockWebhookManager.update).toHaveBeenCalledWith(
+    expect(mockWebhookManager.update).not.toHaveBeenCalledWith(
       Payment,
       10,
       expect.objectContaining({ status: PaymentStatus.CONFIRMED }),
     );
-    expect(mockWebhookManager.update).toHaveBeenCalledWith(
+    expect(mockWebhookManager.update).not.toHaveBeenCalledWith(
       Order,
       7,
       { status: OrderStatus.PAID },

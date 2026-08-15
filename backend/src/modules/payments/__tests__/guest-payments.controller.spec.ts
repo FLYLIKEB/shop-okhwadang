@@ -19,7 +19,7 @@ describe('GuestPaymentsController', () => {
   });
 
   it('uses the first trimmed guest token from lowercase header arrays for prepare', async () => {
-    const dto = { locale: 'ko', gateway: 'naverpay' };
+    const dto = { locale: 'ko', gateway: 'toss' };
 
     await expect(
       controller.prepare(7, dto as never, {

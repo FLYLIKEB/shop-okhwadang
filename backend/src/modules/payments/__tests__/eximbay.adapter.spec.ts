@@ -30,6 +30,9 @@ describe('EximbayPaymentAdapter', () => {
     expect(result).toMatchObject({
       clientKey: 'mid-123',
       orderId: 'ORD-001',
+      providerOrderReference: 'ORD-001',
+      providerAmount: 40000,
+      providerCurrency: 'KRW',
       gatewayPayload: expect.objectContaining({
         fgkey: 'FGKEY-1',
         jsSdkUrl: 'https://api-test.eximbay.com/v1/javascriptSDK.js',
@@ -84,6 +87,29 @@ describe('EximbayPaymentAdapter', () => {
 
     expect(makeAdapter().verifyWebhook(payload, signature)).toBe(true);
     expect(makeAdapter().verifyWebhook(payload, 'bad-signature')).toBe(false);
+  });
+
+  it('confirm fails closed when retrieved provider payment has no transaction ID', async () => {
+    jest.spyOn(global, 'fetch')
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ rescode: '0000' }) } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          rescode: '0000',
+          payment: {
+            order_id: 'ORD-001',
+            currency: 'KRW',
+            amount: '40000',
+            status: 'SALE',
+          },
+        }),
+      } as Response);
+
+    await expect(makeAdapter().confirm(
+      'rescode=0000&order_id=ORD-001&transaction_id=client-value',
+      40000,
+      'ORD-001',
+    )).rejects.toThrow();
   });
 
   it('partialCancel()은 저장된 confirm rawResponse의 거래 금액/잔액으로 환불 요청을 만든다', async () => {

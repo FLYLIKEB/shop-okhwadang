@@ -13,7 +13,6 @@ import { MockPaymentAdapter, MOCK_TEST_SIGNATURE } from '../adapters/mock.adapte
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
-import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
 import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
 import { NotificationService } from '../../notification/notification.service';
@@ -43,6 +42,11 @@ const makePayment = (overrides: Partial<Payment> = {}): Payment =>
     method: PaymentMethod.MOCK,
     gateway: PaymentGatewayType.MOCK,
     paymentKey: null,
+    providerTransactionId: null,
+    providerOrderReference: 'ORD-20240101-ABCD1',
+    expectedProviderAmount: 30000,
+    expectedProviderCurrency: 'KRW',
+    localOrderReference: 'ORD-20240101-ABCD1',
     order: makeOrder(),
     ...overrides,
   } as unknown as Payment);
@@ -81,10 +85,15 @@ describe('MockPaymentAdapter', () => {
     const result = await adapter.prepare('42', 30000);
     expect(result.clientKey).toBe('mock_client_key');
     expect(result.orderId).toBe('42');
+    expect(result).toMatchObject({
+      providerOrderReference: '42',
+      providerAmount: 30000,
+      providerCurrency: 'KRW',
+    });
   });
 
   it('confirm → returns confirmed result', async () => {
-    const result = await adapter.confirm('pay_abc', 30000, 'ORD-TEST');
+    const result = await adapter.confirm('mock-ORD-TEST', 30000, 'ORD-TEST');
     expect(result.status).toBe('confirmed');
     expect(result.method).toBe('mock');
     expect(result.amount).toBe(30000);
@@ -92,6 +101,10 @@ describe('MockPaymentAdapter', () => {
 
   it('confirm with fail_ prefix → throws', async () => {
     await expect(adapter.confirm('fail_xyz', 30000, 'ORD-TEST')).rejects.toThrow('Mock payment failed');
+  });
+
+  it('confirm rejects a client-supplied transaction key outside the prepared order', async () => {
+    await expect(adapter.confirm('pay_abc', 30000, 'ORD-TEST')).rejects.toThrow('transaction mismatch');
   });
 
   it('cancel → returns cancelledAt', async () => {
@@ -165,14 +178,6 @@ describe('PaymentsService', () => {
     verifyWebhook: jest.fn(),
   };
 
-  const mockNaverpayAdapter = {
-    prepare: jest.fn(),
-    confirm: jest.fn(),
-    cancel: jest.fn(),
-    partialCancel: jest.fn(),
-    verifyWebhook: jest.fn(),
-  };
-
   const mockPaypalAdapter = {
     prepare: jest.fn(),
     confirm: jest.fn(),
@@ -196,7 +201,9 @@ describe('PaymentsService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockTossAdapter.prepare.mockResolvedValue({ clientKey: 'toss-widget-client', orderId: '1' });
+    mockTossAdapter.prepare.mockResolvedValue({
+      clientKey: 'toss-widget-client', orderId: '1', providerOrderReference: 'ORD-20240101-ABCD1', providerAmount: 30000, providerCurrency: 'KRW',
+    });
     const defaultManager = makeTransactionManager({
       findOne: jest.fn().mockImplementation((entity: unknown, options: unknown) => {
         if (entity === Payment) {
@@ -276,7 +283,6 @@ describe('PaymentsService', () => {
         { provide: TossPaymentAdapter, useValue: mockTossAdapter },
         { provide: StripePaymentAdapter, useValue: mockStripeAdapter },
         { provide: KGInicisPaymentAdapter, useValue: mockInicisAdapter },
-        { provide: NaverPayPaymentAdapter, useValue: mockNaverpayAdapter },
         { provide: PayPalPaymentAdapter, useValue: mockPaypalAdapter },
         { provide: EximbayPaymentAdapter, useValue: mockEximbayAdapter },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
@@ -302,11 +308,14 @@ describe('PaymentsService', () => {
     it('valid order → returns clientKey', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
-      mockPaymentRepo.findOne.mockResolvedValue(null);
+      mockPaymentRepo.findOne.mockResolvedValueOnce(null);
       const savedPayment = makePayment();
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockDefaultGateway.prepare.mockResolvedValue({ clientKey: 'mock_client_key', orderId: '1' });
+      mockPaymentRepo.findOne.mockResolvedValue(savedPayment);
+      mockDefaultGateway.prepare.mockResolvedValue({
+        clientKey: 'mock_client_key', orderId: '1', providerOrderReference: 'ORD-20240101-ABCD1', providerAmount: 30000, providerCurrency: 'KRW',
+      });
 
       const result = await service.prepare({ orderId: 1 }, 10);
       expect(result.clientKey).toBe('mock_client_key');
@@ -331,10 +340,11 @@ describe('PaymentsService', () => {
     it('locale=ko 기본 prepare → Toss 결제위젯만 반환하고 회원 customerKey를 생성한다', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
-      mockPaymentRepo.findOne.mockResolvedValue(null);
+      mockPaymentRepo.findOne.mockResolvedValueOnce(null);
       const savedPayment = makePayment({ gateway: PaymentGatewayType.TOSS });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
+      mockPaymentRepo.findOne.mockResolvedValue(savedPayment);
 
       const result = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
 
@@ -347,14 +357,49 @@ describe('PaymentsService', () => {
       );
     });
 
+    it('replays the persisted Toss client artifact including customerKey', async () => {
+      const order = makeOrder();
+      const payment = makePayment({
+        gateway: PaymentGatewayType.TOSS,
+        providerOrderReference: order.orderNumber,
+        expectedProviderAmount: 30000,
+        expectedProviderCurrency: 'KRW',
+        localOrderReference: order.orderNumber,
+        rawResponse: {
+          clientArtifact: {
+            clientKey: 'toss-widget-client',
+            gatewayPayload: { customerKey: 'persisted-customer-key' },
+          },
+        },
+      });
+      mockOrderRepo.findOne.mockResolvedValue(order);
+      mockPaymentRepo.findOne.mockResolvedValue(payment);
+
+      await expect(service.prepare({ orderId: 1, locale: 'ko' }, 10)).resolves.toMatchObject({
+        clientKey: 'toss-widget-client',
+        gatewayPayload: { customerKey: 'persisted-customer-key' },
+      });
+      expect(mockTossAdapter.prepare).not.toHaveBeenCalled();
+    });
+
     it('locale=en 기본 prepare → PAYPAL 저장 + 카드 선택지 반환 (#1057/#1066)', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
-      mockPaymentRepo.findOne.mockResolvedValue(null);
-      const savedPayment = makePayment({ gateway: PaymentGatewayType.PAYPAL });
+      mockPaymentRepo.findOne.mockResolvedValueOnce(null);
+      const savedPayment = makePayment({
+        gateway: PaymentGatewayType.PAYPAL,
+        providerTransactionId: 'paypal-order-id',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        expectedProviderAmount: 20,
+        expectedProviderCurrency: 'USD',
+        localOrderReference: 'ORD-20240101-ABCD1',
+      });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockPaypalAdapter.prepare.mockResolvedValue({ clientKey: 'paypal-client', orderId: 'paypal-order-id' });
+      mockPaymentRepo.findOne.mockResolvedValue(savedPayment);
+      mockPaypalAdapter.prepare.mockResolvedValue({
+        clientKey: 'paypal-client', orderId: 'paypal-order-id', providerTransactionId: 'paypal-order-id', providerOrderReference: 'ORD-20240101-ABCD1', providerAmount: 20, providerCurrency: 'USD',
+      });
 
       const result = await service.prepare({ orderId: 1, locale: 'en' }, 10);
 
@@ -369,10 +414,11 @@ describe('PaymentsService', () => {
     it('ko에서 비활성 gateway를 요청하면 Toss로 제한한다', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
-      mockPaymentRepo.findOne.mockResolvedValue(null);
+      mockPaymentRepo.findOne.mockResolvedValueOnce(null);
       const savedPayment = makePayment({ gateway: PaymentGatewayType.TOSS });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
+      mockPaymentRepo.findOne.mockResolvedValue(savedPayment);
       const result = await service.prepare({ orderId: 1, locale: 'ko', gateway: 'bank_transfer' }, 10);
 
       expect(result.gateway).toBe('toss');
@@ -386,17 +432,19 @@ describe('PaymentsService', () => {
     it('명시적 gateway=paypal → locale=ko 에서도 PAYPAL 로 저장한다 (#769)', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
-      mockPaymentRepo.findOne.mockResolvedValue(null);
+      mockPaymentRepo.findOne.mockResolvedValueOnce(null);
       const savedPayment = makePayment({ gateway: PaymentGatewayType.PAYPAL });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockPaypalAdapter.prepare.mockResolvedValue({ clientKey: 'paypal-client', orderId: 'paypal-order-id' });
+      mockPaymentRepo.findOne.mockResolvedValue(savedPayment);
+      mockPaypalAdapter.prepare.mockResolvedValue({
+        clientKey: 'paypal-client', orderId: 'paypal-order-id', providerTransactionId: 'paypal-order-id', providerOrderReference: 'ORD-20240101-ABCD1', providerAmount: 20, providerCurrency: 'USD',
+      });
 
       const result = await service.prepare({ orderId: 1, locale: 'ko', gateway: 'paypal' }, 10);
 
       expect(result.gateway).toBe('toss');
       expect(mockTossAdapter.prepare).toHaveBeenCalled();
-      expect(mockNaverpayAdapter.prepare).not.toHaveBeenCalled();
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.TOSS }),
       );
@@ -415,13 +463,17 @@ describe('PaymentsService', () => {
     it('명시적 gateway=eximbay → EXIMBAY 로 저장하고 카드 결제 payload를 반환한다 (#1057)', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
-      mockPaymentRepo.findOne.mockResolvedValue(null);
+      mockPaymentRepo.findOne.mockResolvedValueOnce(null);
       const savedPayment = makePayment({ gateway: PaymentGatewayType.EXIMBAY });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
+      mockPaymentRepo.findOne.mockResolvedValue(savedPayment);
       mockEximbayAdapter.prepare.mockResolvedValue({
         clientKey: 'eximbay-mid',
         orderId: 'ORD-20240101-ABCD1',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         gatewayPayload: { fgkey: 'fgkey' },
       });
 
@@ -442,6 +494,10 @@ describe('PaymentsService', () => {
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.confirm.mockResolvedValue({
         paymentKey: 'pay_abc',
+        providerTransactionId: 'pay_abc',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -457,6 +513,10 @@ describe('PaymentsService', () => {
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.confirm.mockResolvedValue({
         paymentKey: 'pay_abc',
+        providerTransactionId: 'pay_abc',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -473,6 +533,10 @@ describe('PaymentsService', () => {
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.confirm.mockResolvedValue({
         paymentKey: 'pay_abc',
+        providerTransactionId: 'pay_abc',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -496,6 +560,10 @@ describe('PaymentsService', () => {
       mockPaymentRepo.findOne.mockResolvedValue(payment);
       mockDefaultGateway.confirm.mockResolvedValue({
         paymentKey: 'pay_abc',
+        providerTransactionId: 'pay_abc',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'mock',
         amount: 30000,
         status: 'confirmed',
@@ -581,11 +649,21 @@ describe('PaymentsService', () => {
     it('locale=en prepare → payment.gateway 가 PAYPAL 로 저장되고 네이버페이를 숨김 (#1057/#1066)', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
-      mockPaymentRepo.findOne.mockResolvedValue(null);
-      const savedPayment = makePayment({ gateway: PaymentGatewayType.PAYPAL });
+      mockPaymentRepo.findOne.mockResolvedValueOnce(null);
+      const savedPayment = makePayment({
+        gateway: PaymentGatewayType.PAYPAL,
+        providerTransactionId: 'paypal-order-id',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        expectedProviderAmount: 20,
+        expectedProviderCurrency: 'USD',
+        localOrderReference: 'ORD-20240101-ABCD1',
+      });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockPaypalAdapter.prepare.mockResolvedValue({ clientKey: 'paypal-client', orderId: 'paypal-order-id' });
+      mockPaymentRepo.findOne.mockResolvedValue(savedPayment);
+      mockPaypalAdapter.prepare.mockResolvedValue({
+        clientKey: 'paypal-client', orderId: 'paypal-order-id', providerTransactionId: 'paypal-order-id', providerOrderReference: 'ORD-20240101-ABCD1', providerAmount: 20, providerCurrency: 'USD',
+      });
 
       const result = await service.prepare({ orderId: 1, locale: 'en' }, 10);
 
@@ -624,17 +702,29 @@ describe('PaymentsService', () => {
     it('locale=ko prepare → confirm 시 Toss adapter의 confirm()이 호출되어야 함', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
-      mockPaymentRepo.findOne.mockResolvedValue(null);
+      mockPaymentRepo.findOne.mockResolvedValueOnce(null);
       const savedPayment = makePayment({ gateway: PaymentGatewayType.TOSS });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
+      mockPaymentRepo.findOne.mockResolvedValue(savedPayment);
       const prepareResult = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
       expect(prepareResult.gateway).toBe('toss');
 
-      const paymentForConfirm = makePayment({ gateway: PaymentGatewayType.TOSS });
+      const paymentForConfirm = makePayment({
+        gateway: PaymentGatewayType.TOSS,
+        providerTransactionId: 'pay_toss_abc',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        expectedProviderAmount: 30000,
+        expectedProviderCurrency: 'KRW',
+        localOrderReference: 'ORD-20240101-ABCD1',
+      });
       mockPaymentRepo.findOne.mockResolvedValue(paymentForConfirm);
       mockTossAdapter.confirm.mockResolvedValue({
         paymentKey: 'pay_toss_abc',
+        providerTransactionId: 'pay_toss_abc',
+        providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 30000,
+        providerCurrency: 'KRW',
         method: 'card',
         amount: 30000,
         status: 'confirmed',

@@ -109,7 +109,7 @@ describe('PaymentWebhookService', () => {
   });
 
   describe('비동기 결제 상태 갱신', () => {
-    it('DONE 이벤트 → Payment CONFIRMED + Order PAID + paidAt 기록', async () => {
+    it('unbound DONE event never transitions Payment or Order to paid', async () => {
       const manager = makeWebhookManager({
         findOne: jest.fn().mockResolvedValue({ id: 7, status: 'pending' }),
       });
@@ -126,15 +126,14 @@ describe('PaymentWebhookService', () => {
         'valid_sig',
       );
 
-      expect(manager.update).toHaveBeenCalledWith(
+      expect(manager.update).not.toHaveBeenCalledWith(
         Payment,
         10,
         expect.objectContaining({
           status: PaymentStatus.CONFIRMED,
-          paidAt: expect.any(Date),
         }),
       );
-      expect(manager.update).toHaveBeenCalledWith(Order, 7, {
+      expect(manager.update).not.toHaveBeenCalledWith(Order, 7, {
         status: OrderStatus.PAID,
       });
     });
@@ -275,13 +274,13 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
 
-      // eventType=DONE → status=CANCELLED 보다 우선되어 PAID 로 전이
+      // Unbound paid callbacks are ignored even when eventType takes precedence.
       await service.handleWebhook(
         { orderId: 7, eventType: 'DONE', status: 'CANCELLED' },
         'valid_sig',
       );
 
-      expect(manager.update).toHaveBeenCalledWith(
+      expect(manager.update).not.toHaveBeenCalledWith(
         Payment,
         10,
         expect.objectContaining({ status: PaymentStatus.CONFIRMED }),
@@ -290,7 +289,7 @@ describe('PaymentWebhookService', () => {
   });
 
   describe('Idempotent / 차단 전이', () => {
-    it('이미 PAID 인 주문에 DONE 웹훅 재수신 → allowSameStatus=true 로 멱등 처리', async () => {
+    it('already paid order ignores an unbound DONE callback', async () => {
       const manager = makeWebhookManager({
         findOne: jest.fn().mockResolvedValue({ id: 7, status: 'paid' }),
       });
@@ -309,8 +308,7 @@ describe('PaymentWebhookService', () => {
         ),
       ).resolves.not.toThrow();
 
-      // 동일 상태(paid → paid) 전이는 허용되어 update 가 호출됨
-      expect(manager.update).toHaveBeenCalled();
+      expect(manager.update).not.toHaveBeenCalled();
     });
 
     it('차단 전이(delivered → paid) 는 update 를 수행하지 않음', async () => {
@@ -394,7 +392,7 @@ describe('PaymentWebhookService', () => {
   });
 
   describe('멱등성 / 결과 추적 (issue #725)', () => {
-    it('성공 케이스: webhook event 가 SUCCESS 로 update 된다', async () => {
+    it('unbound paid callback records IGNORED rather than success', async () => {
       const manager = makeWebhookManager({
         findOne: jest.fn().mockResolvedValue({ id: 7, status: 'pending' }),
       });
@@ -408,7 +406,7 @@ describe('PaymentWebhookService', () => {
       expect(webhookEventRepo.update).toHaveBeenCalledWith(
         1,
         expect.objectContaining({
-          result: PaymentWebhookResult.SUCCESS,
+          result: PaymentWebhookResult.IGNORED,
           paymentId: 10,
           orderId: 7,
           processedAt: expect.any(Date),
@@ -435,7 +433,7 @@ describe('PaymentWebhookService', () => {
       expect(webhookEventRepo.update).not.toHaveBeenCalled();
     });
 
-    it('처리 도중 예외 발생 → FAILED + errorMessage 기록', async () => {
+    it('unbound paid callback does not enter transaction processing', async () => {
       const dbErr = new Error('DB connection lost');
       const manager = makeWebhookManager({
         findOne: jest.fn().mockRejectedValue(dbErr),
@@ -449,8 +447,8 @@ describe('PaymentWebhookService', () => {
       expect(webhookEventRepo.update).toHaveBeenCalledWith(
         1,
         expect.objectContaining({
-          result: PaymentWebhookResult.FAILED,
-          errorMessage: 'DB connection lost',
+          result: PaymentWebhookResult.IGNORED,
+          errorMessage: null,
           processedAt: expect.any(Date),
         }),
       );

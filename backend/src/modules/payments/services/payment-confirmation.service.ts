@@ -40,7 +40,6 @@ import { PAYMENT_CONFIG, type PaymentConfig } from '../../../config/payment.conf
 import { TossPaymentAdapter } from '../adapters/toss.adapter';
 import { StripePaymentAdapter } from '../adapters/stripe.adapter';
 import { KGInicisPaymentAdapter } from '../adapters/inicis.adapter';
-import { NaverPayPaymentAdapter } from '../adapters/naverpay.adapter';
 import { PayPalPaymentAdapter } from '../adapters/paypal.adapter';
 import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
 import { PointsService } from '../../points/points.service';
@@ -90,7 +89,6 @@ export class PaymentConfirmationService {
     private readonly tossAdapter: TossPaymentAdapter,
     private readonly stripeAdapter: StripePaymentAdapter,
     private readonly inicisAdapter: KGInicisPaymentAdapter,
-    private readonly naverpayAdapter: NaverPayPaymentAdapter,
     private readonly paypalAdapter: PayPalPaymentAdapter,
     private readonly eximbayAdapter: EximbayPaymentAdapter,
     private readonly pointsService: PointsService,
@@ -118,6 +116,7 @@ export class PaymentConfirmationService {
     );
     this.assertMemberOwnership(payment.order.userId, userId);
     this.assertConfirmablePayment(payment.order, payment, dto.amount);
+    this.assertNotBankTransfer(payment);
 
     let result: Awaited<ReturnType<PaymentGateway['confirm']>>;
     try {
@@ -130,20 +129,6 @@ export class PaymentConfirmationService {
         const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
 
         if (this.isDuplicateLikeConfirmError(err)) {
-          if (
-            lockedPayment.status === PaymentStatus.CONFIRMED ||
-            lockedPayment.order.status === OrderStatus.PAID
-          ) {
-            throw new ConflictException('이미 승인된 결제입니다.');
-          }
-
-          await this.persistDuplicateConfirmationReconciliation(
-            manager,
-            lockedPayment,
-            dto.orderId,
-            dto.paymentKey,
-            err,
-          );
           throw new ConflictException('이미 승인된 결제입니다.');
         }
 
@@ -158,6 +143,7 @@ export class PaymentConfirmationService {
       }
       throw new InternalServerErrorException('결제 승인에 실패했습니다.');
     }
+    this.assertProviderBinding(payment, result);
 
     const paidAt = new Date();
 
@@ -262,6 +248,7 @@ export class PaymentConfirmationService {
       ['order'],
     );
     this.assertConfirmablePayment(payment.order, payment, dto.amount);
+    this.assertNotBankTransfer(payment);
 
     let result: Awaited<ReturnType<PaymentGateway['confirm']>>;
     try {
@@ -279,20 +266,6 @@ export class PaymentConfirmationService {
         const lockedPayment = await this.loadLockedPayment(orderId, manager);
 
         if (this.isDuplicateLikeConfirmError(err)) {
-          if (
-            lockedPayment.status === PaymentStatus.CONFIRMED ||
-            lockedPayment.order.status === OrderStatus.PAID
-          ) {
-            throw new ConflictException('이미 승인된 결제입니다.');
-          }
-
-          await this.persistDuplicateConfirmationReconciliation(
-            manager,
-            lockedPayment,
-            orderId,
-            dto.paymentKey,
-            err,
-          );
           throw new ConflictException('이미 승인된 결제입니다.');
         }
 
@@ -307,6 +280,7 @@ export class PaymentConfirmationService {
         throw new InternalServerErrorException('결제 승인에 실패했습니다.');
       });
     }
+    this.assertProviderBinding(payment, result);
 
     const paidAt = new Date();
     try {
@@ -485,6 +459,39 @@ export class PaymentConfirmationService {
     }
   }
 
+  private assertNotBankTransfer(payment: Payment): void {
+    if (payment.method === PaymentMethod.BANK_TRANSFER) {
+      throw new BadRequestException('무통장 입금은 관리자 입금 확인 후 처리됩니다.');
+    }
+  }
+
+  private assertProviderBinding(
+    payment: Payment,
+    result: Awaited<ReturnType<PaymentGateway['confirm']>>,
+  ): void {
+    if (
+      !payment.providerOrderReference ||
+      payment.expectedProviderAmount === null ||
+      !payment.expectedProviderCurrency ||
+      !payment.localOrderReference ||
+      !result.providerTransactionId ||
+      !result.providerOrderReference ||
+      result.providerAmount === undefined ||
+      !result.providerCurrency ||
+      result.providerOrderReference !== payment.providerOrderReference ||
+      Number(result.providerAmount) !== Number(payment.expectedProviderAmount) ||
+      result.providerCurrency.toUpperCase() !== payment.expectedProviderCurrency.toUpperCase()
+    ) {
+      throw new BadRequestException('결제 거래 바인딩이 일치하지 않습니다.');
+    }
+    if (
+      payment.providerTransactionId &&
+      result.providerTransactionId !== payment.providerTransactionId
+    ) {
+      throw new BadRequestException('결제 거래 식별자가 일치하지 않습니다.');
+    }
+  }
+
   private assertMemberOwnership(orderUserId: number | null, userId: number): void {
     if (orderUserId === null) {
       throw new ForbiddenException('접근 권한이 없습니다.');
@@ -534,24 +541,6 @@ export class PaymentConfirmationService {
     );
   }
 
-  private extractProviderErrorPayload(err: unknown): Record<string, unknown> | null {
-    if (typeof err !== 'object' || err === null) {
-      return null;
-    }
-
-    const candidates: unknown[] = [
-      (err as Record<string, unknown>).rawResponse,
-      (err as Record<string, unknown>).response,
-      (err as Record<string, unknown>).body,
-    ];
-    for (const candidate of candidates) {
-      if (typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate)) {
-        return candidate as Record<string, unknown>;
-      }
-    }
-
-    return null;
-  }
 
   private readNestedErrorText(err: unknown, path: string): string {
     if (typeof err !== 'object' || err === null) {
@@ -709,27 +698,6 @@ export class PaymentConfirmationService {
     });
   }
 
-  private async persistDuplicateConfirmationReconciliation(
-    manager: EntityManager,
-    payment: Payment,
-    orderId: number,
-    paymentKey: string,
-    err: unknown,
-  ): Promise<void> {
-    await manager.update(Payment, payment.id, {
-      status: PaymentStatus.CONFIRMED,
-      paymentKey,
-      paidAt: payment.paidAt ?? new Date(),
-      rawResponse: {
-        gatewayConfirmationDuplicateLike: true,
-        reconciliationRequired: true,
-        orderId,
-        duplicateLike: true,
-        rawResponse: this.extractProviderErrorPayload(err),
-        error: err instanceof Error ? err.message : String(err),
-      } as object,
-    });
-  }
   private async loadLockedPayment(orderId: number, manager: EntityManager): Promise<Payment> {
     const payment = await manager.findOne(Payment, {
       where: { orderId },
@@ -779,8 +747,6 @@ export class PaymentConfirmationService {
         return this.stripeAdapter;
       case PaymentGatewayType.INICIS:
         return this.inicisAdapter;
-      case PaymentGatewayType.NAVERPAY:
-        return this.naverpayAdapter;
       case PaymentGatewayType.PAYPAL:
         return this.paypalAdapter;
       case PaymentGatewayType.EXIMBAY:

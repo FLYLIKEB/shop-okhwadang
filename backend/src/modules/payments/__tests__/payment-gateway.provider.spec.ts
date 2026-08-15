@@ -11,7 +11,6 @@ describe('selectPaymentGatewayAdapter', () => {
     toss: { name: 'toss' },
     stripe: { name: 'stripe' },
     inicis: { name: 'inicis' },
-    naverpay: { name: 'naverpay' },
     paypal: { name: 'paypal' },
     eximbay: { name: 'eximbay' },
   };
@@ -21,7 +20,6 @@ describe('selectPaymentGatewayAdapter', () => {
     ['toss', adapters.toss],
     ['stripe', adapters.stripe],
     ['inicis', adapters.inicis],
-    ['naverpay', adapters.naverpay],
     ['paypal', adapters.paypal],
     ['eximbay', adapters.eximbay],
   ] as const)('returns %s adapter', (gateway, expected) => {

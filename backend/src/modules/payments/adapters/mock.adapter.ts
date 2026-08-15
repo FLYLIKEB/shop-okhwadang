@@ -12,16 +12,31 @@ export class MockPaymentAdapter implements PaymentGateway {
     Logger.warn('Mock payment adapter is active. DO NOT use in production.', 'MockPaymentAdapter');
   }
 
-  async prepare(orderId: string, _amount: number): Promise<PrepareResult> {
-    return { clientKey: 'mock_client_key', orderId };
+  async prepare(orderId: string, amount: number, context?: { orderNumber?: string }): Promise<PrepareResult> {
+    return {
+      clientKey: 'mock_client_key',
+      orderId,
+      providerTransactionId: `mock-${context?.orderNumber ?? orderId}`,
+      providerOrderReference: context?.orderNumber ?? orderId,
+      providerAmount: amount,
+      providerCurrency: 'KRW',
+      gatewayPayload: { paymentKey: `mock-${context?.orderNumber ?? orderId}` },
+    };
   }
 
-  async confirm(paymentKey: string, amount: number, _orderId: string): Promise<ConfirmResult> {
+  async confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult> {
     if (paymentKey.startsWith('fail_')) {
       throw new Error('Mock payment failed');
     }
+    if (paymentKey !== `mock-${orderId}`) {
+      throw new Error('Mock payment transaction mismatch');
+    }
     return {
       paymentKey,
+      providerTransactionId: `mock-${orderId}`,
+      providerOrderReference: orderId,
+      providerAmount: amount,
+      providerCurrency: 'KRW',
       method: 'mock',
       amount,
       status: 'confirmed',
