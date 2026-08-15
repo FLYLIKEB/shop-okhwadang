@@ -1,6 +1,8 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { createHash, randomUUID } from 'crypto';
-import { DataSource, EntityManager } from 'typeorm';
+import {
+  DataSource, EntityManager, IsNull, LessThanOrEqual,
+} from 'typeorm';
 import { IdempotencyOperation } from '../entities/idempotency-operation.entity';
 
 class PendingOperationError extends Error {}
@@ -57,11 +59,30 @@ export class IdempotencyService {
         if (existing) {
           this.assertFingerprint(existing, fingerprint);
           if (existing.status !== 'completed') {
-            if (!existing.leaseExpiresAt || existing.leaseExpiresAt <= new Date()) {
-              existing.leaseOwner = owner;
-              existing.leaseExpiresAt = new Date(Date.now() + IdempotencyService.LEASE_MS);
-              await repository.save(existing);
-              return { id: existing.id, leaseOwner: owner, owner: true, replayed: false };
+            const now = new Date();
+            if (!existing.leaseExpiresAt || existing.leaseExpiresAt <= now) {
+              const takeover = await repository.update(
+                {
+                  id: existing.id,
+                  status: 'pending',
+                  leaseOwner: existing.leaseOwner ?? IsNull(),
+                  leaseExpiresAt: existing.leaseExpiresAt
+                    ? LessThanOrEqual(now)
+                    : IsNull(),
+                },
+                {
+                  leaseOwner: owner,
+                  leaseExpiresAt: new Date(Date.now() + IdempotencyService.LEASE_MS),
+                },
+              );
+              if (takeover.affected === 1) {
+                return {
+                  id: existing.id,
+                  leaseOwner: owner,
+                  owner: true,
+                  replayed: false,
+                };
+              }
             }
             throw new PendingOperationError();
           }
