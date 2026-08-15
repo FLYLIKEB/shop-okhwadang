@@ -458,9 +458,7 @@
     "consent": {
       "title": "Required Consent",
       "requiredLabel": "[Required] I agree to the purchase terms and personal information processing.",
-      "requiredDescription": "I have reviewed the product name, price, shipping information, and exchange/refund policy, and agree to proceed with this purchase.\nI agree to personal information collection/use and processing delegation or third-party provision to payment gateways and shipping providers for payment and delivery.",
-      "marketingLabel": "[Optional] I agree to receive marketing communications.",
-      "marketingDescription": "Receive new product, promotion, and event updates by email or SMS."
+      "requiredDescription": "I have reviewed the product name, price, shipping information, and exchange/refund policy, and agree to proceed with this purchase.\nI agree to personal information collection/use and processing delegation or third-party provision to payment gateways and shipping providers for payment and delivery."
     },
     "couponLoadError": "Failed to load coupons.",
     "couponLoading": "Loading coupons...",

@@ -108,7 +108,6 @@ export default function CheckoutPage({
   const [guestEmail, setGuestEmail] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [requiredConsent, setRequiredConsent] = useState(false);
-  const [marketingConsent, setMarketingConsent] = useState(false);
   const [requestedUserCouponId, setRequestedUserCouponId] = useState<number | undefined>();
   const [requestedPointsToUse, setRequestedPointsToUse] = useState(0);
   const paymentRef = useRef<PaymentGatewayHandle>(null);
@@ -305,7 +304,6 @@ export default function CheckoutPage({
     currentOrderNumber,
     currentGuestAccessToken,
     requiredConsent,
-    marketingConsent,
     appliedUserCouponId: pricingPreview?.appliedUserCouponId,
     appliedPointsUsed,
     isGuestCheckout,
@@ -447,18 +445,6 @@ export default function CheckoutPage({
                     <span id="checkout-required-consent-description" className="mt-1 block whitespace-pre-line text-muted-foreground">
                       {t('consent.requiredDescription')}
                     </span>
-                  </span>
-                </label>
-                <label className="flex gap-3 rounded-md border border-soft p-3 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={marketingConsent}
-                    onChange={(event) => setMarketingConsent(event.target.checked)}
-                    className="mt-1 h-4 w-4 shrink-0 accent-foreground"
-                  />
-                  <span>
-                    <span className="font-medium">{t('consent.marketingLabel')}</span>
-                    <span className="mt-1 block text-muted-foreground">{t('consent.marketingDescription')}</span>
                   </span>
                 </label>
               </div>

@@ -131,7 +131,6 @@ function makeOptions(
     currentOrderNumber: state.currentOrderNumber,
     currentGuestAccessToken: '',
     requiredConsent: true,
-    marketingConsent: false,
     isGuestCheckout: false,
     setStep: vi.fn((s: PaymentStep) => { state.step = s; }),
     setPrepareResult: vi.fn((r) => { state.prepareResult = r; }),
@@ -235,40 +234,6 @@ describe('useCheckout - 폼 검증', () => {
       expect.objectContaining({ zipcode: '12345' }),
     );
   });
-
-  it('선택 마케팅 동의 값을 주문 생성 payload에 포함한다', async () => {
-    mockOrdersCreate.mockResolvedValue(mockOrder);
-    mockPaymentsPrepare.mockResolvedValue({
-      paymentId: 1,
-      orderId: mockOrder.id,
-      orderNumber: mockOrder.orderNumber,
-      amount: 30000,
-      gateway: 'mock',
-      clientKey: 'mock_client_key',
-    } satisfies PreparePaymentResponse);
-    mockPaymentsConfirm.mockResolvedValue({
-      paymentId: 1,
-      orderId: mockOrder.id,
-      orderNumber: mockOrder.orderNumber,
-      status: 'confirmed',
-      method: 'mock',
-      amount: 30000,
-      paidAt: '2026-04-25T00:00:00Z',
-    });
-
-    const { options } = makeOptions({ marketingConsent: true });
-    const { result } = renderHook(() => useCheckout(options));
-
-    await act(async () => {
-      await result.current.handleSubmit(makeFormEvent());
-    });
-
-    expect(mockOrdersCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ marketingConsent: true }),
-    );
-  });
-
-
 
   it('선택한 쿠폰과 적립금을 주문 생성 payload에 포함한다', async () => {
     mockOrdersCreate.mockResolvedValue(mockOrder);
@@ -399,8 +364,10 @@ describe('useCheckout - Mock 결제 흐름', () => {
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
         zipcode: '12345',
-        marketingConsent: false,
       }),
+    );
+    expect(mockOrdersCreate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ marketingConsent: expect.anything() }),
     );
     expect(options.setErrors).toHaveBeenCalledWith({});
     expect(mockPaymentsPrepare).toHaveBeenCalledWith({ orderId: mockOrder.id, locale: 'ko', gateway: 'naverpay' });

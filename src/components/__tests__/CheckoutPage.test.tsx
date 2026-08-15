@@ -82,8 +82,6 @@ vi.mock('next-intl', () => ({
       'consent.title': '필수 동의',
       'consent.requiredLabel': '[필수] 구매조건 및 개인정보 처리에 동의합니다.',
       'consent.requiredDescription': '주문할 상품의 상품명, 가격, 배송정보, 교환·환불 규정을 확인했으며 구매에 동의합니다.',
-      'consent.marketingLabel': '[선택] 마케팅 정보 수신에 동의합니다.',
-      'consent.marketingDescription': '신상품, 프로모션, 이벤트 안내를 받을 수 있습니다.',
       guestCheckoutTitle: '비회원 주문',
       guestCheckoutDescription: '비회원 안내',
       guestEmailLabel: '비회원 이메일',
@@ -357,6 +355,7 @@ describe('CheckoutPage', () => {
     expect(screen.queryByRole('radio', { name: /Credit card/ })).not.toBeInTheDocument();
     expect(screen.queryByTestId('secure-card-entry-shell')).not.toBeInTheDocument();
     expect(screen.queryByTestId('bank-transfer-account-info')).not.toBeInTheDocument();
+    expect(screen.queryByText(/마케팅 정보 수신/)).not.toBeInTheDocument();
   });
 
   it('ko checkout은 prepare gateway=toss를 전달한다', async () => {
