@@ -403,46 +403,53 @@ export class OrderServiceRequestsService {
     const order = await manager.findOne(Order, {
       where: { id: request.orderId },
       relations: ['items'],
-      lock: { mode: 'pessimistic_write' },
     });
     if (!order) throw new BadRequestException('주문을 찾을 수 없습니다.');
 
     if (request.type === OrderServiceRequestType.CANCEL) {
-      const lockedPayment = await manager.findOne(Payment, {
-        where: { orderId: Number(order.id) },
-        lock: { mode: 'pessimistic_write' },
-      });
-      const usesGatewayCancellationReconciliation =
-        this.isGatewayCancellationReconciliation(lockedPayment);
-
-      if (this.isGatewayCancellationAmbiguous(lockedPayment)) {
-        throw new BadRequestException('결제 취소 상태 확인이 필요합니다. 수동 확인 후 다시 시도해주세요.');
-      }
-
-      if (lockedPayment?.status === PaymentStatus.CONFIRMED) {
-        throw new GatewayCancellationRequiredError();
-      }
-
       if (order.status === OrderStatus.CANCELLED) {
         return;
       }
-      if (![OrderStatus.PENDING, OrderStatus.PAID].includes(order.status)) {
-        throw new BadRequestException('결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.');
-      }
-      if (order.status === OrderStatus.PAID && !usesGatewayCancellationReconciliation) {
-        throw new BadRequestException('결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.');
-      }
 
-      const cancelledAt = lockedPayment?.cancelledAt ?? new Date();
+      let lockedPayment: Payment | null = null;
+      let cancelledAt: Date;
       const recovery = await runFirstTerminalTransitionRecovery(manager, {
         orderId: Number(order.id),
         nextOrderStatus: OrderStatus.CANCELLED,
         pointsService: this.pointsService,
         pointRestoreDescription: `주문 ${order.orderNumber} 고객 신청 처리로 인한 적립금 복구`,
+        lockBeforeRecovery: async (lockedOrder) => {
+          lockedPayment = await manager.findOne(Payment, {
+            where: { orderId: Number(lockedOrder.id) },
+            lock: { mode: 'pessimistic_write' },
+          });
+          const usesGatewayCancellationReconciliation =
+            this.isGatewayCancellationReconciliation(lockedPayment);
+
+          if (this.isGatewayCancellationAmbiguous(lockedPayment)) {
+            throw new BadRequestException('결제 취소 상태 확인이 필요합니다. 수동 확인 후 다시 시도해주세요.');
+          }
+          if (lockedPayment?.status === PaymentStatus.CONFIRMED) {
+            throw new GatewayCancellationRequiredError();
+          }
+          if (![OrderStatus.PENDING, OrderStatus.PAID].includes(lockedOrder.status)) {
+            return false;
+          }
+          if (lockedOrder.status === OrderStatus.PAID && !usesGatewayCancellationReconciliation) {
+            return false;
+          }
+
+          cancelledAt = lockedPayment?.cancelledAt ?? new Date();
+          return true;
+        },
         applyMutations: async (lockedOrder) => {
+          if (!cancelledAt) {
+            return false;
+          }
           const canCancelLocally =
             lockedOrder.status === OrderStatus.PENDING ||
-            (lockedOrder.status === OrderStatus.PAID && usesGatewayCancellationReconciliation);
+            (lockedOrder.status === OrderStatus.PAID &&
+              this.isGatewayCancellationReconciliation(lockedPayment));
           if (!canCancelLocally) {
             return false;
           }

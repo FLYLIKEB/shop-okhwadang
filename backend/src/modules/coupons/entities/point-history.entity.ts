@@ -24,6 +24,9 @@ export class PointHistory {
   @Column({ type: 'int' })
   amount!: number;
 
+  @Column({ name: 'remaining_amount', type: 'int', nullable: true })
+  remainingAmount!: number | null;
+
   @Column({ type: 'int' })
   balance!: number;
 

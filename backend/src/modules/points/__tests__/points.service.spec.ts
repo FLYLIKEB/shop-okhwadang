@@ -10,10 +10,14 @@ import { AuditAction } from '../../audit-logs/entities/audit-log.entity';
 
 const mockSelectQueryBuilder = {
   select: jest.fn().mockReturnThis(),
+  setLock: jest.fn().mockReturnThis(),
   where: jest.fn().mockReturnThis(),
   andWhere: jest.fn().mockReturnThis(),
+  orderBy: jest.fn().mockReturnThis(),
+  addOrderBy: jest.fn().mockReturnThis(),
   setParameter: jest.fn().mockReturnThis(),
   getRawOne: jest.fn(),
+  getMany: jest.fn(),
 };
 
 const mockPointHistoryRepo = {
@@ -153,11 +157,11 @@ describe('PointsService', () => {
       await service.getUserPointBalance(1);
 
       expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
-        expect.stringContaining('NOT EXISTS'),
+        expect.stringContaining('ph.remaining_amount IS NOT NULL'),
         'total',
       );
       expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
-        expect.stringContaining('ex.related_entity_id = ph.id'),
+        expect.stringContaining('ph.expires_at > :now'),
         'total',
       );
     });
@@ -238,15 +242,11 @@ describe('PointsService', () => {
 
       expect(balance).toBe(1000);
       expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
-        expect.stringContaining('COALESCE(SUM(ph.amount), 0)'),
+        expect.stringContaining('THEN ph.remaining_amount'),
         'total',
       );
       expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
-        expect.stringContaining("ex.type = 'expire'"),
-        'total',
-      );
-      expect(mockSelectQueryBuilder.select).toHaveBeenCalledWith(
-        expect.stringContaining('ex.related_entity_id = ph.id'),
+        expect.stringContaining('ph.remaining_amount IS NOT NULL'),
         'total',
       );
     });
@@ -337,21 +337,17 @@ describe('PointsService', () => {
       mockEntityManager.findOne
         .mockResolvedValueOnce({ id: 42 })
         .mockResolvedValueOnce({ balance: 2000 })
-        .mockResolvedValueOnce({ balance: 2000 })
-        .mockResolvedValueOnce({
-          id: 91,
-          userId: 42,
-          type: 'spend',
-          amount: -300,
-          balance: 1700,
-          description: '관리자 수동 포인트 조정: 사후 차감',
-          createdAt: new Date(),
-          orderId: null,
-          relatedEntityType: null,
-          relatedEntityId: null,
-        });
+        .mockResolvedValueOnce({ id: 42 })
+        .mockResolvedValueOnce({ balance: 2000 });
       mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '1200' });
-      mockEntityManager.save.mockResolvedValue({});
+      mockSelectQueryBuilder.getMany.mockResolvedValue([
+        { id: 10, remainingAmount: 1200 },
+      ]);
+      mockEntityManager.save.mockImplementation(async (_entity, value) => (
+        (value as { type?: string }).type === 'spend'
+          ? { ...value, id: 91, createdAt: new Date() }
+          : value
+      ));
 
       const result = await service.adjustPointsManually(
         { actorId: 7, actorRole: 'admin' },
@@ -409,11 +405,16 @@ describe('PointsService', () => {
 
   beforeEach(() => {
     mockEntityManager.findOne.mockReset();
+    mockEntityManager.save.mockImplementation(
+      async (_entity: unknown, value: unknown) => value,
+    );
   });
     it('should create a spend record with correct balance and return new balance', async () => {
       mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '5000' });
+      mockSelectQueryBuilder.getMany.mockResolvedValue([
+        { id: 1, remainingAmount: 5000 },
+      ]);
       mockEntityManager.findOne.mockResolvedValue({ balance: 5000 });
-      mockEntityManager.save.mockResolvedValue({});
 
       const newBalance = await service.deductFifo(
         mockEntityManager as unknown as EntityManager,
@@ -428,6 +429,7 @@ describe('PointsService', () => {
         userId: 1,
         type: 'spend',
         amount: -1000,
+        remainingAmount: null,
         balance: 4000,
         orderId: 42,
         description: '주문 사용 (ORD-001)',
@@ -436,8 +438,8 @@ describe('PointsService', () => {
 
     it('should reject when no effective balance exists', async () => {
       mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '0' });
-      mockEntityManager.findOne.mockResolvedValue(null);
-      mockEntityManager.save.mockResolvedValue({});
+      mockSelectQueryBuilder.getMany.mockResolvedValue([]);
+      mockEntityManager.findOne.mockResolvedValue({ id: 1 });
 
       await expect(
         service.deductFifo(
@@ -453,8 +455,10 @@ describe('PointsService', () => {
 
     it('should query latest entry ordered by createdAt DESC, id DESC for FIFO', async () => {
       mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '2000' });
+      mockSelectQueryBuilder.getMany.mockResolvedValue([
+        { id: 1, remainingAmount: 2000 },
+      ]);
       mockEntityManager.findOne.mockResolvedValue({ balance: 2000 });
-      mockEntityManager.save.mockResolvedValue({});
 
       await service.deductFifo(mockEntityManager as unknown as EntityManager, 1, 200, 'test', null);
 
@@ -466,8 +470,10 @@ describe('PointsService', () => {
 
     it('should deduct full balance when amount equals balance', async () => {
       mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '1000' });
+      mockSelectQueryBuilder.getMany.mockResolvedValue([
+        { id: 1, remainingAmount: 1000 },
+      ]);
       mockEntityManager.findOne.mockResolvedValue({ balance: 1000 });
-      mockEntityManager.save.mockResolvedValue({});
 
       const newBalance = await service.deductFifo(
         mockEntityManager as unknown as EntityManager,
@@ -482,8 +488,10 @@ describe('PointsService', () => {
 
     it('rejects spending expired earn that is still present in running balance before cron expiry', async () => {
       mockSelectQueryBuilder.getRawOne.mockResolvedValue({ total: '1000' });
+      mockSelectQueryBuilder.getMany.mockResolvedValue([
+        { id: 1, remainingAmount: 1000 },
+      ]);
       mockEntityManager.findOne.mockResolvedValue({ balance: 2000 });
-      mockEntityManager.save.mockResolvedValue({});
 
       await expect(
         service.deductFifo(

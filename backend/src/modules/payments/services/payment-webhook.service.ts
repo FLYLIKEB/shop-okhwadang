@@ -24,7 +24,7 @@ interface PaymentWebhookDependencies {
   webhookEventRepository: Repository<PaymentWebhookEvent>;
   dataSource: DataSource;
   logger: Logger;
-  pointsService: Pick<PointsService, 'getRunningBalanceInTx'>;
+  pointsService: Pick<PointsService, 'lockUserForPointChanges' | 'creditFifo'>;
   defaultCarrier?: string;
 }
 

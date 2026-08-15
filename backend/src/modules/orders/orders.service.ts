@@ -40,8 +40,9 @@ export class OrdersService {
    *   2) 트랜잭션 블록 — 재고 차감, 가격 계산, 주문/아이템 저장, 쿠폰/포인트 사용, 카트 정리
    *   3) post-commit 후처리 — 이벤트 발행 / 알림 디스패치 (실패가 주문에 영향 주면 안 됨)
    *
-   * DB write 순서는 절대 변경되지 않는다:
-   *   - product/option stock UPDATE → order INSERT → coupon/point UPDATE → order_items INSERT → cart DELETE
+   * Lock/write order is fixed:
+   *   - user(point ledger) lock → product/option stock UPDATE (ID order) → order INSERT
+   *     → coupon/point UPDATE → order_items INSERT → cart DELETE
    */
   async create(userId: number, dto: CreateOrderDto, idempotencyKey?: string): Promise<Order> {
     this.orderCreationWorkflow.assertCreatePayload(dto);

@@ -76,7 +76,8 @@ describe('AdminOrdersService', () => {
       reconcileConfirmedPayment: jest.fn(),
     } as unknown as jest.Mocked<PaymentsService>;
     pointsService = {
-      getRunningBalanceInTx: jest.fn().mockResolvedValue(0),
+      lockUserForPointChanges: jest.fn().mockResolvedValue(undefined),
+      creditFifo: jest.fn().mockResolvedValue({}),
     } as unknown as jest.Mocked<PointsService>;
     notificationService = {
       sendOrderCancelled: jest.fn().mockResolvedValue(undefined),
@@ -241,7 +242,7 @@ describe('AdminOrdersService', () => {
       paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });
       paymentsService.cancelAdmin.mockImplementation(async (_orderId, _reason, postGatewaySync) => {
         if (postGatewaySync) {
-          await postGatewaySync(mockManager as unknown as EntityManager, new Date());
+          await postGatewaySync(mockManager as unknown as EntityManager, new Date(), async () => undefined);
         }
         return {
           paymentId: 10,
@@ -250,12 +251,19 @@ describe('AdminOrdersService', () => {
           cancelReason: '관리자 환불 처리',
         };
       });
-      mockManager.findOne.mockResolvedValueOnce({
-        id: 1,
-        status: OrderStatus.PAID,
-        pointsUsed: 0,
-        userId: null,
-      });
+      mockManager.findOne
+        .mockResolvedValueOnce({
+          id: 1,
+          status: OrderStatus.PAID,
+          pointsUsed: 0,
+          userId: null,
+        })
+        .mockResolvedValueOnce({
+          id: 1,
+          status: OrderStatus.PAID,
+          pointsUsed: 0,
+          userId: null,
+        });
 
       await service.updateStatus(1, OrderStatus.REFUNDED);
       expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(
@@ -304,7 +312,7 @@ describe('AdminOrdersService', () => {
       paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 1 });
       paymentsService.cancelAdmin.mockImplementation(async (_orderId, _reason, postGatewaySync) => {
         if (postGatewaySync) {
-          await postGatewaySync(mockManager as unknown as EntityManager, new Date());
+          await postGatewaySync(mockManager as unknown as EntityManager, new Date(), async () => undefined);
         }
         return {
           paymentId: 10,
@@ -313,12 +321,19 @@ describe('AdminOrdersService', () => {
           cancelReason: '관리자 환불 처리',
         };
       });
-      mockManager.findOne.mockResolvedValueOnce({
-        id: 1,
-        status: OrderStatus.REFUND_REQUESTED,
-        pointsUsed: 0,
-        userId: null,
-      });
+      mockManager.findOne
+        .mockResolvedValueOnce({
+          id: 1,
+          status: OrderStatus.REFUND_REQUESTED,
+          pointsUsed: 0,
+          userId: null,
+        })
+        .mockResolvedValueOnce({
+          id: 1,
+          status: OrderStatus.REFUND_REQUESTED,
+          pointsUsed: 0,
+          userId: null,
+        });
 
       await service.updateStatus(1, OrderStatus.REFUNDED);
       expect(paymentsService.cancelAdmin).toHaveBeenCalledWith(
@@ -340,7 +355,7 @@ describe('AdminOrdersService', () => {
       paymentRepo.findOne.mockResolvedValue({ id: 99, orderId: 1 });
       paymentsService.cancelAdmin.mockImplementation(async (_orderId, _reason, postGatewaySync) => {
         if (postGatewaySync) {
-          await postGatewaySync(mockManager as unknown as EntityManager, new Date());
+          await postGatewaySync(mockManager as unknown as EntityManager, new Date(), async () => undefined);
         }
         return {
           paymentId: 99,
@@ -349,12 +364,19 @@ describe('AdminOrdersService', () => {
           cancelReason: '관리자 환불 처리',
         };
       });
-      mockManager.findOne.mockResolvedValueOnce({
-        id: 1,
-        status: OrderStatus.REFUND_REQUESTED,
-        pointsUsed: 0,
-        userId: null,
-      });
+      mockManager.findOne
+        .mockResolvedValueOnce({
+          id: 1,
+          status: OrderStatus.REFUND_REQUESTED,
+          pointsUsed: 0,
+          userId: null,
+        })
+        .mockResolvedValueOnce({
+          id: 1,
+          status: OrderStatus.REFUND_REQUESTED,
+          pointsUsed: 0,
+          userId: null,
+        });
 
       await service.updateStatus(1, OrderStatus.REFUNDED);
 
@@ -383,12 +405,19 @@ describe('AdminOrdersService', () => {
           reconciliationRequired: true,
         },
       });
-      mockManager.findOne.mockResolvedValueOnce({
-        id: 1,
-        status: OrderStatus.REFUND_REQUESTED,
-        pointsUsed: 0,
-        userId: null,
-      });
+      mockManager.findOne
+        .mockResolvedValueOnce({
+          id: 1,
+          status: OrderStatus.REFUND_REQUESTED,
+          pointsUsed: 0,
+          userId: null,
+        })
+        .mockResolvedValueOnce({
+          id: 1,
+          status: OrderStatus.REFUND_REQUESTED,
+          pointsUsed: 0,
+          userId: null,
+        });
 
       await service.updateStatus(1, OrderStatus.REFUNDED);
 
@@ -696,19 +725,36 @@ describe('AdminOrdersService', () => {
 
       await service.cancelOrder(1, '고객 요청');
 
-      expect(pointsService.getRunningBalanceInTx).toHaveBeenCalledWith(
+      expect(pointsService.lockUserForPointChanges).toHaveBeenCalledWith(
         mockManager as unknown as EntityManager,
         10,
       );
-      expect(mockManager.save).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          userId: 10,
-          type: 'admin_adjust',
-          amount: 300,
-          balance: 300,
-          orderId: 1,
-        }),
+      expect(pointsService.creditFifo).toHaveBeenCalledTimes(1);
+      expect(pointsService.creditFifo).toHaveBeenCalledWith(
+        mockManager as unknown as EntityManager,
+        10,
+        300,
+        '주문 ORD-POINTS 취소/환불로 인한 적립금 복구',
+        null,
+        1,
+        null,
+        null,
+        'admin_adjust',
+      );
+      expect(mockManager.findOne.mock.calls.map(([entity]) => entity)).toEqual([
+        Order,
+        Order,
+        Payment,
+      ]);
+      expect(mockManager.findOne.mock.calls[0][1]).toEqual({ where: { id: 1 } });
+      expect(mockManager.findOne.mock.calls[1][1]).toEqual({
+        where: { id: 1 },
+        lock: { mode: 'pessimistic_write' },
+      });
+      const lockedOrderCall =
+        mockManager.findOne.mock.invocationCallOrder[1];
+      expect(pointsService.lockUserForPointChanges.mock.invocationCallOrder[0]).toBeLessThan(
+        lockedOrderCall,
       );
     });
   });

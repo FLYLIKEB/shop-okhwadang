@@ -104,6 +104,14 @@ export class OrderCreationWorkflowService {
     dto: CreateOrderDto,
     pointsToUse: number,
   ): Promise<OrderPostCommitPayload> {
+    /*
+     * Transaction lock order is fixed: user (point ledger) -> inventory
+     * (product/option tuple sorted by IDs) -> order. Take the canonical user
+     * lock before inventory so concurrent orders cannot both observe and spend
+     * the same ledger balance, while retaining one ordering across checkouts.
+     */
+    await this.pointsService.lockUserForPointChanges(manager, userId);
+
     const { orderItems, subtotalAmount, shippingItemPolicies } = await this.validateAndReserveStock(manager, dto);
 
     const pricing = await this.calculatePricing(manager, userId, {
@@ -348,7 +356,13 @@ export class OrderCreationWorkflowService {
     const shippingItemPolicies: { isFreeShipping: boolean }[] = [];
     let subtotalAmount = 0;
 
-    for (const item of dto.items) {
+    const itemsInLockOrder = [...dto.items].sort((left, right) => {
+      const productDifference = Number(left.productId) - Number(right.productId);
+      if (productDifference !== 0) return productDifference;
+      return Number(left.productOptionId ?? 0) - Number(right.productOptionId ?? 0);
+    });
+
+    for (const item of itemsInLockOrder) {
       const product = await manager
         .createQueryBuilder(Product, 'product')
         .setLock(reserveStock ? 'pessimistic_write' : 'pessimistic_read')

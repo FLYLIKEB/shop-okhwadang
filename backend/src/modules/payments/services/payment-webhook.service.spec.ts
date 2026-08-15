@@ -54,8 +54,9 @@ const buildService = (args: BuildArgs = {}) => {
   const dataSource = { transaction } as never;
   const logger = new Logger('PaymentWebhookService.spec');
   const pointsService = {
-    getRunningBalanceInTx: jest.fn().mockResolvedValue(1200),
-  } as Pick<PointsService, 'getRunningBalanceInTx'>;
+    lockUserForPointChanges: jest.fn(),
+    creditFifo: jest.fn().mockResolvedValue({}),
+  } as Pick<PointsService, 'lockUserForPointChanges' | 'creditFifo'>;
 
   const service = new PaymentWebhookService({
     gateway,
@@ -267,16 +268,16 @@ describe('PaymentWebhookService', () => {
 
       await service.handleWebhook({ orderId: 7, status: 'CANCELLED' }, 'valid_sig');
 
-      expect(pointsService.getRunningBalanceInTx).toHaveBeenCalledWith(manager, 10);
-      expect(manager.save).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          userId: 10,
-          type: 'admin_adjust',
-          amount: 500,
-          balance: 1700,
-          orderId: 7,
-        }),
+      expect(pointsService.creditFifo).toHaveBeenCalledWith(
+        manager,
+        10,
+        500,
+        expect.any(String),
+        null,
+        7,
+        null,
+        null,
+        'admin_adjust',
       );
     });
 
@@ -302,18 +303,18 @@ describe('PaymentWebhookService', () => {
       await service.handleWebhook({ orderId: 7, status: 'CANCELLED' }, 'valid_sig');
 
       expect(manager.findOne).toHaveBeenNthCalledWith(
-        1,
+        2,
         Order,
         expect.objectContaining({ lock: { mode: 'pessimistic_write' } }),
       );
       expect(manager.findOne).toHaveBeenNthCalledWith(
-        2,
+        3,
         Payment,
         expect.objectContaining({ lock: { mode: 'pessimistic_write' } }),
       );
       expect(manager.update).not.toHaveBeenCalled();
       expect(manager.increment).not.toHaveBeenCalled();
-      expect(pointsService.getRunningBalanceInTx).not.toHaveBeenCalled();
+      expect(pointsService.creditFifo).not.toHaveBeenCalled();
     });
 
     it('uses the locked payment rather than a stale pre-transaction payment snapshot', async () => {

@@ -96,6 +96,12 @@ const mockSchedulerLockService = {
   runWithLock: jest.fn(),
 };
 
+const mockPointsService = {
+  getRunningBalanceInTx: jest.fn(),
+  lockUserForPointChanges: jest.fn(),
+  creditFifo: jest.fn(),
+};
+
 describe('SchedulerService', () => {
   let service: SchedulerService;
 
@@ -120,6 +126,12 @@ describe('SchedulerService', () => {
     mockQueryRunner.manager.increment.mockReset();
     mockQueryRunner.manager.getRepository.mockReset();
     mockSchedulerLockService.runWithLock.mockReset();
+    mockPointsService.getRunningBalanceInTx.mockReset();
+    mockPointsService.lockUserForPointChanges.mockReset();
+    mockPointsService.creditFifo.mockReset();
+    mockPointsService.getRunningBalanceInTx.mockResolvedValue(0);
+    mockPointsService.lockUserForPointChanges.mockResolvedValue(undefined);
+    mockPointsService.creditFifo.mockResolvedValue(undefined);
     mockSchedulerLockService.runWithLock.mockImplementation(
       async (
         _policy: { lockName: string; ttlMinutes: number },
@@ -142,7 +154,7 @@ describe('SchedulerService', () => {
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: MembershipService, useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined), evaluateAllUserTiers: jest.fn().mockResolvedValue(undefined) } },
-        { provide: PointsService, useValue: { getRunningBalanceInTx: jest.fn().mockResolvedValue(0) } },
+        { provide: PointsService, useValue: mockPointsService },
         { provide: SchedulerLockService, useValue: mockSchedulerLockService },
       ],
     }).compile();
@@ -237,22 +249,34 @@ describe('SchedulerService', () => {
         pointsUsed: 500,
       }]);
       mockQueryRunner.manager.findOne
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING })
-        .mockResolvedValueOnce({ id: 10, orderId: 1, status: 'pending' })
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: 9, pointsUsed: 500 });
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: 9, pointsUsed: 500 })
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: 9, pointsUsed: 500 })
+        .mockResolvedValueOnce({ id: 10, orderId: 1, status: 'pending' });
       mockQueryRunner.manager.find.mockResolvedValue([{ productId: 5, productOptionId: null, quantity: 2 }]);
 
       await service.handlePendingOrderCancellation();
 
       expect(mockQueryRunner.manager.increment).toHaveBeenCalledWith(Product, { id: 5 }, 'stock', 2);
-      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(PointHistory, expect.objectContaining({
-        userId: 9,
-        amount: 500,
-        orderId: 1,
-      }));
+      expect(mockPointsService.lockUserForPointChanges).toHaveBeenCalledWith(mockQueryRunner.manager, 9);
+      expect(mockPointsService.creditFifo).toHaveBeenCalledWith(
+        mockQueryRunner.manager,
+        9,
+        500,
+        expect.any(String),
+        null,
+        1,
+        null,
+        null,
+        'admin_adjust',
+      );
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.manager.findOne.mock.calls.slice(0, 2).map(([entity]) => entity))
-        .toEqual([Order, Payment]);
+      expect(mockQueryRunner.manager.findOne.mock.calls.slice(0, 3).map(([entity]) => entity))
+        .toEqual([Order, Order, Payment]);
+      expect(mockQueryRunner.manager.findOne.mock.calls[0][1]).toEqual({ where: { id: 1 } });
+      expect(mockQueryRunner.manager.findOne.mock.calls[1][1]).toEqual({
+        where: { id: 1 },
+        lock: { mode: 'pessimistic_write' },
+      });
     });
 
     it('does not recover an already terminal order on retry', async () => {
@@ -274,8 +298,8 @@ describe('SchedulerService', () => {
       mockOrderRepo.find.mockResolvedValue([{ id: 1, orderNumber: 'ORD-NO-PAYMENT', status: OrderStatus.PENDING }]);
       mockQueryRunner.manager.findOne
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: null, pointsUsed: 0 })
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: null, pointsUsed: 0 });
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: null, pointsUsed: 0 })
+        .mockResolvedValueOnce(null);
       mockQueryRunner.manager.find.mockResolvedValue([{ productId: 5, productOptionId: null, quantity: 2 }]);
 
       await service.handlePendingOrderCancellation();
@@ -299,6 +323,7 @@ describe('SchedulerService', () => {
       mockQueryRunner.manager.findOne
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING })
         .mockResolvedValueOnce({ id: 10, orderId: 1, status: 'pending' })
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: null, pointsUsed: 0 })
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, userId: null, pointsUsed: 0 });
       mockQueryRunner.manager.find.mockRejectedValueOnce(new Error('stock recovery failed'));
 
@@ -392,73 +417,89 @@ describe('SchedulerService', () => {
       expect(mockPointHistoryRepo.find).not.toHaveBeenCalled();
     });
 
-    it('should process expired points', async () => {
+    it('expires each locked expired remainder using the running balance', async () => {
       mockDataSource.query
-        .mockResolvedValueOnce([                             // SELECT expired points raw query
-          { id: 1, user_id: 1, amount: 1000, expires_at: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        .mockResolvedValueOnce([
+          { user_id: 1 },
         ]);
-
-      mockQueryRunner.manager.save.mockResolvedValue({});
-      mockQueryRunner.manager.findOne
-        .mockResolvedValueOnce({ balance: 5000 })   // latest balance
-        .mockResolvedValueOnce({ id: 1, email: 'test@example.com' }); // user
+      const lots = [
+        { id: 1, userId: 1, remainingAmount: 400 },
+        { id: 2, userId: 1, remainingAmount: 600 },
+      ];
+      const queryBuilder = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(lots),
+      };
+      mockQueryRunner.manager.createQueryBuilder.mockReturnValue(queryBuilder);
+      mockPointsService.getRunningBalanceInTx.mockResolvedValue(5000);
+      mockQueryRunner.manager.findOne.mockResolvedValue({ id: 1, email: 'test@example.com' });
 
       await service.handlePointExpiry();
 
       expect(mockDataSource.query).toHaveBeenCalled();
+      expect(mockDataSource.query.mock.calls[0][0]).toContain('ph.remaining_amount > 0');
+      expect(mockDataSource.query.mock.calls[0][0]).toContain('ph.expires_at <= ?');
+      expect(mockPointsService.lockUserForPointChanges).toHaveBeenCalledWith(mockQueryRunner.manager, 1);
+      expect(queryBuilder.setLock).toHaveBeenCalledWith('pessimistic_write');
+      expect(mockPointsService.lockUserForPointChanges.mock.invocationCallOrder[0])
+        .toBeLessThan(mockQueryRunner.manager.createQueryBuilder.mock.invocationCallOrder[0]);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(PointHistory, lots[0]);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(PointHistory, lots[1]);
       expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(PointHistory, expect.objectContaining({
         userId: 1,
         type: 'expire',
-        amount: -1000,
-        balance: 4000,
+        amount: -400,
+        balance: 4600,
         relatedEntityType: null,
         relatedEntityId: 1,
       }));
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(PointHistory, expect.objectContaining({
+        amount: -600,
+        balance: 4000,
+        relatedEntityId: 2,
+      }));
+      expect(lots).toEqual([
+        expect.objectContaining({ remainingAmount: 0 }),
+        expect.objectContaining({ remainingAmount: 0 }),
+      ]);
     });
 
-    it('should not expire the same earn row again on a later day', async () => {
-      const earnRow = {
-        id: 99,
-        user_id: 1,
-        amount: 1000,
-        expires_at: new Date('2026-01-01T00:00:00.000Z'),
+    it('reloads lots after the user lock and does not duplicate expiry on retry', async () => {
+      mockDataSource.query.mockResolvedValue([{ user_id: 1 }]);
+      const remainder = { id: 99, userId: 1, remainingAmount: 300 };
+      const queryBuilder = {
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn()
+          .mockResolvedValueOnce([remainder])
+          .mockResolvedValueOnce([]),
       };
-      const expireMarkers: Array<{ type?: string; relatedEntityType?: string | null; relatedEntityId?: number | null }> = [];
+      mockQueryRunner.manager.createQueryBuilder.mockReturnValue(queryBuilder);
+      mockPointsService.getRunningBalanceInTx.mockResolvedValue(300);
+      mockQueryRunner.manager.findOne.mockResolvedValue(null);
 
-      mockDataSource.query.mockImplementation(async (query: string) => {
-        expect(query).toContain('ex.related_entity_id = ph.id');
-        expect(query).not.toContain('DATE(ex.created_at)');
-
-        return expireMarkers.some((marker) => (
-          marker.type === 'expire'
-          && marker.relatedEntityType === null
-          && marker.relatedEntityId === earnRow.id
-        ))
-          ? []
-          : [earnRow];
-      });
-      mockQueryRunner.manager.findOne
-        .mockResolvedValueOnce({ balance: 1000 })
-        .mockResolvedValueOnce(null);
-      mockQueryRunner.manager.save.mockImplementation(async (_entity, entry) => {
-        expireMarkers.push(entry);
-        return entry;
-      });
-
-      jest.setSystemTime(new Date('2026-01-02T02:00:00.000Z'));
+      await service.handlePointExpiry();
       await service.handlePointExpiry();
 
-      jest.setSystemTime(new Date('2026-01-03T02:00:00.000Z'));
-      await service.handlePointExpiry();
-
-      expect(mockDataSource.query).toHaveBeenCalledTimes(2);
-      expect(mockQueryRunner.manager.save).toHaveBeenCalledTimes(1);
-      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(PointHistory, expect.objectContaining({
-        type: 'expire',
-        amount: -1000,
-        relatedEntityType: null,
-        relatedEntityId: earnRow.id,
-      }));
+      expect(mockPointsService.lockUserForPointChanges).toHaveBeenCalledTimes(2);
+      expect(queryBuilder.getMany).toHaveBeenCalledTimes(2);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledTimes(2);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        PointHistory,
+        expect.objectContaining({ id: 99, remainingAmount: 0 }),
+      );
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        PointHistory,
+        expect.objectContaining({ type: 'expire', amount: -300, relatedEntityId: 99 }),
+      );
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalledTimes(2);
     });
 
     it('should do nothing when no expired points found', async () => {
@@ -494,6 +535,23 @@ describe('SchedulerService', () => {
       const result = await service['getSettingNumber']('scheduler_pending_cancel_hours', 24);
 
       expect(result).toBe(24);
+    });
+  });
+
+  describe('handlePointExpiryNotification', () => {
+    it('aggregates only unconsumed remainders for expiry notifications', async () => {
+      mockDataSource.query.mockResolvedValue([]);
+
+      await service.handlePointExpiryNotification();
+
+      const notificationQueries = mockDataSource.query.mock.calls.map(([sql]) => String(sql));
+      expect(notificationQueries).toHaveLength(2);
+      for (const sql of notificationQueries) {
+        expect(sql).toContain('SUM(ph.remaining_amount) AS total_amount');
+        expect(sql).toContain('ph.remaining_amount > 0');
+        expect(sql).toContain('HAVING SUM(ph.remaining_amount) > 0');
+        expect(sql).not.toContain('SUM(ph.amount)');
+      }
     });
   });
 });

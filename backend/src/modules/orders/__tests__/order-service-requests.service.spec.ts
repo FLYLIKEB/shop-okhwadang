@@ -114,6 +114,7 @@ describe('OrderServiceRequestsService', () => {
   let manager: ReturnType<typeof makeManager>;
   let paymentRepository: ReturnType<typeof makeRepository>;
   let paymentsService: jest.Mocked<Pick<PaymentsService, 'cancelPaidOrder'>>;
+  let pointsService: jest.Mocked<Pick<PointsService, 'lockUserForPointChanges' | 'creditFifo'>>;
   let notificationService: jest.Mocked<Pick<NotificationService, 'sendEmail'>>;
   let notificationDispatchHelper: jest.Mocked<Pick<NotificationDispatchHelper, 'dispatch'>>;
 
@@ -132,7 +133,10 @@ describe('OrderServiceRequestsService', () => {
     };
     notificationService = { sendEmail: jest.fn().mockResolvedValue(undefined) };
     notificationDispatchHelper = { dispatch: jest.fn().mockResolvedValue(undefined) };
-    const pointsService = { getRunningBalanceInTx: jest.fn().mockResolvedValue(900) };
+    pointsService = {
+      lockUserForPointChanges: jest.fn().mockResolvedValue(undefined),
+      creditFifo: jest.fn().mockResolvedValue({}),
+    };
 
     const dataSource = {
       transaction: jest.fn((cb: (txManager: EntityManager) => Promise<unknown>) =>
@@ -394,15 +398,32 @@ describe('OrderServiceRequestsService', () => {
       status: OrderServiceRequestStatus.COMPLETED,
     });
 
-    expect(manager.save).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        userId: order.userId,
-        type: 'admin_adjust',
-        amount: 400,
-        balance: 1300,
-        orderId: order.id,
-      }),
+    expect(pointsService.lockUserForPointChanges).toHaveBeenCalledWith(
+      manager as unknown as EntityManager,
+      order.userId,
+    );
+    expect(pointsService.creditFifo).toHaveBeenCalledTimes(1);
+    expect(pointsService.creditFifo).toHaveBeenCalledWith(
+      manager as unknown as EntityManager,
+      order.userId,
+      400,
+      '주문 ORD-20260101-ABCDE 고객 신청 처리로 인한 적립금 복구',
+      null,
+      order.id,
+      null,
+      null,
+      'admin_adjust',
+    );
+    const recoveryCalls = manager.findOne.mock.calls.filter(([entity]) => entity === Order);
+    expect(recoveryCalls).toEqual([
+      [Order, { where: { id: order.id }, relations: ['items'] }],
+      [Order, { where: { id: order.id } }],
+      [Order, { where: { id: order.id }, lock: { mode: 'pessimistic_write' } }],
+    ]);
+    const lockedOrderCall =
+      manager.findOne.mock.invocationCallOrder[manager.findOne.mock.invocationCallOrder.length - 2];
+    expect(pointsService.lockUserForPointChanges.mock.invocationCallOrder[0]).toBeLessThan(
+      lockedOrderCall,
     );
   });
 
