@@ -78,6 +78,7 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidation
     for (const key of [
       'STRIPE_SECRET_KEY',
       'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+      'STRIPE_WEBHOOK_SECRET',
       'STRIPE_KRW_PER_USD',
       'STRIPE_KRW_PER_USD_UPDATED_AT',
     ]) {

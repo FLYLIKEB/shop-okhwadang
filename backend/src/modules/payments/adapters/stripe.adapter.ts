@@ -279,6 +279,7 @@ export class StripePaymentAdapter implements PaymentGateway {
   }
 
   verifyWebhook(payload: unknown, signature: string): boolean {
+    if (!this.webhookSecret || !signature) return false;
     try {
       const body =
         typeof payload === 'string' ? payload : JSON.stringify(payload);
