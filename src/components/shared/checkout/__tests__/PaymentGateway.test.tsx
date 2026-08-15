@@ -4,6 +4,8 @@ import { createRef } from 'react';
 import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
 import type { PreparePaymentResponse } from '@/lib/api';
 
+const mockTossRequestPayment = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => {
     const dict: Record<string, string> = {
@@ -46,7 +48,7 @@ vi.mock('@tosspayments/tosspayments-sdk', () => ({
       setAmount: vi.fn().mockResolvedValue(undefined),
       renderPaymentMethods: vi.fn().mockResolvedValue(undefined),
       renderAgreement: vi.fn().mockResolvedValue(undefined),
-      requestPayment: vi.fn().mockResolvedValue(undefined),
+      requestPayment: mockTossRequestPayment,
     }),
   }),
 }));
@@ -97,6 +99,40 @@ describe('PaymentGateway', () => {
     expect(document.querySelector('#toss-payment-methods')).toBeInTheDocument();
     await act(async () => {});
     expect(document.querySelector('#toss-payment-methods')).toHaveAttribute('aria-busy', 'false');
+  });
+
+  it('autoConfirm이면 위젯 준비 직후 한 번만 결제창을 연다', async () => {
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 1,
+      orderId: 1,
+      orderNumber: 'ORDER-001',
+      amount: 50000,
+      gateway: 'toss',
+      clientKey: 'test_ck_real_value',
+      gatewayPayload: { customerKey: 'member-customer-key' },
+    };
+    const { rerender } = render(
+      <PaymentGateway
+        prepareResult={prepareResult}
+        locale="ko"
+        autoConfirm
+        {...baseProps}
+      />,
+    );
+
+    await act(async () => {});
+    expect(mockTossRequestPayment).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <PaymentGateway
+        prepareResult={prepareResult}
+        locale="ko"
+        autoConfirm
+        {...baseProps}
+      />,
+    );
+    await act(async () => {});
+    expect(mockTossRequestPayment).toHaveBeenCalledTimes(1);
   });
 
   it('gateway=stripe + 유효 clientKey → Stripe Element 라디오 표시', () => {

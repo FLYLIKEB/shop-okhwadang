@@ -130,9 +130,16 @@ vi.mock('@/i18n/routing', () => ({
 }));
 
 vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
-  default: forwardRef(function MockPaymentGateway(_props: unknown, ref) {
+  default: forwardRef(function MockPaymentGateway(
+    props: { autoConfirm?: boolean },
+    ref,
+  ) {
     useImperativeHandle(ref, () => ({ confirm: mockPaymentGatewayConfirm }));
-    return <div data-testid="payment-gateway">PaymentGateway</div>;
+    return (
+      <div data-testid="payment-gateway" data-auto-confirm={String(props.autoConfirm)}>
+        PaymentGateway
+      </div>
+    );
   }),
   TossPaymentWidgetPreview: () => (
     <div data-testid="toss-widget-preview">TossPaymentWidgetPreview</div>
@@ -387,7 +394,7 @@ describe('CheckoutPage', () => {
 
     await waitFor(() => {
       expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 1, locale: 'ko', gateway: 'toss' });
-      expect(screen.getByTestId('payment-gateway')).toBeInTheDocument();
+      expect(screen.getByTestId('payment-gateway')).toHaveAttribute('data-auto-confirm', 'true');
     });
     expect(mockPaymentGatewayConfirm).not.toHaveBeenCalled();
   });

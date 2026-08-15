@@ -142,6 +142,7 @@ interface PaymentGatewayProps {
   guestAccessTokenExpiresAt?: string;
   onError: (message: string) => void;
   preview?: boolean;
+  autoConfirm?: boolean;
 }
 
 function buildHostedPaymentContext({
@@ -177,10 +178,11 @@ function buildHostedPaymentContext({
 
 const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
   function TossPaymentGateway(
-    { prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError, preview = false },
+    { prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError, preview = false, autoConfirm = false },
     ref,
   ) {
     const handlerRef = useRef<(() => Promise<void>) | null>(null);
+    const autoConfirmedOrderRef = useRef<string | null>(null);
     const onErrorRef = useRef(onError);
     const [isReady, setIsReady] = useState(false);
     onErrorRef.current = onError;
@@ -258,6 +260,27 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
         await handlerRef.current();
       },
     }), [isReady, locale]);
+
+    useEffect(() => {
+      if (
+        !autoConfirm ||
+        !isReady ||
+        !handlerRef.current ||
+        autoConfirmedOrderRef.current === orderNumber
+      ) {
+        return;
+      }
+
+      autoConfirmedOrderRef.current = orderNumber;
+      void handlerRef.current().catch((err: unknown) => {
+        onErrorRef.current(
+          handleApiError(
+            err,
+            locale === 'en' ? 'Failed to open payment.' : '결제창을 열지 못했습니다.',
+          ),
+        );
+      });
+    }, [autoConfirm, isReady, locale, orderNumber]);
 
     return (
       <div className="layout-stack-md">
