@@ -211,7 +211,8 @@ export class PaymentsService {
   private createTossCustomerKey(userId: number): string {
     return createHmac('sha256', this.paymentConfig.toss.secretKey)
       .update(`ockhwadang:user:${userId}`)
-      .digest('hex');
+      .digest('hex')
+      .slice(0, 50);
   }
 
   async prepareForOrder(
