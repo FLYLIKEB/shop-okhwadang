@@ -290,7 +290,7 @@ describe('PaymentWebhookService', () => {
         cancelledAt: null,
       };
       const manager = makeWebhookManager({
-        findOne: jest.fn().mockImplementation((entity: unknown, options: unknown) => Promise.resolve(
+        findOne: jest.fn().mockImplementation((entity: unknown, _options: unknown) => Promise.resolve(
           entity === Order ? order : confirmingPayment,
         )),
         find: jest.fn().mockResolvedValue([{ orderId: 7, productId: 11, quantity: 1 }]),
