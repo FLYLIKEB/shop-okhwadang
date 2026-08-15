@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/routing';
 import type { PreparePaymentResponse } from '@/lib/api';
@@ -141,6 +141,7 @@ interface PaymentGatewayProps {
   guestAccessToken?: string;
   guestAccessTokenExpiresAt?: string;
   onError: (message: string) => void;
+  preview?: boolean;
 }
 
 function buildHostedPaymentContext({
@@ -176,7 +177,7 @@ function buildHostedPaymentContext({
 
 const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
   function TossPaymentGateway(
-    { prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError },
+    { prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError, preview = false },
     ref,
   ) {
     const handlerRef = useRef<(() => Promise<void>) | null>(null);
@@ -186,6 +187,8 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
 
     useEffect(() => {
       let cancelled = false;
+      let paymentMethodWidget: { destroy: () => Promise<void> } | null = null;
+      let agreementWidget: { destroy: () => Promise<void> } | null = null;
 
       const initialize = async () => {
         try {
@@ -198,18 +201,18 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
           const widgets = tossPayments.widgets({ customerKey });
 
           await widgets.setAmount({ currency: 'KRW', value: amount });
-          await widgets.renderPaymentMethods({
+          paymentMethodWidget = await widgets.renderPaymentMethods({
             selector: '#toss-payment-methods',
             variantKey: 'DEFAULT',
           });
-          await widgets.renderAgreement({
+          agreementWidget = await widgets.renderAgreement({
             selector: '#toss-payment-agreement',
             variantKey: 'AGREEMENT',
           });
           if (cancelled) return;
 
           setIsReady(true);
-          handlerRef.current = async () => {
+          handlerRef.current = preview ? null : async () => {
             const origin = window.location.origin;
 
             sessionStorage.setItem(
@@ -242,8 +245,10 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
       return () => {
         cancelled = true;
         handlerRef.current = null;
+        void paymentMethodWidget?.destroy().catch(() => undefined);
+        void agreementWidget?.destroy().catch(() => undefined);
       };
-    }, [prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt]);
+    }, [prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, preview]);
 
     useImperativeHandle(ref, () => ({
       confirm: async () => {
@@ -262,6 +267,44 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
     );
   },
 );
+
+export function TossPaymentWidgetPreview({
+  amount,
+  locale,
+  onError,
+}: {
+  amount: number;
+  locale: Locale;
+  onError: (message: string) => void;
+}) {
+  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
+  const prepareResult = useMemo<PreparePaymentResponse>(
+    () => ({
+      paymentId: 0,
+      orderId: 0,
+      orderNumber: 'preview',
+      amount,
+      gateway: 'toss',
+      clientKey,
+      gatewayPayload: { customerKey: 'ANONYMOUS' },
+    }),
+    [amount, clientKey],
+  );
+
+  if (!clientKey || amount <= 0) return null;
+
+  return (
+    <TossPaymentGateway
+      prepareResult={prepareResult}
+      orderId={0}
+      orderNumber="preview"
+      amount={amount}
+      locale={locale}
+      onError={onError}
+      preview
+    />
+  );
+}
 
 // ─── Stripe Payment Element (en) ──────────────────────────────────────────────
 

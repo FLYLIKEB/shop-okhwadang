@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import * as Accordion from '@radix-ui/react-accordion';
-import { ChevronDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
@@ -26,6 +26,7 @@ export default function CartPage() {
   const { items, isLoading, updateQuantity, removeItem } = useCart();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResponse | null>(null);
+  const knownItemIdsRef = useRef<Set<number>>(new Set());
 
   const allSelected = items.length > 0 && selectedIds.size === items.length;
 
@@ -44,6 +45,20 @@ export default function CartPage() {
   const freeShippingProgress = freeShippingThreshold > 0
     ? Math.min((selectedTotal / freeShippingThreshold) * 100, 100)
     : 100;
+
+  useEffect(() => {
+    const currentIds = new Set(items.map((item) => item.id));
+    const addedIds = items
+      .map((item) => item.id)
+      .filter((id) => !knownItemIdsRef.current.has(id));
+
+    setSelectedIds((previous) => {
+      const next = new Set([...previous].filter((id) => currentIds.has(id)));
+      addedIds.forEach((id) => next.add(id));
+      return next;
+    });
+    knownItemIdsRef.current = currentIds;
+  }, [items]);
 
   useEffect(() => {
     if (selectedTotal <= 0) {
@@ -180,16 +195,21 @@ export default function CartPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between border-b border-soft pb-3">
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <div className="mb-3 border-b border-soft pb-3">
+            <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg bg-muted/30 px-3 py-2 transition-colors hover:bg-muted/50">
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={(e) => handleSelectAll(e.target.checked)}
                 aria-label={t('selectAll')}
-                className="h-4 w-4 rounded border-input accent-foreground"
+                className="peer sr-only"
               />
-              {t('selectAll')} ({selectedIds.size}/{items.length})
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-soft bg-background text-transparent transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2">
+                <Check className="h-4 w-4" strokeWidth={3} aria-hidden />
+              </span>
+              <span className="typo-body-sm font-medium">
+                {t('selectAll')} ({selectedIds.size}/{items.length})
+              </span>
             </label>
           </div>
 

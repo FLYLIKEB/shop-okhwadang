@@ -154,6 +154,18 @@ describe('CartPage', () => {
     expect(screen.getByText('상품 B')).toBeInTheDocument();
   });
 
+  it('selects every cart item by default', () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1, cartItem2] });
+
+    render(<CartPage />);
+
+    expect(screen.getAllByRole('checkbox')).toHaveLength(3);
+    screen.getAllByRole('checkbox').forEach((checkbox) => {
+      expect(checkbox).toBeChecked();
+    });
+  });
+
   it('keeps order summary and selected-order CTA available below desktop breakpoint', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true });
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1] });
@@ -176,8 +188,8 @@ describe('CartPage', () => {
 
     const checkboxes = screen.getAllByRole('checkbox');
     // first is "전체 선택", then one per item
-    const item1Checkbox = checkboxes[1];
-    await user.click(item1Checkbox);
+    const item2Checkbox = checkboxes[2];
+    await user.click(item2Checkbox);
 
     expect(screen.getAllByText('₩20,000', { selector: 'span' }).length).toBeGreaterThan(0);
   });
@@ -188,6 +200,7 @@ describe('CartPage', () => {
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1] });
 
     render(<CartPage />);
+    await user.click(screen.getAllByRole('checkbox')[0]);
     await user.click(screen.getAllByRole('button', { name: '선택 상품 주문하기' })[0]);
 
     expect(toast.warning).toHaveBeenCalledWith('주문할 상품을 선택해주세요.');
