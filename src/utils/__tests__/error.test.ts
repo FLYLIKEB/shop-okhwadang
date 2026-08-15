@@ -11,8 +11,11 @@ describe('handleApiError', () => {
     expect(handleApiError('string error')).toBe('오류가 발생했습니다.');
     expect(handleApiError(null)).toBe('오류가 발생했습니다.');
     expect(handleApiError(undefined)).toBe('오류가 발생했습니다.');
-    expect(handleApiError({ message: 'object error' })).toBe('오류가 발생했습니다.');
     expect(handleApiError(123)).toBe('오류가 발생했습니다.');
+  });
+
+  it('SDK가 plain object로 던진 message를 반환한다', () => {
+    expect(handleApiError({ message: '결제 금액이 너무 작습니다.' })).toBe('결제 금액이 너무 작습니다.');
   });
 
   it('명시된 fallback 메시지를 사용한다', () => {
