@@ -313,11 +313,38 @@ export class PaymentsService {
     }
 
     const selectedGateway = this.resolveGatewayByName(prepared.gatewayName);
-    const result = await selectedGateway.prepare(String(normalizedOrderId), prepared.amount, {
+    let result = await selectedGateway.prepare(String(normalizedOrderId), prepared.amount, {
       locale,
       orderNumber: prepared.orderNumber,
-      idempotencyKey: options.idempotencyKey,
+      // A payment is one immutable provider attempt. Client idempotency keys
+      // protect API replay only and must not produce additional Stripe intents.
+      idempotencyKey: prepared.gatewayName === 'stripe'
+        ? `stripe-payment-${prepared.paymentId}`
+        : options.idempotencyKey,
+      rawResponse: (await this.paymentRepository.findOne({ where: { id: prepared.paymentId } }))?.rawResponse,
     });
+    if (result.rawResponse && prepared.gatewayName === 'stripe') {
+      const winningRawResponse = await this.dataSource.transaction(async (manager) => {
+        const payment = await manager.findOne(Payment, {
+          where: { id: prepared.paymentId },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!payment) throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
+        if (payment.rawResponse) return payment.rawResponse;
+        await manager.update(Payment, prepared.paymentId, { rawResponse: result.rawResponse! });
+        return result.rawResponse!;
+      });
+      if (winningRawResponse !== result.rawResponse) {
+        result = await selectedGateway.prepare(String(normalizedOrderId), prepared.amount, {
+          locale,
+          orderNumber: prepared.orderNumber,
+          idempotencyKey: `stripe-payment-${prepared.paymentId}`,
+          rawResponse: winningRawResponse,
+        });
+      }
+    } else if (result.rawResponse) {
+      await this.paymentRepository.update(prepared.paymentId, { rawResponse: result.rawResponse });
+    }
 
     return {
       paymentId: prepared.paymentId,

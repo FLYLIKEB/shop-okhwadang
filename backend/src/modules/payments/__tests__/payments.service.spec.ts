@@ -643,7 +643,12 @@ describe('PaymentsService', () => {
 
       const confirmResult = await service.confirm({ orderId: 1, paymentKey: 'pay_toss_abc', amount: 30000 }, 10);
       expect(confirmResult.status).toBe(PaymentStatus.CONFIRMED);
-      expect(mockTossAdapter.confirm).toHaveBeenCalledWith('pay_toss_abc', 30000, 'ORD-20240101-ABCD1');
+      expect(mockTossAdapter.confirm).toHaveBeenCalledWith(
+        'pay_toss_abc',
+        30000,
+        'ORD-20240101-ABCD1',
+        { rawResponse: undefined },
+      );
       expect(mockDefaultGateway.confirm).not.toHaveBeenCalled();
     });
   });
@@ -681,6 +686,7 @@ describe('PaymentsService', () => {
         getRawOne: jest.fn().mockResolvedValue({ total: '0' }),
         createQueryBuilder: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnThis(),
+          addSelect: jest.fn().mockReturnThis(),
           where: jest.fn().mockReturnThis(),
           getRawOne: jest.fn().mockResolvedValue({ total: '0' }),
         }),
@@ -719,6 +725,19 @@ describe('PaymentsService', () => {
         paymentKey: 'pi_stripe_abc',
         amount: 30000,
         gateway: PaymentGatewayType.STRIPE,
+        rawResponse: {
+          stripeQuote: {
+            localAmount: 30000,
+            localCurrency: 'krw',
+            providerAmount: 2222,
+            providerCurrency: 'usd',
+            krwPerUsd: '1350',
+            krwPerUsdUpdatedAt: '2026-08-15T00:00:00.000Z',
+            orderNumber: 'ORD-20240101-ABCD1',
+            paymentIntentId: 'pi_stripe_abc',
+            quotedAt: '2026-08-15T00:00:00.000Z',
+          },
+        },
       });
       const stripeManager = makeRefundManager({
         findOne: jest.fn().mockImplementation((entity: unknown) =>

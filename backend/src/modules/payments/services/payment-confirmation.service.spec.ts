@@ -390,7 +390,12 @@ describe('PaymentConfirmationService', () => {
 
       await service.confirm({ orderId: 1, paymentKey: 'pay_toss', amount: 30000 }, 10);
 
-      expect(tossGateway.confirm).toHaveBeenCalledWith('pay_toss', 30000, 'ORD-20240101-ABCD1');
+      expect(tossGateway.confirm).toHaveBeenCalledWith(
+        'pay_toss',
+        30000,
+        'ORD-20240101-ABCD1',
+        { rawResponse: undefined },
+      );
     });
 
     it('게이트웨이가 던지면 payment 를 FAILED 로 마킹하고 InternalServerErrorException', async () => {
@@ -773,7 +778,8 @@ describe('PaymentConfirmationService', () => {
         orderLocale: 'ko',
         guestEmailNormalized: 'guest@example.com',
       } as Partial<Order>);
-      const payment = makePayment({ order: guestOrder });
+      const quote = { stripeQuote: { paymentIntentId: 'pi_guest' } };
+      const payment = makePayment({ order: guestOrder, rawResponse: quote });
       const lockedPayment = makePayment({
         status: PaymentStatus.CONFIRMED,
         order: makeOrder({
@@ -801,6 +807,12 @@ describe('PaymentConfirmationService', () => {
       await expect(
         service.confirmGuest(1, { paymentKey: 'pay_guest_dup', amount: 30000 }, 'guest-token'),
       ).rejects.toThrow(ConflictException);
+      expect(defaultGateway.confirm).toHaveBeenCalledWith(
+        'pay_guest_dup',
+        30000,
+        guestOrder.orderNumber,
+        { rawResponse: quote },
+      );
       expect(manager.update).not.toHaveBeenCalledWith(Payment, lockedPayment.id, {
         status: PaymentStatus.FAILED,
       });

@@ -28,6 +28,12 @@ export class Refund {
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   amount!: number;
 
+  @Column({ name: 'provider_minor_amount', type: 'int', nullable: true })
+  providerMinorAmount!: number | null;
+
+  @Column({ name: 'local_cumulative_offset', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  localCumulativeOffset!: number | null;
+
   @Column({ type: 'varchar', length: 500 })
   reason!: string;
 

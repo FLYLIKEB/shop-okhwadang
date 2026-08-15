@@ -2,10 +2,12 @@ export interface PrepareContext {
   locale?: string;
   orderNumber?: string;
   idempotencyKey?: string;
+  rawResponse?: object | null;
 }
 
 export interface ConfirmContext {
   idempotencyKey?: string;
+  rawResponse?: object | null;
 }
 
 export interface PrepareResult {
@@ -13,6 +15,7 @@ export interface PrepareResult {
   orderId: string;
   redirectUrl?: string;
   gatewayPayload?: Record<string, string | number | boolean>;
+  rawResponse?: object;
 }
 
 export interface ConfirmResult {
@@ -34,6 +37,8 @@ export interface PartialCancelParams {
   cancelReason: string;
   idempotencyKey?: string;
   originalAmount?: number;
+  priorRefundedAmount?: number;
+  providerRefundAmount?: number;
   orderNumber?: string;
   rawResponse?: object | null;
 }
