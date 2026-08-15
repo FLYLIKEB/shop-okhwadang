@@ -29,6 +29,8 @@ export const CHECKOUT_GATEWAY_CONTRACT = {
         'https://api.tosspayments.com',
         'https://log.tosspayments.com',
         'https://event.tosspayments.com',
+        'https://apigw.tosspayments.com',
+        'https://apigw-sandbox.tosspayments.com',
       ],
       'child-src': ['https://*.tosspayments.com'],
       'frame-src': ['https://*.tosspayments.com'],

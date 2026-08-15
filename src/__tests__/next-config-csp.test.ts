@@ -84,7 +84,7 @@ describe('Next.js CSP headers', () => {
     }
   });
 
-  it('allows Toss widget API and telemetry connections', async () => {
+  it('allows Toss widget API, gateway, and telemetry connections', async () => {
     const { directives } = await loadNextConfigSnapshot({
       NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS: 'toss',
       CHECKOUT_ENABLED_GATEWAYS: 'toss',
@@ -93,6 +93,8 @@ describe('Next.js CSP headers', () => {
     expect(directives['connect-src']).toContain('https://api.tosspayments.com');
     expect(directives['connect-src']).toContain('https://log.tosspayments.com');
     expect(directives['connect-src']).toContain('https://event.tosspayments.com');
+    expect(directives['connect-src']).toContain('https://apigw.tosspayments.com');
+    expect(directives['connect-src']).toContain('https://apigw-sandbox.tosspayments.com');
   });
 
   it('keeps PayPal popup isolation enabled', async () => {
