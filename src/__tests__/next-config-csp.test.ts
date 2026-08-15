@@ -84,6 +84,16 @@ describe('Next.js CSP headers', () => {
     }
   });
 
+  it('allows Toss widget API and telemetry connections', async () => {
+    const { directives } = await loadNextConfigSnapshot({
+      NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS: 'toss',
+      CHECKOUT_ENABLED_GATEWAYS: 'toss',
+    });
+
+    expect(directives['connect-src']).toContain('https://api.tosspayments.com');
+    expect(directives['connect-src']).toContain('https://log.tosspayments.com');
+  });
+
   it('keeps PayPal popup isolation enabled', async () => {
     const { headers } = await loadNextConfigSnapshot();
     const coop = headers?.[0]?.headers.find((header) => header.key === 'Cross-Origin-Opener-Policy')?.value;

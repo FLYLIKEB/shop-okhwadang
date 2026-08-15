@@ -25,7 +25,10 @@ export const CHECKOUT_GATEWAY_CONTRACT = {
     requiredEnvKeys: ['TOSS_CLIENT_KEY', 'TOSS_SECRET_KEY'],
     csp: {
       'script-src': ['https://js.tosspayments.com'],
-      'connect-src': ['https://api.tosspayments.com'],
+      'connect-src': [
+        'https://api.tosspayments.com',
+        'https://log.tosspayments.com',
+      ],
       'child-src': ['https://*.tosspayments.com'],
       'frame-src': ['https://*.tosspayments.com'],
     },
