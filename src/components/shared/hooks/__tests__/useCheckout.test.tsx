@@ -625,7 +625,7 @@ describe('useCheckout - Stripe 결제 흐름', () => {
 
     expect(toast.error).toHaveBeenCalledWith('카드 거절');
     expect(options.setStep).toHaveBeenCalledWith('idle');
-    expect(options.setPrepareResult).toHaveBeenCalledWith(null);
+    expect(options.setPrepareResult).not.toHaveBeenCalledWith(null);
   });
 });
 
@@ -701,7 +701,7 @@ describe('useCheckout - 에러 처리', () => {
     expect(options.setStep).toHaveBeenLastCalledWith('idle');
   });
 
-  it('handlePaymentError 는 메시지를 토스트로 보여주고 step을 idle로 reset', () => {
+  it('handlePaymentError 는 메시지를 보여주고 준비된 위젯을 유지한다', () => {
     const { options } = makeOptions();
     const { result } = renderHook(() => useCheckout(options));
 
@@ -711,6 +711,6 @@ describe('useCheckout - 에러 처리', () => {
 
     expect(toast.error).toHaveBeenCalledWith('결제가 취소되었습니다.');
     expect(options.setStep).toHaveBeenCalledWith('idle');
-    expect(options.setPrepareResult).toHaveBeenCalledWith(null);
+    expect(options.setPrepareResult).not.toHaveBeenCalledWith(null);
   });
 });

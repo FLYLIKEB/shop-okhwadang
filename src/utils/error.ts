@@ -29,6 +29,14 @@ function localizeErrorMessage(message: string, fallback: string): string {
 }
 
 export function handleApiError(err: unknown, fallback = '오류가 발생했습니다.'): string {
-  const message = err instanceof Error ? err.message : fallback;
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === 'object' &&
+          err !== null &&
+          'message' in err &&
+          typeof err.message === 'string'
+        ? err.message
+        : fallback;
   return localizeErrorMessage(message, fallback);
 }

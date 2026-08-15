@@ -94,7 +94,6 @@ export function useCheckout(options: UseCheckoutOptions) {
     (message: string) => {
       toast.error(message);
       options.setStep('idle');
-      options.setPrepareResult(null);
     },
     [options],
   );
