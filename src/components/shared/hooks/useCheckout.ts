@@ -40,7 +40,6 @@ export interface UseCheckoutOptions {
   currentOrderNumber: string;
   currentGuestAccessToken: string;
   requiredConsent?: boolean;
-  marketingConsent?: boolean;
   appliedUserCouponId?: number;
   appliedPointsUsed?: number;
   isGuestCheckout: boolean;
@@ -269,7 +268,6 @@ export function useCheckout(options: UseCheckoutOptions) {
             memo: memo || null,
             guestEmail: normalizedGuestEmail,
             orderLocale: locale,
-            marketingConsent: options.marketingConsent ?? false,
           });
 
 
@@ -295,7 +293,6 @@ export function useCheckout(options: UseCheckoutOptions) {
             addressDetail: addressDetail || null,
             memo: memo || null,
             orderLocale: locale,
-            marketingConsent: options.marketingConsent ?? false,
             userCouponId: options.appliedUserCouponId,
             pointsUsed: options.appliedPointsUsed && options.appliedPointsUsed > 0 ? options.appliedPointsUsed : undefined,
           });
