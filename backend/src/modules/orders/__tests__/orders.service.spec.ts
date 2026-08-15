@@ -40,6 +40,7 @@ const mockOrderRepository = {
 };
 
 const mockPointsService = {
+  lockUserForPointChanges: jest.fn(),
   getUserPointBalance: jest.fn(),
   getEffectiveBalanceInTx: jest.fn(),
   getRunningBalanceInTx: jest.fn(),

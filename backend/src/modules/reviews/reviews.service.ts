@@ -12,7 +12,6 @@ import { Review } from './entities/review.entity';
 import { ExternalReview } from './entities/external-review.entity';
 import { OrderItem } from '../orders/entities/order-item.entity';
 import { OrderStatus } from '../orders/entities/order.entity';
-import { PointHistory } from '../coupons/entities/point-history.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
@@ -90,8 +89,6 @@ export class ReviewsService {
     private readonly externalReviewRepo: Repository<ExternalReview>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepo: Repository<OrderItem>,
-    @InjectRepository(PointHistory)
-    private readonly pointHistoryRepo: Repository<PointHistory>,
     private readonly settingsService: SettingsService,
     private readonly dataSource: DataSource,
     private readonly pointsService: PointsService,
@@ -425,21 +422,16 @@ export class ReviewsService {
       const earnAmount = reward + (isPhotoReview ? bonus : 0);
 
       if (earnAmount > 0) {
-        const currentBalance = await this.pointsService.getRunningBalanceInTx(manager, userId);
-        const newBalance = currentBalance + earnAmount;
-
-        const pointEntry = manager.create(PointHistory, {
+        await this.pointsService.creditFifo(
+          manager,
           userId,
-          type: 'earn' as const,
-          amount: earnAmount,
-          balance: newBalance,
-          description: `리뷰 포인트 적립 (review_id:${saved.id})`,
-          orderId: null,
-          relatedEntityType: 'review' as const,
-          relatedEntityId: Number(saved.id),
-          expiresAt: addOneYear(new Date()),
-        });
-        await manager.save(PointHistory, pointEntry);
+          earnAmount,
+          `리뷰 포인트 적립 (review_id:${saved.id})`,
+          addOneYear(new Date()),
+          null,
+          'review',
+          Number(saved.id),
+        );
       }
 
       await this.refreshProductReviewStats(manager, dto.productId);
@@ -489,47 +481,20 @@ export class ReviewsService {
     }
 
     await this.dataSource.transaction(async (manager) => {
-      // Revoke points — find the original EARN entry for this review
-      const earnEntry = await manager.findOne(PointHistory, {
-        where: {
-          userId: Number(review.userId),
-          relatedEntityType: 'review',
-          relatedEntityId: id,
-          type: 'earn',
-        },
-      });
-
-      if (earnEntry) {
-        // Check if already revoked (spend entry exists for this review)
-        const alreadyRevoked = await manager.findOne(PointHistory, {
-          where: {
-            userId: Number(review.userId),
-            relatedEntityType: 'review',
-            relatedEntityId: id,
-            type: 'spend',
-          },
-        });
-
-        if (!alreadyRevoked) {
-          const currentBalance = await this.pointsService.getRunningBalanceInTx(
-            manager,
-            Number(review.userId),
-          );
-          const newBalance = currentBalance - earnEntry.amount;
-
-          const revokeEntry = manager.create(PointHistory, {
-            userId: Number(review.userId),
-            type: 'spend' as const,
-            amount: -earnEntry.amount,
-            balance: newBalance,
-            description: `리뷰 포인트 환수 (review_id:${id})`,
-            orderId: null,
-            relatedEntityType: 'review' as const,
-            relatedEntityId: id,
-            expiresAt: null,
-          });
-          await manager.save(PointHistory, revokeEntry);
+      const rewardUserId = Number(review.userId);
+      try {
+        await this.pointsService.revokeSourceCreditLocked(
+          manager,
+          rewardUserId,
+          'review',
+          id,
+          `리뷰 포인트 환수 (review_id:${id})`,
+        );
+      } catch (error) {
+        if (error instanceof BadRequestException) {
+          throw new ConflictException('사용된 리뷰 적립금은 환수할 수 없습니다.');
         }
+        throw error;
       }
 
       await manager.remove(Review, review);

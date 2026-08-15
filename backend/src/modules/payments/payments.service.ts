@@ -515,7 +515,11 @@ export class PaymentsService {
   async cancelAdmin(
     orderId: number,
     reason: string,
-    postGatewaySync?: (manager: EntityManager, cancelledAt: Date) => Promise<void>,
+    postGatewaySync?: (
+      manager: EntityManager,
+      cancelledAt: Date,
+      syncPayment: () => Promise<void>,
+    ) => Promise<void>,
   ): Promise<{
     paymentId: number;
     status: PaymentStatus;
@@ -535,70 +539,74 @@ export class PaymentsService {
 
     let gatewayResult: { cancelledAt: Date; rawResponse?: unknown } | null = null;
     let lockedPaymentSnapshot = payment;
+    const cancelGateway = this.resolveGatewayByType(payment.gateway);
+    try {
+      gatewayResult = await cancelGateway.cancel(payment.paymentKey!, reason, {
+        originalAmount: Number(payment.amount),
+        orderNumber: payment.order?.orderNumber,
+        rawResponse: payment.rawResponse,
+      });
+    } catch (err) {
+      if (!isDuplicateLikeGatewayOutcomeError(err)) {
+        throw err;
+      }
+      await this.persistAmbiguousRefundOutcome(
+        payment,
+        orderId,
+        reason,
+        extractGatewayErrorPayload(err) ?? payment.rawResponse,
+        err,
+      );
+      throw new InternalServerErrorException('환불 상태 확인이 필요합니다.');
+    }
+
     const applyRefund = async (txManager: EntityManager): Promise<void> => {
-      const lockedOrder = await txManager.findOne(Order, {
-        where: { id: orderId },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!lockedOrder) {
-        throw new NotFoundException('주문을 찾을 수 없습니다.');
-      }
-      const lockedPayment = await txManager.findOne(Payment, {
-        where: { orderId },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!lockedPayment) {
-        throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
-      }
-      if (lockedPayment.status !== PaymentStatus.CONFIRMED) {
-        throw new BadRequestException('환불 가능한 상태가 아닙니다.');
-      }
-      lockedPayment.order = lockedOrder;
-
-      lockedPaymentSnapshot = lockedPayment;
-      const cancelGateway = this.resolveGatewayByType(lockedPayment.gateway);
-      try {
-        gatewayResult = await cancelGateway.cancel(lockedPayment.paymentKey!, reason, {
-          originalAmount: Number(lockedPayment.amount),
-          orderNumber: lockedPayment.order?.orderNumber,
-          rawResponse: lockedPayment.rawResponse,
+      const syncPayment = async (): Promise<void> => {
+        const lockedPayment = await txManager.findOne(Payment, {
+          where: { orderId },
+          lock: { mode: 'pessimistic_write' },
         });
-      } catch (err) {
-        if (!isDuplicateLikeGatewayOutcomeError(err)) {
-          throw err;
+        if (!lockedPayment) {
+          throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
         }
-        throw new AmbiguousGatewayOutcomeError(
-          'refund',
-          extractGatewayErrorPayload(err) ?? lockedPayment.rawResponse,
-          err,
-        );
-      }
+        if (
+          lockedPayment.status !== PaymentStatus.CONFIRMED ||
+          lockedPayment.paymentKey !== payment.paymentKey ||
+          lockedPayment.gateway !== payment.gateway
+        ) {
+          throw new BadRequestException('환불 가능한 상태가 아닙니다.');
+        }
 
-      await txManager.update(Payment, lockedPayment.id, {
-        status: PaymentStatus.REFUNDED,
-        cancelledAt: gatewayResult.cancelledAt,
-        cancelReason: reason,
-        rawResponse: normalizeGatewayRawResponse(gatewayResult.rawResponse),
-      });
+        lockedPaymentSnapshot = lockedPayment;
+        await txManager.update(Payment, lockedPayment.id, {
+          status: PaymentStatus.REFUNDED,
+          cancelledAt: gatewayResult!.cancelledAt,
+          cancelReason: reason,
+          rawResponse: normalizeGatewayRawResponse(gatewayResult!.rawResponse),
+        });
+      };
 
       if (postGatewaySync) {
-        await postGatewaySync(txManager, gatewayResult.cancelledAt);
+        await postGatewaySync(txManager, gatewayResult!.cancelledAt, syncPayment);
+        return;
       }
+
+      await runFirstTerminalTransitionRecovery(txManager, {
+        orderId,
+        nextOrderStatus: OrderStatus.REFUNDED,
+        pointsService: this.pointsService,
+        pointRestoreDescription: `주문 ${orderId} 환불로 인한 적립금 복구`,
+        lockBeforeRecovery: async () => {
+          await syncPayment();
+          return true;
+        },
+        applyMutations: async () => false,
+      });
     };
 
     try {
       await this.dataSource.transaction(applyRefund);
     } catch (err) {
-      if (err instanceof AmbiguousGatewayOutcomeError) {
-        await this.persistAmbiguousRefundOutcome(
-          lockedPaymentSnapshot,
-          orderId,
-          reason,
-          err.rawResponse,
-          err.source,
-        );
-        throw new InternalServerErrorException('환불 상태 확인이 필요합니다.');
-      }
       if (gatewayResult) {
         await this.persistAdminRefundReconciliation(
           lockedPaymentSnapshot,
@@ -696,53 +704,48 @@ export class PaymentsService {
     let lockedPaymentSnapshot = payment;
 
     const applyCancellation = async (txManager: EntityManager): Promise<void> => {
-      const lockedOrder = await txManager.findOne(Order, {
-        where: { id: orderId },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!lockedOrder) {
-        throw new NotFoundException('주문을 찾을 수 없습니다.');
-      }
-      const lockedPayment = await txManager.findOne(Payment, {
-        where: { orderId },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!lockedPayment) {
-        throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
-      }
-      if (lockedPayment.status !== PaymentStatus.CONFIRMED) {
-        throw new BadRequestException('취소 가능한 상태가 아닙니다.');
-      }
-      lockedPayment.order = lockedOrder;
-
-      lockedPaymentSnapshot = lockedPayment;
-      assertOrderStatusTransition(lockedPayment.order.status, OrderStatus.CANCELLED);
-      const cancelGateway = this.resolveGatewayByType(lockedPayment.gateway);
-      try {
-        gatewayResult = await cancelGateway.cancel(lockedPayment.paymentKey!, reason, {
-          originalAmount: Number(lockedPayment.amount),
-          orderNumber: lockedPayment.order?.orderNumber,
-          rawResponse: lockedPayment.rawResponse,
-        });
-      } catch (err) {
-        if (!isDuplicateLikeGatewayOutcomeError(err)) {
-          throw err;
-        }
-        throw new AmbiguousGatewayOutcomeError(
-          'cancel',
-          extractGatewayErrorPayload(err) ?? lockedPayment.rawResponse,
-          err,
-        );
-      }
-
+      let lockedPayment: Payment | null = null;
       const recovery = await runFirstTerminalTransitionRecovery(txManager, {
         orderId,
         nextOrderStatus: OrderStatus.CANCELLED,
         pointsService: this.pointsService,
-        pointRestoreDescription: `주문 ${lockedPayment.order.orderNumber} 취소로 인한 적립금 복구`,
+        pointRestoreDescription: `주문 ${orderId} 취소로 인한 적립금 복구`,
+        lockBeforeRecovery: async (lockedOrder) => {
+          lockedPayment = await txManager.findOne(Payment, {
+            where: { orderId },
+            lock: { mode: 'pessimistic_write' },
+          });
+          if (!lockedPayment) {
+            throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
+          }
+          if (lockedPayment.status !== PaymentStatus.CONFIRMED) {
+            throw new BadRequestException('취소 가능한 상태가 아닙니다.');
+          }
+          lockedPayment.order = lockedOrder;
+          lockedPaymentSnapshot = lockedPayment;
+          assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
+          const cancelGateway = this.resolveGatewayByType(lockedPayment.gateway);
+          try {
+            gatewayResult = await cancelGateway.cancel(lockedPayment.paymentKey!, reason, {
+              originalAmount: Number(lockedPayment.amount),
+              orderNumber: lockedOrder.orderNumber,
+              rawResponse: lockedPayment.rawResponse,
+            });
+          } catch (err) {
+            if (!isDuplicateLikeGatewayOutcomeError(err)) {
+              throw err;
+            }
+            throw new AmbiguousGatewayOutcomeError(
+              'cancel',
+              extractGatewayErrorPayload(err) ?? lockedPayment.rawResponse,
+              err,
+            );
+          }
+          return true;
+        },
         applyMutations: async (lockedOrder) => {
           assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
-          await txManager.update(Payment, lockedPayment.id, {
+          await txManager.update(Payment, lockedPayment!.id, {
             status: PaymentStatus.CANCELLED,
             cancelledAt: gatewayResult!.cancelledAt,
             cancelReason: reason,
@@ -837,11 +840,30 @@ export class PaymentsService {
       error: err instanceof Error ? err.message : String(err),
     };
 
-    await this.paymentRepository.update(payment.id, {
-      status: PaymentStatus.REFUNDED,
-      cancelledAt: result.cancelledAt,
-      cancelReason: reason,
-      rawResponse: reconciliationPayload,
+    await this.dataSource.transaction(async (manager) => {
+      await runFirstTerminalTransitionRecovery(manager, {
+        orderId,
+        nextOrderStatus: OrderStatus.PENDING,
+        pointsService: this.pointsService,
+        pointRestoreDescription: '',
+        lockBeforeRecovery: async () => {
+          const lockedPayment = await manager.findOne(Payment, {
+            where: { id: payment.id, orderId },
+            lock: { mode: 'pessimistic_write' },
+          });
+          if (!lockedPayment) {
+            throw new NotFoundException('결제 정보를 찾을 수 없습니다.');
+          }
+          await manager.update(Payment, lockedPayment.id, {
+            status: PaymentStatus.REFUNDED,
+            cancelledAt: result.cancelledAt,
+            cancelReason: reason,
+            rawResponse: reconciliationPayload,
+          });
+          return true;
+        },
+        applyMutations: async () => false,
+      });
     });
   }
 

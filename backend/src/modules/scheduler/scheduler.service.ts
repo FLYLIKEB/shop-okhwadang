@@ -7,7 +7,6 @@ import { OrderItem } from '../orders/entities/order-item.entity';
 import { Product } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
 import { Coupon } from '../coupons/entities/coupon.entity';
-import { PointHistory } from '../coupons/entities/point-history.entity';
 import { User } from '../users/entities/user.entity';
 import { RecentlyViewedProduct } from '../products/entities/recently-viewed-product.entity';
 import { NotificationService } from '../notification/notification.service';
@@ -40,8 +39,6 @@ export class SchedulerService {
     private readonly productOptionRepo: Repository<ProductOption>,
     @InjectRepository(Coupon)
     private readonly couponRepo: Repository<Coupon>,
-    @InjectRepository(PointHistory)
-    private readonly pointHistoryRepo: Repository<PointHistory>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     @InjectRepository(RecentlyViewedProduct)
@@ -72,8 +69,7 @@ export class SchedulerService {
       dataSource: this.dataSource,
       logger: this.logger,
       notificationService: this.notificationService,
-      pointHistoryRepo: this.pointHistoryRepo,
-      userRepo: this.userRepo,
+      pointsService: this.pointsService,
     });
     this.userLifecycleSchedulerJob = new UserLifecycleSchedulerJob({
       userRepo: this.userRepo,

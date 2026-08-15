@@ -64,7 +64,10 @@ describe('ReviewsService', () => {
   };
 
   const mockPointsService = {
-    getRunningBalanceInTx: jest.fn(),
+    creditFifo: jest.fn(),
+    deductFifo: jest.fn(),
+    lockUserForPointChanges: jest.fn(),
+    revokeSourceCreditLocked: jest.fn(),
   };
 
   // Manager used inside dataSource.transaction
@@ -106,7 +109,10 @@ describe('ReviewsService', () => {
     mockExternalRepo.findOne.mockReset();
     mockExternalRepo.create.mockReset();
     mockExternalRepo.save.mockReset();
-    mockPointsService.getRunningBalanceInTx.mockResolvedValue(0);
+    mockPointsService.creditFifo.mockResolvedValue({});
+    mockPointsService.deductFifo.mockResolvedValue(0);
+    mockPointsService.lockUserForPointChanges.mockResolvedValue(undefined);
+    mockPointsService.revokeSourceCreditLocked.mockResolvedValue(null);
 
     // Default settings: reward=100, bonus=0
     mockSettingsService.getNumber.mockImplementation((key: string, def: number) => {
@@ -366,7 +372,6 @@ describe('ReviewsService', () => {
     it('should create a review and award points', async () => {
       setupOrderItemQb(mockOrderItem);
       mockManager.findOne.mockResolvedValueOnce(null); // no duplicate review
-      mockManager.findOne.mockResolvedValueOnce(null); // no existing point balance
       mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
       mockManager.save.mockImplementation((_entity: unknown, data: unknown) => Promise.resolve({ ...mockReview, ...(data as object) }));
 
@@ -383,14 +388,16 @@ describe('ReviewsService', () => {
 
       expect(result.id).toBe(1);
       expect(result.userName).toBe('홍**');
-      // Point earn should be created (reward=100, no images so no bonus)
-      const saveCalls = mockManager.save.mock.calls;
-      const pointSave = saveCalls.find((call: unknown[]) => {
-        const data = call[1] as { type?: string };
-        return data?.type === 'earn';
-      });
-      expect(pointSave).toBeDefined();
-      expect((pointSave![1] as { amount: number }).amount).toBe(100);
+      expect(mockPointsService.creditFifo).toHaveBeenCalledWith(
+        mockManager,
+        10,
+        100,
+        '리뷰 포인트 적립 (review_id:1)',
+        expect.any(Date),
+        null,
+        'review',
+        1,
+      );
     });
 
     it('should award photo bonus when images are present', async () => {
@@ -401,7 +408,6 @@ describe('ReviewsService', () => {
       });
 
       setupOrderItemQb(mockOrderItem);
-      mockManager.findOne.mockResolvedValueOnce(null);
       mockManager.findOne.mockResolvedValueOnce(null);
       mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
       mockManager.save.mockImplementation((_entity: unknown, data: unknown) => Promise.resolve({ ...mockReview, ...(data as object) }));
@@ -414,13 +420,16 @@ describe('ReviewsService', () => {
         imageUrls: ['https://cdn.example.com/review/abc.webp'],
       });
 
-      const saveCalls = mockManager.save.mock.calls;
-      const pointSave = saveCalls.find((call: unknown[]) => {
-        const data = call[1] as { type?: string };
-        return data?.type === 'earn';
-      });
-      expect(pointSave).toBeDefined();
-      expect((pointSave![1] as { amount: number }).amount).toBe(150); // 100 + 50 bonus
+      expect(mockPointsService.creditFifo).toHaveBeenCalledWith(
+        mockManager,
+        10,
+        150,
+        '리뷰 포인트 적립 (review_id:1)',
+        expect.any(Date),
+        null,
+        'review',
+        1,
+      );
     });
 
     it('should throw BadRequestException for unpurchased product', async () => {
@@ -486,108 +495,32 @@ describe('ReviewsService', () => {
   });
 
   describe('remove', () => {
-    it('should delete own review and revoke points with negative spend amount', async () => {
+    it('should delete own review by revoking its exact source lot', async () => {
       mockRepo.findOne.mockResolvedValue({ ...mockReview });
-      mockPointsService.getRunningBalanceInTx.mockResolvedValue(250);
-
-      const earnEntry = {
-        id: 99,
-        amount: 100,
-        type: 'earn',
-        description: '리뷰 포인트 적립 (review_id:1)',
-        relatedEntityType: 'review',
-        relatedEntityId: 1,
-      };
-      mockManager.findOne
-        .mockResolvedValueOnce(earnEntry) // earn entry
-        .mockResolvedValueOnce(null);     // no existing revoke
-      mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
-      mockManager.save.mockResolvedValue({});
       mockManager.remove.mockResolvedValue(undefined);
 
       await expect(service.remove(1, 10, 'user')).resolves.not.toThrow();
 
-      const saveCalls = mockManager.save.mock.calls;
-      const revokeSave = saveCalls.find((call: unknown[]) => {
-        const data = call[1] as { type?: string };
-        return data?.type === 'spend';
-      });
-      expect(revokeSave).toBeDefined();
-      expect(revokeSave![1]).toEqual(
-        expect.objectContaining({
-          type: 'spend',
-          amount: -100,
-          balance: 150,
-        }),
-      );
-    });
-
-    it('should revoke based on relatedEntity columns even when description format changes', async () => {
-      mockRepo.findOne.mockResolvedValue({ ...mockReview });
-
-      const earnEntry = {
-        id: 199,
-        amount: 100,
-        type: 'earn',
-        description: 'LEGACY_FORMAT',
-        relatedEntityType: 'review',
-        relatedEntityId: 1,
-      };
-      mockManager.findOne
-        .mockResolvedValueOnce(earnEntry)
-        .mockResolvedValueOnce(null);
-      mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
-      mockManager.save.mockResolvedValue({});
-      mockManager.remove.mockResolvedValue(undefined);
-
-      await expect(service.remove(1, 10, 'user')).resolves.not.toThrow();
-
-      expect(mockManager.findOne).toHaveBeenNthCalledWith(
+      expect(mockPointsService.revokeSourceCreditLocked).toHaveBeenCalledWith(
+        mockManager,
+        10,
+        'review',
         1,
-        PointHistory,
-        expect.objectContaining({
-          where: expect.objectContaining({
-            relatedEntityType: 'review',
-            relatedEntityId: 1,
-            type: 'earn',
-          }),
-        }),
+        '리뷰 포인트 환수 (review_id:1)',
       );
+      expect(mockPointsService.deductFifo).not.toHaveBeenCalled();
     });
 
-    it('should not double-revoke points if already revoked', async () => {
+    it('should reject deletion without mutating the review when the reward was spent', async () => {
       mockRepo.findOne.mockResolvedValue({ ...mockReview });
 
-      const earnEntry = {
-        id: 99,
-        amount: 100,
-        type: 'earn',
-        description: '리뷰 포인트 적립 (review_id:1)',
-        relatedEntityType: 'review',
-        relatedEntityId: 1,
-      };
-      const spendEntry = {
-        id: 100,
-        amount: 100,
-        type: 'spend',
-        description: '리뷰 포인트 환수 (review_id:1)',
-        relatedEntityType: 'review',
-        relatedEntityId: 1,
-      };
-      mockManager.findOne
-        .mockResolvedValueOnce(earnEntry)  // earn entry found
-        .mockResolvedValueOnce(spendEntry); // already revoked
-      mockManager.remove.mockResolvedValue(undefined);
+      mockPointsService.revokeSourceCreditLocked.mockRejectedValueOnce(
+        new BadRequestException('사용된 적립금은 환수할 수 없습니다.'),
+      );
 
-      await expect(service.remove(1, 10, 'user')).resolves.not.toThrow();
+      await expect(service.remove(1, 10, 'user')).rejects.toThrow(ConflictException);
 
-      // No spend entry should be saved
-      const saveCalls = mockManager.save.mock.calls;
-      const revokeSave = saveCalls.find((call: unknown[]) => {
-        const data = call[1] as { type?: string };
-        return data?.type === 'spend';
-      });
-      expect(revokeSave).toBeUndefined();
+      expect(mockManager.remove).not.toHaveBeenCalled();
     });
 
     it('should allow admin to delete any review', async () => {

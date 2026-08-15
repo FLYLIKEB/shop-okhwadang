@@ -110,13 +110,22 @@ export class AdminOrdersService {
       }
     }
 
-    const applyStatusMutation = async (manager: EntityManager): Promise<void> => {
+    const applyStatusMutation = async (
+      manager: EntityManager,
+      syncPayment?: () => Promise<void>,
+    ): Promise<void> => {
       if (this.shouldRestoreStockAndPoints(currentStatus, nextStatus)) {
         const recovery = await runFirstTerminalTransitionRecovery(manager, {
           orderId,
           nextOrderStatus: nextStatus,
           pointsService: this.pointsService,
           pointRestoreDescription: `주문 ${order.orderNumber} 취소/환불로 인한 적립금 복구`,
+          lockBeforeRecovery: syncPayment
+            ? async () => {
+                await syncPayment();
+                return true;
+              }
+            : undefined,
           applyMutations: async (lockedOrder) => {
             if (!isCancelledConfirmationRecovery) {
               assertOrderStatusTransition(lockedOrder.status, nextStatus);
@@ -148,8 +157,8 @@ export class AdminOrdersService {
       } else if (payment && (this.isGatewayRefundAmbiguous(payment) || this.isGatewayCancellationAmbiguous(payment))) {
         throw new ConflictException('결제 취소 상태 확인이 필요합니다. 수동 확인 후 다시 시도해주세요.');
       } else if (payment) {
-        await this.paymentsService.cancelAdmin(orderId, '관리자 환불 처리', async (manager) => {
-          await applyStatusMutation(manager);
+        await this.paymentsService.cancelAdmin(orderId, '관리자 환불 처리', async (manager, _cancelledAt, syncPayment) => {
+          await applyStatusMutation(manager, syncPayment);
         });
       } else {
         await this.dataSource.transaction(applyStatusMutation);
@@ -208,34 +217,34 @@ export class AdminOrdersService {
 
       let shouldGatewayCancel = false;
       await this.dataSource.transaction(async (manager) => {
-        const lockedOrder = await manager.findOne(Order, {
-          where: { id: orderId },
-          lock: { mode: 'pessimistic_write' },
-        });
-        if (!lockedOrder) {
-          throw new BadRequestException('주문을 찾을 수 없습니다.');
-        }
-
-        const lockedPayment = await manager.findOne(Payment, {
-          where: { orderId },
-          relations: ['order'],
-          lock: { mode: 'pessimistic_write' },
-        });
-        this.assertPaymentStateAllowsCancellation(lockedOrder.status, lockedPayment);
-        assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
-
-        if (lockedPayment?.status === PaymentStatus.CONFIRMED) {
-          shouldGatewayCancel = true;
-          return;
-        }
-
-        const cancelledAt = lockedPayment?.cancelledAt ?? new Date();
+        let lockedPayment: Payment | null = null;
+        let cancelledAt: Date;
         const recovery = await runFirstTerminalTransitionRecovery(manager, {
           orderId,
           nextOrderStatus: OrderStatus.CANCELLED,
           pointsService: this.pointsService,
           pointRestoreDescription: `주문 ${order.orderNumber} 취소/환불로 인한 적립금 복구`,
+          lockBeforeRecovery: async (lockedOrder) => {
+            lockedPayment = await manager.findOne(Payment, {
+              where: { orderId: Number(lockedOrder.id) },
+              relations: ['order'],
+              lock: { mode: 'pessimistic_write' },
+            });
+            this.assertPaymentStateAllowsCancellation(lockedOrder.status, lockedPayment);
+            assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
+
+            if (lockedPayment?.status === PaymentStatus.CONFIRMED) {
+              shouldGatewayCancel = true;
+              return false;
+            }
+
+            cancelledAt = lockedPayment?.cancelledAt ?? new Date();
+            return true;
+          },
           applyMutations: async (recoveryOrder) => {
+            if (!cancelledAt) {
+              return false;
+            }
             const canCancelLocally =
               recoveryOrder.status === OrderStatus.PENDING ||
               this.isGatewayCancellationReconciliation(lockedPayment);
@@ -264,6 +273,9 @@ export class AdminOrdersService {
 
         if (!recovery.lockedOrder) {
           throw new BadRequestException('주문을 찾을 수 없습니다.');
+        }
+        if (shouldGatewayCancel) {
+          return;
         }
         if (!recovery.didMutate) {
           throw new BadRequestException(

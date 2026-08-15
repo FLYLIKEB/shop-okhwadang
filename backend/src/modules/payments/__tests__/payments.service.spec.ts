@@ -197,6 +197,8 @@ describe('PaymentsService', () => {
   let mockDataSource: ReturnType<typeof makeDataSourceMock>;
   const mockPointsService = {
     getRunningBalanceInTx: jest.fn().mockResolvedValue(2000),
+    lockUserForPointChanges: jest.fn(),
+    creditFifo: jest.fn().mockResolvedValue({}),
   };
 
   beforeEach(async () => {
@@ -1042,7 +1044,7 @@ describe('PaymentsService', () => {
       expect(result.status).toBe(PaymentStatus.CANCELLED);
     });
 
-    it('locks Order before Payment for a customer cancellation', async () => {
+    it('locks the revalidated Order before Payment for a customer cancellation', async () => {
       const order = makeOrder({ status: OrderStatus.PAID, pointsUsed: 0 });
       const payment = makePayment({
         status: PaymentStatus.CONFIRMED,
@@ -1064,7 +1066,8 @@ describe('PaymentsService', () => {
 
       await service.cancel({ orderId: 1 }, 10);
 
-      expect(txManager.findOne.mock.calls.slice(0, 2).map(([entity]) => entity)).toEqual([
+      expect(txManager.findOne.mock.calls.slice(0, 3).map(([entity]) => entity)).toEqual([
+        Order,
         Order,
         Payment,
       ]);
@@ -1191,6 +1194,7 @@ it('cancelAdmin() persists reconciliation marker when order sync fails after gat
     findOne: jest.fn().mockResolvedValue(payment),
   });
   mockPaymentRepo.findOne.mockResolvedValue(payment);
+  mockOrderRepo.findOne.mockResolvedValue(order);
   mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: refundedAt, rawResponse: { refund: true } });
   mockDataSource.transaction.mockImplementationOnce(async (fn: (m: typeof txManager) => Promise<unknown>) => {
     await fn(txManager);
@@ -1217,7 +1221,7 @@ it('cancelAdmin() persists reconciliation marker when order sync fails after gat
   });
 });
 
-it('cancelAdmin() updates payment before running admin refund sync in one transaction', async () => {
+it('cancelAdmin() lets the admin recovery callback synchronize payment after its canonical locks', async () => {
   const order = makeOrder({ status: OrderStatus.REFUND_REQUESTED, pointsUsed: 0 });
   const payment = makePayment({
     status: PaymentStatus.CONFIRMED,
@@ -1233,7 +1237,9 @@ it('cancelAdmin() updates payment before running admin refund sync in one transa
   mockDataSource.transaction.mockImplementationOnce(
     async (fn: (m: ReturnType<typeof makeTransactionManager>) => Promise<unknown>) => fn(txManager),
   );
-  const postGatewaySync = jest.fn().mockResolvedValue(undefined);
+  const postGatewaySync = jest.fn(async (_manager, _cancelledAt, syncPayment) => {
+    await syncPayment();
+  });
 
   const result = await service.cancelAdmin(1, '관리자 환불 처리', postGatewaySync);
 
@@ -1244,10 +1250,10 @@ it('cancelAdmin() updates payment before running admin refund sync in one transa
     cancelReason: '관리자 환불 처리',
     rawResponse: { refund: true },
   });
-  expect(postGatewaySync).toHaveBeenCalledWith(txManager, refundedAt);
+  expect(postGatewaySync).toHaveBeenCalledWith(txManager, refundedAt, expect.any(Function));
 });
 
-it('cancelAdmin() locks Order before Payment for the refund transaction', async () => {
+it('cancelAdmin() calls the gateway before beginning the canonical local transaction', async () => {
   const order = makeOrder({ status: OrderStatus.REFUND_REQUESTED, pointsUsed: 0 });
   const payment = makePayment({
     status: PaymentStatus.CONFIRMED,
@@ -1263,16 +1269,23 @@ it('cancelAdmin() locks Order before Payment for the refund transaction', async 
   });
   mockPaymentRepo.findOne.mockResolvedValue(payment);
   mockDefaultGateway.cancel.mockResolvedValue({ cancelledAt: new Date(), rawResponse: { refund: true } });
+
+  const events: string[] = [];
+  mockDefaultGateway.cancel.mockImplementationOnce(async () => {
+    events.push('gateway');
+    return { cancelledAt: new Date(), rawResponse: { refund: true } };
+  });
   mockDataSource.transaction.mockImplementationOnce(
-    async (fn: (manager: typeof txManager) => Promise<unknown>) => fn(txManager),
+    async (fn: (manager: typeof txManager) => Promise<unknown>) => {
+      events.push('transaction');
+      return fn(txManager);
+    },
   );
 
   await service.cancelAdmin(1, '관리자 환불 처리');
 
-  expect(txManager.findOne.mock.calls.slice(0, 2).map(([entity]) => entity)).toEqual([
-    Order,
-    Payment,
-  ]);
+  expect(events).toEqual(['gateway', 'transaction']);
+  expect(txManager.findOne.mock.calls.map(([entity]) => entity)).toEqual([Order, Order, Payment]);
 });
 
     it('cancelPaidOrder()는 전달받은 트랜잭션에서 PG 취소 후 Payment/Order/stock/points를 함께 갱신한다 (#898)', async () => {
@@ -1326,15 +1339,16 @@ it('cancelAdmin() locks Order before Payment for the refund transaction', async 
         cancelledAt,
       }));
       expect(txManager.increment).toHaveBeenCalledTimes(2);
-      expect(txManager.save).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          userId: order.userId,
-          type: 'admin_adjust',
-          amount: 1000,
-          balance: 3000,
-          orderId: order.id,
-        }),
+      expect(mockPointsService.creditFifo).toHaveBeenCalledWith(
+        txManager,
+        order.userId,
+        1000,
+        expect.any(String),
+        null,
+        order.id,
+        null,
+        null,
+        'admin_adjust',
       );
     });
 

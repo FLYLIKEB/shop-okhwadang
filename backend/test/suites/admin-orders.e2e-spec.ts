@@ -218,8 +218,8 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
 
       it('pending → cancelled restores spent points', async () => {
         await dataSource.query(
-          `INSERT INTO point_history (user_id, type, amount, balance, description, expires_at, related_entity_type)
-           VALUES (?, 'earn', 5000, 5000, '테스트 적립', DATE_ADD(NOW(), INTERVAL 30 DAY), 'order')`,
+          `INSERT INTO point_history (user_id, type, amount, remaining_amount, balance, description, expires_at, related_entity_type)
+           VALUES (?, 'earn', 5000, 5000, 5000, '테스트 적립', DATE_ADD(NOW(), INTERVAL 30 DAY), 'order')`,
           [userId],
         );
 

@@ -127,20 +127,12 @@ export class PaymentConfirmationService {
         : await gateway.confirm(dto.paymentKey, Number(reservedPayment.amount), reservedPayment.order.orderNumber, { rawResponse: reservedPayment.rawResponse });
     } catch (err) {
       await this.dataSource.transaction(async (manager) => {
-        const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
-
         if (this.isDuplicateLikeConfirmError(err)) {
           throw new ConflictException('이미 승인된 결제입니다.');
         }
 
         if (err instanceof BadRequestException) {
-          if (
-            lockedPayment.status !== PaymentStatus.CONFIRMING
-            || lockedPayment.confirmationOperationKey !== operationKey
-          ) {
-            throw new ConflictException('결제 승인 작업의 소유권이 없습니다.');
-          }
-          await this.applyFailedPaymentRecovery(manager, lockedPayment.id, dto.orderId);
+          await this.applyFailedPaymentRecovery(manager, dto.orderId, operationKey);
         }
       });
 
@@ -277,20 +269,12 @@ export class PaymentConfirmationService {
           guestAccessToken,
           manager,
         );
-        const lockedPayment = await this.loadLockedPayment(orderId, manager);
-
         if (this.isDuplicateLikeConfirmError(err)) {
           throw new ConflictException('이미 승인된 결제입니다.');
         }
 
         if (err instanceof BadRequestException) {
-          if (
-            lockedPayment.status !== PaymentStatus.CONFIRMING
-            || lockedPayment.confirmationOperationKey !== operationKey
-          ) {
-            throw new ConflictException('결제 승인 작업의 소유권이 없습니다.');
-          }
-          await this.applyFailedPaymentRecovery(manager, lockedPayment.id, orderId);
+          await this.applyFailedPaymentRecovery(manager, orderId, operationKey);
         }
 
         if (err instanceof ConflictException || err instanceof BadRequestException) {
@@ -770,21 +754,36 @@ export class PaymentConfirmationService {
 
   private async applyFailedPaymentRecovery(
     manager: EntityManager,
-    paymentId: number,
     orderId: number,
+    operationKey: string,
   ): Promise<void> {
+    let lockedPayment: Payment | null = null;
     const recovery = await runFirstTerminalTransitionRecovery(manager, {
       orderId,
       nextOrderStatus: OrderStatus.CANCELLED,
       pointsService: this.pointsService,
       pointRestoreDescription: `주문 ${orderId} 결제 승인 실패로 인한 적립금 복구`,
+      lockBeforeRecovery: async () => {
+        lockedPayment = await manager.findOne(Payment, {
+          where: { orderId },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (
+          !lockedPayment ||
+          lockedPayment.status !== PaymentStatus.CONFIRMING ||
+          lockedPayment.confirmationOperationKey !== operationKey
+        ) {
+          throw new ConflictException('결제 승인 작업의 소유권이 없습니다.');
+        }
+        return true;
+      },
       applyMutations: async (lockedOrder) => {
         if (lockedOrder.status !== OrderStatus.PENDING) {
           return false;
         }
 
         assertOrderStatusTransition(lockedOrder.status, OrderStatus.CANCELLED);
-        await manager.update(Payment, paymentId, { status: PaymentStatus.FAILED });
+        await manager.update(Payment, lockedPayment!.id, { status: PaymentStatus.FAILED });
         await manager.update(Order, orderId, { status: OrderStatus.CANCELLED });
         return true;
       },

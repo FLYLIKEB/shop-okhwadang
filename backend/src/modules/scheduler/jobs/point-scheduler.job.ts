@@ -1,15 +1,15 @@
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Logger } from '@nestjs/common';
 import { PointHistory } from '../../coupons/entities/point-history.entity';
 import { User } from '../../users/entities/user.entity';
 import { NotificationService } from '../../notification/notification.service';
+import { PointsService } from '../../points/points.service';
 
 interface PointSchedulerJobDependencies {
   dataSource: DataSource;
   logger: Logger;
   notificationService: NotificationService;
-  pointHistoryRepo: Repository<PointHistory>;
-  userRepo: Repository<User>;
+  pointsService: Pick<PointsService, 'getRunningBalanceInTx' | 'lockUserForPointChanges'>;
 }
 
 export class PointSchedulerJob {
@@ -18,59 +18,61 @@ export class PointSchedulerJob {
   async handlePointExpiry(): Promise<void> {
     const now = new Date();
 
-    // Only process earn entries that have expired and have NOT yet had an expire record
-    // created for that source earn row. `related_entity_id` stores the source earn id
-    // for scheduler-created expiration markers; `related_entity_type` stays null because
-    // the existing enum is for business entities, not point_history self-references.
-    const expiredPoints = await this.deps.dataSource.query<
-      Array<{ id: number; user_id: number; amount: number; expires_at: string }>
+    // Candidate selection is only a cross-instance optimization. Each user's credit
+    // lots are reloaded after its canonical point-ledger lock has been acquired.
+    const candidateUsers = await this.deps.dataSource.query<
+      Array<{ user_id: number }>
     >(
-      `SELECT ph.id, ph.user_id, ph.amount, ph.expires_at
+      `SELECT DISTINCT ph.user_id
        FROM point_history ph
-       WHERE ph.type = 'earn'
+       WHERE ph.type IN ('earn', 'admin_adjust')
+         AND ph.amount > 0
+         AND ph.remaining_amount > 0
          AND ph.expires_at IS NOT NULL
-         AND ph.expires_at < ?
-         AND NOT EXISTS (
-           SELECT 1 FROM point_history ex
-           WHERE ex.user_id = ph.user_id
-             AND ex.type = 'expire'
-             AND ex.related_entity_type IS NULL
-             AND ex.related_entity_id = ph.id
-         )`,
+         AND ph.expires_at <= ?`,
       [now],
     );
 
-    if (expiredPoints.length === 0) {
+    if (candidateUsers.length === 0) {
       this.deps.logger.debug('[cron:point-expiry] No expired points to process');
       return;
     }
 
-    this.deps.logger.log(`[cron:point-expiry] Processing ${expiredPoints.length} expired point records`);
+    this.deps.logger.log(`[cron:point-expiry] Processing ${candidateUsers.length} candidate users`);
 
-    const userExpiredMap = new Map<number, Array<{ id: number; amount: number }>>();
-    for (const ph of expiredPoints) {
-      const userId = Number(ph.user_id);
-      const entries = userExpiredMap.get(userId) ?? [];
-      entries.push({ id: Number(ph.id), amount: Number(ph.amount) });
-      userExpiredMap.set(userId, entries);
-    }
-
-    for (const [userId, entries] of userExpiredMap) {
+    for (const candidate of candidateUsers) {
+      const userId = Number(candidate.user_id);
       const queryRunner = this.deps.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
       try {
-        const latestBalance = await queryRunner.manager.findOne(PointHistory, {
-          where: { userId },
-          order: { createdAt: 'DESC', id: 'DESC' },
-        });
+        await this.deps.pointsService.lockUserForPointChanges(queryRunner.manager, userId);
 
-        let currentBalance = latestBalance?.balance ?? 0;
+        const lots = await queryRunner.manager
+          .createQueryBuilder(PointHistory, 'ph')
+          .setLock('pessimistic_write')
+          .where('ph.user_id = :userId', { userId })
+          .andWhere(`ph.type IN ('earn', 'admin_adjust')`)
+          .andWhere('ph.amount > 0')
+          .andWhere('ph.remaining_amount > 0')
+          .andWhere('ph.expires_at IS NOT NULL')
+          .andWhere('ph.expires_at <= :now', { now })
+          .orderBy('ph.expires_at', 'ASC')
+          .addOrderBy('ph.created_at', 'ASC')
+          .addOrderBy('ph.id', 'ASC')
+          .getMany();
+
+        let currentBalance = await this.deps.pointsService.getRunningBalanceInTx(queryRunner.manager, userId);
         let totalExpired = 0;
 
-        for (const entry of entries) {
-          const expireAmount = Math.max(0, Math.min(entry.amount, currentBalance));
+        for (const lot of lots) {
+          const expireAmount = Number(lot.remainingAmount);
+          if (expireAmount <= 0) continue;
+
+          lot.remainingAmount = 0;
+          await queryRunner.manager.save(PointHistory, lot);
+
           currentBalance -= expireAmount;
           totalExpired += expireAmount;
 
@@ -78,11 +80,12 @@ export class PointSchedulerJob {
             userId,
             type: 'expire',
             amount: -expireAmount,
+            remainingAmount: null,
             balance: currentBalance,
             description: '포인트 만료',
             expiresAt: null,
             relatedEntityType: null,
-            relatedEntityId: entry.id,
+            relatedEntityId: lot.id,
           });
         }
 
@@ -111,7 +114,7 @@ export class PointSchedulerJob {
       }
     }
 
-    this.deps.logger.log(`[cron:point-expiry] Completed processing ${expiredPoints.length} expired point records`);
+    this.deps.logger.log(`[cron:point-expiry] Completed processing ${candidateUsers.length} candidate users`);
   }
 
   async handlePointExpiryNotification(): Promise<void> {
@@ -124,14 +127,15 @@ export class PointSchedulerJob {
       const expiringEntries = await this.deps.dataSource.query<
         Array<{ user_id: number; total_amount: string; email: string | null; name: string | null }>
       >(
-        `SELECT ph.user_id, SUM(ph.amount) AS total_amount, u.email, u.name
+        `SELECT ph.user_id, SUM(ph.remaining_amount) AS total_amount, u.email, u.name
          FROM point_history ph
          JOIN users u ON u.id = ph.user_id
          WHERE ph.type = 'earn'
+           AND ph.remaining_amount > 0
            AND ph.expires_at >= ?
            AND ph.expires_at < ?
          GROUP BY ph.user_id, u.email, u.name
-         HAVING SUM(ph.amount) > 0`,
+         HAVING SUM(ph.remaining_amount) > 0`,
         [windowStart, windowEnd],
       );
 

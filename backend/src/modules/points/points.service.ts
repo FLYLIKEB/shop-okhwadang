@@ -71,21 +71,13 @@ export class PointsService {
 
   private effectiveBalanceExpression(): string {
     return `
-      COALESCE(SUM(ph.amount), 0)
-      - COALESCE(SUM(
+      COALESCE(SUM(
         CASE
-          WHEN ph.type = 'earn'
-            AND ph.expires_at IS NOT NULL
-            AND ph.expires_at <= :now
-            AND NOT EXISTS (
-              SELECT 1
-              FROM point_history ex
-              WHERE ex.user_id = ph.user_id
-                AND ex.type = 'expire'
-                AND ex.related_entity_type IS NULL
-                AND ex.related_entity_id = ph.id
-            )
-          THEN ph.amount
+          WHEN ph.type IN ('earn', 'admin_adjust')
+            AND ph.amount > 0
+            AND ph.remaining_amount IS NOT NULL
+            AND (ph.expires_at IS NULL OR ph.expires_at > :now)
+          THEN ph.remaining_amount
           ELSE 0
         END
       ), 0)
@@ -99,8 +91,15 @@ export class PointsService {
     }
   }
 
-  private async assertUserExistsInTx(manager: EntityManager, userId: number): Promise<void> {
-    const user = await manager.findOne(User, { where: { id: userId } });
+  /**
+   * Serializes every mutation of a member's ledger.  The user row is the
+   * canonical lock row because a member may have no PointHistory yet.
+   */
+  async lockUserForPointChanges(manager: EntityManager, userId: number): Promise<void> {
+    const user = await manager.findOne(User, {
+      where: { id: userId },
+      lock: { mode: 'pessimistic_write' },
+    });
     if (!user) {
       throw new NotFoundException('회원을 찾을 수 없습니다.');
     }
@@ -130,26 +129,25 @@ export class PointsService {
     }
 
     if (
-      entry.type === 'earn'
-      && entry.orderId == null
-      && entry.relatedEntityType == null
-      && entry.relatedEntityId == null
+      entry.type === 'earn' &&
+      entry.orderId == null &&
+      entry.relatedEntityType == null &&
+      entry.relatedEntityId == null
     ) {
       return 'manual_grant';
     }
 
     if (
-      entry.type === 'spend'
-      && entry.orderId == null
-      && entry.relatedEntityType == null
-      && entry.relatedEntityId == null
+      entry.type === 'spend' &&
+      entry.orderId == null &&
+      entry.relatedEntityType == null &&
+      entry.relatedEntityId == null
     ) {
       return 'manual_debit';
     }
 
     throw new BadRequestException('지원되지 않는 적립금 이력 유형입니다.');
   }
-
 
   toHistoryResponse(entry: PointHistory): PointHistoryResponseItem {
     return {
@@ -223,7 +221,6 @@ export class PointsService {
     };
   }
 
-
   /**
    * Returns the effective balance within an active transaction.
    */
@@ -240,10 +237,7 @@ export class PointsService {
     return parseInt(result?.total ?? '0', 10);
   }
 
-  async getRunningBalanceInTx(
-    manager: EntityManager,
-    userId: number,
-  ): Promise<number> {
+  async getRunningBalanceInTx(manager: EntityManager, userId: number): Promise<number> {
     const latestEntry = await manager.findOne(PointHistory, {
       where: { userId },
       order: { createdAt: 'DESC', id: 'DESC' },
@@ -261,39 +255,31 @@ export class PointsService {
     }
 
     return this.dataSource.transaction(async (manager) => {
-      await this.assertUserExistsInTx(manager, dto.userId);
+      await this.lockUserForPointChanges(manager, dto.userId);
 
       const beforeBalance = await this.getEffectiveBalanceInTx(manager, dto.userId);
-      const beforeRunningBalance = await this.getRunningBalanceInTx(manager, dto.userId);
       const description = `${MANUAL_POINT_ADJUSTMENT_PREFIX}${dto.reason}`;
 
       let entry: PointHistory;
       let balanceAfter: number;
       if (dto.delta > 0) {
-        const newRunningBalance = beforeRunningBalance + dto.delta;
-        balanceAfter = beforeBalance + dto.delta;
-        entry = await manager.save(PointHistory, {
-          userId: dto.userId,
-          type: 'earn',
-          amount: dto.delta,
-          balance: newRunningBalance,
+        entry = await this.creditLocked(
+          manager,
+          dto.userId,
+          dto.delta,
           description,
-          expiresAt: addOneYear(new Date()),
-          orderId: null,
-          relatedEntityType: null,
-          relatedEntityId: null,
-        });
+          addOneYear(new Date()),
+        );
+        balanceAfter = beforeBalance + dto.delta;
       } else {
-        await this.deductFifo(manager, dto.userId, Math.abs(dto.delta), description, null);
+        entry = await this.deductFifoLocked(
+          manager,
+          dto.userId,
+          Math.abs(dto.delta),
+          description,
+          null,
+        );
         balanceAfter = beforeBalance - Math.abs(dto.delta);
-        const savedEntry = await manager.findOne(PointHistory, {
-          where: { userId: dto.userId },
-          order: { createdAt: 'DESC', id: 'DESC' },
-        });
-        if (!savedEntry) {
-          throw new NotFoundException('적립금 조정 내역을 찾을 수 없습니다.');
-        }
-        entry = savedEntry;
       }
 
       const auditLog = await this.auditLogService.logWithManager(manager, {
@@ -329,15 +315,61 @@ export class PointsService {
     });
   }
 
-  /**
-   * Deducts `amount` points using FIFO (earliest-expiring earn entries consumed first).
-   * Creates a single 'spend' PointHistory record within the provided transaction manager.
-   * Returns the new running balance.
-   *
-   * Note: This method uses the running balance from the latest record for the balance column,
-   * matching the existing pattern in the codebase. FIFO is tracked conceptually by
-   * earning entries with earliest expiresAt being consumed first during deduction validation.
-   */
+  async creditFifo(
+    manager: EntityManager,
+    userId: number,
+    amount: number,
+    description: string,
+    expiresAt: Date | null,
+    orderId: number | null = null,
+    relatedEntityType: PointHistory['relatedEntityType'] = null,
+    relatedEntityId: number | null = null,
+    type: Extract<PointHistory['type'], 'earn' | 'admin_adjust'> = 'earn',
+  ): Promise<PointHistory> {
+    await this.lockUserForPointChanges(manager, userId);
+    return this.creditLocked(
+      manager,
+      userId,
+      amount,
+      description,
+      expiresAt,
+      orderId,
+      relatedEntityType,
+      relatedEntityId,
+      type,
+    );
+  }
+
+  private async creditLocked(
+    manager: EntityManager,
+    userId: number,
+    amount: number,
+    description: string,
+    expiresAt: Date | null,
+    orderId: number | null = null,
+    relatedEntityType: PointHistory['relatedEntityType'] = null,
+    relatedEntityId: number | null = null,
+    type: Extract<PointHistory['type'], 'earn' | 'admin_adjust'> = 'earn',
+  ): Promise<PointHistory> {
+    if (amount <= 0) {
+      throw new BadRequestException('적립 포인트는 0보다 커야 합니다.');
+    }
+
+    const balance = await this.getRunningBalanceInTx(manager, userId);
+    return manager.save(PointHistory, {
+      userId,
+      type,
+      amount,
+      remainingAmount: amount,
+      balance: balance + amount,
+      description,
+      expiresAt,
+      orderId,
+      relatedEntityType,
+      relatedEntityId,
+    });
+  }
+
   async deductFifo(
     manager: EntityManager,
     userId: number,
@@ -345,23 +377,108 @@ export class PointsService {
     description: string,
     orderId: number | null = null,
   ): Promise<number> {
-    const effectiveBalance = await this.getEffectiveBalanceInTx(manager, userId);
-    if (amount > effectiveBalance) {
+    await this.lockUserForPointChanges(manager, userId);
+    const entry = await this.deductFifoLocked(manager, userId, amount, description, orderId);
+    return Number(entry.balance);
+  }
+
+  /**
+   * Revokes an untouched credit lot that belongs to one source entity. This
+   * deliberately does not use FIFO: a source reward may only revoke itself.
+   */
+  async revokeSourceCreditLocked(
+    manager: EntityManager,
+    userId: number,
+    relatedEntityType: NonNullable<PointHistory['relatedEntityType']>,
+    relatedEntityId: number,
+    description: string,
+  ): Promise<PointHistory | null> {
+    await this.lockUserForPointChanges(manager, userId);
+
+    const lot = await manager.findOne(PointHistory, {
+      where: {
+        userId,
+        type: 'earn',
+        relatedEntityType,
+        relatedEntityId,
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    if (!lot) {
+      return null;
+    }
+
+    const amount = Number(lot.amount);
+    if (amount <= 0 || Number(lot.remainingAmount) !== amount) {
+      throw new BadRequestException('사용된 적립금은 환수할 수 없습니다.');
+    }
+
+    lot.remainingAmount = 0;
+    await manager.save(PointHistory, lot);
+
+    const balance = await this.getRunningBalanceInTx(manager, userId);
+    return manager.save(PointHistory, {
+      userId,
+      type: 'spend',
+      amount: -amount,
+      remainingAmount: null,
+      balance: balance - amount,
+      description,
+      relatedEntityType,
+      relatedEntityId,
+    });
+  }
+
+  private async deductFifoLocked(
+    manager: EntityManager,
+    userId: number,
+    amount: number,
+    description: string,
+    orderId: number | null,
+  ): Promise<PointHistory> {
+    if (amount <= 0) {
+      throw new BadRequestException('차감 포인트는 0보다 커야 합니다.');
+    }
+
+    const now = new Date();
+    const lots = await manager
+      .createQueryBuilder(PointHistory, 'ph')
+      .setLock('pessimistic_write')
+      .where('ph.user_id = :userId', { userId })
+      .andWhere(`ph.type IN ('earn', 'admin_adjust')`)
+      .andWhere('ph.amount > 0')
+      .andWhere('ph.remaining_amount > 0')
+      .andWhere('(ph.expires_at IS NULL OR ph.expires_at > :now)', { now })
+      .orderBy('CASE WHEN ph.expires_at IS NULL THEN 1 ELSE 0 END', 'ASC')
+      .addOrderBy('ph.expires_at', 'ASC')
+      .addOrderBy('ph.created_at', 'ASC')
+      .addOrderBy('ph.id', 'ASC')
+      .getMany();
+
+    const available = lots.reduce((total, lot) => total + Number(lot.remainingAmount), 0);
+    if (amount > available) {
       throw new BadRequestException('적립금이 부족합니다.');
     }
 
-    const currentBalance = await this.getRunningBalanceInTx(manager, userId);
-    const newBalance = currentBalance - amount;
+    let outstanding = amount;
+    for (const lot of lots) {
+      if (outstanding === 0) break;
+      const consumed = Math.min(Number(lot.remainingAmount), outstanding);
+      lot.remainingAmount = Number(lot.remainingAmount) - consumed;
+      outstanding -= consumed;
+      await manager.save(PointHistory, lot);
+    }
 
-    await manager.save(PointHistory, {
+    const currentBalance = await this.getRunningBalanceInTx(manager, userId);
+    return manager.save(PointHistory, {
       userId,
       type: 'spend' as const,
       amount: -amount,
-      balance: newBalance,
+      remainingAmount: null,
+      balance: currentBalance - amount,
       orderId,
       description,
     });
-
-    return newBalance;
   }
 }

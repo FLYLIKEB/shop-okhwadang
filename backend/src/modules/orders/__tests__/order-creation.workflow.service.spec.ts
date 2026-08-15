@@ -5,6 +5,7 @@ import { CreateOrderDto } from '../dto/create-order.dto';
 
 describe('OrderCreationWorkflowService', () => {
   const pointsService = {
+    lockUserForPointChanges: jest.fn(),
     getEffectiveBalanceInTx: jest.fn(),
     deductFifo: jest.fn(),
   };
@@ -144,6 +145,7 @@ type OrderCreationWorkflowServiceInternals = {
       .mockResolvedValue(undefined);
     couponsService.useCoupon.mockResolvedValue(undefined);
     pointsService.deductFifo.mockResolvedValue(0);
+    pointsService.lockUserForPointChanges.mockResolvedValue(undefined);
 
     await expect(service.runCreateOrderTransaction(manager as never, 11, dto, 10000)).resolves.toEqual({
       savedOrder,
@@ -156,6 +158,7 @@ type OrderCreationWorkflowServiceInternals = {
       discountAmount: 3000,
       pointsUsed: 7000,
     }));
+    expect(pointsService.lockUserForPointChanges).toHaveBeenCalledWith(manager, 11);
     expect(couponsService.useCoupon).toHaveBeenCalledWith(15, 11, 42, manager);
     expect(pointsService.deductFifo).toHaveBeenCalledWith(
       manager,
@@ -165,5 +168,30 @@ type OrderCreationWorkflowServiceInternals = {
       42,
     );
     expect(clearCartItemsSpy).toHaveBeenCalledWith(manager, 11, dto);
+  });
+
+  it('acquires the member ledger lock before reserving inventory', async () => {
+    const manager = { marker: 'tx-manager' };
+    const dto: CreateOrderDto = {
+      items: [{ productId: 1, quantity: 1 }],
+      recipientName: '홍길동',
+      recipientPhone: '010-1234-5678',
+      zipcode: '12345',
+      address: '서울시 강남구',
+    };
+    let releaseLock: (() => void) | undefined;
+    pointsService.lockUserForPointChanges.mockImplementation(
+      () => new Promise<void>((resolve) => { releaseLock = resolve; }),
+    );
+    const reserveStock = jest
+      .spyOn(service, 'validateAndReserveStock')
+      .mockRejectedValue(new Error('stop after inventory reservation'));
+
+    const creation = service.runCreateOrderTransaction(manager as never, 11, dto, 0);
+    await Promise.resolve();
+
+    expect(reserveStock).not.toHaveBeenCalled();
+    releaseLock?.();
+    await expect(creation).rejects.toThrow('stop after inventory reservation');
   });
 });

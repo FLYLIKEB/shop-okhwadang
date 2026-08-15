@@ -18,7 +18,7 @@ interface OrderSchedulerJobDependencies {
   notificationService: NotificationService;
   settingsService: SettingsService;
   membershipService: MembershipService;
-  pointsService: Pick<PointsService, 'getRunningBalanceInTx'>;
+  pointsService: Pick<PointsService, 'getRunningBalanceInTx' | 'lockUserForPointChanges' | 'creditFifo'>;
   logger: Logger;
 }
 
@@ -107,32 +107,22 @@ export class OrderSchedulerJob {
     await queryRunner.startTransaction();
 
     try {
-      const lockedOrder = await queryRunner.manager.findOne(Order, {
-        where: { id: order.id },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!lockedOrder) {
-        await queryRunner.rollbackTransaction();
-        return;
-      }
-
-      const lockedPayment = await queryRunner.manager.findOne(Payment, {
-        where: { orderId: Number(order.id) },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (
-        lockedOrder.status !== OrderStatus.PENDING
-        || (lockedPayment && lockedPayment.status !== PaymentStatus.PENDING)
-      ) {
-        await queryRunner.rollbackTransaction();
-        return;
-      }
-
+      let lockedPayment: Payment | null = null;
       const recovery = await runFirstTerminalTransitionRecovery(queryRunner.manager, {
         orderId: Number(order.id),
         nextOrderStatus: OrderStatus.CANCELLED,
         pointsService: this.deps.pointsService,
         pointRestoreDescription: `주문 ${order.orderNumber} 결제 미완료 자동 취소로 인한 적립금 복구`,
+        lockBeforeRecovery: async (lockedOrder) => {
+          lockedPayment = await queryRunner.manager.findOne(Payment, {
+            where: { orderId: Number(lockedOrder.id) },
+            lock: { mode: 'pessimistic_write' },
+          });
+          return (
+            lockedOrder.status === OrderStatus.PENDING &&
+            (!lockedPayment || lockedPayment.status === PaymentStatus.PENDING)
+          );
+        },
         applyMutations: async (recoveredOrder) => {
           if (recoveredOrder.status !== OrderStatus.PENDING) {
             return false;
