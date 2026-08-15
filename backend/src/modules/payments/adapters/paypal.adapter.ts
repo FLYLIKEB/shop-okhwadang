@@ -124,15 +124,28 @@ export class PayPalPaymentAdapter implements PaymentGateway {
       throw new BadGatewayException('PayPal 결제 주문 참조가 일치하지 않습니다.');
     }
     const captures = units[0].payments?.captures ?? [];
-    if (captures.length !== 1 || captures[0].status !== 'COMPLETED') {
+    if (captures.length === 0 || captures.some((capture) => capture.status !== 'COMPLETED')) {
       throw new BadGatewayException('PayPal 결제 캡처 상태가 유효하지 않습니다.');
     }
-    const capture = captures[0];
-    const providerAmount = Number(capture.amount?.value);
-    const providerCurrency = capture.amount?.currency_code;
-    if (!capture.id || !Number.isFinite(providerAmount) || !providerCurrency) {
+    const captureIds = new Set<string>();
+    const providerCurrency = captures[0].amount?.currency_code;
+    let providerAmountMinor = 0;
+    for (const capture of captures) {
+      if (
+        !capture.id
+        || captureIds.has(capture.id)
+        || !providerCurrency
+        || capture.amount?.currency_code !== providerCurrency
+      ) {
+        throw new BadGatewayException('PayPal 결제 캡처 증거가 없습니다.');
+      }
+      captureIds.add(capture.id);
+      providerAmountMinor += parsePayPalAmountMinor(capture.amount.value);
+    }
+    if (!Number.isSafeInteger(providerAmountMinor) || providerAmountMinor <= 0) {
       throw new BadGatewayException('PayPal 결제 캡처 증거가 없습니다.');
     }
+    const providerAmount = providerAmountMinor / 100;
 
     return {
       paymentKey,
@@ -302,6 +315,18 @@ async function readJson<T>(response: Response): Promise<T> {
 
 function formatPayPalUsdAmount(krwAmount: number, krwPerUsd: number): string {
   return (Number(krwAmount) / krwPerUsd).toFixed(2);
+}
+
+function parsePayPalAmountMinor(value: string | undefined): number {
+  if (!value || !/^\d+(?:\.\d{1,2})?$/.test(value)) {
+    throw new BadGatewayException('PayPal 결제 캡처 금액이 유효하지 않습니다.');
+  }
+  const [whole, fraction = ''] = value.split('.');
+  const minor = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  if (!Number.isSafeInteger(minor)) {
+    throw new BadGatewayException('PayPal 결제 캡처 금액이 유효하지 않습니다.');
+  }
+  return minor;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

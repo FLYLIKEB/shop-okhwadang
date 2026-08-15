@@ -119,6 +119,40 @@ describe('PayPalPaymentAdapter', () => {
       );
     });
 
+    it('여러 COMPLETED 캡처의 동일 통화 금액을 정확히 합산한다', async () => {
+      mockAccessToken();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 'PAYPAL-ORDER-1',
+          status: 'COMPLETED',
+          purchase_units: [{
+            reference_id: 'ORDER-123',
+            payments: {
+              captures: [
+                {
+                  id: 'CAPTURE-1',
+                  status: 'COMPLETED',
+                  amount: { value: '3.70', currency_code: 'USD' },
+                },
+                {
+                  id: 'CAPTURE-2',
+                  status: 'COMPLETED',
+                  amount: { value: '3.71', currency_code: 'USD' },
+                },
+              ],
+            },
+          }],
+        }),
+      });
+
+      await expect(adapter.confirm('PAYPAL-ORDER-1', 10000, 'ORDER-123')).resolves.toMatchObject({
+        providerTransactionId: 'PAYPAL-ORDER-1',
+        providerAmount: 7.41,
+        providerCurrency: 'USD',
+      });
+    });
+
     it('confirm → COMPLETED 외 상태는 BadGatewayException', async () => {
       mockAccessToken();
       mockFetch.mockResolvedValueOnce({
