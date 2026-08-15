@@ -55,6 +55,7 @@ function makeTranslator(namespace?: string) {
     'serviceRequests.status.rejected': '반려',
     'serviceRequests.status.completed': '처리 완료',
     paypalPayment: 'PayPal',
+    tossPayment: '토스페이먼츠',
     naverpayPayment: '네이버페이',
     bankTransferPayment: '무통장입금',
     bankTransferAccountTitle: '입금 계좌',
@@ -163,6 +164,7 @@ const pendingOrder: OrderResponse = {
 describe('OrderDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS = 'toss,paypal,eximbay';
     vi.mocked(ordersApi.getById).mockResolvedValue(pendingOrder);
     vi.mocked(ordersApi.getServiceRequests).mockResolvedValue([]);
     vi.mocked(ordersApi.createServiceRequest).mockResolvedValue({
@@ -191,11 +193,11 @@ describe('OrderDetailPage', () => {
 
     expect(await screen.findByText('ORD-16')).toBeInTheDocument();
     expect(screen.queryByTestId('shipping-timeline')).toBeNull();
-    expect(screen.getByRole('radio', { name: /네이버페이/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /토스페이먼츠/ })).toBeChecked();
     expect(screen.queryByPlaceholderText('Card number')).not.toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /무통장입금/ })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /Credit card/ })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /PayPal/ })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /무통장입금/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Credit card/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /PayPal/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '결제하기' })).toBeInTheDocument();
     expect(screen.getByText('현금영수증/세금계산서 안내')).toBeInTheDocument();
     expect(screen.getByText(/주문번호를 포함해 고객센터로 요청/)).toBeInTheDocument();
@@ -226,54 +228,26 @@ describe('OrderDetailPage', () => {
   }, 20000);
 
 
-  it('결제대기 주문에서 무통장입금 선택 시 PaymentGateway로 전환하지 않고 주문을 갱신한다', async () => {
-    const user = userEvent.setup();
-    vi.mocked(paymentsApi.prepare).mockResolvedValue({
-      paymentId: 11,
-      orderId: 16,
-      orderNumber: 'ORD-16',
-      amount: 30000,
-      gateway: 'bank_transfer',
-      clientKey: 'bank_transfer',
-      availableGateways: ['naverpay', 'bank_transfer', 'paypal', 'eximbay'],
-    });
-
-    render(<OrderDetailPage />);
-
-    await screen.findByText('ORD-16');
-    await user.click(screen.getByRole('radio', { name: /무통장입금/ }));
-    expect(screen.getByTestId('bank-transfer-account-info')).toBeInTheDocument();
-    expect(screen.getByText('123456-78-901234')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: '결제하기' }));
-
-    await waitFor(() => {
-      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 16, locale: 'ko', gateway: 'bank_transfer' });
-    });
-    expect(screen.queryByTestId('payment-gateway')).not.toBeInTheDocument();
-    expect(ordersApi.getById).toHaveBeenCalledTimes(2);
-  }, 20000);
-
-  it('결제대기 주문에서 PayPal 선택 후 결제 준비 API를 호출하고 동일 PaymentGateway 컴포넌트로 전환한다', async () => {
+  it('결제대기 주문에서 Toss 결제 준비 API를 호출하고 PaymentGateway로 전환한다', async () => {
     const user = userEvent.setup();
     vi.mocked(paymentsApi.prepare).mockResolvedValue({
       paymentId: 10,
       orderId: 16,
       orderNumber: 'ORD-16',
       amount: 30000,
-      gateway: 'paypal',
-      clientKey: 'paypal-client',
-      redirectUrl: 'https://www.paypal.com/checkoutnow?token=PAYPAL-16',
-      availableGateways: ['naverpay', 'eximbay', 'paypal'],
+      gateway: 'toss',
+      clientKey: 'toss-widget-client',
+      gatewayPayload: { customerKey: 'member-customer-key' },
+      availableGateways: ['toss'],
     });
 
     render(<OrderDetailPage />);
 
     await screen.findByText('ORD-16');
-    await user.click(screen.getByRole('radio', { name: /PayPal/ }));
     await user.click(screen.getByRole('button', { name: '결제하기' }));
 
     await waitFor(() => {
-      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 16, locale: 'ko', gateway: 'paypal' });
+      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 16, locale: 'ko', gateway: 'toss' });
     });
     expect(await screen.findByTestId('payment-gateway')).toBeInTheDocument();
   }, 20000);

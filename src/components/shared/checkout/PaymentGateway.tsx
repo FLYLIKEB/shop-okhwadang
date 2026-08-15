@@ -180,69 +180,85 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
     ref,
   ) {
     const handlerRef = useRef<(() => Promise<void>) | null>(null);
+    const onErrorRef = useRef(onError);
+    const [isReady, setIsReady] = useState(false);
+    onErrorRef.current = onError;
 
     useEffect(() => {
-      const origin = window.location.origin;
+      let cancelled = false;
 
-      const handler = async () => {
+      const initialize = async () => {
         try {
-          const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+          const { ANONYMOUS, loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
           const tossPayments = await loadTossPayments(prepareResult.clientKey);
-          const payment = tossPayments.payment({ customerKey: `user_${orderId}` });
+          const preparedCustomerKey = getGatewayPayloadString(prepareResult, 'customerKey');
+          const customerKey = preparedCustomerKey === 'ANONYMOUS' || !preparedCustomerKey
+            ? ANONYMOUS
+            : preparedCustomerKey;
+          const widgets = tossPayments.widgets({ customerKey });
 
-          sessionStorage.setItem(
-            SESSION_KEYS.TOSS_CONTEXT,
-            JSON.stringify(
-              buildHostedPaymentContext({
-                orderId,
-                orderNumber,
-                amount,
-                guestAccessToken,
-                guestAccessTokenExpiresAt,
-              }),
-            ),
-          );
-
-          await payment.requestPayment({
-            method: 'CARD',
-            amount: { currency: 'KRW', value: amount },
-            orderId: orderNumber,
-            orderName: locale === 'en' ? `Order ${orderNumber}` : `주문 ${orderNumber}`,
-            successUrl: `${origin}/${locale}/checkout/success`,
-            failUrl: `${origin}/${locale}/checkout/fail`,
+          await widgets.setAmount({ currency: 'KRW', value: amount });
+          await widgets.renderPaymentMethods({
+            selector: '#toss-payment-methods',
+            variantKey: 'DEFAULT',
           });
+          await widgets.renderAgreement({
+            selector: '#toss-payment-agreement',
+            variantKey: 'AGREEMENT',
+          });
+          if (cancelled) return;
+
+          setIsReady(true);
+          handlerRef.current = async () => {
+            const origin = window.location.origin;
+
+            sessionStorage.setItem(
+              SESSION_KEYS.TOSS_CONTEXT,
+              JSON.stringify(
+                buildHostedPaymentContext({
+                  orderId,
+                  orderNumber,
+                  amount,
+                  guestAccessToken,
+                  guestAccessTokenExpiresAt,
+                }),
+              ),
+            );
+
+            await widgets.requestPayment({
+              orderId: orderNumber,
+              orderName: locale === 'en' ? `Order ${orderNumber}` : `주문 ${orderNumber}`,
+              successUrl: `${origin}/${locale}/checkout/success`,
+              failUrl: `${origin}/${locale}/checkout/fail`,
+            });
+          };
         } catch (err) {
-          onError(handleApiError(err, locale === 'en' ? 'Failed to initialize payment.' : '결제 초기화 오류'));
+          onErrorRef.current(handleApiError(err, locale === 'en' ? 'Failed to initialize payment.' : '결제 초기화 오류'));
         }
       };
 
-      handlerRef.current = handler;
+      void initialize();
 
       return () => {
+        cancelled = true;
         handlerRef.current = null;
       };
-    }, [prepareResult.clientKey, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError]);
+    }, [prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt]);
 
     useImperativeHandle(ref, () => ({
       confirm: async () => {
-        if (handlerRef.current) {
-          await handlerRef.current();
+        if (!isReady || !handlerRef.current) {
+          throw new Error(locale === 'en' ? 'Payment widget is loading.' : '결제위젯을 불러오는 중입니다.');
         }
+        await handlerRef.current();
       },
-    }));
+    }), [isReady, locale]);
 
     return (
-      <label className="flex items-center gap-3 cursor-pointer">
-        <input
-          type="radio"
-          name="paymentMethod"
-          value="toss"
-          defaultChecked
-          readOnly
-          className="accent-foreground"
-        />
-        <span className="text-sm">{locale === 'en' ? 'Toss Payments (Card)' : '토스페이먼츠 (카드)'}</span>
-      </label>
+      <div className="layout-stack-md">
+        <div id="toss-payment-methods" aria-busy={!isReady} />
+        <div id="toss-payment-agreement" />
+      </div>
     );
   },
 );

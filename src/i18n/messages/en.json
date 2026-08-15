@@ -442,6 +442,7 @@
     "freeShippingUnlocked": "Free shipping is now applied.",
     "freeShippingRemaining": "Add {amount} more for free shipping",
     "paypalPayment": "PayPal",
+    "tossPayment": "Toss Payments",
     "naverpayPayment": "Naver Pay",
     "bankTransferPayment": "Bank transfer",
     "bankTransferAccountTitle": "Bank transfer account",

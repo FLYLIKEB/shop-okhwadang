@@ -635,7 +635,7 @@ describe('useCheckout - Toss 결제 흐름', () => {
     vi.useFakeTimers();
   });
 
-  it('locale=ko + 실제 clientKey 응답 시 paymentRef.confirm을 setTimeout으로 호출', async () => {
+  it('locale=ko + 실제 clientKey 응답 시 위젯 렌더링 후 사용자 결제를 기다린다', async () => {
     const prepareResult: PreparePaymentResponse = {
       paymentId: 3,
       orderId: mockOrder.id,
@@ -660,14 +660,8 @@ describe('useCheckout - Toss 결제 흐름', () => {
     expect(options.setCurrentOrderId).toHaveBeenCalledWith(mockOrder.id);
     expect(options.setCurrentOrderNumber).toHaveBeenCalledWith(mockOrder.orderNumber);
     expect(options.setPrepareResult).toHaveBeenCalledWith(prepareResult);
-    // confirm은 setTimeout 100ms 이후 호출
     expect(confirmSpy).not.toHaveBeenCalled();
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(150);
-    });
-
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(options.setStep).toHaveBeenCalledWith('idle');
     expect(mockPaymentsConfirm).not.toHaveBeenCalled();
   });
 });

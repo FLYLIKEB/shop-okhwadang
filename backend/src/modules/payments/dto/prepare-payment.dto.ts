@@ -14,11 +14,11 @@ export class PreparePaymentDto {
 
   @ApiPropertyOptional({
     example: 'paypal',
-    enum: ['naverpay', 'bank_transfer', 'eximbay', 'paypal'],
+    enum: ['toss', 'naverpay', 'bank_transfer', 'eximbay', 'paypal'],
     description: '사용자가 명시적으로 선택한 결제 게이트웨이',
   })
   @IsOptional()
   @IsString({ message: '결제 게이트웨이는 문자열이어야 합니다.' })
-  @IsIn(['naverpay', 'bank_transfer', 'eximbay', 'paypal'], { message: '결제 게이트웨이는 naverpay, bank_transfer, eximbay 또는 paypal만 지원합니다.' })
-  gateway?: 'naverpay' | 'bank_transfer' | 'eximbay' | 'paypal';
+  @IsIn(['toss', 'naverpay', 'bank_transfer', 'eximbay', 'paypal'], { message: '결제 게이트웨이는 toss, naverpay, bank_transfer, eximbay 또는 paypal만 지원합니다.' })
+  gateway?: 'toss' | 'naverpay' | 'bank_transfer' | 'eximbay' | 'paypal';
 }

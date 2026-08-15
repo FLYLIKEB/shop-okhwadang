@@ -1,6 +1,6 @@
 import { apiClient, type RequestOptions } from './core';
 
-export type CheckoutGatewayName = 'naverpay' | 'bank_transfer' | 'eximbay' | 'paypal';
+export type CheckoutGatewayName = 'toss' | 'naverpay' | 'bank_transfer' | 'eximbay' | 'paypal';
 
 export interface PreparePaymentResponse {
   paymentId: number;

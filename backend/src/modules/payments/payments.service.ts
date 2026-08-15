@@ -9,6 +9,7 @@ import {
   Logger,
   Inject,
 } from '@nestjs/common';
+import { createHmac } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import {
@@ -203,12 +204,19 @@ export class PaymentsService {
     return this.prepareForOrder(Number(order.id), {
       locale: dto.locale,
       gateway: dto.gateway,
+      customerKey: this.createTossCustomerKey(userId),
     });
+  }
+
+  private createTossCustomerKey(userId: number): string {
+    return createHmac('sha256', this.paymentConfig.toss.secretKey)
+      .update(`ockhwadang:user:${userId}`)
+      .digest('hex');
   }
 
   async prepareForOrder(
     orderId: number,
-    options: Pick<PreparePaymentDto, 'locale' | 'gateway'>,
+    options: Pick<PreparePaymentDto, 'locale' | 'gateway'> & { customerKey?: string },
   ): Promise<{
     paymentId: number;
     orderId: number;
@@ -306,7 +314,16 @@ export class PaymentsService {
       clientKey: result.clientKey,
       availableGateways,
       ...(result.redirectUrl ? { redirectUrl: result.redirectUrl } : {}),
-      ...(result.gatewayPayload ? { gatewayPayload: result.gatewayPayload } : {}),
+      ...(
+        result.gatewayPayload || prepared.gatewayName === 'toss'
+          ? {
+              gatewayPayload: {
+                ...result.gatewayPayload,
+                customerKey: options.customerKey ?? 'ANONYMOUS',
+              },
+            }
+          : {}
+      ),
     };
   }
 

@@ -40,8 +40,12 @@ vi.mock('next-intl', () => ({
 }));
 
 vi.mock('@tosspayments/tosspayments-sdk', () => ({
+  ANONYMOUS: '@@ANONYMOUS',
   loadTossPayments: vi.fn().mockResolvedValue({
-    payment: vi.fn().mockReturnValue({
+    widgets: vi.fn().mockReturnValue({
+      setAmount: vi.fn().mockResolvedValue(undefined),
+      renderPaymentMethods: vi.fn().mockResolvedValue(undefined),
+      renderAgreement: vi.fn().mockResolvedValue(undefined),
       requestPayment: vi.fn().mockResolvedValue(undefined),
     }),
   }),
@@ -73,7 +77,7 @@ describe('PaymentGateway', () => {
     delete window.Naver;
     delete window.EXIMBAY;
   });
-  it('locale=ko + 유효 clientKey → Toss 라디오 표시', () => {
+  it('locale=ko + 유효 clientKey → Toss 결제위젯 영역을 렌더링한다', async () => {
     const prepareResult: PreparePaymentResponse = {
       paymentId: 1,
       orderId: 1,
@@ -81,6 +85,7 @@ describe('PaymentGateway', () => {
       amount: 50000,
       gateway: 'toss',
       clientKey: 'test_ck_real_value',
+      gatewayPayload: { customerKey: 'member-customer-key' },
     };
     render(
       <PaymentGateway
@@ -89,7 +94,9 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByText('토스페이먼츠 (카드)')).toBeInTheDocument();
+    expect(document.querySelector('#toss-payment-methods')).toBeInTheDocument();
+    await act(async () => {});
+    expect(document.querySelector('#toss-payment-methods')).toHaveAttribute('aria-busy', 'false');
   });
 
   it('gateway=stripe + 유효 clientKey → Stripe Element 라디오 표시', () => {

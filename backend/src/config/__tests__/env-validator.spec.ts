@@ -17,6 +17,8 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   NOTIFICATION_PROVIDER: 'resend',
   RESEND_API_KEY: 're_abc123',
   PAYMENT_GATEWAY: 'toss',
+  TOSS_CLIENT_KEY: 'test_gck_docs',
+  TOSS_SECRET_KEY: 'test_gsk_docs',
   STORAGE_PROVIDER: 's3',
   AWS_S3_BUCKET_NAME: 'okhwadang-assets',
   AWS_REGION: 'ap-northeast-2',

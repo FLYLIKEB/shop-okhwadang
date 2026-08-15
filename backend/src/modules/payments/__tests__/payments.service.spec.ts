@@ -195,6 +195,7 @@ describe('PaymentsService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockTossAdapter.prepare.mockResolvedValue({ clientKey: 'toss-widget-client', orderId: '1' });
     const defaultManager = makeTransactionManager({
       findOne: jest.fn().mockImplementation((entity: unknown, options: unknown) => {
         if (entity === Payment) {
@@ -314,22 +315,22 @@ describe('PaymentsService', () => {
       await expect(service.prepare({ orderId: 1 }, 10)).rejects.toThrow(ConflictException);
     });
 
-    it('locale=ko 기본 prepare → NAVERPAY 저장 + paypal/eximbay 선택지 반환 (#769/#1057)', async () => {
+    it('locale=ko 기본 prepare → Toss 결제위젯만 반환하고 회원 customerKey를 생성한다', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
       mockPaymentRepo.findOne.mockResolvedValue(null);
-      const savedPayment = makePayment({ gateway: PaymentGatewayType.NAVERPAY });
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.TOSS });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockNaverpayAdapter.prepare.mockResolvedValue({ clientKey: 'naverpay-client', orderId: '1' });
 
       const result = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
 
-      expect(result.gateway).toBe('naverpay');
-      expect(result.availableGateways).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
-      expect(mockNaverpayAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
+      expect(result.gateway).toBe('toss');
+      expect(result.availableGateways).toEqual(['toss']);
+      expect(result.gatewayPayload?.customerKey).toMatch(/^[a-f0-9]{64}$/);
+      expect(mockTossAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: PaymentGatewayType.NAVERPAY }),
+        expect.objectContaining({ gateway: PaymentGatewayType.TOSS }),
       );
     });
 
@@ -352,21 +353,20 @@ describe('PaymentsService', () => {
       );
     });
 
-    it('명시적 gateway=bank_transfer → pending 무통장입금 결제로 저장한다 (#1075)', async () => {
+    it('ko에서 비활성 gateway를 요청하면 Toss로 제한한다', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
       mockPaymentRepo.findOne.mockResolvedValue(null);
-      const savedPayment = makePayment({ gateway: PaymentGatewayType.MOCK, method: PaymentMethod.BANK_TRANSFER });
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.TOSS });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
       const result = await service.prepare({ orderId: 1, locale: 'ko', gateway: 'bank_transfer' }, 10);
 
-      expect(result.gateway).toBe('bank_transfer');
-      expect(result.availableGateways).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
-      expect(result.clientKey).toBe('bank_transfer');
-      expect(mockDefaultGateway.prepare).not.toHaveBeenCalled();
+      expect(result.gateway).toBe('toss');
+      expect(result.availableGateways).toEqual(['toss']);
+      expect(result.clientKey).toBe('toss-widget-client');
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ method: PaymentMethod.BANK_TRANSFER, gateway: PaymentGatewayType.MOCK }),
+        expect.objectContaining({ gateway: PaymentGatewayType.TOSS }),
       );
     });
 
@@ -381,11 +381,11 @@ describe('PaymentsService', () => {
 
       const result = await service.prepare({ orderId: 1, locale: 'ko', gateway: 'paypal' }, 10);
 
-      expect(result.gateway).toBe('paypal');
-      expect(mockPaypalAdapter.prepare).toHaveBeenCalled();
+      expect(result.gateway).toBe('toss');
+      expect(mockTossAdapter.prepare).toHaveBeenCalled();
       expect(mockNaverpayAdapter.prepare).not.toHaveBeenCalled();
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: PaymentGatewayType.PAYPAL }),
+        expect.objectContaining({ gateway: PaymentGatewayType.TOSS }),
       );
     });
 
@@ -414,11 +414,11 @@ describe('PaymentsService', () => {
 
       const result = await service.prepare({ orderId: 1, locale: 'ko', gateway: 'eximbay' }, 10);
 
-      expect(result.gateway).toBe('eximbay');
-      expect(result.availableGateways).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
-      expect(mockEximbayAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
+      expect(result.gateway).toBe('toss');
+      expect(result.availableGateways).toEqual(['toss']);
+      expect(mockTossAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: PaymentGatewayType.EXIMBAY }),
+        expect.objectContaining({ gateway: PaymentGatewayType.TOSS }),
       );
     });
   });
@@ -608,31 +608,29 @@ describe('PaymentsService', () => {
       expect(mockDefaultGateway.cancel).not.toHaveBeenCalled();
     });
 
-    it('locale=ko prepare → confirm 시 NaverPay adapter의 confirm()이 호출되어야 함', async () => {
+    it('locale=ko prepare → confirm 시 Toss adapter의 confirm()이 호출되어야 함', async () => {
       const order = makeOrder();
       mockOrderRepo.findOne.mockResolvedValue(order);
       mockPaymentRepo.findOne.mockResolvedValue(null);
-      const savedPayment = makePayment({ gateway: PaymentGatewayType.NAVERPAY });
+      const savedPayment = makePayment({ gateway: PaymentGatewayType.TOSS });
       mockPaymentRepo.create.mockReturnValue(savedPayment);
       mockPaymentRepo.save.mockResolvedValue(savedPayment);
-      mockNaverpayAdapter.prepare.mockResolvedValue({ clientKey: 'naverpay_client_key', orderId: '1' });
-
       const prepareResult = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
-      expect(prepareResult.gateway).toBe('naverpay');
+      expect(prepareResult.gateway).toBe('toss');
 
-      const paymentForConfirm = makePayment({ gateway: PaymentGatewayType.NAVERPAY });
+      const paymentForConfirm = makePayment({ gateway: PaymentGatewayType.TOSS });
       mockPaymentRepo.findOne.mockResolvedValue(paymentForConfirm);
-      mockNaverpayAdapter.confirm.mockResolvedValue({
-        paymentKey: 'pay_naverpay_abc',
+      mockTossAdapter.confirm.mockResolvedValue({
+        paymentKey: 'pay_toss_abc',
         method: 'card',
         amount: 30000,
         status: 'confirmed',
-        rawResponse: { naverpay: true },
+        rawResponse: { toss: true },
       });
 
-      const confirmResult = await service.confirm({ orderId: 1, paymentKey: 'pay_naverpay_abc', amount: 30000 }, 10);
+      const confirmResult = await service.confirm({ orderId: 1, paymentKey: 'pay_toss_abc', amount: 30000 }, 10);
       expect(confirmResult.status).toBe(PaymentStatus.CONFIRMED);
-      expect(mockNaverpayAdapter.confirm).toHaveBeenCalledWith('pay_naverpay_abc', 30000, 'ORD-20240101-ABCD1');
+      expect(mockTossAdapter.confirm).toHaveBeenCalledWith('pay_toss_abc', 30000, 'ORD-20240101-ABCD1');
       expect(mockDefaultGateway.confirm).not.toHaveBeenCalled();
     });
   });

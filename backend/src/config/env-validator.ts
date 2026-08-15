@@ -27,6 +27,7 @@ export const REQUIRED_PROD_ENV_KEYS = [
 ] as const;
 
 export const CHECKOUT_PROVIDER_ENV_KEYS = {
+  toss: [...CHECKOUT_GATEWAY_CONTRACT.toss.requiredEnvKeys],
   naverpay: [...CHECKOUT_GATEWAY_CONTRACT.naverpay.requiredEnvKeys],
   paypal: [...CHECKOUT_GATEWAY_CONTRACT.paypal.requiredEnvKeys],
   eximbay: [...CHECKOUT_GATEWAY_CONTRACT.eximbay.requiredEnvKeys],
