@@ -117,9 +117,8 @@ export function useCheckout(options: UseCheckoutOptions) {
       options.setCurrentOrderId(orderId);
       options.setCurrentOrderNumber(orderNumber);
       options.setPrepareResult(result);
-      setTimeout(async () => {
-        await options.paymentRef.current?.confirm();
-      }, 100);
+      options.setStep('idle');
+      toast.info(toastMessage('paymentMethodPrompt'));
     },
     [options],
   );
@@ -217,7 +216,7 @@ export function useCheckout(options: UseCheckoutOptions) {
 
       if (
         options.prepareResult &&
-        ['stripe', 'paypal', 'naverpay', 'eximbay'].includes(options.prepareResult.gateway)
+        ['toss', 'stripe', 'paypal', 'naverpay', 'eximbay'].includes(options.prepareResult.gateway)
       ) {
         await handlePreparedGatewayFlow();
         return;

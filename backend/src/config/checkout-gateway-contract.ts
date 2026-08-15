@@ -1,4 +1,4 @@
-export type CheckoutGatewayName = 'naverpay' | 'bank_transfer' | 'eximbay' | 'paypal';
+export type CheckoutGatewayName = 'toss' | 'naverpay' | 'bank_transfer' | 'eximbay' | 'paypal';
 export type CheckoutLocale = 'ko' | 'en';
 export type CheckoutGatewayCspDirective =
   | 'style-src'
@@ -13,14 +13,23 @@ interface CheckoutGatewayContract {
   csp: Partial<Record<CheckoutGatewayCspDirective, readonly string[]>>;
 }
 
-export const DEFAULT_CHECKOUT_GATEWAYS = ['naverpay', 'bank_transfer', 'paypal', 'eximbay'] as const satisfies readonly CheckoutGatewayName[];
+export const DEFAULT_CHECKOUT_GATEWAYS = ['toss', 'paypal', 'eximbay'] as const satisfies readonly CheckoutGatewayName[];
 
 export const CHECKOUT_GATEWAY_ORDER_BY_LOCALE = {
-  ko: DEFAULT_CHECKOUT_GATEWAYS,
+  ko: ['toss'],
   en: ['paypal', 'eximbay'],
 } as const satisfies Record<CheckoutLocale, readonly CheckoutGatewayName[]>;
 
 export const CHECKOUT_GATEWAY_CONTRACT = {
+  toss: {
+    requiredEnvKeys: ['TOSS_CLIENT_KEY', 'TOSS_SECRET_KEY'],
+    csp: {
+      'script-src': ['https://js.tosspayments.com'],
+      'connect-src': ['https://api.tosspayments.com'],
+      'child-src': ['https://*.tosspayments.com'],
+      'frame-src': ['https://*.tosspayments.com'],
+    },
+  },
   naverpay: {
     requiredEnvKeys: [
       'NAVERPAY_PARTNER_ID',
@@ -106,7 +115,7 @@ export const CHECKOUT_GATEWAY_CHANGE_FILES = [
 ] as const;
 
 export function isCheckoutGatewayName(value: string): value is CheckoutGatewayName {
-  return value === 'naverpay' || value === 'bank_transfer' || value === 'eximbay' || value === 'paypal';
+  return value === 'toss' || value === 'naverpay' || value === 'bank_transfer' || value === 'eximbay' || value === 'paypal';
 }
 
 export function parseConfiguredCheckoutGateways(configured: string | undefined | null): CheckoutGatewayName[] {
@@ -119,7 +128,7 @@ export function parseConfiguredCheckoutGateways(configured: string | undefined |
     return [];
   }
 
-  return [...new Set([...gateways, 'bank_transfer' as const])];
+  return [...new Set(gateways)];
 }
 
 export function getEnabledCheckoutGateways(

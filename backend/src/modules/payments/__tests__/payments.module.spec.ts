@@ -115,26 +115,26 @@ describe('createPaymentConfig — 프로덕션 Mock 차단', () => {
   });
 });
 
-describe('locale gateway policy — express payments first and country-specific visibility', () => {
-  it('ko → naverpay default, bank transfer, paypal, eximbay card fallback', () => {
-    expect(resolveGatewayByLocale('ko')).toBe('naverpay');
-    expect(getAvailableGatewaysByLocale('ko')).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
+describe('locale gateway policy — country-specific visibility', () => {
+  it('ko → Toss 결제위젯만 노출', () => {
+    expect(resolveGatewayByLocale('ko')).toBe('toss');
+    expect(getAvailableGatewaysByLocale('ko')).toEqual(['toss']);
   });
 
-  it('ko keeps bank transfer even when external gateways are configured by env', () => {
-    const env = { CHECKOUT_ENABLED_GATEWAYS: 'naverpay,paypal,eximbay' } as NodeJS.ProcessEnv;
+  it('ko는 글로벌 게이트웨이가 함께 활성화되어도 Toss만 노출한다', () => {
+    const env = { CHECKOUT_ENABLED_GATEWAYS: 'toss,paypal,eximbay' } as NodeJS.ProcessEnv;
 
-    expect(getAvailableGatewaysByLocale('ko', env)).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
+    expect(getAvailableGatewaysByLocale('ko', env)).toEqual(['toss']);
     expect(getAvailableGatewaysByLocale('en', env)).toEqual(['paypal', 'eximbay']);
   });
 
-  it('ko hides disabled express gateways when only paypal is enabled', () => {
+  it('ko에서 Toss가 비활성화되면 결제수단을 노출하지 않는다', () => {
     const previous = process.env.CHECKOUT_ENABLED_GATEWAYS;
     process.env.CHECKOUT_ENABLED_GATEWAYS = 'paypal';
 
     try {
-      expect(resolveGatewayByLocale('ko')).toBe('bank_transfer');
-      expect(getAvailableGatewaysByLocale('ko')).toEqual(['bank_transfer', 'paypal']);
+      expect(resolveGatewayByLocale('ko')).toBeUndefined();
+      expect(getAvailableGatewaysByLocale('ko')).toEqual([]);
       expect(getAvailableGatewaysByLocale('en')).toEqual(['paypal']);
     } finally {
       if (previous === undefined) {

@@ -442,6 +442,7 @@
     "freeShippingUnlocked": "무료배송이 적용되었습니다.",
     "freeShippingRemaining": "{amount} 더 담으면 무료배송",
     "paypalPayment": "PayPal",
+    "tossPayment": "토스페이먼츠",
     "naverpayPayment": "네이버페이",
     "bankTransferPayment": "무통장입금",
     "bankTransferAccountTitle": "입금 계좌",

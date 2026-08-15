@@ -20,6 +20,7 @@ export function PaymentBrandIcon({ brand, className }: PaymentBrandIconProps) {
       aria-label={label}
       role="img"
     >
+      {brand === 'toss' && <TossMark />}
       {brand === 'paypal' && <PayPalMark />}
       {brand === 'naverpay' && <NaverPayMark />}
       {brand === 'bank_transfer' && <BankTransferMark />}
@@ -32,6 +33,7 @@ export function PaymentBrandIcon({ brand, className }: PaymentBrandIconProps) {
 }
 
 const BRAND_LABELS: Record<PaymentBrand, string> = {
+  toss: 'Toss Payments',
   paypal: 'PayPal',
   naverpay: 'Naver Pay',
   bank_transfer: 'Bank transfer',
@@ -40,6 +42,15 @@ const BRAND_LABELS: Record<PaymentBrand, string> = {
   mastercard: 'Mastercard',
   amex: 'American Express',
 };
+
+function TossMark() {
+  return (
+    <svg viewBox="0 0 64 28" className="h-full w-16" aria-hidden="true">
+      <rect width="64" height="28" rx="3" fill="#3182F6" />
+      <text x="10" y="18" fill="#fff" fontSize="11" fontWeight="700" fontFamily="Arial, sans-serif">Toss</text>
+    </svg>
+  );
+}
 
 function PayPalMark() {
   return (

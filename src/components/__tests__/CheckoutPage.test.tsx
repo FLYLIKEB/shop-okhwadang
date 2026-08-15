@@ -26,6 +26,7 @@ vi.mock('next-intl', () => ({
       addressDetail: '상세 주소',
       shippingMemo: '배송 메모',
       paymentMethod: '결제 수단',
+      tossPayment: '토스페이먼츠',
       paypalPayment: 'PayPal',
       naverpayPayment: '네이버페이',
       bankTransferPayment: '무통장입금',
@@ -196,6 +197,7 @@ describe('CheckoutPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
+    process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS = 'toss,paypal,eximbay';
     vi.mocked(checkoutPricingApi.preview).mockResolvedValue(defaultPreview);
   });
 
@@ -339,36 +341,21 @@ describe('CheckoutPage', () => {
     expect(paymentsApi.confirm).toHaveBeenCalledOnce();
   });
 
-  it('ko checkout은 간편결제를 기본 선택하고 무통장입금 안내와 카드 입력 shell을 조건부 표시한다', async () => {
-    const user = userEvent.setup();
+  it('ko checkout은 토스페이먼츠만 노출한다', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
 
     await renderCheckoutPage();
 
-    expect(await screen.findByRole('radio', { name: /네이버페이/ })).toBeChecked();
-    expect(screen.getByRole('radio', { name: /PayPal/ })).not.toBeChecked();
-    expect(screen.getByRole('radio', { name: /Credit card/ })).not.toBeChecked();
+    expect(await screen.findByRole('radio', { name: /토스페이먼츠/ })).toBeChecked();
+    expect(screen.queryByRole('radio', { name: /네이버페이/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /PayPal/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Credit card/ })).not.toBeInTheDocument();
     expect(screen.queryByTestId('secure-card-entry-shell')).not.toBeInTheDocument();
     expect(screen.queryByTestId('bank-transfer-account-info')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('radio', { name: /무통장입금/ }));
-
-    expect(await screen.findByTestId('bank-transfer-account-info')).toBeInTheDocument();
-    expect(screen.getByText('123456-78-901234')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('radio', { name: /Credit card/ }));
-
-    expect(await screen.findByTestId('secure-card-entry-shell')).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /Credit card/ })).toBeChecked();
-    expect(screen.getByPlaceholderText('Card number')).toHaveAttribute('readonly');
-    expect(screen.getByPlaceholderText('MM / YY')).toHaveAttribute('readonly');
-    expect(screen.getByPlaceholderText('Security code')).toHaveAttribute('readonly');
-    expect(screen.getByText('Use shipping address as billing address')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Pay now' })).toBeInTheDocument();
   });
 
-  it('ko checkout에서 PayPal로 전환하면 prepare gateway=paypal 전달', async () => {
+  it('ko checkout은 prepare gateway=toss를 전달한다', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
@@ -381,14 +368,13 @@ describe('CheckoutPage', () => {
     });
     vi.mocked(paymentsApi.prepare).mockResolvedValue({
       paymentId: 1, orderId: 1, orderNumber: 'ORD-001',
-      amount: 40000, gateway: 'paypal', clientKey: 'paypal-client',
-      redirectUrl: 'https://www.paypal.com/checkoutnow?token=PAYPAL-ORDER-1',
-      availableGateways: ['naverpay', 'eximbay', 'paypal'],
+      amount: 40000, gateway: 'toss', clientKey: 'toss-widget-client',
+      gatewayPayload: { customerKey: 'member-customer-key' },
+      availableGateways: ['toss'],
     });
 
     await renderCheckoutPage();
-    expect(await screen.findByRole('radio', { name: /네이버페이/ })).toBeChecked();
-    await user.click(screen.getByRole('radio', { name: /PayPal/ }));
+    expect(await screen.findByRole('radio', { name: /토스페이먼츠/ })).toBeChecked();
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');
@@ -397,13 +383,10 @@ describe('CheckoutPage', () => {
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
-      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 1, locale: 'ko', gateway: 'paypal' });
+      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 1, locale: 'ko', gateway: 'toss' });
       expect(screen.getByTestId('payment-gateway')).toBeInTheDocument();
     });
-
-    await waitFor(() => {
-      expect(mockPaymentGatewayConfirm).toHaveBeenCalledTimes(1);
-    });
+    expect(mockPaymentGatewayConfirm).not.toHaveBeenCalled();
   });
 
   const defaultAddress: UserAddress = {

@@ -69,8 +69,9 @@ nslookup -type=TXT _dmarc.ockhwadang.com
 - 백엔드/EC2 `.env.production` `BACKEND_URL=https://api.ockhwadang.com/api` (결제 webhook/status_url, 업로드 절대 URL 생성에 사용)
 - `api.ockhwadang.com` 은 Cloudflare **Proxied + SSL/TLS mode `Full (strict)`** 로 유지하고, EC2 nginx 443에는 Cloudflare Origin CA 또는 동등한 서버 인증서를 설치한다.
 - `SITE_URL=https://ockhwadang.com`
-- `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS=naverpay,paypal,eximbay`
-- `CHECKOUT_ENABLED_GATEWAYS=naverpay,paypal,eximbay` (프론트와 동일하게 유지; 단일 소스는 `backend/src/config/checkout-gateway-contract.ts`)
+- `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS=toss,paypal,eximbay`
+- `CHECKOUT_ENABLED_GATEWAYS=toss,paypal,eximbay` (한국어는 Toss 결제위젯만 노출; 단일 소스는 `backend/src/config/checkout-gateway-contract.ts`)
+- `NEXT_PUBLIC_TOSS_CLIENT_KEY`, `TOSS_CLIENT_KEY`, `TOSS_SECRET_KEY`는 운영 배포 전에 문서용 테스트 키에서 실제 상점의 주문서형 키 쌍으로 교체
 
 ## 배포 구조
 

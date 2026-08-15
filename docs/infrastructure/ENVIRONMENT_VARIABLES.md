@@ -6,7 +6,7 @@
 | ------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `BACKEND_URL` | `http://localhost:3000` | Next.js middleware 프록시와 SSR fetch가 공유하는 **백엔드 origin**. canonical contract는 `origin only` 이며 앱 코드가 `/api/*` 를 붙인다. 예: 로컬 `http://localhost:3000`, 운영 `https://api.ockhwadang.com` |
 | `SITE_URL`    | `http://localhost:5173` | canonical 프론트엔드 origin. 메타데이터/redirect/배포 smoke test 기준 URL                                                                                                                                    |
-| `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` | `naverpay,paypal,eximbay` | 체크아웃 노출 계약. `backend/src/config/checkout-gateway-contract.ts` 기준으로 로케일별 결제수단 노출과 CSP를 함께 관리 |
+| `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` | `toss,paypal,eximbay` | 체크아웃 노출 계약. 한국어는 Toss 결제위젯만, 영어는 PayPal/Eximbay를 노출 |
 
 ### 프록시 계약 메모
 
@@ -77,8 +77,11 @@
 
 | 변수 | 기본값 | 설명 |
 | --- | --- | --- |
-| `CHECKOUT_ENABLED_GATEWAYS` | `naverpay,paypal,eximbay` | 백엔드 체크아웃 노출 계약. 쉼표 구분. `bank_transfer`는 `ko` 체크아웃에서 항상 유지 |
-| `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` | `naverpay,paypal,eximbay` | 프론트 체크아웃 노출 계약. Vercel 빌드 시 CSP 허용 목록도 이 값 기준으로 계산 |
+| `CHECKOUT_ENABLED_GATEWAYS` | `toss,paypal,eximbay` | 백엔드 체크아웃 노출 계약. 한국어는 Toss 결제위젯만 허용 |
+| `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` | `toss,paypal,eximbay` | 프론트 체크아웃 노출 계약. Vercel 빌드 시 CSP 허용 목록도 이 값 기준으로 계산 |
+| `NEXT_PUBLIC_TOSS_CLIENT_KEY` | — | Toss 결제위젯 클라이언트 키. 운영 배포 전에 문서용 테스트 키를 실제 상점 키로 교체 |
+| `TOSS_CLIENT_KEY` | — | 백엔드가 결제 준비 응답으로 전달하는 Toss 결제위젯 클라이언트 키 |
+| `TOSS_SECRET_KEY` | — | Toss 승인·취소 API 시크릿 키. 클라이언트 키와 같은 상점 키 쌍을 사용 |
 | `PAYMENT_GATEWAY` | `mock` | 백엔드 기본 PG 어댑터 (`mock`/`toss`/`stripe`/`inicis`/`naverpay`/`paypal`/`eximbay`). `mock`은 프로덕션 차단 |
 | `NAVERPAY_PARTNER_ID` | — | NaverPay partner ID (프로덕션 체크아웃 필수) |
 | `NAVERPAY_CLIENT_ID` | — | NaverPay client ID (프로덕션 체크아웃 필수) |

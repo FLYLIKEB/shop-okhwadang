@@ -54,6 +54,7 @@ function getPaymentMethodLabel(
   gateway: CheckoutGatewayName,
   t: ReturnType<typeof useTranslations>,
 ): string {
+  if (gateway === 'toss') return t('tossPayment');
   if (gateway === 'naverpay') return t('naverpayPayment');
   if (gateway === 'bank_transfer') return t('bankTransferPayment');
   if (gateway === 'paypal') return t('paypalPayment');

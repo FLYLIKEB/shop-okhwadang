@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMethodSelector';
 import { getDefaultCheckoutGateway, getGatewayOptionsByLocale } from '@/constants/checkoutPaymentMethods';
 
@@ -8,6 +8,7 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => {
     const dict: Record<string, string> = {
       paymentMethod: 'Payment Method',
+      tossPayment: '토스페이먼츠',
       paypalPayment: 'PayPal',
       naverpayPayment: '네이버페이',
       bankTransferPayment: '무통장입금',
@@ -43,12 +44,15 @@ vi.mock('next-intl', () => ({
 }));
 
 describe('PaymentMethodSelector', () => {
-  it('ko 정책은 네이버페이 → 무통장입금 → PayPal → Credit card 순서이고 카드는 선택할 때만 열린다', async () => {
-    const user = userEvent.setup();
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS = 'toss,paypal,eximbay';
+  });
+
+  it('ko 정책은 토스페이먼츠 결제위젯만 노출한다', () => {
     const onSelect = vi.fn();
     const options = getGatewayOptionsByLocale('ko');
 
-    const { rerender } = render(
+    render(
       <PaymentMethodSelector
         gatewayOptions={options}
         selectedGateway={getDefaultCheckoutGateway('ko')}
@@ -57,45 +61,13 @@ describe('PaymentMethodSelector', () => {
       />,
     );
 
-    expect(options).toEqual(['naverpay', 'bank_transfer', 'paypal', 'eximbay']);
-    expect(screen.getByRole('radio', { name: /네이버페이/ })).toBeChecked();
-    expect(screen.getByRole('radio', { name: /무통장입금/ })).toBeInTheDocument();
+    expect(options).toEqual(['toss']);
+    expect(screen.getByRole('radio', { name: /토스페이먼츠/ })).toBeChecked();
+    expect(screen.queryByRole('radio', { name: /네이버페이/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /무통장입금/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /PayPal/ })).not.toBeInTheDocument();
     expect(screen.queryByTestId('secure-card-entry-shell')).not.toBeInTheDocument();
     expect(screen.queryByTestId('bank-transfer-account-info')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('radio', { name: /무통장입금/ }));
-    expect(onSelect).toHaveBeenCalledWith('bank_transfer');
-
-    rerender(
-      <PaymentMethodSelector
-        gatewayOptions={options}
-        selectedGateway="bank_transfer"
-        onSelect={onSelect}
-        showCardSubmitButton
-      />,
-    );
-
-    expect(screen.getByTestId('bank-transfer-account-info')).toBeInTheDocument();
-    expect(screen.getByText('123456-78-901234')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('radio', { name: /Credit card/ }));
-    expect(onSelect).toHaveBeenCalledWith('eximbay');
-
-    rerender(
-      <PaymentMethodSelector
-        gatewayOptions={options}
-        selectedGateway="eximbay"
-        onSelect={onSelect}
-        showCardSubmitButton
-      />,
-    );
-
-    const cardShell = screen.getByTestId('secure-card-entry-shell');
-    expect(cardShell).toBeInTheDocument();
-    expect(cardShell.querySelector('[style]')).toBeNull();
-    expect(screen.getByLabelText('Visa')).toBeInTheDocument();
-    expect(screen.getByLabelText('Mastercard')).toBeInTheDocument();
-    expect(screen.getByLabelText('American Express')).toBeInTheDocument();
   });
 
   it('en 정책은 네이버페이를 숨기고 PayPal을 기본으로 둔다', () => {
@@ -118,7 +90,7 @@ describe('PaymentMethodSelector', () => {
 
   it('NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS로 비활성 게이트웨이를 숨긴다', () => {
     const previous = process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS;
-    process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS = 'paypal';
+    process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS = 'toss';
 
     try {
       const options = getGatewayOptionsByLocale('ko');
@@ -131,9 +103,8 @@ describe('PaymentMethodSelector', () => {
         />,
       );
 
-      expect(options).toEqual(['bank_transfer', 'paypal']);
-      expect(screen.getByRole('radio', { name: /무통장입금/ })).toBeChecked();
-      expect(screen.getByRole('radio', { name: /PayPal/ })).toBeInTheDocument();
+      expect(options).toEqual(['toss']);
+      expect(screen.getByRole('radio', { name: /토스페이먼츠/ })).toBeChecked();
       expect(screen.queryByRole('radio', { name: /네이버페이|Naver Pay/ })).not.toBeInTheDocument();
       expect(screen.queryByRole('radio', { name: /Credit card/ })).not.toBeInTheDocument();
     } finally {
