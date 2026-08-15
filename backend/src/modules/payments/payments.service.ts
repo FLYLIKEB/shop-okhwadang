@@ -48,6 +48,7 @@ import { PaymentWebhookService } from './services/payment-webhook.service';
 import { runFirstTerminalTransitionRecovery } from './services/order-terminal-recovery.util';
 import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../config/payment.config';
+import { IdempotencyService } from '../../common/services/idempotency.service';
 
 
 class AmbiguousGatewayOutcomeError extends Error {
@@ -89,6 +90,7 @@ export class PaymentsService {
     private readonly pointsService: PointsService,
     private readonly paymentConfirmationService: PaymentConfirmationService,
     private readonly dataSource: DataSource,
+    private readonly idempotencyService: IdempotencyService,
   ) {
     this.paymentRefundService = new PaymentRefundService({
       paymentRepository: this.paymentRepository,
@@ -184,6 +186,7 @@ export class PaymentsService {
   async prepare(
     dto: PreparePaymentDto,
     userId: number,
+    idempotencyKey?: string,
   ): Promise<{
     paymentId: number;
     orderId: number;
@@ -195,18 +198,26 @@ export class PaymentsService {
     redirectUrl?: string;
     gatewayPayload?: Record<string, string | number | boolean>;
   }> {
-    const order = await findOrThrow(
-      this.orderRepository,
-      { id: dto.orderId },
-      '주문을 찾을 수 없습니다.',
-    );
-    this.assertMemberOwnership(order.userId, userId);
-
-    return this.prepareForOrder(Number(order.id), {
-      locale: dto.locale,
-      gateway: dto.gateway,
-      customerKey: this.createTossCustomerKey(userId),
-    });
+    return (await this.idempotencyService.execute(
+      `member:${userId}`,
+      'payment.prepare',
+      idempotencyKey,
+      dto,
+      async () => {
+        const order = await findOrThrow(
+          this.orderRepository,
+          { id: dto.orderId },
+          '주문을 찾을 수 없습니다.',
+        );
+        this.assertMemberOwnership(order.userId, userId);
+        return this.prepareForOrder(Number(order.id), {
+          locale: dto.locale,
+          gateway: dto.gateway,
+          customerKey: this.createTossCustomerKey(userId),
+          idempotencyKey,
+        });
+      },
+    )).result;
   }
 
   private createTossCustomerKey(userId: number): string {
@@ -218,7 +229,7 @@ export class PaymentsService {
 
   async prepareForOrder(
     orderId: number,
-    options: Pick<PreparePaymentDto, 'locale' | 'gateway'> & { customerKey?: string },
+    options: Pick<PreparePaymentDto, 'locale' | 'gateway'> & { customerKey?: string; idempotencyKey?: string },
   ): Promise<{
     paymentId: number;
     orderId: number;
@@ -305,6 +316,7 @@ export class PaymentsService {
     const result = await selectedGateway.prepare(String(normalizedOrderId), prepared.amount, {
       locale,
       orderNumber: prepared.orderNumber,
+      idempotencyKey: options.idempotencyKey,
     });
 
     return {
@@ -332,6 +344,7 @@ export class PaymentsService {
   async confirm(
     dto: ConfirmPaymentDto,
     userId: number,
+    idempotencyKey?: string,
   ): Promise<{
     paymentId: number;
     orderId: number;
@@ -341,7 +354,24 @@ export class PaymentsService {
     amount: number;
     paidAt: Date;
   }> {
-    return this.paymentConfirmationService.confirm(dto, userId);
+    const operation = await this.idempotencyService.reserve<{
+      paymentId: number;
+      orderId: number;
+      orderNumber: string;
+      status: PaymentStatus;
+      method: string;
+      amount: number;
+      paidAt: Date;
+    }>(`member:${userId}`, 'payment.confirm', idempotencyKey, dto);
+    if (operation.replayed) return operation.result!;
+    if (!operation.owner) throw new ConflictException('동일한 요청이 처리 중입니다.');
+    await this.idempotencyService.renewLease(operation.id, operation.leaseOwner!);
+    return this.paymentConfirmationService.confirm(
+      dto,
+      userId,
+      idempotencyKey,
+      (manager, response) => this.idempotencyService.complete(manager, operation.id, operation.leaseOwner!, response),
+    );
   }
 
   async reconcileConfirmedPayment(orderId: number): Promise<void> {
@@ -514,7 +544,8 @@ export class PaymentsService {
     const normalized = await this.normalizeEximbayWebhookPayload(payload);
     const trustedEximbayGateway: PaymentGateway = {
       prepare: (...args) => this.eximbayAdapter.prepare(...args),
-      confirm: (...args) => this.eximbayAdapter.confirm(...args),
+      confirm: (paymentKey, amount, orderId) =>
+        this.eximbayAdapter.confirm(paymentKey, amount, orderId),
       cancel: (...args) => this.eximbayAdapter.cancel(...args),
       partialCancel: (...args) => this.eximbayAdapter.partialCancel(...args),
       verifyWebhook: () => true,

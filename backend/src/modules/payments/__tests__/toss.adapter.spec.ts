@@ -39,6 +39,14 @@ describe('TossPaymentAdapter', () => {
       expect(result.status).toBe('confirmed');
     });
 
+    it('forwards the stable operation key to Toss', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ method: 'card' }) });
+      await adapter.confirm('pk123', 10000, 'ORD-TEST-001', { idempotencyKey: 'confirm-operation-key' });
+      expect(mockFetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+        headers: expect.objectContaining({ 'Idempotency-Key': 'confirm-operation-key' }),
+      }));
+    });
+
     it('토스 API 5xx → BadGatewayException', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,

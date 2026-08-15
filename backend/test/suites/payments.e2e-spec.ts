@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { e2eIdempotencyKey } from '../helpers/idempotency.helper';
 
 import {
   AuthCookies,
@@ -60,6 +61,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       // Create order
       const orderRes = await request(app.getHttpServer())
         .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
         .set('Cookie', cookieHeader(userCookies))
         .send({
           items: [{ productId, quantity: 1 }],
@@ -76,6 +78,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
     const createGuestOrder = async (email = guestEmail) => {
       const orderRes = await request(app.getHttpServer())
         .post('/api/guest/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-order'))
         .send({
           items: [{ productId, quantity: 1 }],
           guestEmail: email,
@@ -132,6 +135,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('no JWT → 401', () => {
         return request(app.getHttpServer())
           .post('/api/payments/prepare')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .send({ orderId })
           .expect(401);
       });
@@ -139,6 +143,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('invalid orderId → 404', () => {
         return request(app.getHttpServer())
           .post('/api/payments/prepare')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
           .send({ orderId: 999999 })
           .expect(404);
@@ -147,6 +152,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('valid → 200/201, has clientKey', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/payments/prepare')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
           .send({ orderId })
           .expect((r) => {
@@ -158,12 +164,24 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         expect(body.orderId).toBe(orderId);
         expect(body.amount).toBe(orderAmount);
       });
+
+      it('same payment preparation key replays the stored response', async () => {
+        const key = e2eIdempotencyKey('payment-prepare-replay');
+        const first = await request(app.getHttpServer()).post('/api/payments/prepare')
+          .set('Cookie', cookieHeader(userCookies)).set('Idempotency-Key', key).send({ orderId })
+          .expect((r) => { if (![200, 201].includes(r.status)) throw new Error(`unexpected ${r.status}`); });
+        const replay = await request(app.getHttpServer()).post('/api/payments/prepare')
+          .set('Cookie', cookieHeader(userCookies)).set('Idempotency-Key', key).send({ orderId })
+          .expect((r) => { if (![200, 201].includes(r.status)) throw new Error(`unexpected ${r.status}`); });
+        expect(replay.body).toEqual(first.body);
+      });
     });
 
     describe('POST /api/payments/confirm', () => {
       it('amount match → 200/201, status=confirmed', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/payments/confirm')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
           .send({ orderId, paymentKey: 'pay_mock_key', amount: orderAmount })
           .expect((r) => {
@@ -190,6 +208,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         // The order is already confirmed so we'll get 409; create a separate order for mismatch test
         const orderRes = await request(app.getHttpServer())
           .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
           .set('Cookie', cookieHeader(userCookies))
           .send({
             items: [{ productId, quantity: 1 }],
@@ -203,11 +222,13 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
         // Prepare it first
         await request(app.getHttpServer())
           .post('/api/payments/prepare')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
           .send({ orderId: mismatchOrderId });
 
         await request(app.getHttpServer())
           .post('/api/payments/confirm')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
           .send({ orderId: mismatchOrderId, paymentKey: 'pay_mismatch', amount: 99999 })
           .expect(400);
@@ -223,6 +244,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
       it('re-confirm (already confirmed) → 409', () => {
         return request(app.getHttpServer())
           .post('/api/payments/confirm')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
           .set('Cookie', cookieHeader(userCookies))
           .send({ orderId, paymentKey: 'pay_mock_key', amount: orderAmount })
           .expect(409);
@@ -235,6 +257,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
 
         await request(app.getHttpServer())
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/prepare`)
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .send({ locale: 'ko' })
           .expect(401);
       });
@@ -244,6 +267,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
 
         await request(app.getHttpServer())
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/prepare`)
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .set('X-Guest-Access-Token', 'invalid-token')
           .send({ locale: 'ko' })
           .expect(401);
@@ -254,6 +278,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
 
         const res = await request(app.getHttpServer())
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/prepare`)
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .set('X-Guest-Access-Token', guestOrder.guestAccessToken)
           .send({})
           .expect((r) => {
@@ -276,6 +301,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
 
         await request(app.getHttpServer())
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/confirm`)
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .set('X-Guest-Access-Token', 'invalid-token')
           .send({ paymentKey: 'pay_guest_invalid', amount: guestOrder.orderAmount })
           .expect(401);
@@ -286,6 +312,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
 
         await request(app.getHttpServer())
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/prepare`)
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .set('X-Guest-Access-Token', guestOrder.guestAccessToken)
           .send({})
           .expect((r) => {
@@ -295,6 +322,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
 
         const confirmRes = await request(app.getHttpServer())
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/confirm`)
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .set('X-Guest-Access-Token', guestOrder.guestAccessToken)
           .send({ paymentKey: 'pay_guest_mock_key', amount: guestOrder.orderAmount })
           .expect((r) => {
@@ -315,6 +343,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
 
         await request(app.getHttpServer())
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/prepare`)
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .set('X-Guest-Access-Token', guestOrder.guestAccessToken)
           .send({ locale: 'ko' })
           .expect(401);
@@ -333,21 +362,26 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
 
         await request(app.getHttpServer())
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/prepare`)
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .set('X-Guest-Access-Token', guestOrder.guestAccessToken)
           .send({})
           .expect((r) => {
             if (r.status !== 200 && r.status !== 201) throw new Error(`Expected 200/201 got ${r.status}: ${JSON.stringify(r.body)}`);
           });
 
+        const raceKey = e2eIdempotencyKey('guest-payment-race');
+        const racePayload = { paymentKey: 'pay_guest_race', amount: guestOrder.orderAmount };
         const [firstResult, secondResult] = await Promise.allSettled([
           request(app.getHttpServer())
             .post(`/api/guest/orders/${guestOrder.orderId}/payments/confirm`)
+            .set('Idempotency-Key', raceKey)
             .set('X-Guest-Access-Token', guestOrder.guestAccessToken)
-            .send({ paymentKey: 'pay_guest_race_first', amount: guestOrder.orderAmount }),
+            .send(racePayload),
           request(app.getHttpServer())
             .post(`/api/guest/orders/${guestOrder.orderId}/payments/confirm`)
+            .set('Idempotency-Key', raceKey)
             .set('X-Guest-Access-Token', guestOrder.guestAccessToken)
-            .send({ paymentKey: 'pay_guest_race_second', amount: guestOrder.orderAmount }),
+            .send(racePayload),
         ]);
 
         expect(firstResult.status).toBe('fulfilled');
@@ -359,11 +393,9 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
           }
           return result.value;
         });
-        const statuses = responses.map((response) => response.status).sort((a, b) => a - b);
-        expect(statuses.filter((status) => status === 200 || status === 201)).toHaveLength(1);
-        expect(statuses.filter((status) => status === 401 || status === 409)).toHaveLength(1);
-
-        const successResponse = responses.find((response) => response.status === 200 || response.status === 201);
+        expect(responses.every((response) => response.status === 200 || response.status === 201)).toBe(true);
+        const successResponse = responses[0];
+        expect(responses[1].body).toEqual(successResponse.body);
         expect(successResponse).toBeDefined();
 
         const successBody = successResponse!.body as {
@@ -380,6 +412,7 @@ export function registerPaymentsSuite(getApp: () => INestApplication) {
 
         await request(app.getHttpServer())
           .post(`/api/guest/orders/${guestOrder.orderId}/payments/prepare`)
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-payment'))
           .set('X-Guest-Access-Token', guestOrder.guestAccessToken)
           .send({})
           .expect(401);

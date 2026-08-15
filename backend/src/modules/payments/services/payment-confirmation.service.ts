@@ -104,7 +104,12 @@ export class PaymentConfirmationService {
     private readonly guestOrderAccessService: GuestOrderAccessService,
   ) {}
 
-  async confirm(dto: ConfirmPaymentDto, userId: number): Promise<ConfirmResponse> {
+  async confirm(
+    dto: ConfirmPaymentDto,
+    userId: number,
+    idempotencyKey?: string,
+    persistResult?: (manager: EntityManager, response: ConfirmResponse) => Promise<void>,
+  ): Promise<ConfirmResponse> {
     const payment = await findOrThrow(
       this.paymentRepository,
       { orderId: dto.orderId },
@@ -116,11 +121,10 @@ export class PaymentConfirmationService {
 
     let result: Awaited<ReturnType<PaymentGateway['confirm']>>;
     try {
-      result = await this.resolveGatewayByType(payment.gateway).confirm(
-        dto.paymentKey,
-        Number(payment.amount),
-        payment.order.orderNumber,
-      );
+      const gateway = this.resolveGatewayByType(payment.gateway);
+      result = idempotencyKey
+        ? await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber, { idempotencyKey })
+        : await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
     } catch (err) {
       await this.dataSource.transaction(async (manager) => {
         const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
@@ -143,8 +147,10 @@ export class PaymentConfirmationService {
           throw new ConflictException('이미 승인된 결제입니다.');
         }
 
-        this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
-        await this.applyFailedPaymentRecovery(manager, lockedPayment.id, dto.orderId);
+        if (!idempotencyKey) {
+          this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
+          await this.applyFailedPaymentRecovery(manager, lockedPayment.id, dto.orderId);
+        }
       });
 
       if (err instanceof ConflictException || err instanceof BadRequestException) {
@@ -207,18 +213,17 @@ export class PaymentConfirmationService {
           method: result.method,
         });
 
-        return {
-          payload,
-          response: {
-            paymentId: Number(lockedPayment.id),
-            orderId: dto.orderId,
-            orderNumber: lockedOrder.orderNumber,
-            status: PaymentStatus.CONFIRMED,
-            method: result.method,
-            amount: Number(lockedPayment.amount),
-            paidAt,
-          },
+        const response: ConfirmResponse = {
+          paymentId: Number(lockedPayment.id),
+          orderId: dto.orderId,
+          orderNumber: lockedOrder.orderNumber,
+          status: PaymentStatus.CONFIRMED,
+          method: result.method,
+          amount: Number(lockedPayment.amount),
+          paidAt,
         };
+        if (persistResult) await persistResult(manager, response);
+        return { payload, response };
       });
 
       this.dispatchPostCommit(outcome.payload);
@@ -228,7 +233,9 @@ export class PaymentConfirmationService {
       if (err instanceof ConflictException || err instanceof UnauthorizedException) {
         throw err;
       }
-      await this.persistConfirmationReconciliation(payment.id, dto.orderId, result, paidAt, err);
+      if (!idempotencyKey) {
+        await this.persistConfirmationReconciliation(payment.id, dto.orderId, result, paidAt, err);
+      }
       throw new InternalServerErrorException('결제 승인 후 동기화에 실패했습니다.');
     }
   }
@@ -241,6 +248,8 @@ export class PaymentConfirmationService {
     orderId: number,
     dto: GuestConfirmPaymentDto,
     guestAccessToken: string,
+    idempotencyKey?: string,
+    persistResult?: (manager: EntityManager, response: GuestConfirmResponse) => Promise<void>,
   ): Promise<GuestConfirmResponse> {
     await this.assertGuestAccessTokenActive(orderId, guestAccessToken);
 
@@ -254,11 +263,10 @@ export class PaymentConfirmationService {
 
     let result: Awaited<ReturnType<PaymentGateway['confirm']>>;
     try {
-      result = await this.resolveGatewayByType(payment.gateway).confirm(
-        dto.paymentKey,
-        Number(payment.amount),
-        payment.order.orderNumber,
-      );
+      const gateway = this.resolveGatewayByType(payment.gateway);
+      result = idempotencyKey
+        ? await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber, { idempotencyKey })
+        : await gateway.confirm(dto.paymentKey, Number(payment.amount), payment.order.orderNumber);
     } catch (err) {
       return this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
         await this.guestOrderAccessService.getValidAccessOrThrow(
@@ -286,8 +294,10 @@ export class PaymentConfirmationService {
           throw new ConflictException('이미 승인된 결제입니다.');
         }
 
-        this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
-        await this.applyFailedPaymentRecovery(manager, lockedPayment.id, orderId);
+        if (!idempotencyKey) {
+          this.assertPendingBeforeFailureRecovery(lockedPayment.order, lockedPayment);
+          await this.applyFailedPaymentRecovery(manager, lockedPayment.id, orderId);
+        }
 
         if (err instanceof ConflictException || err instanceof BadRequestException) {
           throw err;
@@ -344,20 +354,19 @@ export class PaymentConfirmationService {
             method: result.method,
           });
 
-          return {
-            payload,
-            response: {
-              paymentId: Number(lockedPayment.id),
-              orderId,
-              orderNumber: lockedOrder.orderNumber,
-              status: PaymentStatus.CONFIRMED,
-              method: result.method,
-              amount: Number(lockedPayment.amount),
-              paidAt,
-              guestAccessToken: rotatedAccess.guestAccessToken,
-              guestAccessTokenExpiresAt: rotatedAccess.guestAccessTokenExpiresAt.toISOString(),
-            },
+          const response: GuestConfirmResponse = {
+            paymentId: Number(lockedPayment.id),
+            orderId,
+            orderNumber: lockedOrder.orderNumber,
+            status: PaymentStatus.CONFIRMED,
+            method: result.method,
+            amount: Number(lockedPayment.amount),
+            paidAt,
+            guestAccessToken: rotatedAccess.guestAccessToken,
+            guestAccessTokenExpiresAt: rotatedAccess.guestAccessTokenExpiresAt.toISOString(),
           };
+          if (persistResult) await persistResult(manager, response);
+          return { payload, response };
         },
       );
 
@@ -368,7 +377,9 @@ export class PaymentConfirmationService {
       if (err instanceof ConflictException) {
         throw err;
       }
-      await this.persistConfirmationReconciliation(payment.id, orderId, result, paidAt, err);
+      if (!idempotencyKey) {
+        await this.persistConfirmationReconciliation(payment.id, orderId, result, paidAt, err);
+      }
       if (err instanceof UnauthorizedException) {
         throw err;
       }

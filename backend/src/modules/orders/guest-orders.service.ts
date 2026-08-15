@@ -8,6 +8,7 @@ import { Order } from './entities/order.entity';
 import { GuestOrderCreationWorkflowService } from './guest-order-creation.workflow.service';
 import { GuestOrderAccessService } from './guest-order-access.service';
 import { OrderPostCommitService } from './order-post-commit.service';
+import { IdempotencyService } from '../../common/services/idempotency.service';
 
 @Injectable()
 export class GuestOrdersService {
@@ -21,16 +22,17 @@ export class GuestOrdersService {
     private readonly guestOrderCreationWorkflow: GuestOrderCreationWorkflowService,
     private readonly guestOrderAccessService: GuestOrderAccessService,
     private readonly orderPostCommitService: OrderPostCommitService,
+    private readonly idempotencyService: IdempotencyService,
   ) {}
 
-  async create(dto: CreateGuestOrderDto): Promise<{
+  async create(dto: CreateGuestOrderDto, idempotencyKey?: string): Promise<{
     order: Order;
     guestAccessToken: string;
     guestAccessTokenExpiresAt: Date;
   }> {
     this.guestOrderCreationWorkflow.assertCreatePayload(dto);
 
-    const result = await this.dataSource.transaction(async (manager) => {
+    const operation = await this.idempotencyService.execute(`guest:${dto.guestEmail.trim().toLowerCase()}`, 'guest-order.create', idempotencyKey, dto, async (manager) => {
       const postCommit = await this.guestOrderCreationWorkflow.runCreateOrderTransaction(manager, dto);
       const access = await this.guestOrderAccessService.issueAccessToken(
         Number(postCommit.savedOrder.id),
@@ -39,11 +41,14 @@ export class GuestOrdersService {
 
       return { postCommit, access };
     });
+    const result = operation.result;
 
-    this.logger.log(
-      `Guest order created: ${result.postCommit.savedOrder.orderNumber} email=${result.postCommit.guestEmailNormalized}`,
-    );
-    await this.orderPostCommitService.dispatchOrderCreated(null, result.postCommit);
+    if (!operation.replayed) {
+      this.logger.log(
+        `Guest order created: ${result.postCommit.savedOrder.orderNumber} email=${result.postCommit.guestEmailNormalized}`,
+      );
+      await this.orderPostCommitService.dispatchOrderCreated(null, result.postCommit);
+    }
 
     const order = await this.findOne(
       Number(result.postCommit.savedOrder.id),

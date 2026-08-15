@@ -247,7 +247,10 @@ describe('OrderDetailPage', () => {
     await user.click(screen.getByRole('button', { name: '결제하기' }));
 
     await waitFor(() => {
-      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 16, locale: 'ko', gateway: 'toss' });
+      expect(paymentsApi.prepare).toHaveBeenCalledWith(
+        { orderId: 16, locale: 'ko', gateway: 'toss' },
+        { headers: { 'Idempotency-Key': expect.any(String) } },
+      );
     });
     expect(await screen.findByTestId('payment-gateway')).toBeInTheDocument();
   }, 20000);

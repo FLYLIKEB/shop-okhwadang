@@ -25,8 +25,9 @@ export class GuestOrdersController {
   @ApiResponse({ status: 201, description: '비회원 주문 생성 성공' })
   @ApiResponse({ status: 400, description: '입력값 오류' })
   @ApiResponse({ status: 429, description: '요청 한도 초과' })
-  create(@Body() dto: CreateGuestOrderDto) {
-    return this.guestOrdersService.create(dto);
+  @ApiHeader({ name: 'Idempotency-Key', required: true, description: '재시도 식별 키' })
+  create(@Body() dto: CreateGuestOrderDto, @Headers('idempotency-key') idempotencyKey?: string) {
+    return this.guestOrdersService.create(dto, idempotencyKey);
   }
 
   @Get(':id')

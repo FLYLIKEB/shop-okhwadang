@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { e2eIdempotencyKey } from '../helpers/idempotency.helper';
 
 import {
   AuthCookies,
@@ -109,6 +110,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('no JWT → 401', () => {
         return request(app.getHttpServer())
           .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
           .send({
             items: [{ productId, quantity: 1 }],
             recipientName: '홍길동',
@@ -120,9 +122,17 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
           .expect(401);
       });
 
+      it('missing Idempotency-Key → 400', () => {
+        return request(app.getHttpServer()).post('/api/orders')
+          .set('Cookie', cookieHeader(userACookies))
+          .send({ items: [{ productId, quantity: 1 }], recipientName: '홍길동', recipientPhone: '010-1234-5678', zipcode: '12345', address: '서울시 강남구' })
+          .expect(400);
+      });
+
       it('valid body → 201, orderNumber matches ORD-YYYYMMDD-XXXXX', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
           .set('Cookie', cookieHeader(userACookies))
           .send({
             items: [{ productId, quantity: 1 }],
@@ -153,6 +163,15 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
         expect(Number(rows[0].stock)).toBe(4); // started at 5, ordered 1
       });
 
+      it('same member key replays and changed payload conflicts', async () => {
+        const key = e2eIdempotencyKey('member-replay');
+        const payload = { items: [{ productId, quantity: 1 }], recipientName: '홍길동', recipientPhone: '010-1234-5678', zipcode: '12345', address: '서울시 강남구', orderLocale: 'ko' };
+        const first = await request(app.getHttpServer()).post('/api/orders').set('Cookie', cookieHeader(userACookies)).set('Idempotency-Key', key).send(payload).expect(201);
+        const replay = await request(app.getHttpServer()).post('/api/orders').set('Cookie', cookieHeader(userACookies)).set('Idempotency-Key', key).send(payload).expect(201);
+        expect(replay.body.id).toBe(first.body.id);
+        await request(app.getHttpServer()).post('/api/orders').set('Cookie', cookieHeader(userACookies)).set('Idempotency-Key', key).send({ ...payload, memo: 'changed' }).expect(409);
+      });
+
       it('option order: only option stock is decremented (product stock unchanged) — #723', async () => {
         // 정책 (#723): 옵션이 있는 상품은 옵션 재고만 원장으로 차감.
         // 상품 총 재고는 옵션 합산 집계가 아닌 무옵션 전용 원장이므로 옵션 주문 시 변하지 않는다.
@@ -164,6 +183,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
 
         await request(app.getHttpServer())
           .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
           .set('Cookie', cookieHeader(userACookies))
           .send({
             items: [{ productId, productOptionId, quantity: 2 }],
@@ -191,6 +211,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('option excess quantity → 400', () => {
         return request(app.getHttpServer())
           .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
           .set('Cookie', cookieHeader(userACookies))
           .send({
             items: [{ productId, productOptionId, quantity: 2 }],
@@ -206,6 +227,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('excess quantity → 400', () => {
         return request(app.getHttpServer())
           .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
           .set('Cookie', cookieHeader(userACookies))
           .send({
             items: [{ productId, quantity: 999 }],
@@ -221,6 +243,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('insufficient points → 400', () => {
         return request(app.getHttpServer())
           .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
           .set('Cookie', cookieHeader(userACookies))
           .send({
             items: [{ productId, quantity: 1 }],
@@ -237,6 +260,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('empty items → 400', () => {
         return request(app.getHttpServer())
           .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
           .set('Cookie', cookieHeader(userACookies))
           .send({
             items: [],
@@ -251,9 +275,24 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
     });
 
     describe('Guest orders', () => {
+      it('missing Idempotency-Key → 400', () => {
+        return request(app.getHttpServer()).post('/api/guest/orders')
+          .send({ items: [{ productId: guestProductId, quantity: 1 }], guestEmail, recipientName: '비회원 주문자', recipientPhone: '010-9999-0000', zipcode: '54321', address: '서울시 마포구', orderLocale: 'ko' })
+          .expect(400);
+      });
+
+      it('same guest key replays and changed payload conflicts', async () => {
+        const key = e2eIdempotencyKey('guest-replay');
+        const payload = { items: [{ productId: guestProductId, quantity: 1 }], guestEmail, recipientName: '비회원 주문자', recipientPhone: '010-9999-0000', zipcode: '54321', address: '서울시 마포구', orderLocale: 'ko' };
+        const first = await request(app.getHttpServer()).post('/api/guest/orders').set('Idempotency-Key', key).send(payload).expect(201);
+        const replay = await request(app.getHttpServer()).post('/api/guest/orders').set('Idempotency-Key', key).send(payload).expect(201);
+        expect(replay.body.order.id).toBe(first.body.order.id);
+        await request(app.getHttpServer()).post('/api/guest/orders').set('Idempotency-Key', key).send({ ...payload, memo: 'changed' }).expect(409);
+      });
       it('guest create returns top-level token, expiry, and guest-safe order fields', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/guest/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-order'))
           .send({
             items: [{ productId: guestProductId, quantity: 1 }],
             guestEmail: `  ${guestEmail.toUpperCase()}  `,
@@ -303,6 +342,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
       it('guest create rejects crafted member-only discount fields', () => {
         return request(app.getHttpServer())
           .post('/api/guest/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('guest-order'))
           .send({
             items: [{ productId: guestProductId, quantity: 1 }],
             guestEmail,

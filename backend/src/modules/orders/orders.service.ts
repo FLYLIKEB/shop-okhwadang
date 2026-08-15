@@ -8,6 +8,7 @@ import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { applyLocale } from '../../common/utils/locale.util';
 import { OrderCreationWorkflowService } from './order-creation.workflow.service';
 import { OrderPostCommitService } from './order-post-commit.service';
+import { IdempotencyService } from '../../common/services/idempotency.service';
 function assertMemberOrderOwnership(order: Order, userId: number): void {
   if (order.userId == null) {
     throw new NotFoundException('주문을 찾을 수 없습니다.');
@@ -28,6 +29,7 @@ export class OrdersService {
     private readonly dataSource: DataSource,
     private readonly orderCreationWorkflow: OrderCreationWorkflowService,
     private readonly orderPostCommitService: OrderPostCommitService,
+    private readonly idempotencyService: IdempotencyService,
   ) {}
 
   /**
@@ -41,16 +43,20 @@ export class OrdersService {
    * DB write 순서는 절대 변경되지 않는다:
    *   - product/option stock UPDATE → order INSERT → coupon/point UPDATE → order_items INSERT → cart DELETE
    */
-  async create(userId: number, dto: CreateOrderDto): Promise<Order> {
+  async create(userId: number, dto: CreateOrderDto, idempotencyKey?: string): Promise<Order> {
     this.orderCreationWorkflow.assertCreatePayload(dto);
 
     const pointsToUse = dto.pointsUsed ?? 0;
-    const postCommit = await this.dataSource.transaction((manager) =>
-      this.orderCreationWorkflow.runCreateOrderTransaction(manager, userId, dto, pointsToUse),
+    const operation = await this.idempotencyService.execute(
+      `member:${userId}`, 'order.create', idempotencyKey, dto,
+      (manager) => this.orderCreationWorkflow.runCreateOrderTransaction(manager, userId, dto, pointsToUse),
     );
+    const postCommit = operation.result;
 
-    this.logger.log(`Order created: ${postCommit.savedOrder.orderNumber} userId=${userId}`);
-    await this.orderPostCommitService.dispatchOrderCreated(userId, postCommit);
+    if (!operation.replayed) {
+      this.logger.log(`Order created: ${postCommit.savedOrder.orderNumber} userId=${userId}`);
+      await this.orderPostCommitService.dispatchOrderCreated(userId, postCommit);
+    }
 
     return this.findOne(Number(postCommit.savedOrder.id), userId);
   }

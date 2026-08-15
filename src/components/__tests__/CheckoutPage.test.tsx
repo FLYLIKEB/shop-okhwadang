@@ -393,7 +393,10 @@ describe('CheckoutPage', () => {
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
-      expect(paymentsApi.prepare).toHaveBeenCalledWith({ orderId: 1, locale: 'ko', gateway: 'toss' });
+      expect(paymentsApi.prepare).toHaveBeenCalledWith(
+        { orderId: 1, locale: 'ko', gateway: 'toss' },
+        { headers: { 'Idempotency-Key': expect.any(String) } },
+      );
       expect(screen.getByTestId('payment-gateway')).toHaveAttribute('data-auto-confirm', 'true');
     });
     expect(mockPaymentGatewayConfirm).not.toHaveBeenCalled();

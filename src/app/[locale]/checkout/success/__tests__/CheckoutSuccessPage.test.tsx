@@ -1,5 +1,5 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import CheckoutSuccessPage from '@/app/[locale]/checkout/success/page';
 import { toast } from 'sonner';
 import { ApiHttpError } from '@/lib/api-error';
@@ -88,6 +88,10 @@ describe('CheckoutSuccessPage guest coverage', () => {
     mockSearchParams = new URLSearchParams();
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it('persists rotated guest context and redirects to guest order complete after guest hosted confirm', async () => {
     mockSearchParams.set('token', 'PAYPAL-ORDER-1');
     sessionStorage.setItem(SESSION_KEYS.PAYPAL_CONTEXT, JSON.stringify(guestContext));
@@ -115,6 +119,7 @@ describe('CheckoutSuccessPage guest coverage', () => {
         2,
         { paymentKey: 'PAYPAL-ORDER-1', amount: 52000 },
         'guest-token-1',
+        { headers: { 'Idempotency-Key': expect.stringMatching(/^[A-Za-z0-9-]{36}$/) } },
       );
     });
 
@@ -156,6 +161,26 @@ describe('CheckoutSuccessPage guest coverage', () => {
     expect(toast.error).toHaveBeenCalledWith('비회원 주문 조회 권한이 만료되었습니다. 주문조회에서 다시 확인해 주세요.');
   });
 
+  it('persists one opaque hosted confirmation key across a retry', async () => {
+    setTossSearchParams();
+    sessionStorage.setItem(SESSION_KEYS.TOSS_CONTEXT, JSON.stringify(memberContext));
+    mockMemberConfirm.mockRejectedValueOnce(new Error('response lost')).mockResolvedValueOnce({
+      paymentId: 1, orderId: 1, orderNumber: 'ORD-001', status: 'paid', method: 'card', amount: 40000, paidAt: '2026-07-22T00:00:00.000Z',
+    });
+    let first!: ReturnType<typeof render>;
+    await act(async () => {
+      first = render(<CheckoutSuccessPage params={makeParams()} />);
+    });
+    await waitFor(() => expect(mockMemberConfirm).toHaveBeenCalledTimes(1));
+    const firstKey = mockMemberConfirm.mock.calls[0][1].headers['Idempotency-Key'];
+    first.unmount();
+    await act(async () => {
+      render(<CheckoutSuccessPage params={makeParams()} />);
+    });
+    await waitFor(() => expect(mockMemberConfirm).toHaveBeenCalledTimes(2));
+    expect(mockMemberConfirm.mock.calls[1][1].headers['Idempotency-Key']).toBe(firstKey);
+  });
+
   it('keeps member hosted confirm behavior for non-guest contexts', async () => {
     setTossSearchParams();
     sessionStorage.setItem(SESSION_KEYS.TOSS_CONTEXT, JSON.stringify(memberContext));
@@ -176,11 +201,10 @@ describe('CheckoutSuccessPage guest coverage', () => {
     });
 
     await waitFor(() => {
-      expect(mockMemberConfirm).toHaveBeenCalledWith({
-        orderId: 1,
-        paymentKey: 'pay_abc123',
-        amount: 40000,
-      });
+      expect(mockMemberConfirm).toHaveBeenCalledWith(
+        { orderId: 1, paymentKey: 'pay_abc123', amount: 40000 },
+        { headers: { 'Idempotency-Key': expect.stringMatching(/^[A-Za-z0-9-]{36}$/) } },
+      );
     });
 
     await waitFor(() => {

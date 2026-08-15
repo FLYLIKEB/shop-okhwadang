@@ -5,6 +5,7 @@ export const SESSION_KEYS = {
   PAYPAL_CONTEXT: 'paypalPaymentContext',
   NAVERPAY_CONTEXT: 'naverpayPaymentContext',
   EXIMBAY_CONTEXT: 'eximbayPaymentContext',
+  PAYMENT_CONFIRM_OPERATION_PREFIX: 'paymentConfirmOperation:',
   OAUTH_STATE: 'oauth_state',
 } as const;
 

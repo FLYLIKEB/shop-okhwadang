@@ -17,6 +17,8 @@ import { AdminOrderRefundsController } from './admin-order-refunds.controller';
 import { AdminPaymentWebhooksController } from './admin-payment-webhooks.controller';
 import { gatewayProviders } from './payment-gateway.provider';
 import { PaymentConfirmationService } from './services/payment-confirmation.service';
+import { IdempotencyOperation } from '../../common/entities/idempotency-operation.entity';
+import { IdempotencyService } from '../../common/services/idempotency.service';
 import {
   getCheckoutGatewayOptions,
   getDefaultCheckoutGateway,
@@ -41,7 +43,7 @@ export { isCheckoutGatewayName };
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory]),
+    TypeOrmModule.forFeature([Payment, PaymentWebhookEvent, Refund, Shipping, Order, PointHistory, IdempotencyOperation]),
     OrderEventsModule,
     OrdersModule,
     PointsModule,
@@ -57,6 +59,7 @@ export { isCheckoutGatewayName };
     PaymentConfirmationService,
     PaymentsService,
     GuestPaymentsService,
+    IdempotencyService,
     { provide: 'PaymentsService', useExisting: PaymentsService },
   ],
   exports: [PaymentsService, 'PaymentsService'],

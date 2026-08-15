@@ -20,6 +20,7 @@ import { PAYMENT_CONFIG, createPaymentConfig } from '../../../config/payment.con
 import { PaymentConfirmationService } from '../services/payment-confirmation.service';
 import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
 import { PointsService } from '../../points/points.service';
+import { IdempotencyService } from '../../../common/services/idempotency.service';
 
 describe('PaymentsService — webhook', () => {
   let service: PaymentsService;
@@ -82,6 +83,7 @@ describe('PaymentsService — webhook', () => {
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: DataSource, useValue: mockDataSource },
         { provide: PointsService, useValue: { getRunningBalanceInTx: jest.fn().mockResolvedValue(0) } },
+        { provide: IdempotencyService, useValue: { execute: jest.fn(), reserve: jest.fn(), complete: jest.fn(), renewLease: jest.fn() } },
         {
           provide: GuestOrderAccessService,
           useValue: {

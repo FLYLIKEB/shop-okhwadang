@@ -31,6 +31,7 @@ export class GuestPaymentsController {
   @ApiOperation({ summary: '게스트 결제 준비', description: '게스트 주문의 결제를 준비합니다.' })
   @ApiParam({ name: 'id', type: Number, description: '주문 ID' })
   @ApiHeader({ name: 'X-Guest-Access-Token', required: true, description: '게스트 주문 접근 토큰' })
+  @ApiHeader({ name: 'Idempotency-Key', required: true, description: '재시도 식별 키' })
   @ApiResponse({ status: 201, description: '결제 준비 성공' })
   @ApiResponse({ status: 401, description: '게스트 접근 토큰 필요 또는 만료' })
   async prepare(
@@ -38,7 +39,7 @@ export class GuestPaymentsController {
     @Body() dto: GuestPreparePaymentDto,
     @Headers() headers: Record<string, string | string[] | undefined>,
   ) {
-    return this.guestPaymentsService.prepare(orderId, dto, this.readGuestAccessToken(headers));
+    return this.guestPaymentsService.prepare(orderId, dto, this.readGuestAccessToken(headers), this.readIdempotencyKey(headers));
   }
 
   @Public()
@@ -47,6 +48,7 @@ export class GuestPaymentsController {
   @ApiOperation({ summary: '게스트 결제 승인', description: '게스트 주문의 결제를 확정하고 접근 토큰을 회전합니다.' })
   @ApiParam({ name: 'id', type: Number, description: '주문 ID' })
   @ApiHeader({ name: 'X-Guest-Access-Token', required: true, description: '게스트 주문 접근 토큰' })
+  @ApiHeader({ name: 'Idempotency-Key', required: true, description: '재시도 식별 키' })
   @ApiResponse({ status: 200, description: '결제 승인 성공' })
   @ApiResponse({ status: 401, description: '게스트 접근 토큰 필요 또는 만료' })
   @ApiResponse({ status: 409, description: '이미 처리된 결제' })
@@ -55,17 +57,18 @@ export class GuestPaymentsController {
     @Body() dto: GuestConfirmPaymentDto,
     @Headers() headers: Record<string, string | string[] | undefined>,
   ) {
-    return this.guestPaymentsService.confirm(orderId, dto, this.readGuestAccessToken(headers));
+    return this.guestPaymentsService.confirm(orderId, dto, this.readGuestAccessToken(headers), this.readIdempotencyKey(headers));
   }
 
   private readGuestAccessToken(headers: Record<string, string | string[] | undefined>): string {
     const value = headers['x-guest-access-token'] ?? headers['X-Guest-Access-Token'];
     const token = Array.isArray(value) ? value[0] : value;
-
-    if (!token?.trim()) {
-      throw new UnauthorizedException('게스트 주문 접근 토큰이 필요합니다.');
-    }
-
+    if (!token?.trim()) throw new UnauthorizedException('게스트 주문 접근 토큰이 필요합니다.');
     return token.trim();
+  }
+
+  private readIdempotencyKey(headers: Record<string, string | string[] | undefined>): string | undefined {
+    const value = headers['idempotency-key'] ?? headers['Idempotency-Key'];
+    return Array.isArray(value) ? value[0] : value;
   }
 }

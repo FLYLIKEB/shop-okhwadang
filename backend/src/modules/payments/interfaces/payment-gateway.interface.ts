@@ -1,6 +1,11 @@
 export interface PrepareContext {
   locale?: string;
   orderNumber?: string;
+  idempotencyKey?: string;
+}
+
+export interface ConfirmContext {
+  idempotencyKey?: string;
 }
 
 export interface PrepareResult {
@@ -42,7 +47,7 @@ export interface PartialCancelResult {
 export interface PaymentGateway {
   readonly supportsRefundIdempotency?: boolean;
   prepare(orderId: string, amount: number, context?: PrepareContext): Promise<PrepareResult>;
-  confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult>;
+  confirm(paymentKey: string, amount: number, orderId: string, context?: ConfirmContext): Promise<ConfirmResult>;
   cancel(paymentKey: string, reason: string, context?: Pick<PartialCancelParams, 'originalAmount' | 'orderNumber' | 'rawResponse'>): Promise<CancelResult>;
   partialCancel(params: PartialCancelParams): Promise<PartialCancelResult>;
   verifyWebhook(payload: unknown, signature: string): boolean | Promise<boolean>;

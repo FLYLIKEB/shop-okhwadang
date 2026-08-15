@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { e2eIdempotencyKey } from '../helpers/idempotency.helper';
 import {
   AuthCookies,
   cookieHeader,
@@ -26,6 +27,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
     async function createOrder(options: { pointsUsed?: number } = {}): Promise<number> {
       const orderRes = await request(app.getHttpServer())
         .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
         .set('Cookie', cookieHeader(userCookies))
         .send({
           items: [{ productId, quantity: 1 }],

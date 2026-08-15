@@ -22,20 +22,26 @@ describe('GuestPaymentsController', () => {
     const dto = { locale: 'ko', gateway: 'naverpay' };
 
     await expect(
-      controller.prepare(7, dto as never, { 'x-guest-access-token': [' guest-token ', 'ignored'] }),
+      controller.prepare(7, dto as never, {
+        'x-guest-access-token': [' guest-token ', 'ignored'],
+        'idempotency-key': ['prepare-key', 'ignored'],
+      }),
     ).resolves.toEqual({ checkoutId: 'checkout-1' });
 
-    expect(guestPaymentsService.prepare).toHaveBeenCalledWith(7, dto, 'guest-token');
+    expect(guestPaymentsService.prepare).toHaveBeenCalledWith(7, dto, 'guest-token', 'prepare-key');
   });
 
   it('accepts uppercase guest token headers for confirm', async () => {
     const dto = { paymentKey: 'key', orderId: 'external-order-id', amount: 18000, gateway: 'paypal' };
 
     await expect(
-      controller.confirm(7, dto as never, { 'X-Guest-Access-Token': ' upper-token ' }),
+      controller.confirm(7, dto as never, {
+        'X-Guest-Access-Token': ' upper-token ',
+        'Idempotency-Key': 'confirm-key',
+      }),
     ).resolves.toEqual({ ok: true });
 
-    expect(guestPaymentsService.confirm).toHaveBeenCalledWith(7, dto, 'upper-token');
+    expect(guestPaymentsService.confirm).toHaveBeenCalledWith(7, dto, 'upper-token', 'confirm-key');
   });
 
   it('rejects prepare requests without a usable guest token header', async () => {

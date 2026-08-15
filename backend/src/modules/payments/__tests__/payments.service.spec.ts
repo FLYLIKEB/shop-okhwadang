@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource, EntityManager } from 'typeorm';
 import { NotFoundException, BadRequestException, ConflictException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { PaymentsService } from '../payments.service';
+import { IdempotencyService } from '../../../common/services/idempotency.service';
 import { Payment, PaymentStatus, PaymentMethod, PaymentGatewayType } from '../entities/payment.entity';
 import { PaymentWebhookEvent } from '../entities/payment-webhook-event.entity';
 import { Refund, RefundStatus } from '../entities/refund.entity';
@@ -238,6 +239,18 @@ describe('PaymentsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
+        {
+          provide: IdempotencyService,
+          useValue: {
+            execute: async (_scope: string, _operation: string, _key: string, _payload: unknown, work: () => Promise<unknown>) => ({
+              result: await work(),
+              replayed: false,
+            }),
+            reserve: jest.fn().mockResolvedValue({ id: 1, owner: true, leaseOwner: 'lease-owner', replayed: false }),
+            complete: jest.fn().mockResolvedValue(undefined),
+            renewLease: jest.fn().mockResolvedValue(undefined),
+          },
+        },
         { provide: getRepositoryToken(Payment), useValue: mockPaymentRepo },
         { provide: getRepositoryToken(Refund), useValue: mockRefundRepo },
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },

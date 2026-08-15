@@ -6,6 +6,7 @@ import { GuestOrderCreationWorkflowService } from '../guest-order-creation.workf
 import { GuestOrderAccessService } from '../guest-order-access.service';
 import { OrderPostCommitService } from '../order-post-commit.service';
 import { CreateGuestOrderDto } from '../dto/create-guest-order.dto';
+import { IdempotencyService } from '../../../common/services/idempotency.service';
 import { LookupGuestOrderDto } from '../dto/lookup-guest-order.dto';
 
 function makeOrder(overrides: Partial<Order> = {}): Order {
@@ -59,6 +60,7 @@ describe('GuestOrdersService', () => {
     getOrderForAccessOrThrow: jest.Mock;
     lookupAndIssueAccessToken: jest.Mock;
   };
+  let idempotencyService: { execute: jest.Mock };
   let orderPostCommitService: {
     dispatchOrderCreated: jest.Mock;
   };
@@ -86,6 +88,12 @@ describe('GuestOrdersService', () => {
     orderPostCommitService = {
       dispatchOrderCreated: jest.fn().mockResolvedValue(undefined),
     };
+    idempotencyService = {
+      execute: jest.fn(async (_scope, _operation, _key, _payload, work) => ({
+        result: await dataSource.transaction(work),
+        replayed: false,
+      })),
+    };
 
     service = new GuestOrdersService(
       orderRepository as never,
@@ -93,6 +101,7 @@ describe('GuestOrdersService', () => {
       guestOrderCreationWorkflow as unknown as GuestOrderCreationWorkflowService,
       guestOrderAccessService as unknown as GuestOrderAccessService,
       orderPostCommitService as unknown as OrderPostCommitService,
+      idempotencyService as unknown as IdempotencyService,
     );
   });
 

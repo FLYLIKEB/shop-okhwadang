@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { e2eIdempotencyKey } from '../helpers/idempotency.helper';
 import * as bcrypt from 'bcrypt';
 
 let app: INestApplication;
@@ -212,6 +213,7 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
 
       const orderRes = await request(app.getHttpServer())
         .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
         .set('Cookie', userCookies)
         .send({
           items: [{ productId, quantity: 1 }],
@@ -234,6 +236,7 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
 
       await request(app.getHttpServer())
         .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
         .set('Cookie', userCookies)
         .send({
           items: [{ productId, quantity: 1 }],
