@@ -383,5 +383,20 @@ describe('StripePaymentAdapter', () => {
     it('잘못된 서명 → false', () => {
       expect(adapter.verifyWebhook({ type: 'test' }, 'wrong_signature')).toBe(false);
     });
+
+    it('웹훅 secret 미설정 → 항상 false', () => {
+      const adapterWithoutWebhookSecret = new StripePaymentAdapter(
+        createPaymentConfig({
+          NODE_ENV: 'development',
+          PAYMENT_GATEWAY: 'stripe',
+          STRIPE_SECRET_KEY: 'sk_test_secret',
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_publishable',
+          STRIPE_KRW_PER_USD: '1350',
+          STRIPE_KRW_PER_USD_UPDATED_AT: rateUpdatedAt,
+        }),
+      );
+
+      expect(adapterWithoutWebhookSecret.verifyWebhook({ type: 'test' }, '00')).toBe(false);
+    });
   });
 });

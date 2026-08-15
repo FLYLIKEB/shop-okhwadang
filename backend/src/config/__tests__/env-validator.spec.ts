@@ -75,6 +75,7 @@ describe('validateEnv', () => {
       expect.arrayContaining([
         'STRIPE_SECRET_KEY',
         'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+        'STRIPE_WEBHOOK_SECRET',
         'STRIPE_KRW_PER_USD',
         'STRIPE_KRW_PER_USD_UPDATED_AT',
       ]),
@@ -83,6 +84,7 @@ describe('validateEnv', () => {
     Object.assign(env, {
       STRIPE_SECRET_KEY: 'sk_test',
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test',
+      STRIPE_WEBHOOK_SECRET: 'whsec_test',
       STRIPE_KRW_PER_USD: '1350.25',
       STRIPE_KRW_PER_USD_UPDATED_AT: new Date().toISOString(),
     });
