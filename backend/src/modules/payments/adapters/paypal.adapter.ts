@@ -38,6 +38,7 @@ interface PayPalOrderResponse {
 
 @Injectable()
 export class PayPalPaymentAdapter implements PaymentGateway {
+  readonly supportsRefundIdempotency = true;
   private readonly logger = new Logger(PayPalPaymentAdapter.name);
   private readonly clientId: string;
   private readonly clientSecret: string;
@@ -150,6 +151,9 @@ export class PayPalPaymentAdapter implements PaymentGateway {
       {
         method: 'POST',
         body: JSON.stringify(payload),
+        headers: params.idempotencyKey
+          ? { 'PayPal-Request-Id': params.idempotencyKey }
+          : undefined,
       },
     );
     const body = await readJson<Record<string, unknown>>(response);

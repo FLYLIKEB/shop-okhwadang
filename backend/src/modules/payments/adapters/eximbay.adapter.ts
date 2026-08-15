@@ -65,6 +65,7 @@ const SENSITIVE_KEY_PATTERN = /(card_number|cardnumber|pan|cvc|cvv|expiry|author
 
 @Injectable()
 export class EximbayPaymentAdapter implements PaymentGateway {
+  readonly supportsRefundIdempotency = true;
   private readonly logger = new Logger(EximbayPaymentAdapter.name);
   private readonly merchantId: string;
   private readonly apiKey: string;
@@ -205,7 +206,8 @@ export class EximbayPaymentAdapter implements PaymentGateway {
       throw new BadGatewayException('Eximbay 환불 대상 거래를 찾을 수 없습니다.');
     }
 
-    const refundId = `okhwadang-${params.paymentKey}-${Date.now()}`.slice(0, 64);
+    const refundSeed = params.idempotencyKey ?? params.paymentKey;
+    const refundId = `okhwadang-${crypto.createHash('sha256').update(refundSeed).digest('hex').slice(0, 54)}`;
     const isFull = params.cancelAmount <= 0 || Number(params.cancelAmount) >= Number(payment.balance);
     const body = await this.eximbayFetch<EximbayCancelResponse>(
       `/v1/payments/${encodeURIComponent(params.paymentKey)}/cancel`,

@@ -137,6 +137,31 @@ describe('TossPaymentAdapter', () => {
       expect(result.cancelledAt).toBeInstanceOf(Date);
     });
 
+    it('안정적인 멱등성 키를 Toss 요청 헤더로 전달', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          cancels: [{ transactionKey: 'toss-txn-idempotent' }],
+        }),
+      });
+
+      await adapter.partialCancel({
+        paymentKey: 'pk123',
+        cancelAmount: 5000,
+        cancelReason: '부분 환불',
+        idempotencyKey: 'refund-key-123',
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Idempotency-Key': 'refund-key-123',
+          }),
+        }),
+      );
+    });
+
     it('cancels 배열 마지막 항목의 transactionKey 사용', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

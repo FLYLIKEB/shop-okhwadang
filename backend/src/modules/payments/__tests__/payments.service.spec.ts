@@ -652,11 +652,17 @@ describe('PaymentsService', () => {
         reason: '부분 환불',
         status: RefundStatus.PENDING,
         gatewayRefundId: null,
+        idempotencyKey: 'refund-key-1',
+        gatewayAttemptedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       return makeTransactionManager({
-        findOne: jest.fn().mockResolvedValue(confirmedPayment),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Payment
+            ? Promise.resolve(confirmedPayment)
+            : Promise.resolve(null),
+        ),
         create: jest.fn().mockImplementation((_entity: unknown, data: unknown) => ({ ...pendingRefund, ...(data as object) })),
         save: jest.fn().mockImplementation((_entity: unknown, data: unknown) => Promise.resolve({ ...pendingRefund, ...(data as object) })),
         getRawOne: jest.fn().mockResolvedValue({ total: '0' }),
@@ -690,7 +696,7 @@ describe('PaymentsService', () => {
         rawResponse: { mock: true },
       });
 
-      const result = await service.partialRefund(1, { amount: 10000, reason: '부분 환불' });
+      const result = await service.partialRefund(1, { amount: 10000, reason: '부분 환불' , idempotencyKey: 'refund-test' });
       expect(result.status).toBe(RefundStatus.COMPLETED);
     });
 
@@ -702,7 +708,9 @@ describe('PaymentsService', () => {
         gateway: PaymentGatewayType.STRIPE,
       });
       const stripeManager = makeRefundManager({
-        findOne: jest.fn().mockResolvedValue(stripePayment),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Payment ? Promise.resolve(stripePayment) : Promise.resolve(null),
+        ),
       });
       mockDataSource.transaction
         .mockImplementationOnce(async (fn: (m: typeof stripeManager) => Promise<unknown>) => fn(stripeManager))
@@ -719,7 +727,7 @@ describe('PaymentsService', () => {
         rawResponse: { stripe: true },
       });
 
-      const result = await service.partialRefund(1, { amount: 10000, reason: '부분 환불' });
+      const result = await service.partialRefund(1, { amount: 10000, reason: '부분 환불' , idempotencyKey: 'refund-test' });
 
       expect(result.status).toBe(RefundStatus.COMPLETED);
       expect(mockStripeAdapter.partialCancel).toHaveBeenCalled();
@@ -734,7 +742,7 @@ describe('PaymentsService', () => {
         async (fn: (m: typeof pendingManager) => Promise<unknown>) => fn(pendingManager),
       );
 
-      await expect(service.partialRefund(1, { amount: 10000, reason: '환불' })).rejects.toThrow(BadRequestException);
+      await expect(service.partialRefund(1, { amount: 10000, reason: '환불' , idempotencyKey: 'refund-test' })).rejects.toThrow(BadRequestException);
     });
 
     it('금액 초과 → BadRequestException', async () => {
@@ -749,10 +757,10 @@ describe('PaymentsService', () => {
         async (fn: (m: typeof overManager) => Promise<unknown>) => fn(overManager),
       );
 
-      await expect(service.partialRefund(1, { amount: 99999, reason: '초과' })).rejects.toThrow(BadRequestException);
+      await expect(service.partialRefund(1, { amount: 99999, reason: '초과' , idempotencyKey: 'refund-test' })).rejects.toThrow(BadRequestException);
     });
 
-    it('어댑터 실패 → Refund status=failed + InternalServerErrorException', async () => {
+    it('결과가 불명확한 어댑터 실패 → Refund pending 유지 + InternalServerErrorException', async () => {
       const refundManager = makeRefundManager();
       mockDataSource.transaction.mockImplementationOnce(
         async (fn: (m: typeof refundManager) => Promise<unknown>) => fn(refundManager),
@@ -762,8 +770,8 @@ describe('PaymentsService', () => {
       mockDefaultGateway.partialCancel.mockRejectedValue(new Error('gateway error'));
       mockRefundRepo.update.mockResolvedValue({});
 
-      await expect(service.partialRefund(1, { amount: 10000, reason: '환불' })).rejects.toThrow(InternalServerErrorException);
-      expect(mockRefundRepo.update).toHaveBeenCalledWith(expect.anything(), { status: RefundStatus.FAILED });
+      await expect(service.partialRefund(1, { amount: 10000, reason: '환불' , idempotencyKey: 'refund-test' })).rejects.toThrow(InternalServerErrorException);
+      expect(mockRefundRepo.update).not.toHaveBeenCalledWith(expect.anything(), { status: RefundStatus.FAILED });
     });
 
     it('[CRITICAL] 부분 환불 2회 누적 — totalRefunded 이중 계산 없이 정확히 누적', async () => {
@@ -780,7 +788,9 @@ describe('PaymentsService', () => {
 
       // Phase 1 manager (create pending refund)
       const phase1Manager = makeRefundManager({
-        findOne: jest.fn().mockResolvedValue(totalPayment),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Payment ? Promise.resolve(totalPayment) : Promise.resolve(null),
+        ),
         createQueryBuilder: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnThis(),
           where: jest.fn().mockReturnThis(),
@@ -790,6 +800,7 @@ describe('PaymentsService', () => {
 
       // Phase 3 manager: after updating refund to COMPLETED, SUM returns 10000
       const phase3Manager = makeTransactionManager({
+        findOne: jest.fn().mockResolvedValue(totalPayment),
         update: jest.fn().mockResolvedValue({}),
         createQueryBuilder: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnThis(),
@@ -812,7 +823,7 @@ describe('PaymentsService', () => {
         rawResponse: { mock: true },
       });
 
-      await service.partialRefund(1, { amount: 5000, reason: '2차 환불' });
+      await service.partialRefund(1, { amount: 5000, reason: '2차 환불' , idempotencyKey: 'refund-test' });
 
       // Phase 3 must update Payment to REFUNDED and Order to REFUNDED
       expect(phase3Manager.update).toHaveBeenCalledWith(Payment, totalPayment.id, { status: PaymentStatus.REFUNDED });
@@ -833,7 +844,7 @@ describe('PaymentsService', () => {
       });
       mockRefundRepo.update.mockResolvedValue({});
 
-      await expect(service.partialRefund(1, { amount: 10000, reason: '환불' })).rejects.toThrow(InternalServerErrorException);
+      await expect(service.partialRefund(1, { amount: 10000, reason: '환불' , idempotencyKey: 'refund-test' })).rejects.toThrow(InternalServerErrorException);
 
       // Refund must NOT be marked FAILED — gateway already processed the refund
       expect(mockRefundRepo.update).not.toHaveBeenCalledWith(expect.anything(), { status: RefundStatus.FAILED });

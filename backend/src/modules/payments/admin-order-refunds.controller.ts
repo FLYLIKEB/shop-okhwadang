@@ -7,6 +7,7 @@ import {
 import { Roles } from '../../common/decorators/roles.decorator';
 import { PaymentsService } from './payments.service';
 import { CreateRefundDto } from './dto/create-refund.dto';
+import { ReconcileRefundDto } from './dto/reconcile-refund.dto';
 import { Refund } from './entities/refund.entity';
 
 @ApiTags('관리자 - 환불')
@@ -29,5 +30,15 @@ export class AdminOrderRefundsController {
     @Body() dto: CreateRefundDto,
   ): Promise<Refund> {
     return this.paymentsService.partialRefund(id, dto);
+  }
+
+  @Post('refunds/:refundId/reconcile')
+  @ApiOperation({ summary: 'PG 검증 결과로 보류 환불 조정' })
+  @ApiParam({ name: 'refundId', type: Number, description: '환불 작업 ID' })
+  async reconcile(
+    @Param('refundId', ParseIntPipe) refundId: number,
+    @Body() dto: ReconcileRefundDto,
+  ): Promise<Refund> {
+    return this.paymentsService.reconcileRefund(refundId, dto);
   }
 }

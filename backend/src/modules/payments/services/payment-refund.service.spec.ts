@@ -33,6 +33,8 @@ const makePendingRefund = (overrides: Partial<Refund> = {}): Refund =>
     reason: '부분 환불',
     status: RefundStatus.PENDING,
     gatewayRefundId: null,
+    idempotencyKey: 'refund-key-1',
+    gatewayAttemptedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -48,27 +50,34 @@ const makePhase1Manager = (
   payment: Payment,
   refundedTotal = '0',
   pendingRefund: Refund = makePendingRefund(),
-) => ({
-  findOne: jest.fn().mockResolvedValue(payment),
-  create: jest
-    .fn()
-    .mockImplementation((_entity: unknown, data: unknown) => ({
-      ...pendingRefund,
-      ...(data as object),
-    })),
-  save: jest
-    .fn()
-    .mockImplementation((_entity: unknown, data: unknown) =>
-      Promise.resolve({ ...pendingRefund, ...(data as object) }),
+) => {
+  const queryBuilder = makeQueryBuilderRefundSum(refundedTotal);
+  return {
+    payment,
+    queryBuilder,
+    findOne: jest.fn().mockImplementation((entity: unknown) =>
+      entity === Payment ? Promise.resolve(payment) : Promise.resolve(null),
     ),
-  createQueryBuilder: jest
-    .fn()
-    .mockReturnValue(makeQueryBuilderRefundSum(refundedTotal)),
-  update: jest.fn().mockResolvedValue({}),
-});
+    create: jest
+      .fn()
+      .mockImplementation((_entity: unknown, data: unknown) => ({
+        ...pendingRefund,
+        ...(data as object),
+      })),
+    save: jest
+      .fn()
+      .mockImplementation((_entity: unknown, data: unknown) =>
+        Promise.resolve({ ...pendingRefund, ...(data as object) }),
+      ),
+    createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+    update: jest.fn().mockResolvedValue({}),
+  };
+};
 
-const makePhase3Manager = (refundedAfter: string) => ({
-  findOne: jest.fn(),
+const makePhase3Manager = (refundedAfter: string, payment = makeConfirmedPayment()) => ({
+  findOne: jest.fn().mockImplementation((entity: unknown) =>
+    entity === Payment ? Promise.resolve(payment) : Promise.resolve(null),
+  ),
   save: jest.fn(),
   create: jest.fn(),
   update: jest.fn().mockResolvedValue({}),
@@ -106,20 +115,25 @@ const buildService = (args: BuildArgs = {}) => {
     ...args.gateway,
   } as PaymentGateway;
   const resolveGateway = args.resolveGateway ?? jest.fn(() => gateway);
+  const phase1Manager = args.phase1Manager ?? makePhase1Manager(makeConfirmedPayment());
+  const phase3Manager = args.phase3Manager ?? makePhase3Manager(
+    '10000',
+    phase1Manager.payment,
+  );
 
   const transaction = jest
     .fn()
     .mockImplementationOnce(
       async (
         fn: (m: ReturnType<typeof makePhase1Manager>) => Promise<unknown>,
-      ) => fn(args.phase1Manager ?? makePhase1Manager(makeConfirmedPayment())),
+      ) => fn(phase1Manager),
     )
     .mockImplementationOnce(
       async (
         fn: (m: ReturnType<typeof makePhase3Manager>) => Promise<unknown>,
       ) => {
         if (args.phase3Throws) throw args.phase3Throws;
-        return fn(args.phase3Manager ?? makePhase3Manager('10000'));
+        return fn(phase3Manager);
       },
     );
 
@@ -162,7 +176,7 @@ describe('PaymentRefundService', () => {
         const { service } = buildService({ phase1Manager });
 
         await expect(
-          service.partialRefund(1, { amount: 1000, reason: '테스트' }),
+          service.partialRefund(1, { amount: 1000, reason: '테스트' , idempotencyKey: 'refund-test' }),
         ).rejects.toThrow(BadRequestException);
       },
     );
@@ -186,7 +200,7 @@ describe('PaymentRefundService', () => {
       });
 
       await expect(
-        service.partialRefund(1, { amount: 10000, reason: '부분 환불' }),
+        service.partialRefund(1, { amount: 10000, reason: '부분 환불' , idempotencyKey: 'refund-test' }),
       ).resolves.toBeDefined();
     });
 
@@ -210,7 +224,7 @@ describe('PaymentRefundService', () => {
       });
 
       await expect(
-        service.partialRefund(1, { amount: 5000, reason: '부분 환불 2차' }),
+        service.partialRefund(1, { amount: 5000, reason: '부분 환불 2차' , idempotencyKey: 'refund-test' }),
       ).resolves.toBeDefined();
     });
 
@@ -220,7 +234,7 @@ describe('PaymentRefundService', () => {
       const { service } = buildService({ phase1Manager });
 
       await expect(
-        service.partialRefund(1, { amount: 1000, reason: '테스트' }),
+        service.partialRefund(1, { amount: 1000, reason: '테스트' , idempotencyKey: 'refund-test' }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -232,7 +246,7 @@ describe('PaymentRefundService', () => {
       const { service } = buildService({ phase1Manager });
 
       await expect(
-        service.partialRefund(99, { amount: 1000, reason: '테스트' }),
+        service.partialRefund(99, { amount: 1000, reason: '테스트' , idempotencyKey: 'refund-test' }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -245,14 +259,14 @@ describe('PaymentRefundService', () => {
       const { service } = buildService({ phase1Manager });
 
       await expect(
-        service.partialRefund(1, { amount: 5000, reason: '초과 시도' }),
+        service.partialRefund(1, { amount: 5000, reason: '초과 시도' , idempotencyKey: 'refund-test' }),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('전액 환불 시 Payment=REFUNDED + Order=REFUNDED 로 갱신', async () => {
       const payment = makeConfirmedPayment({ amount: 10000 });
       const phase1Manager = makePhase1Manager(payment, '0');
-      const phase3Manager = makePhase3Manager('10000');
+      const phase3Manager = makePhase3Manager('10000', payment);
       const { service, paymentRepo, refundRepo, gateway } = buildService({
         phase1Manager,
         phase3Manager,
@@ -267,7 +281,7 @@ describe('PaymentRefundService', () => {
         rawResponse: {},
       });
 
-      await service.partialRefund(1, { amount: 10000, reason: '전액 환불' });
+      await service.partialRefund(1, { amount: 10000, reason: '전액 환불' , idempotencyKey: 'refund-test' });
 
       expect(phase3Manager.update).toHaveBeenCalledWith(Payment, payment.id, {
         status: PaymentStatus.REFUNDED,
@@ -295,7 +309,7 @@ describe('PaymentRefundService', () => {
         rawResponse: {},
       });
 
-      await service.partialRefund(1, { amount: 10000, reason: '부분 환불' });
+      await service.partialRefund(1, { amount: 10000, reason: '부분 환불' , idempotencyKey: 'refund-test' });
 
       expect(phase3Manager.update).toHaveBeenCalledWith(Payment, payment.id, {
         status: PaymentStatus.PARTIAL_CANCELLED,
@@ -328,7 +342,7 @@ describe('PaymentRefundService', () => {
         rawResponse: {},
       });
 
-      await service.partialRefund(1, { amount: 10000, reason: '환불 사유' });
+      await service.partialRefund(1, { amount: 10000, reason: '환불 사유' , idempotencyKey: 'refund-test' });
 
       expect(gateway.partialCancel).toHaveBeenCalledWith(expect.objectContaining({
         paymentKey: 'pk_abc',
@@ -369,15 +383,15 @@ describe('PaymentRefundService', () => {
         makePendingRefund({ status: RefundStatus.COMPLETED }),
       );
 
-      await service.partialRefund(1, { amount: 10000, reason: '환불' });
+      await service.partialRefund(1, { amount: 10000, reason: '환불' , idempotencyKey: 'refund-test' });
 
       expect(resolveGateway).toHaveBeenCalledWith(PaymentGatewayType.TOSS);
       expect(tossGateway.partialCancel).toHaveBeenCalled();
     });
   });
 
-  describe('partialRefund() — 게이트웨이 실패 → Refund FAILED + 롤백', () => {
-    it('게이트웨이가 던지면 Refund 를 FAILED 로 마킹하고 InternalServerErrorException', async () => {
+  describe('partialRefund() — 게이트웨이 실패 → 안전하게 보류', () => {
+    it('확인할 수 없는 게이트웨이 실패는 Refund 를 PENDING 으로 보존한다', async () => {
       const payment = makeConfirmedPayment({ amount: 10000 });
       const phase1Manager = makePhase1Manager(payment, '0');
       const { service, paymentRepo, refundRepo, gateway } = buildService({
@@ -389,10 +403,10 @@ describe('PaymentRefundService', () => {
       );
 
       await expect(
-        service.partialRefund(1, { amount: 5000, reason: '실패' }),
+        service.partialRefund(1, { amount: 5000, reason: '실패' , idempotencyKey: 'refund-test' }),
       ).rejects.toThrow(InternalServerErrorException);
 
-      expect(refundRepo.update).toHaveBeenCalledWith(expect.anything(), {
+      expect(refundRepo.update).not.toHaveBeenCalledWith(expect.anything(), {
         status: RefundStatus.FAILED,
       });
     });
@@ -407,7 +421,7 @@ describe('PaymentRefundService', () => {
       );
 
       await expect(
-        service.partialRefund(1, { amount: 5000, reason: '실패' }),
+        service.partialRefund(1, { amount: 5000, reason: '실패' , idempotencyKey: 'refund-test' }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -426,13 +440,253 @@ describe('PaymentRefundService', () => {
       });
 
       await expect(
-        service.partialRefund(1, { amount: 5000, reason: '환불' }),
+        service.partialRefund(1, { amount: 5000, reason: '환불' , idempotencyKey: 'refund-test' }),
       ).rejects.toThrow(InternalServerErrorException);
 
       // Phase 3 실패 시 Refund 를 FAILED 로 마킹하면 안 됨 (게이트웨이는 성공)
       expect(refundRepo.update).not.toHaveBeenCalledWith(expect.anything(), {
         status: RefundStatus.FAILED,
       });
+      expect(refundRepo.update).toHaveBeenCalledWith(expect.anything(), {
+        gatewayRefundId: 'rid-x',
+      });
+    });
+  });
+
+  describe('partialRefund() — reservation and reconciliation', () => {
+    it('allows distinct operations with identical amount and reason', async () => {
+      const payment = makeConfirmedPayment({ amount: 30000 });
+      const phase1Manager = makePhase1Manager(payment);
+      const { service, paymentRepo, refundRepo, gateway } = buildService({ phase1Manager });
+      paymentRepo.findOne.mockResolvedValue(payment);
+      refundRepo.findOne.mockResolvedValue(makePendingRefund({ status: RefundStatus.COMPLETED }));
+      (gateway.partialCancel as jest.Mock).mockResolvedValue({
+        refundId: 'rid-distinct',
+        cancelledAt: new Date(),
+        rawResponse: {},
+      });
+
+      await service.partialRefund(1, {
+        amount: 10000,
+        reason: '동일 사유',
+        idempotencyKey: 'different-operation',
+      });
+
+      expect(phase1Manager.create).toHaveBeenCalledWith(Refund, expect.objectContaining({
+        idempotencyKey: 'different-operation',
+      }));
+    });
+
+    it('rejects a reused operation key with different request details', async () => {
+      const payment = makeConfirmedPayment();
+      const existingRefund = makePendingRefund({ idempotencyKey: 'used-operation' });
+      const phase1Manager = {
+        ...makePhase1Manager(payment),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Payment ? Promise.resolve(payment) : Promise.resolve(existingRefund),
+        ),
+      };
+      const { service } = buildService({ phase1Manager });
+
+      await expect(service.partialRefund(1, {
+        amount: 9999,
+        reason: '다른 사유',
+        idempotencyKey: 'used-operation',
+      })).rejects.toThrow(BadRequestException);
+    });
+
+    it('reserves both PENDING and COMPLETED refunds while the payment is locked', async () => {
+      const payment = makeConfirmedPayment({ amount: 10000 });
+      const phase1Manager = makePhase1Manager(payment, '9000');
+      const { service } = buildService({ phase1Manager });
+
+      await expect(
+        service.partialRefund(1, { amount: 2000, reason: '동시 환불' , idempotencyKey: 'refund-test' }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(phase1Manager.queryBuilder.where).toHaveBeenCalledWith(
+        'r.paymentId = :paymentId AND r.status IN (:...statuses)',
+        expect.objectContaining({
+          statuses: [RefundStatus.PENDING, RefundStatus.COMPLETED],
+        }),
+      );
+    });
+
+    it('reuses an in-flight row and stable idempotency key for a native retry', async () => {
+      const payment = makeConfirmedPayment();
+      const pendingRefund = makePendingRefund({
+        idempotencyKey: 'stable-refund-key',
+        gatewayAttemptedAt: new Date(),
+      });
+      const phase1Manager = {
+        ...makePhase1Manager(payment),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Payment ? Promise.resolve(payment) : Promise.resolve(pendingRefund),
+        ),
+      };
+      const phase3Manager = makePhase3Manager('10000', payment);
+      const { service, paymentRepo, refundRepo, gateway } = buildService({ phase1Manager, phase3Manager });
+      paymentRepo.findOne.mockResolvedValue(payment);
+      refundRepo.findOne.mockResolvedValue(makePendingRefund({ status: RefundStatus.COMPLETED }));
+      Object.defineProperty(gateway, 'supportsRefundIdempotency', { value: true });
+      (gateway.partialCancel as jest.Mock).mockResolvedValue({
+        refundId: 'rid-retry',
+        cancelledAt: new Date(),
+        rawResponse: {},
+      });
+
+      await service.partialRefund(1, { amount: 10000, reason: '부분 환불', idempotencyKey: 'stable-refund-key' });
+
+      expect(phase1Manager.create).not.toHaveBeenCalled();
+      expect(gateway.partialCancel).toHaveBeenCalledWith(expect.objectContaining({
+        idempotencyKey: 'stable-refund-key',
+      }));
+    });
+
+    it('reconciles a persisted gateway reference without another gateway call', async () => {
+      const payment = makeConfirmedPayment();
+      const pendingRefund = makePendingRefund({
+        gatewayRefundId: 'rid-persisted',
+        gatewayAttemptedAt: new Date(),
+      });
+      const phase1Manager = {
+        ...makePhase1Manager(payment),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Payment ? Promise.resolve(payment) : Promise.resolve(pendingRefund),
+        ),
+      };
+      const phase3Manager = makePhase3Manager('10000', payment);
+      const { service, paymentRepo, refundRepo, gateway } = buildService({ phase1Manager, phase3Manager });
+      paymentRepo.findOne.mockResolvedValue(payment);
+      refundRepo.findOne.mockResolvedValue(makePendingRefund({ status: RefundStatus.COMPLETED }));
+
+      await service.partialRefund(1, { amount: 10000, reason: '부분 환불', idempotencyKey: pendingRefund.idempotencyKey });
+
+      expect(gateway.partialCancel).not.toHaveBeenCalled();
+      expect(phase3Manager.update).toHaveBeenCalledWith(Refund, pendingRefund.id, {
+        status: RefundStatus.COMPLETED,
+      });
+    });
+
+    it('returns a completed operation after a lost response without another gateway call', async () => {
+      const payment = makeConfirmedPayment();
+      const completedRefund = makePendingRefund({
+        status: RefundStatus.COMPLETED,
+        gatewayRefundId: 'rid-completed',
+      });
+      const phase1Manager = {
+        ...makePhase1Manager(payment),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Payment ? Promise.resolve(payment) : Promise.resolve(completedRefund),
+        ),
+      };
+      const { service, paymentRepo, gateway } = buildService({ phase1Manager });
+      paymentRepo.findOne.mockResolvedValue(payment);
+
+      await expect(service.partialRefund(1, {
+        amount: 10000,
+        reason: '부분 환불',
+        idempotencyKey: completedRefund.idempotencyKey,
+      })).resolves.toEqual(completedRefund);
+      expect(gateway.partialCancel).not.toHaveBeenCalled();
+    });
+
+    it('returns a completed full-refund operation after payment becomes REFUNDED', async () => {
+      const payment = makeConfirmedPayment({ status: PaymentStatus.REFUNDED });
+      const completedRefund = makePendingRefund({
+        status: RefundStatus.COMPLETED,
+        gatewayRefundId: 'rid-full-completed',
+      });
+      const phase1Manager = {
+        ...makePhase1Manager(payment),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Payment ? Promise.resolve(payment) : Promise.resolve(completedRefund),
+        ),
+      };
+      const { service, paymentRepo, gateway } = buildService({ phase1Manager });
+      paymentRepo.findOne.mockResolvedValue(payment);
+
+      await expect(service.partialRefund(1, {
+        amount: completedRefund.amount,
+        reason: completedRefund.reason,
+        idempotencyKey: completedRefund.idempotencyKey,
+      })).resolves.toEqual(completedRefund);
+      expect(gateway.partialCancel).not.toHaveBeenCalled();
+    });
+
+    it('fails closed after an unconfirmed non-idempotent gateway attempt', async () => {
+      const payment = makeConfirmedPayment();
+      const pendingRefund = makePendingRefund({ gatewayAttemptedAt: new Date() });
+      const phase1Manager = {
+        ...makePhase1Manager(payment),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Payment ? Promise.resolve(payment) : Promise.resolve(pendingRefund),
+        ),
+      };
+      const { service, paymentRepo, gateway } = buildService({ phase1Manager });
+      paymentRepo.findOne.mockResolvedValue(payment);
+
+      await expect(
+        service.partialRefund(1, { amount: 10000, reason: '부분 환불' , idempotencyKey: 'refund-test' }),
+      ).rejects.toThrow(InternalServerErrorException);
+      expect(gateway.partialCancel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('reconcileRefund()', () => {
+    it('검증 증거와 PG 참조를 저장하고 결제 상태를 원자적으로 동기화한다', async () => {
+      const payment = makeConfirmedPayment();
+      const pendingRefund = makePendingRefund({ gatewayAttemptedAt: new Date() });
+      const manager = {
+        ...makePhase1Manager(payment, '10000'),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Refund ? Promise.resolve(pendingRefund) : Promise.resolve(payment),
+        ),
+      };
+      const { service, refundRepo } = buildService({ phase1Manager: manager });
+      refundRepo.findOne.mockResolvedValue({
+        ...pendingRefund,
+        status: RefundStatus.COMPLETED,
+        gatewayRefundId: 'provider-refund-1',
+      });
+
+      await service.reconcileRefund(pendingRefund.id, {
+        outcome: RefundStatus.COMPLETED,
+        gatewayRefundId: 'provider-refund-1',
+        verificationEvidence: 'PG 관리자 조회 결과 환불 완료 거래를 확인함',
+      });
+
+      expect(manager.update).toHaveBeenCalledWith(
+        Refund,
+        pendingRefund.id,
+        expect.objectContaining({
+          status: RefundStatus.COMPLETED,
+          gatewayRefundId: 'provider-refund-1',
+          reconciliationEvidence: 'PG 관리자 조회 결과 환불 완료 거래를 확인함',
+          reconciledAt: expect.any(Date),
+        }),
+      );
+      expect(manager.update).toHaveBeenCalledWith(Payment, payment.id, {
+        status: PaymentStatus.PARTIAL_CANCELLED,
+      });
+    });
+
+    it('완료 환불 합계가 결제 금액을 넘으면 조정 트랜잭션을 거부한다', async () => {
+      const payment = makeConfirmedPayment({ amount: 10000 });
+      const pendingRefund = makePendingRefund({ amount: 5000 });
+      const manager = {
+        ...makePhase1Manager(payment, '15000'),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          entity === Refund ? Promise.resolve(pendingRefund) : Promise.resolve(payment),
+        ),
+      };
+      const { service } = buildService({ phase1Manager: manager });
+
+      await expect(service.reconcileRefund(pendingRefund.id, {
+        outcome: RefundStatus.COMPLETED,
+        gatewayRefundId: 'provider-refund-over-limit',
+        verificationEvidence: 'PG 관리자 조회 결과 환불 완료 거래를 확인함',
+      })).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

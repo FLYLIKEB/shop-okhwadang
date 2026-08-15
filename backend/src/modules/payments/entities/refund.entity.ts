@@ -13,6 +13,8 @@ export enum RefundStatus {
 
 @Entity('refunds')
 @Index(['paymentId'])
+@Index('IDX_refunds_payment_status', ['paymentId', 'status'])
+@Index('UQ_refunds_idempotency_key', ['idempotencyKey'], { unique: true })
 export class Refund {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: number;
@@ -34,6 +36,18 @@ export class Refund {
 
   @Column({ name: 'gateway_refund_id', type: 'varchar', length: 255, nullable: true })
   gatewayRefundId!: string | null;
+
+  @Column({ name: 'idempotency_key', type: 'varchar', length: 255 })
+  idempotencyKey!: string;
+
+  @Column({ name: 'gateway_attempted_at', type: 'datetime', nullable: true })
+  gatewayAttemptedAt!: Date | null;
+
+  @Column({ name: 'reconciliation_evidence', type: 'varchar', length: 1000, nullable: true })
+  reconciliationEvidence!: string | null;
+
+  @Column({ name: 'reconciled_at', type: 'datetime', nullable: true })
+  reconciledAt!: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
