@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Param, Body, Query, ParseIntPipe, DefaultValuePipe,
+  Controller, Get, Post, Param, Body, Query, ParseIntPipe, DefaultValuePipe, Headers,
 } from '@nestjs/common';
 import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
@@ -9,6 +9,7 @@ import {
   ApiQuery,
   ApiCookieAuth,
   ApiParam,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -25,8 +26,9 @@ export class OrdersController {
   @ApiOperation({ summary: '주문 생성', description: '새로운 주문을 생성합니다.' })
   @ApiResponse({ status: 201, description: '주문 생성 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  create(@CurrentUser() user: AuthUser, @Body() dto: CreateOrderDto) {
-    return this.ordersService.create(user.id, dto);
+  @ApiHeader({ name: 'Idempotency-Key', required: true, description: '재시도 식별 키' })
+  create(@CurrentUser() user: AuthUser, @Body() dto: CreateOrderDto, @Headers('idempotency-key') idempotencyKey?: string) {
+    return this.ordersService.create(user.id, dto, idempotencyKey);
   }
 
   @Get()

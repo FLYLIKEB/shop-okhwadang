@@ -24,8 +24,9 @@ export class PaymentsController {
   @ApiOperation({ summary: '결제 준비', description: '결제를 위한 사전 준비 작업을 수행합니다.' })
   @ApiResponse({ status: 201, description: '결제 준비 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  prepare(@Body() dto: PreparePaymentDto, @CurrentUser() user: { id: number }) {
-    return this.paymentsService.prepare(dto, user.id);
+  @ApiHeader({ name: 'Idempotency-Key', required: true, description: '재시도 식별 키' })
+  prepare(@Body() dto: PreparePaymentDto, @CurrentUser() user: { id: number }, @Headers('idempotency-key') idempotencyKey?: string) {
+    return this.paymentsService.prepare(dto, user.id, idempotencyKey);
   }
 
   @Post('confirm')
@@ -34,8 +35,9 @@ export class PaymentsController {
   @ApiOperation({ summary: '결제 승인', description: '결제를 확정합니다.' })
   @ApiResponse({ status: 200, description: '결제 확정 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  confirm(@Body() dto: ConfirmPaymentDto, @CurrentUser() user: { id: number }) {
-    return this.paymentsService.confirm(dto, user.id);
+  @ApiHeader({ name: 'Idempotency-Key', required: true, description: '재시도 식별 키' })
+  confirm(@Body() dto: ConfirmPaymentDto, @CurrentUser() user: { id: number }, @Headers('idempotency-key') idempotencyKey?: string) {
+    return this.paymentsService.confirm(dto, user.id, idempotencyKey);
   }
 
   @Post('cancel')

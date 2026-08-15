@@ -232,6 +232,7 @@ describe('useCheckout - 폼 검증', () => {
 
     expect(mockOrdersCreate).toHaveBeenCalledWith(
       expect.objectContaining({ zipcode: '12345' }),
+      { headers: { 'Idempotency-Key': expect.any(String) } },
     );
   });
 
@@ -264,6 +265,7 @@ describe('useCheckout - 폼 검증', () => {
 
     expect(mockOrdersCreate).toHaveBeenCalledWith(
       expect.objectContaining({ userCouponId: 7, pointsUsed: 1500 }),
+      { headers: { 'Idempotency-Key': expect.any(String) } },
     );
   });
 
@@ -323,11 +325,14 @@ describe('useCheckout - Mock 결제 흐름', () => {
 
     expect(options.setConfirmedGrandTotal).toHaveBeenCalledWith(33000);
     expect(options.setConfirmedGrandTotal).not.toHaveBeenCalledWith(36000);
-    expect(mockPaymentsConfirm).toHaveBeenCalledWith({
-      orderId: orderWithShipping.id,
-      paymentKey: `mock-${orderWithShipping.orderNumber}`,
-      amount: 33000,
-    });
+    expect(mockPaymentsConfirm).toHaveBeenCalledWith(
+      {
+        orderId: orderWithShipping.id,
+        paymentKey: `mock-${orderWithShipping.orderNumber}`,
+        amount: 33000,
+      },
+      { headers: { 'Idempotency-Key': expect.any(String) } },
+    );
   });
 
   it('mock_client_key 응답 시 결제 확인까지 자동 진행 후 라우팅', async () => {
@@ -365,17 +370,20 @@ describe('useCheckout - Mock 결제 흐름', () => {
         recipientPhone: '010-1234-5678',
         zipcode: '12345',
       }),
+      { headers: { 'Idempotency-Key': expect.any(String) } },
     );
     expect(mockOrdersCreate).not.toHaveBeenCalledWith(
       expect.objectContaining({ marketingConsent: expect.anything() }),
     );
     expect(options.setErrors).toHaveBeenCalledWith({});
-    expect(mockPaymentsPrepare).toHaveBeenCalledWith({ orderId: mockOrder.id, locale: 'ko', gateway: 'naverpay' });
-    expect(mockPaymentsConfirm).toHaveBeenCalledWith({
-      orderId: mockOrder.id,
-      paymentKey: `mock-${mockOrder.orderNumber}`,
-      amount: 30000,
-    });
+    expect(mockPaymentsPrepare).toHaveBeenCalledWith(
+      { orderId: mockOrder.id, locale: 'ko', gateway: 'naverpay' },
+      { headers: { 'Idempotency-Key': expect.any(String) } },
+    );
+    expect(mockPaymentsConfirm).toHaveBeenCalledWith(
+      { orderId: mockOrder.id, paymentKey: `mock-${mockOrder.orderNumber}`, amount: 30000 },
+      { headers: { 'Idempotency-Key': expect.any(String) } },
+    );
     expect(toast.success).toHaveBeenCalledWith('결제가 완료되었습니다.');
     expect(refetch).toHaveBeenCalled();
     expect(mockReplace).toHaveBeenCalledWith(
@@ -385,6 +393,37 @@ describe('useCheckout - Mock 결제 흐름', () => {
     expect(options.setStep).toHaveBeenCalledWith('preparing_payment');
     expect(options.setStep).toHaveBeenCalledWith('confirming_payment');
     expect(options.setStep).toHaveBeenCalledWith('success');
+  });
+
+  it('reuses one generated request key for an unchanged double-submit intent', async () => {
+    mockOrdersCreate.mockResolvedValue(mockOrder);
+    mockPaymentsPrepare.mockResolvedValue({
+      paymentId: 1,
+      orderId: mockOrder.id,
+      orderNumber: mockOrder.orderNumber,
+      amount: 30000,
+      gateway: 'bank_transfer',
+      clientKey: 'bank_transfer',
+    } satisfies PreparePaymentResponse);
+    const { options } = makeOptions();
+    const { result } = renderHook(() => useCheckout(options));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeFormEvent());
+      await result.current.handleSubmit(makeFormEvent());
+    });
+
+    const [, firstRequestOptions] = mockOrdersCreate.mock.calls[0] as [
+      unknown,
+      { headers: { 'Idempotency-Key': string } },
+    ];
+    const [, secondRequestOptions] = mockOrdersCreate.mock.calls[1] as [
+      unknown,
+      { headers: { 'Idempotency-Key': string } },
+    ];
+    expect(mockOrdersCreate).toHaveBeenCalledTimes(2);
+    expect(firstRequestOptions.headers['Idempotency-Key']).toEqual(expect.any(String));
+    expect(secondRequestOptions.headers['Idempotency-Key']).toBe(firstRequestOptions.headers['Idempotency-Key']);
   });
 });
 
@@ -415,11 +454,10 @@ describe('useCheckout - 무통장입금 흐름', () => {
       await result.current.handleSubmit(makeFormEvent());
     });
 
-    expect(mockPaymentsPrepare).toHaveBeenCalledWith({
-      orderId: mockOrder.id,
-      locale: 'ko',
-      gateway: 'bank_transfer',
-    });
+    expect(mockPaymentsPrepare).toHaveBeenCalledWith(
+      { orderId: mockOrder.id, locale: 'ko', gateway: 'bank_transfer' },
+      { headers: { 'Idempotency-Key': expect.any(String) } },
+    );
     expect(mockPaymentsConfirm).not.toHaveBeenCalled();
     expect(options.setPrepareResult).toHaveBeenCalledWith(null);
     expect(options.setStep).toHaveBeenCalledWith('success');
@@ -465,11 +503,10 @@ describe('useCheckout - PayPal 결제 흐름', () => {
       await result.current.handleSubmit(makeFormEvent());
     });
 
-    expect(mockPaymentsPrepare).toHaveBeenCalledWith({
-      orderId: mockOrder.id,
-      locale: 'en',
-      gateway: 'paypal',
-    });
+    expect(mockPaymentsPrepare).toHaveBeenCalledWith(
+      { orderId: mockOrder.id, locale: 'en', gateway: 'paypal' },
+      { headers: { 'Idempotency-Key': expect.any(String) } },
+    );
     expect(options.setPrepareResult).toHaveBeenCalledWith(prepareResult);
     expect(options.setStep).toHaveBeenCalledWith('confirming_payment');
     expect(confirmSpy).not.toHaveBeenCalled();

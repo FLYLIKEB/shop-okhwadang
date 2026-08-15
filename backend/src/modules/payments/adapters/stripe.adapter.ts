@@ -4,6 +4,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BadGatewayException } from '@nestjs/common';
 import {
   PaymentGateway,
+  PrepareContext,
   PrepareResult,
   ConfirmResult,
   CancelResult,
@@ -42,13 +43,16 @@ export class StripePaymentAdapter implements PaymentGateway {
     return this.stripe;
   }
 
-  async prepare(orderId: string, amount: number): Promise<PrepareResult> {
+  async prepare(orderId: string, amount: number, context?: PrepareContext): Promise<PrepareResult> {
     try {
-      const paymentIntent = await this.ensureStripe().paymentIntents.create({
+      const paymentIntentParams = {
         amount,
         currency: 'usd',
         metadata: { orderId },
-      });
+      };
+      const paymentIntent = context?.idempotencyKey
+        ? await this.ensureStripe().paymentIntents.create(paymentIntentParams, { idempotencyKey: context.idempotencyKey })
+        : await this.ensureStripe().paymentIntents.create(paymentIntentParams);
 
       return {
         clientKey: paymentIntent.client_secret ?? this.publishableKey,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { SESSION_KEYS } from '@/constants/storage';
@@ -88,6 +88,12 @@ function persistGuestOrderContext(context: GuestOrderContext): void {
 export function useCheckout(options: UseCheckoutOptions) {
   const { locale, grandTotal, refetch, form, checkoutItems } = options;
   const router = useRouter();
+  const idempotencyIntentRef = useRef<{
+    fingerprint: string;
+    orderKey: string;
+    paymentPrepareKey: string;
+    paymentConfirmKey: string;
+  } | null>(null);
 
   const handlePaymentError = useCallback(
     (message: string) => {
@@ -156,6 +162,7 @@ export function useCheckout(options: UseCheckoutOptions) {
       guestAccessToken?: string,
     ): Promise<void> => {
       options.setStep('confirming_payment');
+      const paymentConfirmIdempotencyKey = idempotencyIntentRef.current?.paymentConfirmKey ?? crypto.randomUUID();
 
       if (options.isGuestCheckout) {
         if (!guestAccessToken) {
@@ -165,6 +172,7 @@ export function useCheckout(options: UseCheckoutOptions) {
           orderId,
           { paymentKey: `mock-${orderNumber}`, amount: amountToConfirm },
           guestAccessToken,
+          { headers: { 'Idempotency-Key': paymentConfirmIdempotencyKey } },
         );
         const guestContext = {
           orderId: result.orderId,
@@ -184,7 +192,10 @@ export function useCheckout(options: UseCheckoutOptions) {
         return;
       }
 
-      await paymentsApi.confirm({ orderId, paymentKey: `mock-${orderNumber}`, amount: amountToConfirm });
+      await paymentsApi.confirm(
+        { orderId, paymentKey: `mock-${orderNumber}`, amount: amountToConfirm },
+        { headers: { 'Idempotency-Key': paymentConfirmIdempotencyKey } },
+      );
       clearHostedProviderContexts();
       options.setStep('success');
       toast.success(toastMessage('paymentComplete'));
@@ -245,6 +256,37 @@ export function useCheckout(options: UseCheckoutOptions) {
       options.setErrors({});
 
       try {
+        const intentFingerprint = JSON.stringify({
+          isGuestCheckout: options.isGuestCheckout,
+          items: checkoutItems.map((item) => ({
+            productId: item.productId,
+            productOptionId: item.productOptionId,
+            quantity: item.quantity,
+          })),
+          recipientName,
+          recipientPhone,
+          zipcode,
+          address,
+          addressDetail,
+          memo,
+          guestEmail: normalizedGuestEmail,
+          locale,
+          selectedGateway: options.selectedGateway,
+          userCouponId: options.appliedUserCouponId,
+          pointsUsed: options.appliedPointsUsed,
+        });
+        if (idempotencyIntentRef.current?.fingerprint !== intentFingerprint) {
+          idempotencyIntentRef.current = {
+            fingerprint: intentFingerprint,
+            orderKey: crypto.randomUUID(),
+            paymentPrepareKey: crypto.randomUUID(),
+            paymentConfirmKey: crypto.randomUUID(),
+          };
+        }
+        const {
+          orderKey: orderIdempotencyKey,
+          paymentPrepareKey: paymentPrepareIdempotencyKey,
+        } = idempotencyIntentRef.current;
         options.setStep('creating_order');
 
         let orderId: number;
@@ -268,7 +310,7 @@ export function useCheckout(options: UseCheckoutOptions) {
             memo: memo || null,
             guestEmail: normalizedGuestEmail,
             orderLocale: locale,
-          });
+          }, { headers: { 'Idempotency-Key': orderIdempotencyKey } });
 
 
 
@@ -295,7 +337,7 @@ export function useCheckout(options: UseCheckoutOptions) {
             orderLocale: locale,
             userCouponId: options.appliedUserCouponId,
             pointsUsed: options.appliedPointsUsed && options.appliedPointsUsed > 0 ? options.appliedPointsUsed : undefined,
-          });
+          }, { headers: { 'Idempotency-Key': orderIdempotencyKey } });
 
           orderId = order.id;
           confirmedTotal = Number(order.totalAmount);
@@ -312,8 +354,12 @@ export function useCheckout(options: UseCheckoutOptions) {
               orderId,
               { locale, gateway: options.selectedGateway },
               guestAccessToken,
+              { headers: { 'Idempotency-Key': paymentPrepareIdempotencyKey } },
             )
-          : await paymentsApi.prepare({ orderId, locale, gateway: options.selectedGateway });
+          : await paymentsApi.prepare(
+              { orderId, locale, gateway: options.selectedGateway },
+              { headers: { 'Idempotency-Key': paymentPrepareIdempotencyKey } },
+            );
 
         const isToss =
           result.gateway === 'toss' &&

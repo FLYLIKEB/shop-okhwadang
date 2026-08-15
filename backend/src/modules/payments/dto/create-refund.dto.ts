@@ -21,5 +21,5 @@ export class CreateRefundDto {
   @IsString()
   @MaxLength(255)
   @Matches(/^[A-Za-z0-9_-]+$/, { message: '환불 작업 키 형식이 올바르지 않습니다.' })
-  idempotencyKey?: string;
+  idempotencyKey!: string;
 }

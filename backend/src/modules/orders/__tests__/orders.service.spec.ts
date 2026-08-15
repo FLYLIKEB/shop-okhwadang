@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { OrdersService } from '../orders.service';
 import { Order, OrderStatus } from '../entities/order.entity';
 import { CreateOrderDto } from '../dto/create-order.dto';
@@ -13,6 +13,7 @@ import { ShippingFeeCalculatorService } from '../../shipping/services/shipping-f
 import { ProductStatus } from '../../products/entities/product.entity';
 import { OrderCreationWorkflowService } from '../order-creation.workflow.service';
 import { OrderPostCommitService } from '../order-post-commit.service';
+import { IdempotencyService } from '../../../common/services/idempotency.service';
 
 // Manager used inside dataSource.transaction — same shape as the previous queryRunner.manager mock
 const mockManager = {
@@ -28,6 +29,9 @@ const mockDataSource = {
   transaction: jest.fn(
     (cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager),
   ),
+};
+const mockIdempotencyService = {
+  execute: jest.fn(),
 };
 
 const mockOrderRepository = {
@@ -69,12 +73,28 @@ describe('OrdersService', () => {
     mockDataSource.transaction.mockImplementation(
       (cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager),
     );
+    mockIdempotencyService.execute.mockImplementation(
+      async (
+        _scope: string,
+        _operation: string,
+        _key: string | undefined,
+        _payload: unknown,
+        work: (manager: typeof mockManager) => Promise<unknown>,
+      ) => ({
+        result: await mockDataSource.transaction(work),
+        replayed: false,
+      }),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrdersService,
         OrderCreationWorkflowService,
         OrderPostCommitService,
+        {
+          provide: IdempotencyService,
+          useValue: mockIdempotencyService,
+        },
         { provide: getRepositoryToken(Order), useValue: mockOrderRepository },
         { provide: DataSource, useValue: mockDataSource },
         { provide: PointsService, useValue: mockPointsService },
@@ -150,6 +170,39 @@ describe('OrdersService', () => {
       const result = await service.create(1, dto);
       expect(result).toBeDefined();
       expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('idempotent create delegation', () => {
+    const dto: CreateOrderDto = {
+      items: [{ productId: 1, quantity: 1 }],
+      recipientName: '홍길동',
+      recipientPhone: '010-1234-5678',
+      zipcode: '12345',
+      address: '서울시',
+    };
+
+    it('replays the stored order without dispatching post-commit effects again', async () => {
+      const savedOrder = { id: 71, orderNumber: 'ORD-20260815-ABCDE' } as Order;
+      mockIdempotencyService.execute.mockResolvedValueOnce({
+        result: { savedOrder, totalPayable: 1000, recipientName: dto.recipientName },
+        replayed: true,
+      });
+      jest.spyOn(service, 'findOne').mockResolvedValue(savedOrder);
+
+      await expect(service.create(1, dto, 'replay-key')).resolves.toBe(savedOrder);
+
+      expect(mockIdempotencyService.execute).toHaveBeenCalledWith(
+        'member:1', 'order.create', 'replay-key', dto, expect.any(Function),
+      );
+    });
+
+    it('propagates changed-payload idempotency conflicts before order effects', async () => {
+      mockIdempotencyService.execute.mockRejectedValueOnce(
+        new ConflictException('동일한 Idempotency-Key에 다른 요청을 사용할 수 없습니다.'),
+      );
+
+      await expect(service.create(1, dto, 'conflict-key')).rejects.toBeInstanceOf(ConflictException);
     });
   });
 

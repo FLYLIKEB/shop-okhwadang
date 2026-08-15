@@ -61,6 +61,7 @@ export class PayPalPaymentAdapter implements PaymentGateway {
     const accessToken = await this.getAccessToken();
     const response = await this.paypalFetch('/v2/checkout/orders', accessToken, {
       method: 'POST',
+      headers: context?.idempotencyKey ? { 'PayPal-Request-Id': context.idempotencyKey } : undefined,
       body: JSON.stringify({
         intent: 'CAPTURE',
         purchase_units: [
@@ -95,12 +96,15 @@ export class PayPalPaymentAdapter implements PaymentGateway {
     };
   }
 
-  async confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult> {
+  async confirm(paymentKey: string, amount: number, orderId: string, context?: { idempotencyKey?: string }): Promise<ConfirmResult> {
     const accessToken = await this.getAccessToken();
     const response = await this.paypalFetch(
       `/v2/checkout/orders/${encodeURIComponent(paymentKey)}/capture`,
       accessToken,
-      { method: 'POST' },
+      {
+        method: 'POST',
+        headers: context?.idempotencyKey ? { 'PayPal-Request-Id': context.idempotencyKey } : undefined,
+      },
     );
     const body = await readJson<PayPalOrderResponse>(response);
 

@@ -183,7 +183,7 @@ export default function OrderDetailPage() {
         orderId: order.id,
         locale: checkoutLocale,
         gateway: selectedGateway,
-      });
+      }, { headers: { 'Idempotency-Key': crypto.randomUUID() } });
       if (result.gateway === 'bank_transfer') {
         setPrepareResult(null);
         setPaymentStep('idle');

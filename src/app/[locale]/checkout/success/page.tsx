@@ -33,6 +33,15 @@ function clearCheckoutState(): void {
   clearHostedProviderContexts();
 }
 
+function getHostedConfirmOperationKey(providerContextKey: string, orderId: number): string {
+  const storageKey = `${SESSION_KEYS.PAYMENT_CONFIRM_OPERATION_PREFIX}${providerContextKey}:${orderId}`;
+  const existing = sessionStorage.getItem(storageKey);
+  if (existing && /^[A-Za-z0-9-]{36}$/.test(existing)) return existing;
+  const key = crypto.randomUUID();
+  sessionStorage.setItem(storageKey, key);
+  return key;
+}
+
 function CheckoutSuccessContent({ locale }: { locale: Locale }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -110,14 +119,19 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
     const isGuestConfirmResponse = (
       result: ConfirmPaymentResponse | GuestConfirmPaymentResponse,
     ): result is GuestConfirmPaymentResponse => 'guestAccessToken' in result;
+    const idempotencyKey = getHostedConfirmOperationKey(contextKey, ctx.orderId);
 
     const confirmPromise: Promise<ConfirmPaymentResponse | GuestConfirmPaymentResponse> = ctx.guestAccessToken
       ? guestPaymentsApi.confirm(
           ctx.orderId,
           { paymentKey, amount: ctx.amount },
           ctx.guestAccessToken,
+          { headers: { 'Idempotency-Key': idempotencyKey } },
         )
-      : paymentsApi.confirm({ orderId: ctx.orderId, paymentKey, amount: ctx.amount });
+      : paymentsApi.confirm(
+          { orderId: ctx.orderId, paymentKey, amount: ctx.amount },
+          { headers: { 'Idempotency-Key': idempotencyKey } },
+        );
 
     confirmPromise
       .then(async (result) => {

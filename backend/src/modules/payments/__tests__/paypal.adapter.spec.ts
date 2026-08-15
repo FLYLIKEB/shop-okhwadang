@@ -70,6 +70,15 @@ describe('PayPalPaymentAdapter', () => {
   });
 
   describe('confirm', () => {
+    it('forwards the stable operation key to PayPal capture', async () => {
+      mockAccessToken();
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'PAYPAL-ORDER-1', status: 'COMPLETED' }) });
+      await adapter.confirm('PAYPAL-ORDER-1', 10000, 'ORDER-123', { idempotencyKey: 'confirm-operation-key' });
+      expect(mockFetch).toHaveBeenLastCalledWith(expect.any(String), expect.objectContaining({
+        headers: expect.objectContaining({ 'PayPal-Request-Id': 'confirm-operation-key' }),
+      }));
+    });
+
     it('confirm → Orders v2 capture COMPLETED 응답을 confirmed로 변환', async () => {
       mockAccessToken();
       mockFetch.mockResolvedValueOnce({

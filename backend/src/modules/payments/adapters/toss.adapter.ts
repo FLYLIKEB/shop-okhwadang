@@ -35,7 +35,7 @@ export class TossPaymentAdapter implements PaymentGateway {
     return { clientKey: this.clientKey, orderId };
   }
 
-  async confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult> {
+  async confirm(paymentKey: string, amount: number, orderId: string, context?: { idempotencyKey?: string }): Promise<ConfirmResult> {
     const response = await fetch(
       'https://api.tosspayments.com/v1/payments/confirm',
       {
@@ -43,6 +43,7 @@ export class TossPaymentAdapter implements PaymentGateway {
         headers: {
           Authorization: this.authHeader,
           'Content-Type': 'application/json',
+          ...(context?.idempotencyKey ? { 'Idempotency-Key': context.idempotencyKey } : {}),
         },
         body: JSON.stringify({ paymentKey, orderId, amount }),
         signal: AbortSignal.timeout(8000),

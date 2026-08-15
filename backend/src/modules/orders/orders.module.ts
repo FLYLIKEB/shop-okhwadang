@@ -21,10 +21,12 @@ import { GuestOrderAccessService } from './guest-order-access.service';
 import { OrderServiceRequestsService } from './order-service-requests.service';
 import { OrderCreationWorkflowService } from './order-creation.workflow.service';
 import { OrderPostCommitService } from './order-post-commit.service';
+import { IdempotencyOperation } from '../../common/entities/idempotency-operation.entity';
+import { IdempotencyService } from '../../common/services/idempotency.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, OrderServiceRequest, PointHistory, PolicyConsent, Payment, GuestOrderAccess]),
+    TypeOrmModule.forFeature([Order, OrderItem, OrderServiceRequest, PointHistory, PolicyConsent, Payment, GuestOrderAccess, IdempotencyOperation]),
     PointsModule,
     CouponsModule,
     ShippingModule,
@@ -44,6 +46,7 @@ import { OrderPostCommitService } from './order-post-commit.service';
     GuestOrderAccessService,
     OrderPostCommitService,
     OrderServiceRequestsService,
+    IdempotencyService,
   ],
   exports: [OrdersService, OrderCreationWorkflowService, GuestOrderAccessService, OrderServiceRequestsService, OrderEventsModule],
 })

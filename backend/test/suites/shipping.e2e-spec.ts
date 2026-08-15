@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { e2eIdempotencyKey } from '../helpers/idempotency.helper';
 import {
   AuthCookies,
   cookieHeader,
@@ -74,6 +75,7 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       // Create order
       const orderRes = await request(app.getHttpServer())
         .post('/api/orders')
+          .set('Idempotency-Key', e2eIdempotencyKey('order'))
         .set('Cookie', cookieHeader(userCookies))
         .send({
           items: [{ productId, quantity: 1 }],
@@ -89,11 +91,13 @@ export function registerShippingSuite(getApp: () => INestApplication) {
       // Confirm payment to auto-create shipping record
       await request(app.getHttpServer())
         .post('/api/payments/prepare')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
         .set('Cookie', cookieHeader(userCookies))
         .send({ orderId });
 
       await request(app.getHttpServer())
         .post('/api/payments/confirm')
+          .set('Idempotency-Key', e2eIdempotencyKey('payment'))
         .set('Cookie', cookieHeader(userCookies))
         .send({ orderId, paymentKey: 'mock_key_123', amount: orderAmount });
     });
