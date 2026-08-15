@@ -19,7 +19,10 @@ import { usersApi } from '@/lib/api';
 import { SESSION_KEYS } from '@/constants/storage';
 import { getDefaultCheckoutGateway, getGatewayOptionsByLocale } from '@/constants/checkoutPaymentMethods';
 import type { Locale } from '@/i18n/routing';
-import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
+import PaymentGateway, {
+  TossPaymentWidgetPreview,
+  type PaymentGatewayHandle,
+} from '@/components/shared/checkout/PaymentGateway';
 import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMethodSelector';
 import { AddressSelectorSection } from '@/components/shared/checkout/AddressSelectorSection';
 import { OrderSummarySection } from '@/components/shared/checkout/OrderSummarySection';
@@ -395,6 +398,12 @@ export default function CheckoutPage({
                     locale={locale}
                     guestAccessToken={currentGuestAccessToken || undefined}
                     guestAccessTokenExpiresAt={currentGuestAccessTokenExpiresAt || undefined}
+                    onError={handlePaymentError}
+                  />
+                ) : locale === 'ko' && selectedGateway === 'toss' ? (
+                  <TossPaymentWidgetPreview
+                    amount={grandTotal}
+                    locale={locale}
                     onError={handlePaymentError}
                   />
                 ) : (

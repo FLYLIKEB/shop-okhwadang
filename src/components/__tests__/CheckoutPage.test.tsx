@@ -136,6 +136,9 @@ vi.mock('@/components/shared/checkout/PaymentGateway', () => ({
     useImperativeHandle(ref, () => ({ confirm: mockPaymentGatewayConfirm }));
     return <div data-testid="payment-gateway">PaymentGateway</div>;
   }),
+  TossPaymentWidgetPreview: () => (
+    <div data-testid="toss-widget-preview">TossPaymentWidgetPreview</div>
+  ),
 }));
 
 vi.mock('@/components/shared/checkout/CouponSelector', () => ({
@@ -341,13 +344,14 @@ describe('CheckoutPage', () => {
     expect(paymentsApi.confirm).toHaveBeenCalledOnce();
   });
 
-  it('ko checkout은 토스페이먼츠만 노출한다', async () => {
+  it('ko checkout은 주문 생성 전부터 토스 위젯을 노출한다', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
 
     await renderCheckoutPage();
 
-    expect(await screen.findByRole('radio', { name: /토스페이먼츠/ })).toBeChecked();
+    expect(await screen.findByTestId('toss-widget-preview')).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /토스페이먼츠/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /네이버페이/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /PayPal/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /Credit card/ })).not.toBeInTheDocument();
@@ -374,7 +378,7 @@ describe('CheckoutPage', () => {
     });
 
     await renderCheckoutPage();
-    expect(await screen.findByRole('radio', { name: /토스페이먼츠/ })).toBeChecked();
+    expect(await screen.findByTestId('toss-widget-preview')).toBeInTheDocument();
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     await user.type(screen.getByLabelText(/우편번호/), '12345');
