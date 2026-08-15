@@ -92,6 +92,7 @@ describe('Next.js CSP headers', () => {
 
     expect(directives['connect-src']).toContain('https://api.tosspayments.com');
     expect(directives['connect-src']).toContain('https://log.tosspayments.com');
+    expect(directives['connect-src']).toContain('https://event.tosspayments.com');
   });
 
   it('keeps PayPal popup isolation enabled', async () => {

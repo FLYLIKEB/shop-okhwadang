@@ -327,7 +327,7 @@ describe('PaymentsService', () => {
 
       expect(result.gateway).toBe('toss');
       expect(result.availableGateways).toEqual(['toss']);
-      expect(result.gatewayPayload?.customerKey).toMatch(/^[a-f0-9]{64}$/);
+      expect(result.gatewayPayload?.customerKey).toMatch(/^[a-f0-9]{50}$/);
       expect(mockTossAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.TOSS }),

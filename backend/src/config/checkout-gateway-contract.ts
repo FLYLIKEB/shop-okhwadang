@@ -28,6 +28,7 @@ export const CHECKOUT_GATEWAY_CONTRACT = {
       'connect-src': [
         'https://api.tosspayments.com',
         'https://log.tosspayments.com',
+        'https://event.tosspayments.com',
       ],
       'child-src': ['https://*.tosspayments.com'],
       'frame-src': ['https://*.tosspayments.com'],
