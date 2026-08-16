@@ -158,7 +158,7 @@ export class TossPaymentAdapter implements PaymentGateway {
   verifyWebhook(payload: unknown, signature: string): boolean {
     const expected = crypto
       .createHmac('sha256', this.secretKey)
-      .update(JSON.stringify(payload))
+      .update(typeof payload === 'string' ? payload : JSON.stringify(payload))
       .digest();
     const provided = Buffer.from(signature, 'base64');
     if (expected.length !== provided.length) return false;

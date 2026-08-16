@@ -166,6 +166,10 @@ export class PaymentConfirmationService {
           status: PaymentStatus.CONFIRMED,
           confirmationOperationKey: null,
           paymentKey: result.paymentKey,
+          providerTransactionId: result.providerTransactionId,
+          providerOrderReference: result.providerOrderReference,
+          expectedProviderAmount: result.providerAmount,
+          expectedProviderCurrency: result.providerCurrency?.toUpperCase(),
           method: result.method as PaymentMethod,
           paidAt,
           rawResponse: lockedPayment.gateway === PaymentGatewayType.STRIPE
@@ -314,6 +318,10 @@ export class PaymentConfirmationService {
             status: PaymentStatus.CONFIRMED,
             confirmationOperationKey: null,
             paymentKey: result.paymentKey,
+            providerTransactionId: result.providerTransactionId,
+            providerOrderReference: result.providerOrderReference,
+            expectedProviderAmount: result.providerAmount,
+            expectedProviderCurrency: result.providerCurrency?.toUpperCase(),
             method: result.method as PaymentMethod,
             paidAt,
             rawResponse: lockedPayment.gateway === PaymentGatewayType.STRIPE

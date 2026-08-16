@@ -40,10 +40,7 @@ export function extractWebhookIdempotencyKey(
     }
     case PaymentGatewayType.TOSS: {
       const eventId = stringOf(payload.eventId);
-      const paymentKey = stringOf(payload.paymentKey);
-      if (eventId) return { gateway, eventId, eventType };
-      if (paymentKey && eventType) return { gateway, eventId: `${paymentKey}:${eventType}`, eventType };
-      return null;
+      return eventId && eventType ? { gateway, eventId, eventType } : null;
     }
     case PaymentGatewayType.PAYPAL: {
       const id = stringOf(payload.id);
@@ -51,22 +48,17 @@ export function extractWebhookIdempotencyKey(
       return { gateway, eventId: id, eventType };
     }
     case PaymentGatewayType.EXIMBAY: {
-      const transactionId = stringOf(payload.transactionId ?? payload.transaction_id ?? payload.paymentKey);
-      const orderId = stringOf(payload.orderId ?? payload.order_id);
-      const id = transactionId ?? orderId;
-      if (!id || !eventType) return null;
-      return { gateway, eventId: `${id}:${eventType}`, eventType };
+      const id = stringOf(payload.eventId);
+      return id && eventType ? { gateway, eventId: id, eventType } : null;
     }
     case PaymentGatewayType.INICIS: {
-      const tid = stringOf(payload.tid);
-      if (!tid || !eventType) return null;
-      return { gateway, eventId: `${tid}:${eventType}`, eventType };
+      const id = stringOf(payload.eventId);
+      return id && eventType ? { gateway, eventId: id, eventType } : null;
     }
     case PaymentGatewayType.MOCK:
     default: {
-      const orderId = stringOf(payload.orderId);
-      if (!orderId || !eventType) return null;
-      return { gateway, eventId: `${orderId}:${eventType}`, eventType };
+      const id = stringOf(payload.eventId);
+      return id && eventType ? { gateway, eventId: id, eventType } : null;
     }
   }
 }
