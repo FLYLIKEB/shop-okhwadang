@@ -92,6 +92,29 @@ describe('ResendEmailAdapter', () => {
       });
     });
 
+    it('stable effect key is passed to Resend idempotency and Message-ID metadata', async () => {
+      fetchSpy.mockResolvedValue({
+        ok: true,
+        json: async () => ({ id: 'msg-1' }),
+      } as Response);
+
+      const adapter = new ResendEmailAdapter(baseConfig);
+      await adapter.send({
+        to: 'user@example.com',
+        subject: '제목',
+        html: '<p>본문</p>',
+        idempotencyKey: 'payment-email-1',
+      });
+
+      const request = fetchSpy.mock.calls[0][1] as RequestInit;
+      expect(request.headers).toEqual(expect.objectContaining({
+        'Idempotency-Key': 'payment-email-1',
+      }));
+      expect(JSON.parse(request.body as string)).toEqual(expect.objectContaining({
+        headers: { 'Message-ID': '<payment-email-1@okhwadang>' },
+      }));
+    });
+
     it('id가 누락되면 messageId는 빈 문자열', async () => {
       fetchSpy.mockResolvedValue({
         ok: true,

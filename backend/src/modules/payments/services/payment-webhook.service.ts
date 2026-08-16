@@ -1,12 +1,13 @@
-import { UnauthorizedException, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { Logger, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'crypto';
-import { DataSource, IsNull, LessThan, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { Payment, PaymentStatus, PaymentGatewayType } from '../entities/payment.entity';
 import { Shipping, ShippingStatus } from '../entities/shipping.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import {
   PaymentWebhookEvent,
   PaymentWebhookResult,
+  PaymentWebhookState,
 } from '../entities/payment-webhook-event.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { resolveWebhookTransition } from './payment-webhook-transition.policy';
@@ -17,6 +18,8 @@ import {
   extractWebhookIdempotencyKey,
   isDuplicateKeyError,
 } from './webhook-idempotency.util';
+import { PaymentEffectType } from '../entities/payment-effect-outbox.entity';
+import { PaymentEffectOutboxService } from './payment-effect-outbox.service';
 
 interface PaymentWebhookDependencies {
   gateway: PaymentGateway;
@@ -27,6 +30,7 @@ interface PaymentWebhookDependencies {
   dataSource: DataSource;
   logger: Logger;
   pointsService: Pick<PointsService, 'lockUserForPointChanges' | 'creditFifo'>;
+  effectOutbox: PaymentEffectOutboxService;
   defaultCarrier?: string;
 }
 
@@ -43,32 +47,20 @@ interface PaymentWebhookDependencies {
  *   - FAILED: 처리 도중 예외 발생 — 운영자 재처리 가능하도록 raw_payload + error_message 보존
  */
 export class PaymentWebhookService {
-  private static readonly EVENT_LEASE_MS = 5 * 60 * 1000;
-
   constructor(private readonly deps: PaymentWebhookDependencies) {}
 
-  async handleWebhook(payload: unknown, signature: string, rawBody?: Buffer): Promise<void> {
-    const signaturePayload =
-      rawBody && this.deps.gatewayType !== PaymentGatewayType.PAYPAL
-        ? rawBody.toString('utf8')
-        : payload;
-    if (!(await this.deps.gateway.verifyWebhook(signaturePayload, signature))) {
-      throw new UnauthorizedException('웹훅 서명 검증 실패');
-    }
+  async handleWebhook(
+    payload: unknown,
+    signature: string,
+    rawBody?: Buffer,
+    signatureHeader?: string,
+  ): Promise<void> {
     const normalizedPayload = normalizeProviderEvent(this.deps.gatewayType, payload, rawBody);
     if (!normalizedPayload) {
       this.deps.logger.warn(`Webhook ignored: malformed provider event (gateway=${this.deps.gatewayType})`);
       return;
     }
-    payload = normalizedPayload;
-    const safe = {
-      orderId: (payload as Record<string, unknown>)?.orderId,
-      status: (payload as Record<string, unknown>)?.status,
-      type: (payload as Record<string, unknown>)?.type,
-    };
-    this.deps.logger.log(`Webhook received: ${JSON.stringify(safe)}`);
-
-    const idempotencyKey = extractWebhookIdempotencyKey(this.deps.gatewayType, payload);
+    const idempotencyKey = extractWebhookIdempotencyKey(this.deps.gatewayType, normalizedPayload);
     if (!idempotencyKey) {
       this.deps.logger.warn(
         `Webhook ignored: cannot extract idempotency key (gateway=${this.deps.gatewayType})`,
@@ -76,111 +68,43 @@ export class PaymentWebhookService {
       return;
     }
 
-    // 1) 이벤트 행을 UNIQUE(gateway, event_id) 위반 캐치하여 즉시 중복 차단.
+    // A reconstructed JSON string is not the provider-signed request.  Such
+    // receipts are retained for audit but deliberately cannot be replayed.
+    const replayable = rawBody !== undefined;
     const eventEntity = this.deps.webhookEventRepository.create({
       gateway: idempotencyKey.gateway,
       eventId: idempotencyKey.eventId,
       eventType: idempotencyKey.eventType,
       result: PaymentWebhookResult.IGNORED,
-      rawPayload: isObject(payload) ? (payload as object) : null,
+      state: replayable ? PaymentWebhookState.PENDING : PaymentWebhookState.MANUAL_REVIEW,
+      attemptCount: 0,
+      maxAttempts: 8,
+      providerRoute: this.deps.gatewayType,
+      rawBody: rawBody ?? null,
+      signatureHeader: signatureHeader ?? null,
+      signatureValue: signature,
+      normalizedMetadata: normalizedPayload,
+      replayable,
+      lastError: replayable ? null : 'Webhook raw body was unavailable; receipt cannot be replayed.',
     });
-    let savedEvent: PaymentWebhookEvent;
     try {
-      savedEvent = await this.deps.webhookEventRepository.save(eventEntity);
+      await this.deps.webhookEventRepository.save(eventEntity);
     } catch (err) {
       if (isDuplicateKeyError(err)) {
-        const failedEvent = await this.deps.webhookEventRepository.findOne({
+        const existing = await this.deps.webhookEventRepository.findOne({
           where: { gateway: idempotencyKey.gateway, eventId: idempotencyKey.eventId },
         });
-        if (failedEvent?.result === PaymentWebhookResult.FAILED) {
-          const reclaimed = await this.deps.webhookEventRepository.update(
-            { id: failedEvent.id, result: PaymentWebhookResult.FAILED },
-            {
-              result: PaymentWebhookResult.IGNORED,
-              processedAt: null,
-              errorMessage: JSON.stringify({
-                previousAttempt: {
-                  errorMessage: failedEvent.errorMessage,
-                  rawPayload: failedEvent.rawPayload,
-                },
-                retryPayload: isObject(payload) ? payload : null,
-              }),
-            },
-          );
-          if (reclaimed.affected !== 1) return;
-          savedEvent = { ...failedEvent, result: PaymentWebhookResult.IGNORED };
-        } else if (
-          failedEvent?.result === PaymentWebhookResult.IGNORED
-          && failedEvent.processedAt === null
-        ) {
-          const cutoff = new Date(Date.now() - PaymentWebhookService.EVENT_LEASE_MS);
-          const reclaimed = await this.deps.webhookEventRepository.update(
-            {
-              id: failedEvent.id,
-              result: PaymentWebhookResult.IGNORED,
-              processedAt: IsNull(),
-              receivedAt: LessThan(cutoff),
-            },
-            { receivedAt: new Date() },
-          );
-          if (reclaimed.affected !== 1) {
-            throw new ServiceUnavailableException('웹훅 처리가 진행 중입니다.');
-          }
-          savedEvent = { ...failedEvent, receivedAt: new Date() };
-        } else {
-          this.deps.logger.warn(
-            `Webhook ignored: duplicate event (gateway=${idempotencyKey.gateway}, eventId=${idempotencyKey.eventId})`,
-          );
-          return;
+        if (existing?.state === PaymentWebhookState.PENDING || existing?.state === PaymentWebhookState.PROCESSING) {
+          throw new ServiceUnavailableException('웹훅 처리가 진행 중입니다.');
         }
+        this.deps.logger.warn(`Webhook ignored: duplicate event (gateway=${idempotencyKey.gateway}, eventId=${idempotencyKey.eventId})`);
+        return;
       }
-      else throw err;
-    }
-
-    // 2) 실제 처리. 결과는 try/catch 종료 후 events 테이블에 반영.
-    let result: PaymentWebhookResult = PaymentWebhookResult.IGNORED;
-    let errorMessage: string | null = null;
-    let resolvedPaymentId: number | null = null;
-    let resolvedOrderId: number | null = null;
-    let processingFailed = false;
-    try {
-      const outcome = await this.processWebhook(payload);
-      result = outcome.result;
-      resolvedPaymentId = outcome.paymentId;
-      resolvedOrderId = outcome.orderId;
-    } catch (err) {
-      result = PaymentWebhookResult.FAILED;
-      errorMessage = '웹훅 처리 중 일시적인 오류가 발생했습니다.';
-      processingFailed = true;
-      this.deps.logger.error(
-        `Webhook processing failed: gateway=${idempotencyKey.gateway}, eventId=${idempotencyKey.eventId}, error=${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
-
-    // #725: audit row update 자체가 실패해도 PG 재시도를 유발하지 않도록 swallow.
-    // (audit INSERT 는 이미 커밋되었기 때문에, 여기서 throw 하면 PG 가 재시도하지만
-    // UNIQUE 제약으로 차단되어 영구적으로 IGNORED 상태로 남음.)
-    let auditUpdated = false;
-    try {
-      const updated = await this.deps.webhookEventRepository.update(savedEvent.id, {
-        result,
-        processedAt: new Date(),
-        errorMessage,
-        paymentId: resolvedPaymentId,
-        orderId: resolvedOrderId,
-      });
-      auditUpdated = updated.affected === 1;
-    } catch (updateErr) {
-      this.deps.logger.error(
-        `Webhook event audit row update failed: id=${savedEvent.id}, ${updateErr instanceof Error ? updateErr.message : String(updateErr)}`,
-      );
-    }
-    if (processingFailed || !auditUpdated) {
-      throw new ServiceUnavailableException('웹훅 처리를 재시도해야 합니다.');
+      throw err;
     }
   }
 
-  private async processWebhook(payload: unknown): Promise<{
+  async processStoredWebhook(payload: unknown, transactionManager?: EntityManager): Promise<{
     result: PaymentWebhookResult;
     paymentId: number | null;
     orderId: number | null;
@@ -232,7 +156,7 @@ export class PaymentWebhookService {
     }
 
     let didMutate = false;
-    await this.deps.dataSource.transaction(async (manager) => {
+    const applyMutation = async (manager: EntityManager) => {
       const isRestoreTarget =
         matchedTransition.orderStatus === OrderStatus.CANCELLED
         || matchedTransition.orderStatus === OrderStatus.REFUNDED;
@@ -351,10 +275,51 @@ export class PaymentWebhookService {
             status: ShippingStatus.PAYMENT_CONFIRMED,
           });
         }
+        const isFirstPurchase = lockedOrder.userId !== null
+          && await manager.count(Order, {
+            where: {
+              userId: lockedOrder.userId,
+              status: In([
+                OrderStatus.PAID,
+                OrderStatus.PREPARING,
+                OrderStatus.SHIPPED,
+                OrderStatus.DELIVERED,
+                OrderStatus.COMPLETED,
+              ]),
+            },
+          }) <= 1;
+        const payload = {
+          userId: lockedOrder.userId,
+          orderId: parsedOrderId,
+          orderNumber: lockedOrder.orderNumber,
+          recipientName: lockedOrder.recipientName,
+          amount: Number(lockedPayment.amount),
+          method: lockedPayment.method,
+          locale: lockedOrder.orderLocale,
+          customerType: lockedOrder.userId === null ? 'guest' : 'member',
+          isFirstPurchase,
+          guestEmail: lockedOrder.userId === null ? lockedOrder.guestEmailNormalized : null,
+        };
+        await this.deps.effectOutbox.enqueueWithManager(
+          manager, parsedOrderId, PaymentEffectType.ORDER_COMPLETED_EVENT, payload,
+        );
+        await this.deps.effectOutbox.enqueueWithManager(
+          manager, parsedOrderId, PaymentEffectType.PAYMENT_CONFIRMED_NOTIFICATION, payload,
+        );
+        if (payload.customerType === 'member') {
+          await this.deps.effectOutbox.enqueueWithManager(
+            manager, parsedOrderId, PaymentEffectType.MEMBER_MESSAGE_NOTIFICATION, payload,
+          );
+        }
       }
 
       didMutate = true;
-    });
+    };
+    if (transactionManager) {
+      await applyMutation(transactionManager);
+    } else {
+      await this.deps.dataSource.transaction(applyMutation);
+    }
 
     return {
       result: didMutate ? PaymentWebhookResult.SUCCESS : PaymentWebhookResult.IGNORED,

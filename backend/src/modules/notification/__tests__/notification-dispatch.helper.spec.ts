@@ -89,4 +89,17 @@ describe('NotificationDispatchHelper', () => {
     expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('userId=10'));
     expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('resourceId=99'));
   });
+
+  it('outbox callers can propagate awaited delivery failures', async () => {
+    findOne.mockResolvedValue({ id: 10, email: 'user@test.com', name: '홍길동' });
+    await expect(helper.dispatch({
+      event: 'payment.confirmed',
+      userId: 10,
+      resourceId: 'payment-effect:7',
+      mode: 'await',
+      propagateFailure: true,
+      logger,
+      send: jest.fn().mockRejectedValue(new Error('smtp failed')),
+    })).rejects.toThrow('smtp failed');
+  });
 });

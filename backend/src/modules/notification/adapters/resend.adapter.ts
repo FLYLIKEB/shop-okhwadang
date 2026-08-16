@@ -31,6 +31,7 @@ export class ResendEmailAdapter implements EmailProvider {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
+        ...(message.idempotencyKey ? { 'Idempotency-Key': message.idempotencyKey } : {}),
       },
       body: JSON.stringify({
         from: this.fromAddress,
@@ -38,6 +39,9 @@ export class ResendEmailAdapter implements EmailProvider {
         subject: message.subject,
         html: message.html,
         text: message.text,
+        ...(message.idempotencyKey
+          ? { headers: { 'Message-ID': `<${message.idempotencyKey}@okhwadang>` } }
+          : {}),
       }),
     });
 

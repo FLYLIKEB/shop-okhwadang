@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { createHmac, randomUUID } from 'crypto';
 import {
+  AmbiguousMessageDeliveryError,
   MessageProvider,
   MessageSendResult,
   TransactionalMessage,
@@ -25,24 +26,20 @@ export class SolapiMessageAdapter implements MessageProvider {
   ) {}
 
   async send(message: TransactionalMessage): Promise<MessageSendResult> {
-    const response = await axios.post<SolapiSingleSendResponse>(
-      `${this.config.message.solapi.apiBaseUrl}/messages/v4/send`,
-      { message: this.buildPayload(message) },
-      {
-        headers: {
-          Authorization: this.buildAuthorizationHeader(),
-          'Content-Type': 'application/json',
-        },
-      },
-    );
-
-    const providerMessageId = response.data.messageId ?? response.data.groupId ?? randomUUID();
-    return {
-      provider: 'solapi',
-      providerMessageId,
-      channel: 'kakao_alimtalk',
-      status: 'sent',
-    };
+    let response;
+    try {
+      response = await axios.post<SolapiSingleSendResponse>(
+        `${this.config.message.solapi.apiBaseUrl}/messages/v4/send`,
+        { message: this.buildPayload(message) },
+        { headers: { Authorization: this.buildAuthorizationHeader(), 'Content-Type': 'application/json' } },
+      );
+    } catch (error) {
+      throw new AmbiguousMessageDeliveryError('SOLAPI delivery outcome is unknown', message.idempotencyKey, error);
+    }
+    const providerMessageId = response.data.messageId ?? response.data.groupId;
+    if (response.data.statusCode && !response.data.statusCode.startsWith('2')) return { provider: 'solapi', providerMessageId: providerMessageId ?? '', channel: 'kakao_alimtalk', status: 'failed', errorMessage: response.data.statusMessage ?? `SOLAPI rejected message (${response.data.statusCode})` };
+    if (!providerMessageId) throw new AmbiguousMessageDeliveryError('SOLAPI response has no message identifier', message.idempotencyKey);
+    return { provider: 'solapi', providerMessageId, channel: 'kakao_alimtalk', status: 'sent' };
   }
 
   private buildPayload(message: TransactionalMessage): Record<string, unknown> {
@@ -57,6 +54,7 @@ export class SolapiMessageAdapter implements MessageProvider {
         disableSms: !message.smsFallbackEnabled,
       },
       autoTypeDetect: true,
+      customFields: { requestId: message.idempotencyKey },
     };
   }
 

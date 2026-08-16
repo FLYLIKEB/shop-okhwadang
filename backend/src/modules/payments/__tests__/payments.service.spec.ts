@@ -22,6 +22,7 @@ import { PointsService } from '../../points/points.service';
 import { PaymentConfirmationService } from '../services/payment-confirmation.service';
 import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
 import { User } from '../../users/entities/user.entity';
+import { PaymentEffectOutboxService } from '../services/payment-effect-outbox.service';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({
@@ -290,6 +291,7 @@ describe('PaymentsService', () => {
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
         { provide: PointsService, useValue: mockPointsService },
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
+        { provide: PaymentEffectOutboxService, useValue: { enqueueWithManager: jest.fn().mockResolvedValue({ id: 1 }) } },
         { provide: DataSource, useValue: mockDataSource },
         {
           provide: GuestOrderAccessService,

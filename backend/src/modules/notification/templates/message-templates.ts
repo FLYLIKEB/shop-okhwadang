@@ -13,7 +13,7 @@ interface MessageTemplateInput {
   cancelReason?: string;
 }
 
-type BuiltMessage = Omit<TransactionalMessage, 'to'>;
+type BuiltMessage = Omit<TransactionalMessage, 'to' | 'idempotencyKey'>;
 
 function money(value: number | string | null | undefined): string {
   const amount = Number(value ?? 0);

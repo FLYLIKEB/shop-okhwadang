@@ -193,6 +193,21 @@ describe('NotificationService', () => {
     expect(failing.send).toHaveBeenCalled();
   });
 
+  it('propagates strict payment email failures', async () => {
+    const failing = { send: jest.fn().mockRejectedValue(new Error('boom')) };
+    const svc = new NotificationService(failing);
+
+    await expect(svc.sendPaymentConfirmedOrThrow('x@y.z', {
+      recipientName: '홍길동',
+      orderNumber: 'ORD-1',
+      amount: 10000,
+      method: 'card',
+    }, 'payment-email-1')).rejects.toThrow('boom');
+    expect(failing.send).toHaveBeenCalledWith(expect.objectContaining({
+      idempotencyKey: 'payment-email-1',
+    }));
+  });
+
   it('sends password reset email via the provider', async () => {
     await service.sendPasswordReset('user@example.com', {
       recipientName: '홍길동',

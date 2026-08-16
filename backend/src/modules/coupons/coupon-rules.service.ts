@@ -60,11 +60,9 @@ export class CouponRulesService implements OnModuleInit {
 
     this.orderEvents.onOrderCompleted(async (event) => {
       if (event.customerType === 'member' && event.userId !== null && event.isFirstPurchase) {
-        try {
-          await this.applyRulesForUser(CouponRuleTrigger.FIRST_PURCHASE, event.userId);
-        } catch (err) {
-          this.logger.warn(`[first_purchase] Failed to issue coupon for userId=${event.userId}: ${String(err)}`);
-        }
+        // UserCoupon has a unique (userId, couponId) grant constraint, so retries
+        // cannot issue the same first-purchase coupon twice.
+        await this.applyRulesForUser(CouponRuleTrigger.FIRST_PURCHASE, event.userId, {}, true);
       }
     });
 
@@ -81,6 +79,7 @@ export class CouponRulesService implements OnModuleInit {
     trigger: CouponRuleTrigger,
     userId: number,
     context: Record<string, unknown> = {},
+    throwOnFailure = false,
   ): Promise<void> {
     const rules = await this.couponRuleRepo.find({
       where: { trigger, active: true },
@@ -90,7 +89,7 @@ export class CouponRulesService implements OnModuleInit {
       .filter((rule) => this.matchesConditions(rule, context))
       .map((rule) => Number(rule.couponTemplateId));
 
-    await this.issueCouponsForUser(trigger, userId, matchingCouponIds);
+    await this.issueCouponsForUser(trigger, userId, matchingCouponIds, throwOnFailure);
   }
 
   private matchesConditions(rule: CouponRule, context: Record<string, unknown>): boolean {
@@ -255,6 +254,7 @@ export class CouponRulesService implements OnModuleInit {
     trigger: string,
     userId: number,
     couponIds: number[],
+    throwOnFailure = false,
   ): Promise<void> {
     if (couponIds.length === 0) {
       return;
@@ -267,6 +267,9 @@ export class CouponRulesService implements OnModuleInit {
           `[${trigger}] Issued couponTemplateId=${result.couponId} to userId=${userId}`,
         );
       } else {
+        if (throwOnFailure && result.reason !== '이미 발급된 쿠폰입니다.') {
+          throw new Error(`[${trigger}] Failed to issue couponTemplateId=${result.couponId}: ${result.reason ?? 'unknown error'}`);
+        }
         this.logger.debug(
           `[${trigger}] Skipped couponTemplateId=${result.couponId} for userId=${userId}: ${result.reason ?? 'unknown error'}`,
         );

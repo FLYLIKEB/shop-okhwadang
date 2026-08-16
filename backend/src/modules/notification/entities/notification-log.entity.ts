@@ -8,12 +8,13 @@ import {
 } from 'typeorm';
 import { MessageTemplateKey, TransactionalMessageChannel } from '../interfaces/message-provider.interface';
 
-export type NotificationLogStatus = 'pending' | 'sent' | 'failed' | 'skipped';
+export type NotificationLogStatus = 'pending' | 'processing' | 'sent' | 'failed' | 'skipped' | 'manual_review';
 export type NotificationResourceType = 'order' | 'payment' | 'shipping';
 
 @Entity('notification_logs')
 @Index(['eventType', 'resourceType', 'resourceId'])
 @Index(['recipientPhoneHash'])
+@Index(['effectKey'], { unique: true })
 export class NotificationLog {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: number;
@@ -45,7 +46,10 @@ export class NotificationLog {
   @Column({ name: 'provider_message_id', type: 'varchar', length: 120, nullable: true })
   providerMessageId!: string | null;
 
-  @Column({ type: 'enum', enum: ['pending', 'sent', 'failed', 'skipped'], default: 'pending' })
+  @Column({ name: 'effect_key', type: 'varchar', length: 191, nullable: true })
+  effectKey!: string | null;
+
+  @Column({ type: 'enum', enum: ['pending', 'processing', 'sent', 'failed', 'skipped', 'manual_review'], default: 'pending' })
   status!: NotificationLogStatus;
 
   @Column({ name: 'error_message', type: 'varchar', length: 500, nullable: true })

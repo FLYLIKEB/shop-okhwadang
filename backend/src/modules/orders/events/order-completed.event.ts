@@ -5,6 +5,7 @@ export class OrderCompletedEvent {
     public readonly orderNumber: string,
     public readonly isFirstPurchase: boolean,
     public readonly customerType: 'member' | 'guest',
+    public readonly idempotencyKey: string,
   ) {}
 }
 

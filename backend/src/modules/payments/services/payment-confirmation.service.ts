@@ -45,6 +45,11 @@ import { EximbayPaymentAdapter } from '../adapters/eximbay.adapter';
 import { PointsService } from '../../points/points.service';
 import { assertOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
 import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
+import {
+  PaymentCompletionEffectPayload,
+  PaymentEffectType,
+} from '../entities/payment-effect-outbox.entity';
+import { PaymentEffectOutboxService } from './payment-effect-outbox.service';
 
 type CustomerType = 'member' | 'guest';
 type ConfirmResponse = {
@@ -60,18 +65,7 @@ type GuestConfirmResponse = ConfirmResponse & {
   guestAccessToken: string;
   guestAccessTokenExpiresAt: string;
 };
-type PostCommitPayload = {
-  userId: number | null;
-  orderId: number;
-  orderNumber: string;
-  recipientName: string;
-  amount: number;
-  method: string;
-  locale: 'ko' | 'en';
-  customerType: CustomerType;
-  isFirstPurchase: boolean;
-  guestEmail: string | null;
-};
+type PostCommitPayload = PaymentCompletionEffectPayload;
 
 @Injectable()
 export class PaymentConfirmationService {
@@ -100,6 +94,7 @@ export class PaymentConfirmationService {
     @Optional()
     private readonly orderEventEmitter: OrderEventEmitter | undefined,
     private readonly guestOrderAccessService: GuestOrderAccessService,
+    private readonly effectOutbox: PaymentEffectOutboxService,
   ) {}
 
   async confirm(
@@ -219,11 +214,11 @@ export class PaymentConfirmationService {
           amount: Number(lockedPayment.amount),
           paidAt,
         };
+        await this.enqueuePaymentEffects(manager, dto.orderId, payload);
         if (persistResult) await persistResult(manager, response);
         return { payload, response };
       });
 
-      this.dispatchPostCommit(outcome.payload);
       this.logger.log(`Payment confirmed: orderId=${dto.orderId} customerType=member`);
       return outcome.response;
     } catch (err) {
@@ -361,12 +356,12 @@ export class PaymentConfirmationService {
             guestAccessToken: rotatedAccess.guestAccessToken,
             guestAccessTokenExpiresAt: rotatedAccess.guestAccessTokenExpiresAt.toISOString(),
           };
+          await this.enqueuePaymentEffects(manager, orderId, payload);
           if (persistResult) await persistResult(manager, response);
           return { payload, response };
         },
       );
 
-      this.dispatchPostCommit(outcome.payload);
       this.logger.log(`Payment confirmed: orderId=${orderId} customerType=guest`);
       return outcome.response;
     } catch (err) {
@@ -451,15 +446,16 @@ export class PaymentConfirmationService {
         });
       }
 
-      return this.buildPostCommitPayload(lockedOrder, {
+      const payload = this.buildPostCommitPayload(lockedOrder, {
         amount: Number(lockedPayment.amount),
         customerType,
         isFirstPurchase,
         method: lockedPayment.method,
       });
+      await this.enqueuePaymentEffects(manager, orderId, payload);
+      return payload;
     });
 
-    this.dispatchPostCommit(outcome);
     this.logger.log(
       `Payment reconciliation replayed: orderId=${orderId} customerType=${outcome.customerType}`,
     );
@@ -594,30 +590,58 @@ export class PaymentConfirmationService {
     };
   }
 
-  private dispatchPostCommit(payload: PostCommitPayload): void {
-    this.orderEventEmitter?.emitOrderCompleted(
+  private async enqueuePaymentEffects(
+    manager: EntityManager,
+    orderId: number,
+    payload: PaymentCompletionEffectPayload,
+  ): Promise<void> {
+    await this.effectOutbox.enqueueWithManager(
+      manager, orderId, PaymentEffectType.ORDER_COMPLETED_EVENT, payload,
+    );
+    await this.effectOutbox.enqueueWithManager(
+      manager, orderId, PaymentEffectType.PAYMENT_CONFIRMED_NOTIFICATION, payload,
+    );
+    if (payload.customerType === 'member') {
+      await this.effectOutbox.enqueueWithManager(
+        manager, orderId, PaymentEffectType.MEMBER_MESSAGE_NOTIFICATION, payload,
+      );
+    }
+  }
+
+  async deliverOrderCompleted(
+    payload: PaymentCompletionEffectPayload,
+    idempotencyKey: string,
+  ): Promise<void> {
+    await this.orderEventEmitter?.emitOrderCompleted(
       new OrderCompletedEvent(
         payload.userId,
         payload.orderId,
         payload.orderNumber,
         payload.isFirstPurchase,
         payload.customerType,
+        idempotencyKey,
       ),
     );
-
-    void this.notifyPaymentConfirmed(payload).catch((err) => {
-      this.logger.warn(`Failed to send payment confirmed email: ${String(err)}`);
-    });
-
-    if (payload.customerType === 'member') {
-      void this.messageNotificationService?.sendPaymentConfirmed(payload.orderId, payload.method);
-    }
   }
 
-  private async notifyPaymentConfirmed(payload: PostCommitPayload): Promise<void> {
+  async deliverPaymentConfirmedNotification(
+    payload: PaymentCompletionEffectPayload,
+    idempotencyKey: string,
+  ): Promise<void> {
+    await this.notifyPaymentConfirmed(payload, idempotencyKey);
+  }
+
+  async deliverMemberMessageNotification(
+    payload: PaymentCompletionEffectPayload,
+    idempotencyKey: string,
+  ): Promise<void> {
+    await this.messageNotificationService?.sendPaymentConfirmedOrThrow(payload.orderId, payload.method, idempotencyKey);
+  }
+
+  private async notifyPaymentConfirmed(payload: PostCommitPayload, idempotencyKey: string): Promise<void> {
     const order = await this.loadOrderForNotification(payload.orderId);
     const send = (recipient: { email: string }) =>
-      this.notificationService.sendPaymentConfirmed(recipient.email, {
+      this.notificationService.sendPaymentConfirmedOrThrow(recipient.email, {
         recipientName: payload.recipientName,
         orderNumber: payload.orderNumber,
         amount: payload.amount,
@@ -628,14 +652,15 @@ export class PaymentConfirmationService {
           payload.customerType === 'member'
             ? buildOrderUrl(payload.orderId, payload.locale)
             : buildGuestOrderLookupUrl(payload.locale),
-      });
+      }, idempotencyKey);
 
     if (payload.customerType === 'member' && payload.userId !== null) {
       await this.notificationDispatchHelper.dispatch({
         event: 'payment.confirmed',
         userId: payload.userId,
-        resourceId: payload.orderId,
-        mode: 'fire-and-forget',
+        resourceId: `payment-completion:${payload.orderId}:${idempotencyKey}`,
+        mode: 'await',
+        propagateFailure: true,
         logger: this.logger,
         send,
       });
@@ -648,8 +673,9 @@ export class PaymentConfirmationService {
         email: payload.guestEmail ?? '',
         name: payload.recipientName,
       },
-      resourceId: payload.orderId,
-      mode: 'fire-and-forget',
+      resourceId: `payment-completion:${payload.orderId}:${idempotencyKey}`,
+      mode: 'await',
+      propagateFailure: true,
       logger: this.logger,
       send,
     });

@@ -18,7 +18,7 @@ import {
   PaymentGatewayType,
   PaymentMethod,
 } from './entities/payment.entity';
-import { PaymentWebhookEvent } from './entities/payment-webhook-event.entity';
+import { PaymentWebhookEvent, PaymentWebhookResult } from './entities/payment-webhook-event.entity';
 import { Refund } from './entities/refund.entity';
 import { Shipping } from './entities/shipping.entity';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
@@ -48,6 +48,7 @@ import { runFirstTerminalTransitionRecovery } from './services/order-terminal-re
 import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../config/payment.config';
 import { IdempotencyService } from '../../common/services/idempotency.service';
+import { PaymentEffectOutboxService } from './services/payment-effect-outbox.service';
 
 
 class AmbiguousGatewayOutcomeError extends Error {
@@ -89,6 +90,7 @@ export class PaymentsService {
     private readonly paymentConfirmationService: PaymentConfirmationService,
     private readonly dataSource: DataSource,
     private readonly idempotencyService: IdempotencyService,
+    private readonly effectOutbox: PaymentEffectOutboxService,
   ) {
     this.paymentRefundService = new PaymentRefundService({
       paymentRepository: this.paymentRepository,
@@ -105,6 +107,7 @@ export class PaymentsService {
       webhookEventRepository: this.webhookEventRepository,
       dataSource: this.dataSource,
       pointsService: this.pointsService,
+      effectOutbox: this.effectOutbox,
       logger: this.logger,
       defaultCarrier: this.paymentConfig.defaultCarrier,
     });
@@ -647,6 +650,18 @@ export class PaymentsService {
       throw new UnauthorizedException('지원하지 않는 웹훅 제공자');
     }
     const gateway = this.resolveGatewayByType(gatewayType);
+    const verificationPayload = gatewayType === PaymentGatewayType.PAYPAL || !rawBody
+      ? payload
+      : rawBody.toString('utf8');
+    if (!(await gateway.verifyWebhook(verificationPayload, signature))) {
+      throw new UnauthorizedException('유효하지 않은 웹훅 서명');
+    }
+    const event = payload as Record<string, unknown>;
+    this.logger.log(`Webhook received: ${JSON.stringify({
+      orderId: event?.orderId,
+      status: event?.status,
+      type: event?.type,
+    })}`);
     const webhookService = new PaymentWebhookService({
       gateway,
       gatewayType,
@@ -655,10 +670,46 @@ export class PaymentsService {
       webhookEventRepository: this.webhookEventRepository,
       dataSource: this.dataSource,
       pointsService: this.pointsService,
+      effectOutbox: this.effectOutbox,
       logger: this.logger,
       defaultCarrier: this.paymentConfig.defaultCarrier,
     });
     return webhookService.handleWebhook(payload, signature, rawBody);
+  }
+
+  async verifyStoredWebhook(rawBody: Buffer, signature: string, provider: string): Promise<boolean> {
+    const gatewayType = this.gatewayNameToType(provider);
+    const gateway = this.resolveGatewayByType(gatewayType);
+    let payload: unknown = rawBody.toString('utf8');
+    if (gatewayType === PaymentGatewayType.PAYPAL) {
+      try {
+        payload = JSON.parse(rawBody.toString('utf8'));
+      } catch {
+        return false;
+      }
+    }
+    return gateway.verifyWebhook(payload, signature);
+  }
+
+  async processStoredWebhook(
+    provider: string,
+    payload: object,
+    manager: EntityManager,
+  ): Promise<PaymentWebhookResult> {
+    const gatewayType = this.gatewayNameToType(provider);
+    const webhookService = new PaymentWebhookService({
+      gateway: this.resolveGatewayByType(gatewayType),
+      gatewayType,
+      paymentRepository: this.paymentRepository,
+      orderRepository: this.orderRepository,
+      webhookEventRepository: this.webhookEventRepository,
+      dataSource: this.dataSource,
+      pointsService: this.pointsService,
+      effectOutbox: this.effectOutbox,
+      logger: this.logger,
+      defaultCarrier: this.paymentConfig.defaultCarrier,
+    });
+    return (await webhookService.processStoredWebhook(payload, manager)).result;
   }
 
   private async cancelConfirmedOrderPayment(

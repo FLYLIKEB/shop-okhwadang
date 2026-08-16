@@ -330,6 +330,24 @@ describe('CouponRulesService', () => {
       expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(200, [21]);
     });
 
+    it('첫 구매 쿠폰 발급 실패를 outbox caller에게 전파한다', async () => {
+      let orderHandler: Handler<{ userId: number; isFirstPurchase: boolean; customerType: 'member' }> | undefined;
+      mockOrderEvents.onOrderCompleted.mockImplementation((cb: typeof orderHandler) => {
+        orderHandler = cb;
+      });
+      mockCouponRuleRepo.find.mockResolvedValue([
+        makeCouponRule({ trigger: CouponRuleTrigger.FIRST_PURCHASE, couponTemplateId: 21 }),
+      ]);
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([
+        { couponId: 21, issued: false, reason: 'database unavailable' },
+      ]);
+
+      service.onModuleInit();
+
+      await expect(orderHandler!({ userId: 200, isFirstPurchase: true, customerType: 'member' }))
+        .rejects.toThrow('database unavailable');
+    });
+
     it('등급업 이벤트는 newTier 컨텍스트를 전달하며 TIER_UP 규칙을 적용한다', async () => {
       let tierHandler: Handler<{ userId: number; newTier: string }> | undefined;
       mockMembershipEvents.onTierUpgraded.mockImplementation(

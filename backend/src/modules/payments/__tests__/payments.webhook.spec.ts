@@ -20,6 +20,7 @@ import { PaymentConfirmationService } from '../services/payment-confirmation.ser
 import { GuestOrderAccessService } from '../../orders/guest-order-access.service';
 import { PointsService } from '../../points/points.service';
 import { IdempotencyService } from '../../../common/services/idempotency.service';
+import { PaymentEffectOutboxService } from '../services/payment-effect-outbox.service';
 
 describe('PaymentsService — webhook', () => {
   let service: PaymentsService;
@@ -88,6 +89,7 @@ describe('PaymentsService — webhook', () => {
         { provide: EximbayPaymentAdapter, useValue: mockGateway },
         { provide: NotificationService, useValue: { sendPaymentConfirmed: jest.fn() } },
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
+        { provide: PaymentEffectOutboxService, useValue: { enqueueWithManager: jest.fn().mockResolvedValue({ id: 1 }) } },
         { provide: DataSource, useValue: mockDataSource },
         { provide: PointsService, useValue: { getRunningBalanceInTx: jest.fn().mockResolvedValue(0) } },
         { provide: IdempotencyService, useValue: { execute: jest.fn(), reserve: jest.fn(), complete: jest.fn(), renewLease: jest.fn() } },

@@ -5,6 +5,7 @@ import { Order } from '../../orders/entities/order.entity';
 import { Payment, PaymentMethod } from '../../payments/entities/payment.entity';
 import { Shipping } from '../../payments/entities/shipping.entity';
 import { MessageProvider } from '../interfaces/message-provider.interface';
+import { AmbiguousMessageDeliveryError, MessageDeliveryInProgressError } from '../interfaces/message-provider.interface';
 
 describe('MessageNotificationService', () => {
   const baseOrder = {
@@ -41,6 +42,8 @@ describe('MessageNotificationService', () => {
   const logRepository = {
     findOne: jest.fn(),
     save: jest.fn(),
+    insert: jest.fn(),
+    update: jest.fn(),
   };
   const orderRepository = { findOne: jest.fn() };
   const paymentRepository = { findOne: jest.fn() };
@@ -55,6 +58,9 @@ describe('MessageNotificationService', () => {
     jest.clearAllMocks();
     logRepository.findOne.mockResolvedValue(null);
     logRepository.save.mockImplementation(async (value: Partial<NotificationLog>) => value);
+    logRepository.insert.mockResolvedValue({});
+    logRepository.update.mockResolvedValue({ affected: 1 });
+    logRepository.findOne.mockImplementation(async ({ where }: { where: Partial<NotificationLog> }) => where.effectKey ? ({ id: 1, status: 'pending', effectKey: where.effectKey } as NotificationLog) : null);
     orderRepository.findOne.mockResolvedValue(baseOrder);
     paymentRepository.findOne.mockResolvedValue({ id: 30, orderId: 10, amount: 15000, method: PaymentMethod.CARD } as Payment);
     shippingRepository.findOne.mockResolvedValue({ id: 40, orderId: 10, carrier: 'cj', trackingNumber: '123456' } as Shipping);
@@ -160,5 +166,88 @@ describe('MessageNotificationService', () => {
       status: 'failed',
       errorMessage: expect.stringContaining('provider down'),
     }));
+  });
+
+  it('strict payment delivery propagates provider failure and records the effect key', async () => {
+    (provider.send as jest.Mock).mockRejectedValue(new Error('provider down'));
+
+    await expect(service.sendPaymentConfirmedOrThrow(10, 'card', 'message-effect-1'))
+      .rejects.toThrow('provider down');
+
+    expect(logRepository.update).toHaveBeenCalledWith(
+      { effectKey: 'message-effect-1', status: 'processing' },
+      expect.objectContaining({ status: 'failed' }),
+    );
+  });
+
+  it('does not resend a strict delivery already accepted for its stable key', async () => {
+    logRepository.findOne.mockResolvedValue({ id: 1, status: 'sent', effectKey: 'message-effect-1' });
+
+    await service.sendPaymentConfirmedOrThrow(10, 'card', 'message-effect-1');
+
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it('treats a fresh processing reservation as retryable rather than delivered', async () => {
+    logRepository.findOne.mockResolvedValue({
+      id: 1, status: 'processing', effectKey: 'payment-effect:7', updatedAt: new Date(),
+    });
+
+    await expect(service.sendPaymentConfirmedOrThrow(10, 'card', 'payment-effect:7'))
+      .rejects.toBeInstanceOf(MessageDeliveryInProgressError);
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it('moves a stale processing reservation to manual review without resending', async () => {
+    logRepository.findOne.mockResolvedValue({
+      id: 1, status: 'processing', effectKey: 'payment-effect:7',
+      updatedAt: new Date(Date.now() - 6 * 60 * 1000),
+    });
+
+    await expect(service.sendPaymentConfirmedOrThrow(10, 'card', 'payment-effect:7'))
+      .rejects.toBeInstanceOf(AmbiguousMessageDeliveryError);
+    expect(logRepository.update).toHaveBeenCalledWith(
+      { effectKey: 'payment-effect:7', status: 'processing' },
+      expect.objectContaining({ status: 'manual_review' }),
+    );
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it('honors sent when stale processing takeover loses its CAS', async () => {
+    const stale = {
+      id: 1, status: 'processing', effectKey: 'payment-effect:7',
+      updatedAt: new Date(Date.now() - 6 * 60 * 1000),
+    };
+    logRepository.findOne
+      .mockResolvedValueOnce(stale)
+      .mockResolvedValueOnce({ ...stale, status: 'sent' });
+    logRepository.update.mockResolvedValueOnce({ affected: 0 });
+
+    await expect(service.sendPaymentConfirmedOrThrow(10, 'card', 'payment-effect:7'))
+      .resolves.toBeUndefined();
+
+    expect(logRepository.update).toHaveBeenCalledWith(
+      { effectKey: 'payment-effect:7', status: 'processing' },
+      expect.objectContaining({ status: 'manual_review' }),
+    );
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it('honors reconciliation sent while the original sender loses its final CAS', async () => {
+    logRepository.findOne
+      .mockResolvedValueOnce({ id: 1, status: 'pending', effectKey: 'payment-effect:7' })
+      .mockResolvedValueOnce({ id: 1, status: 'sent', effectKey: 'payment-effect:7' });
+    logRepository.update
+      .mockResolvedValueOnce({ affected: 1 }) // pending -> processing reservation
+      .mockResolvedValueOnce({ affected: 0 }) // original processing -> sent loses reconciliation
+      .mockResolvedValueOnce({ affected: 0 }); // processing -> manual_review must not overwrite sent
+
+    await expect(service.sendPaymentConfirmedOrThrow(10, 'card', 'payment-effect:7'))
+      .resolves.toBeUndefined();
+
+    expect(logRepository.update).toHaveBeenLastCalledWith(
+      { effectKey: 'payment-effect:7', status: 'processing' },
+      expect.objectContaining({ status: 'manual_review' }),
+    );
   });
 });
