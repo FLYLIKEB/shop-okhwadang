@@ -20,6 +20,7 @@ interface NotificationDispatchParams {
   mode: NotificationDispatchMode;
   logger: Pick<Logger, 'warn'>;
   send: (recipient: NotificationDispatchRecipient) => Promise<void>;
+  propagateFailure?: boolean;
 }
 
 type NotificationDispatchRequest = NotificationDispatchParams & NotificationDispatchTarget;
@@ -57,6 +58,7 @@ export class NotificationDispatchHelper {
       });
     } catch (err) {
       logger.warn(this.buildFailureMessage(event, failureTarget, resourceId, err));
+      if (params.propagateFailure) throw err;
     }
   }
 

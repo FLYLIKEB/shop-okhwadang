@@ -171,6 +171,7 @@ const buildService = (args: BuildArgs = {}) => {
   const pointsService = {
     getRunningBalanceInTx: jest.fn().mockResolvedValue(2000),
   };
+  const effectOutbox = { enqueueWithManager: jest.fn().mockResolvedValue({ id: 1 }) };
 
   const service = new PaymentConfirmationService(
     paymentRepo as never,
@@ -193,6 +194,7 @@ const buildService = (args: BuildArgs = {}) => {
     { dispatch: notificationDispatch } as unknown as NotificationDispatchHelper,
     { emitOrderCompleted: orderEventEmit } as never,
     guestOrderAccessService as unknown as GuestOrderAccessService,
+    effectOutbox as never,
   );
 
   return {
@@ -211,6 +213,7 @@ const buildService = (args: BuildArgs = {}) => {
     orderEventEmit,
     guestOrderAccessService,
     pointsService,
+    effectOutbox,
   };
 };
 
@@ -807,7 +810,7 @@ describe('PaymentConfirmationService', () => {
         count: jest.fn().mockResolvedValue(1),
       });
       const dataSource = makeDataSource(manager);
-      const { service, orderEventEmit, notificationDispatch } = buildService({
+      const { service, effectOutbox } = buildService({
         paymentRepo: {
           findOne: jest.fn().mockResolvedValue(payment),
           update: jest.fn().mockResolvedValue({}),
@@ -821,13 +824,8 @@ describe('PaymentConfirmationService', () => {
         rawResponse: { provider: true },
       });
       expect(manager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.PAID });
-      expect(orderEventEmit).toHaveBeenCalledTimes(1);
-      expect(notificationDispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          event: 'payment.confirmed',
-          userId: 10,
-          resourceId: 1,
-        }),
+      expect(effectOutbox.enqueueWithManager).toHaveBeenCalledWith(
+        manager, 1, 'ORDER_COMPLETED_EVENT', expect.objectContaining({ userId: 10 }),
       );
     });
   });
@@ -895,9 +893,9 @@ describe('PaymentConfirmationService', () => {
   });
 
   describe('confirm() — 알림 디스패치', () => {
-    it('성공 시 fire-and-forget 으로 결제완료 알림을 디스패치한다', async () => {
+    it('성공 시 완료 효과를 트랜잭션 안에서 대기열에 넣는다', async () => {
       const payment = makePayment();
-      const { service, defaultGateway, notificationDispatch } = buildService({
+      const { service, defaultGateway, notificationDispatch, effectOutbox } = buildService({
         paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) },
       });
       (defaultGateway.confirm as jest.Mock).mockResolvedValue({
@@ -914,12 +912,10 @@ describe('PaymentConfirmationService', () => {
 
       await service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10);
 
-      expect(notificationDispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          event: 'payment.confirmed',
+      expect(notificationDispatch).not.toHaveBeenCalled();
+      expect(effectOutbox.enqueueWithManager).toHaveBeenCalledWith(
+        expect.anything(), 1, 'ORDER_COMPLETED_EVENT', expect.objectContaining({
           userId: 10,
-          resourceId: 1,
-          mode: 'fire-and-forget',
         }),
       );
     });

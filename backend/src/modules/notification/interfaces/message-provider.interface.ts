@@ -8,6 +8,7 @@ export type MessageTemplateKey =
   | 'SHIPPING_DELIVERED';
 
 export interface TransactionalMessage {
+  idempotencyKey: string;
   to: string;
   templateKey: MessageTemplateKey;
   templateId: string;
@@ -22,6 +23,21 @@ export interface MessageSendResult {
   channel: TransactionalMessageChannel;
   status: 'sent' | 'failed';
   errorMessage?: string;
+}
+
+export class AmbiguousMessageDeliveryError extends Error {
+  constructor(message: string, public readonly requestId: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = 'AmbiguousMessageDeliveryError';
+  }
+}
+
+/** A different worker owns a fresh local delivery reservation. Retry after its outcome settles. */
+export class MessageDeliveryInProgressError extends Error {
+  constructor(public readonly requestId: string) {
+    super(`Message delivery is already processing for ${requestId}`);
+    this.name = 'MessageDeliveryInProgressError';
+  }
 }
 
 export interface MessageProvider {

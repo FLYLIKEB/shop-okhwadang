@@ -20,6 +20,15 @@ export enum PaymentWebhookResult {
   FAILED = 'failed',
 }
 
+export enum PaymentWebhookState {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  SUCCEEDED = 'succeeded',
+  IGNORED = 'ignored',
+  FAILED = 'failed',
+  MANUAL_REVIEW = 'manual_review',
+}
+
 /**
  * PG 웹훅 수신 이벤트 로그 (issue #725)
  *
@@ -40,6 +49,7 @@ export enum PaymentWebhookResult {
   unique: true,
 })
 @Index('IDX_payment_webhook_events_received_at', ['receivedAt'])
+@Index('IDX_payment_webhook_events_retry', ['state', 'nextAttemptAt'])
 export class PaymentWebhookEvent {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: number;
@@ -56,6 +66,10 @@ export class PaymentWebhookEvent {
   @Column({ name: 'event_type', type: 'varchar', length: 64 })
   eventType!: string;
 
+  /** The gateway route which received the signed request; never rewritten on replay. */
+  @Column({ name: 'provider_route', type: 'varchar', length: 128, default: '' })
+  providerRoute!: string;
+
   @Column({ name: 'payment_id', type: 'bigint', nullable: true })
   paymentId!: number | null;
 
@@ -68,15 +82,55 @@ export class PaymentWebhookEvent {
   @Column({ name: 'processed_at', type: 'datetime', nullable: true })
   processedAt!: Date | null;
 
+  @Column({ name: 'processing_started_at', type: 'datetime', nullable: true })
+  processingStartedAt!: Date | null;
+
+  @Column({ type: 'enum', enum: PaymentWebhookState, default: PaymentWebhookState.PENDING })
+  state!: PaymentWebhookState;
+
+  @Column({ name: 'attempt_count', type: 'int', unsigned: true, default: 0 })
+  attemptCount!: number;
+
+  @Column({ name: 'max_attempts', type: 'int', unsigned: true, default: 8 })
+  maxAttempts!: number;
+
+  @Column({ name: 'lease_owner', type: 'varchar', length: 128, nullable: true })
+  leaseOwner!: string | null;
+
+  @Column({ name: 'lease_expires_at', type: 'datetime', nullable: true })
+  leaseExpiresAt!: Date | null;
+
+  @Column({ name: 'next_attempt_at', type: 'datetime', nullable: true })
+  nextAttemptAt!: Date | null;
+
   @Column({
     type: 'enum',
     enum: PaymentWebhookResult,
   })
   result!: PaymentWebhookResult;
 
-  @Column({ name: 'error_message', type: 'text', nullable: true })
-  errorMessage!: string | null;
+  @Column({ name: 'last_error', type: 'text', nullable: true })
+  lastError!: string | null;
 
-  @Column({ name: 'raw_payload', type: 'json', nullable: true })
-  rawPayload!: object | null;
+  @Column({ name: 'raw_body', type: 'longblob', nullable: true })
+  rawBody!: Buffer | null;
+
+  @Column({ name: 'signature_header', type: 'varchar', length: 128, nullable: true })
+  signatureHeader!: string | null;
+
+  @Column({ name: 'signature_value', type: 'text', nullable: true })
+  signatureValue!: string | null;
+
+  /** Parsed provider fields used for routing; the source request is rawBody. */
+  @Column({ name: 'normalized_metadata', type: 'json', nullable: true })
+  normalizedMetadata!: object | null;
+
+  @Column({ name: 'replayable', type: 'boolean', default: true })
+  replayable!: boolean;
+
+  @Column({ name: 'replay_count', type: 'int', unsigned: true, default: 0 })
+  replayCount!: number;
+
+  @Column({ name: 'replayed_at', type: 'datetime', nullable: true })
+  replayedAt!: Date | null;
 }

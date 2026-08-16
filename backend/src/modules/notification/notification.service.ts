@@ -65,6 +65,20 @@ export class NotificationService {
     await this.sendEmail({ to, ...rendered });
   }
 
+  async sendPaymentConfirmedOrThrow(
+    to: string,
+    context: PaymentConfirmedContext,
+    idempotencyKey: string,
+  ): Promise<void> {
+    if (!to) {
+      throw new Error('sendPaymentConfirmedOrThrow called with empty recipient.');
+    }
+
+    const rendered = renderPaymentConfirmed(context);
+    const result = await this.provider.send({ to, ...rendered, idempotencyKey });
+    this.logger.log(`Email sent: to=${to} messageId=${result.messageId} provider=${result.provider}`);
+  }
+
   async sendShippingUpdate(to: string, context: ShippingUpdateContext): Promise<void> {
     const rendered = renderShippingUpdate(context);
     await this.sendEmail({ to, ...rendered });

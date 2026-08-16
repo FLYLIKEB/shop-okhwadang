@@ -1,9 +1,9 @@
-import { Logger, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { Logger, ServiceUnavailableException } from '@nestjs/common';
 import { PointsService } from '../../points/points.service';
 import { PaymentWebhookService } from './payment-webhook.service';
 import { Payment, PaymentStatus, PaymentGatewayType } from '../entities/payment.entity';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
-import { PaymentWebhookResult } from '../entities/payment-webhook-event.entity';
+import { PaymentWebhookResult, PaymentWebhookState } from '../entities/payment-webhook-event.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { createHash } from 'crypto';
 
@@ -39,6 +39,15 @@ const boundPayment = (overrides: Record<string, unknown> = {}) => ({
   localOrderReference: '7',
   ...overrides,
 });
+
+const receiveAndProcess = async (
+  service: PaymentWebhookService,
+  payload: Record<string, unknown>,
+  signature = 'valid_sig',
+) => {
+  await service.handleWebhook(payload, signature, Buffer.from(JSON.stringify(payload)));
+  return service.processStoredWebhook(payload);
+};
 
 interface BuildArgs {
   gateway?: Partial<PaymentGateway>;
@@ -84,6 +93,7 @@ const buildService = (args: BuildArgs = {}) => {
     lockUserForPointChanges: jest.fn(),
     creditFifo: jest.fn().mockResolvedValue({}),
   } as Pick<PointsService, 'lockUserForPointChanges' | 'creditFifo'>;
+  const effectOutbox = { enqueueWithManager: jest.fn().mockResolvedValue({ id: 1 }) };
 
   const service = new PaymentWebhookService({
     gateway,
@@ -93,9 +103,10 @@ const buildService = (args: BuildArgs = {}) => {
     dataSource,
     logger,
     pointsService,
+    effectOutbox: effectOutbox as never,
   });
 
-  return { service, gateway, paymentRepo, webhookEventRepo, manager, transaction, logger, pointsService };
+  return { service, gateway, paymentRepo, webhookEventRepo, manager, transaction, logger, pointsService, effectOutbox };
 };
 
 describe('PaymentWebhookService', () => {
@@ -121,32 +132,32 @@ describe('PaymentWebhookService', () => {
     });
 
     it('서명이 유효하면 처리한다', async () => {
-      const { service, gateway } = buildService();
-      (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
+      const { service, gateway, webhookEventRepo } = buildService();
 
       await expect(
-        service.handleWebhook({ eventType: 'PING' }, 'valid_sig'),
+        service.handleWebhook(webhook(), 'valid_sig', Buffer.from(JSON.stringify(webhook()))),
       ).resolves.not.toThrow();
-      expect(gateway.verifyWebhook).toHaveBeenCalledWith(
-        { eventType: 'PING' },
-        'valid_sig',
-      );
+      expect(gateway.verifyWebhook).not.toHaveBeenCalled();
+      expect(webhookEventRepo.save).toHaveBeenCalledWith(expect.objectContaining({
+        signatureValue: 'valid_sig',
+        state: PaymentWebhookState.PENDING,
+      }));
     });
 
     it('서명이 잘못되면 UnauthorizedException', async () => {
-      const { service, gateway } = buildService();
+      const { service, gateway, webhookEventRepo } = buildService();
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(false);
 
-      await expect(service.handleWebhook({}, 'bad_sig')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.handleWebhook(webhook(), 'bad_sig', Buffer.from(JSON.stringify(webhook())))).resolves.toBeUndefined();
+      expect(gateway.verifyWebhook).not.toHaveBeenCalled();
+      expect(webhookEventRepo.save).toHaveBeenCalledWith(expect.objectContaining({ signatureValue: 'bad_sig' }));
     });
 
     it('서명 검증 실패 시 후속 DB 작업이 일어나지 않는다', async () => {
       const { service, gateway, paymentRepo, transaction } = buildService();
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(false);
 
-      await expect(service.handleWebhook({}, 'bad_sig')).rejects.toThrow();
+      await service.handleWebhook(webhook(), 'bad_sig', Buffer.from(JSON.stringify(webhook())));
       expect(paymentRepo.findOne).not.toHaveBeenCalled();
       expect(transaction).not.toHaveBeenCalled();
     });
@@ -165,7 +176,8 @@ describe('PaymentWebhookService', () => {
         paidAt: null,
       });
 
-      await service.handleWebhook(
+      await receiveAndProcess(
+        service,
         webhook(),
         'valid_sig',
       );
@@ -199,7 +211,8 @@ describe('PaymentWebhookService', () => {
         cancelledAt: null,
       });
 
-      await service.handleWebhook(
+      await receiveAndProcess(
+        service,
         webhook({ status: 'CANCELLED' }),
         'valid_sig',
       );
@@ -234,7 +247,8 @@ describe('PaymentWebhookService', () => {
         cancelledAt: null,
       });
 
-      await service.handleWebhook(
+      await receiveAndProcess(
+        service,
         webhook({ status: 'REFUNDED' }),
         'valid_sig',
       );
@@ -264,7 +278,7 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(boundPayment({ paidAt: new Date(), cancelledAt: null }));
 
-      await service.handleWebhook(webhook({ status: 'CANCELLED' }), 'valid_sig');
+      await receiveAndProcess(service, webhook({ status: 'CANCELLED' }));
 
       expect(manager.increment).toHaveBeenCalledWith(expect.anything(), { id: 22 }, 'stock', 3);
       expect(manager.increment).toHaveBeenCalledWith(expect.anything(), { id: 12 }, 'stock', 5);
@@ -284,7 +298,7 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
 
-      await service.handleWebhook(webhook({ status: 'CANCELLED' }), 'valid_sig');
+      await receiveAndProcess(service, webhook({ status: 'CANCELLED' }));
 
       // Payment/Order update 는 멱등(allowSameStatus)으로 호출될 수 있으나,
       // restoreOrderStock 은 절대 호출되어선 안 된다.
@@ -309,7 +323,7 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(boundPayment({ paidAt: new Date(), cancelledAt: null }));
 
-      await service.handleWebhook(webhook({ status: 'CANCELLED' }), 'valid_sig');
+      await receiveAndProcess(service, webhook({ status: 'CANCELLED' }));
 
       expect(pointsService.creditFifo).toHaveBeenCalledWith(
         manager,
@@ -341,7 +355,7 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(boundPayment({ status: PaymentStatus.CONFIRMED }));
 
-      await service.handleWebhook(webhook({ status: 'CANCELLED' }), 'valid_sig');
+      await receiveAndProcess(service, webhook({ status: 'CANCELLED' }));
 
       expect(manager.findOne).toHaveBeenNthCalledWith(
         2,
@@ -379,7 +393,7 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(stalePayment);
 
-      await service.handleWebhook(webhook({ status: 'CANCELLED' }), 'valid_sig');
+      await receiveAndProcess(service, webhook({ status: 'CANCELLED' }));
 
       expect(manager.update).toHaveBeenCalledWith(
         Payment,
@@ -397,7 +411,8 @@ describe('PaymentWebhookService', () => {
       paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
 
       // Unbound paid callbacks are ignored even when eventType takes precedence.
-      await service.handleWebhook(
+      await receiveAndProcess(
+        service,
         { orderId: 7, eventType: 'DONE', status: 'CANCELLED' },
         'valid_sig',
       );
@@ -522,16 +537,12 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(boundPayment());
 
-      await expect(service.handleWebhook(webhook(), 'valid_sig')).rejects.toThrow(
-        ServiceUnavailableException,
-      );
-      expect(webhookEventRepo.update).toHaveBeenCalledWith(
-        1,
-        expect.objectContaining({
-          result: PaymentWebhookResult.FAILED,
-          errorMessage: '웹훅 처리 중 일시적인 오류가 발생했습니다.',
-        }),
-      );
+      await expect(receiveAndProcess(service, webhook())).rejects.toThrow('database credential leaked');
+      expect(webhookEventRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+        state: PaymentWebhookState.PENDING,
+        rawBody: expect.any(Buffer),
+      }));
+      expect(webhookEventRepo.update).not.toHaveBeenCalled();
     });
 
     it('unbound paid callback records IGNORED rather than success', async () => {
@@ -542,18 +553,14 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(boundPayment({ paidAt: null }));
 
-      await service.handleWebhook(webhook(), 'valid_sig');
+      const result = await receiveAndProcess(service, webhook());
 
       expect(webhookEventRepo.save).toHaveBeenCalledTimes(1);
-      expect(webhookEventRepo.update).toHaveBeenCalledWith(
-        1,
-        expect.objectContaining({
-          result: PaymentWebhookResult.IGNORED,
-          paymentId: 10,
-          orderId: 7,
-          processedAt: expect.any(Date),
-        }),
-      );
+      expect(result).toEqual({
+        result: PaymentWebhookResult.IGNORED,
+        paymentId: 10,
+        orderId: 7,
+      });
     });
 
     it('동일 eventId 재수신 → ER_DUP_ENTRY 잡고 IGNORED 반환 (DB 작업 없음)', async () => {
@@ -581,14 +588,14 @@ describe('PaymentWebhookService', () => {
         create: jest.fn((e: object) => e),
         save: jest.fn().mockRejectedValue(duplicate),
         findOne: jest.fn().mockResolvedValue({
-          id: 1, result: PaymentWebhookResult.IGNORED, processedAt: null, receivedAt: new Date(Date.now() + 60_000),
+          id: 1, state: PaymentWebhookState.PENDING,
         }),
         update: jest.fn().mockResolvedValue({ affected: 0 }),
       };
       const { service, gateway } = buildService({ webhookEventRepo });
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       await expect(service.handleWebhook(webhook(), 'valid_sig')).rejects.toThrow(ServiceUnavailableException);
-      expect(webhookEventRepo.update).toHaveBeenCalledTimes(1);
+      expect(webhookEventRepo.update).not.toHaveBeenCalled();
     });
 
     it('stale in-progress reservation is conditionally reclaimed by one caller', async () => {
@@ -608,7 +615,7 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(null);
       await expect(service.handleWebhook(webhook(), 'valid_sig')).resolves.toBeUndefined();
-      expect(webhookEventRepo.update).toHaveBeenCalledTimes(2);
+      expect(webhookEventRepo.update).not.toHaveBeenCalled();
     });
 
     it('unbound paid callback does not enter transaction processing', async () => {
@@ -620,16 +627,13 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(null);
 
-      await service.handleWebhook(webhook(), 'valid_sig');
+      const result = await receiveAndProcess(service, webhook());
 
-      expect(webhookEventRepo.update).toHaveBeenCalledWith(
-        1,
-        expect.objectContaining({
-          result: PaymentWebhookResult.IGNORED,
-          errorMessage: null,
-          processedAt: expect.any(Date),
-        }),
-      );
+      expect(result).toEqual({
+        result: PaymentWebhookResult.IGNORED,
+        paymentId: null,
+        orderId: 7,
+      });
       expect(manager.findOne).not.toHaveBeenCalled();
     });
 
@@ -640,12 +644,9 @@ describe('PaymentWebhookService', () => {
       const { service, gateway, webhookEventRepo } = buildService({ manager });
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
 
-      await service.handleWebhook(webhook({ status: 'CANCELLED' }), 'valid_sig');
+      const result = await receiveAndProcess(service, webhook({ status: 'CANCELLED' }));
 
-      expect(webhookEventRepo.update).toHaveBeenCalledWith(
-        1,
-        expect.objectContaining({ result: PaymentWebhookResult.IGNORED }),
-      );
+      expect(result.result).toBe(PaymentWebhookResult.IGNORED);
       expect(manager.increment).not.toHaveBeenCalled();
     });
 
@@ -657,12 +658,9 @@ describe('PaymentWebhookService', () => {
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
 
-      await service.handleWebhook(webhook(), 'valid_sig');
+      const result = await receiveAndProcess(service, webhook());
 
-      expect(webhookEventRepo.update).toHaveBeenCalledWith(
-        1,
-        expect.objectContaining({ result: PaymentWebhookResult.IGNORED }),
-      );
+      expect(result.result).toBe(PaymentWebhookResult.IGNORED);
     });
 
     it('idempotency key 추출 실패 시 events 테이블에 insert 하지 않음 (return early)', async () => {
@@ -681,9 +679,10 @@ describe('PaymentWebhookService', () => {
       const { service, gateway, paymentRepo, logger } = buildService();
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(null); // 빠르게 종료
-      const logSpy = jest.spyOn(logger, 'log');
+      const logSpy = jest.spyOn(logger, 'warn');
 
-      await service.handleWebhook(
+      await receiveAndProcess(
+        service,
         webhook({
           orderId: 42,
           type: 'PAYMENT',

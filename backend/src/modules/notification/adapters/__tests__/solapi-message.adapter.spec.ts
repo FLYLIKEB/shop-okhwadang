@@ -41,6 +41,7 @@ describe('SolapiMessageAdapter', () => {
     const adapter = new SolapiMessageAdapter(config);
 
     const result = await adapter.send({
+      idempotencyKey: 'effect-1',
       to: '01012345678',
       templateKey: 'ORDER_CREATED',
       templateId: 'tpl-order',
@@ -62,6 +63,7 @@ describe('SolapiMessageAdapter', () => {
           to: '01012345678',
           from: '021234567',
           text: '[옥화당] 주문 접수',
+          customFields: { requestId: 'effect-1' },
           kakaoOptions: {
             pfId: 'pf-id',
             templateId: 'tpl-order',
