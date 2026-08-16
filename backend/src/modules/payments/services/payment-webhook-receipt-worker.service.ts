@@ -37,6 +37,7 @@ export class PaymentWebhookReceiptWorkerService {
 
   async claim(id: number): Promise<ClaimedPaymentWebhookReceipt | null> {
     const now = this.now();
+    await this.exhaustDueRetries(now, id);
     const owner = randomUUID();
     const affected = await this.deps.repository.createQueryBuilder()
       .update(PaymentWebhookEvent)
@@ -53,8 +54,8 @@ export class PaymentWebhookReceiptWorkerService {
       .where('id = :id', { id })
       .andWhere('replayable = :replayable', { replayable: true })
       .andWhere(new Brackets((where) => where
-        .where("state = 'pending' AND (next_attempt_at IS NULL OR next_attempt_at <= :now) AND attempt_count < max_attempts", { now })
-        .orWhere("state = 'processing' AND lease_expires_at < :now", { now })))
+        .where("state IN ('pending', 'failed') AND (next_attempt_at IS NULL OR next_attempt_at <= :now) AND attempt_count < max_attempts", { now })
+        .orWhere("state = 'processing' AND lease_expires_at < :now AND attempt_count < max_attempts", { now })))
       .execute();
     return affected.affected === 1 ? { id, owner } : null;
   }
@@ -62,6 +63,11 @@ export class PaymentWebhookReceiptWorkerService {
   async processClaimed(claim: ClaimedPaymentWebhookReceipt): Promise<boolean> {
     const receipt = await this.deps.repository.findOne({ where: { id: claim.id } });
     if (!receipt || receipt.state !== PaymentWebhookState.PROCESSING || receipt.leaseOwner !== claim.owner) return false;
+    const now = this.now();
+    if (receipt.leaseExpiresAt && receipt.leaseExpiresAt < now) {
+      await this.exhaustDueRetries(now, claim.id);
+      return false;
+    }
     if (!receipt.replayable || !receipt.rawBody || !receipt.signatureValue || !receipt.normalizedMetadata) {
       await this.manualReview(claim, 'Receipt is missing immutable signed evidence.');
       return false;
@@ -116,8 +122,9 @@ export class PaymentWebhookReceiptWorkerService {
 
   async processDue(limit = 25): Promise<number> {
     const now = this.now();
+    await this.exhaustDueRetries(now);
     const receipts = await this.deps.repository.createQueryBuilder('receipt')
-      .where("receipt.replayable = 1 AND ((receipt.state = 'pending' AND (receipt.next_attempt_at IS NULL OR receipt.next_attempt_at <= :now) AND receipt.attempt_count < receipt.max_attempts) OR (receipt.state = 'processing' AND receipt.lease_expires_at < :now))", { now })
+      .where("receipt.replayable = 1 AND ((receipt.state IN ('pending', 'failed') AND (receipt.next_attempt_at IS NULL OR receipt.next_attempt_at <= :now) AND receipt.attempt_count < receipt.max_attempts) OR (receipt.state = 'processing' AND receipt.lease_expires_at < :now AND receipt.attempt_count < receipt.max_attempts))", { now })
       .orderBy('receipt.received_at', 'ASC').take(limit).getMany();
     let processed = 0;
     for (const receipt of receipts) {
@@ -143,6 +150,27 @@ export class PaymentWebhookReceiptWorkerService {
       { id: claim.id, state: PaymentWebhookState.PROCESSING, leaseOwner: claim.owner },
       { state: PaymentWebhookState.MANUAL_REVIEW, result: PaymentWebhookResult.FAILED, processedAt: this.now(), leaseOwner: null, leaseExpiresAt: null, lastError },
     );
+  }
+
+  private async exhaustDueRetries(now: Date, id?: number): Promise<void> {
+    const query = this.deps.repository.createQueryBuilder()
+      .update(PaymentWebhookEvent)
+      .set({
+        state: PaymentWebhookState.MANUAL_REVIEW,
+        result: PaymentWebhookResult.FAILED,
+        processedAt: now,
+        leaseOwner: null,
+        leaseExpiresAt: null,
+        nextAttemptAt: null,
+        lastError: 'Webhook receipt retry attempts exhausted after a dead worker lease expired.',
+      })
+      .where('replayable = :replayable', { replayable: true })
+      .andWhere('attempt_count >= max_attempts')
+      .andWhere(new Brackets((where) => where
+        .where("state IN ('pending', 'failed') AND (next_attempt_at IS NULL OR next_attempt_at <= :now)", { now })
+        .orWhere("state = 'processing' AND lease_expires_at < :now", { now })));
+    if (id !== undefined) query.andWhere('id = :id', { id });
+    await query.execute();
   }
 
   private backoff(attempt: number): number {

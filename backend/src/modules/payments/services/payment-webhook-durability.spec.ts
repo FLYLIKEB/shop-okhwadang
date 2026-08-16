@@ -3,6 +3,7 @@ import { PaymentWebhookResult, PaymentWebhookState } from '../entities/payment-w
 
 const receipt = (overrides: Record<string, unknown> = {}) => ({
   id: 1, state: PaymentWebhookState.PROCESSING, leaseOwner: 'owner', replayable: true,
+  leaseExpiresAt: null as Date | null, nextAttemptAt: null as Date | null,
   rawBody: Buffer.from('{"eventId":"evt-1"}'), signatureValue: 'signature',
   normalizedMetadata: { eventId: 'evt-1' }, attemptCount: 1, maxAttempts: 3,
   ...overrides,
@@ -65,7 +66,111 @@ describe('PaymentWebhookReceiptWorkerService', () => {
     const { worker, repository } = build();
     repository.createQueryBuilder.mockReturnValue(chain);
     await expect(worker.claim(1)).resolves.toBeNull();
-    expect(chain.andWhere).toHaveBeenCalledTimes(2);
+    expect(chain.andWhere).toHaveBeenCalledTimes(5);
+  });
+
+  it('bounds dead-worker reclaim attempts and has one concurrent exhaustion winner', async () => {
+    const event = receipt({
+      state: PaymentWebhookState.PENDING,
+      leaseOwner: null,
+      leaseExpiresAt: null,
+      nextAttemptAt: null,
+      attemptCount: 0,
+      maxAttempts: 3,
+    });
+    let exhaustionTransitions = 0;
+    const repository = {
+      findOne: jest.fn().mockResolvedValue(event),
+      update: jest.fn(),
+      createQueryBuilder: jest.fn(() => {
+        let values: Record<string, unknown> = {};
+        const query: {
+          update: jest.Mock;
+          set: jest.Mock;
+          where: jest.Mock;
+          andWhere: jest.Mock;
+          execute: jest.Mock;
+        } = {
+          update: jest.fn().mockReturnThis(),
+          set: jest.fn((next: Record<string, unknown>) => {
+            values = next;
+            return query;
+          }),
+          where: jest.fn().mockReturnThis(),
+          andWhere: jest.fn().mockReturnThis(),
+          execute: jest.fn(async () => {
+            if (values.state === PaymentWebhookState.MANUAL_REVIEW) {
+              const due = event.nextAttemptAt === null || event.nextAttemptAt <= now;
+              const stale = event.leaseExpiresAt !== null && event.leaseExpiresAt < now;
+              if (event.attemptCount >= event.maxAttempts
+                && ((event.state === PaymentWebhookState.PROCESSING && stale)
+                  || ([PaymentWebhookState.PENDING, PaymentWebhookState.FAILED].includes(event.state) && due))) {
+                Object.assign(event, {
+                  ...values,
+                  leaseOwner: null,
+                  leaseExpiresAt: null,
+                  nextAttemptAt: null,
+                });
+                exhaustionTransitions += 1;
+                return { affected: 1 };
+              }
+              return { affected: 0 };
+            }
+            const due = event.nextAttemptAt === null || event.nextAttemptAt <= now;
+            const stale = event.leaseExpiresAt !== null && event.leaseExpiresAt < now;
+            if (event.attemptCount < event.maxAttempts
+              && (([PaymentWebhookState.PENDING, PaymentWebhookState.FAILED].includes(event.state) && due)
+                || (event.state === PaymentWebhookState.PROCESSING && stale))) {
+              Object.assign(event, {
+                ...values,
+                state: PaymentWebhookState.PROCESSING,
+                attemptCount: event.attemptCount + 1,
+              });
+              return { affected: 1 };
+            }
+            return { affected: 0 };
+          }),
+        };
+        return query;
+      }),
+    };
+    const worker = new PaymentWebhookReceiptWorkerService({
+      repository: repository as never,
+      dataSource: {} as never,
+      verify: jest.fn(),
+      apply: jest.fn(),
+      now: () => now,
+    });
+
+    for (let attempt = 1; attempt <= event.maxAttempts; attempt += 1) {
+      const claim = await worker.claim(event.id);
+      expect(claim).not.toBeNull();
+      expect(event.attemptCount).toBe(attempt);
+      Object.assign(event, {
+        state: PaymentWebhookState.PROCESSING,
+        leaseOwner: claim?.owner ?? null,
+        leaseExpiresAt: new Date(now.getTime() - 1),
+      });
+    }
+
+    await Promise.all([worker.claim(event.id), worker.claim(event.id)]);
+    expect(event).toMatchObject({
+      state: PaymentWebhookState.MANUAL_REVIEW,
+      attemptCount: event.maxAttempts,
+      leaseOwner: null,
+      leaseExpiresAt: null,
+      nextAttemptAt: null,
+      lastError: 'Webhook receipt retry attempts exhausted after a dead worker lease expired.',
+    });
+    expect(exhaustionTransitions).toBe(1);
+    await expect(worker.claim(event.id)).resolves.toBeNull();
+
+    Object.assign(event, {
+      state: PaymentWebhookState.FAILED,
+      nextAttemptAt: now,
+    });
+    await expect(worker.claim(event.id)).resolves.toBeNull();
+    expect(event.state).toBe(PaymentWebhookState.MANUAL_REVIEW);
   });
 
   it('sends failed verification and verification errors through the fenced failure paths', async () => {
