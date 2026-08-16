@@ -70,6 +70,10 @@ describe('PayPalPaymentAdapter', () => {
         currency_code: 'USD',
         value: '7.41',
       });
+      expect(createOrderBody.purchase_units[0]).toMatchObject({
+        custom_id: 'ORDER-123',
+        invoice_id: 'ORDER-123',
+      });
     });
   });
 

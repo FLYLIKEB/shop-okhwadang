@@ -68,6 +68,8 @@ export class PayPalPaymentAdapter implements PaymentGateway {
         purchase_units: [
           {
             reference_id: orderId,
+            custom_id: context?.orderNumber ?? orderId,
+            invoice_id: context?.orderNumber ?? orderId,
             amount: {
               currency_code: 'USD',
               value: formatPayPalUsdAmount(amount, this.krwPerUsd),

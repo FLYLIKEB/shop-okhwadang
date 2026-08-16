@@ -30,3 +30,17 @@ export const PAYMENT_WEBHOOK_TRANSITIONS: WebhookTransition[] = [
   },
 ];
 
+export function resolveWebhookTransition(status: string): WebhookTransition | null {
+  const normalized = status.toUpperCase();
+  if (['DONE', 'PAID', 'SALE', 'PAYMENT.CAPTURE.COMPLETED', 'PAYMENT_INTENT.SUCCEEDED'].includes(normalized)) {
+    return PAYMENT_WEBHOOK_TRANSITIONS[0];
+  }
+  if (['REFUNDED'].includes(normalized)) {
+    return PAYMENT_WEBHOOK_TRANSITIONS[1];
+  }
+  if (['CANCELLED', 'CANCELED'].includes(normalized)) {
+    return PAYMENT_WEBHOOK_TRANSITIONS[2];
+  }
+  return null;
+}
+

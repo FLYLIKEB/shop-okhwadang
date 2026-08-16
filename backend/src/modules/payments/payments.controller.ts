@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Headers, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Headers, HttpCode, HttpStatus, Param, Req } from '@nestjs/common';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -10,7 +11,6 @@ import { PaymentsService } from './payments.service';
 import { PreparePaymentDto } from './dto/prepare-payment.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 import { CancelPaymentDto } from './dto/cancel-payment.dto';
-import { WebhookPayloadDto } from './dto/webhook-payload.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
@@ -51,38 +51,35 @@ export class PaymentsController {
   }
 
   @Public()
-  @Post('webhook')
+  @Post('webhook/:provider')
   @HttpCode(200)
   @ApiOperation({ summary: '결제 웹훅', description: 'PG사로부터 결제 상태 변경 웹훅을 수신합니다.' })
   @ApiResponse({ status: 200, description: '웹훅 수신 성공' })
   @ApiHeader({ name: 'toss-signature', description: 'Toss 서명', required: true })
   async webhook(
-    @Body() dto: WebhookPayloadDto,
+    @Body() dto: Record<string, unknown>,
+    @Param('provider') provider: string,
     @Headers() headers: Record<string, string | string[] | undefined>,
+    @Req() request: Request & { rawBody?: Buffer },
   ): Promise<{ received: boolean }> {
-    await this.paymentsService.handleWebhook(dto, buildPaymentWebhookSignature(headers));
-    return { received: true };
-  }
-
-  @Public()
-  @Post('webhook/eximbay')
-  @HttpCode(200)
-  @ApiOperation({ summary: 'Eximbay 결제 웹훅', description: 'Eximbay status_url/webhook 결제 상태를 수신합니다.' })
-  @ApiResponse({ status: 200, description: 'Eximbay 웹훅 수신 성공' })
-  @ApiHeader({ name: 'eximbay-webhook-signature', description: 'Eximbay HMAC 서명', required: true })
-  async eximbayWebhook(
-    @Body() payload: Record<string, unknown>,
-    @Headers() headers: Record<string, string | string[] | undefined>,
-  ): Promise<{ received: boolean }> {
-    await this.paymentsService.handleEximbayWebhook(
-      payload,
-      getHeader(headers, 'eximbay-webhook-signature') ?? '',
+    await this.paymentsService.handleWebhook(
+      provider,
+      dto,
+      provider === 'eximbay'
+        ? getHeader(headers, 'eximbay-webhook-signature') ?? ''
+        : buildPaymentWebhookSignature(headers, provider),
+      request.rawBody,
     );
     return { received: true };
   }
 }
 
-function buildPaymentWebhookSignature(headers: Record<string, string | string[] | undefined>): string {
+function buildPaymentWebhookSignature(
+  headers: Record<string, string | string[] | undefined>,
+  provider: string,
+): string {
+  if (provider === 'stripe') return getHeader(headers, 'stripe-signature') ?? '';
+  if (provider === 'inicis') return getHeader(headers, 'inicis-signature') ?? '';
   const tossSignature = getHeader(headers, 'toss-signature');
   const paypalTransmissionSig = getHeader(headers, 'paypal-transmission-sig');
 

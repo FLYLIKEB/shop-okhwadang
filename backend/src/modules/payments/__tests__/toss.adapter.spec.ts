@@ -149,6 +149,15 @@ describe('TossPaymentAdapter', () => {
         false,
       );
     });
+
+    it('raw JSON bytes are signed without reserialization', () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const crypto = require('crypto');
+      const raw = '{ "eventType": "PAYMENT_STATUS_CHANGED" }';
+      const sig = crypto.createHmac('sha256', 'test_secret').update(raw).digest('base64');
+      expect(adapter.verifyWebhook(raw, sig)).toBe(true);
+      expect(adapter.verifyWebhook({ eventType: 'PAYMENT_STATUS_CHANGED' }, sig)).toBe(false);
+    });
   });
 
   describe('prepare', () => {

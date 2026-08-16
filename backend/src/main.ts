@@ -21,7 +21,7 @@ import { requestContextMiddleware } from './common/logging/request-context.middl
 assertEnv();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
   app.useLogger(app.get(ContextualLogger));
   const logger = new Logger('Bootstrap');
   app.enableShutdownHooks();

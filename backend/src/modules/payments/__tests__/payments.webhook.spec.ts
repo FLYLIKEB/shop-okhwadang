@@ -38,7 +38,7 @@ describe('PaymentsService — webhook', () => {
   const mockWebhookEventRepo = {
     create: jest.fn((e: object) => e),
     save: jest.fn(async (e: object) => ({ id: 1, ...e })),
-    update: jest.fn().mockResolvedValue({}),
+    update: jest.fn().mockResolvedValue({ affected: 1 }),
   };
   const mockWebhookManager = {
     findOne: jest.fn(),
@@ -52,6 +52,15 @@ describe('PaymentsService — webhook', () => {
       ) => fn(mockWebhookManager),
     ),
   };
+  const webhook = (overrides: Record<string, unknown> = {}) => ({
+    eventId: 'evt-1',
+    transactionId: 'txn-1',
+    orderId: 7,
+    amount: 1000,
+    currency: 'KRW',
+    status: 'DONE',
+    ...overrides,
+  });
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -101,7 +110,8 @@ describe('PaymentsService — webhook', () => {
     mockGateway.verifyWebhook.mockReturnValue(true);
     await expect(
       service.handleWebhook(
-        { eventType: 'PAYMENT_STATUS_CHANGED' },
+        'mock',
+        webhook({ eventType: 'PAYMENT_STATUS_CHANGED' }),
         'valid_sig',
       ),
     ).resolves.not.toThrow();
@@ -109,7 +119,7 @@ describe('PaymentsService — webhook', () => {
 
   it('잘못된 서명 → UnauthorizedException', async () => {
     mockGateway.verifyWebhook.mockReturnValue(false);
-    await expect(service.handleWebhook({}, 'bad_sig')).rejects.toThrow(
+    await expect(service.handleWebhook('mock', {}, 'bad_sig')).rejects.toThrow(
       UnauthorizedException,
     );
   });
@@ -117,14 +127,13 @@ describe('PaymentsService — webhook', () => {
   it('웹훅 로그에 민감 필드(cardNumber 등) 포함 안 됨', async () => {
     mockGateway.verifyWebhook.mockReturnValue(true);
     const logSpy = jest.spyOn(service['logger'], 'log');
-    const payload = {
+    const payload = webhook({
       orderId: 42,
-      status: 'DONE',
       type: 'PAYMENT',
       cardNumber: '4111111111111111',
       accountNumber: '123456789',
-    };
-    await service.handleWebhook(payload, 'valid_sig');
+    });
+    await service.handleWebhook('mock', payload, 'valid_sig');
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('42'));
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('DONE'));
     expect(logSpy).not.toHaveBeenCalledWith(
@@ -138,8 +147,8 @@ describe('PaymentsService — webhook', () => {
   it('웹훅 로그에 orderId, status, type 필드만 포함', async () => {
     mockGateway.verifyWebhook.mockReturnValue(true);
     const logSpy = jest.spyOn(service['logger'], 'log');
-    const payload = { orderId: 7, status: 'CANCELLED', type: 'CANCEL' };
-    await service.handleWebhook(payload, 'valid_sig');
+    const payload = webhook({ status: 'CANCELLED', type: 'CANCEL' });
+    await service.handleWebhook('mock', payload, 'valid_sig');
     const logArg: string = logSpy.mock.calls[0][0] as string;
     const logged = JSON.parse(logArg.replace('Webhook received: ', '')) as Record<string, unknown>;
     expect(Object.keys(logged)).toEqual(['orderId', 'status', 'type']);
@@ -150,7 +159,7 @@ describe('PaymentsService — webhook', () => {
     mockRepo.findOne.mockResolvedValue({ id: 10, orderId: 7, paidAt: null });
     mockWebhookManager.findOne.mockResolvedValue({ id: 7, status: 'pending' });
 
-    await service.handleWebhook({ orderId: 7, status: 'DONE' }, 'valid_sig');
+    await service.handleWebhook('mock', webhook(), 'valid_sig');
 
     expect(mockWebhookManager.update).not.toHaveBeenCalledWith(
       Payment,
@@ -170,7 +179,7 @@ describe('PaymentsService — webhook', () => {
     mockWebhookManager.findOne.mockResolvedValue({ id: 7, status: 'delivered' });
 
     await expect(
-      service.handleWebhook({ orderId: 7, status: 'DONE' }, 'valid_sig'),
+      service.handleWebhook('mock', webhook(), 'valid_sig'),
     ).resolves.not.toThrow();
 
     expect(mockWebhookManager.update).not.toHaveBeenCalled();

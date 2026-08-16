@@ -358,6 +358,10 @@ describe('PaymentConfirmationService', () => {
         expect.objectContaining({
           status: PaymentStatus.CONFIRMED,
           paymentKey: 'pay_abc',
+          providerTransactionId: 'pay_abc',
+          providerOrderReference: 'ORD-20240101-ABCD1',
+          expectedProviderAmount: 30000,
+          expectedProviderCurrency: 'KRW',
           paidAt: expect.any(Date),
         }),
       );

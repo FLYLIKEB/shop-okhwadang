@@ -101,6 +101,7 @@ export class PaymentsService {
       gateway: this.gateway,
       gatewayType: this.gatewayNameToType(this.paymentConfig.gateway),
       paymentRepository: this.paymentRepository,
+      orderRepository: this.orderRepository,
       webhookEventRepository: this.webhookEventRepository,
       dataSource: this.dataSource,
       pointsService: this.pointsService,
@@ -635,58 +636,29 @@ export class PaymentsService {
     return this.paymentRefundService.reconcileRefund(refundId, dto);
   }
 
-  async handleWebhook(payload: unknown, signature: string): Promise<void> {
-    return this.paymentWebhookService.handleWebhook(payload, signature);
-  }
-
-  async handleEximbayWebhook(payload: unknown, signature: string): Promise<void> {
-    if (!(await this.eximbayAdapter.verifyWebhook(payload, signature))) {
-      throw new UnauthorizedException('Eximbay 웹훅 서명 검증 실패');
+  async handleWebhook(
+    provider: string,
+    payload: unknown,
+    signature: string,
+    rawBody?: Buffer,
+  ): Promise<void> {
+    const gatewayType = this.gatewayNameToType(provider);
+    if (gatewayType === PaymentGatewayType.MOCK && provider !== 'mock') {
+      throw new UnauthorizedException('지원하지 않는 웹훅 제공자');
     }
-
-    const normalized = await this.normalizeEximbayWebhookPayload(payload);
-    const trustedEximbayGateway: PaymentGateway = {
-      prepare: (...args) => this.eximbayAdapter.prepare(...args),
-      confirm: (paymentKey, amount, orderId) =>
-        this.eximbayAdapter.confirm(paymentKey, amount, orderId),
-      cancel: (...args) => this.eximbayAdapter.cancel(...args),
-      partialCancel: (...args) => this.eximbayAdapter.partialCancel(...args),
-      verifyWebhook: () => true,
-    };
-    const eximbayWebhookService = new PaymentWebhookService({
-      gateway: trustedEximbayGateway,
-      gatewayType: PaymentGatewayType.EXIMBAY,
+    const gateway = this.resolveGatewayByType(gatewayType);
+    const webhookService = new PaymentWebhookService({
+      gateway,
+      gatewayType,
       paymentRepository: this.paymentRepository,
+      orderRepository: this.orderRepository,
       webhookEventRepository: this.webhookEventRepository,
       dataSource: this.dataSource,
       pointsService: this.pointsService,
       logger: this.logger,
       defaultCarrier: this.paymentConfig.defaultCarrier,
     });
-
-    return eximbayWebhookService.handleWebhook(normalized, 'verified');
-  }
-
-  private async normalizeEximbayWebhookPayload(payload: unknown): Promise<Record<string, unknown>> {
-    const record = isRecord(payload) ? payload : {};
-    const rawOrderNumber = String(record.order_id ?? record.orderId ?? '');
-    const order = rawOrderNumber
-      ? await this.orderRepository.findOne({ where: { orderNumber: rawOrderNumber } })
-      : null;
-    const rescode = String(record.rescode ?? '');
-    const transactionId = String(
-      record.transaction_id ?? record.transactionId ?? record.paymentKey ?? '',
-    );
-
-    return {
-      ...record,
-      orderId: order?.id ?? record.orderId,
-      orderNumber: rawOrderNumber,
-      paymentKey: transactionId,
-      transactionId,
-      eventType: 'EXIMBAY_PAYMENT_STATUS',
-      status: rescode === '0000' ? 'DONE' : String(record.status ?? record.resmsg ?? 'FAILED'),
-    };
+    return webhookService.handleWebhook(payload, signature, rawBody);
   }
 
   private async cancelConfirmedOrderPayment(

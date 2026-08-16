@@ -18,16 +18,11 @@ describe('extractWebhookIdempotencyKey', () => {
       });
     });
 
-    it('eventId 가 없으면 paymentKey + eventType 으로 폴백', () => {
-      const key = extractWebhookIdempotencyKey(
+    it('stable provider eventId 없이는 거부한다', () => {
+      expect(extractWebhookIdempotencyKey(
         PaymentGatewayType.TOSS,
         { paymentKey: 'pk-1', eventType: 'DONE' },
-      );
-      expect(key).toEqual({
-        gateway: PaymentGatewayType.TOSS,
-        eventId: 'pk-1:DONE',
-        eventType: 'DONE',
-      });
+      )).toBeNull();
     });
 
     it('paymentKey 도 없으면 null', () => {
@@ -78,28 +73,28 @@ describe('extractWebhookIdempotencyKey', () => {
   });
 
   describe('KGInicis', () => {
-    it('tid + eventType 결합', () => {
+    it('stable provider eventId 사용', () => {
       const key = extractWebhookIdempotencyKey(
         PaymentGatewayType.INICIS,
-        { tid: 'tid-123', status: 'CANCELLED' },
+        { eventId: 'evt-inicis-1', tid: 'tid-123', status: 'CANCELLED' },
       );
       expect(key).toEqual({
         gateway: PaymentGatewayType.INICIS,
-        eventId: 'tid-123:CANCELLED',
+        eventId: 'evt-inicis-1',
         eventType: 'CANCELLED',
       });
     });
   });
 
   describe('Mock', () => {
-    it('orderId + eventType 결합', () => {
+    it('stable provider eventId 사용', () => {
       const key = extractWebhookIdempotencyKey(
         PaymentGatewayType.MOCK,
-        { orderId: 7, status: 'DONE' },
+        { eventId: 'evt-mock-1', orderId: 7, status: 'DONE' },
       );
       expect(key).toEqual({
         gateway: PaymentGatewayType.MOCK,
-        eventId: '7:DONE',
+        eventId: 'evt-mock-1',
         eventType: 'DONE',
       });
     });
@@ -109,7 +104,7 @@ describe('extractWebhookIdempotencyKey', () => {
       expect(extractWebhookIdempotencyKey(PaymentGatewayType.MOCK, 'string')).toBeNull();
     });
 
-    it('orderId 누락 시 null', () => {
+    it('eventId 누락 시 null', () => {
       expect(
         extractWebhookIdempotencyKey(PaymentGatewayType.MOCK, { status: 'DONE' }),
       ).toBeNull();
