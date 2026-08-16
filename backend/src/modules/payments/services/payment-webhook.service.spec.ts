@@ -623,7 +623,7 @@ describe('PaymentWebhookService', () => {
       const manager = makeWebhookManager({
         findOne: jest.fn().mockRejectedValue(dbErr),
       });
-      const { service, gateway, paymentRepo, webhookEventRepo } = buildService({ manager });
+      const { service, gateway, paymentRepo } = buildService({ manager });
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue(null);
 
@@ -641,7 +641,7 @@ describe('PaymentWebhookService', () => {
       const manager = makeWebhookManager({
         findOne: jest.fn().mockResolvedValue({ id: 7, status: OrderStatus.CANCELLED }),
       });
-      const { service, gateway, webhookEventRepo } = buildService({ manager });
+      const { service, gateway } = buildService({ manager });
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
 
       const result = await receiveAndProcess(service, webhook({ status: 'CANCELLED' }));
@@ -654,7 +654,7 @@ describe('PaymentWebhookService', () => {
       const manager = makeWebhookManager({
         findOne: jest.fn().mockResolvedValue({ id: 7, status: 'delivered' }),
       });
-      const { service, gateway, paymentRepo, webhookEventRepo } = buildService({ manager });
+      const { service, gateway, paymentRepo } = buildService({ manager });
       (gateway.verifyWebhook as jest.Mock).mockReturnValue(true);
       paymentRepo.findOne.mockResolvedValue({ id: 10, orderId: 7 });
 

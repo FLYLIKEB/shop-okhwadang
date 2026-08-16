@@ -18,7 +18,20 @@ describe('PaymentWebhookReceiptWorkerService', () => {
     const dataSource = { transaction: jest.fn(async (fn) => fn(manager)) };
     const verify = jest.fn().mockResolvedValue(true);
     const apply = jest.fn().mockResolvedValue(PaymentWebhookResult.SUCCESS);
-    return { worker: new PaymentWebhookReceiptWorkerService({ repository: repository as never, dataSource: dataSource as never, verify, apply, now: () => now }), repository, verify, apply, completion };
+    return {
+      worker: new PaymentWebhookReceiptWorkerService({
+        repository: repository as never,
+        dataSource: dataSource as never,
+        verify,
+        apply,
+        now: () => now,
+      }),
+      repository,
+      dataSource,
+      verify,
+      apply,
+      completion,
+    };
   };
 
   it('replays only immutable stored evidence and owner-fences completion', async () => {
@@ -45,5 +58,52 @@ describe('PaymentWebhookReceiptWorkerService', () => {
     const { worker, repository } = build(receipt({ attemptCount: 1, maxAttempts: 3 }));
     expect(await worker.fail({ id: 1, owner: 'owner' }, new Error('crash boundary'))).toBe(true);
     expect(repository.update).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ state: PaymentWebhookState.PENDING, nextAttemptAt: new Date('2026-01-01T00:00:01.000Z') }));
+  });
+
+  it('does not claim a receipt when the conditional update loses a race', async () => {
+    const chain = { update: jest.fn().mockReturnThis(), set: jest.fn().mockReturnThis(), where: jest.fn().mockReturnThis(), andWhere: jest.fn().mockReturnThis(), execute: jest.fn().mockResolvedValue({ affected: 0 }) };
+    const { worker, repository } = build();
+    repository.createQueryBuilder.mockReturnValue(chain);
+    await expect(worker.claim(1)).resolves.toBeNull();
+    expect(chain.andWhere).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends failed verification and verification errors through the fenced failure paths', async () => {
+    const failed = build();
+    failed.verify.mockResolvedValue(false);
+    await expect(failed.worker.processClaimed({ id: 1, owner: 'owner' })).resolves.toBe(false);
+    expect(failed.repository.update).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ state: PaymentWebhookState.MANUAL_REVIEW }));
+
+    const thrown = build();
+    thrown.verify.mockRejectedValue(new Error('bad verifier'));
+    await expect(thrown.worker.processClaimed({ id: 1, owner: 'owner' })).rejects.toThrow('bad verifier');
+    expect(thrown.repository.update).not.toHaveBeenCalled();
+  });
+
+  it('does not overwrite a receipt when failure loses its owner fence and exhausts retries into manual review', async () => {
+    const stale = build();
+    stale.repository.update.mockResolvedValue({ affected: 0 });
+    await expect(stale.worker.fail({ id: 1, owner: 'owner' }, 'lost')).resolves.toBe(false);
+
+    const exhausted = build(receipt({ attemptCount: 3, maxAttempts: 3 }));
+    await expect(exhausted.worker.fail({ id: 1, owner: 'owner' }, 'final')).resolves.toBe(true);
+    expect(exhausted.repository.update).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      state: PaymentWebhookState.MANUAL_REVIEW, lastError: 'final',
+    }));
+  });
+
+  it('does not complete domain work when the transaction lock is missing or completion is stale', async () => {
+    const missing = build();
+    missing.dataSource.transaction.mockImplementation(
+      async (fn: (manager: { findOne: jest.Mock }) => Promise<unknown>) =>
+        fn({ findOne: jest.fn().mockResolvedValue(null) }),
+    );
+    await expect(missing.worker.processClaimed({ id: 1, owner: 'owner' })).resolves.toBe(false);
+    expect(missing.apply).not.toHaveBeenCalled();
+
+    const stale = build();
+    stale.completion.execute.mockResolvedValue({ affected: 0 });
+    await expect(stale.worker.processClaimed({ id: 1, owner: 'owner' })).resolves.toBe(false);
+    expect(stale.repository.update).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ state: PaymentWebhookState.PENDING }));
   });
 });

@@ -27,6 +27,38 @@ describe('PaymentEffectOutbox core', () => {
     expect(existing.payload).toEqual({ source: 'confirmation' });
   });
 
+  it('returns the inserted row, propagates non-duplicate inserts, and detects a vanished duplicate row', async () => {
+    const created = effect({ id: 99 });
+    const repository = {
+      insert: jest.fn().mockResolvedValue({ identifiers: [{ id: 99 }] }),
+      create: jest.fn((value) => value),
+      findOne: jest.fn().mockResolvedValue(created),
+    };
+    const manager = { getRepository: jest.fn().mockReturnValue(repository) };
+    const service = new PaymentEffectOutboxService({} as never);
+    await expect(service.enqueueWithManager(manager as never, 11, PaymentEffectType.ORDER_COMPLETED_EVENT, { nested: { value: 1 } })).resolves.toBe(created);
+    expect(repository.findOne).toHaveBeenCalledWith({ where: { id: 99 } });
+
+    repository.insert.mockRejectedValueOnce(new Error('db unavailable'));
+    await expect(service.enqueueWithManager(manager as never, 11, PaymentEffectType.ORDER_COMPLETED_EVENT, {})).rejects.toThrow('db unavailable');
+    repository.insert.mockRejectedValueOnce({ code: 'ER_DUP_ENTRY' });
+    repository.findOne.mockResolvedValueOnce(null);
+    await expect(service.enqueueWithManager(manager as never, 11, PaymentEffectType.ORDER_COMPLETED_EVENT, {})).rejects.toThrow('did not return a row');
+  });
+
+  it('returns no claim for an empty queue and skips candidates whose conditional lease update loses', async () => {
+    const select = { where: jest.fn().mockReturnThis(), andWhere: jest.fn().mockReturnThis(), orderBy: jest.fn().mockReturnThis(), take: jest.fn().mockReturnThis(), getMany: jest.fn().mockResolvedValue([]) };
+    const repository = { createQueryBuilder: jest.fn().mockReturnValue(select) };
+    const service = new PaymentEffectOutboxService(repository as never);
+    await expect(service.claimDue({ owner: 'a', limit: 2, maxAttempts: 3, leaseMs: 100, now: new Date() })).resolves.toEqual([]);
+
+    const update = { update: jest.fn().mockReturnThis(), set: jest.fn().mockReturnThis(), where: jest.fn().mockReturnThis(), andWhere: jest.fn().mockReturnThis(), execute: jest.fn().mockResolvedValue({ affected: 0 }) };
+    select.getMany.mockResolvedValue([effect({ state: PaymentEffectState.FAILED })]);
+    repository.createQueryBuilder.mockReturnValueOnce(select).mockReturnValueOnce(update);
+    await expect(service.claimDue({ owner: 'a', limit: 2, maxAttempts: 3, leaseMs: 100, now: new Date() })).resolves.toEqual([]);
+    expect(update.andWhere).toHaveBeenCalledTimes(2);
+  });
+
   it('fences stale workers and sends exhausted effects to manual review', async () => {
     const update = jest.fn().mockResolvedValue({ affected: 0 });
     const service = new PaymentEffectOutboxService({ update } as never);
