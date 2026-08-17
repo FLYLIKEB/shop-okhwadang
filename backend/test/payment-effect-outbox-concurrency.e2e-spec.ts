@@ -140,7 +140,7 @@ describe('payment effect outbox exhaustion concurrency (MySQL)', () => {
 
     const claims = await new PaymentEffectOutboxService(repository()).claimDue({
       owner: 'later-worker',
-      limit: 10,
+      limit: 1_000,
       maxAttempts: MAX_ATTEMPTS,
       leaseMs: 1_000,
       now: new Date(now.getTime() + 1_000),
