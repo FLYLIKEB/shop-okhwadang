@@ -331,6 +331,8 @@ export function TossPaymentWidgetPreview({
 
 // ─── Stripe Payment Element (en) ──────────────────────────────────────────────
 
+const STRIPE_INITIALIZATION_TIMEOUT_MS = 15_000;
+
 const StripePaymentGateway = forwardRef<
   PaymentGatewayHandle,
   {
@@ -340,17 +342,47 @@ const StripePaymentGateway = forwardRef<
     onError: (msg: string) => void;
   }
 >(function StripePaymentGateway({ clientSecret, publishableKey, locale,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onError: _onError }, ref) {
+  onError }, ref) {
+  const t = useTranslations('checkout');
   const containerRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
+  const [lifecycle, setLifecycle] = useState<'loading' | 'ready' | 'error'>('loading');
   const [mountError, setMountError] = useState<string | null>(null);
+  const [retryGeneration, setRetryGeneration] = useState(0);
   const confirmRef = useRef<(() => Promise<void>) | null>(null);
+  const confirmInFlightRef = useRef(false);
+  const onErrorRef = useRef(onError);
+  const translationsRef = useRef(t);
 
   useEffect(() => {
+    onErrorRef.current = onError;
+    translationsRef.current = t;
+  }, [onError, t]);
+
+  useEffect(() => {
+    let initializationFailed = false;
+    let initializationTimeout: ReturnType<typeof setTimeout> | null = null;
+    setLifecycle('loading');
+    setMountError(null);
+    confirmRef.current = null;
+    if (containerRef.current) {
+      containerRef.current.replaceChildren();
+    }
+
+    const reportInitializationError = (message: string) => {
+      if (initializationFailed) return;
+      initializationFailed = true;
+      if (initializationTimeout) {
+        clearTimeout(initializationTimeout);
+        initializationTimeout = null;
+      }
+      setLifecycle('error');
+      setMountError(message);
+      confirmRef.current = null;
+      onErrorRef.current(message);
+    };
+
     if (!clientSecret || !publishableKey) {
-      setMountError(locale === 'en' ? 'Stripe is not configured correctly.' : 'Stripe 설정이 올바르지 않습니다.');
-      setLoading(false);
+      reportInitializationError(translationsRef.current('stripeConfigurationError'));
       return;
     }
 
@@ -360,57 +392,96 @@ const StripePaymentGateway = forwardRef<
     const stripeLocale = stripeLocaleMap[locale] ?? 'auto';
 
     let mounted = true;
+    let paymentElement: import('@stripe/stripe-js').StripePaymentElement | null = null;
+    initializationTimeout = setTimeout(() => {
+      if (mounted) {
+        reportInitializationError(translationsRef.current('stripeInitializationTimeout'));
+      }
+    }, STRIPE_INITIALIZATION_TIMEOUT_MS);
 
-    import('@stripe/stripe-js').then(async ({ loadStripe }) => {
-      if (!mounted || !containerRef.current) return;
+    const initialize = async () => {
+      try {
+        const { loadStripe } = await import('@stripe/stripe-js');
+        if (!mounted || initializationFailed || !containerRef.current) return;
 
-      const stripeInstance = await loadStripe(publishableKey);
-      if (!stripeInstance || !mounted || !containerRef.current) return;
-
-      const elements = stripeInstance.elements({
-        clientSecret,
-        locale: stripeLocale as import('@stripe/stripe-js').StripeElementLocale,
-      });
-
-      const paymentElement = elements.create('payment');
-      paymentElement.mount(containerRef.current);
-      paymentElement.on('ready', () => {
-        if (mounted) setLoading(false);
-      });
-      paymentElement.on('loaderror', () => {
-        if (mounted) {
-          setMountError(locale === 'en' ? 'Failed to load payment methods.' : '결제 수단을 불러오는데 실패했습니다.');
-          setLoading(false);
+        const stripeInstance = await loadStripe(publishableKey);
+        if (!stripeInstance) {
+          throw new Error(translationsRef.current('stripeInitializationError'));
         }
-      });
+        if (!mounted || initializationFailed || !containerRef.current) return;
 
-      confirmRef.current = async () => {
-        const { error } = await stripeInstance.confirmPayment({
-          elements,
-          confirmParams: {
-            return_url: `${window.location.origin}/${locale}/checkout/success`,
-          },
+        const elements = stripeInstance.elements({
+          clientSecret,
+          locale: stripeLocale as import('@stripe/stripe-js').StripeElementLocale,
         });
-        if (error) {
-          throw new Error(error.message ?? (locale === 'en' ? 'Payment failed.' : '결제에 실패했습니다.'));
+
+        paymentElement = elements.create('payment');
+        paymentElement.mount(containerRef.current);
+        paymentElement.on('ready', () => {
+          if (mounted && !initializationFailed) {
+            if (initializationTimeout) {
+              clearTimeout(initializationTimeout);
+              initializationTimeout = null;
+            }
+            setLifecycle('ready');
+          }
+        });
+        paymentElement.on('loaderror', () => {
+          if (mounted) reportInitializationError(translationsRef.current('stripeLoadError'));
+        });
+
+        confirmRef.current = async () => {
+          const { error } = await stripeInstance.confirmPayment({
+            elements,
+            confirmParams: {
+              return_url: `${window.location.origin}/${locale}/checkout/success`,
+            },
+          });
+          if (error) {
+            throw new Error(error.message ?? translationsRef.current('paymentFailed'));
+          }
+        };
+      } catch (error) {
+        if (mounted) {
+          reportInitializationError(
+            handleApiError(error, translationsRef.current('stripeInitializationError')),
+          );
         }
-      };
-    });
+      } finally {
+        if (!mounted) {
+          confirmRef.current = null;
+        }
+      }
+    };
+    void initialize();
 
     return () => {
       mounted = false;
+      if (initializationTimeout) clearTimeout(initializationTimeout);
       confirmRef.current = null;
+      paymentElement?.unmount();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientSecret, publishableKey]);
+  }, [clientSecret, locale, publishableKey, retryGeneration]);
 
   useImperativeHandle(ref, () => ({
     confirm: async () => {
-      if (confirmRef.current) {
+      if (lifecycle === 'loading') {
+        throw new Error(translationsRef.current('stripeNotReadyError'));
+      }
+      if (lifecycle === 'error' || !confirmRef.current) {
+        throw new Error(mountError ?? translationsRef.current('stripeInitializationError'));
+      }
+      if (confirmInFlightRef.current) {
+        throw new Error(translationsRef.current('paymentConfirmationInProgress'));
+      }
+      confirmInFlightRef.current = true;
+      try {
         await confirmRef.current();
+      } finally {
+        confirmInFlightRef.current = false;
       }
     },
-  }));
+  }), [lifecycle, mountError]);
 
   return (
     <div className="space-y-3">
@@ -423,13 +494,30 @@ const StripePaymentGateway = forwardRef<
           readOnly
           className="accent-foreground"
         />
-        <span className="text-sm">Stripe (International Card)</span>
+        <span className="text-sm">{t('stripePayment')}</span>
       </label>
-      {loading && !mountError && (
-        <p className="text-xs text-muted-foreground">{locale === 'en' ? 'Loading payment methods...' : '결제 수단 불러오는 중...'}</p>
+      {lifecycle === 'loading' && (
+        <p role="status" aria-live="polite" className="text-xs text-muted-foreground">
+          {t('stripeLoading')}
+        </p>
       )}
-      {mountError && <p className="text-xs text-destructive">{mountError}</p>}
-      <div ref={containerRef} className={loading ? 'sr-only' : undefined} />
+      {lifecycle === 'error' && mountError && (
+        <div className="space-y-2">
+          <p role="alert" className="text-xs text-destructive">{mountError}</p>
+          <button
+            type="button"
+            className="text-xs font-medium underline underline-offset-4"
+            onClick={() => setRetryGeneration((generation) => generation + 1)}
+          >
+            {t('retryPaymentInitialization')}
+          </button>
+        </div>
+      )}
+      <div
+        ref={containerRef}
+        aria-busy={lifecycle === 'loading'}
+        className={lifecycle !== 'ready' ? 'sr-only' : undefined}
+      />
     </div>
   );
 });
@@ -614,13 +702,13 @@ const PaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
 
     const isStripe =
       prepareResult.gateway === 'stripe' &&
-      prepareResult.clientKey &&
       prepareResult.clientKey !== 'mock_client_key';
 
     if (isStripe) {
       const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
       return (
         <StripePaymentGateway
+          key={`${prepareResult.clientKey}:${publishableKey}:${locale}`}
           ref={ref}
           clientSecret={prepareResult.clientKey}
           publishableKey={publishableKey}
