@@ -1,10 +1,17 @@
-import { render, screen, act } from '@testing-library/react';
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { render, screen, act, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { createRef } from 'react';
 import PaymentGateway, { type PaymentGatewayHandle } from '@/components/shared/checkout/PaymentGateway';
 import type { PreparePaymentResponse } from '@/lib/api';
 
 const mockTossRequestPayment = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const stripeMocks = vi.hoisted(() => ({
+  loadStripe: vi.fn(),
+  eventHandlers: {} as Record<string, () => void>,
+  unmount: vi.fn(),
+  confirmPayment: vi.fn().mockResolvedValue({ error: null }),
+}));
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => {
@@ -36,6 +43,15 @@ vi.mock('next-intl', () => ({
       payNow: 'Pay now',
       cardSecurePageNotice: '카드번호·유효기간·CVC는 저장되지 않습니다.',
       externalPaymentUnavailable: '결제 페이지를 열 수 없습니다.',
+      stripeLoading: 'Loading payment methods...',
+      stripeConfigurationError: 'Stripe is not configured correctly.',
+      stripeInitializationError: 'Failed to initialize Stripe payment.',
+      stripeInitializationTimeout: 'Payment methods took too long to load. Please try again.',
+      stripeLoadError: 'Failed to load payment methods.',
+      stripeNotReadyError: 'Payment methods are not ready yet. Please try again shortly.',
+      retryPaymentInitialization: 'Reload payment methods',
+      paymentFailed: 'Payment failed.',
+      paymentConfirmationInProgress: 'Payment confirmation is already in progress.',
     };
     return dict[key] ?? key;
   },
@@ -54,15 +70,7 @@ vi.mock('@tosspayments/tosspayments-sdk', () => ({
 }));
 
 vi.mock('@stripe/stripe-js', () => ({
-  loadStripe: vi.fn().mockResolvedValue({
-    elements: vi.fn().mockReturnValue({
-      create: vi.fn().mockReturnValue({
-        mount: vi.fn(),
-        on: vi.fn(),
-      }),
-    }),
-    confirmPayment: vi.fn().mockResolvedValue({ error: null }),
-  }),
+  loadStripe: stripeMocks.loadStripe,
 }));
 
 const baseProps = {
@@ -73,11 +81,29 @@ const baseProps = {
 };
 
 describe('PaymentGateway', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
     delete window.Naver;
     delete window.EXIMBAY;
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = 'pk_test_publishable';
+    stripeMocks.eventHandlers = {};
+    stripeMocks.loadStripe.mockResolvedValue({
+      elements: vi.fn().mockReturnValue({
+        create: vi.fn().mockReturnValue({
+          mount: vi.fn(),
+          unmount: stripeMocks.unmount,
+          on: vi.fn((event: string, handler: () => void) => {
+            stripeMocks.eventHandlers[event] = handler;
+          }),
+        }),
+      }),
+      confirmPayment: stripeMocks.confirmPayment,
+    });
   });
   it('locale=ko + 유효 clientKey → Toss 결제위젯 영역을 렌더링한다', async () => {
     const prepareResult: PreparePaymentResponse = {
@@ -152,6 +178,210 @@ describe('PaymentGateway', () => {
       />,
     );
     expect(screen.getByText('Stripe (International Card)')).toBeInTheDocument();
+  });
+
+  it('Stripe가 ready 전이면 confirm을 명시적으로 거부한다', async () => {
+    const ref = createRef<PaymentGatewayHandle>();
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 1,
+      orderId: 1,
+      orderNumber: 'ORDER-001',
+      amount: 50000,
+      gateway: 'stripe',
+      clientKey: 'pi_secret_value',
+    };
+    render(
+      <PaymentGateway
+        ref={ref}
+        prepareResult={prepareResult}
+        locale="en"
+        {...baseProps}
+      />,
+    );
+
+    await expect(ref.current?.confirm()).rejects.toThrow(
+      'Payment methods are not ready yet.',
+    );
+    expect(stripeMocks.confirmPayment).not.toHaveBeenCalled();
+  });
+
+  it('Stripe 초기화 실패를 부모에 전달하고 재시도로 ready 상태를 복구한다', async () => {
+    const user = userEvent.setup();
+    const onError = vi.fn();
+    const ref = createRef<PaymentGatewayHandle>();
+    stripeMocks.loadStripe.mockRejectedValueOnce(new Error('sdk blocked'));
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 1,
+      orderId: 1,
+      orderNumber: 'ORDER-001',
+      amount: 50000,
+      gateway: 'stripe',
+      clientKey: 'pi_secret_value',
+    };
+    render(
+      <PaymentGateway
+        ref={ref}
+        prepareResult={prepareResult}
+        locale="en"
+        {...baseProps}
+        onError={onError}
+      />,
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('sdk blocked');
+    expect(onError).toHaveBeenCalledWith('sdk blocked');
+    await expect(ref.current?.confirm()).rejects.toThrow();
+
+    await user.click(screen.getByRole('button', { name: 'Reload payment methods' }));
+    await waitFor(() => expect(stripeMocks.eventHandlers.ready).toBeTypeOf('function'));
+    await act(async () => stripeMocks.eventHandlers.ready());
+    await waitFor(() => {
+      expect(screen.queryByText('Loading payment methods...')).not.toBeInTheDocument();
+    });
+    await expect(ref.current?.confirm()).resolves.toBeUndefined();
+    expect(stripeMocks.confirmPayment).toHaveBeenCalledTimes(1);
+  });
+
+  it('Stripe loaderror 뒤 늦은 ready 이벤트가 오류와 재시도 UI를 덮지 않는다', async () => {
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 1,
+      orderId: 1,
+      orderNumber: 'ORDER-001',
+      amount: 50000,
+      gateway: 'stripe',
+      clientKey: 'pi_secret_value',
+    };
+    render(
+      <PaymentGateway
+        prepareResult={prepareResult}
+        locale="en"
+        {...baseProps}
+      />,
+    );
+
+    await waitFor(() => expect(stripeMocks.eventHandlers.loaderror).toBeTypeOf('function'));
+    await act(async () => stripeMocks.eventHandlers.loaderror());
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load payment methods.');
+
+    await act(async () => stripeMocks.eventHandlers.ready());
+    expect(screen.getByRole('alert')).toHaveTextContent('Failed to load payment methods.');
+    expect(screen.getByRole('button', { name: 'Reload payment methods' })).toBeInTheDocument();
+  });
+
+  it('Stripe confirm 요청이 진행 중이면 중복 provider confirm을 거부한다', async () => {
+    const ref = createRef<PaymentGatewayHandle>();
+    let resolveConfirmation: ((value: { error: null }) => void) | undefined;
+    stripeMocks.confirmPayment.mockImplementationOnce(
+      () => new Promise((resolve) => {
+        resolveConfirmation = resolve;
+      }),
+    );
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 1,
+      orderId: 1,
+      orderNumber: 'ORDER-001',
+      amount: 50000,
+      gateway: 'stripe',
+      clientKey: 'pi_secret_value',
+    };
+    render(
+      <PaymentGateway
+        ref={ref}
+        prepareResult={prepareResult}
+        locale="en"
+        {...baseProps}
+      />,
+    );
+    await waitFor(() => expect(stripeMocks.eventHandlers.ready).toBeTypeOf('function'));
+    await act(async () => stripeMocks.eventHandlers.ready());
+
+    const firstConfirmation = ref.current!.confirm();
+    await expect(ref.current!.confirm()).rejects.toThrow(
+      'Payment confirmation is already in progress.',
+    );
+    expect(stripeMocks.confirmPayment).toHaveBeenCalledTimes(1);
+
+    resolveConfirmation?.({ error: null });
+    await expect(firstConfirmation).resolves.toBeUndefined();
+  });
+
+  it('loadStripe가 null을 반환하면 초기화 오류와 재시도를 표시한다', async () => {
+    stripeMocks.loadStripe.mockResolvedValueOnce(null);
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 1,
+      orderId: 1,
+      orderNumber: 'ORDER-001',
+      amount: 50000,
+      gateway: 'stripe',
+      clientKey: 'pi_secret_value',
+    };
+    render(
+      <PaymentGateway
+        prepareResult={prepareResult}
+        locale="en"
+        {...baseProps}
+      />,
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Failed to initialize Stripe payment.',
+    );
+    expect(screen.getByRole('button', { name: 'Reload payment methods' })).toBeInTheDocument();
+  });
+
+  it('Stripe 응답의 client secret이 비어도 mock으로 우회하지 않고 설정 오류를 표시한다', async () => {
+    const ref = createRef<PaymentGatewayHandle>();
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 1,
+      orderId: 1,
+      orderNumber: 'ORDER-001',
+      amount: 50000,
+      gateway: 'stripe',
+      clientKey: '',
+    };
+    render(
+      <PaymentGateway
+        ref={ref}
+        prepareResult={prepareResult}
+        locale="en"
+        {...baseProps}
+      />,
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Stripe is not configured correctly.',
+    );
+    await expect(ref.current?.confirm()).rejects.toThrow();
+    expect(screen.queryByText('Test Payment (Mock)')).not.toBeInTheDocument();
+  });
+
+  it('Stripe 초기화 promise가 끝나지 않으면 timeout 오류와 재시도를 표시한다', async () => {
+    vi.useFakeTimers();
+    stripeMocks.loadStripe.mockImplementationOnce(() => new Promise(() => undefined));
+    const prepareResult: PreparePaymentResponse = {
+      paymentId: 1,
+      orderId: 1,
+      orderNumber: 'ORDER-001',
+      amount: 50000,
+      gateway: 'stripe',
+      clientKey: 'pi_secret_value',
+    };
+    render(
+      <PaymentGateway
+        prepareResult={prepareResult}
+        locale="en"
+        {...baseProps}
+      />,
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15_000);
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Payment methods took too long to load.',
+    );
+    expect(screen.getByRole('button', { name: 'Reload payment methods' })).toBeInTheDocument();
+    vi.useRealTimers();
   });
 
   it('clientKey=mock_client_key → Mock 라디오 표시', () => {
