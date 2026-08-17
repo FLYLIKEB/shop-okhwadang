@@ -115,4 +115,15 @@ describe('PaymentMethodSelector', () => {
       }
     }
   });
+
+  it('unknown gateway가 섞인 frontend 설정은 결제수단 평가를 거부한다', () => {
+    process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS = 'toss, typo-provider';
+
+    expect(() => getGatewayOptionsByLocale('ko')).toThrow(
+      'Unsupported checkout gateways: typo-provider',
+    );
+    expect(() => getGatewayOptionsByLocale('en')).toThrow(
+      'Unsupported checkout gateways: typo-provider',
+    );
+  });
 });

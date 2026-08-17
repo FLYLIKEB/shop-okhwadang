@@ -43,13 +43,28 @@ describe('validateEnv', () => {
     expect(validateEnv(makeFullEnv())).toEqual([]);
   });
 
-  it('unknown disabled checkout providers do not add validation requirements', () => {
+  it('unknown checkout providers fail production validation without enabling defaults', () => {
     const env = makeFullEnv();
     env.CHECKOUT_ENABLED_GATEWAYS = 'disabled-provider';
     delete env.PAYPAL_CLIENT_SECRET;
 
     const errorKeys = validateEnv(env).map((e) => e.key);
+    expect(errorKeys).toContain('CHECKOUT_ENABLED_GATEWAYS');
     expect(errorKeys).not.toContain('PAYPAL_CLIENT_SECRET');
+  });
+
+  it('mixed valid and unknown checkout providers fail the whole configuration closed', () => {
+    const env = makeFullEnv();
+    env.CHECKOUT_ENABLED_GATEWAYS = 'toss, typo-provider';
+
+    expect(validateEnv(env)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'CHECKOUT_ENABLED_GATEWAYS',
+          reason: expect.stringContaining('typo-provider'),
+        }),
+      ]),
+    );
   });
 
   it('CHECKOUT_ENABLED_GATEWAYS가 없으면 PAYMENT_GATEWAY provider 키만 필수로 검증한다', () => {

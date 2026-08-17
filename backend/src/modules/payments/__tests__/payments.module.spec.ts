@@ -145,6 +145,17 @@ describe('locale gateway policy — country-specific visibility', () => {
     }
   });
 
+  it('unknown gateway가 섞이면 모든 locale 정책 평가를 거부한다', () => {
+    const env = { CHECKOUT_ENABLED_GATEWAYS: 'toss, typo-provider' } as NodeJS.ProcessEnv;
+
+    expect(() => getAvailableGatewaysByLocale('ko', env)).toThrow(
+      'Unsupported checkout gateways: typo-provider',
+    );
+    expect(() => getAvailableGatewaysByLocale('en', env)).toThrow(
+      'Unsupported checkout gateways: typo-provider',
+    );
+  });
+
   it('en and other locales → paypal default and eximbay card', () => {
     expect(resolveGatewayByLocale('en')).toBe('paypal');
     expect(resolveGatewayByLocale('ja')).toBe('paypal');

@@ -116,6 +116,16 @@ describe('Next.js CSP headers', () => {
     expect(directives['connect-src']).not.toContain('https://pay.naver.com');
     expect(directives['connect-src']).not.toContain('https://api-test.eximbay.com');
     expect(directives['frame-src']).not.toContain('https://pgonline.eximbay.com');
+    expect(directives['script-src']).not.toContain('https://js.tosspayments.com');
+  });
+
+  it('rejects malformed checkout gateway configuration before emitting CSP', async () => {
+    await expect(
+      loadNextConfigSnapshot({
+        NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS: 'paypal, typo-provider',
+        CHECKOUT_ENABLED_GATEWAYS: 'paypal, typo-provider',
+      }),
+    ).rejects.toThrow('Unsupported checkout gateways: typo-provider');
   });
 
   it('allows SmartStore product images from the exact Naver image origin', async () => {
