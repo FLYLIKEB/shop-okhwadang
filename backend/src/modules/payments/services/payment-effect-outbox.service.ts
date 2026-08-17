@@ -60,6 +60,7 @@ export class PaymentEffectOutboxService {
 
   async claimDue(options: PaymentEffectClaimOptions): Promise<PaymentEffectOutbox[]> {
     const now = options.now ?? new Date();
+    await this.exhaustDueRetries(options.maxAttempts, now);
     const candidates = await this.repository
       .createQueryBuilder('effect')
       .where(
@@ -111,6 +112,31 @@ export class PaymentEffectOutboxService {
       }
     }
     return claimed;
+  }
+
+  async exhaustDueRetries(maxAttempts: number, now = new Date()): Promise<number> {
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(PaymentEffectOutbox)
+      .set({
+        state: PaymentEffectState.MANUAL_REVIEW,
+        leaseOwner: null,
+        leaseExpiresAt: null,
+        nextAttemptAt: null,
+      })
+      .where('attempt_count >= :maxAttempts', { maxAttempts })
+      .andWhere(
+        `(state = :pending OR (state = :failed AND (next_attempt_at IS NULL OR next_attempt_at <= :now)) OR (state = :processing AND lease_expires_at <= :now))`,
+        {
+          pending: PaymentEffectState.PENDING,
+          failed: PaymentEffectState.FAILED,
+          processing: PaymentEffectState.PROCESSING,
+          now,
+        },
+      )
+      .execute();
+
+    return result.affected ?? 0;
   }
 
   async markSucceeded(id: number, owner: string, processedAt = new Date()): Promise<boolean> {
