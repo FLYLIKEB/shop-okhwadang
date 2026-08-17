@@ -240,7 +240,7 @@ export class NaverCommerceApiClient {
 
     if (!response.ok || typeof payload.access_token !== 'string') {
       throw new BadGatewayException(
-        this.safeErrorMessage(payload, '네이버 커머스API 인증 토큰 발급에 실패했습니다.'),
+        this.getTokenFailureMessage(payload),
       );
     }
 
@@ -359,6 +359,14 @@ export class NaverCommerceApiClient {
     return message
       .replace(this.getEnv('NAVER_COMMERCE_APP_ID'), '[REDACTED]')
       .replace(this.getEnv('NAVER_COMMERCE_APP_SECRET'), '[REDACTED]');
+  }
+
+  private getTokenFailureMessage(payload: unknown): string {
+    const message = this.safeErrorMessage(payload, '네이버 커머스API 인증 토큰 발급에 실패했습니다.');
+    if (/호출이 허용되지 않은 IP|ip.*허용되지|ip.*not allowed/i.test(message)) {
+      return '네이버 커머스API 서버 IP가 허용 목록에 없습니다. 네이버 커머스API센터에 백엔드 서버의 공인 IP를 등록해 주세요.';
+    }
+    return message;
   }
 
   private getErrorCode(payload: unknown): string | null {

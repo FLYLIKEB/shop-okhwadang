@@ -212,6 +212,17 @@ describe('NaverCommerceApiClient', () => {
     );
   });
 
+  it('explains that Naver rejected the server IP instead of mislabeling it as credentials', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      jsonResponse({ message: '호출이 허용되지 않은 IP입니다.' }, 401),
+    );
+    const client = new NaverCommerceApiClient();
+
+    await expect(client.fetchProductsWithDetails()).rejects.toThrow(
+      '서버 IP가 허용 목록에 없습니다',
+    );
+  });
+
   it('wraps token network failures in a safe gateway error', async () => {
     global.fetch = jest.fn().mockRejectedValue(new Error('socket includes secret-ish details'));
     const client = new NaverCommerceApiClient();
