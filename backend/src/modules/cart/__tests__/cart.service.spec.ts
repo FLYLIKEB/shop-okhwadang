@@ -148,6 +148,44 @@ describe('CartService', () => {
       expect(mockCartItemRepo.create).not.toHaveBeenCalled();
     });
 
+    it('uses transaction manager repositories for validation, upsert, and returned snapshot', async () => {
+      const transactionCartRepo = {
+        findOne: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockReturnValue({ id: 1 }),
+        save: jest.fn().mockResolvedValue({ id: 1 }),
+        createQueryBuilder: jest.fn().mockReturnValue(buildQueryBuilder([])),
+      };
+      const transactionProductRepo = {
+        findOne: jest.fn().mockResolvedValue({ id: 1 } as Product),
+      };
+      const transactionProductOptionRepo = { findOne: jest.fn() };
+      const manager = {
+        getRepository: jest.fn((entity) => {
+          if (entity === CartItem) return transactionCartRepo;
+          if (entity === Product) return transactionProductRepo;
+          return transactionProductOptionRepo;
+        }),
+      };
+
+      await service.add(
+        1,
+        { productId: 1, productOptionId: null, quantity: 1 },
+        undefined,
+        manager as never,
+      );
+
+      expect(manager.getRepository).toHaveBeenCalledWith(Product);
+      expect(manager.getRepository).toHaveBeenCalledWith(ProductOption);
+      expect(manager.getRepository).toHaveBeenCalledWith(CartItem);
+      expect(transactionProductRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 1, status: 'active' },
+      });
+      expect(transactionCartRepo.save).toHaveBeenCalled();
+      expect(transactionCartRepo.createQueryBuilder).toHaveBeenCalledWith('cartItem');
+      expect(mockProductRepo.findOne).not.toHaveBeenCalled();
+      expect(mockCartItemRepo.save).not.toHaveBeenCalled();
+    });
+
     it('throws NotFoundException for non-existent product', async () => {
       mockProductRepo.findOne.mockResolvedValue(null);
 

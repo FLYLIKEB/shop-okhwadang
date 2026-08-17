@@ -46,6 +46,7 @@ export interface Product {
   viewCount: number;
   category: Category | null;
   images: ProductImage[];
+  options?: ProductOption[];
   attributes?: ProductAttribute[];
 }
 

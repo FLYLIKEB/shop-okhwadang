@@ -198,13 +198,15 @@ export class ProductQueryService {
 
     if (cached) {
       const visible = this.filterVisibleForPublic(cached, isAdmin, normalizedLocale);
-      const localized = visible.map((product) => this.applyLocale(product, normalizedLocale));
-      return localized as (Product & { rating: number; reviewCount: number })[];
+      return visible.map((product) =>
+        this.serializeBulkProduct(product, normalizedLocale),
+      ) as (Product & { rating: number; reviewCount: number })[];
     }
 
     const products = await this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.options', 'option')
       .leftJoinAndSelect(
         'product.images',
         'image',
@@ -226,7 +228,9 @@ export class ProductQueryService {
           this.isVisibleInLocale(product, normalizedLocale),
         );
 
-    const localizedItems = filtered.map((product) => this.applyLocale(product, normalizedLocale));
+    const localizedItems = filtered.map((product) =>
+      this.serializeBulkProduct(product, normalizedLocale),
+    );
     const statsMap = await this.getReviewStats(
       localizedItems.map((product) => Number(product.id)),
     );
@@ -350,6 +354,48 @@ export class ProductQueryService {
       localized.category = applyLocale(localized.category, locale, ['name']);
     }
     return localized;
+  }
+
+  private serializeBulkProduct(product: Product, locale: 'ko' | 'en'): Product {
+    const localized = this.applyLocale(product, locale);
+    return {
+      ...localized,
+      id: this.serializePositiveId(localized.id),
+      price: this.serializeRequiredDecimal(localized.price),
+      salePrice: this.serializeOptionalDecimal(localized.salePrice),
+      options: localized.options?.map((option) => ({
+        ...applyLocale(option, locale, ['name', 'value']),
+        id: this.serializePositiveId(option.id),
+        priceAdjustment: this.serializeRequiredDecimal(option.priceAdjustment),
+      })),
+    };
+  }
+
+  private serializePositiveId(value: unknown): number {
+    const serialized = Number(value);
+    if (!Number.isSafeInteger(serialized) || serialized <= 0) {
+      throw new Error('Invalid product identifier in bulk response');
+    }
+    return serialized;
+  }
+
+  private serializeRequiredDecimal(value: unknown): number {
+    if (
+      value === null
+      || value === undefined
+      || (typeof value === 'string' && value.trim() === '')
+    ) {
+      throw new Error('Invalid product price in bulk response');
+    }
+    const serialized = Number(value);
+    if (!Number.isFinite(serialized)) {
+      throw new Error('Invalid product price in bulk response');
+    }
+    return serialized;
+  }
+
+  private serializeOptionalDecimal(value: unknown): number | null {
+    return value == null ? null : this.serializeRequiredDecimal(value);
   }
 
   private normalizeLocale(locale?: string): 'ko' | 'en' {

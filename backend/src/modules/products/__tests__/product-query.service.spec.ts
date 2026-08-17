@@ -420,8 +420,8 @@ describe('ProductQueryService', () => {
 
     it('비관리자는 ACTIVE 상태만 필터링', async () => {
       qb.getMany.mockResolvedValue([
-        { id: 1, status: ProductStatus.ACTIVE } as Product,
-        { id: 2, status: ProductStatus.HIDDEN } as Product,
+        { id: 1, price: 1000, status: ProductStatus.ACTIVE } as Product,
+        { id: 2, price: 1000, status: ProductStatus.HIDDEN } as Product,
       ]);
       reviewQb.getRawMany.mockResolvedValue([]);
 
@@ -432,7 +432,7 @@ describe('ProductQueryService', () => {
     });
 
     it('bulk 상품 응답에 product_attributes 와 attributeType 을 포함한다', async () => {
-      qb.getMany.mockResolvedValue([{ id: 1, status: ProductStatus.ACTIVE } as Product]);
+      qb.getMany.mockResolvedValue([{ id: 1, price: 1000, status: ProductStatus.ACTIVE } as Product]);
       reviewQb.getRawMany.mockResolvedValue([]);
 
       await service.findBulk([1], false);
@@ -444,10 +444,107 @@ describe('ProductQueryService', () => {
       );
     });
 
+    it('옵션을 같은 bulk 쿼리로 반환하고 decimal 가격을 숫자로 직렬화한다', async () => {
+      qb.getMany.mockResolvedValue([
+        {
+          id: '1',
+          status: ProductStatus.ACTIVE,
+          price: '10000.00',
+          salePrice: '9000.00',
+          options: [{
+            id: '10',
+            name: '포장',
+            nameEn: 'Packaging',
+            value: '목함',
+            valueEn: 'Wooden box',
+            priceAdjustment: '1500.00',
+          }],
+        } as unknown as Product,
+      ]);
+      reviewQb.getRawMany.mockResolvedValue([]);
+
+      const result = await service.findBulk([1], false, 'en');
+
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('product.options', 'option');
+      expect(result[0]).toMatchObject({
+        price: 10000,
+        salePrice: 9000,
+        options: [{
+          id: 10,
+          name: 'Packaging',
+          value: 'Wooden box',
+          priceAdjustment: 1500,
+        }],
+      });
+      expect(typeof result[0].options[0].priceAdjustment).toBe('number');
+    });
+
+    it.each([null, '', 'not-a-number', 'Infinity'])(
+      'bulk 상품의 잘못된 필수 가격 %p 을 거부한다',
+      async (price) => {
+        qb.getMany.mockResolvedValue([
+          {
+            id: '1',
+            status: ProductStatus.ACTIVE,
+            price,
+            salePrice: null,
+            options: [],
+          } as unknown as Product,
+        ]);
+        reviewQb.getRawMany.mockResolvedValue([]);
+
+        await expect(service.findBulk([1], false)).rejects.toThrow(
+          'Invalid product price in bulk response',
+        );
+      },
+    );
+
+    it.each(['0', '-1', '9007199254740992'])(
+      'bulk 상품의 unsafe ID %s 를 거부한다',
+      async (id) => {
+        qb.getMany.mockResolvedValue([
+          {
+            id,
+            status: ProductStatus.ACTIVE,
+            price: '1000.00',
+            salePrice: null,
+            options: [],
+          } as unknown as Product,
+        ]);
+        reviewQb.getRawMany.mockResolvedValue([]);
+
+        await expect(service.findBulk([1], false)).rejects.toThrow(
+          'Invalid product identifier in bulk response',
+        );
+      },
+    );
+
+    it('bulk 상품의 unsafe option ID를 거부한다', async () => {
+      qb.getMany.mockResolvedValue([
+        {
+          id: '1',
+          status: ProductStatus.ACTIVE,
+          price: '1000.00',
+          salePrice: null,
+          options: [{
+            id: '9007199254740992',
+            name: '포장',
+            value: '상자',
+            priceAdjustment: '100.00',
+          }],
+        } as unknown as Product,
+      ]);
+      reviewQb.getRawMany.mockResolvedValue([]);
+
+      await expect(service.findBulk([1], false)).rejects.toThrow(
+        'Invalid product identifier in bulk response',
+      );
+    });
+
     it('비관리자 bulk 조회는 현재 locale에서 숨김 처리된 상품을 제외한다', async () => {
       qb.getMany.mockResolvedValue([
-        { id: 1, status: ProductStatus.ACTIVE, isVisibleEn: true } as Product,
-        { id: 2, status: ProductStatus.ACTIVE, isVisibleEn: false } as Product,
+        { id: 1, price: 1000, status: ProductStatus.ACTIVE, isVisibleEn: true } as Product,
+        { id: 2, price: 1000, status: ProductStatus.ACTIVE, isVisibleEn: false } as Product,
       ]);
       reviewQb.getRawMany.mockResolvedValue([]);
 
@@ -459,8 +556,8 @@ describe('ProductQueryService', () => {
 
     it('비관리자 bulk cache hit 에도 hidden 상품을 반환하지 않는다', async () => {
       cacheService.get.mockResolvedValue([
-        { id: 1, status: ProductStatus.ACTIVE } as Product,
-        { id: 2, status: ProductStatus.HIDDEN } as Product,
+        { id: 1, price: 1000, status: ProductStatus.ACTIVE } as Product,
+        { id: 2, price: 1000, status: ProductStatus.HIDDEN } as Product,
       ]);
 
       const result = await service.findBulk([1, 2], false);
@@ -472,8 +569,8 @@ describe('ProductQueryService', () => {
 
     it('관리자 bulk cache 는 hidden 상품도 반환한다', async () => {
       cacheService.get.mockResolvedValue([
-        { id: 1, status: ProductStatus.ACTIVE } as Product,
-        { id: 2, status: ProductStatus.HIDDEN } as Product,
+        { id: 1, price: 1000, status: ProductStatus.ACTIVE } as Product,
+        { id: 2, price: 1000, status: ProductStatus.HIDDEN } as Product,
       ]);
 
       const result = await service.findBulk([1, 2], true);
