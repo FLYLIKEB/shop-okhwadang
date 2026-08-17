@@ -6,7 +6,9 @@
  */
 import {
   CHECKOUT_GATEWAY_CONTRACT,
+  getInvalidConfiguredCheckoutGateways,
   getRequiredCheckoutEnvKeys as getRequiredCheckoutEnvKeysFromContract,
+  isCheckoutGatewayName,
 } from './checkout-gateway-contract';
 import { validateStripeExchangeRate } from '../modules/payments/stripe-money.policy';
 
@@ -39,9 +41,18 @@ export const CHECKOUT_PROD_ENV_KEYS = [
 ] as const;
 
 export function getRequiredCheckoutEnvKeys(env: NodeJS.ProcessEnv): RequiredEnvKey[] {
-  return getRequiredCheckoutEnvKeysFromContract(
-    env.CHECKOUT_ENABLED_GATEWAYS ?? env.PAYMENT_GATEWAY,
-  ) as RequiredEnvKey[];
+  const configured = env.CHECKOUT_ENABLED_GATEWAYS ?? env.PAYMENT_GATEWAY;
+  if (
+    env.CHECKOUT_ENABLED_GATEWAYS === undefined &&
+    configured &&
+    !isCheckoutGatewayName(configured.trim().toLowerCase())
+  ) {
+    return [];
+  }
+  if (getInvalidConfiguredCheckoutGateways(configured).length > 0) {
+    return [];
+  }
+  return getRequiredCheckoutEnvKeysFromContract(configured) as RequiredEnvKey[];
 }
 
 export type RequiredEnvKey =
@@ -65,6 +76,15 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidation
   }
 
   const errors: EnvValidationError[] = [];
+  const invalidCheckoutGateways = getInvalidConfiguredCheckoutGateways(
+    env.CHECKOUT_ENABLED_GATEWAYS,
+  );
+  if (invalidCheckoutGateways.length > 0) {
+    errors.push({
+      key: 'CHECKOUT_ENABLED_GATEWAYS',
+      reason: `지원하지 않는 결제 게이트웨이: ${invalidCheckoutGateways.join(', ')}`,
+    });
+  }
 
   for (const key of [...REQUIRED_PROD_ENV_KEYS, ...getRequiredCheckoutEnvKeys(env)]) {
     const value = env[key];

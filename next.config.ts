@@ -13,7 +13,7 @@ const enabledCheckoutGatewaySources = getConfiguredCheckoutGatewayCspSources(
 );
 
 const legacyPaymentSdkSources = {
-  'script-src': ['https://js.tosspayments.com', 'https://js.sandbox.tosspayments.com', 'https://js.stripe.com', 'https://*.js.stripe.com'],
+  'script-src': ['https://js.stripe.com', 'https://*.js.stripe.com'],
   'connect-src': ['https://api.stripe.com'],
   'child-src': ['https://js.stripe.com', 'https://*.js.stripe.com', 'https://hooks.stripe.com'],
   'frame-src': ['https://js.stripe.com', 'https://*.js.stripe.com', 'https://hooks.stripe.com'],

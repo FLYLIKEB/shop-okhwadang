@@ -107,10 +107,27 @@ export function parseConfiguredCheckoutGateways(configured: string | undefined |
   return [...new Set(gateways)];
 }
 
+export function getInvalidConfiguredCheckoutGateways(
+  configured: string | undefined | null,
+): string[] {
+  return [
+    ...new Set(
+      (configured ?? '')
+        .split(',')
+        .map((value) => value.trim().toLowerCase())
+        .filter((value) => value.length > 0 && !isCheckoutGatewayName(value)),
+    ),
+  ];
+}
+
 export function getEnabledCheckoutGateways(
   configured: string | undefined | null,
   fallback: readonly CheckoutGatewayName[] = DEFAULT_CHECKOUT_GATEWAYS,
 ): CheckoutGatewayName[] {
+  const invalidGateways = getInvalidConfiguredCheckoutGateways(configured);
+  if (invalidGateways.length > 0) {
+    throw new Error(`Unsupported checkout gateways: ${invalidGateways.join(', ')}`);
+  }
   const parsed = parseConfiguredCheckoutGateways(configured);
   return parsed.length > 0 ? parsed : [...fallback];
 }
