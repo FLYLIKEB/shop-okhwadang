@@ -11,6 +11,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Headers,
 } from '@nestjs/common';
 import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import { ValidateCartDto, ValidateCartResponseDto } from './dto/validate-cart.dto';
@@ -27,12 +28,16 @@ import { UpdateCartQuantityDto } from './dto/update-cart-quantity.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuthUser } from '../../common/interfaces/auth-user.interface';
+import { IdempotencyService } from '../../common/services/idempotency.service';
 
 @ApiTags('장바구니')
 @Controller('cart')
 @UseGuards(JwtAuthGuard)
 export class CartController {
-  constructor(private readonly cartService: CartService) {}
+  constructor(
+    private readonly cartService: CartService,
+    private readonly idempotencyService: IdempotencyService,
+  ) {}
 
   @Get()
   @ApiCookieAuth()
@@ -49,8 +54,21 @@ export class CartController {
   @ApiOperation({ summary: '장바구니에 상품 추가', description: '장바구니에 새로운 상품을 추가합니다.' })
   @ApiResponse({ status: 201, description: '장바구니에 상품 추가 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
-  add(@CurrentUser() user: AuthUser, @Body() dto: AddToCartDto, @Query('locale', OptionalLocalePipe) locale?: string) {
-    return this.cartService.add(user.id, dto, locale);
+  async add(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: AddToCartDto,
+    @Query('locale', OptionalLocalePipe) locale?: string,
+    @Headers('idempotency-key') idempotencyKey?: string,
+  ) {
+    if (!idempotencyKey) return this.cartService.add(user.id, dto, locale);
+    const { result } = await this.idempotencyService.execute(
+      `user:${user.id}`,
+      'cart-add',
+      idempotencyKey,
+      dto,
+      (manager) => this.cartService.add(user.id, dto, locale, manager),
+    );
+    return result;
   }
 
   @Post('validate')

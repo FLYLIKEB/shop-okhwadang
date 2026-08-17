@@ -4,7 +4,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { EntityManager, IsNull, Repository } from 'typeorm';
 import { CartItem } from './entities/cart-item.entity';
 import { Product, ProductStatus } from '../products/entities/product.entity';
 import { ProductOption } from '../products/entities/product-option.entity';
@@ -51,8 +51,9 @@ export class CartService {
     private readonly productOptionRepository: Repository<ProductOption>,
   ) {}
 
-  async findAll(userId: number, locale?: string): Promise<CartResponse> {
-    const items = await this.cartItemRepository
+  async findAll(userId: number, locale?: string, manager?: EntityManager): Promise<CartResponse> {
+    const cartItemRepository = manager?.getRepository(CartItem) ?? this.cartItemRepository;
+    const items = await cartItemRepository
       .createQueryBuilder('cartItem')
       .leftJoinAndSelect('cartItem.product', 'product')
       .leftJoinAndSelect(
@@ -101,15 +102,18 @@ export class CartService {
     return { items: itemsWithPrice, totalAmount, itemCount };
   }
 
-  async add(userId: number, dto: AddToCartDto, locale?: string): Promise<CartResponse> {
+  async add(userId: number, dto: AddToCartDto, locale?: string, manager?: EntityManager): Promise<CartResponse> {
+    const productRepository = manager?.getRepository(Product) ?? this.productRepository;
+    const productOptionRepository = manager?.getRepository(ProductOption) ?? this.productOptionRepository;
+    const cartItemRepository = manager?.getRepository(CartItem) ?? this.cartItemRepository;
     await findOrThrow(
-      this.productRepository,
+      productRepository,
       { id: dto.productId, status: ProductStatus.ACTIVE },
       '상품을 찾을 수 없습니다.',
     );
 
     if (dto.productOptionId != null) {
-      const option = await this.productOptionRepository.findOne({
+      const option = await productOptionRepository.findOne({
         where: { id: dto.productOptionId },
       });
       if (!option || Number(option.productId) !== Number(dto.productId)) {
@@ -121,7 +125,7 @@ export class CartService {
 
     const optionIdForQuery =
       dto.productOptionId != null ? dto.productOptionId : IsNull();
-    const existing = await this.cartItemRepository.findOne({
+    const existing = await cartItemRepository.findOne({
       where: {
         userId,
         productId: dto.productId,
@@ -131,24 +135,24 @@ export class CartService {
 
     if (existing) {
       existing.quantity += dto.quantity;
-      await this.cartItemRepository.save(existing);
+      await cartItemRepository.save(existing);
       this.logger.log(
         `Cart upsert: userId=${userId} productId=${dto.productId} qty+=${dto.quantity}`,
       );
     } else {
-      const newItem = this.cartItemRepository.create({
+      const newItem = cartItemRepository.create({
         userId,
         productId: dto.productId,
         productOptionId: dto.productOptionId ?? null,
         quantity: dto.quantity,
       });
-      await this.cartItemRepository.save(newItem);
+      await cartItemRepository.save(newItem);
       this.logger.log(
         `Cart add: userId=${userId} productId=${dto.productId} qty=${dto.quantity}`,
       );
     }
 
-    return this.findAll(userId, locale);
+    return this.findAll(userId, locale, manager);
   }
 
   async updateQuantity(

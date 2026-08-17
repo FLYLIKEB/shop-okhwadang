@@ -166,6 +166,26 @@ describe('CartPage', () => {
     });
   });
 
+  it('keeps the remaining guest line selected after the first line is removed', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: false });
+    mockUseCart.mockReturnValue({
+      ...defaultCart,
+      items: [{ ...cartItem1, id: -1 }, { ...cartItem2, id: -2 }],
+    });
+
+    const { rerender } = render(<CartPage />);
+    await user.click(screen.getAllByRole('checkbox')[1]);
+
+    mockUseCart.mockReturnValue({
+      ...defaultCart,
+      items: [{ ...cartItem2, id: -2 }],
+    });
+    rerender(<CartPage />);
+
+    expect(screen.getAllByRole('checkbox')[1]).toBeChecked();
+  });
+
   it('keeps order summary and selected-order CTA available below desktop breakpoint', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true });
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1] });

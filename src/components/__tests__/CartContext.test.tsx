@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CartProvider, useCart } from '@/contexts/CartContext';
 import { AuthContext } from '@/contexts/AuthContext';
 import type { AuthContextValue } from '@/contexts/AuthContext';
-import type { CartResponse, CartItem } from '@/lib/api';
+import type { CartResponse, CartItem, Product } from '@/lib/api';
 import { ReactNode } from 'react';
 
 vi.mock('next-intl', () => ({
@@ -18,6 +18,9 @@ vi.mock('@/lib/api', () => ({
     updateQuantity: vi.fn(),
     remove: vi.fn(),
   },
+  productsApi: {
+    getBulk: vi.fn(),
+  },
 }));
 
 vi.mock('sonner', () => ({
@@ -27,7 +30,8 @@ vi.mock('sonner', () => ({
   },
 }));
 
-import { cartApi } from '@/lib/api';
+import { cartApi, productsApi } from '@/lib/api';
+import { toast } from 'sonner';
 
 const mockCartItem: CartItem = {
   id: 1,
@@ -112,6 +116,32 @@ describe('CartContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    Object.defineProperty(navigator, 'locks', {
+      configurable: true,
+      value: {
+        request: vi.fn(async (
+          _name: string,
+          _options: LockOptions,
+          callback: () => Promise<unknown>,
+        ) => callback()),
+      } as unknown as LockManager,
+    });
+    vi.mocked(productsApi.getBulk).mockImplementation(async (ids) =>
+      ids.map((id) => ({
+        ...mockCartItem.product,
+        id,
+        name: `상품 ${id}`,
+        slug: `product-${id}`,
+        shortDescription: null,
+        rating: 0,
+        reviewCount: 0,
+        isFeatured: false,
+        viewCount: 0,
+        category: null,
+        status: 'active',
+        options: [],
+      } satisfies Product)),
+    );
   });
 
   it('fetches cart on mount when authenticated', async () => {
@@ -214,12 +244,12 @@ describe('CartContext', () => {
 
     await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('3'));
     expect(cartApi.getList).not.toHaveBeenCalled();
-    expect(screen.getByTestId('total').textContent).toBe('0');
+    expect(screen.getByTestId('total').textContent).toBe('45000');
   });
 
   it('guest addItem merges identical product/option and persists localStorage', async () => {
     const user = userEvent.setup();
-    localStorage.setItem('guest_cart', JSON.stringify([{ productId: 10, productOptionId: null, quantity: 1 }]));
+    localStorage.setItem('guest_cart', JSON.stringify([{ lineId: -1, productId: 10, productOptionId: null, quantity: 1 }]));
 
     renderWithAuth(
       <>
@@ -233,47 +263,181 @@ describe('CartContext', () => {
 
     expect(screen.getByTestId('count').textContent).toBe('3');
     expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
-      { productId: 10, productOptionId: null, quantity: 3 },
+      { lineId: -1, productId: 10, productOptionId: null, quantity: 3 },
     ]);
     expect(cartApi.add).not.toHaveBeenCalled();
   });
 
-  it('guest updateQuantity and removeItem update localStorage by negative guest id', async () => {
+  it('guest line IDs survive deletion and target the correct remaining row', async () => {
     const user = userEvent.setup();
+    vi.mocked(productsApi.getBulk).mockImplementation(async (ids) =>
+      ids.map((id) => ({
+        ...mockCartItem.product,
+        id,
+        name: `상품 ${id}`,
+        slug: `product-${id}`,
+        shortDescription: null,
+        rating: 0,
+        reviewCount: 0,
+        isFeatured: false,
+        viewCount: 0,
+        category: null,
+        status: 'active',
+        options: id === 11
+          ? [{ id: 7, name: 'Size', value: 'Large', priceAdjustment: 0, stock: 1, sortOrder: 0 }]
+          : [],
+      } satisfies Product)),
+    );
     localStorage.setItem(
       'guest_cart',
       JSON.stringify([
-        { productId: 10, productOptionId: null, quantity: 1 },
-        { productId: 11, productOptionId: 7, quantity: 2 },
+        { lineId: -1, productId: 10, productOptionId: null, quantity: 1 },
+        { lineId: -2, productId: 11, productOptionId: 7, quantity: 2 },
       ]),
     );
 
     renderWithAuth(
       <>
         <CartDisplay />
-        <UpdateQtyButton id={-1} quantity={4} />
-        <RemoveItemButton id={-2} />
+        <RemoveItemButton id={-1} />
+        <UpdateQtyButton id={-2} quantity={4} />
       </>,
       makeAuthValue({ isAuthenticated: false }),
     );
 
     await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('3'));
-    await user.click(screen.getByRole('button', { name: 'update' }));
-    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')[0].quantity).toBe(4);
-    expect(screen.getByTestId('count').textContent).toBe('6');
-
     await user.click(screen.getByRole('button', { name: 'remove' }));
     expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
-      { productId: 10, productOptionId: null, quantity: 4 },
+      { lineId: -2, productId: 11, productOptionId: 7, quantity: 2 },
+    ]);
+    await user.click(screen.getByRole('button', { name: 'update' }));
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
+      { lineId: -2, productId: 11, productOptionId: 7, quantity: 4 },
     ]);
     expect(screen.getByTestId('count').textContent).toBe('4');
     expect(cartApi.updateQuantity).not.toHaveBeenCalled();
     expect(cartApi.remove).not.toHaveBeenCalled();
   });
 
+  it('ignores an older guest projection that resolves after a newer mutation', async () => {
+    const user = userEvent.setup();
+    let resolveInitial: ((products: Product[]) => void) | undefined;
+    let resolveMutation: ((products: Product[]) => void) | undefined;
+    vi.mocked(productsApi.getBulk)
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        resolveInitial = resolve;
+      }))
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        resolveMutation = resolve;
+      }));
+    localStorage.setItem(
+      'guest_cart',
+      JSON.stringify([{ lineId: -1, productId: 10, productOptionId: null, quantity: 1 }]),
+    );
+    renderWithAuth(
+      <>
+        <CartDisplay />
+        <AddItemButton params={{ productId: 11, productOptionId: null, quantity: 1 }} />
+      </>,
+      makeAuthValue({ isAuthenticated: false }),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'add' }));
+    const products = [10, 11].map((id) => ({
+      ...mockCartItem.product,
+      id,
+      name: `상품 ${id}`,
+      slug: `product-${id}`,
+      shortDescription: null,
+      rating: 0,
+      reviewCount: 0,
+      isFeatured: false,
+      viewCount: 0,
+      category: null,
+      status: 'active' as const,
+      options: [],
+    } satisfies Product));
+    resolveMutation?.(products);
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('2'));
+
+    resolveInitial?.([products[0]]);
+    await act(async () => {});
+    expect(screen.getByTestId('count').textContent).toBe('2');
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
+      { lineId: -1, productId: 10, productOptionId: null, quantity: 1 },
+      { lineId: -2, productId: 11, productOptionId: null, quantity: 1 },
+    ]);
+  });
+
+  it('clears stale checkout-visible rows when the latest projection fails', async () => {
+    const user = userEvent.setup();
+    vi.mocked(productsApi.getBulk)
+      .mockResolvedValueOnce([{
+        ...mockCartItem.product,
+        shortDescription: null,
+        rating: 0,
+        reviewCount: 0,
+        isFeatured: false,
+        viewCount: 0,
+        category: null,
+        status: 'active',
+        options: [],
+      } satisfies Product])
+      .mockRejectedValueOnce(new Error('network'));
+    localStorage.setItem(
+      'guest_cart',
+      JSON.stringify([{ lineId: -1, productId: 10, productOptionId: null, quantity: 1 }]),
+    );
+    renderWithAuth(
+      <>
+        <CartDisplay />
+        <AddItemButton params={{ productId: 11, productOptionId: null, quantity: 1 }} />
+      </>,
+      makeAuthValue({ isAuthenticated: false }),
+    );
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('1'));
+
+    await user.click(screen.getByRole('button', { name: 'add' }));
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('0'));
+    expect(toast.error).toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
+      { lineId: -1, productId: 10, productOptionId: null, quantity: 1 },
+      { lineId: -2, productId: 11, productOptionId: null, quantity: 1 },
+    ]);
+  });
+
+  it('canonicalizes malformed and duplicate storage without safe-integer underflow', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      'guest_cart',
+      JSON.stringify([
+        { lineId: Number.MIN_SAFE_INTEGER, productId: 10, productOptionId: null, quantity: 1 },
+        { lineId: -3, productId: 10, productOptionId: null, quantity: 2 },
+        { lineId: 4.5, productId: 11, productOptionId: null, quantity: 1 },
+        { lineId: -4, productId: 'bad', productOptionId: null, quantity: 1 },
+        { lineId: -5, productId: 12, productOptionId: null, quantity: 0 },
+      ]),
+    );
+    renderWithAuth(
+      <>
+        <CartDisplay />
+        <AddItemButton params={{ productId: 12, productOptionId: null, quantity: 1 }} />
+      </>,
+      makeAuthValue({ isAuthenticated: false }),
+    );
+
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('4'));
+    await user.click(screen.getByRole('button', { name: 'add' }));
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
+      { lineId: Number.MIN_SAFE_INTEGER, productId: 10, productOptionId: null, quantity: 3 },
+      { lineId: -1, productId: 11, productOptionId: null, quantity: 1 },
+      { lineId: -2, productId: 12, productOptionId: null, quantity: 1 },
+    ]);
+  });
+
   it('merges guest cart into backend cart after auth transition and clears guest storage', async () => {
     const authValue = makeAuthValue({ isAuthenticated: false });
-    localStorage.setItem('guest_cart', JSON.stringify([{ productId: 10, productOptionId: null, quantity: 2 }]));
+    localStorage.setItem('guest_cart', JSON.stringify([{ lineId: -7, productId: 10, productOptionId: null, quantity: 2 }]));
     vi.mocked(cartApi.add).mockResolvedValue(mockCartResponse);
     vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
 
@@ -296,8 +460,227 @@ describe('CartContext', () => {
       </AuthContext.Provider>,
     );
 
-    await waitFor(() => expect(cartApi.add).toHaveBeenCalledWith({ productId: 10, productOptionId: null, quantity: 2 }));
+    await waitFor(() => expect(cartApi.add).toHaveBeenCalledWith(
+      { productId: 10, productOptionId: null, quantity: 2 },
+      {
+        headers: {
+          'Idempotency-Key': expect.stringMatching(/^guest-cart:.+$/),
+        },
+      },
+    ));
     await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('2'));
     expect(localStorage.getItem('guest_cart')).toBeNull();
+  });
+
+  it('removes only successful login merges and retries retained failures on re-login', async () => {
+    const user = userEvent.setup();
+    const guestItems = [
+      { lineId: -7, productId: 10, productOptionId: null, quantity: 1 },
+      { lineId: -8, productId: 11, productOptionId: null, quantity: 2 },
+    ];
+    localStorage.setItem('guest_cart', JSON.stringify(guestItems));
+    vi.mocked(cartApi.add).mockImplementation(async ({ productId }) => {
+      if (productId === 11) throw new Error('temporary failure');
+      return mockCartResponse;
+    });
+    vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
+    const guestAuth = makeAuthValue({ isAuthenticated: false });
+    const memberAuth = makeAuthValue({
+      isAuthenticated: true,
+      user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' },
+    });
+    const { rerender } = render(
+      <AuthContext.Provider value={guestAuth}>
+        <CartProvider>
+          <CartDisplay />
+          <AddItemButton params={{ productId: 11, productOptionId: null, quantity: 1 }} />
+        </CartProvider>
+      </AuthContext.Provider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('3'));
+
+    rerender(
+      <AuthContext.Provider value={memberAuth}>
+        <CartProvider>
+          <CartDisplay />
+          <AddItemButton params={{ productId: 11, productOptionId: null, quantity: 1 }} />
+        </CartProvider>
+      </AuthContext.Provider>,
+    );
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
+        { lineId: -8, productId: 11, productOptionId: null, quantity: 2 },
+      ]);
+    });
+    expect(toast.error).toHaveBeenCalled();
+    expect(cartApi.add).toHaveBeenCalledTimes(2);
+
+    vi.mocked(cartApi.add).mockResolvedValue(mockCartResponse);
+    rerender(
+      <AuthContext.Provider value={guestAuth}>
+        <CartProvider>
+          <CartDisplay />
+          <AddItemButton params={{ productId: 11, productOptionId: null, quantity: 1 }} />
+        </CartProvider>
+      </AuthContext.Provider>,
+    );
+    await waitFor(() => expect(productsApi.getBulk).toHaveBeenCalled());
+    await user.click(screen.getByRole('button', { name: 'add' }));
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
+      { lineId: -8, productId: 11, productOptionId: null, quantity: 2 },
+    ]);
+    rerender(
+      <AuthContext.Provider value={memberAuth}>
+        <CartProvider>
+          <CartDisplay />
+          <AddItemButton params={{ productId: 11, productOptionId: null, quantity: 1 }} />
+        </CartProvider>
+      </AuthContext.Provider>,
+    );
+    await waitFor(() => expect(localStorage.getItem('guest_cart')).toBeNull());
+    expect(cartApi.add).toHaveBeenCalledTimes(3);
+    expect(vi.mocked(cartApi.add).mock.calls.filter(([payload]) => payload.productId === 10)).toHaveLength(1);
+    const retriedCalls = vi.mocked(cartApi.add).mock.calls.filter(([payload]) => payload.productId === 11);
+    expect(retriedCalls).toHaveLength(2);
+    expect(retriedCalls[0][1]?.headers).toEqual(retriedCalls[1][1]?.headers);
+  });
+
+  it('retains every guest line when the whole login merge fails', async () => {
+    const guestItems = [
+      { lineId: -7, productId: 10, productOptionId: null, quantity: 1 },
+      { lineId: -8, productId: 11, productOptionId: null, quantity: 2 },
+    ];
+    localStorage.setItem('guest_cart', JSON.stringify(guestItems));
+    vi.mocked(cartApi.add).mockRejectedValue(new Error('offline'));
+    vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
+    const { rerender } = render(
+      <AuthContext.Provider value={makeAuthValue({ isAuthenticated: false })}>
+        <CartProvider><CartDisplay /></CartProvider>
+      </AuthContext.Provider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('3'));
+
+    rerender(
+      <AuthContext.Provider value={makeAuthValue({
+        isAuthenticated: true,
+        user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' },
+      })}>
+        <CartProvider><CartDisplay /></CartProvider>
+      </AuthContext.Provider>,
+    );
+
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual(guestItems);
+    });
+    expect(toast.error).toHaveBeenCalled();
+  });
+
+  it('fails closed and retains guest rows when cross-tab locking is unavailable', async () => {
+    Object.defineProperty(navigator, 'locks', {
+      configurable: true,
+      value: undefined,
+    });
+    const guestItems = [
+      { lineId: -7, productId: 10, productOptionId: null, quantity: 1 },
+    ];
+    localStorage.setItem('guest_cart', JSON.stringify(guestItems));
+    const { rerender } = render(
+      <AuthContext.Provider value={makeAuthValue({ isAuthenticated: false })}>
+        <CartProvider><CartDisplay /></CartProvider>
+      </AuthContext.Provider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('1'));
+
+    rerender(
+      <AuthContext.Provider value={makeAuthValue({
+        isAuthenticated: true,
+        user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' },
+      })}>
+        <CartProvider><CartDisplay /></CartProvider>
+      </AuthContext.Provider>,
+    );
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(cartApi.add).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual(guestItems);
+  });
+
+  it('migrates legacy guest rows once and keeps their IDs stable on reload', async () => {
+    localStorage.setItem(
+      'guest_cart',
+      JSON.stringify([
+        { productId: 10, productOptionId: null, quantity: 1 },
+        { lineId: -1, productId: 11, productOptionId: null, quantity: 2 },
+      ]),
+    );
+
+    const { unmount } = renderWithAuth(<CartDisplay />, makeAuthValue({ isAuthenticated: false }));
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('3'));
+    const migrated = JSON.parse(localStorage.getItem('guest_cart') ?? '[]');
+    expect(migrated.map((item: { lineId: number }) => item.lineId)).toEqual([-1, -2]);
+
+    unmount();
+    renderWithAuth(<CartDisplay />, makeAuthValue({ isAuthenticated: false }));
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('3'));
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual(migrated);
+  });
+
+  it('uses authoritative product option metadata and price for guest rows', async () => {
+    const productWithOptions = {
+      ...mockCartItem.product,
+      shortDescription: null,
+      rating: 0,
+      reviewCount: 0,
+      isFeatured: false,
+      viewCount: 0,
+      category: null,
+      status: 'active' as const,
+      options: [{ id: 7, name: 'Size', value: 'Large', priceAdjustment: 500, stock: 1, sortOrder: 0 }],
+    };
+    vi.mocked(productsApi.getBulk).mockResolvedValue([productWithOptions]);
+    localStorage.setItem('guest_cart', JSON.stringify([{ lineId: -1, productId: 10, productOptionId: 7, quantity: 2 }]));
+
+    function OptionDisplay() {
+      const { items, totalAmount } = useCart();
+      const item = items[0];
+      return <span data-testid="option">{`${item?.option?.name}/${item?.option?.value}/${item?.unitPrice}/${item?.subtotal}/${totalAmount}`}</span>;
+    }
+
+    renderWithAuth(<OptionDisplay />, makeAuthValue({ isAuthenticated: false }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('option').textContent).toBe('Size/Large/15500/31000/31000');
+    });
+  });
+
+  it('fails closed instead of pricing a malformed requested guest option', async () => {
+    const productWithMalformedOption = {
+      ...mockCartItem.product,
+      shortDescription: null,
+      rating: 0,
+      reviewCount: 0,
+      isFeatured: false,
+      viewCount: 0,
+      category: null,
+      status: 'active' as const,
+      options: [{ id: 7, name: 'Size', value: 'Large', priceAdjustment: '500' as never, stock: 1, sortOrder: 0 }],
+    };
+    vi.mocked(productsApi.getBulk).mockResolvedValue([productWithMalformedOption]);
+    localStorage.setItem('guest_cart', JSON.stringify([{ lineId: -1, productId: 10, productOptionId: 7, quantity: 2 }]));
+
+    function OptionDisplay() {
+      const { items, isLoading } = useCart();
+      return <span data-testid="option">{`${items.length}/${isLoading ? 'loading' : 'idle'}`}</span>;
+    }
+
+    renderWithAuth(<OptionDisplay />, makeAuthValue({ isAuthenticated: false }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('option').textContent).toBe('0/idle');
+    });
+    expect(toast.error).toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
+      { lineId: -1, productId: 10, productOptionId: 7, quantity: 2 },
+    ]);
   });
 });

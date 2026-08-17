@@ -78,6 +78,9 @@ export function registerCartSuite(getApp: () => INestApplication) {
         `DELETE FROM products WHERE slug = 'cart-test-product-e2e'`,
       );
       await dataSource.query(
+        `DELETE FROM idempotency_operations WHERE operation = 'cart-add' AND \`key\` LIKE 'cart-e2e-%'`,
+      );
+      await dataSource.query(
         `DELETE FROM users WHERE email IN (?, ?)`,
         [userAEmail, userBEmail],
       );
@@ -142,6 +145,40 @@ export function registerCartSuite(getApp: () => INestApplication) {
           .set('Cookie', cookieHeader(userACookies))
           .send({ productId, productOptionId: null, quantity: 0 })
           .expect(400);
+      });
+
+      it('same idempotency key replays one cart increment and rejects a changed payload', async () => {
+        const key = `cart-e2e-${Date.now()}`;
+        const payload = { productId, productOptionId: null, quantity: 2 };
+
+        const first = await request(app.getHttpServer())
+          .post('/api/cart')
+          .set('Cookie', cookieHeader(userBCookies))
+          .set('Idempotency-Key', key)
+          .send(payload)
+          .expect(201);
+        const replay = await request(app.getHttpServer())
+          .post('/api/cart')
+          .set('Cookie', cookieHeader(userBCookies))
+          .set('Idempotency-Key', key)
+          .send(payload)
+          .expect(201);
+
+        expect((first.body as { itemCount: number }).itemCount).toBe(2);
+        expect((replay.body as { itemCount: number }).itemCount).toBe(2);
+        await request(app.getHttpServer())
+          .post('/api/cart')
+          .set('Cookie', cookieHeader(userBCookies))
+          .set('Idempotency-Key', key)
+          .send({ ...payload, quantity: 3 })
+          .expect(409);
+        const rows = await dataSource.query(
+          `SELECT quantity FROM cart_items ci
+           JOIN users u ON u.id = ci.user_id
+           WHERE u.email = ? AND ci.product_id = ? AND ci.product_option_id IS NULL`,
+          [userBEmail, productId],
+        ) as Array<{ quantity: number }>;
+        expect(Number(rows[0]?.quantity)).toBe(2);
       });
     });
 
