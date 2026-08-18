@@ -31,6 +31,14 @@ export interface Page {
   is_published: boolean;
 }
 
+export interface CurrentPolicyMetadata {
+  slug: string;
+  title: string;
+  titleEn: string | null;
+  version: string | null;
+  effectiveDate: string | null;
+}
+
 export interface HeroBannerSlide {
   title: string;
   subtitle?: string;
@@ -217,4 +225,8 @@ export const pagesApi = {
   getBySlug: (slug: string, locale?: string) =>
     apiClient.get<Page>(`/pages/${slug}`, { params: locale ? { locale } : undefined }),
   getAll: () => apiClient.get<Page[]>('/pages'),
+  getCurrentPolicies: (locale?: string) =>
+    apiClient.get<CurrentPolicyMetadata[]>('/pages/policies/current', {
+      params: locale ? { locale } : undefined,
+    }),
 };

@@ -9,6 +9,12 @@ const validPayload = {
   zipcode: '12345',
   address: '서울특별시 강남구',
   orderLocale: 'en',
+  policyConsents: [
+    { slug: 'privacy', version: null, effectiveDate: null },
+    { slug: 'returns', version: null, effectiveDate: null },
+    { slug: 'shipping', version: null, effectiveDate: null },
+    { slug: 'terms', version: null, effectiveDate: null },
+  ],
 };
 
 describe('CreateOrderDto', () => {

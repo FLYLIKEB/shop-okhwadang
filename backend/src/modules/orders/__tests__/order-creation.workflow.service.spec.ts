@@ -32,6 +32,73 @@ type OrderCreationWorkflowServiceInternals = {
     );
   });
 
+  it('rejects order creation with an empty checkout policy consent list', async () => {
+    const manager = { query: jest.fn().mockResolvedValue([]) };
+    await expect(service.savePolicyConsent(
+      manager as never,
+      null,
+      { id: 10 } as never,
+      { policyConsents: [] },
+    )).rejects.toThrow(new BadRequestException('필수 정책 동의 정보가 없습니다.'));
+  });
+
+  it('rejects policy snapshots that do not match the current server versions', async () => {
+    const manager = {
+      query: jest.fn().mockResolvedValue([
+        { slug: 'privacy', title: '개인정보처리방침', version: 'v2', effectiveDate: '2026-08-01' },
+        { slug: 'returns', title: '반품 안내', version: 'v2', effectiveDate: '2026-08-01' },
+        { slug: 'shipping', title: '배송 안내', version: 'v2', effectiveDate: '2026-08-01' },
+        { slug: 'terms', title: '이용약관', version: 'v2', effectiveDate: '2026-08-01' },
+      ]),
+      save: jest.fn(),
+    };
+
+    await expect(service.savePolicyConsent(
+      manager as never,
+      null,
+      { id: 10 } as never,
+      { policyConsents: [
+        { slug: 'privacy', version: 'v2', effectiveDate: '2026-08-01' },
+        { slug: 'returns', version: 'v2', effectiveDate: '2026-08-01' },
+        { slug: 'shipping', version: 'v2', effectiveDate: '2026-08-01' },
+        { slug: 'terms', version: 'v1', effectiveDate: '2026-04-20' },
+      ] },
+    )).rejects.toThrow(new BadRequestException('정책 버전이 변경되었습니다. 최신 정책에 다시 동의해 주세요.'));
+    expect(manager.save).not.toHaveBeenCalled();
+  });
+
+  it('persists the exact current policy snapshots and explicit marketing opt-out', async () => {
+    const manager = {
+      query: jest.fn().mockResolvedValue([
+        { slug: 'privacy', title: '개인정보처리방침', version: 'v1', effectiveDate: '2026-04-20' },
+        { slug: 'returns', title: '반품 안내', version: 'v1', effectiveDate: '2026-04-20' },
+        { slug: 'shipping', title: '배송 안내', version: 'v1', effectiveDate: '2026-04-20' },
+        { slug: 'terms', title: '이용약관', version: 'v1', effectiveDate: '2026-04-20' },
+      ]),
+      save: jest.fn().mockResolvedValue(undefined),
+    };
+    const dto = {
+      policyConsents: [
+        { slug: 'privacy', version: 'v1', effectiveDate: '2026-04-20' },
+        { slug: 'returns', version: 'v1', effectiveDate: '2026-04-20' },
+        { slug: 'shipping', version: 'v1', effectiveDate: '2026-04-20' },
+        { slug: 'terms', version: 'v1', effectiveDate: '2026-04-20' },
+      ],
+      marketingConsent: false,
+    };
+
+    await service.savePolicyConsent(manager as never, 7, { id: 10 } as never, dto);
+
+    expect(manager.save).toHaveBeenCalledWith(expect.anything(), {
+      userId: 7,
+      context: 'checkout',
+      resourceType: 'order',
+      resourceId: 10,
+      policies: dto.policyConsents,
+      marketingConsent: false,
+    });
+  });
+
   it('rejects guest coupon/point preview requests before any member pricing is applied', async () => {
     const manager = {};
 

@@ -12,6 +12,7 @@ import { OrderCreationWorkflowService } from '../src/modules/orders/order-creati
 import { CreateOrderDto } from '../src/modules/orders/dto/create-order.dto';
 import { IdempotencyService } from '../src/common/services/idempotency.service';
 import { IdempotencyOperation } from '../src/common/entities/idempotency-operation.entity';
+import { currentPolicyConsents } from './helpers/policy-consent.helper';
 
 const TEST_TIMEOUT_MS = 10_000;
 const RUN_ID = `point-concurrency-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -54,6 +55,7 @@ describe('point spending concurrency (MySQL)', () => {
     recipientPhone: '010-0000-0000',
     zipcode: '12345',
     address: '서울특별시 테스트구 테스트로 1',
+    policyConsents: currentPolicyConsents,
     pointsUsed: 60,
   });
 

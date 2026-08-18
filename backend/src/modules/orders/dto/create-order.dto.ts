@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
-  IsArray, IsInt, IsOptional, IsString, MaxLength, Min,
+  ArrayMinSize, IsArray, IsInt, IsOptional, IsString, Matches, MaxLength, Min,
   ValidateNested, ValidateIf, IsNotEmpty, IsBoolean, IsIn,
 } from 'class-validator';
 export class OrderItemDto {
@@ -38,6 +38,7 @@ export class PolicyConsentSnapshotDto {
   @ApiProperty({ example: '2026-04-20', description: '동의한 정책 시행일', required: false })
   @IsOptional()
   @IsString({ message: '정책 시행일은 문자열이어야 합니다.' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: '정책 시행일은 YYYY-MM-DD 형식이어야 합니다.' })
   @MaxLength(20, { message: '정책 시행일은 최대 20자까지 입력 가능합니다.' })
   effectiveDate?: string | null;
 }
@@ -106,9 +107,9 @@ export class CreateOrderDto {
   @IsBoolean({ message: '장바구니 보존 여부는 boolean이어야 합니다.' })
   preserveCart?: boolean;
 
-  @ApiProperty({ type: [PolicyConsentSnapshotDto], description: '결제 동의 시점 정책 버전 스냅샷', required: false })
-  @IsOptional()
+  @ApiProperty({ type: [PolicyConsentSnapshotDto], description: '결제 동의 시점 정책 버전 스냅샷' })
   @IsArray({ message: '정책 동의 목록은 배열이어야 합니다.' })
+  @ArrayMinSize(1, { message: '필수 정책 동의 정보가 없습니다.' })
   @ValidateNested({ each: true })
   @Type(() => PolicyConsentSnapshotDto)
   policyConsents?: PolicyConsentSnapshotDto[];

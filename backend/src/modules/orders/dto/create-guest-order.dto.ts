@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
+  ArrayMinSize,
   IsBoolean,
   IsEmail,
   IsIn,
@@ -66,9 +67,9 @@ export class CreateGuestOrderDto {
   @IsIn(['ko', 'en'], { message: '주문 로케일은 ko 또는 en이어야 합니다.' })
   orderLocale!: 'ko' | 'en';
 
-  @ApiProperty({ type: [PolicyConsentSnapshotDto], description: '결제 동의 시점 정책 버전 스냅샷', required: false })
-  @IsOptional()
+  @ApiProperty({ type: [PolicyConsentSnapshotDto], description: '결제 동의 시점 정책 버전 스냅샷' })
   @IsArray({ message: '정책 동의 목록은 배열이어야 합니다.' })
+  @ArrayMinSize(1, { message: '필수 정책 동의 정보가 없습니다.' })
   @ValidateNested({ each: true })
   @Type(() => PolicyConsentSnapshotDto)
   policyConsents?: PolicyConsentSnapshotDto[];

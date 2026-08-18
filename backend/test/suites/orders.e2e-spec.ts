@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { e2eIdempotencyKey } from '../helpers/idempotency.helper';
+import { currentPolicyConsents } from '../helpers/policy-consent.helper';
 
 import {
   AuthCookies,
@@ -141,6 +142,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             zipcode: '12345',
             address: '서울시 강남구',
             orderLocale: 'en',
+            policyConsents: currentPolicyConsents,
           })
           .expect(201);
 
@@ -165,7 +167,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
 
       it('same member key replays and changed payload conflicts', async () => {
         const key = e2eIdempotencyKey('member-replay');
-        const payload = { items: [{ productId, quantity: 1 }], recipientName: '홍길동', recipientPhone: '010-1234-5678', zipcode: '12345', address: '서울시 강남구', orderLocale: 'ko' };
+        const payload = { items: [{ productId, quantity: 1 }], recipientName: '홍길동', recipientPhone: '010-1234-5678', zipcode: '12345', address: '서울시 강남구', orderLocale: 'ko', policyConsents: currentPolicyConsents };
         const first = await request(app.getHttpServer()).post('/api/orders').set('Cookie', cookieHeader(userACookies)).set('Idempotency-Key', key).send(payload).expect(201);
         const replay = await request(app.getHttpServer()).post('/api/orders').set('Cookie', cookieHeader(userACookies)).set('Idempotency-Key', key).send(payload).expect(201);
         expect(replay.body.id).toBe(first.body.id);
@@ -192,6 +194,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             zipcode: '12345',
             address: '서울시 강남구',
             orderLocale: 'ko',
+            policyConsents: currentPolicyConsents,
           })
           .expect(201);
 
@@ -283,7 +286,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
 
       it('same guest key replays and changed payload conflicts', async () => {
         const key = e2eIdempotencyKey('guest-replay');
-        const payload = { items: [{ productId: guestProductId, quantity: 1 }], guestEmail, recipientName: '비회원 주문자', recipientPhone: '010-9999-0000', zipcode: '54321', address: '서울시 마포구', orderLocale: 'ko' };
+        const payload = { items: [{ productId: guestProductId, quantity: 1 }], guestEmail, recipientName: '비회원 주문자', recipientPhone: '010-9999-0000', zipcode: '54321', address: '서울시 마포구', orderLocale: 'ko', policyConsents: currentPolicyConsents };
         const first = await request(app.getHttpServer()).post('/api/guest/orders').set('Idempotency-Key', key).send(payload).expect(201);
         const replay = await request(app.getHttpServer()).post('/api/guest/orders').set('Idempotency-Key', key).send(payload).expect(201);
         expect(replay.body.order.id).toBe(first.body.order.id);
@@ -303,7 +306,9 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             addressDetail: '202호',
             memo: '경비실에 맡겨주세요',
             orderLocale: 'en',
-            policyConsents: [{ slug: 'terms', version: 'v1', effectiveDate: '2026-07-22' }],
+            policyConsents: [
+              ...currentPolicyConsents,
+            ],
             marketingConsent: true,
           })
           .expect(201);
@@ -351,6 +356,7 @@ export function registerOrdersSuite(getApp: () => INestApplication) {
             zipcode: '54321',
             address: '서울시 마포구',
             orderLocale: 'en',
+            policyConsents: currentPolicyConsents,
             pointsUsed: 1000,
             userCouponId: 1,
           })

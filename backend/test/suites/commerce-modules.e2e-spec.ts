@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { e2eIdempotencyKey } from '../helpers/idempotency.helper';
+import { currentPolicyConsents } from '../helpers/policy-consent.helper';
 import * as bcrypt from 'bcrypt';
 
 let app: INestApplication;
@@ -221,6 +222,7 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
           recipientPhone: '010-1234-5678',
           zipcode: '12345',
           address: '서울특별시 강남구',
+          policyConsents: currentPolicyConsents,
           userCouponId,
         })
         .expect(201);
@@ -244,6 +246,7 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
           recipientPhone: '010-1234-5678',
           zipcode: '12345',
           address: '서울특별시 강남구',
+          policyConsents: currentPolicyConsents,
           userCouponId,
         })
         .expect(400);
