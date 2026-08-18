@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
@@ -143,6 +143,38 @@ export class AdminOrdersService {
           throw new BadRequestException('결제 상태가 변경되었습니다. 새로고침 후 다시 시도해주세요.');
         }
         return;
+      }
+
+      if ([OrderStatus.PREPARING, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(nextStatus)) {
+        const lockedOrder = await manager.findOne(Order, {
+          where: { id: orderId },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!lockedOrder) {
+          throw new BadRequestException('주문을 찾을 수 없습니다.');
+        }
+
+        assertOrderStatusTransition(lockedOrder.status, nextStatus);
+
+        if ([OrderStatus.PREPARING, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(nextStatus)) {
+          const lockedPayment = await manager.findOne(Payment, {
+            where: { orderId },
+            lock: { mode: 'pessimistic_write' },
+          });
+          if (!lockedPayment || lockedPayment.status !== PaymentStatus.CONFIRMED) {
+            throw new BadRequestException('결제가 확정되지 않은 주문은 배송을 진행할 수 없습니다.');
+          }
+        }
+
+        if ([OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(nextStatus)) {
+          const lockedShipping = await manager.findOne(Shipping, {
+            where: { orderId },
+            lock: { mode: 'pessimistic_write' },
+          });
+          if (!lockedShipping?.trackingNumber) {
+            throw new BadRequestException('운송장이 등록되지 않았습니다. 먼저 운송장을 등록해주세요.');
+          }
+        }
       }
 
       await manager.update(Order, orderId, { status: nextStatus });
@@ -503,40 +535,56 @@ export class AdminOrdersService {
   }
 
   async registerShipping(orderId: number, dto: RegisterShippingDto): Promise<Shipping | null> {
-    const order = await findOrThrow(
-      this.orderRepository,
-      { id: orderId },
-      '주문을 찾을 수 없습니다.',
-      ['items', 'user'],
-    );
-
-    const existing = await this.shippingRepository.findOne({ where: { orderId } });
-    if (existing && existing.trackingNumber) {
-      throw new ConflictException('이미 운송장이 등록되어 있습니다.');
-    }
-
-    if (existing) {
-      await this.shippingRepository.update(existing.id, {
-        carrier: dto.carrier,
-        trackingNumber: dto.trackingNumber,
-        status: ShippingStatus.PREPARING,
+    const { order, shipping } = await this.dataSource.transaction(async (manager) => {
+      const lockedOrder = await manager.findOne(Order, {
+        where: { id: orderId },
+        relations: ['items', 'user'],
+        lock: { mode: 'pessimistic_write' },
       });
-    } else {
-      const shipping = this.shippingRepository.create({
+      if (!lockedOrder) {
+        throw new NotFoundException('주문을 찾을 수 없습니다.');
+      }
+
+      const lockedPayment = await manager.findOne(Payment, {
+        where: { orderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedPayment || lockedPayment.status !== PaymentStatus.CONFIRMED) {
+        throw new BadRequestException('결제가 확정되지 않은 주문은 배송을 등록할 수 없습니다.');
+      }
+
+      if (lockedOrder.status === OrderStatus.PAID) {
+        assertOrderStatusTransition(lockedOrder.status, OrderStatus.PREPARING);
+        await manager.update(Order, orderId, { status: OrderStatus.PREPARING });
+      } else if (lockedOrder.status !== OrderStatus.PREPARING) {
+        assertOrderStatusTransition(lockedOrder.status, OrderStatus.PREPARING);
+      }
+
+      const existing = await manager.findOne(Shipping, {
+        where: { orderId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (existing?.trackingNumber) {
+        throw new ConflictException('이미 운송장이 등록되어 있습니다.');
+      }
+
+      const shipping = await manager.save(Shipping, {
+        ...(existing ?? {}),
         orderId,
         carrier: dto.carrier,
         trackingNumber: dto.trackingNumber,
         status: ShippingStatus.PREPARING,
       });
-      await this.shippingRepository.save(shipping);
-    }
+
+      return { order: lockedOrder, shipping };
+    });
 
     this.logger.log(
       `Shipping registered for order #${orderId}: ${dto.carrier} ${dto.trackingNumber}`,
     );
     void this.sendShippingStartedNotification(orderId, order, dto.carrier, dto.trackingNumber);
 
-    return this.shippingRepository.findOne({ where: { orderId } });
+    return shipping;
   }
 
   private decorateOrder(order: Order): Order {
