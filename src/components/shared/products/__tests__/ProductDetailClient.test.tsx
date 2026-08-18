@@ -1,8 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import ProductDetailClient from '@/components/shared/products/ProductDetailClient';
+import ProductDetailClient, { buildBuyNowCheckoutItem } from '@/components/shared/products/ProductDetailClient';
 import type { ProductDetail } from '@/lib/api';
+import { SESSION_KEYS } from '@/constants/storage';
 
 const {
   pushMock,
@@ -220,6 +221,7 @@ describe('ProductDetailClient', () => {
     mockPathname.mockReturnValue('/ko/products/1');
     toastSuccessMock.mockReset();
     toastErrorMock.mockReset();
+    sessionStorage.clear();
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
@@ -269,13 +271,131 @@ describe('ProductDetailClient', () => {
     expect(toastErrorMock).not.toHaveBeenCalled();
   });
 
-  it('바로 구매 → addItem + locale-aware router.push("/checkout")', async () => {
-    render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
+  it('회원 바로 구매는 선택한 옵션 한 건만 checkout session에 저장하고 장바구니를 변경하지 않는다', async () => {
+    sessionStorage.setItem(SESSION_KEYS.CHECKOUT_ITEMS, JSON.stringify([{ id: 999 }]));
+    render(<ProductDetailClient product={productWithOptions} locale="ko" />);
+    await userEvent.click(screen.getByRole('button', { name: '크기-소' }));
+    await userEvent.click(screen.getAllByRole('button', { name: '+' })[0]);
     await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[0]);
+
     await waitFor(() => {
-      expect(addCartItemMock).toHaveBeenCalled();
       expect(pushMock).toHaveBeenCalledWith('/checkout', { locale: 'ko' });
     });
+
+    expect(addCartItemMock).not.toHaveBeenCalled();
+    expect(JSON.parse(sessionStorage.getItem(SESSION_KEYS.CHECKOUT_ITEMS) ?? '')).toEqual([
+      {
+        id: -1,
+        productId: 1,
+        productOptionId: 12,
+        checkoutSource: 'buy_now',
+        quantity: 2,
+        unitPrice: 110000,
+        subtotal: 220000,
+        product: {
+          id: 1,
+          name: '핸드메이드 자사호',
+          slug: 'handmade-teapot',
+          price: 120000,
+          salePrice: null,
+          status: 'active',
+          images: productWithOptions.images,
+        },
+        option: {
+          id: 12,
+          name: '크기',
+          value: '소',
+          priceAdjustment: -10000,
+        },
+      },
+    ]);
+  });
+
+  it('잘못된 바로 구매 선택은 checkout payload를 만들지 않는다', () => {
+    expect(() => buildBuyNowCheckoutItem(productWithOptions, undefined, 1)).toThrow(
+      'Invalid buy-now product option',
+    );
+    expect(() => buildBuyNowCheckoutItem(productWithoutOptions, undefined, 0)).toThrow(
+      'Invalid buy-now product selection',
+    );
+    expect(() => buildBuyNowCheckoutItem({ ...productWithoutOptions, price: Number.NaN }, undefined, 1)).toThrow(
+      'Invalid buy-now product selection',
+    );
+    expect(() => buildBuyNowCheckoutItem(
+      { ...productWithoutOptions, price: null } as unknown as ProductDetail,
+      undefined,
+      1,
+    )).toThrow('Invalid buy-now product selection');
+    expect(buildBuyNowCheckoutItem(
+      productWithOptions,
+      { ...productWithOptions.options[0], name: 'forged', priceAdjustment: 999999 },
+      1,
+    )).toEqual(expect.objectContaining({
+      productOptionId: 11,
+      unitPrice: 120000,
+      option: expect.objectContaining({ name: '크기', priceAdjustment: 0 }),
+    }));
+    expect(() => buildBuyNowCheckoutItem(productWithOptions, productWithOptions.options[1], 6)).toThrow(
+      'Invalid buy-now product selection',
+    );
+    const runtimeShaped = {
+      ...productWithOptions,
+      id: '1',
+      price: '120000.00',
+      salePrice: '110000.00',
+      stock: '12',
+      options: [{
+        ...productWithOptions.options[0],
+        id: '11',
+        priceAdjustment: '5000.00',
+        stock: '12',
+      }],
+    } as unknown as ProductDetail;
+    expect(buildBuyNowCheckoutItem(
+      runtimeShaped,
+      runtimeShaped.options[0],
+      2,
+    )).toEqual(expect.objectContaining({
+      id: -1,
+      productId: 1,
+      productOptionId: 11,
+      unitPrice: 115000,
+      subtotal: 230000,
+      option: expect.objectContaining({ priceAdjustment: 5000 }),
+    }));
+  });
+
+  it('빠른 바로 구매 반복은 session 저장과 navigation을 한 번만 실행한다', async () => {
+    render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+    const button = screen.getAllByRole('button', { name: '바로 구매' })[0];
+
+    await userEvent.dblClick(button);
+    await waitFor(() => expect(pushMock).toHaveBeenCalledTimes(1));
+    const checkoutWrites = setItemSpy.mock.calls.filter(
+      ([key]) => key === SESSION_KEYS.CHECKOUT_ITEMS,
+    );
+    expect(checkoutWrites).toHaveLength(1);
+    expect(setItemSpy.mock.invocationCallOrder[0]).toBeLessThan(
+      pushMock.mock.invocationCallOrder[0],
+    );
+    setItemSpy.mockRestore();
+  });
+
+  it('checkout session 저장 실패 시 navigation하지 않고 다시 시도할 수 있다', async () => {
+    render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem')
+      .mockImplementationOnce(() => {
+        throw new DOMException('quota', 'QuotaExceededError');
+      });
+
+    await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[0]);
+    await waitFor(() => expect(toastErrorMock).toHaveBeenCalled());
+    expect(pushMock).not.toHaveBeenCalled();
+    setItemSpy.mockRestore();
+
+    await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[0]);
+    await waitFor(() => expect(pushMock).toHaveBeenCalledTimes(1));
   });
 
   it('English 바로 구매 keeps checkout navigation under /en', async () => {

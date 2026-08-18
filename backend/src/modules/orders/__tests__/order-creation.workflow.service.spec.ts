@@ -168,6 +168,11 @@ type OrderCreationWorkflowServiceInternals = {
       42,
     );
     expect(clearCartItemsSpy).toHaveBeenCalledWith(manager, 11, dto);
+
+    clearCartItemsSpy.mockClear();
+    const buyNowDto: CreateOrderDto = { ...dto, preserveCart: true };
+    await service.runCreateOrderTransaction(manager as never, 11, buyNowDto, 10000);
+    expect(clearCartItemsSpy).not.toHaveBeenCalled();
   });
 
   it('acquires the member ledger lock before reserving inventory', async () => {
