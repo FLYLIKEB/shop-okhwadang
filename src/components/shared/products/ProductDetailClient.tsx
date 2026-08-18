@@ -9,8 +9,9 @@ import { useTranslations } from 'next-intl'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/shared/common/PriceDisplay'
-import type { ProductDetail, ProductOption } from '@/lib/api'
+import type { CartItem, ProductDetail, ProductOption } from '@/lib/api'
 import { wishlistApi } from '@/lib/api'
+import { SESSION_KEYS } from '@/constants/storage'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCart } from '@/contexts/CartContext'
 import { useMobileNav } from '@/contexts/MobileNavContext'
@@ -39,6 +40,133 @@ interface ProductDetailClientProps {
   locale?: Locale
 }
 
+function toSafeInteger(value: unknown, minimum: number): number {
+  if (
+    (typeof value !== 'number' && typeof value !== 'string')
+    || (typeof value === 'string' && value.trim() === '')
+  ) {
+    throw new Error('Invalid numeric value')
+  }
+  const normalized = Number(value)
+  if (!Number.isSafeInteger(normalized) || normalized < minimum) {
+    throw new Error('Invalid numeric value')
+  }
+  return normalized
+}
+
+export function buildBuyNowCheckoutItem(
+  product: ProductDetail,
+  selectedOption: ProductOption | undefined,
+  quantity: number,
+): CartItem {
+  let productId: number
+  let price: number
+  let salePrice: number | null
+  if (
+    !product.name ||
+    !product.slug ||
+    !Number.isSafeInteger(quantity) ||
+    quantity <= 0
+  ) {
+    throw new Error('Invalid buy-now product selection')
+  }
+  try {
+    productId = toSafeInteger(product.id, 1)
+    price = toSafeInteger(product.price, 0)
+    salePrice = product.salePrice === null
+      ? null
+      : toSafeInteger(product.salePrice, 0)
+  } catch {
+    throw new Error('Invalid buy-now product selection')
+  }
+
+  let selectedOptionId: number | undefined
+  if (selectedOption) {
+    try {
+      selectedOptionId = toSafeInteger(selectedOption.id, 1)
+    } catch {
+      throw new Error('Invalid buy-now product option')
+    }
+  }
+  const canonicalOption = selectedOptionId
+    ? product.options.find((option) => {
+      try {
+        return toSafeInteger(option.id, 1) === selectedOptionId
+      } catch {
+        return false
+      }
+    })
+    : undefined
+  let optionId: number | null = null
+  let priceAdjustment = 0
+  let availableStock: number
+  if (product.options.length > 0) {
+    if (
+      !canonicalOption ||
+      !canonicalOption.name ||
+      !canonicalOption.value
+    ) {
+      throw new Error('Invalid buy-now product option')
+    }
+    try {
+      optionId = toSafeInteger(canonicalOption.id, 1)
+      priceAdjustment = toSafeInteger(canonicalOption.priceAdjustment, Number.MIN_SAFE_INTEGER)
+      availableStock = toSafeInteger(canonicalOption.stock, 0)
+    } catch {
+      throw new Error('Invalid buy-now product option')
+    }
+  } else if (selectedOption) {
+    throw new Error('Invalid buy-now product option')
+  } else {
+    try {
+      availableStock = toSafeInteger(product.stock, 0)
+    } catch {
+      throw new Error('Invalid buy-now product selection')
+    }
+  }
+
+  const basePrice = salePrice ?? price
+  const unitPrice = basePrice + priceAdjustment
+  const subtotal = unitPrice * quantity
+
+  if (
+    availableStock < quantity ||
+    !Number.isSafeInteger(unitPrice) ||
+    unitPrice < 0 ||
+    !Number.isSafeInteger(subtotal) ||
+    subtotal < 0
+  ) {
+    throw new Error('Invalid buy-now product selection')
+  }
+
+  return {
+    id: -productId,
+    productId,
+    productOptionId: optionId,
+    quantity,
+    unitPrice,
+    subtotal,
+    product: {
+      id: productId,
+      name: product.name,
+      slug: product.slug,
+      price,
+      salePrice,
+      status: product.status,
+      isFreeShipping: product.isFreeShipping,
+      images: product.images,
+    },
+    option: canonicalOption
+      ? {
+          id: optionId!,
+          name: canonicalOption.name,
+          value: canonicalOption.value,
+          priceAdjustment,
+        }
+      : null,
+  }
+}
+
 export default function ProductDetailClient({ product, locale = 'ko' }: ProductDetailClientProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -52,6 +180,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [wishlistId, setWishlistId] = useState<number | null>(null)
   const optionSectionRef = useRef<HTMLDivElement>(null)
+  const buyNowStartedRef = useRef(false)
 
   useEffect(() => {
     addRecentlyViewed({
@@ -135,10 +264,18 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
     { errorMessage: t('wishlistError') },
   )
 
-  const { execute: buyNow } = useAsyncAction(
+  const { execute: buyNow, isLoading: isBuying } = useAsyncAction(
     async () => {
-      await addItem({ productId: Number(product.id), productOptionId: selectedOptionId, quantity })
-      router.push('/checkout', { locale })
+      if (buyNowStartedRef.current) return
+      buyNowStartedRef.current = true
+      try {
+        const checkoutItem = buildBuyNowCheckoutItem(product, selectedOption, quantity)
+        sessionStorage.setItem(SESSION_KEYS.CHECKOUT_ITEMS, JSON.stringify([checkoutItem]))
+        router.push('/checkout', { locale })
+      } catch (error) {
+        buyNowStartedRef.current = false
+        throw error
+      }
     },
     { errorMessage: t('buyNowError') },
   )
@@ -354,14 +491,14 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             <Button
               variant="outline"
               className="w-1/3"
-              disabled={isSoldout || isAdding}
+              disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleAddToCart()}
             >
               {t('addToCart')}
             </Button>
             <Button
               className="w-2/3"
-              disabled={isSoldout || isAdding}
+              disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleBuyNow()}
             >
               {t('buyNow')}
@@ -408,14 +545,14 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
         <Button
           variant="outline"
           className="w-1/3"
-          disabled={isSoldout || isAdding}
+          disabled={isSoldout || isAdding || isBuying}
           onClick={() => void handleAddToCart()}
         >
           {t('addToCart')}
         </Button>
         <Button
           className="w-2/3"
-          disabled={isSoldout || isAdding}
+          disabled={isSoldout || isAdding || isBuying}
           onClick={() => void handleBuyNow()}
         >
           {t('buyNow')}

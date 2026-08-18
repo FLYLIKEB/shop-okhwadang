@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ProductDetailClient from '@/components/shared/products/ProductDetailClient'
 import type { ProductDetail } from '@/lib/api'
 import enMessages from '@/i18n/messages/en.json'
+import { SESSION_KEYS } from '@/constants/storage'
 
 const { pushMock, toastSuccessMock, toastErrorMock, addCartItemMock, mockUseAuth } = vi.hoisted(() => ({
   pushMock: vi.fn(),
@@ -151,7 +152,10 @@ const productWithoutOptions: ProductDetail = {
 
 describe('ProductDetailClient', () => {
   beforeEach(() => {
+    addCartItemMock.mockReset()
     addCartItemMock.mockResolvedValue(undefined)
+    pushMock.mockReset()
+    sessionStorage.clear()
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
@@ -176,11 +180,40 @@ describe('ProductDetailClient', () => {
     expect(container.innerHTML).not.toContain('max-w-8xl')
   })
 
-  it('keeps English buy-now checkout navigation locale-aware', async () => {
+  it('guest English buy-now replaces checkout selection without adding to cart', async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+      isLoading: false,
+      user: { id: 1, email: 'test@example.com', name: 'Guest', role: 'user' },
+    })
+    sessionStorage.setItem(SESSION_KEYS.CHECKOUT_ITEMS, JSON.stringify([{ id: 99 }]))
     render(<ProductDetailClient product={productWithoutOptions} locale="en" />)
 
     await userEvent.click(screen.getAllByRole('button', { name: 'Buy Now' })[0])
 
     expect(pushMock).toHaveBeenCalledWith('/checkout', { locale: 'en' })
+    expect(addCartItemMock).not.toHaveBeenCalled()
+    const serializedSelection = sessionStorage.getItem(SESSION_KEYS.CHECKOUT_ITEMS)
+    expect(serializedSelection).not.toBeNull()
+    expect(JSON.parse(serializedSelection ?? '')).toEqual([
+      {
+        id: -1,
+        productId: 1,
+        productOptionId: null,
+        quantity: 1,
+        unitPrice: 120000,
+        subtotal: 120000,
+        product: {
+          id: 1,
+          name: 'Handmade Teapot',
+          slug: 'handmade-teapot',
+          price: 120000,
+          salePrice: null,
+          status: 'active',
+          images: productWithoutOptions.images,
+        },
+        option: null,
+      },
+    ])
   })
 })
