@@ -33,6 +33,17 @@ export class CheckoutPricingPreviewDto {
 }
 
 export class CheckoutPricingPreviewResponse {
+  @ApiProperty({ type: 'array', description: '서버 가격 기준 상품별 금액' })
+  items!: Array<{
+    productId: number;
+    productOptionId: number | null;
+    productName: string;
+    optionName: string | null;
+    unitPrice: number;
+    subtotal: number;
+    quantity: number;
+  }>;
+
   @ApiProperty({ example: 50000, description: '할인 전 상품 합계' })
   subtotalAmount!: number;
 

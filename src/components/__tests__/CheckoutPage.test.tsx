@@ -187,8 +187,26 @@ const sampleItem: CartItem = {
 };
 
 const buyNowItem: CartItem = { ...sampleItem, checkoutSource: 'buy_now' };
+const sampleOptionItem: CartItem = {
+  ...sampleItem,
+  id: 2,
+  productOptionId: 5,
+  unitPrice: 22000,
+  subtotal: 22000,
+  quantity: 1,
+  option: { id: 5, name: '용량', value: '100g', priceAdjustment: 2000 },
+};
 
 const defaultPreview = {
+  items: [{
+    productId: 10,
+    productOptionId: null,
+    productName: '테스트 상품',
+    optionName: null,
+    unitPrice: 20000,
+    subtotal: 40000,
+    quantity: 2,
+  }],
   subtotalAmount: 40000,
   couponDiscount: 0,
   pointsDiscount: 0,
@@ -286,6 +304,90 @@ describe('CheckoutPage', () => {
     expect(screen.getByText('사용 적립금')).toBeInTheDocument();
     expect(screen.getByText(/-₩2,000/)).toBeInTheDocument();
     expect(screen.getAllByText(/₩36,000/)[0]).toBeInTheDocument();
+  });
+
+  it('displays the server subtotal instead of the session cart subtotal', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: false, token: null, user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+    vi.mocked(checkoutPricingApi.preview).mockResolvedValue({
+      ...defaultPreview,
+      items: [{ ...defaultPreview.items[0], unitPrice: 17500, subtotal: 35000 }],
+      subtotalAmount: 35000,
+      totalPayable: 35000,
+    });
+
+    await renderCheckoutPage();
+
+    await waitFor(() => expect(screen.getByText('상품 금액')).toBeInTheDocument());
+    expect(screen.getAllByText('₩35,000').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
+  });
+
+  it('forwards and renders server-priced option items', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: false, token: null, user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleOptionItem]));
+    vi.mocked(checkoutPricingApi.preview).mockResolvedValue({
+      ...defaultPreview,
+      items: [{
+        productId: 10,
+        productOptionId: 5,
+        productName: '테스트 상품',
+        optionName: '용량: 100g',
+        unitPrice: 22000,
+        subtotal: 22000,
+        quantity: 1,
+      }],
+      subtotalAmount: 22000,
+      totalPayable: 22000,
+    });
+
+    await renderCheckoutPage();
+
+    await waitFor(() => expect(screen.getByText('용량: 100g')).toBeInTheDocument());
+    expect(checkoutPricingApi.preview).toHaveBeenCalledWith(expect.objectContaining({
+      items: [{ productId: 10, productOptionId: 5, quantity: 1 }],
+    }));
+  });
+
+  it('disables payment while a changed pricing preview is unavailable', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+    vi.mocked(checkoutPricingApi.preview)
+      .mockResolvedValueOnce({
+        ...defaultPreview,
+        couponDiscount: 1000,
+        pointsDiscount: 500,
+        shippingFee: 3000,
+        totalPayable: 41500,
+      })
+      .mockRejectedValueOnce(new Error('preview failed'));
+
+    await renderCheckoutPage();
+    await screen.findByText('테스트 상품');
+    await user.click(screen.getByRole('button', { name: '혜택 적용' }));
+
+    await waitFor(() => expect(screen.getAllByRole('button', { name: '결제하기' })[0]).toBeDisabled());
+    expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
+    expect(screen.queryAllByText('-₩1,000')).toHaveLength(0);
+    expect(screen.queryAllByText('-₩500')).toHaveLength(0);
+    expect(screen.queryAllByText('₩3,000')).toHaveLength(0);
+  });
+
+  it('clears the old quote when the address changes without changing zipcode', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+    vi.mocked(checkoutPricingApi.preview)
+      .mockResolvedValueOnce(defaultPreview)
+      .mockRejectedValue(new Error('preview failed'));
+
+    await renderCheckoutPage();
+    await screen.findByLabelText(/받는 분 이름/);
+    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+
+    await waitFor(() => expect(screen.getAllByRole('button', { name: '결제하기' })[0]).toBeDisabled());
+    expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
   });
 
   it('keeps desktop order summary and submit CTA inside the same sticky aside', async () => {
