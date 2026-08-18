@@ -20,6 +20,10 @@ import {
   PolicyConsentContext,
   PolicyConsentSnapshot,
 } from '../pages/entities/policy-consent.entity';
+import {
+  REQUIRED_CHECKOUT_POLICY_SLUGS,
+  REQUIRED_CHECKOUT_POLICY_SQL,
+} from '../../common/constants/policy.constants';
 
 export type OrderLocale = 'ko' | 'en';
 
@@ -31,6 +35,7 @@ interface OrderItemBuildResult {
 
 interface SharedOrderCreatePayload {
   items: OrderItemDto[];
+  policyConsents?: PolicyConsentSnapshotDto[];
 }
 
 interface SharedOrderAddressPayload {
@@ -281,13 +286,17 @@ export class OrderCreationWorkflowService {
     savedOrder: Order,
     dto: SharedPolicyConsentPayload,
   ): Promise<void> {
-    const policies = dto.policyConsents?.length
-      ? dto.policyConsents.map((policy) => ({
-        slug: policy.slug,
-        version: policy.version ?? null,
-        effectiveDate: policy.effectiveDate ?? null,
-      }))
-      : await this.loadCurrentPolicySnapshots(manager);
+    if (!dto.policyConsents || dto.policyConsents.length === 0) {
+      throw new BadRequestException('필수 정책 동의 정보가 없습니다.');
+    }
+    const currentPolicies = await this.loadCurrentPolicySnapshots(manager);
+    const policies = dto.policyConsents.map((policy) => ({
+      slug: policy.slug,
+      version: policy.version ?? null,
+      effectiveDate: policy.effectiveDate ?? null,
+    }));
+
+    this.assertPolicyConsentMatchesCurrent(currentPolicies, policies);
 
     await manager.save(PolicyConsent, {
       userId,
@@ -299,29 +308,60 @@ export class OrderCreationWorkflowService {
     });
   }
 
+  private assertPolicyConsentMatchesCurrent(
+    currentPolicies: PolicyConsentSnapshot[],
+    submittedPolicies: PolicyConsentSnapshot[],
+  ): void {
+    const submittedBySlug = new Map<string, PolicyConsentSnapshot>();
+    for (const policy of submittedPolicies) {
+      if (submittedBySlug.has(policy.slug)) {
+        throw new BadRequestException('필수 정책 동의 정보가 중복되었습니다.');
+      }
+      submittedBySlug.set(policy.slug, policy);
+    }
+
+    if (submittedBySlug.size !== currentPolicies.length) {
+      throw new BadRequestException('필수 정책 동의 정보가 누락되었습니다.');
+    }
+
+    for (const currentPolicy of currentPolicies) {
+      const submitted = submittedBySlug.get(currentPolicy.slug);
+      if (
+        !submitted
+        || submitted.version !== currentPolicy.version
+        || this.normalizePolicyEffectiveDate(submitted.effectiveDate)
+          !== this.normalizePolicyEffectiveDate(currentPolicy.effectiveDate)
+      ) {
+        throw new BadRequestException('정책 버전이 변경되었습니다. 최신 정책에 다시 동의해 주세요.');
+      }
+    }
+  }
+
+  private normalizePolicyEffectiveDate(value: string | Date | null | undefined): string | null {
+    if (!value) return null;
+    return value instanceof Date ? value.toISOString().slice(0, 10) : value;
+  }
+
   async loadCurrentPolicySnapshots(manager: EntityManager): Promise<PolicyConsentSnapshot[]> {
     const rows = await manager.query(`
-      SELECT slug, title, policy_version AS version, policy_effective_date AS effectiveDate
+      SELECT slug, title, policy_version AS version,
+             DATE_FORMAT(policy_effective_date, '%Y-%m-%d') AS effectiveDate
       FROM pages
       WHERE is_current_policy = 1
-        AND slug IN ('terms', 'privacy', 'shipping', 'returns', 'shipping-returns')
+        AND slug IN (${REQUIRED_CHECKOUT_POLICY_SQL})
       ORDER BY slug ASC
     `) as Array<{ slug: string; title: string | null; version: string | null; effectiveDate: string | null }>;
 
-    if (rows.length > 0) {
+    if (rows.length === REQUIRED_CHECKOUT_POLICY_SLUGS.length) {
       return rows.map((row) => ({
         slug: row.slug,
         title: row.title,
         version: row.version,
-        effectiveDate: row.effectiveDate,
+        effectiveDate: this.normalizePolicyEffectiveDate(row.effectiveDate),
       }));
     }
 
-    return [
-      { slug: 'terms', version: null, effectiveDate: null },
-      { slug: 'privacy', version: null, effectiveDate: null },
-      { slug: 'shipping-returns', version: null, effectiveDate: null },
-    ];
+    throw new BadRequestException('체크아웃 필수 정책을 불러올 수 없습니다.');
   }
 
   async saveOrderItems(

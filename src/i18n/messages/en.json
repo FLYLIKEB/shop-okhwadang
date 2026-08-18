@@ -467,7 +467,12 @@
     "consent": {
       "title": "Required Consent",
       "requiredLabel": "[Required] I agree to the purchase terms and personal information processing.",
-      "requiredDescription": "I have reviewed the product name, price, shipping information, and exchange/refund policy, and agree to proceed with this purchase.\nI agree to personal information collection/use and processing delegation or third-party provision to payment gateways and shipping providers for payment and delivery."
+      "requiredDescription": "Review and agree to each policy below.",
+      "loading": "Loading required policies...",
+      "loadError": "Required policies could not be loaded. Please try again shortly.",
+      "policyMetadata": "Version {version} · Effective {effectiveDate}",
+      "unknownVersion": "Unavailable",
+      "unknownEffectiveDate": "Unavailable"
     },
     "couponLoadError": "Failed to load coupons.",
     "couponLoading": "Loading coupons...",

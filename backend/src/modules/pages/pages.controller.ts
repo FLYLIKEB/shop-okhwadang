@@ -43,6 +43,15 @@ export class PagesController {
     return this.pagesService.findAllPublished(locale);
   }
 
+  @Get('policies/current')
+  @Public()
+  @ApiOperation({ summary: '현재 checkout 필수 정책 조회', description: '체크아웃 동의에 사용할 현재 정책 버전과 시행일을 조회합니다.' })
+  @ApiResponse({ status: 200, description: '현재 정책 조회 성공' })
+  @ApiQuery({ name: 'locale', required: false, description: '언어 코드 (ko, en)' })
+  findCurrentPolicies(@Query('locale', OptionalLocalePipe) locale?: string) {
+    return this.pagesService.findCurrentPolicies(locale);
+  }
+
   @Get(':slug')
   @Public()
   @ApiOperation({ summary: '페이지 상세 조회', description: '페이지 슬러그로 상세 정보를 조회합니다.' })

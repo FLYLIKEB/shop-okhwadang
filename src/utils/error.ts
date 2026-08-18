@@ -11,6 +11,11 @@ const COMMON_KOREAN_ERROR_TRANSLATIONS: Record<string, string> = {
   '결제 초기화 오류': 'Failed to initialize payment.',
   '적립금을 불러오지 못했습니다.': 'Failed to load points.',
   '저널 목록을 불러오지 못했습니다.': 'Failed to load journal entries.',
+  '필수 정책 동의 정보가 없습니다.': 'Required policy consent is missing.',
+  '필수 정책 동의 정보가 누락되었습니다.': 'Required policy consent is incomplete.',
+  '필수 정책 동의 정보가 중복되었습니다.': 'Required policy consent is duplicated.',
+  '정책 버전이 변경되었습니다. 최신 정책에 다시 동의해 주세요.': 'Checkout policy changed. Review the latest policies and try again.',
+  '체크아웃 필수 정책을 불러올 수 없습니다.': 'Checkout policies are unavailable. Try again later.',
 };
 
 function isEnglishDocument(): boolean {

@@ -13,9 +13,10 @@ import type {
   CartItem,
   CheckoutGatewayName,
   PreparePaymentResponse,
+  PolicyConsentSnapshot,
   UserAddress,
 } from '@/lib/api';
-import { usersApi } from '@/lib/api';
+import { pagesApi, usersApi, type CurrentPolicyMetadata } from '@/lib/api';
 import { SESSION_KEYS } from '@/constants/storage';
 import { getDefaultCheckoutGateway, getGatewayOptionsByLocale } from '@/constants/checkoutPaymentMethods';
 import type { Locale } from '@/i18n/routing';
@@ -107,7 +108,9 @@ export default function CheckoutPage({
   });
   const [guestEmail, setGuestEmail] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
-  const [requiredConsent, setRequiredConsent] = useState(false);
+  const [policyConsents, setPolicyConsents] = useState<Array<CurrentPolicyMetadata & { agreed: boolean }>>([]);
+  const [policyConsentLoading, setPolicyConsentLoading] = useState(true);
+  const [policyConsentLoadError, setPolicyConsentLoadError] = useState(false);
   const [requestedUserCouponId, setRequestedUserCouponId] = useState<number | undefined>();
   const [requestedPointsToUse, setRequestedPointsToUse] = useState(0);
   const paymentRef = useRef<PaymentGatewayHandle>(null);
@@ -116,6 +119,12 @@ export default function CheckoutPage({
   const [addressLoading, setAddressLoading] = useState(false);
 
   const isGuestCheckout = !isAuthenticated;
+  const requiredConsent = policyConsents.length > 0 && policyConsents.every((policy) => policy.agreed);
+  const policyConsentPayload: PolicyConsentSnapshot[] = policyConsents.map((policy) => ({
+    slug: policy.slug,
+    version: policy.version,
+    effectiveDate: policy.effectiveDate,
+  }));
   const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
   const couponDiscount = pricingPreview?.couponDiscount ?? 0;
   const appliedPointsUsed = pricingPreview?.appliedPointsUsed ?? 0;
@@ -132,6 +141,7 @@ export default function CheckoutPage({
     success: t('steps.success'),
   };
   const loadAddressErrorMessage = t('loadAddressError');
+  const policyConsentLoadErrorMessage = t('consent.loadError');
   const gatewayOptions = getGatewayOptionsByLocale(locale);
   const { execute: previewPricing, isLoading: pricingPreviewLoading } = useAsyncAction(
     async ({
@@ -176,6 +186,32 @@ export default function CheckoutPage({
   useEffect(() => {
     setSelectedGateway(getDefaultCheckoutGateway(locale));
   }, [locale]);
+
+  useEffect(() => {
+    let active = true;
+    setPolicyConsentLoading(true);
+    setPolicyConsentLoadError(false);
+    void pagesApi.getCurrentPolicies(locale)
+      .then((policies) => {
+        if (active) {
+          setPolicyConsents(policies.map((policy) => ({ ...policy, agreed: false })));
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setPolicyConsents([]);
+          setPolicyConsentLoadError(true);
+          toast.error(policyConsentLoadErrorMessage);
+        }
+      })
+      .finally(() => {
+        if (active) setPolicyConsentLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [locale, policyConsentLoadErrorMessage]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -304,6 +340,8 @@ export default function CheckoutPage({
     currentOrderNumber,
     currentGuestAccessToken,
     requiredConsent,
+    policyConsents: policyConsentPayload,
+    marketingConsent: false,
     appliedUserCouponId: pricingPreview?.appliedUserCouponId,
     appliedPointsUsed,
     isGuestCheckout,
@@ -432,23 +470,54 @@ export default function CheckoutPage({
 
             <section className="surface-card p-6">
               <h2 className="typo-h3">{t('consent.title')}</h2>
-              <div className="mt-4 space-y-4">
-                <label className="flex gap-3 rounded-md border border-soft bg-muted/20 p-3 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={requiredConsent}
-                    onChange={(event) => setRequiredConsent(event.target.checked)}
-                    className="mt-1 h-4 w-4 shrink-0 accent-foreground"
-                    aria-describedby="checkout-required-consent-description"
-                  />
-                  <span>
+              {policyConsentLoading ? (
+                <p className="mt-4 text-sm text-muted-foreground">{t('consent.loading')}</p>
+              ) : policyConsentLoadError ? (
+                <p className="mt-4 text-sm text-destructive">{t('consent.loadError')}</p>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  <p className="text-sm text-muted-foreground">{t('consent.requiredDescription')}</p>
+                  <label className="flex gap-3 rounded-md border border-soft bg-muted/20 p-3 text-sm text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={requiredConsent}
+                      onChange={(event) => {
+                        setPolicyConsents((current) => current.map((policy) => ({
+                          ...policy,
+                          agreed: event.target.checked,
+                        })));
+                      }}
+                      className="mt-1 h-4 w-4 shrink-0 accent-foreground"
+                      aria-label={t('consent.requiredLabel')}
+                    />
                     <span className="font-medium">{t('consent.requiredLabel')}</span>
-                    <span id="checkout-required-consent-description" className="mt-1 block whitespace-pre-line text-muted-foreground">
-                      {t('consent.requiredDescription')}
-                    </span>
-                  </span>
-                </label>
-              </div>
+                  </label>
+                  {policyConsents.map((policy) => (
+                    <label key={policy.slug} className="flex gap-3 rounded-md border border-soft bg-muted/20 p-3 text-sm text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={policy.agreed}
+                        onChange={(event) => {
+                          setPolicyConsents((current) => current.map((item) => (
+                            item.slug === policy.slug ? { ...item, agreed: event.target.checked } : item
+                          )));
+                        }}
+                        className="mt-1 h-4 w-4 shrink-0 accent-foreground"
+                        aria-label={policy.title}
+                      />
+                      <span>
+                        <span className="font-medium">{policy.title}</span>
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {t('consent.policyMetadata', {
+                            version: policy.version ?? t('consent.unknownVersion'),
+                            effectiveDate: policy.effectiveDate ?? t('consent.unknownEffectiveDate'),
+                          })}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
 

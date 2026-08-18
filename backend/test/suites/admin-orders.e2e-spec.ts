@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { e2eIdempotencyKey } from '../helpers/idempotency.helper';
+import { currentPolicyConsents } from '../helpers/policy-consent.helper';
 import {
   AuthCookies,
   cookieHeader,
@@ -35,6 +36,7 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
           recipientPhone: '010-1234-5678',
           zipcode: '12345',
           address: '서울시 강남구',
+          policyConsents: currentPolicyConsents,
           ...(options.pointsUsed === undefined ? {} : { pointsUsed: options.pointsUsed }),
         })
         .expect(201);

@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Page } from './entities/page.entity';
 import { PageBlock } from './entities/page-block.entity';
 import { CreatePageDto } from './dto/create-page.dto';
@@ -14,6 +14,7 @@ import { UpdatePageBlockDto } from './dto/update-page-block.dto';
 import { ReorderBlocksDto } from './dto/reorder-blocks.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { applyLocale, applyLocaleToContent } from '../../common/utils/locale.util';
+import { REQUIRED_CHECKOUT_POLICY_SLUGS } from '../../common/constants/policy.constants';
 
 const SUPPORTED_BLOCK_TYPES = [
   'hero_banner',
@@ -37,6 +38,14 @@ const GENERIC_ITEM_BLOCK_TYPES = new Set([
   'person_card_list',
   'image_card_grid',
 ]);
+
+export interface CurrentPolicyMetadata {
+  slug: string;
+  title: string;
+  titleEn: string | null;
+  version: string | null;
+  effectiveDate: string | null;
+}
 
 function validateGenericBlockContent(type: string, content: Record<string, unknown>): void {
   if (!GENERIC_ITEM_BLOCK_TYPES.has(type)) return;
@@ -80,6 +89,28 @@ export class PagesService {
       order: { created_at: 'DESC' },
     });
     return pages.map((p) => this.applyLocaleToPage(p, locale));
+  }
+
+  async findCurrentPolicies(locale?: string): Promise<CurrentPolicyMetadata[]> {
+    const pages = await this.pageRepository.find({
+      where: { is_published: true, isCurrentPolicy: true, slug: In([...REQUIRED_CHECKOUT_POLICY_SLUGS]) },
+      order: { slug: 'ASC' },
+    });
+
+    if (pages.length !== REQUIRED_CHECKOUT_POLICY_SLUGS.length) {
+      throw new BadRequestException('체크아웃 필수 정책을 불러올 수 없습니다.');
+    }
+
+    return pages.map((page) => {
+      const localized = applyLocale(page, locale, ['title']);
+      return {
+        slug: page.slug,
+        title: localized.title,
+        titleEn: page.titleEn,
+        version: page.policyVersion,
+        effectiveDate: page.policyEffectiveDate,
+      };
+    });
   }
 
   async findBySlug(slug: string, locale?: string): Promise<Page> {

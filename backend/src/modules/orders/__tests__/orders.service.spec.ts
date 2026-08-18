@@ -70,7 +70,12 @@ describe('OrdersService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockManager.query.mockResolvedValue([]);
+    mockManager.query.mockResolvedValue([
+      { slug: 'privacy', title: '개인정보처리방침', version: null, effectiveDate: null },
+      { slug: 'returns', title: '반품 안내', version: null, effectiveDate: null },
+      { slug: 'shipping', title: '배송 안내', version: null, effectiveDate: null },
+      { slug: 'terms', title: '이용약관', version: null, effectiveDate: null },
+    ]);
     mockDataSource.transaction.mockImplementation(
       (cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager),
     );
@@ -113,6 +118,7 @@ describe('OrdersService', () => {
     it('order number format matches ORD-YYYYMMDD-XXXXX', async () => {
       // We test this indirectly via a successful create
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, quantity: 1 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -176,6 +182,7 @@ describe('OrdersService', () => {
 
   describe('idempotent create delegation', () => {
     const dto: CreateOrderDto = {
+      policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
       items: [{ productId: 1, quantity: 1 }],
       recipientName: '홍길동',
       recipientPhone: '010-1234-5678',
@@ -210,6 +217,7 @@ describe('OrdersService', () => {
   describe('create()', () => {
     it('empty items → BadRequestException', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -223,6 +231,7 @@ describe('OrdersService', () => {
 
     it('insufficient stock → BadRequestException (transaction rolls back)', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, quantity: 100 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -251,6 +260,7 @@ describe('OrdersService', () => {
 
     it('product not found → NotFoundException (transaction rolls back)', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 999, quantity: 1 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -277,6 +287,7 @@ describe('OrdersService', () => {
       'non-active product status %s → BadRequestException before stock reservation',
       async (status) => {
         const dto: CreateOrderDto = {
+          policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
           items: [{ productId: 1, quantity: 1 }],
           recipientName: '홍길동',
           recipientPhone: '010-1234-5678',
@@ -307,6 +318,7 @@ describe('OrdersService', () => {
 
     it('insufficient points inside transaction → BadRequestException (transaction rolls back)', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, quantity: 1 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -337,6 +349,7 @@ describe('OrdersService', () => {
 
     it('만료 earn 이 history 에 남아 running balance 가 충분해도 effective balance 부족이면 주문 포인트 사용을 거부한다', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, quantity: 1 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -361,6 +374,7 @@ describe('OrdersService', () => {
 
     it('valid dto → creates order, deducts stock, clears cart', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, quantity: 2 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -428,6 +442,7 @@ describe('OrdersService', () => {
 
     it('무료배송 상품 단독 주문은 상품 정책을 배송비 계산에 전달하고 주문상품에 스냅샷을 저장한다', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, quantity: 2 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -509,6 +524,7 @@ describe('OrdersService', () => {
 
     it('valid dto with userCouponId → applies coupon discount, sets discountAmount, calls useCoupon', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, quantity: 2 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -594,6 +610,7 @@ describe('OrdersService', () => {
 
     it('userCouponId but coupon calculate throws → BadRequestException (transaction rolls back)', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, quantity: 1 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -627,6 +644,7 @@ describe('OrdersService', () => {
 
     it('옵션 있는 상품 주문: 옵션 재고만 차감되고 product.stock 은 건드리지 않는다', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, productOptionId: 7, quantity: 2 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -709,6 +727,7 @@ describe('OrdersService', () => {
 
     it('옵션 없는 상품 주문: product.stock 만 원장으로 차감된다', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 99, quantity: 4 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',
@@ -763,6 +782,7 @@ describe('OrdersService', () => {
 
     it('동시 주문 보호: product/option 조회 시 pessimistic_write 락을 건다', async () => {
       const dto: CreateOrderDto = {
+        policyConsents: [{ slug: 'privacy', version: null, effectiveDate: null }, { slug: 'returns', version: null, effectiveDate: null }, { slug: 'shipping', version: null, effectiveDate: null }, { slug: 'terms', version: null, effectiveDate: null }],
         items: [{ productId: 1, productOptionId: 7, quantity: 1 }],
         recipientName: '홍길동',
         recipientPhone: '010-1234-5678',

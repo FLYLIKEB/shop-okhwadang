@@ -467,7 +467,12 @@
     "consent": {
       "title": "필수 동의",
       "requiredLabel": "[필수] 구매조건 및 개인정보 처리에 동의합니다.",
-      "requiredDescription": "주문할 상품의 상품명, 가격, 배송정보, 교환·환불 규정을 확인했으며 구매에 동의합니다.\n결제 및 배송 처리를 위해 개인정보 수집·이용과 PG사/배송사 처리위탁 또는 제3자 제공 안내에 동의합니다."
+      "requiredDescription": "아래 정책을 각각 확인하고 동의해 주세요.",
+      "loading": "필수 정책을 불러오는 중...",
+      "loadError": "필수 정책을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      "policyMetadata": "버전 {version} · 시행일 {effectiveDate}",
+      "unknownVersion": "확인 필요",
+      "unknownEffectiveDate": "확인 필요"
     },
     "couponLoadError": "쿠폰 목록을 불러오지 못했습니다.",
     "couponLoading": "쿠폰 불러오는 중...",

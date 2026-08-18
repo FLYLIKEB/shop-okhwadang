@@ -56,6 +56,43 @@ describe('PagesService', () => {
     });
   });
 
+  describe('findCurrentPolicies', () => {
+    it('returns published policy metadata localized by checkout locale', async () => {
+      mockPageRepository.find.mockResolvedValue([
+        {
+          slug: 'terms',
+          title: '이용약관',
+          titleEn: 'Terms of Service',
+          policyVersion: 'v2',
+          policyEffectiveDate: '2026-08-01',
+          is_published: true,
+          isCurrentPolicy: true,
+        },
+        { slug: 'privacy', title: '개인정보처리방침', titleEn: 'Privacy Policy', policyVersion: 'v2', policyEffectiveDate: '2026-08-01', is_published: true, isCurrentPolicy: true },
+        { slug: 'returns', title: '반품 안내', titleEn: 'Returns', policyVersion: 'v2', policyEffectiveDate: '2026-08-01', is_published: true, isCurrentPolicy: true },
+        { slug: 'shipping', title: '배송 안내', titleEn: 'Shipping', policyVersion: 'v2', policyEffectiveDate: '2026-08-01', is_published: true, isCurrentPolicy: true },
+      ]);
+
+      await expect(service.findCurrentPolicies('en')).resolves.toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          slug: 'terms',
+          title: 'Terms of Service',
+          titleEn: 'Terms of Service',
+          version: 'v2',
+          effectiveDate: '2026-08-01',
+        }),
+      ]));
+      expect(mockPageRepository.find).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          is_published: true,
+          isCurrentPolicy: true,
+          slug: expect.anything(),
+        }),
+        order: { slug: 'ASC' },
+      }));
+    });
+  });
+
   describe('findBySlug', () => {
     it('공개된 페이지를 slug로 조회한다', async () => {
       const page = {

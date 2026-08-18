@@ -9,6 +9,7 @@ import type {
   CartItem,
   CheckoutGatewayName,
   GuestConfirmPaymentResponse,
+  PolicyConsentSnapshot,
   PreparePaymentResponse,
 } from '@/lib/api';
 import { guestOrdersApi, guestPaymentsApi, ordersApi, paymentsApi } from '@/lib/api';
@@ -40,6 +41,8 @@ export interface UseCheckoutOptions {
   currentOrderNumber: string;
   currentGuestAccessToken: string;
   requiredConsent?: boolean;
+  policyConsents?: PolicyConsentSnapshot[];
+  marketingConsent?: boolean;
   appliedUserCouponId?: number;
   appliedPointsUsed?: number;
   isGuestCheckout: boolean;
@@ -277,6 +280,8 @@ export function useCheckout(options: UseCheckoutOptions) {
           selectedGateway: options.selectedGateway,
           userCouponId: options.appliedUserCouponId,
           pointsUsed: options.appliedPointsUsed,
+          policyConsents: options.policyConsents,
+          marketingConsent: options.marketingConsent ?? false,
           preserveCart,
         });
         if (idempotencyIntentRef.current?.fingerprint !== intentFingerprint) {
@@ -315,6 +320,8 @@ export function useCheckout(options: UseCheckoutOptions) {
             memo: memo || null,
             guestEmail: normalizedGuestEmail,
             orderLocale: locale,
+            policyConsents: options.policyConsents ?? [],
+            marketingConsent: options.marketingConsent ?? false,
           }, { headers: { 'Idempotency-Key': orderIdempotencyKey } });
 
 
@@ -341,6 +348,8 @@ export function useCheckout(options: UseCheckoutOptions) {
             addressDetail: addressDetail || null,
             memo: memo || null,
             orderLocale: locale,
+            policyConsents: options.policyConsents ?? [],
+            marketingConsent: options.marketingConsent ?? false,
             userCouponId: options.appliedUserCouponId,
             pointsUsed: options.appliedPointsUsed && options.appliedPointsUsed > 0 ? options.appliedPointsUsed : undefined,
           }, { headers: { 'Idempotency-Key': orderIdempotencyKey } });
@@ -433,7 +442,14 @@ export function useCheckout(options: UseCheckoutOptions) {
 
         await handleMockFlow(orderId, orderNumber, confirmedTotal, guestAccessToken || undefined);
       } catch (err) {
-        toast.error(handleApiError(err, toastMessage('paymentError')));
+        const errorMessage = handleApiError(err, toastMessage('paymentError'));
+        const isPolicyConsentError = [
+          '필수 정책 동의',
+          '정책 버전이 변경되었습니다.',
+          'Checkout policy',
+          'policy consent',
+        ].some((marker) => errorMessage.includes(marker));
+        toast.error(isPolicyConsentError ? toastMessage('checkoutPolicyChanged') : errorMessage);
         options.setStep('idle');
       }
     },
