@@ -178,6 +178,8 @@ const sampleItem: CartItem = {
   option: null,
 };
 
+const buyNowItem: CartItem = { ...sampleItem, checkoutSource: 'buy_now' };
+
 const defaultPreview = {
   subtotalAmount: 40000,
   couponDiscount: 0,
@@ -347,6 +349,40 @@ describe('CheckoutPage', () => {
     expect(ordersApi.create).toHaveBeenCalledOnce();
     expect(paymentsApi.prepare).toHaveBeenCalledOnce();
     expect(paymentsApi.confirm).toHaveBeenCalledOnce();
+  });
+
+  it('Buy Now 주문은 기존 회원 장바구니를 보존한다', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([buyNowItem]));
+    vi.mocked(ordersApi.create).mockResolvedValue({
+      id: 1, orderNumber: 'ORD-001', status: 'pending', totalAmount: 40000,
+      discountAmount: 0, shippingFee: 0, recipientName: '홍길동',
+      recipientPhone: '010-1234-5678', zipcode: '12345', address: '서울시',
+      addressDetail: null, memo: null, items: [], createdAt: new Date().toISOString(),
+    });
+    vi.mocked(paymentsApi.prepare).mockResolvedValue({
+      paymentId: 1, orderId: 1, orderNumber: 'ORD-001',
+      amount: 40000, gateway: 'mock', clientKey: 'mock_client_key', availableGateways: ['naverpay', 'eximbay', 'paypal'],
+    });
+    vi.mocked(paymentsApi.confirm).mockResolvedValue({
+      paymentId: 1, orderId: 1, orderNumber: 'ORD-001',
+      status: 'paid', method: 'card', amount: 40000, paidAt: new Date().toISOString(),
+    });
+
+    await renderCheckoutPage();
+    await screen.findByLabelText(/받는 분 이름/);
+    await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
+    await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
+    await user.type(screen.getByLabelText(/우편번호/), '12345');
+    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
+    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
+
+    await waitFor(() => expect(ordersApi.create).toHaveBeenCalledWith(
+      expect.objectContaining({ preserveCart: true }),
+      expect.anything(),
+    ));
   });
 
   it('ko checkout은 주문 생성 전부터 토스 위젯을 노출한다', async () => {
