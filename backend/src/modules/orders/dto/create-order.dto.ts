@@ -101,6 +101,11 @@ export class CreateOrderDto {
   @IsInt({ message: '쿠폰 ID는 정수여야 합니다.' })
   userCouponId?: number;
 
+  @ApiProperty({ example: true, description: '바로 구매 주문이면 기존 장바구니를 보존', required: false })
+  @IsOptional()
+  @IsBoolean({ message: '장바구니 보존 여부는 boolean이어야 합니다.' })
+  preserveCart?: boolean;
+
   @ApiProperty({ type: [PolicyConsentSnapshotDto], description: '결제 동의 시점 정책 버전 스냅샷', required: false })
   @IsOptional()
   @IsArray({ message: '정책 동의 목록은 배열이어야 합니다.' })

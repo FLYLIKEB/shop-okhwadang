@@ -255,6 +255,9 @@ export function useCheckout(options: UseCheckoutOptions) {
 
       options.setErrors({});
 
+      const preserveCart = checkoutItems.length > 0
+        && checkoutItems.every((item) => item.checkoutSource === 'buy_now');
+
       try {
         const intentFingerprint = JSON.stringify({
           isGuestCheckout: options.isGuestCheckout,
@@ -274,6 +277,7 @@ export function useCheckout(options: UseCheckoutOptions) {
           selectedGateway: options.selectedGateway,
           userCouponId: options.appliedUserCouponId,
           pointsUsed: options.appliedPointsUsed,
+          preserveCart,
         });
         if (idempotencyIntentRef.current?.fingerprint !== intentFingerprint) {
           idempotencyIntentRef.current = {
@@ -302,6 +306,7 @@ export function useCheckout(options: UseCheckoutOptions) {
               productOptionId: item.productOptionId,
               quantity: item.quantity,
             })),
+            preserveCart,
             recipientName,
             recipientPhone,
             zipcode,
@@ -328,6 +333,7 @@ export function useCheckout(options: UseCheckoutOptions) {
               productOptionId: item.productOptionId,
               quantity: item.quantity,
             })),
+            preserveCart,
             recipientName,
             recipientPhone,
             zipcode,

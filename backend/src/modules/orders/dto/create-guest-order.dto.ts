@@ -78,4 +78,9 @@ export class CreateGuestOrderDto {
   @Transform(({ value }: { value: unknown }) => value === true || value === 'true')
   @IsBoolean({ message: '마케팅 수신 동의 여부는 boolean이어야 합니다.' })
   marketingConsent?: boolean;
+
+  @ApiProperty({ example: true, description: '바로 구매 주문이면 기존 장바구니를 보존', required: false })
+  @IsOptional()
+  @IsBoolean({ message: '장바구니 보존 여부는 boolean이어야 합니다.' })
+  preserveCart?: boolean;
 }

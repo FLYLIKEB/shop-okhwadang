@@ -74,6 +74,7 @@ export interface PolicyConsentSnapshot {
 
 export interface CreateOrderBody {
   items: Array<{ productId: number; productOptionId: number | null; quantity: number }>;
+  preserveCart?: boolean;
   recipientName: string;
   recipientPhone: string;
   zipcode: string;
@@ -89,6 +90,7 @@ export interface CreateOrderBody {
 
 export interface CreateGuestOrderBody {
   items: Array<{ productId: number; productOptionId: number | null; quantity: number }>;
+  preserveCart?: boolean;
   recipientName: string;
   recipientPhone: string;
   zipcode: string;

@@ -141,7 +141,9 @@ export class OrderCreationWorkflowService {
     await this.applyCouponAndPoints(manager, userId, dto.userCouponId, pricing.appliedPointsUsed, savedOrder);
     await this.savePolicyConsent(manager, userId, savedOrder, dto);
     await this.saveOrderItems(manager, orderItems, Number(savedOrder.id));
-    await this.clearCartItems(manager, userId, dto);
+    if (!dto.preserveCart) {
+      await this.clearCartItems(manager, userId, dto);
+    }
 
     return {
       savedOrder,

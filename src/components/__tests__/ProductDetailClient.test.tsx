@@ -200,6 +200,7 @@ describe('ProductDetailClient', () => {
         id: -1,
         productId: 1,
         productOptionId: null,
+        checkoutSource: 'buy_now',
         quantity: 1,
         unitPrice: 120000,
         subtotal: 120000,

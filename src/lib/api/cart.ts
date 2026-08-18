@@ -23,6 +23,7 @@ export interface CartItem {
   id: number;
   productId: number;
   productOptionId: number | null;
+  checkoutSource?: 'cart' | 'buy_now';
   quantity: number;
   unitPrice: number;
   subtotal: number;

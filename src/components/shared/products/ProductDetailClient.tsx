@@ -143,6 +143,7 @@ export function buildBuyNowCheckoutItem(
     id: -productId,
     productId,
     productOptionId: optionId,
+    checkoutSource: 'buy_now',
     quantity,
     unitPrice,
     subtotal,
