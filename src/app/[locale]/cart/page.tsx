@@ -103,12 +103,22 @@ export default function CartPage() {
   };
 
   const handleRemove = async (id: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-    await removeItem(id);
+    const wasSelected = selectedIds.has(id);
+    try {
+      await removeItem(id);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    } catch {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (wasSelected) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+    }
   };
 
   const handleOrder = () => {

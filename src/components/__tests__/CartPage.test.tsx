@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import CartPage from '@/app/[locale]/cart/page';
@@ -224,5 +224,60 @@ describe('CartPage', () => {
     await user.click(screen.getAllByRole('button', { name: '선택 상품 주문하기' })[0]);
 
     expect(toast.warning).toHaveBeenCalledWith('주문할 상품을 선택해주세요.');
+  });
+
+  it('commits selection removal only after the delete succeeds', async () => {
+    const user = userEvent.setup();
+    const removeItem = vi.fn().mockResolvedValue(undefined);
+    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1], removeItem });
+
+    render(<CartPage />);
+    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
+
+    expect(removeItem).toHaveBeenCalledWith(1);
+    expect(screen.getAllByRole('checkbox')[1]).not.toBeChecked();
+  });
+
+  it('restores selection when the delete fails', async () => {
+    const user = userEvent.setup();
+    const removeItem = vi.fn().mockRejectedValue(new Error('network failure'));
+    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1], removeItem });
+
+    render(<CartPage />);
+    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
+
+    await waitFor(() => expect(screen.getAllByRole('checkbox')[1]).toBeChecked());
+    expect(removeItem).toHaveBeenCalledWith(1);
+  });
+
+  it('preserves an initially unselected row when the delete fails', async () => {
+    const user = userEvent.setup();
+    const removeItem = vi.fn().mockRejectedValue(new Error('network failure'));
+    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1], removeItem });
+
+    render(<CartPage />);
+    await user.click(screen.getAllByRole('checkbox')[0]);
+    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
+
+    await waitFor(() => expect(screen.getAllByRole('checkbox')[1]).not.toBeChecked());
+  });
+
+  it('supports consecutive successful deletions without stale selection state', async () => {
+    const user = userEvent.setup();
+    const removeItem = vi.fn().mockResolvedValue(undefined);
+    mockUseAuth.mockReturnValue({ isAuthenticated: true });
+    mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1, cartItem2], removeItem });
+
+    render(<CartPage />);
+    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '상품 B 삭제' })[0]);
+
+    expect(removeItem).toHaveBeenNthCalledWith(1, 1);
+    expect(removeItem).toHaveBeenNthCalledWith(2, 2);
+    expect(screen.getAllByRole('checkbox')[1]).not.toBeChecked();
+    expect(screen.getAllByRole('checkbox')[2]).not.toBeChecked();
   });
 });

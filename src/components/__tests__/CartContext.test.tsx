@@ -109,7 +109,7 @@ function UpdateQtyButton({ id, quantity }: { id: number; quantity: number }) {
 
 function RemoveItemButton({ id }: { id: number }) {
   const { removeItem } = useCart();
-  return <button onClick={() => removeItem(id)}>remove</button>;
+  return <button onClick={() => void removeItem(id).catch(() => undefined)}>remove</button>;
 }
 
 describe('CartContext', () => {
@@ -210,6 +210,100 @@ describe('CartContext', () => {
       expect(screen.queryByText('테스트 상품')).not.toBeInTheDocument();
     });
     expect(cartApi.remove).toHaveBeenCalledWith(1);
+  });
+
+  it('keeps the item and refreshes the cart when removal fails', async () => {
+    const user = userEvent.setup();
+    vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
+    vi.mocked(cartApi.remove).mockRejectedValue(new Error('network failure'));
+
+    renderWithAuth(
+      <>
+        <CartDisplay />
+        <RemoveItemButton id={1} />
+      </>,
+      makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }),
+    );
+
+    await waitFor(() => expect(screen.getByText('테스트 상품')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'remove' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(screen.getByText('테스트 상품')).toBeInTheDocument();
+    expect(cartApi.getList).toHaveBeenCalledTimes(2);
+  });
+
+  it('restores a guest item when its projection fails during removal', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('guest_cart', JSON.stringify([
+      { productId: 10, productOptionId: null, quantity: 2 },
+      { productId: 11, productOptionId: null, quantity: 1 },
+    ]));
+
+    renderWithAuth(
+      <>
+        <CartDisplay />
+        <RemoveItemButton id={-1} />
+      </>,
+      makeAuthValue({ isAuthenticated: false }),
+    );
+
+    await waitFor(() => expect(screen.getByText('상품 10')).toBeInTheDocument());
+    vi.mocked(productsApi.getBulk).mockRejectedValue(new Error('network failure'));
+
+    await user.click(screen.getByRole('button', { name: 'remove' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('장바구니 상품 삭제에 실패했습니다. 다시 시도해 주세요.'));
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toHaveLength(2);
+    expect(screen.getByText('상품 10')).toBeInTheDocument();
+  });
+
+  it('allows a member deletion to succeed on retry after a failed request', async () => {
+    const user = userEvent.setup();
+    vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
+    vi.mocked(cartApi.remove)
+      .mockRejectedValueOnce(new Error('network failure'))
+      .mockResolvedValueOnce({ message: 'deleted' });
+
+    renderWithAuth(
+      <>
+        <CartDisplay />
+        <RemoveItemButton id={1} />
+      </>,
+      makeAuthValue({ isAuthenticated: true, user: { id: 1, email: 'a@b.com', name: 'Test', role: 'user' } }),
+    );
+
+    await waitFor(() => expect(screen.getByText('테스트 상품')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'remove' }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(screen.getByText('테스트 상품')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'remove' }));
+    await waitFor(() => expect(screen.queryByText('테스트 상품')).not.toBeInTheDocument());
+    expect(cartApi.remove).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports a localized error when guest deletion cannot acquire its lock', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('guest_cart', JSON.stringify([
+      { productId: 10, productOptionId: null, quantity: 1 },
+      { productId: 11, productOptionId: null, quantity: 1 },
+    ]));
+
+    renderWithAuth(
+      <>
+        <CartDisplay />
+        <RemoveItemButton id={-1} />
+      </>,
+      makeAuthValue({ isAuthenticated: false }),
+    );
+    await waitFor(() => expect(screen.getByText('상품 10')).toBeInTheDocument());
+
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: undefined });
+    await user.click(screen.getByRole('button', { name: 'remove' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('장바구니 상품 삭제에 실패했습니다. 다시 시도해 주세요.'));
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toHaveLength(2);
   });
 
   it('updateQuantity applies optimistic update', async () => {

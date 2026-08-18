@@ -275,7 +275,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const guestMergePromiseRef = useRef<Promise<void> | null>(null);
 
   const projectGuestCart = useCallback(
-    async (items: GuestCartItem[]) => {
+    async (
+      items: GuestCartItem[],
+      options?: { showError?: boolean; preserveOnError?: boolean },
+    ): Promise<boolean> => {
       const generation = ++guestProjectionGenerationRef.current;
       setIsLoading(true);
       try {
@@ -285,14 +288,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         if (generation === guestProjectionGenerationRef.current) {
-          setCartData({ items: [], totalAmount: 0, itemCount: 0 });
-          toast.error(toastMessage('cartLoadError'));
+          if (options?.preserveOnError !== true) {
+            setCartData({ items: [], totalAmount: 0, itemCount: 0 });
+          }
+          if (options?.showError !== false) toast.error(toastMessage('cartLoadError'));
         }
+        return false;
       } finally {
         if (generation === guestProjectionGenerationRef.current) {
           setIsLoading(false);
         }
       }
+      return true;
     },
     [locale],
   );
@@ -490,25 +497,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeItem = useCallback(
     async (id: number) => {
       if (!isAuthenticated) {
-        const removed = await withGuestCartLock(async () => {
-          const guestItems = loadGuestCart();
-          const index = guestItems.findIndex((item) => item.lineId === id);
-          if (
-            index >= 0
-            && loadGuestMergeOperations()[guestItems[index].lineId]?.pending
-          ) {
-            toast.error(toastMessage('guestCartPendingMergeError'));
-            return false;
+        try {
+          const removed = await withGuestCartLock(async () => {
+            const guestItems = loadGuestCart();
+            const index = guestItems.findIndex((item) => item.lineId === id);
+            if (
+              index >= 0
+              && loadGuestMergeOperations()[guestItems[index].lineId]?.pending
+            ) {
+              toast.error(toastMessage('guestCartPendingMergeError'));
+              return false;
+            }
+            const previousItems = guestItems.map((item) => ({ ...item }));
+            if (index >= 0) guestItems.splice(index, 1);
+            saveGuestCart(guestItems);
+            const projected = await projectGuestCart(guestItems, { showError: false, preserveOnError: true });
+            if (!projected) {
+              saveGuestCart(previousItems);
+              await projectGuestCart(previousItems, { showError: false, preserveOnError: true });
+              toast.error(toastMessage('cartItemDeleteError'));
+              return false;
+            }
+            return index >= 0;
+          });
+          if (removed) toast.success(toastMessage('deleted'));
+          else throw new Error('cart_item_remove_failed');
+        } catch (err) {
+          if (!(err instanceof Error && err.message === 'cart_item_remove_failed')) {
+            toast.error(toastMessage('cartItemDeleteError'));
           }
-          if (index >= 0) guestItems.splice(index, 1);
-          saveGuestCart(guestItems);
-          await projectGuestCart(guestItems);
-          return index >= 0;
-        });
-        if (removed) toast.success(toastMessage('deleted'));
+          throw err;
+        }
         return;
       }
-      await api.cartApi.remove(id);
+      try {
+        await api.cartApi.remove(id);
+      } catch (err) {
+        toast.error(handleApiError(err, toastMessage('cartItemDeleteError')));
+        try {
+          await fetchCart();
+        } catch {
+          // Keep the existing item visible when the recovery refresh also fails.
+        }
+        throw err;
+      }
       setCartData((prev) => {
         const items = prev.items.filter((item) => item.id !== id);
         const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
@@ -517,7 +549,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
       toast.success(toastMessage('deleted'));
     },
-    [isAuthenticated, projectGuestCart],
+    [isAuthenticated, fetchCart, projectGuestCart],
   );
 
   const value = useMemo(
