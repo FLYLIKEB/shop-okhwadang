@@ -27,6 +27,8 @@ export interface CouponListResponse {
 
 export interface CalculateDiscountBody {
   orderAmount: number;
+  zipcode: string;
+  items: Array<{ productId: number; productOptionId?: number | null; quantity: number }>;
   userCouponId?: number;
   pointsToUse?: number;
 }

@@ -596,9 +596,11 @@ describe('OrdersService', () => {
       expect(result).toBe(mockSavedOrder);
       expect(mockCouponsService.calculate).toHaveBeenCalledWith(1, {
         orderAmount: 18000,
+        zipcode: '12345',
+        items: [],
         userCouponId: 10,
         pointsToUse: 0,
-      });
+      }, [{ isFreeShipping: undefined }]);
       expect(mockCouponsService.useCoupon).toHaveBeenCalledWith(10, 1, 42, mockManager);
       // discountAmount should be set in the created order
       expect(mockManager.create).toHaveBeenCalledWith(

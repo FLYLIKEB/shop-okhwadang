@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager, Like } from 'typeorm';
+import { In, Repository, DataSource, EntityManager, Like } from 'typeorm';
 import { Coupon } from './entities/coupon.entity';
 import { UserCoupon } from './entities/user-coupon.entity';
 import { PointHistory } from './entities/point-history.entity';
@@ -17,6 +17,9 @@ import { AdminCouponListQueryDto } from './dto/admin-coupon-list-query.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { PointsService, PointHistoryResponseItem } from '../points/points.service';
+import { ShippingFeeCalculatorService } from '../shipping/services/shipping-fee-calculator.service';
+import { Product, ProductStatus } from '../products/entities/product.entity';
+import type { CouponShippingItemDto } from './dto/calculate-discount.dto';
 
 export interface CouponResponse {
   id: number;
@@ -86,9 +89,6 @@ export interface PointsResponse {
   history: PointHistoryResponseItem[];
 }
 
-const SHIPPING_FEE = 3000;
-const FREE_SHIPPING_THRESHOLD = 30000;
-
 @Injectable()
 export class CouponsService {
   private readonly logger = new Logger(CouponsService.name);
@@ -102,6 +102,9 @@ export class CouponsService {
     private readonly pointHistoryRepo: Repository<PointHistory>,
     private readonly dataSource: DataSource,
     private readonly pointsService: PointsService,
+    private readonly shippingFeeCalculator: ShippingFeeCalculatorService,
+    @InjectRepository(Product)
+    private readonly productRepo: Repository<Product>,
   ) {}
 
   private toResponse(uc: UserCoupon): CouponResponse {
@@ -242,7 +245,23 @@ export class CouponsService {
     return this.toAdminCouponResponse(coupon);
   }
 
-  async calculate(userId: number, dto: CalculateDiscountDto): Promise<CalculateDiscountResponse> {
+  private async resolveShippingPolicies(items: CouponShippingItemDto[]): Promise<{ isFreeShipping: boolean }[]> {
+    const productIds = [...new Set(items.map((item) => item.productId))];
+    const products = await this.productRepo.find({
+      where: { id: In(productIds), status: ProductStatus.ACTIVE },
+    });
+    const productMap = new Map(products.map((product) => [Number(product.id), product]));
+    if (products.length !== productIds.length || items.some((item) => !productMap.has(item.productId))) {
+      throw new BadRequestException('배송비 계산 상품을 찾을 수 없습니다.');
+    }
+    return items.map((item) => ({ isFreeShipping: Boolean(productMap.get(item.productId)?.isFreeShipping) }));
+  }
+
+  async calculate(
+    userId: number,
+    dto: CalculateDiscountDto,
+    trustedShippingPolicies?: { isFreeShipping: boolean }[],
+  ): Promise<CalculateDiscountResponse> {
     const { orderAmount, userCouponId, pointsToUse = 0 } = dto;
 
     let couponDiscount = 0;
@@ -269,7 +288,13 @@ export class CouponsService {
 
     const pointsDiscount = Math.min(pointsToUse, orderAmount - couponDiscount);
     const afterDiscount = Math.max(0, orderAmount - couponDiscount - pointsDiscount);
-    const shippingFee = afterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+    // The authority uses the pre-discount merchandise subtotal for the free-shipping threshold.
+    const shippingQuote = await this.shippingFeeCalculator.calculate(
+      orderAmount,
+      dto.zipcode,
+      trustedShippingPolicies ?? await this.resolveShippingPolicies(dto.items),
+    );
+    const shippingFee = shippingQuote.shippingFee;
     const finalAmount = afterDiscount;
     const totalPayable = Math.max(0, finalAmount + shippingFee);
 
