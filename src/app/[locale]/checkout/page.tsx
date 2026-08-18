@@ -125,13 +125,13 @@ export default function CheckoutPage({
     version: policy.version,
     effectiveDate: policy.effectiveDate,
   }));
-  const totalAmount = checkoutItems.reduce((sum, item) => sum + item.subtotal, 0);
   const couponDiscount = pricingPreview?.couponDiscount ?? 0;
   const appliedPointsUsed = pricingPreview?.appliedPointsUsed ?? 0;
   const shippingFee = pricingPreview?.shippingFee ?? 0;
   const freeShippingThreshold = pricingPreview?.freeShippingThreshold ?? 0;
-  const grandTotal = confirmedGrandTotal ?? pricingPreview?.totalPayable ?? totalAmount;
-  const isPricingReady = confirmedGrandTotal !== null || pricingPreview !== null;
+  const subtotalAmount = pricingPreview?.subtotalAmount ?? 0;
+  const grandTotal = confirmedGrandTotal ?? pricingPreview?.totalPayable ?? 0;
+  const isPricingReady = pricingPreview !== null || confirmedGrandTotal !== null;
 
   const stepLabels: Record<PaymentStep, string> = {
     idle: t('steps.idle'),
@@ -250,6 +250,8 @@ export default function CheckoutPage({
     }
 
     let active = true;
+    setPricingPreview(null);
+    setConfirmedGrandTotal(null);
     const zipcode = /^\d{5}$/.test(form.zipcode.trim()) ? form.zipcode.trim() : '00000';
 
     void previewPricing({
@@ -269,11 +271,16 @@ export default function CheckoutPage({
   }, [
     checkoutItems,
     form.zipcode,
+    form.address,
+    form.addressDetail,
+    form.recipientName,
+    form.recipientPhone,
     isGuestCheckout,
     locale,
     previewPricing,
     requestedPointsToUse,
     requestedUserCouponId,
+    selectedAddressId,
     sessionChecked,
   ]);
 
@@ -523,9 +530,9 @@ export default function CheckoutPage({
 
           <aside className="layout-stack-md lg:sticky lg:top-24 lg:self-start">
             <OrderSummarySection
-              checkoutItems={checkoutItems}
+              pricedItems={pricingPreview?.items ?? []}
               locale={locale}
-              subtotalAmount={totalAmount}
+              subtotalAmount={subtotalAmount}
               shippingFee={shippingFee}
               freeShippingThreshold={freeShippingThreshold}
               couponDiscount={couponDiscount}

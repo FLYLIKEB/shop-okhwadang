@@ -60,6 +60,7 @@ export interface CheckoutPricingAuthorityInput extends SharedOrderCreatePayload 
 }
 
 export interface CheckoutPricingAuthorityResult {
+  items?: CheckoutPricingItem[];
   subtotalAmount: number;
   couponDiscount: number;
   pointsDiscount: number;
@@ -71,6 +72,20 @@ export interface CheckoutPricingAuthorityResult {
   appliedUserCouponId?: number;
   appliedPointsUsed: number;
   freeShippingThreshold: number;
+}
+
+export interface CheckoutPricingPreviewResult extends CheckoutPricingAuthorityResult {
+  items: CheckoutPricingItem[];
+}
+
+export interface CheckoutPricingItem {
+  productId: number;
+  productOptionId: number | null;
+  productName: string;
+  optionName: string | null;
+  unitPrice: number;
+  subtotal: number;
+  quantity: number;
 }
 
 export interface PersistOrderInput extends SharedOrderAddressPayload {
@@ -161,16 +176,28 @@ export class OrderCreationWorkflowService {
     manager: EntityManager,
     userId: number | null,
     input: CheckoutPricingAuthorityInput,
-  ): Promise<CheckoutPricingAuthorityResult> {
-    const { subtotalAmount, shippingItemPolicies } = await this.buildOrderItems(manager, input, false);
+  ): Promise<CheckoutPricingPreviewResult> {
+    const { subtotalAmount, shippingItemPolicies, orderItems } = await this.buildOrderItems(manager, input, false);
 
-    return this.calculatePricing(manager, userId, {
+    const pricing = await this.calculatePricing(manager, userId, {
       zipcode: input.zipcode,
       subtotalAmount,
       shippingItemPolicies,
       userCouponId: input.userCouponId,
       pointsToUse: input.pointsToUse,
     });
+    return {
+      ...pricing,
+      items: orderItems.map((item) => ({
+        productId: Number(item.productId),
+        productOptionId: item.productOptionId != null ? Number(item.productOptionId) : null,
+        productName: String(item.productName ?? ''),
+        optionName: item.optionName != null ? String(item.optionName) : null,
+        unitPrice: Number(item.price),
+        subtotal: Number(item.price) * Number(item.quantity),
+        quantity: Number(item.quantity),
+      })),
+    };
   }
 
   async calculatePricing(

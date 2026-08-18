@@ -13,6 +13,15 @@ export interface CheckoutPricingPreviewDto {
 }
 
 export interface CheckoutPricingPreviewResponse {
+  items: Array<{
+    productId: number;
+    productOptionId: number | null;
+    productName: string;
+    optionName: string | null;
+    unitPrice: number;
+    subtotal: number;
+    quantity: number;
+  }>;
   subtotalAmount: number;
   couponDiscount: number;
   pointsDiscount: number;

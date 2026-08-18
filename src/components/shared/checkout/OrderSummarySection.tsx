@@ -1,12 +1,21 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import type { CartItem } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import type { Locale } from '@/i18n/routing';
 
+export interface CheckoutPricingItem {
+  productId: number;
+  productOptionId: number | null;
+  productName: string;
+  optionName: string | null;
+  unitPrice: number;
+  subtotal: number;
+  quantity: number;
+}
+
 interface OrderSummarySectionProps {
-  checkoutItems: CartItem[];
+  pricedItems: CheckoutPricingItem[];
   locale: Locale;
   subtotalAmount: number;
   shippingFee: number;
@@ -17,7 +26,7 @@ interface OrderSummarySectionProps {
 }
 
 export function OrderSummarySection({
-  checkoutItems,
+  pricedItems,
   locale,
   subtotalAmount,
   shippingFee,
@@ -37,13 +46,11 @@ export function OrderSummarySection({
       <h2 className="typo-h3">{t('orderItems')}</h2>
 
       <ul className="mt-4 divide-y divide-soft text-sm">
-        {checkoutItems.map((item) => (
-          <li key={item.id} className="space-y-0.5 py-3">
-            <p className="font-medium">{item.product.name}</p>
-            {item.option && (
-              <p className="text-xs text-muted-foreground">
-                {item.option.name}: {item.option.value}
-              </p>
+        {pricedItems.map((item) => (
+          <li key={`${item.productId}:${item.productOptionId ?? 'none'}`} className="space-y-0.5 py-3">
+            <p className="font-medium">{item.productName}</p>
+            {item.optionName && (
+              <p className="text-xs text-muted-foreground">{item.optionName}</p>
             )}
             <p className="text-muted-foreground">
               {formatCurrency(item.unitPrice, locale)} × {item.quantity} = {formatCurrency(item.subtotal, locale)}

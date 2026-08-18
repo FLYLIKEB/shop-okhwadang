@@ -3,7 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import {
   CheckoutPricingAuthorityInput,
-  CheckoutPricingAuthorityResult,
+  CheckoutPricingPreviewResult,
   OrderCreationWorkflowService,
 } from '../orders/order-creation.workflow.service';
 
@@ -18,7 +18,7 @@ export class CheckoutPricingService {
   async preview(
     userId: number | null,
     input: CheckoutPricingAuthorityInput,
-  ): Promise<CheckoutPricingAuthorityResult> {
+  ): Promise<CheckoutPricingPreviewResult> {
     this.orderCreationWorkflow.assertCreatePayload(input);
 
     return this.dataSource.transaction((manager) =>
