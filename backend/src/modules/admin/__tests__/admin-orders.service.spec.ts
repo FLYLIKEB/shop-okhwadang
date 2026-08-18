@@ -81,6 +81,7 @@ describe('AdminOrdersService', () => {
     } as unknown as jest.Mocked<PointsService>;
     notificationService = {
       sendOrderCancelled: jest.fn().mockResolvedValue(undefined),
+      sendShippingUpdate: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<NotificationService>;
     messageNotificationService = {
       sendOrderCancelled: jest.fn().mockResolvedValue(undefined),
@@ -150,9 +151,27 @@ describe('AdminOrdersService', () => {
       orderRepo.findOne
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PREPARING });
+      mockManager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
+        .mockResolvedValueOnce({ id: 1, status: PaymentStatus.CONFIRMED });
 
       await service.updateStatus(1, OrderStatus.PREPARING);
       expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.PREPARING });
+    });
+
+    it('paid → preparing: rejects before payment confirmation without mutating the order', async () => {
+      orderRepo.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID });
+      paymentRepo.findOne.mockResolvedValue({ orderId: 1, status: PaymentStatus.PENDING });
+      mockManager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
+        .mockResolvedValueOnce({ id: 1, status: PaymentStatus.PENDING });
+
+      await expect(service.updateStatus(1, OrderStatus.PREPARING)).rejects.toThrow(
+        '결제가 확정되지 않은 주문은 배송을 진행할 수 없습니다.',
+      );
+      expect(mockManager.update).not.toHaveBeenCalledWith(Order, 1, {
+        status: OrderStatus.PREPARING,
+      });
     });
 
     it('preparing → shipped: requires tracking number', async () => {
@@ -173,6 +192,10 @@ describe('AdminOrdersService', () => {
         status: ShippingStatus.PREPARING,
         trackingNumber: '123456',
       });
+      mockManager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PREPARING })
+        .mockResolvedValueOnce({ id: 1, status: PaymentStatus.CONFIRMED })
+        .mockResolvedValueOnce({ orderId: 1, trackingNumber: '123456' });
 
       await service.updateStatus(1, OrderStatus.SHIPPED);
       expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.SHIPPED });
@@ -187,6 +210,10 @@ describe('AdminOrdersService', () => {
       orderRepo.findOne
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.SHIPPED })
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED });
+      mockManager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.SHIPPED })
+        .mockResolvedValueOnce({ id: 1, status: PaymentStatus.CONFIRMED })
+        .mockResolvedValueOnce({ orderId: 1, trackingNumber: '123456' });
 
       await service.updateStatus(1, OrderStatus.DELIVERED);
       expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.DELIVERED });
@@ -761,49 +788,104 @@ describe('AdminOrdersService', () => {
 
   describe('registerShipping', () => {
     it('should throw NotFoundException for non-existent order', async () => {
-      orderRepo.findOne.mockResolvedValue(null);
+      mockManager.findOne.mockResolvedValue(null);
       await expect(
         service.registerShipping(999, { carrier: 'cj', trackingNumber: '123' }),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ConflictException if tracking already exists', async () => {
-      orderRepo.findOne.mockResolvedValue({ id: 1 });
-      shippingRepo.findOne.mockResolvedValue({ id: 1, trackingNumber: '123' });
+      mockManager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PREPARING })
+        .mockResolvedValueOnce({ id: 1, status: PaymentStatus.CONFIRMED })
+        .mockResolvedValueOnce({ id: 1, trackingNumber: '123' });
 
       await expect(
         service.registerShipping(1, { carrier: 'cj', trackingNumber: '456' }),
       ).rejects.toThrow(ConflictException);
     });
 
-    it('should create new shipping record', async () => {
-      orderRepo.findOne.mockResolvedValue({ id: 1 });
-      shippingRepo.findOne
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ id: 1, carrier: 'cj', trackingNumber: '123' });
-      shippingRepo.create.mockReturnValue({ orderId: 1, carrier: 'cj', trackingNumber: '123' });
-      shippingRepo.save.mockResolvedValue({ id: 1 });
+    it('rejects unconfirmed payment before mutation or notification', async () => {
+      mockManager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
+        .mockResolvedValueOnce({ id: 1, status: PaymentStatus.PENDING });
 
-      await service.registerShipping(1, { carrier: 'cj', trackingNumber: '123' });
-      expect(shippingRepo.create).toHaveBeenCalled();
-      expect(shippingRepo.save).toHaveBeenCalled();
+      await expect(
+        service.registerShipping(1, { carrier: 'cj', trackingNumber: '456' }),
+      ).rejects.toThrow('결제가 확정되지 않은 주문은 배송을 등록할 수 없습니다.');
+
+      expect(mockManager.update).not.toHaveBeenCalledWith(Order, 1, {
+        status: OrderStatus.PREPARING,
+      });
+      expect(mockManager.save).not.toHaveBeenCalledWith(Shipping, expect.anything());
+      expect(notificationService.sendShippingUpdate).not.toHaveBeenCalled();
+      expect(messageNotificationService.sendShippingStarted).not.toHaveBeenCalled();
     });
 
-    it('should update existing shipping record without tracking', async () => {
-      orderRepo.findOne.mockResolvedValue({ id: 1 });
-      shippingRepo.findOne
-        .mockResolvedValueOnce({ id: 5, trackingNumber: null })
-        .mockResolvedValueOnce({ id: 5, carrier: 'hanjin', trackingNumber: '789' });
-      shippingRepo.update.mockResolvedValue({ affected: 1 });
+    it('should create new shipping record', async () => {
+      mockManager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID })
+        .mockResolvedValueOnce({ id: 1, status: PaymentStatus.CONFIRMED })
+        .mockResolvedValueOnce(null);
+      mockManager.save.mockResolvedValue({
+        id: 1,
+        orderId: 1,
+        carrier: 'cj',
+        trackingNumber: '123',
+        status: ShippingStatus.PREPARING,
+      });
 
-      await service.registerShipping(1, { carrier: 'hanjin', trackingNumber: '789' });
-      expect(shippingRepo.update).toHaveBeenCalledWith(
-        5,
+      await service.registerShipping(1, { carrier: 'cj', trackingNumber: '123' });
+      expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.PREPARING });
+      expect(mockManager.save).toHaveBeenCalledWith(
+        Shipping,
         expect.objectContaining({
-          carrier: 'hanjin',
-          trackingNumber: '789',
+          orderId: 1,
+          carrier: 'cj',
+          trackingNumber: '123',
+          status: ShippingStatus.PREPARING,
         }),
       );
     });
+
+    it('should update existing shipping record without tracking', async () => {
+      mockManager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PREPARING })
+        .mockResolvedValueOnce({ id: 1, status: PaymentStatus.CONFIRMED })
+        .mockResolvedValueOnce({ id: 5, trackingNumber: null });
+      mockManager.save.mockResolvedValue({
+        id: 5,
+        orderId: 1,
+        carrier: 'hanjin',
+        trackingNumber: '789',
+        status: ShippingStatus.PREPARING,
+      });
+
+      await service.registerShipping(1, { carrier: 'hanjin', trackingNumber: '789' });
+      expect(mockManager.save).toHaveBeenCalledWith(
+        Shipping,
+        expect.objectContaining({
+          id: 5,
+          orderId: 1,
+          carrier: 'hanjin',
+          trackingNumber: '789',
+          status: ShippingStatus.PREPARING,
+        }),
+      );
+    });
+
+    it.each([OrderStatus.CANCELLED, OrderStatus.REFUNDED])(
+      'rejects %s orders before creating shipping',
+      async (status) => {
+        mockManager.findOne
+          .mockResolvedValueOnce({ id: 1, status })
+          .mockResolvedValueOnce({ id: 1, status: PaymentStatus.CONFIRMED });
+
+        await expect(
+          service.registerShipping(1, { carrier: 'cj', trackingNumber: '123' }),
+        ).rejects.toThrow(BadRequestException);
+        expect(mockManager.save).not.toHaveBeenCalledWith(Shipping, expect.anything());
+      },
+    );
   });
 });
