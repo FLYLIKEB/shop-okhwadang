@@ -132,6 +132,7 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
     });
 
     it('coupons supports admin creation/issuance and user discount calculation', async () => {
+      const couponShipping = { zipcode: '12345', items: [{ productId, productOptionId: null, quantity: 1 }] };
       await request(app.getHttpServer())
         .post('/api/admin/coupons')
         .set('Cookie', userCookies)
@@ -172,24 +173,35 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/coupons/calculate')
         .set('Cookie', userCookies)
-        .send({ orderAmount: 5000, userCouponId })
+        .send({ ...couponShipping, orderAmount: 5000, userCouponId })
         .expect(400);
 
       await request(app.getHttpServer())
         .post('/api/coupons/calculate')
         .set('Cookie', userCookies)
-        .send({ orderAmount: 15000, pointsToUse: 1 })
+        .send({ ...couponShipping, orderAmount: 15000, pointsToUse: 1 })
         .expect(400);
 
-      await request(app.getHttpServer())
+      const couponQuote = await request(app.getHttpServer())
         .post('/api/coupons/calculate')
         .set('Cookie', userCookies)
-        .send({ orderAmount: 15000, userCouponId })
+        .send({ ...couponShipping, orderAmount: 15000, userCouponId })
         .expect(200)
-        .expect((res) => {
-          expect((res.body as { couponDiscount: number }).couponDiscount).toBe(3000);
-          expect((res.body as { totalPayable: number }).totalPayable).toBe(15000);
-        });
+      expect((couponQuote.body as { couponDiscount: number }).couponDiscount).toBe(3000);
+      expect((couponQuote.body as { totalPayable: number }).totalPayable).toBe(15000);
+
+      const preview = await request(app.getHttpServer())
+        .post('/api/checkout/pricing/preview')
+        .set('Cookie', userCookies)
+        .send({
+          items: couponShipping.items,
+          zipcode: couponShipping.zipcode,
+          userCouponId,
+          pointsToUse: 0,
+        })
+        .expect(200);
+      expect((preview.body as { shippingFee: number }).shippingFee).toBe((couponQuote.body as { shippingFee: number }).shippingFee);
+      expect((preview.body as { totalPayable: number }).totalPayable).toBe((couponQuote.body as { totalPayable: number }).totalPayable);
 
       const expiredCouponRes = await request(app.getHttpServer())
         .post('/api/admin/coupons')
@@ -228,6 +240,12 @@ export function registerCommerceModulesSuite(getApp: () => INestApplication) {
         .expect(201);
 
       const orderId = Number((orderRes.body as { id: number }).id);
+      const persistedOrder = await dataSource.query(
+        `SELECT total_amount, shipping_fee FROM orders WHERE id = ?`,
+        [orderId],
+      ) as Array<{ total_amount: number; shipping_fee: number }>;
+      expect(Number(persistedOrder[0].shipping_fee)).toBe((couponQuote.body as { shippingFee: number }).shippingFee);
+      expect(Number(persistedOrder[0].total_amount)).toBe((couponQuote.body as { totalPayable: number }).totalPayable);
       const usedCoupons = await dataSource.query(
         `SELECT status, order_id FROM user_coupons WHERE id = ?`,
         [userCouponId],

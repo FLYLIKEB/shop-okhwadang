@@ -200,10 +200,12 @@ export class OrderCreationWorkflowService {
     if (userId !== null && (input.userCouponId || requestedPoints > 0)) {
       const calculateDto: CalculateDiscountDto = {
         orderAmount: input.subtotalAmount,
+        zipcode: input.zipcode,
+        items: [],
         userCouponId: input.userCouponId,
         pointsToUse: requestedPoints,
       };
-      const discountResult = await this.couponsService.calculate(userId, calculateDto);
+      const discountResult = await this.couponsService.calculate(userId, calculateDto, input.shippingItemPolicies);
       couponDiscount = discountResult.couponDiscount;
       pointsDiscount = discountResult.pointsDiscount;
     }

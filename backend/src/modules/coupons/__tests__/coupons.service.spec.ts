@@ -8,6 +8,8 @@ import { PointHistory } from '../entities/point-history.entity';
 import { CalculateDiscountDto } from '../dto/calculate-discount.dto';
 import { DataSource } from 'typeorm';
 import { PointsService } from '../../points/points.service';
+import { ShippingFeeCalculatorService } from '../../shipping/services/shipping-fee-calculator.service';
+import { Product, ProductStatus } from '../../products/entities/product.entity';
 
 describe('CouponsService', () => {
   let service: CouponsService;
@@ -98,6 +100,16 @@ describe('CouponsService', () => {
     })),
   };
 
+  const mockShippingFeeCalculator = {
+    calculate: jest.fn().mockResolvedValue({ shippingFee: 0, threshold: 50000 }),
+  };
+
+  const mockProductRepo = {
+    find: jest.fn().mockResolvedValue([{ id: 10, status: ProductStatus.ACTIVE, isFreeShipping: false }]),
+  };
+
+  const shippingInput = { zipcode: '04524', items: [{ productId: 10, productOptionId: null, quantity: 1 }] };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -107,6 +119,8 @@ describe('CouponsService', () => {
         { provide: getRepositoryToken(PointHistory), useValue: mockPointHistoryRepo },
         { provide: DataSource, useValue: mockDataSource },
         { provide: PointsService, useValue: mockPointsService },
+        { provide: ShippingFeeCalculatorService, useValue: mockShippingFeeCalculator },
+        { provide: getRepositoryToken(Product), useValue: mockProductRepo },
       ],
     }).compile();
 
@@ -225,7 +239,7 @@ describe('CouponsService', () => {
       mockUserCouponRepo.findOne.mockResolvedValue(uc);
 
       await expect(
-        service.calculate(10, { orderAmount: 20000, userCouponId: 1 }),
+        service.calculate(10, { ...shippingInput, orderAmount: 20000, userCouponId: 1 }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -234,7 +248,7 @@ describe('CouponsService', () => {
       mockUserCouponRepo.findOne.mockResolvedValue(uc);
 
       await expect(
-        service.calculate(10, { orderAmount: 5000, userCouponId: 1 }),
+        service.calculate(10, { ...shippingInput, orderAmount: 5000, userCouponId: 1 }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -243,7 +257,7 @@ describe('CouponsService', () => {
       mockUserCouponRepo.findOne.mockResolvedValue(uc);
 
       await expect(
-        service.calculate(10, { orderAmount: 20000, userCouponId: 1 }),
+        service.calculate(10, { ...shippingInput, orderAmount: 20000, userCouponId: 1 }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -252,25 +266,47 @@ describe('CouponsService', () => {
       mockPointsService.getUserPointBalance.mockResolvedValue(1000);
 
       await expect(
-        service.calculate(10, { orderAmount: 20000, pointsToUse: 5000 }),
+        service.calculate(10, { ...shippingInput, orderAmount: 20000, pointsToUse: 5000 }),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('쿠폰 없이 계산 성공', async () => {
       mockPointsService.getUserPointBalance.mockResolvedValue(0);
 
-      const result = await service.calculate(10, { orderAmount: 50000 });
+      const result = await service.calculate(10, { ...shippingInput, orderAmount: 50000 });
       expect(result.originalAmount).toBe(50000);
       expect(result.couponDiscount).toBe(0);
       expect(result.pointsDiscount).toBe(0);
       expect(result.shippingFee).toBe(0);
       expect(result.totalPayable).toBe(50000);
     });
+
+    it('uses the authoritative shipping quote with the pre-discount subtotal and item policies', async () => {
+      const uc = mockUserCoupon(mockFixedCoupon);
+      mockUserCouponRepo.findOne.mockResolvedValue(uc);
+      mockShippingFeeCalculator.calculate.mockResolvedValue({ shippingFee: 7000, threshold: 50000 });
+
+      const result = await service.calculate(10, {
+        ...shippingInput,
+        orderAmount: 40000,
+        items: [{ productId: 10, productOptionId: null, quantity: 1 }],
+        userCouponId: 2,
+      });
+
+      expect(mockShippingFeeCalculator.calculate).toHaveBeenCalledWith(
+        40000,
+        '04524',
+        [{ isFreeShipping: false }],
+      );
+      expect(result.finalAmount).toBe(37000);
+      expect(result.shippingFee).toBe(7000);
+      expect(result.totalPayable).toBe(44000);
+    });
   });
 
   describe('정책 고정 — 쿠폰·포인트 동시 사용', () => {
     it('CalculateDiscountDto 는 단일 userCouponId 만 받는다 (다중 쿠폰 적용 불가 — 구조적 제약)', () => {
-      const dto: CalculateDiscountDto = { orderAmount: 10000, userCouponId: 1, pointsToUse: 0 };
+      const dto: CalculateDiscountDto = { ...shippingInput, orderAmount: 10000, userCouponId: 1, pointsToUse: 0 };
       expect(typeof dto.userCouponId).toBe('number');
     });
 
@@ -280,6 +316,7 @@ describe('CouponsService', () => {
       mockPointsService.getUserPointBalance.mockResolvedValue(2000);
 
       const result = await service.calculate(10, {
+        ...shippingInput,
         orderAmount: 50000,
         userCouponId: 1,
         pointsToUse: 2000,
@@ -298,6 +335,7 @@ describe('CouponsService', () => {
       mockPointsService.getUserPointBalance.mockResolvedValue(50000);
 
       const result = await service.calculate(10, {
+        ...shippingInput,
         orderAmount: 10000,
         userCouponId: 2,
         pointsToUse: 10000,
@@ -313,6 +351,7 @@ describe('CouponsService', () => {
       mockPointsService.getUserPointBalance.mockResolvedValue(5000);
 
       const result = await service.calculate(10, {
+        ...shippingInput,
         orderAmount: 10000,
         pointsToUse: 3000,
       });

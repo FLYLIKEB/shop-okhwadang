@@ -14,16 +14,19 @@ import { AuthEventsModule } from '../auth/auth-events.module';
 import { OrderEventsModule } from '../orders/order-events.module';
 import { AuditLogModule } from '../audit-logs/audit-log.module';
 import { User } from '../users/entities/user.entity';
+import { Product } from '../products/entities/product.entity';
 import { SchedulerLockService } from '../../common/services/scheduler-lock.service';
+import { ShippingModule } from '../shipping/shipping.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Coupon, UserCoupon, PointHistory, CouponRule, User]),
+    TypeOrmModule.forFeature([Coupon, UserCoupon, PointHistory, CouponRule, User, Product]),
     PointsModule,
     MembershipModule,
     AuthEventsModule,
     OrderEventsModule,
     AuditLogModule,
+    ShippingModule,
   ],
   controllers: [CouponsController, AdminCouponsController, AdminCouponRulesController],
   providers: [CouponsService, CouponRulesService, SchedulerLockService],

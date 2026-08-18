@@ -163,9 +163,11 @@ type OrderCreationWorkflowServiceInternals = {
 
     expect(couponsService.calculate).toHaveBeenCalledWith(7, {
       orderAmount: 50000,
+        zipcode: '12345',
+        items: [],
       userCouponId: 10,
       pointsToUse: 0,
-    });
+      }, [{ isFreeShipping: false }]);
     expect(shippingFeeCalculator.calculate).toHaveBeenCalledWith(50000, '12345', [{ isFreeShipping: false }]);
   });
 
