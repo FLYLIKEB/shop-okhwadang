@@ -1,4 +1,6 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
+import { hydrateRoot } from 'react-dom/client';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthProvider, buildOAuthAuthorizeUrl, useAuth } from '@/contexts/AuthContext';
 import type { AuthTokenResponse, AuthUser } from '@/lib/api';
@@ -101,6 +103,32 @@ describe('AuthContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('loading').textContent).toBe('idle');
     });
+  });
+
+  it('keeps the first server and client render stable without a saved session hint', async () => {
+    const serverHtml = renderToString(
+      <AuthProvider>
+        <AuthDisplay />
+      </AuthProvider>,
+    );
+    const container = document.createElement('div');
+    container.innerHTML = serverHtml;
+    document.body.appendChild(container);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const root = hydrateRoot(
+      container,
+      <AuthProvider>
+        <AuthDisplay />
+      </AuthProvider>,
+    );
+
+    await act(async () => {});
+
+    expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining('Hydration failed'));
+    root.unmount();
+    consoleError.mockRestore();
+    container.remove();
   });
 
   it('loads user from /auth/me on mount (cookie-based)', async () => {
