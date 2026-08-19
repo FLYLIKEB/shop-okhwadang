@@ -187,9 +187,9 @@ export class ProductsController {
   @Roles('admin')
   @ApiCookieAuth()
   @ApiOperation({
-    summary: '네이버 커머스API 상품 업데이트 미리보기',
+    summary: '네이버 커머스API 상품 반영 미리보기',
     description:
-      '네이버 커머스API로 스마트스토어 상품을 조회하고 SKU가 일치하는 자사몰 상품 업데이트 예정 내역을 반환합니다.',
+      '네이버 커머스API로 스마트스토어 상품을 조회하고 기존 상품은 업데이트, 신규 상품은 생성할 반영 예정 내역을 반환합니다.',
   })
   @ApiResponse({ status: 201, description: '네이버 커머스API 미리보기 작업 시작' })
   @ApiResponse({ status: 401, description: '인증 필요' })
@@ -202,9 +202,9 @@ export class ProductsController {
   @Roles('admin')
   @ApiCookieAuth()
   @ApiOperation({
-    summary: '네이버 커머스API 상품 업데이트 반영',
+    summary: '네이버 커머스API 상품 반영',
     description:
-      '네이버 커머스API 미리보기와 동일한 매칭/매핑 기준으로 SKU가 일치하는 자사몰 상품을 업데이트합니다.',
+      '네이버 커머스API 미리보기와 동일한 매칭/매핑 기준으로 기존 상품을 업데이트하고 신규 상품을 생성합니다.',
   })
   @ApiResponse({ status: 201, description: '네이버 커머스API 반영 작업 시작' })
   @ApiResponse({ status: 401, description: '인증 필요' })

@@ -134,7 +134,7 @@ const NAVER_PRODUCTS: NaverCommerceFetchedProduct[] = [
 ];
 
 describe('NaverCommerceProductImportService', () => {
-  it('previews Naver Commerce products with the shared SmartStore row format without saving', async () => {
+  it('previews new Naver Commerce products as creates and existing products as updates', async () => {
     const existing = { id: 7, sku: 'SKU-1', slug: 'old-product' } as Product;
     const { service, commandService } = createService(NAVER_PRODUCTS, [existing]);
 
@@ -142,9 +142,9 @@ describe('NaverCommerceProductImportService', () => {
 
     expect(result.summary).toMatchObject({
       totalRows: 2,
-      createCount: 0,
+      createCount: 1,
       updateCount: 1,
-      skipCount: 1,
+      skipCount: 0,
       failureCount: 0,
     });
     expect(result.rows[0]).toMatchObject({
@@ -165,13 +165,13 @@ describe('NaverCommerceProductImportService', () => {
         ]),
       }),
     });
-    expect(result.rows[1]).toMatchObject({ identifier: 'SKU-2', action: 'skip', status: 'valid' });
-    expect(result.rows[1].errors.join(' ')).toContain('업데이트 대상에서 제외');
+    expect(result.rows[1]).toMatchObject({ identifier: 'SKU-2', action: 'create', status: 'valid' });
+    expect(result.rows[1].errors).toEqual([]);
     expect(commandService.update).not.toHaveBeenCalled();
     expect(commandService.create).not.toHaveBeenCalled();
   });
 
-  it('commits only SKU-matched Naver products and never creates unmatched API rows', async () => {
+  it('commits matched products as updates and new Naver products as creates', async () => {
     const existing = { id: 7, sku: 'SKU-1', slug: 'old-product' } as Product;
     const { service, commandService, ingestService, attributesService } = createService(
       NAVER_PRODUCTS,
@@ -182,9 +182,9 @@ describe('NaverCommerceProductImportService', () => {
 
     expect(result.summary).toMatchObject({
       updateCount: 1,
-      createCount: 0,
-      skipCount: 1,
-      successCount: 1,
+      createCount: 1,
+      skipCount: 0,
+      successCount: 2,
       failureCount: 0,
     });
     expect(commandService.update).toHaveBeenCalledWith(
@@ -219,7 +219,14 @@ describe('NaverCommerceProductImportService', () => {
         ],
       }),
     );
-    expect(commandService.create).not.toHaveBeenCalled();
+    expect(commandService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: '미매칭 상품',
+        sku: 'SKU-2',
+        price: 30000,
+        stock: 1,
+      }),
+    );
     expect(attributesService.createOrUpdateProductAttribute).toHaveBeenCalledWith(
       7,
       10,

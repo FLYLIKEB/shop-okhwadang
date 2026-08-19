@@ -33,11 +33,7 @@ export class NaverCommerceProductImportService {
     const fetchedProducts = await this.naverCommerceApiClient.fetchProductsWithDetails();
     const parsedRows = fetchedProducts.map((product) => this.toParsedRow(product));
     const options = {
-      unmatchedAction: 'skip' as const,
-      unmatchedSkipMessage: (identifier: string | null) =>
-        identifier
-          ? `SKU가 ${identifier}인 자사몰 상품이 없어 업데이트 대상에서 제외했습니다.`
-          : '네이버 상품 식별자를 찾지 못해 업데이트 대상에서 제외했습니다.',
+      unmatchedAction: 'create' as const,
     };
     return commit
       ? this.smartStoreProductImportService.commitParsedRows(parsedRows, options)

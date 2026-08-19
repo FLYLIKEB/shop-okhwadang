@@ -925,8 +925,8 @@
         }
       },
       "naverCommerce": {
-        "title": "네이버 커머스API 상품 업데이트",
-        "description": "엑셀 파일 없이 네이버 커머스API에서 스마트스토어 상품을 조회해 SKU가 일치하는 기존 자사몰 상품만 업데이트 후보로 미리보기합니다.",
+        "title": "네이버 커머스API 상품 반영",
+        "description": "엑셀 파일 없이 네이버 커머스API에서 스마트스토어 상품을 조회해 기존 상품은 업데이트하고 신규 상품은 자사몰에 생성합니다.",
         "previewButton": "API 미리보기",
         "previewing": "조회 중...",
         "commitButton": "API 결과 반영",
