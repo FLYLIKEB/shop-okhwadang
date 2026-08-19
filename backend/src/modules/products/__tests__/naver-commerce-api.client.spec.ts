@@ -232,6 +232,22 @@ describe('NaverCommerceApiClient', () => {
     );
   });
 
+  it('retries transient token network failures before failing the import', async () => {
+    process.env.NAVER_COMMERCE_RETRY_ATTEMPTS = '1';
+    process.env.NAVER_COMMERCE_RETRY_BASE_DELAY_MS = '0';
+    const fetchMock = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('temporary network failure'))
+      .mockResolvedValueOnce(jsonResponse({ access_token: 'access-token', expires_in: 10_800 }))
+      .mockResolvedValueOnce(jsonResponse({ contents: [], totalPages: 1, last: true }));
+    global.fetch = fetchMock;
+
+    const client = new NaverCommerceApiClient();
+
+    await expect(client.fetchProductsWithDetails()).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   it('throws a safe configuration error when credentials are missing', async () => {
     delete process.env.NAVER_COMMERCE_APP_ID;
     delete process.env.NAVER_COMMERCE_APP_SECRET;
