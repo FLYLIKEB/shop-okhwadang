@@ -111,7 +111,9 @@ function writeAuthSessionHint(present: boolean): void {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(() => readAuthSessionHint() !== 'absent');
+  // The server cannot read localStorage. Keep the first render identical on
+  // both sides and resolve the session hint only after hydration.
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (readAuthSessionHint() === 'absent') {
