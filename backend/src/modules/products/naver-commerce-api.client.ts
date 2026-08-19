@@ -1,4 +1,4 @@
-import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 const DEFAULT_NAVER_COMMERCE_API_BASE_URL = 'https://api.commerce.naver.com/external';
@@ -38,6 +38,7 @@ class NaverCommerceTransientApiError extends Error {
 
 @Injectable()
 export class NaverCommerceApiClient {
+  private readonly logger = new Logger(NaverCommerceApiClient.name);
   private accessToken: string | null = null;
   private accessTokenExpiresAt = 0;
 
@@ -169,7 +170,8 @@ export class NaverCommerceApiClient {
           Authorization: `Bearer ${token}`,
         },
       });
-    } catch {
+    } catch (error) {
+      this.logger.warn(`Naver API request network failure: ${this.getNetworkErrorCode(error)}`);
       throw new NaverCommerceTransientApiError(
         '네이버 커머스API 요청에 실패했습니다. 네트워크 상태를 확인해 주세요.',
       );
@@ -242,7 +244,8 @@ export class NaverCommerceApiClient {
           body,
         });
         break;
-      } catch {
+      } catch (error) {
+        this.logger.warn(`Naver OAuth token network failure: ${this.getNetworkErrorCode(error)}`);
         if (attempt >= retryAttempts) {
           throw new BadGatewayException(
             '네이버 커머스API 인증 토큰 요청에 실패했습니다. 네트워크 상태를 확인해 주세요.',
@@ -404,5 +407,14 @@ export class NaverCommerceApiClient {
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
+
+  private getNetworkErrorCode(error: unknown): string {
+    if (!(error instanceof Error)) return 'unknown';
+    const cause = 'cause' in error ? error.cause : null;
+    if (this.isRecord(cause) && typeof cause.code === 'string') {
+      return `${error.name}/${cause.code}`;
+    }
+    return error.name;
   }
 }
