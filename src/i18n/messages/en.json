@@ -472,7 +472,12 @@
       "loadError": "Required policies could not be loaded. Please try again shortly.",
       "policyMetadata": "Version {version} · Effective {effectiveDate}",
       "unknownVersion": "Unavailable",
-      "unknownEffectiveDate": "Unavailable"
+      "unknownEffectiveDate": "Unavailable",
+      "showPolicy": "Show policy details",
+      "hidePolicy": "Hide policy details",
+      "contentLoading": "Loading policy details.",
+      "contentUnavailable": "Policy details are unavailable.",
+      "contentLoadError": "Unable to load policy details."
     },
     "couponLoadError": "Failed to load coupons.",
     "couponLoading": "Loading coupons...",

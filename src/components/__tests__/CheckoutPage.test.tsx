@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { forwardRef, Suspense, useImperativeHandle } from 'react';
 import CheckoutPage from '@/app/[locale]/checkout/page';
-import { ordersApi, paymentsApi, usersApi } from '@/lib/api';
+import { ordersApi, pagesApi, paymentsApi, usersApi } from '@/lib/api';
 import { checkoutPricingApi } from '@/lib/api/checkout-pricing';
 import type { CartItem, UserAddress } from '@/lib/api';
 
@@ -82,6 +82,11 @@ vi.mock('next-intl', () => ({
       'consent.title': '필수 동의',
       'consent.requiredLabel': '[필수] 구매조건 및 개인정보 처리에 동의합니다.',
       'consent.requiredDescription': '주문할 상품의 상품명, 가격, 배송정보, 교환·환불 규정을 확인했으며 구매에 동의합니다.',
+      'consent.showPolicy': '정책 내용 열기',
+      'consent.hidePolicy': '정책 내용 닫기',
+      'consent.contentLoading': '정책 내용을 불러오는 중입니다.',
+      'consent.contentUnavailable': '정책 내용을 불러오지 못했습니다.',
+      'consent.contentLoadError': '정책 내용을 불러오지 못했습니다.',
       guestCheckoutTitle: '비회원 주문',
       guestCheckoutDescription: '비회원 안내',
       guestEmailLabel: '비회원 이메일',
@@ -169,6 +174,7 @@ vi.mock('@/lib/api', () => ({
       { slug: 'shipping', title: '배송 안내', titleEn: 'Shipping', version: 'v1.0', effectiveDate: '2026-04-20' },
       { slug: 'terms', title: '이용약관', titleEn: 'Terms', version: 'v1.0', effectiveDate: '2026-04-20' },
     ]),
+    getBySlug: vi.fn(),
   },
   usersApi: { getAddresses: vi.fn().mockResolvedValue([]), updateAddress: vi.fn().mockResolvedValue({}) },
 }));
@@ -268,6 +274,36 @@ describe('CheckoutPage', () => {
     expect(await screen.findByLabelText(/받는 분 이름/)).toBeInTheDocument();
     expect(screen.getByLabelText(/연락처/)).toBeInTheDocument();
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
+  });
+
+  it('expands a policy row and loads its content on demand', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+    vi.mocked(pagesApi.getBySlug).mockResolvedValue({
+      id: 1,
+      slug: 'privacy',
+      title: '개인정보처리방침',
+      blocks: [{
+        id: 1,
+        type: 'text_content',
+        content: { html: '<p>개인정보 처리 내용</p>' },
+        sort_order: 0,
+        is_visible: true,
+      }],
+      is_published: true,
+    });
+
+    await renderCheckoutPage();
+    const policyToggle = screen.getAllByRole('button', { name: '정책 내용 열기' })[0];
+    await user.click(policyToggle);
+
+    expect(pagesApi.getBySlug).toHaveBeenCalledWith('privacy', 'ko');
+    expect(policyToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(await screen.findByText('개인정보 처리 내용')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '정책 내용 닫기' }));
+    expect(screen.queryByText('개인정보 처리 내용')).not.toBeInTheDocument();
   });
 
   it('uses preview totals and keeps coupon discount / points / shipping split visible', async () => {

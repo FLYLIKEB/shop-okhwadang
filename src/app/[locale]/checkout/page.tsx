@@ -3,6 +3,7 @@
 import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -12,6 +13,7 @@ import { cn } from '@/components/ui/utils';
 import type {
   CartItem,
   CheckoutGatewayName,
+  Page,
   PreparePaymentResponse,
   PolicyConsentSnapshot,
   UserAddress,
@@ -43,6 +45,7 @@ import {
   checkoutPricingApi,
   type CheckoutPricingPreviewResponse,
 } from '@/lib/api/checkout-pricing';
+import SafeHtml from '@/components/shared/common/SafeHtml';
 
 export interface ShippingForm {
   recipientName: string;
@@ -71,6 +74,12 @@ function normalizeZipcodeInputValue(value: unknown): string {
     return String(value).padStart(5, '0');
   }
   return normalizeInputValue(value);
+}
+
+function getPolicyHtml(page: Page | undefined): string | null {
+  const block = page?.blocks.find((candidate) => candidate.type === 'text_content');
+  const html = block?.content.html;
+  return typeof html === 'string' ? html : null;
 }
 
 export default function CheckoutPage({
@@ -111,6 +120,9 @@ export default function CheckoutPage({
   const [policyConsents, setPolicyConsents] = useState<Array<CurrentPolicyMetadata & { agreed: boolean }>>([]);
   const [policyConsentLoading, setPolicyConsentLoading] = useState(true);
   const [policyConsentLoadError, setPolicyConsentLoadError] = useState(false);
+  const [expandedPolicySlug, setExpandedPolicySlug] = useState<string | null>(null);
+  const [policyPages, setPolicyPages] = useState<Record<string, Page>>({});
+  const [policyContentLoadingSlug, setPolicyContentLoadingSlug] = useState<string | null>(null);
   const [requestedUserCouponId, setRequestedUserCouponId] = useState<number | undefined>();
   const [requestedPointsToUse, setRequestedPointsToUse] = useState(0);
   const paymentRef = useRef<PaymentGatewayHandle>(null);
@@ -170,6 +182,11 @@ export default function CheckoutPage({
       onError: () => setPricingPreview(null),
       errorMessage: t('pricingPreviewError'),
     },
+  );
+  const { execute: loadPolicyContent } = useAsyncAction(
+    ({ slug, policyLocale }: { slug: string; policyLocale: Locale }) =>
+      pagesApi.getBySlug(slug, policyLocale),
+    { errorMessage: t('consent.contentLoadError') },
   );
 
   const fillFormFromAddress = (addr: UserAddress) => {
@@ -332,6 +349,23 @@ export default function CheckoutPage({
     if (errors.guestEmail) {
       setErrors((prev) => ({ ...prev, guestEmail: undefined }));
     }
+  };
+
+  const handlePolicyToggle = (slug: string) => {
+    const nextSlug = expandedPolicySlug === slug ? null : slug;
+    setExpandedPolicySlug(nextSlug);
+    if (nextSlug === null || policyPages[nextSlug]) return;
+
+    setPolicyContentLoadingSlug(nextSlug);
+    void loadPolicyContent({ slug: nextSlug, policyLocale: locale })
+      .then((page) => {
+        if (page) {
+          setPolicyPages((current) => ({ ...current, [nextSlug]: page }));
+        }
+      })
+      .finally(() => {
+        setPolicyContentLoadingSlug((current) => (current === nextSlug ? null : current));
+      });
   };
 
   const { handleSubmit, handlePaymentError } = useCheckout({
@@ -499,30 +533,61 @@ export default function CheckoutPage({
                     />
                     <span className="font-medium">{t('consent.requiredLabel')}</span>
                   </label>
-                  {policyConsents.map((policy) => (
-                    <label key={policy.slug} className="flex gap-3 rounded-md border border-soft bg-muted/20 p-3 text-sm text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={policy.agreed}
-                        onChange={(event) => {
-                          setPolicyConsents((current) => current.map((item) => (
-                            item.slug === policy.slug ? { ...item, agreed: event.target.checked } : item
-                          )));
-                        }}
-                        className="mt-1 h-4 w-4 shrink-0 accent-foreground"
-                        aria-label={policy.title}
-                      />
-                      <span>
-                        <span className="font-medium">{policy.title}</span>
-                        <span className="mt-1 block text-xs text-muted-foreground">
-                          {t('consent.policyMetadata', {
-                            version: policy.version ?? t('consent.unknownVersion'),
-                            effectiveDate: policy.effectiveDate ?? t('consent.unknownEffectiveDate'),
-                          })}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
+                  {policyConsents.map((policy) => {
+                    const isExpanded = expandedPolicySlug === policy.slug;
+                    const detailsId = `checkout-policy-${policy.slug}`;
+                    const html = getPolicyHtml(policyPages[policy.slug]);
+
+                    return (
+                      <div key={policy.slug} className="overflow-hidden rounded-md border border-soft bg-muted/20 text-sm text-foreground">
+                        <div className="flex items-start gap-3 p-3">
+                          <input
+                            type="checkbox"
+                            checked={policy.agreed}
+                            onChange={(event) => {
+                              setPolicyConsents((current) => current.map((item) => (
+                                item.slug === policy.slug ? { ...item, agreed: event.target.checked } : item
+                              )));
+                            }}
+                            className="mt-1 h-4 w-4 shrink-0 accent-foreground"
+                            aria-label={policy.title}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <span className="font-medium">{policy.title}</span>
+                              <button
+                                type="button"
+                                onClick={() => handlePolicyToggle(policy.slug)}
+                                aria-expanded={isExpanded}
+                                aria-controls={detailsId}
+                                aria-label={t(isExpanded ? 'consent.hidePolicy' : 'consent.showPolicy')}
+                                className="-m-1 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              >
+                                <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                              </button>
+                            </div>
+                            <span className="mt-1 block text-xs text-muted-foreground">
+                              {t('consent.policyMetadata', {
+                                version: policy.version ?? t('consent.unknownVersion'),
+                                effectiveDate: policy.effectiveDate ?? t('consent.unknownEffectiveDate'),
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                        {isExpanded && (
+                          <div id={detailsId} className="border-t border-soft bg-background p-4">
+                            {policyContentLoadingSlug === policy.slug ? (
+                              <p className="text-sm text-muted-foreground">{t('consent.contentLoading')}</p>
+                            ) : html ? (
+                              <SafeHtml html={html} className="prose max-w-none text-sm" />
+                            ) : (
+                              <p className="text-sm text-muted-foreground">{t('consent.contentUnavailable')}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </section>
