@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import 'dotenv/config';
+import { config as loadEnv } from 'dotenv';
 import * as Sentry from '@sentry/node';
 import * as express from 'express';
 import * as path from 'path';
@@ -16,6 +16,14 @@ import { SentryExceptionFilter } from './common/filters/sentry-exception.filter'
 import { redactSensitiveFields } from './common/utils/redaction.util';
 import { ContextualLogger } from './common/logging/contextual-logger.service';
 import { requestContextMiddleware } from './common/logging/request-context.middleware';
+
+// PM2 may preserve values inherited from an earlier shell-based restart.
+// Parse the deployment file explicitly so quoted dotenv values are normalized
+// and take precedence over stale inherited values.
+loadEnv({
+  path: process.env.DOTENV_CONFIG_PATH || '.env',
+  override: true,
+});
 
 // 프로덕션 환경에서 필수 env 키 사전 검증 — 누락 시 명확한 에러 메시지와 함께 종료
 assertEnv();
