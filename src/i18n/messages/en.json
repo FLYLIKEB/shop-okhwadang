@@ -930,8 +930,8 @@
         }
       },
       "naverCommerce": {
-        "title": "Naver Commerce API product update",
-        "description": "Fetch SmartStore products from the Naver Commerce API without Excel and preview updates only for existing store products with matching SKUs.",
+        "title": "Naver Commerce API product sync",
+        "description": "Fetch SmartStore products from the Naver Commerce API without Excel, update matching store products, and create new products.",
         "previewButton": "Preview API sync",
         "previewing": "Fetching...",
         "commitButton": "Apply API result",
