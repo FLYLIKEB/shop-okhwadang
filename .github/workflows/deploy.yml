@@ -90,13 +90,12 @@ jobs:
           # ------------------------------------------------------------------
           # 4. 마이그레이션/앱 재시작 전 런타임 사전 점검
           # ------------------------------------------------------------------
-          set -a
-          source .env
-          set +a
-
+          # dotenv 파일을 shell 로 source 하면 bcrypt secret 의 `$`가 shell
+          # 변수로 확장될 수 있다. Node 프로세스가 dotenv를 직접 읽게 해
+          # 자격증명 원문을 보존하고, PM2에는 비밀값을 shell 환경으로 넘기지 않는다.
           # 실패 시 배포 중지 (set -e 덕분에 자동으로 스크립트 중단)
-          NODE_ENV=production npm run preflight:prod
-          NODE_ENV=production npm run migration:run:prod
+          NODE_ENV=production DOTENV_CONFIG_PATH=.env NODE_OPTIONS=--require=dotenv/config npm run preflight:prod
+          NODE_ENV=production DOTENV_CONFIG_PATH=.env NODE_OPTIONS=--require=dotenv/config npm run migration:run:prod
 
           # ------------------------------------------------------------------
           # 5. 불필요한 devDependencies 정리 (디스크 절약)
