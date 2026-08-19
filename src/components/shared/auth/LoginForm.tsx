@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { handleApiError } from '@/utils/error';
@@ -12,11 +12,13 @@ import { cn } from '@/components/ui/utils';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { localMessage } from '@/utils/localMessages';
 
-export default function LoginForm() {
+interface LoginFormProps {
+  redirect?: string;
+}
+
+export default function LoginForm({ redirect }: LoginFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const rawRedirect = searchParams.get('redirect');
-  const redirectTo = rawRedirect && isSafeUrl(rawRedirect) ? rawRedirect : '/';
+  const redirectTo = redirect && isSafeUrl(redirect) ? redirect : '/';
   const { login, loginWithKakao, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('');
