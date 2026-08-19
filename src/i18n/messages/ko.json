@@ -472,7 +472,12 @@
       "loadError": "필수 정책을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
       "policyMetadata": "버전 {version} · 시행일 {effectiveDate}",
       "unknownVersion": "확인 필요",
-      "unknownEffectiveDate": "확인 필요"
+      "unknownEffectiveDate": "확인 필요",
+      "showPolicy": "정책 내용 열기",
+      "hidePolicy": "정책 내용 닫기",
+      "contentLoading": "정책 내용을 불러오는 중입니다.",
+      "contentUnavailable": "정책 내용을 불러오지 못했습니다.",
+      "contentLoadError": "정책 내용을 불러오지 못했습니다."
     },
     "couponLoadError": "쿠폰 목록을 불러오지 못했습니다.",
     "couponLoading": "쿠폰 불러오는 중...",
