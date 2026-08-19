@@ -95,6 +95,7 @@ describe('Next.js CSP headers', () => {
     expect(directives['connect-src']).toContain('https://event.tosspayments.com');
     expect(directives['connect-src']).toContain('https://apigw.tosspayments.com');
     expect(directives['connect-src']).toContain('https://apigw-sandbox.tosspayments.com');
+    expect(directives['frame-src']).toContain('https://toss.im');
   });
 
   it('keeps PayPal popup isolation enabled', async () => {
