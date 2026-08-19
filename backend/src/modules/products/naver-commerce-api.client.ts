@@ -170,7 +170,7 @@ export class NaverCommerceApiClient {
         },
       });
     } catch {
-      throw new BadGatewayException(
+      throw new NaverCommerceTransientApiError(
         '네이버 커머스API 요청에 실패했습니다. 네트워크 상태를 확인해 주세요.',
       );
     }
@@ -221,17 +221,38 @@ export class NaverCommerceApiClient {
       type: 'SELF',
     });
 
-    let response: Response;
-    try {
-      response = await fetch(`${this.getBaseUrl()}/v1/oauth2/token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Accept: 'application/json',
-        },
-        body,
-      });
-    } catch {
+    const retryAttempts = this.getNonNegativeIntegerEnv(
+      'NAVER_COMMERCE_RETRY_ATTEMPTS',
+      DEFAULT_RETRY_ATTEMPTS,
+    );
+    const retryBaseDelayMs = this.getNonNegativeIntegerEnv(
+      'NAVER_COMMERCE_RETRY_BASE_DELAY_MS',
+      DEFAULT_RETRY_BASE_DELAY_MS,
+    );
+
+    let response: Response | null = null;
+    for (let attempt = 0; attempt <= retryAttempts; attempt += 1) {
+      try {
+        response = await fetch(`${this.getBaseUrl()}/v1/oauth2/token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: 'application/json',
+          },
+          body,
+        });
+        break;
+      } catch {
+        if (attempt >= retryAttempts) {
+          throw new BadGatewayException(
+            '네이버 커머스API 인증 토큰 요청에 실패했습니다. 네트워크 상태를 확인해 주세요.',
+          );
+        }
+        await this.sleep(this.getRetryDelayMs(attempt, retryBaseDelayMs, null));
+      }
+    }
+
+    if (!response) {
       throw new BadGatewayException(
         '네이버 커머스API 인증 토큰 요청에 실패했습니다. 네트워크 상태를 확인해 주세요.',
       );
