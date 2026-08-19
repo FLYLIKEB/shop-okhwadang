@@ -33,7 +33,7 @@ export const CHECKOUT_GATEWAY_CONTRACT = {
         'https://apigw-sandbox.tosspayments.com',
       ],
       'child-src': ['https://*.tosspayments.com'],
-      'frame-src': ['https://*.tosspayments.com'],
+      'frame-src': ['https://*.tosspayments.com', 'https://toss.im'],
     },
   },
   bank_transfer: {
