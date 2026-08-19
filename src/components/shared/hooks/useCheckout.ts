@@ -125,7 +125,6 @@ export function useCheckout(options: UseCheckoutOptions) {
       options.setCurrentOrderNumber(orderNumber);
       options.setPrepareResult(result);
       options.setStep('idle');
-      toast.info(toastMessage('paymentMethodPrompt'));
     },
     [options],
   );

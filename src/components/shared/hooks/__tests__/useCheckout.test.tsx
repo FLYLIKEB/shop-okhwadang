@@ -666,6 +666,7 @@ describe('useCheckout - Toss 결제 흐름', () => {
     expect(options.setPrepareResult).toHaveBeenCalledWith(prepareResult);
     expect(confirmSpy).not.toHaveBeenCalled();
     expect(options.setStep).toHaveBeenCalledWith('idle');
+    expect(toast.info).not.toHaveBeenCalledWith('결제 수단을 확인하고 결제하기를 눌러주세요.');
     expect(mockPaymentsConfirm).not.toHaveBeenCalled();
   });
 });
