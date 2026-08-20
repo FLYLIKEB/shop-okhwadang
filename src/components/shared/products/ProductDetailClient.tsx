@@ -494,7 +494,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
               {t('addToCart')}
             </Button>
             <Button
-              variant="brown"
+              variant="black"
               className="w-2/3"
               disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleBuyNow()}
@@ -549,7 +549,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {t('addToCart')}
         </Button>
         <Button
-          variant="brown"
+          variant="black"
           className="w-2/3"
           disabled={isSoldout || isAdding || isBuying}
           onClick={() => void handleBuyNow()}
