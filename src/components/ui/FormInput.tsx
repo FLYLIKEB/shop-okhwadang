@@ -26,7 +26,6 @@ export default function FormInput({
         <input
           {...controlProps}
           {...props}
-          required={required}
           className={getFormControlClassName({ error, density, className })}
         />
       )}
