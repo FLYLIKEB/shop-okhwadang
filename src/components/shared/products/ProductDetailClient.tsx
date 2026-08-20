@@ -387,20 +387,20 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Name */}
           <h1 className="toss-product-detail__title text-foreground">{product.name}</h1>
 
+          {/* Rating */}
+          {product.rating !== undefined && (
+            <div className="inline-flex w-fit items-center gap-2 rounded-full bg-muted/40 px-2.5 py-1">
+              <StarRating rating={product.rating} size="sm" interactive={false} />
+              <span className="typo-body-sm font-semibold">{product.rating.toFixed(1)}</span>
+              {product.reviewCount !== undefined && product.reviewCount > 0 && (
+                <span className="typo-body-sm text-muted-foreground">{t('reviewCount', { count: product.reviewCount })}</span>
+              )}
+            </div>
+          )}
+
           {/* Short description */}
           {product.shortDescription && (
             <p className="typo-body-sm font-normal leading-relaxed text-muted-foreground">{product.shortDescription}</p>
-          )}
-
-          {/* Rating */}
-          {product.rating !== undefined && (
-            <div className="flex items-center gap-2">
-              <StarRating rating={product.rating} size="md" interactive={false} />
-              <span className="typo-body-sm font-semibold">{product.rating.toFixed(1)}</span>
-              {product.reviewCount !== undefined && product.reviewCount > 0 && (
-                <span className="typo-body text-muted-foreground">{t('reviewCount', { count: product.reviewCount })}</span>
-              )}
-            </div>
           )}
 
           {/* Price */}
