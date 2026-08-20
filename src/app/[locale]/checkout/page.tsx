@@ -416,14 +416,6 @@ export default function CheckoutPage({
       <div className="layout-container layout-page max-w-3xl">
       <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
 
-      <ol className="checkout-toss-flow mt-6 flex flex-wrap items-center gap-2 text-xs text-muted-foreground md:max-w-xl">
-        <li className="checkout-toss-flow__step checkout-toss-flow__step--active rounded-full px-2.5 py-1 text-primary-foreground">{t('flow.shipping')}</li>
-        <span aria-hidden>→</span>
-        <li className="checkout-toss-flow__step checkout-toss-flow__step--inactive rounded-full px-2.5 py-1 text-secondary-foreground">{t('flow.payment')}</li>
-        <span aria-hidden>→</span>
-        <li className="checkout-toss-flow__step checkout-toss-flow__step--inactive rounded-full px-2.5 py-1 text-secondary-foreground">{t('flow.complete')}</li>
-      </ol>
-
       <form id="checkout-form" onSubmit={handleSubmit} className="mt-8">
         <div className="mx-auto layout-stack-md">
           <OrderSummarySection

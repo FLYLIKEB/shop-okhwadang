@@ -3,6 +3,7 @@
 import type { ShippingForm, FormErrors } from '@/app/[locale]/checkout/page';
 import { localMessage } from '@/utils/localMessages';
 import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 
 interface AddressSearchResult {
   zonecode: string;
@@ -18,20 +19,15 @@ interface DaumPostcodeWindow extends Window {
   };
 }
 
-function openDaumPostcode(onComplete: (data: AddressSearchResult) => void) {
-  const open = () => {
-    const postcode = (window as DaumPostcodeWindow).daum?.Postcode;
-    if (postcode) new postcode({ oncomplete: onComplete }).open();
-  };
-
+function loadDaumPostcode(onReady: () => void) {
   if ((window as DaumPostcodeWindow).daum?.Postcode) {
-    open();
+    onReady();
     return;
   }
 
   const existingScript = document.querySelector<HTMLScriptElement>('script[data-daum-postcode]');
   if (existingScript) {
-    existingScript.addEventListener('load', open, { once: true });
+    existingScript.addEventListener('load', onReady, { once: true });
     return;
   }
 
@@ -39,8 +35,13 @@ function openDaumPostcode(onComplete: (data: AddressSearchResult) => void) {
   script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
   script.async = true;
   script.dataset.daumPostcode = 'true';
-  script.addEventListener('load', open, { once: true });
+  script.addEventListener('load', onReady, { once: true });
   document.body.appendChild(script);
+}
+
+function openDaumPostcode(onComplete: (data: AddressSearchResult) => void) {
+  const postcode = (window as DaumPostcodeWindow).daum?.Postcode;
+  if (postcode) new postcode({ oncomplete: onComplete }).open();
 }
 
 interface ShippingFormSectionProps {
@@ -108,6 +109,12 @@ interface ZipcodeInputSectionProps {
 }
 
 export function ZipcodeInputSection({ form, errors, onChange, onAddressSearch, readOnly = false }: ZipcodeInputSectionProps) {
+  const [postcodeReady, setPostcodeReady] = useState(false);
+
+  useEffect(() => {
+    loadDaumPostcode(() => setPostcodeReady(true));
+  }, []);
+
   return (
     <div className="space-y-1">
       <label htmlFor="zipcode" className="typo-label">
@@ -129,6 +136,7 @@ export function ZipcodeInputSection({ form, errors, onChange, onAddressSearch, r
           type="button"
           variant="black"
           size="sm"
+          disabled={!postcodeReady}
           onClick={() => openDaumPostcode((result) => onAddressSearch?.(result))}
           className="shrink-0"
         >
