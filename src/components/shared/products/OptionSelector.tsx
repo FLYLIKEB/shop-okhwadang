@@ -46,7 +46,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                   title={isSoldout ? t('optionSoldoutReason') : isLowStock ? t('lowStock', { count: option.stock }) : undefined}
                   onClick={() => onSelect(option.id)}
                   className={cn(
-                    'min-w-28 flex-col items-start gap-1 rounded-md px-3 py-2 text-sm transition-all',
+                    'h-auto min-h-20 min-w-28 flex-col items-start gap-1 rounded-md px-3 py-3 text-sm leading-snug transition-all whitespace-normal',
                     isSelected && 'ring-2 ring-foreground',
                     isSoldout && 'opacity-55 cursor-not-allowed',
                   )}
