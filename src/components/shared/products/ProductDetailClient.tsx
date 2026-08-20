@@ -381,7 +381,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Short description */}
           {product.shortDescription && (
-            <p className="typo-body leading-relaxed text-muted-foreground">{product.shortDescription}</p>
+            <p className="typo-body-sm font-normal leading-relaxed text-muted-foreground">{product.shortDescription}</p>
           )}
 
           {/* Rating */}
