@@ -12,6 +12,7 @@ vi.mock('next-intl', () => ({
       toggleOn: '위시리스트에 추가',
       toggleOff: '위시리스트에서 삭제',
       ratingSummary: `${values?.rating ?? 0}(${values?.count ?? 0})`,
+      okhwadang: '옥화당',
     }[key] ?? key),
 }));
 
@@ -77,6 +78,37 @@ describe('ProductCard image presentation', () => {
     });
 
     expect(screen.getByAltText('자사호')).toHaveAttribute('src', 'https://example.com/thumb.webp');
+  });
+
+
+  it('keeps the card responsive sizes and non-lazy policy on the product image', () => {
+    renderCard({ priority: true });
+
+    const image = screen.getByAltText('자사호');
+
+    expect(image).toHaveAttribute('sizes', '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw');
+    expect(image).not.toHaveAttribute('loading', 'lazy');
+  });
+
+  it('renders the fallback logo when the product has no image URL', () => {
+    renderCard({ images: [] });
+
+    const fallback = screen.getByTestId('product-card-image-fallback');
+    expect(fallback).toHaveClass('bg-neutral-200');
+    expect(screen.getByAltText('옥화당')).toHaveAttribute('src', '/logo-okhwadang.png');
+    expect(screen.queryByAltText('자사호')).not.toBeInTheDocument();
+  });
+
+
+  it('keeps image-link navigation separate from overlay actions', () => {
+    renderCard();
+
+    const imageLink = screen.getByRole('link', { name: '자사호' });
+    const cartButton = screen.getByRole('button', { name: '장바구니 담기' });
+
+    expect(imageLink).toHaveAttribute('href', '/ko/products/1');
+    expect(imageLink).not.toContainElement(cartButton);
+    expect(cartButton.closest('a')).toBeNull();
   });
 
   it('renders the image frame and image badges without rounded corners', () => {

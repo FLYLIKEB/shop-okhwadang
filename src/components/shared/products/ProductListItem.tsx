@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from '@/i18n/navigation';
-import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import type { Locale } from '@/utils/currency';
 import ProductRatingSummary from '@/components/shared/products/ProductRatingSummary';
+import ProductImageFrame from '@/components/shared/products/ProductImageFrame';
 
 interface ProductListItemProps {
   id: number;
@@ -37,10 +37,10 @@ function ProductListItem({
   locale = 'ko',
 }: ProductListItemProps) {
   const t = useTranslations('product');
+  const tHeader = useTranslations('header');
   const thumbnailImage = images.find((image) => image.isThumbnail) ?? images[0];
   const thumbnail = thumbnailImage?.thumbnailUrl ?? thumbnailImage?.url;
   const isSoldout = status === 'soldout';
-  const [hasImageError, setHasImageError] = React.useState(false);
 
   return (
     <Link
@@ -51,34 +51,25 @@ function ProductListItem({
         isSoldout && 'opacity-75',
       )}
     >
-      <div data-testid="product-list-item-image-frame" className="relative h-24 w-24 shrink-0 overflow-hidden bg-muted">
-        {thumbnail && !hasImageError ? (
-          <Image
-            src={thumbnail}
-            alt={name}
-            fill
-            sizes="96px"
-            className="object-cover"
-            loading="lazy"
-            onError={() => setHasImageError(true)}
-          />
-        ) : (
-          <div data-testid="product-list-item-image-fallback" className="flex h-full w-full items-center justify-center bg-neutral-200">
-            <Image
-              src="/logo-okhwadang.png"
-              alt="옥화당"
-              width={72}
-              height={21}
-              className="object-contain opacity-70 grayscale"
-            />
-          </div>
-        )}
+      <ProductImageFrame
+        imageUrl={thumbnail}
+        alt={name}
+        frameTestId="product-list-item-image-frame"
+        fallbackTestId="product-list-item-image-fallback"
+        frameClassName="h-24 w-24 shrink-0 bg-muted"
+        imageClassName="object-cover"
+        sizes="96px"
+        loading="lazy"
+        fallbackLogoAlt={tHeader('okhwadang')}
+        fallbackLogoWidth={72}
+        fallbackLogoHeight={21}
+      >
         {isSoldout && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
             <span className="text-xs font-semibold text-white">{t('stockStatus.soldout')}</span>
           </div>
         )}
-      </div>
+      </ProductImageFrame>
 
       <div className="flex flex-1 flex-col justify-center gap-1">
         <div className="flex items-center justify-between gap-2">
