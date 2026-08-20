@@ -806,6 +806,56 @@ h3 {
   line-height: 1.4;
 }
 
+/* Shared issue notifications use the same compact surface language as checkout. */
+.toss-toast {
+  min-height: 3.5rem;
+  padding: 0.75rem 2.5rem 0.75rem 0.875rem;
+  letter-spacing: -0.01em;
+}
+
+.toss-toast__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.toss-toast__description {
+  margin-top: 0.125rem;
+  color: var(--checkout-toss-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.toss-toast__close {
+  top: 0.75rem;
+  right: 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--checkout-toss-muted);
+}
+
+.toss-toast__close:hover {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-toast__action {
+  border-radius: 0.625rem;
+  background: var(--checkout-toss-button-black);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.toss-toast__action:hover {
+  background: var(--checkout-toss-button-black-hover);
+}
+
+.toss-toast--success { border-color: color-mix(in srgb, #16a34a 28%, var(--checkout-toss-border)); }
+.toss-toast--error { border-color: color-mix(in srgb, #dc2626 28%, var(--checkout-toss-border)); }
+.toss-toast--warning { border-color: color-mix(in srgb, #d97706 28%, var(--checkout-toss-border)); }
+.toss-toast--info { border-color: color-mix(in srgb, #2563eb 28%, var(--checkout-toss-border)); }
+
 .checkout-toss-theme .checkout-toss-panel {
   border: 0;
   border-radius: 0.75rem;

@@ -36,11 +36,31 @@ function SharedToaster() {
     <Toaster
       position="top-center"
       closeButton
+      expand={false}
+      visibleToasts={3}
+      gap={8}
+      offset={{ top: 72 }}
+      mobileOffset={{ top: 16, left: 16, right: 16 }}
       swipeDirections={['top', 'right', 'bottom', 'left']}
       toastOptions={{
         style: {
           fontFamily: 'var(--font-body)',
-          borderRadius: 'var(--radius-md)',
+          borderRadius: '1rem',
+          background: 'var(--checkout-toss-surface)',
+          color: 'var(--checkout-toss-foreground)',
+          border: '1px solid var(--checkout-toss-border)',
+          boxShadow: 'var(--checkout-toss-shadow)',
+        },
+        classNames: {
+          toast: 'toss-toast',
+          title: 'toss-toast__title',
+          description: 'toss-toast__description',
+          closeButton: 'toss-toast__close',
+          actionButton: 'toss-toast__action',
+          success: 'toss-toast--success',
+          error: 'toss-toast--error',
+          warning: 'toss-toast--warning',
+          info: 'toss-toast--info',
         },
       }}
     />
