@@ -10,6 +10,7 @@ import { AdminReviewsController } from './admin-reviews.controller';
 import { ReviewsService } from './reviews.service';
 import { AdminReviewsService } from './admin-reviews.service';
 import { SmartStoreReviewImportService } from './smartstore-review-import.service';
+import { ReviewStatsSyncService } from './review-stats-sync.service';
 import { UploadModule } from '../upload/upload.module';
 import { SettingsModule } from '../settings/settings.module';
 import { PointsModule } from '../points/points.module';
@@ -22,7 +23,17 @@ import { PointsModule } from '../points/points.module';
     PointsModule,
   ],
   controllers: [ReviewsController, AdminReviewsController],
-  providers: [ReviewsService, AdminReviewsService, SmartStoreReviewImportService],
-  exports: [ReviewsService, AdminReviewsService, SmartStoreReviewImportService],
+  providers: [
+    ReviewsService,
+    AdminReviewsService,
+    SmartStoreReviewImportService,
+    ReviewStatsSyncService,
+  ],
+  exports: [
+    ReviewsService,
+    AdminReviewsService,
+    SmartStoreReviewImportService,
+    ReviewStatsSyncService,
+  ],
 })
 export class ReviewsModule {}
