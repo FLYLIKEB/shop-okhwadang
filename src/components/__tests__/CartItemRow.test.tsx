@@ -26,12 +26,32 @@ const baseItem: CartItem = {
     price: 15000,
     salePrice: null,
     status: 'active',
-    images: [{ id: 1, url: '/img/test.jpg', alt: '썸네일', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
+    images: [{ id: 1, url: '/img/test.jpg', thumbnailUrl: null, alt: '썸네일', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
   },
   option: null,
 };
 
 describe('CartItemRow', () => {
+  it('uses the generated thumbnail URL when it is available', () => {
+    render(
+      <CartItemRow
+        item={{
+          ...baseItem,
+          product: {
+            ...baseItem.product,
+            images: [{ ...baseItem.product.images[0], thumbnailUrl: '/img/thumb.webp' }],
+          },
+        }}
+        selected={false}
+        onSelect={vi.fn()}
+        onQuantityChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByAltText('썸네일')).toHaveAttribute('src', '/img/thumb.webp');
+  });
+
   it('renders product name, unitPrice, quantity, subtotal', () => {
     const onSelect = vi.fn();
     const onQuantityChange = vi.fn();

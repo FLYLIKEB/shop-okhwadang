@@ -94,7 +94,7 @@ describe('ProductCard', () => {
     price: 29000,
     salePrice: null,
     status: 'active' as const,
-    images: [{ id: 1, url: '/img/test.jpg', alt: null, sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
+    images: [{ id: 1, url: '/img/test.jpg', thumbnailUrl: null, alt: null, sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
   };
 
   beforeEach(() => {

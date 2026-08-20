@@ -126,7 +126,8 @@ export default function WishlistPage() {
           {items.map((item) => {
             const product = item.product;
             const isSoldout = product?.status === 'soldout';
-            const thumbnail = product?.images.find((img) => img.isThumbnail)?.url ?? product?.images[0]?.url;
+            const thumbnailImage = product?.images.find((img) => img.isThumbnail) ?? product?.images[0];
+            const thumbnail = thumbnailImage?.thumbnailUrl ?? thumbnailImage?.url;
 
             return (
               <li key={item.id} className="flex flex-col overflow-hidden rounded-lg border border-border bg-card">

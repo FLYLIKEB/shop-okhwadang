@@ -135,7 +135,7 @@ const product: ProductDetail = {
   isFeatured: false,
   viewCount: 0,
   category: { id: 10, name: 'Teapots', slug: 'teapots', parentId: null, imageUrl: null },
-  images: [{ id: 1, url: '/teapot.jpg', alt: 'Teapot', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
+  images: [{ id: 1, url: '/teapot.jpg', thumbnailUrl: null, alt: 'Teapot', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
   attributes: [],
   description: '<p>Detail</p>',
   stock: 12,

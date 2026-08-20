@@ -4,6 +4,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ObjectLiteral, Repository } from 'typeorm';
 import { ProductCommandService } from '../product-command.service';
 import { Product } from '../entities/product.entity';
+import { ProductImage } from '../entities/product-image.entity';
 import { ProductOption } from '../entities/product-option.entity';
 import { CacheService } from '../../cache/cache.service';
 import { RestockAlertsService } from '../../restock-alerts/restock-alerts.service';
@@ -127,12 +128,16 @@ describe('ProductCommandService', () => {
         slug: 'p2',
         price: 100,
         images: [
-          { url: 'a.jpg' },
+          { url: 'a.jpg', thumbnailUrl: 'a-thumb.webp' },
           { url: 'b.jpg' },
         ],
       });
 
       expect(manager.save).toHaveBeenCalledTimes(2); // product + images batch
+      expect(manager.create).toHaveBeenCalledWith(
+        ProductImage,
+        expect.objectContaining({ url: 'a.jpg', thumbnailUrl: 'a-thumb.webp' }),
+      );
     });
 
     it('옵션 함께 생성 시 ProductOption 저장', async () => {

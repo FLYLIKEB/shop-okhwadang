@@ -61,6 +61,7 @@ const DUMMY_PRODUCT: ProductDetail = {
     {
       id: 1,
       url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',
+      thumbnailUrl: null,
       alt: '주니 서시호 정면',
       sortOrder: 1,
       isThumbnail: true, isDescriptionImage: false,
@@ -68,6 +69,7 @@ const DUMMY_PRODUCT: ProductDetail = {
     {
       id: 2,
       url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&q=80',
+      thumbnailUrl: null,
       alt: '주니 서시호 측면',
       sortOrder: 2,
       isThumbnail: false, isDescriptionImage: false,
@@ -75,6 +77,7 @@ const DUMMY_PRODUCT: ProductDetail = {
     {
       id: 3,
       url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=800&q=80',
+      thumbnailUrl: null,
       alt: '주니 서시호 손에 쥔 사이즈',
       sortOrder: 3,
       isThumbnail: false, isDescriptionImage: false,
@@ -82,6 +85,7 @@ const DUMMY_PRODUCT: ProductDetail = {
     {
       id: 4,
       url: 'https://images.unsplash.com/photo-1523920290228-4f321a939b4c?w=800&q=80',
+      thumbnailUrl: null,
       alt: '주니 서시호 찻자리 세팅',
       sortOrder: 4,
       isThumbnail: false, isDescriptionImage: false,
@@ -89,6 +93,7 @@ const DUMMY_PRODUCT: ProductDetail = {
     {
       id: 5,
       url: 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800&q=80',
+      thumbnailUrl: null,
       alt: '주니 서시호 낙관 클로즈업',
       sortOrder: 5,
       isThumbnail: false, isDescriptionImage: false,

@@ -18,6 +18,9 @@ export class ProductImage {
   @Column({ length: 500 })
   url!: string;
 
+  @Column({ name: 'thumbnail_url', type: 'varchar', length: 500, nullable: true })
+  thumbnailUrl!: string | null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   alt!: string | null;
 
