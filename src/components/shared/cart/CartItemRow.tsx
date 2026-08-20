@@ -1,12 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { Check, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { memo } from 'react';
 import { CartItem } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
 import { formatCurrency } from '@/utils/currency';
 import QuantitySelector from '@/components/shared/products/QuantitySelector';
+import { Checkbox } from '@/components/ui/checkbox';
 import { getClientLocale } from '@/utils/clientLocale';
 import { localMessage } from '@/utils/localMessages';
 
@@ -32,24 +33,19 @@ const CartItemRowComponent = memo(function CartItemRow({
   return (
     <div
       className={cn(
-        'mb-3 flex items-start gap-2 rounded-lg border border-soft p-3 transition-colors last:mb-0',
-        selected && 'border-primary/30 bg-primary/5',
+        'checkout-toss-cart-item mb-3 flex items-start gap-2 rounded-lg border border-soft p-3 transition-colors last:mb-0',
+        selected && 'checkout-toss-cart-item--selected border-primary/30 bg-primary/5',
       )}
     >
       <label className="-ml-2 -mt-2 flex min-h-12 min-w-12 cursor-pointer items-center justify-center">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={selected}
           onChange={(e) => onSelect(item.id, e.target.checked)}
           aria-label={localMessage('cart.selectItemAria', { product: item.product.name })}
-          className="peer sr-only"
         />
-        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-soft bg-background text-transparent transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2">
-          <Check className="h-4 w-4" strokeWidth={3} aria-hidden />
-        </span>
       </label>
 
-      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border border-divider-soft bg-muted">
+      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
         {thumbnail ? (
           <Image
             src={thumbnail.url}
@@ -65,7 +61,7 @@ const CartItemRowComponent = memo(function CartItemRow({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="text-sm font-medium leading-snug whitespace-normal break-all md:break-words">{item.product.name}</p>
+        <p className="checkout-toss-cart-item__name typo-body-sm whitespace-normal break-all md:break-words">{item.product.name}</p>
         {item.option && (
           <p className="text-xs text-muted-foreground break-all md:break-words">
             {item.option.name}: {item.option.value}

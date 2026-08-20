@@ -3,6 +3,7 @@
 import { CircleHelp, LockKeyhole } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/components/ui/utils';
 import { PaymentBrandIcon } from './PaymentBrandIcon';
 
@@ -57,12 +58,10 @@ export function SecureCardEntryShell({ showSubmitButton = false }: SecureCardEnt
           </div>
 
           <label className="mt-4 flex items-center gap-3 typo-body-sm text-foreground">
-            <input
-              type="checkbox"
+            <Checkbox
               checked
               readOnly
               aria-label={t('billingSameAsShipping')}
-              className="h-4 w-4 rounded-sm accent-foreground"
             />
             {t('billingSameAsShipping')}
           </label>
@@ -71,10 +70,8 @@ export function SecureCardEntryShell({ showSubmitButton = false }: SecureCardEnt
 
       <div className="border-t border-dashed border-soft pt-4">
         <label className="flex items-start gap-3 typo-body-sm text-muted-foreground">
-          <input
-            type="checkbox"
+          <Checkbox
             aria-label={t('cardTermsAriaLabel')}
-            className="mt-0.5 h-4 w-4 rounded-sm accent-foreground"
           />
           <span>{t('cardTermsAgreement')}</span>
         </label>

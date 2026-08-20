@@ -283,7 +283,7 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
     }, [autoConfirm, isReady, locale, orderNumber]);
 
     return (
-      <div className="layout-stack-md">
+      <div className="checkout-toss-widget layout-stack-md">
         <div id="toss-payment-methods" aria-busy={!isReady} />
         <div id="toss-payment-agreement" />
       </div>

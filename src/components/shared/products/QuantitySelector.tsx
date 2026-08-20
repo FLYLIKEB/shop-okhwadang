@@ -18,7 +18,7 @@ export default function QuantitySelector({
   onDecrease,
 }: QuantitySelectorProps) {
   return (
-    <div className="inline-flex items-center w-fit border border-border bg-background">
+    <div className="checkout-toss-quantity inline-flex items-center w-fit border border-border bg-background">
       <button
         type="button"
         onClick={onDecrease}

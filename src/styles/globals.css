@@ -57,6 +57,18 @@
   --color-accent-tea: #5E5E5E;
   --color-brand-secondary: #C7C7C7;
   --color-accent-danni: #BABABA;
+
+  /* Checkout surfaces — shared by cart and checkout pages */
+  --checkout-toss-background: #f2f4f6;
+  --checkout-toss-surface: #ffffff;
+  --checkout-toss-input: #f2f4f6;
+  --checkout-toss-foreground: #191f28;
+  --checkout-toss-muted: #8b95a1;
+  --checkout-toss-border: #e5e8eb;
+  --checkout-toss-primary: #8b4513;
+  --checkout-toss-primary-hover: #6f350f;
+  --checkout-toss-primary-soft: #f5ede7;
+  --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
 }
 
 /* 색상 토큰은 @theme (non-inline) — 유틸리티가 var(--color-*)로 생성되어야
@@ -744,4 +756,396 @@ h3 {
   max-width: 100%;
   margin-inline: auto;
   text-align: center;
+}
+
+/* ── Toss-style checkout surface ───────────────────────────────── */
+.checkout-toss-theme {
+  min-height: 100%;
+  background: var(--checkout-toss-background);
+  color: var(--checkout-toss-foreground);
+  font-family: var(--font-body);
+}
+
+.checkout-toss-theme .layout-container {
+  max-width: 72rem;
+}
+
+.checkout-toss-theme h1,
+.checkout-toss-theme h2,
+.checkout-toss-theme h3,
+.checkout-toss-theme .typo-h1,
+.checkout-toss-theme .typo-h2,
+.checkout-toss-theme .typo-h3 {
+  font-family: var(--font-body);
+  letter-spacing: -0.025em;
+}
+
+.checkout-toss-theme .checkout-toss-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.checkout-toss-theme .checkout-toss-flow {
+  width: fit-content;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--checkout-toss-surface) 72%, transparent);
+  padding: 0.25rem;
+}
+
+.checkout-toss-theme .checkout-toss-flow__step {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.checkout-toss-theme .checkout-toss-flow__step--active {
+  background: var(--checkout-toss-primary);
+}
+
+.checkout-toss-theme .checkout-toss-flow__step--inactive {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-muted);
+}
+
+.checkout-toss-theme .surface-card,
+.checkout-toss-theme .checkout-toss-section {
+  border: 0;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.checkout-toss-theme .checkout-toss-section > h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.checkout-toss-theme .checkout-toss-panel {
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+}
+
+.checkout-toss-theme input:not([type='checkbox']):not([type='radio']),
+.checkout-toss-theme select,
+.checkout-toss-theme textarea {
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  min-height: 3.25rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.checkout-toss-theme textarea {
+  min-height: 6rem;
+}
+
+.checkout-toss-theme input::placeholder,
+.checkout-toss-theme textarea::placeholder {
+  color: var(--checkout-toss-muted);
+}
+
+.checkout-toss-theme input:not([type='checkbox']):not([type='radio']):focus,
+.checkout-toss-theme select:focus,
+.checkout-toss-theme textarea:focus {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--checkout-toss-primary) 18%, transparent);
+  outline: 0;
+}
+
+.checkout-toss-theme input[type='checkbox'],
+.checkout-toss-theme input[type='radio'] {
+  accent-color: var(--checkout-toss-primary);
+}
+
+.checkout-toss-theme label {
+  color: var(--checkout-toss-foreground);
+}
+
+.checkout-toss-theme .typo-label {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.checkout-toss-theme .text-muted-foreground,
+.checkout-toss-theme [class*='text-muted-foreground'] {
+  color: var(--checkout-toss-muted);
+}
+
+.checkout-toss-theme .text-foreground,
+.checkout-toss-theme [class*='text-foreground'] {
+  color: var(--checkout-toss-foreground);
+}
+
+.checkout-toss-theme [class*='border-soft'],
+.checkout-toss-theme [class*='border-border'],
+.checkout-toss-theme [class*='border-input'] {
+  border-color: var(--checkout-toss-border);
+}
+
+.checkout-toss-theme [class*='bg-muted'],
+.checkout-toss-theme [class*='bg-secondary'] {
+  background-color: var(--checkout-toss-input);
+}
+
+.checkout-toss-theme .bg-primary,
+.checkout-toss-theme button.bg-primary {
+  background-color: var(--checkout-toss-primary);
+}
+
+.checkout-toss-theme .bg-primary:hover,
+.checkout-toss-theme button.bg-primary:hover {
+  background-color: var(--checkout-toss-primary-hover);
+}
+
+.checkout-toss-theme .text-primary-foreground,
+.checkout-toss-theme .text-secondary-foreground {
+  color: var(--checkout-toss-foreground);
+}
+
+.checkout-toss-theme .text-primary-foreground {
+  color: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-payment-option {
+  min-height: 3.25rem;
+  border-color: var(--checkout-toss-border);
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-payment-option:hover {
+  border-color: color-mix(in srgb, var(--checkout-toss-primary) 45%, var(--checkout-toss-border));
+  background: var(--checkout-toss-primary-soft);
+}
+
+.checkout-toss-theme .checkout-toss-payment-option--selected {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-primary-soft);
+  box-shadow: 0 0 0 1px var(--checkout-toss-primary);
+}
+
+.checkout-toss-theme .checkout-toss-submit-card,
+.checkout-toss-theme .checkout-toss-mobile-cta {
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-submit-card button,
+.checkout-toss-theme .checkout-toss-mobile-cta button {
+  min-height: 3.25rem;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-primary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.checkout-toss-theme .checkout-toss-submit-card button:hover,
+.checkout-toss-theme .checkout-toss-mobile-cta button:hover {
+  background: var(--checkout-toss-primary-hover);
+}
+
+.checkout-toss-theme .checkout-toss-widget {
+  max-width: 42rem;
+}
+
+.checkout-toss-theme .checkout-toss-cart-item {
+  border: 0;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.checkout-toss-theme .checkout-toss-cart-item--selected {
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--checkout-toss-primary) 12%, transparent);
+}
+
+.checkout-toss-theme .checkout-toss-cart-item__name {
+  color: var(--checkout-toss-foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+}
+
+.checkout-toss-theme .checkout-toss-select-all {
+  border-color: var(--checkout-toss-border);
+}
+
+.checkout-toss-theme .checkout-toss-select-all > label {
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+}
+
+.checkout-toss-theme .checkout-toss-select-all__label {
+  color: var(--checkout-toss-foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.checkout-toss-theme .checkout-toss-select-all__count {
+  color: var(--checkout-toss-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.checkout-toss-theme .checkout-toss-summary__rows {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.checkout-toss-theme .checkout-toss-summary__row {
+  min-height: 1.75rem;
+  align-items: center;
+  color: var(--checkout-toss-foreground);
+}
+
+.checkout-toss-theme .checkout-toss-summary__value {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.checkout-toss-theme .checkout-toss-summary__shipping {
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-surface);
+  padding: 0.875rem;
+}
+
+.checkout-toss-theme .checkout-toss-summary__shipping p {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.checkout-toss-theme .checkout-toss-summary__shipping > div {
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-summary__total {
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-surface);
+  padding: 1rem;
+}
+
+.checkout-toss-theme .checkout-toss-mobile-summary .group {
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-summary__total-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.checkout-toss-theme .checkout-toss-summary__total-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.checkout-toss-theme .checkout-toss-check {
+  border-color: var(--checkout-toss-border);
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme input:checked + .checkout-toss-check {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-primary);
+  color: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-cart-item [class*='border-border'] {
+  border-color: var(--checkout-toss-border);
+}
+
+.checkout-toss-theme .checkout-toss-cart-item [class*='bg-muted'] {
+  background: var(--checkout-toss-input);
+}
+
+.checkout-toss-theme .checkout-toss-quantity {
+  gap: 0.25rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  padding: 0.25rem;
+}
+
+.checkout-toss-theme .checkout-toss-quantity button {
+  height: 2rem;
+  width: 2rem;
+  border: 0;
+  border-radius: 0.5rem;
+  color: var(--checkout-toss-muted);
+}
+
+.checkout-toss-theme .checkout-toss-quantity button:hover:not(:disabled) {
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+}
+
+.checkout-toss-theme .checkout-toss-quantity span {
+  width: 2.25rem;
+  color: var(--checkout-toss-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 2rem;
+}
+
+/* ── Toss-style mobile navigation ──────────────────────────────── */
+.toss-mobile-nav {
+  min-height: 3.5rem;
+  border-top: 0;
+  background: color-mix(in srgb, var(--checkout-toss-surface) 96%, transparent);
+  box-shadow: 0 -4px 18px rgb(25 31 40 / 8%);
+  padding-bottom: env(safe-area-inset-bottom);
+  backdrop-filter: blur(14px);
+}
+
+.toss-mobile-nav__link {
+  min-height: 3.5rem;
+  color: var(--checkout-toss-muted);
+}
+
+.toss-mobile-nav__link:hover,
+.toss-mobile-nav__link--active {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-mobile-nav__link--active .toss-mobile-nav__icon {
+  transform: translateY(-1px);
+}
+
+.toss-mobile-nav__icon {
+  transition: transform 160ms ease;
+}
+
+.toss-mobile-nav__label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.toss-mobile-nav__badge {
+  background: var(--checkout-toss-primary);
+  color: var(--checkout-toss-surface);
+}
+
+@media (max-width: 767px) {
+  .checkout-toss-theme .layout-container {
+    padding-inline: 1rem;
+  }
+
+  .checkout-toss-theme .checkout-toss-section {
+    padding: 1.25rem;
+  }
 }

@@ -24,9 +24,9 @@ export function PaymentMethodOption({
   return (
     <label
       className={cn(
-        'flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-soft bg-card px-3 py-2 transition-colors',
+        'checkout-toss-payment-option flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-soft bg-card px-3 py-2 transition-colors',
         'hover:border-foreground/30 hover:bg-muted/30',
-        selected && 'border-foreground bg-muted/35',
+        selected && 'checkout-toss-payment-option--selected border-foreground bg-muted/35',
         readOnly && 'cursor-default hover:border-soft hover:bg-card',
       )}
       aria-label={label}
