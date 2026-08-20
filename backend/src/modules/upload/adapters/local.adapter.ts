@@ -18,6 +18,20 @@ export class LocalStorageAdapter implements StorageAdapter {
     return this.saveToFolder(filename, buffer, categoriesDir, 'uploads/categories');
   }
 
+  async saveCmsImage(
+    filename: string,
+    buffer: Buffer,
+    _mimetype: string,
+    variant: string,
+  ): Promise<UploadedFile> {
+    return this.saveToFolder(
+      filename,
+      buffer,
+      path.join(this.uploadDir, 'cms', variant),
+      `uploads/cms/${variant}`,
+    );
+  }
+
   private async saveToFolder(filename: string, buffer: Buffer, dir: string, urlPath: string): Promise<UploadedFile> {
     if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
       throw new BadRequestException('잘못된 파일명입니다.');

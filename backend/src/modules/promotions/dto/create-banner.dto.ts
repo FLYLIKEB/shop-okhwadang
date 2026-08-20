@@ -9,6 +9,7 @@ import {
   MaxLength,
   IsUrl,
   IsDateString,
+  IsObject,
 } from 'class-validator';
 
 export class CreateBannerDto {
@@ -47,6 +48,11 @@ export class CreateBannerDto {
   @IsDateString()
   @IsOptional()
   endsAt?: string;
+
+  @ApiProperty({ example: { full: 'https://cdn.example.com/banner.webp', card: 'https://cdn.example.com/banner-card.webp' }, required: false })
+  @IsObject()
+  @IsOptional()
+  imageDerivatives?: Record<string, string>;
 }
 
 export class UpdateBannerDto {
@@ -87,4 +93,9 @@ export class UpdateBannerDto {
   @IsDateString()
   @IsOptional()
   endsAt?: string;
+
+  @ApiProperty({ example: { full: 'https://cdn.example.com/banner.webp', card: 'https://cdn.example.com/banner-card.webp' }, required: false })
+  @IsObject()
+  @IsOptional()
+  imageDerivatives?: Record<string, string>;
 }

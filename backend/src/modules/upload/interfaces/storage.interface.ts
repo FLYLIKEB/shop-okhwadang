@@ -6,4 +6,10 @@ export interface UploadedFile {
 export interface StorageAdapter {
   save(filename: string, buffer: Buffer, mimetype: string): Promise<UploadedFile>;
   saveCategoryImage(filename: string, buffer: Buffer, mimetype: string): Promise<UploadedFile>;
+  saveCmsImage(
+    filename: string,
+    buffer: Buffer,
+    mimetype: string,
+    variant: string,
+  ): Promise<UploadedFile>;
 }

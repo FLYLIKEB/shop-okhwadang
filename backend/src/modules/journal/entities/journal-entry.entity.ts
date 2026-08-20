@@ -59,6 +59,9 @@ export class JournalEntry {
   @Column({ name: 'cover_image_url', type: 'varchar', length: 500, nullable: true })
   coverImageUrl!: string | null;
 
+  @Column({ name: 'cover_image_derivatives', type: 'json', nullable: true })
+  coverImageDerivatives!: Record<string, string> | null;
+
   @Column({ name: 'is_published', default: false })
   isPublished!: boolean;
 

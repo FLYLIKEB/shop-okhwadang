@@ -24,6 +24,17 @@ import {
   STORAGE_CONFIG,
   StorageConfig,
 } from '../../config/storage.config';
+import {
+  CMS_MEDIA_VARIANTS,
+  CMS_MEDIA_WIDTHS,
+  CmsMediaKind,
+  isCmsMediaKind,
+} from './cms-media.constants';
+
+export interface CmsMedia {
+  original: UploadedFile;
+  derivatives: Record<string, UploadedFile>;
+}
 
 @Injectable()
 export class UploadService {
@@ -76,6 +87,26 @@ export class UploadService {
   uploadOriginalImageBuffer(buffer: Buffer, originalname: string): Promise<UploadedFile> {
     const file = this.createFileFromBuffer(buffer, originalname);
     return this.uploadOriginal(file, 'save');
+  }
+
+  async uploadCmsImage(
+    file: Express.Multer.File | undefined,
+    kind: string,
+  ): Promise<CmsMedia> {
+    this.validateCmsKind(kind);
+    this.validateFile(file);
+    return this.uploadCmsFile(file, kind);
+  }
+
+  async uploadCmsImageBuffer(
+    buffer: Buffer,
+    originalname: string,
+    kind: string,
+  ): Promise<CmsMedia> {
+    this.validateCmsKind(kind);
+    const file = this.createFileFromBuffer(buffer, originalname);
+    this.validateFile(file);
+    return this.uploadCmsFile(file, kind);
   }
 
   private createFileFromBuffer(buffer: Buffer, originalname: string): Express.Multer.File {
@@ -144,6 +175,63 @@ export class UploadService {
         );
       }
       throw err;
+    }
+  }
+
+  private async uploadCmsFile(
+    file: Express.Multer.File,
+    kind: CmsMediaKind,
+  ): Promise<CmsMedia> {
+    const extension = path.extname(file.originalname).toLowerCase() || `.${file.mimetype.split('/')[1]}`;
+    const id = randomUUID();
+    const original = await this.saveCmsFile(
+      `${id}${extension}`,
+      file.buffer,
+      file.mimetype,
+      `${kind}/original`,
+    );
+    const derivatives: Record<string, UploadedFile> = {};
+
+    for (const variant of CMS_MEDIA_VARIANTS[kind]) {
+      const derivative = await sharp(file.buffer)
+        .resize(CMS_MEDIA_WIDTHS[kind][variant], undefined, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .webp({ quality: 82 })
+        .toBuffer();
+      derivatives[variant] = await this.saveCmsFile(
+        `${id}.webp`,
+        derivative,
+        'image/webp',
+        `${kind}/${variant}`,
+      );
+    }
+
+    return { original, derivatives };
+  }
+
+  private async saveCmsFile(
+    filename: string,
+    buffer: Buffer,
+    mimetype: string,
+    variant: string,
+  ): Promise<UploadedFile> {
+    try {
+      return await this.adapter.saveCmsImage(filename, buffer, mimetype, variant);
+    } catch (err) {
+      if (isAwsCredentialError(err)) {
+        throw new InternalServerErrorException(
+          '이미지 저장소 인증 정보가 올바르지 않습니다. AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY 또는 STORAGE_PROVIDER 설정을 확인해 주세요.',
+        );
+      }
+      throw err;
+    }
+  }
+
+  private validateCmsKind(kind: string): asserts kind is CmsMediaKind {
+    if (!isCmsMediaKind(kind)) {
+      throw new BadRequestException('CMS 이미지 용도는 hero, promotion, journal 중 하나여야 합니다.');
     }
   }
 

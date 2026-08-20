@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Body,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -21,6 +22,10 @@ import {
 import { UploadService } from './upload.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UploadedFile as UploadedFileType } from './interfaces/storage.interface';
+import { CmsImageImportDto } from './dto/cms-image.dto';
+import { CmsMedia } from './upload.service';
+import { CmsMediaKind } from './cms-media.constants';
+import { RemoteImageIngestService } from './remote-image-ingest.service';
 
 const IMAGE_UPLOAD_BODY_SCHEMA = {
   schema: {
@@ -43,7 +48,10 @@ const FILE_UPLOAD_INTERCEPTOR = FileInterceptor(
 @ApiTags('업로드')
 @Controller('upload')
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(
+    private readonly uploadService: UploadService,
+    private readonly remoteImageIngestService: RemoteImageIngestService,
+  ) {}
 
   @Post('image')
   @Roles('admin')
@@ -81,5 +89,44 @@ export class UploadController {
     @UploadedFile() file: Express.Multer.File,
   ): Promise<UploadedFileType> {
     return this.uploadService.uploadCategoryImage(file);
+  }
+
+  @Post('cms-image')
+  @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: 'CMS 이미지 업로드',
+    description: '히어로, 프로모션, 저널 용도의 원본과 WebP 파생 이미지를 생성합니다.',
+  })
+  @ApiResponse({ status: 201, description: 'CMS 이미지 업로드 성공' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'kind'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        kind: { type: 'string', enum: ['hero', 'promotion', 'journal'] },
+      },
+    },
+  })
+  @UseInterceptors(FILE_UPLOAD_INTERCEPTOR)
+  uploadCmsImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('kind') kind: CmsMediaKind,
+  ): Promise<CmsMedia> {
+    return this.uploadService.uploadCmsImage(file, kind);
+  }
+
+  @Post('cms-image/import')
+  @Roles('admin')
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: '기존 CMS 이미지 변환',
+    description: '기존 원본 URL을 다운로드해 원본과 용도별 WebP 파생 이미지를 저장합니다.',
+  })
+  @ApiResponse({ status: 201, description: 'CMS 이미지 변환 성공' })
+  importCmsImage(@Body() dto: CmsImageImportDto): Promise<CmsMedia> {
+    return this.remoteImageIngestService.ingestCms(dto.url, dto.kind);
   }
 }

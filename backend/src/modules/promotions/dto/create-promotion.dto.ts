@@ -11,6 +11,7 @@ import {
   Max,
   MaxLength,
   IsUrl,
+  IsObject,
 } from 'class-validator';
 import { PromotionType } from '../entities/promotion.entity';
 
@@ -54,6 +55,11 @@ export class CreatePromotionDto {
   @IsUrl()
   @IsOptional()
   imageUrl?: string;
+
+  @ApiProperty({ example: { full: 'https://cdn.example.com/promotion.webp', card: 'https://cdn.example.com/promotion-card.webp' }, required: false })
+  @IsObject()
+  @IsOptional()
+  imageDerivatives?: Record<string, string>;
 }
 
 export class UpdatePromotionDto {
@@ -100,4 +106,9 @@ export class UpdatePromotionDto {
   @IsUrl()
   @IsOptional()
   imageUrl?: string;
+
+  @ApiProperty({ example: { full: 'https://cdn.example.com/promotion.webp', card: 'https://cdn.example.com/promotion-card.webp' }, required: false })
+  @IsObject()
+  @IsOptional()
+  imageDerivatives?: Record<string, string>;
 }
