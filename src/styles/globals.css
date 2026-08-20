@@ -809,7 +809,7 @@ h3 {
 /* Shared issue notifications use the same compact surface language as checkout. */
 .toss-toast {
   min-height: 3.5rem;
-  padding: 0.75rem 2.5rem 0.75rem 0.875rem;
+  padding: 0.75rem 4rem 0.75rem 0.875rem;
   letter-spacing: -0.01em;
 }
 
@@ -836,6 +836,7 @@ h3 {
   top: 50%;
   right: 0.75rem;
   transform: translateY(-50%);
+  z-index: 1;
   border: 1px solid var(--checkout-toss-border);
   border-radius: 9999px;
   background: var(--checkout-toss-input);
