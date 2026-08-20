@@ -26,6 +26,15 @@ if [ -z "$LOCAL_DATABASE_URL" ] && [ -n "$DATABASE_URL" ]; then
     export LOCAL_DATABASE_URL
 fi
 
+# Next.js keeps inherited environment variables ahead of .env.local. Read the
+# local frontend setting explicitly so a stale shell export cannot break startup.
+if [ -f "$PROJECT_ROOT/.env.local" ]; then
+    FRONTEND_CHECKOUT_GATEWAYS=$(grep -E '^NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS=' "$PROJECT_ROOT/.env.local" | tail -n 1 | cut -d= -f2-)
+    if [ -n "$FRONTEND_CHECKOUT_GATEWAYS" ]; then
+        export NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS="$FRONTEND_CHECKOUT_GATEWAYS"
+    fi
+fi
+
 echo -e "${BLUE}🚀 옥화당 — 로컬 개발 환경 시작 중...${NC}"
 echo ""
 
@@ -115,13 +124,18 @@ export NODE_ENV=development
 if command -v tmux > /dev/null 2>&1; then
     tmux kill-session -t okhwadang-backend 2>/dev/null || true
     tmux kill-session -t okhwadang-frontend 2>/dev/null || true
+    # tmux servers retain their own environment between sessions. Keep the
+    # frontend gateway setting in sync so a stale export cannot override
+    # .env.local on the next launch.
+    tmux set-environment -g NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS "$NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS"
+    FRONTEND_CHECKOUT_GATEWAYS_QUOTED=$(printf '%q' "$NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS")
 
     tmux new-session -d -s okhwadang-backend \
         "cd '$BACKEND_DIR' && set -a && source .env && set +a && export NODE_ENV=development && npm run start:dev > /tmp/commerce-backend.log 2>&1"
     BACKEND_PID=$(tmux display-message -p -t okhwadang-backend '#{pane_pid}')
 
     tmux new-session -d -s okhwadang-frontend \
-        "cd '$PROJECT_ROOT' && npm run dev > /tmp/commerce-frontend.log 2>&1"
+        "cd '$PROJECT_ROOT' && export NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS=$FRONTEND_CHECKOUT_GATEWAYS_QUOTED && npm run dev > /tmp/commerce-frontend.log 2>&1"
     FRONTEND_PID=$(tmux display-message -p -t okhwadang-frontend '#{pane_pid}')
 else
     cd "$BACKEND_DIR"
@@ -138,13 +152,37 @@ fi
 echo "$BACKEND_PID" > /tmp/commerce-backend.pid
 echo "$FRONTEND_PID" > /tmp/commerce-frontend.pid
 
-# 백엔드 health check
-echo -e "${YELLOW}⏳ 백엔드 준비 대기...${NC}"
+# 백엔드 + 프론트엔드 health check
+echo -e "${YELLOW}⏳ 백엔드와 프론트엔드 준비 대기...${NC}"
+BACKEND_READY="no"
+FRONTEND_READY="no"
 for i in {1..30}; do
-    curl -s http://localhost:3000/api/health > /dev/null 2>&1 && break
+    if [ "$BACKEND_READY" = "no" ] && curl -fsS --max-time 2 http://localhost:3000/api/health > /dev/null 2>&1; then
+        BACKEND_READY="yes"
+    fi
+    if [ "$FRONTEND_READY" = "no" ] && curl -fsS --max-time 2 http://localhost:5173/ > /dev/null 2>&1; then
+        FRONTEND_READY="yes"
+    fi
+    [ "$BACKEND_READY" = "yes" ] && [ "$FRONTEND_READY" = "yes" ] && break
     sleep 1
 done
-curl -s http://localhost:3000/api/health > /dev/null 2>&1 && echo -e "${GREEN}✅ 백엔드 준비 완료${NC}" || echo -e "${YELLOW}⚠️  백엔드 시작 중...${NC}"
+
+if [ "$BACKEND_READY" = "yes" ]; then
+    echo -e "${GREEN}✅ 백엔드 준비 완료${NC}"
+else
+    echo -e "${RED}❌ 백엔드가 시작되지 않았습니다. 로그: /tmp/commerce-backend.log${NC}"
+fi
+
+if [ "$FRONTEND_READY" = "yes" ]; then
+    echo -e "${GREEN}✅ 프론트엔드 준비 완료${NC}"
+else
+    echo -e "${RED}❌ 프론트엔드가 시작되지 않았습니다. 로그: /tmp/commerce-frontend.log${NC}"
+fi
+
+if [ "$BACKEND_READY" != "yes" ] || [ "$FRONTEND_READY" != "yes" ]; then
+    bash "$PROJECT_ROOT/scripts/stop-local.sh" > /dev/null 2>&1 || true
+    exit 1
+fi
 
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

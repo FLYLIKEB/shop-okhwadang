@@ -185,7 +185,7 @@ const goToHistoryPage = (nextPage: number) => {
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
       <AdminPageHeader title={t('title')} description={t('description')} />
 
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="surface-card p-4">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-start">
           <div className="space-y-3">
             <div>
@@ -229,7 +229,7 @@ const goToHistoryPage = (nextPage: number) => {
             </div>
           </div>
 
-          <div className="rounded-lg border bg-muted/20 p-4">
+          <div className="surface-card bg-muted/20 p-4">
             <div className="typo-label text-muted-foreground">{t('selectedUser')}</div>
             <div className="mt-1 typo-body font-medium">{selectedMemberLabel}</div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -257,7 +257,7 @@ const goToHistoryPage = (nextPage: number) => {
           ) : history.length === 0 ? (
             <AdminEmptyState title={t('empty')} />
           ) : (
-<div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+<div className="surface-card overflow-hidden">
   <div className="overflow-x-auto">
     <table className="min-w-full text-sm">
       <thead className="bg-muted/40 text-left">
@@ -332,7 +332,7 @@ const goToHistoryPage = (nextPage: number) => {
           )}
         </div>
 
-        <section className="rounded-lg border bg-card p-4 shadow-sm">
+        <section className="surface-card p-4">
           <h2 className="typo-body font-semibold">{t('adjustmentTitle')}</h2>
           <p className="mt-1 typo-body-sm text-muted-foreground">{t('adjustmentDescription')}</p>
           <form className="mt-4 grid gap-3" onSubmit={(event) => void submitAdjustment(event)}>

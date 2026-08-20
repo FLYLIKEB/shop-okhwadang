@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import type { Locale } from '@/i18n/routing';
 import { SESSION_KEYS } from '@/constants/storage';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
 
 function clearHostedProviderContexts(): void {
   sessionStorage.removeItem(SESSION_KEYS.TOSS_CONTEXT);
@@ -32,12 +33,12 @@ function CheckoutFailContent({ locale }: { locale: Locale }) {
       <h1 className="mb-4 text-xl font-bold text-destructive">{t('failedTitle')}</h1>
       {code && <p className="mb-2 text-xs text-muted-foreground">{t('errorCode', { code })}</p>}
       <p className="mb-6 text-sm text-muted-foreground">{message}</p>
-      <button
+      <Button
+        variant="black"
         onClick={() => router.replace(`/${locale}/checkout`)}
-        className="rounded-md bg-foreground px-6 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90"
       >
         {t('back')}
-      </button>
+      </Button>
     </div>
   );
 }

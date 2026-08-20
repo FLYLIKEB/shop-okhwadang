@@ -5,6 +5,7 @@ import Image from 'next/image';
 import type { NewsletterSignupContent } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
 import { localMessage } from '@/utils/localMessages';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   content: NewsletterSignupContent;
@@ -101,15 +102,14 @@ export default function NewsletterSignupBlock({ content }: Props) {
                 template === 'minimal' ? 'rounded-none' : ''
               )}
             />
-            <button
+            <Button
               type="submit"
-              className={cn(
-                'bg-foreground text-background font-medium px-6 py-3 text-sm transition-colors hover:bg-foreground/90',
-                template === 'minimal' ? 'rounded-none' : ''
-              )}
+              variant="black"
+              size="lg"
+              className={template === 'minimal' ? 'rounded-none' : ''}
             >
               {button_text}
-            </button>
+            </Button>
           </div>
         </form>
         {status === 'error' && (

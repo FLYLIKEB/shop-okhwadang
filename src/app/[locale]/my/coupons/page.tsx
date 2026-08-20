@@ -9,6 +9,9 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
 import { formatCurrency, type Locale } from '@/utils/currency';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 
 type TabStatus = 'available' | 'used' | 'expired';
 
@@ -95,8 +98,8 @@ export default function MyCouponsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-4 typo-h1">{t('title')}</h1>
+    <AccountPageShell maxWidth="max-w-2xl">
+      <AccountPageHeader title={t('title')} className="mb-4" />
 
       {/* 적립금 잔액 */}
       <div className="mb-6 rounded-lg border p-4 flex items-center justify-between">
@@ -107,19 +110,16 @@ export default function MyCouponsPage() {
       {/* 탭 */}
       <div className="mb-4 flex border-b">
         {(['available', 'used', 'expired'] as TabStatus[]).map((status) => (
-          <button
+          <Button
             key={status}
             type="button"
+            variant={tab === status ? 'black' : 'gray'}
+            size="sm"
             onClick={() => setTab(status)}
-            className={cn(
-              'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-              tab === status
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
+            className="rounded-none"
           >
             {t(`tab.${status}`)}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -141,6 +141,6 @@ export default function MyCouponsPage() {
           ))}
         </div>
       )}
-    </div>
+    </AccountPageShell>
   );
 }

@@ -138,7 +138,7 @@ export default function SearchPage() {
               'placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring',
             )}
           />
-          <Button type="button" size="sm" variant="outline" onClick={handlePriceApply}>
+          <Button type="button" size="sm" variant="gray" onClick={handlePriceApply}>
             {tCommon('apply')}
           </Button>
         </div>
@@ -179,7 +179,7 @@ export default function SearchPage() {
 
           {hasMore && (
             <div className="mt-8 flex justify-center">
-              <Button variant="outline" onClick={handleLoadMore}>
+              <Button variant="gray" onClick={handleLoadMore}>
                 {localMessage('search.loadMore')}
               </Button>
             </div>

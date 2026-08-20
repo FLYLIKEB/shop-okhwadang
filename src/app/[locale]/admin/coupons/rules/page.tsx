@@ -18,6 +18,8 @@ import {
 } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 
+
+
 const TRIGGERS: CouponRuleTrigger[] = ['signup', 'first_purchase', 'birthday', 'tier_up'];
 const RULE_PAGE_SIZE = 20;
 const COUPON_OPTION_PAGE_SIZE = 20;
@@ -173,7 +175,7 @@ export default function AdminCouponRulesPage() {
             <AdminEmptyState title={t('empty')} />
           ) : (
             <>
-              <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+              <div className="surface-card overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead className="bg-muted/40 text-left">
@@ -231,7 +233,7 @@ export default function AdminCouponRulesPage() {
           )}
         </div>
 
-        <section className="rounded-lg border bg-card p-4 shadow-sm">
+        <section className="surface-card p-4">
           <div className="mb-4">
             <h2 className="typo-body font-semibold">
               {editingRuleId == null ? t('createTitle') : t('editTitle')}

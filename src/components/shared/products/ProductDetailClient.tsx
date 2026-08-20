@@ -54,6 +54,11 @@ function toSafeInteger(value: unknown, minimum: number): number {
   return normalized
 }
 
+function toFiniteNumber(value: unknown, fallback = 0): number {
+  const normalized = Number(value)
+  return Number.isFinite(normalized) ? normalized : fallback
+}
+
 export function buildBuyNowCheckoutItem(
   product: ProductDetail,
   selectedOption: ProductOption | undefined,
@@ -188,9 +193,9 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
     addRecentlyViewed({
       id: Number(product.id),
       name: product.name,
-      price: product.price,
-      salePrice: product.salePrice ?? null,
-      thumbnail: viewedThumbnail?.thumbnailUrl ?? viewedThumbnail?.url ?? null,
+      price: toFiniteNumber(product.price),
+      salePrice: product.salePrice == null ? null : toFiniteNumber(product.salePrice),
+      thumbnail: viewedThumbnail?.url ?? null,
       slug: product.slug,
     })
   }, [product.id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -220,18 +225,21 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const selectedOption: ProductOption | undefined = product.options.find(
     (o) => o.id === selectedOptionId,
   )
-  const maxQuantity = selectedOption?.stock ?? product.stock
+  const maxQuantity = toFiniteNumber(selectedOption?.stock ?? product.stock)
   const isSoldout = product.status === 'soldout' || maxQuantity === 0
   const isLowStock = !isSoldout && maxQuantity > 0 && maxQuantity <= 5
   const descriptionImages = product.detailImages?.filter((img) => img.isActive) ?? []
 
-  const basePrice = product.salePrice ?? product.price
-  const unitPrice = basePrice + (selectedOption?.priceAdjustment ?? 0)
+  const normalizedPrice = toFiniteNumber(product.price)
+  const normalizedSalePrice = product.salePrice == null ? null : toFiniteNumber(product.salePrice)
+  const optionPriceAdjustment = toFiniteNumber(selectedOption?.priceAdjustment)
+  const basePrice = normalizedSalePrice ?? normalizedPrice
+  const unitPrice = basePrice + optionPriceAdjustment
   const totalPrice = unitPrice * quantity
   const discountPercent = useMemo(() => {
-    if (!product.salePrice || product.salePrice >= product.price) return 0
-    return Math.round(((product.price - product.salePrice) / product.price) * 100)
-  }, [product.price, product.salePrice])
+    if (!normalizedSalePrice || normalizedSalePrice >= normalizedPrice || normalizedPrice <= 0) return 0
+    return Math.round(((normalizedPrice - normalizedSalePrice) / normalizedPrice) * 100)
+  }, [normalizedPrice, normalizedSalePrice])
 
 
   const handleIncrease = useCallback(() => {
@@ -319,19 +327,19 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   }, [product.options.length, selectedOptionId, buyNow, t, focusOptionSection])
 
   return (
-    <div className="layout-container layout-page pb-24 md:pb-8">
+    <div className="toss-product-detail layout-container layout-page pb-24 md:pb-8">
       {/* 갤러리 + 정보 영역 */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.2fr_1fr]">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.15fr_1fr]">
         {/* Left: Image gallery */}
         <div className="md:sticky sticky-below-header md:self-start">
           <ImageGallery images={product.images} locale={locale} />
         </div>
 
         {/* Right: Product info */}
-        <div className="flex flex-col gap-6">
+        <div className="toss-product-detail__info flex flex-col gap-4 p-4 md:p-6">
           {/* Breadcrumb */}
           {product.category && (
-            <nav className="typo-label text-muted-foreground tracking-widest uppercase">
+            <nav className="typo-body-sm font-medium text-muted-foreground">
               <Link href={`/products?categoryId=${product.category.id}`} locale={locale} className="hover:text-foreground transition-colors">
                 {product.category.name}
               </Link>
@@ -351,7 +359,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                       href={`/products?attrs=clay_type:${encodeURIComponent(attr.value)}`}
                       locale={locale}
                       className={cn(
-                        'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                        'inline-flex items-center rounded-full px-3 py-1 typo-body-sm font-medium transition-colors',
                         'tag-clay border-transparent',
                         getClayTagClass(attr.value),
                       )}
@@ -366,7 +374,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                       key={attr.id}
                       href={`/products?attrs=teapot_shape:${encodeURIComponent(attr.value)}`}
                       locale={locale}
-                      className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-foreground/30"
+                      className="inline-flex items-center rounded-full bg-muted px-3 py-1 typo-body-sm font-medium text-foreground transition-colors hover:bg-secondary"
                     >
                       {t('shape')}: {attr.displayValue ?? attr.value}
                     </Link>
@@ -378,61 +386,38 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Name */}
-          <h1 className="typo-h1 font-display text-foreground">{product.name}</h1>
-
-          {/* 금박 구분선 */}
-          <hr className="w-16 border-tea" />
-
-          {/* Short description */}
-          {product.shortDescription && (
-            <p className="typo-body text-muted-foreground font-display leading-relaxed">{product.shortDescription}</p>
-          )}
+          <h1 className="toss-product-detail__title text-foreground">{product.name}</h1>
 
           {/* Rating */}
           {product.rating !== undefined && (
-            <div className="flex items-center gap-2">
-              <StarRating rating={product.rating} size="md" interactive={false} />
-              <span className="typo-body font-medium">{product.rating.toFixed(1)}</span>
+            <div className="inline-flex w-fit items-center gap-2 rounded-full bg-muted/40 px-2.5 py-1">
+              <StarRating rating={product.rating} size="sm" interactive={false} />
+              <span className="typo-body-sm font-semibold">{product.rating.toFixed(1)}</span>
               {product.reviewCount !== undefined && product.reviewCount > 0 && (
-                <span className="typo-body text-muted-foreground">{t('reviewCount', { count: product.reviewCount })}</span>
+                <span className="typo-body-sm text-muted-foreground">{t('reviewCount', { count: product.reviewCount })}</span>
               )}
             </div>
+          )}
+
+          {/* Short description */}
+          {product.shortDescription && (
+            <p className="typo-body-sm font-normal leading-relaxed text-muted-foreground">{product.shortDescription}</p>
           )}
 
           {/* Price */}
           <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-col gap-2">
-              <div className="text-4xl font-semibold leading-none text-foreground md:text-5xl">
-                <PriceDisplay price={product.price} salePrice={product.salePrice} size="lg" locale={locale} />
+            <div className="flex flex-col gap-1">
+              <div className="font-body text-foreground">
+                <PriceDisplay price={normalizedPrice} salePrice={normalizedSalePrice} size="lg" locale={locale} />
               </div>
               <div className="flex items-center gap-2">
                 {discountPercent > 0 && (
-                  <span className="tag-clay tag-nokni rounded-full px-2 py-1 text-xs font-semibold">
+                  <span className="tag-clay tag-nokni rounded-full px-2 py-1 typo-label font-semibold">
                     {t('discountOff', { percent: discountPercent })}
-                  </span>
-                )}
-                {isLowStock && (
-                  <span className="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive">
-                    {t('lowStock', { count: maxQuantity })}
                   </span>
                 )}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => void handleToggleWishlist()}
-              disabled={isTogglingWishlist}
-              aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
-              className={cn(
-                'hidden md:inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-md border transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                isWishlisted
-                  ? 'border-primary/30 bg-primary/10 text-primary'
-                  : 'border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/20',
-              )}
-            >
-              <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
-            </button>
           </div>
 
           {/* Options */}
@@ -447,16 +432,23 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Quantity */}
-          <div className="flex flex-col gap-2">
-            <span className="typo-label text-foreground">{t('quantity')}</span>
-            <div className="flex items-center gap-3">
+          <div className="toss-product-detail__quantity flex items-center justify-between gap-3 rounded-xl px-0 py-1">
+            <div className="flex items-center gap-2">
+              <span className="typo-body-sm font-semibold text-foreground">{t('quantity')}</span>
+              {isLowStock && (
+                <span className="rounded-full bg-destructive/10 px-2 py-1 typo-label font-semibold text-destructive">
+                  {t('lowStock', { count: maxQuantity })}
+                </span>
+              )}
+            </div>
+            <div className="flex min-w-0 items-center gap-2">
               <QuantitySelector
                 quantity={quantity}
                 maxQuantity={Math.max(maxQuantity, 1)}
                 onIncrease={handleIncrease}
                 onDecrease={handleDecrease}
               />
-              <span className="typo-body font-semibold text-foreground tabular-nums">
+              <span className="typo-price whitespace-nowrap text-foreground tabular-nums">
                 {formatCurrency(totalPrice, locale)}
               </span>
             </div>
@@ -464,14 +456,14 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Selected summary */}
           {(product.options.length === 0 || selectedOption) && (
-            <div className="flex flex-col gap-3 py-2">
+            <div className="toss-product-detail__summary flex flex-col gap-3 rounded-xl bg-muted/40 px-4 py-3">
               {selectedOption && (
                 <div className="flex items-center justify-between">
                   <span className="typo-body-sm text-muted-foreground">
                     {selectedOption.name}: {selectedOption.value}
-                    {selectedOption.priceAdjustment !== 0 && (
+                    {optionPriceAdjustment !== 0 && (
                       <span className="typo-label ml-1">
-                        ({selectedOption.priceAdjustment > 0 ? '+' : ''}{formatCurrency(selectedOption.priceAdjustment, locale)})
+                        ({optionPriceAdjustment > 0 ? '+' : ''}{formatCurrency(optionPriceAdjustment, locale)})
                       </span>
                     )}
                   </span>
@@ -481,25 +473,46 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
               <div className="flex items-center justify-between">
                 <span className="typo-body-sm text-muted-foreground">{t('selectedQuantity', { quantity })}</span>
               </div>
-              <div className="flex items-center justify-between border-t border-border pt-3">
+              <div className="flex items-center justify-between pt-3">
                 <span className="typo-body-sm font-medium text-foreground">{t('totalProductPrice')}</span>
                 <span className="typo-h2 font-semibold text-foreground">{formatCurrency(totalPrice, locale)}</span>
               </div>
             </div>
           )}
 
+          {isSoldout && (
+            <p className="typo-body-sm font-semibold text-destructive">
+              {t('stockStatus.soldoutReason')}
+            </p>
+          )}
+
           {/* Action buttons — desktop only */}
-          <div className="hidden md:flex gap-3">
+          <div className="hidden gap-3 md:flex">
             <Button
-              variant="outline"
-              className="w-1/3"
+              type="button"
+              variant="gray"
+              size="icon"
+              onClick={() => void handleToggleWishlist()}
+              disabled={isTogglingWishlist}
+              aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
+              className={cn(
+                'h-11 min-h-11 w-11 shrink-0 rounded-md',
+                isWishlisted && 'text-primary',
+              )}
+            >
+              <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
+            </Button>
+            <Button
+              variant="white"
+              className="flex-1"
               disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleAddToCart()}
             >
               {t('addToCart')}
             </Button>
             <Button
-              className="w-2/3"
+              variant="black"
+              className="flex-[2]"
               disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleBuyNow()}
             >
@@ -507,13 +520,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             </Button>
           </div>
 
-          <div className="rounded-lg border border-border bg-muted/20 p-4">
-            <p className="typo-label text-muted-foreground">{t('stockStatus.title')}</p>
-            <p className={cn('mt-1 typo-body-sm font-medium', isSoldout ? 'text-destructive' : 'text-foreground')}>
-              {isSoldout ? t('stockStatus.soldoutReason') : isLowStock ? t('stockStatus.lowStock', { count: maxQuantity }) : t('stockStatus.available')}
-            </p>
-            <p className="mt-2 typo-body-sm text-muted-foreground">{t('stockStatus.restockNotice')}</p>
-          </div>
+
         </div>
       </div>
 
@@ -530,22 +537,22 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
       {/* Mobile fixed bottom action bar — sits above MobileBottomNav (z-50, ~56px tall) */}
       <div className={isNavVisible ? 'md:hidden fixed bottom-14 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3' : 'md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3'}>
-        <button
+        <Button
           type="button"
+          variant="gray"
+          size="icon"
           onClick={() => void handleToggleWishlist()}
           disabled={isTogglingWishlist}
           aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
           className={cn(
-            'flex items-center justify-center h-11 w-11 shrink-0 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-            isWishlisted
-              ? 'border-primary/30 bg-primary/10 text-primary'
-              : 'border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/20',
+            'h-11 min-h-11 w-11 shrink-0 rounded-md',
+            isWishlisted && 'text-primary',
           )}
         >
           <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
-        </button>
+        </Button>
         <Button
-          variant="outline"
+          variant="white"
           className="w-1/3"
           disabled={isSoldout || isAdding || isBuying}
           onClick={() => void handleAddToCart()}
@@ -553,6 +560,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {t('addToCart')}
         </Button>
         <Button
+          variant="black"
           className="w-2/3"
           disabled={isSoldout || isAdding || isBuying}
           onClick={() => void handleBuyNow()}

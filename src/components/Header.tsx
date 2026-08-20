@@ -20,6 +20,7 @@ import { MobileMenu } from '@/components/header/MobileMenu';
 import { MobileSearchOverlay } from '@/components/header/MobileSearchOverlay';
 import { DesktopNav } from '@/components/header/DesktopNav';
 import type { NavigationItem } from '@/lib/api';
+import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   initialNavItems?: NavigationItem[] | null;
@@ -68,24 +69,26 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
   return (
     <>
       <header ref={headerRef} className={cn(
-        'sticky top-0 z-50 transition-all duration-300 ease-in-out',
+        'toss-header sticky top-0 z-50 transition-all duration-300 ease-in-out',
         isScrolled
-          ? 'bg-background/85 backdrop-blur-lg shadow-sm'
+          ? 'toss-header--scrolled bg-background/85 backdrop-blur-lg shadow-sm'
           : 'bg-background',
       )}>
         {/* 2줄 헤더 — top: 로고/검색/액션 · bottom: GNB 전폭 균등 */}
-        <div className="mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
+        <div className="toss-header__top mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
           {/* 햄버거 (mobile) */}
-          <button
+          <Button
             type="button"
+            variant="gray"
+            size="icon"
             onClick={() => { setIsMenuOpen(!isMenuOpen); setIsSearchOpen(false); }}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? tNav('closeMenu') : tNav('openMenu')}
-            className="p-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground md:hidden"
+            className="h-8 min-h-8 w-8 shrink-0 rounded-md md:hidden"
           >
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+            {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </Button>
 
           {/* 로고 */}
           <Link href="/" className="shrink-0">
@@ -99,7 +102,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             onSubmit={handleDesktopSearch}
             role="search"
             aria-label={t('searchLabel')}
-            className="hidden md:flex relative items-center flex-1 max-w-lg mx-8"
+            className="toss-header__search hidden md:flex relative items-center flex-1 max-w-lg mx-8"
           >
             <input
               type="search"
@@ -107,26 +110,26 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
               aria-label={t('searchLabel')}
-              className="w-full rounded-md bg-muted/40 pl-3 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-muted/60 transition-colors"
+              className="toss-header__search-input w-full rounded-md bg-muted/40 pl-3 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-muted/60 transition-colors"
             />
-            <button type="submit" aria-label={t('searchButton')} className="absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
-              <Search className="h-4 w-4" />
-            </button>
+            <Button type="submit" variant="gray" size="icon" aria-label={t('searchButton')} className="toss-header__search-button absolute right-1 h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground">
+              <Search className="h-3.5 w-3.5" />
+            </Button>
           </form>
 
           {/* 데스크탑 액션 */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="toss-header__actions hidden md:flex items-center gap-2">
             <ThemeToggle />
             <LanguageSelector />
             <CartBadge itemCount={itemCount} />
             {isAuthenticated ? (
               <>
-                <Link href="/my" aria-label={t('myPage')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <User className="h-5 w-5" />
+                <Link href="/my" aria-label={t('myPage')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                  <User className="h-4 w-4" />
                 </Link>
-                <button type="button" onClick={() => void logout()} aria-label={t('logout')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <LogOut className="h-5 w-5" />
-                </button>
+                <Button type="button" variant="gray" size="icon" onClick={() => void logout()} aria-label={t('logout')} className="h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground">
+                  <LogOut className="h-4 w-4" />
+                </Button>
                 {isAdmin && (
                   <Link href="/admin" aria-label={t('adminPage')} className="ml-2 inline-flex items-center gap-2 rounded-md border border-primary bg-primary px-3 py-2 typo-button text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
                     <Shield className="h-4 w-4" />
@@ -135,40 +138,42 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
                 )}
               </>
             ) : (
-              <Link href="/login" aria-label={t('login')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-5 w-5" />
+              <Link href="/login" aria-label={t('login')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-4 w-4" />
               </Link>
             )}
           </div>
 
           {/* 모바일 우측 */}
-          <div className="md:hidden flex items-center gap-1">
-            <button
+          <div className="toss-header__mobile-actions md:hidden flex items-center gap-2">
+            <Button
               type="button"
+              variant="gray"
+              size="icon"
               onClick={() => { setIsSearchOpen(!isSearchOpen); setIsMenuOpen(false); }}
               aria-label={isSearchOpen ? t('searchClose') : t('searchOpen')}
               aria-expanded={isSearchOpen}
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground"
             >
-              {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-            </button>
+              {isSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            </Button>
             {isAuthenticated ? (
-              <Link href="/my" aria-label={t('myPage')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-5 w-5" />
+              <Link href="/my" aria-label={t('myPage')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-4 w-4" />
               </Link>
             ) : (
-              <Link href="/login" aria-label={t('login')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-5 w-5" />
+              <Link href="/login" aria-label={t('login')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-4 w-4" />
               </Link>
             )}
-            <div className="p-2">
+            <div className="p-1.5">
               <CartBadge itemCount={itemCount} />
             </div>
           </div>
         </div>
 
         {/* Bottom row — GNB 전폭 균등 분할 */}
-        <div className="hidden md:block">
+        <div className="toss-header__gnb hidden md:block">
           <div className="flex h-12 items-stretch justify-between px-4 md:px-20">
             <DesktopNav items={navItems} fullWidth />
           </div>

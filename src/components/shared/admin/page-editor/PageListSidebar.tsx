@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Plus, FileText } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import type { Page } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import FormInput from '@/components/ui/FormInput';
 
 interface PageListSidebarProps {
   pages: Page[];
@@ -50,73 +52,76 @@ export default function PageListSidebar({
   };
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r bg-background">
-      <div className="flex items-center justify-between border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">페이지 목록</h2>
-        <button
+    <aside className="cms-editor__sidebar surface-card flex w-64 shrink-0 flex-col rounded-none border-0 border-r border-soft shadow-none">
+      <div className="flex items-center justify-between border-b border-soft px-4 py-4">
+        <h2 className="typo-body font-semibold">페이지 목록</h2>
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => setShowForm(!showForm)}
-          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="새 페이지"
         >
           <Plus className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="border-b p-3 space-y-2">
-          <input
-            type="text"
+        <form onSubmit={handleSubmit} className="space-y-3 border-b border-soft p-4">
+          <FormInput
+            id="new-page-title"
+            label="페이지 제목"
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
             placeholder="페이지 제목"
             required
-            className="w-full rounded-md border border-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
-          <input
-            type="text"
+          <FormInput
+            id="new-page-slug"
+            label="slug"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            placeholder="slug"
+            placeholder="영문·숫자·하이픈"
             required
-            className="w-full rounded-md border border-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <div className="flex gap-2">
-            <button
+            <Button
               type="submit"
               disabled={creating}
-              className="flex-1 rounded-md bg-foreground px-3 py-1.5 text-xs text-background hover:opacity-90 disabled:opacity-50"
+              size="sm"
+              className="flex-1"
             >
               {creating ? '생성 중...' : '생성'}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setShowForm(false)}
-              className="rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
             >
               취소
-            </button>
+            </Button>
           </div>
         </form>
       )}
 
       {/* 사용 안내 */}
-      <div className="border-b px-4 py-3 bg-muted/40 space-y-1.5 text-xs text-muted-foreground">
-        <p className="font-medium text-foreground">📄 페이지 관리란?</p>
-        <p>쇼핑몰에 표시될 페이지(홈, 이벤트 등)의 구성을 직접 편집하는 기능입니다.</p>
-        <ul className="space-y-1 mt-1 list-none">
-          <li>➕ 우측 상단 <b>+</b> 버튼으로 새 페이지 생성</li>
-          <li>✏️ 페이지 선택 후 블록을 추가·편집·삭제</li>
-          <li>👁 <b>미리보기</b>로 변경 전 확인</li>
-          <li>💾 <b>저장</b> 후 <b>공개</b>로 전환해야 쇼핑몰에 반영</li>
+      <div className="mx-3 my-3 space-y-2 rounded-xl bg-muted/40 px-3 py-3 typo-body-sm text-muted-foreground">
+        <p className="typo-label font-semibold text-foreground">페이지 관리</p>
+        <p>쇼핑몰에 표시될 페이지의 구성을 직접 편집합니다.</p>
+        <ul className="mt-2 list-none space-y-1">
+          <li><b className="text-foreground">+</b> 새 페이지 생성</li>
+          <li>블록을 추가·편집·삭제</li>
+          <li><b className="text-foreground">미리보기</b>로 변경 전 확인</li>
+          <li><b className="text-foreground">저장 후 공개</b>해야 쇼핑몰에 반영</li>
         </ul>
       </div>
 
       <div className="flex-1 overflow-y-auto py-2">
         {pages.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+          <p className="px-4 py-8 text-center typo-body-sm text-muted-foreground">
             페이지가 없습니다.<br />
-            <span className="text-xs">위 + 버튼으로 생성하세요</span>
+            <span className="typo-label">위 + 버튼으로 생성하세요</span>
           </p>
         ) : (
           <ul className="space-y-0.5 px-2">
@@ -126,16 +131,16 @@ export default function PageListSidebar({
                   type="button"
                   onClick={() => onSelectPage(page)}
                   className={cn(
-                    'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors',
+                    'flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left typo-body-sm transition-colors',
                     selectedPageId === page.id
-                      ? 'bg-foreground text-background'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )}
                 >
                   <FileText className="h-4 w-4 shrink-0" />
-                  <span className="flex-1 truncate">{page.title}</span>
+                  <span className="flex-1 truncate font-medium">{page.title}</span>
                   {!page.is_published && (
-                    <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                    <span className="shrink-0 rounded-lg bg-muted px-2 py-1 typo-label text-muted-foreground">
                       비공개
                     </span>
                   )}

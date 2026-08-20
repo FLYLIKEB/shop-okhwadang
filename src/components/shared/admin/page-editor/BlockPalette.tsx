@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft, BookOpen, Palette, Clock3, Images, Contact } from 'lucide-react';
 import type { PageBlock } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import FormInput from '@/components/ui/FormInput';
 
 type BlockType = PageBlock['type'];
 
@@ -147,53 +149,54 @@ export default function BlockPalette({ onAddBlock }: BlockPaletteProps) {
     : BLOCK_TYPES;
 
   return (
-    <div className="w-60 shrink-0 overflow-y-auto border-r p-3">
+    <div className="cms-editor__palette surface-card w-64 shrink-0 overflow-y-auto rounded-none border-0 border-r border-soft p-4 shadow-none">
       <h3 className="mb-3 typo-label font-semibold uppercase text-muted-foreground">블록 추가</h3>
-      <label className="mb-3 block">
-        <span className="sr-only">블록 검색</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="블록 검색"
-          className="w-full rounded-md border px-3 py-2 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        />
-      </label>
+      <FormInput
+        id="block-search"
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="블록 검색"
+        className="mb-3 rounded-xl border-soft py-3 typo-body-sm"
+      />
       <div className="space-y-1.5">
         {visibleBlockTypes.map(({ type, label, description, detail, icon: Icon }) => (
           <div key={type} className="relative">
             <div className="flex items-stretch gap-1">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => onAddBlock(type, getDefaultContent(type))}
-                className="flex flex-1 items-start gap-2 rounded-md border p-2.5 text-left transition-colors hover:bg-muted"
+                className="surface-card flex h-auto min-h-16 flex-1 items-start justify-start gap-2 p-3 text-left transition-colors hover:bg-muted"
                 data-testid={`add-block-${type}`}
               >
                 <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0">
-                  <span className="block text-sm font-medium">{label}</span>
-                  <span className="block text-xs text-muted-foreground leading-tight">{description}</span>
+                  <span className="block typo-body-sm font-semibold">{label}</span>
+                  <span className="block typo-label leading-tight text-muted-foreground">{description}</span>
                 </div>
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
+                size="icon"
                 onClick={() => setTooltip(tooltip === type ? null : type)}
-                className="shrink-0 rounded-md border px-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="h-auto min-h-16 w-10 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label={`${label} 설명 보기`}
               >
                 {tooltip === type ? <X className="h-3.5 w-3.5" /> : <Info className="h-3.5 w-3.5" />}
-              </button>
+              </Button>
             </div>
 
             {tooltip === type && (
-              <div className="mt-1 rounded-md border bg-muted/60 px-3 py-2 text-xs text-foreground leading-relaxed whitespace-pre-line">
+              <div className="mt-2 rounded-xl bg-muted/70 px-3 py-3 typo-body-sm leading-relaxed text-foreground whitespace-pre-line">
                 {detail}
               </div>
             )}
           </div>
         ))}
         {visibleBlockTypes.length === 0 && (
-          <p className="rounded-md border border-dashed p-3 text-center typo-body-sm text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-soft p-4 text-center typo-body-sm text-muted-foreground">
             검색 결과가 없습니다.
           </p>
         )}

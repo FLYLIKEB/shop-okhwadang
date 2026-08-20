@@ -10,9 +10,10 @@ import ProductCard from '@/components/shared/products/ProductCard';
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import { useCarouselProgress } from '@/components/shared/hooks/useCarouselProgress';
 import CarouselProgressBar from '@/components/shared/common/CarouselProgressBar';
+import CarouselArrowButton from '@/components/shared/common/CarouselArrowButton';
 import { cn } from '@/components/ui/utils';
 import type { Locale } from '@/utils/currency';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 interface Props {
   content: ProductCarouselContent;
@@ -116,22 +117,19 @@ export default function ProductCarouselBlock({ content }: Props) {
         )}
       </div>
 
-      <div className="relative group">
-        <button
-          type="button"
+      <div className="relative">
+        <CarouselArrowButton
+          direction="left"
           onClick={() => handleScroll('left')}
           disabled={!canScrollLeft}
-          aria-label={t('prevProduct')}
+          ariaLabel={t('prevProduct')}
           className={cn(
             'absolute left-2 top-1/2 -translate-y-1/2 z-10',
-            'flex items-center justify-center',
-            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-divider-soft shadow-sm',
+            'bg-transparent text-foreground shadow-none hover:bg-transparent',
             'transition-opacity duration-200',
             canScrollLeft ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',
           )}
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
+        />
 
         <div
           ref={scrollRef}
@@ -159,21 +157,18 @@ export default function ProductCarouselBlock({ content }: Props) {
           ))}
         </div>
 
-        <button
-          type="button"
+        <CarouselArrowButton
+          direction="right"
           onClick={() => handleScroll('right')}
           disabled={!canScrollRight}
-          aria-label={t('nextProduct')}
+          ariaLabel={t('nextProduct')}
           className={cn(
             'absolute right-2 top-1/2 -translate-y-1/2 z-10',
-            'flex items-center justify-center',
-            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-divider-soft shadow-sm',
+            'bg-transparent text-foreground shadow-none hover:bg-transparent',
             'transition-opacity duration-200',
             canScrollRight ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',
           )}
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        />
       </div>
 
       <CarouselProgressBar progress={progress} className="mt-4 mx-4 md:mx-4 xl:mx-8" />

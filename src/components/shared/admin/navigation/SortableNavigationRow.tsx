@@ -5,6 +5,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import type { NavigationItem } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+
 
 interface SortableNavigationRowProps {
   item: NavigationItem;
@@ -40,7 +42,7 @@ export default function SortableNavigationRow({
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
         className={cn(
-          'flex items-center gap-3 rounded-md border bg-background px-3 py-2 mb-1',
+          'surface-card mb-2 flex items-center gap-3 px-3 py-3',
           isDragging && 'opacity-50',
           !item.is_active && 'opacity-50 bg-muted/30',
         )}
@@ -49,56 +51,64 @@ export default function SortableNavigationRow({
         {depth > 0 && (
           <span className="text-xs text-muted-foreground">└</span>
         )}
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           {...listeners}
           title="드래그하여 순서 변경"
-          className="cursor-grab text-muted-foreground hover:text-foreground"
+          className="h-9 w-9 cursor-grab text-muted-foreground hover:text-foreground"
           aria-label="드래그하여 순서 변경"
         >
           <GripVertical className="h-4 w-4" />
-        </button>
+        </Button>
 
         <div className="flex flex-1 flex-col min-w-0">
-          <span className={cn('text-sm font-medium truncate', !item.is_active && 'line-through text-muted-foreground')}>
+          <span className={cn('typo-body-sm truncate font-semibold', !item.is_active && 'line-through text-muted-foreground')}>
             {item.label}
           </span>
-          <span className="text-xs text-muted-foreground truncate">{item.url}</span>
+          <span className="typo-label truncate text-muted-foreground">{item.url}</span>
         </div>
 
         {item.children.length > 0 && (
-          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-muted px-2 py-1 typo-label text-muted-foreground">
             하위 {item.children.length}
           </span>
         )}
 
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => onToggleActive(item)}
           title={item.is_active ? '클릭하면 이 메뉴가 숨겨집니다 (비활성화)' : '클릭하면 이 메뉴가 표시됩니다 (활성화)'}
-          className={cn('shrink-0', item.is_active ? 'text-green-600 hover:text-muted-foreground' : 'text-muted-foreground hover:text-green-600')}
+          className={cn('h-9 w-9 shrink-0', item.is_active ? 'text-green-600 hover:text-muted-foreground' : 'text-muted-foreground hover:text-green-600')}
           aria-label={item.is_active ? '비활성화' : '활성화'}
         >
           {item.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => onEdit(item)}
           title="메뉴 이름·URL·상위 메뉴 수정"
-          className="shrink-0 text-muted-foreground hover:text-foreground"
+          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
           aria-label="수정"
         >
           <Pencil className="h-4 w-4" />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => onDelete(item)}
           title="메뉴 삭제 (하위 메뉴도 함께 삭제됩니다)"
-          className="shrink-0 text-muted-foreground hover:text-destructive"
+          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
           aria-label="삭제"
         >
           <Trash2 className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
       {item.children.length > 0 && (
         <div>

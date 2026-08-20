@@ -14,12 +14,16 @@ interface CartBadgeProps {
 export function CartBadge({ itemCount, className, iconSize = 'h-5 w-5' }: CartBadgeProps) {
   const t = useTranslations('header');
   return (
-    <Link href="/cart" aria-label={t('cartLabel')} className={cn('relative', className)}>
+    <Link
+      href="/cart"
+      aria-label={t('cartLabel')}
+      className={cn('toss-header__cart relative inline-flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200', className)}
+    >
       <ShoppingCart className={cn(iconSize, 'text-muted-foreground hover:text-foreground transition-colors')} />
       {itemCount > 0 && (
         <span
           role="status"
-          className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-foreground text-background text-xs font-bold leading-none"
+          className="absolute top-0 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-foreground text-background text-xs font-bold leading-none"
         >
           {itemCount > 99 ? '99+' : itemCount}
         </span>

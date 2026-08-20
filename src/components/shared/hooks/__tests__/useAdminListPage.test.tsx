@@ -1,10 +1,12 @@
 import { act, renderHook } from '@testing-library/react';
+import { useState, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAdminListPage } from '@/components/shared/hooks/useAdminListPage';
 
 const replaceMock = vi.fn();
 const pushMock = vi.fn();
 let params = new URLSearchParams();
+let markNavigation: (() => void) | null = null;
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: replaceMock, push: pushMock }),
@@ -17,6 +19,34 @@ describe('useAdminListPage', () => {
     replaceMock.mockClear();
     pushMock.mockClear();
     params = new URLSearchParams();
+    markNavigation = null;
+  });
+
+  it('does not navigate while React is applying a filter state update', () => {
+    function RouterStateWrapper({ children }: { children: ReactNode }) {
+      const [, setNavigationCount] = useState(0);
+      markNavigation = () => setNavigationCount((count) => count + 1);
+      return children;
+    }
+
+    pushMock.mockImplementation(() => {
+      markNavigation?.();
+    });
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useAdminListPage({
+      initialFilters: { status: '' },
+    }), { wrapper: RouterStateWrapper });
+
+    act(() => {
+      result.current.setFilter('status', 'active');
+      result.current.setFilter('status', 'hidden');
+    });
+
+    expect(consoleError).not.toHaveBeenCalledWith(
+      expect.stringContaining('Cannot update a component'),
+    );
+    consoleError.mockRestore();
   });
 
   it('resets page to 1 when a filter changes', () => {

@@ -9,6 +9,9 @@ import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed';
 import EmptyState from '@/components/shared/EmptyState';
 import { formatCurrency } from '@/utils/currency';
 import { getClientLocale } from '@/utils/clientLocale';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 
 interface RecentlyViewedProductImageProps {
   thumbnail: string | null;
@@ -55,18 +58,18 @@ export default function RecentlyViewedPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-        {items.length > 0 && (
-          <button
+    <AccountPageShell maxWidth="max-w-4xl">
+      <AccountPageHeader
+        title={t('title')}
+        action={items.length > 0 ? (
+          <Button
+            variant="gray"
             onClick={handleClear}
-            className="text-sm text-muted-foreground hover:text-destructive transition-colors"
           >
             {t('clearAll')}
-          </button>
-        )}
-      </div>
+          </Button>
+        ) : undefined}
+      />
 
       {items.length === 0 ? (
         <EmptyState title={t('noItems')} />
@@ -89,6 +92,6 @@ export default function RecentlyViewedPage() {
           ))}
         </div>
       )}
-    </div>
+    </AccountPageShell>
   );
 }

@@ -8,6 +8,7 @@ import { useFormModal } from '@/components/shared/hooks/useFormModal';
 import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { StatusBadge } from '@/components/shared/admin/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import Modal from '@/components/ui/Modal';
 import FormInput from '@/components/ui/FormInput';
 import { adminAnnouncementBarsApi, type AnnouncementBarItem, type CreateAnnouncementBarData } from '@/lib/api';
@@ -162,20 +163,19 @@ export default function AdminAnnouncementBarsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+      <div className="mx-auto max-w-6xl px-4 py-8 surface-card">
+        <div className="h-8 w-48 animate-pulse rounded bg-muted" aria-hidden="true" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">안내 바 관리</h1>
-        <Button onClick={openCreate}>새 안내 바</Button>
-      </div>
-
-      <p className="text-sm text-muted-foreground">상단 안내 메시지를 다국어로 관리하고 노출 순서를 조정하세요.</p>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <AdminPageHeader
+        title="안내 바 관리"
+        description="상단 안내 메시지를 다국어로 관리하고 노출 순서를 조정하세요."
+        action={<Button onClick={openCreate}>새 안내 바</Button>}
+      />
 
       <AdminTable
         columns={[
@@ -190,31 +190,38 @@ export default function AdminAnnouncementBarsPage() {
         emptyMessage="등록된 안내 바가 없습니다."
       >
         {items.map((item, index) => (
-          <tr key={item.id} className="border-b hover:bg-muted/40">
-            <td className="px-4 py-3 text-sm text-muted-foreground">{item.sort_order}</td>
-            <td className="px-4 py-3 text-sm">{item.message}</td>
-            <td className="px-4 py-3 text-sm text-muted-foreground">{item.message_en ?? '-'}</td>
-            <td className="px-4 py-3 text-sm text-muted-foreground truncate max-w-56">{item.href ?? '-'}</td>
-            <td className="px-4 py-3">
-              <button type="button" onClick={() => toggleActive(item)} className="text-left">
+          <tr key={item.id} className="transition-colors hover:bg-muted/40">
+            <td className="admin-row px-4 py-3 typo-body-sm text-muted-foreground">{item.sort_order}</td>
+            <td className="admin-row px-4 py-3 typo-body-sm font-medium">{item.message}</td>
+            <td className="admin-row px-4 py-3 typo-body-sm text-muted-foreground">{item.message_en ?? '-'}</td>
+            <td className="admin-row max-w-56 truncate px-4 py-3 typo-body-sm text-muted-foreground">{item.href ?? '-'}</td>
+            <td className="admin-row px-4 py-3">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleActive(item)}
+                aria-pressed={item.is_active}
+                className="h-auto px-0 text-left typo-body-sm"
+              >
                 <StatusBadge isActive={item.is_active} />
-              </button>
+              </Button>
             </td>
-            <td className="px-4 py-3">
-              <div className="flex items-center gap-2 text-sm">
-                <button type="button" onClick={() => moveItem(item.id, -1)} disabled={index === 0} className="text-muted-foreground enabled:hover:text-foreground disabled:opacity-40">↑</button>
-                <button type="button" onClick={() => moveItem(item.id, 1)} disabled={index === items.length - 1} className="text-muted-foreground enabled:hover:text-foreground disabled:opacity-40">↓</button>
-                <button type="button" onClick={() => openEdit(item.id)} className="text-foreground hover:underline">수정</button>
-                <button type="button" onClick={() => handleDelete(item.id)} className="text-destructive hover:underline">삭제</button>
+            <td className="admin-row px-4 py-3">
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" aria-label="위로 이동" onClick={() => moveItem(item.id, -1)} disabled={index === 0} className="h-9 min-h-9 w-9 typo-body-sm">↑</Button>
+                <Button variant="ghost" size="icon" aria-label="아래로 이동" onClick={() => moveItem(item.id, 1)} disabled={index === items.length - 1} className="h-9 min-h-9 w-9 typo-body-sm">↓</Button>
+                <Button variant="ghost" size="sm" onClick={() => openEdit(item.id)} className="typo-body-sm">수정</Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="typo-body-sm text-destructive hover:text-destructive">삭제</Button>
               </div>
             </td>
           </tr>
         ))}
       </AdminTable>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <div className="space-y-4 p-6">
-          <h2 className="text-lg font-semibold">{editingId == null ? '새 안내 바' : '안내 바 수정'}</h2>
+      <Modal isOpen={isModalOpen} onClose={closeModal} className="surface-card">
+        <div className="space-y-4">
+          <h2 className="typo-h3">{editingId == null ? '새 안내 바' : '안내 바 수정'}</h2>
 
           <FormInput
             label="국문 메시지"
@@ -244,9 +251,10 @@ export default function AdminAnnouncementBarsPage() {
             onChange={(e) => setFormData((prev) => ({ ...prev, sort_order: Number(e.target.value) }))}
           />
 
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 field-soft rounded-md px-3 py-2 typo-body-sm">
             <input
               type="checkbox"
+              className="h-4 w-4 rounded border-soft accent-foreground"
               checked={formData.is_active ?? true}
               onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
             />

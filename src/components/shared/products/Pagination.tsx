@@ -3,7 +3,8 @@
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { cn } from '@/components/ui/utils';
+
+import { Button } from '@/components/ui/button';
 
 interface PaginationProps {
   total: number;
@@ -56,19 +57,16 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
 
   return (
     <nav aria-label={t('nav')} className="flex items-center justify-center gap-1">
-      <button
+      <Button
         type="button"
+        variant="gray"
+        size="sm"
         onClick={() => goToPage(page - 1)}
         disabled={page <= 1}
-        className={cn(
-          'rounded-md px-3 py-1.5 text-sm transition-colors',
-          page <= 1
-            ? 'cursor-not-allowed text-muted-foreground opacity-50'
-            : 'text-foreground hover:bg-accent',
-        )}
+        className="min-w-16"
       >
         {t('prev')}
-      </button>
+      </Button>
 
       {pages.map((p, idx) =>
         p === 'ellipsis' ? (
@@ -76,37 +74,31 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
             ...
           </span>
         ) : (
-          <button
+          <Button
             key={p}
             type="button"
+            variant={p === page ? 'black' : 'gray'}
+            size="sm"
             onClick={() => goToPage(p)}
             aria-label={t('pageNumber')}
             aria-current={p === page ? 'page' : undefined}
-            className={cn(
-              'min-w-8 rounded-md px-2 py-1.5 text-sm transition-colors',
-              p === page
-                ? 'bg-primary text-primary-foreground'
-                : 'text-foreground hover:bg-accent',
-            )}
+            className="min-w-8"
           >
             {p}
-          </button>
+          </Button>
         ),
       )}
 
-      <button
+      <Button
         type="button"
+        variant="gray"
+        size="sm"
         onClick={() => goToPage(page + 1)}
         disabled={page >= totalPages}
-        className={cn(
-          'rounded-md px-3 py-1.5 text-sm transition-colors',
-          page >= totalPages
-            ? 'cursor-not-allowed text-muted-foreground opacity-50'
-            : 'text-foreground hover:bg-accent',
-        )}
+        className="min-w-16"
       >
         {t('next')}
-      </button>
+      </Button>
     </nav>
   );
 }

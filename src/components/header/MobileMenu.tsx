@@ -37,7 +37,7 @@ function MobileMenuHeader({ onClose }: MobileMenuHeaderProps) {
   const tNav = useTranslations('navigation');
   const tHeader = useTranslations('header');
   return (
-    <div className="flex items-center px-4 h-14 shrink-0">
+    <div className="toss-sidebar__header flex items-center px-4 h-14 shrink-0">
       <button
         type="button"
         onClick={onClose}
@@ -67,7 +67,7 @@ function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }:
   const tHeader = useTranslations('header');
 
   return (
-    <div className="relative flex-1 overflow-hidden">
+    <div className="toss-sidebar__content relative flex-1 overflow-hidden">
       <div
         data-testid="mobile-menu-track"
         className="absolute inset-0 transition-transform duration-300 ease-out motion-reduce:transition-none"
@@ -79,7 +79,7 @@ function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }:
           return (
             <div
               key={`${panel.title}-${index}`}
-              className="absolute top-0 bottom-0 w-full overflow-y-auto px-4 py-4"
+              className="toss-sidebar__panel absolute top-0 bottom-0 w-full overflow-y-auto px-4 py-4"
               style={{ left: `${index * 100}%` }}
               aria-hidden={!isActive}
             >
@@ -150,7 +150,7 @@ function MobileMenuFooter({ isAuthenticated, userName, userRole, onLogout, onLin
   const orderTrackingHref = isAuthenticated ? '/my/orders' : '/login?redirect=/my/orders';
   const isAdmin = userRole === 'admin' || userRole === 'super_admin';
   return (
-    <div className="px-4 py-4 shrink-0">
+    <div className="toss-sidebar__footer px-4 py-4 shrink-0">
       <div className="flex flex-col gap-1">
         {isAuthenticated ? (
           <>
@@ -206,7 +206,7 @@ function MobileMenuBackdrop({ visible, onClose }: { visible: boolean; onClose: (
   return (
     <div
       className={cn(
-        'absolute inset-0 bg-black/40 transition-opacity duration-300',
+        'toss-sidebar__backdrop absolute inset-0 bg-black/40 transition-opacity duration-300',
         visible ? 'opacity-100' : 'opacity-0',
       )}
       onClick={onClose}
@@ -221,7 +221,7 @@ function MobileMenuNav({ visible, children }: { visible: boolean; children: Reac
     <nav
       aria-label={tNav('mobileMenu')}
       className={cn(
-        'absolute left-0 top-0 h-full w-80 bg-background shadow-xl transition-transform duration-500 ease-out',
+        'toss-sidebar absolute left-0 top-0 h-full w-80 bg-background shadow-xl transition-transform duration-500 ease-out',
         visible ? 'translate-x-0' : '-translate-x-full',
       )}
     >

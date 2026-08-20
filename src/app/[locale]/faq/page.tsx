@@ -9,7 +9,7 @@ import type { Faq } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/shared/EmptyState';
-import { cn } from '@/components/ui/utils';
+import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 
 const CATEGORIES = [
@@ -43,35 +43,29 @@ export default function FaqPage() {
   }, [activeCategory, locale]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="toss-customer-page mx-auto max-w-3xl px-4 py-10">
       <h1 className="mb-6 typo-h1">{t('title')}</h1>
 
       <div className="mb-6 flex flex-wrap gap-2">
         {CATEGORIES.map((cat) => (
-          <button
+          <Button
             key={cat.key}
+            variant={activeCategory === cat.key ? 'black' : 'gray'}
+            size="sm"
             onClick={() => setActiveCategory(cat.key)}
-            className={cn(
-              'rounded-full border px-4 py-1.5 typo-button transition-colors',
-              activeCategory === cat.key
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-border text-muted-foreground hover:border-foreground',
-            )}
+            className="toss-customer-category rounded-full"
           >
             {t(`categories.${cat.key}`)}
-          </button>
+          </Button>
         ))}
       </div>
 
-      <section className="mb-6 rounded-lg border border-border bg-muted/20 p-5">
+      <section className="toss-customer-lookup mb-6 rounded-2xl border border-border bg-muted/20 p-5">
         <h2 className="typo-h3 text-foreground">{t('orderLookupTitle')}</h2>
         <p className="mt-2 typo-body text-muted-foreground">{t('orderLookupGuestDescription')}</p>
-        <Link
-          href={`/${locale}/order/lookup`}
-          className="mt-3 inline-flex text-sm font-semibold text-foreground underline underline-offset-4"
-        >
-          {t('orderLookupGuestAction')}
-        </Link>
+        <Button asChild variant="black" size="sm" className="mt-3">
+          <Link href={`/${locale}/order/lookup`}>{t('orderLookupGuestAction')}</Link>
+        </Button>
         <p className="mt-4 typo-body text-muted-foreground">{t('orderLookupMemberDescription')}</p>
         <p className="mt-2 typo-body-sm text-muted-foreground">{t('orderLookupMemberAction')}</p>
       </section>
@@ -85,11 +79,11 @@ export default function FaqPage() {
       ) : (faqs?.length ?? 0) === 0 ? (
         <EmptyState title={t('empty')} />
       ) : (
-        <Accordion.Root type="single" collapsible className="divide-y divide-border border-b border-t">
+        <Accordion.Root type="single" collapsible className="toss-customer-faq divide-y divide-border border-b border-t">
           {faqs.map((faq) => (
             <Accordion.Item key={faq.id} value={String(faq.id)}>
               <Accordion.Header>
-                <Accordion.Trigger className="flex w-full items-center justify-between px-2 py-4 text-left typo-h3 text-foreground transition-colors hover:bg-muted">
+                <Accordion.Trigger className="toss-customer-faq__trigger flex w-full items-center justify-between px-2 py-4 text-left typo-h3 text-foreground transition-colors hover:bg-muted">
                   <span>{faq.question}</span>
                   <span className="faq-arrow ml-4 shrink-0 text-muted-foreground transition-transform duration-200">
                     ▼
@@ -97,7 +91,7 @@ export default function FaqPage() {
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-                <div className="bg-muted px-2 pb-4 typo-body text-muted-foreground">{faq.answer}</div>
+                <div className="toss-customer-faq__answer px-2 pb-4 typo-body text-muted-foreground">{faq.answer}</div>
               </Accordion.Content>
             </Accordion.Item>
           ))}

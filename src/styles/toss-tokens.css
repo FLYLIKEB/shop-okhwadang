@@ -1,0 +1,203 @@
+/* Shared Toss-style surfaces and brand tokens. Components consume these aliases
+   instead of embedding a light-only palette. */
+:root,
+html[data-theme='light'] {
+  --checkout-toss-background: #f2f4f6;
+  --checkout-toss-surface: #ffffff;
+  --checkout-toss-input: #f2f4f6;
+  --checkout-toss-foreground: #191f28;
+  --checkout-toss-muted: #8b95a1;
+  --checkout-toss-border: #e5e8eb;
+  --checkout-toss-primary: #8b4513;
+  --checkout-toss-primary-hover: #6f350f;
+  --checkout-toss-primary-soft: #f5ede7;
+  --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
+  --checkout-toss-button-black: #2b3138;
+  --checkout-toss-button-black-hover: #333d48;
+  --checkout-toss-button-brown: #8b4513;
+  --checkout-toss-button-brown-hover: #6f350f;
+  --checkout-toss-button-gray: #f2f4f6;
+  --checkout-toss-button-gray-hover: #e5e8eb;
+  --checkout-toss-button-white: #ffffff;
+  --checkout-toss-button-white-hover: #f2f4f6;
+  --checkout-toss-header-button-gray-hover: #f2f4f6;
+}
+
+html[data-theme='dark'] {
+  --checkout-toss-background: #101418;
+  --checkout-toss-surface: #191d23;
+  --checkout-toss-input: #242a31;
+  --checkout-toss-foreground: #f2f4f6;
+  --checkout-toss-muted: #9aa4af;
+  --checkout-toss-border: #343c46;
+  --checkout-toss-primary: #8b4513;
+  --checkout-toss-primary-hover: #a85f31;
+  --checkout-toss-primary-soft: #3a2920;
+  --checkout-toss-shadow: 0 2px 12px rgb(0 0 0 / 28%);
+  --checkout-toss-button-black: #2b3138;
+  --checkout-toss-button-black-hover: #343c46;
+  --checkout-toss-button-brown: #8b4513;
+  --checkout-toss-button-brown-hover: #a85f31;
+  --checkout-toss-button-gray: #242a31;
+  --checkout-toss-button-gray-hover: #343c46;
+  --checkout-toss-button-white: #ffffff;
+  --checkout-toss-button-white-hover: #f2f4f6;
+  --checkout-toss-header-button-gray-hover: #303740;
+}
+
+/* Payment content is intentionally light so the Toss widget remains a
+   coherent vendor-owned surface while the global storefront chrome keeps its theme. */
+.checkout-light-theme,
+.product-detail-light-theme {
+  color-scheme: light;
+  --checkout-toss-background: #f2f4f6;
+  --checkout-toss-surface: #ffffff;
+  --checkout-toss-input: #f2f4f6;
+  --checkout-toss-foreground: #191f28;
+  --checkout-toss-muted: #8b95a1;
+  --checkout-toss-border: #e5e8eb;
+  --checkout-toss-primary: #8b4513;
+  --checkout-toss-primary-hover: #6f350f;
+  --checkout-toss-primary-soft: #f5ede7;
+  --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
+  --checkout-toss-button-black: #2b3138;
+  --checkout-toss-button-black-hover: #333d48;
+  --checkout-toss-button-brown: #8b4513;
+  --checkout-toss-button-brown-hover: #6f350f;
+  --checkout-toss-button-gray: #f2f4f6;
+  --checkout-toss-button-gray-hover: #e5e8eb;
+
+  --color-bg: #fafafa;
+  --color-text: #1a1a1a;
+  --color-primary: #353535;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f0f0f0;
+  --color-secondary-foreground: #1a1a1a;
+  --color-destructive: #3d3d3d;
+  --color-destructive-foreground: #ffffff;
+  --color-muted: #f0f0f0;
+  --color-muted-foreground: #525252;
+  --color-accent: #f0f0f0;
+  --color-accent-foreground: #1a1a1a;
+  --color-background: #f9f9f9;
+  --color-foreground: #1a1a1a;
+  --color-card: #f9f9f9;
+  --color-card-foreground: #1a1a1a;
+  --color-border: #e1e1e1;
+  --color-input: #e1e1e1;
+  --color-ring: #353535;
+  --color-surface: #f0f0f0;
+}
+
+.product-detail-light-theme {
+  background: var(--checkout-toss-surface);
+}
+
+.toss-button {
+  border: 0 !important;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.toss-button--black {
+  background: var(--checkout-toss-button-black) !important;
+  color: var(--checkout-toss-surface) !important;
+}
+
+.toss-button--black:hover {
+  background: var(--checkout-toss-button-black-hover) !important;
+}
+
+.toss-button--brown {
+  background: var(--checkout-toss-button-brown) !important;
+  color: var(--checkout-toss-surface) !important;
+}
+
+.toss-button--brown:hover {
+  background: var(--checkout-toss-button-brown-hover) !important;
+}
+
+.toss-button--gray {
+  background: var(--checkout-toss-button-gray) !important;
+  color: var(--checkout-toss-foreground) !important;
+}
+
+.toss-button--gray:hover {
+  background: var(--checkout-toss-button-gray-hover) !important;
+}
+
+.toss-button--white {
+  border: 1px solid var(--checkout-toss-border) !important;
+  background: var(--checkout-toss-button-white) !important;
+  color: var(--checkout-toss-foreground) !important;
+  box-shadow: 0 1px 3px rgb(25 31 40 / 5%);
+}
+
+.toss-button--white:hover {
+  background: var(--checkout-toss-button-white-hover) !important;
+}
+
+.toss-quantity {
+  gap: 0.25rem;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  padding: 0.25rem;
+}
+
+.toss-quantity button {
+  height: 2rem;
+  width: 2rem;
+  border: 0;
+  border-radius: 0.5rem;
+  color: var(--checkout-toss-muted);
+}
+
+.toss-quantity button:hover:not(:disabled) {
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-quantity span {
+  width: 2.25rem;
+  color: var(--checkout-toss-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 2rem;
+  text-align: center;
+}
+
+.toss-product-detail__info {
+  border: 0;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-product-detail__title {
+  font-family: var(--font-display);
+  font-size: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+
+.toss-header__actions .toss-button--gray,
+.toss-header__mobile-actions .toss-button--gray {
+  background: transparent !important;
+}
+
+.toss-header__actions .toss-button--gray:hover,
+.toss-header__mobile-actions .toss-button--gray:hover {
+  background: var(--checkout-toss-header-button-gray-hover) !important;
+}
+
+.toss-header__cart:hover {
+  background: var(--checkout-toss-header-button-gray-hover) !important;
+  color: var(--checkout-toss-primary) !important;
+  transform: scale(1.06);
+}
+
+.toss-header__cart:hover svg {
+  color: var(--checkout-toss-primary) !important;
+}

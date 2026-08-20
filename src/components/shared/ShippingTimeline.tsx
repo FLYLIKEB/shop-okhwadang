@@ -8,6 +8,7 @@ import {
   CARRIER_TRACKING_URLS,
   getCarrierName,
 } from '@/constants/status';
+import { Button } from '@/components/ui/button';
 
 const SHIPPING_STEPS = ['payment_confirmed', 'preparing', 'shipped', 'in_transit', 'delivered'];
 
@@ -114,13 +115,14 @@ export default function ShippingTimeline({ orderId }: Props) {
           {pollErrorCount >= 3 && (
             <span className="text-xs text-destructive">{t('pollingStopped')}</span>
           )}
-          <button
+          <Button
+            variant="gray"
+            size="sm"
             onClick={() => fetchShipping()}
-            className="text-xs text-muted-foreground underline hover:text-foreground"
             aria-label={t('refreshLabel')}
           >
             {t('refresh')}
-          </button>
+          </Button>
         </div>
       </div>
 

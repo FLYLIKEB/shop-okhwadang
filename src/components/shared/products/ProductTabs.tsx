@@ -6,11 +6,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
+import { ChevronDown } from 'lucide-react'
 import { inquiriesApi } from '@/lib/api'
 import type { Inquiry, ProductDetailImage, ProductNoticeInfo } from '@/lib/api'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/components/ui/utils'
+import { Button } from '@/components/ui/button'
 import ReviewsTab from '@/components/shared/reviews/ReviewsTab'
 import { hasEmbeddedDetailMedia, sanitizeProductDetailHtml } from '@/lib/product-detail-html'
 
@@ -71,34 +73,35 @@ function ProductGuideDisclosure<Key extends string>({
   if (rows.length === 0) return null
 
   return (
-    <section className="border-t border-border/70 py-4 last:border-b" aria-labelledby={titleId}>
-      <button
+    <section className="toss-product-guide rounded-2xl bg-muted/40 p-4 md:p-5" aria-labelledby={titleId}>
+      <Button
         type="button"
-        className="flex w-full items-center justify-between gap-4 py-1 text-left"
+        variant="ghost"
+        className="w-full justify-between rounded-xl px-1 py-1 text-left"
         aria-expanded={isOpen}
         aria-controls={`${titleId}-content`}
         onClick={() => setIsOpen((open) => !open)}
       >
         <span>
           <span className="typo-label block text-muted-foreground">{eyebrow}</span>
-          <span id={titleId} className="typo-h2 block text-foreground">{title}</span>
+          <span id={titleId} className="mt-1 block typo-h3 font-body tracking-tight text-foreground">{title}</span>
         </span>
         <span
           className={cn(
-            'text-xl leading-none text-muted-foreground transition-transform',
-            isOpen && 'rotate-45',
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background text-muted-foreground transition-transform',
+            isOpen && 'rotate-180',
           )}
           aria-hidden="true"
         >
-          +
+          <ChevronDown className="h-4 w-4" />
         </span>
-      </button>
+      </Button>
       {isOpen && (
-        <dl id={`${titleId}-content`} className="mt-4 divide-y divide-border/70">
+        <dl id={`${titleId}-content`} className="mt-4 divide-y divide-border/50 rounded-xl bg-background/70 px-4">
           {rows.map((row) => (
             <div key={row.key} className="grid gap-1 py-3 md:grid-cols-[11rem_1fr] md:gap-6">
-              <dt className="typo-label text-muted-foreground">{row.label}</dt>
-              <dd className="typo-body-sm whitespace-pre-line text-foreground">{row.value}</dd>
+              <dt className="typo-body-sm font-semibold text-muted-foreground">{row.label}</dt>
+              <dd className="typo-body-sm whitespace-pre-line font-normal text-foreground">{row.value}</dd>
             </div>
           ))}
         </dl>
@@ -234,25 +237,40 @@ export default function ProductTabs({ description, descriptionImages, productId,
   }
 
   return (
-    <div className="mt-8">
-      <div className="flex justify-center md:justify-start border-b border-border sticky sticky-below-header z-30 bg-background">
+    <div className="mt-4">
+      <div
+        role="navigation"
+        aria-label={t('tabs.navigationLabel')}
+        className="sticky sticky-below-header z-30 flex w-full items-center justify-center gap-8 border-b border-border/50 bg-background/95 px-4 backdrop-blur"
+      >
         {TABS.map((tab) => (
-          <button
+          <Button
             key={tab}
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setActiveTab(tab)}
+            aria-pressed={activeTab === tab}
+            aria-controls={`product-tabpanel-${tab}`}
+            id={`product-tab-${tab}`}
             className={cn(
-              'px-6 py-3 typo-body-sm transition-colors',
+              'relative h-12 min-h-12 rounded-none px-1 py-2 typo-body-sm transition-colors hover:bg-transparent',
               activeTab === tab
-                ? 'border-b-2 border-foreground font-medium text-foreground'
+                ? 'font-semibold text-foreground after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-foreground'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {tabLabels[tab]}
-          </button>
+          </Button>
         ))}
       </div>
-      <div className="py-6">
+      <div
+        id={`product-tabpanel-${activeTab}`}
+        role="region"
+        aria-labelledby={`product-tab-${activeTab}`}
+        tabIndex={0}
+        className="py-6 outline-none"
+      >
         {activeTab === 'details' && (
           <div className="flex flex-col gap-6">
             {descriptionImages.length > 0 && !descriptionContainsEmbeddedMedia && (
@@ -279,9 +297,11 @@ export default function ProductTabs({ description, descriptionImages, productId,
               className="product-detail-html max-w-none"
               dangerouslySetInnerHTML={{ __html: sanitized }}
             />
-            <ProductNoticeInfoGuide noticeInfo={noticeInfo} />
-            <ProductPolicyGuide namespace="deliveryGuide" titleId="delivery-guide-title" />
-            <ProductPolicyGuide namespace="exchangeRefundGuide" titleId="exchange-refund-guide-title" />
+            <div className="mt-8 flex flex-col gap-3">
+              <ProductNoticeInfoGuide noticeInfo={noticeInfo} />
+              <ProductPolicyGuide namespace="deliveryGuide" titleId="delivery-guide-title" />
+              <ProductPolicyGuide namespace="exchangeRefundGuide" titleId="exchange-refund-guide-title" />
+            </div>
           </div>
         )}
         {activeTab === 'reviews' && productId && (
@@ -348,13 +368,13 @@ export default function ProductTabs({ description, descriptionImages, productId,
                     {t('tabs.inquiryPanel.secretLabel')}
                   </label>
                   <div className="flex justify-end">
-                    <button
+                    <Button
                       type="submit"
+                      variant="black"
                       disabled={isSubmitting}
-                      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isSubmitting ? t('tabs.inquiryPanel.submitting') : t('tabs.inquiryPanel.submit')}
-                    </button>
+                    </Button>
                   </div>
                 </form>
 

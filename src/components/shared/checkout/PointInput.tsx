@@ -6,6 +6,7 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { couponsApi } from '@/lib/api';
 import { formatCurrency, type Locale } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
+import { Button } from '@/components/ui/button';
 
 interface PointInputProps {
   onPointsChange: (points: number) => void;
@@ -70,18 +71,15 @@ export default function PointInput({ onPointsChange }: PointInputProps) {
             balance === 0 && 'opacity-50 cursor-not-allowed',
           )}
         />
-        <button
+        <Button
           type="button"
+          variant="gray"
+          size="sm"
           onClick={handleUseAll}
           disabled={balance === 0}
-          className={cn(
-            'rounded-md border px-3 py-2 text-sm font-medium',
-            'hover:bg-muted transition-colors',
-            balance === 0 && 'opacity-50 cursor-not-allowed',
-          )}
         >
           {t('useAll')}
-        </button>
+        </Button>
       </div>
       {balance === 0 && (
         <p className="text-xs text-muted-foreground">{t('empty')}</p>

@@ -9,6 +9,7 @@ import { adminInquiriesApi } from '@/lib/api';
 import type { Inquiry } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { Button } from '@/components/ui/button';
 import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { InquiryStatusBadge } from '@/components/shared/admin/StatusBadge';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
@@ -87,7 +88,7 @@ export default function AdminInquiriesPage() {
         title="문의 관리"
         titleClassName="typo-h1"
         meta={pendingCount > 0 ? (
-          <span className="text-sm font-medium text-red-600">미답변 {pendingCount}건</span>
+          <span className="typo-body-sm font-medium text-red-600">미답변 {pendingCount}건</span>
         ) : undefined}
       />
 
@@ -131,7 +132,7 @@ export default function AdminInquiriesPage() {
           {inquiries.map((inquiry) => (
             <React.Fragment key={inquiry.id}>
               <tr
-                className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                className="border-b border-soft hover:bg-muted/50 cursor-pointer transition-colors"
                 onClick={() => {
                   setOpenId(openId === inquiry.id ? null : inquiry.id);
                   setAnswerText(inquiry.answer ?? '');
@@ -141,40 +142,40 @@ export default function AdminInquiriesPage() {
                   <InquiryStatusBadge status={inquiry.status as 'answered' | 'pending'} context="admin" />
                 </td>
                 <td className="px-4 py-3 text-sm">
-                  <p className="font-medium truncate">{inquiry.user?.name ?? '-'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{inquiry.user?.email ?? ''}</p>
+                  <p className="typo-body-sm font-medium truncate">{inquiry.user?.name ?? '-'}</p>
+                  <p className="typo-body-sm text-muted-foreground truncate">{inquiry.user?.email ?? ''}</p>
                 </td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">{inquiry.type}</td>
-                <td className="px-4 py-3 text-sm font-medium truncate max-w-xs">{inquiry.title}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">
+                <td className="px-4 py-3 typo-body-sm text-muted-foreground">{inquiry.type}</td>
+                <td className="px-4 py-3 typo-body-sm font-medium truncate max-w-xs">{inquiry.title}</td>
+                <td className="px-4 py-3 typo-body-sm text-muted-foreground">
                   {new Date(inquiry.createdAt).toLocaleDateString('ko-KR')}
                 </td>
               </tr>
               {openId === inquiry.id && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-4 bg-muted/30 border-b">
+                  <td colSpan={5} className="px-4 py-4 surface-card border-b border-soft">
                     <div className="space-y-4">
                       <div>
-                        <p className="text-xs font-semibold text-muted-foreground mb-1">문의 내용</p>
-                        <p className="text-sm whitespace-pre-wrap">{inquiry.content}</p>
+                        <p className="typo-label font-semibold text-muted-foreground mb-1">문의 내용</p>
+                        <p className="typo-body-sm whitespace-pre-wrap">{inquiry.content}</p>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-muted-foreground mb-1">답변</p>
+                        <p className="typo-label font-semibold text-muted-foreground mb-1">답변</p>
                         <textarea
                           value={answerText}
                           onChange={(event) => setAnswerText(event.target.value)}
                           rows={4}
                           placeholder="답변을 입력하세요..."
-                          className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                          className="field-soft w-full rounded-lg px-3 py-2 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                         />
-                        <button
+                        <Button
                           type="button"
                           onClick={() => handleAnswer(inquiry.id)}
                           disabled={answering}
-                          className="mt-2 px-4 py-2 bg-foreground text-background text-sm rounded-lg hover:bg-foreground/80 disabled:opacity-50 transition-colors"
+                          className="mt-2"
                         >
                           {answering ? '등록 중...' : inquiry.status === 'answered' ? '답변 수정' : '답변 등록'}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </td>

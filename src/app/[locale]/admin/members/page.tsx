@@ -12,6 +12,7 @@ import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 import { localMessage } from '@/utils/localMessages';
+import { Button } from '@/components/ui/button';
 
 const ROLE_FILTERS = [
   { label: '전체', value: '' },
@@ -77,7 +78,7 @@ export default function AdminMembersPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
-      <AdminPageHeader title="회원 관리" />
+      <AdminPageHeader title="회원 관리" titleClassName="typo-h1" />
 
       <div className="flex flex-wrap items-center gap-2">
         <AdminFilterChips
@@ -88,9 +89,9 @@ export default function AdminMembersPage() {
           size="sm"
         />
         {hasActiveFilters && (
-          <button type="button" onClick={resetFilters} className="rounded-md border px-3 py-1 typo-button text-muted-foreground hover:bg-muted">
+          <Button type="button" onClick={resetFilters} variant="outline" size="sm" className="typo-button">
             {localMessage('admin.common.resetFilters')}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -103,7 +104,7 @@ export default function AdminMembersPage() {
         />
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">상태:</span>
+          <span className="typo-label text-muted-foreground">상태:</span>
           <AdminFilterChips
             items={STATUS_FILTERS}
             value={filters.status}

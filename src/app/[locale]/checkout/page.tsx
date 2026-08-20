@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/components/ui/utils';
 import type {
   CartItem,
@@ -402,26 +403,27 @@ export default function CheckoutPage({
   }
 
   return (
-    <div className="layout-container layout-page pb-36 md:pb-8">
-      <h1 className="typo-h1">{t('title')}</h1>
+    <div className="checkout-toss-theme min-h-screen pb-36 md:pb-8">
+      <div className="layout-container layout-page">
+      <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
 
-      <ol className="mt-4 flex flex-wrap items-center gap-2 rounded-md border border-soft bg-muted/20 px-3 py-2 text-xs text-muted-foreground md:max-w-xl">
-        <li className="rounded-full bg-primary px-2.5 py-1 text-primary-foreground">{t('flow.shipping')}</li>
+      <ol className="checkout-toss-flow mt-6 flex flex-wrap items-center gap-2 text-xs text-muted-foreground md:max-w-xl">
+        <li className="checkout-toss-flow__step checkout-toss-flow__step--active rounded-full px-2.5 py-1 text-primary-foreground">{t('flow.shipping')}</li>
         <span aria-hidden>→</span>
-        <li className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">{t('flow.payment')}</li>
+        <li className="checkout-toss-flow__step checkout-toss-flow__step--inactive rounded-full px-2.5 py-1 text-secondary-foreground">{t('flow.payment')}</li>
         <span aria-hidden>→</span>
-        <li className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">{t('flow.complete')}</li>
+        <li className="checkout-toss-flow__step checkout-toss-flow__step--inactive rounded-full px-2.5 py-1 text-secondary-foreground">{t('flow.complete')}</li>
       </ol>
 
-      <form id="checkout-form" onSubmit={handleSubmit} className="mt-6">
+      <form id="checkout-form" onSubmit={handleSubmit} className="mt-8">
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="layout-stack-md lg:col-span-2">
-            <section className="surface-card p-6">
+            <section className="checkout-toss-section surface-card p-6">
               <h2 className="typo-h3">{t('shippingInfo')}</h2>
 
               <div className="mt-4 layout-stack-md">
                 {isGuestCheckout ? (
-                  <div className="rounded-lg border border-soft bg-muted/20 p-4">
+                  <div className="checkout-toss-panel rounded-lg border border-soft bg-muted/20 p-4">
                     <h3 className="text-sm font-semibold text-foreground">{t('guestCheckoutTitle')}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">{t('guestCheckoutDescription')}</p>
                     <label className="mt-4 block text-sm font-medium text-foreground" htmlFor="guestEmail">
@@ -435,7 +437,7 @@ export default function CheckoutPage({
                       value={guestEmail}
                       onChange={handleGuestEmailChange}
                       placeholder={t('guestEmailPlaceholder')}
-                      className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                      className="checkout-toss-input mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                     />
                     {errors.guestEmail ? (
                       <p className="mt-2 text-sm text-destructive">{errors.guestEmail}</p>
@@ -462,7 +464,7 @@ export default function CheckoutPage({
               </div>
             </section>
 
-            <section className="surface-card p-6">
+            <section className="checkout-toss-section surface-card p-6">
               <h2 className="typo-h3">{t('paymentMethod')}</h2>
               <div className="mt-4">
                 {prepareResult ? (
@@ -496,7 +498,7 @@ export default function CheckoutPage({
             </section>
 
             {!isGuestCheckout && (
-              <section className="surface-card p-6">
+              <section className="checkout-toss-section surface-card p-6">
                 <h2 className="typo-h3">{t('couponPoints')}</h2>
                 <div className="mt-4">
                   <CouponSelector
@@ -509,7 +511,7 @@ export default function CheckoutPage({
               </section>
             )}
 
-            <section className="surface-card p-6">
+            <section className="checkout-toss-section surface-card p-6">
               <h2 className="typo-h3">{t('consent.title')}</h2>
               {policyConsentLoading ? (
                 <p className="mt-4 text-sm text-muted-foreground">{t('consent.loading')}</p>
@@ -518,9 +520,8 @@ export default function CheckoutPage({
               ) : (
                 <div className="mt-4 space-y-3">
                   <p className="text-sm text-muted-foreground">{t('consent.requiredDescription')}</p>
-                  <label className="flex gap-3 rounded-md border border-soft bg-muted/20 p-3 text-sm text-foreground">
-                    <input
-                      type="checkbox"
+                  <label className="checkout-toss-panel flex gap-3 rounded-md border border-soft bg-muted/20 p-3 text-sm text-foreground">
+                    <Checkbox
                       checked={requiredConsent}
                       onChange={(event) => {
                         setPolicyConsents((current) => current.map((policy) => ({
@@ -528,7 +529,6 @@ export default function CheckoutPage({
                           agreed: event.target.checked,
                         })));
                       }}
-                      className="mt-1 h-4 w-4 shrink-0 accent-foreground"
                       aria-label={t('consent.requiredLabel')}
                     />
                     <span className="font-medium">{t('consent.requiredLabel')}</span>
@@ -539,17 +539,15 @@ export default function CheckoutPage({
                     const html = getPolicyHtml(policyPages[policy.slug]);
 
                     return (
-                      <div key={policy.slug} className="overflow-hidden rounded-md border border-soft bg-muted/20 text-sm text-foreground">
+                      <div key={policy.slug} className="checkout-toss-panel overflow-hidden rounded-md border border-soft bg-muted/20 text-sm text-foreground">
                         <div className="flex items-start gap-3 p-3">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={policy.agreed}
                             onChange={(event) => {
                               setPolicyConsents((current) => current.map((item) => (
                                 item.slug === policy.slug ? { ...item, agreed: event.target.checked } : item
                               )));
                             }}
-                            className="mt-1 h-4 w-4 shrink-0 accent-foreground"
                             aria-label={policy.title}
                           />
                           <div className="min-w-0 flex-1">
@@ -593,7 +591,7 @@ export default function CheckoutPage({
             </section>
           </div>
 
-          <aside className="layout-stack-md lg:sticky lg:top-24 lg:self-start">
+          <aside className="checkout-toss-summary layout-stack-md lg:sticky lg:top-24 lg:self-start">
             <OrderSummarySection
               pricedItems={pricingPreview?.items ?? []}
               locale={locale}
@@ -604,13 +602,14 @@ export default function CheckoutPage({
               pointsUsed={appliedPointsUsed}
               totalPayable={grandTotal}
             />
-            <div className="hidden surface-card p-4 md:block">
+            <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
               </div>
               <Button
                 type="submit"
+                variant="brown"
                 disabled={step !== 'idle' || !requiredConsent || !isPricingReady || pricingPreviewLoading}
                 className="w-full"
               >
@@ -623,7 +622,7 @@ export default function CheckoutPage({
 
       <div
         className={cn(
-          'mobile-sticky-cta fixed z-40 border-t border-soft bg-background md:hidden',
+          'checkout-toss-mobile-cta mobile-sticky-cta fixed z-40 border-t border-soft bg-background md:hidden',
           isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
         )}
       >
@@ -635,12 +634,14 @@ export default function CheckoutPage({
           <Button
             type="submit"
             form="checkout-form"
+            variant="brown"
             className="w-full"
             disabled={step !== 'idle' || !requiredConsent || !isPricingReady || pricingPreviewLoading}
           >
             {stepLabels[step]}
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );

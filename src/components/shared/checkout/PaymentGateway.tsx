@@ -8,6 +8,7 @@ import { handleApiError } from '@/utils/error';
 import { SESSION_KEYS } from '@/constants/storage';
 import { SecureCardEntryShell } from './SecureCardEntryShell';
 import { PaymentMethodOption } from './PaymentMethodOption';
+import { Button } from '@/components/ui/button';
 
 export interface PaymentGatewayHandle {
   confirm: () => Promise<void>;
@@ -283,7 +284,7 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
     }, [autoConfirm, isReady, locale, orderNumber]);
 
     return (
-      <div className="layout-stack-md">
+      <div className="checkout-toss-widget layout-stack-md">
         <div id="toss-payment-methods" aria-busy={!isReady} />
         <div id="toss-payment-agreement" />
       </div>
@@ -504,13 +505,14 @@ const StripePaymentGateway = forwardRef<
       {lifecycle === 'error' && mountError && (
         <div className="space-y-2">
           <p role="alert" className="text-xs text-destructive">{mountError}</p>
-          <button
+          <Button
             type="button"
-            className="text-xs font-medium underline underline-offset-4"
+            variant="gray"
+            size="sm"
             onClick={() => setRetryGeneration((generation) => generation + 1)}
           >
             {t('retryPaymentInitialization')}
-          </button>
+          </Button>
         </div>
       )}
       <div

@@ -7,7 +7,10 @@ import { adminSettingsApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import type { SiteSetting } from '@/lib/api';
 import { useUnsavedChanges } from '@/components/shared/hooks/useUnsavedChanges';
-import { cn } from '@/components/ui/utils';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminEmptyState } from '@/components/shared/admin/AdminStates';
+import { Button } from '@/components/ui/button';
+import FormInput from '@/components/ui/FormInput';
 import { toastMessage } from '@/utils/toastMessages';
 
 const FIELD_ORDER = [
@@ -43,24 +46,23 @@ function FieldRow({
   onChangeEn: (key: string, value: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-2 border-b py-4 last:border-0 sm:grid-cols-[1fr_2fr]">
+    <div className="grid grid-cols-1 gap-3 border-soft border-b py-4 last:border-0 sm:grid-cols-[1fr_2fr]">
       <div>
-        <p className="text-sm font-medium">{setting.label}</p>
-        <p className="text-xs text-muted-foreground">{setting.key}</p>
+        <p className="typo-body-sm font-medium">{setting.label}</p>
+        <p className="typo-label text-muted-foreground">{setting.key}</p>
       </div>
       <div className="flex flex-col gap-1.5">
-        <input
-          type="text"
+        <FormInput
           value={currentValue}
           onChange={(e) => onChange(setting.key, e.target.value)}
-          className="w-full rounded border px-3 py-1.5 text-sm"
+          aria-label={setting.label}
           placeholder="한국어"
         />
-        <input
-          type="text"
+        <FormInput
           value={currentValueEn}
           onChange={(e) => onChangeEn(setting.key, e.target.value)}
-          className="w-full rounded border px-3 py-1.5 text-xs text-muted-foreground placeholder:text-muted-foreground/50"
+          aria-label={`${setting.label} (EN)`}
+          className="text-xs text-muted-foreground placeholder:text-muted-foreground/50"
           placeholder="English"
         />
       </div>
@@ -132,33 +134,22 @@ export default function BusinessInfoEditor({ initialSettings }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">사업자 정보 설정</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Footer에 표시되는 사업자 정보를 관리합니다. (전자상거래법 제10조)
-          </p>
-        </div>
-        <button
-          type="button"
+      <AdminPageHeader
+        title="사업자 정보 설정"
+        description="Footer에 표시되는 사업자 정보를 관리합니다. (전자상거래법 제10조)"
+        action={
+          <Button
           onClick={handleSave}
           disabled={!hasChanges || saving}
-          className={cn(
-            'rounded-md px-4 py-2 text-sm transition-colors',
-            hasChanges && !saving
-              ? 'bg-primary text-primary-foreground hover:opacity-90'
-              : 'cursor-not-allowed bg-muted text-muted-foreground',
-          )}
-        >
-          {saving ? '저장 중...' : '저장'}
-        </button>
-      </div>
+          >
+            {saving ? '저장 중...' : '저장'}
+          </Button>
+        }
+      />
 
-      <div className="rounded-lg border bg-background p-4">
+      <div className="surface-card p-4">
         {orderedSettings.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            사업자 정보 설정이 없습니다. DB 마이그레이션을 실행해 주세요.
-          </p>
+          <AdminEmptyState title="사업자 정보 설정이 없습니다. DB 마이그레이션을 실행해 주세요." />
         ) : (
           orderedSettings.map((setting) => (
             <FieldRow

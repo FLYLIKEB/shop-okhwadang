@@ -10,6 +10,7 @@ import { formatCurrency } from '@/utils/currency';
 import { cn } from '@/components/ui/utils';
 import { getClientLocale } from '@/utils/clientLocale';
 import { localMessage } from '@/utils/localMessages';
+import { Button } from '@/components/ui/button';
 
 export default function RecentlyViewedWidget() {
   const locale = getClientLocale();
@@ -26,20 +27,20 @@ export default function RecentlyViewedWidget() {
   return (
     <div
       className={cn(
-        'fixed right-4 z-50 flex flex-col items-end gap-2 md:bottom-20',
+        'toss-recent-widget fixed right-4 z-50 flex flex-col items-end gap-2 md:bottom-20',
         hasMobileBottomCta ? 'bottom-40' : 'bottom-20',
       )}
     >
       {isOpen && (
-        <div className="flex flex-col gap-1 rounded-lg border bg-background shadow-lg p-2">
+        <div className="toss-recent-widget__panel flex flex-col gap-1 rounded-lg border bg-background p-2 shadow-lg">
           {preview.map((item) => (
             <Link
               key={item.id}
               href={`/products/${item.slug}`}
-              className="flex items-center gap-2 rounded-md p-1 hover:bg-muted transition-colors"
+              className="toss-recent-widget__item flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted"
               title={item.name}
             >
-              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded border bg-muted">
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
                 {item.thumbnail ? (
                   <Image
                     src={item.thumbnail}
@@ -65,7 +66,7 @@ export default function RecentlyViewedWidget() {
           {items.length > 3 && (
             <Link
               href="/my/recently-viewed"
-              className="text-center text-xs text-muted-foreground hover:underline py-1"
+              className="toss-recent-widget__more py-1 text-center text-xs text-muted-foreground hover:underline"
             >
               {localMessage('recentlyViewedWidget.more', { count: items.length })}
             </Link>
@@ -74,25 +75,31 @@ export default function RecentlyViewedWidget() {
       )}
 
       <div className="flex items-center gap-1">
-        <button
+        <Button
+          type="button"
+          variant="gray"
+          size="icon"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background shadow-md hover:bg-muted transition-colors"
+          className="h-12 min-h-12 w-12 rounded-full shadow-md"
           aria-label={localMessage('recentlyViewedWidget.open')}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
-        </button>
-        <button
+        </Button>
+        <Button
+          type="button"
+          variant="gray"
+          size="icon"
           onClick={() => setIsHidden(true)}
-          className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background shadow-sm hover:bg-muted transition-colors"
+          className="h-6 min-h-6 w-6 rounded-full p-0 shadow-sm"
           aria-label={localMessage('recentlyViewedWidget.close')}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -45,12 +45,12 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   const roleLabel = user?.role ? t(ROLE_LABEL_KEYS[user.role] ?? 'roles.unknown') : '';
 
   return (
-    <header className="flex min-h-14 items-center justify-between gap-3 border-b bg-background px-4 py-2">
+    <header className="toss-admin__header flex min-h-14 items-center justify-between gap-3 border-b border-soft px-5 py-3">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={onMenuClick}
-          className="min-h-11 min-w-11 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+          className="min-h-11 min-w-11 rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
           aria-label={t('openMenu')}
         >
           <Menu className="h-5 w-5" />
@@ -65,20 +65,20 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         <Link
           href="/"
           target="_blank"
-          className="hidden min-h-11 items-center gap-1 rounded-md border px-3 typo-button text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
+          className="hidden min-h-11 items-center gap-1 rounded-xl border border-soft px-3 typo-button text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
         >
           <ExternalLink className="h-4 w-4" />
           {t('viewShop')}
         </Link>
         <Link
           href="/admin/products"
-          className="hidden min-h-11 items-center gap-1 rounded-md border px-3 typo-button text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:flex"
+          className="hidden min-h-11 items-center gap-1 rounded-xl border border-soft px-3 typo-button text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:flex"
           aria-label={t('quickSearch')}
         >
           <Search className="h-4 w-4" />
           {t('quickSearch')}
         </Link>
-        <div className="flex min-h-11 items-center gap-2 rounded-md border px-2">
+        <div className="flex min-h-11 items-center gap-2 rounded-xl border border-soft bg-background px-2">
           <UserCircle className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
           {user && (
             <div className="hidden text-right sm:block">
@@ -89,7 +89,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           <button
             type="button"
             onClick={() => void logout()}
-            className={cn('rounded px-2 py-1 typo-label text-muted-foreground transition-colors hover:bg-muted hover:text-foreground')}
+            className={cn('rounded-lg px-2 py-1 typo-label text-muted-foreground transition-colors hover:bg-muted hover:text-foreground')}
           >
             {t('logout')}
           </button>

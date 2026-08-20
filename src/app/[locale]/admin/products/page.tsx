@@ -16,6 +16,9 @@ import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 import { ConfirmDialog } from '@/components/shared/admin/ConfirmDialog';
 
+import { Button } from '@/components/ui/button';
+import FormInput from '@/components/ui/FormInput';
+
 const PAGE_SIZE = 20;
 
 type ProductStatus = 'active' | 'soldout' | 'draft' | 'hidden';
@@ -239,22 +242,19 @@ export default function AdminProductsPage() {
       <AdminPageHeader
         title={t('title')}
         action={
-          <Link
-            href="/admin/products/new"
-            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
-          >
-            {t('addProduct')}
-          </Link>
+          <Button asChild variant="primary">
+            <Link href="/admin/products/new">{t('addProduct')}</Link>
+          </Button>
         }
       />
 
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="surface-card p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
-            <h2 className="text-base font-semibold">{t('import.title')}</h2>
-            <p className="text-sm text-muted-foreground">{t('import.description')}</p>
-            <p className="text-sm text-muted-foreground">{t('import.supportedFormats')}</p>
-            <p className="text-sm text-muted-foreground">{t('import.supportedScope')}</p>
+            <h2 className="typo-heading-sm">{t('import.title')}</h2>
+            <p className="typo-body-sm text-muted-foreground">{t('import.description')}</p>
+            <p className="typo-body-sm text-muted-foreground">{t('import.supportedFormats')}</p>
+            <p className="typo-body-sm text-muted-foreground">{t('import.supportedScope')}</p>
             <ul className="grid gap-1.5 rounded-md bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground sm:grid-cols-2">
               {[
                 'identity',
@@ -275,25 +275,27 @@ export default function AdminProductsPage() {
                 </li>
               ))}
             </ul>
-            <input
+            <FormInput
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={handleFileChange}
-              className="block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium"
+              className="file:mr-4 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium"
               aria-label={t('import.fileLabel')}
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={handlePreviewImport}
               disabled={!smartStoreFile || isImporting}
-              className="rounded border px-4 py-2 text-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
             >
               {previewingImport ? t('import.previewing') : t('import.previewButton')}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="primary"
               onClick={handleCommitImport}
               disabled={
                 !smartStoreFile ||
@@ -301,10 +303,9 @@ export default function AdminProductsPage() {
                 !importPreview ||
                 activeImportSource !== 'smartstore-excel'
               }
-              className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {committingImport ? t('import.committing') : t('import.commitButton')}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -312,7 +313,7 @@ export default function AdminProductsPage() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-1">
               <h3 className="font-semibold typo-body-sm">{t('naverCommerce.title')}</h3>
-              <p className="text-sm text-muted-foreground">{t('naverCommerce.description')}</p>
+              <p className="typo-body-sm text-muted-foreground">{t('naverCommerce.description')}</p>
               {isNaverPreviewActive && (
                 <p className="text-sm font-medium text-tea">
                   {t('naverCommerce.selectedCount', {
@@ -323,8 +324,10 @@ export default function AdminProductsPage() {
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={handlePreviewNaverCommerce}
                 disabled={isImporting}
                 className="rounded border px-4 py-2 text-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
@@ -332,9 +335,10 @@ export default function AdminProductsPage() {
                 {previewingNaverCommerce
                   ? t('naverCommerce.previewing')
                   : t('naverCommerce.previewButton')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="primary"
                 onClick={handleCommitNaverCommerce}
                 disabled={
                   isImporting ||
@@ -347,13 +351,13 @@ export default function AdminProductsPage() {
                 {committingNaverCommerce
                   ? t('naverCommerce.committing')
                   : t('naverCommerce.commitButton')}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
         {importSummary && (
-          <div className="mt-4 space-y-3 rounded-lg bg-secondary/40 p-4 text-sm">
+          <div className="mt-4 space-y-3 surface-card bg-secondary/40 p-4 typo-body-sm">
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
               <ImportSummaryItem
                 label={t('import.summary.total')}
@@ -381,7 +385,9 @@ export default function AdminProductsPage() {
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
                   {visibleImportRows.length > 5 && (
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       type="button"
                       onClick={() => setShowAllImportRows((value) => !value)}
                       className="rounded border px-3 py-1 text-xs hover:bg-secondary"
@@ -389,10 +395,12 @@ export default function AdminProductsPage() {
                       {showAllImportRows
                         ? t('import.showTopRows')
                         : t('import.showAllRows', { count: visibleImportRows.length })}
-                    </button>
+                    </Button>
                   )}
                   {allImportRows.some((row) => row.status === 'failed') && (
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       type="button"
                       onClick={() => {
                         setShowFailedImportRowsOnly((value) => !value);
@@ -403,12 +411,12 @@ export default function AdminProductsPage() {
                       {showFailedImportRowsOnly
                         ? t('import.showAllResults')
                         : t('import.showFailedRows')}
-                    </button>
+                    </Button>
                   )}
                 </div>
-                <div className="overflow-x-auto rounded border bg-background">
+                <div className="surface-card overflow-x-auto">
                   <table className="w-full text-xs">
-                    <thead className="bg-secondary">
+                    <thead className="admin-table-head">
                       <tr>
                         {isNaverPreviewActive && (
                           <th className="px-3 py-2 text-left">
@@ -475,7 +483,7 @@ export default function AdminProductsPage() {
                         <th className="px-3 py-2 text-left">{t('import.previewColumns.result')}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-soft">
                       {importRows.map((row) => (
                         <tr key={`${row.rowNumber}-${row.identifier ?? 'empty'}`}>
                           {isNaverPreviewActive && (
@@ -582,9 +590,9 @@ export default function AdminProductsPage() {
           size="sm"
         />
         {hasActiveFilters && (
-          <button type="button" onClick={resetFilters} className="rounded-md border px-3 py-1 typo-button text-muted-foreground hover:bg-muted">
+          <Button type="button" onClick={resetFilters} variant="outline" size="sm">
             {tCommon('resetFilters')}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -597,9 +605,9 @@ export default function AdminProductsPage() {
         totalPages={totalPages}
         onPageChange={setPage}
       >
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="surface-card overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-secondary">
+            <thead className="admin-table-head">
               <tr>
                 <th className="px-4 py-3 text-left">{t('columns.id')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.name')}</th>
@@ -611,7 +619,7 @@ export default function AdminProductsPage() {
                 <th className="px-4 py-3 text-right">{t('columns.action')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-soft">
               {products.map((product) => (
                 <tr key={product.id} className="hover:bg-secondary/30">
                   <td className="px-4 py-3 text-muted-foreground">{product.id}</td>
@@ -646,24 +654,27 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
-                      <button
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => void handleToggleStatus(product)}
-                        className="rounded border px-2 py-1 text-xs hover:bg-secondary"
                       >
                         {product.status === 'active' ? t('actions.hide') : t('actions.show')}
-                      </button>
-                      <Link
+                      </Button>
+                      <Button asChild variant="outline" size="sm">
+                        <Link
                         href={`/admin/products/${product.id}/edit`}
-                        className="rounded border px-2 py-1 text-xs hover:bg-secondary"
                       >
                         {t('actions.edit')}
-                      </Link>
-                      <button
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
                         onClick={() => void handleDelete(product)}
-                        className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
                       >
                         {t('actions.delete')}
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -697,26 +708,27 @@ function LocaleVisibilityButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      size="sm"
       onClick={onClick}
       aria-pressed={visible}
       className={
         visible
-          ? 'rounded border border-tea bg-tea px-2 py-1 typo-label font-medium text-white'
-          : 'rounded border px-2 py-1 typo-label font-medium text-muted-foreground hover:bg-secondary'
+          ? 'border-tea bg-tea typo-label font-medium text-white'
+          : 'border-soft typo-label font-medium text-muted-foreground'
       }
     >
       {label}
-    </button>
+    </Button>
   );
 }
 
 function ImportSummaryItem({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded border bg-background p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-lg font-semibold">{value}</div>
+    <div className="border-soft bg-background p-3">
+      <div className="typo-label text-muted-foreground">{label}</div>
+      <div className="typo-heading-sm">{value}</div>
     </div>
   );
 }

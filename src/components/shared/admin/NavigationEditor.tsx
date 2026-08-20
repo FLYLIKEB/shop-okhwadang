@@ -13,13 +13,14 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { Plus, Eye } from 'lucide-react';
-import { cn } from '@/components/ui/utils';
 import type { NavigationItem } from '@/lib/api';
 import { GROUP_INFO, type NavGroup } from './navigation/navigationGroups';
 import { flattenItems } from './navigation/flattenItems';
 import NavigationPreview from './navigation/NavigationPreview';
 import SortableNavigationRow from './navigation/SortableNavigationRow';
 import NavigationFormModal, { type NavigationFormData } from './navigation/NavigationFormModal';
+import { AdminEmptyState } from './AdminStates';
+import { Button } from '@/components/ui/button';
 
 type NavigationSubmitData = Omit<NavigationFormData, 'labelEn'> & { labelEn: string | null };
 
@@ -117,44 +118,41 @@ export default function NavigationEditor({
   };
 
   return (
-    <div>
+    <div className="space-y-4">
       {/* 그룹 설명 */}
-      <div className="mb-4 rounded-lg border bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-        <p className="font-medium mb-0.5">ℹ️ {info.label}</p>
-        <p className="text-xs leading-relaxed">{info.desc}</p>
+      <div className="surface-card bg-primary/5 p-4">
+        <p className="typo-body-sm font-semibold text-primary">{info.label}</p>
+        <p className="mt-1 typo-body-sm leading-relaxed text-muted-foreground">{info.desc}</p>
       </div>
 
       {/* 액션 바 */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
+          <span className="typo-body-sm text-muted-foreground">
             총 {flatItems.length}개 메뉴 ({items.filter(i => i.is_active).length}개 활성)
           </span>
-          <button
+          <Button
             type="button"
+            variant={showPreview ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setShowPreview(!showPreview)}
-            className={cn(
-              'flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs transition-colors',
-              showPreview ? 'bg-foreground text-background' : 'hover:bg-muted',
-            )}
           >
             <Eye className="h-3.5 w-3.5" />
             {showPreview ? '미리보기 닫기' : '미리보기'}
-          </button>
+          </Button>
         </div>
-        <button
+        <Button
           onClick={handleCreate}
-          className="flex items-center gap-1 rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
           메뉴 추가
-        </button>
+        </Button>
       </div>
 
       {/* 미리보기 */}
       {showPreview && (
-        <div className="mb-4 rounded-lg border bg-muted/30 p-4">
-          <p className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="surface-card bg-muted/30 p-4">
+          <p className="mb-2 typo-label font-semibold uppercase tracking-wide text-muted-foreground">
             쇼핑몰 미리보기 — 활성화된 메뉴만 표시됩니다
           </p>
           <NavigationPreview group={group} items={items} />
@@ -162,16 +160,17 @@ export default function NavigationEditor({
       )}
 
       {/* 사용 안내 */}
-      <div className="mb-3 rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground space-y-0.5">
-        <p>⠿ <b>드래그</b>로 순서 변경 · 👁 아이콘으로 표시/숨김 · ✏️ 수정 · 🗑 삭제</p>
-        <p>하위 메뉴는 수정 모달의 <b>상위 메뉴</b> 선택으로 만들 수 있습니다.</p>
+      <div className="surface-card px-4 py-3 typo-body-sm text-muted-foreground space-y-0.5">
+        <p><b className="text-foreground">드래그</b>로 순서 변경 · 표시/숨김 · 수정 · 삭제</p>
+        <p>하위 메뉴는 수정 모달의 <b className="text-foreground">상위 메뉴</b> 선택으로 만들 수 있습니다.</p>
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-lg border border-dashed py-12 text-center">
-          <p className="text-sm font-medium text-foreground">등록된 메뉴가 없습니다</p>
-          <p className="mt-1 text-xs text-muted-foreground">우측 상단 &quot;메뉴 추가&quot; 버튼으로 첫 메뉴를 만들어보세요.</p>
-        </div>
+        <AdminEmptyState
+          title="등록된 메뉴가 없습니다"
+          description="우측 상단 ‘메뉴 추가’ 버튼으로 첫 메뉴를 만들어보세요."
+          className="surface-card border-0"
+        />
       ) : (
         <DndContext
           sensors={sensors}

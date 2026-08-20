@@ -12,6 +12,10 @@ import {
   type DashboardQueryParams,
 } from '@/lib/api';
 import { ORDER_STATUS_LABELS } from '@/constants/status';
+import { AdminEmptyState, AdminErrorState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
+
 
 const DashboardCharts = dynamic(
   () => import('@/components/shared/admin/DashboardCharts'),
@@ -20,8 +24,8 @@ const DashboardCharts = dynamic(
 
 function ChartSkeleton() {
   return (
-    <div className="flex h-80 items-center justify-center rounded-lg border">
-      <span className="text-sm text-muted-foreground">차트 로딩 중...</span>
+    <div className="surface-card flex h-80 items-center justify-center">
+      <span className="typo-body-sm text-muted-foreground">차트 로딩 중...</span>
     </div>
   );
 }
@@ -48,14 +52,14 @@ function KpiCard({ label, value, diffPct, unit }: KpiCardProps) {
   const isZero = diffPct === 0;
 
   return (
-    <div className="rounded-lg border p-4">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-bold">
+    <div className="surface-card p-4">
+      <p className="typo-body-sm text-muted-foreground">{label}</p>
+      <p className="typo-h2 mt-1">
         {value}
-        {unit && <span className="ml-1 text-base font-normal">{unit}</span>}
+        {unit && <span className="ml-1 typo-body font-normal">{unit}</span>}
       </p>
       <p
-        className={`mt-1 text-sm ${
+        className={`mt-1 typo-body-sm ${
           isZero
             ? 'text-muted-foreground'
             : isPositive
@@ -65,7 +69,7 @@ function KpiCard({ label, value, diffPct, unit }: KpiCardProps) {
       >
         {isZero ? '-' : `${isPositive ? '+' : ''}${diffPct}%`}
         {!isZero && (
-          <span className="ml-1 text-muted-foreground">전일 대비</span>
+          <span className="ml-1 typo-body-sm text-muted-foreground">전일 대비</span>
         )}
       </p>
     </div>
@@ -107,54 +111,49 @@ export default function DashboardPage() {
   }, [isAdmin, period, customStart, customEnd]);
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">대시보드</h1>
-        <div className="flex items-center gap-2">
-          {PERIOD_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setPeriod(opt.value)}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                period === opt.value
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="대시보드"
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {PERIOD_OPTIONS.map((opt) => (
+              <Button
+                key={opt.value}
+                type="button"
+                size="sm"
+                variant={period === opt.value ? 'primary' : 'gray'}
+                onClick={() => setPeriod(opt.value)}
+                aria-pressed={period === opt.value}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+        }
+      />
 
       {period === 'custom' && (
-        <div className="mb-4 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <input
             type="date"
             value={customStart}
             onChange={(e) => setCustomStart(e.target.value)}
-            className="rounded-md border px-3 py-1.5 text-sm"
+            className="surface-card border-soft bg-background px-3 py-2 typo-body-sm"
           />
           <span className="text-muted-foreground">~</span>
           <input
             type="date"
             value={customEnd}
             onChange={(e) => setCustomEnd(e.target.value)}
-            className="rounded-md border px-3 py-1.5 text-sm"
+            className="surface-card border-soft bg-background px-3 py-2 typo-body-sm"
           />
         </div>
       )}
 
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <AdminErrorState title={error} />}
 
       {loading && !data ? (
-        <div className="flex h-64 items-center justify-center">
-          <span className="text-sm text-muted-foreground">로딩 중...</span>
-        </div>
+        <AdminLoadingState title="로딩 중..." />
       ) : data ? (
         <div className="space-y-6">
           {/* KPI Cards */}
@@ -199,8 +198,8 @@ export default function DashboardPage() {
           <DashboardCharts data={data.revenue_chart} />
 
           {/* Order Status Summary */}
-          <div className="rounded-lg border p-4">
-            <h3 className="mb-4 text-lg font-semibold">주문 상태별 현황</h3>
+          <div className="surface-card p-4">
+            <h3 className="mb-4 typo-h3">주문 상태별 현황</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
               {Object.entries(data.order_status_summary).map(
                 ([status, count]) => (
@@ -208,10 +207,10 @@ export default function DashboardPage() {
                     key={status}
                     className="rounded-md bg-muted p-3 text-center"
                   >
-                    <p className="text-sm text-muted-foreground">
+                    <p className="typo-body-sm text-muted-foreground">
                       {ORDER_STATUS_LABELS[status] ?? status}
                     </p>
-                    <p className="mt-1 text-xl font-bold">{count}</p>
+                    <p className="mt-1 typo-h3">{count}</p>
                   </div>
                 ),
               )}
@@ -219,17 +218,15 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Orders */}
-          <div className="rounded-lg border p-4">
-            <h3 className="mb-4 text-lg font-semibold">최근 주문 5건</h3>
+          <div className="surface-card p-4">
+            <h3 className="mb-4 typo-h3">최근 주문 5건</h3>
             {data.recent_orders.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                주문 내역이 없습니다
-              </p>
+              <AdminEmptyState title="주문 내역이 없습니다" className="border-0 p-4" />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full typo-body-sm">
                   <thead>
-                    <tr className="border-b text-left">
+                    <tr className="border-soft border-b text-left">
                       <th className="px-3 py-2 font-medium">주문번호</th>
                       <th className="px-3 py-2 font-medium">고객명</th>
                       <th className="px-3 py-2 font-medium text-right">
@@ -243,9 +240,9 @@ export default function DashboardPage() {
                     {data.recent_orders.map((order) => (
                       <tr
                         key={order.order_number}
-                        className="border-b last:border-0"
+                        className="border-soft border-b last:border-0"
                       >
-                        <td className="px-3 py-2 font-mono text-xs">
+                        <td className="px-3 py-2 font-mono typo-label">
                           {order.order_number}
                         </td>
                         <td className="px-3 py-2">{order.user_name}</td>
@@ -253,7 +250,7 @@ export default function DashboardPage() {
                           {formatCurrency(order.total_amount)}
                         </td>
                         <td className="px-3 py-2">
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                          <span className="rounded-full bg-muted px-2 py-0.5 typo-label">
                             {ORDER_STATUS_LABELS[order.status] ?? order.status}
                           </span>
                         </td>

@@ -23,7 +23,7 @@ interface BlockPropertyPanelProps {
 export default function BlockPropertyPanel({ block, onUpdateContent }: BlockPropertyPanelProps) {
   if (!block) {
     return (
-      <div className="flex w-72 shrink-0 items-center justify-center border-l p-4 text-sm text-muted-foreground">
+      <div className="cms-editor__properties flex w-72 shrink-0 items-center justify-center border-l border-soft p-5 typo-body-sm text-center text-muted-foreground">
         블록을 선택하면 설정을 편집할 수 있습니다
       </div>
     );
@@ -64,15 +64,15 @@ export default function BlockPropertyPanel({ block, onUpdateContent }: BlockProp
   };
 
   return (
-    <div className="w-72 shrink-0 overflow-y-auto border-l p-4">
-      <h3 className="mb-2 text-sm font-semibold">
+    <div className="cms-editor__properties w-72 shrink-0 overflow-y-auto border-l border-soft p-5">
+      <h3 className="mb-2 typo-body font-semibold">
         {BLOCK_TYPE_LABELS[block.type]} 설정
       </h3>
-      <p className="mb-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-relaxed text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-        ℹ️ {BLOCK_TYPE_DESCRIPTIONS[block.type]}
+      <p className="mb-3 rounded-xl bg-primary/5 px-3 py-3 typo-body-sm leading-relaxed text-primary">
+        {BLOCK_TYPE_DESCRIPTIONS[block.type]}
       </p>
-      <div className="mb-3 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-700 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
-        ✏️ 수정 내용은 상단 <b>저장</b> 버튼을 눌러야 반영됩니다
+      <div className="mb-4 rounded-xl bg-muted/70 px-3 py-3 typo-body-sm text-muted-foreground">
+        수정 내용은 상단 <b className="text-foreground">저장</b> 버튼을 눌러야 반영됩니다.
       </div>
       <div className="space-y-3">
         {renderFields()}

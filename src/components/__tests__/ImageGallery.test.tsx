@@ -46,12 +46,12 @@ describe('ImageGallery', () => {
     expect(mainImage).toHaveAttribute('src', '/img/1.jpg')
   })
 
-  it('clicking second thumbnail changes main image src', async () => {
+  it('clicking the next arrow changes main image src', async () => {
     const user = userEvent.setup()
     render(<ImageGallery images={mockImages} />)
 
-    const thumbnailBtn = screen.getByRole('button', { name: '이미지 2 선택' })
-    await user.click(thumbnailBtn)
+    const nextButton = screen.getByRole('button', { name: '다음 이미지' })
+    await user.click(nextButton)
 
     const mainImages = screen.getAllByAltText('두번째 이미지')
     expect(mainImages[0]).toHaveAttribute('src', '/img/2.jpg')
@@ -69,7 +69,8 @@ describe('ImageGallery', () => {
 
     expect(screen.getByText('Zoom')).toBeInTheDocument()
     expect(screen.queryByText('확대')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Select image 2' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Select image 2' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next image' })).toBeInTheDocument()
   })
 
   it('server-renders English gallery copy when the route locale is English', () => {

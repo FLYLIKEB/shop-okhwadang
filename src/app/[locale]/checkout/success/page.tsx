@@ -12,6 +12,7 @@ import { SESSION_KEYS } from '@/constants/storage';
 import { toastMessage } from '@/utils/toastMessages';
 import { ApiHttpError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
 
 interface HostedPaymentContext {
   orderId: number;
@@ -177,12 +178,12 @@ function CheckoutSuccessContent({ locale }: { locale: Locale }) {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-4 text-xl font-bold text-destructive">{t('confirmFailedTitle')}</h1>
         <p className="mb-6 text-sm text-muted-foreground">{t('confirmFailedDescription')}</p>
-        <button
+        <Button
+          variant="black"
           onClick={() => router.replace(`/${locale}/cart`)}
-          className="rounded-md bg-foreground px-6 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90"
         >
           {t('backToCart')}
-        </button>
+        </Button>
       </div>
     );
   }

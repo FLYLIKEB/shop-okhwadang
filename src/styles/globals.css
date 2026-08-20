@@ -14,6 +14,7 @@
    기본 테마는 ThemeContext(DEFAULT_THEME_BY_LOCALE)에서 관리 */
 @import './tokens-dark.css';
 @import './tokens-light.css';
+@import './toss-tokens.css';
 
 /* ── Tailwind v4 dark variant ──────────────────────────────────── */
 /* dark: 유틸리티가 data-theme="dark" 스코프에 반응하도록 매핑 */
@@ -52,6 +53,7 @@
   --color-accent-tea: #5E5E5E;
   --color-brand-secondary: #C7C7C7;
   --color-accent-danni: #BABABA;
+
 }
 
 /* 색상 토큰은 @theme (non-inline) — 유틸리티가 var(--color-*)로 생성되어야
@@ -739,4 +741,1116 @@ h3 {
   max-width: 100%;
   margin-inline: auto;
   text-align: center;
+}
+
+/* ── Toss-style checkout surface ───────────────────────────────── */
+.checkout-toss-theme {
+  min-height: 100%;
+  background: var(--checkout-toss-background);
+  color: var(--checkout-toss-foreground);
+  font-family: var(--font-body);
+}
+
+.checkout-toss-theme .layout-container {
+  max-width: 72rem;
+}
+
+.checkout-toss-theme h1,
+.checkout-toss-theme h2,
+.checkout-toss-theme h3,
+.checkout-toss-theme .typo-h1,
+.checkout-toss-theme .typo-h2,
+.checkout-toss-theme .typo-h3 {
+  font-family: var(--font-body);
+  letter-spacing: -0.025em;
+}
+
+.checkout-toss-theme .checkout-toss-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.checkout-toss-theme .checkout-toss-flow {
+  width: fit-content;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--checkout-toss-surface) 72%, transparent);
+  padding: 0.25rem;
+}
+
+.checkout-toss-theme .checkout-toss-flow__step {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.checkout-toss-theme .checkout-toss-flow__step--active {
+  background: var(--checkout-toss-primary);
+}
+
+.checkout-toss-theme .checkout-toss-flow__step--inactive {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-muted);
+}
+
+.checkout-toss-theme .surface-card,
+.checkout-toss-theme .checkout-toss-section {
+  border: 0;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.checkout-toss-theme .checkout-toss-section > h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.checkout-toss-theme .checkout-toss-panel {
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+}
+
+.checkout-toss-theme input:not([type='checkbox']):not([type='radio']),
+.checkout-toss-theme select,
+.checkout-toss-theme textarea {
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  min-height: 3.25rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.checkout-toss-theme textarea {
+  min-height: 6rem;
+}
+
+.checkout-toss-theme input::placeholder,
+.checkout-toss-theme textarea::placeholder {
+  color: var(--checkout-toss-muted);
+}
+
+.checkout-toss-theme input:not([type='checkbox']):not([type='radio']):focus,
+.checkout-toss-theme select:focus,
+.checkout-toss-theme textarea:focus {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--checkout-toss-primary) 18%, transparent);
+  outline: 0;
+}
+
+.checkout-toss-theme input[type='checkbox'],
+.checkout-toss-theme input[type='radio'] {
+  accent-color: var(--checkout-toss-primary);
+}
+
+.checkout-toss-theme label {
+  color: var(--checkout-toss-foreground);
+}
+
+.checkout-toss-theme .typo-label {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.checkout-toss-theme .text-muted-foreground,
+.checkout-toss-theme [class*='text-muted-foreground'] {
+  color: var(--checkout-toss-muted);
+}
+
+.checkout-toss-theme .text-foreground,
+.checkout-toss-theme [class*='text-foreground'] {
+  color: var(--checkout-toss-foreground);
+}
+
+.checkout-toss-theme [class*='border-soft'],
+.checkout-toss-theme [class*='border-border'],
+.checkout-toss-theme [class*='border-input'] {
+  border-color: var(--checkout-toss-border);
+}
+
+.checkout-toss-theme [class*='bg-muted'],
+.checkout-toss-theme [class*='bg-secondary'] {
+  background-color: var(--checkout-toss-input);
+}
+
+.checkout-toss-theme .bg-primary,
+.checkout-toss-theme button.bg-primary {
+  background-color: var(--checkout-toss-primary);
+}
+
+.checkout-toss-theme .bg-primary:hover,
+.checkout-toss-theme button.bg-primary:hover {
+  background-color: var(--checkout-toss-primary-hover);
+}
+
+.checkout-toss-theme .text-primary-foreground,
+.checkout-toss-theme .text-secondary-foreground {
+  color: var(--checkout-toss-foreground);
+}
+
+.checkout-toss-theme .text-primary-foreground {
+  color: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-payment-option {
+  min-height: 3.25rem;
+  border-color: var(--checkout-toss-border);
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-payment-option:hover {
+  border-color: color-mix(in srgb, var(--checkout-toss-primary) 45%, var(--checkout-toss-border));
+  background: var(--checkout-toss-primary-soft);
+}
+
+.checkout-toss-theme .checkout-toss-payment-option--selected {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-primary-soft);
+  box-shadow: 0 0 0 1px var(--checkout-toss-primary);
+}
+
+.checkout-toss-theme .checkout-toss-submit-card,
+.checkout-toss-theme .checkout-toss-mobile-cta {
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-submit-card button,
+.checkout-toss-theme .checkout-toss-mobile-cta button {
+  min-height: 3.25rem;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-primary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.checkout-toss-theme .checkout-toss-submit-card button:hover,
+.checkout-toss-theme .checkout-toss-mobile-cta button:hover {
+  background: var(--checkout-toss-primary-hover);
+}
+
+.checkout-toss-theme .checkout-toss-widget {
+  max-width: 42rem;
+}
+
+.checkout-toss-theme .checkout-toss-cart-item {
+  border: 0;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.checkout-toss-theme .checkout-toss-cart-item--selected {
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--checkout-toss-primary) 12%, transparent);
+}
+
+.checkout-toss-theme .checkout-toss-cart-item__name {
+  color: var(--checkout-toss-foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+}
+
+.checkout-toss-theme .checkout-toss-select-all {
+  border-color: var(--checkout-toss-border);
+}
+
+.checkout-toss-theme .checkout-toss-select-all > label {
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+}
+
+.checkout-toss-theme .checkout-toss-select-all__label {
+  color: var(--checkout-toss-foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.checkout-toss-theme .checkout-toss-select-all__count {
+  color: var(--checkout-toss-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.checkout-toss-theme .checkout-toss-summary__rows {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.checkout-toss-theme .checkout-toss-summary__row {
+  min-height: 1.75rem;
+  align-items: center;
+  color: var(--checkout-toss-foreground);
+}
+
+.checkout-toss-theme .checkout-toss-summary__value {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.checkout-toss-theme .checkout-toss-summary__shipping {
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-surface);
+  padding: 0.875rem;
+}
+
+.checkout-toss-theme .checkout-toss-summary__shipping p {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.checkout-toss-theme .checkout-toss-free-shipping {
+  border: 0;
+}
+
+.checkout-toss-theme .checkout-toss-summary__shipping > div {
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-summary__total {
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-surface);
+  padding: 1rem;
+}
+
+.checkout-toss-theme .checkout-toss-mobile-summary .group {
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-summary__total-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.checkout-toss-theme .checkout-toss-summary__total-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.checkout-toss-theme .checkout-toss-check {
+  border-color: var(--checkout-toss-border);
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme input:checked + .checkout-toss-check {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-primary);
+  color: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme .checkout-toss-cart-item [class*='border-border'] {
+  border-color: var(--checkout-toss-border);
+}
+
+.checkout-toss-theme .checkout-toss-cart-item [class*='bg-muted'] {
+  background: var(--checkout-toss-input);
+}
+
+/* ── Toss-style header chrome ──────────────────────────────────── */
+.toss-header {
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-header--scrolled {
+  background: color-mix(in srgb, var(--checkout-toss-surface) 94%, transparent);
+  box-shadow: 0 2px 14px rgb(25 31 40 / 6%);
+}
+
+.toss-header__top {
+  min-height: 4rem;
+}
+
+.toss-header__search-input {
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+  font-size: 0.9375rem;
+  letter-spacing: -0.015em;
+}
+
+.toss-header__search-input:focus {
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--checkout-toss-primary) 14%, transparent);
+}
+
+.toss-header__search-button {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-header__search-button:hover {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-header__actions a,
+.toss-header__actions button,
+.toss-header__mobile-actions a,
+.toss-header__mobile-actions button,
+.toss-header__mobile-actions > div {
+  border-radius: 0.625rem;
+}
+
+.toss-header__actions a:not([href='/admin']):hover,
+.toss-header__actions button:hover,
+.toss-header__mobile-actions a:hover,
+.toss-header__mobile-actions button:hover,
+.toss-header__mobile-actions > div:hover {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-header__gnb {
+  background: var(--checkout-toss-surface);
+}
+
+.toss-header__gnb > nav > div > a {
+  min-height: 3rem;
+  border-radius: 0.625rem;
+  padding-inline: 0.75rem;
+  color: var(--checkout-toss-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.toss-header__gnb > nav > div > a:hover {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-header__gnb > nav > div > a > span > span {
+  background: var(--checkout-toss-primary);
+}
+
+.toss-header__gnb > nav > div.fixed {
+  border: 0;
+  border-radius: 0 0 1rem 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 10px 24px rgb(25 31 40 / 8%);
+}
+
+/* ── Toss-style mobile navigation ──────────────────────────────── */
+.toss-mobile-nav {
+  min-height: 3.5rem;
+  border-top: 0;
+  background: color-mix(in srgb, var(--checkout-toss-surface) 96%, transparent);
+  box-shadow: 0 -4px 18px rgb(25 31 40 / 8%);
+  padding-bottom: env(safe-area-inset-bottom);
+  backdrop-filter: blur(14px);
+}
+
+.toss-mobile-nav__link {
+  min-height: 3.5rem;
+  color: var(--checkout-toss-muted);
+}
+
+.toss-mobile-nav__link:hover,
+.toss-mobile-nav__link--active {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-mobile-nav__link--active .toss-mobile-nav__icon {
+  transform: translateY(-1px);
+}
+
+.toss-mobile-nav__icon {
+  transition: transform 160ms ease;
+}
+
+.toss-mobile-nav__label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.toss-mobile-nav__badge {
+  background: var(--checkout-toss-primary);
+  color: var(--checkout-toss-surface);
+}
+
+/* ── Toss-style footer ─────────────────────────────────────────── */
+.toss-footer {
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-footer__inner {
+  padding-block: 3.5rem;
+}
+
+.toss-footer__grid {
+  gap: 2.5rem;
+}
+
+.toss-footer__heading {
+  margin-bottom: 1rem;
+  color: var(--checkout-toss-foreground);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.toss-footer__link {
+  font-size: 0.875rem;
+  letter-spacing: -0.015em;
+  transition: color 160ms ease;
+}
+
+.toss-footer__link:hover {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-footer__brand {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-footer__brand > div {
+  font-size: 0.875rem;
+  letter-spacing: -0.015em;
+}
+
+.toss-footer__social {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-muted);
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.toss-footer__social:hover {
+  background: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary);
+  transform: translateY(-1px);
+}
+
+.toss-footer__business {
+  border: 0;
+  color: var(--checkout-toss-muted);
+}
+
+.toss-footer__business > div {
+  font-size: 0.8125rem;
+  letter-spacing: -0.01em;
+}
+
+/* ── Toss-style mobile sidebar ────────────────────────────────── */
+.toss-sidebar {
+  border: 0;
+  border-radius: 0 1.25rem 1.25rem 0;
+  background: var(--checkout-toss-surface);
+  box-shadow: 10px 0 28px rgb(25 31 40 / 10%);
+}
+
+.toss-sidebar__header {
+  min-height: 4rem;
+  padding-inline: 1.25rem;
+}
+
+.toss-sidebar__header button,
+.toss-sidebar__panel a,
+.toss-sidebar__panel button,
+.toss-sidebar__footer a,
+.toss-sidebar__footer button {
+  border-radius: 0.75rem;
+}
+
+.toss-sidebar__header button:hover,
+.toss-sidebar__panel a:hover,
+.toss-sidebar__panel button:hover,
+.toss-sidebar__footer a:hover,
+.toss-sidebar__footer button:hover {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-sidebar__panel a,
+.toss-sidebar__panel button {
+  padding-inline: 0.75rem;
+  color: var(--checkout-toss-foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.toss-sidebar__panel svg {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-sidebar__footer {
+  margin: 0 1rem 1rem;
+  border-radius: 1rem;
+  background: var(--checkout-toss-input);
+  padding: 1rem;
+}
+
+.toss-sidebar__footer a,
+.toss-sidebar__footer button {
+  color: var(--checkout-toss-muted);
+  padding-inline: 0.625rem;
+}
+
+.toss-sidebar__backdrop {
+  background: rgb(25 31 40 / 34%);
+  backdrop-filter: blur(2px);
+}
+
+/* ── Toss-style account page ──────────────────────────────────── */
+.toss-account {
+  background: var(--checkout-toss-background);
+}
+
+.toss-account__title {
+  letter-spacing: -0.035em;
+}
+
+.toss-account__profile,
+.toss-account__orders {
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account__profile .typo-h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.toss-account .toss-account__edit {
+  min-height: 2.75rem;
+  background-color: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.toss-account .toss-account__edit:hover {
+  background-color: var(--checkout-toss-input);
+}
+
+.toss-account__quick-grid {
+  grid-auto-rows: 1fr;
+}
+
+.toss-account .toss-account__quick-link {
+  min-height: 7rem;
+  background-color: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+  letter-spacing: -0.02em;
+}
+
+.toss-account .toss-account__quick-link:hover {
+  background-color: var(--checkout-toss-surface);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account__quick-link svg {
+  color: var(--checkout-toss-muted);
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.toss-account__quick-link:hover svg {
+  color: var(--checkout-toss-primary);
+  transform: translateY(-1px);
+}
+
+.toss-account__orders h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.toss-account__order-link {
+  border-radius: 0.75rem;
+  padding-inline: 0.75rem;
+}
+
+.toss-account__order-link:hover {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account .toss-account__order-card {
+  background-color: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account__order-card:hover {
+  background-color: var(--checkout-toss-surface);
+  box-shadow: 0 6px 20px rgb(25 31 40 / 8%);
+}
+
+.toss-account .toss-account__recent-order {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-account__address-card,
+.toss-account__address-form {
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account__address-action {
+  border: 0;
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-account__address-action--danger {
+  color: var(--color-destructive);
+}
+
+.toss-account__add-address {
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account__recent-item {
+  background: var(--checkout-toss-input);
+}
+
+.toss-account__recent-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toss-account__order-item-summary {
+  letter-spacing: -0.015em;
+}
+
+.toss-account__order-extra {
+  margin-left: 0.25rem;
+}
+
+/* ── Toss-style recently viewed floating widget ───────────────── */
+.toss-recent-widget__panel {
+  min-width: 15rem;
+  border: 0;
+  border-radius: 1.125rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 10px 28px rgb(25 31 40 / 12%);
+}
+
+.toss-recent-widget__item {
+  border-radius: 0.75rem;
+}
+
+.toss-recent-widget__item:hover {
+  background: var(--checkout-toss-input);
+}
+
+.toss-recent-widget__toggle {
+  border: 0;
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 6px 18px rgb(25 31 40 / 12%);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-recent-widget__toggle:hover {
+  background: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary-hover);
+  transform: translateY(-1px);
+}
+
+.toss-recent-widget__toggle:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.toss-recent-widget__close {
+  border: 0;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-muted);
+}
+
+.toss-recent-widget__close:hover {
+  background: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-recent-widget__more {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-recent-widget__more:hover {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account > * {
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-account [class*='rounded-lg'][class*='border']:not(input):not(select):not(textarea):not(button),
+.toss-account [class*='rounded-md'][class*='border']:not(input):not(select):not(textarea):not(button) {
+  border-color: transparent;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account [class*='border-b'],
+.toss-account [class*='border-t'] {
+  border-color: transparent;
+}
+
+.toss-account [class*='bg-foreground'] {
+  background: var(--checkout-toss-primary);
+  color: var(--checkout-toss-surface);
+}
+
+.toss-account [class*='bg-foreground']:hover {
+  background: var(--checkout-toss-primary-hover);
+}
+
+.toss-account [class*='border-dashed'] {
+  border-color: color-mix(in srgb, var(--checkout-toss-primary) 32%, transparent);
+  background: transparent;
+  box-shadow: none;
+}
+
+.toss-account [class*='border-dashed']:hover {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-primary-soft);
+}
+
+@media (max-width: 767px) {
+  .toss-footer__inner {
+    padding-block: 2.5rem;
+  }
+
+  .toss-footer__grid {
+    gap: 2rem 1.5rem;
+  }
+
+  .toss-footer__brand {
+    grid-column: 1 / -1;
+  }
+
+  .toss-footer__business {
+    margin-top: 2.5rem;
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .checkout-toss-theme .layout-container {
+    padding-inline: 1rem;
+  }
+
+  .checkout-toss-theme .checkout-toss-section {
+    padding: 1.25rem;
+  }
+}
+
+/* Account subpages use surface and spacing instead of outlined boxes. */
+.toss-account button[class*='border'],
+.toss-account a[class*='border'] {
+  border: 0;
+  background-color: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account button[class*='border']:hover,
+.toss-account a[class*='border']:hover {
+  background-color: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account [class~='bg-muted/20'],
+.toss-account [class~='bg-muted/30'],
+.toss-account [class~='bg-muted/40'] {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-account .toss-account__recent-item,
+.toss-account .toss-account__address-action,
+.toss-account .toss-account__add-address {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-account .toss-account__add-address:hover,
+.toss-account .toss-account__address-action:hover {
+  background-color: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account .toss-account__cancel-action,
+.toss-account .toss-account__cancel-action:hover {
+  background-color: var(--checkout-toss-primary);
+  color: var(--checkout-toss-surface);
+}
+
+.toss-account .toss-account__cancel-action:hover {
+  background-color: var(--checkout-toss-primary-hover);
+}
+
+/* ── Toss-style CMS and customer center surfaces ──────────────── */
+.toss-cms,
+.toss-customer-page {
+  background: var(--checkout-toss-background);
+}
+
+.toss-cms,
+.toss-cms h1,
+.toss-cms h2,
+.toss-cms h3,
+.toss-cms .typo-h0,
+.toss-cms .typo-h1,
+.toss-cms .typo-h2,
+.toss-cms .typo-h3,
+.toss-cms .font-display {
+  font-family: var(--font-body);
+}
+
+.toss-cms h1,
+.toss-cms h2,
+.toss-cms h3,
+.toss-cms .typo-h0,
+.toss-cms .typo-h1,
+.toss-cms .typo-h2,
+.toss-cms .typo-h3 {
+  letter-spacing: -0.025em;
+}
+
+.toss-cms__hero {
+  border: 0;
+  background: var(--checkout-toss-surface);
+}
+
+.toss-cms__hero > div {
+  padding-block: 4rem;
+}
+
+.toss-cms__hero h1 {
+  letter-spacing: -0.035em;
+}
+
+.toss-cms__hero .h-px {
+  display: none;
+}
+
+.toss-cms__blocks section[class*='border'],
+.toss-cms__blocks [class*='rounded-lg'][class*='border'],
+.toss-cms__blocks [class*='rounded-md'][class*='border'] {
+  border: 0;
+}
+
+.toss-cms__blocks [class*='rounded-lg'][class*='border'],
+.toss-cms__blocks [class*='rounded-md'][class*='border'] {
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-cms__blocks [class~='bg-muted'],
+.toss-cms__blocks [class~='bg-muted/20'],
+.toss-cms__blocks [class~='bg-background/80'] {
+  background: var(--checkout-toss-surface);
+}
+
+.toss-cms__blocks a[class*='border'],
+.toss-cms__blocks button[class*='border'] {
+  border: 0;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-cms__blocks a[class*='border']:hover,
+.toss-cms__blocks button[class*='border']:hover {
+  background: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-customer-category,
+.toss-customer-lookup {
+  border: 0;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-customer-category:hover {
+  border-color: transparent;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-customer-lookup a {
+  color: var(--checkout-toss-primary);
+  text-decoration: none;
+}
+
+.toss-customer-faq {
+  overflow: hidden;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-customer-faq__trigger {
+  min-height: 3.75rem;
+  background: var(--checkout-toss-surface);
+}
+
+.toss-customer-faq__trigger:hover {
+  background: var(--checkout-toss-input);
+}
+
+.toss-customer-faq__answer {
+  background: var(--checkout-toss-input);
+  padding-inline: 1rem;
+}
+
+.toss-inquiry__new {
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-inquiry__card {
+  border: 0;
+  background-color: var(--checkout-toss-surface) !important;
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-inquiry__summary {
+  min-height: 5.5rem;
+  background-color: var(--checkout-toss-surface) !important;
+}
+
+.toss-inquiry__summary:hover {
+  background-color: var(--checkout-toss-surface) !important;
+}
+
+.toss-inquiry__detail {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-inquiry__answer {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-inquiry-status {
+  border: 0 !important;
+  border-radius: 999px;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.toss-inquiry-status--pending {
+  background: var(--checkout-toss-primary-soft) !important;
+  color: var(--checkout-toss-primary) !important;
+}
+
+.toss-inquiry-status--pending > span {
+  background: var(--checkout-toss-primary) !important;
+}
+
+.toss-inquiry-status--answered {
+  background: var(--checkout-toss-input) !important;
+  color: var(--checkout-toss-foreground) !important;
+}
+
+.toss-inquiry-status--answered > span {
+  background: var(--checkout-toss-muted) !important;
+}
+
+/* ── Toss-style CMS admin surfaces ────────────────────────────── */
+.toss-admin {
+  min-height: 100%;
+  background: var(--checkout-toss-background);
+  color: var(--checkout-toss-foreground);
+  font-family: var(--font-body);
+}
+
+.toss-admin main {
+  background: var(--checkout-toss-background);
+}
+
+.toss-admin__header,
+.toss-admin__sidebar {
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-admin__header [class*='border-soft'],
+.toss-admin__sidebar [class*='border-soft'] {
+  border-color: var(--checkout-toss-border);
+}
+
+.toss-admin .surface-card,
+.toss-admin .admin-surface {
+  border-color: transparent;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-admin .admin-table-head {
+  background: var(--checkout-toss-input);
+}
+
+.toss-admin tbody tr {
+  border-color: var(--checkout-toss-border);
+}
+
+.toss-admin input:not([type='checkbox']):not([type='radio']),
+.toss-admin select,
+.toss-admin textarea {
+  border-color: transparent;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-admin input:not([type='checkbox']):not([type='radio']):focus,
+.toss-admin select:focus,
+.toss-admin textarea:focus {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--checkout-toss-primary) 16%, transparent);
+  outline: 0;
+}
+
+.toss-admin .cms-editor {
+  background: var(--checkout-toss-background);
+}
+
+.toss-admin .cms-editor__topbar,
+.toss-admin .cms-editor__sidebar,
+.toss-admin .cms-editor__palette,
+.toss-admin .cms-editor__properties {
+  background: var(--checkout-toss-surface);
+}
+
+.toss-admin .cms-editor__canvas {
+  background: var(--checkout-toss-background);
+}
+
+.toss-admin [class*='border-soft'] {
+  border-color: var(--checkout-toss-border);
+}
+
+.toss-admin [class*='text-muted-foreground'] {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-admin [class*='bg-muted'] {
+  background-color: var(--checkout-toss-input);
+}
+
+.toss-admin .bg-primary,
+.toss-admin button.bg-primary {
+  background-color: var(--checkout-toss-primary);
+}
+
+.toss-admin .bg-primary:hover,
+.toss-admin button.bg-primary:hover {
+  background-color: var(--checkout-toss-primary-hover);
 }

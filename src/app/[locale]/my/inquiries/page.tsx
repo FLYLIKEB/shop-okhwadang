@@ -10,6 +10,9 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/shared/EmptyState';
 import { InquiryStatusBadge } from '@/components/shared/admin/StatusBadge';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 
 export default function InquiriesPage() {
   const t = useTranslations('myInquiries');
@@ -52,30 +55,37 @@ export default function InquiriesPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="typo-h1">{t('title')}</h1>
-        <Link
-          href="/my/inquiries/new"
-          className="px-4 py-2 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/80 transition-colors"
-        >
-          {t('newInquiry')}
-        </Link>
-      </div>
+    <AccountPageShell maxWidth="max-w-3xl" className="toss-account__inquiries">
+      <AccountPageHeader
+        title={t('title')}
+        action={(
+          <Button asChild variant="black" className="toss-inquiry__new">
+            <Link href="/my/inquiries/new">{t('newInquiry')}</Link>
+          </Button>
+        )}
+      />
 
       {inquiries.length === 0 ? (
         <EmptyState title={t('empty')} />
       ) : (
-        <ul className="space-y-2">
+        <ul className="toss-inquiry__list space-y-4">
           {inquiries.map((inquiry) => (
-            <li key={inquiry.id} className="border rounded-lg overflow-hidden">
-              <button
+            <li key={inquiry.id} className="toss-inquiry__card surface-card overflow-hidden bg-card">
+              <Button
+                type="button"
+                variant="gray"
                 onClick={() => setOpenId(openId === inquiry.id ? null : inquiry.id)}
-                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted transition-colors"
+                className="toss-inquiry__summary min-h-20 w-full justify-between rounded-none bg-card px-5 py-4 text-left"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <InquiryStatusBadge status={inquiry.status as 'answered' | 'pending'} context="my" />
+                    <InquiryStatusBadge
+                      status={inquiry.status as 'answered' | 'pending'}
+                      context="my"
+                      className={inquiry.status === 'answered'
+                        ? 'toss-inquiry-status toss-inquiry-status--answered'
+                        : 'toss-inquiry-status toss-inquiry-status--pending'}
+                    />
                     <span className="text-xs text-muted-foreground">{getTypeLabel(inquiry.type)}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground truncate">{inquiry.title}</p>
@@ -83,15 +93,15 @@ export default function InquiriesPage() {
                 <span className="ml-4 shrink-0 text-xs text-muted-foreground">
                   {new Date(inquiry.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
                 </span>
-              </button>
+              </Button>
               {openId === inquiry.id && (
-                <div className="border-t px-4 py-3 bg-muted space-y-3">
+                <div className="toss-inquiry__detail space-y-3 px-5 py-4">
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground mb-1">{t('content')}</p>
                     <p className="text-sm text-foreground whitespace-pre-wrap">{inquiry.content}</p>
                   </div>
                   {inquiry.answer && (
-                    <div className="bg-card border rounded p-3">
+                    <div className="toss-inquiry__answer rounded-xl p-4">
                       <p className="text-xs font-semibold text-primary mb-1">{t('answer')}</p>
                       <p className="text-sm text-foreground whitespace-pre-wrap">{inquiry.answer}</p>
                       {inquiry.answeredAt && (
@@ -107,6 +117,6 @@ export default function InquiriesPage() {
           ))}
         </ul>
       )}
-    </div>
+    </AccountPageShell>
   );
 }

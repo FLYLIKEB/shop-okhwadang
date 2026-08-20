@@ -8,6 +8,7 @@ import { cn } from '@/components/ui/utils';
 import { useUrlModal } from '@/hooks/useUrlModal';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/i18n/routing';
+import { Button } from '@/components/ui/button';
 
 interface LangOption {
   locale: Locale;
@@ -80,9 +81,11 @@ function InlineLanguageSelector({ className }: { className?: string }) {
         {LANG_OPTIONS.map((option, idx) => {
           const isSelected = option.locale === currentLocale;
           return (
-            <button
+            <Button
               key={option.locale}
               type="button"
+              variant={isSelected ? 'black' : 'gray'}
+              size="sm"
               onClick={() => {
                 startTransition(() => {
                   switchLocale(option.locale, currentLocale, (href) => router.replace(href));
@@ -90,16 +93,10 @@ function InlineLanguageSelector({ className }: { className?: string }) {
               }}
               aria-pressed={isSelected}
               aria-label={option.label}
-              className={cn(
-                'px-3 py-1.5 text-sm font-medium transition-colors min-h-9',
-                idx > 0 && 'border-l border-border',
-                isSelected
-                  ? 'bg-foreground text-background'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-              )}
+              className={cn('min-h-9 rounded-none px-3 py-1.5', idx > 0 && 'border-l border-border')}
             >
               {option.shortLabel}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -145,20 +142,19 @@ function DropdownLanguageSelector({ className, compact = false }: { className?: 
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
-      <button
+      <Button
         type="button"
+        variant="gray"
+        size="sm"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={t('languageSelector')}
         onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          'flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm',
-        )}
+        className="h-8 min-h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
       >
-        <Globe className="h-4 w-4" aria-hidden="true" />
+        <Globe className="h-3.5 w-3.5" aria-hidden="true" />
         {!compact && <span>{current.shortLabel}</span>}
-      </button>
+      </Button>
 
       {isOpen && (
         <ul
@@ -170,18 +166,15 @@ function DropdownLanguageSelector({ className, compact = false }: { className?: 
             const isSelected = option.locale === currentLocale;
             return (
               <li key={option.locale} role="option" aria-selected={isSelected}>
-                <button
+                <Button
                   type="button"
+                  variant={isSelected ? 'black' : 'gray'}
+                  size="sm"
                   onClick={() => handleSelect(option.locale)}
-                  className={cn(
-                    'w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left transition-colors',
-                    isSelected
-                      ? 'text-foreground font-medium bg-muted'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-                  )}
+                  className="w-full justify-start rounded-none px-3 py-1.5 text-left"
                 >
                   {option.label}
-                </button>
+                </Button>
               </li>
             );
           })}

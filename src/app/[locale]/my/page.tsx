@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
-import { ordersApi } from '@/lib/api';
-import type { OrderResponse } from '@/lib/api';
+import { ordersApi, productsApi } from '@/lib/api';
+import type { OrderResponse, Product } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
-import { formatCurrency, type Locale } from '@/utils/currency';
-import { formatDate } from '@/utils/date';
+import { type Locale } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
+import { OrderSummaryCard } from '@/components/shared/account/OrderSummaryCard';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 import {
   Package,
   Heart,
@@ -40,13 +42,27 @@ export default function MyPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
   const { user } = useAuth();
   const [recentOrders, setRecentOrders] = useState<OrderResponse[]>([]);
+  const [recentProducts, setRecentProducts] = useState<Map<number, Product>>(new Map());
   const [ordersLoading, setOrdersLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     ordersApi
       .getList({ page: 1, limit: 3, locale })
-      .then((res) => setRecentOrders(res.items))
+      .then(async (res) => {
+        setRecentOrders(res.items);
+        const productIds = [...new Set(res.items.flatMap((order) => order.items.map((item) => item.productId)))];
+        if (productIds.length === 0) {
+          setRecentProducts(new Map());
+          return;
+        }
+        try {
+          const products = await productsApi.getBulk(productIds, locale);
+          setRecentProducts(new Map(products.map((product) => [product.id, product])));
+        } catch {
+          setRecentProducts(new Map());
+        }
+      })
       .catch((err: unknown) => {
         toast.error(handleApiError(err, t('loadOrdersError')));
         setRecentOrders([]);
@@ -56,18 +72,21 @@ export default function MyPage() {
 
   if (isLoading || !user) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
-        <SkeletonBox width="w-48" height="h-8" />
+      <div className="toss-account checkout-toss-theme min-h-screen">
+        <AccountPageShell maxWidth="max-w-3xl" className="py-12">
+          <SkeletonBox width="w-48" height="h-8" />
+        </AccountPageShell>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="typo-h1 mb-10">{t('title')}</h1>
+    <div className="toss-account checkout-toss-theme min-h-screen pb-16">
+      <AccountPageShell maxWidth="max-w-3xl" className="toss-account__inner">
+      <h1 className="toss-account__title checkout-toss-title typo-h1 mb-8">{t('title')}</h1>
 
       {/* User info */}
-      <section className="mb-10 border-b border-border pb-8">
+      <section className="toss-account__profile checkout-toss-section surface-card mb-6 p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="typo-h3">{user.name}</p>
@@ -76,23 +95,20 @@ export default function MyPage() {
               <p className="typo-body-sm text-muted-foreground">{user.phone}</p>
             )}
           </div>
-          <Link
-            href="/my/profile"
-            className="typo-button border border-border rounded-md px-4 py-2 text-foreground hover:bg-muted transition-colors"
-          >
-            {t('edit')}
-          </Link>
+          <Button asChild variant="gray" className="toss-account__edit">
+            <Link href="/my/profile">{t('edit')}</Link>
+          </Button>
         </div>
       </section>
 
       {/* Quick links */}
-      <section className="mb-10">
-        <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4 border border-border rounded-md overflow-hidden">
+      <section className="mb-6">
+        <div className="toss-account__quick-grid grid grid-cols-2 gap-3 sm:grid-cols-4">
           {QUICK_LINKS.map(({ href, key, icon: Icon }) => (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-2.5 bg-background py-6 typo-body-sm font-medium text-foreground hover:bg-muted transition-colors"
+              className="toss-account__quick-link flex flex-col items-center gap-2.5 rounded-2xl bg-card py-6 typo-body-sm font-semibold text-foreground transition-colors hover:bg-muted"
             >
               <Icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
               {t(key)}
@@ -102,7 +118,7 @@ export default function MyPage() {
       </section>
 
       {/* Recent orders */}
-      <section>
+      <section className="toss-account__orders checkout-toss-section surface-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="typo-h3">{tOrder('recentOrders')}</h2>
           <Link
@@ -125,37 +141,22 @@ export default function MyPage() {
             {tOrder('noOrders')}
           </p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="toss-account__recent-orders space-y-4">
             {recentOrders.map((order) => (
               <li key={order.id}>
-                <Link
+                <OrderSummaryCard
+                  order={order}
+                  products={recentProducts}
+                  locale={locale}
                   href={`/my/orders/${order.id}`}
-                  className="flex items-center justify-between py-4 hover:opacity-75 transition-opacity"
-                >
-                  <div className="min-w-0">
-                    <p className="typo-body-sm font-medium">{order.orderNumber}</p>
-                    <p className="typo-label text-muted-foreground mt-0.5">
-                      {order.items[0]?.productName}
-                      {order.items.length > 1 &&
-                        t('additionalItems', { count: order.items.length - 1 })}
-                      {' · '}
-                      {formatDate(order.createdAt, locale)}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0 ml-4">
-                    <p className="typo-body-sm font-medium">
-                      {formatCurrency(Number(order.totalAmount), locale)}
-                    </p>
-                    <p className="typo-label text-muted-foreground mt-0.5">
-                      {tOrder.has(`status.${order.status}`) ? tOrder(`status.${order.status}`) : order.status}
-                    </p>
-                  </div>
-                </Link>
+                  moreLabel={order.items.length > 1 ? t('additionalItems', { count: order.items.length - 1 }) : undefined}
+                />
               </li>
             ))}
           </ul>
         )}
       </section>
+      </AccountPageShell>
     </div>
   );
 }

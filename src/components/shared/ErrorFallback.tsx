@@ -3,6 +3,7 @@
 import { HOME_PAGE_CONTENT_ERROR_CODE, isHomePageContentError } from '@/lib/storefront-diagnostics';
 import { handleApiError } from '@/utils/error';
 import { localMessage } from '@/utils/localMessages';
+import { Button } from '@/components/ui/button';
 
 interface ErrorFallbackProps {
   error: Error & { digest?: string };
@@ -38,12 +39,12 @@ export default function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
           ) : null}
           <p className="text-xs text-red-500/70">{detailMessage}</p>
         </div>
-        <button
+        <Button
+          variant="black"
           onClick={onRetry}
-          className="inline-flex items-center gap-2 text-sm font-medium bg-foreground text-background rounded px-6 py-3 hover:opacity-80 transition-opacity"
         >
           {localMessage('ui.retry')}
-        </button>
+        </Button>
       </div>
     </div>
   );

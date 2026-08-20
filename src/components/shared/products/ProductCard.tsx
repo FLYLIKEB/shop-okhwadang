@@ -13,6 +13,7 @@ import { useWishlistToggle } from '@/components/shared/hooks/useWishlistToggle';
 import { useCart } from '@/contexts/CartContext';
 import { compactProductSummary } from '@/lib/collectionDisplay';
 import type { Locale } from '@/utils/currency';
+import { Button } from '@/components/ui/button';
 
 interface ProductCardProps {
   id: number;
@@ -142,14 +143,15 @@ function ProductCard({
         )}
 
         {/* 찜하기 — 모바일: 항상 노출 / 데스크톱: hover 또는 찜한 상태에서만 */}
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           aria-label={isWishlisted ? tWishlist('toggleOff') : tWishlist('toggleOn')}
           onClick={handleToggleWishlist}
           disabled={isWishlistLoading}
           className={cn(
-            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full',
-            'bg-background/70 backdrop-blur-sm transition-opacity hover:bg-background/90',
+            'absolute right-12 top-2 z-10 h-8 min-h-8 w-8 cursor-pointer rounded-full bg-transparent text-foreground/50 transition-colors transition-opacity hover:bg-transparent hover:text-white md:group-hover:text-white',
             'disabled:cursor-not-allowed',
             'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100',
             isWishlisted && 'md:opacity-100',
@@ -158,21 +160,37 @@ function ProductCard({
           <Heart
             className={cn(
               'h-4 w-4 transition-colors',
-              isWishlisted ? 'fill-foreground text-foreground' : 'text-foreground/70',
+              isWishlisted && 'fill-current',
             )}
           />
-        </button>
+        </Button>
 
         {isFreeShipping && (
           <span className="tag-clay absolute bottom-2 right-2 z-10 bg-foreground/85 px-2 py-0.5 text-background backdrop-blur-sm pointer-events-none">
             {t('badgeFreeShipping')}
           </span>
         )}
+
+        {!isSoldout && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleAddToCart}
+            disabled={isCartLoading}
+            className="absolute right-2 top-2 z-10 h-8 min-h-8 w-8 cursor-pointer rounded-full bg-transparent opacity-100 transition-colors transition-opacity hover:bg-background/90 md:opacity-0 md:group-hover:opacity-100 md:group-hover:bg-background/60 md:group-focus-within:opacity-100"
+          >
+            <ShoppingCart className="h-4 w-4 text-white mix-blend-difference" />
+            <span className="sr-only">
+              {isCartLoading ? t('addingToCart') : t('addToCart')}
+            </span>
+          </Button>
+        )}
       </div>
 
       {/* ── 정보 영역 — 상품명 > 가격 > 메타 위계 ── */}
       <div className="mt-3 flex flex-1 flex-col gap-1.5">
-        <p className="typo-title line-clamp-3 break-words leading-snug text-foreground min-h-[3.75rem] md:min-h-[4.25rem]">{name}</p>
+        <p className="typo-title line-clamp-3 break-words leading-snug text-foreground">{name}</p>
 
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
 
@@ -180,10 +198,10 @@ function ProductCard({
           {hasRating && (
             <div className="flex items-center gap-1.5">
               <StarRating rating={rating} size="sm" interactive={false} />
-              <span className="font-mono text-xs leading-none text-muted-foreground">
+              <span className="typo-label font-normal leading-none text-muted-foreground">
                 {rating.toFixed(1)}
               </span>
-              <span className="font-mono text-xs leading-none text-muted-foreground">
+              <span className="typo-label font-normal leading-none text-muted-foreground">
                 ({reviewCount})
               </span>
             </div>
@@ -202,21 +220,6 @@ function ProductCard({
           </p>
         )}
 
-        {!isSoldout && (
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={isCartLoading}
-            className={cn(
-              'mt-auto flex w-full items-center justify-center gap-2 border border-divider-soft py-2',
-              'typo-button text-foreground transition-colors',
-              'hover:bg-foreground hover:text-background disabled:cursor-not-allowed',
-            )}
-          >
-            <ShoppingCart className="h-3.5 w-3.5" />
-            {isCartLoading ? t('addingToCart') : t('addToCart')}
-          </button>
-        )}
       </div>
     </article>
   );

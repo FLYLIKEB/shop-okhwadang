@@ -42,7 +42,7 @@ export default function BlockRenderer({ blocks }: Props) {
   if (visibleBlocks.length === 0) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="toss-cms__blocks space-y-8">
       {visibleBlocks.map((block, index) => {
         if (interactiveBlockTypes.has(block.type)) {
           return <InteractiveBlock key={block.id} block={block} index={index} />;

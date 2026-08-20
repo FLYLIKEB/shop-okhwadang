@@ -131,14 +131,16 @@ export default function ReviewForm({
             {imageUrls.map((url, idx) => (
               <div key={url} className="relative">
                 <Image src={url} alt={localMessage('review.attachedImage', { index: idx + 1 })} width={64} height={64} className="rounded object-cover" />
-                <button
+                <Button
                   type="button"
+                  variant="gray"
+                  size="icon"
                   onClick={() => removeImage(idx)}
-                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground"
+                  className="absolute -right-1 -top-1 h-5 min-h-5 w-5 rounded-full p-0 text-xs text-destructive"
                   aria-label={localMessage('review.deleteImage')}
                 >
                   x
-                </button>
+                </Button>
               </div>
             ))}
           </div>
@@ -147,10 +149,10 @@ export default function ReviewForm({
 
       {/* Actions */}
       <div className="flex gap-2">
-        <Button type="submit" disabled={isSubmitting || rating === 0} size="sm">
+        <Button type="submit" variant="black" disabled={isSubmitting || rating === 0} size="sm">
           {isSubmitting ? localMessage('review.submitting') : localMessage('review.submit')}
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+        <Button type="button" variant="gray" size="sm" onClick={onCancel}>
           {localMessage('review.cancel')}
         </Button>
       </div>

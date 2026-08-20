@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 
 interface ProfileForm {
   name: string;
@@ -82,14 +85,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8">
-      <div className="mb-6 flex items-center gap-2">
-        <Link href="/my" className="text-sm text-muted-foreground hover:underline">
-          {tMy('title')}
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <h1 className="typo-h2">{t('title')}</h1>
-      </div>
+    <AccountPageShell maxWidth="max-w-lg">
+      <AccountPageHeader title={t('title')} backHref="/my" backLabel={tMy('title')} />
 
       <form onSubmit={handleSubmit} className="rounded-lg border p-6 space-y-5">
         <div className="space-y-1">
@@ -138,14 +135,15 @@ export default function ProfilePage() {
           {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
         </div>
 
-        <button
+        <Button
           type="submit"
+          variant="black"
           disabled={submitting}
-          className="w-full rounded-md bg-foreground py-2.5 text-sm font-semibold text-background hover:opacity-90 transition-opacity disabled:opacity-40"
+          className="w-full"
         >
           {submitting ? t('saving') : t('save')}
-        </button>
+        </Button>
       </form>
-    </div>
+    </AccountPageShell>
   );
 }
