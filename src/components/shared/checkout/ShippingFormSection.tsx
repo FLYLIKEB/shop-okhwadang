@@ -104,9 +104,10 @@ interface ZipcodeInputSectionProps {
   errors: FormErrors;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onAddressSearch?: (result: AddressSearchResult) => void;
+  readOnly?: boolean;
 }
 
-export function ZipcodeInputSection({ form, errors, onChange, onAddressSearch }: ZipcodeInputSectionProps) {
+export function ZipcodeInputSection({ form, errors, onChange, onAddressSearch, readOnly = false }: ZipcodeInputSectionProps) {
   return (
     <div className="space-y-1">
       <label htmlFor="zipcode" className="typo-label">
@@ -119,6 +120,7 @@ export function ZipcodeInputSection({ form, errors, onChange, onAddressSearch }:
           type="text"
           value={form.zipcode}
           onChange={onChange}
+          readOnly={readOnly}
           placeholder="12345"
           maxLength={5}
           className="min-w-0 flex-1 rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
@@ -144,9 +146,10 @@ interface AddressInputSectionProps {
   form: ShippingForm;
   errors: FormErrors;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  readOnly?: boolean;
 }
 
-export function AddressInputSection({ form, errors, onChange }: AddressInputSectionProps) {
+export function AddressInputSection({ form, errors, onChange, readOnly = false }: AddressInputSectionProps) {
   return (
     <div className="space-y-1">
       <label htmlFor="address" className="typo-label">
@@ -158,6 +161,7 @@ export function AddressInputSection({ form, errors, onChange }: AddressInputSect
         type="text"
         value={form.address}
         onChange={onChange}
+        readOnly={readOnly}
         placeholder={localMessage('checkout.addressPlaceholder')}
         className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />

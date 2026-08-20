@@ -411,7 +411,6 @@ describe('CheckoutPage', () => {
   });
 
   it('clears the old quote when the address changes without changing zipcode', async () => {
-    const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     vi.mocked(checkoutPricingApi.preview)
@@ -420,7 +419,7 @@ describe('CheckoutPage', () => {
 
     await renderCheckoutPage();
     await screen.findByLabelText(/받는 분 이름/);
-    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
 
     await waitFor(() => expect(screen.getAllByRole('button', { name: '결제하기' })[0]).toBeDisabled());
     expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
@@ -485,8 +484,8 @@ describe('CheckoutPage', () => {
     await screen.findByLabelText(/받는 분 이름/);
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
-    await user.type(screen.getByLabelText(/우편번호/), '12345');
-    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
     await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
@@ -533,8 +532,8 @@ describe('CheckoutPage', () => {
     await screen.findByLabelText(/받는 분 이름/);
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
-    await user.type(screen.getByLabelText(/우편번호/), '12345');
-    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
     await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
@@ -582,8 +581,8 @@ describe('CheckoutPage', () => {
     expect(await screen.findByTestId('toss-widget-preview')).toBeInTheDocument();
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
-    await user.type(screen.getByLabelText(/우편번호/), '12345');
-    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
     await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 

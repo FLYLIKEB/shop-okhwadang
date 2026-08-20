@@ -481,8 +481,9 @@ export default function CheckoutPage({
                   errors={errors}
                   onChange={handleChange}
                   onAddressSearch={handleAddressSearch}
+                  readOnly
                 />
-                <AddressInputSection form={form} errors={errors} onChange={handleChange} />
+                <AddressInputSection form={form} errors={errors} onChange={handleChange} readOnly />
                 <AddressDetailInputSection form={form} onChange={handleChange} />
                 <MemoInputSection form={form} onChange={handleChange} />
               </div>
