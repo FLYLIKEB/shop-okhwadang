@@ -5,6 +5,7 @@ import { cn } from '@/components/ui/utils';
 import type { ColorCardItem, ColorCardListContent } from '@/lib/api';
 import { getHeadingId, InlineHtmlText } from './genericBlockUtils';
 import { Button } from '@/components/ui/button';
+import { ContentCardShell, ContentCardSkeleton } from './ContentCardShell';
 
 function AlternatingCard({ item, reversed }: { item: ColorCardItem; reversed: boolean }) {
   const displayName = item.name ?? item.nameKo;
@@ -67,24 +68,13 @@ function GridCard({ item }: { item: ColorCardItem }) {
     </>
   );
 
-  if (!item.href) {
-    return <article className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg">{body}</article>;
-  }
-
-  return <Link href={item.href} className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg">{body}</Link>;
+  return <ContentCardShell href={item.href}>{body}</ContentCardShell>;
 }
 
 function SkeletonCards({ layout }: { layout: ColorCardListContent['layout'] }) {
   if (layout === 'grid-3') {
     return Array.from({ length: 3 }).map((_, index) => (
-      <div key={index} className="rounded-lg border border-border bg-background overflow-hidden">
-        <SkeletonBox height="h-40" className="!rounded-none" />
-        <div className="p-5 space-y-3">
-          <SkeletonBox width="w-24 h-3" />
-          <SkeletonBox width="w-32 h-5" />
-          <SkeletonBox width="w-full h-4" />
-        </div>
-      </div>
+      <ContentCardSkeleton key={index} variant="color" />
     ));
   }
 

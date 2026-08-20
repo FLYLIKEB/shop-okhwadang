@@ -1,10 +1,9 @@
 import Image from 'next/image';
-import Link from 'next/link';
 import { SectionHeading } from '@/components/shared/common/SectionHeading';
-import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
 import type { ImageCardGridContent, ImageCardItem } from '@/lib/api';
 import { getHeadingId, InlineHtmlText } from './genericBlockUtils';
+import { ContentCardShell, ContentCardSkeleton } from './ContentCardShell';
 
 function gridClass(columns: ImageCardGridContent['columns']) {
   switch (columns) {
@@ -36,23 +35,7 @@ function ImageCard({ item, columns }: { item: ImageCardItem; columns: ImageCardG
     </>
   );
 
-  if (!item.href) {
-    return <article className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg">{body}</article>;
-  }
-
-  return <Link href={item.href} className="group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg">{body}</Link>;
-}
-
-function ImageSkeletonCard() {
-  return (
-    <div className="rounded-lg border border-border bg-background overflow-hidden">
-      <SkeletonBox height="h-40" className="!rounded-none" />
-      <div className="p-5 space-y-3">
-        <SkeletonBox width="w-32 h-5" />
-        <SkeletonBox width="w-full h-4" />
-      </div>
-    </div>
-  );
+  return <ContentCardShell href={item.href}>{body}</ContentCardShell>;
 }
 
 export default function ImageCardGridBlock({ content }: { content: ImageCardGridContent }) {
@@ -66,7 +49,7 @@ export default function ImageCardGridBlock({ content }: { content: ImageCardGrid
       <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-6', gridClass(columns))} data-columns={columns}>
         {items.length > 0
           ? items.map((item) => <ImageCard key={item.id} item={item} columns={columns} />)
-          : Array.from({ length: columns }).map((_, index) => <ImageSkeletonCard key={index} />)}
+          : Array.from({ length: columns }).map((_, index) => <ContentCardSkeleton key={index} variant="image" />)}
       </div>
     </section>
   );
