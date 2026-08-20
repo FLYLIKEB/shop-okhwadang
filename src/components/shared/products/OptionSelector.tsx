@@ -33,7 +33,6 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
             {groupOptions.map((option) => {
               const isSoldout = option.stock === 0
               const isSelected = option.id === selectedOptionId
-              const isLowStock = !isSoldout && option.stock > 0 && option.stock <= 5
               return (
                 <Button
                   key={option.id}
@@ -43,7 +42,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                   disabled={isSoldout}
                   aria-disabled={isSoldout}
                   aria-label={isSoldout ? t('optionSoldoutAria', { option: option.value }) : undefined}
-                  title={isSoldout ? t('optionSoldoutReason') : isLowStock ? t('lowStock', { count: option.stock }) : undefined}
+                  title={isSoldout ? t('optionSoldoutReason') : undefined}
                   onClick={() => onSelect(option.id)}
                   className={cn(
                     'h-auto min-h-16 min-w-24 flex-col items-start gap-0.5 rounded-xl px-3 py-2 text-sm leading-snug transition-all whitespace-normal',
@@ -58,9 +57,6 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                       {formatCurrency(option.priceAdjustment, locale)})
                     </span>
                   )}
-                  <span className={cn('text-xs', isSelected ? 'text-background/80' : 'text-muted-foreground', isSoldout && 'text-destructive')}>
-                    {isSoldout ? t('soldout') : isLowStock ? t('lowStock', { count: option.stock }) : t('available')}
-                  </span>
                 </Button>
               )
             })}

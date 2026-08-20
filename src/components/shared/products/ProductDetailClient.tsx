@@ -422,20 +422,6 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                 )}
               </div>
             </div>
-            <Button
-              type="button"
-              variant="gray"
-              size="icon"
-              onClick={() => void handleToggleWishlist()}
-              disabled={isTogglingWishlist}
-              aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
-              className={cn(
-                'hidden h-11 min-h-11 w-11 shrink-0 rounded-md md:inline-flex',
-                isWishlisted && 'text-primary',
-              )}
-            >
-              <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
-            </Button>
           </div>
 
           {/* Options */}
@@ -500,8 +486,22 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Action buttons — desktop only */}
           <div className="hidden gap-3 md:flex">
             <Button
+              type="button"
+              variant="gray"
+              size="icon"
+              onClick={() => void handleToggleWishlist()}
+              disabled={isTogglingWishlist}
+              aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
+              className={cn(
+                'h-11 min-h-11 w-11 shrink-0 rounded-md',
+                isWishlisted && 'text-primary',
+              )}
+            >
+              <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
+            </Button>
+            <Button
               variant="white"
-              className="w-1/3"
+              className="flex-1"
               disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleAddToCart()}
             >
@@ -509,7 +509,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             </Button>
             <Button
               variant="black"
-              className="w-2/3"
+              className="flex-[2]"
               disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleBuyNow()}
             >
