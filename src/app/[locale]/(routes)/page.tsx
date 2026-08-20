@@ -12,6 +12,7 @@ import type {
 import { HOME_PAGE_CONTENT_ERROR_CODE, createHomePageContentError, getHomePageContentErrorDetail } from '@/lib/storefront-diagnostics';
 import { fetchCategories, fetchJournals, fetchPage, fetchProducts, fetchProductsBulk } from '@/lib/api-server';
 import { isLocale } from '@/i18n/routing';
+import { selectCategoriesFromTree } from '@/utils/categoryTree';
 
 
 /**
@@ -143,9 +144,7 @@ async function prefetchHomeBlocks(blocks: PageBlock[], locale: string): Promise<
           categoriesRequest ??= fetchCategories(locale);
           const categories = await categoriesRequest;
           const categoryIds = content.category_ids ?? [];
-          const prefetchedCategories = categoryIds.length > 0
-            ? categories.filter((category) => categoryIds.includes(category.id))
-            : categories.filter((category) => category.parentId === null);
+          const prefetchedCategories = selectCategoriesFromTree(categories, categoryIds);
 
           return {
             ...block,

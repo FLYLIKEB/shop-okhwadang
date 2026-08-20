@@ -40,7 +40,18 @@ vi.mock('@/lib/api', () => ({
 }));
 
 const mockCategories: Category[] = [
-  { id: 1, name: '자사호', slug: 'teapot', description: null, parentId: null, imageUrl: null },
+  {
+    id: 1,
+    name: '자사호',
+    slug: 'teapot',
+    description: null,
+    parentId: null,
+    imageUrl: null,
+    children: [
+      { id: 10, name: '주니', slug: 'zhuni', description: null, parentId: 1, imageUrl: null },
+      { id: 11, name: '자사', slug: 'zisha', description: null, parentId: 1, imageUrl: null },
+    ],
+  },
   {
     id: 2,
     name: '보이차',
@@ -88,6 +99,24 @@ describe('CategoryNavBlock', () => {
       expect(links).toHaveLength(3);
       expect(links[1]).toHaveAttribute('href', '/en/products?categoryId=2');
       expect(links[1]).toHaveAttribute('data-prefetch', 'false');
+    });
+  });
+
+  it('renders selected nested categories from the remote category tree', async () => {
+    const content = {
+      category_ids: [11, 10],
+      template: 'text' as const,
+      prefetched_categories: undefined,
+    };
+    vi.mocked(categoriesApi.getTree).mockResolvedValue(mockCategories);
+
+    render(<CategoryNavBlock content={content} />);
+
+    await waitFor(() => {
+      const links = screen.getAllByRole('link');
+      expect(links).toHaveLength(2);
+      expect(links[0]).toHaveAttribute('href', '/en/products?categoryId=11');
+      expect(links[1]).toHaveAttribute('href', '/en/products?categoryId=10');
     });
   });
 

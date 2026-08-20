@@ -9,6 +9,7 @@ import { categoriesApi } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import type { Category, CategoryNavContent } from '@/lib/api';
+import { selectCategoriesFromTree } from '@/utils/categoryTree';
 
 /* ── 니료(泥料) 컬러 매핑 — 카테고리 slug으로 매칭 ── */
 const CLAY_COLORS: Record<string, string> = {
@@ -79,9 +80,7 @@ export default function CategoryNavBlock({ content }: Props) {
     prefetched: prefetched_categories,
     fetch: async () => {
       const all = await categoriesApi.getTree(locale);
-      return category_ids.length > 0
-        ? all.filter((c) => category_ids.includes(c.id))
-        : all.filter((c) => c.parentId === null);
+      return selectCategoriesFromTree(all, category_ids);
     },
     deps: [category_ids, locale],
   });

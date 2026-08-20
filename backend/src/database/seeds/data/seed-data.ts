@@ -49,7 +49,7 @@ export const categories: SeedCategory[] = [
     slug: 'puerh-tea',
     parentId: null,
     sortOrder: 2,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
     description:
@@ -64,7 +64,7 @@ export const categories: SeedCategory[] = [
     slug: 'tea-ware',
     parentId: null,
     sortOrder: 3,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png',
     description:
@@ -79,7 +79,7 @@ export const categories: SeedCategory[] = [
     slug: 'tea-leaf',
     parentId: null,
     sortOrder: 4,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
     description:
@@ -235,7 +235,7 @@ export const categories: SeedCategory[] = [
     slug: 'sheng-puerh',
     parentId: 2,
     sortOrder: 1,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
     description:
@@ -250,7 +250,7 @@ export const categories: SeedCategory[] = [
     slug: 'shou-puerh',
     parentId: 2,
     sortOrder: 2,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png',
     description:
@@ -265,7 +265,7 @@ export const categories: SeedCategory[] = [
     slug: 'aged-puerh',
     parentId: 2,
     sortOrder: 3,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
     description:
@@ -282,7 +282,7 @@ export const categories: SeedCategory[] = [
     slug: 'teacup',
     parentId: 3,
     sortOrder: 1,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png',
     description:
@@ -297,7 +297,7 @@ export const categories: SeedCategory[] = [
     slug: 'tea-tray',
     parentId: 3,
     sortOrder: 2,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-1.png',
     description:
@@ -312,7 +312,7 @@ export const categories: SeedCategory[] = [
     slug: 'tea-set',
     parentId: 3,
     sortOrder: 3,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-3.png',
     description:
@@ -327,7 +327,7 @@ export const categories: SeedCategory[] = [
     slug: 'tea-tools',
     parentId: 3,
     sortOrder: 4,
-    isActive: true,
+    isActive: false,
     imageUrl:
       'https://okhwadang-images-978581199241-ap-northeast-2-an.s3.ap-northeast-2.amazonaws.com/teapot-2.png',
     description:
@@ -1619,7 +1619,7 @@ export const pageBlocks: SeedPageBlock[] = JSON.parse(JSON.stringify([
       title: '옥화당의 제품들',
       title_en: "Okhwadang's Products",
       template: 'image',
-      category_ids: [1, 2, 3, 4],
+      category_ids: [10, 11, 12, 13, 14, 20, 21, 22, 23],
     },
     sortOrder: 5,
     isVisible: true,
