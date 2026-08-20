@@ -175,7 +175,7 @@ html[data-theme='dark'] {
 }
 
 .toss-product-detail__title {
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.02em;
