@@ -27,7 +27,8 @@
     "migration:show:prod": "typeorm migration:show -d dist/database/typeorm.config.js",
     "seed": "ts-node src/database/seeds/run-seed.ts",
     "seed:prod": "node dist/database/seeds/run-seed.js",
-    "preflight:prod": "node scripts/verify-production-runtime.js"
+    "preflight:prod": "node scripts/verify-production-runtime.js",
+    "backfill:cms-media-derivatives": "ts-node src/database/scripts/backfill-cms-media-derivatives.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1078.0",

@@ -34,6 +34,27 @@ describe('JournalCard', () => {
     expect(screen.getByRole('link')).toHaveAttribute('href', '/ko/journal/journal-test');
   });
 
+
+
+  it('prefers immutable journal thumbnail derivative over original cover image', () => {
+    render(
+      <JournalCard
+        journal={{
+          ...BASE_JOURNAL,
+          coverImageUrl: 'https://cdn.example.com/original.jpg',
+          coverImageDerivatives: { thumbnail: 'https://cdn.example.com/thumbnail.webp' },
+        }}
+        fallbackImageUrl="https://example.com/fallback.jpg"
+        categoryLabel="다문화"
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: '저널 테스트' })).toHaveAttribute(
+      'src',
+      'https://cdn.example.com/thumbnail.webp',
+    );
+  });
+
   it('prefers journal cover image when available', () => {
     render(
       <JournalCard
