@@ -63,11 +63,11 @@ describe('GuestCartStore', () => {
     expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual([
       { lineId: -2, productId: 11, productOptionId: 7, quantity: 2 },
     ]);
-    const firstRetryKey = vi.mocked(cartApi.add).mock.calls[1][1]?.headers?.['Idempotency-Key'];
+    const firstRetryKey = new Headers(vi.mocked(cartApi.add).mock.calls[1][1]?.headers).get('Idempotency-Key');
 
     vi.mocked(cartApi.add).mockResolvedValue({} as never);
     await expect(guestCartStore.merge()).resolves.toEqual({ failed: false });
-    const secondRetryKey = vi.mocked(cartApi.add).mock.calls[2][1]?.headers?.['Idempotency-Key'];
+    const secondRetryKey = new Headers(vi.mocked(cartApi.add).mock.calls[2][1]?.headers).get('Idempotency-Key');
     expect(firstRetryKey).toBe(secondRetryKey);
     expect(localStorage.getItem('guest_cart')).toBeNull();
   });
