@@ -25,11 +25,11 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
   }, {})
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {Object.entries(groups).map(([groupName, groupOptions]) => (
-        <div key={groupName} className="flex flex-col gap-2">
-          <span className="typo-label text-foreground">{groupName}</span>
-          <div className="flex flex-wrap gap-2">
+        <div key={groupName} className="flex flex-col gap-1.5">
+          <span className="typo-body-sm font-semibold text-foreground">{groupName}</span>
+          <div className="flex flex-wrap gap-1.5">
             {groupOptions.map((option) => {
               const isSoldout = option.stock === 0
               const isSelected = option.id === selectedOptionId
@@ -46,7 +46,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                   title={isSoldout ? t('optionSoldoutReason') : isLowStock ? t('lowStock', { count: option.stock }) : undefined}
                   onClick={() => onSelect(option.id)}
                   className={cn(
-                    'h-auto min-h-20 min-w-28 flex-col items-start gap-1 rounded-md px-3 py-3 text-sm leading-snug transition-all whitespace-normal',
+                    'h-auto min-h-16 min-w-24 flex-col items-start gap-0.5 rounded-xl px-3 py-2 text-sm leading-snug transition-all whitespace-normal',
                     isSelected && 'ring-2 ring-foreground',
                     isSoldout && 'opacity-55 cursor-not-allowed',
                   )}
