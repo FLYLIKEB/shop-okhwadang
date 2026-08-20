@@ -98,12 +98,31 @@ async function prefetchProductBlock(
 }
 
 async function prefetchHomeBlocks(blocks: PageBlock[], locale: string): Promise<PageBlock[]> {
+  const productRequests = new Map<string, ReturnType<typeof prefetchProductBlock>>();
+  const journalRequests = new Map<string, ReturnType<typeof fetchJournals>>();
+  let categoriesRequest: ReturnType<typeof fetchCategories> | undefined;
+
   return Promise.all(
     blocks.map(async (block) => {
+      // Hidden CMS blocks are not rendered and must not trigger catalog or CMS requests.
+      if (!block.is_visible) return block;
+
       try {
         if (block.type === 'product_grid' || block.type === 'product_carousel') {
           const content = block.content as unknown as ProductGridContent | ProductCarouselContent;
-          const prefetchedProducts = await prefetchProductBlock(content, locale);
+          const productKey = JSON.stringify({
+            product_ids: content.product_ids?.slice(0, content.limit),
+            category_id: content.category_id,
+            sort: content.sort,
+            limit: content.limit,
+            locale,
+          });
+          let productRequest = productRequests.get(productKey);
+          if (!productRequest) {
+            productRequest = prefetchProductBlock(content, locale);
+            productRequests.set(productKey, productRequest);
+          }
+          const prefetchedProducts = await productRequest;
 
           return {
             ...block,
@@ -121,7 +140,8 @@ async function prefetchHomeBlocks(blocks: PageBlock[], locale: string): Promise<
             return block;
           }
 
-          const categories = await fetchCategories(locale);
+          categoriesRequest ??= fetchCategories(locale);
+          const categories = await categoriesRequest;
           const categoryIds = content.category_ids ?? [];
           const prefetchedCategories = categoryIds.length > 0
             ? categories.filter((category) => categoryIds.includes(category.id))
@@ -143,11 +163,18 @@ async function prefetchHomeBlocks(blocks: PageBlock[], locale: string): Promise<
             return block;
           }
 
-          const prefetchedJournals = await fetchJournals({
-            category: content.category,
-            limit: content.limit ?? 6,
-            locale,
-          });
+          const journalLimit = content.limit ?? 6;
+          const journalKey = JSON.stringify({ category: content.category, limit: journalLimit, locale });
+          let journalRequest = journalRequests.get(journalKey);
+          if (!journalRequest) {
+            journalRequest = fetchJournals({
+              category: content.category,
+              limit: journalLimit,
+              locale,
+            });
+            journalRequests.set(journalKey, journalRequest);
+          }
+          const prefetchedJournals = await journalRequest;
 
           return {
             ...block,

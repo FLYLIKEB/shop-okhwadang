@@ -1,5 +1,3 @@
-'use client';
-
 import type { ComponentType } from 'react';
 import type { PageBlock } from '@/lib/api';
 import BlockErrorBoundary from './BlockErrorBoundary';
@@ -36,6 +34,15 @@ const blockComponentMap: Record<string, BlockComponent> = {
   image_card_grid: ImageCardGridBlock as unknown as BlockComponent,
 };
 
+const interactiveBlockTypes = new Set<PageBlock['type']>([
+  'hero_banner',
+  'product_grid',
+  'product_carousel',
+  'category_nav',
+  'promotion_banner',
+  'journal_preview',
+]);
+
 interface Props {
   blocks: PageBlock[];
 }
@@ -53,6 +60,10 @@ export default function BlockRenderer({ blocks }: Props) {
         const Component = blockComponentMap[block.type];
         const isHero = block.type === 'hero_banner';
         const staggerDelay = isHero ? 0 : index * 90;
+
+        if (!interactiveBlockTypes.has(block.type)) {
+          return Component ? <Component key={block.id} content={block.content} /> : <UnknownBlock key={block.id} type={block.type} />;
+        }
 
         return (
           <BlockErrorBoundary key={block.id} blockType={block.type}>
