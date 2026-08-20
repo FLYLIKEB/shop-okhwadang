@@ -109,6 +109,7 @@ describe('AppShell', () => {
     );
 
     expect(container.querySelector('main.checkout-light-theme')).toBeInTheDocument();
+    expect(screen.queryByTestId('footer')).not.toBeInTheDocument();
   });
 
   it('uses a white light boundary for product detail routes', () => {
