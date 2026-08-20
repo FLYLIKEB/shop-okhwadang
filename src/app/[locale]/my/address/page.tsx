@@ -12,6 +12,7 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { AddressSearchFields, type AddressSearchResult } from '@/components/shared/address/AddressSearchFields';
 
 interface AddressForm {
   recipientName: string;
@@ -87,6 +88,15 @@ export default function AddressPage() {
     if (formErrors[name as keyof FormErrors]) {
       setFormErrors((prev) => ({ ...prev, [name]: undefined }));
     }
+  };
+
+  const handleAddressSearch = (result: AddressSearchResult) => {
+    setForm((prev) => ({
+      ...prev,
+      zipcode: result.zonecode,
+      address: result.address || result.roadAddress || result.jibunAddress,
+    }));
+    setFormErrors((prev) => ({ ...prev, zipcode: undefined, address: undefined }));
   };
 
   const openCreate = () => {
@@ -305,14 +315,11 @@ export default function AddressPage() {
 
               {[
                 { id: 'recipientName', label: t('recipientName'), placeholder: t('recipientName'), required: true },
-                { id: 'phone', label: t('phone'), placeholder: '010-1234-5678', required: true },
-                { id: 'zipcode', label: t('zipcode'), placeholder: '12345', required: true },
-                { id: 'address', label: t('address'), placeholder: t('address'), required: true },
-                { id: 'addressDetail', label: t('addressDetail'), placeholder: t('addressDetail'), required: false },
+                { id: 'phone', label: t('phone'), placeholder: t('phonePlaceholder'), required: true },
                 { id: 'label', label: t('label'), placeholder: t('labelPlaceholder'), required: false },
               ].map(({ id, label, placeholder, required }) => (
                 <div key={id} className="space-y-1">
-                  <label htmlFor={id} className="text-sm font-medium">
+                  <label htmlFor={id} className="typo-label">
                     {label} {required && <span className="text-destructive">*</span>}
                   </label>
                   <input
@@ -322,13 +329,38 @@ export default function AddressPage() {
                     value={form[id as keyof AddressForm] as string}
                     onChange={handleChange}
                     placeholder={placeholder}
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+                    className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
                   />
                   {formErrors[id as keyof FormErrors] && (
-                    <p className="text-xs text-destructive">{formErrors[id as keyof FormErrors]}</p>
+                    <p className="typo-label text-destructive">{formErrors[id as keyof FormErrors]}</p>
                   )}
                 </div>
               ))}
+
+              <AddressSearchFields
+                values={{
+                  zipcode: form.zipcode,
+                  address: form.address,
+                  addressDetail: form.addressDetail,
+                }}
+                errors={formErrors}
+                labels={{
+                  zipcode: t('zipcode'),
+                  address: t('address'),
+                  addressDetail: t('addressDetail'),
+                  addressSearch: t('addressSearch'),
+                  addressSearchClose: t('addressSearchClose'),
+                  addressSearchLoadError: t('addressSearchLoadError'),
+                }}
+                placeholders={{
+                  zipcode: t('zipcodePlaceholder'),
+                  address: t('addressPlaceholder'),
+                  addressDetail: t('addressDetailPlaceholder'),
+                }}
+                onChange={handleChange}
+                onAddressSelect={handleAddressSearch}
+                readOnlyBaseAddress
+              />
 
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input

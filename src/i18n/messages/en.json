@@ -522,7 +522,7 @@
     "expires": "Expires",
     "noCoupons": "No available coupons.",
     "defaultAddressLabel": "Address",
-    "addressPlaceholder": "123 Main St, Seoul",
+    "addressPlaceholder": "Use address search to fill the base address.",
     "stripeSetupError": "Stripe is not configured correctly.",
     "paymentMethodLoadError": "Failed to load payment methods.",
     "loadingPaymentMethods": "Loading payment methods...",
@@ -555,7 +555,10 @@
     "guestCheckoutDescription": "Enter the email address used for this order. You can use it later to look up your order without logging in.",
     "guestEmailLabel": "Guest email",
     "guestEmailPlaceholder": "you@example.com",
-    "guestEmailDescription": "We will use this email for order updates and guest order lookup."
+    "guestEmailDescription": "We will use this email for order updates and guest order lookup.",
+    "zipcodePlaceholder": "12345",
+    "addressSearchClose": "Close address search",
+    "addressSearchLoadError": "Could not load address search. Please try again later."
   },
   "order": {
     "orderHistory": "Order History",
@@ -665,7 +668,14 @@
     },
     "loadError": "Failed to load addresses.",
     "saveError": "An error occurred.",
-    "deleteError": "An error occurred while deleting."
+    "deleteError": "An error occurred while deleting.",
+    "phonePlaceholder": "010-1234-5678",
+    "zipcodePlaceholder": "12345",
+    "addressPlaceholder": "Use address search to fill the base address.",
+    "addressDetailPlaceholder": "Apartment, suite, etc.",
+    "addressSearch": "Search address",
+    "addressSearchClose": "Close address search",
+    "addressSearchLoadError": "Could not load address search. Please try again later."
   },
   "review": {
     "title": "Write a Review",
