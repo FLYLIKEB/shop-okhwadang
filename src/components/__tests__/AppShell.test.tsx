@@ -90,7 +90,9 @@ describe('AppShell', () => {
       </AppShell>,
     );
 
-    expect(container.querySelector('.checkout-light-theme')).toBeInTheDocument();
+    expect(container.querySelector('main.checkout-light-theme')).toBeInTheDocument();
+    expect(screen.getByTestId('global-header')).toBeInTheDocument();
+    expect(screen.getByTestId('footer')).toBeInTheDocument();
   });
   it('does not import server-only announcement fetching into the client shell', () => {
     const source = readFileSync('src/components/AppShell.tsx', 'utf8');

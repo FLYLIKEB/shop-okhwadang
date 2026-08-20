@@ -68,10 +68,13 @@ export default function AppShell({
 
   return (
     <MobileNavProvider initialVisible={mobileBottomNavVisible}>
-      <div className={cn('flex min-h-screen flex-col', isCheckoutLightPath(pathname) && 'checkout-light-theme')}>
+      <div className="flex min-h-screen flex-col">
         {announcementBar}
         <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
-        <main id="main-content" className="flex-1 pb-16 md:pb-0">
+        <main
+          id="main-content"
+          className={cn('flex-1 pb-16 md:pb-0', isCheckoutLightPath(pathname) && 'checkout-light-theme')}
+        >
           {children}
         </main>
         <Footer businessInfo={businessInfo} initialFooterItems={navigationData?.footer} />

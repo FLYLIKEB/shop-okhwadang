@@ -27,8 +27,8 @@ html[data-theme='dark'] {
   --checkout-toss-shadow: 0 2px 12px rgb(0 0 0 / 28%);
 }
 
-/* Payment confirmation is intentionally light so the Toss widget remains a
-   coherent vendor-owned surface even when the storefront is in dark mode. */
+/* Payment content is intentionally light so the Toss widget remains a
+   coherent vendor-owned surface while the global storefront chrome keeps its theme. */
 .checkout-light-theme {
   color-scheme: light;
   --checkout-toss-background: #f2f4f6;
