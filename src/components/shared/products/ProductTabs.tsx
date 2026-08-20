@@ -241,7 +241,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
       <div
         role="navigation"
         aria-label={t('tabs.navigationLabel')}
-        className="sticky sticky-below-header z-30 mx-auto grid w-full max-w-xl grid-cols-3 gap-1 rounded-xl bg-muted/70 p-1 backdrop-blur md:mx-0 md:max-w-md"
+        className="sticky sticky-below-header z-30 mx-auto grid w-full max-w-xl grid-cols-3 gap-1 rounded-xl bg-muted/70 p-1 backdrop-blur md:max-w-md"
       >
         {TABS.map((tab) => (
           <Button
