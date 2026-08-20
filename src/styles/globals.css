@@ -1043,7 +1043,7 @@ h3 {
 .checkout-toss-theme .checkout-toss-mobile-summary-content {
   border: 1px solid var(--checkout-toss-border);
   border-radius: 0.75rem;
-  background: var(--checkout-toss-input);
+  background: var(--checkout-toss-surface);
   padding: 0.75rem;
 }
 

@@ -205,20 +205,20 @@ export default function CartPage() {
 
   const mobileOrderSummaryContent = (
     <div className="checkout-toss-mobile-summary-content">
-      <div className="grid grid-cols-3 gap-3 text-xs">
-        <div>
-          <p className="text-muted-foreground">{t('selectedItems')}</p>
-          <p className="mt-1 font-semibold text-foreground">{selectedIds.size}</p>
+      <div className="space-y-2 text-xs">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-muted-foreground">{t('selectedItems')}</span>
+          <span className="font-semibold text-foreground">{selectedIds.size}</span>
         </div>
-        <div>
-          <p className="text-muted-foreground">{t('productAmount')}</p>
-          <p className="mt-1 font-semibold text-foreground">{formatCurrency(selectedTotal, locale)}</p>
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-muted-foreground">{t('productAmount')}</span>
+          <span className="font-semibold text-foreground">{formatCurrency(selectedTotal, locale)}</span>
         </div>
-        <div>
-          <p className="text-muted-foreground">{t('shippingFee')}</p>
-          <p className="mt-1 font-semibold text-foreground">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-muted-foreground">{t('shippingFee')}</span>
+          <span className="font-semibold text-foreground">
             {selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee, locale)}
-          </p>
+          </span>
         </div>
       </div>
       <div className="mt-3 flex items-end justify-between border-t border-soft pt-3">
@@ -269,7 +269,7 @@ export default function CartPage() {
             />
           ))}
 
-          <section className="checkout-toss-submit-card mt-8 border-t border-soft pt-8">
+          <section className="checkout-toss-submit-card mt-8 hidden border-t border-soft pt-8 lg:block">
             <h2 className="typo-h3">{t('orderSummary')}</h2>
             <div className="mt-4">{orderSummaryContent}</div>
 

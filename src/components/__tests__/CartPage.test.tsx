@@ -192,7 +192,7 @@ describe('CartPage', () => {
 
     const { container } = render(<CartPage />);
 
-    expect(container.querySelector('section.checkout-toss-submit-card')).toBeInTheDocument();
+    expect(container.querySelector('section.checkout-toss-submit-card')).toHaveClass('hidden', 'lg:block');
     expect(container.querySelector('.mobile-sticky-cta')).toHaveClass('lg:hidden');
     expect(container.querySelector('aside')).not.toBeInTheDocument();
     expect(screen.getAllByText('주문 요약')).toHaveLength(1);
