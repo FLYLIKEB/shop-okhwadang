@@ -241,7 +241,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
       <div
         role="navigation"
         aria-label={t('tabs.navigationLabel')}
-        className="sticky sticky-below-header z-30 mx-auto grid w-full max-w-xl grid-cols-3 gap-1 rounded-xl bg-muted/70 p-1 backdrop-blur md:max-w-md"
+        className="sticky sticky-below-header z-30 flex w-full items-center justify-center gap-8 border-b border-border/50 bg-background/95 px-4 backdrop-blur"
       >
         {TABS.map((tab) => (
           <Button
@@ -254,10 +254,10 @@ export default function ProductTabs({ description, descriptionImages, productId,
             aria-controls={`product-tabpanel-${tab}`}
             id={`product-tab-${tab}`}
             className={cn(
-              'h-10 min-h-10 rounded-lg px-3 py-2 typo-body-sm transition-all',
+              'relative h-12 min-h-12 rounded-none px-1 py-2 typo-body-sm transition-colors hover:bg-transparent',
               activeTab === tab
-                ? 'bg-background font-semibold text-foreground shadow-sm'
-                : 'text-muted-foreground hover:bg-background/60 hover:text-foreground',
+                ? 'font-semibold text-foreground after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-foreground'
+                : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {tabLabels[tab]}
