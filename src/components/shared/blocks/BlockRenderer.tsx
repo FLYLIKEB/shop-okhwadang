@@ -1,37 +1,24 @@
-import type { ComponentType } from 'react';
+import type { ReactNode } from 'react';
 import type { PageBlock } from '@/lib/api';
-import BlockErrorBoundary from './BlockErrorBoundary';
-import BlockReveal from './BlockReveal';
-import HeroBannerBlock from './HeroBannerBlock';
-import ProductGridBlock from './ProductGridBlock';
-import ProductCarouselBlock from './ProductCarouselBlock';
-import CategoryNavBlock from './CategoryNavBlock';
-import PromotionBannerBlock from './PromotionBannerBlock';
+import InteractiveBlock from './InteractiveBlock';
 import TextContentBlock from './TextContentBlock';
 import SplitContentBlock from './SplitContentBlock';
-import JournalPreviewBlock from './JournalPreviewBlock';
 import ColorCardListBlock from './ColorCardListBlock';
 import TimelineListBlock from './TimelineListBlock';
 import PersonCardListBlock from './PersonCardListBlock';
 import ImageCardGridBlock from './ImageCardGridBlock';
 import UnknownBlock from './UnknownBlock';
 
-type BlockComponent = ComponentType<{ content: Record<string, unknown> }>;
+type StaticBlockComponent = (props: { content: Record<string, unknown> }) => ReactNode;
 
-const blockComponentMap: Record<string, BlockComponent> = {
-  hero_banner: HeroBannerBlock as unknown as BlockComponent,
-  product_grid: ProductGridBlock as unknown as BlockComponent,
-  product_carousel: ProductCarouselBlock as unknown as BlockComponent,
-  category_nav: CategoryNavBlock as unknown as BlockComponent,
-  promotion_banner: PromotionBannerBlock as unknown as BlockComponent,
-  text_content: TextContentBlock as unknown as BlockComponent,
-  split_content: SplitContentBlock as unknown as BlockComponent,
-  brand_story: SplitContentBlock as unknown as BlockComponent,
-  journal_preview: JournalPreviewBlock as unknown as BlockComponent,
-  color_card_list: ColorCardListBlock as unknown as BlockComponent,
-  timeline_list: TimelineListBlock as unknown as BlockComponent,
-  person_card_list: PersonCardListBlock as unknown as BlockComponent,
-  image_card_grid: ImageCardGridBlock as unknown as BlockComponent,
+const staticBlockComponentMap: Partial<Record<PageBlock['type'], StaticBlockComponent>> = {
+  text_content: TextContentBlock as unknown as StaticBlockComponent,
+  split_content: SplitContentBlock as unknown as StaticBlockComponent,
+  brand_story: SplitContentBlock as unknown as StaticBlockComponent,
+  color_card_list: ColorCardListBlock as unknown as StaticBlockComponent,
+  timeline_list: TimelineListBlock as unknown as StaticBlockComponent,
+  person_card_list: PersonCardListBlock as unknown as StaticBlockComponent,
+  image_card_grid: ImageCardGridBlock as unknown as StaticBlockComponent,
 };
 
 const interactiveBlockTypes = new Set<PageBlock['type']>([
@@ -57,29 +44,14 @@ export default function BlockRenderer({ blocks }: Props) {
   return (
     <div className="space-y-8">
       {visibleBlocks.map((block, index) => {
-        const Component = blockComponentMap[block.type];
-        const isHero = block.type === 'hero_banner';
-        const staggerDelay = isHero ? 0 : index * 90;
-
-        if (!interactiveBlockTypes.has(block.type)) {
-          return Component ? <Component key={block.id} content={block.content} /> : <UnknownBlock key={block.id} type={block.type} />;
+        if (interactiveBlockTypes.has(block.type)) {
+          return <InteractiveBlock key={block.id} block={block} index={index} />;
         }
 
-        return (
-          <BlockErrorBoundary key={block.id} blockType={block.type}>
-            {isHero ? (
-              <Component content={block.content} />
-            ) : (
-              <BlockReveal delay={staggerDelay}>
-                {Component ? (
-                  <Component content={block.content} />
-                ) : (
-                  <UnknownBlock type={block.type} />
-                )}
-              </BlockReveal>
-            )}
-          </BlockErrorBoundary>
-        );
+        const Component = staticBlockComponentMap[block.type];
+        return Component
+          ? <Component key={block.id} content={block.content} />
+          : <UnknownBlock key={block.id} type={block.type} />;
       })}
     </div>
   );
