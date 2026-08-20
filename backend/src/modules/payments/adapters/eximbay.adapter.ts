@@ -10,6 +10,8 @@ import {
   PrepareResult,
 } from '../interfaces/payment-gateway.interface';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../../config/payment.config';
+import { requestPaymentJson } from '../payment-http.util';
+import { verifyPaymentHmacSha256 } from '../payment-hmac.util';
 
 interface EximbayReadyResponse {
   rescode?: string;
@@ -249,20 +251,11 @@ export class EximbayPaymentAdapter implements PaymentGateway {
   }
 
   verifyWebhook(payload: unknown, signature: string): boolean {
-    if (!this.webhookSecret || !signature) return false;
-    try {
-      const body = typeof payload === 'string' ? payload : JSON.stringify(payload);
-      const expected = crypto
-        .createHmac('sha256', this.webhookSecret)
-        .update(body)
-        .digest('base64');
-      const expectedBuffer = Buffer.from(expected);
-      const providedBuffer = Buffer.from(signature);
-      if (expectedBuffer.length !== providedBuffer.length) return false;
-      return crypto.timingSafeEqual(expectedBuffer, providedBuffer);
-    } catch {
-      return false;
-    }
+    return verifyPaymentHmacSha256(payload, signature, {
+      secret: this.webhookSecret,
+      signatureEncoding: 'base64',
+      comparison: 'encoded-digest-string',
+    });
   }
 
   private async retrieveByOrderId(orderId: string, amount: number, transactionId?: string): Promise<EximbayRetrieveResponse> {
@@ -307,21 +300,21 @@ export class EximbayPaymentAdapter implements PaymentGateway {
   }
 
   private async eximbayFetch<T>(path: string, body: unknown): Promise<T> {
-    const response = await fetch(`${this.apiBaseUrl}${path}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${Buffer.from(`${this.apiKey}:${this.secretKey}`).toString('base64')}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+    return requestPaymentJson<T>({
+      url: `${this.apiBaseUrl}${path}`,
+      init: {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${this.apiKey}:${this.secretKey}`).toString('base64')}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(8000),
+      logger: this.logger,
+      errorLog: (response) => `Eximbay API failed: path=${path}, status=${response.status}`,
+      errorMessage: 'Eximbay API 오류',
     });
-    if (!response.ok) {
-      this.logger.error(`Eximbay API failed: path=${path}, status=${response.status}`);
-      throw new BadGatewayException('Eximbay API 오류');
-    }
-    return (await response.json()) as T;
   }
 
   private ensureConfigured(): void {

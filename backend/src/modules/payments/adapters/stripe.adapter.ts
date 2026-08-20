@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import Stripe from 'stripe';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BadGatewayException } from '@nestjs/common';
@@ -20,6 +19,7 @@ import {
   StripeMoneyContext,
   StripeMoneyPolicyError,
 } from '../stripe-money.policy';
+import { verifyPaymentHmacSha256 } from '../payment-hmac.util';
 
 @Injectable()
 export class StripePaymentAdapter implements PaymentGateway {
@@ -295,20 +295,9 @@ export class StripePaymentAdapter implements PaymentGateway {
   }
 
   verifyWebhook(payload: unknown, signature: string): boolean {
-    if (!this.webhookSecret || !signature) return false;
-    try {
-      const body =
-        typeof payload === 'string' ? payload : JSON.stringify(payload);
-      const hmac = crypto
-        .createHmac('sha256', this.webhookSecret)
-        .update(body)
-        .digest('hex');
-      const provided = Buffer.from(signature, 'hex');
-      const expected = Buffer.from(hmac, 'hex');
-      if (expected.length !== provided.length) return false;
-      return crypto.timingSafeEqual(expected, provided);
-    } catch {
-      return false;
-    }
+    return verifyPaymentHmacSha256(payload, signature, {
+      secret: this.webhookSecret,
+      signatureEncoding: 'hex',
+    });
   }
 }
