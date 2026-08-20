@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { ordersApi, productsApi } from '@/lib/api';
 import type { OrderResponse, Product } from '@/lib/api';
@@ -11,6 +11,8 @@ import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { OrderSummaryCard } from '@/components/shared/account/OrderSummaryCard';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 
 const PAGE_LIMIT = 10;
 
@@ -66,14 +68,8 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="toss-account__subpage-header mb-6 flex items-center gap-2">
-        <Link href="/my" className="text-sm text-muted-foreground transition-colors hover:text-primary">
-          {tMy('title')}
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <h1 className="checkout-toss-title typo-h2">{t('orderHistory')}</h1>
-      </div>
+    <AccountPageShell maxWidth="max-w-4xl">
+      <AccountPageHeader title={t('orderHistory')} backHref="/my" backLabel={tMy('title')} />
 
       {loading ? (
         <div className="space-y-4">
@@ -140,6 +136,6 @@ export default function OrdersPage() {
           )}
         </>
       )}
-    </div>
+    </AccountPageShell>
   );
 }

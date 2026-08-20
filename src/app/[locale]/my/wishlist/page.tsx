@@ -13,6 +13,8 @@ import EmptyState from '@/components/shared/EmptyState';
 import { cn } from '@/components/ui/utils';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 
 interface WishlistProductImageProps {
   thumbnail?: string;
@@ -106,8 +108,8 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 typo-h1">{t('title')}</h1>
+    <AccountPageShell maxWidth="max-w-4xl">
+      <AccountPageHeader title={t('title')} />
 
       {dataLoading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
@@ -176,6 +178,6 @@ export default function WishlistPage() {
           })}
         </ul>
       )}
-    </div>
+    </AccountPageShell>
   );
 }

@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 
 interface ProfileForm {
   name: string;
@@ -82,14 +84,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8">
-      <div className="mb-6 flex items-center gap-2">
-        <Link href="/my" className="text-sm text-muted-foreground hover:underline">
-          {tMy('title')}
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <h1 className="typo-h2">{t('title')}</h1>
-      </div>
+    <AccountPageShell maxWidth="max-w-lg">
+      <AccountPageHeader title={t('title')} backHref="/my" backLabel={tMy('title')} />
 
       <form onSubmit={handleSubmit} className="rounded-lg border p-6 space-y-5">
         <div className="space-y-1">
@@ -146,6 +142,6 @@ export default function ProfilePage() {
           {submitting ? t('saving') : t('save')}
         </button>
       </form>
-    </div>
+    </AccountPageShell>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { handleApiError } from '@/utils/error';
@@ -10,6 +9,8 @@ import type { UserAddress, CreateAddressData } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 
 interface AddressForm {
   recipientName: string;
@@ -195,14 +196,8 @@ export default function AddressPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <div className="toss-account__subpage-header mb-6 flex items-center gap-2">
-        <Link href="/my" className="text-sm text-muted-foreground transition-colors hover:text-primary">
-          {tMy('title')}
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <h1 className="checkout-toss-title typo-h2">{t('title')}</h1>
-      </div>
+    <AccountPageShell maxWidth="max-w-2xl">
+      <AccountPageHeader title={t('title')} backHref="/my" backLabel={tMy('title')} />
 
       {loading ? (
         <div className="space-y-4">
@@ -357,6 +352,6 @@ export default function AddressPage() {
           )}
         </>
       )}
-    </div>
+    </AccountPageShell>
   );
 }

@@ -9,6 +9,8 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
 import { formatCurrency, type Locale } from '@/utils/currency';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 
 type TabStatus = 'available' | 'used' | 'expired';
 
@@ -95,8 +97,8 @@ export default function MyCouponsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-4 typo-h1">{t('title')}</h1>
+    <AccountPageShell maxWidth="max-w-2xl">
+      <AccountPageHeader title={t('title')} className="mb-4" />
 
       {/* 적립금 잔액 */}
       <div className="mb-6 rounded-lg border p-4 flex items-center justify-between">
@@ -141,6 +143,6 @@ export default function MyCouponsPage() {
           ))}
         </div>
       )}
-    </div>
+    </AccountPageShell>
   );
 }

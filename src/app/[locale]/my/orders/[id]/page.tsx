@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ordersApi, paymentsApi } from '@/lib/api';
@@ -20,6 +20,8 @@ import { toast } from 'sonner';
 import type { Locale } from '@/i18n/routing';
 import { getDefaultCheckoutGateway, getGatewayOptionsByLocale } from '@/constants/checkoutPaymentMethods';
 import { toastMessage } from '@/utils/toastMessages';
+import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 
 const STATUS_TIMELINE = ['pending', 'paid', 'preparing', 'shipped', 'delivered'];
 
@@ -27,7 +29,7 @@ export default function OrderDetailPage() {
   const params = useParams();
   const locale = useLocale() as CurrencyLocale;
   const tOrder = useTranslations('order');
-  const tMy = useTranslations('myPage');
+
   const t = useTranslations('orderDetail');
   const tCheckout = useTranslations('checkout');
   const { isAuthenticated, isLoading } = useRequireAuth();
@@ -201,18 +203,8 @@ export default function OrderDetailPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-6 flex items-center gap-2">
-        <Link href="/my" className="text-sm text-muted-foreground hover:underline">
-          {tMy('title')}
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <Link href="/my/orders" className="text-sm text-muted-foreground hover:underline">
-          {tOrder('orderHistory')}
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <h1 className="text-xl font-bold">{order.orderNumber}</h1>
-      </div>
+    <AccountPageShell maxWidth="max-w-4xl">
+      <AccountPageHeader title={order.orderNumber} backHref="/my/orders" backLabel={tOrder('orderHistory')} />
 
       <div className="space-y-6">
         {/* Status timeline */}
@@ -462,6 +454,6 @@ export default function OrderDetailPage() {
           </dl>
         </section>
       </div>
-    </div>
+    </AccountPageShell>
   );
 }

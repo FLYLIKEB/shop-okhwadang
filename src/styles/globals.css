@@ -1635,3 +1635,57 @@ h3 {
 .toss-account .toss-account__cancel-action:hover {
   background-color: var(--checkout-toss-primary-hover);
 }
+
+.toss-inquiry__new {
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-inquiry__card {
+  border: 0;
+  background-color: var(--checkout-toss-surface) !important;
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-inquiry__summary {
+  min-height: 5.5rem;
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-inquiry__summary:hover {
+  background-color: var(--checkout-toss-surface) !important;
+}
+
+.toss-inquiry__detail {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-inquiry__answer {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-inquiry-status {
+  border: 0 !important;
+  border-radius: 999px;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.toss-inquiry-status--pending {
+  background: var(--checkout-toss-primary-soft) !important;
+  color: var(--checkout-toss-primary) !important;
+}
+
+.toss-inquiry-status--pending > span {
+  background: var(--checkout-toss-primary) !important;
+}
+
+.toss-inquiry-status--answered {
+  background: var(--checkout-toss-input) !important;
+  color: var(--checkout-toss-foreground) !important;
+}
+
+.toss-inquiry-status--answered > span {
+  background: var(--checkout-toss-muted) !important;
+}

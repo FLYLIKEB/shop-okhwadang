@@ -12,6 +12,7 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { type Locale } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import { OrderSummaryCard } from '@/components/shared/account/OrderSummaryCard';
+import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 import {
   Package,
   Heart,
@@ -71,16 +72,16 @@ export default function MyPage() {
   if (isLoading || !user) {
     return (
       <div className="toss-account checkout-toss-theme min-h-screen">
-        <div className="mx-auto max-w-3xl px-4 py-12">
+        <AccountPageShell maxWidth="max-w-3xl" className="py-12">
           <SkeletonBox width="w-48" height="h-8" />
-        </div>
+        </AccountPageShell>
       </div>
     );
   }
 
   return (
     <div className="toss-account checkout-toss-theme min-h-screen pb-16">
-      <div className="toss-account__inner mx-auto max-w-3xl px-4 py-10">
+      <AccountPageShell maxWidth="max-w-3xl" className="toss-account__inner">
       <h1 className="toss-account__title checkout-toss-title typo-h1 mb-8">{t('title')}</h1>
 
       {/* User info */}
@@ -157,7 +158,7 @@ export default function MyPage() {
           </ul>
         )}
       </section>
-      </div>
+      </AccountPageShell>
     </div>
   );
 }
