@@ -98,6 +98,7 @@
     "tagline": "자사호 · 보이차 · 다구",
     "specialty": "전문 쇼핑몰",
     "social": {
+      "label": "소셜 링크",
       "instagram": "인스타그램",
       "naverStore": "스마트스토어"
     },

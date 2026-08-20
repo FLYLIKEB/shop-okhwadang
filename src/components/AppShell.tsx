@@ -79,6 +79,7 @@ export default function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const isAdminRoute = isAdminPath(pathname);
+  const isCheckoutRoute = /\/checkout(?:\/|$)/.test(pathname);
 
   if (isAdminRoute) {
     return (
@@ -104,7 +105,9 @@ export default function AppShell({
         >
           {children}
         </main>
-        <Footer businessInfo={businessInfo} initialFooterItems={navigationData?.footer} />
+        {!isCheckoutRoute && (
+          <Footer businessInfo={businessInfo} initialFooterItems={navigationData?.footer} />
+        )}
         <MobileBottomNavWrapper visible={mobileBottomNavVisible} />
         <SharedToaster />
         <RecentlyViewedWidget />

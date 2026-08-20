@@ -69,6 +69,8 @@ describe('Footer', () => {
 
     expect(screen.getByRole('link', { name: '인스타그램' })).toHaveTextContent('인스타그램');
     expect(screen.getByRole('link', { name: '스마트스토어' })).toHaveTextContent('스마트스토어');
+    expect(screen.getByRole('link', { name: '인스타그램' })).toHaveClass('toss-footer__social');
+    expect(screen.getByRole('link', { name: '스마트스토어' })).toHaveClass('toss-footer__social');
   });
 
   it('disables prefetch for footer navigation links', () => {

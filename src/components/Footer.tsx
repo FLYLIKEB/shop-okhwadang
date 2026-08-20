@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useNavigation } from '@/hooks/useNavigation';
 import type { StorefrontBusinessInfo as FooterBusinessInfo } from '@/lib/storefront-shell';
+import { Button } from '@/components/ui/button';
 
 import type { NavigationItem } from '@/lib/api';
 
@@ -54,7 +55,7 @@ function renderNavLinks(items: NavigationItem[]) {
       key={item.id}
       href={getFooterHref(item)}
       prefetch={false}
-      className="toss-footer__link typo-body-sm text-muted-foreground transition-colors hover:text-foreground"
+      className="toss-footer__link inline-flex min-h-10 items-center typo-body-sm text-muted-foreground transition-colors hover:text-foreground"
     >
       {item.label}
     </Link>
@@ -97,9 +98,9 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
   const infoUrl = businessInfo?.infoUrl ?? '';
 
   return (
-    <footer className="toss-footer mt-auto border-t border-soft bg-card">
-      <div className="toss-footer__inner mx-auto max-w-7xl px-5 py-10 md:px-4 md:py-12">
-        <div className={`toss-footer__grid grid grid-cols-2 gap-x-6 gap-y-8 transition-opacity duration-300 md:grid-cols-4 md:gap-8 ${loading ? 'opacity-0' : 'opacity-100'}`}>
+    <footer className="toss-footer mt-auto border-t border-soft bg-background">
+      <div className="toss-footer__inner mx-auto max-w-6xl px-4 py-12 md:py-16">
+        <div className={`toss-footer__grid grid grid-cols-2 gap-x-8 gap-y-10 transition-opacity duration-300 md:grid-cols-4 md:gap-10 ${loading ? 'opacity-0' : 'opacity-100'}`}>
           <div className="toss-footer__group text-center md:text-left">
             <p className="typo-label font-semibold tracking-tight text-foreground">{t('customerService')}</p>
             <nav className="mt-3 flex flex-col items-center gap-2 md:items-start">
@@ -121,33 +122,39 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
             </nav>
           </div>
 
-          <div className="toss-footer__brand order-first col-span-2 flex flex-col items-center text-center md:order-none md:col-span-1 md:items-start md:text-left">
+          <div className="toss-footer__brand order-first col-span-2 flex flex-col items-center border-b border-soft pb-8 text-center md:order-none md:col-span-1 md:items-start md:border-b-0 md:pb-0 md:text-left">
             <Image src="/logo-okhwadang.png" alt={t('okhwadang')} width={120} height={34} className="mb-4 h-auto w-[104px] object-contain md:w-[120px]" />
             <div className="flex flex-col gap-1 typo-body-sm text-muted-foreground">
               <p>{t('tagline')}</p>
               <p>{t('specialty')}</p>
             </div>
-            <div className="mt-4 flex items-center gap-2">
+            <div role="group" aria-label={t('social.label')} className="mt-4 flex flex-wrap items-center justify-center gap-1 md:justify-start">
               {SOCIAL_LINKS.map((social) => (
-                <a
+                <Button
                   key={social.id}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={socialLabels[social.id]}
-                  className="toss-footer__social inline-flex min-h-10 items-center gap-2 rounded-full bg-muted px-3 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="toss-footer__social gap-2 typo-body-sm"
                 >
-                  <social.icon size={18} />
-                  <span className="typo-body-sm">{socialLabels[social.id]}</span>
-                </a>
+                  <a
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={socialLabels[social.id]}
+                  >
+                    <social.icon size={18} />
+                    <span>{socialLabels[social.id]}</span>
+                  </a>
+                </Button>
               ))}
             </div>
           </div>
         </div>
 
         {/* 사업자 정보 (전자상거래법 제10조) */}
-        <div className="toss-footer__business mt-10 border-t border-soft pt-6 text-center md:mt-12 md:pt-8">
-          <div className="typo-body-sm space-y-0.5 leading-relaxed text-muted-foreground/70">
+        <div className="toss-footer__business mt-10 border-t border-soft pt-6 text-center md:mt-16 md:pt-8">
+          <div className="mx-auto max-w-3xl space-y-1 typo-body-sm leading-relaxed text-muted-foreground/70">
             <p>{companyName} · {ceo}</p>
             <p>{address}</p>
             <p>{bizNo} · {mailOrderNo}</p>
