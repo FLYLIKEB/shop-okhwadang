@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ReviewsService } from '../reviews.service';
 import { Review } from '../entities/review.entity';
@@ -10,6 +15,7 @@ import { PointHistory } from '../../coupons/entities/point-history.entity';
 import { SettingsService } from '../../settings/settings.service';
 import { OrderStatus } from '../../orders/entities/order.entity';
 import { PointsService } from '../../points/points.service';
+import { ReviewStatsSyncService } from '../review-stats-sync.service';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
@@ -63,6 +69,10 @@ describe('ReviewsService', () => {
     getNumber: jest.fn(),
   };
 
+  const mockReviewStatsSyncService = {
+    syncProductStats: jest.fn(),
+  };
+
   const mockPointsService = {
     creditFifo: jest.fn(),
     deductFifo: jest.fn(),
@@ -81,7 +91,9 @@ describe('ReviewsService', () => {
   };
 
   const mockDataSource = {
-    transaction: jest.fn((cb: (manager: typeof mockManager) => Promise<unknown>) => cb(mockManager)),
+    transaction: jest.fn((cb: (manager: typeof mockManager) => Promise<unknown>) =>
+      cb(mockManager),
+    ),
   };
 
   beforeEach(async () => {
@@ -95,6 +107,7 @@ describe('ReviewsService', () => {
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: DataSource, useValue: mockDataSource },
         { provide: PointsService, useValue: mockPointsService },
+        { provide: ReviewStatsSyncService, useValue: mockReviewStatsSyncService },
       ],
     }).compile();
 
@@ -109,6 +122,8 @@ describe('ReviewsService', () => {
     mockExternalRepo.findOne.mockReset();
     mockExternalRepo.create.mockReset();
     mockExternalRepo.save.mockReset();
+    mockReviewStatsSyncService.syncProductStats.mockReset();
+    mockReviewStatsSyncService.syncProductStats.mockResolvedValue(undefined);
     mockPointsService.creditFifo.mockResolvedValue({});
     mockPointsService.deductFifo.mockResolvedValue(0);
     mockPointsService.lockUserForPointChanges.mockResolvedValue(undefined);
@@ -204,7 +219,12 @@ describe('ReviewsService', () => {
     });
 
     it('should include SmartStore reviews in product average stats and distribution', async () => {
-      const internalReview = { ...mockReview, id: 1, rating: 4, createdAt: new Date('2026-03-01T12:00:00Z') };
+      const internalReview = {
+        ...mockReview,
+        id: 1,
+        rating: 4,
+        createdAt: new Date('2026-03-01T12:00:00Z'),
+      };
       const externalReview = {
         id: 9,
         productId: 5,
@@ -267,8 +287,6 @@ describe('ReviewsService', () => {
     });
   });
 
-
-
   describe('translateReviewContent', () => {
     const originalFetch = global.fetch;
 
@@ -279,7 +297,7 @@ describe('ReviewsService', () => {
     it('translates review content through the translation service', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue([[["Really good", "정말 좋아요", null, null]]]),
+        json: jest.fn().mockResolvedValue([[['Really good', '정말 좋아요', null, null]]]),
       } as unknown as Response);
 
       const result = await service.translateReviewContent({
@@ -335,24 +353,31 @@ describe('ReviewsService', () => {
         ],
       });
 
-      expect(result).toMatchObject({ source: 'smartstore', received: 2, created: 1, updated: 1, hidden: 1 });
-      expect(mockExternalRepo.save).toHaveBeenCalledTimes(2);
-      expect(mockExternalRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        productId: 5,
+      expect(result).toMatchObject({
         source: 'smartstore',
-        externalReviewId: 'naver-1',
-        externalProductId: 'sp-1',
-        reviewerNameMasked: '김**',
-      }));
-      expect(mockExternalRepo.save).toHaveBeenLastCalledWith(expect.objectContaining({
-        id: 8,
-        externalReviewId: 'naver-2',
-        isVisible: false,
-      }));
-      expect(mockManager.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE products p'),
-        [5, 5, 5],
+        received: 2,
+        created: 1,
+        updated: 1,
+        hidden: 1,
+      });
+      expect(mockExternalRepo.save).toHaveBeenCalledTimes(2);
+      expect(mockExternalRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 5,
+          source: 'smartstore',
+          externalReviewId: 'naver-1',
+          externalProductId: 'sp-1',
+          reviewerNameMasked: '김**',
+        }),
       );
+      expect(mockExternalRepo.save).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          id: 8,
+          externalReviewId: 'naver-2',
+          isVisible: false,
+        }),
+      );
+      expect(mockReviewStatsSyncService.syncProductStats).toHaveBeenCalledWith(5, mockManager);
     });
   });
 
@@ -373,7 +398,9 @@ describe('ReviewsService', () => {
       setupOrderItemQb(mockOrderItem);
       mockManager.findOne.mockResolvedValueOnce(null); // no duplicate review
       mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
-      mockManager.save.mockImplementation((_entity: unknown, data: unknown) => Promise.resolve({ ...mockReview, ...(data as object) }));
+      mockManager.save.mockImplementation((_entity: unknown, data: unknown) =>
+        Promise.resolve({ ...mockReview, ...(data as object) }),
+      );
 
       // reload with user
       mockRepo.findOne.mockResolvedValueOnce(mockReview);
@@ -398,6 +425,7 @@ describe('ReviewsService', () => {
         'review',
         1,
       );
+      expect(mockReviewStatsSyncService.syncProductStats).toHaveBeenCalledWith(5, mockManager);
     });
 
     it('should award photo bonus when images are present', async () => {
@@ -410,7 +438,9 @@ describe('ReviewsService', () => {
       setupOrderItemQb(mockOrderItem);
       mockManager.findOne.mockResolvedValueOnce(null);
       mockManager.create.mockImplementation((_entity: unknown, data: unknown) => data);
-      mockManager.save.mockImplementation((_entity: unknown, data: unknown) => Promise.resolve({ ...mockReview, ...(data as object) }));
+      mockManager.save.mockImplementation((_entity: unknown, data: unknown) =>
+        Promise.resolve({ ...mockReview, ...(data as object) }),
+      );
       mockRepo.findOne.mockResolvedValueOnce(mockReview);
 
       await service.create(10, {
@@ -479,6 +509,7 @@ describe('ReviewsService', () => {
 
       const result = await service.update(1, 10, { rating: 4 });
       expect(result.rating).toBe(4);
+      expect(mockReviewStatsSyncService.syncProductStats).toHaveBeenCalledWith(5, mockManager);
     });
 
     it('should throw NotFoundException for non-existent review', async () => {
@@ -509,6 +540,7 @@ describe('ReviewsService', () => {
         '리뷰 포인트 환수 (review_id:1)',
       );
       expect(mockPointsService.deductFifo).not.toHaveBeenCalled();
+      expect(mockReviewStatsSyncService.syncProductStats).toHaveBeenCalledWith(5, mockManager);
     });
 
     it('should reject deletion without mutating the review when the reward was spent', async () => {
