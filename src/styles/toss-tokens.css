@@ -1,0 +1,28 @@
+/* Shared Toss-style surfaces and brand tokens. Components consume these aliases
+   instead of embedding a light-only palette. */
+:root,
+html[data-theme='light'] {
+  --checkout-toss-background: #f2f4f6;
+  --checkout-toss-surface: #ffffff;
+  --checkout-toss-input: #f2f4f6;
+  --checkout-toss-foreground: #191f28;
+  --checkout-toss-muted: #8b95a1;
+  --checkout-toss-border: #e5e8eb;
+  --checkout-toss-primary: #8b4513;
+  --checkout-toss-primary-hover: #6f350f;
+  --checkout-toss-primary-soft: #f5ede7;
+  --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
+}
+
+html[data-theme='dark'] {
+  --checkout-toss-background: #101418;
+  --checkout-toss-surface: #191d23;
+  --checkout-toss-input: #242a31;
+  --checkout-toss-foreground: #f2f4f6;
+  --checkout-toss-muted: #9aa4af;
+  --checkout-toss-border: #343c46;
+  --checkout-toss-primary: #8b4513;
+  --checkout-toss-primary-hover: #a85f31;
+  --checkout-toss-primary-soft: #3a2920;
+  --checkout-toss-shadow: 0 2px 12px rgb(0 0 0 / 28%);
+}

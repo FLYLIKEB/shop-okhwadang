@@ -19,6 +19,7 @@
    기본 테마는 ThemeContext(DEFAULT_THEME_BY_LOCALE)에서 관리 */
 @import './tokens-dark.css';
 @import './tokens-light.css';
+@import './toss-tokens.css';
 
 /* ── Tailwind v4 dark variant ──────────────────────────────────── */
 /* dark: 유틸리티가 data-theme="dark" 스코프에 반응하도록 매핑 */
@@ -58,17 +59,6 @@
   --color-brand-secondary: #C7C7C7;
   --color-accent-danni: #BABABA;
 
-  /* Checkout surfaces — shared by cart and checkout pages */
-  --checkout-toss-background: #f2f4f6;
-  --checkout-toss-surface: #ffffff;
-  --checkout-toss-input: #f2f4f6;
-  --checkout-toss-foreground: #191f28;
-  --checkout-toss-muted: #8b95a1;
-  --checkout-toss-border: #e5e8eb;
-  --checkout-toss-primary: #8b4513;
-  --checkout-toss-primary-hover: #6f350f;
-  --checkout-toss-primary-soft: #f5ede7;
-  --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
 }
 
 /* 색상 토큰은 @theme (non-inline) — 유틸리티가 var(--color-*)로 생성되어야
