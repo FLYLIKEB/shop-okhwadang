@@ -5,6 +5,7 @@ import { AdminReviewQueryDto } from './dto/admin-review-query.dto';
 import { ExternalReview } from './entities/external-review.entity';
 import { Review } from './entities/review.entity';
 import { ReviewStatsSyncService } from './review-stats-sync.service';
+import { buildReviewCatalog, compareCatalogTieBreakers, isInternalReviewSource } from './review-catalog';
 
 export interface AdminReviewProductSummary {
   id: number;
@@ -70,14 +71,19 @@ export class AdminReviewsService {
 
     const [externalReviews] = await qb.getManyAndCount();
     const internalReviews = await this.findInternalReviews(query);
-    const items = [
-      ...externalReviews.map((review) => this.toExternalItem(review)),
-      ...internalReviews.map((review) => this.toInternalItem(review)),
-    ].sort((a, b) => this.compareItems(a, b, query));
+    const catalog = buildReviewCatalog(
+      [
+        { items: externalReviews, map: (review) => this.toExternalItem(review) },
+        { items: internalReviews, map: (review) => this.toInternalItem(review) },
+      ],
+      (a, b) => this.compareItems(a, b, query),
+      page,
+      limit,
+    );
 
     return {
-      items: items.slice((page - 1) * limit, page * limit),
-      total: items.length,
+      items: catalog.items,
+      total: catalog.total,
       page,
       limit,
     };
@@ -99,7 +105,7 @@ export class AdminReviewsService {
     isVisible: boolean,
     source?: string | null,
   ): Promise<AdminReviewItem> {
-    if (source === 'okhwadang' || source === 'internal') {
+    if (isInternalReviewSource(source)) {
       const review = await this.reviewRepository.findOne({
         where: { id },
         relations: ['product', 'user'],
@@ -137,10 +143,10 @@ export class AdminReviewsService {
     if (items.length === 0) return { updated: 0 };
 
     const externalIds = items
-      .filter((item) => item.source !== 'okhwadang' && item.source !== 'internal')
+      .filter((item) => !isInternalReviewSource(item.source))
       .map((item) => item.id);
     const internalIds = items
-      .filter((item) => item.source === 'okhwadang' || item.source === 'internal')
+      .filter((item) => isInternalReviewSource(item.source))
       .map((item) => item.id);
 
     let updated = 0;
@@ -193,7 +199,7 @@ export class AdminReviewsService {
       adminRepliedAt: trimmed.length > 0 ? new Date() : null,
     };
 
-    if (source === 'okhwadang' || source === 'internal') {
+    if (isInternalReviewSource(source)) {
       const review = await this.reviewRepository.findOne({
         where: { id },
         relations: ['product', 'user'],
@@ -306,19 +312,20 @@ export class AdminReviewsService {
     switch (query.sort ?? 'reviewedAt') {
       case 'rating': {
         const diff = (a.rating - b.rating) * order;
-        return diff || dateDiff;
+        return diff || dateDiff || compareCatalogTieBreakers(a, b);
       }
       case 'helpful': {
         const diff = (a.helpfulCount - b.helpfulCount) * order;
-        return diff || dateDiff;
+        return diff || dateDiff || compareCatalogTieBreakers(a, b);
       }
       case 'importedAt':
         return (
           (new Date(a.lastSyncedAt).getTime() - new Date(b.lastSyncedAt).getTime()) * order ||
-          dateDiff
+          dateDiff ||
+          compareCatalogTieBreakers(a, b)
         );
       default:
-        return dateDiff;
+        return dateDiff || compareCatalogTieBreakers(a, b);
     }
   }
 
