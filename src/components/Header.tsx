@@ -68,13 +68,13 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
   return (
     <>
       <header ref={headerRef} className={cn(
-        'sticky top-0 z-50 transition-all duration-300 ease-in-out',
+        'toss-header sticky top-0 z-50 transition-all duration-300 ease-in-out',
         isScrolled
-          ? 'bg-background/85 backdrop-blur-lg shadow-sm'
+          ? 'toss-header--scrolled bg-background/85 backdrop-blur-lg shadow-sm'
           : 'bg-background',
       )}>
         {/* 2줄 헤더 — top: 로고/검색/액션 · bottom: GNB 전폭 균등 */}
-        <div className="mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
+        <div className="toss-header__top mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
           {/* 햄버거 (mobile) */}
           <button
             type="button"
@@ -99,7 +99,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             onSubmit={handleDesktopSearch}
             role="search"
             aria-label={t('searchLabel')}
-            className="hidden md:flex relative items-center flex-1 max-w-lg mx-8"
+            className="toss-header__search hidden md:flex relative items-center flex-1 max-w-lg mx-8"
           >
             <input
               type="search"
@@ -107,15 +107,15 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
               aria-label={t('searchLabel')}
-              className="w-full rounded-md bg-muted/40 pl-3 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-muted/60 transition-colors"
+              className="toss-header__search-input w-full rounded-md bg-muted/40 pl-3 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-muted/60 transition-colors"
             />
-            <button type="submit" aria-label={t('searchButton')} className="absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
+            <button type="submit" aria-label={t('searchButton')} className="toss-header__search-button absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
               <Search className="h-4 w-4" />
             </button>
           </form>
 
           {/* 데스크탑 액션 */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="toss-header__actions hidden md:flex items-center gap-1">
             <ThemeToggle />
             <LanguageSelector />
             <CartBadge itemCount={itemCount} />
@@ -142,7 +142,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
           </div>
 
           {/* 모바일 우측 */}
-          <div className="md:hidden flex items-center gap-1">
+          <div className="toss-header__mobile-actions md:hidden flex items-center gap-1">
             <button
               type="button"
               onClick={() => { setIsSearchOpen(!isSearchOpen); setIsMenuOpen(false); }}
@@ -168,7 +168,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
         </div>
 
         {/* Bottom row — GNB 전폭 균등 분할 */}
-        <div className="hidden md:block">
+        <div className="toss-header__gnb hidden md:block">
           <div className="flex h-12 items-stretch justify-between px-4 md:px-20">
             <DesktopNav items={navItems} fullWidth />
           </div>

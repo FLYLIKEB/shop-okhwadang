@@ -1027,6 +1027,10 @@ h3 {
   letter-spacing: -0.01em;
 }
 
+.checkout-toss-theme .checkout-toss-free-shipping {
+  border: 0;
+}
+
 .checkout-toss-theme .checkout-toss-summary__shipping > div {
   background: var(--checkout-toss-surface);
 }
@@ -1099,6 +1103,91 @@ h3 {
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 2rem;
+}
+
+/* ── Toss-style header chrome ──────────────────────────────────── */
+.toss-header {
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-header--scrolled {
+  background: color-mix(in srgb, var(--checkout-toss-surface) 94%, transparent);
+  box-shadow: 0 2px 14px rgb(25 31 40 / 6%);
+}
+
+.toss-header__top {
+  min-height: 4rem;
+}
+
+.toss-header__search-input {
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+  font-size: 0.9375rem;
+  letter-spacing: -0.015em;
+}
+
+.toss-header__search-input:focus {
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--checkout-toss-primary) 14%, transparent);
+}
+
+.toss-header__search-button {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-header__search-button:hover {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-header__actions a,
+.toss-header__actions button,
+.toss-header__mobile-actions a,
+.toss-header__mobile-actions button,
+.toss-header__mobile-actions > div {
+  border-radius: 0.625rem;
+}
+
+.toss-header__actions a:not([href='/admin']):hover,
+.toss-header__actions button:hover,
+.toss-header__mobile-actions a:hover,
+.toss-header__mobile-actions button:hover,
+.toss-header__mobile-actions > div:hover {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-header__gnb {
+  background: var(--checkout-toss-surface);
+}
+
+.toss-header__gnb > nav > div > a {
+  min-height: 3rem;
+  border-radius: 0.625rem;
+  padding-inline: 0.75rem;
+  color: var(--checkout-toss-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.toss-header__gnb > nav > div > a:hover {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-header__gnb > nav > div > a > span > span {
+  background: var(--checkout-toss-primary);
+}
+
+.toss-header__gnb > nav > div.fixed {
+  border: 0;
+  border-radius: 0 0 1rem 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 10px 24px rgb(25 31 40 / 8%);
 }
 
 /* ── Toss-style mobile navigation ──────────────────────────────── */

@@ -59,7 +59,7 @@ export function OrderSummarySection({
         ))}
       </ul>
 
-      <div className="mt-4 rounded-md border border-soft bg-muted/20 p-3">
+      <div className="checkout-toss-free-shipping mt-4 rounded-md bg-muted/20 p-3">
         <p className="text-xs text-muted-foreground">
           {remainingForFreeShipping === 0
             ? t('freeShippingUnlocked')
