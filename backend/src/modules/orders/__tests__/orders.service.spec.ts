@@ -899,6 +899,48 @@ describe('OrdersService', () => {
       expect(result.items).toHaveLength(1);
     });
 
+    it('returns localized member order detail when locale is en', async () => {
+      const mockOrder = {
+        id: 1,
+        userId: 1,
+        orderNumber: 'ORD-1',
+        items: [
+          {
+            productName: '한글상품명',
+            optionName: '옵션: 기본',
+            product: { name: '한글상품명', nameEn: 'English Name' },
+            option: { name: '옵션', nameEn: 'Option', value: '기본', valueEn: 'Default' },
+          },
+        ],
+      } as unknown as Order;
+
+      const mockQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockOrder),
+      };
+      mockOrderRepository.createQueryBuilder.mockReturnValue(mockQb);
+
+      const result = await service.findOne(1, 1, 'en');
+
+      expect(result).not.toBe(mockOrder);
+      expect(result.items[0]?.productName).toBe('English Name');
+      expect(result.items[0]?.optionName).toBe('Option: Default');
+    });
+
+    it('guest order for member detail → NotFoundException', async () => {
+      const mockOrder = { id: 1, userId: null } as unknown as Order;
+
+      const mockQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockOrder),
+      };
+      mockOrderRepository.createQueryBuilder.mockReturnValue(mockQb);
+
+      await expect(service.findOne(1, 99)).rejects.toThrow(NotFoundException);
+    });
+
     it('wrong user → ForbiddenException', async () => {
       const mockOrder = { id: 1, userId: 1 } as unknown as Order;
 
