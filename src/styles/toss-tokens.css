@@ -127,3 +127,13 @@ html[data-theme='dark'] {
 .toss-header__mobile-actions .toss-button--gray:hover {
   background: var(--checkout-toss-header-button-gray-hover) !important;
 }
+
+.toss-header__cart:hover {
+  background: var(--checkout-toss-header-button-gray-hover) !important;
+  color: var(--checkout-toss-primary) !important;
+  transform: scale(1.06);
+}
+
+.toss-header__cart:hover svg {
+  color: var(--checkout-toss-primary) !important;
+}
