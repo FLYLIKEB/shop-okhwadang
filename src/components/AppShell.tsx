@@ -79,7 +79,8 @@ export default function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const isAdminRoute = isAdminPath(pathname);
-  const isPurchaseFlowRoute = /\/(?:cart|checkout)(?:\/|$)/.test(pathname);
+  const isCartRoute = /\/cart(?:\/|$)/.test(pathname);
+  const isCheckoutRoute = /\/checkout(?:\/|$)/.test(pathname);
 
   if (isAdminRoute) {
     return (
@@ -94,7 +95,13 @@ export default function AppShell({
     <MobileNavProvider initialVisible={mobileBottomNavVisible}>
       <div className="flex min-h-screen flex-col">
         {announcementBar}
-        <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
+        {isCartRoute ? (
+          <div className="cart-route-header">
+            <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
+          </div>
+        ) : (
+          <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
+        )}
         <main
           id="main-content"
           className={cn(
@@ -105,9 +112,13 @@ export default function AppShell({
         >
           {children}
         </main>
-        {!isPurchaseFlowRoute && (
+        {!isCheckoutRoute && (isCartRoute ? (
+          <div className="cart-route-footer">
+            <Footer businessInfo={businessInfo} initialFooterItems={navigationData?.footer} />
+          </div>
+        ) : (
           <Footer businessInfo={businessInfo} initialFooterItems={navigationData?.footer} />
-        )}
+        ))}
         <MobileBottomNavWrapper visible={mobileBottomNavVisible} />
         <SharedToaster />
         <RecentlyViewedWidget />

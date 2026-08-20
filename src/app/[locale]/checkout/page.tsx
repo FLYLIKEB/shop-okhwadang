@@ -506,7 +506,7 @@ export default function CheckoutPage({
                       value={guestEmail}
                       onChange={handleGuestEmailChange}
                       placeholder={t('guestEmailPlaceholder')}
-                      className="checkout-toss-guest-email mt-2 w-full rounded-md border border-border bg-white px-3 py-2 text-sm"
+                      className="checkout-toss-guest-email mt-2 w-full rounded-md border border-border !bg-white px-3 py-2 text-sm"
                     />
                     {errors.guestEmail ? (
                       <p className="mt-2 text-sm text-destructive">{errors.guestEmail}</p>

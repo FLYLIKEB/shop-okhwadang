@@ -12,6 +12,14 @@ vi.mock('next/image', () => ({
   },
 }));
 
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({ href, locale, children, ...props }: { href: string; locale?: string; children: React.ReactNode }) => (
+    <a href={locale ? `/${locale}${href}` : href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 const baseItem: CartItem = {
   id: 1,
   productId: 10,
@@ -66,9 +74,11 @@ describe('CartItemRow', () => {
       />,
     );
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '테스트 상품' })).toHaveAttribute('href', '/ko/products/10');
+    expect(screen.getByRole('link', { name: '썸네일' })).toHaveAttribute('href', '/ko/products/10');
     expect(screen.queryByText('₩15,000')).not.toBeInTheDocument();
-    expect(screen.getAllByText('2')).toHaveLength(2);
-    expect(screen.getAllByText('₩30,000')).toHaveLength(2);
+    expect(screen.getAllByText('2')).toHaveLength(1);
+    expect(screen.getAllByText('₩30,000')).toHaveLength(1);
   });
 
   it('renders option text when option is provided', () => {

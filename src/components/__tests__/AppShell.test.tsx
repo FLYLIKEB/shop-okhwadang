@@ -109,7 +109,8 @@ describe('AppShell', () => {
     );
 
     expect(container.querySelector('main.checkout-light-theme')).toBeInTheDocument();
-    expect(screen.queryByTestId('footer')).not.toBeInTheDocument();
+    expect(screen.getByTestId('global-header').parentElement).toHaveClass('cart-route-header');
+    expect(screen.getByTestId('footer').parentElement).toHaveClass('cart-route-footer');
   });
 
   it('uses a white light boundary for product detail routes', () => {
