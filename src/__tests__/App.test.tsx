@@ -83,6 +83,9 @@ const mockFetchPage = vi.hoisted(() => vi.fn().mockResolvedValue({
     },
   ],
 }));
+const mockFetchProducts = vi.hoisted(() => vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, limit: 4 }));
+const mockFetchCategories = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+const mockFetchJournals = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
@@ -94,6 +97,9 @@ vi.mock('@/contexts/AuthContext', () => ({
 
 vi.mock('@/lib/api-server', () => ({
   fetchPage: mockFetchPage,
+  fetchProducts: mockFetchProducts,
+  fetchCategories: mockFetchCategories,
+  fetchJournals: mockFetchJournals,
 }));
 
 vi.mock('@/contexts/CartContext', () => ({
@@ -152,6 +158,9 @@ describe('Footer', () => {
 describe('Home page', () => {
   beforeEach(() => {
     mockFetchPage.mockClear();
+    mockFetchProducts.mockClear();
+    mockFetchCategories.mockClear();
+    mockFetchJournals.mockClear();
   });
 
   it('renders home page sections', async () => {
@@ -167,6 +176,27 @@ describe('Home page', () => {
     await expect(Home({ params: Promise.resolve({ locale: 'ko' }) })).rejects.toMatchObject({
       name: HOME_PAGE_CONTENT_ERROR_CODE,
     });
+  });
+
+  it('deduplicates shared CMS prefetches and skips hidden blocks', async () => {
+    const productContent = { limit: 4, sort: 'latest' as const };
+    mockFetchPage.mockResolvedValueOnce({
+      blocks: [
+        { id: 1, type: 'product_grid', is_visible: true, sort_order: 0, content: productContent },
+        { id: 2, type: 'product_carousel', is_visible: true, sort_order: 1, content: productContent },
+        { id: 3, type: 'product_grid', is_visible: false, sort_order: 2, content: productContent },
+        { id: 4, type: 'category_nav', is_visible: true, sort_order: 3, content: {} },
+        { id: 5, type: 'category_nav', is_visible: true, sort_order: 4, content: {} },
+        { id: 6, type: 'journal_preview', is_visible: true, sort_order: 5, content: { limit: 3 } },
+        { id: 7, type: 'journal_preview', is_visible: true, sort_order: 6, content: { limit: 3 } },
+      ],
+    });
+
+    await Home({ params: Promise.resolve({ locale: 'ko' }) });
+
+    expect(mockFetchProducts).toHaveBeenCalledTimes(1);
+    expect(mockFetchCategories).toHaveBeenCalledTimes(1);
+    expect(mockFetchJournals).toHaveBeenCalledTimes(1);
   });
 
   it.each(['favicon.ico', 'robots.txt', 'sitemap.xml', 'logo.png'])(

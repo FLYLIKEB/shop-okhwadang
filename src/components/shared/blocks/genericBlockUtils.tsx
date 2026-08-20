@@ -1,5 +1,3 @@
-'use client';
-
 import { sanitizeInlineHtml } from '@/lib/sanitize-inline-html';
 
 export function InlineHtmlText({

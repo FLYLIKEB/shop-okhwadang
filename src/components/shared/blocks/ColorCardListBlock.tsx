@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import { SectionHeading } from '@/components/shared/common/SectionHeading';
 import { SkeletonBox } from '@/components/ui/Skeleton';
