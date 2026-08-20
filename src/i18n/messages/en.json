@@ -397,6 +397,7 @@
     "loadingAddresses": "Loading addresses...",
     "noSavedAddress": "No saved addresses.",
     "addAddress": "Add Address",
+    "changeAddress": "Change address",
     "manualEntry": "Enter Manually",
     "recipientName": "Recipient Name",
     "phone": "Phone Number",

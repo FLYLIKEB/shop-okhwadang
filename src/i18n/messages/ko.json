@@ -397,6 +397,7 @@
     "loadingAddresses": "주소 불러오는 중...",
     "noSavedAddress": "저장된 배송지가 없습니다.",
     "addAddress": "배송지 추가",
+    "changeAddress": "배송지 변경",
     "manualEntry": "직접 입력",
     "recipientName": "받는 분 이름",
     "phone": "연락처",

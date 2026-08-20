@@ -674,8 +674,9 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/집/)).toBeInTheDocument();
+      expect(screen.getByText('집')).toBeInTheDocument();
     });
+    await userEvent.click(screen.getByRole('button', { name: '배송지 변경' }));
     expect(screen.getByLabelText(/회사/)).toBeInTheDocument();
     expect(screen.getByLabelText(/직접 입력/)).toBeInTheDocument();
   });
@@ -688,8 +689,9 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/회사/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '배송지 변경' })).toBeInTheDocument();
     });
+    await user.click(screen.getByRole('button', { name: '배송지 변경' }));
     await user.click(screen.getByLabelText(/회사/));
 
     await waitFor(() => {
@@ -711,6 +713,7 @@ describe('CheckoutPage', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김기본');
     });
+    await user.click(screen.getByRole('button', { name: '배송지 변경' }));
     await user.click(screen.getByLabelText(/직접 입력/));
 
     await waitFor(() => {
