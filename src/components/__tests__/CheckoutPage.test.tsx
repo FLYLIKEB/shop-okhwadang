@@ -86,6 +86,11 @@ vi.mock('next-intl', () => ({
       'consent.contentLoading': '정책 내용을 불러오는 중입니다.',
       'consent.contentUnavailable': '정책 내용을 불러오지 못했습니다.',
       'consent.contentLoadError': '정책 내용을 불러오지 못했습니다.',
+      'consent.openPolicy': '정책 상세 열기',
+      'consent.closePolicy': '정책 상세 닫기',
+      'consent.required': '필수',
+      'consent.scrollRegion': '본문 스크롤 영역',
+      'consent.effectiveDate': '시행일',
       guestCheckoutTitle: '비회원 주문',
       guestCheckoutDescription: '비회원 안내',
       guestEmailLabel: '비회원 이메일',
@@ -291,7 +296,7 @@ describe('CheckoutPage', () => {
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
   });
 
-  it('expands the policy list and opens policy content in a modal', async () => {
+  it('expands policy content inside a capped scroll region without opening a modal', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
@@ -302,7 +307,7 @@ describe('CheckoutPage', () => {
       blocks: [{
         id: 1,
         type: 'text_content',
-        content: { html: '<p>개인정보 처리 내용</p>' },
+        content: { html: '<p>개인정보 처리 내용</p><p>마지막 조항</p>' },
         sort_order: 0,
         is_visible: true,
       }],
@@ -313,18 +318,24 @@ describe('CheckoutPage', () => {
     const policyListToggle = screen.getByRole('button', { name: '정책 내용 열기' });
     await user.click(policyListToggle);
 
-    const privacyPolicyButton = screen.getByRole('button', { name: '개인정보처리방침' });
+    const privacyPolicyButton = screen.getByRole('button', { name: '개인정보처리방침 정책 상세 열기' });
     await user.click(privacyPolicyButton);
     expect(pagesApi.getBySlug).toHaveBeenCalledWith('privacy', 'ko');
     expect(policyListToggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(await screen.findByText('개인정보 처리 내용')).toBeInTheDocument();
+    expect(privacyPolicyButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('dialog'));
+    const policyScrollRegion = await screen.findByRole('region', { name: '개인정보처리방침 본문 스크롤 영역' });
+    expect(policyScrollRegion).toHaveClass('checkout-policy-scroll', 'max-h-80', 'overflow-y-auto', 'md:max-h-96');
+    expect(policyScrollRegion).toHaveTextContent('개인정보 처리 내용');
+    expect(policyScrollRegion).toHaveTextContent('마지막 조항');
+    expect(screen.getAllByText(/필수 · v1.0 · 시행일: 2026-04-20/)).toHaveLength(4);
+
+    await user.click(privacyPolicyButton);
     expect(screen.queryByText('개인정보 처리 내용')).not.toBeInTheDocument();
 
     await user.click(policyListToggle);
-    expect(screen.queryByRole('button', { name: '개인정보처리방침' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '개인정보처리방침 정책 상세 열기' })).not.toBeInTheDocument();
   });
 
   it('uses preview totals and keeps coupon discount / points / shipping split visible', async () => {

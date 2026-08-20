@@ -505,7 +505,12 @@
       "hidePolicy": "정책 내용 닫기",
       "contentLoading": "정책 내용을 불러오는 중입니다.",
       "contentUnavailable": "정책 내용을 불러오지 못했습니다.",
-      "contentLoadError": "정책 내용을 불러오지 못했습니다."
+      "contentLoadError": "정책 내용을 불러오지 못했습니다.",
+      "openPolicy": "정책 상세 열기",
+      "closePolicy": "정책 상세 닫기",
+      "required": "필수",
+      "scrollRegion": "본문 스크롤 영역",
+      "effectiveDate": "시행일"
     },
     "couponLoadError": "쿠폰 목록을 불러오지 못했습니다.",
     "couponLoading": "쿠폰 불러오는 중...",
