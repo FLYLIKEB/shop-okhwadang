@@ -404,7 +404,7 @@ export default function CheckoutPage({
 
   return (
     <div className="checkout-toss-theme min-h-screen pb-36 md:pb-8">
-      <div className="layout-container layout-page">
+      <div className="layout-container layout-page max-w-3xl">
       <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
 
       <ol className="checkout-toss-flow mt-6 flex flex-wrap items-center gap-2 text-xs text-muted-foreground md:max-w-xl">
@@ -416,8 +416,18 @@ export default function CheckoutPage({
       </ol>
 
       <form id="checkout-form" onSubmit={handleSubmit} className="mt-8">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="layout-stack-md lg:col-span-2">
+        <div className="mx-auto layout-stack-md">
+          <OrderSummarySection
+            pricedItems={pricingPreview?.items ?? []}
+            locale={locale}
+            subtotalAmount={subtotalAmount}
+            shippingFee={shippingFee}
+            freeShippingThreshold={freeShippingThreshold}
+            couponDiscount={couponDiscount}
+            pointsUsed={appliedPointsUsed}
+            totalPayable={grandTotal}
+          />
+
             <section className="checkout-toss-section surface-card p-6">
               <h2 className="typo-h3">{t('shippingInfo')}</h2>
 
@@ -589,20 +599,7 @@ export default function CheckoutPage({
                 </div>
               )}
             </section>
-          </div>
-
-          <aside className="checkout-toss-summary layout-stack-md lg:sticky lg:top-24 lg:self-start">
-            <OrderSummarySection
-              pricedItems={pricingPreview?.items ?? []}
-              locale={locale}
-              subtotalAmount={subtotalAmount}
-              shippingFee={shippingFee}
-              freeShippingThreshold={freeShippingThreshold}
-              couponDiscount={couponDiscount}
-              pointsUsed={appliedPointsUsed}
-              totalPayable={grandTotal}
-            />
-            <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
+          <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
@@ -615,8 +612,7 @@ export default function CheckoutPage({
               >
                 {stepLabels[step]}
               </Button>
-            </div>
-          </aside>
+          </div>
         </div>
       </form>
 
