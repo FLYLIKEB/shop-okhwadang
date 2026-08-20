@@ -327,7 +327,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
         </div>
 
         {/* Right: Product info */}
-        <div className="toss-product-detail__info flex flex-col gap-6 p-5 md:p-8">
+        <div className="toss-product-detail__info flex flex-col gap-4 p-4 md:p-6">
           {/* Breadcrumb */}
           {product.category && (
             <nav className="typo-body-sm font-medium text-muted-foreground">
@@ -397,7 +397,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Price */}
           <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               <div className="font-body text-foreground">
                 <PriceDisplay price={product.price} salePrice={product.salePrice} size="lg" locale={locale} />
               </div>
@@ -442,7 +442,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Quantity */}
-          <div className="toss-product-detail__quantity flex flex-col gap-2 rounded-xl bg-muted/40 p-4">
+          <div className="toss-product-detail__quantity flex flex-col gap-2 rounded-xl bg-muted/40 p-3">
             <span className="typo-body-sm font-semibold text-foreground">{t('quantity')}</span>
             <div className="flex items-center gap-3">
               <QuantitySelector
@@ -503,7 +503,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             </Button>
           </div>
 
-          <div className="toss-product-detail__stock rounded-xl bg-muted/40 p-4">
+          <div className="toss-product-detail__stock rounded-xl bg-muted/40 p-3">
             <p className="typo-body-sm font-semibold text-muted-foreground">{t('stockStatus.title')}</p>
             <p className={cn('mt-1 typo-body-sm font-medium', isSoldout ? 'text-destructive' : 'text-foreground')}>
               {isSoldout ? t('stockStatus.soldoutReason') : isLowStock ? t('stockStatus.lowStock', { count: maxQuantity }) : t('stockStatus.available')}
