@@ -5,7 +5,12 @@ import { AdminReviewQueryDto } from './dto/admin-review-query.dto';
 import { ExternalReview } from './entities/external-review.entity';
 import { Review } from './entities/review.entity';
 import { ReviewStatsSyncService } from './review-stats-sync.service';
-import { buildReviewCatalog, compareCatalogTieBreakers, isInternalReviewSource } from './review-catalog';
+import {
+  buildReviewCatalog,
+  compareCatalogTieBreakers,
+  reviewCatalogSource,
+  isInternalReviewSource,
+} from './review-catalog';
 
 export interface AdminReviewProductSummary {
   id: number;
@@ -73,8 +78,8 @@ export class AdminReviewsService {
     const internalReviews = await this.findInternalReviews(query);
     const catalog = buildReviewCatalog(
       [
-        { items: externalReviews, map: (review) => this.toExternalItem(review) },
-        { items: internalReviews, map: (review) => this.toInternalItem(review) },
+        reviewCatalogSource(externalReviews, (review) => this.toExternalItem(review)),
+        reviewCatalogSource(internalReviews, (review) => this.toInternalItem(review)),
       ],
       (a, b) => this.compareItems(a, b, query),
       page,

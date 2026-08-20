@@ -7,9 +7,8 @@ export interface ReviewCatalogPage<TItem> {
   limit: number;
 }
 
-export interface ReviewCatalogSourceStrategy<TEntity, TItem> {
-  items: TEntity[];
-  map: (entity: TEntity) => TItem;
+export interface ReviewCatalogSourceStrategy<TItem> {
+  resolveItems: () => TItem[];
 }
 
 export function isInternalReviewSource(source?: string | null): boolean {
@@ -30,13 +29,20 @@ export function paginateReviewCatalog<TItem>(
   };
 }
 
-export function buildReviewCatalog<TEntity, TItem>(
-  sources: Array<ReviewCatalogSourceStrategy<TEntity, TItem>>,
+export function reviewCatalogSource<TEntity, TItem>(
+  items: TEntity[],
+  map: (entity: TEntity) => TItem,
+): ReviewCatalogSourceStrategy<TItem> {
+  return { resolveItems: () => items.map(map) };
+}
+
+export function buildReviewCatalog<TItem>(
+  sources: Array<ReviewCatalogSourceStrategy<TItem>>,
   compare: (a: TItem, b: TItem) => number,
   page: number,
   limit: number,
 ): ReviewCatalogPage<TItem> {
-  const merged = sources.flatMap((source) => source.items.map(source.map));
+  const merged = sources.flatMap((source) => source.resolveItems());
   const sorted = [...merged].sort(compare);
   return paginateReviewCatalog(sorted, page, limit);
 }

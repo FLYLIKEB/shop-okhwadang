@@ -21,7 +21,11 @@ import { assertOwnership } from '../../common/utils/ownership.util';
 import { SettingsService } from '../settings/settings.service';
 import { PointsService, addOneYear } from '../points/points.service';
 import { ReviewStatsSyncService } from './review-stats-sync.service';
-import { buildReviewCatalog, compareCatalogTieBreakers } from './review-catalog';
+import {
+  buildReviewCatalog,
+  compareCatalogTieBreakers,
+  reviewCatalogSource,
+} from './review-catalog';
 
 const REVIEW_POINT_REWARD_KEY = 'review_point_reward';
 const PHOTO_REVIEW_BONUS_KEY = 'photo_review_bonus';
@@ -186,8 +190,8 @@ export class ReviewsService {
     const stats = await this.getStats(query.productId);
     const catalog = buildReviewCatalog(
       [
-        { items: internalReviews, map: (review) => this.toResponse(review) },
-        { items: externalReviews, map: (review) => this.toExternalResponse(review) },
+        reviewCatalogSource(internalReviews, (review) => this.toResponse(review)),
+        reviewCatalogSource(externalReviews, (review) => this.toExternalResponse(review)),
       ],
       (a, b) => this.compareReviews(a, b, sort),
       page,

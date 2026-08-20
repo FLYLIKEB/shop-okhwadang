@@ -1,6 +1,7 @@
 import {
   buildReviewCatalog,
   compareCatalogTieBreakers,
+  reviewCatalogSource,
   isInternalReviewSource,
 } from '../review-catalog';
 
@@ -8,17 +9,17 @@ describe('review-catalog', () => {
   it('merges mapped source strategies before deterministic sorting and pagination', () => {
     const page = buildReviewCatalog(
       [
-        {
-          items: [{ id: 1, source: 'internal', rating: 4, reviewedAt: new Date('2026-01-01') }],
-          map: (item) => ({ ...item, label: 'okhwadang' }),
-        },
-        {
-          items: [
+        reviewCatalogSource(
+          [{ id: 1, source: 'internal', rating: 4, reviewedAt: new Date('2026-01-01') }],
+          (item) => ({ ...item, label: 'okhwadang' }),
+        ),
+        reviewCatalogSource(
+          [
             { id: 2, source: 'smartstore', rating: 5, reviewedAt: new Date('2026-01-03') },
             { id: 3, source: 'smartstore', rating: 3, reviewedAt: new Date('2026-01-02') },
           ],
-          map: (item) => ({ ...item, label: 'external' }),
-        },
+          (item) => ({ ...item, label: 'external' }),
+        ),
       ],
       (a, b) => b.reviewedAt.getTime() - a.reviewedAt.getTime() || compareCatalogTieBreakers(a, b),
       2,
@@ -27,7 +28,13 @@ describe('review-catalog', () => {
 
     expect(page).toMatchObject({ total: 3, page: 2, limit: 1 });
     expect(page.items).toEqual([
-      { id: 3, source: 'smartstore', rating: 3, reviewedAt: new Date('2026-01-02'), label: 'external' },
+      {
+        id: 3,
+        source: 'smartstore',
+        rating: 3,
+        reviewedAt: new Date('2026-01-02'),
+        label: 'external',
+      },
     ]);
   });
 

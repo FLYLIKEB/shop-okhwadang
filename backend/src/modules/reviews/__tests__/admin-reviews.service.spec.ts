@@ -152,6 +152,57 @@ describe('AdminReviewsService', () => {
     expect(reviewRepository.find).toHaveBeenCalledWith({ relations: ['product', 'user'] });
   });
 
+  it('paginates after merging internal and external admin review sources', async () => {
+    const externalReview = {
+      id: 5,
+      source: 'smartstore',
+      externalReviewId: '5008298806',
+      externalProductId: '13629303355',
+      productId: 9,
+      product: { id: 9, name: '외부상품', sku: 'EXT-9' },
+      reviewType: '일반',
+      rating: 3,
+      content: '외부 리뷰',
+      reviewerNameMasked: 'da**',
+      helpfulCount: 0,
+      imageUrls: null,
+      mediaAssets: [],
+      sourceDisplayStatus: null,
+      isVisible: true,
+      isBest: false,
+      reviewedAt: new Date('2026-01-01T00:00:00.000Z'),
+      sourceUpdatedAt: null,
+      lastSyncedAt: new Date('2026-01-02T00:00:00.000Z'),
+      importBatchId: null,
+      orderNo: null,
+      relatedReviewExternalId: null,
+      relatedReviewContent: null,
+      adminReplyContent: null,
+      adminReplyAuthor: null,
+      adminRepliedAt: null,
+    } as unknown as ExternalReview;
+    const internalReview = {
+      id: 7,
+      productId: 10,
+      rating: 5,
+      content: '내부 리뷰',
+      imageUrls: null,
+      isVisible: true,
+      createdAt: new Date('2026-01-03T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-04T00:00:00.000Z'),
+      product: { id: 10, name: '내부상품', sku: 'INT-10' },
+      user: { name: '회원' },
+    } as unknown as Review;
+    qb.getManyAndCount.mockResolvedValue([[externalReview], 1]);
+    reviewRepository.find.mockResolvedValue([internalReview]);
+
+    const result = await service.findAll({ page: 2, limit: 1, sort: 'rating', order: 'DESC' });
+
+    expect(result.total).toBe(2);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toMatchObject({ source: 'smartstore', rating: 3 });
+  });
+
   it('syncs stats through the shared service when internal visibility changes', async () => {
     const review = {
       id: 3,
