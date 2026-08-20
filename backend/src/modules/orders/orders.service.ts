@@ -5,10 +5,11 @@ import { Order } from './entities/order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
-import { applyLocale } from '../../common/utils/locale.util';
 import { OrderCreationWorkflowService } from './order-creation.workflow.service';
 import { OrderPostCommitService } from './order-post-commit.service';
 import { IdempotencyService } from '../../common/services/idempotency.service';
+import { applyOrderReadRelationJoins, localizeOrderReadProjection } from './order-read-projection.util';
+
 function assertMemberOrderOwnership(order: Order, userId: number): void {
   if (order.userId == null) {
     throw new NotFoundException('주문을 찾을 수 없습니다.');
@@ -68,11 +69,7 @@ export class OrdersService {
     limit = 10,
     locale?: string,
   ): Promise<PaginatedResult<Order>> {
-    const qb = this.orderRepository
-      .createQueryBuilder('order')
-      .leftJoinAndSelect('order.items', 'item')
-      .leftJoinAndSelect('item.product', 'product')
-      .leftJoinAndSelect('item.option', 'option')
+    const qb = applyOrderReadRelationJoins(this.orderRepository.createQueryBuilder('order'))
       .loadRelationCountAndMap('order.itemCount', 'order.items')
       .where('order.userId = :userId', { userId })
       .orderBy('order.createdAt', 'DESC');
@@ -80,16 +77,12 @@ export class OrdersService {
     const paged = await paginate(qb, { page, limit });
     return {
       ...paged,
-      items: paged.items.map((order) => this.localizeOrder(order, locale)),
+      items: paged.items.map((order) => localizeOrderReadProjection(order, locale)),
     };
   }
 
   async findOne(id: number, userId: number, locale?: string): Promise<Order> {
-    const order = await this.orderRepository
-      .createQueryBuilder('order')
-      .leftJoinAndSelect('order.items', 'item')
-      .leftJoinAndSelect('item.product', 'product')
-      .leftJoinAndSelect('item.option', 'option')
+    const order = await applyOrderReadRelationJoins(this.orderRepository.createQueryBuilder('order'))
       .where('order.id = :id', { id })
       .getOne();
 
@@ -99,33 +92,6 @@ export class OrdersService {
 
     assertMemberOrderOwnership(order, userId);
 
-    return this.localizeOrder(order, locale);
-  }
-
-  private localizeOrder(order: Order, locale?: string): Order {
-    if (!locale || locale === 'ko') {
-      return order;
-    }
-
-    const localizedItems = order.items?.map((item) => {
-      const localizedProduct = item.product
-        ? applyLocale(item.product, locale, ['name'])
-        : item.product;
-      const localizedOption = item.option
-        ? applyLocale(item.option, locale, ['name', 'value'])
-        : item.option;
-
-      return {
-        ...item,
-        product: localizedProduct,
-        option: localizedOption,
-        productName: localizedProduct?.name || item.productName,
-        optionName: localizedOption
-          ? `${localizedOption.name}: ${localizedOption.value}`
-          : item.optionName,
-      };
-    });
-
-    return { ...order, items: localizedItems ?? [] };
+    return localizeOrderReadProjection(order, locale);
   }
 }
