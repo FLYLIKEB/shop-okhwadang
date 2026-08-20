@@ -19,6 +19,9 @@ export class Banner {
   @Column({ name: 'image_url', type: 'varchar', length: 500 })
   imageUrl!: string;
 
+  @Column({ name: 'image_derivatives', type: 'json', nullable: true })
+  imageDerivatives!: Record<string, string> | null;
+
   @Column({ name: 'link_url', type: 'varchar', length: 500, nullable: true })
   linkUrl!: string | null;
 

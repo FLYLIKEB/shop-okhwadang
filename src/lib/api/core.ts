@@ -163,9 +163,17 @@ class ApiClient {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 
-  uploadFile<T>(endpoint: string, file: File, fieldName = 'file'): Promise<T> {
+  uploadFile<T>(
+    endpoint: string,
+    file: File,
+    fieldName = 'file',
+    fields?: Record<string, string>,
+  ): Promise<T> {
     const formData = new FormData();
     formData.append(fieldName, file);
+    for (const [key, value] of Object.entries(fields ?? {})) {
+      formData.append(key, value);
+    }
     return this.request<T>(endpoint, { method: 'POST', body: formData });
   }
 }
@@ -189,4 +197,11 @@ export interface ListResponse<T> {
 export interface UploadedFile {
   url: string;
   filename: string;
+}
+
+export type CmsMediaKind = 'hero' | 'promotion' | 'journal';
+
+export interface CmsMedia {
+  original: UploadedFile;
+  derivatives: Record<string, UploadedFile>;
 }

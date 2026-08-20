@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsObject } from 'class-validator';
 import { JournalCategory } from '../entities/journal-entry.entity';
 
 export class CreateJournalDto {
@@ -43,6 +43,11 @@ export class CreateJournalDto {
   @IsOptional()
   @IsString()
   coverImageUrl?: string;
+
+  @ApiProperty({ example: { thumbnail: 'https://cdn.example.com/image.webp' }, required: false })
+  @IsOptional()
+  @IsObject()
+  coverImageDerivatives?: Record<string, string>;
 
   @ApiProperty({ example: true, description: '공개 여부', required: false })
   @IsOptional()

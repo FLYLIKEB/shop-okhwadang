@@ -4,6 +4,7 @@ import request from 'supertest';
 import { UploadController } from '../upload.controller';
 import { MAX_UPLOAD_INPUT_FILE_SIZE_BYTES } from '../upload.constants';
 import { UploadService } from '../upload.service';
+import { RemoteImageIngestService } from '../remote-image-ingest.service';
 
 const PNG_1X1 = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X4r0AAAAASUVORK5CYII=',
@@ -26,7 +27,10 @@ describe('UploadController multipart limits', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UploadController],
-      providers: [{ provide: UploadService, useValue: uploadService }],
+      providers: [
+        { provide: UploadService, useValue: uploadService },
+        { provide: RemoteImageIngestService, useValue: { ingestCms: jest.fn() } },
+      ],
     }).compile();
 
     app = module.createNestApplication();

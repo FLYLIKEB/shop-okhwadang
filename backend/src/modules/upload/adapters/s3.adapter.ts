@@ -47,6 +47,15 @@ export class S3StorageAdapter implements StorageAdapter {
     return this.saveToFolder(filename, buffer, mimetype, 'categories');
   }
 
+  async saveCmsImage(
+    filename: string,
+    buffer: Buffer,
+    mimetype: string,
+    variant: string,
+  ): Promise<UploadedFile> {
+    return this.saveToFolder(filename, buffer, mimetype, `cms/${variant}`);
+  }
+
   private async saveToFolder(filename: string, buffer: Buffer, mimetype: string, folder: string): Promise<UploadedFile> {
     const key = `${folder}/${filename}`;
 

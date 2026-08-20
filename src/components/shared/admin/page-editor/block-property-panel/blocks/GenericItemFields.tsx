@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { NumberField, SelectField, StringField } from '../FormFields';
 import ProductImageUploader from '@/components/shared/admin/ProductImageUploader';
+import type { CmsMediaKind } from '@/lib/api';
 
 export interface EditableItem {
   id: string;
@@ -124,10 +125,14 @@ export function ImageUploadField({
   label,
   value,
   onChange,
+  cmsKind,
+  onDerivativesChange,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  cmsKind?: CmsMediaKind;
+  onDerivativesChange?: (value: Record<string, string>) => void;
 }) {
   return (
     <div className="space-y-2">
@@ -136,6 +141,8 @@ export function ImageUploadField({
         imageUrl={value}
         onChange={onChange}
         altText={label}
+        cmsKind={cmsKind}
+        onDerivativesChange={onDerivativesChange}
       />
     </div>
   );

@@ -18,6 +18,7 @@ export interface Journal {
   summary: string | null;
   content: string | null;
   coverImageUrl: string | null;
+  coverImageDerivatives?: Record<string, string> | null;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
@@ -33,6 +34,7 @@ export interface CreateJournalData {
   summary?: string;
   content?: string;
   coverImageUrl?: string;
+  coverImageDerivatives?: Record<string, string>;
   isPublished?: boolean;
 }
 
