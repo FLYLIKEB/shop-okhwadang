@@ -4,6 +4,7 @@ import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { AdminReviewQueryDto } from './dto/admin-review-query.dto';
 import { ExternalReview } from './entities/external-review.entity';
 import { Review } from './entities/review.entity';
+import { ReviewStatsSyncService } from './review-stats-sync.service';
 
 export interface AdminReviewProductSummary {
   id: number;
@@ -54,6 +55,7 @@ export class AdminReviewsService {
     private readonly externalReviewRepository: Repository<ExternalReview>,
     @InjectRepository(Review)
     private readonly reviewRepository: Repository<Review>,
+    private readonly reviewStatsSyncService: ReviewStatsSyncService,
   ) {}
 
   async findAll(query: AdminReviewQueryDto): Promise<AdminReviewListResult> {
@@ -105,7 +107,10 @@ export class AdminReviewsService {
       if (!review) throw new NotFoundException('리뷰를 찾을 수 없습니다.');
       review.isVisible = isVisible;
       const saved = await this.reviewRepository.save(review);
-      await this.refreshProductReviewStats(Number(saved.productId));
+      await this.reviewStatsSyncService.syncProductStats(
+        Number(saved.productId),
+        this.reviewRepository.manager,
+      );
       return this.toInternalItem(saved);
     }
 
@@ -118,7 +123,10 @@ export class AdminReviewsService {
     }
     review.isVisible = isVisible;
     const saved = await this.externalReviewRepository.save(review);
-    await this.refreshProductReviewStats(Number(saved.productId));
+    await this.reviewStatsSyncService.syncProductStats(
+      Number(saved.productId),
+      this.externalReviewRepository.manager,
+    );
     return this.toExternalItem(saved);
   }
 
@@ -143,7 +151,10 @@ export class AdminReviewsService {
         select: ['id', 'productId'],
         where: { id: In(externalIds) },
       });
-      const result = await this.externalReviewRepository.update({ id: In(externalIds) }, { isVisible });
+      const result = await this.externalReviewRepository.update(
+        { id: In(externalIds) },
+        { isVisible },
+      );
       updated += result.affected ?? 0;
       reviews.forEach((review) => productIds.add(Number(review.productId)));
     }
@@ -158,7 +169,14 @@ export class AdminReviewsService {
       reviews.forEach((review) => productIds.add(Number(review.productId)));
     }
 
-    await Promise.all([...productIds].map((productId) => this.refreshProductReviewStats(productId)));
+    await Promise.all(
+      [...productIds].map((productId) =>
+        this.reviewStatsSyncService.syncProductStats(
+          productId,
+          this.externalReviewRepository.manager,
+        ),
+      ),
+    );
     return { updated };
   }
 
@@ -171,7 +189,7 @@ export class AdminReviewsService {
     const trimmed = content?.trim() ?? '';
     const reply = {
       adminReplyContent: trimmed.length > 0 ? trimmed : null,
-      adminReplyAuthor: trimmed.length > 0 ? (author?.trim() || '옥화당') : null,
+      adminReplyAuthor: trimmed.length > 0 ? author?.trim() || '옥화당' : null,
       adminRepliedAt: trimmed.length > 0 ? new Date() : null,
     };
 
@@ -195,25 +213,6 @@ export class AdminReviewsService {
 
     Object.assign(review, reply);
     return this.toExternalItem(await this.externalReviewRepository.save(review));
-  }
-
-  private async refreshProductReviewStats(productId: number): Promise<void> {
-    await this.externalReviewRepository.manager.query(
-      `UPDATE products p
-       LEFT JOIN (
-         SELECT product_id, COUNT(*) AS review_count, COALESCE(AVG(rating), 0) AS avg_rating
-         FROM (
-           SELECT product_id, rating FROM reviews WHERE product_id = ? AND is_visible = 1
-           UNION ALL
-           SELECT product_id, rating FROM external_reviews WHERE product_id = ? AND is_visible = 1
-         ) all_reviews
-         GROUP BY product_id
-       ) rs ON rs.product_id = p.id
-       SET p.review_count = COALESCE(rs.review_count, 0),
-           p.avg_rating = COALESCE(rs.avg_rating, 0)
-       WHERE p.id = ?`,
-      [productId, productId, productId],
-    );
   }
 
   private applyFilters(qb: SelectQueryBuilder<ExternalReview>, query: AdminReviewQueryDto): void {
@@ -274,7 +273,6 @@ export class AdminReviewsService {
     }
   }
 
-
   private async findInternalReviews(query: AdminReviewQueryDto): Promise<Review[]> {
     if (query.reviewType?.trim() || query.importBatchId?.trim()) return [];
 
@@ -283,8 +281,10 @@ export class AdminReviewsService {
       if (query.visibility === 'visible' && !review.isVisible) return false;
       if (query.visibility === 'hidden' && review.isVisible) return false;
       if (query.rating && review.rating !== query.rating) return false;
-      if (query.hasMedia === 'true' && (!review.imageUrls || review.imageUrls.length === 0)) return false;
-      if (query.hasMedia === 'false' && review.imageUrls && review.imageUrls.length > 0) return false;
+      if (query.hasMedia === 'true' && (!review.imageUrls || review.imageUrls.length === 0))
+        return false;
+      if (query.hasMedia === 'false' && review.imageUrls && review.imageUrls.length > 0)
+        return false;
 
       const search = query.search?.trim().toLowerCase();
       if (!search) return true;
@@ -313,7 +313,10 @@ export class AdminReviewsService {
         return diff || dateDiff;
       }
       case 'importedAt':
-        return (new Date(a.lastSyncedAt).getTime() - new Date(b.lastSyncedAt).getTime()) * order || dateDiff;
+        return (
+          (new Date(a.lastSyncedAt).getTime() - new Date(b.lastSyncedAt).getTime()) * order ||
+          dateDiff
+        );
       default:
         return dateDiff;
     }
