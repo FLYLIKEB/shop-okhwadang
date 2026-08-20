@@ -237,7 +237,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
   }
 
   return (
-    <div className="mt-8">
+    <div className="mt-4">
       <div
         role="navigation"
         aria-label={t('tabs.navigationLabel')}

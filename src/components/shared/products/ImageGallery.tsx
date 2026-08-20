@@ -11,7 +11,7 @@ import { localMessage } from '@/utils/localMessages'
 import type { Locale } from '@/utils/currency'
 import { Button } from '@/components/ui/button'
 import LightboxOverlay from './LightboxOverlay'
-import ThumbnailStrip from './ThumbnailStrip'
+import CarouselArrowButton from '@/components/shared/common/CarouselArrowButton'
 
 interface ProductImage {
   id: number
@@ -72,7 +72,6 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
   const lightboxOpen = lightboxParam !== null
   const mainImageRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const thumbnailRef = useRef<HTMLDivElement>(null)
   const rafId = useRef<number>(0)
   const isScrolling = useRef(false)
   const scrollTimeoutId = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -168,15 +167,6 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
       cancelAnimationFrame(scrollRaf)
     }
   }, [])
-
-  // Sync scroll position when selectedIndex changes from thumbnail click
-  const handleSelectIndex = useCallback((index: number) => {
-    setSelectedIndex(index)
-    scrollToIndex(index)
-    if (lightboxOpen) {
-      setLightboxParam(String(index), 'replace')
-    }
-  }, [lightboxOpen, scrollToIndex, setLightboxParam])
 
   const closeLightbox = useCallback(() => {
     closeLightboxParam()
@@ -315,41 +305,22 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
 
           {images.length > 1 && (
             <>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); goPrev() }}
-                className="absolute left-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity"
-                style={{ background: 'transparent' }}
-                aria-label={localMessage('product.prevProduct', undefined, locale)}
-              >
-                <span className="flex items-center justify-center w-10 h-20 rounded-md bg-black/40 text-white text-2xl font-bold shadow hover:bg-black/60 transition-colors">
-                  ‹
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); goNext() }}
-                className="absolute right-0 top-0 h-full w-16 flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity"
-                style={{ background: 'transparent' }}
-                aria-label={localMessage('product.nextProduct', undefined, locale)}
-              >
-                <span className="flex items-center justify-center w-10 h-20 rounded-md bg-black/40 text-white text-2xl font-bold shadow hover:bg-black/60 transition-colors">
-                  ›
-                </span>
-              </button>
+              <CarouselArrowButton
+                direction="left"
+                onClick={goPrev}
+                ariaLabel={localMessage('product.prevImage', undefined, locale)}
+                className="absolute left-3 top-1/2 z-10 -translate-y-1/2 bg-black/35 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/55 hover:text-white"
+              />
+              <CarouselArrowButton
+                direction="right"
+                onClick={goNext}
+                ariaLabel={localMessage('product.nextImage', undefined, locale)}
+                className="absolute right-3 top-1/2 z-10 -translate-y-1/2 bg-black/35 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/55 hover:text-white"
+              />
             </>
           )}
         </div>
 
-        {images.length > 1 && (
-          <ThumbnailStrip
-            images={images}
-            selectedIndex={selectedIndex}
-            onSelectIndex={handleSelectIndex}
-            thumbnailRef={thumbnailRef}
-            locale={locale}
-          />
-        )}
       </div>
 
       <LightboxOverlay
