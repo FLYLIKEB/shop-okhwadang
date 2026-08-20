@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import JournalDetailPage, { generateMetadata } from '../page';
 import { JournalCategory, type Journal } from '@/lib/api';
@@ -14,6 +15,10 @@ vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   ),
+}));
+
+vi.mock('next/image', () => ({
+  default: ({ src, alt }: { src: string; alt: string }) => React.createElement('img', { src, alt }),
 }));
 
 vi.mock('next-intl/server', () => ({
@@ -98,6 +103,50 @@ describe('/[locale]/journal/[slug] detail page', () => {
     expect(screen.getByText('News')).toBeInTheDocument();
     expect(screen.getByText('First API paragraph.')).toBeInTheDocument();
     expect(screen.getByText('Second API paragraph.')).toBeInTheDocument();
+  });
+
+  it('renders safe CMS body images from HTML content without escaping them as text', async () => {
+    mockFetchJournal.mockResolvedValue({
+      ...apiCreatedJournal,
+      content: JSON.stringify([
+        '<p>Intro before image.</p><img src="https://cdn.ockhwadang.com/journal/photo.jpg" alt="Tea table photo"><p>Outro after image.</p>',
+      ]),
+    });
+
+    const jsx = await JournalDetailPage({
+      params: Promise.resolve({ locale: 'en', slug: 'cms-created-journal' }),
+    });
+    render(jsx);
+
+    expect(screen.getByText('Intro before image.')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Tea table photo' })).toHaveAttribute(
+      'src',
+      'https://cdn.ockhwadang.com/journal/photo.jpg',
+    );
+    expect(screen.getByText('Outro after image.')).toBeInTheDocument();
+    expect(screen.queryByText(/<img/)).not.toBeInTheDocument();
+  });
+
+  it('ignores unsafe CMS image URLs while keeping adjacent journal text', async () => {
+    mockFetchJournal.mockResolvedValue({
+      ...apiCreatedJournal,
+      content: JSON.stringify([
+        'Before unsafe image <img src="javascript:alert(1)" alt="Bad image"> after unsafe image.',
+        { type: 'image', src: '/uploads/journal/safe.jpg', alt: 'Safe uploaded image' },
+      ]),
+    });
+
+    const jsx = await JournalDetailPage({
+      params: Promise.resolve({ locale: 'en', slug: 'cms-created-journal' }),
+    });
+    render(jsx);
+
+    expect(screen.queryByRole('img', { name: 'Bad image' })).not.toBeInTheDocument();
+    expect(screen.getByText('Before unsafe image after unsafe image.')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Safe uploaded image' })).toHaveAttribute(
+      'src',
+      '/uploads/journal/safe.jpg',
+    );
   });
 
   it('uses the API journal for metadata', async () => {

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -22,28 +23,138 @@ interface RenderableJournal {
   date: string;
   readTime: string | null;
   summary: string | null;
-  content: string[];
+  content: JournalContentBlock[];
 }
+
+type JournalContentBlock =
+  { type: 'text'; text: string } | { type: 'image'; src: string; alt: string };
+
+type RawJournalContentBlock = {
+  type?: unknown;
+  src?: unknown;
+  url?: unknown;
+  imageUrl?: unknown;
+  image_url?: unknown;
+  alt?: unknown;
+  altText?: unknown;
+  caption?: unknown;
+};
 
 export async function generateStaticParams() {
   return JOURNAL_ENTRIES.map((entry) => ({ slug: entry.slug }));
 }
 
-function parseJournalContent(content: string | null): string[] {
+const RAW_TEXT_BLOCK_PATTERN =
+  /<(script|style|iframe|object|embed|svg|math)\b[^>]*>[\s\S]*?<\/\1>/gi;
+const IMG_TAG_PATTERN = /<img\b[^>]*>/gi;
+const HTML_TAG_PATTERN = /<[^>]*>/g;
+const HTML_ATTRIBUTE_PATTERN = /([a-zA-Z_:][\w:.-]*)\s*=\s*("[^"]*"|'[^']*'|[^\s"'=<>`]+)/g;
+
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function normalizeHtmlText(value: string): string {
+  return decodeHtmlEntities(
+    value
+      .replace(RAW_TEXT_BLOCK_PATTERN, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(HTML_TAG_PATTERN, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim(),
+  );
+}
+
+function getHtmlAttributes(tag: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  for (const match of tag.matchAll(HTML_ATTRIBUTE_PATTERN)) {
+    const name = match[1]?.toLowerCase();
+    const rawValue = match[2] ?? '';
+    if (!name) continue;
+    attrs[name] = decodeHtmlEntities(rawValue.replace(/^['"]|['"]$/g, ''));
+  }
+  return attrs;
+}
+
+function isSafeJournalImageUrl(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) return true;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function appendTextBlock(blocks: JournalContentBlock[], value: string) {
+  const text = normalizeHtmlText(value);
+  if (!text) return;
+
+  const previous = blocks[blocks.length - 1];
+  if (previous?.type === 'text') {
+    previous.text = `${previous.text} ${text}`;
+    return;
+  }
+
+  blocks.push({ type: 'text', text });
+}
+
+function appendImageBlock(blocks: JournalContentBlock[], src: unknown, alt: unknown) {
+  if (typeof src !== 'string' || !isSafeJournalImageUrl(src)) return;
+  blocks.push({
+    type: 'image',
+    src: src.trim(),
+    alt: typeof alt === 'string' ? normalizeHtmlText(alt) : '',
+  });
+}
+
+function parseJournalContentString(value: string): JournalContentBlock[] {
+  const blocks: JournalContentBlock[] = [];
+  let cursor = 0;
+  for (const match of value.matchAll(IMG_TAG_PATTERN)) {
+    const index = match.index ?? 0;
+    appendTextBlock(blocks, value.slice(cursor, index));
+    const attrs = getHtmlAttributes(match[0]);
+    appendImageBlock(blocks, attrs.src, attrs.alt ?? attrs.title);
+    cursor = index + match[0].length;
+  }
+  appendTextBlock(blocks, value.slice(cursor));
+  return blocks;
+}
+
+function parseJournalContentBlock(block: unknown): JournalContentBlock[] {
+  if (typeof block === 'string') return parseJournalContentString(block);
+  if (!block || typeof block !== 'object') return [];
+
+  const candidate = block as RawJournalContentBlock;
+  const src = candidate.src ?? candidate.url ?? candidate.imageUrl ?? candidate.image_url;
+  const alt = candidate.alt ?? candidate.altText ?? candidate.caption;
+  const blocks: JournalContentBlock[] = [];
+  appendImageBlock(blocks, src, alt);
+  return blocks;
+}
+
+function parseJournalContent(content: string | null): JournalContentBlock[] {
   if (!content) return [];
 
   try {
     const parsed = JSON.parse(content) as unknown;
     if (Array.isArray(parsed)) {
-      return parsed.filter(
-        (paragraph): paragraph is string => typeof paragraph === 'string' && paragraph.length > 0,
-      );
+      return parsed.flatMap(parseJournalContentBlock);
     }
   } catch {
-    return [content];
+    return parseJournalContentString(content);
   }
 
-  return [content];
+  return parseJournalContentString(content);
 }
 
 async function resolveJournal(
@@ -87,7 +198,7 @@ function normalizeLocalJournal(entry: LocalJournalEntry): RenderableJournal {
     date: entry.date,
     readTime: entry.readTime,
     summary: entry.summary,
-    content: entry.content,
+    content: entry.content.flatMap(parseJournalContentString),
   };
 }
 
@@ -154,7 +265,9 @@ export default async function JournalDetailPage({ params }: PageProps) {
               </>
             ) : null}
           </div>
-          <h1 className="mb-3 font-display typo-h1 tracking-tight text-foreground">{entry.title}</h1>
+          <h1 className="mb-3 font-display typo-h1 tracking-tight text-foreground">
+            {entry.title}
+          </h1>
           {entry.subtitle ? (
             <p className="font-display typo-h3 text-muted-foreground">{entry.subtitle}</p>
           ) : null}
@@ -169,23 +282,38 @@ export default async function JournalDetailPage({ params }: PageProps) {
           </p>
         ) : null}
         <div className="space-y-7">
-          {entry.content.map((paragraph, i) => (
-            <p key={i} className="typo-body leading-relaxed text-foreground">
-              {paragraph}
-            </p>
-          ))}
+          {entry.content.map((block, i) =>
+            block.type === 'image' ? (
+              <figure
+                key={i}
+                className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-soft bg-muted/30"
+              >
+                <Image
+                  src={block.src}
+                  alt={block.alt || entry.title}
+                  fill
+                  sizes="(min-width: 768px) 768px, calc(100vw - 2rem)"
+                  className="object-contain"
+                />
+              </figure>
+            ) : (
+              <p key={i} className="whitespace-pre-line typo-body leading-relaxed text-foreground">
+                {block.text}
+              </p>
+            ),
+          )}
         </div>
       </article>
 
       {/* 하단 네비 */}
       <section className="border-t border-soft px-4 py-8">
         <div className="mx-auto max-w-3xl">
-        <Link
-          href="/journal"
-          className="inline-flex min-h-11 items-center gap-2 typo-button text-muted-foreground transition-colors hover:text-foreground"
-        >
-          {t('backToList')}
-        </Link>
+          <Link
+            href="/journal"
+            className="inline-flex min-h-11 items-center gap-2 typo-button text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t('backToList')}
+          </Link>
         </div>
       </section>
     </div>
