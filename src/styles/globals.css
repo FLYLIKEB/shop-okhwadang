@@ -1229,6 +1229,149 @@ h3 {
   color: var(--checkout-toss-surface);
 }
 
+/* ── Toss-style footer ─────────────────────────────────────────── */
+.toss-footer {
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-footer__inner {
+  padding-block: 3.5rem;
+}
+
+.toss-footer__grid {
+  gap: 2.5rem;
+}
+
+.toss-footer__heading {
+  margin-bottom: 1rem;
+  color: var(--checkout-toss-foreground);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.toss-footer__link {
+  font-size: 0.875rem;
+  letter-spacing: -0.015em;
+  transition: color 160ms ease;
+}
+
+.toss-footer__link:hover {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-footer__brand {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-footer__brand > div {
+  font-size: 0.875rem;
+  letter-spacing: -0.015em;
+}
+
+.toss-footer__social {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-muted);
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.toss-footer__social:hover {
+  background: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary);
+  transform: translateY(-1px);
+}
+
+.toss-footer__business {
+  border: 0;
+  color: var(--checkout-toss-muted);
+}
+
+.toss-footer__business > div {
+  font-size: 0.8125rem;
+  letter-spacing: -0.01em;
+}
+
+/* ── Toss-style mobile sidebar ────────────────────────────────── */
+.toss-sidebar {
+  border: 0;
+  border-radius: 0 1.25rem 1.25rem 0;
+  background: var(--checkout-toss-surface);
+  box-shadow: 10px 0 28px rgb(25 31 40 / 10%);
+}
+
+.toss-sidebar__header {
+  min-height: 4rem;
+  padding-inline: 1.25rem;
+}
+
+.toss-sidebar__header button,
+.toss-sidebar__panel a,
+.toss-sidebar__panel button,
+.toss-sidebar__footer a,
+.toss-sidebar__footer button {
+  border-radius: 0.75rem;
+}
+
+.toss-sidebar__header button:hover,
+.toss-sidebar__panel a:hover,
+.toss-sidebar__panel button:hover,
+.toss-sidebar__footer a:hover,
+.toss-sidebar__footer button:hover {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-sidebar__panel a,
+.toss-sidebar__panel button {
+  padding-inline: 0.75rem;
+  color: var(--checkout-toss-foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.toss-sidebar__panel svg {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-sidebar__footer {
+  margin: 0 1rem 1rem;
+  border-radius: 1rem;
+  background: var(--checkout-toss-input);
+  padding: 1rem;
+}
+
+.toss-sidebar__footer a,
+.toss-sidebar__footer button {
+  color: var(--checkout-toss-muted);
+  padding-inline: 0.625rem;
+}
+
+.toss-sidebar__backdrop {
+  background: rgb(25 31 40 / 34%);
+  backdrop-filter: blur(2px);
+}
+
+@media (max-width: 767px) {
+  .toss-footer__inner {
+    padding-block: 2.5rem;
+  }
+
+  .toss-footer__grid {
+    gap: 2rem 1.5rem;
+  }
+
+  .toss-footer__brand {
+    grid-column: 1 / -1;
+  }
+
+  .toss-footer__business {
+    margin-top: 2.5rem;
+    padding-top: 0;
+  }
+}
+
 @media (max-width: 767px) {
   .checkout-toss-theme .layout-container {
     padding-inline: 1rem;

@@ -54,7 +54,7 @@ function renderNavLinks(items: NavigationItem[]) {
       key={item.id}
       href={getFooterHref(item)}
       prefetch={false}
-      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+      className="toss-footer__link text-sm text-muted-foreground hover:text-foreground transition-colors"
     >
       {item.label}
     </Link>
@@ -97,31 +97,31 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
   const infoUrl = businessInfo?.infoUrl ?? '';
 
   return (
-    <footer className="mt-auto bg-card">
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className={`grid grid-cols-2 md:grid-cols-4 gap-8 transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
-          <div>
+    <footer className="toss-footer mt-auto bg-card">
+      <div className="toss-footer__inner mx-auto max-w-7xl px-4 py-12">
+        <div className={`toss-footer__grid grid grid-cols-2 md:grid-cols-4 gap-8 transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
+          <div className="toss-footer__group">
             <p className="typo-body font-semibold text-foreground mb-4">{t('customerService')}</p>
             <nav className="flex flex-col gap-2">
               {renderNavLinks(rootItems.slice(0, 4))}
             </nav>
           </div>
 
-          <div>
+          <div className="toss-footer__group">
             <p className="typo-body font-semibold text-foreground mb-4">{t('company')}</p>
             <nav className="flex flex-col gap-2">
               {renderNavLinks(rootItems.slice(4, 6))}
             </nav>
           </div>
 
-          <div>
+          <div className="toss-footer__group">
             <p className="typo-body font-semibold text-foreground mb-4">{t('shop')}</p>
             <nav className="flex flex-col gap-2">
               {renderNavLinks(rootItems.slice(6, 10))}
             </nav>
           </div>
 
-          <div>
+          <div className="toss-footer__brand">
             <Image src="/logo-okhwadang.png" alt={t('okhwadang')} width={120} height={34} className="object-contain mb-4" />
             <div className="flex flex-col gap-1 text-sm text-muted-foreground">
               <p>{t('tagline')}</p>
@@ -135,7 +135,7 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={socialLabels[social.id]}
-                  className="flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                  className="toss-footer__social flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <social.icon size={18} />
                 </a>
@@ -145,7 +145,7 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
         </div>
 
         {/* 사업자 정보 (전자상거래법 제10조) */}
-        <div className="mt-12 pt-8 text-center">
+        <div className="toss-footer__business mt-12 pt-8 text-center">
           <div className="typo-body-sm text-muted-foreground/70 leading-relaxed space-y-0.5">
             <p>{companyName} · {ceo}</p>
             <p>{address}</p>
