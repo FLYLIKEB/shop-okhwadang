@@ -415,11 +415,6 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                     {t('discountOff', { percent: discountPercent })}
                   </span>
                 )}
-                {isLowStock && (
-                  <span className="rounded-full bg-destructive/10 px-2 py-1 typo-label font-semibold text-destructive">
-                    {t('lowStock', { count: maxQuantity })}
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -437,7 +432,14 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Quantity */}
           <div className="toss-product-detail__quantity flex items-center justify-between gap-3 rounded-xl px-0 py-1">
-            <span className="typo-body-sm font-semibold text-foreground">{t('quantity')}</span>
+            <div className="flex items-center gap-2">
+              <span className="typo-body-sm font-semibold text-foreground">{t('quantity')}</span>
+              {isLowStock && (
+                <span className="rounded-full bg-destructive/10 px-2 py-1 typo-label font-semibold text-destructive">
+                  {t('lowStock', { count: maxQuantity })}
+                </span>
+              )}
+            </div>
             <div className="flex min-w-0 items-center gap-2">
               <QuantitySelector
                 quantity={quantity}
