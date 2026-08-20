@@ -345,11 +345,11 @@ export default function CheckoutPage({
     }
   };
 
-  const handleAddressSearch = (result: { zonecode: string; roadAddress: string; jibunAddress: string }) => {
+  const handleAddressSearch = (result: { zonecode: string; address: string; roadAddress: string; jibunAddress: string }) => {
     setForm((prev) => ({
       ...prev,
       zipcode: result.zonecode,
-      address: result.roadAddress || result.jibunAddress,
+      address: result.address || result.roadAddress || result.jibunAddress,
     }));
     setErrors((prev) => ({ ...prev, zipcode: undefined, address: undefined }));
   };

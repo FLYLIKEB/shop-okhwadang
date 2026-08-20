@@ -3,10 +3,12 @@
 import type { ShippingForm, FormErrors } from '@/app/[locale]/checkout/page';
 import { localMessage } from '@/utils/localMessages';
 import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 
 interface AddressSearchResult {
   zonecode: string;
+  address: string;
   roadAddress: string;
   jibunAddress: string;
 }
@@ -14,7 +16,7 @@ interface AddressSearchResult {
 interface DaumPostcodeWindow extends Window {
   daum?: {
     Postcode: new (options: { oncomplete: (data: AddressSearchResult) => void }) => {
-      open: () => void;
+      embed: (element: HTMLElement) => void;
     };
   };
 }
@@ -37,11 +39,6 @@ function loadDaumPostcode(onReady: () => void) {
   script.dataset.daumPostcode = 'true';
   script.addEventListener('load', onReady, { once: true });
   document.body.appendChild(script);
-}
-
-function openDaumPostcode(onComplete: (data: AddressSearchResult) => void) {
-  const postcode = (window as DaumPostcodeWindow).daum?.Postcode;
-  if (postcode) new postcode({ oncomplete: onComplete }).open();
 }
 
 interface ShippingFormSectionProps {
@@ -110,10 +107,30 @@ interface ZipcodeInputSectionProps {
 
 export function ZipcodeInputSection({ form, errors, onChange, onAddressSearch, readOnly = false }: ZipcodeInputSectionProps) {
   const [postcodeReady, setPostcodeReady] = useState(false);
+  const [postcodeOpen, setPostcodeOpen] = useState(false);
+  const postcodeContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadDaumPostcode(() => setPostcodeReady(true));
   }, []);
+
+  useEffect(() => {
+    const container = postcodeContainerRef.current;
+    if (!postcodeOpen || !postcodeReady || !container) return;
+
+    const postcode = (window as DaumPostcodeWindow).daum?.Postcode;
+    if (!postcode) return;
+
+    container.replaceChildren();
+    new postcode({
+      oncomplete: (result) => {
+        onAddressSearch?.(result);
+        setPostcodeOpen(false);
+      },
+    }).embed(container);
+
+    return () => container.replaceChildren();
+  }, [onAddressSearch, postcodeOpen, postcodeReady]);
 
   return (
     <div className="space-y-1">
@@ -137,12 +154,29 @@ export function ZipcodeInputSection({ form, errors, onChange, onAddressSearch, r
           variant="black"
           size="sm"
           disabled={!postcodeReady}
-          onClick={() => openDaumPostcode((result) => onAddressSearch?.(result))}
+          onClick={() => setPostcodeOpen(true)}
           className="shrink-0"
         >
           {localMessage('checkout.addressSearch')}
         </Button>
       </div>
+      {postcodeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="presentation">
+          <div className="relative h-[min(600px,90vh)] w-full max-w-lg overflow-hidden rounded-xl bg-background shadow-xl" role="dialog" aria-modal="true" aria-label={localMessage('checkout.addressSearch')}>
+            <Button
+              type="button"
+              variant="gray"
+              size="icon"
+              onClick={() => setPostcodeOpen(false)}
+              aria-label={localMessage('checkout.addressSearch')}
+              className="absolute right-3 top-3 z-10 h-9 min-h-9 w-9 rounded-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <div ref={postcodeContainerRef} className="h-full w-full" />
+          </div>
+        </div>
+      )}
       {errors.zipcode && (
         <p className="typo-label text-destructive">{errors.zipcode}</p>
       )}

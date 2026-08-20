@@ -21,10 +21,10 @@ const legacyPaymentSdkSources = {
 
 const postcodeSearchSources = {
   'script-src': ['https://t1.daumcdn.net', 'https://t1.kakaocdn.net'],
-  'connect-src': ['https://postcode.map.daum.net', 'https://postcode.map.kakao.com', 'https://t1.daumcdn.net', 'https://t1.kakaocdn.net'],
+  'connect-src': ['http://postcode.map.daum.net', 'http://postcode.map.kakao.com', 'https://postcode.map.daum.net', 'https://postcode.map.kakao.com', 'https://t1.daumcdn.net', 'https://t1.kakaocdn.net'],
   'img-src': ['https://t1.daumcdn.net', 'https://t1.kakaocdn.net'],
-  'child-src': ['https://postcode.map.daum.net', 'https://postcode.map.kakao.com'],
-  'frame-src': ['https://postcode.map.daum.net', 'https://postcode.map.kakao.com'],
+  'child-src': ['http://postcode.map.daum.net', 'http://postcode.map.kakao.com', 'https://postcode.map.daum.net', 'https://postcode.map.kakao.com'],
+  'frame-src': ['http://postcode.map.daum.net', 'http://postcode.map.kakao.com', 'https://postcode.map.daum.net', 'https://postcode.map.kakao.com'],
 } as const;
 
 function mergeSources(...groups: readonly (readonly string[])[]): string[] {

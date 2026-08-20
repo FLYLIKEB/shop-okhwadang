@@ -79,6 +79,7 @@ describe('Next.js CSP headers', () => {
     expect(directives['script-src']).toContain('https://t1.daumcdn.net');
     expect(directives['frame-src']).toContain('https://postcode.map.daum.net');
     expect(directives['frame-src']).toContain('https://postcode.map.kakao.com');
+    expect(directives['frame-src']).toContain('http://postcode.map.kakao.com');
     expect(directives['connect-src']).toContain('https://postcode.map.kakao.com');
   });
 
