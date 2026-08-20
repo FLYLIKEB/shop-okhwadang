@@ -154,7 +154,7 @@ export function ZipcodeInputSection({ form, errors, onChange, onAddressSearch, r
           readOnly={readOnly}
           placeholder="12345"
           maxLength={5}
-          className="min-w-0 flex-1 rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+          className="w-32 flex-none rounded-md border field-soft px-3 py-2 text-sm tracking-wide outline-none focus:ring-2 focus:ring-foreground/20"
         />
         <Button
           type="button"
