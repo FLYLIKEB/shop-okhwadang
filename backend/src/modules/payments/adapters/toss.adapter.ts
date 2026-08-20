@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BadGatewayException } from '@nestjs/common';
 import {
@@ -10,6 +9,8 @@ import {
   PartialCancelResult,
 } from '../interfaces/payment-gateway.interface';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../../config/payment.config';
+import { requestPaymentJson } from '../payment-http.util';
+import { verifyPaymentHmacSha256 } from '../payment-hmac.util';
 
 @Injectable()
 export class TossPaymentAdapter implements PaymentGateway {
@@ -42,9 +43,9 @@ export class TossPaymentAdapter implements PaymentGateway {
   }
 
   async confirm(paymentKey: string, amount: number, orderId: string, context?: { idempotencyKey?: string }): Promise<ConfirmResult> {
-    const response = await fetch(
-      'https://api.tosspayments.com/v1/payments/confirm',
-      {
+    const body = await requestPaymentJson<Record<string, unknown>>({
+      url: 'https://api.tosspayments.com/v1/payments/confirm',
+      init: {
         method: 'POST',
         headers: {
           Authorization: this.authHeader,
@@ -52,18 +53,11 @@ export class TossPaymentAdapter implements PaymentGateway {
           ...(context?.idempotencyKey ? { 'Idempotency-Key': context.idempotencyKey } : {}),
         },
         body: JSON.stringify({ paymentKey, orderId, amount }),
-        signal: AbortSignal.timeout(8000),
       },
-    );
-
-    if (!response.ok) {
-      this.logger.error(
-        `Toss confirm failed: status=${response.status}, paymentKey=${paymentKey}`,
-      );
-      throw new BadGatewayException('토스 API 오류');
-    }
-
-    const body = (await response.json()) as Record<string, unknown>;
+      logger: this.logger,
+      errorLog: (response) => `Toss confirm failed: status=${response.status}, paymentKey=${paymentKey}`,
+      errorMessage: '토스 API 오류',
+    });
     if (body.status !== 'DONE') {
       this.logger.error(
         `Toss confirm incomplete: status=${String(body.status)}, paymentKey=${paymentKey}`,
@@ -85,27 +79,20 @@ export class TossPaymentAdapter implements PaymentGateway {
   }
 
   async cancel(paymentKey: string, reason: string): Promise<CancelResult> {
-    const response = await fetch(
-      `https://api.tosspayments.com/v1/payments/${paymentKey}/cancel`,
-      {
+    const body = await requestPaymentJson<Record<string, unknown>>({
+      url: `https://api.tosspayments.com/v1/payments/${paymentKey}/cancel`,
+      init: {
         method: 'POST',
         headers: {
           Authorization: this.authHeader,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ cancelReason: reason }),
-        signal: AbortSignal.timeout(8000),
       },
-    );
-
-    if (!response.ok) {
-      this.logger.error(
-        `Toss cancel failed: status=${response.status}, paymentKey=${paymentKey}`,
-      );
-      throw new BadGatewayException('토스 API 취소 오류');
-    }
-
-    const body = (await response.json()) as Record<string, unknown>;
+      logger: this.logger,
+      errorLog: (response) => `Toss cancel failed: status=${response.status}, paymentKey=${paymentKey}`,
+      errorMessage: '토스 API 취소 오류',
+    });
     const cancels = body.cancels as Array<{ canceledAt?: string }> | undefined;
 
     return {
@@ -115,9 +102,9 @@ export class TossPaymentAdapter implements PaymentGateway {
   }
 
   async partialCancel(params: PartialCancelParams): Promise<PartialCancelResult> {
-    const response = await fetch(
-      `https://api.tosspayments.com/v1/payments/${params.paymentKey}/cancel`,
-      {
+    const body = await requestPaymentJson<Record<string, unknown>>({
+      url: `https://api.tosspayments.com/v1/payments/${params.paymentKey}/cancel`,
+      init: {
         method: 'POST',
         headers: {
           Authorization: this.authHeader,
@@ -130,18 +117,11 @@ export class TossPaymentAdapter implements PaymentGateway {
           cancelReason: params.cancelReason,
           cancelAmount: params.cancelAmount,
         }),
-        signal: AbortSignal.timeout(8000),
       },
-    );
-
-    if (!response.ok) {
-      this.logger.error(
-        `Toss partialCancel failed: status=${response.status}, paymentKey=${params.paymentKey}`,
-      );
-      throw new BadGatewayException('토스 API 부분 취소 오류');
-    }
-
-    const body = (await response.json()) as Record<string, unknown>;
+      logger: this.logger,
+      errorLog: (response) => `Toss partialCancel failed: status=${response.status}, paymentKey=${params.paymentKey}`,
+      errorMessage: '토스 API 부분 취소 오류',
+    });
     const cancels = body.cancels as Array<{ canceledAt?: string; transactionKey?: string }> | undefined;
     const lastCancel = Array.isArray(cancels) ? cancels[cancels.length - 1] : null;
     const refundId = typeof lastCancel?.transactionKey === 'string'
@@ -156,13 +136,10 @@ export class TossPaymentAdapter implements PaymentGateway {
   }
 
   verifyWebhook(payload: unknown, signature: string): boolean {
-    const expected = crypto
-      .createHmac('sha256', this.secretKey)
-      .update(typeof payload === 'string' ? payload : JSON.stringify(payload))
-      .digest();
-    const provided = Buffer.from(signature, 'base64');
-    if (expected.length !== provided.length) return false;
-    return crypto.timingSafeEqual(expected, provided);
+    return verifyPaymentHmacSha256(payload, signature, {
+      secret: this.secretKey,
+      signatureEncoding: 'base64',
+    });
   }
 }
 

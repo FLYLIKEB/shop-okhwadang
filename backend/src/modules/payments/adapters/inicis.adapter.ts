@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BadGatewayException } from '@nestjs/common';
 import {
@@ -10,6 +9,8 @@ import {
   PartialCancelResult,
 } from '../interfaces/payment-gateway.interface';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../../config/payment.config';
+import { requestPaymentJson } from '../payment-http.util';
+import { verifyPaymentHmacSha256 } from '../payment-hmac.util';
 
 /**
  * KG이니시스 결제 어댑터 (#721 국내 PG 어댑터 확장)
@@ -45,30 +46,26 @@ export class KGInicisPaymentAdapter implements PaymentGateway {
   }
 
   async confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult> {
-    const response = await fetch('https://iniapi.inicis.com/v2/pg/payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
+    const body = await requestPaymentJson<Record<string, unknown>>({
+      url: 'https://iniapi.inicis.com/v2/pg/payment',
+      init: {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          type: 'Confirm',
+          mid: this.mid,
+          tid: paymentKey,
+          price: amount,
+          orderId,
+        }),
       },
-      body: JSON.stringify({
-        type: 'Confirm',
-        mid: this.mid,
-        tid: paymentKey,
-        price: amount,
-        orderId,
-      }),
-      signal: AbortSignal.timeout(8000),
+      logger: this.logger,
+      errorLog: (response) => `Inicis confirm failed: status=${response.status}, paymentKey=${paymentKey}`,
+      errorMessage: '이니시스 API 오류',
     });
-
-    if (!response.ok) {
-      this.logger.error(
-        `Inicis confirm failed: status=${response.status}, paymentKey=${paymentKey}`,
-      );
-      throw new BadGatewayException('이니시스 API 오류');
-    }
-
-    const body = (await response.json()) as Record<string, unknown>;
 
     if (body.resultCode !== '0000') {
       this.logger.error(
@@ -89,29 +86,25 @@ export class KGInicisPaymentAdapter implements PaymentGateway {
   }
 
   async cancel(paymentKey: string, reason: string): Promise<CancelResult> {
-    const response = await fetch('https://iniapi.inicis.com/v2/pg/refund', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
+    const body = await requestPaymentJson<Record<string, unknown>>({
+      url: 'https://iniapi.inicis.com/v2/pg/refund',
+      init: {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          type: 'Refund',
+          mid: this.mid,
+          tid: paymentKey,
+          msg: reason,
+        }),
       },
-      body: JSON.stringify({
-        type: 'Refund',
-        mid: this.mid,
-        tid: paymentKey,
-        msg: reason,
-      }),
-      signal: AbortSignal.timeout(8000),
+      logger: this.logger,
+      errorLog: (response) => `Inicis cancel failed: status=${response.status}, paymentKey=${paymentKey}`,
+      errorMessage: '이니시스 API 취소 오류',
     });
-
-    if (!response.ok) {
-      this.logger.error(
-        `Inicis cancel failed: status=${response.status}, paymentKey=${paymentKey}`,
-      );
-      throw new BadGatewayException('이니시스 API 취소 오류');
-    }
-
-    const body = (await response.json()) as Record<string, unknown>;
 
     if (body.resultCode !== '00' && body.resultCode !== '0000') {
       this.logger.error(
@@ -129,30 +122,26 @@ export class KGInicisPaymentAdapter implements PaymentGateway {
   }
 
   async partialCancel(params: PartialCancelParams): Promise<PartialCancelResult> {
-    const response = await fetch('https://iniapi.inicis.com/v2/pg/refund', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
+    const body = await requestPaymentJson<Record<string, unknown>>({
+      url: 'https://iniapi.inicis.com/v2/pg/refund',
+      init: {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          type: 'PartialRefund',
+          mid: this.mid,
+          tid: params.paymentKey,
+          price: params.cancelAmount,
+          msg: params.cancelReason,
+        }),
       },
-      body: JSON.stringify({
-        type: 'PartialRefund',
-        mid: this.mid,
-        tid: params.paymentKey,
-        price: params.cancelAmount,
-        msg: params.cancelReason,
-      }),
-      signal: AbortSignal.timeout(8000),
+      logger: this.logger,
+      errorLog: (response) => `Inicis partialCancel failed: status=${response.status}, paymentKey=${params.paymentKey}`,
+      errorMessage: '이니시스 부분 취소 오류',
     });
-
-    if (!response.ok) {
-      this.logger.error(
-        `Inicis partialCancel failed: status=${response.status}, paymentKey=${params.paymentKey}`,
-      );
-      throw new BadGatewayException('이니시스 부분 취소 오류');
-    }
-
-    const body = (await response.json()) as Record<string, unknown>;
 
     if (body.resultCode !== '00' && body.resultCode !== '0000') {
       this.logger.error(
@@ -173,18 +162,10 @@ export class KGInicisPaymentAdapter implements PaymentGateway {
   }
 
   verifyWebhook(payload: unknown, signature: string): boolean {
-    try {
-      const body = typeof payload === 'string' ? payload : JSON.stringify(payload);
-      const expected = crypto
-        .createHmac('sha256', this.signKey)
-        .update(body)
-        .digest();
-      const provided = Buffer.from(signature, 'hex');
-      if (expected.length !== provided.length) return false;
-      return crypto.timingSafeEqual(expected, provided);
-    } catch {
-      return false;
-    }
+    return verifyPaymentHmacSha256(payload, signature, {
+      secret: this.signKey,
+      signatureEncoding: 'hex',
+    });
   }
 }
 
