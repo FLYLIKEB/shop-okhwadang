@@ -330,7 +330,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
         <div className="toss-product-detail__info flex flex-col gap-6 p-5 md:p-8">
           {/* Breadcrumb */}
           {product.category && (
-            <nav className="typo-label text-muted-foreground tracking-widest uppercase">
+            <nav className="typo-body-sm font-medium text-muted-foreground">
               <Link href={`/products?categoryId=${product.category.id}`} locale={locale} className="hover:text-foreground transition-colors">
                 {product.category.name}
               </Link>
@@ -350,7 +350,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                       href={`/products?attrs=clay_type:${encodeURIComponent(attr.value)}`}
                       locale={locale}
                       className={cn(
-                        'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                        'inline-flex items-center rounded-full px-3 py-1 typo-body-sm font-medium transition-colors',
                         'tag-clay border-transparent',
                         getClayTagClass(attr.value),
                       )}
@@ -365,7 +365,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                       key={attr.id}
                       href={`/products?attrs=teapot_shape:${encodeURIComponent(attr.value)}`}
                       locale={locale}
-                      className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
+                      className="inline-flex items-center rounded-full bg-muted px-3 py-1 typo-body-sm font-medium text-foreground transition-colors hover:bg-secondary"
                     >
                       {t('shape')}: {attr.displayValue ?? attr.value}
                     </Link>
@@ -377,7 +377,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Name */}
-          <h1 className="typo-h1 font-semibold tracking-tight text-foreground">{product.name}</h1>
+          <h1 className="typo-h1 font-body font-semibold tracking-tight text-foreground">{product.name}</h1>
 
           {/* Short description */}
           {product.shortDescription && (
@@ -388,7 +388,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {product.rating !== undefined && (
             <div className="flex items-center gap-2">
               <StarRating rating={product.rating} size="md" interactive={false} />
-              <span className="typo-body font-medium">{product.rating.toFixed(1)}</span>
+              <span className="typo-body-sm font-semibold">{product.rating.toFixed(1)}</span>
               {product.reviewCount !== undefined && product.reviewCount > 0 && (
                 <span className="typo-body text-muted-foreground">{t('reviewCount', { count: product.reviewCount })}</span>
               )}
@@ -398,17 +398,17 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Price */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-2">
-              <div className="text-4xl font-semibold leading-none text-foreground md:text-5xl">
+              <div className="font-body text-foreground">
                 <PriceDisplay price={product.price} salePrice={product.salePrice} size="lg" locale={locale} />
               </div>
               <div className="flex items-center gap-2">
                 {discountPercent > 0 && (
-                  <span className="tag-clay tag-nokni rounded-full px-2 py-1 text-xs font-semibold">
+                  <span className="tag-clay tag-nokni rounded-full px-2 py-1 typo-label font-semibold">
                     {t('discountOff', { percent: discountPercent })}
                   </span>
                 )}
                 {isLowStock && (
-                  <span className="rounded-full bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive">
+                  <span className="rounded-full bg-destructive/10 px-2 py-1 typo-label font-semibold text-destructive">
                     {t('lowStock', { count: maxQuantity })}
                   </span>
                 )}
@@ -443,7 +443,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Quantity */}
           <div className="toss-product-detail__quantity flex flex-col gap-2 rounded-xl bg-muted/40 p-4">
-            <span className="typo-label text-foreground">{t('quantity')}</span>
+            <span className="typo-body-sm font-semibold text-foreground">{t('quantity')}</span>
             <div className="flex items-center gap-3">
               <QuantitySelector
                 quantity={quantity}
@@ -451,7 +451,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                 onIncrease={handleIncrease}
                 onDecrease={handleDecrease}
               />
-              <span className="typo-body font-semibold text-foreground tabular-nums">
+              <span className="typo-price text-foreground tabular-nums">
                 {formatCurrency(totalPrice, locale)}
               </span>
             </div>
@@ -504,7 +504,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           </div>
 
           <div className="toss-product-detail__stock rounded-xl bg-muted/40 p-4">
-            <p className="typo-label text-muted-foreground">{t('stockStatus.title')}</p>
+            <p className="typo-body-sm font-semibold text-muted-foreground">{t('stockStatus.title')}</p>
             <p className={cn('mt-1 typo-body-sm font-medium', isSoldout ? 'text-destructive' : 'text-foreground')}>
               {isSoldout ? t('stockStatus.soldoutReason') : isLowStock ? t('stockStatus.lowStock', { count: maxQuantity }) : t('stockStatus.available')}
             </p>
