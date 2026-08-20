@@ -9,6 +9,7 @@ import {
   PartialCancelResult,
 } from '../interfaces/payment-gateway.interface';
 import { PAYMENT_CONFIG, PaymentConfig } from '../../../config/payment.config';
+import { requestPaymentJson, requestPaymentResponse } from '../payment-http.util';
 
 interface PayPalLink {
   rel?: string;
@@ -271,21 +272,21 @@ export class PayPalPaymentAdapter implements PaymentGateway {
       throw new BadGatewayException('PayPal is not configured');
     }
     const token = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
-    const response = await fetch(`${this.apiBaseUrl}/v1/oauth2/token`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${token}`,
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
+    const body = await requestPaymentJson<Record<string, unknown>>({
+      url: `${this.apiBaseUrl}/v1/oauth2/token`,
+      init: {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${token}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'grant_type=client_credentials',
       },
-      body: 'grant_type=client_credentials',
-      signal: AbortSignal.timeout(8000),
+      logger: this.logger,
+      errorLog: (response) => `PayPal token failed: status=${response.status}`,
+      errorMessage: 'PayPal 인증 오류',
     });
-    if (!response.ok) {
-      this.logger.error(`PayPal token failed: status=${response.status}`);
-      throw new BadGatewayException('PayPal 인증 오류');
-    }
-    const body = await readJson<Record<string, unknown>>(response);
     if (typeof body.access_token !== 'string') {
       throw new BadGatewayException('PayPal 인증 응답 오류');
     }
@@ -293,21 +294,21 @@ export class PayPalPaymentAdapter implements PaymentGateway {
   }
 
   private async paypalFetch(path: string, accessToken: string, init: RequestInit): Promise<Response> {
-    const response = await fetch(`${this.apiBaseUrl}${path}`, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...(init.headers ?? {}),
+    return requestPaymentResponse({
+      url: `${this.apiBaseUrl}${path}`,
+      init: {
+        ...init,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(init.headers ?? {}),
+        },
       },
-      signal: init.signal ?? AbortSignal.timeout(8000),
+      logger: this.logger,
+      errorLog: (response) => `PayPal API failed: path=${path}, status=${response.status}`,
+      errorMessage: 'PayPal API 오류',
     });
-    if (!response.ok) {
-      this.logger.error(`PayPal API failed: path=${path}, status=${response.status}`);
-      throw new BadGatewayException('PayPal API 오류');
-    }
-    return response;
   }
 }
 
