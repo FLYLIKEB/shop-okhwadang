@@ -71,7 +71,7 @@ export default function SplitContentBlock({ content }: Props) {
         {cta_text && cta_url && (
           <div
             className={cn(
-              'animate-fade-in-up',
+              'flex w-full justify-end animate-fade-in-up',
             )}
             style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}
           >
