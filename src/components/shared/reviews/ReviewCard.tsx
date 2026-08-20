@@ -164,27 +164,31 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
       {canManageReply && (
         <div className="mt-3 space-y-2">
           <div className="flex flex-wrap items-center gap-3 text-xs">
-            <button
+            <Button
               type="button"
+              variant="gray"
+              size="sm"
               onClick={() => {
                 setReplyContent(review.adminReplyContent ?? '');
                 setIsReplyEditorOpen((value) => !value);
               }}
-              className="font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              className="h-auto min-h-0 rounded-none px-1 py-0 font-medium underline-offset-2 hover:underline"
             >
               {localMessage('review.adminReplyWrite')}
-            </button>
+            </Button>
             {review.adminReplyContent && (
-              <button
+              <Button
                 type="button"
+                variant="gray"
+                size="sm"
                 onClick={() => void handleDeleteReply()}
                 disabled={isSavingReply}
-                className="font-medium text-muted-foreground underline-offset-2 hover:text-destructive hover:underline disabled:opacity-50"
+                className="h-auto min-h-0 rounded-none px-1 py-0 font-medium underline-offset-2 hover:text-destructive hover:underline"
               >
                 {isSavingReply
                   ? localMessage('review.adminReplyDeleting')
                   : localMessage('review.adminReplyDelete')}
-              </button>
+              </Button>
             )}
           </div>
           {isReplyEditorOpen && (
@@ -197,27 +201,30 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
                 placeholder={localMessage('review.adminReplyPlaceholder')}
               />
               <div className="flex gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="black"
+                  size="sm"
                   onClick={() => void handleSaveReply()}
                   disabled={isSavingReply}
-                  className="rounded bg-foreground px-3 py-1.5 text-xs font-medium text-background disabled:opacity-50"
                 >
                   {isSavingReply
                     ? localMessage('review.adminReplySaving')
                     : localMessage('review.adminReplySave')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="gray"
+                  size="sm"
                   onClick={() => {
                     setReplyContent(review.adminReplyContent ?? '');
                     setIsReplyEditorOpen(false);
                   }}
                   disabled={isSavingReply}
-                  className="px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+                  className="text-xs font-medium"
                 >
                   {localMessage('review.adminReplyCancel')}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -227,10 +234,12 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
       {review.imageUrls && review.imageUrls.length > 0 && (
         <div className="mt-3 flex gap-2 overflow-x-auto">
           {review.imageUrls.map((url, idx) => (
-            <button
+            <Button
               key={url}
               type="button"
-              className="shrink-0 overflow-hidden rounded-md border border-border"
+              variant="gray"
+              size="icon"
+              className="h-20 min-h-20 w-20 shrink-0 overflow-hidden rounded-md p-0"
               onClick={() => setExpandedImage(url)}
               aria-label={localMessage('review.imageAria', { index: idx + 1 })}
             >
@@ -241,7 +250,7 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
                 height={80}
                 className="object-cover"
               />
-            </button>
+            </Button>
           ))}
         </div>
       )}
