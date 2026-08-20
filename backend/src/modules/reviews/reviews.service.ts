@@ -21,6 +21,11 @@ import { assertOwnership } from '../../common/utils/ownership.util';
 import { SettingsService } from '../settings/settings.service';
 import { PointsService, addOneYear } from '../points/points.service';
 import { ReviewStatsSyncService } from './review-stats-sync.service';
+import {
+  buildReviewCatalog,
+  compareCatalogTieBreakers,
+  reviewCatalogSource,
+} from './review-catalog';
 
 const REVIEW_POINT_REWARD_KEY = 'review_point_reward';
 const PHOTO_REVIEW_BONUS_KEY = 'photo_review_bonus';
@@ -183,14 +188,18 @@ export class ReviewsService {
     const [internalReviews, internalTotal] = await qb.getManyAndCount();
     const [externalReviews, externalTotal] = await externalQb.getManyAndCount();
     const stats = await this.getStats(query.productId);
-    const data = [
-      ...internalReviews.map((r) => this.toResponse(r)),
-      ...externalReviews.map((r) => this.toExternalResponse(r)),
-    ].sort((a, b) => this.compareReviews(a, b, sort));
-    const offset = (page - 1) * limit;
+    const catalog = buildReviewCatalog(
+      [
+        reviewCatalogSource(internalReviews, (review) => this.toResponse(review)),
+        reviewCatalogSource(externalReviews, (review) => this.toExternalResponse(review)),
+      ],
+      (a, b) => this.compareReviews(a, b, sort),
+      page,
+      limit,
+    );
 
     return {
-      data: data.slice(offset, offset + limit),
+      data: catalog.items,
       stats,
       pagination: { page, limit, total: internalTotal + externalTotal },
     };
@@ -203,7 +212,10 @@ export class ReviewsService {
   ): number {
     if (sort === 'rating_high' && b.rating !== a.rating) return b.rating - a.rating;
     if (sort === 'rating_low' && a.rating !== b.rating) return a.rating - b.rating;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return (
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() ||
+      compareCatalogTieBreakers(a, b)
+    );
   }
 
   async getStats(productId?: number): Promise<ReviewStats> {
