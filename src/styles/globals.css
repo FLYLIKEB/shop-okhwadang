@@ -809,9 +809,36 @@ h3 {
 /* Shared issue notifications use the same compact surface language as checkout. */
 .toss-toast {
   position: relative;
+  display: flex;
+  width: min(360px, calc(100vw - 32px));
+  align-items: center;
+  gap: 0.75rem;
   min-height: 3.5rem;
   padding: 0.75rem 4rem 0.75rem 0.875rem;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+  border: 1px solid var(--checkout-toss-border);
+  box-shadow: var(--checkout-toss-shadow);
   letter-spacing: -0.01em;
+}
+
+.toss-toast__status {
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: 9999px;
+}
+
+.toss-toast__status--success { background: #16a34a; }
+.toss-toast__status--info { background: #2563eb; }
+.toss-toast__status--warning { background: #d97706; }
+.toss-toast__status--error { background: #dc2626; }
+
+.toss-toast__content {
+  min-width: 0;
+  flex: 1;
 }
 
 .toss-toast__title {

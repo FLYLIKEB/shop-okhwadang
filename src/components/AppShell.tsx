@@ -36,6 +36,7 @@ function SharedToaster() {
     <Toaster
       position="top-center"
       closeButton
+      className="toss-toaster"
       expand={false}
       visibleToasts={3}
       gap={8}
@@ -43,6 +44,7 @@ function SharedToaster() {
       mobileOffset={{ top: 16, left: 16, right: 16 }}
       swipeDirections={['top', 'right', 'bottom', 'left']}
       toastOptions={{
+        unstyled: true,
         style: {
           fontFamily: 'var(--font-body)',
           borderRadius: '1rem',
@@ -62,6 +64,12 @@ function SharedToaster() {
           warning: 'toss-toast--warning',
           info: 'toss-toast--info',
         },
+      }}
+      icons={{
+        success: <span className="toss-toast__status toss-toast__status--success" aria-hidden="true" />,
+        info: <span className="toss-toast__status toss-toast__status--info" aria-hidden="true" />,
+        warning: <span className="toss-toast__status toss-toast__status--warning" aria-hidden="true" />,
+        error: <span className="toss-toast__status toss-toast__status--error" aria-hidden="true" />,
       }}
     />
   );
