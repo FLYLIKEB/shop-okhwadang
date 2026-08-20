@@ -11,6 +11,7 @@ import { adminProductsApi } from '@/lib/api';
 import type { Product, SmartStoreProductImportResult } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { ProductStatusBadge } from '@/components/shared/admin/StatusBadge';
+import type { ProductStatus } from '@/constants/status';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
@@ -20,8 +21,6 @@ import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 
 const PAGE_SIZE = 20;
-
-type ProductStatus = 'active' | 'soldout' | 'draft' | 'hidden';
 
 export default function AdminProductsPage() {
   const t = useTranslations('admin.products');
@@ -626,7 +625,7 @@ export default function AdminProductsPage() {
                   <td className="px-4 py-3 font-medium">{product.name}</td>
                   <td className="px-4 py-3">{formatCurrency(product.price)}</td>
                   <td className="px-4 py-3">
-                    <ProductStatusBadge status={product.status as ProductStatus} />
+                    <ProductStatusBadge status={product.status} />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1" aria-label={t('localeVisibilityAria', { name: product.name })}>
