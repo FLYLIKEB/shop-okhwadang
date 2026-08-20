@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import CategoryNavBlock from '@/components/shared/blocks/CategoryNavBlock';
 import { categoriesApi } from '@/lib/api';
@@ -41,7 +41,14 @@ vi.mock('@/lib/api', () => ({
 
 const mockCategories: Category[] = [
   { id: 1, name: '자사호', slug: 'teapot', description: null, parentId: null, imageUrl: null },
-  { id: 2, name: '보이차', slug: 'puerh-tea', description: null, parentId: null, imageUrl: null },
+  {
+    id: 2,
+    name: '보이차',
+    slug: 'puerh-tea',
+    description: null,
+    parentId: null,
+    imageUrl: 'https://images.example.com/puerh-tea.jpg',
+  },
   { id: 3, name: '다구', slug: 'tea-ware', description: null, parentId: null, imageUrl: null },
 ];
 
@@ -81,6 +88,40 @@ describe('CategoryNavBlock', () => {
       expect(links).toHaveLength(3);
       expect(links[1]).toHaveAttribute('href', '/en/products?categoryId=2');
       expect(links[1]).toHaveAttribute('data-prefetch', 'false');
+    });
+  });
+
+  it('uses optimized responsive images for category thumbnails', async () => {
+    const content = {
+      category_ids: [],
+      template: 'image' as const,
+      prefetched_categories: mockCategories,
+    };
+
+    render(<CategoryNavBlock content={content} />);
+
+    const image = await screen.findByRole('img', { name: '보이차' });
+    expect(image).toHaveAttribute('src', 'https://images.example.com/puerh-tea.jpg');
+    expect(image).toHaveAttribute('sizes', '(max-width: 768px) calc(50vw - 0.5rem), calc(25vw - 0.75rem)');
+    expect(image).toHaveAttribute('quality', '75');
+    expect(image).not.toHaveAttribute('unoptimized');
+  });
+
+  it('keeps the clay-color fallback when a category image fails', async () => {
+    const content = {
+      category_ids: [],
+      template: 'image' as const,
+      prefetched_categories: mockCategories,
+    };
+
+    render(<CategoryNavBlock content={content} />);
+
+    const image = await screen.findByRole('img', { name: '보이차' });
+    fireEvent.error(image);
+
+    expect(screen.queryByRole('img', { name: '보이차' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '보이차' }).firstElementChild).toHaveStyle({
+      backgroundColor: '#2A2520',
     });
   });
 
