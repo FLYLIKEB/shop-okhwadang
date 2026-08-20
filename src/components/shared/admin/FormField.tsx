@@ -1,11 +1,13 @@
 import type { ReactNode, ChangeEvent } from 'react';
+import FormField, { getFormControlClassName } from '@/components/ui/FormField';
 
-const INPUT_CLASS =
-  'w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary';
+const ADMIN_INPUT_CLASS = 'rounded-lg focus:ring-primary';
 
 interface BaseFieldProps {
   label: string;
   required?: boolean;
+  error?: ReactNode;
+  description?: ReactNode;
 }
 
 interface TextFieldProps extends BaseFieldProps {
@@ -19,6 +21,8 @@ interface TextFieldProps extends BaseFieldProps {
 export function TextField({
   label,
   required,
+  error,
+  description,
   type = 'text',
   value,
   onChange,
@@ -26,21 +30,20 @@ export function TextField({
   min,
 }: TextFieldProps) {
   return (
-    <div>
-      <label className="mb-1 block text-sm font-medium">
-        {label}
-        {required ? ' *' : ''}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        placeholder={placeholder}
-        required={required}
-        min={min}
-        className={INPUT_CLASS}
-      />
-    </div>
+    <FormField label={label} required={required} error={error} description={description}>
+      {({ controlProps }) => (
+        <input
+          {...controlProps}
+          type={type}
+          value={value}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          min={min}
+          className={getFormControlClassName({ error, className: ADMIN_INPUT_CLASS })}
+        />
+      )}
+    </FormField>
   );
 }
 
@@ -54,25 +57,27 @@ interface TextAreaFieldProps extends BaseFieldProps {
 export function TextAreaField({
   label,
   required,
+  error,
+  description,
   value,
   onChange,
   placeholder,
   rows = 3,
 }: TextAreaFieldProps) {
   return (
-    <div>
-      <label className="mb-1 block text-sm font-medium">
-        {label}
-        {required ? ' *' : ''}
-      </label>
-      <textarea
-        value={value}
-        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
-        placeholder={placeholder}
-        rows={rows}
-        className={INPUT_CLASS}
-      />
-    </div>
+    <FormField label={label} required={required} error={error} description={description}>
+      {({ controlProps }) => (
+        <textarea
+          {...controlProps}
+          value={value}
+          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          rows={rows}
+          className={getFormControlClassName({ error, className: ADMIN_INPUT_CLASS })}
+        />
+      )}
+    </FormField>
   );
 }
 
@@ -85,28 +90,30 @@ interface SelectFieldProps<T extends string> extends BaseFieldProps {
 export function SelectField<T extends string>({
   label,
   required,
+  error,
+  description,
   value,
   onChange,
   options,
 }: SelectFieldProps<T>) {
   return (
-    <div>
-      <label className="mb-1 block text-sm font-medium">
-        {label}
-        {required ? ' *' : ''}
-      </label>
-      <select
-        value={value}
-        onChange={(e: ChangeEvent<HTMLSelectElement>) => onChange(e.target.value as T)}
-        className={INPUT_CLASS}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
+    <FormField label={label} required={required} error={error} description={description}>
+      {({ controlProps }) => (
+        <select
+          {...controlProps}
+          value={value}
+          onChange={(e: ChangeEvent<HTMLSelectElement>) => onChange(e.target.value as T)}
+          required={required}
+          className={getFormControlClassName({ error, className: ADMIN_INPUT_CLASS })}
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      )}
+    </FormField>
   );
 }
 
@@ -120,7 +127,7 @@ export function CheckboxField({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm">
+    <label className="flex cursor-pointer items-center gap-2 typo-body-sm">
       <input
         type="checkbox"
         checked={checked}

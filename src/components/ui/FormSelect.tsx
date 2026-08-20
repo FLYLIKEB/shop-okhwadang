@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/components/ui/utils';
+import FormField, { getFormControlClassName, type FormFieldDensity } from '@/components/ui/FormField';
 
 export interface SelectOption {
   value: string;
@@ -11,6 +11,8 @@ export interface SelectOption {
 interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
+  description?: string;
+  density?: FormFieldDensity;
   required?: boolean;
   options: SelectOption[];
   placeholder?: string;
@@ -19,6 +21,8 @@ interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> 
 export default function FormSelect({
   label,
   error,
+  description,
+  density = 'default',
   required,
   options,
   placeholder,
@@ -27,36 +31,30 @@ export default function FormSelect({
   ...props
 }: FormSelectProps) {
   return (
-    <div className="space-y-1">
-      {label && (
-        <label htmlFor={id} className="text-sm font-medium">
-          {label} {required && <span className="text-destructive">*</span>}
-        </label>
+    <FormField id={id} label={label} required={required} description={description} error={error} density={density}>
+      {({ controlProps }) => (
+        <select
+          {...controlProps}
+          {...props}
+          required={required}
+          className={getFormControlClassName({
+            error,
+            density,
+            className: [!props.value && placeholder && 'text-muted-foreground', className].filter(Boolean).join(' '),
+          })}
+        >
+          {placeholder && (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          )}
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       )}
-      <select
-        id={id}
-        className={cn(
-          'w-full rounded-md border px-3 py-2 text-sm outline-none',
-          error ? 'border-destructive bg-background' : 'field-soft',
-          'focus:ring-2 focus:ring-foreground/20',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          !props.value && placeholder && 'text-muted-foreground',
-          className,
-        )}
-        {...props}
-      >
-        {placeholder && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        )}
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value} disabled={opt.disabled}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-    </div>
+    </FormField>
   );
 }

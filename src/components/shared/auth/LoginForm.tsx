@@ -8,6 +8,8 @@ import { handleApiError } from '@/utils/error';
 import { isSafeUrl } from '@/utils/url';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import FormField, { getFormControlClassName } from '@/components/ui/FormField';
+import FormInput from '@/components/ui/FormInput';
 import { cn } from '@/components/ui/utils';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { localMessage } from '@/utils/localMessages';
@@ -63,73 +65,55 @@ export default function LoginForm({ redirect }: LoginFormProps) {
       <h1 className="text-2xl font-bold text-center mb-8">{localMessage('auth.loginTitle')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1">
-          <label htmlFor="email" className="text-sm font-medium">
-            {localMessage('auth.email')}
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setEmailError('');
-            }}
-            className={cn(
-              'w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
-              'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              emailError && 'border-destructive',
-            )}
-            placeholder="you@example.com"
-          />
-          {emailError && (
-            <p className="text-sm text-destructive">{emailError}</p>
-          )}
-        </div>
+        <FormInput
+          id="email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setEmailError('');
+          }}
+          label={localMessage('auth.email')}
+          error={emailError}
+          placeholder={localMessage('auth.emailPlaceholder')}
+        />
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-sm font-medium">
-              {localMessage('auth.password')}
-            </label>
-            <span className="text-xs text-muted-foreground cursor-not-allowed">{localMessage('auth.forgotPassword')}</span>
-          </div>
-          <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setPasswordError('');
-              }}
-              className={cn(
-                'w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm',
-                'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                passwordError && 'border-destructive',
-              )}
-              placeholder="••••••••"
-            />
-            <button
-              type="button"
-              onClick={handleTogglePassword}
-              aria-label={showPassword ? localMessage('auth.hidePassword') : localMessage('auth.showPassword')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </button>
-          </div>
-          {passwordError && (
-            <p className="text-sm text-destructive">{passwordError}</p>
+        <FormField id="password" label={localMessage('auth.password')} required error={passwordError}>
+          {({ controlProps }) => (
+            <div className="relative">
+              <input
+                {...controlProps}
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordError('');
+                }}
+                className={getFormControlClassName({ error: passwordError, className: 'pr-10' })}
+                placeholder={localMessage('auth.passwordPlaceholder')}
+              />
+              <button
+                type="button"
+                onClick={handleTogglePassword}
+                aria-label={showPassword ? localMessage('auth.hidePassword') : localMessage('auth.showPassword')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           )}
+        </FormField>
+
+        <div className="flex justify-end">
+          <span className="text-xs text-muted-foreground cursor-not-allowed">{localMessage('auth.forgotPassword')}</span>
         </div>
 
         <Button type="submit" variant="black" className="w-full" disabled={isSubmitting}>
