@@ -38,6 +38,7 @@ const translations: Record<string, string> = {
   discountOff: '{percent}% 할인',
   'stockStatus.soldout': '품절',
   'stockStatus.soldoutReason': '현재 재고가 없어 구매할 수 없습니다.',
+  okhwadang: '옥화당',
 };
 
 vi.mock('next-intl', () => ({

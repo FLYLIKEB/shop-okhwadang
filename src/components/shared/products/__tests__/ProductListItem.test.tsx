@@ -8,6 +8,7 @@ vi.mock('next-intl', () => ({
     ({
       badgeFreeShipping: '무료배송',
       ratingSummary: `${values?.rating ?? 0}(${values?.count ?? 0})`,
+      okhwadang: '옥화당',
     }[key] ?? key),
 }));
 
@@ -81,6 +82,25 @@ describe('ProductListItem image presentation', () => {
     });
 
     expect(screen.getByAltText('자사호')).toHaveAttribute('src', 'https://example.com/thumb.webp');
+  });
+
+
+  it('keeps the list item fixed sizes and lazy loading policy on the product image', () => {
+    renderItem();
+
+    const image = screen.getByAltText('자사호');
+
+    expect(image).toHaveAttribute('sizes', '96px');
+    expect(image).toHaveAttribute('loading', 'lazy');
+  });
+
+  it('renders the fallback logo when the product has no image URL', () => {
+    renderItem({ images: [] });
+
+    const fallback = screen.getByTestId('product-list-item-image-fallback');
+    expect(fallback).toHaveClass('bg-neutral-200');
+    expect(screen.getByAltText('옥화당')).toHaveAttribute('src', '/logo-okhwadang.png');
+    expect(screen.queryByAltText('자사호')).not.toBeInTheDocument();
   });
 
   it('renders the image frame and image badges without rounded corners', () => {

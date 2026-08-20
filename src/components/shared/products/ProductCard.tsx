@@ -1,14 +1,13 @@
 'use client';
 
 import { memo, useState } from 'react';
-import { Link } from '@/i18n/navigation';
-import Image from 'next/image';
 import { ShoppingCart } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import ProductRatingSummary from '@/components/shared/products/ProductRatingSummary';
+import ProductImageFrame from '@/components/shared/products/ProductImageFrame';
 import { useCart } from '@/contexts/CartContext';
 import { compactProductSummary } from '@/lib/collectionDisplay';
 import type { Locale } from '@/utils/currency';
@@ -69,6 +68,7 @@ function ProductCard({
   isFreeShipping = false,
 }: ProductCardProps) {
   const t = useTranslations('product');
+  const tHeader = useTranslations('header');
   const thumbnailImage = images.find((image) => image.isThumbnail) ?? images[0];
   const thumbnail = thumbnailImage?.thumbnailUrl ?? thumbnailImage?.url;
   const isSoldout = status === 'soldout';
@@ -77,7 +77,6 @@ function ProductCard({
 
   const { addItem } = useCart();
   const [isCartLoading, setIsCartLoading] = useState(false);
-  const [hasImageError, setHasImageError] = useState(false);
 
   const handleAddToCart = async () => {
     setIsCartLoading(true);
@@ -96,31 +95,21 @@ function ProductCard({
       )}
     >
       {/* ── 이미지 영역 — 오버레이 액션은 hover 시에만 노출 ── */}
-      <div data-testid="product-card-image-frame" className="relative aspect-square overflow-hidden bg-secondary">
-        <Link href={productHref} locale={locale} className="block h-full" aria-label={name}>
-          {thumbnail && !hasImageError ? (
-            <Image
-              src={thumbnail}
-              alt={name}
-              fill
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              priority={priority}
-              onError={() => setHasImageError(true)}
-            />
-          ) : (
-            <div data-testid="product-card-image-fallback" className="flex h-full w-full items-center justify-center bg-neutral-200">
-              <Image
-                src="/logo-okhwadang.png"
-                alt="옥화당"
-                width={120}
-                height={34}
-                className="object-contain opacity-70 grayscale"
-              />
-            </div>
-          )}
-        </Link>
-
+      <ProductImageFrame
+        imageUrl={thumbnail}
+        alt={name}
+        href={productHref}
+        locale={locale}
+        frameTestId="product-card-image-frame"
+        fallbackTestId="product-card-image-fallback"
+        frameClassName="aspect-square bg-secondary"
+        imageClassName="object-cover transition-transform duration-500 group-hover:scale-105"
+        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+        priority={priority}
+        fallbackLogoAlt={tHeader('okhwadang')}
+        fallbackLogoWidth={120}
+        fallbackLogoHeight={34}
+      >
         {isSoldout && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/70 pointer-events-none">
             <span className="data-label text-foreground tracking-widest">{t('stockStatus.soldout')}</span>
@@ -159,7 +148,7 @@ function ProductCard({
             </span>
           </Button>
         )}
-      </div>
+      </ProductImageFrame>
 
       {/* ── 정보 영역 — 상품명 > 가격 > 메타 위계 ── */}
       <div className="mt-3 flex flex-1 flex-col gap-1.5">
