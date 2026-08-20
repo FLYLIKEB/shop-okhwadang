@@ -11,7 +11,7 @@ import { MobileNavProvider } from '@/contexts/MobileNavContext';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
 import type { Locale } from '@/i18n/routing';
 import { cn } from '@/components/ui/utils';
-import { isCheckoutLightPath } from '@/utils/checkout-theme';
+import { isCheckoutLightPath, isProductDetailPath } from '@/utils/checkout-theme';
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -73,7 +73,11 @@ export default function AppShell({
         <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
         <main
           id="main-content"
-          className={cn('flex-1 pb-16 md:pb-0', isCheckoutLightPath(pathname) && 'checkout-light-theme')}
+          className={cn(
+            'flex-1 pb-16 md:pb-0',
+            isCheckoutLightPath(pathname) && 'checkout-light-theme',
+            isProductDetailPath(pathname) && 'product-detail-light-theme',
+          )}
         >
           {children}
         </main>

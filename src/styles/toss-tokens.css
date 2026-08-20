@@ -12,12 +12,14 @@ html[data-theme='light'] {
   --checkout-toss-primary-hover: #6f350f;
   --checkout-toss-primary-soft: #f5ede7;
   --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
-  --checkout-toss-button-black: #191f28;
+  --checkout-toss-button-black: #2b3138;
   --checkout-toss-button-black-hover: #333d48;
   --checkout-toss-button-brown: #8b4513;
   --checkout-toss-button-brown-hover: #6f350f;
   --checkout-toss-button-gray: #f2f4f6;
   --checkout-toss-button-gray-hover: #e5e8eb;
+  --checkout-toss-button-white: #ffffff;
+  --checkout-toss-button-white-hover: #f2f4f6;
   --checkout-toss-header-button-gray-hover: #f2f4f6;
 }
 
@@ -38,12 +40,15 @@ html[data-theme='dark'] {
   --checkout-toss-button-brown-hover: #a85f31;
   --checkout-toss-button-gray: #242a31;
   --checkout-toss-button-gray-hover: #343c46;
+  --checkout-toss-button-white: #ffffff;
+  --checkout-toss-button-white-hover: #f2f4f6;
   --checkout-toss-header-button-gray-hover: #303740;
 }
 
 /* Payment content is intentionally light so the Toss widget remains a
    coherent vendor-owned surface while the global storefront chrome keeps its theme. */
-.checkout-light-theme {
+.checkout-light-theme,
+.product-detail-light-theme {
   color-scheme: light;
   --checkout-toss-background: #f2f4f6;
   --checkout-toss-surface: #ffffff;
@@ -55,7 +60,7 @@ html[data-theme='dark'] {
   --checkout-toss-primary-hover: #6f350f;
   --checkout-toss-primary-soft: #f5ede7;
   --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
-  --checkout-toss-button-black: #191f28;
+  --checkout-toss-button-black: #2b3138;
   --checkout-toss-button-black-hover: #333d48;
   --checkout-toss-button-brown: #8b4513;
   --checkout-toss-button-brown-hover: #6f350f;
@@ -82,6 +87,10 @@ html[data-theme='dark'] {
   --color-input: #e1e1e1;
   --color-ring: #353535;
   --color-surface: #f0f0f0;
+}
+
+.product-detail-light-theme {
+  background: var(--checkout-toss-surface);
 }
 
 .toss-button {
@@ -116,6 +125,16 @@ html[data-theme='dark'] {
 
 .toss-button--gray:hover {
   background: var(--checkout-toss-button-gray-hover) !important;
+}
+
+.toss-button--white {
+  background: var(--checkout-toss-button-white) !important;
+  color: var(--checkout-toss-foreground) !important;
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-button--white:hover {
+  background: var(--checkout-toss-button-white-hover) !important;
 }
 
 .toss-quantity {

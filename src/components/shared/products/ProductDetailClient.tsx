@@ -486,7 +486,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Action buttons — desktop only */}
           <div className="hidden gap-3 md:flex">
             <Button
-              variant="black"
+              variant="white"
               className="w-1/3"
               disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleAddToCart()}
@@ -541,7 +541,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
         </Button>
         <Button
-          variant="black"
+          variant="white"
           className="w-1/3"
           disabled={isSoldout || isAdding || isBuying}
           onClick={() => void handleAddToCart()}

@@ -110,6 +110,21 @@ describe('AppShell', () => {
 
     expect(container.querySelector('main.checkout-light-theme')).toBeInTheDocument();
   });
+
+  it('uses a white light boundary for product detail routes', () => {
+    mockPathname = '/ko/products/1';
+
+    const { container } = render(
+      <AppShell locale="ko" mobileBottomNavVisible>
+        product detail content
+      </AppShell>,
+    );
+
+    expect(container.querySelector('main.product-detail-light-theme')).toBeInTheDocument();
+    expect(screen.getByTestId('global-header')).toBeInTheDocument();
+    expect(screen.getByTestId('footer')).toBeInTheDocument();
+  });
+
   it('does not import server-only announcement fetching into the client shell', () => {
     const source = readFileSync('src/components/AppShell.tsx', 'utf8');
 

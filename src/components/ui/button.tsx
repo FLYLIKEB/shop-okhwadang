@@ -13,6 +13,7 @@ const buttonVariants = cva(
         black: 'toss-button toss-button--black',
         brown: 'toss-button toss-button--brown',
         gray: 'toss-button toss-button--gray',
+        white: 'toss-button toss-button--white',
         destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/92',
         outline: 'border border-input bg-background hover:border-foreground/20 hover:bg-accent hover:text-accent-foreground',
         secondary: 'border border-border bg-secondary text-secondary-foreground hover:bg-secondary/70',
