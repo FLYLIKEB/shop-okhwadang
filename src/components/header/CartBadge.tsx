@@ -23,7 +23,7 @@ export function CartBadge({ itemCount, className, iconSize = 'h-5 w-5' }: CartBa
       {itemCount > 0 && (
         <span
           role="status"
-          className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-foreground text-background text-xs font-bold leading-none"
+          className="absolute top-0 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-foreground text-background text-xs font-bold leading-none"
         >
           {itemCount > 99 ? '99+' : itemCount}
         </span>
