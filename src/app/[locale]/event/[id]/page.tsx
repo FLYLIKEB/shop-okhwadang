@@ -17,9 +17,11 @@ const TYPE_KEY_MAP: Record<Promotion['type'], string> = {
   event: 'types.event',
 };
 
+const DATE_LOCALE_MAP: Record<string, 'ko' | 'en'> = { ko: 'ko', en: 'en' };
 
 export default function EventDetailPage() {
   const { id, locale } = useParams<{ id: string; locale: string }>();
+  const dateLocale = DATE_LOCALE_MAP[locale] ?? DATE_LOCALE_MAP.ko;
   const router = useRouter();
   const t = useTranslations('event');
   const [promotion, setPromotion] = useState<Promotion | null>(null);
@@ -91,8 +93,8 @@ export default function EventDetailPage() {
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400 mb-6">
         <span>
-          {formatDate(promotion.startsAt, locale)} ~{' '}
-          {formatDate(promotion.endsAt, locale)}
+          {formatDate(promotion.startsAt, dateLocale)} ~{' '}
+          {formatDate(promotion.endsAt, dateLocale)}
         </span>
         {promotion.type === 'timesale' && (
           <span className="flex items-center gap-1">
