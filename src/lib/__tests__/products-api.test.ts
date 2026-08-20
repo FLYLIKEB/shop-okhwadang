@@ -84,11 +84,13 @@ describe('adminProductsApi', () => {
       result: response,
     });
 
-    const promise = adminProductsApi.commitNaverCommerceImport();
+    const promise = adminProductsApi.commitNaverCommerceImport(['SKU-1']);
     await vi.advanceTimersByTimeAsync(2000);
 
     await expect(promise).resolves.toBe(response);
-    expect(postSpy).toHaveBeenCalledWith('/products/imports/naver-commerce/commit');
+    expect(postSpy).toHaveBeenCalledWith('/products/imports/naver-commerce/commit', {
+      selectedIdentifiers: ['SKU-1'],
+    });
     expect(getSpy).toHaveBeenCalledWith('/products/imports/naver-commerce/jobs/job-2');
     vi.useRealTimers();
   });

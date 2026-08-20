@@ -19,6 +19,7 @@ export interface NaverCommerceImportJobSnapshot {
 
 interface NaverCommerceImportJobRecord extends NaverCommerceImportJobSnapshot {
   createdAtMs: number;
+  selectedIdentifiers?: string[];
 }
 
 const JOB_TTL_MS = 30 * 60 * 1000;
@@ -31,7 +32,7 @@ export class NaverCommerceImportJobService {
     private readonly naverCommerceProductImportService: NaverCommerceProductImportService,
   ) {}
 
-  start(type: NaverCommerceImportJobType): NaverCommerceImportJobSnapshot {
+  start(type: NaverCommerceImportJobType, selectedIdentifiers?: string[]): NaverCommerceImportJobSnapshot {
     this.pruneExpiredJobs();
     const now = new Date();
     const job: NaverCommerceImportJobRecord = {
@@ -40,6 +41,7 @@ export class NaverCommerceImportJobService {
       status: 'pending',
       createdAt: now.toISOString(),
       createdAtMs: now.getTime(),
+      selectedIdentifiers,
     };
     this.jobs.set(job.id, job);
 
@@ -66,7 +68,7 @@ export class NaverCommerceImportJobService {
     try {
       job.result =
         job.type === 'commit'
-          ? await this.naverCommerceProductImportService.commit()
+          ? await this.naverCommerceProductImportService.commit(job.selectedIdentifiers)
           : await this.naverCommerceProductImportService.preview();
       job.status = 'completed';
     } catch (err) {

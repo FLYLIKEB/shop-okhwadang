@@ -931,7 +931,11 @@
       },
       "naverCommerce": {
         "title": "Naver Commerce API product sync",
-        "description": "Fetch SmartStore products from the Naver Commerce API without Excel, update matching store products, and create new products.",
+        "description": "Fetch SmartStore products from the Naver Commerce API without Excel. Select only the products to sync in the preview; matching products are updated and new products are created.",
+        "selectedCount": "{selected} of {total} products selected for sync",
+        "selectAll": "Select all Naver products for sync",
+        "selectProduct": "Select {name} for sync",
+        "selectProducts": "Select at least one Naver product to sync.",
         "previewButton": "Preview API sync",
         "previewing": "Fetching...",
         "commitButton": "Apply API result",

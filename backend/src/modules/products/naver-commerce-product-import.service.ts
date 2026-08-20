@@ -25,13 +25,22 @@ export class NaverCommerceProductImportService {
     return this.process(false);
   }
 
-  async commit(): Promise<SmartStoreImportResult> {
-    return this.process(true);
+  async commit(selectedIdentifiers?: string[]): Promise<SmartStoreImportResult> {
+    return this.process(true, selectedIdentifiers);
   }
 
-  private async process(commit: boolean): Promise<SmartStoreImportResult> {
+  private async process(
+    commit: boolean,
+    selectedIdentifiers?: string[],
+  ): Promise<SmartStoreImportResult> {
     const fetchedProducts = await this.naverCommerceApiClient.fetchProductsWithDetails();
-    const parsedRows = fetchedProducts.map((product) => this.toParsedRow(product));
+    const parsedRows = fetchedProducts
+      .map((product) => this.toParsedRow(product))
+      .filter(
+        (row) =>
+          !selectedIdentifiers ||
+          (row.identifier !== null && selectedIdentifiers.includes(row.identifier)),
+      );
     const options = {
       unmatchedAction: 'create' as const,
     };

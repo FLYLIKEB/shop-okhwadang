@@ -51,9 +51,10 @@ describe('NaverCommerceImportJobService', () => {
       importService as unknown as NaverCommerceProductImportService,
     );
 
-    const started = jobService.start('commit');
+    const started = jobService.start('commit', ['SKU-1']);
     await flushPromises();
 
+    expect(importService.commit).toHaveBeenCalledWith(['SKU-1']);
     expect(jobService.get(started.id)).toMatchObject({
       type: 'commit',
       status: 'failed',

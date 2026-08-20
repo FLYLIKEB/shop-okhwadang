@@ -245,6 +245,25 @@ describe('NaverCommerceProductImportService', () => {
     expect(ingestService.ingest).toHaveBeenCalledTimes(2);
   });
 
+  it('commits only the selected Naver identifiers', async () => {
+    const existing = { id: 7, sku: 'SKU-1', slug: 'old-product' } as Product;
+    const { service, commandService } = createService(NAVER_PRODUCTS, [existing]);
+
+    const result = await service.commit(['SKU-1']);
+
+    expect(result.summary).toMatchObject({
+      totalRows: 1,
+      updateCount: 1,
+      createCount: 0,
+      successCount: 1,
+      failureCount: 0,
+    });
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]).toMatchObject({ identifier: 'SKU-1', productId: 7 });
+    expect(commandService.update).toHaveBeenCalledTimes(1);
+    expect(commandService.create).not.toHaveBeenCalled();
+  });
+
   it('clears generated capacity options when Naver Commerce source has no options (issue #1054)', async () => {
     const existing = { id: 35, sku: 'naver-13622684792', slug: 'naver-13622684792' } as Product;
     const fetchedProducts: NaverCommerceFetchedProduct[] = [
