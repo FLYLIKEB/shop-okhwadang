@@ -71,7 +71,7 @@ export default function AdminPagesPage() {
   }
 
   return (
-    <div className="flex h-full -m-6">
+    <div className="cms-editor flex h-full -m-6 overflow-hidden">
       <PageListSidebar
         pages={pages}
         selectedPageId={selectedPage?.id ?? null}

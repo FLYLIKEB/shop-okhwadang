@@ -9,6 +9,8 @@ import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import NavigationEditor from '@/components/shared/admin/NavigationEditor';
 import { toastMessage } from '@/utils/toastMessages';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { Button } from '@/components/ui/button';
 
 type NavGroup = 'gnb' | 'sidebar' | 'footer';
 
@@ -128,17 +130,16 @@ export default function AdminNavigationPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">네비게이션 관리</h1>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <AdminPageHeader
+        title="네비게이션 관리"
+        description="쇼핑몰의 메뉴 구조를 영역별로 정리하고 미리보기를 확인합니다."
+      />
 
-      <p className="mb-4 text-sm text-muted-foreground">
-        쇼핑몰의 메뉴 구조를 관리합니다. 탭을 선택해 각 영역의 메뉴를 추가·수정·삭제·순서 변경하세요.
-      </p>
-
-      <div className="mb-6 flex items-center justify-between rounded-lg border bg-card p-4">
+      <section className="surface-card flex items-center justify-between gap-4 p-5">
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium">모바일 하단 네비게이션</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="typo-body font-semibold">모바일 하단 네비게이션</span>
+          <span className="typo-body-sm text-muted-foreground">
             모바일 화면 하단에 고정된 탐색 메뉴를 표시합니다.
           </span>
         </div>
@@ -158,23 +159,23 @@ export default function AdminNavigationPage() {
             }`}
           />
         </button>
-      </div>
+      </section>
 
-      <div className="mb-6 flex gap-2 border-b">
+      <div className="flex gap-1 rounded-xl bg-muted/70 p-1" role="tablist" aria-label="네비게이션 영역">
         {TABS.map((tab) => (
-          <button
+          <Button
             key={tab.value}
+            variant={activeTab === tab.value ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => setActiveTab(tab.value)}
             title={tab.hint}
-            className={`flex flex-col items-start px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.value
-                ? 'border-foreground text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
+            role="tab"
+            aria-selected={activeTab === tab.value}
+            className="h-auto min-h-10 flex-1 flex-col items-start gap-0 rounded-lg px-4 py-2 text-left"
           >
-            <span>{tab.label}</span>
-            <span className="text-xs font-normal text-muted-foreground">{tab.hint}</span>
-          </button>
+            <span className="typo-body-sm font-semibold">{tab.label}</span>
+            <span className="typo-label font-normal opacity-70">{tab.hint}</span>
+          </Button>
         ))}
       </div>
 

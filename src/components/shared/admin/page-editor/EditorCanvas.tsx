@@ -12,6 +12,7 @@ import {
 } from '@dnd-kit/sortable';
 import SortableBlockItem from './SortableBlockItem';
 import type { DraftBlock } from './SortableBlockItem';
+import { AdminEmptyState } from '../AdminStates';
 
 interface EditorCanvasProps {
   blocks: DraftBlock[];
@@ -40,15 +41,18 @@ export default function EditorCanvas({
 
   if (blocks.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center text-muted-foreground p-8">
-        <p className="text-sm font-medium text-foreground">블록이 없습니다</p>
-        <p className="text-xs max-w-xs">← 왼쪽 팔레트에서 블록 종류를 클릭하면<br/>이 캔버스에 추가됩니다</p>
+      <div className="flex flex-1 items-center justify-center p-8">
+        <AdminEmptyState
+          title="블록이 없습니다"
+          description="왼쪽 팔레트에서 블록 종류를 클릭하면 이 캔버스에 추가됩니다."
+          className="max-w-sm border-0 bg-transparent shadow-none"
+        />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4">
+    <div className="cms-editor__canvas flex-1 overflow-y-auto p-5">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

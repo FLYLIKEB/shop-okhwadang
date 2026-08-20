@@ -6,6 +6,7 @@ import { GripVertical, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import type { NavigationItem } from '@/lib/api';
 
+
 interface SortableNavigationRowProps {
   item: NavigationItem;
   depth: number;
@@ -40,7 +41,7 @@ export default function SortableNavigationRow({
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
         className={cn(
-          'flex items-center gap-3 rounded-md border bg-background px-3 py-2 mb-1',
+          'surface-card mb-2 flex items-center gap-3 px-3 py-3',
           isDragging && 'opacity-50',
           !item.is_active && 'opacity-50 bg-muted/30',
         )}
@@ -60,14 +61,14 @@ export default function SortableNavigationRow({
         </button>
 
         <div className="flex flex-1 flex-col min-w-0">
-          <span className={cn('text-sm font-medium truncate', !item.is_active && 'line-through text-muted-foreground')}>
+          <span className={cn('typo-body-sm truncate font-semibold', !item.is_active && 'line-through text-muted-foreground')}>
             {item.label}
           </span>
-          <span className="text-xs text-muted-foreground truncate">{item.url}</span>
+          <span className="typo-label truncate text-muted-foreground">{item.url}</span>
         </div>
 
         {item.children.length > 0 && (
-          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-muted px-2 py-1 typo-label text-muted-foreground">
             하위 {item.children.length}
           </span>
         )}

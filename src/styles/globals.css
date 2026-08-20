@@ -1773,3 +1773,85 @@ h3 {
 .toss-inquiry-status--answered > span {
   background: var(--checkout-toss-muted) !important;
 }
+
+/* ── Toss-style CMS admin surfaces ────────────────────────────── */
+.toss-admin {
+  min-height: 100%;
+  background: var(--checkout-toss-background);
+  color: var(--checkout-toss-foreground);
+  font-family: var(--font-body);
+}
+
+.toss-admin main {
+  background: var(--checkout-toss-background);
+}
+
+.toss-admin .surface-card,
+.toss-admin .admin-surface {
+  border-color: transparent;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-admin .admin-table-head {
+  background: var(--checkout-toss-input);
+}
+
+.toss-admin tbody tr {
+  border-color: var(--checkout-toss-border);
+}
+
+.toss-admin input:not([type='checkbox']):not([type='radio']),
+.toss-admin select,
+.toss-admin textarea {
+  border-color: transparent;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-admin input:not([type='checkbox']):not([type='radio']):focus,
+.toss-admin select:focus,
+.toss-admin textarea:focus {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--checkout-toss-primary) 16%, transparent);
+  outline: 0;
+}
+
+.toss-admin .cms-editor {
+  background: var(--checkout-toss-background);
+}
+
+.toss-admin .cms-editor__topbar,
+.toss-admin .cms-editor__sidebar,
+.toss-admin .cms-editor__palette,
+.toss-admin .cms-editor__properties {
+  background: var(--checkout-toss-surface);
+}
+
+.toss-admin .cms-editor__canvas {
+  background: var(--checkout-toss-background);
+}
+
+.toss-admin [class*='border-soft'] {
+  border-color: var(--checkout-toss-border);
+}
+
+.toss-admin [class*='text-muted-foreground'] {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-admin [class*='bg-muted'] {
+  background-color: var(--checkout-toss-input);
+}
+
+.toss-admin .bg-primary,
+.toss-admin button.bg-primary {
+  background-color: var(--checkout-toss-primary);
+}
+
+.toss-admin .bg-primary:hover,
+.toss-admin button.bg-primary:hover {
+  background-color: var(--checkout-toss-primary-hover);
+}

@@ -109,12 +109,12 @@ export default function SortableBlockItem({
       style={style}
       {...attributes}
       className={cn(
-        'mb-2 flex items-center gap-2 rounded-md border bg-background px-3 py-2.5 transition-colors',
-        isSelected && 'ring-2 ring-ring',
+        'surface-card mb-2 flex items-center gap-3 px-4 py-3 transition-colors',
+        isSelected && 'ring-2 ring-primary',
         isDragging && 'opacity-50',
       )}
     >
-      <span className="w-5 shrink-0 text-center text-xs font-bold text-muted-foreground">
+      <span className="w-5 shrink-0 text-center typo-label font-semibold text-muted-foreground">
         {index}
       </span>
 
@@ -132,12 +132,12 @@ export default function SortableBlockItem({
         onClick={onSelect}
         className="flex flex-1 flex-col text-left min-w-0"
       >
-        <span className="text-sm font-medium">
+        <span className="typo-body-sm font-semibold">
           {BLOCK_TYPE_LABELS[block.type]}
-          {block._isNew && <span className="ml-1 text-xs text-blue-500">(신규)</span>}
-          {block._isModified && <span className="ml-1 text-xs text-yellow-500">(수정됨)</span>}
+          {block._isNew && <span className="ml-1 typo-label text-primary">(신규)</span>}
+          {block._isModified && <span className="ml-1 typo-label text-tea">(수정됨)</span>}
         </span>
-        <span className="truncate text-xs text-muted-foreground">
+        <span className="truncate typo-label text-muted-foreground">
           {getContentSummary(block)}
         </span>
       </button>

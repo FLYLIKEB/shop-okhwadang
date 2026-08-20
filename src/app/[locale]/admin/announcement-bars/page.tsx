@@ -8,6 +8,7 @@ import { useFormModal } from '@/components/shared/hooks/useFormModal';
 import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { StatusBadge } from '@/components/shared/admin/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import Modal from '@/components/ui/Modal';
 import FormInput from '@/components/ui/FormInput';
 import { adminAnnouncementBarsApi, type AnnouncementBarItem, type CreateAnnouncementBarData } from '@/lib/api';
@@ -169,13 +170,12 @@ export default function AdminAnnouncementBarsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">안내 바 관리</h1>
-        <Button onClick={openCreate}>새 안내 바</Button>
-      </div>
-
-      <p className="text-sm text-muted-foreground">상단 안내 메시지를 다국어로 관리하고 노출 순서를 조정하세요.</p>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <AdminPageHeader
+        title="안내 바 관리"
+        description="상단 안내 메시지를 다국어로 관리하고 노출 순서를 조정하세요."
+        action={<Button onClick={openCreate}>새 안내 바</Button>}
+      />
 
       <AdminTable
         columns={[
@@ -190,22 +190,22 @@ export default function AdminAnnouncementBarsPage() {
         emptyMessage="등록된 안내 바가 없습니다."
       >
         {items.map((item, index) => (
-          <tr key={item.id} className="border-b hover:bg-muted/40">
-            <td className="px-4 py-3 text-sm text-muted-foreground">{item.sort_order}</td>
-            <td className="px-4 py-3 text-sm">{item.message}</td>
-            <td className="px-4 py-3 text-sm text-muted-foreground">{item.message_en ?? '-'}</td>
-            <td className="px-4 py-3 text-sm text-muted-foreground truncate max-w-56">{item.href ?? '-'}</td>
-            <td className="px-4 py-3">
+          <tr key={item.id} className="border-soft transition-colors hover:bg-muted/40">
+            <td className="admin-row px-4 py-3 typo-body-sm text-muted-foreground">{item.sort_order}</td>
+            <td className="admin-row px-4 py-3 typo-body-sm font-medium">{item.message}</td>
+            <td className="admin-row px-4 py-3 typo-body-sm text-muted-foreground">{item.message_en ?? '-'}</td>
+            <td className="admin-row max-w-56 truncate px-4 py-3 typo-body-sm text-muted-foreground">{item.href ?? '-'}</td>
+            <td className="admin-row px-4 py-3">
               <button type="button" onClick={() => toggleActive(item)} className="text-left">
                 <StatusBadge isActive={item.is_active} />
               </button>
             </td>
-            <td className="px-4 py-3">
-              <div className="flex items-center gap-2 text-sm">
-                <button type="button" onClick={() => moveItem(item.id, -1)} disabled={index === 0} className="text-muted-foreground enabled:hover:text-foreground disabled:opacity-40">↑</button>
-                <button type="button" onClick={() => moveItem(item.id, 1)} disabled={index === items.length - 1} className="text-muted-foreground enabled:hover:text-foreground disabled:opacity-40">↓</button>
-                <button type="button" onClick={() => openEdit(item.id)} className="text-foreground hover:underline">수정</button>
-                <button type="button" onClick={() => handleDelete(item.id)} className="text-destructive hover:underline">삭제</button>
+            <td className="admin-row px-4 py-3">
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" aria-label="위로 이동" onClick={() => moveItem(item.id, -1)} disabled={index === 0} className="h-9 min-h-9 w-9 typo-body-sm">↑</Button>
+                <Button variant="ghost" size="icon" aria-label="아래로 이동" onClick={() => moveItem(item.id, 1)} disabled={index === items.length - 1} className="h-9 min-h-9 w-9 typo-body-sm">↓</Button>
+                <Button variant="ghost" size="sm" onClick={() => openEdit(item.id)}>수정</Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="text-destructive hover:text-destructive">삭제</Button>
               </div>
             </td>
           </tr>

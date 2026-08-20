@@ -17,7 +17,7 @@ export function StringField({ label, value, onChange, placeholder, multiline, on
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
+      <label htmlFor={id} className="mb-1 block typo-label font-semibold text-muted-foreground">{label}</label>
       {multiline ? (
         <textarea
           id={id}
@@ -26,7 +26,7 @@ export function StringField({ label, value, onChange, placeholder, multiline, on
           onBlur={onBlur}
           placeholder={placeholder}
           rows={4}
-          className="w-full rounded-md border border-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className="field-soft w-full rounded-xl border px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       ) : (
         <input
@@ -35,7 +35,7 @@ export function StringField({ label, value, onChange, placeholder, multiline, on
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-md border border-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className="field-soft w-full rounded-xl border px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       )}
     </div>
@@ -53,14 +53,14 @@ export function NumberField({ label, value, onChange }: NumberFieldProps) {
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
+      <label htmlFor={id} className="mb-1 block typo-label font-semibold text-muted-foreground">{label}</label>
       <input
         id={id}
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         min={1}
-        className="w-full rounded-md border border-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        className="field-soft w-full rounded-xl border px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
       />
     </div>
   );
@@ -85,12 +85,12 @@ export function SelectField({ label, value, options, onChange, hint }: SelectFie
   const selectedHint = hint ?? options.find((o) => o.value === value)?.hint;
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
+      <label htmlFor={id} className="mb-1 block typo-label font-semibold text-muted-foreground">{label}</label>
       <select
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        className="field-soft w-full rounded-xl border px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -99,7 +99,7 @@ export function SelectField({ label, value, options, onChange, hint }: SelectFie
         ))}
       </select>
       {selectedHint && (
-        <p className="mt-1 text-xs text-muted-foreground">{selectedHint}</p>
+        <p className="mt-1 typo-label text-muted-foreground">{selectedHint}</p>
       )}
     </div>
   );

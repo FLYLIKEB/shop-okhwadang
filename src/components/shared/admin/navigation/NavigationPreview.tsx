@@ -18,7 +18,7 @@ function GNBDropdownPreviewItem({ item }: { item: NavigationItem }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <span className="flex items-center gap-1 px-3 py-1 text-slate-200 hover:text-white text-xs cursor-default transition-colors duration-200">
+      <span className="flex cursor-default items-center gap-1 px-3 py-1 typo-body-sm text-muted-foreground transition-colors duration-200 hover:text-foreground">
         {item.label}
         {hasActiveChildren && (
           <svg
@@ -35,9 +35,9 @@ function GNBDropdownPreviewItem({ item }: { item: NavigationItem }) {
         )}
       </span>
       {hasActiveChildren && isHovered && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 min-w-36 rounded-lg border border-slate-600 bg-slate-800 shadow-xl py-1 z-10 animate-accordion-down">
+        <div className="absolute left-1/2 top-full z-10 mt-2 min-w-36 -translate-x-1/2 rounded-xl border border-soft bg-background py-1 shadow-xl animate-accordion-down">
           {activeChildren.map((child: NavigationItem) => (
-            <span key={child.id} className="flex items-center px-4 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all duration-200 cursor-default border-l-2 border-transparent hover:border-slate-400/50">
+            <span key={child.id} className="flex cursor-default items-center border-l-2 border-transparent px-4 py-2 typo-body-sm text-muted-foreground transition-all duration-200 hover:border-primary/50 hover:bg-muted hover:text-foreground">
               {child.label}
             </span>
           ))}
@@ -58,11 +58,11 @@ export default function NavigationPreview({ group, items }: NavigationPreviewPro
 
   if (group === 'gnb') {
     return (
-      <div className="rounded-lg border bg-slate-900 px-4 py-3">
-        <div className="flex items-center gap-1 text-sm text-white">
-          <span className="mr-4 font-bold text-white">로고</span>
+      <div className="surface-card bg-background px-4 py-3">
+        <div className="flex items-center gap-1 typo-body-sm text-foreground">
+          <span className="mr-4 font-bold text-primary">옥화당</span>
           {activeItems.length === 0 ? (
-            <span className="text-xs text-slate-400">(메뉴 없음)</span>
+            <span className="typo-label text-muted-foreground">(메뉴 없음)</span>
           ) : (
             activeItems.map((item) => (
               <GNBDropdownPreviewItem key={item.id} item={item} />
@@ -75,20 +75,20 @@ export default function NavigationPreview({ group, items }: NavigationPreviewPro
 
   if (group === 'sidebar') {
     return (
-      <div className="rounded-lg border bg-white shadow-md w-48 py-2 text-sm">
+      <div className="surface-card w-48 py-2 typo-body-sm shadow-md">
         {activeItems.length === 0 ? (
-          <p className="px-4 py-2 text-xs text-muted-foreground">(메뉴 없음)</p>
+          <p className="px-4 py-2 typo-label text-muted-foreground">(메뉴 없음)</p>
         ) : (
           activeItems.map((item) => (
             <div key={item.id}>
-              <div className="flex items-center justify-between px-4 py-1.5 hover:bg-muted text-foreground text-xs">
+              <div className="flex items-center justify-between px-4 py-1.5 typo-body-sm text-foreground hover:bg-muted">
                 <span>{item.label}</span>
                 {item.children.filter(c => c.is_active).length > 0 && (
                   <ChevronRight className="h-3 w-3 text-muted-foreground" />
                 )}
               </div>
               {item.children.filter(c => c.is_active).map(child => (
-                <div key={child.id} className="px-8 py-1 text-xs text-muted-foreground hover:bg-muted">
+                <div key={child.id} className="px-8 py-1 typo-body-sm text-muted-foreground hover:bg-muted">
                   {child.label}
                 </div>
               ))}
@@ -101,10 +101,10 @@ export default function NavigationPreview({ group, items }: NavigationPreviewPro
 
   // footer
   return (
-    <div className="rounded-lg border bg-slate-800 px-6 py-4">
-      <div className="flex flex-wrap gap-4 text-xs text-slate-300">
+    <div className="surface-card bg-muted/50 px-6 py-4">
+      <div className="flex flex-wrap gap-4 typo-body-sm text-muted-foreground">
         {activeItems.length === 0 ? (
-          <span className="text-slate-500">(메뉴 없음)</span>
+          <span className="text-muted-foreground">(메뉴 없음)</span>
         ) : (
           activeItems.map((item) => (
             <span key={item.id} className="hover:text-white flex items-center gap-0.5">
