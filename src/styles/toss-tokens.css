@@ -154,6 +154,14 @@ html[data-theme='dark'] {
   box-shadow: var(--checkout-toss-shadow);
 }
 
+.toss-product-detail__title {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
 .toss-header__actions .toss-button--gray,
 .toss-header__mobile-actions .toss-button--gray {
   background: transparent !important;

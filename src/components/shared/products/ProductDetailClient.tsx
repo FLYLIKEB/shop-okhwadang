@@ -377,7 +377,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Name */}
-          <h1 className="typo-h3 font-body font-semibold tracking-tight text-foreground">{product.name}</h1>
+          <h1 className="toss-product-detail__title text-foreground">{product.name}</h1>
 
           {/* Short description */}
           {product.shortDescription && (
