@@ -27,7 +27,7 @@ export default function SortDropdown() {
       onChange={handleChange}
       aria-label={t('label')}
       className={cn(
-        'rounded-md border border-input bg-background px-3 py-1.5 text-sm',
+        'min-h-11 rounded-full bg-muted px-4 py-2 typo-body-sm font-medium text-foreground',
         'focus:outline-none focus:ring-2 focus:ring-ring',
       )}
     >

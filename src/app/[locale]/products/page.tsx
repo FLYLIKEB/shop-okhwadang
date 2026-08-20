@@ -79,64 +79,71 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     ? categories.find((c) => c.id === categoryId || c.children?.some((child) => child.id === categoryId))
     : null;
 
+  const pageTitle = q ? t('searchResults', { query: q }) : isFeatured ? t('featuredProducts') : t('productList');
+
   return (
-    <div className="layout-container layout-page">
-      <Breadcrumb category={selectedCategory} />
+    <div className="bg-muted/60">
+      <div className="layout-container layout-page">
+        <Breadcrumb category={selectedCategory} />
 
-      {selectedCategory && (
-        <CategoryHeroBanner category={selectedCategory} />
-      )}
+        <section className="overflow-hidden rounded-2xl bg-card px-5 py-8 shadow-sm md:px-10 md:py-12">
+          {selectedCategory ? (
+            <CategoryHeroBanner category={selectedCategory} />
+          ) : (
+            <div className="max-w-3xl">
+              <p className="typo-body-sm font-medium text-muted-foreground">{t('listHeroEyebrow')}</p>
+              <h1 className="mt-3 typo-h1 font-body text-foreground">
+                {pageTitle}
+              </h1>
+              <p className="mt-4 typo-body text-muted-foreground">
+                {q ? t('listHeroSearchDescription', { query: q }) : t('listHeroDescription')}
+              </p>
+            </div>
+          )}
+        </section>
 
-      {!selectedCategory && !q && !isFeatured && (
-        <h1 className="py-6 text-2xl font-display font-medium text-foreground">
-          {t('productList')}
-        </h1>
-      )}
-
-      {(q || isFeatured) && (
-        <h1 className="py-6 text-xl font-bold text-foreground">
-          {q ? t('searchResults', { query: q }) : t('featuredProducts')}
-        </h1>
-      )}
-
-      <div className="md:hidden">
-        <Suspense fallback={null}>
-          <MobileFilterBar categories={categories ?? []} filterGroups={filterGroups} />
-        </Suspense>
-      </div>
-
-      <div className="flex gap-8 pb-12">
-        <div className="hidden md:block md:w-48 md:shrink-0">
+        <div className="mt-5 md:hidden">
           <Suspense fallback={null}>
-            <FilterSidebar categories={categories ?? []} filterGroups={filterGroups} />
+            <MobileFilterBar categories={categories ?? []} filterGroups={filterGroups} />
           </Suspense>
         </div>
 
-        <div className="min-w-0 flex-1">
-          {error ? (
-            <ProductErrorState />
-          ) : !productsData || productsData.items.length === 0 ? (
-            <EmptyState
-              title={t('noProducts')}
-              description={q ? t('noSearchResults', { query: q }) : t('noProductsDescription')}
-            />
-          ) : (
-            <>
-              <Suspense fallback={<ProductSkeleton />}>
-                <ProductGrid products={productsData.items} total={productsData.total} locale={safeLocale} />
+        <div className="mt-6 flex gap-8 pb-12">
+          <div className="hidden md:block md:w-64 md:shrink-0">
+            <div className="sticky top-24 rounded-2xl bg-card p-5 shadow-sm">
+              <Suspense fallback={null}>
+                <FilterSidebar categories={categories ?? []} filterGroups={filterGroups} />
               </Suspense>
+            </div>
+          </div>
 
-              <div className="mt-8">
-                <Suspense fallback={null}>
-                  <Pagination
-                    total={productsData.total}
-                    page={productsData.page}
-                    limit={productsData.limit}
-                  />
+          <div className="min-w-0 flex-1">
+            {error ? (
+              <ProductErrorState />
+            ) : !productsData || productsData.items.length === 0 ? (
+              <EmptyState
+                className="rounded-2xl bg-card px-6 shadow-sm"
+                title={t('noProducts')}
+                description={q ? t('noSearchResults', { query: q }) : t('noProductsDescription')}
+              />
+            ) : (
+              <>
+                <Suspense fallback={<ProductSkeleton />}>
+                  <ProductGrid products={productsData.items} total={productsData.total} locale={safeLocale} />
                 </Suspense>
-              </div>
-            </>
-          )}
+
+                <div className="mt-10">
+                  <Suspense fallback={null}>
+                    <Pagination
+                      total={productsData.total}
+                      page={productsData.page}
+                      limit={productsData.limit}
+                    />
+                  </Suspense>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

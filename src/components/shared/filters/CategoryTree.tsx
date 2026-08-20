@@ -36,10 +36,10 @@ export default function CategoryTree({ categories, selectedId, onSelect }: Categ
           type="button"
           onClick={() => onSelect(undefined)}
           className={cn(
-            'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
+            'min-h-11 w-full rounded-full px-4 py-2 text-left typo-body-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             selectedId === undefined
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+              ? 'bg-foreground text-background shadow-sm'
+              : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
           )}
         >
           {tCommon('all')}
@@ -63,16 +63,16 @@ export default function CategoryTree({ categories, selectedId, onSelect }: Categ
                   onSelect(category.id);
                 }}
                 className={cn(
-                  'flex-1 rounded-md px-3 py-1.5 text-left text-sm transition-colors',
+                  'min-h-11 flex-1 rounded-full px-4 py-2 text-left typo-body-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   isSelected || isChildSelected
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                    ? 'bg-foreground text-background shadow-sm'
+                    : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
               >
                 <span className="flex items-center justify-between">
                   <span>{category.name}</span>
                   {hasChildren && (
-                    <span className="text-xs ml-1">{isExpanded ? '▲' : '▼'}</span>
+                    <span className="typo-label ml-1" aria-hidden="true">{isExpanded ? '▲' : '▼'}</span>
                   )}
                 </span>
               </button>
@@ -85,10 +85,10 @@ export default function CategoryTree({ categories, selectedId, onSelect }: Categ
                       type="button"
                       onClick={() => onSelect(child.id)}
                       className={cn(
-                        'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
+                        'min-h-11 w-full rounded-full px-4 py-2 text-left typo-body-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         selectedId === Number(child.id)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                          ? 'bg-foreground text-background shadow-sm'
+                          : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
                       )}
                     >
                       {child.name}

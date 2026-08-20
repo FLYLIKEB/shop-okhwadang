@@ -34,7 +34,7 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
   };
 
   const inputClass = cn(
-    'w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm',
+    'min-h-11 w-full rounded-full bg-muted px-4 py-2 typo-body-sm',
     'focus:outline-none focus:ring-2 focus:ring-ring',
   );
 
@@ -50,7 +50,7 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
           onChange={(e) => setLocalMin(e.target.value)}
           className={inputClass}
         />
-        <span className="shrink-0 text-sm text-muted-foreground">~</span>
+        <span className="shrink-0 typo-body-sm text-muted-foreground">~</span>
         <input
           type="number"
           aria-label={t('priceMax')}
@@ -62,7 +62,7 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
         />
       </div>
       {(min !== undefined || max !== undefined) && (
-        <p className="text-xs text-muted-foreground">
+        <p className="typo-label text-muted-foreground">
           {min !== undefined && max !== undefined
             ? `${formatCurrency(min, locale)} ~ ${formatCurrency(max, locale)}`
             : min !== undefined
@@ -74,8 +74,8 @@ export default function PriceRangeFilter({ min, max, onChange }: PriceRangeFilte
         type="button"
         onClick={handleApply}
         className={cn(
-          'w-full rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground',
-          'transition-colors hover:bg-primary/90',
+          'min-h-11 w-full rounded-full bg-foreground px-4 py-2 typo-body-sm font-medium text-background',
+          'transition-colors hover:bg-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         )}
       >
         {tCommon('apply')}

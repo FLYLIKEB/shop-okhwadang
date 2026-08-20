@@ -59,13 +59,13 @@ export default function FilterSidebar({ categories, filterGroups }: FilterSideba
 
   const sidebarContent = (
     <aside aria-label={t('filterLabel')} className="flex flex-col">
-      <div className="flex items-center justify-between py-4 border-b border-border">
-        <span className="text-sm font-semibold text-foreground">{t('label')}</span>
+      <div className="flex items-center justify-between border-b border-soft pb-4">
+        <span className="typo-body-sm font-semibold text-foreground">{t('label')}</span>
         {hasActiveFilters && (
           <button
             type="button"
             onClick={handleReset}
-            className="text-xs text-muted-foreground underline hover:text-foreground"
+            className="typo-label font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
             {t('resetFilter')}
           </button>
@@ -108,14 +108,14 @@ export default function FilterSidebar({ categories, filterGroups }: FilterSideba
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
           className={cn(
-            'rounded-md border border-input bg-background px-3 py-1.5 text-sm',
-            'transition-colors hover:bg-accent',
+            'min-h-11 rounded-full bg-card px-4 py-2 typo-body-sm shadow-sm',
+            'transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           )}
         >
           {mobileOpen ? t('closeFilter') : t('openFilter')}
         </button>
         {mobileOpen && (
-          <div className="mt-4 rounded-lg border border-border bg-background p-4">
+          <div className="mt-4 rounded-2xl bg-card p-4 shadow-sm">
             {sidebarContent}
           </div>
         )}

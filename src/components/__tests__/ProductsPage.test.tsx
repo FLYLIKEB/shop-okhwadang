@@ -24,6 +24,7 @@ const translations: Record<string, string> = {
   'product.sort.priceDesc': '가격높은순',
   'product.sort.popular': '인기순',
   'product.totalItems': '총 {count}개 상품',
+  'product.filter.categoryFilterLabel': '카테고리 필터',
   'common.pagination.nav': '페이지네이션',
   'common.pagination.prev': '이전',
   'common.pagination.next': '다음',
@@ -140,5 +141,17 @@ describe('Pagination', () => {
     const { default: Pagination } = await import('@/components/shared/products/Pagination');
     const { container } = render(<Pagination total={10} page={1} limit={20} />);
     expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('MobileFilterBar', () => {
+  it('uses locale-backed category aria label and Toss-style surface tokens', async () => {
+    const { default: MobileFilterBar } = await import('@/components/shared/filters/MobileFilterBar');
+
+    render(<MobileFilterBar categories={[{ id: 1, name: '다구', parentId: null, children: [] } as never]} filterGroups={[]} />);
+
+    const categoryGroup = screen.getByRole('group', { name: '카테고리 필터' });
+    expect(categoryGroup).toBeInTheDocument();
+    expect(categoryGroup.closest('.rounded-2xl')).toHaveClass('bg-card', 'shadow-sm');
   });
 });

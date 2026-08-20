@@ -331,7 +331,8 @@
       "priceMax": "최대",
       "clayType": "니료",
       "teapotShape": "형태",
-      "category": "카테고리"
+      "category": "카테고리",
+      "categoryFilterLabel": "카테고리 필터"
     },
     "status": {
       "draft": "임시저장",
@@ -369,7 +370,10 @@
     "prevImage": "이전 이미지",
     "nextImage": "다음 이미지",
     "imageDot": "이미지 {index}",
-    "defaultImage": "상품 이미지"
+    "defaultImage": "상품 이미지",
+    "listHeroEyebrow": "옥화당 상품 탐색",
+    "listHeroDescription": "차와 다구를 목적에 맞게 고르고, 필터와 정렬로 원하는 상품을 빠르게 찾아보세요.",
+    "listHeroSearchDescription": "검색어 “{query}”에 맞는 상품을 필터와 정렬로 더 좁혀볼 수 있습니다."
   },
   "cart": {
     "title": "장바구니",

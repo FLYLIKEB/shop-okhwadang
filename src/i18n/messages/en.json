@@ -331,7 +331,8 @@
       "priceMax": "Max",
       "clayType": "Clay Type",
       "teapotShape": "Shape",
-      "category": "Category"
+      "category": "Category",
+      "categoryFilterLabel": "Category filter"
     },
     "status": {
       "draft": "Draft",
@@ -369,7 +370,10 @@
     "prevImage": "Previous image",
     "nextImage": "Next image",
     "imageDot": "Image {index}",
-    "defaultImage": "Product image"
+    "defaultImage": "Product image",
+    "listHeroEyebrow": "Ockhwadang product discovery",
+    "listHeroDescription": "Browse tea and teaware by intent, then narrow the catalog with filters and sorting.",
+    "listHeroSearchDescription": "Refine products matching “{query}” with filters and sorting."
   },
   "cart": {
     "title": "Cart",

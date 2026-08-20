@@ -56,21 +56,21 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
   const pages = getPageNumbers(page, totalPages);
 
   return (
-    <nav aria-label={t('nav')} className="flex items-center justify-center gap-1">
+    <nav aria-label={t('nav')} className="flex flex-wrap items-center justify-center gap-2">
       <Button
         type="button"
         variant="gray"
         size="sm"
         onClick={() => goToPage(page - 1)}
         disabled={page <= 1}
-        className="min-w-16"
+        className="min-h-11 min-w-16 rounded-full bg-card shadow-sm"
       >
         {t('prev')}
       </Button>
 
       {pages.map((p, idx) =>
         p === 'ellipsis' ? (
-          <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
+          <span key={`ellipsis-${idx}`} className="px-2 typo-body-sm text-muted-foreground">
             ...
           </span>
         ) : (
@@ -82,7 +82,7 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
             onClick={() => goToPage(p)}
             aria-label={t('pageNumber')}
             aria-current={p === page ? 'page' : undefined}
-            className="min-w-8"
+            className="min-h-11 min-w-11 rounded-full shadow-sm"
           >
             {p}
           </Button>
@@ -95,7 +95,7 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
         size="sm"
         onClick={() => goToPage(page + 1)}
         disabled={page >= totalPages}
-        className="min-w-16"
+        className="min-h-11 min-w-16 rounded-full bg-card shadow-sm"
       >
         {t('next')}
       </Button>
