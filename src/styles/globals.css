@@ -808,6 +808,7 @@ h3 {
 
 /* Shared issue notifications use the same compact surface language as checkout. */
 .toss-toast {
+  position: relative;
   min-height: 3.5rem;
   padding: 0.75rem 4rem 0.75rem 0.875rem;
   letter-spacing: -0.01em;
@@ -848,6 +849,12 @@ h3 {
 .toss-toast__close:hover {
   background: var(--checkout-toss-input);
   color: var(--checkout-toss-foreground);
+}
+
+.toss-toast[data-sonner-toast] [data-close-button] {
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
 }
 
 .toss-toast__action {
