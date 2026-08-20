@@ -72,10 +72,10 @@ export default function InquiriesPage() {
       ) : (
         <ul className="toss-inquiry__list space-y-4">
           {inquiries.map((inquiry) => (
-            <li key={inquiry.id} className="toss-inquiry__card surface-card overflow-hidden">
+            <li key={inquiry.id} className="toss-inquiry__card surface-card overflow-hidden bg-white">
               <button
                 onClick={() => setOpenId(openId === inquiry.id ? null : inquiry.id)}
-                className="toss-inquiry__summary flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-muted"
+                className="toss-inquiry__summary flex w-full items-center justify-between bg-white px-5 py-4 text-left transition-colors hover:bg-white"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">

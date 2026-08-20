@@ -171,6 +171,7 @@
   "product": {
     "addToCart": "Add to Cart",
     "addingToCart": "Adding...",
+    "soldout": "Sold out",
     "discountOff": "{percent}% OFF",
     "prevProduct": "Previous product",
     "nextProduct": "Next product",

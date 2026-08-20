@@ -171,6 +171,7 @@
   "product": {
     "addToCart": "장바구니 담기",
     "addingToCart": "담는 중...",
+    "soldout": "품절",
     "discountOff": "{percent}% 할인",
     "prevProduct": "이전 상품",
     "nextProduct": "다음 상품",

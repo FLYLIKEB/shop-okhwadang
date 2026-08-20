@@ -48,7 +48,7 @@ export default function BlockRenderer({ blocks }: Props) {
   if (visibleBlocks.length === 0) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="toss-cms__blocks space-y-8">
       {visibleBlocks.map((block, index) => {
         const Component = blockComponentMap[block.type];
         const isHero = block.type === 'hero_banner';

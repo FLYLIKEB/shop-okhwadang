@@ -1636,6 +1636,100 @@ h3 {
   background-color: var(--checkout-toss-primary-hover);
 }
 
+/* ── Toss-style CMS and customer center surfaces ──────────────── */
+.toss-cms,
+.toss-customer-page {
+  background: var(--checkout-toss-background);
+}
+
+.toss-cms__hero {
+  border: 0;
+  background: var(--checkout-toss-surface);
+}
+
+.toss-cms__hero > div {
+  padding-block: 4rem;
+}
+
+.toss-cms__hero h1 {
+  letter-spacing: -0.035em;
+}
+
+.toss-cms__hero .h-px {
+  display: none;
+}
+
+.toss-cms__blocks section[class*='border'],
+.toss-cms__blocks [class*='rounded-lg'][class*='border'],
+.toss-cms__blocks [class*='rounded-md'][class*='border'] {
+  border: 0;
+}
+
+.toss-cms__blocks [class*='rounded-lg'][class*='border'],
+.toss-cms__blocks [class*='rounded-md'][class*='border'] {
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-cms__blocks [class~='bg-muted'],
+.toss-cms__blocks [class~='bg-muted/20'],
+.toss-cms__blocks [class~='bg-background/80'] {
+  background: var(--checkout-toss-surface);
+}
+
+.toss-cms__blocks a[class*='border'],
+.toss-cms__blocks button[class*='border'] {
+  border: 0;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-cms__blocks a[class*='border']:hover,
+.toss-cms__blocks button[class*='border']:hover {
+  background: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-customer-category,
+.toss-customer-lookup {
+  border: 0;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-customer-category:hover {
+  border-color: transparent;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-customer-lookup a {
+  color: var(--checkout-toss-primary);
+  text-decoration: none;
+}
+
+.toss-customer-faq {
+  overflow: hidden;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-customer-faq__trigger {
+  min-height: 3.75rem;
+  background: var(--checkout-toss-surface);
+}
+
+.toss-customer-faq__trigger:hover {
+  background: var(--checkout-toss-input);
+}
+
+.toss-customer-faq__answer {
+  background: var(--checkout-toss-input);
+  padding-inline: 1rem;
+}
+
 .toss-inquiry__new {
   box-shadow: var(--checkout-toss-shadow);
 }
@@ -1648,7 +1742,7 @@ h3 {
 
 .toss-inquiry__summary {
   min-height: 5.5rem;
-  background-color: var(--checkout-toss-surface);
+  background-color: var(--checkout-toss-surface) !important;
 }
 
 .toss-inquiry__summary:hover {
