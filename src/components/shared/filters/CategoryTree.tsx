@@ -38,7 +38,7 @@ export default function CategoryTree({ categories, selectedId, onSelect }: Categ
           className={cn(
             'min-h-11 w-full rounded-full px-4 py-2 text-left typo-body-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             selectedId === undefined
-              ? 'bg-foreground text-background shadow-sm'
+              ? 'bg-primary text-primary-foreground shadow-sm'
               : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
           )}
         >
@@ -65,7 +65,7 @@ export default function CategoryTree({ categories, selectedId, onSelect }: Categ
                 className={cn(
                   'min-h-11 flex-1 rounded-full px-4 py-2 text-left typo-body-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   isSelected || isChildSelected
-                    ? 'bg-foreground text-background shadow-sm'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
               >
@@ -87,7 +87,7 @@ export default function CategoryTree({ categories, selectedId, onSelect }: Categ
                       className={cn(
                         'min-h-11 w-full rounded-full px-4 py-2 text-left typo-body-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         selectedId === Number(child.id)
-                          ? 'bg-foreground text-background shadow-sm'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
                       )}
                     >
