@@ -73,6 +73,15 @@ describe('Next.js CSP headers', () => {
     expect(directives['img-src']).toContain('https://www.google.co.kr');
   });
 
+  it('allows the Kakao postcode script and embedded search frame', async () => {
+    const { directives } = await loadNextConfigSnapshot();
+
+    expect(directives['script-src']).toContain('https://t1.daumcdn.net');
+    expect(directives['frame-src']).toContain('https://postcode.map.daum.net');
+    expect(directives['frame-src']).toContain('https://postcode.map.kakao.com');
+    expect(directives['connect-src']).toContain('https://postcode.map.kakao.com');
+  });
+
   it('uses the shared checkout gateway contract sources by default', async () => {
     const { directives } = await loadNextConfigSnapshot();
     const expectedSources = getConfiguredCheckoutGatewayCspSources(undefined);
