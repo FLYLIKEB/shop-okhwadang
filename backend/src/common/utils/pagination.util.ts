@@ -1,4 +1,5 @@
 import { SelectQueryBuilder, ObjectLiteral } from 'typeorm';
+import { DEFAULT_LIMIT, DEFAULT_PAGE, MAX_LIMIT } from '../dto/pagination-query.dto';
 
 export interface PaginatedResult<T> {
   items: T[];
@@ -15,8 +16,8 @@ export async function paginate<T extends ObjectLiteral>(
   qb: SelectQueryBuilder<T>,
   pagination: { page?: number; limit?: number },
 ): Promise<PaginatedResult<T>> {
-  const page = pagination.page ?? 1;
-  const limit = Math.min(Math.max(1, pagination.limit ?? 20), 100);
+  const page = pagination.page ?? DEFAULT_PAGE;
+  const limit = Math.min(Math.max(1, pagination.limit ?? DEFAULT_LIMIT), MAX_LIMIT);
 
   const [items, total] = await qb
     .skip((page - 1) * limit)

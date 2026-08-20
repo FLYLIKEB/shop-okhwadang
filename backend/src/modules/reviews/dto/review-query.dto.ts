@@ -1,8 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsInt, IsIn, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsIn, IsInt, IsOptional } from 'class-validator';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
-export class ReviewQueryDto {
+export class ReviewQueryDto extends PaginationQueryDto {
+  @ApiProperty({ example: 1, description: '페이지 번호', required: false })
+  page?: number;
+
+  @ApiProperty({ example: 10, description: '페이지당 개수', required: false })
+  limit?: number;
+
   @ApiProperty({ example: 1, description: '상품 ID', required: false })
   @IsOptional()
   @Type(() => Number)
@@ -13,19 +20,4 @@ export class ReviewQueryDto {
   @IsOptional()
   @IsIn(['recent', 'rating_high', 'rating_low'])
   sort?: 'recent' | 'rating_high' | 'rating_low';
-
-  @ApiProperty({ example: 1, description: '페이지 번호', required: false })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @ApiProperty({ example: 10, description: '페이지당 개수', required: false })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100, { message: 'limit은 100 이하여야 합니다.' })
-  limit?: number;
 }
