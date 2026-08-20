@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
+import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import EmptyState from '@/components/shared/EmptyState';
@@ -14,12 +15,14 @@ import { formatCurrency, type Locale } from '@/utils/currency';
 import { SESSION_KEYS } from '@/constants/storage';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { shippingApi, type ShippingQuoteResponse } from '@/lib/api';
+import { cn } from '@/components/ui/utils';
 
 export default function CartPage() {
   const t = useTranslations('cart');
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const locale = (params?.locale ?? 'ko') as Locale;
+  const { isVisible: isNavVisible } = useMobileNav();
   const { items, isLoading, updateQuantity, removeItem } = useCart();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResponse | null>(null);
@@ -200,6 +203,31 @@ export default function CartPage() {
     </>
   );
 
+  const mobileOrderSummaryContent = (
+    <div className="checkout-toss-mobile-summary-content">
+      <div className="grid grid-cols-3 gap-3 text-xs">
+        <div>
+          <p className="text-muted-foreground">{t('selectedItems')}</p>
+          <p className="mt-1 font-semibold text-foreground">{selectedIds.size}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">{t('productAmount')}</p>
+          <p className="mt-1 font-semibold text-foreground">{formatCurrency(selectedTotal, locale)}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">{t('shippingFee')}</p>
+          <p className="mt-1 font-semibold text-foreground">
+            {selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee, locale)}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 flex items-end justify-between border-t border-soft pt-3">
+        <span className="typo-body-sm font-semibold">{t('total')}</span>
+        <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
+      </div>
+    </div>
+  );
+
   return (
     <div className="checkout-toss-theme min-h-screen pb-36 lg:pb-8">
       <div className="layout-container layout-page max-w-3xl">
@@ -249,6 +277,20 @@ export default function CartPage() {
               {t('orderSelected')}
             </Button>
           </section>
+      </div>
+
+      <div
+        className={cn(
+          'checkout-toss-mobile-cta mobile-sticky-cta fixed z-40 border-t border-soft bg-background lg:hidden',
+          isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
+        )}
+      >
+        <div className="mobile-sticky-inner">
+          {mobileOrderSummaryContent}
+          <Button type="button" variant="brown" className="mt-3 w-full" onClick={handleOrder}>
+            {t('orderSelected')}
+          </Button>
+        </div>
       </div>
       </div>
     </div>

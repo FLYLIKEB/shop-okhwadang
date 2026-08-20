@@ -1040,6 +1040,13 @@ h3 {
   background: var(--checkout-toss-surface);
 }
 
+.checkout-toss-theme .checkout-toss-mobile-summary-content {
+  border: 1px solid var(--checkout-toss-border);
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  padding: 0.75rem;
+}
+
 .checkout-toss-theme .checkout-toss-submit-card button,
 .checkout-toss-theme .checkout-toss-mobile-cta button {
   min-height: 3.25rem;

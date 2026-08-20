@@ -68,8 +68,6 @@ const CartItemRowComponent = memo(function CartItemRow({
             {item.option.name}: {item.option.value}
           </p>
         )}
-        <p className="typo-price text-foreground">{formatCurrency(item.unitPrice, locale)}</p>
-
         <div className="mt-2 flex flex-wrap items-center gap-2 md:hidden">
           <QuantitySelector
             quantity={item.quantity}

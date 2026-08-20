@@ -193,10 +193,13 @@ describe('CartPage', () => {
     const { container } = render(<CartPage />);
 
     expect(container.querySelector('section.checkout-toss-submit-card')).toBeInTheDocument();
-    expect(container.querySelector('.mobile-sticky-cta')).not.toBeInTheDocument();
+    expect(container.querySelector('.mobile-sticky-cta')).toHaveClass('lg:hidden');
     expect(container.querySelector('aside')).not.toBeInTheDocument();
     expect(screen.getAllByText('주문 요약')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: '선택 상품 주문하기' })).toHaveClass('toss-button--brown');
+    expect(screen.getAllByRole('button', { name: '선택 상품 주문하기' })).toHaveLength(2);
+    screen.getAllByRole('button', { name: '선택 상품 주문하기' }).forEach((button) => {
+      expect(button).toHaveClass('toss-button--brown');
+    });
   });
 
   it('calculates selected total for checked items', async () => {

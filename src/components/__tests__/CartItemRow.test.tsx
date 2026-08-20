@@ -52,7 +52,7 @@ describe('CartItemRow', () => {
     expect(screen.getByAltText('썸네일')).toHaveAttribute('src', '/img/thumb.webp');
   });
 
-  it('renders product name, unitPrice, quantity, subtotal', () => {
+  it('renders the product price once with the quantity subtotal', () => {
     const onSelect = vi.fn();
     const onQuantityChange = vi.fn();
     const onRemove = vi.fn();
@@ -66,7 +66,7 @@ describe('CartItemRow', () => {
       />,
     );
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
-    expect(screen.getAllByText('₩15,000')).toHaveLength(1);
+    expect(screen.queryByText('₩15,000')).not.toBeInTheDocument();
     expect(screen.getAllByText('2')).toHaveLength(2);
     expect(screen.getAllByText('₩30,000')).toHaveLength(2);
   });
