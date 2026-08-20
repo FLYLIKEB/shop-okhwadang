@@ -150,9 +150,9 @@ function DropdownLanguageSelector({ className, compact = false }: { className?: 
         aria-expanded={isOpen}
         aria-label={t('languageSelector')}
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+        className="h-8 min-h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
       >
-        <Globe className="h-4 w-4" aria-hidden="true" />
+        <Globe className="h-3.5 w-3.5" aria-hidden="true" />
         {!compact && <span>{current.shortLabel}</span>}
       </Button>
 

@@ -36,12 +36,12 @@ export default function ThemeToggle({ className, iconClassName }: ThemeTogglePro
       onClick={toggleTheme}
       aria-label={label}
       title={label}
-      className={cn('text-muted-foreground hover:text-foreground', className)}
+      className={cn('h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground', className)}
     >
       {theme === 'dark' ? (
-        <Sun className={cn('h-5 w-5', iconClassName)} aria-hidden="true" />
+        <Sun className={cn('h-4 w-4', iconClassName)} aria-hidden="true" />
       ) : (
-        <Moon className={cn('h-5 w-5', iconClassName)} aria-hidden="true" />
+        <Moon className={cn('h-4 w-4', iconClassName)} aria-hidden="true" />
       )}
     </Button>
   );

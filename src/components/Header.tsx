@@ -85,9 +85,9 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? tNav('closeMenu') : tNav('openMenu')}
-            className="shrink-0 md:hidden"
+            className="h-8 min-h-8 w-8 shrink-0 rounded-md md:hidden"
           >
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
 
           {/* 로고 */}
@@ -112,8 +112,8 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
               aria-label={t('searchLabel')}
               className="toss-header__search-input w-full rounded-md bg-muted/40 pl-3 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-muted/60 transition-colors"
             />
-            <Button type="submit" variant="gray" size="icon" aria-label={t('searchButton')} className="toss-header__search-button absolute right-1 h-9 min-h-9 w-9 text-muted-foreground hover:text-foreground">
-              <Search className="h-4 w-4" />
+            <Button type="submit" variant="gray" size="icon" aria-label={t('searchButton')} className="toss-header__search-button absolute right-1 h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground">
+              <Search className="h-3.5 w-3.5" />
             </Button>
           </form>
 
@@ -124,11 +124,11 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             <CartBadge itemCount={itemCount} />
             {isAuthenticated ? (
               <>
-                <Link href="/my" aria-label={t('myPage')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <User className="h-5 w-5" />
+                <Link href="/my" aria-label={t('myPage')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                  <User className="h-4 w-4" />
                 </Link>
-                <Button type="button" variant="gray" size="icon" onClick={() => void logout()} aria-label={t('logout')} className="text-muted-foreground hover:text-foreground">
-                  <LogOut className="h-5 w-5" />
+                <Button type="button" variant="gray" size="icon" onClick={() => void logout()} aria-label={t('logout')} className="h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground">
+                  <LogOut className="h-4 w-4" />
                 </Button>
                 {isAdmin && (
                   <Link href="/admin" aria-label={t('adminPage')} className="ml-2 inline-flex items-center gap-2 rounded-md border border-primary bg-primary px-3 py-2 typo-button text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
@@ -138,8 +138,8 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
                 )}
               </>
             ) : (
-              <Link href="/login" aria-label={t('login')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-5 w-5" />
+              <Link href="/login" aria-label={t('login')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-4 w-4" />
               </Link>
             )}
           </div>
@@ -153,20 +153,20 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
               onClick={() => { setIsSearchOpen(!isSearchOpen); setIsMenuOpen(false); }}
               aria-label={isSearchOpen ? t('searchClose') : t('searchOpen')}
               aria-expanded={isSearchOpen}
-              className="text-muted-foreground hover:text-foreground"
+              className="h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground"
             >
-              {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+              {isSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
             </Button>
             {isAuthenticated ? (
-              <Link href="/my" aria-label={t('myPage')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-5 w-5" />
+              <Link href="/my" aria-label={t('myPage')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-4 w-4" />
               </Link>
             ) : (
-              <Link href="/login" aria-label={t('login')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-5 w-5" />
+              <Link href="/login" aria-label={t('login')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                <User className="h-4 w-4" />
               </Link>
             )}
-            <div className="p-2">
+            <div className="p-1.5">
               <CartBadge itemCount={itemCount} />
             </div>
           </div>
