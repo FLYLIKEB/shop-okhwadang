@@ -88,7 +88,7 @@ describe('ProductCard', () => {
 
   it('renders the Okhwadang logo fallback when images are empty', () => {
     render(<ProductCard {...baseProps} images={[]} />);
-    expect(screen.getByAltText('Ockhwadang')).toHaveAttribute('src', '/logo-okhwadang.png');
+    expect(screen.getByAltText('옥화당')).toHaveAttribute('src', '/logo-okhwadang.png');
   });
 
   it('links to the product detail page', () => {
