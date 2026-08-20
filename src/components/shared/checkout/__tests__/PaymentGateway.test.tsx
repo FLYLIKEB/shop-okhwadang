@@ -62,7 +62,11 @@ vi.mock('@tosspayments/tosspayments-sdk', () => ({
   loadTossPayments: vi.fn().mockResolvedValue({
     widgets: vi.fn().mockReturnValue({
       setAmount: vi.fn().mockResolvedValue(undefined),
-      renderPaymentMethods: vi.fn().mockResolvedValue(undefined),
+      renderPaymentMethods: vi.fn().mockResolvedValue({
+        on: vi.fn(),
+        getSelectedPaymentMethod: vi.fn().mockResolvedValue({ code: 'CARD' }),
+        destroy: vi.fn().mockResolvedValue(undefined),
+      }),
       renderAgreement: vi.fn().mockResolvedValue(undefined),
       requestPayment: mockTossRequestPayment,
     }),

@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import type { WidgetSelectedPaymentMethod } from '@tosspayments/tosspayments-sdk';
 import type { Locale } from '@/i18n/routing';
 import type { PreparePaymentResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
@@ -142,6 +143,7 @@ interface PaymentGatewayProps {
   guestAccessToken?: string;
   guestAccessTokenExpiresAt?: string;
   onError: (message: string) => void;
+  onPaymentMethodChange?: (methodCode: string) => void;
   preview?: boolean;
   autoConfirm?: boolean;
 }
@@ -179,7 +181,7 @@ function buildHostedPaymentContext({
 
 const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
   function TossPaymentGateway(
-    { prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError, preview = false, autoConfirm = false },
+    { prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError, onPaymentMethodChange, preview = false, autoConfirm = false },
     ref,
   ) {
     const handlerRef = useRef<(() => Promise<void>) | null>(null);
@@ -190,7 +192,11 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
 
     useEffect(() => {
       let cancelled = false;
-      let paymentMethodWidget: { destroy: () => Promise<void> } | null = null;
+      let paymentMethodWidget: {
+        on: (eventName: 'paymentMethodSelect', callback: (paymentMethod: WidgetSelectedPaymentMethod) => void) => void;
+        getSelectedPaymentMethod: () => Promise<WidgetSelectedPaymentMethod>;
+        destroy: () => Promise<void>;
+      } | null = null;
       let agreementWidget: { destroy: () => Promise<void> } | null = null;
 
       const initialize = async () => {
@@ -213,6 +219,15 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
             variantKey: 'AGREEMENT',
           });
           if (cancelled) return;
+
+          const notifySelectedPaymentMethod = (paymentMethod: WidgetSelectedPaymentMethod) => {
+            if (!cancelled) onPaymentMethodChange?.(paymentMethod.code);
+          };
+          paymentMethodWidget.on('paymentMethodSelect', notifySelectedPaymentMethod);
+          void paymentMethodWidget
+            .getSelectedPaymentMethod()
+            .then(notifySelectedPaymentMethod)
+            .catch(() => undefined);
 
           setIsReady(true);
           handlerRef.current = preview ? null : async () => {
@@ -251,7 +266,7 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
         void paymentMethodWidget?.destroy().catch(() => undefined);
         void agreementWidget?.destroy().catch(() => undefined);
       };
-    }, [prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, preview]);
+    }, [prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onPaymentMethodChange, preview]);
 
     useImperativeHandle(ref, () => ({
       confirm: async () => {
@@ -296,10 +311,12 @@ export function TossPaymentWidgetPreview({
   amount,
   locale,
   onError,
+  onPaymentMethodChange,
 }: {
   amount: number;
   locale: Locale;
   onError: (message: string) => void;
+  onPaymentMethodChange?: (methodCode: string) => void;
 }) {
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
   const prepareResult = useMemo<PreparePaymentResponse>(
@@ -325,6 +342,7 @@ export function TossPaymentWidgetPreview({
       amount={amount}
       locale={locale}
       onError={onError}
+      onPaymentMethodChange={onPaymentMethodChange}
       preview
     />
   );

@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ArrowRight } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { categoriesApi } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
@@ -35,7 +36,7 @@ function CategoryImageCard({ cat, locale }: { cat: Category; locale: string }) {
     <Link
       href={`/${locale}/products?categoryId=${cat.id}`}
       prefetch={false}
-      className="group relative aspect-[4/3] overflow-hidden bg-muted"
+      className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-muted shadow-sm transition-shadow duration-300 hover:shadow-md"
     >
       {cat.imageUrl && !imgError ? (
         <Image
@@ -54,7 +55,7 @@ function CategoryImageCard({ cat, locale }: { cat: Category; locale: string }) {
         />
       ) : null}
       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300" />
-      <span className="absolute inset-0 flex items-center justify-center font-display text-lg font-medium text-white tracking-wide">
+      <span className="absolute inset-0 flex items-center justify-center px-4 font-body text-base font-semibold tracking-tight text-white md:text-lg">
         {cat.name}
       </span>
     </Link>
@@ -87,9 +88,9 @@ export default function CategoryNavBlock({ content }: Props) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-px bg-divider-soft sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {Array.from({ length: category_ids.length || 4 }).map((_, i) => (
-          <div key={i} className="bg-background px-6 py-8">
+          <div key={i} className="surface-card px-5 py-6 md:px-6 md:py-8">
             <div className="animate-pulse">
               <div className="h-10 w-10 rounded bg-muted mb-4" />
               <div className="h-4 w-16 rounded bg-muted mb-2" />
@@ -105,8 +106,8 @@ export default function CategoryNavBlock({ content }: Props) {
 
   if (template === 'image') {
     return (
-      <nav ref={ref} className="py-16 md:py-24">
-        {title && <h2 className="text-2xl font-medium mb-8 text-center">{title}</h2>}
+      <nav ref={ref} className="border-y border-soft py-12 md:py-20">
+        {title && <h2 className="mb-8 text-center typo-h2 font-body tracking-tight">{title}</h2>}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {categories.map((cat) => (
             <CategoryImageCard key={cat.id} cat={cat} locale={locale} />
@@ -117,9 +118,9 @@ export default function CategoryNavBlock({ content }: Props) {
   }
 
   return (
-    <nav ref={ref} className="py-16 md:py-24 border-t border-divider-soft">
-      {title && <h2 className="text-2xl font-medium mb-8 text-center">{title}</h2>}
-      <div className="grid grid-cols-2 gap-px bg-divider-soft sm:grid-cols-4">
+    <nav ref={ref} className="border-y border-soft py-12 md:py-20">
+      {title && <h2 className="mb-8 text-center typo-h2 font-body tracking-tight">{title}</h2>}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {categories.map((cat, i) => {
           const clayColor = getClayColor(cat.slug);
           return (
@@ -127,7 +128,7 @@ export default function CategoryNavBlock({ content }: Props) {
               key={cat.id}
               href={`/${locale}/products?categoryId=${cat.id}`}
               prefetch={false}
-              className="group bg-background px-6 py-8 flex flex-col gap-3 hover:bg-muted/40 transition-colors duration-300"
+              className="surface-card group flex flex-col gap-3 px-5 py-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md md:px-6 md:py-8"
               style={{
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(12px)',
@@ -141,11 +142,11 @@ export default function CategoryNavBlock({ content }: Props) {
                   aria-hidden="true"
                 />
               )}
-              <span className="font-display text-base font-medium text-foreground tracking-wide">
+              <span className="font-body text-base font-semibold tracking-tight text-foreground">
                 {cat.name}
               </span>
-              <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-auto">
-                →
+              <span className="mt-auto text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </span>
             </Link>
           );

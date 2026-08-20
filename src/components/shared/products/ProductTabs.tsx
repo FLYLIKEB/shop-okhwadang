@@ -241,7 +241,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
       <div
         role="navigation"
         aria-label={t('tabs.navigationLabel')}
-        className="sticky sticky-below-header z-30 flex w-full items-center justify-center gap-8 border-b border-border/50 bg-background/95 px-4 backdrop-blur"
+        className="sticky sticky-below-header z-30 flex w-full items-center justify-between gap-0 border-b border-soft bg-background/95 px-0 backdrop-blur md:justify-center md:gap-8 md:px-4"
       >
         {TABS.map((tab) => (
           <Button
@@ -254,7 +254,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
             aria-controls={`product-tabpanel-${tab}`}
             id={`product-tab-${tab}`}
             className={cn(
-              'relative h-12 min-h-12 rounded-none px-1 py-2 typo-body-sm transition-colors hover:bg-transparent',
+              'relative h-12 min-h-12 flex-1 rounded-none px-1 py-2 typo-body-sm transition-colors hover:bg-transparent md:flex-none md:px-4',
               activeTab === tab
                 ? 'font-semibold text-foreground after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-foreground'
                 : 'text-muted-foreground hover:text-foreground',
@@ -272,7 +272,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
         className="py-6 outline-none"
       >
         {activeTab === 'details' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2 md:gap-6">
             {descriptionImages.length > 0 && !descriptionContainsEmbeddedMedia && (
               <div className="flex flex-col items-center gap-0">
                 {descriptionImages.map((image, index) => (

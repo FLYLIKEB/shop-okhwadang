@@ -4,9 +4,10 @@ import ProductListItem from '@/components/shared/products/ProductListItem';
 import type { ProductImage } from '@/lib/api';
 
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) =>
+  useTranslations: () => (key: string, values?: Record<string, string | number>) =>
     ({
       badgeFreeShipping: '무료배송',
+      ratingSummary: `${values?.rating ?? 0}(${values?.count ?? 0})`,
     }[key] ?? key),
 }));
 
@@ -59,6 +60,17 @@ describe('ProductListItem free-shipping badge', () => {
     renderItem({ isFreeShipping: false });
 
     expect(screen.queryByText('무료배송')).not.toBeInTheDocument();
+  });
+});
+
+describe('ProductListItem rating display', () => {
+  it('shows one star and the rating summary beside the product name', () => {
+    renderItem({ rating: 4.3, reviewCount: 15 });
+
+    const ratingSummary = screen.getByText('4.3(15)');
+    expect(ratingSummary).toBeInTheDocument();
+    expect(screen.getByText('자사호').parentElement).toContainElement(ratingSummary);
+    expect(screen.getByRole('group').querySelectorAll('button')).toHaveLength(1);
   });
 });
 

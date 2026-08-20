@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { AnnouncementBarItem } from '@/lib/api-server';
+import { Button } from '@/components/ui/button';
 
 interface AnnouncementBarClientProps {
   locale: string;
@@ -50,22 +51,21 @@ export default function AnnouncementBarClient({ locale, items }: AnnouncementBar
 
   return (
     <div
-      className="relative flex items-center justify-center px-4 text-white md:justify-between"
-      style={{ height: '37px', backgroundColor: '#000000', paddingLeft: '15px', paddingRight: '15px' }}
+      className="relative flex min-h-11 items-center justify-center border-b border-soft bg-muted/80 px-3 text-foreground md:px-5"
     >
-      <div className="hidden md:block" />
+      <div className="hidden flex-1 md:block" />
 
-      <div className="relative overflow-hidden" style={{ maxWidth: '360px', width: '100%' }}>
+      <div className="relative w-full max-w-lg overflow-hidden">
         <div
           className="transition-transform ease-out"
           data-testid="announcement-track"
+          aria-live="polite"
           style={{ transform: `translateY(-${currentIndex * 100}%)`, transitionDuration: '500ms' }}
         >
           {normalizedItems.map((item) => {
             const content = (
               <span
-                className="block text-center"
-                style={{ fontWeight: 300, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: '14px', height: '37px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                className="flex h-11 items-center justify-center px-10 text-center typo-body-sm font-medium"
               >
                 {item.message}
               </span>
@@ -76,7 +76,7 @@ export default function AnnouncementBarClient({ locale, items }: AnnouncementBar
             }
 
             return (
-              <Link key={item.id} href={item.href} className="block text-white hover:text-white/80">
+              <Link key={item.id} href={item.href} className="block text-foreground transition-colors hover:text-primary">
                 {content}
               </Link>
             );
@@ -85,29 +85,31 @@ export default function AnnouncementBarClient({ locale, items }: AnnouncementBar
 
         {normalizedItems.length > 1 ? (
           <>
-            <button
+            <Button
               type="button"
               aria-label={t('prev')}
               onClick={goPrev}
-              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 bg-transparent text-white opacity-75 transition-all hover:opacity-100 hover:text-[#757575]"
-              style={{ width: '20px', height: '20px' }}
+              className="absolute left-1 top-1/2 z-10 h-8 w-8 -translate-y-1/2"
+              variant="ghost"
+              size="icon"
             >
-              <ChevronLeft className="mx-auto h-4 w-4" />
-            </button>
-            <button
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
               type="button"
               aria-label={t('next')}
               onClick={goNext}
-              className="absolute right-0 top-1/2 z-10 -translate-y-1/2 bg-transparent text-white opacity-75 transition-all hover:opacity-100 hover:text-[#757575]"
-              style={{ width: '20px', height: '20px' }}
+              className="absolute right-1 top-1/2 z-10 h-8 w-8 -translate-y-1/2"
+              variant="ghost"
+              size="icon"
             >
-              <ChevronRight className="mx-auto h-4 w-4" />
-            </button>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </>
         ) : null}
       </div>
 
-      <div className="hidden md:block" />
+      <div className="hidden flex-1 md:block" />
     </div>
   );
 }

@@ -3,13 +3,13 @@
 import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import Modal from '@/components/ui/Modal';
 import { cn } from '@/components/ui/utils';
 import type {
   CartItem,
@@ -30,6 +30,7 @@ import PaymentGateway, {
 import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMethodSelector';
 import { AddressSelectorSection } from '@/components/shared/checkout/AddressSelectorSection';
 import { OrderSummarySection } from '@/components/shared/checkout/OrderSummarySection';
+import { FreeShippingProgress } from '@/components/shared/checkout/FreeShippingProgress';
 import CouponSelector from '@/components/shared/checkout/CouponSelector';
 import {
   AddressDetailInputSection,
@@ -77,6 +78,13 @@ function normalizeZipcodeInputValue(value: unknown): string {
   return normalizeInputValue(value);
 }
 
+function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 function getPolicyHtml(page: Page | undefined): string | null {
   const block = page?.blocks.find((candidate) => candidate.type === 'text_content');
   const html = block?.content.html;
@@ -108,6 +116,7 @@ export default function CheckoutPage({
   const [currentGuestAccessTokenExpiresAt, setCurrentGuestAccessTokenExpiresAt] = useState('');
   const [confirmedGrandTotal, setConfirmedGrandTotal] = useState<number | null>(null);
   const [pricingPreview, setPricingPreview] = useState<CheckoutPricingPreviewResponse | null>(null);
+  const [selectedWidgetPaymentMethodCode, setSelectedWidgetPaymentMethodCode] = useState<string | null>(null);
   const [form, setForm] = useState<ShippingForm>({
     recipientName: '',
     recipientPhone: '',
@@ -118,10 +127,11 @@ export default function CheckoutPage({
   });
   const [guestEmail, setGuestEmail] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
-  const [policyConsents, setPolicyConsents] = useState<Array<CurrentPolicyMetadata & { agreed: boolean }>>([]);
+  const [policyConsents, setPolicyConsents] = useState<CurrentPolicyMetadata[]>([]);
   const [policyConsentLoading, setPolicyConsentLoading] = useState(true);
   const [policyConsentLoadError, setPolicyConsentLoadError] = useState(false);
-  const [expandedPolicySlug, setExpandedPolicySlug] = useState<string | null>(null);
+  const [isPolicyListExpanded, setIsPolicyListExpanded] = useState(false);
+  const [selectedPolicySlug, setSelectedPolicySlug] = useState<string | null>(null);
   const [policyPages, setPolicyPages] = useState<Record<string, Page>>({});
   const [policyContentLoadingSlug, setPolicyContentLoadingSlug] = useState<string | null>(null);
   const [requestedUserCouponId, setRequestedUserCouponId] = useState<number | undefined>();
@@ -132,7 +142,7 @@ export default function CheckoutPage({
   const [addressLoading, setAddressLoading] = useState(false);
 
   const isGuestCheckout = !isAuthenticated;
-  const requiredConsent = policyConsents.length > 0 && policyConsents.every((policy) => policy.agreed);
+  const requiredConsent = policyConsents.length > 0;
   const policyConsentPayload: PolicyConsentSnapshot[] = policyConsents.map((policy) => ({
     slug: policy.slug,
     version: policy.version,
@@ -145,6 +155,52 @@ export default function CheckoutPage({
   const subtotalAmount = pricingPreview?.subtotalAmount ?? 0;
   const grandTotal = confirmedGrandTotal ?? pricingPreview?.totalPayable ?? 0;
   const isPricingReady = pricingPreview !== null || confirmedGrandTotal !== null;
+  const selectedPolicy = policyConsents.find((policy) => policy.slug === selectedPolicySlug);
+  const selectedPolicyHtml = selectedPolicy ? getPolicyHtml(policyPages[selectedPolicy.slug]) : null;
+  const gatewayPaymentLabel = selectedGateway === 'toss'
+    ? t('tossPayment')
+    : selectedGateway === 'paypal'
+      ? t('paypalPayment')
+      : selectedGateway === 'eximbay'
+        ? t('eximbayPayment')
+        : t('bankTransferPayment');
+  const tossPaymentMethodLabels: Record<string, string> = {
+    CARD: t('paymentMethodLabels.card'),
+    VIRTUAL_ACCOUNT: t('paymentMethodLabels.virtualAccount'),
+    MOBILE_PHONE: t('paymentMethodLabels.mobilePhone'),
+    TRANSFER: t('paymentMethodLabels.transfer'),
+    TOSSPAY: t('paymentMethodLabels.tossPay'),
+    NAVERPAY: t('paymentMethodLabels.naverPay'),
+    KAKAOPAY: t('paymentMethodLabels.kakaoPay'),
+    SAMSUNGPAY: t('paymentMethodLabels.samsungPay'),
+    PAYCO: t('paymentMethodLabels.payco'),
+    LPAY: t('paymentMethodLabels.lpay'),
+    SSG: t('paymentMethodLabels.ssg'),
+    APPLEPAY: t('paymentMethodLabels.applePay'),
+    KBPAY: t('paymentMethodLabels.kbPay'),
+    PINPAY: t('paymentMethodLabels.pinPay'),
+    CULTURE_GIFT_CERTIFICATE: t('paymentMethodLabels.cultureGiftCertificate'),
+    GAME_GIFT_CERTIFICATE: t('paymentMethodLabels.gameGiftCertificate'),
+    BOOK_GIFT_CERTIFICATE: t('paymentMethodLabels.bookGiftCertificate'),
+    PAYPAL: t('paypalPayment'),
+  };
+  const selectedPaymentMethodLabel = selectedWidgetPaymentMethodCode
+    ? tossPaymentMethodLabels[selectedWidgetPaymentMethodCode] ?? gatewayPaymentLabel
+    : gatewayPaymentLabel;
+  const orderSummaryItems = (pricingPreview?.items ?? []).map((item) => {
+    const checkoutItem = checkoutItems.find(
+      (candidate) => candidate.productId === item.productId
+        && candidate.productOptionId === item.productOptionId,
+    );
+    const thumbnail = checkoutItem?.product.images.find((image) => image.isThumbnail)
+      ?? checkoutItem?.product.images[0];
+
+    return {
+      ...item,
+      thumbnailUrl: thumbnail?.thumbnailUrl ?? thumbnail?.url ?? null,
+      imageAlt: thumbnail?.alt ?? item.productName,
+    };
+  });
 
   const stepLabels: Record<PaymentStep, string> = {
     idle: t('steps.idle'),
@@ -212,7 +268,7 @@ export default function CheckoutPage({
     void pagesApi.getCurrentPolicies(locale)
       .then((policies) => {
         if (active) {
-          setPolicyConsents(policies.map((policy) => ({ ...policy, agreed: false })));
+          setPolicyConsents(policies);
         }
       })
       .catch(() => {
@@ -339,10 +395,20 @@ export default function CheckoutPage({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const nextValue = name === 'recipientPhone' ? formatPhoneInput(value) : value;
+    setForm((prev) => ({ ...prev, [name]: nextValue }));
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
+  };
+
+  const handleAddressSearch = (result: { zonecode: string; address: string; roadAddress: string; jibunAddress: string }) => {
+    setForm((prev) => ({
+      ...prev,
+      zipcode: result.zonecode,
+      address: result.address || result.roadAddress || result.jibunAddress,
+    }));
+    setErrors((prev) => ({ ...prev, zipcode: undefined, address: undefined }));
   };
 
   const handleGuestEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -352,20 +418,19 @@ export default function CheckoutPage({
     }
   };
 
-  const handlePolicyToggle = (slug: string) => {
-    const nextSlug = expandedPolicySlug === slug ? null : slug;
-    setExpandedPolicySlug(nextSlug);
-    if (nextSlug === null || policyPages[nextSlug]) return;
+  const handlePolicyOpen = (slug: string) => {
+    setSelectedPolicySlug(slug);
+    if (policyPages[slug]) return;
 
-    setPolicyContentLoadingSlug(nextSlug);
-    void loadPolicyContent({ slug: nextSlug, policyLocale: locale })
+    setPolicyContentLoadingSlug(slug);
+    void loadPolicyContent({ slug, policyLocale: locale })
       .then((page) => {
         if (page) {
-          setPolicyPages((current) => ({ ...current, [nextSlug]: page }));
+          setPolicyPages((current) => ({ ...current, [slug]: page }));
         }
       })
       .finally(() => {
-        setPolicyContentLoadingSlug((current) => (current === nextSlug ? null : current));
+        setPolicyContentLoadingSlug((current) => (current === slug ? null : current));
       });
   };
 
@@ -402,22 +467,26 @@ export default function CheckoutPage({
     return null;
   }
 
+  const hasSelectedSavedAddress = !isGuestCheckout
+    && typeof selectedAddressId === 'number';
+
   return (
     <div className="checkout-toss-theme min-h-screen pb-36 md:pb-8">
-      <div className="layout-container layout-page">
+      <div className="layout-container layout-page max-w-3xl">
       <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
 
-      <ol className="checkout-toss-flow mt-6 flex flex-wrap items-center gap-2 text-xs text-muted-foreground md:max-w-xl">
-        <li className="checkout-toss-flow__step checkout-toss-flow__step--active rounded-full px-2.5 py-1 text-primary-foreground">{t('flow.shipping')}</li>
-        <span aria-hidden>→</span>
-        <li className="checkout-toss-flow__step checkout-toss-flow__step--inactive rounded-full px-2.5 py-1 text-secondary-foreground">{t('flow.payment')}</li>
-        <span aria-hidden>→</span>
-        <li className="checkout-toss-flow__step checkout-toss-flow__step--inactive rounded-full px-2.5 py-1 text-secondary-foreground">{t('flow.complete')}</li>
-      </ol>
-
       <form id="checkout-form" onSubmit={handleSubmit} className="mt-8">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="layout-stack-md lg:col-span-2">
+        <div className="mx-auto layout-stack-md">
+          <OrderSummarySection
+            pricedItems={orderSummaryItems}
+            locale={locale}
+            subtotalAmount={subtotalAmount}
+            shippingFee={shippingFee}
+            couponDiscount={couponDiscount}
+            pointsUsed={appliedPointsUsed}
+            totalPayable={grandTotal}
+          />
+
             <section className="checkout-toss-section surface-card p-6">
               <h2 className="typo-h3">{t('shippingInfo')}</h2>
 
@@ -437,7 +506,7 @@ export default function CheckoutPage({
                       value={guestEmail}
                       onChange={handleGuestEmailChange}
                       placeholder={t('guestEmailPlaceholder')}
-                      className="checkout-toss-input mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                      className="checkout-toss-guest-email mt-2 w-full rounded-md border border-border !bg-white px-3 py-2 text-sm"
                     />
                     {errors.guestEmail ? (
                       <p className="mt-2 text-sm text-destructive">{errors.guestEmail}</p>
@@ -455,11 +524,23 @@ export default function CheckoutPage({
                   />
                 )}
 
-                <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
-                <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
-                <ZipcodeInputSection form={form} errors={errors} onChange={handleChange} />
-                <AddressInputSection form={form} errors={errors} onChange={handleChange} />
-                <AddressDetailInputSection form={form} onChange={handleChange} />
+                {!hasSelectedSavedAddress && (
+                  <>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
+                      <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
+                    </div>
+                    <ZipcodeInputSection
+                      form={form}
+                      errors={errors}
+                      onChange={handleChange}
+                      onAddressSearch={handleAddressSearch}
+                      readOnly
+                    />
+                    <AddressInputSection form={form} errors={errors} onChange={handleChange} readOnly />
+                    <AddressDetailInputSection form={form} onChange={handleChange} />
+                  </>
+                )}
                 <MemoInputSection form={form} onChange={handleChange} />
               </div>
             </section>
@@ -478,6 +559,7 @@ export default function CheckoutPage({
                     guestAccessToken={currentGuestAccessToken || undefined}
                     guestAccessTokenExpiresAt={currentGuestAccessTokenExpiresAt || undefined}
                     onError={handlePaymentError}
+                    onPaymentMethodChange={setSelectedWidgetPaymentMethodCode}
                     autoConfirm={locale === 'ko' && prepareResult.gateway === 'toss'}
                   />
                 ) : locale === 'ko' && selectedGateway === 'toss' ? (
@@ -485,12 +567,16 @@ export default function CheckoutPage({
                     amount={grandTotal}
                     locale={locale}
                     onError={handlePaymentError}
+                    onPaymentMethodChange={setSelectedWidgetPaymentMethodCode}
                   />
                 ) : (
                   <PaymentMethodSelector
                     gatewayOptions={gatewayOptions}
                     selectedGateway={selectedGateway}
-                    onSelect={setSelectedGateway}
+                    onSelect={(gateway) => {
+                      setSelectedGateway(gateway);
+                      setSelectedWidgetPaymentMethodCode(null);
+                    }}
                     showCardSubmitButton
                   />
                 )}
@@ -512,101 +598,82 @@ export default function CheckoutPage({
             )}
 
             <section className="checkout-toss-section surface-card p-6">
-              <h2 className="typo-h3">{t('consent.title')}</h2>
               {policyConsentLoading ? (
                 <p className="mt-4 text-sm text-muted-foreground">{t('consent.loading')}</p>
               ) : policyConsentLoadError ? (
                 <p className="mt-4 text-sm text-destructive">{t('consent.loadError')}</p>
               ) : (
-                <div className="mt-4 space-y-3">
-                  <p className="text-sm text-muted-foreground">{t('consent.requiredDescription')}</p>
-                  <label className="checkout-toss-panel flex gap-3 rounded-md border border-soft bg-muted/20 p-3 text-sm text-foreground">
-                    <Checkbox
-                      checked={requiredConsent}
-                      onChange={(event) => {
-                        setPolicyConsents((current) => current.map((policy) => ({
-                          ...policy,
-                          agreed: event.target.checked,
-                        })));
-                      }}
-                      aria-label={t('consent.requiredLabel')}
-                    />
-                    <span className="font-medium">{t('consent.requiredLabel')}</span>
-                  </label>
-                  {policyConsents.map((policy) => {
-                    const isExpanded = expandedPolicySlug === policy.slug;
-                    const detailsId = `checkout-policy-${policy.slug}`;
-                    const html = getPolicyHtml(policyPages[policy.slug]);
-
-                    return (
-                      <div key={policy.slug} className="checkout-toss-panel overflow-hidden rounded-md border border-soft bg-muted/20 text-sm text-foreground">
-                        <div className="flex items-start gap-3 p-3">
-                          <Checkbox
-                            checked={policy.agreed}
-                            onChange={(event) => {
-                              setPolicyConsents((current) => current.map((item) => (
-                                item.slug === policy.slug ? { ...item, agreed: event.target.checked } : item
-                              )));
-                            }}
-                            aria-label={policy.title}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                              <span className="font-medium">{policy.title}</span>
-                              <button
-                                type="button"
-                                onClick={() => handlePolicyToggle(policy.slug)}
-                                aria-expanded={isExpanded}
-                                aria-controls={detailsId}
-                                aria-label={t(isExpanded ? 'consent.hidePolicy' : 'consent.showPolicy')}
-                                className="-m-1 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                              >
-                                <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                              </button>
-                            </div>
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              {t('consent.policyMetadata', {
-                                version: policy.version ?? t('consent.unknownVersion'),
-                                effectiveDate: policy.effectiveDate ?? t('consent.unknownEffectiveDate'),
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                        {isExpanded && (
-                          <div id={detailsId} className="border-t border-soft bg-background p-4">
-                            {policyContentLoadingSlug === policy.slug ? (
-                              <p className="text-sm text-muted-foreground">{t('consent.contentLoading')}</p>
-                            ) : html ? (
-                              <SafeHtml html={html} className="prose max-w-none text-sm" />
-                            ) : (
-                              <p className="text-sm text-muted-foreground">{t('consent.contentUnavailable')}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="checkout-toss-panel overflow-hidden rounded-md border border-soft bg-muted/20 text-sm text-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setIsPolicyListExpanded((current) => !current)}
+                    aria-expanded={isPolicyListExpanded}
+                    aria-controls="checkout-policy-list"
+                    aria-label={t(isPolicyListExpanded ? 'consent.hidePolicy' : 'consent.showPolicy')}
+                    className="flex min-h-12 w-full items-center justify-between gap-3 p-4 text-left font-medium transition-colors hover:bg-muted/50"
+                  >
+                    <span>{t('consent.title')}</span>
+                    <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${isPolicyListExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isPolicyListExpanded && (
+                    <div id="checkout-policy-list" className="border-t border-soft p-2">
+                      {policyConsents.map((policy) => (
+                        <button
+                          key={policy.slug}
+                          type="button"
+                          onClick={() => handlePolicyOpen(policy.slug)}
+                          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-background"
+                        >
+                          <span>{policy.title}</span>
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </section>
-          </div>
-
-          <aside className="checkout-toss-summary layout-stack-md lg:sticky lg:top-24 lg:self-start">
-            <OrderSummarySection
-              pricedItems={pricingPreview?.items ?? []}
-              locale={locale}
-              subtotalAmount={subtotalAmount}
-              shippingFee={shippingFee}
-              freeShippingThreshold={freeShippingThreshold}
-              couponDiscount={couponDiscount}
-              pointsUsed={appliedPointsUsed}
-              totalPayable={grandTotal}
-            />
-            <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
+            <Modal
+              isOpen={selectedPolicySlug !== null}
+              onClose={() => setSelectedPolicySlug(null)}
+              maxWidth="lg"
+              className="max-h-screen overflow-y-auto"
+            >
+              {selectedPolicySlug && (
+                <>
+                  <h2 className="mb-4 pr-8 typo-h3">{selectedPolicy?.title}</h2>
+                  {policyContentLoadingSlug === selectedPolicySlug ? (
+                    <p className="text-sm text-muted-foreground">{t('consent.contentLoading')}</p>
+                  ) : selectedPolicyHtml ? (
+                    <SafeHtml
+                      html={selectedPolicyHtml}
+                      className="prose max-w-none text-sm"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t('consent.contentUnavailable')}</p>
+                  )}
+                </>
+              )}
+            </Modal>
+          <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
+              {pricingPreview !== null && (
+                <FreeShippingProgress
+                  locale={locale}
+                  subtotalAmount={subtotalAmount}
+                  freeShippingThreshold={freeShippingThreshold}
+                  className="mb-3"
+                />
+              )}
+              <div className="mb-2 flex justify-end">
+                <span className="text-xs text-muted-foreground">{selectedPaymentMethodLabel}</span>
+              </div>
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
               </div>
+              <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
+                {t('consent.confirmation')}
+              </p>
               <Button
                 type="submit"
                 variant="brown"
@@ -615,8 +682,7 @@ export default function CheckoutPage({
               >
                 {stepLabels[step]}
               </Button>
-            </div>
-          </aside>
+          </div>
         </div>
       </form>
 
@@ -624,13 +690,29 @@ export default function CheckoutPage({
         className={cn(
           'checkout-toss-mobile-cta mobile-sticky-cta fixed z-40 border-t border-soft bg-background md:hidden',
           isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
+          pricingPreview !== null && 'checkout-toss-mobile-cta--shipping',
         )}
       >
+        {pricingPreview !== null && (
+          <FreeShippingProgress
+            locale={locale}
+            subtotalAmount={subtotalAmount}
+            freeShippingThreshold={freeShippingThreshold}
+            variant="top-edge"
+            className="mb-3"
+          />
+        )}
         <div className="mobile-sticky-inner">
+          <div className="mb-2 flex justify-end">
+            <span className="text-xs text-muted-foreground">{selectedPaymentMethodLabel}</span>
+          </div>
           <div className="mb-2 flex items-end justify-between">
             <span className="text-xs text-muted-foreground">{t('total')}</span>
             <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
           </div>
+          <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
+            {t('consent.confirmation')}
+          </p>
           <Button
             type="submit"
             form="checkout-form"

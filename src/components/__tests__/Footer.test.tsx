@@ -64,6 +64,15 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: '고객센터' })).toBeInTheDocument();
   });
 
+  it('renders labels next to social icons', () => {
+    render(<Footer />);
+
+    expect(screen.getByRole('link', { name: '인스타그램' })).toHaveTextContent('인스타그램');
+    expect(screen.getByRole('link', { name: '스마트스토어' })).toHaveTextContent('스마트스토어');
+    expect(screen.getByRole('link', { name: '인스타그램' })).toHaveClass('toss-footer__social');
+    expect(screen.getByRole('link', { name: '스마트스토어' })).toHaveClass('toss-footer__social');
+  });
+
   it('disables prefetch for footer navigation links', () => {
     render(<Footer />);
 
@@ -77,15 +86,16 @@ describe('Footer', () => {
     for (const heading of ['고객센터', '회사', '쇼핑']) {
       const sectionHeading = screen.getAllByText(heading).find((element) => element.tagName === 'P');
 
-      expect(sectionHeading).toHaveClass('typo-body', 'font-semibold', 'text-foreground');
+      expect(sectionHeading).toHaveClass('typo-label', 'font-semibold', 'text-foreground');
       expect(sectionHeading).not.toHaveClass('text-sm', 'font-medium');
     }
   });
 
-  it('renders footer without solid or dotted divider lines', () => {
+  it('renders footer with the soft Toss divider', () => {
     const { container } = render(<Footer />);
 
-    expect(container.querySelector('footer')?.className).not.toContain('border-');
+    expect(container.querySelector('footer')?.className).toContain('border-t');
+    expect(container.querySelector('footer')?.className).toContain('border-soft');
     expect(container.innerHTML).not.toContain('border-divider-soft');
     expect(container.innerHTML).not.toContain('border-dashed');
   });

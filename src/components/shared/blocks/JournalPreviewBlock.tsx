@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { journalsApi, type Journal, JournalCategory } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
@@ -8,6 +7,7 @@ import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import JournalCard from '@/components/shared/journal/JournalCard';
 import { getJournalCategoryMessageKey } from '@/components/shared/journal/journalCategory';
 import { cn } from '@/components/ui/utils';
+import ViewAllButton from '@/components/shared/common/ViewAllButton';
 
 interface JournalPreviewContent {
   title?: string;
@@ -47,15 +47,15 @@ export default function JournalPreviewBlock({ content }: Props) {
   if (loading) {
     return (
       <section className="py-16 md:py-24">
-        {title && <h2 className="text-2xl font-medium mb-8">{title}</h2>}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {title && <h2 className="mb-8 font-display typo-h2 text-foreground">{title}</h2>}
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: limit }).map((_, index) => (
-            <div key={index} className="rounded-lg overflow-hidden">
-              <div className="h-48 bg-muted animate-pulse" />
-              <div className="p-5 space-y-2">
-                <div className="h-3 w-16 bg-muted rounded animate-pulse" />
-                <div className="h-5 w-3/4 bg-muted rounded animate-pulse" />
-                <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
+            <div key={index} className="overflow-hidden">
+              <div className="h-52 bg-muted animate-skeleton-shimmer sm:h-56" />
+              <div className="space-y-2 pt-4">
+                <div className="h-3 w-16 rounded bg-muted animate-skeleton-shimmer" />
+                <div className="h-5 w-3/4 rounded bg-muted animate-skeleton-shimmer" />
+                <div className="h-3 w-1/2 rounded bg-muted animate-skeleton-shimmer" />
               </div>
             </div>
           ))}
@@ -70,22 +70,17 @@ export default function JournalPreviewBlock({ content }: Props) {
     <section
       ref={ref}
       className={cn(
-        'py-12 transition-all duration-600 ease-out',
+        'py-16 md:py-24 transition-all duration-600 ease-out',
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
       )}
     >
-      <div className="mb-8">
-        {title && <h2 className="text-2xl font-medium">{title}</h2>}
-        <div className="text-right mt-2">
-          <Link
-            href={more_href ?? '/journal'}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {tCommon('viewAll')} →
-          </Link>
+      <div className="relative mb-8 flex min-h-10 items-center justify-center">
+        {title && <h2 className="font-display typo-h2 text-center text-foreground">{title}</h2>}
+        <div className="absolute right-0 shrink-0">
+          <ViewAllButton href={more_href ?? '/journal'} label={tCommon('viewAll')} />
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {journals.map((journal, index) => (
           <div
             key={journal.id}

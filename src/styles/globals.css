@@ -174,6 +174,22 @@ html:lang(en) {
   padding-bottom: calc(var(--layout-spacing-sm) + env(safe-area-inset-bottom));
 }
 
+.checkout-toss-mobile-cta--shipping {
+  padding-top: 0;
+}
+
+.checkout-toss-free-shipping--top-edge {
+  position: relative;
+  margin-inline: calc(var(--layout-spacing-md) * -1);
+}
+
+.checkout-toss-free-shipping--top-edge .checkout-toss-free-shipping__progress {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
 .mobile-sticky-inner {
   width: 100%;
   max-width: var(--layout-max-width);
@@ -186,6 +202,13 @@ html:lang(en) {
 
 .mobile-sticky-cta--above-nav {
   bottom: calc(3.5rem + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 767px) {
+  .cart-route-header,
+  .cart-route-footer {
+    display: none;
+  }
 }
 
 /* 모바일 메뉴/사이드바 오버레이 열림 상태에서는 CTA 바 숨김 */
@@ -281,6 +304,10 @@ body.overflow-hidden .mobile-sticky-cta {
 }
 
 /* ── Typography utility classes ────────────────────────────────── */
+@utility font-pretendard {
+  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
 @utility typo-h0 {
   font-size: var(--font-size-heading-0, 2rem);
   line-height: var(--line-height-heading);
@@ -746,9 +773,32 @@ h3 {
 /* ── Toss-style checkout surface ───────────────────────────────── */
 .checkout-toss-theme {
   min-height: 100%;
-  background: var(--checkout-toss-background);
+  --checkout-toss-background: var(--checkout-toss-surface);
+  --checkout-toss-input: var(--color-background);
+  --checkout-toss-foreground: var(--color-foreground);
+  --checkout-toss-button-gray: var(--color-background);
+  --checkout-toss-button-gray-hover: var(--color-background);
+  --checkout-toss-header-button-gray-hover: var(--color-background);
+  background: var(--checkout-toss-surface);
   color: var(--checkout-toss-foreground);
   font-family: var(--font-body);
+}
+
+.checkout-toss-theme.cart-page {
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme.cart-page .checkout-toss-submit-card {
+  background: var(--checkout-toss-surface);
+}
+
+.checkout-toss-theme.cart-page input:checked + .checkout-toss-check {
+  border-color: var(--color-muted-foreground);
+  background: var(--color-muted-foreground);
+}
+
+.checkout-toss-theme.cart-page .checkout-toss-check {
+  border-radius: 0.5rem;
 }
 
 .checkout-toss-theme .layout-container {
@@ -806,6 +856,99 @@ h3 {
   line-height: 1.4;
 }
 
+/* Shared issue notifications use the same compact surface language as checkout. */
+.toss-toast {
+  position: relative;
+  display: flex;
+  width: min(360px, calc(100vw - 32px));
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+  border: 1px solid var(--checkout-toss-border);
+  box-shadow: var(--checkout-toss-shadow);
+  letter-spacing: -0.01em;
+}
+
+.toss-toast__icon {
+  display: none;
+}
+
+.toss-toast__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.toss-toast__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.toss-toast__description {
+  margin-top: 0.125rem;
+  color: var(--checkout-toss-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.toss-toast__close {
+  position: absolute;
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  z-index: 1;
+  border: 1px solid var(--checkout-toss-border);
+  border-radius: 9999px;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+  opacity: 1;
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-toast__close:hover {
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-toast[data-sonner-toast] [data-close-button] {
+  position: static !important;
+  order: 3;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 1.75rem;
+  margin-left: auto;
+  transform: none !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
+}
+
+.toss-toast__action {
+  border-radius: 0.625rem;
+  background: var(--checkout-toss-button-black);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.toss-toast__action:hover {
+  background: var(--checkout-toss-button-black-hover);
+}
+
+.toss-toast--success { border-color: color-mix(in srgb, #16a34a 28%, var(--checkout-toss-border)); }
+.toss-toast--error { border-color: color-mix(in srgb, #dc2626 28%, var(--checkout-toss-border)); }
+.toss-toast--warning { border-color: color-mix(in srgb, #d97706 28%, var(--checkout-toss-border)); }
+.toss-toast--info { border-color: color-mix(in srgb, #2563eb 28%, var(--checkout-toss-border)); }
+
 .checkout-toss-theme .checkout-toss-panel {
   border: 0;
   border-radius: 0.75rem;
@@ -833,6 +976,11 @@ h3 {
 .checkout-toss-theme input::placeholder,
 .checkout-toss-theme textarea::placeholder {
   color: var(--checkout-toss-muted);
+}
+
+.checkout-toss-theme .checkout-toss-guest-email {
+  background: var(--checkout-toss-surface);
+  border-color: var(--checkout-toss-border);
 }
 
 .checkout-toss-theme input:not([type='checkbox']):not([type='radio']):focus,
@@ -922,6 +1070,14 @@ h3 {
   background: var(--checkout-toss-surface);
 }
 
+.checkout-toss-theme .checkout-toss-mobile-summary-content {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent;
+  box-shadow: none !important;
+  padding: 0;
+}
+
 .checkout-toss-theme .checkout-toss-submit-card button,
 .checkout-toss-theme .checkout-toss-mobile-cta button {
   min-height: 3.25rem;
@@ -941,20 +1097,23 @@ h3 {
 }
 
 .checkout-toss-theme .checkout-toss-cart-item {
-  border: 0;
-  border-radius: 1rem;
-  background: var(--checkout-toss-surface);
-  box-shadow: var(--checkout-toss-shadow);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .checkout-toss-theme .checkout-toss-cart-item--selected {
-  background: var(--checkout-toss-surface);
-  box-shadow: 0 4px 18px color-mix(in srgb, var(--checkout-toss-primary) 12%, transparent);
+  background: transparent;
+  box-shadow: none;
+}
+
+.checkout-toss-theme .checkout-toss-cart-list > * + * {
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 85%, var(--color-background)) !important;
 }
 
 .checkout-toss-theme .checkout-toss-cart-item__name {
   color: var(--checkout-toss-foreground);
-  font-size: 0.9375rem;
+  font-size: var(--font-size-title);
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.45;
@@ -965,8 +1124,8 @@ h3 {
 }
 
 .checkout-toss-theme .checkout-toss-select-all > label {
-  border-radius: 0.75rem;
-  background: var(--checkout-toss-input);
+  border-radius: 0;
+  background: transparent;
 }
 
 .checkout-toss-theme .checkout-toss-select-all__label {
@@ -1605,8 +1764,41 @@ h3 {
 .toss-cms .typo-h0,
 .toss-cms .typo-h1,
 .toss-cms .typo-h2,
-.toss-cms .typo-h3,
-.toss-cms .font-display {
+.toss-cms .typo-h3 {
+  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+.toss-cms p,
+.toss-cms .typo-body,
+.toss-cms .typo-body-sm,
+.toss-cms .prose {
+  font-family: var(--font-display);
+}
+
+.toss-cms__blocks h1,
+.toss-cms__blocks h2,
+.toss-cms__blocks h3,
+.toss-cms__blocks .typo-h0,
+.toss-cms__blocks .typo-h1,
+.toss-cms__blocks .typo-h2,
+.toss-cms__blocks .typo-h3 {
+  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+.toss-cms__blocks p,
+.toss-cms__blocks .typo-body,
+.toss-cms__blocks .typo-body-sm,
+.toss-cms__blocks .prose {
+  font-family: var(--font-display);
+}
+
+.toss-cms .toss-split-content__title,
+.toss-cms__blocks .toss-split-content__title {
+  font-family: var(--font-display);
+}
+
+.toss-cms .toss-split-content__body,
+.toss-cms__blocks .toss-split-content__body {
   font-family: var(--font-body);
 }
 

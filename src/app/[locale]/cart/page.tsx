@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import * as Accordion from '@radix-ui/react-accordion';
-import { ChevronDown } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import EmptyState from '@/components/shared/EmptyState';
 import CartItemRow from '@/components/shared/cart/CartItemRow';
+import { FreeShippingProgress } from '@/components/shared/checkout/FreeShippingProgress';
 import { formatCurrency, type Locale } from '@/utils/currency';
 import { SESSION_KEYS } from '@/constants/storage';
 import { SkeletonBox } from '@/components/ui/Skeleton';
@@ -42,10 +42,6 @@ export default function CartPage() {
   const selectedShippingFee = selectedTotal === 0 ? 0 : (shippingQuote?.shippingFee ?? 0);
   const freeShippingThreshold = shippingQuote?.threshold ?? 0;
   const grandTotal = selectedTotal + selectedShippingFee;
-  const remainingForFreeShipping = Math.max(freeShippingThreshold - selectedTotal, 0);
-  const freeShippingProgress = freeShippingThreshold > 0
-    ? Math.min((selectedTotal / freeShippingThreshold) * 100, 100)
-    : 100;
 
   useEffect(() => {
     const currentIds = new Set(items.map((item) => item.id));
@@ -134,8 +130,8 @@ export default function CartPage() {
 
   if (isLoading) {
     return (
-      <div className="checkout-toss-theme min-h-screen">
-        <div className="layout-container layout-page">
+      <div className="checkout-toss-theme cart-page min-h-screen">
+        <div className="layout-container layout-page max-w-3xl">
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             {[1, 2, 3].map((i) => (
@@ -151,8 +147,8 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="checkout-toss-theme min-h-screen">
-        <div className="layout-container layout-page">
+      <div className="checkout-toss-theme cart-page min-h-screen">
+        <div className="layout-container layout-page max-w-3xl">
         <EmptyState
           title={t('empty')}
           description={t('emptyDescription')}
@@ -180,20 +176,14 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="checkout-toss-summary__shipping mt-4 rounded-md bg-muted/20 p-3">
-        <p className="text-xs text-muted-foreground">
-          {remainingForFreeShipping === 0
-            ? t('freeShippingUnlocked')
-            : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping, locale) })}
-        </p>
-        <div className="mt-2 h-1.5 w-full rounded-full bg-background">
-          <div
-            className="h-full rounded-full bg-primary transition-[width] duration-300"
-            style={{ width: `${freeShippingProgress}%` }}
-            aria-hidden
-          />
-        </div>
-      </div>
+      {shippingQuote && (
+        <FreeShippingProgress
+          locale={locale}
+          subtotalAmount={selectedTotal}
+          freeShippingThreshold={freeShippingThreshold}
+          className="mt-4"
+        />
+      )}
 
       <div className="checkout-toss-summary__total mt-4 pt-4">
         <div className="flex items-end justify-between">
@@ -204,63 +194,84 @@ export default function CartPage() {
     </>
   );
 
-  return (
-    <div className="checkout-toss-theme min-h-screen pb-36 lg:pb-8">
-      <div className="layout-container layout-page">
-      <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
+  const mobileOrderSummaryContent = (
+    <div className="checkout-toss-mobile-summary-content">
+      <div className="typo-body-sm">
+        <div className="flex items-center justify-between gap-4 py-2 first:pt-0">
+          <span className="text-muted-foreground">{t('selectedItems')}</span>
+          <span className="font-semibold text-foreground">{selectedIds.size}</span>
+        </div>
+        <div className="border-t border-soft pt-2">
+          <div className="flex items-center justify-between gap-4 py-2">
+            <span className="text-muted-foreground">{t('productAmount')}</span>
+            <span className="font-semibold text-foreground">{formatCurrency(selectedTotal, locale)}</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 py-2 last:pb-0">
+            <span className="text-muted-foreground">{t('shippingFee')}</span>
+            <span className="font-semibold text-foreground">
+              {selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee, locale)}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-end justify-between border-t border-soft pt-3">
+        <span className="typo-body-sm font-semibold">{t('total')}</span>
+        <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
+      </div>
+    </div>
+  );
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+  return (
+    <div className="checkout-toss-theme cart-page min-h-screen pb-36 lg:pb-8">
+      <div className="layout-container layout-page">
+      <div className="relative flex items-center justify-center pb-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push(`/${locale}/products`)}
+          aria-label={t('backToShopping')}
+          className="absolute left-0 h-10 min-h-10 w-10 rounded-full"
+        >
+          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+        </Button>
+        <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <div className="min-w-0 lg:col-span-2">
           <div className="checkout-toss-select-all mb-3 pb-3">
-            <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg bg-muted/30 px-3 py-2 transition-colors hover:bg-muted/50">
+            <label className="flex min-h-12 cursor-pointer items-center gap-3 px-0 py-2 transition-colors hover:bg-muted/30">
               <Checkbox
                 checked={allSelected}
                 onChange={(e) => handleSelectAll(e.target.checked)}
                 aria-label={t('selectAll')}
+                className="h-6 w-6"
               />
               <span className="checkout-toss-select-all__label typo-body-sm font-semibold">{t('selectAll')}</span>
               <span className="checkout-toss-select-all__count typo-body-sm">({selectedIds.size}/{items.length})</span>
             </label>
           </div>
 
-          {items.map((item) => (
-            <CartItemRow
-              key={item.id}
-              item={item}
-              selected={selectedIds.has(item.id)}
-              onSelect={handleSelect}
-              onQuantityChange={updateQuantity}
-              onRemove={handleRemove}
-            />
-          ))}
-
-          <section className="checkout-toss-mobile-summary mt-6 lg:hidden">
-            <Accordion.Root type="single" collapsible className="surface-card">
-              <Accordion.Item value="summary">
-                <Accordion.Header>
-                  <Accordion.Trigger className="group flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted/30">
-                    <div>
-                      <p className="typo-h3">{t('orderSummary')}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {t('total')} · {formatCurrency(grandTotal, locale)}
-                      </p>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                  </Accordion.Trigger>
-                </Accordion.Header>
-                <Accordion.Content className="overflow-hidden border-t border-soft data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                  <div className="p-4">{orderSummaryContent}</div>
-                </Accordion.Content>
-              </Accordion.Item>
-            </Accordion.Root>
-          </section>
+          <div className="checkout-toss-cart-list">
+            {items.map((item) => (
+              <CartItemRow
+                key={item.id}
+                item={item}
+                selected={selectedIds.has(item.id)}
+                onSelect={handleSelect}
+                onQuantityChange={updateQuantity}
+                onRemove={handleRemove}
+              />
+            ))}
+          </div>
         </div>
 
-        <aside className="checkout-toss-submit-card hidden h-fit surface-card p-6 lg:sticky lg:top-24 lg:block">
+        <aside className="checkout-toss-submit-card hidden h-fit p-6 lg:sticky lg:top-24 lg:block">
           <h2 className="typo-h3">{t('orderSummary')}</h2>
           <div className="mt-4">{orderSummaryContent}</div>
 
-          <Button type="button" variant="black" className="mt-4 w-full" onClick={handleOrder}>
+          <Button type="button" variant="brown" className="mt-6 w-full" onClick={handleOrder}>
             {t('orderSelected')}
           </Button>
         </aside>
@@ -268,16 +279,23 @@ export default function CartPage() {
 
       <div
         className={cn(
-          'checkout-toss-mobile-cta mobile-sticky-cta fixed z-40 border-t border-soft bg-background lg:hidden',
+          'checkout-toss-mobile-cta mobile-sticky-cta fixed z-40 bg-background lg:hidden',
           isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
+          shippingQuote && 'checkout-toss-mobile-cta--shipping',
         )}
       >
+        {shippingQuote && (
+          <FreeShippingProgress
+            locale={locale}
+            subtotalAmount={selectedTotal}
+            freeShippingThreshold={freeShippingThreshold}
+            variant="top-edge"
+            className="mb-3"
+          />
+        )}
         <div className="mobile-sticky-inner">
-          <div className="mb-2 flex items-end justify-between">
-            <p className="text-xs text-muted-foreground">{t('total')}</p>
-            <p className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</p>
-          </div>
-          <Button type="button" variant="black" className="w-full" onClick={handleOrder}>
+          {mobileOrderSummaryContent}
+          <Button type="button" variant="brown" className="mt-3 w-full" onClick={handleOrder}>
             {t('orderSelected')}
           </Button>
         </div>

@@ -27,7 +27,7 @@ export default function RecentlyViewedWidget() {
   return (
     <div
       className={cn(
-        'toss-recent-widget fixed right-4 z-50 flex flex-col items-end gap-2 md:bottom-20',
+        'toss-recent-widget fixed right-4 z-50 hidden flex-col items-end gap-2 md:flex md:bottom-20',
         hasMobileBottomCta ? 'bottom-40' : 'bottom-20',
       )}
     >

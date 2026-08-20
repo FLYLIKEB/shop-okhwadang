@@ -4,13 +4,14 @@ import ProductCard from '@/components/shared/products/ProductCard';
 import type { ProductImage } from '@/lib/api';
 
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) =>
+  useTranslations: () => (key: string, values?: Record<string, string | number>) =>
     ({
       addToCart: '장바구니 담기',
       addingToCart: '담는 중...',
       badgeFreeShipping: '무료배송',
       toggleOn: '위시리스트에 추가',
       toggleOff: '위시리스트에서 삭제',
+      ratingSummary: `${values?.rating ?? 0}(${values?.count ?? 0})`,
     }[key] ?? key),
 }));
 
@@ -106,6 +107,21 @@ describe('ProductCard summary display', () => {
 
     expect(screen.getByText('Fujian Zhuni · Xishi · 120ml · Gongfu Tea')).toBeInTheDocument();
     expect(screen.queryByText(/Xishi Shape/)).not.toBeInTheDocument();
+  });
+
+  it('shows one star and the rating summary beside the product name', () => {
+    renderCard({ rating: 4.3, reviewCount: 15 });
+
+    const ratingSummary = screen.getByText('4.3(15)');
+    expect(ratingSummary).toBeInTheDocument();
+    expect(screen.getByText('자사호').parentElement).toContainElement(ratingSummary);
+    expect(screen.getByRole('group').querySelectorAll('button')).toHaveLength(1);
+  });
+
+  it('does not render a wishlist button', () => {
+    renderCard();
+
+    expect(screen.queryByRole('button', { name: '위시리스트에 추가' })).not.toBeInTheDocument();
   });
 });
 

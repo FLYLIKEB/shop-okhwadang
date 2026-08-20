@@ -186,17 +186,20 @@ describe('CartPage', () => {
     expect(screen.getAllByRole('checkbox')[1]).toBeChecked();
   });
 
-  it('keeps order summary and selected-order CTA available below desktop breakpoint', () => {
+  it('places the order summary and brown checkout CTA beside the cart items on desktop', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true });
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1] });
 
     const { container } = render(<CartPage />);
 
-    expect(container.querySelector('section.mt-6')).toHaveClass('lg:hidden');
+    expect(container.querySelector('aside.checkout-toss-submit-card')).toHaveClass('hidden', 'lg:block');
     expect(container.querySelector('.mobile-sticky-cta')).toHaveClass('lg:hidden');
-    expect(container.querySelector('aside')).toHaveClass('hidden', 'lg:block');
-    expect(screen.getAllByText('주문 요약').length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByRole('button', { name: '선택 상품 주문하기' }).length).toBeGreaterThanOrEqual(2);
+    expect(container.querySelector('.grid.lg\\:grid-cols-3')).toBeInTheDocument();
+    expect(screen.getAllByText('주문 요약')).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: '선택 상품 주문하기' })).toHaveLength(2);
+    screen.getAllByRole('button', { name: '선택 상품 주문하기' }).forEach((button) => {
+      expect(button).toHaveClass('toss-button--brown');
+    });
   });
 
   it('calculates selected total for checked items', async () => {

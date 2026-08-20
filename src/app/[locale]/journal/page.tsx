@@ -12,20 +12,22 @@ export default async function JournalPage({ params }: JournalPageProps) {
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="bg-foreground text-background py-20 px-4 text-center">
-        <p className="typo-label tracking-widest uppercase text-background/60 mb-3">
-          {t('heroEyebrow')}
-        </p>
-        <h1 className="font-display typo-h1 tracking-tight mb-4">
-          {t('heroTitle')}
-        </h1>
-        <p className="max-w-xl mx-auto typo-body text-background/80">
-          {t('heroDesc')}
-        </p>
+      <section className="border-b border-soft bg-background px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <p className="mb-3 typo-label tracking-widest text-muted-foreground">
+            {t('heroEyebrow')}
+          </p>
+          <h1 className="mb-4 font-display typo-h1 tracking-tight text-foreground">
+            {t('heroTitle')}
+          </h1>
+          <p className="max-w-xl typo-body text-muted-foreground">
+            {t('heroDesc')}
+          </p>
+        </div>
       </section>
 
       {/* 필터 + 목록 */}
-      <section className="py-16 px-4 max-w-6xl mx-auto">
+      <section className="mx-auto max-w-6xl px-4 py-16 md:py-24">
         <JournalListClient />
       </section>
     </div>

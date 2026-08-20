@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import Link from 'next/link';
+
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { productsApi } from '@/lib/api';
@@ -11,9 +11,9 @@ import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import { useCarouselProgress } from '@/components/shared/hooks/useCarouselProgress';
 import CarouselProgressBar from '@/components/shared/common/CarouselProgressBar';
 import CarouselArrowButton from '@/components/shared/common/CarouselArrowButton';
+import ViewAllButton from '@/components/shared/common/ViewAllButton';
 import { cn } from '@/components/ui/utils';
 import type { Locale } from '@/utils/currency';
-import { ChevronRight } from 'lucide-react';
 
 interface Props {
   content: ProductCarouselContent;
@@ -102,17 +102,14 @@ export default function ProductCarouselBlock({ content }: Props) {
 
   return (
     <section className="py-16 md:py-24">
-      <div className="mb-8">
+      <div className="relative mb-8 flex min-h-10 items-center justify-center">
         {title && <h2 className="font-semibold text-center">{title}</h2>}
         {category_id && (
-          <div className="flex justify-end mt-2">
-            <Link
+          <div className="absolute right-0">
+            <ViewAllButton
               href={`/${locale}/products?categoryId=${category_id}`}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {tCommon('viewAll')}
-              <ChevronRight className="w-4 h-4" />
-            </Link>
+              label={tCommon('viewAll')}
+            />
           </div>
         )}
       </div>

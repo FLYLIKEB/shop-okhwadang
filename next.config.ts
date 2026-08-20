@@ -19,6 +19,14 @@ const legacyPaymentSdkSources = {
   'frame-src': ['https://js.stripe.com', 'https://*.js.stripe.com', 'https://hooks.stripe.com'],
 } as const;
 
+const postcodeSearchSources = {
+  'script-src': ['https://t1.daumcdn.net', 'https://t1.kakaocdn.net'],
+  'connect-src': ['http://postcode.map.daum.net', 'http://postcode.map.kakao.com', 'https://postcode.map.daum.net', 'https://postcode.map.kakao.com', 'https://t1.daumcdn.net', 'https://t1.kakaocdn.net'],
+  'img-src': ['https://t1.daumcdn.net', 'https://t1.kakaocdn.net'],
+  'child-src': ['http://postcode.map.daum.net', 'http://postcode.map.kakao.com', 'https://postcode.map.daum.net', 'https://postcode.map.kakao.com'],
+  'frame-src': ['http://postcode.map.daum.net', 'http://postcode.map.kakao.com', 'https://postcode.map.daum.net', 'https://postcode.map.kakao.com'],
+} as const;
+
 function mergeSources(...groups: readonly (readonly string[])[]): string[] {
   return [...new Set(groups.flat())];
 }
@@ -31,6 +39,7 @@ const contentSecurityPolicyDirectives: Array<[string, string[]]> = [
     mergeSources(
       ["'self'", "'unsafe-inline'", 'https://static.cloudflareinsights.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com'],
       legacyPaymentSdkSources['script-src'],
+      postcodeSearchSources['script-src'],
       enabledCheckoutGatewaySources['script-src'],
     ),
   ],
@@ -40,6 +49,7 @@ const contentSecurityPolicyDirectives: Array<[string, string[]]> = [
     "img-src",
     mergeSources(
       ["'self'", 'data:', 'https://images.unsplash.com', 'https://*.amazonaws.com', 'https://*.cloudfront.net', 'https://cdn.ockhwadang.com', 'https://ockhwadang.com', 'https://i.pinimg.com', 'https://m.cbw.co.kr', 'https://gdimg.gmarket.co.kr', 'https://cdn-optimized.imweb.me', 'https://shop-phinf.pstatic.net', 'https://www.google.co.kr'],
+      postcodeSearchSources['img-src'],
       enabledCheckoutGatewaySources['img-src'],
     ),
   ],
@@ -49,11 +59,12 @@ const contentSecurityPolicyDirectives: Array<[string, string[]]> = [
     mergeSources(
       ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cloudflareinsights.com', 'https://www.google-analytics.com', 'https://analytics.google.com', 'https://www.google.com', 'https://region1.google-analytics.com'],
       legacyPaymentSdkSources['connect-src'],
+      postcodeSearchSources['connect-src'],
       enabledCheckoutGatewaySources['connect-src'],
     ),
   ],
-  ["child-src", mergeSources(["'self'"], legacyPaymentSdkSources['child-src'], enabledCheckoutGatewaySources['child-src'])],
-  ["frame-src", mergeSources(["'self'"], legacyPaymentSdkSources['frame-src'], enabledCheckoutGatewaySources['frame-src'])],
+  ["child-src", mergeSources(["'self'"], legacyPaymentSdkSources['child-src'], postcodeSearchSources['child-src'], enabledCheckoutGatewaySources['child-src'])],
+  ["frame-src", mergeSources(["'self'"], legacyPaymentSdkSources['frame-src'], postcodeSearchSources['frame-src'], enabledCheckoutGatewaySources['frame-src'])],
 ];
 
 const contentSecurityPolicy = contentSecurityPolicyDirectives

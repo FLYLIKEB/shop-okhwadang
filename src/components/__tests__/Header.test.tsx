@@ -100,7 +100,9 @@ beforeEach(() => {
 describe('Header', () => {
   it('renders logo, nav link, cart icon link, and login link', () => {
     render(<Header />);
-    expect(screen.getByRole('img', { name: '옥화당' })).toBeInTheDocument();
+    const logo = screen.getByRole('img', { name: '옥화당' });
+    expect(logo).toBeInTheDocument();
+    expect(logo.closest('a')).toHaveClass('absolute', 'left-1/2', '-translate-x-1/2', 'md:static');
     expect(screen.getByText('상품목록')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: '장바구니' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: '로그인' }).length).toBeGreaterThan(0);
@@ -146,7 +148,11 @@ describe('Header', () => {
 
   it('renders mobile hamburger button', () => {
     render(<Header />);
-    expect(screen.getByRole('button', { name: '메뉴 열기' })).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: '메뉴 열기' });
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveClass('w-10', 'bg-transparent', 'hover:bg-transparent');
+    expect(button.querySelector('svg')).toHaveClass('h-5', 'w-7');
+    expect(button.querySelector('svg path')).toHaveAttribute('d', 'M1 3h26M1 13h26');
   });
 
   it('renders header chrome without divider lines', async () => {

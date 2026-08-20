@@ -137,40 +137,40 @@ export default async function JournalDetailPage({ params }: PageProps) {
       />
 
       {/* Hero */}
-      <section className="bg-foreground text-background py-20 px-4 text-center">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-2 justify-center mb-4">
-            <span className="text-xs font-semibold tracking-widest uppercase text-background/60">
+      <section className="border-b border-soft bg-background px-4 py-16 md:py-24">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-5 flex flex-wrap items-center gap-2 typo-label tracking-wide text-muted-foreground">
+            <span className="rounded-full bg-muted px-2.5 py-1 font-semibold text-foreground">
               {entry.category}
             </span>
-            <span className="text-xs text-background/40">·</span>
-            <time className="text-xs text-background/60">{entry.date}</time>
+            <span aria-hidden="true">·</span>
+            <time>{entry.date}</time>
             {entry.readTime ? (
               <>
-                <span className="text-xs text-background/40">·</span>
-                <span className="text-xs text-background/60">
+                <span aria-hidden="true">·</span>
+                <span>
                   {entry.readTime} {t('readSuffix')}
                 </span>
               </>
             ) : null}
           </div>
-          <h1 className="font-display typo-h1 tracking-tight mb-3">{entry.title}</h1>
+          <h1 className="mb-3 font-display typo-h1 tracking-tight text-foreground">{entry.title}</h1>
           {entry.subtitle ? (
-            <p className="typo-h3 text-background/70 font-display">{entry.subtitle}</p>
+            <p className="font-display typo-h3 text-muted-foreground">{entry.subtitle}</p>
           ) : null}
         </div>
       </section>
 
       {/* 본문 */}
-      <article className="py-16 px-4 max-w-3xl mx-auto">
+      <article className="mx-auto max-w-3xl px-4 py-12 md:py-20">
         {entry.summary ? (
-          <p className="text-base text-muted-foreground leading-relaxed mb-8 border-l-2 border-foreground pl-4 italic">
+          <p className="mb-10 border-l-2 border-primary pl-4 typo-body leading-relaxed text-muted-foreground">
             {entry.summary}
           </p>
         ) : null}
-        <div className="space-y-6">
+        <div className="space-y-7">
           {entry.content.map((paragraph, i) => (
-            <p key={i} className="text-base text-foreground leading-relaxed">
+            <p key={i} className="typo-body leading-relaxed text-foreground">
               {paragraph}
             </p>
           ))}
@@ -178,13 +178,15 @@ export default async function JournalDetailPage({ params }: PageProps) {
       </article>
 
       {/* 하단 네비 */}
-      <section className="border-t border-border py-12 px-4 max-w-3xl mx-auto">
+      <section className="border-t border-soft px-4 py-8">
+        <div className="mx-auto max-w-3xl">
         <Link
           href="/journal"
-          className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:underline"
+          className="inline-flex min-h-11 items-center gap-2 typo-button text-muted-foreground transition-colors hover:text-foreground"
         >
           {t('backToList')}
         </Link>
+        </div>
       </section>
     </div>
   );

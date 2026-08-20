@@ -79,9 +79,8 @@ vi.mock('next-intl', () => ({
       'steps.preparing_payment': '결제 준비 중...',
       'steps.confirming_payment': '결제 확인 중...',
       'steps.success': '완료',
-      'consent.title': '필수 동의',
-      'consent.requiredLabel': '[필수] 구매조건 및 개인정보 처리에 동의합니다.',
-      'consent.requiredDescription': '주문할 상품의 상품명, 가격, 배송정보, 교환·환불 규정을 확인했으며 구매에 동의합니다.',
+      'consent.title': '개인정보 제공 동의',
+      'consent.confirmation': '주문 내용을 확인하였으며, 정보 제공 등에 동의합니다.',
       'consent.showPolicy': '정책 내용 열기',
       'consent.hidePolicy': '정책 내용 닫기',
       'consent.contentLoading': '정책 내용을 불러오는 중입니다.',
@@ -188,7 +187,23 @@ vi.mock('@/lib/api/checkout-pricing', () => ({
 const sampleItem: CartItem = {
   id: 1, productId: 10, productOptionId: null, quantity: 2,
   unitPrice: 20000, subtotal: 40000,
-  product: { id: 10, name: '테스트 상품', slug: 'test-product', price: 20000, salePrice: null, status: 'active', images: [] },
+  product: {
+    id: 10,
+    name: '테스트 상품',
+    slug: 'test-product',
+    price: 20000,
+    salePrice: null,
+    status: 'active',
+    images: [{
+      id: 1,
+      url: '/products/test.jpg',
+      thumbnailUrl: '/products/test-thumb.jpg',
+      alt: '테스트 상품 썸네일',
+      sortOrder: 0,
+      isThumbnail: true,
+      isDescriptionImage: false,
+    }],
+  },
   option: null,
 };
 
@@ -248,7 +263,7 @@ describe('CheckoutPage', () => {
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
     expect(mockReplace).not.toHaveBeenCalledWith('/ko/login');
-    expect(await screen.findByLabelText(/비회원 이메일/)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/비회원 이메일/)).toHaveClass('checkout-toss-guest-email');
     expect(screen.queryByText('쿠폰 / 적립금')).not.toBeInTheDocument();
     await waitFor(() => {
       expect(checkoutPricingApi.preview).toHaveBeenCalledWith({
@@ -276,7 +291,7 @@ describe('CheckoutPage', () => {
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
   });
 
-  it('expands a policy row and loads its content on demand', async () => {
+  it('expands the policy list and opens policy content in a modal', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
@@ -295,15 +310,21 @@ describe('CheckoutPage', () => {
     });
 
     await renderCheckoutPage();
-    const policyToggle = screen.getAllByRole('button', { name: '정책 내용 열기' })[0];
-    await user.click(policyToggle);
+    const policyListToggle = screen.getByRole('button', { name: '정책 내용 열기' });
+    await user.click(policyListToggle);
 
+    const privacyPolicyButton = screen.getByRole('button', { name: '개인정보처리방침' });
+    await user.click(privacyPolicyButton);
     expect(pagesApi.getBySlug).toHaveBeenCalledWith('privacy', 'ko');
-    expect(policyToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(policyListToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(await screen.findByText('개인정보 처리 내용')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '정책 내용 닫기' }));
+    await user.click(screen.getByRole('dialog'));
     expect(screen.queryByText('개인정보 처리 내용')).not.toBeInTheDocument();
+
+    await user.click(policyListToggle);
+    expect(screen.queryByRole('button', { name: '개인정보처리방침' })).not.toBeInTheDocument();
   });
 
   it('uses preview totals and keeps coupon discount / points / shipping split visible', async () => {
@@ -411,7 +432,6 @@ describe('CheckoutPage', () => {
   });
 
   it('clears the old quote when the address changes without changing zipcode', async () => {
-    const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     vi.mocked(checkoutPricingApi.preview)
@@ -420,25 +440,33 @@ describe('CheckoutPage', () => {
 
     await renderCheckoutPage();
     await screen.findByLabelText(/받는 분 이름/);
-    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
+    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
 
     await waitFor(() => expect(screen.getAllByRole('button', { name: '결제하기' })[0]).toBeDisabled());
     expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
   });
 
-  it('keeps desktop order summary and submit CTA inside the same sticky aside', async () => {
+  it('keeps order summary and submit CTA in the centered checkout flow', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
 
     await renderCheckoutPage();
 
     const orderSummaryHeading = await screen.findByText('주문 상품');
-    const desktopSummaryAside = orderSummaryHeading.closest('aside');
+    const orderSummarySection = orderSummaryHeading.closest('section');
+    const checkoutForm = orderSummaryHeading.closest('form');
 
-    expect(desktopSummaryAside).not.toBeNull();
-    expect(desktopSummaryAside).toHaveClass('lg:sticky', 'lg:top-24', 'lg:self-start');
-    expect(desktopSummaryAside).toContainElement(screen.getByText('테스트 상품'));
-    expect(desktopSummaryAside).toContainElement(screen.getAllByRole('button', { name: '결제하기' })[0]);
+    expect(orderSummarySection).not.toBeNull();
+    expect(orderSummarySection).toHaveClass('surface-card');
+    expect(orderSummarySection).toContainElement(screen.getByText('테스트 상품'));
+    expect(checkoutForm).toContainElement(screen.getAllByRole('button', { name: '결제하기' })[0]);
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+    expect(screen.getAllByText('주문 내용을 확인하였으며, 정보 제공 등에 동의합니다.')).toHaveLength(2);
+    expect(screen.getByAltText('테스트 상품 썸네일')).toHaveAttribute('src', '/products/test-thumb.jpg');
+    expect(screen.getAllByText('토스페이먼츠')).toHaveLength(2);
+    expect(document.querySelectorAll('.checkout-toss-free-shipping')).toHaveLength(2);
+    expect(orderSummarySection?.querySelector('.checkout-toss-free-shipping')).toBeNull();
+    expect(document.querySelector('.checkout-toss-mobile-cta > .checkout-toss-free-shipping--top-edge')).not.toBeNull();
   });
 
   it('shows validation error for invalid phone on submit', async () => {
@@ -448,10 +476,9 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
     await screen.findByLabelText(/받는 분 이름/);
     fireEvent.change(screen.getByLabelText(/받는 분 이름/), { target: { value: '홍길동' } });
-    fireEvent.change(screen.getByLabelText(/연락처/), { target: { value: '01012345678' } });
+    fireEvent.change(screen.getByLabelText(/연락처/), { target: { value: '0101234567' } });
     fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
@@ -484,9 +511,8 @@ describe('CheckoutPage', () => {
     await screen.findByLabelText(/받는 분 이름/);
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
-    await user.type(screen.getByLabelText(/우편번호/), '12345');
-    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
-    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
+    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
@@ -532,9 +558,8 @@ describe('CheckoutPage', () => {
     await screen.findByLabelText(/받는 분 이름/);
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
-    await user.type(screen.getByLabelText(/우편번호/), '12345');
-    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
-    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
+    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => expect(ordersApi.create).toHaveBeenCalledWith(
@@ -581,9 +606,8 @@ describe('CheckoutPage', () => {
     expect(await screen.findByTestId('toss-widget-preview')).toBeInTheDocument();
     await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
-    await user.type(screen.getByLabelText(/우편번호/), '12345');
-    await user.type(screen.getByLabelText(/^주소/), '서울시 강남구');
-    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
+    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
@@ -639,19 +663,19 @@ describe('CheckoutPage', () => {
     });
   });
 
-  it('fetches saved addresses on mount and auto-fills default address', async () => {
+  it('fetches saved addresses on mount and shows the default summary', async () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김기본');
+      expect(screen.getByText('김기본')).toBeInTheDocument();
+      expect(screen.getByText('010-1111-2222')).toBeInTheDocument();
+      expect(screen.getByText(/06000/)).toBeInTheDocument();
+      expect(screen.getByText(/101호/)).toBeInTheDocument();
     });
-    expect(screen.getByLabelText(/연락처/)).toHaveValue('010-1111-2222');
-    expect(screen.getByLabelText(/우편번호/)).toHaveValue('06000');
-    expect(screen.getByLabelText(/^주소/)).toHaveValue('서울특별시 강남구 역삼동');
-    expect(screen.getByLabelText(/상세 주소/)).toHaveValue('101호');
+    expect(screen.queryByLabelText(/받는 분 이름/)).not.toBeInTheDocument();
   });
 
   it('숫자형 zipcode 주소도 문자열로 정규화해 폼에 채운다', async () => {
@@ -663,7 +687,8 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/우편번호/)).toHaveValue('06000');
+      expect(screen.getByText(/06000/)).toBeInTheDocument();
+      expect(screen.getByText(/101호/)).toBeInTheDocument();
     });
   });
 
@@ -674,13 +699,14 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/집/)).toBeInTheDocument();
+      expect(screen.getByText('집')).toBeInTheDocument();
     });
+    await userEvent.click(screen.getByRole('button', { name: '배송지 변경' }));
     expect(screen.getByLabelText(/회사/)).toBeInTheDocument();
     expect(screen.getByLabelText(/직접 입력/)).toBeInTheDocument();
   });
 
-  it('selecting a different address fills the form', async () => {
+  it('selecting a different address shows its summary and hides the input form', async () => {
     const user = userEvent.setup();
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
@@ -688,17 +714,19 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/회사/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '배송지 변경' })).toBeInTheDocument();
     });
+    await user.click(screen.getByRole('button', { name: '배송지 변경' }));
     await user.click(screen.getByLabelText(/회사/));
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('이직장');
+      expect(screen.getByText('회사')).toBeInTheDocument();
+      expect(screen.getByText('010-3333-4444')).toBeInTheDocument();
+      expect(screen.getByText(/04000 서울특별시 중구 을지로 5층/)).toBeInTheDocument();
     });
-    expect(screen.getByLabelText(/연락처/)).toHaveValue('010-3333-4444');
-    expect(screen.getByLabelText(/우편번호/)).toHaveValue('04000');
-    expect(screen.getByLabelText(/^주소/)).toHaveValue('서울특별시 중구 을지로');
-    expect(screen.getByLabelText(/상세 주소/)).toHaveValue('5층');
+    expect(screen.queryByLabelText(/받는 분 이름/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/연락처/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/우편번호/)).not.toBeInTheDocument();
   });
 
   it('selecting direct input clears the form', async () => {
@@ -709,8 +737,9 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김기본');
+      expect(screen.getByText('김기본')).toBeInTheDocument();
     });
+    await user.click(screen.getByRole('button', { name: '배송지 변경' }));
     await user.click(screen.getByLabelText(/직접 입력/));
 
     await waitFor(() => {

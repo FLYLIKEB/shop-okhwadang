@@ -36,11 +36,34 @@ function SharedToaster() {
     <Toaster
       position="top-center"
       closeButton
+      className="toss-toaster"
+      expand={false}
+      visibleToasts={3}
+      gap={8}
+      offset={{ top: 72 }}
+      mobileOffset={{ top: 16, left: 16, right: 16 }}
       swipeDirections={['top', 'right', 'bottom', 'left']}
       toastOptions={{
+        unstyled: true,
         style: {
           fontFamily: 'var(--font-body)',
-          borderRadius: 'var(--radius-md)',
+          borderRadius: '1rem',
+          background: 'var(--checkout-toss-surface)',
+          color: 'var(--checkout-toss-foreground)',
+          border: '1px solid var(--checkout-toss-border)',
+          boxShadow: 'var(--checkout-toss-shadow)',
+        },
+        classNames: {
+          toast: 'toss-toast',
+          icon: 'toss-toast__icon',
+          title: 'toss-toast__title',
+          description: 'toss-toast__description',
+          closeButton: 'toss-toast__close',
+          actionButton: 'toss-toast__action',
+          success: 'toss-toast--success',
+          error: 'toss-toast--error',
+          warning: 'toss-toast--warning',
+          info: 'toss-toast--info',
         },
       }}
     />
@@ -56,6 +79,8 @@ export default function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const isAdminRoute = isAdminPath(pathname);
+  const isCartRoute = /\/cart(?:\/|$)/.test(pathname);
+  const isCheckoutRoute = /\/checkout(?:\/|$)/.test(pathname);
 
   if (isAdminRoute) {
     return (
@@ -70,7 +95,13 @@ export default function AppShell({
     <MobileNavProvider initialVisible={mobileBottomNavVisible}>
       <div className="flex min-h-screen flex-col">
         {announcementBar}
-        <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
+        {isCartRoute ? (
+          <div className="cart-route-header">
+            <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
+          </div>
+        ) : (
+          <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
+        )}
         <main
           id="main-content"
           className={cn(
@@ -81,7 +112,13 @@ export default function AppShell({
         >
           {children}
         </main>
-        <Footer businessInfo={businessInfo} initialFooterItems={navigationData?.footer} />
+        {!isCheckoutRoute && (isCartRoute ? (
+          <div className="cart-route-footer">
+            <Footer businessInfo={businessInfo} initialFooterItems={navigationData?.footer} />
+          </div>
+        ) : (
+          <Footer businessInfo={businessInfo} initialFooterItems={navigationData?.footer} />
+        ))}
         <MobileBottomNavWrapper visible={mobileBottomNavVisible} />
         <SharedToaster />
         <RecentlyViewedWidget />

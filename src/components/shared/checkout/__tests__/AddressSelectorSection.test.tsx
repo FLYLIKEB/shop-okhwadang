@@ -69,11 +69,11 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
-    // 두 주소 + 직접 입력
-    expect(screen.getAllByRole('radio')).toHaveLength(3);
+    expect(screen.getByRole('button', { name: '배송지 변경' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
     expect(screen.getByText('집')).toBeInTheDocument();
-    expect(screen.getByText('회사')).toBeInTheDocument();
-    expect(screen.getByText('직접 입력')).toBeInTheDocument();
+    expect(screen.queryByText('회사')).not.toBeInTheDocument();
+    expect(screen.queryByText('직접 입력')).not.toBeInTheDocument();
   });
 
   it('selectedAddressId=1 → 첫 번째 주소 라디오 checked', () => {
@@ -86,10 +86,7 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
-    const radios = screen.getAllByRole('radio');
-    expect(radios[0]).toBeChecked();
-    expect(radios[1]).not.toBeChecked();
-    expect(radios[2]).not.toBeChecked();
+    expect(screen.getByRole('button', { name: '배송지 변경' })).toBeInTheDocument();
   });
 
   it('selectedAddressId=manual → 직접 입력 라디오 checked', () => {
@@ -102,8 +99,8 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
-    const radios = screen.getAllByRole('radio');
-    expect(radios[2]).toBeChecked();
+    expect(screen.getAllByRole('radio')).toHaveLength(3);
+    expect(screen.getAllByRole('radio')[2]).toBeChecked();
   });
 
   it('주소 라디오 클릭 → onSelect(id) 호출', async () => {
@@ -117,6 +114,7 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
+    await userEvent.click(screen.getByRole('button', { name: '배송지 변경' }));
     await userEvent.click(screen.getAllByRole('radio')[1]);
     expect(onSelect).toHaveBeenCalledWith(2);
   });
@@ -132,6 +130,7 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
+    await userEvent.click(screen.getByRole('button', { name: '배송지 변경' }));
     await userEvent.click(screen.getAllByRole('radio')[2]);
     expect(onSelect).toHaveBeenCalledWith('manual');
   });

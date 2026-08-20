@@ -1,10 +1,11 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsEnum, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsObject, MinLength } from 'class-validator';
 import { JournalCategory } from '../entities/journal-entry.entity';
 
 export class CreateJournalDto {
   @ApiProperty({ example: 'junzi-tea-culture', description: 'URL 슬러그' })
   @IsString()
+  @MinLength(1)
   slug!: string;
 
   @ApiProperty({ example: '중국차 도자기 문화', description: '제목' })

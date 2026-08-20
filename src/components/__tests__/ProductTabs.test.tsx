@@ -84,8 +84,8 @@ describe('ProductTabs', () => {
 
     const tabBar = screen.getByRole('button', { name: '상세정보' }).parentElement
 
-    expect(tabBar).toHaveClass('sticky', 'sticky-below-header')
-    expect(tabBar).not.toHaveClass('top-88')
+    expect(tabBar).toHaveClass('sticky', 'sticky-below-header', 'border-soft')
+    expect(screen.getByRole('button', { name: '상세정보' })).not.toHaveClass('border-l')
   })
 
   it('default tab shows description content', async () => {
