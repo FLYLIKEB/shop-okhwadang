@@ -32,8 +32,6 @@ import { FreeShippingProgress } from '@/components/shared/checkout/FreeShippingP
 import { CheckoutPolicyConsentPanel } from '@/components/shared/checkout/CheckoutPolicyConsentPanel';
 import CouponSelector from '@/components/shared/checkout/CouponSelector';
 import {
-  AddressDetailInputSection,
-  AddressInputSection,
   MemoInputSection,
   PhoneInputSection,
   ShippingFormSection,
@@ -532,8 +530,6 @@ export default function CheckoutPage({
                       onAddressSearch={handleAddressSearch}
                       readOnly
                     />
-                    <AddressInputSection form={form} errors={errors} onChange={handleChange} readOnly />
-                    <AddressDetailInputSection form={form} onChange={handleChange} />
                   </>
                 )}
                 <MemoInputSection form={form} onChange={handleChange} />

@@ -522,7 +522,7 @@
     "expires": "만료",
     "noCoupons": "사용 가능한 쿠폰이 없습니다.",
     "defaultAddressLabel": "주소",
-    "addressPlaceholder": "서울특별시 강남구 테헤란로 123",
+    "addressPlaceholder": "주소 검색으로 기본 주소를 입력하세요.",
     "stripeSetupError": "Stripe 설정이 올바르지 않습니다.",
     "paymentMethodLoadError": "결제 수단을 불러오는데 실패했습니다.",
     "loadingPaymentMethods": "결제 수단 불러오는 중...",
@@ -555,7 +555,10 @@
     "guestCheckoutDescription": "주문에 사용할 이메일을 입력해 주세요. 로그인 없이도 같은 이메일과 주문번호로 비회원 주문을 다시 조회할 수 있습니다.",
     "guestEmailLabel": "비회원 이메일",
     "guestEmailPlaceholder": "you@example.com",
-    "guestEmailDescription": "주문 안내와 비회원 주문조회에 사용할 이메일입니다."
+    "guestEmailDescription": "주문 안내와 비회원 주문조회에 사용할 이메일입니다.",
+    "zipcodePlaceholder": "12345",
+    "addressSearchClose": "주소 검색 닫기",
+    "addressSearchLoadError": "주소 검색을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
   },
   "order": {
     "orderHistory": "주문 내역",
@@ -665,7 +668,14 @@
     },
     "loadError": "배송지를 불러오지 못했습니다.",
     "saveError": "오류가 발생했습니다.",
-    "deleteError": "삭제 중 오류가 발생했습니다."
+    "deleteError": "삭제 중 오류가 발생했습니다.",
+    "phonePlaceholder": "010-1234-5678",
+    "zipcodePlaceholder": "12345",
+    "addressPlaceholder": "주소 검색으로 기본 주소를 입력하세요.",
+    "addressDetailPlaceholder": "동/호수 등",
+    "addressSearch": "주소 검색",
+    "addressSearchClose": "주소 검색 닫기",
+    "addressSearchLoadError": "주소 검색을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
   },
   "review": {
     "title": "리뷰 작성",
