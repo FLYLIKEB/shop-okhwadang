@@ -84,10 +84,10 @@ function JournalRow({
             alt={journal.title}
             width={48}
             height={48}
-            className="surface-card h-12 w-12 rounded-lg object-cover"
+            className="h-12 w-12 rounded-md border-soft object-cover"
           />
         ) : (
-          <div className="surface-card h-12 w-12 rounded-lg bg-muted" />
+          <div className="h-12 w-12 rounded-md border-soft bg-muted" />
         )}
       </td>
       <td className="admin-row px-4">
@@ -97,7 +97,7 @@ function JournalRow({
         )}
       </td>
       <td className="admin-row px-4">
-        <span className="typo-label rounded-full bg-muted px-2 py-1 font-medium">
+        <span className="rounded-full border-soft bg-muted px-2 py-1 typo-label font-medium">
           {CATEGORY_LABELS[journal.category]}
         </span>
       </td>
@@ -410,7 +410,7 @@ export default function AdminJournalPage() {
         action={<Button onClick={handleOpenCreate}>+ 저널 추가</Button>}
       />
 
-      <div className="surface-card flex flex-wrap gap-2 p-3">
+      <div className="surface-card border-soft flex flex-wrap gap-2 bg-background p-3">
         <Button
           type="button"
           size="sm"

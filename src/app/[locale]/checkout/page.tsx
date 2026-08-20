@@ -115,6 +115,7 @@ export default function CheckoutPage({
   const [currentGuestAccessTokenExpiresAt, setCurrentGuestAccessTokenExpiresAt] = useState('');
   const [confirmedGrandTotal, setConfirmedGrandTotal] = useState<number | null>(null);
   const [pricingPreview, setPricingPreview] = useState<CheckoutPricingPreviewResponse | null>(null);
+  const [selectedWidgetPaymentMethodCode, setSelectedWidgetPaymentMethodCode] = useState<string | null>(null);
   const [form, setForm] = useState<ShippingForm>({
     recipientName: '',
     recipientPhone: '',
@@ -150,11 +151,45 @@ export default function CheckoutPage({
   const appliedPointsUsed = pricingPreview?.appliedPointsUsed ?? 0;
   const shippingFee = pricingPreview?.shippingFee ?? 0;
   const freeShippingThreshold = pricingPreview?.freeShippingThreshold ?? 0;
+  const isFreeShipping = pricingPreview?.isFreeShipping ?? false;
   const subtotalAmount = pricingPreview?.subtotalAmount ?? 0;
   const grandTotal = confirmedGrandTotal ?? pricingPreview?.totalPayable ?? 0;
   const isPricingReady = pricingPreview !== null || confirmedGrandTotal !== null;
   const selectedPolicy = policyConsents.find((policy) => policy.slug === selectedPolicySlug);
   const selectedPolicyHtml = selectedPolicy ? getPolicyHtml(policyPages[selectedPolicy.slug]) : null;
+  const gatewayPaymentLabel = selectedGateway === 'toss'
+    ? t('tossPayment')
+    : selectedGateway === 'paypal'
+      ? t('paypalPayment')
+      : selectedGateway === 'eximbay'
+        ? t('eximbayPayment')
+        : t('bankTransferPayment');
+  const tossPaymentMethodLabels: Record<string, string> = {
+    CARD: t('paymentMethodLabels.card'),
+    VIRTUAL_ACCOUNT: t('paymentMethodLabels.virtualAccount'),
+    MOBILE_PHONE: t('paymentMethodLabels.mobilePhone'),
+    TRANSFER: t('paymentMethodLabels.transfer'),
+    TOSSPAY: t('paymentMethodLabels.tossPay'),
+    NAVERPAY: t('paymentMethodLabels.naverPay'),
+    KAKAOPAY: t('paymentMethodLabels.kakaoPay'),
+    SAMSUNGPAY: t('paymentMethodLabels.samsungPay'),
+    PAYCO: t('paymentMethodLabels.payco'),
+    LPAY: t('paymentMethodLabels.lpay'),
+    SSG: t('paymentMethodLabels.ssg'),
+    APPLEPAY: t('paymentMethodLabels.applePay'),
+    KBPAY: t('paymentMethodLabels.kbPay'),
+    PINPAY: t('paymentMethodLabels.pinPay'),
+    CULTURE_GIFT_CERTIFICATE: t('paymentMethodLabels.cultureGiftCertificate'),
+    GAME_GIFT_CERTIFICATE: t('paymentMethodLabels.gameGiftCertificate'),
+    BOOK_GIFT_CERTIFICATE: t('paymentMethodLabels.bookGiftCertificate'),
+    PAYPAL: t('paypalPayment'),
+  };
+  const selectedPaymentMethodLabel = selectedWidgetPaymentMethodCode
+    ? tossPaymentMethodLabels[selectedWidgetPaymentMethodCode] ?? gatewayPaymentLabel
+    : gatewayPaymentLabel;
+  const freeShippingProgress = freeShippingThreshold > 0
+    ? Math.min((subtotalAmount / freeShippingThreshold) * 100, 100)
+    : 100;
   const orderSummaryItems = (pricingPreview?.items ?? []).map((item) => {
     const checkoutItem = checkoutItems.find(
       (candidate) => candidate.productId === item.productId
@@ -528,6 +563,7 @@ export default function CheckoutPage({
                     guestAccessToken={currentGuestAccessToken || undefined}
                     guestAccessTokenExpiresAt={currentGuestAccessTokenExpiresAt || undefined}
                     onError={handlePaymentError}
+                    onPaymentMethodChange={setSelectedWidgetPaymentMethodCode}
                     autoConfirm={locale === 'ko' && prepareResult.gateway === 'toss'}
                   />
                 ) : locale === 'ko' && selectedGateway === 'toss' ? (
@@ -535,12 +571,16 @@ export default function CheckoutPage({
                     amount={grandTotal}
                     locale={locale}
                     onError={handlePaymentError}
+                    onPaymentMethodChange={setSelectedWidgetPaymentMethodCode}
                   />
                 ) : (
                   <PaymentMethodSelector
                     gatewayOptions={gatewayOptions}
                     selectedGateway={selectedGateway}
-                    onSelect={setSelectedGateway}
+                    onSelect={(gateway) => {
+                      setSelectedGateway(gateway);
+                      setSelectedWidgetPaymentMethodCode(null);
+                    }}
                     showCardSubmitButton
                   />
                 )}
@@ -620,10 +660,37 @@ export default function CheckoutPage({
               )}
             </Modal>
           <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
+              {isFreeShipping && (
+                <div className="checkout-toss-free-shipping mb-3 rounded-md bg-muted/20 p-3">
+                  <p className="text-xs text-muted-foreground">{t('freeShippingUnlocked')}</p>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-background">
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-300"
+                      style={{ width: `${freeShippingProgress}%` }}
+                      aria-hidden
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="mb-2 flex justify-end">
+                <span className="text-xs text-muted-foreground">{selectedPaymentMethodLabel}</span>
+              </div>
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
               </div>
+              {isFreeShipping && (
+                <div className="checkout-toss-free-shipping mb-2 rounded-md bg-muted/20 p-2.5">
+                  <p className="text-xs text-muted-foreground">{t('freeShippingUnlocked')}</p>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-background">
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-300"
+                      style={{ width: `${freeShippingProgress}%` }}
+                      aria-hidden
+                    />
+                  </div>
+                </div>
+              )}
               <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
                 {t('consent.confirmation')}
               </p>
@@ -646,10 +713,16 @@ export default function CheckoutPage({
         )}
       >
         <div className="mobile-sticky-inner">
+          <div className="mb-2 flex justify-end">
+            <span className="text-xs text-muted-foreground">{selectedPaymentMethodLabel}</span>
+          </div>
           <div className="mb-2 flex items-end justify-between">
             <span className="text-xs text-muted-foreground">{t('total')}</span>
             <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
           </div>
+          {isFreeShipping && (
+            <p className="mb-2 text-right text-xs text-muted-foreground">{t('freeShippingUnlocked')}</p>
+          )}
           <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
             {t('consent.confirmation')}
           </p>

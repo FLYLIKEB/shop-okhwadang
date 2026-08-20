@@ -463,6 +463,8 @@ describe('CheckoutPage', () => {
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
     expect(screen.getAllByText('주문 내용을 확인하였으며, 정보 제공 등에 동의합니다.')).toHaveLength(2);
     expect(screen.getByAltText('테스트 상품 썸네일')).toHaveAttribute('src', '/products/test-thumb.jpg');
+    expect(screen.getAllByText('토스페이먼츠')).toHaveLength(2);
+    expect(screen.getAllByText('무료배송이 적용되었습니다.').length).toBeGreaterThanOrEqual(2);
   });
 
   it('shows validation error for invalid phone on submit', async () => {

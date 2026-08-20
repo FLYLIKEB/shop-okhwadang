@@ -74,8 +74,8 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
   const currentYear = new Date().getFullYear();
 
   const socialLabels: Record<'instagram' | 'naver', string> = {
-    instagram: 'Instagram',
-    naver: 'Naver Smart Store',
+    instagram: t('social.instagram'),
+    naver: t('social.naverStore'),
   };
 
   // Settings values take priority; fall back to i18n for safety
@@ -135,9 +135,10 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={socialLabels[social.id]}
-                  className="toss-footer__social flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  className="toss-footer__social inline-flex min-h-10 items-center gap-2 rounded-full bg-muted px-3 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
                   <social.icon size={18} />
+                  <span className="typo-body-sm">{socialLabels[social.id]}</span>
                 </a>
               ))}
             </div>

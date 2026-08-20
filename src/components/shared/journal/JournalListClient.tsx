@@ -86,16 +86,16 @@ export default function JournalListClient() {
 
   return (
     <>
-      <div className="mb-12">
+      <div className="mb-10 border-b border-soft pb-6">
         <CategoryFilter selected={selectedCategory ?? ALL_CATEGORY} onSelect={setSelectedCategory} />
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground py-20">
+        <p className="py-20 text-center typo-body-sm text-muted-foreground">
           {tJournal('emptyCategory')}
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((journal, index) => (
             <JournalCard
               key={journal.id}

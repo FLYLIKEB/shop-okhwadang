@@ -31,6 +31,7 @@ describe('JournalCard', () => {
 
     const image = screen.getByRole('img', { name: '저널 테스트' });
     expect(image).toHaveAttribute('src', 'https://example.com/fallback.jpg');
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/ko/journal/journal-test');
   });
 
   it('prefers journal cover image when available', () => {
