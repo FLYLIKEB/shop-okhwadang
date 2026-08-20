@@ -953,7 +953,7 @@ INSERT INTO page_blocks (id, page_id, type, content, sort_order, is_visible, cre
   'title', '옥화당의 제품들',
   'title_en', 'Okhwadang''s Products',
   'template', 'image',
-  'category_ids', JSON_ARRAY(1, 2, 3, 4)
+  'category_ids', JSON_ARRAY(10, 11, 12, 13, 14, 20, 21, 22, 23)
 ), 5, 1, NOW(), NOW()),
 
 (21, 1, 'journal_preview', JSON_OBJECT(
