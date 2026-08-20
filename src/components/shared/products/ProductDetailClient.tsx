@@ -318,16 +318,16 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   }, [product.options.length, selectedOptionId, buyNow, t, focusOptionSection])
 
   return (
-    <div className="layout-container layout-page pb-24 md:pb-8">
+    <div className="toss-product-detail layout-container layout-page pb-24 md:pb-8">
       {/* 갤러리 + 정보 영역 */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.2fr_1fr]">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.15fr_1fr]">
         {/* Left: Image gallery */}
         <div className="md:sticky sticky-below-header md:self-start">
           <ImageGallery images={product.images} locale={locale} />
         </div>
 
         {/* Right: Product info */}
-        <div className="flex flex-col gap-6">
+        <div className="toss-product-detail__info flex flex-col gap-6 p-5 md:p-8">
           {/* Breadcrumb */}
           {product.category && (
             <nav className="typo-label text-muted-foreground tracking-widest uppercase">
@@ -350,7 +350,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                       href={`/products?attrs=clay_type:${encodeURIComponent(attr.value)}`}
                       locale={locale}
                       className={cn(
-                        'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                        'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors',
                         'tag-clay border-transparent',
                         getClayTagClass(attr.value),
                       )}
@@ -365,7 +365,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                       key={attr.id}
                       href={`/products?attrs=teapot_shape:${encodeURIComponent(attr.value)}`}
                       locale={locale}
-                      className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-foreground/30"
+                      className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
                     >
                       {t('shape')}: {attr.displayValue ?? attr.value}
                     </Link>
@@ -377,14 +377,11 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Name */}
-          <h1 className="typo-h1 font-display text-foreground">{product.name}</h1>
-
-          {/* 금박 구분선 */}
-          <hr className="w-16 border-tea" />
+          <h1 className="typo-h1 font-semibold tracking-tight text-foreground">{product.name}</h1>
 
           {/* Short description */}
           {product.shortDescription && (
-            <p className="typo-body text-muted-foreground font-display leading-relaxed">{product.shortDescription}</p>
+            <p className="typo-body leading-relaxed text-muted-foreground">{product.shortDescription}</p>
           )}
 
           {/* Rating */}
@@ -411,7 +408,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                   </span>
                 )}
                 {isLowStock && (
-                  <span className="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive">
+                  <span className="rounded-full bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive">
                     {t('lowStock', { count: maxQuantity })}
                   </span>
                 )}
@@ -445,7 +442,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Quantity */}
-          <div className="flex flex-col gap-2">
+          <div className="toss-product-detail__quantity flex flex-col gap-2 rounded-xl bg-muted/40 p-4">
             <span className="typo-label text-foreground">{t('quantity')}</span>
             <div className="flex items-center gap-3">
               <QuantitySelector
@@ -462,7 +459,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Selected summary */}
           {(product.options.length === 0 || selectedOption) && (
-            <div className="flex flex-col gap-3 py-2">
+            <div className="toss-product-detail__summary flex flex-col gap-3 rounded-xl bg-muted/40 px-4 py-3">
               {selectedOption && (
                 <div className="flex items-center justify-between">
                   <span className="typo-body-sm text-muted-foreground">
@@ -479,7 +476,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
               <div className="flex items-center justify-between">
                 <span className="typo-body-sm text-muted-foreground">{t('selectedQuantity', { quantity })}</span>
               </div>
-              <div className="flex items-center justify-between border-t border-border pt-3">
+              <div className="flex items-center justify-between pt-3">
                 <span className="typo-body-sm font-medium text-foreground">{t('totalProductPrice')}</span>
                 <span className="typo-h2 font-semibold text-foreground">{formatCurrency(totalPrice, locale)}</span>
               </div>
@@ -487,7 +484,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Action buttons — desktop only */}
-          <div className="hidden md:flex gap-3">
+          <div className="hidden gap-3 md:flex">
             <Button
               variant="black"
               className="w-1/3"
@@ -506,7 +503,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             </Button>
           </div>
 
-          <div className="rounded-lg border border-border bg-muted/20 p-4">
+          <div className="toss-product-detail__stock rounded-xl bg-muted/40 p-4">
             <p className="typo-label text-muted-foreground">{t('stockStatus.title')}</p>
             <p className={cn('mt-1 typo-body-sm font-medium', isSoldout ? 'text-destructive' : 'text-foreground')}>
               {isSoldout ? t('stockStatus.soldoutReason') : isLowStock ? t('stockStatus.lowStock', { count: maxQuantity }) : t('stockStatus.available')}

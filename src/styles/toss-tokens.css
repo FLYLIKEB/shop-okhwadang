@@ -118,6 +118,42 @@ html[data-theme='dark'] {
   background: var(--checkout-toss-button-gray-hover) !important;
 }
 
+.toss-quantity {
+  gap: 0.25rem;
+  border-radius: 0.75rem;
+  background: var(--checkout-toss-input);
+  padding: 0.25rem;
+}
+
+.toss-quantity button {
+  height: 2rem;
+  width: 2rem;
+  border: 0;
+  border-radius: 0.5rem;
+  color: var(--checkout-toss-muted);
+}
+
+.toss-quantity button:hover:not(:disabled) {
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-quantity span {
+  width: 2.25rem;
+  color: var(--checkout-toss-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 2rem;
+  text-align: center;
+}
+
+.toss-product-detail__info {
+  border: 0;
+  border-radius: 1rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
 .toss-header__actions .toss-button--gray,
 .toss-header__mobile-actions .toss-button--gray {
   background: transparent !important;

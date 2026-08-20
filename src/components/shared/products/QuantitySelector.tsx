@@ -19,16 +19,16 @@ export default function QuantitySelector({
   onDecrease,
 }: QuantitySelectorProps) {
   return (
-    <div className="checkout-toss-quantity inline-flex items-center w-fit border border-border bg-background">
+    <div className="toss-quantity inline-flex w-fit items-center">
       <Button
         type="button"
-        variant="gray"
+        variant="ghost"
         size="icon"
         onClick={onDecrease}
         disabled={quantity <= 1}
         aria-label={localMessage('product.quantityDecrease')}
         className={cn(
-          'flex items-center justify-center h-9 w-9 shrink-0 border-r border-border transition-colors text-muted-foreground hover:bg-muted',
+          'flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent',
         )}
@@ -42,13 +42,13 @@ export default function QuantitySelector({
 
       <Button
         type="button"
-        variant="gray"
+        variant="ghost"
         size="icon"
         onClick={onIncrease}
         disabled={quantity >= maxQuantity}
         aria-label={localMessage('product.quantityIncrease')}
         className={cn(
-          'flex items-center justify-center h-9 w-9 shrink-0 border-l border-border transition-colors text-muted-foreground hover:bg-muted',
+          'flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent',
         )}

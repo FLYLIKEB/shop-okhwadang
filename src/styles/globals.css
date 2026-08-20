@@ -1066,35 +1066,6 @@ h3 {
   background: var(--checkout-toss-input);
 }
 
-.checkout-toss-theme .checkout-toss-quantity {
-  gap: 0.25rem;
-  border: 0;
-  border-radius: 0.75rem;
-  background: var(--checkout-toss-input);
-  padding: 0.25rem;
-}
-
-.checkout-toss-theme .checkout-toss-quantity button {
-  height: 2rem;
-  width: 2rem;
-  border: 0;
-  border-radius: 0.5rem;
-  color: var(--checkout-toss-muted);
-}
-
-.checkout-toss-theme .checkout-toss-quantity button:hover:not(:disabled) {
-  background: var(--checkout-toss-surface);
-  color: var(--checkout-toss-foreground);
-}
-
-.checkout-toss-theme .checkout-toss-quantity span {
-  width: 2.25rem;
-  color: var(--checkout-toss-foreground);
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 2rem;
-}
-
 /* ── Toss-style header chrome ──────────────────────────────────── */
 .toss-header {
   background: var(--checkout-toss-surface);
