@@ -639,19 +639,19 @@ describe('CheckoutPage', () => {
     });
   });
 
-  it('fetches saved addresses on mount and auto-fills default address', async () => {
+  it('fetches saved addresses on mount and shows the default summary', async () => {
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김기본');
+      expect(screen.getByText('김기본')).toBeInTheDocument();
+      expect(screen.getByText('010-1111-2222')).toBeInTheDocument();
+      expect(screen.getByText(/06000/)).toBeInTheDocument();
+      expect(screen.getByText(/101호/)).toBeInTheDocument();
     });
-    expect(screen.getByLabelText(/연락처/)).toHaveValue('010-1111-2222');
-    expect(screen.getByLabelText(/우편번호/)).toHaveValue('06000');
-    expect(screen.getByLabelText(/^주소/)).toHaveValue('서울특별시 강남구 역삼동');
-    expect(screen.getByLabelText(/상세 주소/)).toHaveValue('101호');
+    expect(screen.queryByLabelText(/받는 분 이름/)).not.toBeInTheDocument();
   });
 
   it('숫자형 zipcode 주소도 문자열로 정규화해 폼에 채운다', async () => {
@@ -663,7 +663,8 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/우편번호/)).toHaveValue('06000');
+      expect(screen.getByText(/06000/)).toBeInTheDocument();
+      expect(screen.getByText(/101호/)).toBeInTheDocument();
     });
   });
 
@@ -681,7 +682,7 @@ describe('CheckoutPage', () => {
     expect(screen.getByLabelText(/직접 입력/)).toBeInTheDocument();
   });
 
-  it('selecting a different address fills the form', async () => {
+  it('selecting a different address shows its summary and hides the input form', async () => {
     const user = userEvent.setup();
     vi.mocked(usersApi.getAddresses).mockResolvedValue([defaultAddress, secondAddress]);
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
@@ -695,12 +696,13 @@ describe('CheckoutPage', () => {
     await user.click(screen.getByLabelText(/회사/));
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('이직장');
+      expect(screen.getByText('회사')).toBeInTheDocument();
+      expect(screen.getByText('010-3333-4444')).toBeInTheDocument();
+      expect(screen.getByText(/04000 서울특별시 중구 을지로 5층/)).toBeInTheDocument();
     });
-    expect(screen.getByLabelText(/연락처/)).toHaveValue('010-3333-4444');
-    expect(screen.getByLabelText(/우편번호/)).toHaveValue('04000');
-    expect(screen.getByLabelText(/^주소/)).toHaveValue('서울특별시 중구 을지로');
-    expect(screen.getByLabelText(/상세 주소/)).toHaveValue('5층');
+    expect(screen.queryByLabelText(/받는 분 이름/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/연락처/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/우편번호/)).not.toBeInTheDocument();
   });
 
   it('selecting direct input clears the form', async () => {
@@ -711,7 +713,7 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김기본');
+      expect(screen.getByText('김기본')).toBeInTheDocument();
     });
     await user.click(screen.getByRole('button', { name: '배송지 변경' }));
     await user.click(screen.getByLabelText(/직접 입력/));

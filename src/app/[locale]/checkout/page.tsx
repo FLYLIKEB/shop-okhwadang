@@ -419,6 +419,9 @@ export default function CheckoutPage({
     return null;
   }
 
+  const hasSelectedSavedAddress = !isGuestCheckout
+    && typeof selectedAddressId === 'number';
+
   return (
     <div className="checkout-toss-theme min-h-screen pb-36 md:pb-8">
       <div className="layout-container layout-page max-w-3xl">
@@ -474,19 +477,23 @@ export default function CheckoutPage({
                   />
                 )}
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
-                  <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
-                </div>
-                <ZipcodeInputSection
-                  form={form}
-                  errors={errors}
-                  onChange={handleChange}
-                  onAddressSearch={handleAddressSearch}
-                  readOnly
-                />
-                <AddressInputSection form={form} errors={errors} onChange={handleChange} readOnly />
-                <AddressDetailInputSection form={form} onChange={handleChange} />
+                {!hasSelectedSavedAddress && (
+                  <>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
+                      <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
+                    </div>
+                    <ZipcodeInputSection
+                      form={form}
+                      errors={errors}
+                      onChange={handleChange}
+                      onAddressSearch={handleAddressSearch}
+                      readOnly
+                    />
+                    <AddressInputSection form={form} errors={errors} onChange={handleChange} readOnly />
+                    <AddressDetailInputSection form={form} onChange={handleChange} />
+                  </>
+                )}
                 <MemoInputSection form={form} onChange={handleChange} />
               </div>
             </section>

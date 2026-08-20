@@ -49,6 +49,8 @@ export function AddressSelectorSection({
   };
 
   if (selectedAddress && !isExpanded) {
+    const selectedZipcode = String(selectedAddress.zipcode).padStart(5, '0');
+
     return (
       <div className="checkout-toss-panel p-4">
         <div className="flex items-start justify-between gap-3">
@@ -71,7 +73,7 @@ export function AddressSelectorSection({
         </div>
         <p className="mt-2 typo-body-sm font-semibold">{selectedAddress.phone}</p>
         <p className="mt-1 typo-label leading-relaxed text-muted-foreground">
-          {selectedAddress.zipcode} {selectedAddress.address} {selectedAddress.addressDetail ?? ''}
+          {selectedZipcode} {selectedAddress.address} {selectedAddress.addressDetail ?? ''}
         </p>
       </div>
     );
