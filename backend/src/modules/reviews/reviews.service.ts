@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
 import { ExternalReview } from './entities/external-review.entity';
 import { OrderItem } from '../orders/entities/order-item.entity';
@@ -20,6 +20,7 @@ import { findOrThrow } from '../../common/utils/repository.util';
 import { assertOwnership } from '../../common/utils/ownership.util';
 import { SettingsService } from '../settings/settings.service';
 import { PointsService, addOneYear } from '../points/points.service';
+import { ReviewStatsSyncService } from './review-stats-sync.service';
 
 const REVIEW_POINT_REWARD_KEY = 'review_point_reward';
 const PHOTO_REVIEW_BONUS_KEY = 'photo_review_bonus';
@@ -92,6 +93,7 @@ export class ReviewsService {
     private readonly settingsService: SettingsService,
     private readonly dataSource: DataSource,
     private readonly pointsService: PointsService,
+    private readonly reviewStatsSyncService: ReviewStatsSyncService,
   ) {}
 
   private maskUserName(name: string): string {
@@ -235,7 +237,7 @@ export class ReviewsService {
     const externalAvg = externalResult?.avg ? parseFloat(externalResult.avg) : 0;
     const averageRating = totalCount
       ? parseFloat(
-          (((internalAvg * internalCount) + (externalAvg * externalCount)) / totalCount).toFixed(1),
+          ((internalAvg * internalCount + externalAvg * externalCount) / totalCount).toFixed(1),
         )
       : 0;
 
@@ -276,7 +278,6 @@ export class ReviewsService {
     };
   }
 
-
   async translateReviewContent(dto: {
     text: string;
     sourceLocale: 'ko' | 'en';
@@ -288,7 +289,11 @@ export class ReviewsService {
     }
 
     if (dto.sourceLocale === dto.targetLocale) {
-      return { translatedText: text, sourceLocale: dto.sourceLocale, targetLocale: dto.targetLocale };
+      return {
+        translatedText: text,
+        sourceLocale: dto.sourceLocale,
+        targetLocale: dto.targetLocale,
+      };
     }
 
     const controller = new AbortController();
@@ -302,10 +307,13 @@ export class ReviewsService {
     });
 
     try {
-      const response = await fetch(`https://translate.googleapis.com/translate_a/single?${params.toString()}`, {
-        signal: controller.signal,
-        headers: { accept: 'application/json' },
-      });
+      const response = await fetch(
+        `https://translate.googleapis.com/translate_a/single?${params.toString()}`,
+        {
+          signal: controller.signal,
+          headers: { accept: 'application/json' },
+        },
+      );
 
       if (!response.ok) {
         throw new BadGatewayException('리뷰 번역 서비스 응답이 올바르지 않습니다.');
@@ -362,7 +370,7 @@ export class ReviewsService {
     }
 
     await this.dataSource.transaction((manager) =>
-      this.refreshProductReviewStats(manager, dto.productId),
+      this.reviewStatsSyncService.syncProductStats(dto.productId, manager),
     );
 
     this.logger.log(
@@ -434,7 +442,7 @@ export class ReviewsService {
         );
       }
 
-      await this.refreshProductReviewStats(manager, dto.productId);
+      await this.reviewStatsSyncService.syncProductStats(dto.productId, manager);
       return saved;
     });
 
@@ -464,7 +472,7 @@ export class ReviewsService {
 
     const saved = await this.reviewRepo.save(review);
     await this.dataSource.transaction((manager) =>
-      this.refreshProductReviewStats(manager, Number(saved.productId)),
+      this.reviewStatsSyncService.syncProductStats(Number(saved.productId), manager),
     );
     return this.toResponse(saved);
   }
@@ -498,31 +506,9 @@ export class ReviewsService {
       }
 
       await manager.remove(Review, review);
-      await this.refreshProductReviewStats(manager, Number(review.productId));
+      await this.reviewStatsSyncService.syncProductStats(Number(review.productId), manager);
     });
 
     this.logger.log(`Review deleted: id=${id}, by userId=${userId}`);
-  }
-
-  private async refreshProductReviewStats(
-    manager: EntityManager,
-    productId: number,
-  ): Promise<void> {
-    await manager.query(
-      `UPDATE products p
-       LEFT JOIN (
-         SELECT product_id, COUNT(*) AS review_count, COALESCE(AVG(rating), 0) AS avg_rating
-         FROM (
-           SELECT product_id, rating FROM reviews WHERE product_id = ? AND is_visible = 1
-           UNION ALL
-           SELECT product_id, rating FROM external_reviews WHERE product_id = ? AND is_visible = 1
-         ) all_reviews
-         GROUP BY product_id
-       ) rs ON rs.product_id = p.id
-       SET p.review_count = COALESCE(rs.review_count, 0),
-           p.avg_rating = COALESCE(rs.avg_rating, 0)
-       WHERE p.id = ?`,
-      [productId, productId, productId],
-    );
   }
 }

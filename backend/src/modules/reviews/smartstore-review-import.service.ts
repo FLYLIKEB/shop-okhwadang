@@ -17,6 +17,7 @@ import { Product } from '../products/entities/product.entity';
 import { RemoteImageIngestService } from '../upload/remote-image-ingest.service';
 import { UploadedFile } from '../upload/interfaces/storage.interface';
 import { ExternalReview, ExternalReviewMediaAsset } from './entities/external-review.entity';
+import { ReviewStatsSyncService } from './review-stats-sync.service';
 
 export type SmartStoreReviewImportAction = 'create' | 'update' | 'skip';
 export type SmartStoreReviewImportStatus = 'valid' | 'failed' | 'success';
@@ -143,6 +144,7 @@ export class SmartStoreReviewImportService {
     @InjectRepository(ExternalReview)
     private readonly externalReviewRepository: Repository<ExternalReview>,
     private readonly remoteImageIngestService: RemoteImageIngestService,
+    private readonly reviewStatsSyncService: ReviewStatsSyncService,
   ) {}
 
   async preview(file: Express.Multer.File): Promise<SmartStoreReviewImportResult> {
@@ -208,7 +210,9 @@ export class SmartStoreReviewImportService {
 
     if (commit && touchedProductIds.size > 0) {
       await Promise.all(
-        [...touchedProductIds].map((productId) => this.refreshProductReviewStats(productId)),
+        [...touchedProductIds].map((productId) =>
+          this.reviewStatsSyncService.syncProductStats(productId, this.productRepository.manager),
+        ),
       );
     }
 
@@ -475,25 +479,6 @@ export class SmartStoreReviewImportService {
     const promise = this.remoteImageIngestService.ingest(url);
     cache.set(url, promise);
     return promise;
-  }
-
-  private async refreshProductReviewStats(productId: number): Promise<void> {
-    await this.productRepository.manager.query(
-      `UPDATE products p
-       LEFT JOIN (
-         SELECT product_id, COUNT(*) AS review_count, COALESCE(AVG(rating), 0) AS avg_rating
-         FROM (
-           SELECT product_id, rating FROM reviews WHERE product_id = ? AND is_visible = 1
-           UNION ALL
-           SELECT product_id, rating FROM external_reviews WHERE product_id = ? AND is_visible = 1
-         ) all_reviews
-         GROUP BY product_id
-       ) rs ON rs.product_id = p.id
-       SET p.review_count = COALESCE(rs.review_count, 0),
-           p.avg_rating = COALESCE(rs.avg_rating, 0)
-       WHERE p.id = ?`,
-      [productId, productId, productId],
-    );
   }
 
   private buildResult(

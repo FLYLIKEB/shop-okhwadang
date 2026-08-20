@@ -4,6 +4,7 @@ import { Column, DataSource, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColu
 import { AdminReviewsService } from '../admin-reviews.service';
 import { ExternalReview } from '../entities/external-review.entity';
 import { Review } from '../entities/review.entity';
+import { ReviewStatsSyncService } from '../review-stats-sync.service';
 
 @Entity('test_products')
 class TestProduct {
@@ -55,6 +56,10 @@ describe('AdminReviewsService', () => {
     getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
   };
 
+  const mockReviewStatsSyncService = {
+    syncProductStats: jest.fn(),
+  };
+
   const externalReviewRepository = {
     createQueryBuilder: jest.fn(() => qb),
     findOne: jest.fn(),
@@ -65,6 +70,7 @@ describe('AdminReviewsService', () => {
   };
 
   const reviewRepository = {
+    manager: { query: jest.fn() },
     findOne: jest.fn(),
     find: jest.fn(),
     update: jest.fn(),
@@ -77,6 +83,7 @@ describe('AdminReviewsService', () => {
         AdminReviewsService,
         { provide: getRepositoryToken(ExternalReview), useValue: externalReviewRepository },
         { provide: getRepositoryToken(Review), useValue: reviewRepository },
+        { provide: ReviewStatsSyncService, useValue: mockReviewStatsSyncService },
       ],
     }).compile();
 
@@ -91,6 +98,7 @@ describe('AdminReviewsService', () => {
     qb.getManyAndCount.mockResolvedValue([[], 0]);
     externalReviewRepository.createQueryBuilder.mockReturnValue(qb);
     reviewRepository.find.mockResolvedValue([]);
+    mockReviewStatsSyncService.syncProductStats.mockResolvedValue(undefined);
   });
 
   it('lists all visibility reviews using entity property paths for paginated sorting', async () => {
@@ -103,7 +111,6 @@ describe('AdminReviewsService', () => {
     expect(qb.orderBy).toHaveBeenCalledWith('review.reviewedAt', 'DESC');
     expect(reviewRepository.find).toHaveBeenCalledWith({ relations: ['product', 'user'] });
   });
-
 
   it('keeps joined pagination order paths resolvable by TypeORM metadata', async () => {
     const dataSource = new DataSource({
@@ -143,6 +150,54 @@ describe('AdminReviewsService', () => {
     expect(qb.orderBy).toHaveBeenCalledWith('review.helpfulCount', 'ASC');
     expect(qb.addOrderBy).toHaveBeenCalledWith('review.reviewedAt', 'DESC');
     expect(reviewRepository.find).toHaveBeenCalledWith({ relations: ['product', 'user'] });
+  });
+
+  it('syncs stats through the shared service when internal visibility changes', async () => {
+    const review = {
+      id: 3,
+      productId: 9,
+      rating: 5,
+      content: '좋아요',
+      imageUrls: null,
+      isVisible: true,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      product: { id: 9, name: '상품', sku: 'SKU-9' },
+      user: { name: '고객' },
+    } as unknown as Review;
+    reviewRepository.findOne.mockResolvedValue(review);
+    reviewRepository.save.mockImplementation(async (entity: unknown) => entity as Review);
+
+    await service.setVisibility(3, false, 'internal');
+
+    expect(mockReviewStatsSyncService.syncProductStats).toHaveBeenCalledWith(
+      9,
+      reviewRepository.manager,
+    );
+  });
+
+  it('syncs each touched product through the shared service after bulk visibility changes', async () => {
+    externalReviewRepository.find.mockResolvedValue([{ id: 5, productId: 9 }]);
+    reviewRepository.find.mockResolvedValue([{ id: 7, productId: 10 }]);
+    externalReviewRepository.update.mockResolvedValue({ affected: 1 });
+    reviewRepository.update.mockResolvedValue({ affected: 1 });
+
+    await service.bulkSetVisibility(
+      [
+        { id: 5, source: 'smartstore' },
+        { id: 7, source: 'internal' },
+      ],
+      false,
+    );
+
+    expect(mockReviewStatsSyncService.syncProductStats).toHaveBeenCalledWith(
+      9,
+      externalReviewRepository.manager,
+    );
+    expect(mockReviewStatsSyncService.syncProductStats).toHaveBeenCalledWith(
+      10,
+      externalReviewRepository.manager,
+    );
   });
 
   it('saves replies for internal reviews when source identifies okhwadang', async () => {
@@ -204,7 +259,9 @@ describe('AdminReviewsService', () => {
       adminRepliedAt: null,
     } as unknown as ExternalReview;
     externalReviewRepository.findOne.mockResolvedValue(review);
-    externalReviewRepository.save.mockImplementation(async (entity: unknown) => entity as ExternalReview);
+    externalReviewRepository.save.mockImplementation(
+      async (entity: unknown) => entity as ExternalReview,
+    );
 
     const saved = await service.setReply(5, ' 답글입니다 ', '관리자', 'smartstore');
 
@@ -232,5 +289,4 @@ describe('AdminReviewsService', () => {
     );
     expect(cleared.adminReplyContent).toBeNull();
   });
-
 });

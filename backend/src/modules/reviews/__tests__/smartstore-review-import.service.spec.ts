@@ -6,6 +6,7 @@ import { Product } from '../../products/entities/product.entity';
 import { ExternalReview } from '../entities/external-review.entity';
 import { RemoteImageIngestService } from '../../upload/remote-image-ingest.service';
 import { NAVER_SMARTSTORE_REVIEW_SOURCE } from '../../../common/imports/external-source.util';
+import { ReviewStatsSyncService } from '../review-stats-sync.service';
 
 function makeFile(buffer: Buffer): Express.Multer.File {
   return {
@@ -67,6 +68,9 @@ describe('SmartStoreReviewImportService', () => {
   const remoteImageIngestService = {
     ingest: jest.fn(),
   };
+  const mockReviewStatsSyncService = {
+    syncProductStats: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -75,6 +79,7 @@ describe('SmartStoreReviewImportService', () => {
         { provide: getRepositoryToken(Product), useValue: productRepository },
         { provide: getRepositoryToken(ExternalReview), useValue: externalReviewRepository },
         { provide: RemoteImageIngestService, useValue: remoteImageIngestService },
+        { provide: ReviewStatsSyncService, useValue: mockReviewStatsSyncService },
       ],
     }).compile();
 
@@ -89,6 +94,7 @@ describe('SmartStoreReviewImportService', () => {
       filename: 'reviews/naver.jpg',
     });
     productRepository.manager.query.mockResolvedValue(undefined);
+    mockReviewStatsSyncService.syncProductStats.mockResolvedValue(undefined);
   });
 
   it('previews SmartStore review rows and matches products by naver-prefixed SKU', async () => {
@@ -210,7 +216,10 @@ describe('SmartStoreReviewImportService', () => {
         ],
       }),
     );
-    expect(productRepository.manager.query).toHaveBeenCalled();
+    expect(mockReviewStatsSyncService.syncProductStats).toHaveBeenCalledWith(
+      7,
+      productRepository.manager,
+    );
   });
 
   it('reports row failures without aborting the whole upload', async () => {
