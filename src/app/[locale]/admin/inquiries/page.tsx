@@ -16,6 +16,7 @@ import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 import { toastMessage } from '@/utils/toastMessages';
+import { formatDate } from '@/utils/date';
 
 type InquiryStatusFilter = 'all' | 'pending' | 'answered';
 
@@ -148,7 +149,7 @@ export default function AdminInquiriesPage() {
                 <td className="px-4 py-3 typo-body-sm text-muted-foreground">{inquiry.type}</td>
                 <td className="px-4 py-3 typo-body-sm font-medium truncate max-w-xs">{inquiry.title}</td>
                 <td className="px-4 py-3 typo-body-sm text-muted-foreground">
-                  {new Date(inquiry.createdAt).toLocaleDateString('ko-KR')}
+                  {formatDate(inquiry.createdAt, 'ko')}
                 </td>
               </tr>
               {openId === inquiry.id && (

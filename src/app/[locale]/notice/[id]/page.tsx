@@ -8,6 +8,7 @@ import { noticesApi } from '@/lib/api';
 import type { Notice } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { formatCount, formatDate } from '@/utils/date';
 
 // DOMPurify requires browser environment — load without SSR
 const DOMPurifyContent = dynamic(
@@ -63,8 +64,8 @@ export default function NoticeDetailPage() {
       </button>
       <h1 className="text-xl font-bold text-gray-900 mb-2">{notice.title}</h1>
       <div className="flex items-center gap-3 text-xs text-gray-400 mb-6 pb-4 border-b">
-        <span>{new Date(notice.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}</span>
-        <span>{t('views', { count: notice.viewCount.toLocaleString(locale === 'en' ? 'en-US' : 'ko-KR') })}</span>
+        <span>{formatDate(notice.createdAt, locale)}</span>
+        <span>{t('views', { count: formatCount(notice.viewCount, locale) })}</span>
         {notice.isPinned && (
           <span className="text-blue-600 font-semibold">{t('pinned')}</span>
         )}

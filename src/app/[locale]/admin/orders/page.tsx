@@ -15,6 +15,7 @@ import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 import { localMessage } from '@/utils/localMessages';
 import { Button } from '@/components/ui/button';
+import { formatDateTime } from '@/utils/date';
 
 const STATUS_FILTERS = [
   { label: '전체', value: '' },
@@ -133,7 +134,7 @@ export default function AdminOrdersPage() {
                   <p className="typo-body-sm font-medium">
                     #{request.orderId} {request.order?.orderNumber} · {requestTypeLabels[request.type]} · {request.reason}
                   </p>
-                  <p className="typo-label text-muted-foreground">{request.userId} · {new Date(request.createdAt).toLocaleString('ko-KR')}</p>
+                  <p className="typo-label text-muted-foreground">{request.userId} · {formatDateTime(request.createdAt, 'ko')}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button

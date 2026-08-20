@@ -10,6 +10,7 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/shared/EmptyState';
 import { cn } from '@/components/ui/utils';
 import { useTranslations } from 'next-intl';
+import { formatDate } from '@/utils/date';
 
 export default function NoticePage() {
   const params = useParams<{ locale: string }>();
@@ -70,7 +71,7 @@ export default function NoticePage() {
                   </span>
                 </div>
                 <span className="shrink-0 ml-4 text-xs text-gray-400">
-                  {new Date(notice.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
+                  {formatDate(notice.createdAt, locale)}
                 </span>
               </Link>
             </li>

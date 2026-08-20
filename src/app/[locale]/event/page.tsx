@@ -11,6 +11,7 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/shared/EmptyState';
 import CountdownTimer from '@/components/shared/home/CountdownTimer';
+import { formatDate } from '@/utils/date';
 
 const TYPE_KEY_MAP: Record<Promotion['type'], string> = {
   timesale: 'types.timesale',
@@ -20,16 +21,11 @@ const TYPE_KEY_MAP: Record<Promotion['type'], string> = {
 
 const TYPE_ORDER: Promotion['type'][] = ['timesale', 'exhibition', 'event'];
 
-const DATE_LOCALE_MAP: Record<string, string> = {
-  ko: 'ko-KR',
-  en: 'en-US',
-};
 
 export default function EventPage() {
   const { locale } = useParams<{ locale: string }>();
   const t = useTranslations('event');
   const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const dateLocale = DATE_LOCALE_MAP[locale] ?? locale;
 
   const { execute: loadPromotions, isLoading: loading } = useAsyncAction(
     async () => {
@@ -123,7 +119,7 @@ export default function EventPage() {
                         )}
                         <span>
                           {t('until', {
-                            date: new Date(promo.endsAt).toLocaleDateString(dateLocale),
+                            date: formatDate(promo.endsAt, locale),
                           })}
                         </span>
                         {type === 'timesale' && (

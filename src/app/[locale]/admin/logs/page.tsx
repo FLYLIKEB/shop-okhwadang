@@ -13,6 +13,7 @@ import {
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { handleApiError } from '@/utils/error';
+import { formatDateTime } from '@/utils/date';
 import { cn } from '@/components/ui/utils';
 
 const LOG_TYPES: AdminLogType[] = ['normal', 'error'];
@@ -27,10 +28,14 @@ interface AppliedLogFilters {
 
 function formatUpdatedAt(value: string | null): string {
   if (!value) return '-';
-  return new Intl.DateTimeFormat('ko-KR', {
-    dateStyle: 'medium',
-    timeStyle: 'medium',
-  }).format(new Date(value));
+  return formatDateTime(value, 'ko', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 }
 
 function toIsoOrUndefined(value: string): string | undefined {

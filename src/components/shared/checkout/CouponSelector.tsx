@@ -9,6 +9,7 @@ import { cn } from '@/components/ui/utils';
 import { getClientLocale } from '@/utils/clientLocale';
 import { localMessage } from '@/utils/localMessages';
 import { Button } from '@/components/ui/button';
+import { formatDate } from '@/utils/date';
 
 interface CouponSelectorProps {
   onSelectionChange: (userCouponId?: number, pointsToUse?: number) => void;
@@ -111,7 +112,7 @@ export default function CouponSelector({ onSelectionChange }: CouponSelectorProp
       {selected && (
         <p className="text-xs text-muted-foreground">
           {localMessage('checkout.minimumOrderAmount', { amount: formatCurrency(selected.minOrderAmount, locale) })} &middot; {localMessage('checkout.expires')}:{' '}
-          {new Date(selected.expiresAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
+          {formatDate(selected.expiresAt, locale)}
         </p>
       )}
 

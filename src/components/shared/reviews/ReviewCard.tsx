@@ -11,6 +11,7 @@ import { localMessage } from '@/utils/localMessages';
 import { handleApiError } from '@/utils/error';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { formatLongDate } from '@/utils/date';
 
 interface ReviewCardProps {
   review: ReviewItem;
@@ -35,14 +36,7 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
   const [replyContent, setReplyContent] = useState(review.adminReplyContent ?? '');
   const [isSavingReply, setIsSavingReply] = useState(false);
 
-  const formattedDate = new Date(review.createdAt).toLocaleDateString(
-    locale === 'en' ? 'en-US' : 'ko-KR',
-    {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    },
-  );
+  const formattedDate = formatLongDate(review.createdAt, locale);
 
   const isSmartStoreReview = review.source === 'smartstore';
   const canManageReply = Boolean(user && ADMIN_ROLES.has(user.role));

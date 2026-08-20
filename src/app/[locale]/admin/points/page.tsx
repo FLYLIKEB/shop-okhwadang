@@ -19,6 +19,7 @@ import {
 import { formatCurrency, type Locale } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import { cn } from '@/components/ui/utils';
+import { formatCount, formatDateTime } from '@/utils/date';
 
 const SOURCE_KIND_TONES: Record<AdminPointSourceKind, string> = {
   review_reward_earn: 'bg-sky-100 text-sky-700',
@@ -241,7 +242,7 @@ const goToHistoryPage = (nextPage: number) => {
               </div>
               <div className="rounded-md bg-background p-4 shadow-sm">
                 <div className="typo-label text-muted-foreground">{t('historyCountLabel')}</div>
-                <div className="mt-2 text-2xl font-semibold">{historyTotal.toLocaleString(locale)}</div>
+                <div className="mt-2 text-2xl font-semibold">{formatCount(historyTotal, locale)}</div>
               </div>
             </div>
           </div>
@@ -274,7 +275,7 @@ const goToHistoryPage = (nextPage: number) => {
         {history.map((item) => (
           <tr key={item.id} className="border-t align-top">
             <td className="px-4 py-3 text-xs text-muted-foreground">
-              {new Date(item.createdAt).toLocaleString(locale)}
+              {formatDateTime(item.createdAt, locale)}
             </td>
             <td className="px-4 py-3">{t(`types.${item.type}`)}</td>
             <td className="px-4 py-3">

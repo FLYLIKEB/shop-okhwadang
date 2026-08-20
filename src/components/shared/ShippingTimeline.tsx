@@ -9,6 +9,7 @@ import {
   getCarrierName,
 } from '@/constants/status';
 import { Button } from '@/components/ui/button';
+import { formatDate, formatDateTime } from '@/utils/date';
 
 const SHIPPING_STEPS = ['payment_confirmed', 'preparing', 'shipped', 'in_transit', 'delivered'];
 
@@ -20,7 +21,6 @@ export default function ShippingTimeline({ orderId }: Props) {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('shippingTracking');
-  const dateLocale = locale === 'en' ? 'en-US' : 'ko-KR';
   const [shipping, setShipping] = useState<ShippingResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,12 +146,12 @@ export default function ShippingTimeline({ orderId }: Props) {
               </span>
               {step === 'shipped' && shipping.shipped_at && (
                 <span className="text-center text-xs text-muted-foreground">
-                  {new Date(shipping.shipped_at).toLocaleDateString(dateLocale)}
+                  {formatDate(shipping.shipped_at, locale)}
                 </span>
               )}
               {step === 'delivered' && shipping.delivered_at && (
                 <span className="text-center text-xs text-muted-foreground">
-                  {new Date(shipping.delivered_at).toLocaleDateString(dateLocale)}
+                  {formatDate(shipping.delivered_at, locale)}
                 </span>
               )}
             </div>
@@ -204,7 +204,7 @@ export default function ShippingTimeline({ orderId }: Props) {
               <div>
                 <span className="font-medium">{step.description}</span>
                 <span className="ml-2 text-xs text-muted-foreground">
-                  {new Date(step.timestamp).toLocaleString(dateLocale)}
+                  {formatDateTime(step.timestamp, locale)}
                 </span>
               </div>
             </li>
