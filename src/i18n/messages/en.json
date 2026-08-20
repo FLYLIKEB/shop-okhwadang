@@ -202,7 +202,6 @@
     "shape": "Shape",
     "reviewCount": "({count} review(s))",
     "ratingSummary": "{rating}({count})",
-
     "featuredProducts": "Featured Products",
     "searchResults": "Results for \"{query}\"",
     "noProducts": "No products found",
@@ -437,7 +436,7 @@
       "gameGiftCertificate": "Game gift certificate",
       "bookGiftCertificate": "Book gift certificate"
     },
-    "tossPayment": "Toss Payments (Card)",
+    "tossPayment": "Toss Payments",
     "mockPayment": "Test Payment (Mock)",
     "couponPoints": "Coupons / Points",
     "couponPointsComingSoon": "Coupon and points support coming soon.",
@@ -474,7 +473,6 @@
     "freeShippingUnlocked": "Free shipping is now applied.",
     "freeShippingRemaining": "Add {amount} more for free shipping",
     "paypalPayment": "PayPal",
-    "tossPayment": "Toss Payments",
     "naverpayPayment": "Naver Pay",
     "bankTransferPayment": "Bank transfer",
     "bankTransferAccountTitle": "Bank transfer account",
@@ -1694,6 +1692,9 @@
       "adjusting": "Applying...",
       "adjustmentSuccess": "Point adjustment saved.",
       "adjustmentError": "Failed to save point adjustment."
+    },
+    "pageEditor": {
+      "productSelectionMode": "Product selection mode"
     }
   },
   "search": {

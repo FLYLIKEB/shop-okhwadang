@@ -202,7 +202,6 @@
     "shape": "모양",
     "reviewCount": "({count}개의 후기)",
     "ratingSummary": "{rating}({count})",
-
     "featuredProducts": "추천 상품",
     "searchResults": "\"{query}\" 검색 결과",
     "noProducts": "상품이 없습니다",
@@ -437,7 +436,7 @@
       "gameGiftCertificate": "게임문화상품권",
       "bookGiftCertificate": "도서문화상품권"
     },
-    "tossPayment": "토스페이먼츠 (카드)",
+    "tossPayment": "토스페이먼츠",
     "mockPayment": "테스트 결제 (Mock)",
     "couponPoints": "쿠폰 / 적립금",
     "couponPointsComingSoon": "쿠폰/적립금 적용은 추후 지원 예정입니다.",
@@ -474,7 +473,6 @@
     "freeShippingUnlocked": "무료배송이 적용되었습니다.",
     "freeShippingRemaining": "{amount} 더 담으면 무료배송",
     "paypalPayment": "PayPal",
-    "tossPayment": "토스페이먼츠",
     "naverpayPayment": "네이버페이",
     "bankTransferPayment": "무통장입금",
     "bankTransferAccountTitle": "입금 계좌",
@@ -1694,6 +1692,9 @@
       "adjusting": "적용 중...",
       "adjustmentSuccess": "적립금 조정을 저장했습니다.",
       "adjustmentError": "적립금 조정 저장에 실패했습니다."
+    },
+    "pageEditor": {
+      "productSelectionMode": "상품 선택 방식"
     }
   },
   "search": {

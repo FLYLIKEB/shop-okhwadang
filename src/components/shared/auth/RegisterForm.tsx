@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/components/ui/utils';
+import FormInput from '@/components/ui/FormInput';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { localMessage } from '@/utils/localMessages';
 
@@ -51,29 +51,13 @@ export default function RegisterForm() {
       <h1 className="text-2xl font-bold text-center mb-8">{localMessage('auth.registerTitle')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1">
-          <label htmlFor="name" className="text-sm font-medium">{localMessage('auth.name')}</label>
-          <input id="name" type="text" autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} className={cn('w-full rounded-md border bg-background px-3 py-2 text-sm', 'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', errors.name ? 'border-destructive' : 'border-input')} placeholder={localMessage('auth.namePlaceholder')} />
-          {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
-        </div>
+        <FormInput id="name" type="text" autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} label={localMessage('auth.name')} error={errors.name} placeholder={localMessage('auth.namePlaceholder')} />
 
-        <div className="space-y-1">
-          <label htmlFor="email" className="text-sm font-medium">{localMessage('auth.email')}</label>
-          <input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={cn('w-full rounded-md border bg-background px-3 py-2 text-sm', 'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', errors.email ? 'border-destructive' : 'border-input')} placeholder={localMessage('auth.emailPlaceholder')} />
-          {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-        </div>
+        <FormInput id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} label={localMessage('auth.email')} error={errors.email} placeholder={localMessage('auth.emailPlaceholder')} />
 
-        <div className="space-y-1">
-          <label htmlFor="password" className="text-sm font-medium">{localMessage('auth.password')}</label>
-          <input id="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className={cn('w-full rounded-md border bg-background px-3 py-2 text-sm', 'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', errors.password ? 'border-destructive' : 'border-input')} placeholder={localMessage('auth.passwordHint')} />
-          {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
-        </div>
+        <FormInput id="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} label={localMessage('auth.password')} error={errors.password} placeholder={localMessage('auth.passwordHint')} />
 
-        <div className="space-y-1">
-          <label htmlFor="passwordConfirm" className="text-sm font-medium">{localMessage('auth.passwordConfirm')}</label>
-          <input id="passwordConfirm" type="password" autoComplete="new-password" required value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} className={cn('w-full rounded-md border bg-background px-3 py-2 text-sm', 'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', errors.passwordConfirm ? 'border-destructive' : 'border-input')} placeholder={localMessage('auth.passwordConfirmPlaceholder')} />
-          {errors.passwordConfirm && <p className="text-xs text-destructive">{errors.passwordConfirm}</p>}
-        </div>
+        <FormInput id="passwordConfirm" type="password" autoComplete="new-password" required value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} label={localMessage('auth.passwordConfirm')} error={errors.passwordConfirm} placeholder={localMessage('auth.passwordConfirmPlaceholder')} />
 
         <Button type="submit" variant="black" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? localMessage('auth.registerSubmitting') : localMessage('auth.registerSubmit')}

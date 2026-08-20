@@ -1,7 +1,8 @@
 'use client';
 
-import { useId } from 'react';
 import { cn } from '@/components/ui/utils';
+import FormField, { getFormControlClassName } from '@/components/ui/FormField';
+import { localMessage } from '@/utils/localMessages';
 
 interface StringFieldProps {
   label: string;
@@ -13,32 +14,30 @@ interface StringFieldProps {
 }
 
 export function StringField({ label, value, onChange, placeholder, multiline, onBlur }: StringFieldProps) {
-  const id = useId();
-
   return (
-    <div>
-      <label htmlFor={id} className="mb-1 block typo-label font-semibold text-muted-foreground">{label}</label>
-      {multiline ? (
+    <FormField label={label} density="compact">
+      {({ controlProps }) => multiline ? (
         <textarea
-          id={id}
+          {...controlProps}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
           placeholder={placeholder}
           rows={4}
-          className="field-soft w-full rounded-xl border px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className={getFormControlClassName({ density: 'compact' })}
         />
       ) : (
         <input
-          id={id}
+          {...controlProps}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={placeholder}
-          className="field-soft w-full rounded-xl border px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className={getFormControlClassName({ density: 'compact' })}
         />
       )}
-    </div>
+    </FormField>
   );
 }
 
@@ -49,20 +48,19 @@ interface NumberFieldProps {
 }
 
 export function NumberField({ label, value, onChange }: NumberFieldProps) {
-  const id = useId();
-
   return (
-    <div>
-      <label htmlFor={id} className="mb-1 block typo-label font-semibold text-muted-foreground">{label}</label>
-      <input
-        id={id}
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        min={1}
-        className="field-soft w-full rounded-xl border px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
-      />
-    </div>
+    <FormField label={label} density="compact">
+      {({ controlProps }) => (
+        <input
+          {...controlProps}
+          type="number"
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          min={1}
+          className={getFormControlClassName({ density: 'compact' })}
+        />
+      )}
+    </FormField>
   );
 }
 
@@ -81,27 +79,24 @@ interface SelectFieldProps {
 }
 
 export function SelectField({ label, value, options, onChange, hint }: SelectFieldProps) {
-  const id = useId();
   const selectedHint = hint ?? options.find((o) => o.value === value)?.hint;
   return (
-    <div>
-      <label htmlFor={id} className="mb-1 block typo-label font-semibold text-muted-foreground">{label}</label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="field-soft w-full rounded-xl border px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      {selectedHint && (
-        <p className="mt-1 typo-label text-muted-foreground">{selectedHint}</p>
+    <FormField label={label} description={selectedHint} density="compact">
+      {({ controlProps }) => (
+        <select
+          {...controlProps}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={getFormControlClassName({ density: 'compact' })}
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       )}
-    </div>
+    </FormField>
   );
 }
 
@@ -112,10 +107,12 @@ interface RadioFieldProps {
   onChange: (v: string) => void;
 }
 
-export function RadioField({ label = '상품 선택 방식', value, options, onChange }: RadioFieldProps) {
+export function RadioField({ label, value, options, onChange }: RadioFieldProps) {
+  const resolvedLabel = label ?? localMessage('admin.pageEditor.productSelectionMode');
+
   return (
     <div>
-      <div className="mb-1.5 typo-label text-muted-foreground">{label}</div>
+      <div className="mb-1.5 typo-label text-muted-foreground">{resolvedLabel}</div>
       <div className="flex gap-3">
         {options.map((opt) => (
           <button
