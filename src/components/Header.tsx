@@ -118,7 +118,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
           </form>
 
           {/* 데스크탑 액션 */}
-          <div className="toss-header__actions hidden md:flex items-center gap-1">
+          <div className="toss-header__actions hidden md:flex items-center gap-2">
             <ThemeToggle />
             <LanguageSelector />
             <CartBadge itemCount={itemCount} />
@@ -145,7 +145,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
           </div>
 
           {/* 모바일 우측 */}
-          <div className="toss-header__mobile-actions md:hidden flex items-center gap-1">
+          <div className="toss-header__mobile-actions md:hidden flex items-center gap-2">
             <Button
               type="button"
               variant="gray"

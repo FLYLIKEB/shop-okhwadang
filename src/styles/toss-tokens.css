@@ -18,6 +18,8 @@ html[data-theme='light'] {
   --checkout-toss-button-brown-hover: #6f350f;
   --checkout-toss-button-gray: #f2f4f6;
   --checkout-toss-button-gray-hover: #e5e8eb;
+  --checkout-toss-header-button-gray: #fafbfc;
+  --checkout-toss-header-button-gray-hover: #f2f4f6;
 }
 
 html[data-theme='dark'] {
@@ -37,6 +39,8 @@ html[data-theme='dark'] {
   --checkout-toss-button-brown-hover: #a85f31;
   --checkout-toss-button-gray: #242a31;
   --checkout-toss-button-gray-hover: #343c46;
+  --checkout-toss-header-button-gray: #252b32;
+  --checkout-toss-header-button-gray-hover: #303740;
 }
 
 /* Payment content is intentionally light so the Toss widget remains a
@@ -114,4 +118,14 @@ html[data-theme='dark'] {
 
 .toss-button--gray:hover {
   background: var(--checkout-toss-button-gray-hover) !important;
+}
+
+.toss-header__actions .toss-button--gray,
+.toss-header__mobile-actions .toss-button--gray {
+  background: var(--checkout-toss-header-button-gray) !important;
+}
+
+.toss-header__actions .toss-button--gray:hover,
+.toss-header__mobile-actions .toss-button--gray:hover {
+  background: var(--checkout-toss-header-button-gray-hover) !important;
 }
