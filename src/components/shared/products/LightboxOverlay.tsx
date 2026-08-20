@@ -6,7 +6,7 @@ import { ZoomIn, ZoomOut, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/components/ui/utils'
 import { localMessage } from '@/utils/localMessages'
 import type { Locale } from '@/utils/currency'
-import { Button } from '@/components/ui/button'
+
 
 interface LightboxOverlayProps {
   images: Array<{

@@ -43,6 +43,7 @@ export interface HeroBannerSlide {
   title: string;
   subtitle?: string;
   image_url?: string;
+  image_derivatives?: Record<string, string>;
   bg_color?: string;
   cta_text?: string;
   cta_url?: string;
@@ -54,6 +55,7 @@ export interface HeroBannerContent {
   subtitle?: string;
   description?: string;
   image_url?: string;
+  image_derivatives?: Record<string, string>;
   cta_text?: string;
   cta_url?: string;
   bgColor?: 'foreground' | 'background' | 'muted' | string;
@@ -98,6 +100,7 @@ export interface PromotionBannerContent {
   eyebrow?: string;
   subtitle?: string;
   image_url?: string;
+  image_derivatives?: Record<string, string>;
   cta_text?: string;
   cta_url?: string;
   bgColor?: 'foreground' | 'background' | 'muted' | string;

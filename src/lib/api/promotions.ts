@@ -10,6 +10,7 @@ export interface Promotion {
   isActive: boolean;
   discountRate: number | null;
   imageUrl: string | null;
+  imageDerivatives: Record<string, string> | null;
   createdAt: string;
 }
 

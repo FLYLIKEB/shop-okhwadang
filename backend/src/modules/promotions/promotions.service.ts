@@ -55,6 +55,7 @@ export class PromotionsService {
       isActive: dto.isActive ?? true,
       discountRate: dto.discountRate ?? null,
       imageUrl: dto.imageUrl ?? null,
+      imageDerivatives: dto.imageDerivatives ?? null,
     });
     const saved = await this.promotionRepo.save(promotion);
     this.logger.log(`Promotion created: id=${saved.id}`);
@@ -71,6 +72,7 @@ export class PromotionsService {
     if (dto.isActive !== undefined) promotion.isActive = dto.isActive;
     if (dto.discountRate !== undefined) promotion.discountRate = dto.discountRate;
     if (dto.imageUrl !== undefined) promotion.imageUrl = dto.imageUrl;
+    if (dto.imageDerivatives !== undefined) promotion.imageDerivatives = dto.imageDerivatives;
     return this.promotionRepo.save(promotion);
   }
 
@@ -104,6 +106,7 @@ export class PromotionsService {
       isActive: dto.isActive ?? true,
       startsAt: dto.startsAt ? new Date(dto.startsAt) : null,
       endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
+      imageDerivatives: dto.imageDerivatives ?? null,
     });
     const saved = await this.bannerRepo.save(banner);
     this.logger.log(`Banner created: id=${saved.id}`);
@@ -119,6 +122,7 @@ export class PromotionsService {
     if (dto.isActive !== undefined) banner.isActive = dto.isActive;
     if (dto.startsAt !== undefined) banner.startsAt = new Date(dto.startsAt);
     if (dto.endsAt !== undefined) banner.endsAt = new Date(dto.endsAt);
+    if (dto.imageDerivatives !== undefined) banner.imageDerivatives = dto.imageDerivatives;
     return this.bannerRepo.save(banner);
   }
 

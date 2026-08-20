@@ -3,6 +3,8 @@ import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import * as path from 'node:path';
 import { UploadService } from './upload.service';
+import { CmsMediaKind } from './cms-media.constants';
+import type { CmsMedia } from './upload.service';
 import { UploadedFile } from './interfaces/storage.interface';
 import {
   MAX_UPLOAD_FILE_SIZE_BYTES,
@@ -26,6 +28,15 @@ export class RemoteImageIngestService {
     }
 
     return this.uploadService.uploadOriginalImageBuffer(buffer, filename);
+  }
+
+  async ingestCms(url: string, kind: CmsMediaKind): Promise<CmsMedia> {
+    const { buffer, finalUrl } = await this.download(url);
+    return this.uploadService.uploadCmsImageBuffer(
+      buffer,
+      this.filenameFromUrl(finalUrl),
+      kind,
+    );
   }
 
   private async download(rawUrl: string): Promise<{ buffer: Buffer; finalUrl: URL }> {

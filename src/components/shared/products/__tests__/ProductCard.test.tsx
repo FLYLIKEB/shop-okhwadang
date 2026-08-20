@@ -70,6 +70,14 @@ describe('ProductCard free-shipping badge', () => {
 });
 
 describe('ProductCard image presentation', () => {
+  it('prefers the generated thumbnail URL and falls back to the original URL', () => {
+    renderCard({
+      images: [{ ...images[0], thumbnailUrl: 'https://example.com/thumb.webp' }],
+    });
+
+    expect(screen.getByAltText('자사호')).toHaveAttribute('src', 'https://example.com/thumb.webp');
+  });
+
   it('renders the image frame and image badges without rounded corners', () => {
     renderCard({ categoryName: '자사호', isFreeShipping: true });
 

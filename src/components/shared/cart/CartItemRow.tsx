@@ -49,7 +49,7 @@ const CartItemRowComponent = memo(function CartItemRow({
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
         {thumbnail ? (
           <Image
-            src={thumbnail.url}
+            src={thumbnail.thumbnailUrl ?? thumbnail.url}
             alt={thumbnail.alt ?? item.product.name}
             fill
             className="object-cover"

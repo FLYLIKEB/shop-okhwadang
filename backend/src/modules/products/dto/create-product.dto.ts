@@ -108,6 +108,11 @@ export class ProductImageInputDto {
   @IsString()
   url!: string;
 
+  @ApiPropertyOptional({ example: 'https://cdn.example.com/product-thumbnails/image.webp', description: '생성된 목록용 썸네일 URL' })
+  @IsOptional()
+  @IsString()
+  thumbnailUrl?: string;
+
   @ApiPropertyOptional({ example: '상품 이미지 설명', description: 'ALT 텍스트' })
   @IsOptional()
   @IsString()

@@ -39,6 +39,7 @@ const makeFile = (overrides: Partial<Express.Multer.File> = {}): Express.Multer.
 jest.mock('sharp', () => {
   return jest.fn().mockImplementation(() => ({
     resize: jest.fn().mockReturnThis(),
+    webp: jest.fn().mockReturnThis(),
     toBuffer: jest.fn().mockResolvedValue(Buffer.from('processed')),
   }));
 });
@@ -88,6 +89,19 @@ describe('UploadService', () => {
     expect(sharpMock).not.toHaveBeenCalled();
     expect(result.url).toContain('/uploads/mock/');
     expect(result.filename).toMatch(/^[0-9a-f-]+\.jpg$/);
+  });
+
+  it('CMS 히어로 업로드는 원본과 데스크톱/모바일 WebP 파생본을 함께 저장한다', async () => {
+    const result = await service.uploadCmsImage(makeFile(), 'hero');
+
+    expect(result.original.url).toContain('/uploads/mock/cms/hero/original/');
+    expect(result.derivatives.desktop.url).toContain('/uploads/mock/cms/hero/desktop/');
+    expect(result.derivatives.mobile.url).toContain('/uploads/mock/cms/hero/mobile/');
+    expect(result.derivatives.desktop.filename).toMatch(/\.webp$/);
+  });
+
+  it('지원하지 않는 CMS 용도는 거부한다', async () => {
+    await expect(service.uploadCmsImage(makeFile(), 'product')).rejects.toThrow(BadRequestException);
   });
 
   it('파일이 누락되면 400 BadRequest로 거부한다', async () => {

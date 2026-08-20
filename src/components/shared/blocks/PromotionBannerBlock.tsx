@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function PromotionBannerBlock({ content }: Props) {
-  const { title, eyebrow, subtitle, image_url, cta_text, cta_url, template, end_date, expires_at, bgColor } = content;
+  const { title, eyebrow, subtitle, image_url, image_derivatives, cta_text, cta_url, template, end_date, expires_at, bgColor } = content;
   const countdownEndDate = end_date ?? expires_at;
   const { ref, visible } = useScrollAnimation<HTMLElement>();
   const t = useTranslations('promotion');
@@ -64,7 +64,7 @@ export default function PromotionBannerBlock({ content }: Props) {
       <section className="flex overflow-hidden border border-divider-soft">
         {image_url && (
           <div className="relative hidden w-48 md:block bg-muted">
-            <Image src={image_url} alt={title} fill className="object-cover" />
+            <Image src={image_derivatives?.card ?? image_url} alt={title} fill className="object-cover" />
           </div>
         )}
         <div className="flex flex-1 flex-col justify-center p-6">
@@ -83,7 +83,7 @@ export default function PromotionBannerBlock({ content }: Props) {
   return (
     <section ref={ref} className="relative overflow-hidden py-16 md:py-24 border-t border-b border-divider-soft">
       {image_url && (
-        <Image src={image_url} alt={title} fill className="object-cover opacity-20" />
+        <Image src={image_derivatives?.full ?? image_url} alt={title} fill className="object-cover opacity-20" />
       )}
       <div className="relative z-10 text-center px-8">
         <p

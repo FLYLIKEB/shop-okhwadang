@@ -71,7 +71,8 @@ function ProductCard({
 }: ProductCardProps) {
   const t = useTranslations('product');
   const tWishlist = useTranslations('wishlist');
-  const thumbnail = images[0]?.url;
+  const thumbnailImage = images.find((image) => image.isThumbnail) ?? images[0];
+  const thumbnail = thumbnailImage?.thumbnailUrl ?? thumbnailImage?.url;
   const isSoldout = status === 'soldout';
   const clayTagClass = categoryName ? getClayTagClass(categoryName) : null;
   const hasRating = rating !== undefined && reviewCount !== undefined && reviewCount > 0;

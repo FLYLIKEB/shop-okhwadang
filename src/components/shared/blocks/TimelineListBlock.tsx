@@ -1,5 +1,3 @@
-'use client';
-
 import { SectionHeading } from '@/components/shared/common/SectionHeading';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import type { TimelineItem, TimelineListContent } from '@/lib/api';

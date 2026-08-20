@@ -59,6 +59,7 @@ function toFormData(j: Journal): CreateJournalData {
     summary: j.summary ?? '',
     content: j.content ?? '',
     coverImageUrl: j.coverImageUrl ?? '',
+    coverImageDerivatives: j.coverImageDerivatives ?? undefined,
     isPublished: j.isPublished,
   };
 }
@@ -75,11 +76,11 @@ function JournalRow({
   onTogglePublish: (j: Journal) => void;
 }) {
   return (
-    <tr className="transition-colors hover:bg-muted/30">
+    <tr className="admin-row transition-colors hover:bg-muted/30">
       <td className="admin-row px-4">
-        {journal.coverImageUrl ? (
+        {(journal.coverImageDerivatives?.thumbnail || journal.coverImageUrl) ? (
           <Image
-            src={journal.coverImageUrl}
+            src={journal.coverImageDerivatives?.thumbnail || journal.coverImageUrl || ''}
             alt={journal.title}
             width={48}
             height={48}
@@ -287,6 +288,8 @@ function JournalFormModal({
           <ProductImageUploader
             imageUrl={form.coverImageUrl ?? ''}
             onChange={(url) => setForm({ ...form, coverImageUrl: url })}
+            cmsKind="journal"
+            onDerivativesChange={(derivatives) => setForm({ ...form, coverImageDerivatives: derivatives })}
           />
         </div>
 

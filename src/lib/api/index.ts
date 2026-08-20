@@ -9,6 +9,8 @@ export {
   type PaginatedResponse,
   type ListResponse,
   type UploadedFile,
+  type CmsMedia,
+  type CmsMediaKind,
 } from './core';
 
 // Domain modules

@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 
 interface GalleryImage {
   url: string;
+  thumbnailUrl?: string | null;
   alt?: string;
 }
 
@@ -624,7 +625,11 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     isFreeShipping: product?.isFreeShipping ?? false,
     isVisibleKo: product?.isVisibleKo ?? true,
     isVisibleEn: product?.isVisibleEn ?? false,
-    images: product?.images?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
+    images: product?.images?.map((img) => ({
+      url: img.url,
+      thumbnailUrl: img.thumbnailUrl ?? null,
+      alt: img.alt ?? undefined,
+    })) ?? [],
     detailImages:
       product?.detailImages?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
     options:
@@ -706,6 +711,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         noticeInfo: buildNoticeInfoPayload(form.noticeInfo, hadNoticeInfo),
         images: form.images.map((img, index) => ({
           url: img.url,
+          thumbnailUrl: img.thumbnailUrl ?? null,
           alt: img.alt,
           sortOrder: index,
           isThumbnail: index === 0,

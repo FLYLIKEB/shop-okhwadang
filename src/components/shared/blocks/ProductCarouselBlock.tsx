@@ -135,7 +135,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           ref={scrollRef}
           className="flex gap-10 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8 py-4"
         >
-          {products.map((product, index) => (
+          {products.map((product) => (
             <div
               key={product.id}
               className="shrink-0 snap-center w-[calc(50%-20px)] md:w-[calc(33.333%-27px)] xl:w-[calc(25%-30px)]"
@@ -152,7 +152,6 @@ export default function ProductCarouselBlock({ content }: Props) {
                 images={product.images}
                 isFreeShipping={product.isFreeShipping}
                 locale={locale}
-                priority={index === 0}
               />
             </div>
           ))}

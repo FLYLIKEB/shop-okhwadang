@@ -42,6 +42,9 @@ export class Promotion {
   @Column({ name: 'image_url', type: 'varchar', length: 500, nullable: true })
   imageUrl!: string | null;
 
+  @Column({ name: 'image_derivatives', type: 'json', nullable: true })
+  imageDerivatives!: Record<string, string> | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

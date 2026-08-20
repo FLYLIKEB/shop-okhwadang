@@ -3,6 +3,7 @@ import { apiClient, type PaginatedResponse } from './core';
 export interface ProductImage {
   id: number;
   url: string;
+  thumbnailUrl?: string | null;
   alt: string | null;
   sortOrder: number;
   isThumbnail: boolean;

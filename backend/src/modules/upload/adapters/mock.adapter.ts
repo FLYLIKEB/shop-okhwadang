@@ -16,4 +16,16 @@ export class MockStorageAdapter implements StorageAdapter {
       filename: `categories/${filename}`,
     };
   }
+
+  async saveCmsImage(
+    filename: string,
+    _buffer: Buffer,
+    _mimetype: string,
+    variant: string,
+  ): Promise<UploadedFile> {
+    return {
+      url: `/uploads/mock/cms/${variant}/${filename}`,
+      filename: `cms/${variant}/${filename}`,
+    };
+  }
 }

@@ -43,8 +43,8 @@ function CategoryImageCard({ cat, locale }: { cat: Category; locale: string }) {
           alt={cat.name}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 768px) 50vw, 25vw"
-          unoptimized
+          sizes="(max-width: 768px) calc(50vw - 0.5rem), calc(25vw - 0.75rem)"
+          quality={75}
           onError={handleError}
         />
       ) : imgError || !cat.imageUrl ? (

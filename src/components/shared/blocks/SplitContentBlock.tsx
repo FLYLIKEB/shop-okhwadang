@@ -1,6 +1,3 @@
-'use client';
-
-import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { SplitContentContent } from '@/lib/api';
@@ -27,31 +24,10 @@ export default function SplitContentBlock({ content }: Props) {
   const isLarge = template === 'large';
   const isCompact = template === 'compact';
 
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   const bgClass = use_alternate_bg ? 'bg-muted' : 'bg-background';
 
   return (
-    <div ref={sectionRef} className={cn(bgClass, 'border-y border-soft')}>
+    <div className={cn(bgClass)}>
       <div
         className={cn(
           'mx-auto flex flex-col justify-center w-full',
@@ -63,7 +39,6 @@ export default function SplitContentBlock({ content }: Props) {
             className={cn(
               'animate-fade-in-up typo-body-sm font-body font-semibold uppercase tracking-widest text-muted-foreground',
               isLarge ? 'mb-6' : 'mb-5',
-              isVisible ? 'opacity-100' : 'opacity-0'
             )}
             style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}
           >
@@ -72,9 +47,12 @@ export default function SplitContentBlock({ content }: Props) {
         )}
         <h2
           className={cn(
-            'animate-fade-in-up typo-h1 font-body text-foreground leading-snug',
-            isCompact && 'typo-h2',
-            isVisible ? 'opacity-100' : 'opacity-0'
+            'animate-fade-in-up font-display text-foreground leading-snug',
+            isLarge
+              ? 'text-3xl lg:text-4xl'
+              : isCompact
+                ? 'text-xl lg:text-2xl'
+                : 'text-2xl lg:text-3xl',
           )}
           style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
         >
@@ -86,7 +64,6 @@ export default function SplitContentBlock({ content }: Props) {
             className={cn(
               'animate-fade-in-up typo-body text-muted-foreground prose max-w-none leading-relaxed',
               isLarge ? 'mt-8' : 'mt-6',
-              isVisible ? 'opacity-100' : 'opacity-0'
             )}
             style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
           />
@@ -95,7 +72,6 @@ export default function SplitContentBlock({ content }: Props) {
           <div
             className={cn(
               'animate-fade-in-up',
-              isVisible ? 'opacity-100' : 'opacity-0'
             )}
             style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}
           >

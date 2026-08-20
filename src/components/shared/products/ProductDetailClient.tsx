@@ -187,6 +187,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const [wishlistId, setWishlistId] = useState<number | null>(null)
   const optionSectionRef = useRef<HTMLDivElement>(null)
   const buyNowStartedRef = useRef(false)
+  const viewedThumbnail = product.images.find((image) => image.isThumbnail) ?? product.images[0]
 
   useEffect(() => {
     addRecentlyViewed({
@@ -194,7 +195,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
       name: product.name,
       price: toFiniteNumber(product.price),
       salePrice: product.salePrice == null ? null : toFiniteNumber(product.salePrice),
-      thumbnail: product.images[0]?.url ?? null,
+      thumbnail: viewedThumbnail?.url ?? null,
       slug: product.slug,
     })
   }, [product.id]) // eslint-disable-line react-hooks/exhaustive-deps

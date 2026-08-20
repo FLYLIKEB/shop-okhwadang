@@ -27,6 +27,7 @@ export interface CreateProductData {
   noticeInfo?: ProductNoticeInfo | null;
   images?: Array<{
     url: string;
+    thumbnailUrl?: string | null;
     alt?: string;
     sortOrder?: number;
     isThumbnail?: boolean;
