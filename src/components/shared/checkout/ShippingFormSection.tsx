@@ -85,15 +85,16 @@ export function PhoneInputSection({ form, errors, onChange }: PhoneInputSectionP
         id="recipientPhone"
         name="recipientPhone"
         type="tel"
-        inputMode="tel"
+        inputMode="numeric"
         autoComplete="tel"
         value={form.recipientPhone}
         onChange={onChange}
         placeholder={localMessage('checkout.phonePlaceholder')}
         maxLength={13}
+        aria-describedby="recipientPhoneHint"
         className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
-      <p id="recipientPhoneHint" className="typo-label text-muted-foreground">
+      <p id="recipientPhoneHint" className="sr-only">
         {localMessage('checkout.phoneHint')}
       </p>
       {errors.recipientPhone && (
