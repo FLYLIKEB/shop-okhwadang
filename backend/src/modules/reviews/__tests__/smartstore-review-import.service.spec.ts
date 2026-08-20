@@ -213,6 +213,59 @@ describe('SmartStoreReviewImportService', () => {
     expect(productRepository.manager.query).toHaveBeenCalled();
   });
 
+  it('deduplicates normalized review media URLs and preserves uploaded media mapping', async () => {
+    const file = makeFile(
+      await makeWorkbook([
+        header,
+        [
+          '13629303355',
+          '옥화당 자사호',
+          '포토',
+          5,
+          'https://phinf.pstatic.net:443/review.jpg',
+          '첫 번째 리뷰',
+          1,
+          'da**',
+          '2026.06.27. 16:37:03',
+          '',
+          '5008298806',
+        ],
+        [
+          '13629303355',
+          '옥화당 자사호',
+          '포토',
+          4,
+          'https://phinf.pstatic.net/review.jpg',
+          '두 번째 리뷰',
+          0,
+          'be**',
+          '2026.06.28. 16:37:03',
+          '',
+          '5008298807',
+        ],
+      ]),
+    );
+
+    const result = await service.commit(file);
+
+    expect(result.summary).toMatchObject({ successCount: 2, mediaFailureCount: 0 });
+    expect(result.rows).toEqual([
+      expect.objectContaining({ mediaSuccessCount: 1, mediaFailureCount: 0 }),
+      expect.objectContaining({ mediaSuccessCount: 1, mediaFailureCount: 0 }),
+    ]);
+    expect(remoteImageIngestService.ingest).toHaveBeenCalledTimes(1);
+    expect(externalReviewRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+      externalReviewId: '5008298806',
+      imageUrls: ['https://cdn.example.com/reviews/naver.jpg'],
+      mediaAssets: [expect.objectContaining({ originalUrl: 'https://phinf.pstatic.net:443/review.jpg', status: 'uploaded' })],
+    }));
+    expect(externalReviewRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+      externalReviewId: '5008298807',
+      imageUrls: ['https://cdn.example.com/reviews/naver.jpg'],
+      mediaAssets: [expect.objectContaining({ originalUrl: 'https://phinf.pstatic.net/review.jpg', status: 'uploaded' })],
+    }));
+  });
+
   it('reports row failures without aborting the whole upload', async () => {
     productRepository.find.mockResolvedValue([]);
     const file = makeFile(

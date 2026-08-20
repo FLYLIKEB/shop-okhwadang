@@ -9,7 +9,7 @@ import { ProductCommandService } from './product-command.service';
 import { CreateProductDto, ProductNoticeInfoType, ProductOptionInputDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { RemoteImageIngestService } from '../upload/remote-image-ingest.service';
-import { UploadedFile } from '../upload/interfaces/storage.interface';
+import { RemoteImageIngestCache } from '../upload/remote-image-ingest.cache';
 import { assertXlsxFile, cellToString, normalizeExcelHeader } from '../../common/imports/excel-import.util';
 import { buildNaverExternalProductKey } from '../../common/imports/external-source.util';
 import { AttributesService } from './attributes.service';
@@ -213,7 +213,7 @@ export class SmartStoreProductImportService {
 
     const duplicateIdentifiers = this.findDuplicates(identifiers);
     const resolvedMappings = await this.resolveKeywordMappings(parsedRows);
-    const ingestCache = new Map<string, Promise<UploadedFile>>();
+    const ingestCache = new RemoteImageIngestCache(this.remoteImageIngestService);
     const rows: SmartStoreImportRowResult[] = [];
 
     for (const parsed of parsedRows) {
@@ -731,14 +731,14 @@ export class SmartStoreProductImportService {
   // 같은 URL 은 커밋 한 번 동안 캐시를 공유해 중복 다운로드/저장을 방지한다.
   private async resolveRemoteImages(
     dto: CreateProductDto,
-    cache: Map<string, Promise<UploadedFile>>,
+    cache: RemoteImageIngestCache,
   ): Promise<CreateProductDto> {
     const resolved: CreateProductDto = { ...dto };
 
     if (dto.images) {
       const images: NonNullable<CreateProductDto['images']> = [];
       for (const image of dto.images) {
-        const uploaded = await this.ingestCached(image.url, cache);
+        const uploaded = await cache.ingest(image.url);
         images.push({ ...image, url: uploaded.url });
       }
       resolved.images = images;
@@ -747,7 +747,7 @@ export class SmartStoreProductImportService {
     if (dto.detailImages) {
       const detailImages: NonNullable<CreateProductDto['detailImages']> = [];
       for (const detailImage of dto.detailImages) {
-        const uploaded = await this.ingestCached(detailImage.url, cache);
+        const uploaded = await cache.ingest(detailImage.url);
         detailImages.push({ ...detailImage, url: uploaded.url });
       }
       resolved.detailImages = detailImages;
@@ -756,13 +756,6 @@ export class SmartStoreProductImportService {
     return resolved;
   }
 
-  private ingestCached(url: string, cache: Map<string, Promise<UploadedFile>>): Promise<UploadedFile> {
-    const cached = cache.get(url);
-    if (cached) return cached;
-    const promise = this.remoteImageIngestService.ingest(url);
-    cache.set(url, promise);
-    return promise;
-  }
 
   private buildIdentifier(sellerCode: string, productNumber: string): string | null {
     const raw = sellerCode || buildNaverExternalProductKey(productNumber) || '';

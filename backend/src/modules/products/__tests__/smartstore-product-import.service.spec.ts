@@ -723,6 +723,67 @@ describe('SmartStoreProductImportService', () => {
       }));
     });
 
+    it('deduplicates normalized remote image URLs within one import batch', async () => {
+      const repository = createRepositoryMock([]);
+      const commandService = createCommandServiceMock();
+      const ingestService = createIngestServiceMock();
+      const service = createService(repository, commandService, ingestService);
+      const buffer = await createWorkbookBuffer([
+        ['판매자상품코드', '상품명', '판매가', '대표이미지', '추가이미지'],
+        ['SKU-1', '정규화 이미지 상품', 10000, 'https://img.example.com:443/rep.jpg', 'https://img.example.com/rep.jpg'],
+      ]);
+
+      await service.commit(createFile(buffer));
+
+      expect(ingestService.ingest).toHaveBeenCalledTimes(1);
+      expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({
+        images: [
+          expect.objectContaining({ url: ingestedUrl('https://img.example.com:443/rep.jpg'), isThumbnail: true }),
+          expect.objectContaining({ url: ingestedUrl('https://img.example.com:443/rep.jpg'), isThumbnail: false }),
+        ],
+      }));
+    });
+
+    it('evicts failed image ingests so a later row can retry the same URL', async () => {
+      const repository = createRepositoryMock([]);
+      const commandService = createCommandServiceMock();
+      const ingestService = createIngestServiceMock();
+      ingestService.ingest
+        .mockRejectedValueOnce(new BadRequestException('일시적인 이미지 오류'))
+        .mockResolvedValueOnce({ url: ingestedUrl('https://img.example.com/flaky.jpg'), filename: 'uploaded.jpg' });
+      const service = createService(repository, commandService, ingestService);
+      const buffer = await createWorkbookBuffer([
+        ['판매자상품코드', '상품명', '판매가', '대표이미지'],
+        ['SKU-1', '실패 후 재시도 상품', 10000, 'https://img.example.com/flaky.jpg'],
+        ['SKU-2', '재시도 성공 상품', 10000, 'https://img.example.com/flaky.jpg'],
+      ]);
+
+      const result = await service.commit(createFile(buffer));
+
+      expect(ingestService.ingest).toHaveBeenCalledTimes(2);
+      expect(result.summary).toMatchObject({ successCount: 1, failureCount: 1 });
+      expect(result.rows[0].status).toBe('failed');
+      expect(result.rows[1].status).toBe('success');
+      expect(commandService.create).toHaveBeenCalledTimes(1);
+      expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({ sku: 'SKU-2' }));
+    });
+
+    it('does not share successful image promises across separate import batches', async () => {
+      const repository = createRepositoryMock([]);
+      const commandService = createCommandServiceMock();
+      const ingestService = createIngestServiceMock();
+      const service = createService(repository, commandService, ingestService);
+      const buffer = await createWorkbookBuffer([
+        ['판매자상품코드', '상품명', '판매가', '대표이미지'],
+        ['SKU-1', '첫 배치 상품', 10000, 'https://img.example.com/shared.jpg'],
+      ]);
+
+      await service.commit(createFile(buffer));
+      await service.commit(createFile(buffer));
+
+      expect(ingestService.ingest).toHaveBeenCalledTimes(2);
+    });
+
     it('extracts detail images from 상세설명 HTML img tags', async () => {
       const repository = createRepositoryMock([]);
       const commandService = createCommandServiceMock();
