@@ -21,9 +21,11 @@ const TYPE_KEY_MAP: Record<Promotion['type'], string> = {
 
 const TYPE_ORDER: Promotion['type'][] = ['timesale', 'exhibition', 'event'];
 
+const DATE_LOCALE_MAP: Record<string, 'ko' | 'en'> = { ko: 'ko', en: 'en' };
 
 export default function EventPage() {
   const { locale } = useParams<{ locale: string }>();
+  const dateLocale = DATE_LOCALE_MAP[locale] ?? DATE_LOCALE_MAP.ko;
   const t = useTranslations('event');
   const [promotions, setPromotions] = useState<Promotion[]>([]);
 
@@ -119,7 +121,7 @@ export default function EventPage() {
                         )}
                         <span>
                           {t('until', {
-                            date: formatDate(promo.endsAt, locale),
+                            date: formatDate(promo.endsAt, dateLocale),
                           })}
                         </span>
                         {type === 'timesale' && (
