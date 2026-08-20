@@ -128,9 +128,10 @@ html[data-theme='dark'] {
 }
 
 .toss-button--white {
+  border: 1px solid var(--checkout-toss-border) !important;
   background: var(--checkout-toss-button-white) !important;
   color: var(--checkout-toss-foreground) !important;
-  box-shadow: var(--checkout-toss-shadow);
+  box-shadow: 0 2px 8px rgb(25 31 40 / 8%);
 }
 
 .toss-button--white:hover {
