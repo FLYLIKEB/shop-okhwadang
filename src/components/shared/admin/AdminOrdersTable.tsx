@@ -5,6 +5,7 @@ import { formatCurrency } from '@/utils/currency';
 import { OrderStatusSelect } from './OrderStatusSelect';
 import { OrderStatusBadge } from './StatusBadge';
 import { localMessage } from '@/utils/localMessages';
+import { formatDate } from '@/utils/date';
 
 interface AdminOrdersTableProps {
   orders: AdminOrder[];
@@ -80,7 +81,7 @@ export function AdminOrdersTable({
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">{localMessage('admin.orders.columns.orderDate')}</dt>
-                  <dd>{new Date(order.createdAt).toLocaleDateString()}</dd>
+                  <dd>{formatDate(order.createdAt, 'ko')}</dd>
                 </div>
               </dl>
               <div className="mt-4 flex flex-wrap justify-end gap-2">
@@ -142,7 +143,7 @@ export function AdminOrdersTable({
                     <OrderStatusBadge status={order.status} />
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {new Date(order.createdAt).toLocaleDateString()}
+                    {formatDate(order.createdAt, 'ko')}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">

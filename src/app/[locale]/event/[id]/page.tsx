@@ -9,6 +9,7 @@ import type { Promotion } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import CountdownTimer from '@/components/shared/home/CountdownTimer';
+import { formatDate } from '@/utils/date';
 
 const TYPE_KEY_MAP: Record<Promotion['type'], string> = {
   timesale: 'types.timesale',
@@ -16,18 +17,15 @@ const TYPE_KEY_MAP: Record<Promotion['type'], string> = {
   event: 'types.event',
 };
 
-const DATE_LOCALE_MAP: Record<string, string> = {
-  ko: 'ko-KR',
-  en: 'en-US',
-};
+const DATE_LOCALE_MAP: Record<string, 'ko' | 'en'> = { ko: 'ko', en: 'en' };
 
 export default function EventDetailPage() {
   const { id, locale } = useParams<{ id: string; locale: string }>();
+  const dateLocale = DATE_LOCALE_MAP[locale] ?? DATE_LOCALE_MAP.ko;
   const router = useRouter();
   const t = useTranslations('event');
   const [promotion, setPromotion] = useState<Promotion | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const dateLocale = DATE_LOCALE_MAP[locale] ?? locale;
 
   const { execute: loadPromotion, isLoading: loading } = useAsyncAction(
     async () => {
@@ -95,8 +93,8 @@ export default function EventDetailPage() {
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400 mb-6">
         <span>
-          {new Date(promotion.startsAt).toLocaleDateString(dateLocale)} ~{' '}
-          {new Date(promotion.endsAt).toLocaleDateString(dateLocale)}
+          {formatDate(promotion.startsAt, dateLocale)} ~{' '}
+          {formatDate(promotion.endsAt, dateLocale)}
         </span>
         {promotion.type === 'timesale' && (
           <span className="flex items-center gap-1">

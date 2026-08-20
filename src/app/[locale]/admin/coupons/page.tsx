@@ -14,6 +14,7 @@ import { adminCouponsApi, type AdminCoupon, type AdminCouponInput } from '@/lib/
 import { formatCurrency, type Locale } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import { cn } from '@/components/ui/utils';
+import { formatCount, formatDateTime } from '@/utils/date';
 
 type CouponFilter = 'all' | 'active' | 'inactive';
 
@@ -270,7 +271,7 @@ export default function AdminCouponsPage() {
                             )}
                           </td>
                           <td className="px-4 py-3">
-                            <div>{coupon.issuedCount.toLocaleString(locale)}</div>
+                            <div>{formatCount(coupon.issuedCount, locale)}</div>
                             <div className="mt-1 text-xs text-muted-foreground">
                               {coupon.totalQuantity == null
                                 ? t('table.unlimited')
@@ -278,8 +279,8 @@ export default function AdminCouponsPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-xs text-muted-foreground">
-                            <div>{new Date(coupon.startsAt).toLocaleString(locale)}</div>
-                            <div>{new Date(coupon.expiresAt).toLocaleString(locale)}</div>
+                            <div>{formatDateTime(coupon.startsAt, locale)}</div>
+                            <div>{formatDateTime(coupon.expiresAt, locale)}</div>
                           </td>
                           <td className="px-4 py-3">
                             <span

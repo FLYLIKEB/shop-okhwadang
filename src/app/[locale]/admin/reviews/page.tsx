@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -16,6 +16,7 @@ import { useAdminListPage } from '@/components/shared/hooks/useAdminListPage';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { adminReviewsApi } from '@/lib/api';
 import type { AdminReviewItem, AdminReviewsParams, SmartStoreReviewImportResult } from '@/lib/api';
+import { formatDateTime } from '@/utils/date';
 
 const PAGE_SIZE = 20;
 const reviewKey = (review: Pick<AdminReviewItem, 'id' | 'source'>) => `${review.source}:${review.id}`;
@@ -57,17 +58,7 @@ export default function AdminReviewsPage() {
     { label: t('filters.visibility.hidden'), value: 'hidden' },
   ] as const;
 
-  const dateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    [locale],
-  );
+  const formatReviewDate = (value: string) => formatDateTime(value, locale, { month: '2-digit', day: '2-digit' });
 
   const { execute: fetchReviews, isLoading: loading } = useAsyncAction(
     async () => {
@@ -598,7 +589,7 @@ export default function AdminReviewsPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">{review.reviewerNameMasked}</td>
-                  <td className="px-4 py-3">{dateFormatter.format(new Date(review.reviewedAt))}</td>
+                  <td className="px-4 py-3">{formatReviewDate(review.reviewedAt)}</td>
                   <td className="px-4 py-3">
                     {review.mediaCount > 0
                       ? t('table.mediaValue', { count: review.mediaCount })

@@ -15,6 +15,7 @@ import { cn } from '@/components/ui/utils'
 import { Button } from '@/components/ui/button'
 import ReviewsTab from '@/components/shared/reviews/ReviewsTab'
 import { hasEmbeddedDetailMedia, sanitizeProductDetailHtml } from '@/lib/product-detail-html'
+import { formatDate } from '@/utils/date';
 
 interface ProductTabsProps {
   description: string | null
@@ -391,7 +392,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <p className="text-sm font-medium text-foreground">{inquiry.isSecret ? `${t('tabs.inquiryPanel.secretBadge')} ` : ''}{inquiry.title}</p>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(inquiry.createdAt).toLocaleDateString(locale)}
+                              {formatDate(inquiry.createdAt, locale)}
                             </span>
                           </div>
                           <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{inquiry.content}</p>

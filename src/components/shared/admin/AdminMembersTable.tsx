@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import type { AdminMember } from '@/lib/api';
 import { MemberRoleSelect } from './MemberRoleSelect';
 import { StatusBadge } from './StatusBadge';
+import { formatDate } from '@/utils/date';
 
 interface AdminMembersTableProps {
   members: AdminMember[];
@@ -13,7 +14,6 @@ interface AdminMembersTableProps {
 export function AdminMembersTable({ members, onRoleChange }: AdminMembersTableProps) {
   const t = useTranslations('admin.members');
   const locale = useLocale();
-  const dateLocale = locale === 'en' ? 'en-US' : 'ko-KR';
 
   if (members.length === 0) {
     return (
@@ -50,7 +50,7 @@ export function AdminMembersTable({ members, onRoleChange }: AdminMembersTablePr
                 <StatusBadge isActive={member.isActive} />
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                {new Date(member.createdAt).toLocaleDateString(dateLocale)}
+                {formatDate(member.createdAt, locale)}
               </td>
               <td className="px-4 py-3">
                 {member.isActive ? (

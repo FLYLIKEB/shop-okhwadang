@@ -13,6 +13,7 @@ import { InquiryStatusBadge } from '@/components/shared/admin/StatusBadge';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 import { Button } from '@/components/ui/button';
+import { formatDate } from '@/utils/date';
 
 export default function InquiriesPage() {
   const t = useTranslations('myInquiries');
@@ -91,7 +92,7 @@ export default function InquiriesPage() {
                   <p className="text-sm font-medium text-foreground truncate">{inquiry.title}</p>
                 </div>
                 <span className="ml-4 shrink-0 text-xs text-muted-foreground">
-                  {new Date(inquiry.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
+                  {formatDate(inquiry.createdAt, locale)}
                 </span>
               </Button>
               {openId === inquiry.id && (
@@ -106,7 +107,7 @@ export default function InquiriesPage() {
                       <p className="text-sm text-foreground whitespace-pre-wrap">{inquiry.answer}</p>
                       {inquiry.answeredAt && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(inquiry.answeredAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
+                          {formatDate(inquiry.answeredAt, locale)}
                         </p>
                       )}
                     </div>

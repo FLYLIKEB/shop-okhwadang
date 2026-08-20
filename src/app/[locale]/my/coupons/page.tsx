@@ -12,6 +12,7 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 import { Button } from '@/components/ui/button';
+import { formatDate } from '@/utils/date';
 
 type TabStatus = 'available' | 'used' | 'expired';
 
@@ -61,7 +62,7 @@ function CouponCard({
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        {t('expiresAt')}: {new Date(coupon.expiresAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
+        {t('expiresAt')}: {formatDate(coupon.expiresAt, locale)}
       </p>
     </div>
   );

@@ -13,6 +13,7 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { useCatalogQueryParams } from '@/components/shared/hooks/useCatalogQueryParams';
 import { usePathname } from 'next/navigation';
 import type { Locale } from '@/utils/currency';
+import { formatCount } from '@/utils/date';
 
 const SORT_OPTIONS: ProductSort[] = ['latest', 'popular', 'price_asc', 'price_desc'];
 
@@ -86,7 +87,7 @@ export default function SearchPage() {
           {q ? tProduct('searchResults', { query: q }) : tProduct('productList')}
         </h1>
         {!isLoading && (
-          <p className="text-sm text-muted-foreground">{tProduct('totalItems', { count: total.toLocaleString() })}</p>
+          <p className="text-sm text-muted-foreground">{tProduct('totalItems', { count: formatCount(total, locale) })}</p>
         )}
       </div>
 

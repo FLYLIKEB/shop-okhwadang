@@ -15,6 +15,7 @@ import { ORDER_STATUS_LABELS } from '@/constants/status';
 import { AdminEmptyState, AdminErrorState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { Button } from '@/components/ui/button';
+import { formatCount, formatDate } from '@/utils/date';
 
 
 const DashboardCharts = dynamic(
@@ -165,30 +166,30 @@ export default function DashboardPage() {
             />
             <KpiCard
               label="오늘 주문수"
-              value={data.kpi.today_orders.toLocaleString()}
+              value={formatCount(data.kpi.today_orders, 'ko')}
               diffPct={data.kpi.today_orders_diff_pct}
               unit="건"
             />
             <KpiCard
               label="신규 회원수"
-              value={data.kpi.new_members_today.toLocaleString()}
+              value={formatCount(data.kpi.new_members_today, 'ko')}
               diffPct={data.kpi.new_members_diff_pct}
               unit="명"
             />
             <KpiCard
               label="상품 조회수"
-              value={data.kpi.total_product_views.toLocaleString()}
+              value={formatCount(data.kpi.total_product_views, 'ko')}
               diffPct={0}
             />
             <KpiCard
               label="탈퇴 예정"
-              value={(data.kpi.deletion_pending_count ?? 0).toLocaleString()}
+              value={formatCount(data.kpi.deletion_pending_count ?? 0, 'ko')}
               diffPct={0}
               unit="명"
             />
             <KpiCard
               label="탈퇴 완료"
-              value={(data.kpi.deletion_completed_count ?? 0).toLocaleString()}
+              value={formatCount(data.kpi.deletion_completed_count ?? 0, 'ko')}
               diffPct={0}
               unit="명"
             />
@@ -255,9 +256,7 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">
-                          {new Date(order.created_at).toLocaleDateString(
-                            'ko-KR',
-                          )}
+                          {formatDate(order.created_at, 'ko')}
                         </td>
                       </tr>
                     ))}
