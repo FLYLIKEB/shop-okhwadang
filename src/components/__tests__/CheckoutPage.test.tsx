@@ -79,9 +79,8 @@ vi.mock('next-intl', () => ({
       'steps.preparing_payment': '결제 준비 중...',
       'steps.confirming_payment': '결제 확인 중...',
       'steps.success': '완료',
-      'consent.title': '필수 동의',
-      'consent.requiredLabel': '[필수] 구매조건 및 개인정보 처리에 동의합니다.',
-      'consent.requiredDescription': '주문할 상품의 상품명, 가격, 배송정보, 교환·환불 규정을 확인했으며 구매에 동의합니다.',
+      'consent.title': '개인정보 제공 동의',
+      'consent.confirmation': '주문 내용을 확인하였으며, 정보 제공 등에 동의합니다.',
       'consent.showPolicy': '정책 내용 열기',
       'consent.hidePolicy': '정책 내용 닫기',
       'consent.contentLoading': '정책 내용을 불러오는 중입니다.',
@@ -188,7 +187,23 @@ vi.mock('@/lib/api/checkout-pricing', () => ({
 const sampleItem: CartItem = {
   id: 1, productId: 10, productOptionId: null, quantity: 2,
   unitPrice: 20000, subtotal: 40000,
-  product: { id: 10, name: '테스트 상품', slug: 'test-product', price: 20000, salePrice: null, status: 'active', images: [] },
+  product: {
+    id: 10,
+    name: '테스트 상품',
+    slug: 'test-product',
+    price: 20000,
+    salePrice: null,
+    status: 'active',
+    images: [{
+      id: 1,
+      url: '/products/test.jpg',
+      thumbnailUrl: '/products/test-thumb.jpg',
+      alt: '테스트 상품 썸네일',
+      sortOrder: 0,
+      isThumbnail: true,
+      isDescriptionImage: false,
+    }],
+  },
   option: null,
 };
 
@@ -276,7 +291,7 @@ describe('CheckoutPage', () => {
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
   });
 
-  it('expands a policy row and loads its content on demand', async () => {
+  it('expands the policy list and opens policy content in a modal', async () => {
     const user = userEvent.setup();
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
@@ -295,15 +310,21 @@ describe('CheckoutPage', () => {
     });
 
     await renderCheckoutPage();
-    const policyToggle = screen.getAllByRole('button', { name: '정책 내용 열기' })[0];
-    await user.click(policyToggle);
+    const policyListToggle = screen.getByRole('button', { name: '정책 내용 열기' });
+    await user.click(policyListToggle);
 
+    const privacyPolicyButton = screen.getByRole('button', { name: '개인정보처리방침' });
+    await user.click(privacyPolicyButton);
     expect(pagesApi.getBySlug).toHaveBeenCalledWith('privacy', 'ko');
-    expect(policyToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(policyListToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(await screen.findByText('개인정보 처리 내용')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '정책 내용 닫기' }));
+    await user.click(screen.getByRole('dialog'));
     expect(screen.queryByText('개인정보 처리 내용')).not.toBeInTheDocument();
+
+    await user.click(policyListToggle);
+    expect(screen.queryByRole('button', { name: '개인정보처리방침' })).not.toBeInTheDocument();
   });
 
   it('uses preview totals and keeps coupon discount / points / shipping split visible', async () => {
@@ -439,6 +460,9 @@ describe('CheckoutPage', () => {
     expect(orderSummarySection).toHaveClass('surface-card');
     expect(orderSummarySection).toContainElement(screen.getByText('테스트 상품'));
     expect(checkoutForm).toContainElement(screen.getAllByRole('button', { name: '결제하기' })[0]);
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+    expect(screen.getAllByText('주문 내용을 확인하였으며, 정보 제공 등에 동의합니다.')).toHaveLength(2);
+    expect(screen.getByAltText('테스트 상품 썸네일')).toHaveAttribute('src', '/products/test-thumb.jpg');
   });
 
   it('shows validation error for invalid phone on submit', async () => {
@@ -451,7 +475,6 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByLabelText(/연락처/), { target: { value: '0101234567' } });
     fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
@@ -486,7 +509,6 @@ describe('CheckoutPage', () => {
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {
@@ -534,7 +556,6 @@ describe('CheckoutPage', () => {
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => expect(ordersApi.create).toHaveBeenCalledWith(
@@ -583,7 +604,6 @@ describe('CheckoutPage', () => {
     await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
     fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));
     await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
 
     await waitFor(() => {

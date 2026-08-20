@@ -117,6 +117,12 @@ describe('ProductCard summary display', () => {
     expect(screen.getByText('자사호').parentElement).toContainElement(ratingSummary);
     expect(screen.getByRole('group').querySelectorAll('button')).toHaveLength(1);
   });
+
+  it('does not render a wishlist button', () => {
+    renderCard();
+
+    expect(screen.queryByRole('button', { name: '위시리스트에 추가' })).not.toBeInTheDocument();
+  });
 });
 
 describe('ProductCard locale-aware navigation', () => {

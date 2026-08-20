@@ -168,7 +168,7 @@ describe('ProductDetailClient', () => {
 
     expect(screen.getAllByText('Add to Cart')).toHaveLength(2)
     expect(screen.getAllByText('Buy Now')).toHaveLength(2)
-    expect(screen.getByText('Quantity')).toBeInTheDocument()
+    expect(screen.getAllByText('Quantity')).toHaveLength(1)
     expect(screen.getByText('4.8(3)')).toBeInTheDocument()
     expect(screen.getAllByLabelText('Add to wishlist').length).toBeGreaterThan(0)
 

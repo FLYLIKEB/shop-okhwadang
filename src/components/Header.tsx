@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { Menu, X, Search, User, LogOut, Shield } from 'lucide-react';
+import { X, Search, User, LogOut, Shield } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +25,14 @@ import { Button } from '@/components/ui/button';
 interface HeaderProps {
   initialNavItems?: NavigationItem[] | null;
   initialSidebarItems?: NavigationItem[] | null;
+}
+
+function HamburgerIcon() {
+  return (
+    <svg viewBox="0 0 28 16" className="h-5 w-7" aria-hidden="true">
+      <path d="M1 3h26M1 13h26" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+    </svg>
+  );
 }
 
 export default function Header({ initialNavItems, initialSidebarItems }: HeaderProps) {
@@ -75,23 +83,23 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
           : 'bg-background',
       )}>
         {/* 2줄 헤더 — top: 로고/검색/액션 · bottom: GNB 전폭 균등 */}
-        <div className="toss-header__top mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
+        <div className="toss-header__top relative mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
           {/* 햄버거 (mobile) */}
           <Button
             type="button"
-            variant="gray"
+            variant="ghost"
             size="icon"
             onClick={() => { setIsMenuOpen(!isMenuOpen); setIsSearchOpen(false); }}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? tNav('closeMenu') : tNav('openMenu')}
-            className="h-8 min-h-8 w-8 shrink-0 rounded-md md:hidden"
+            className="h-8 min-h-8 w-10 shrink-0 rounded-md bg-transparent p-0 text-foreground hover:bg-transparent md:hidden"
           >
-            {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {isMenuOpen ? <X className="h-5 w-5" /> : <HamburgerIcon />}
           </Button>
 
           {/* 로고 */}
-          <Link href="/" className="shrink-0">
+          <Link href="/" className="absolute left-1/2 shrink-0 -translate-x-1/2 md:static md:translate-x-0">
             <div style={scrollLogo?.headerLogoStyle}>
               <Logo variant="header" alt={t('okhwadang')} />
             </div>

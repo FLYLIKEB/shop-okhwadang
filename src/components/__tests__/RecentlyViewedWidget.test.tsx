@@ -61,7 +61,9 @@ describe('RecentlyViewedWidget', () => {
       clear: vi.fn(),
     });
     render(<RecentlyViewedWidget />);
-    expect(screen.getByLabelText('최근 본 상품')).toBeInTheDocument();
+    const widget = screen.getByLabelText('최근 본 상품').closest('.toss-recent-widget');
+    expect(widget).toBeInTheDocument();
+    expect(widget).toHaveClass('hidden', 'md:flex');
   });
 
   it('cart 경로에서는 모바일 하단 CTA와 겹치지 않도록 더 위로 배치', () => {

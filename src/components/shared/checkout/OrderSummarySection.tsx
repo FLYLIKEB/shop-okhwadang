@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { formatCurrency } from '@/utils/currency';
 import type { Locale } from '@/i18n/routing';
@@ -12,6 +13,8 @@ export interface CheckoutPricingItem {
   unitPrice: number;
   subtotal: number;
   quantity: number;
+  thumbnailUrl?: string | null;
+  imageAlt?: string | null;
 }
 
 interface OrderSummarySectionProps {
@@ -48,13 +51,28 @@ export function OrderSummarySection({
       <ul className="mt-4 divide-y divide-soft text-sm">
         {pricedItems.map((item) => (
           <li key={`${item.productId}:${item.productOptionId ?? 'none'}`} className="space-y-0.5 py-3">
-            <p className="font-medium">{item.productName}</p>
-            {item.optionName && (
-              <p className="text-xs text-muted-foreground">{item.optionName}</p>
-            )}
-            <p className="text-muted-foreground">
-              {formatCurrency(item.unitPrice, locale)} × {item.quantity} = {formatCurrency(item.subtotal, locale)}
-            </p>
+            <div className="flex items-start gap-3">
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                {item.thumbnailUrl && (
+                  <Image
+                    src={item.thumbnailUrl}
+                    alt={item.imageAlt ?? item.productName}
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                )}
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <p className="font-medium">{item.productName}</p>
+                {item.optionName && (
+                  <p className="text-xs text-muted-foreground">{item.optionName}</p>
+                )}
+                <p className="text-muted-foreground">
+                  {formatCurrency(item.unitPrice, locale)} × {item.quantity} = {formatCurrency(item.subtotal, locale)}
+                </p>
+              </div>
+            </div>
           </li>
         ))}
       </ul>

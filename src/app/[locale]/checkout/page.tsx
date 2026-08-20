@@ -3,13 +3,13 @@
 import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import Modal from '@/components/ui/Modal';
 import { cn } from '@/components/ui/utils';
 import type {
   CartItem,
@@ -125,10 +125,11 @@ export default function CheckoutPage({
   });
   const [guestEmail, setGuestEmail] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
-  const [policyConsents, setPolicyConsents] = useState<Array<CurrentPolicyMetadata & { agreed: boolean }>>([]);
+  const [policyConsents, setPolicyConsents] = useState<CurrentPolicyMetadata[]>([]);
   const [policyConsentLoading, setPolicyConsentLoading] = useState(true);
   const [policyConsentLoadError, setPolicyConsentLoadError] = useState(false);
-  const [expandedPolicySlug, setExpandedPolicySlug] = useState<string | null>(null);
+  const [isPolicyListExpanded, setIsPolicyListExpanded] = useState(false);
+  const [selectedPolicySlug, setSelectedPolicySlug] = useState<string | null>(null);
   const [policyPages, setPolicyPages] = useState<Record<string, Page>>({});
   const [policyContentLoadingSlug, setPolicyContentLoadingSlug] = useState<string | null>(null);
   const [requestedUserCouponId, setRequestedUserCouponId] = useState<number | undefined>();
@@ -139,7 +140,7 @@ export default function CheckoutPage({
   const [addressLoading, setAddressLoading] = useState(false);
 
   const isGuestCheckout = !isAuthenticated;
-  const requiredConsent = policyConsents.length > 0 && policyConsents.every((policy) => policy.agreed);
+  const requiredConsent = policyConsents.length > 0;
   const policyConsentPayload: PolicyConsentSnapshot[] = policyConsents.map((policy) => ({
     slug: policy.slug,
     version: policy.version,
@@ -152,6 +153,22 @@ export default function CheckoutPage({
   const subtotalAmount = pricingPreview?.subtotalAmount ?? 0;
   const grandTotal = confirmedGrandTotal ?? pricingPreview?.totalPayable ?? 0;
   const isPricingReady = pricingPreview !== null || confirmedGrandTotal !== null;
+  const selectedPolicy = policyConsents.find((policy) => policy.slug === selectedPolicySlug);
+  const selectedPolicyHtml = selectedPolicy ? getPolicyHtml(policyPages[selectedPolicy.slug]) : null;
+  const orderSummaryItems = (pricingPreview?.items ?? []).map((item) => {
+    const checkoutItem = checkoutItems.find(
+      (candidate) => candidate.productId === item.productId
+        && candidate.productOptionId === item.productOptionId,
+    );
+    const thumbnail = checkoutItem?.product.images.find((image) => image.isThumbnail)
+      ?? checkoutItem?.product.images[0];
+
+    return {
+      ...item,
+      thumbnailUrl: thumbnail?.thumbnailUrl ?? thumbnail?.url ?? null,
+      imageAlt: thumbnail?.alt ?? item.productName,
+    };
+  });
 
   const stepLabels: Record<PaymentStep, string> = {
     idle: t('steps.idle'),
@@ -219,7 +236,7 @@ export default function CheckoutPage({
     void pagesApi.getCurrentPolicies(locale)
       .then((policies) => {
         if (active) {
-          setPolicyConsents(policies.map((policy) => ({ ...policy, agreed: false })));
+          setPolicyConsents(policies);
         }
       })
       .catch(() => {
@@ -369,20 +386,19 @@ export default function CheckoutPage({
     }
   };
 
-  const handlePolicyToggle = (slug: string) => {
-    const nextSlug = expandedPolicySlug === slug ? null : slug;
-    setExpandedPolicySlug(nextSlug);
-    if (nextSlug === null || policyPages[nextSlug]) return;
+  const handlePolicyOpen = (slug: string) => {
+    setSelectedPolicySlug(slug);
+    if (policyPages[slug]) return;
 
-    setPolicyContentLoadingSlug(nextSlug);
-    void loadPolicyContent({ slug: nextSlug, policyLocale: locale })
+    setPolicyContentLoadingSlug(slug);
+    void loadPolicyContent({ slug, policyLocale: locale })
       .then((page) => {
         if (page) {
-          setPolicyPages((current) => ({ ...current, [nextSlug]: page }));
+          setPolicyPages((current) => ({ ...current, [slug]: page }));
         }
       })
       .finally(() => {
-        setPolicyContentLoadingSlug((current) => (current === nextSlug ? null : current));
+        setPolicyContentLoadingSlug((current) => (current === slug ? null : current));
       });
   };
 
@@ -430,7 +446,7 @@ export default function CheckoutPage({
       <form id="checkout-form" onSubmit={handleSubmit} className="mt-8">
         <div className="mx-auto layout-stack-md">
           <OrderSummarySection
-            pricedItems={pricingPreview?.items ?? []}
+            pricedItems={orderSummaryItems}
             locale={locale}
             subtotalAmount={subtotalAmount}
             shippingFee={shippingFee}
@@ -546,88 +562,71 @@ export default function CheckoutPage({
             )}
 
             <section className="checkout-toss-section surface-card p-6">
-              <h2 className="typo-h3">{t('consent.title')}</h2>
               {policyConsentLoading ? (
                 <p className="mt-4 text-sm text-muted-foreground">{t('consent.loading')}</p>
               ) : policyConsentLoadError ? (
                 <p className="mt-4 text-sm text-destructive">{t('consent.loadError')}</p>
               ) : (
-                <div className="mt-4 space-y-3">
-                  <p className="text-sm text-muted-foreground">{t('consent.requiredDescription')}</p>
-                  <label className="checkout-toss-panel flex gap-3 rounded-md border border-soft bg-muted/20 p-3 text-sm text-foreground">
-                    <Checkbox
-                      checked={requiredConsent}
-                      onChange={(event) => {
-                        setPolicyConsents((current) => current.map((policy) => ({
-                          ...policy,
-                          agreed: event.target.checked,
-                        })));
-                      }}
-                      aria-label={t('consent.requiredLabel')}
-                    />
-                    <span className="font-medium">{t('consent.requiredLabel')}</span>
-                  </label>
-                  {policyConsents.map((policy) => {
-                    const isExpanded = expandedPolicySlug === policy.slug;
-                    const detailsId = `checkout-policy-${policy.slug}`;
-                    const html = getPolicyHtml(policyPages[policy.slug]);
-
-                    return (
-                      <div key={policy.slug} className="checkout-toss-panel overflow-hidden rounded-md border border-soft bg-muted/20 text-sm text-foreground">
-                        <div className="flex items-start gap-3 p-3">
-                          <Checkbox
-                            checked={policy.agreed}
-                            onChange={(event) => {
-                              setPolicyConsents((current) => current.map((item) => (
-                                item.slug === policy.slug ? { ...item, agreed: event.target.checked } : item
-                              )));
-                            }}
-                            aria-label={policy.title}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                              <span className="font-medium">{policy.title}</span>
-                              <button
-                                type="button"
-                                onClick={() => handlePolicyToggle(policy.slug)}
-                                aria-expanded={isExpanded}
-                                aria-controls={detailsId}
-                                aria-label={t(isExpanded ? 'consent.hidePolicy' : 'consent.showPolicy')}
-                                className="-m-1 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                              >
-                                <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                              </button>
-                            </div>
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              {t('consent.policyMetadata', {
-                                version: policy.version ?? t('consent.unknownVersion'),
-                                effectiveDate: policy.effectiveDate ?? t('consent.unknownEffectiveDate'),
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                        {isExpanded && (
-                          <div id={detailsId} className="border-t border-soft bg-background p-4">
-                            {policyContentLoadingSlug === policy.slug ? (
-                              <p className="text-sm text-muted-foreground">{t('consent.contentLoading')}</p>
-                            ) : html ? (
-                              <SafeHtml html={html} className="prose max-w-none text-sm" />
-                            ) : (
-                              <p className="text-sm text-muted-foreground">{t('consent.contentUnavailable')}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="checkout-toss-panel overflow-hidden rounded-md border border-soft bg-muted/20 text-sm text-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setIsPolicyListExpanded((current) => !current)}
+                    aria-expanded={isPolicyListExpanded}
+                    aria-controls="checkout-policy-list"
+                    aria-label={t(isPolicyListExpanded ? 'consent.hidePolicy' : 'consent.showPolicy')}
+                    className="flex min-h-12 w-full items-center justify-between gap-3 p-4 text-left font-medium transition-colors hover:bg-muted/50"
+                  >
+                    <span>{t('consent.title')}</span>
+                    <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${isPolicyListExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isPolicyListExpanded && (
+                    <div id="checkout-policy-list" className="border-t border-soft p-2">
+                      {policyConsents.map((policy) => (
+                        <button
+                          key={policy.slug}
+                          type="button"
+                          onClick={() => handlePolicyOpen(policy.slug)}
+                          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-background"
+                        >
+                          <span>{policy.title}</span>
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </section>
+            <Modal
+              isOpen={selectedPolicySlug !== null}
+              onClose={() => setSelectedPolicySlug(null)}
+              maxWidth="lg"
+              className="max-h-screen overflow-y-auto"
+            >
+              {selectedPolicySlug && (
+                <>
+                  <h2 className="mb-4 pr-8 typo-h3">{selectedPolicy?.title}</h2>
+                  {policyContentLoadingSlug === selectedPolicySlug ? (
+                    <p className="text-sm text-muted-foreground">{t('consent.contentLoading')}</p>
+                  ) : selectedPolicyHtml ? (
+                    <SafeHtml
+                      html={selectedPolicyHtml}
+                      className="prose max-w-none text-sm"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t('consent.contentUnavailable')}</p>
+                  )}
+                </>
+              )}
+            </Modal>
           <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
               </div>
+              <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
+                {t('consent.confirmation')}
+              </p>
               <Button
                 type="submit"
                 variant="brown"
@@ -651,6 +650,9 @@ export default function CheckoutPage({
             <span className="text-xs text-muted-foreground">{t('total')}</span>
             <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
           </div>
+          <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
+            {t('consent.confirmation')}
+          </p>
           <Button
             type="submit"
             form="checkout-form"

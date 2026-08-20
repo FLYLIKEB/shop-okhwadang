@@ -169,9 +169,9 @@ html[data-theme='dark'] {
 
 .toss-product-detail__info {
   border: 0;
-  border-radius: 1rem;
-  background: var(--checkout-toss-surface);
-  box-shadow: var(--checkout-toss-shadow);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .toss-product-detail__title {

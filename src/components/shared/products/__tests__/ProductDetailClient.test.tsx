@@ -246,7 +246,7 @@ describe('ProductDetailClient', () => {
 
   it('옵션 선택 후 장바구니 담기 → addItem 호출', async () => {
     render(<ProductDetailClient product={productWithOptions} locale="ko" />);
-    await userEvent.click(screen.getByRole('button', { name: '크기-대' }));
+    await userEvent.click(screen.getAllByRole('button', { name: '크기-대' })[0]);
     await userEvent.click(screen.getAllByRole('button', { name: '장바구니 담기' })[0]);
     await waitFor(() => {
       expect(addCartItemMock).toHaveBeenCalledWith({
@@ -273,7 +273,7 @@ describe('ProductDetailClient', () => {
   it('회원 바로 구매는 선택한 옵션 한 건만 checkout session에 저장하고 장바구니를 변경하지 않는다', async () => {
     sessionStorage.setItem(SESSION_KEYS.CHECKOUT_ITEMS, JSON.stringify([{ id: 999 }]));
     render(<ProductDetailClient product={productWithOptions} locale="ko" />);
-    await userEvent.click(screen.getByRole('button', { name: '크기-소' }));
+    await userEvent.click(screen.getAllByRole('button', { name: '크기-소' })[0]);
     await userEvent.click(screen.getAllByRole('button', { name: '+' })[0]);
     await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[0]);
 
@@ -407,23 +407,46 @@ describe('ProductDetailClient', () => {
 
   it('수량 증가 버튼 → quantity 1→2', async () => {
     render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
-    expect(screen.getByTestId('qty-value')).toHaveTextContent('1');
+    await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[1]);
+    expect(screen.getAllByTestId('qty-value')).toHaveLength(2);
+    expect(screen.getAllByTestId('qty-value')[0]).toHaveTextContent('1');
     await userEvent.click(screen.getAllByRole('button', { name: '+' })[0]);
-    expect(screen.getByTestId('qty-value')).toHaveTextContent('2');
+    expect(screen.getAllByTestId('qty-value')).toHaveLength(2);
+    screen.getAllByTestId('qty-value').forEach((value) => expect(value).toHaveTextContent('2'));
   });
 
   it('수량 1 에서 감소 버튼 → 1 유지 (최소값)', async () => {
     render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
+    await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[1]);
     await userEvent.click(screen.getAllByRole('button', { name: '-' })[0]);
-    expect(screen.getByTestId('qty-value')).toHaveTextContent('1');
+    screen.getAllByTestId('qty-value').forEach((value) => expect(value).toHaveTextContent('1'));
+  });
+
+  it('모바일 하단 고정 영역은 구매 버튼을 누르면 수량 패널을 연다', async () => {
+    render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
+
+    const mobileFooter = screen.getAllByRole('button', { name: '바로 구매' })[1].parentElement?.parentElement;
+    expect(mobileFooter).toHaveClass('md:hidden', 'flex-col');
+    expect(screen.getAllByTestId('quantity-selector')).toHaveLength(1);
+
+    await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[1]);
+
+    expect(screen.getAllByTestId('quantity-selector')).toHaveLength(2);
+    expect(mobileFooter).toContainElement(screen.getAllByTestId('quantity-selector')[1]);
   });
 
   it('선택 옵션 뒤에 중복 총 상품금액을 표시하지 않는다', async () => {
     render(<ProductDetailClient product={productWithOptions} locale="ko" />);
 
-    await userEvent.click(screen.getByRole('button', { name: '크기-대' }));
+    await userEvent.click(screen.getAllByRole('button', { name: '크기-대' })[0]);
 
     expect(screen.queryByText('상품 합계')).not.toBeInTheDocument();
+  });
+
+  it('상품상세 별점에 회색 배경을 표시하지 않는다', () => {
+    render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
+
+    expect(screen.getByText('4.8(3)').parentElement).not.toHaveClass('bg-muted/40');
   });
 
   it('normalizes serialized decimal prices before rendering totals', async () => {
@@ -444,7 +467,7 @@ describe('ProductDetailClient', () => {
     expect(screen.getByTestId('price-display')).toHaveTextContent('580000');
     expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: '크기-대' }));
+    await userEvent.click(screen.getAllByRole('button', { name: '크기-대' })[0]);
     expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
   });
 

@@ -54,7 +54,7 @@ function renderNavLinks(items: NavigationItem[]) {
       key={item.id}
       href={getFooterHref(item)}
       prefetch={false}
-      className="toss-footer__link text-sm text-muted-foreground hover:text-foreground transition-colors"
+      className="toss-footer__link typo-body-sm text-muted-foreground transition-colors hover:text-foreground"
     >
       {item.label}
     </Link>
@@ -97,37 +97,37 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
   const infoUrl = businessInfo?.infoUrl ?? '';
 
   return (
-    <footer className="toss-footer mt-auto bg-card">
-      <div className="toss-footer__inner mx-auto max-w-7xl px-4 py-12">
-        <div className={`toss-footer__grid grid grid-cols-2 md:grid-cols-4 gap-8 transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}>
-          <div className="toss-footer__group">
-            <p className="typo-body font-semibold text-foreground mb-4">{t('customerService')}</p>
-            <nav className="flex flex-col gap-2">
+    <footer className="toss-footer mt-auto border-t border-soft bg-card">
+      <div className="toss-footer__inner mx-auto max-w-7xl px-5 py-10 md:px-4 md:py-12">
+        <div className={`toss-footer__grid grid grid-cols-2 gap-x-6 gap-y-8 transition-opacity duration-300 md:grid-cols-4 md:gap-8 ${loading ? 'opacity-0' : 'opacity-100'}`}>
+          <div className="toss-footer__group text-center md:text-left">
+            <p className="typo-label font-semibold tracking-tight text-foreground">{t('customerService')}</p>
+            <nav className="mt-3 flex flex-col items-center gap-2 md:items-start">
               {renderNavLinks(rootItems.slice(0, 4))}
             </nav>
           </div>
 
-          <div className="toss-footer__group">
-            <p className="typo-body font-semibold text-foreground mb-4">{t('company')}</p>
-            <nav className="flex flex-col gap-2">
+          <div className="toss-footer__group text-center md:text-left">
+            <p className="typo-label font-semibold tracking-tight text-foreground">{t('company')}</p>
+            <nav className="mt-3 flex flex-col items-center gap-2 md:items-start">
               {renderNavLinks(rootItems.slice(4, 6))}
             </nav>
           </div>
 
-          <div className="toss-footer__group">
-            <p className="typo-body font-semibold text-foreground mb-4">{t('shop')}</p>
-            <nav className="flex flex-col gap-2">
+          <div className="toss-footer__group text-center md:text-left">
+            <p className="typo-label font-semibold tracking-tight text-foreground">{t('shop')}</p>
+            <nav className="mt-3 flex flex-col items-center gap-2 md:items-start">
               {renderNavLinks(rootItems.slice(6, 10))}
             </nav>
           </div>
 
-          <div className="toss-footer__brand">
-            <Image src="/logo-okhwadang.png" alt={t('okhwadang')} width={120} height={34} className="object-contain mb-4" />
-            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+          <div className="toss-footer__brand order-first col-span-2 flex flex-col items-center text-center md:order-none md:col-span-1 md:items-start md:text-left">
+            <Image src="/logo-okhwadang.png" alt={t('okhwadang')} width={120} height={34} className="mb-4 h-auto w-[104px] object-contain md:w-[120px]" />
+            <div className="flex flex-col gap-1 typo-body-sm text-muted-foreground">
               <p>{t('tagline')}</p>
               <p>{t('specialty')}</p>
             </div>
-            <div className="flex items-center gap-3 mt-4">
+            <div className="mt-4 flex items-center gap-2">
               {SOCIAL_LINKS.map((social) => (
                 <a
                   key={social.id}
@@ -135,7 +135,7 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={socialLabels[social.id]}
-                  className="toss-footer__social flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                  className="toss-footer__social flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
                   <social.icon size={18} />
                 </a>
@@ -145,8 +145,8 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
         </div>
 
         {/* 사업자 정보 (전자상거래법 제10조) */}
-        <div className="toss-footer__business mt-12 pt-8 text-center">
-          <div className="typo-body-sm text-muted-foreground/70 leading-relaxed space-y-0.5">
+        <div className="toss-footer__business mt-10 border-t border-soft pt-6 text-center md:mt-12 md:pt-8">
+          <div className="typo-body-sm space-y-0.5 leading-relaxed text-muted-foreground/70">
             <p>{companyName} · {ceo}</p>
             <p>{address}</p>
             <p>{bizNo} · {mailOrderNo}</p>

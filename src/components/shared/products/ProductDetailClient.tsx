@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Link, useRouter } from '@/i18n/navigation'
 import { toast } from 'sonner'
-import { Heart } from 'lucide-react'
+import { ChevronDown, Heart } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { Button } from '@/components/ui/button'
@@ -183,9 +183,11 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const { isVisible: isNavVisible } = useMobileNav()
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [isMobilePurchasePanelOpen, setIsMobilePurchasePanelOpen] = useState(false)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [wishlistId, setWishlistId] = useState<number | null>(null)
   const optionSectionRef = useRef<HTMLDivElement>(null)
+  const mobileOptionSectionRef = useRef<HTMLDivElement>(null)
   const buyNowStartedRef = useRef(false)
   const viewedThumbnail = product.images.find((image) => image.isThumbnail) ?? product.images[0]
 
@@ -292,7 +294,10 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
   const focusOptionSection = useCallback(() => {
     if (optionSectionRef.current && typeof optionSectionRef.current.scrollIntoView === 'function') {
-      optionSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const target = window.matchMedia('(max-width: 767px)').matches
+      ? mobileOptionSectionRef.current
+      : optionSectionRef.current
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
     window.setTimeout(() => {
       const button = optionSectionRef.current?.querySelector<HTMLButtonElement>('button:not([disabled])')
@@ -326,8 +331,40 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
     void buyNow()
   }, [product.options.length, selectedOptionId, buyNow, t, focusOptionSection])
 
+  const handleMobileBuyNow = useCallback(() => {
+    if (!isMobilePurchasePanelOpen) {
+      setIsMobilePurchasePanelOpen(true)
+      return
+    }
+    handleBuyNow()
+  }, [handleBuyNow, isMobilePurchasePanelOpen])
+
+  const renderQuantitySection = (className: string) => (
+    <div className={cn('toss-product-detail__quantity items-center justify-between gap-3 rounded-xl px-0 py-1', className)}>
+      <div className="flex items-center gap-2">
+        <span className="typo-body-sm font-semibold text-foreground">{t('quantity')}</span>
+        {isLowStock && (
+          <span className="rounded-full bg-destructive/10 px-2 py-1 typo-label font-semibold text-destructive">
+            {t('lowStock', { count: maxQuantity })}
+          </span>
+        )}
+      </div>
+      <div className="flex min-w-0 items-center gap-2">
+        <QuantitySelector
+          quantity={quantity}
+          maxQuantity={Math.max(maxQuantity, 1)}
+          onIncrease={handleIncrease}
+          onDecrease={handleDecrease}
+        />
+        <span className="typo-price whitespace-nowrap text-foreground tabular-nums">
+          {formatCurrency(totalPrice, locale)}
+        </span>
+      </div>
+    </div>
+  )
+
   return (
-    <div className="toss-product-detail layout-container layout-page pb-24 md:pb-8">
+    <div className="toss-product-detail layout-container layout-page pb-72 md:pb-8">
       {/* 갤러리 + 정보 영역 */}
       <div className="grid grid-cols-1 gap-4 md:gap-10 md:grid-cols-[1.15fr_1fr]">
         {/* Left: Image gallery */}
@@ -391,7 +428,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             <ProductRatingSummary
               rating={product.rating}
               reviewCount={product.reviewCount}
-              className="rounded-full bg-muted/40 px-2.5 py-1"
+              className="rounded-full px-2.5 py-1"
             />
           </div>
 
@@ -418,7 +455,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Options */}
           {product.options.length > 0 && (
-            <div ref={optionSectionRef}>
+            <div ref={optionSectionRef} className="hidden md:block">
               <OptionSelector
                 options={product.options}
                 selectedOptionId={selectedOptionId}
@@ -428,27 +465,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Quantity */}
-          <div className="toss-product-detail__quantity flex items-center justify-between gap-3 rounded-xl px-0 py-1">
-            <div className="flex items-center gap-2">
-              <span className="typo-body-sm font-semibold text-foreground">{t('quantity')}</span>
-              {isLowStock && (
-                <span className="rounded-full bg-destructive/10 px-2 py-1 typo-label font-semibold text-destructive">
-                  {t('lowStock', { count: maxQuantity })}
-                </span>
-              )}
-            </div>
-            <div className="flex min-w-0 items-center gap-2">
-              <QuantitySelector
-                quantity={quantity}
-                maxQuantity={Math.max(maxQuantity, 1)}
-                onIncrease={handleIncrease}
-                onDecrease={handleDecrease}
-              />
-              <span className="typo-price whitespace-nowrap text-foreground tabular-nums">
-                {formatCurrency(totalPrice, locale)}
-              </span>
-            </div>
-          </div>
+          {renderQuantitySection('hidden md:flex')}
 
           {isSoldout && (
             <p className="typo-body-sm font-semibold text-destructive">
@@ -506,37 +523,66 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
       </div>
 
       {/* Mobile fixed bottom action bar — sits above MobileBottomNav (z-50, ~56px tall) */}
-      <div className={isNavVisible ? 'md:hidden fixed bottom-14 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3' : 'md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3'}>
-        <Button
-          type="button"
-          variant="gray"
-          size="icon"
-          onClick={() => void handleToggleWishlist()}
-          disabled={isTogglingWishlist}
-          aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
-          className={cn(
-            'h-11 min-h-11 w-11 shrink-0 rounded-md',
-            isWishlisted && 'text-primary',
-          )}
-        >
-          <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
-        </Button>
-        <Button
-          variant="white"
-          className="w-1/3"
-          disabled={isSoldout || isAdding || isBuying}
-          onClick={() => void handleAddToCart()}
-        >
-          {t('addToCart')}
-        </Button>
-        <Button
-          variant="black"
-          className="w-2/3"
-          disabled={isSoldout || isAdding || isBuying}
-          onClick={() => void handleBuyNow()}
-        >
-          {t('buyNow')}
-        </Button>
+      <div className={isNavVisible ? 'md:hidden fixed bottom-14 left-0 right-0 z-50 flex flex-col gap-3 bg-background px-4 py-3' : 'md:hidden fixed bottom-0 left-0 right-0 z-50 flex flex-col gap-3 bg-background px-4 py-3'}>
+        {isMobilePurchasePanelOpen && (
+          <div className="animate-fade-in-up">
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobilePurchasePanelOpen(false)}
+                aria-label={t('close')}
+                className="h-10 min-h-10 w-full justify-end rounded-lg px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </div>
+            {product.options.length > 0 && (
+              <div ref={mobileOptionSectionRef}>
+                <OptionSelector
+                  options={product.options}
+                  selectedOptionId={selectedOptionId}
+                  onSelect={setSelectedOptionId}
+                />
+              </div>
+            )}
+            {renderQuantitySection('mt-3 flex')}
+          </div>
+        )}
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="gray"
+            size="icon"
+            onClick={() => void handleToggleWishlist()}
+            disabled={isTogglingWishlist}
+            aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
+            className={cn(
+              'h-11 min-h-11 w-11 shrink-0 rounded-md',
+              isWishlisted && 'text-primary',
+            )}
+          >
+            <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
+          </Button>
+          <Button
+            variant="white"
+            className="w-1/3"
+            disabled={isSoldout || isAdding || isBuying}
+            onClick={() => void handleAddToCart()}
+          >
+            {t('addToCart')}
+          </Button>
+          <Button
+            variant="black"
+            className="w-2/3"
+            disabled={isSoldout || isAdding || isBuying}
+            aria-expanded={isMobilePurchasePanelOpen}
+            onClick={() => void handleMobileBuyNow()}
+          >
+            {t('buyNow')}
+          </Button>
+        </div>
       </div>
     </div>
   )
