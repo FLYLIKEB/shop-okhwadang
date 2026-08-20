@@ -419,6 +419,28 @@ describe('ProductDetailClient', () => {
     expect(screen.getByTestId('qty-value')).toHaveTextContent('1');
   });
 
+  it('normalizes serialized decimal prices before rendering totals', async () => {
+    const serializedProduct = {
+      ...productWithOptions,
+      price: '580000.00',
+      salePrice: null,
+      stock: '3',
+      options: [{
+        ...productWithOptions.options[0],
+        priceAdjustment: '30000.00',
+        stock: '2',
+      }],
+    } as unknown as ProductDetail;
+
+    render(<ProductDetailClient product={serializedProduct} locale="ko" />);
+
+    expect(screen.getByTestId('price-display')).toHaveTextContent('580000');
+    expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: '크기-대' }));
+    expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
+  });
+
   it('품절 상품 → 장바구니/바로구매 disabled + 안내 메시지', () => {
     render(<ProductDetailClient product={soldoutProduct} locale="ko" />);
     const cartButtons = screen.getAllByRole('button', { name: '장바구니 담기' });

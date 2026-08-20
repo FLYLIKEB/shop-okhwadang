@@ -54,6 +54,11 @@ function toSafeInteger(value: unknown, minimum: number): number {
   return normalized
 }
 
+function toFiniteNumber(value: unknown, fallback = 0): number {
+  const normalized = Number(value)
+  return Number.isFinite(normalized) ? normalized : fallback
+}
+
 export function buildBuyNowCheckoutItem(
   product: ProductDetail,
   selectedOption: ProductOption | undefined,
@@ -187,8 +192,8 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
     addRecentlyViewed({
       id: Number(product.id),
       name: product.name,
-      price: product.price,
-      salePrice: product.salePrice ?? null,
+      price: toFiniteNumber(product.price),
+      salePrice: product.salePrice == null ? null : toFiniteNumber(product.salePrice),
       thumbnail: product.images[0]?.url ?? null,
       slug: product.slug,
     })
@@ -219,18 +224,21 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const selectedOption: ProductOption | undefined = product.options.find(
     (o) => o.id === selectedOptionId,
   )
-  const maxQuantity = selectedOption?.stock ?? product.stock
+  const maxQuantity = toFiniteNumber(selectedOption?.stock ?? product.stock)
   const isSoldout = product.status === 'soldout' || maxQuantity === 0
   const isLowStock = !isSoldout && maxQuantity > 0 && maxQuantity <= 5
   const descriptionImages = product.detailImages?.filter((img) => img.isActive) ?? []
 
-  const basePrice = product.salePrice ?? product.price
-  const unitPrice = basePrice + (selectedOption?.priceAdjustment ?? 0)
+  const normalizedPrice = toFiniteNumber(product.price)
+  const normalizedSalePrice = product.salePrice == null ? null : toFiniteNumber(product.salePrice)
+  const optionPriceAdjustment = toFiniteNumber(selectedOption?.priceAdjustment)
+  const basePrice = normalizedSalePrice ?? normalizedPrice
+  const unitPrice = basePrice + optionPriceAdjustment
   const totalPrice = unitPrice * quantity
   const discountPercent = useMemo(() => {
-    if (!product.salePrice || product.salePrice >= product.price) return 0
-    return Math.round(((product.price - product.salePrice) / product.price) * 100)
-  }, [product.price, product.salePrice])
+    if (!normalizedSalePrice || normalizedSalePrice >= normalizedPrice || normalizedPrice <= 0) return 0
+    return Math.round(((normalizedPrice - normalizedSalePrice) / normalizedPrice) * 100)
+  }, [normalizedPrice, normalizedSalePrice])
 
 
   const handleIncrease = useCallback(() => {
@@ -399,7 +407,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
               <div className="font-body text-foreground">
-                <PriceDisplay price={product.price} salePrice={product.salePrice} size="lg" locale={locale} />
+                <PriceDisplay price={normalizedPrice} salePrice={normalizedSalePrice} size="lg" locale={locale} />
               </div>
               <div className="flex items-center gap-2">
                 {discountPercent > 0 && (
@@ -464,9 +472,9 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                 <div className="flex items-center justify-between">
                   <span className="typo-body-sm text-muted-foreground">
                     {selectedOption.name}: {selectedOption.value}
-                    {selectedOption.priceAdjustment !== 0 && (
+                    {optionPriceAdjustment !== 0 && (
                       <span className="typo-label ml-1">
-                        ({selectedOption.priceAdjustment > 0 ? '+' : ''}{formatCurrency(selectedOption.priceAdjustment, locale)})
+                        ({optionPriceAdjustment > 0 ? '+' : ''}{formatCurrency(optionPriceAdjustment, locale)})
                       </span>
                     )}
                   </span>
