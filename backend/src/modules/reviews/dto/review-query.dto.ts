@@ -5,10 +5,10 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export class ReviewQueryDto extends PaginationQueryDto {
   @ApiProperty({ example: 1, description: '페이지 번호', required: false })
-  page?: number;
+  declare page?: number;
 
   @ApiProperty({ example: 10, description: '페이지당 개수', required: false })
-  limit?: number;
+  declare limit?: number;
 
   @ApiProperty({ example: 1, description: '상품 ID', required: false })
   @IsOptional()
