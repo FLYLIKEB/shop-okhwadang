@@ -285,6 +285,61 @@ describe('ReviewsService', () => {
       expect(result.stats.distribution['4']).toBe(1);
       expect(result.pagination.total).toBe(2);
     });
+
+    it('paginates after merging internal and SmartStore review sources', async () => {
+      const internalReview = {
+        ...mockReview,
+        id: 1,
+        rating: 4,
+        createdAt: new Date('2026-03-01T12:00:00Z'),
+      };
+      const externalReview = {
+        id: 9,
+        productId: 5,
+        source: 'smartstore' as const,
+        externalReviewId: 'naver-1',
+        externalProductId: 'sp-1',
+        rating: 5,
+        content: '스마트스토어 후기',
+        imageUrls: ['https://example.com/naver.jpg'],
+        reviewerNameMasked: '네**',
+        isVisible: true,
+        reviewedAt: new Date('2026-03-02T12:00:00Z'),
+        lastSyncedAt: new Date('2026-03-03T12:00:00Z'),
+      };
+      const qb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[internalReview], 1]),
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawOne: jest.fn().mockResolvedValue({ avg: '4.0', cnt: '1' }),
+        getRawMany: jest.fn().mockResolvedValue([{ rating: 4, count: '1' }]),
+      };
+      const externalQb = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[externalReview], 1]),
+        getRawOne: jest.fn().mockResolvedValue({ avg: '5.0', cnt: '1' }),
+        getRawMany: jest.fn().mockResolvedValue([{ rating: 5, count: '1' }]),
+      };
+      mockRepo.createQueryBuilder.mockReturnValue(qb);
+      mockExternalRepo.createQueryBuilder.mockReturnValue(externalQb);
+
+      const result = await service.findAll({ productId: 5, sort: 'recent', page: 2, limit: 1 });
+
+      expect(result.data.map((review) => review.source)).toEqual(['internal']);
+      expect(result.pagination).toEqual({ page: 2, limit: 1, total: 2 });
+    });
   });
 
   describe('translateReviewContent', () => {
