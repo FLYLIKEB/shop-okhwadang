@@ -182,6 +182,13 @@ html[data-theme='dark'] {
   line-height: 1.4;
 }
 
+@media (max-width: 767px) {
+  .toss-product-detail__title {
+    font-size: 1.375rem;
+    line-height: 1.3;
+  }
+}
+
 .toss-header__actions .toss-button--gray,
 .toss-header__mobile-actions .toss-button--gray {
   background: transparent !important;

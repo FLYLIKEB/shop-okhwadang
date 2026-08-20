@@ -272,7 +272,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
         className="py-6 outline-none"
       >
         {activeTab === 'details' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2 md:gap-6">
             {descriptionImages.length > 0 && !descriptionContainsEmbeddedMedia && (
               <div className="flex flex-col items-center gap-0">
                 {descriptionImages.map((image, index) => (

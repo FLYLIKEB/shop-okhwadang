@@ -6,7 +6,7 @@ import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import type { Locale } from '@/utils/currency';
-import StarRating from '@/components/shared/reviews/StarRating';
+import ProductRatingSummary from '@/components/shared/products/ProductRatingSummary';
 
 interface ProductListItemProps {
   id: number;
@@ -81,7 +81,10 @@ function ProductListItem({
       </div>
 
       <div className="flex flex-1 flex-col justify-center gap-1">
-        <p className="typo-title-sm line-clamp-1 text-card-foreground">{name}</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 typo-title-sm line-clamp-1 text-card-foreground">{name}</p>
+          <ProductRatingSummary rating={rating} reviewCount={reviewCount} />
+        </div>
         <div className="flex items-center gap-2">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
           {isFreeShipping && (
@@ -90,15 +93,6 @@ function ProductListItem({
             </span>
           )}
         </div>
-        {rating !== undefined && (
-          <div className="flex items-center gap-1.5">
-            <StarRating rating={rating} size="sm" interactive={false} />
-            <span className="typo-body-sm font-medium">{rating.toFixed(1)}</span>
-            {reviewCount !== undefined && reviewCount > 0 && (
-              <span className="typo-body-sm text-muted-foreground">({reviewCount})</span>
-            )}
-          </div>
-        )}
         {isSoldout && (
           <p className="line-clamp-1 typo-body-sm font-medium text-destructive">{t('stockStatus.soldoutReason')}</p>
         )}

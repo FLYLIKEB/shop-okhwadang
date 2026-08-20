@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
-import StarRating from '@/components/shared/reviews/StarRating';
+import ProductRatingSummary from '@/components/shared/products/ProductRatingSummary';
 import { useWishlistToggle } from '@/components/shared/hooks/useWishlistToggle';
 import { useCart } from '@/contexts/CartContext';
 import { compactProductSummary } from '@/lib/collectionDisplay';
@@ -75,7 +75,6 @@ function ProductCard({
   const thumbnail = thumbnailImage?.thumbnailUrl ?? thumbnailImage?.url;
   const isSoldout = status === 'soldout';
   const clayTagClass = categoryName ? getClayTagClass(categoryName) : null;
-  const hasRating = rating !== undefined && reviewCount !== undefined && reviewCount > 0;
   const productHref = `/products/${id}`;
 
   const { addItem } = useCart();
@@ -190,23 +189,14 @@ function ProductCard({
 
       {/* ── 정보 영역 — 상품명 > 가격 > 메타 위계 ── */}
       <div className="mt-3 flex flex-1 flex-col gap-1.5">
-        <p className="typo-title line-clamp-3 break-words leading-snug text-foreground">{name}</p>
+        <div className="flex items-start justify-between gap-2">
+          <p className="min-w-0 typo-title line-clamp-3 break-words leading-snug text-foreground">{name}</p>
+          <ProductRatingSummary rating={rating} reviewCount={reviewCount} />
+        </div>
 
         <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
 
         <div className="mt-0.5 flex flex-col gap-1">
-          {hasRating && (
-            <div className="flex items-center gap-1.5">
-              <StarRating rating={rating} size="sm" interactive={false} />
-              <span className="typo-label font-normal leading-none text-muted-foreground">
-                {rating.toFixed(1)}
-              </span>
-              <span className="typo-label font-normal leading-none text-muted-foreground">
-                ({reviewCount})
-              </span>
-            </div>
-          )}
-
           {shortDescription && (
             <p className="line-clamp-1 text-xs text-muted-foreground leading-relaxed">
               {compactProductSummary(shortDescription)}

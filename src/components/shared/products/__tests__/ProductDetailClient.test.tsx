@@ -64,11 +64,10 @@ vi.mock('next-intl', () => ({
       wishlistAddSuccess: '찜 추가됨',
       wishlistRemoveSuccess: '찜 해제됨',
       wishlistError: '찜 오류',
+      ratingSummary: `${values?.rating ?? 0}(${values?.count ?? 0})`,
       reviewCount: `리뷰 ${values?.count ?? 0}건`,
       lowStock: `재고 ${values?.count ?? 0}개`,
       discountOff: `${values?.percent ?? 0}% 할인`,
-      selectedQuantity: `수량 ${values?.quantity ?? 0}개`,
-      totalProductPrice: '상품 합계',
       outOfStockMessage: '품절',
       'stockStatus.title': '재고 안내',
       'stockStatus.soldoutReason': '품절',
@@ -417,6 +416,14 @@ describe('ProductDetailClient', () => {
     render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
     await userEvent.click(screen.getAllByRole('button', { name: '-' })[0]);
     expect(screen.getByTestId('qty-value')).toHaveTextContent('1');
+  });
+
+  it('선택 옵션 뒤에 중복 총 상품금액을 표시하지 않는다', async () => {
+    render(<ProductDetailClient product={productWithOptions} locale="ko" />);
+
+    await userEvent.click(screen.getByRole('button', { name: '크기-대' }));
+
+    expect(screen.queryByText('상품 합계')).not.toBeInTheDocument();
   });
 
   it('normalizes serialized decimal prices before rendering totals', async () => {

@@ -21,7 +21,7 @@ import ImageGallery from './ImageGallery'
 import OptionSelector from './OptionSelector'
 import QuantitySelector from './QuantitySelector'
 import ProductTabs from './ProductTabs'
-import StarRating from '@/components/shared/reviews/StarRating'
+import ProductRatingSummary from './ProductRatingSummary'
 import { formatCurrency, type Locale } from '@/utils/currency'
 
 function getClayTagClass(value: string): string {
@@ -329,7 +329,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   return (
     <div className="toss-product-detail layout-container layout-page pb-24 md:pb-8">
       {/* 갤러리 + 정보 영역 */}
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 md:gap-10 md:grid-cols-[1.15fr_1fr]">
         {/* Left: Image gallery */}
         <div className="md:sticky sticky-below-header md:self-start">
           <ImageGallery images={product.images} locale={locale} />
@@ -386,18 +386,14 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Name */}
-          <h1 className="toss-product-detail__title text-foreground">{product.name}</h1>
-
-          {/* Rating */}
-          {product.rating !== undefined && (
-            <div className="inline-flex w-fit items-center gap-2 rounded-full bg-muted/40 px-2.5 py-1">
-              <StarRating rating={product.rating} size="sm" interactive={false} />
-              <span className="typo-body-sm font-semibold">{product.rating.toFixed(1)}</span>
-              {product.reviewCount !== undefined && product.reviewCount > 0 && (
-                <span className="typo-body-sm text-muted-foreground">{t('reviewCount', { count: product.reviewCount })}</span>
-              )}
-            </div>
-          )}
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="min-w-0 toss-product-detail__title text-foreground">{product.name}</h1>
+            <ProductRatingSummary
+              rating={product.rating}
+              reviewCount={product.reviewCount}
+              className="rounded-full bg-muted/40 px-2.5 py-1"
+            />
+          </div>
 
           {/* Short description */}
           {product.shortDescription && (
@@ -453,32 +449,6 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
               </span>
             </div>
           </div>
-
-          {/* Selected summary */}
-          {(product.options.length === 0 || selectedOption) && (
-            <div className="toss-product-detail__summary flex flex-col gap-3 rounded-xl bg-muted/40 px-4 py-3">
-              {selectedOption && (
-                <div className="flex items-center justify-between">
-                  <span className="typo-body-sm text-muted-foreground">
-                    {selectedOption.name}: {selectedOption.value}
-                    {optionPriceAdjustment !== 0 && (
-                      <span className="typo-label ml-1">
-                        ({optionPriceAdjustment > 0 ? '+' : ''}{formatCurrency(optionPriceAdjustment, locale)})
-                      </span>
-                    )}
-                  </span>
-                  <span className="typo-body-sm text-foreground">{formatCurrency(unitPrice, locale)}</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="typo-body-sm text-muted-foreground">{t('selectedQuantity', { quantity })}</span>
-              </div>
-              <div className="flex items-center justify-between pt-3">
-                <span className="typo-body-sm font-medium text-foreground">{t('totalProductPrice')}</span>
-                <span className="typo-h2 font-semibold text-foreground">{formatCurrency(totalPrice, locale)}</span>
-              </div>
-            </div>
-          )}
 
           {isSoldout && (
             <p className="typo-body-sm font-semibold text-destructive">

@@ -426,19 +426,20 @@ describe('CheckoutPage', () => {
     expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
   });
 
-  it('keeps desktop order summary and submit CTA inside the same sticky aside', async () => {
+  it('keeps order summary and submit CTA in the centered checkout flow', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
 
     await renderCheckoutPage();
 
     const orderSummaryHeading = await screen.findByText('주문 상품');
-    const desktopSummaryAside = orderSummaryHeading.closest('aside');
+    const orderSummarySection = orderSummaryHeading.closest('section');
+    const checkoutForm = orderSummaryHeading.closest('form');
 
-    expect(desktopSummaryAside).not.toBeNull();
-    expect(desktopSummaryAside).toHaveClass('lg:sticky', 'lg:top-24', 'lg:self-start');
-    expect(desktopSummaryAside).toContainElement(screen.getByText('테스트 상품'));
-    expect(desktopSummaryAside).toContainElement(screen.getAllByRole('button', { name: '결제하기' })[0]);
+    expect(orderSummarySection).not.toBeNull();
+    expect(orderSummarySection).toHaveClass('surface-card');
+    expect(orderSummarySection).toContainElement(screen.getByText('테스트 상품'));
+    expect(checkoutForm).toContainElement(screen.getAllByRole('button', { name: '결제하기' })[0]);
   });
 
   it('shows validation error for invalid phone on submit', async () => {

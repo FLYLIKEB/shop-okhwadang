@@ -345,6 +345,15 @@ export default function CheckoutPage({
     }
   };
 
+  const handleAddressSearch = (result: { zonecode: string; roadAddress: string; jibunAddress: string }) => {
+    setForm((prev) => ({
+      ...prev,
+      zipcode: result.zonecode,
+      address: result.roadAddress || result.jibunAddress,
+    }));
+    setErrors((prev) => ({ ...prev, zipcode: undefined, address: undefined }));
+  };
+
   const handleGuestEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setGuestEmail(e.target.value);
     if (errors.guestEmail) {
@@ -467,7 +476,12 @@ export default function CheckoutPage({
 
                 <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
                 <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
-                <ZipcodeInputSection form={form} errors={errors} onChange={handleChange} />
+                <ZipcodeInputSection
+                  form={form}
+                  errors={errors}
+                  onChange={handleChange}
+                  onAddressSearch={handleAddressSearch}
+                />
                 <AddressInputSection form={form} errors={errors} onChange={handleChange} />
                 <AddressDetailInputSection form={form} onChange={handleChange} />
                 <MemoInputSection form={form} onChange={handleChange} />
