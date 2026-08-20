@@ -814,7 +814,7 @@ h3 {
   align-items: center;
   gap: 0.75rem;
   min-height: 3.5rem;
-  padding: 0.75rem 4rem 0.75rem 0.875rem;
+  padding: 0.75rem 0.875rem;
   border-radius: 1rem;
   background: var(--checkout-toss-surface);
   color: var(--checkout-toss-foreground);
@@ -823,18 +823,9 @@ h3 {
   letter-spacing: -0.01em;
 }
 
-.toss-toast__status {
-  display: block;
-  width: 0.5rem;
-  height: 0.5rem;
-  flex: 0 0 auto;
-  border-radius: 9999px;
+.toss-toast__icon {
+  display: none;
 }
-
-.toss-toast__status--success { background: #16a34a; }
-.toss-toast__status--info { background: #2563eb; }
-.toss-toast__status--warning { background: #d97706; }
-.toss-toast__status--error { background: #dc2626; }
 
 .toss-toast__content {
   min-width: 0;
@@ -879,9 +870,16 @@ h3 {
 }
 
 .toss-toast[data-sonner-toast] [data-close-button] {
-  top: 50%;
-  right: 0.75rem;
-  transform: translateY(-50%);
+  position: static !important;
+  order: 3;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 1.75rem;
+  margin-left: auto;
+  transform: none !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
 }
 
 .toss-toast__action {

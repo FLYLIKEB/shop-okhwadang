@@ -55,6 +55,7 @@ function SharedToaster() {
         },
         classNames: {
           toast: 'toss-toast',
+          icon: 'toss-toast__icon',
           title: 'toss-toast__title',
           description: 'toss-toast__description',
           closeButton: 'toss-toast__close',
@@ -64,12 +65,6 @@ function SharedToaster() {
           warning: 'toss-toast--warning',
           info: 'toss-toast--info',
         },
-      }}
-      icons={{
-        success: <span className="toss-toast__status toss-toast__status--success" aria-hidden="true" />,
-        info: <span className="toss-toast__status toss-toast__status--info" aria-hidden="true" />,
-        warning: <span className="toss-toast__status toss-toast__status--warning" aria-hidden="true" />,
-        error: <span className="toss-toast__status toss-toast__status--error" aria-hidden="true" />,
       }}
     />
   );
