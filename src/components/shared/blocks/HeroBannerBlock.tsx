@@ -67,19 +67,24 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               style={{ backgroundColor: slide.bg_color ?? '#2A2520' }}
             >
               {slide.image_url && (
-                <Image
-                  src={slide.image_url}
-                  alt={slide.title}
-                  fill
-                  className={cn(
-                    'object-cover object-center',
-                    slideIndex === selectedIndex && !slide.image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns',
+                <picture>
+                  {slide.image_derivatives?.mobile && (
+                    <source media="(max-width: 767px)" srcSet={slide.image_derivatives.mobile} />
                   )}
-                  priority={slideIndex === 0}
-                  fetchPriority={slideIndex === 0 ? 'high' : 'auto'}
-                  sizes="100vw"
-                  unoptimized={slide.image_url.toLowerCase().endsWith('.gif')}
-                />
+                  <Image
+                    src={slide.image_derivatives?.desktop ?? slide.image_url}
+                    alt={slide.title}
+                    fill
+                    className={cn(
+                      'object-cover object-center',
+                      slideIndex === selectedIndex && !slide.image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns',
+                    )}
+                    priority={slideIndex === 0}
+                    fetchPriority={slideIndex === 0 ? 'high' : 'auto'}
+                    sizes="100vw"
+                    unoptimized={slide.image_url.toLowerCase().endsWith('.gif')}
+                  />
+                </picture>
               )}
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />
@@ -169,7 +174,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
 }
 
 export default function HeroBannerBlock({ content }: Props) {
-  const { title, eyebrow, subtitle, description, image_url, cta_text, cta_url, template, slides, bgColor } = content;
+  const { title, eyebrow, subtitle, description, image_url, image_derivatives, cta_text, cta_url, template, slides, bgColor } = content;
   const sectionRef = useRef<HTMLElement>(null);
 
   const { heroLogoStyle, headerLogoStyle, progress, isHeroVisible } = useScrollLogoTransition({
@@ -256,7 +261,7 @@ export default function HeroBannerBlock({ content }: Props) {
         </div>
         {image_url && (
           <div className="relative aspect-video flex-1">
-            <Image src={image_url} alt={title} fill className="object-cover" />
+            <Image src={image_derivatives?.desktop ?? image_url} alt={title} fill className="object-cover" />
           </div>
         )}
       </section>
@@ -268,7 +273,7 @@ export default function HeroBannerBlock({ content }: Props) {
       <section ref={sectionRef} className="hero-banner-height relative flex items-center justify-center overflow-hidden bg-neutral-900">
         {image_url && (
           <Image
-            src={image_url}
+            src={image_derivatives?.desktop ?? image_url}
             alt={title}
             fill
             className={cn('object-cover object-center', !image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns')}

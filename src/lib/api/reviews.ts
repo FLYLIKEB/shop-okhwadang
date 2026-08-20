@@ -1,4 +1,4 @@
-import { apiClient, type UploadedFile } from './core';
+import { apiClient, type CmsMedia, type CmsMediaKind, type UploadedFile } from './core';
 
 export interface ReviewItem {
   id: number;
@@ -86,4 +86,8 @@ export const reviewsApi = {
 
 export const uploadApi = {
   uploadImage: (file: File) => apiClient.uploadFile<UploadedFile>('/upload/image', file),
+  uploadCmsImage: (file: File, kind: CmsMediaKind) =>
+    apiClient.uploadFile<CmsMedia>('/upload/cms-image', file, 'file', { kind }),
+  importCmsImage: (url: string, kind: CmsMediaKind) =>
+    apiClient.post<CmsMedia>('/upload/cms-image/import', { url, kind }),
 };

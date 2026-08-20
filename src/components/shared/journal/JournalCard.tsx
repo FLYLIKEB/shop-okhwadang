@@ -30,7 +30,7 @@ export default function JournalCard({
   variant = 'list',
   excerptLines = 2,
 }: JournalCardProps) {
-  const imageUrl = journal.coverImageUrl || fallbackImageUrl;
+  const imageUrl = journal.coverImageDerivatives?.thumbnail || journal.coverImageUrl || fallbackImageUrl;
 
   return (
     <Link

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { uploadApi } from '@/lib/api';
+import { uploadApi, type CmsMediaKind } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { toastMessage } from '@/utils/toastMessages';
 import { localMessage } from '@/utils/localMessages';
@@ -13,6 +13,8 @@ interface ProductImageUploaderProps {
   altText?: string;
   emptyText?: string;
   helperText?: string;
+  cmsKind?: CmsMediaKind;
+  onDerivativesChange?: (derivatives: Record<string, string>) => void;
 }
 
 export default function ProductImageUploader({
@@ -21,6 +23,8 @@ export default function ProductImageUploader({
   altText = localMessage('admin.imageUpload.alt'),
   emptyText = localMessage('admin.imageUpload.emptyText'),
   helperText = localMessage('admin.imageUpload.helperText'),
+  cmsKind,
+  onDerivativesChange,
 }: ProductImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,8 +33,18 @@ export default function ProductImageUploader({
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
-      const result = await uploadApi.uploadImage(file);
-      onChange(result.url);
+      if (cmsKind) {
+        const result = await uploadApi.uploadCmsImage(file, cmsKind);
+        onChange(result.original.url);
+        onDerivativesChange?.(
+          Object.fromEntries(
+            Object.entries(result.derivatives).map(([variant, uploaded]) => [variant, uploaded.url]),
+          ),
+        );
+      } else {
+        const result = await uploadApi.uploadImage(file);
+        onChange(result.url);
+      }
       toast.success(toastMessage('imageUploadSuccess'));
     } catch (err) {
       toast.error(handleApiError(err, toastMessage('imageUploadError')));
