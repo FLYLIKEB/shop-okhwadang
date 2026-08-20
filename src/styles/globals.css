@@ -827,11 +827,19 @@ h3 {
 }
 
 .toss-toast__close {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
   top: 0.75rem;
   right: 0.75rem;
-  border: 0;
-  background: transparent;
-  color: var(--checkout-toss-muted);
+  border: 1px solid var(--checkout-toss-border);
+  border-radius: 9999px;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-foreground);
+  opacity: 1;
+  box-shadow: var(--checkout-toss-shadow);
 }
 
 .toss-toast__close:hover {
