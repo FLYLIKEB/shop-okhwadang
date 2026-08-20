@@ -154,8 +154,11 @@ async function pollNaverCommerceImportJob(
 
 async function startNaverCommerceImportJob(
   endpoint: string,
+  body?: Record<string, unknown>,
 ): Promise<SmartStoreProductImportResult> {
-  const job = await apiClient.post<NaverCommerceImportJob>(endpoint);
+  const job = body
+    ? await apiClient.post<NaverCommerceImportJob>(endpoint, body)
+    : await apiClient.post<NaverCommerceImportJob>(endpoint);
   return pollNaverCommerceImportJob(job);
 }
 
@@ -184,6 +187,8 @@ export const adminProductsApi = {
     ),
   previewNaverCommerceImport: () =>
     startNaverCommerceImportJob('/products/imports/naver-commerce/preview'),
-  commitNaverCommerceImport: () =>
-    startNaverCommerceImportJob('/products/imports/naver-commerce/commit'),
+  commitNaverCommerceImport: (selectedIdentifiers: string[]) =>
+    startNaverCommerceImportJob('/products/imports/naver-commerce/commit', {
+      selectedIdentifiers,
+    }),
 };

@@ -34,6 +34,9 @@ export default function AdminProductsPage() {
   >(null);
   const [showAllImportRows, setShowAllImportRows] = useState(false);
   const [showFailedImportRowsOnly, setShowFailedImportRowsOnly] = useState(false);
+  const [selectedNaverIdentifiers, setSelectedNaverIdentifiers] = useState<Set<string>>(
+    new Set(),
+  );
   const [productPendingDelete, setProductPendingDelete] = useState<Product | null>(null);
   const { page, setPage, filters, setFilter, resetFilters, hasActiveFilters } = useAdminListPage({
     initialFilters: {
@@ -106,6 +109,7 @@ export default function AdminProductsPage() {
         setActiveImportSource('naver-commerce');
         setShowAllImportRows(false);
         setShowFailedImportRowsOnly(false);
+        setSelectedNaverIdentifiers(new Set());
       },
       {
         successMessage: t('naverCommerce.previewSuccess'),
@@ -114,11 +118,12 @@ export default function AdminProductsPage() {
     );
 
   const { execute: commitNaverCommerceImport, isLoading: committingNaverCommerce } = useAsyncAction(
-    async () => {
-      const result = await adminProductsApi.commitNaverCommerceImport();
+    async (selectedIdentifiers: string[]) => {
+      const result = await adminProductsApi.commitNaverCommerceImport(selectedIdentifiers);
       setImportResult(result);
       setImportPreview(null);
       setActiveImportSource('naver-commerce');
+      setSelectedNaverIdentifiers(new Set());
       void fetchProducts();
     },
     {
@@ -165,6 +170,7 @@ export default function AdminProductsPage() {
     setActiveImportSource(null);
     setShowAllImportRows(false);
     setShowFailedImportRowsOnly(false);
+    setSelectedNaverIdentifiers(new Set());
   };
 
   const handlePreviewImport = () => {
@@ -188,7 +194,11 @@ export default function AdminProductsPage() {
   };
 
   const handleCommitNaverCommerce = () => {
-    void commitNaverCommerceImport();
+    if (selectedNaverIdentifiers.size === 0) {
+      toast.error(t('naverCommerce.selectProducts'));
+      return;
+    }
+    void commitNaverCommerceImport(Array.from(selectedNaverIdentifiers));
   };
 
   const handleToggleStatus = (product: Product) => void toggleStatus(product);
@@ -210,6 +220,13 @@ export default function AdminProductsPage() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const importSummary = importResult?.summary ?? importPreview?.summary;
   const allImportRows = importResult?.rows ?? importPreview?.rows ?? [];
+  const isNaverPreviewActive = activeImportSource === 'naver-commerce' && importPreview !== null;
+  const selectableNaverRows = allImportRows.filter(
+    (row) => row.identifier !== null && row.status !== 'failed',
+  );
+  const allNaverRowsSelected =
+    selectableNaverRows.length > 0 &&
+    selectableNaverRows.every((row) => selectedNaverIdentifiers.has(row.identifier as string));
   const visibleImportRows = showFailedImportRowsOnly
     ? allImportRows.filter((row) => row.status === 'failed')
     : allImportRows;
@@ -296,6 +313,14 @@ export default function AdminProductsPage() {
             <div className="space-y-1">
               <h3 className="font-semibold typo-body-sm">{t('naverCommerce.title')}</h3>
               <p className="text-sm text-muted-foreground">{t('naverCommerce.description')}</p>
+              {isNaverPreviewActive && (
+                <p className="text-sm font-medium text-tea">
+                  {t('naverCommerce.selectedCount', {
+                    selected: selectedNaverIdentifiers.size,
+                    total: selectableNaverRows.length,
+                  })}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               <button
@@ -311,7 +336,12 @@ export default function AdminProductsPage() {
               <button
                 type="button"
                 onClick={handleCommitNaverCommerce}
-                disabled={isImporting || !importPreview || activeImportSource !== 'naver-commerce'}
+                disabled={
+                  isImporting ||
+                  !importPreview ||
+                  activeImportSource !== 'naver-commerce' ||
+                  selectedNaverIdentifiers.size === 0
+                }
                 className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {committingNaverCommerce
@@ -380,6 +410,26 @@ export default function AdminProductsPage() {
                   <table className="w-full text-xs">
                     <thead className="bg-secondary">
                       <tr>
+                        {isNaverPreviewActive && (
+                          <th className="px-3 py-2 text-left">
+                            <input
+                              type="checkbox"
+                              checked={allNaverRowsSelected}
+                              onChange={(event) => {
+                                setSelectedNaverIdentifiers(
+                                  event.target.checked
+                                    ? new Set(
+                                        selectableNaverRows.flatMap((row) =>
+                                          row.identifier ? [row.identifier] : [],
+                                        ),
+                                      )
+                                    : new Set(),
+                                );
+                              }}
+                              aria-label={t('naverCommerce.selectAll')}
+                            />
+                          </th>
+                        )}
                         <th className="px-3 py-2 text-left">{t('import.previewColumns.row')}</th>
                         <th className="px-3 py-2 text-left">
                           {t('import.previewColumns.identifier')}
@@ -428,6 +478,30 @@ export default function AdminProductsPage() {
                     <tbody className="divide-y">
                       {importRows.map((row) => (
                         <tr key={`${row.rowNumber}-${row.identifier ?? 'empty'}`}>
+                          {isNaverPreviewActive && (
+                            <td className="px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={
+                                  row.identifier !== null &&
+                                  selectedNaverIdentifiers.has(row.identifier)
+                                }
+                                disabled={row.identifier === null || row.status === 'failed'}
+                                onChange={(event) => {
+                                  if (!row.identifier) return;
+                                  setSelectedNaverIdentifiers((current) => {
+                                    const next = new Set(current);
+                                    if (event.target.checked) next.add(row.identifier as string);
+                                    else next.delete(row.identifier as string);
+                                    return next;
+                                  });
+                                }}
+                                aria-label={t('naverCommerce.selectProduct', {
+                                  name: row.productName ?? row.identifier ?? '',
+                                })}
+                              />
+                            </td>
+                          )}
                           <td className="px-3 py-2">{row.rowNumber}</td>
                           <td className="px-3 py-2">{row.identifier ?? '-'}</td>
                           <td className="px-3 py-2">{row.productName ?? '-'}</td>

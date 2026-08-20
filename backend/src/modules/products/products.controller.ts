@@ -43,6 +43,7 @@ import { NaverCommerceImportJobService } from './naver-commerce-import-job.servi
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createSingleFileMemoryUploadOptions } from '../../common/multer/single-file-upload.options';
 import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
+import { NaverCommerceImportDto } from './dto/naver-commerce-import.dto';
 
 @ApiTags('상품')
 @Controller('products')
@@ -209,8 +210,9 @@ export class ProductsController {
   @ApiResponse({ status: 201, description: '네이버 커머스API 반영 작업 시작' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
-  commitNaverCommerceImport() {
-    return this.naverCommerceImportJobService.start('commit');
+  @ApiBody({ type: NaverCommerceImportDto })
+  commitNaverCommerceImport(@Body() dto: NaverCommerceImportDto) {
+    return this.naverCommerceImportJobService.start('commit', dto.selectedIdentifiers);
   }
 
   @Get('imports/naver-commerce/jobs/:id')

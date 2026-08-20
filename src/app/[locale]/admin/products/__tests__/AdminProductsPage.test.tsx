@@ -146,11 +146,18 @@ describe('AdminProductsPage', () => {
     expect(screen.getByText('import.stockSources.option_stock_total')).toBeInTheDocument();
     expect(screen.getAllByText('10')).toHaveLength(2);
 
-    fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.commitButton' }));
+    const commitButton = screen.getByRole('button', { name: 'naverCommerce.commitButton' });
+    expect(commitButton).toBeDisabled();
+    fireEvent.click(screen.getByRole('checkbox', {
+      name: 'naverCommerce.selectProduct:{"name":"네이버 상품"}',
+    }));
+    expect(commitButton).not.toBeDisabled();
+    fireEvent.click(commitButton);
 
     await waitFor(() => {
       expect(mockCommitNaverCommerceImport).toHaveBeenCalledTimes(1);
     });
+    expect(mockCommitNaverCommerceImport).toHaveBeenCalledWith(['SKU-1']);
     expect(mockCommitSmartStoreImport).not.toHaveBeenCalled();
   });
 });
