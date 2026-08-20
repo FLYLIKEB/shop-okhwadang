@@ -2204,5 +2204,20 @@
     "memberHintTitle": "회원 주문 내역이 필요하신가요?",
     "memberHintDescription": "로그인하면 마이페이지에서 회원 주문, 결제 상태, 배송 현황을 확인할 수 있습니다.",
     "memberHintAction": "로그인으로 이동"
+  },
+  "statusBadge": {
+    "active": {
+      "active": "활성",
+      "inactive": "비활성"
+    },
+    "inquiry": {
+      "answered": "답변완료",
+      "pendingAdmin": "미답변",
+      "pendingMy": "접수"
+    },
+    "journal": {
+      "published": "공개",
+      "private": "비공개"
+    }
   }
 }

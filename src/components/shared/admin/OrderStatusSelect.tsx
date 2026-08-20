@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { adminOrdersApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
-import { ORDER_STATUS_LABELS } from '@/constants/status';
+import { ORDER_STATUS_CONFIG, getTypedStatusConfig } from '@/constants/status';
 import { toastMessage } from '@/utils/toastMessages';
+import { localMessage } from '@/utils/localMessages';
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ['paid'],
@@ -18,6 +19,11 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   refund_requested: ['refunded'],
   refunded: [],
 };
+
+function getOrderStatusLabel(status: string): string {
+  const config = getTypedStatusConfig(ORDER_STATUS_CONFIG, status);
+  return config ? localMessage(config.labelKey) : status;
+}
 
 interface OrderStatusSelectProps {
   orderId: number;
@@ -35,7 +41,7 @@ export function OrderStatusSelect({ orderId, currentStatus, onStatusChange }: Or
     setUpdating(true);
     try {
       await adminOrdersApi.updateStatus(orderId, nextStatus);
-      toast.success(toastMessage('orderStatusChanged', { status: ORDER_STATUS_LABELS[nextStatus] ?? nextStatus }));
+      toast.success(toastMessage('orderStatusChanged', { status: getOrderStatusLabel(nextStatus) }));
       onStatusChange();
     } catch (err) {
       toast.error(handleApiError(err, toastMessage('statusChangeError')));
@@ -47,7 +53,7 @@ export function OrderStatusSelect({ orderId, currentStatus, onStatusChange }: Or
   if (allowedNext.length === 0) {
     return (
       <span className="text-xs text-muted-foreground">
-        {ORDER_STATUS_LABELS[currentStatus] ?? currentStatus}
+        {getOrderStatusLabel(currentStatus)}
       </span>
     );
   }
@@ -59,10 +65,10 @@ export function OrderStatusSelect({ orderId, currentStatus, onStatusChange }: Or
       onChange={(e) => void handleChange(e.target.value)}
       className="rounded border bg-background px-2 py-1 text-xs disabled:opacity-50"
     >
-      <option value="">{ORDER_STATUS_LABELS[currentStatus] ?? currentStatus}</option>
+      <option value="">{getOrderStatusLabel(currentStatus)}</option>
       {allowedNext.map((s) => (
         <option key={s} value={s}>
-          → {ORDER_STATUS_LABELS[s]}
+          → {getOrderStatusLabel(s)}
         </option>
       ))}
     </select>

@@ -2204,5 +2204,20 @@
     "memberHintTitle": "Need your member order history?",
     "memberHintDescription": "Sign in to see member orders, payment status, and shipping updates in My Page.",
     "memberHintAction": "Go to login"
+  },
+  "statusBadge": {
+    "active": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "inquiry": {
+      "answered": "Answered",
+      "pendingAdmin": "Pending",
+      "pendingMy": "Received"
+    },
+    "journal": {
+      "published": "Published",
+      "private": "Private"
+    }
   }
 }

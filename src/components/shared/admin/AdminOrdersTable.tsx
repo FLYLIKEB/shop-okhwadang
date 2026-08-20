@@ -3,7 +3,7 @@
 import type { AdminOrder } from '@/lib/api';
 import { formatCurrency } from '@/utils/currency';
 import { OrderStatusSelect } from './OrderStatusSelect';
-import { ORDER_STATUS_COLORS } from '@/constants/status';
+import { OrderStatusBadge } from './StatusBadge';
 import { localMessage } from '@/utils/localMessages';
 
 interface AdminOrdersTableProps {
@@ -15,9 +15,6 @@ interface AdminOrdersTableProps {
 
 const CANCELLABLE_ORDER_STATUSES = new Set(['pending', 'paid', 'preparing']);
 
-function getStatusLabel(status: string): string {
-  return localMessage(`admin.orders.status.${status}`);
-}
 
 function getProductLabel(order: AdminOrder): string {
   if (order.items.length === 0) {
@@ -70,11 +67,7 @@ export function AdminOrdersTable({
                     <p className="text-xs text-muted-foreground">{customerEmail}</p>
                   )}
                 </div>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 typo-label ${ORDER_STATUS_COLORS[order.status] ?? 'bg-secondary'}`}
-                >
-                  {getStatusLabel(order.status)}
-                </span>
+                <OrderStatusBadge status={order.status} className="shrink-0 typo-label" />
               </div>
               <dl className="mt-3 grid gap-2 typo-body-sm">
                 <div className="flex justify-between gap-3">
@@ -146,11 +139,7 @@ export function AdminOrdersTable({
                   <td className="max-w-48 truncate px-4 py-3">{getProductLabel(order)}</td>
                   <td className="px-4 py-3 text-right">{formatCurrency(order.totalAmount)}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${ORDER_STATUS_COLORS[order.status] ?? 'bg-secondary'}`}
-                    >
-                      {getStatusLabel(order.status)}
-                    </span>
+                    <OrderStatusBadge status={order.status} />
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     {new Date(order.createdAt).toLocaleDateString()}
