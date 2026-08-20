@@ -15,7 +15,7 @@ import {
 } from '../../common/imports/external-source.util';
 import { Product } from '../products/entities/product.entity';
 import { RemoteImageIngestService } from '../upload/remote-image-ingest.service';
-import { UploadedFile } from '../upload/interfaces/storage.interface';
+import { RemoteImageIngestCache } from '../upload/remote-image-ingest.cache';
 import { ExternalReview, ExternalReviewMediaAsset } from './entities/external-review.entity';
 import { ReviewStatsSyncService } from './review-stats-sync.service';
 
@@ -167,7 +167,7 @@ export class SmartStoreReviewImportService {
     const productsBySku = await this.findProductsByExternalKey(parsedRows);
     const existingByReviewId = await this.findExistingReviews(parsedRows);
     const importBatchId = commit ? this.createImportBatchId() : null;
-    const mediaCache = new Map<string, Promise<UploadedFile>>();
+    const mediaCache = new RemoteImageIngestCache(this.remoteImageIngestService);
     const rows: SmartStoreReviewImportRowResult[] = [];
     const touchedProductIds = new Set<number>();
 
@@ -386,7 +386,7 @@ export class SmartStoreReviewImportService {
     existing: ExternalReview | undefined;
     productId: number;
     importBatchId: string;
-    mediaCache: Map<string, Promise<UploadedFile>>;
+    mediaCache: RemoteImageIngestCache;
     rowResult: SmartStoreReviewImportRowResult;
   }): Promise<void> {
     const { parsed, existing, productId, importBatchId, mediaCache, rowResult } = args;
@@ -438,13 +438,13 @@ export class SmartStoreReviewImportService {
 
   private async resolveMediaAssets(
     urls: string[],
-    cache: Map<string, Promise<UploadedFile>>,
+    cache: RemoteImageIngestCache,
     rowResult: SmartStoreReviewImportRowResult,
   ): Promise<ExternalReviewMediaAsset[]> {
     const mediaAssets: ExternalReviewMediaAsset[] = [];
     for (const url of urls) {
       try {
-        const uploaded = await this.ingestCached(url, cache);
+        const uploaded = await cache.ingest(url);
         rowResult.mediaSuccessCount += 1;
         mediaAssets.push({
           type: this.guessMediaType(url),
@@ -470,16 +470,6 @@ export class SmartStoreReviewImportService {
     return mediaAssets;
   }
 
-  private ingestCached(
-    url: string,
-    cache: Map<string, Promise<UploadedFile>>,
-  ): Promise<UploadedFile> {
-    const cached = cache.get(url);
-    if (cached) return cached;
-    const promise = this.remoteImageIngestService.ingest(url);
-    cache.set(url, promise);
-    return promise;
-  }
 
   private buildResult(
     importBatchId: string | null,
