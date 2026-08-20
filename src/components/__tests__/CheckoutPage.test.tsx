@@ -263,7 +263,7 @@ describe('CheckoutPage', () => {
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
     expect(mockReplace).not.toHaveBeenCalledWith('/ko/login');
-    expect(await screen.findByLabelText(/비회원 이메일/)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/비회원 이메일/)).toHaveClass('checkout-toss-guest-email');
     expect(screen.queryByText('쿠폰 / 적립금')).not.toBeInTheDocument();
     await waitFor(() => {
       expect(checkoutPricingApi.preview).toHaveBeenCalledWith({
@@ -464,7 +464,9 @@ describe('CheckoutPage', () => {
     expect(screen.getAllByText('주문 내용을 확인하였으며, 정보 제공 등에 동의합니다.')).toHaveLength(2);
     expect(screen.getByAltText('테스트 상품 썸네일')).toHaveAttribute('src', '/products/test-thumb.jpg');
     expect(screen.getAllByText('토스페이먼츠')).toHaveLength(2);
-    expect(screen.getAllByText('무료배송이 적용되었습니다.').length).toBeGreaterThanOrEqual(2);
+    expect(document.querySelectorAll('.checkout-toss-free-shipping')).toHaveLength(2);
+    expect(orderSummarySection?.querySelector('.checkout-toss-free-shipping')).toBeNull();
+    expect(document.querySelector('.checkout-toss-mobile-cta > .checkout-toss-free-shipping--top-edge')).not.toBeNull();
   });
 
   it('shows validation error for invalid phone on submit', async () => {

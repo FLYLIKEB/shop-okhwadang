@@ -30,6 +30,7 @@ import PaymentGateway, {
 import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMethodSelector';
 import { AddressSelectorSection } from '@/components/shared/checkout/AddressSelectorSection';
 import { OrderSummarySection } from '@/components/shared/checkout/OrderSummarySection';
+import { FreeShippingProgress } from '@/components/shared/checkout/FreeShippingProgress';
 import CouponSelector from '@/components/shared/checkout/CouponSelector';
 import {
   AddressDetailInputSection,
@@ -151,7 +152,6 @@ export default function CheckoutPage({
   const appliedPointsUsed = pricingPreview?.appliedPointsUsed ?? 0;
   const shippingFee = pricingPreview?.shippingFee ?? 0;
   const freeShippingThreshold = pricingPreview?.freeShippingThreshold ?? 0;
-  const isFreeShipping = pricingPreview?.isFreeShipping ?? false;
   const subtotalAmount = pricingPreview?.subtotalAmount ?? 0;
   const grandTotal = confirmedGrandTotal ?? pricingPreview?.totalPayable ?? 0;
   const isPricingReady = pricingPreview !== null || confirmedGrandTotal !== null;
@@ -187,9 +187,6 @@ export default function CheckoutPage({
   const selectedPaymentMethodLabel = selectedWidgetPaymentMethodCode
     ? tossPaymentMethodLabels[selectedWidgetPaymentMethodCode] ?? gatewayPaymentLabel
     : gatewayPaymentLabel;
-  const freeShippingProgress = freeShippingThreshold > 0
-    ? Math.min((subtotalAmount / freeShippingThreshold) * 100, 100)
-    : 100;
   const orderSummaryItems = (pricingPreview?.items ?? []).map((item) => {
     const checkoutItem = checkoutItems.find(
       (candidate) => candidate.productId === item.productId
@@ -485,7 +482,6 @@ export default function CheckoutPage({
             locale={locale}
             subtotalAmount={subtotalAmount}
             shippingFee={shippingFee}
-            freeShippingThreshold={freeShippingThreshold}
             couponDiscount={couponDiscount}
             pointsUsed={appliedPointsUsed}
             totalPayable={grandTotal}
@@ -510,7 +506,7 @@ export default function CheckoutPage({
                       value={guestEmail}
                       onChange={handleGuestEmailChange}
                       placeholder={t('guestEmailPlaceholder')}
-                      className="checkout-toss-input mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                      className="checkout-toss-guest-email mt-2 w-full rounded-md border border-border bg-white px-3 py-2 text-sm"
                     />
                     {errors.guestEmail ? (
                       <p className="mt-2 text-sm text-destructive">{errors.guestEmail}</p>
@@ -660,17 +656,13 @@ export default function CheckoutPage({
               )}
             </Modal>
           <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
-              {isFreeShipping && (
-                <div className="checkout-toss-free-shipping mb-3 rounded-md bg-muted/20 p-3">
-                  <p className="text-xs text-muted-foreground">{t('freeShippingUnlocked')}</p>
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-background">
-                    <div
-                      className="h-full rounded-full bg-primary transition-[width] duration-300"
-                      style={{ width: `${freeShippingProgress}%` }}
-                      aria-hidden
-                    />
-                  </div>
-                </div>
+              {pricingPreview !== null && (
+                <FreeShippingProgress
+                  locale={locale}
+                  subtotalAmount={subtotalAmount}
+                  freeShippingThreshold={freeShippingThreshold}
+                  className="mb-3"
+                />
               )}
               <div className="mb-2 flex justify-end">
                 <span className="text-xs text-muted-foreground">{selectedPaymentMethodLabel}</span>
@@ -679,18 +671,6 @@ export default function CheckoutPage({
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
                 <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
               </div>
-              {isFreeShipping && (
-                <div className="checkout-toss-free-shipping mb-2 rounded-md bg-muted/20 p-2.5">
-                  <p className="text-xs text-muted-foreground">{t('freeShippingUnlocked')}</p>
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-background">
-                    <div
-                      className="h-full rounded-full bg-primary transition-[width] duration-300"
-                      style={{ width: `${freeShippingProgress}%` }}
-                      aria-hidden
-                    />
-                  </div>
-                </div>
-              )}
               <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
                 {t('consent.confirmation')}
               </p>
@@ -710,8 +690,18 @@ export default function CheckoutPage({
         className={cn(
           'checkout-toss-mobile-cta mobile-sticky-cta fixed z-40 border-t border-soft bg-background md:hidden',
           isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
+          pricingPreview !== null && 'checkout-toss-mobile-cta--shipping',
         )}
       >
+        {pricingPreview !== null && (
+          <FreeShippingProgress
+            locale={locale}
+            subtotalAmount={subtotalAmount}
+            freeShippingThreshold={freeShippingThreshold}
+            variant="top-edge"
+            className="mb-3"
+          />
+        )}
         <div className="mobile-sticky-inner">
           <div className="mb-2 flex justify-end">
             <span className="text-xs text-muted-foreground">{selectedPaymentMethodLabel}</span>
@@ -720,9 +710,6 @@ export default function CheckoutPage({
             <span className="text-xs text-muted-foreground">{t('total')}</span>
             <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
           </div>
-          {isFreeShipping && (
-            <p className="mb-2 text-right text-xs text-muted-foreground">{t('freeShippingUnlocked')}</p>
-          )}
           <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
             {t('consent.confirmation')}
           </p>

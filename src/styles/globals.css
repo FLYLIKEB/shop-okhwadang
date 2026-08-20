@@ -174,6 +174,22 @@ html:lang(en) {
   padding-bottom: calc(var(--layout-spacing-sm) + env(safe-area-inset-bottom));
 }
 
+.checkout-toss-mobile-cta--shipping {
+  padding-top: 0;
+}
+
+.checkout-toss-free-shipping--top-edge {
+  position: relative;
+  margin-inline: calc(var(--layout-spacing-md) * -1);
+}
+
+.checkout-toss-free-shipping--top-edge .checkout-toss-free-shipping__progress {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
 .mobile-sticky-inner {
   width: 100%;
   max-width: var(--layout-max-width);
@@ -281,6 +297,10 @@ body.overflow-hidden .mobile-sticky-cta {
 }
 
 /* ── Typography utility classes ────────────────────────────────── */
+@utility font-pretendard {
+  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
 @utility typo-h0 {
   font-size: var(--font-size-heading-0, 2rem);
   line-height: var(--line-height-heading);
@@ -926,6 +946,11 @@ h3 {
 .checkout-toss-theme input::placeholder,
 .checkout-toss-theme textarea::placeholder {
   color: var(--checkout-toss-muted);
+}
+
+.checkout-toss-theme .checkout-toss-guest-email {
+  background: var(--checkout-toss-surface);
+  border-color: var(--checkout-toss-border);
 }
 
 .checkout-toss-theme input:not([type='checkbox']):not([type='radio']):focus,
@@ -1698,9 +1723,32 @@ h3 {
 .toss-cms .typo-h0,
 .toss-cms .typo-h1,
 .toss-cms .typo-h2,
-.toss-cms .typo-h3,
-.toss-cms .font-display {
-  font-family: var(--font-body);
+.toss-cms .typo-h3 {
+  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+.toss-cms p,
+.toss-cms .typo-body,
+.toss-cms .typo-body-sm,
+.toss-cms .prose {
+  font-family: var(--font-display);
+}
+
+.toss-cms__blocks h1,
+.toss-cms__blocks h2,
+.toss-cms__blocks h3,
+.toss-cms__blocks .typo-h0,
+.toss-cms__blocks .typo-h1,
+.toss-cms__blocks .typo-h2,
+.toss-cms__blocks .typo-h3 {
+  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+.toss-cms__blocks p,
+.toss-cms__blocks .typo-body,
+.toss-cms__blocks .typo-body-sm,
+.toss-cms__blocks .prose {
+  font-family: var(--font-display);
 }
 
 .toss-cms h1,
