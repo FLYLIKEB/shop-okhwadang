@@ -15,6 +15,6 @@ export interface SiteSetting {
 
 export const settingsApi = {
   getAll: (group?: string) =>
-    apiClient.get<SiteSetting[]>(`/settings${group ? `?group=${group}` : ''}`),
+    apiClient.get<SiteSetting[]>('/settings', { params: group ? { group } : undefined }),
   getMap: () => apiClient.get<Record<string, string>>('/settings/map'),
 };

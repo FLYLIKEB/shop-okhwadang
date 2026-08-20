@@ -25,7 +25,7 @@ describe('settingsApi', () => {
 
     const result = await settingsApi.getAll('theme');
 
-    expect(getSpy).toHaveBeenCalledWith('/settings?group=theme');
+    expect(getSpy).toHaveBeenCalledWith('/settings', { params: { group: 'theme' } });
     expect(result).toEqual(mockSettings);
   });
 
@@ -34,7 +34,7 @@ describe('settingsApi', () => {
 
     await settingsApi.getAll();
 
-    expect(getSpy).toHaveBeenCalledWith('/settings');
+    expect(getSpy).toHaveBeenCalledWith('/settings', { params: undefined });
   });
 
   it('getMap requests the settings map endpoint exactly', async () => {

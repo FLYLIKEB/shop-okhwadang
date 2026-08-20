@@ -68,7 +68,7 @@ export interface PointsResponse {
 
 export const couponsApi = {
   getList: (status?: string) =>
-    apiClient.get<CouponListResponse>(`/coupons${status ? `?status=${status}` : ''}`),
+    apiClient.get<CouponListResponse>('/coupons', { params: status ? { status } : undefined }),
   calculate: (body: CalculateDiscountBody) =>
     apiClient.post<CalculateDiscountResponse>('/coupons/calculate', body),
   getPoints: () => apiClient.get<PointsResponse>('/coupons/points'),

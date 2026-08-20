@@ -30,5 +30,7 @@ export const navigationApi = {
 
 export const announcementBarsApi = {
   getActive: (locale?: string) =>
-    apiClient.get<AnnouncementBarItem[]>(locale ? `/announcement-bars?locale=${locale}` : '/announcement-bars'),
+    apiClient.get<AnnouncementBarItem[]>('/announcement-bars', {
+      params: locale ? { locale } : undefined,
+    }),
 };
