@@ -442,16 +442,16 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Quantity */}
-          <div className="toss-product-detail__quantity flex flex-col gap-2 rounded-xl bg-muted/40 p-3">
+          <div className="toss-product-detail__quantity flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2">
             <span className="typo-body-sm font-semibold text-foreground">{t('quantity')}</span>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-2">
               <QuantitySelector
                 quantity={quantity}
                 maxQuantity={Math.max(maxQuantity, 1)}
                 onIncrease={handleIncrease}
                 onDecrease={handleDecrease}
               />
-              <span className="typo-price text-foreground tabular-nums">
+              <span className="typo-price whitespace-nowrap text-foreground tabular-nums">
                 {formatCurrency(totalPrice, locale)}
               </span>
             </div>
@@ -483,6 +483,12 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             </div>
           )}
 
+          {isSoldout && (
+            <p className="typo-body-sm font-semibold text-destructive">
+              {t('stockStatus.soldoutReason')}
+            </p>
+          )}
+
           {/* Action buttons — desktop only */}
           <div className="hidden gap-3 md:flex">
             <Button
@@ -503,13 +509,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             </Button>
           </div>
 
-          <div className="toss-product-detail__stock rounded-xl bg-muted/40 p-3">
-            <p className="typo-body-sm font-semibold text-muted-foreground">{t('stockStatus.title')}</p>
-            <p className={cn('mt-1 typo-body-sm font-medium', isSoldout ? 'text-destructive' : 'text-foreground')}>
-              {isSoldout ? t('stockStatus.soldoutReason') : isLowStock ? t('stockStatus.lowStock', { count: maxQuantity }) : t('stockStatus.available')}
-            </p>
-            <p className="mt-2 typo-body-sm text-muted-foreground">{t('stockStatus.restockNotice')}</p>
-          </div>
+
         </div>
       </div>
 
