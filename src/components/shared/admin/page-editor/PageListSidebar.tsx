@@ -52,7 +52,7 @@ export default function PageListSidebar({
   };
 
   return (
-    <aside className="cms-editor__sidebar flex w-64 shrink-0 flex-col">
+    <aside className="cms-editor__sidebar surface-card flex w-64 shrink-0 flex-col rounded-none border-0 border-r border-soft shadow-none">
       <div className="flex items-center justify-between border-b border-soft px-4 py-4">
         <h2 className="typo-body font-semibold">페이지 목록</h2>
         <Button
@@ -106,8 +106,8 @@ export default function PageListSidebar({
       )}
 
       {/* 사용 안내 */}
-      <div className="space-y-2 border-b border-soft bg-muted/40 px-4 py-4 typo-body-sm text-muted-foreground">
-        <p className="font-semibold text-foreground">페이지 관리</p>
+      <div className="mx-3 my-3 space-y-2 rounded-xl bg-muted/40 px-3 py-3 typo-body-sm text-muted-foreground">
+        <p className="typo-label font-semibold text-foreground">페이지 관리</p>
         <p>쇼핑몰에 표시될 페이지의 구성을 직접 편집합니다.</p>
         <ul className="mt-2 list-none space-y-1">
           <li><b className="text-foreground">+</b> 새 페이지 생성</li>

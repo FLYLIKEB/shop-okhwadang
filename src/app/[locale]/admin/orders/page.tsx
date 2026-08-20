@@ -14,6 +14,7 @@ import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 import { localMessage } from '@/utils/localMessages';
+import { Button } from '@/components/ui/button';
 
 const STATUS_FILTERS = [
   { label: '전체', value: '' },
@@ -104,7 +105,7 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
-      <AdminPageHeader title="주문 관리" />
+      <AdminPageHeader title="주문 관리" titleClassName="typo-h1" />
 
       <div className="flex flex-wrap items-center gap-2">
         <AdminFilterChips
@@ -115,47 +116,53 @@ export default function AdminOrdersPage() {
           size="sm"
         />
         {hasActiveFilters && (
-          <button type="button" onClick={resetFilters} className="rounded-md border px-3 py-1 typo-button text-muted-foreground hover:bg-muted">
+          <Button type="button" onClick={resetFilters} variant="outline" size="sm" className="typo-button">
             {localMessage('admin.common.resetFilters')}
-          </button>
+          </Button>
         )}
       </div>
 
 
       {serviceRequests.length > 0 && (
-        <section className="rounded-lg border bg-card p-4">
-          <h2 className="mb-3 text-base font-semibold">처리 대기 신청</h2>
-          <ul className="divide-y">
+        <section className="surface-card p-4">
+          <h2 className="mb-3 typo-body font-semibold">처리 대기 신청</h2>
+          <ul className="divide-soft">
             {serviceRequests.map((request) => (
-              <li key={request.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+              <li key={request.id} className="flex flex-wrap items-center justify-between gap-3 py-3 typo-body-sm">
                 <div>
-                  <p className="font-medium">
+                  <p className="typo-body-sm font-medium">
                     #{request.orderId} {request.order?.orderNumber} · {requestTypeLabels[request.type]} · {request.reason}
                   </p>
-                  <p className="text-xs text-muted-foreground">{request.userId} · {new Date(request.createdAt).toLocaleString('ko-KR')}</p>
+                  <p className="typo-label text-muted-foreground">{request.userId} · {new Date(request.createdAt).toLocaleString('ko-KR')}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => void handleRequestStatus(request.id, 'approved')}
-                    className="rounded border px-2 py-1 text-xs hover:bg-secondary"
+                    variant="outline"
+                    size="sm"
+                    className="typo-button"
                   >
                     승인
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => void handleRequestStatus(request.id, 'rejected')}
-                    className="rounded border px-2 py-1 text-xs hover:bg-secondary"
+                    variant="outline"
+                    size="sm"
+                    className="typo-button"
                   >
                     반려
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => void handleRequestStatus(request.id, 'completed')}
-                    className="rounded bg-foreground px-2 py-1 text-xs text-background hover:opacity-80"
+                    variant="black"
+                    size="sm"
+                    className="typo-button"
                   >
                     처리 완료
-                  </button>
+                  </Button>
                 </div>
               </li>
             ))}
@@ -176,14 +183,14 @@ export default function AdminOrdersPage() {
             type="date"
             value={filters.startDate}
             onChange={(event) => setFilter('startDate', event.target.value)}
-            className="rounded-lg border bg-background px-3 py-2 text-sm"
+            className="field-soft rounded-lg typo-body-sm"
           />
-          <span className="text-sm text-muted-foreground">~</span>
+          <span className="typo-label text-muted-foreground">~</span>
           <input
             type="date"
             value={filters.endDate}
             onChange={(event) => setFilter('endDate', event.target.value)}
-            className="rounded-lg border bg-background px-3 py-2 text-sm"
+            className="field-soft rounded-lg typo-body-sm"
           />
         </div>
       </div>

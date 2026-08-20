@@ -144,7 +144,7 @@ export default function AdminLogsPage() {
         </button>
       </div>
 
-      <section className="rounded-lg border bg-card p-4">
+      <section className="surface-card p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             {LOG_TYPES.map((item) => (
@@ -192,7 +192,7 @@ export default function AdminLogsPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border bg-card p-4">
+      <section className="surface-card p-4">
         <div className="grid gap-4 lg:grid-cols-4 lg:items-end">
           <label className="grid gap-2 typo-body-sm font-medium">
             {t('filters.search')}

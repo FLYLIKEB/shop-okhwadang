@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { reviewsApi } from '@/lib/api'
 import type { ReviewItem, ReviewStats as ReviewStatsType, ReviewSort } from '@/lib/api'
-import { cn } from '@/components/ui/utils'
+
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import ReviewCard from './ReviewCard'
 import ReviewStatsComponent from './ReviewStats'
 import { localMessage } from '@/utils/localMessages'
+import { Button } from '@/components/ui/button'
 
 interface ReviewListProps {
   productId: number
@@ -63,19 +64,16 @@ export default function ReviewList({ productId }: ReviewListProps) {
       {/* Sort */}
       <div className="flex items-center gap-2">
         {SORT_OPTIONS.map((opt) => (
-          <button
+          <Button
             key={opt.value}
             type="button"
+            variant={sort === opt.value ? 'black' : 'gray'}
+            size="sm"
             onClick={() => { setSort(opt.value); setPage(1) }}
-            className={cn(
-              'rounded-full px-3 py-1 text-xs transition-colors',
-              sort === opt.value
-                ? 'bg-foreground text-background'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80',
-            )}
+            className="rounded-full px-3 py-1 text-xs"
           >
             {localMessage(`review.${opt.key}`)}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -105,25 +103,27 @@ export default function ReviewList({ productId }: ReviewListProps) {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <button
+          <Button
             type="button"
+            variant="gray"
+            size="sm"
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="rounded px-3 py-1 text-sm text-muted-foreground hover:bg-muted disabled:opacity-50"
           >
             {localMessage('review.previous')}
-          </button>
+          </Button>
           <span className="text-sm text-muted-foreground">
             {page} / {totalPages}
           </span>
-          <button
+          <Button
             type="button"
+            variant="gray"
+            size="sm"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="rounded px-3 py-1 text-sm text-muted-foreground hover:bg-muted disabled:opacity-50"
           >
             {localMessage('review.next')}
-          </button>
+          </Button>
         </div>
       )}
     </div>

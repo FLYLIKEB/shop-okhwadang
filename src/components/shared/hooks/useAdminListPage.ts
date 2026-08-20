@@ -82,13 +82,11 @@ export function useAdminListPage<TFilters extends FilterState>({
   }, [updateUrl]);
 
   const setFilter = useCallback(<K extends keyof TFilters>(key: K, nextValue: TFilters[K]) => {
-    setFilters((prev) => {
-      const nextFilters = { ...prev, [key]: nextValue };
-      updateUrl({ page: 1, filters: nextFilters });
-      return nextFilters;
-    });
+    const nextFilters = { ...filters, [key]: nextValue };
+    setFilters(nextFilters);
     setPage(1);
-  }, [updateUrl]);
+    updateUrl({ page: 1, filters: nextFilters });
+  }, [filters, updateUrl]);
 
   const resetFilters = useCallback(() => {
     setFilters(initialFilters);

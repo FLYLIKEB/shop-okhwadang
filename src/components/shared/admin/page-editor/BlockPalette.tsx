@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft, BookOpen, Palette, Clock3, Images, Contact } from 'lucide-react';
 import type { PageBlock } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import FormInput from '@/components/ui/FormInput';
 
 type BlockType = PageBlock['type'];
 
@@ -148,18 +149,16 @@ export default function BlockPalette({ onAddBlock }: BlockPaletteProps) {
     : BLOCK_TYPES;
 
   return (
-    <div className="cms-editor__palette w-64 shrink-0 overflow-y-auto border-r border-soft p-4">
+    <div className="cms-editor__palette surface-card w-64 shrink-0 overflow-y-auto rounded-none border-0 border-r border-soft p-4 shadow-none">
       <h3 className="mb-3 typo-label font-semibold uppercase text-muted-foreground">블록 추가</h3>
-      <label className="mb-3 block">
-        <span className="sr-only">블록 검색</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="블록 검색"
-          className="field-soft w-full rounded-xl border px-3 py-3 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        />
-      </label>
+      <FormInput
+        id="block-search"
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="블록 검색"
+        className="mb-3 rounded-xl border-soft py-3 typo-body-sm"
+      />
       <div className="space-y-1.5">
         {visibleBlockTypes.map(({ type, label, description, detail, icon: Icon }) => (
           <div key={type} className="relative">

@@ -199,7 +199,7 @@ export default function AdminCouponsPage() {
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(340px,0.9fr)]">
         <div className="space-y-4">
-          <div className="rounded-lg border bg-card p-4 shadow-sm">
+          <div className="surface-card p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <AdminFilterChips
                 items={[
@@ -233,7 +233,7 @@ export default function AdminCouponsPage() {
             <AdminEmptyState title={t('empty')} />
           ) : (
             <>
-              <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+              <div className="surface-card overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead className="bg-muted/40 text-left">
@@ -323,7 +323,7 @@ export default function AdminCouponsPage() {
         </div>
 
         <div className="space-y-4">
-          <section className="rounded-lg border bg-card p-4 shadow-sm">
+          <section className="surface-card p-4">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="typo-body font-semibold">
@@ -475,7 +475,7 @@ export default function AdminCouponsPage() {
             </form>
           </section>
 
-          <section className="rounded-lg border bg-card p-4 shadow-sm">
+          <section className="surface-card p-4">
             <h2 className="typo-body font-semibold">{t('issueTitle')}</h2>
             <p className="mt-1 typo-body-sm text-muted-foreground">{t('issueDescription')}</p>
             <form className="mt-4 grid gap-3" onSubmit={(event) => void issueCoupon(event)}>

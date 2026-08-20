@@ -72,7 +72,7 @@ export default function EditorTopBar({
   };
 
   return (
-    <div className="cms-editor__topbar space-y-3 border-b border-soft px-5 py-4">
+    <div className="cms-editor__topbar surface-card space-y-3 rounded-none border-0 border-b border-soft px-5 py-4 shadow-none">
       {/* 제목 + 액션 버튼 */}
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
@@ -91,7 +91,7 @@ export default function EditorTopBar({
             <button
               type="button"
               onClick={() => { setTitleValue(title); setEditingTitle(true); }}
-              className="max-w-full truncate typo-h3 font-semibold hover:text-muted-foreground"
+              className="max-w-full truncate typo-h2 font-display font-semibold hover:text-muted-foreground"
               title="클릭하여 페이지 제목 편집"
             >
               {title}
@@ -167,7 +167,7 @@ export default function EditorTopBar({
             type="button"
             onClick={() => { setSlugValue(slug); setEditingSlug(true); }}
             title="클릭하여 URL 주소(slug) 편집 — 영문·숫자·하이픈만 사용 가능"
-            className="rounded-lg bg-muted px-2 py-1 font-mono typo-body-sm hover:bg-muted/70"
+            className="field-soft rounded-lg border border-soft px-2 py-1 font-mono typo-body-sm hover:bg-muted/70"
           >
             {slug || '(없음 — 클릭하여 입력)'}
           </button>

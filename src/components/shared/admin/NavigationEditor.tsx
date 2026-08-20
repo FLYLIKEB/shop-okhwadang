@@ -160,7 +160,7 @@ export default function NavigationEditor({
       )}
 
       {/* 사용 안내 */}
-      <div className="rounded-xl bg-muted/50 px-4 py-3 typo-body-sm text-muted-foreground space-y-0.5">
+      <div className="surface-card px-4 py-3 typo-body-sm text-muted-foreground space-y-0.5">
         <p><b className="text-foreground">드래그</b>로 순서 변경 · 표시/숨김 · 수정 · 삭제</p>
         <p>하위 메뉴는 수정 모달의 <b className="text-foreground">상위 메뉴</b> 선택으로 만들 수 있습니다.</p>
       </div>

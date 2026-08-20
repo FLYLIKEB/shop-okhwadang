@@ -9,6 +9,10 @@ import type { SiteSetting } from '@/lib/api';
 import { useUnsavedChanges } from '@/components/shared/hooks/useUnsavedChanges';
 import { cn } from '@/components/ui/utils';
 import { toastMessage } from '@/utils/toastMessages';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminEmptyState } from '@/components/shared/admin/AdminStates';
+import { Button } from '@/components/ui/button';
+import FormInput from '@/components/ui/FormInput';
 
 const TABS = [
   { id: 'color',       label: '라이트 색상' },
@@ -48,23 +52,25 @@ function ColorTokenRow({
   };
 
   return (
-    <div className="flex items-center gap-4 border-b py-3 last:border-0">
+    <div className="flex items-center gap-4 border-soft border-b py-3 last:border-0">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{setting.label}</p>
-        <p className="text-xs text-muted-foreground">{setting.key}</p>
+        <p className="typo-body-sm font-medium">{setting.label}</p>
+        <p className="typo-label text-muted-foreground">{setting.key}</p>
       </div>
       <div className="flex items-center gap-2">
         <input
           type="color"
           value={currentValue}
           onChange={(e) => handleChange(e.target.value)}
-          className="h-8 w-10 cursor-pointer rounded border p-0.5"
+          aria-label={setting.label}
+          className="field-soft h-8 w-10 cursor-pointer rounded p-0.5"
         />
-        <input
+        <FormInput
           type="text"
           value={currentValue}
           onChange={(e) => handleChange(e.target.value)}
-          className="w-24 rounded border px-2 py-1 font-mono text-sm"
+          aria-label={`${setting.label} 값`}
+          className="w-24 font-mono"
           placeholder="#000000"
         />
       </div>
@@ -94,23 +100,24 @@ function GenericTokenRow({
   };
 
   return (
-    <div className="flex items-center gap-4 border-b py-3 last:border-0">
+    <div className="flex items-center gap-4 border-soft border-b py-3 last:border-0">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{setting.label}</p>
-        <p className="text-xs text-muted-foreground">{setting.key}</p>
+        <p className="typo-body-sm font-medium">{setting.label}</p>
+        <p className="typo-label text-muted-foreground">{setting.key}</p>
       </div>
       <div className="flex flex-col gap-1">
-        <input
+        <FormInput
           type={setting.inputType === 'number' ? 'number' : 'text'}
           value={currentValue}
           onChange={(e) => handleChange(e.target.value)}
-          className="w-40 rounded border px-2 py-1 text-sm"
+          aria-label={setting.label}
+          className="w-40"
         />
-        <input
-          type="text"
+        <FormInput
           value={currentValueEn}
           onChange={(e) => onChangeEn(setting.key, e.target.value)}
-          className="w-40 rounded border px-2 py-1 text-xs text-muted-foreground placeholder:text-muted-foreground/50"
+          aria-label={`${setting.label} (EN)`}
+          className="w-40 text-xs text-muted-foreground placeholder:text-muted-foreground/50"
           placeholder="EN"
         />
       </div>
@@ -121,7 +128,7 @@ function GenericTokenRow({
 function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
   return (
     <div
-      className="space-y-4 rounded-lg border p-4"
+      className="surface-card space-y-4 p-4"
       style={{ background: isDark ? 'var(--db-color-dark-background, #121212)' : 'var(--color-background)' }}
     >
       <h3
@@ -131,7 +138,7 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
         라이브 프리뷰 {isDark ? '(다크)' : '(라이트)'}
       </h3>
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button type="button" variant="primary"
           className="rounded-md px-4 py-2 text-sm hover:opacity-90"
           style={{
             background: isDark ? 'var(--db-color-dark-primary, #9C9C9C)' : 'var(--color-primary)',
@@ -139,8 +146,8 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
           }}
         >
           Primary 버튼
-        </button>
-        <button
+        </Button>
+        <Button type="button" variant="secondary"
           className="rounded-md px-4 py-2 text-sm hover:opacity-90"
           style={{
             background: isDark ? 'var(--db-color-dark-secondary, #1C1C1C)' : 'var(--color-secondary)',
@@ -148,16 +155,16 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
           }}
         >
           Secondary 버튼
-        </button>
-        <button
+        </Button>
+        <Button type="button" variant="destructive"
           className="rounded-md px-4 py-2 text-sm text-white hover:opacity-90"
           style={{ background: isDark ? 'var(--db-color-dark-destructive, #ef4444)' : 'var(--color-destructive)' }}
         >
           Destructive 버튼
-        </button>
+        </Button>
       </div>
       <div
-        className="rounded-lg border p-4 shadow-sm"
+        className="surface-card p-4"
         style={{
           background: isDark ? 'var(--db-color-dark-card, #171717)' : 'var(--color-card)',
           borderColor: isDark ? 'var(--db-color-dark-border, #292929)' : 'var(--color-border)',
@@ -196,10 +203,11 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
           Muted 텍스트 예시입니다.
         </p>
       </div>
-      <input
+      <FormInput
         readOnly
         value="Input 필드 예시"
-        className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
+        aria-label="Input 필드 예시"
+        className="w-full"
         style={{
           background: isDark ? 'var(--db-color-dark-background, #121212)' : 'var(--color-background)',
           borderColor: isDark ? 'var(--db-color-dark-input, #292929)' : 'var(--color-input)',
@@ -302,41 +310,29 @@ export default function ThemeEditor({ initialSettings }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">테마 편집</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            색상·폰트·간격·모서리를 편집하고 저장하면 사이트에 즉시
-            반영됩니다.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
+      <AdminPageHeader
+        title="테마 편집"
+        description="색상·폰트·간격·모서리를 편집하고 저장하면 사이트에 즉시 반영됩니다."
+        actions={
+          <div className="flex gap-2">
+          <Button
+            variant="outline"
             type="button"
             onClick={handleReset}
             disabled={resetting}
-            className={cn(
-              'rounded-md border px-4 py-2 text-sm transition-colors',
-              resetting ? 'cursor-not-allowed opacity-50' : 'hover:bg-muted',
-            )}
           >
             {resetting ? '초기화 중...' : '기본값으로 초기화'}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={handleSave}
             disabled={!hasChanges || saving}
-            className={cn(
-              'rounded-md px-4 py-2 text-sm transition-colors',
-              hasChanges && !saving
-                ? 'bg-primary text-primary-foreground hover:opacity-90'
-                : 'cursor-not-allowed bg-muted text-muted-foreground',
-            )}
           >
             {saving ? '저장 중...' : '저장'}
-          </button>
-        </div>
-      </div>
+          </Button>
+          </div>
+        }
+      />
 
       <div className="flex border-b">
         {TABS.map((tab) => (
@@ -357,11 +353,9 @@ export default function ThemeEditor({ initialSettings }: Props) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border bg-background p-4">
+        <div className="surface-card p-4">
           {filteredSettings.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              설정 항목이 없습니다.
-            </p>
+            <AdminEmptyState title="설정 항목이 없습니다." />
           ) : (
             filteredSettings.map((setting) =>
               setting.inputType === 'color' ? (

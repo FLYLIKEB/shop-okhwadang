@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminEmptyState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { adminLocalizationApi } from '@/lib/api';
@@ -55,7 +56,7 @@ export default function AdminLocalizationPage() {
         className="items-start"
       />
 
-      <section className="rounded-lg border bg-card p-5">
+      <section className="surface-card p-5">
         <h2 className="typo-h3 mb-3">{t('fallbackTitle')}</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <PolicyCard label={t('defaultPolicy')} value={t('koFallback')} />
@@ -65,7 +66,7 @@ export default function AdminLocalizationPage() {
 
       <section className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {(report?.summaries ?? []).map((summary) => (
-          <div key={summary.kind} className="rounded-lg border bg-card p-5">
+          <div key={summary.kind} className="surface-card p-5">
             <p className="typo-body-sm text-muted-foreground">{t(`kinds.${summary.kind}`)}</p>
             <div className="mt-3 flex items-end justify-between">
               <p className="typo-h2">{summary.missing}</p>
@@ -77,15 +78,15 @@ export default function AdminLocalizationPage() {
         ))}
       </section>
 
-      <section className="rounded-lg border bg-card">
-        <div className="border-b p-5">
+      <section className="surface-card">
+        <div className="border-soft border-b p-5">
           <h2 className="typo-h3">{t('missingTitle')}</h2>
           <p className="typo-body-sm mt-1 text-muted-foreground">{t('missingDescription')}</p>
         </div>
         {isLoading && !report ? (
-          <p className="typo-body-sm p-5 text-muted-foreground">{t('loading')}</p>
+          <AdminLoadingState title={t('loading')} className="border-0" />
         ) : sortedItems.length === 0 ? (
-          <p className="typo-body-sm p-5 text-muted-foreground">{t('empty')}</p>
+          <AdminEmptyState title={t('empty')} className="border-0" />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">

@@ -12,6 +12,7 @@ import { handleApiError } from '@/utils/error';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
+import FormSelect from '@/components/ui/FormSelect';
 import Modal from '@/components/ui/Modal';
 import { AdminTable } from '@/components/shared/admin/AdminTable';
 import { StatusBadge } from '@/components/shared/admin/StatusBadge';
@@ -131,7 +132,7 @@ export default function AdminFaqsPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <h1 className="typo-h1">FAQ 관리</h1>
+        <AdminPageHeader title="FAQ 관리" titleClassName="typo-h1" />
         {Array.from({ length: 5 }).map((_, index) => (
           <SkeletonBox key={index} className="h-14 rounded-lg" />
         ))}
@@ -169,7 +170,7 @@ export default function AdminFaqsPage() {
         emptyMessage="FAQ가 없습니다."
       >
         {filtered.map((faq) => (
-          <tr key={faq.id} className="border-b hover:bg-muted/50 transition-colors">
+          <tr key={faq.id} className="border-b border-soft hover:bg-muted/50 transition-colors">
             <td className="px-4 py-3 typo-body-sm text-muted-foreground">{faq.sortOrder}</td>
             <td className="px-4 py-3 typo-body-sm text-muted-foreground">{faq.category}</td>
             <td className="px-4 py-3 typo-body-sm font-medium truncate max-w-xs">{faq.question}</td>
@@ -178,7 +179,8 @@ export default function AdminFaqsPage() {
             </td>
             <td className="px-4 py-3">
               <div className="flex gap-2">
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => openEdit(faq.id, {
                     category: faq.category,
                     question: faq.question,
@@ -186,16 +188,17 @@ export default function AdminFaqsPage() {
                     sortOrder: faq.sortOrder,
                     isPublished: faq.isPublished,
                   })}
-                  className="typo-body-sm text-foreground hover:underline"
+                  className="typo-body-sm px-2"
                 >
                   수정
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
                   onClick={() => handleDelete(faq.id)}
-                  className="typo-body-sm text-destructive hover:underline"
+                  className="typo-body-sm px-2 text-destructive hover:text-destructive"
                 >
                   삭제
-                </button>
+                </Button>
               </div>
             </td>
           </tr>
@@ -206,16 +209,12 @@ export default function AdminFaqsPage() {
         <div className="space-y-4 p-6">
           <h2 className="typo-h2">{editingId ? 'FAQ 수정' : '새 FAQ'}</h2>
           <div>
-            <label className="block typo-body-sm font-medium mb-1.5">카테고리</label>
-            <select
+            <FormSelect
+              label="카테고리"
               value={formData.category}
               onChange={(event) => setFormData({ ...formData, category: event.target.value })}
-              className="w-full border border-border rounded-md px-3 py-2.5 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {FAQ_CATEGORIES.map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
+              options={FAQ_CATEGORIES.map((category) => ({ value: category, label: category }))}
+            />
           </div>
           <FormInput
             label="질문"
@@ -230,7 +229,7 @@ export default function AdminFaqsPage() {
               onChange={(event) => setFormData({ ...formData, answer: event.target.value })}
               rows={5}
               placeholder="답변을 입력하세요"
-              className="w-full border border-border rounded-md px-3 py-2.5 typo-body-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              className="field-soft w-full rounded-md px-3 py-2.5 typo-body-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
           <FormInput

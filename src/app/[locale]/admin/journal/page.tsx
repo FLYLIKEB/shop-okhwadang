@@ -7,11 +7,14 @@ import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { useFormModal } from '@/components/shared/hooks/useFormModal';
 import { adminJournalsApi, type Journal, type CreateJournalData, JournalCategory } from '@/lib/api';
-import { SkeletonBox } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
+import FormSelect from '@/components/ui/FormSelect';
 import Modal from '@/components/ui/Modal';
 import { AdminTable } from '@/components/shared/admin/AdminTable';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminLoadingState } from '@/components/shared/admin/AdminStates';
+
 import { JournalStatusBadge } from '@/components/shared/admin/StatusBadge';
 import ProductImageUploader from '@/components/shared/admin/ProductImageUploader';
 import { toastMessage } from '@/utils/toastMessages';
@@ -72,49 +75,53 @@ function JournalRow({
   onTogglePublish: (j: Journal) => void;
 }) {
   return (
-    <tr className="border-b border-border hover:bg-muted/50 transition-colors">
-      <td className="py-3 px-4">
+    <tr className="transition-colors hover:bg-muted/30">
+      <td className="admin-row px-4">
         {journal.coverImageUrl ? (
           <Image
             src={journal.coverImageUrl}
             alt={journal.title}
             width={48}
             height={48}
-            className="h-12 w-12 rounded object-cover"
+            className="surface-card h-12 w-12 rounded-lg object-cover"
           />
         ) : (
-          <div className="w-12 h-12 rounded bg-muted" />
+          <div className="surface-card h-12 w-12 rounded-lg bg-muted" />
         )}
       </td>
-      <td className="py-3 px-4">
-        <span className="font-medium">{journal.title}</span>
+      <td className="admin-row px-4">
+        <span className="typo-body font-medium">{journal.title}</span>
         {journal.subtitle && (
-          <span className="text-muted-foreground ml-2 text-sm">({journal.subtitle})</span>
+          <span className="typo-body-sm ml-2 text-muted-foreground">({journal.subtitle})</span>
         )}
       </td>
-      <td className="py-3 px-4">
-        <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted">
+      <td className="admin-row px-4">
+        <span className="typo-label rounded-full bg-muted px-2 py-1 font-medium">
           {CATEGORY_LABELS[journal.category]}
         </span>
       </td>
-      <td className="py-3 px-4 text-sm text-muted-foreground">{journal.date}</td>
-      <td className="py-3 px-4">
+      <td className="admin-row px-4 typo-body-sm text-muted-foreground">{journal.date}</td>
+      <td className="admin-row px-4">
         <JournalStatusBadge isPublished={journal.isPublished} onClick={() => onTogglePublish(journal)} />
       </td>
-      <td className="py-3 px-4">
+      <td className="admin-row px-4">
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => onEdit(journal)}
-            className="rounded border px-2 py-1 text-xs hover:bg-secondary"
+            className="typo-body-sm"
           >
             수정
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => onDelete(journal)}
-            className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+            className="typo-body-sm text-destructive hover:text-destructive"
           >
             삭제
-          </button>
+          </Button>
         </div>
       </td>
     </tr>
@@ -179,7 +186,7 @@ function JournalFormModal({
 
   return (
     <Modal isOpen={open} onClose={onClose} maxWidth="lg">
-      <h2 className="text-lg font-semibold mb-4">{initial ? '저널 수정' : '저널 추가'}</h2>
+      <h2 className="typo-h2 mb-4">{initial ? '저널 수정' : '저널 추가'}</h2>
       <form onSubmit={(e) => handleSubmit(e, handleFormSubmit, onClose)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormInput
@@ -207,17 +214,15 @@ function JournalFormModal({
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="text-sm font-medium block mb-1">카테고리</label>
-            <select
+            <FormSelect
+              label="카테고리"
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value as JournalCategory })}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value={JournalCategory.CULTURE}>다문화</option>
-              <option value={JournalCategory.USAGE}>사용법</option>
-              <option value={JournalCategory.TABLE_SETTING}>찻자리 세팅</option>
-              <option value={JournalCategory.NEWS}>소식</option>
-            </select>
+              options={Object.values(JournalCategory).map((category) => ({
+                value: category,
+                label: CATEGORY_LABELS[category],
+              }))}
+            />
           </div>
           <FormInput
             label="게시 날짜"
@@ -235,18 +240,18 @@ function JournalFormModal({
         </div>
 
         <div>
-          <label className="text-sm font-medium block mb-1">요약</label>
+          <label className="typo-label block mb-1">요약</label>
           <textarea
             value={form.summary ?? ''}
             onChange={(e) => setForm({ ...form, summary: e.target.value })}
             placeholder="저널 요약..."
             rows={2}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+            className="field-soft w-full rounded-md px-3 py-2 typo-body-sm resize-none"
           />
         </div>
 
         <div>
-          <label className="text-sm font-medium block mb-1">본문 단락</label>
+          <label className="typo-label block mb-1">본문 단락</label>
           <div className="space-y-2">
             {paragraphs.map((p, idx) => (
               <div key={idx} className="flex gap-2">
@@ -255,27 +260,30 @@ function JournalFormModal({
                   onChange={(e) => updateParagraph(idx, e.target.value)}
                   placeholder={`단락 ${idx + 1}...`}
                   rows={2}
-                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+                  className="field-soft flex-1 rounded-md px-3 py-2 typo-body-sm resize-none"
                 />
                 {paragraphs.length > 1 && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     type="button"
                     onClick={() => removeParagraph(idx)}
-                    className="text-destructive hover:bg-destructive/10 px-2 rounded"
+                    aria-label="단락 삭제"
+                    className="text-destructive hover:bg-destructive/10"
                   >
                     ×
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
           </div>
-          <button type="button" onClick={addParagraph} className="mt-2 text-sm text-muted-foreground hover:text-foreground">
+          <Button type="button" variant="link" size="sm" onClick={addParagraph} className="mt-2 px-0 typo-body-sm text-muted-foreground">
             + 단락 추가
-          </button>
+          </Button>
         </div>
 
         <div>
-          <label className="text-sm font-medium block mb-1">커버 이미지</label>
+          <label className="typo-label block mb-1">커버 이미지</label>
           <ProductImageUploader
             imageUrl={form.coverImageUrl ?? ''}
             onChange={(url) => setForm({ ...form, coverImageUrl: url })}
@@ -290,7 +298,7 @@ function JournalFormModal({
             onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
             className="rounded"
           />
-          <label htmlFor="isPublished" className="text-sm">공개 상태</label>
+          <label htmlFor="isPublished" className="typo-body-sm">공개 상태</label>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
@@ -387,45 +395,41 @@ export default function AdminJournalPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="space-y-4">
-        <SkeletonBox height="h-8 w-48" />
-        <SkeletonBox height="h-12 w-full" />
-        <SkeletonBox height="h-64 w-full" />
-      </div>
+      <AdminLoadingState title="저널을 불러오는 중입니다." className="surface-card border-soft" />
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">저널 관리</h1>
-        <button
-          onClick={handleOpenCreate}
-          className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-        >
-          + 저널 추가
-        </button>
-      </div>
+      <AdminPageHeader
+        title="저널 관리"
+        titleClassName="typo-h1"
+        action={<Button onClick={handleOpenCreate}>+ 저널 추가</Button>}
+      />
 
-      <div className="flex gap-2 flex-wrap">
-        <button
+      <div className="surface-card flex flex-wrap gap-2 p-3">
+        <Button
+          type="button"
+          size="sm"
+          variant={filterCategory === '' ? 'black' : 'gray'}
+          aria-pressed={filterCategory === ''}
           onClick={() => setFilterCategory('')}
-          className={`px-3 py-1.5 text-sm rounded-full ${
-            filterCategory === '' ? 'bg-foreground text-background' : 'bg-muted hover:bg-muted/80'
-          }`}
+          className="rounded-full"
         >
           전체
-        </button>
+        </Button>
         {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-          <button
+          <Button
             key={key}
+            type="button"
+            size="sm"
+            variant={filterCategory === key ? 'black' : 'gray'}
+            aria-pressed={filterCategory === key}
             onClick={() => setFilterCategory(key as JournalCategory)}
-            className={`px-3 py-1.5 text-sm rounded-full ${
-              filterCategory === key ? 'bg-foreground text-background' : 'bg-muted hover:bg-muted/80'
-            }`}
+            className="rounded-full"
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
 

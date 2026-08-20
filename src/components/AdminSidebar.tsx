@@ -141,24 +141,24 @@ function SidebarContent({ onClose }: SidebarContentProps) {
   };
 
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r bg-background">
-      <div className="flex h-14 items-center justify-between border-b px-4">
+    <aside className="toss-admin__sidebar flex h-full w-60 shrink-0 flex-col border-r border-soft bg-background">
+      <div className="flex h-14 items-center justify-between border-b border-soft px-4">
         <span className="typo-body-sm font-semibold">{t('adminPanel')}</span>
         {onClose && (
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+            className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
             aria-label={t('close')}
           >
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
-      <div className="border-b px-2 py-3">
+      <div className="border-b border-soft px-2 py-3">
         <Link
           href="/"
           onClick={onClose}
-          className="flex items-center gap-3 rounded-md px-3 py-2 typo-body-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex items-center gap-3 rounded-xl px-3 py-3 typo-body-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <Home className="h-4 w-4 shrink-0" />
           {t('backToShop')}
@@ -175,7 +175,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                   <button
                     onClick={() => toggleGroup(item.labelKey)}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+                      'flex w-full items-center gap-3 rounded-xl px-3 py-3 typo-body-sm transition-colors',
                       isGroupActive
                         ? 'text-foreground'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -202,9 +202,9 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                               href={child.href}
                               onClick={onClose}
                               className={cn(
-                                'flex items-center justify-between rounded-md px-3 py-1.5 typo-body-sm transition-colors',
+                                'flex items-center justify-between rounded-xl px-3 py-2 typo-body-sm transition-colors',
                                 isActive
-                                  ? 'bg-foreground text-background'
+                                  ? 'bg-primary text-primary-foreground shadow-sm'
                                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                               )}
                             >
@@ -232,9 +232,9 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                   href={item.href}
                   onClick={onClose}
                   className={cn(
-                    'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+                    'flex items-center gap-3 rounded-xl px-3 py-3 typo-body-sm transition-colors',
                     isActive
-                      ? 'bg-foreground text-background'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )}
                 >

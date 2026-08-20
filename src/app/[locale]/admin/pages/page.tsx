@@ -16,6 +16,7 @@ import BlockPropertyPanel from '@/components/shared/admin/page-editor/BlockPrope
 import PreviewModal from '@/components/shared/admin/page-editor/PreviewModal';
 import { ConfirmDialog } from '@/components/shared/admin/ConfirmDialog';
 import { AdminEmptyState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { localMessage } from '@/utils/localMessages';
 
 export default function AdminPagesPage() {
@@ -71,7 +72,7 @@ export default function AdminPagesPage() {
   }
 
   return (
-    <div className="cms-editor flex h-full -m-6 overflow-hidden">
+    <div className="cms-editor flex h-full -m-6 overflow-hidden bg-background">
       <PageListSidebar
         pages={pages}
         selectedPageId={selectedPage?.id ?? null}
@@ -80,7 +81,7 @@ export default function AdminPagesPage() {
       />
 
       {selectedPage ? (
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="surface-card flex flex-1 flex-col overflow-hidden rounded-none border-0 shadow-none">
           <EditorTopBar
             title={draft.title}
             slug={draft.slug}
@@ -126,11 +127,15 @@ export default function AdminPagesPage() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-1 items-center justify-center p-8">
-          <AdminEmptyState
-            title={localMessage('admin.pages.emptyTitle')}
-            description={localMessage('admin.pages.emptyDescription')}
-          />
+        <div className="flex flex-1 flex-col gap-8 overflow-y-auto p-8">
+          <AdminPageHeader title={localMessage('admin.common.sections.pages')} />
+          <div className="flex flex-1 items-center justify-center">
+            <AdminEmptyState
+              title={localMessage('admin.pages.emptyTitle')}
+              description={localMessage('admin.pages.emptyDescription')}
+              className="border-0 bg-transparent shadow-none"
+            />
+          </div>
         </div>
       )}
 

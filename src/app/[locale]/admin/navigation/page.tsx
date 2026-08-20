@@ -11,6 +11,7 @@ import NavigationEditor from '@/components/shared/admin/NavigationEditor';
 import { toastMessage } from '@/utils/toastMessages';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { Button } from '@/components/ui/button';
+import { AdminLoadingState } from '@/components/shared/admin/AdminStates';
 
 type NavGroup = 'gnb' | 'sidebar' | 'footer';
 
@@ -123,8 +124,8 @@ export default function AdminNavigationPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+      <div className="mx-auto max-w-5xl">
+        <AdminLoadingState title="네비게이션을 불러오는 중입니다" className="surface-card" />
       </div>
     );
   }
@@ -143,8 +144,10 @@ export default function AdminNavigationPage() {
             모바일 화면 하단에 고정된 탐색 메뉴를 표시합니다.
           </span>
         </div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           role="switch"
           aria-checked={bottomNavVisible}
           disabled={bottomNavLoading}
@@ -158,7 +161,7 @@ export default function AdminNavigationPage() {
               bottomNavVisible ? 'translate-x-6' : 'translate-x-1'
             }`}
           />
-        </button>
+        </Button>
       </section>
 
       <div className="flex gap-1 rounded-xl bg-muted/70 p-1" role="tablist" aria-label="네비게이션 영역">

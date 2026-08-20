@@ -17,6 +17,8 @@ import MultiImageUploader from './MultiImageUploader';
 import ProductOptionsEditor, { type ProductOptionDraft } from './ProductOptionsEditor';
 import { CheckboxField, SelectField, TextAreaField, TextField } from './FormField';
 import { toastMessage } from '@/utils/toastMessages';
+import { AdminPageHeader } from './AdminPageHeader';
+import { Button } from '@/components/ui/button';
 
 interface GalleryImage {
   url: string;
@@ -229,8 +231,8 @@ function NoticeInfoSection({ noticeInfo, set }: { noticeInfo: ProductNoticeInfo;
   const typedFields = noticeInfo.type === 'tea' ? teaFields : teawareFields;
 
   return (
-    <section className="space-y-4">
-      <h2 className="text-sm font-semibold">상품고시정보</h2>
+    <section className="surface-card border-soft space-y-4 p-5">
+      <h2 className="typo-h3">상품고시정보</h2>
       <SelectField
         label="고시정보 유형"
         value={noticeInfo.type ?? ''}
@@ -263,9 +265,9 @@ function ImagesSection({
 }) {
   return (
     <>
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">갤러리 이미지</h2>
-        <p className="text-xs text-muted-foreground">
+      <section className="surface-card border-soft space-y-2 p-5">
+        <h2 className="typo-h3">갤러리 이미지</h2>
+        <p className="typo-body-sm text-muted-foreground">
           상품 목록에 표시될 이미지입니다. 드래그하여 순서를 변경할 수 있습니다.
         </p>
         <MultiImageUploader
@@ -275,9 +277,9 @@ function ImagesSection({
         />
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">상품 상세 이미지</h2>
-        <p className="text-xs text-muted-foreground">
+      <section className="surface-card border-soft space-y-2 p-5">
+        <h2 className="typo-h3">상품 상세 이미지</h2>
+        <p className="typo-body-sm text-muted-foreground">
           상품 상세 페이지 하단에 표시될 이미지입니다.
         </p>
         <MultiImageUploader
@@ -300,8 +302,8 @@ function BasicInfoSection({
   categoryOptions: Array<{ value: string; label: string }>;
 }) {
   return (
-    <section className="space-y-4">
-      <h2 className="text-sm font-semibold">기본 정보</h2>
+    <section className="surface-card border-soft space-y-4 p-5">
+      <h2 className="typo-h3">기본 정보</h2>
 
       <SelectField
         label="카테고리"
@@ -349,8 +351,8 @@ function MultilingualSection({
   set: Setter;
 }) {
   return (
-    <section className="space-y-4">
-      <h2 className="text-sm font-semibold">다국어 정보</h2>
+    <section className="surface-card border-soft space-y-4 p-5">
+      <h2 className="typo-h3">다국어 정보</h2>
 
       <div className="grid grid-cols-1 gap-4">
         <TextField
@@ -379,8 +381,8 @@ function PricingSection({
   set: Setter;
 }) {
   return (
-    <section className="space-y-4">
-      <h2 className="text-sm font-semibold">가격 / 재고</h2>
+    <section className="surface-card border-soft space-y-4 p-5">
+      <h2 className="typo-h3">가격 / 재고</h2>
 
       <div className="grid grid-cols-2 gap-4">
         <TextField
@@ -429,8 +431,8 @@ function VisibilitySection({
   const t = useTranslations('admin.productForm');
 
   return (
-    <section className="space-y-4">
-      <h2 className="text-sm font-semibold">노출 설정</h2>
+    <section className="surface-card border-soft space-y-4 p-5">
+      <h2 className="typo-h3">노출 설정</h2>
 
       <SelectField
         label="상태"
@@ -445,8 +447,8 @@ function VisibilitySection({
         onChange={(v) => set('isFeatured', v)}
       />
 
-      <div className="rounded-md border bg-secondary/30 p-3">
-        <p className="mb-2 text-xs text-muted-foreground">{t('localeVisibilityHelp')}</p>
+      <div className="field-soft border-soft rounded-md p-3">
+        <p className="typo-body-sm mb-2 text-muted-foreground">{t('localeVisibilityHelp')}</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <CheckboxField
             label={t('visibleKo')}
@@ -509,27 +511,28 @@ function ProductAttributesSection({
   };
 
   return (
-    <section className="space-y-3">
+    <section className="surface-card border-soft space-y-3 p-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold">상품 속성</h2>
+          <h2 className="typo-h3">상품 속성</h2>
           <p className="mt-1 text-xs text-muted-foreground">{t('attributePickerHelp')}</p>
         </div>
-        <button
+        <Button
           type="button"
           onClick={() =>
             set('attributes', [...attributes, { attributeTypeId: '', value: '', displayValue: '' }])
           }
-          className="rounded-md bg-secondary px-3 py-1 text-sm hover:bg-secondary/80"
+          variant="secondary"
+          size="sm"
         >
           + 속성 추가
-        </button>
+        </Button>
       </div>
       {attributes.length === 0 && <p className="text-sm text-muted-foreground">속성이 없습니다.</p>}
       {attributes.map((attribute, index) => {
         const existingValues = attributeValueOptions[attribute.attributeTypeId] ?? [];
         return (
-          <div key={index} className="space-y-3 rounded-lg border p-3">
+          <div key={index} className="field-soft border-soft space-y-3 rounded-lg p-3">
             <div className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
               <SelectField
                 label="속성"
@@ -549,7 +552,7 @@ function ProductAttributesSection({
                 onChange={(value) => update(index, 'displayValue', value)}
                 placeholder="주니"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   set(
@@ -557,10 +560,12 @@ function ProductAttributesSection({
                     attributes.filter((_, i) => i !== index),
                   )
                 }
-                className="self-end rounded px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
+                variant="ghost"
+                size="sm"
+                className="self-end text-destructive hover:bg-destructive/10"
               >
                 삭제
-              </button>
+              </Button>
             </div>
             {attribute.attributeTypeId && existingValues.length > 0 && (
               <div className="space-y-2">
@@ -572,19 +577,17 @@ function ProductAttributesSection({
                     const selected = attribute.value === option.value;
                     const label = formatAttributeValueLabel(option);
                     return (
-                      <button
+                      <Button
                         key={option.value}
                         type="button"
                         onClick={() => selectExistingValue(index, option)}
-                        className={
-                          selected
-                            ? 'rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground'
-                            : 'rounded-full border px-3 py-1 text-xs hover:bg-secondary'
-                        }
+                        variant={selected ? 'default' : 'outline'}
+                        size="sm"
+                        className="rounded-full"
                         aria-pressed={selected}
                       >
                         {label}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -747,8 +750,8 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-6 typo-h1">{mode === 'create' ? '상품 등록' : '상품 수정'}</h1>
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
+      <AdminPageHeader title={mode === 'create' ? '상품 등록' : '상품 수정'} />
 
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
         <ImagesSection images={form.images} detailImages={form.detailImages} set={set} />
@@ -768,21 +771,20 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
           set={set}
         />
 
-        <div className="flex justify-end gap-3 border-t pt-4">
-          <button
+        <div className="flex justify-end gap-3 border-soft border-t pt-4">
+          <Button
             type="button"
             onClick={() => router.push('/admin/products')}
-            className="rounded-lg border px-6 py-2 text-sm hover:bg-secondary"
+            variant="outline"
           >
             취소
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             disabled={submitting}
-            className="rounded-lg bg-primary px-6 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {submitting ? '저장 중...' : mode === 'create' ? '등록하기' : '수정하기'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

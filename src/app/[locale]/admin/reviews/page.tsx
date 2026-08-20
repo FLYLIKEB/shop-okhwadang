@@ -6,7 +6,11 @@ import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
+
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
+import { Button } from '@/components/ui/button';
+import FormInput from '@/components/ui/FormInput';
+import FormSelect from '@/components/ui/FormSelect';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAdminListPage } from '@/components/shared/hooks/useAdminListPage';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -224,7 +228,7 @@ export default function AdminReviewsPage() {
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
       <AdminPageHeader title={t('title')} />
 
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
+      <section className="surface-card rounded-lg p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <h2 className="typo-body font-semibold">{t('import.title')}</h2>
@@ -240,31 +244,22 @@ export default function AdminReviewsPage() {
                 </li>
               ))}
             </ul>
-            <input
+            <FormInput
+              id="smart-store-file"
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={handleFileChange}
-              className="block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium"
+              className="file:mr-4 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium"
               aria-label={t('import.fileLabel')}
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handlePreviewImport}
-              disabled={!smartStoreFile || isImporting}
-              className="rounded border px-4 py-2 typo-body-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <Button type="button" onClick={handlePreviewImport} disabled={!smartStoreFile || isImporting} variant="outline" size="sm">
               {previewingImport ? t('import.previewing') : t('import.previewButton')}
-            </button>
-            <button
-              type="button"
-              onClick={handleCommitImport}
-              disabled={!smartStoreFile || isImporting || !importPreview}
-              className="rounded bg-primary px-4 py-2 typo-body-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            </Button>
+            <Button type="button" onClick={handleCommitImport} disabled={!smartStoreFile || isImporting || !importPreview} variant="primary" size="sm">
               {committingImport ? t('import.committing') : t('import.commitButton')}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -306,32 +301,34 @@ export default function AdminReviewsPage() {
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
                   {visibleImportRows.length > 5 && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setShowAllImportRows((value) => !value)}
-                      className="rounded border px-3 py-1 text-xs hover:bg-secondary"
+                      variant="outline"
+                      size="sm"
                     >
                       {showAllImportRows
                         ? t('import.showTopRows')
                         : t('import.showAllRows', { count: visibleImportRows.length })}
-                    </button>
+                    </Button>
                   )}
                   {allImportRows.some((row) => row.status === 'failed') && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => {
                         setShowFailedImportRowsOnly((value) => !value);
                         setShowAllImportRows(true);
                       }}
-                      className="rounded border px-3 py-1 text-xs hover:bg-secondary"
+                      variant="outline"
+                      size="sm"
                     >
                       {showFailedImportRowsOnly
                         ? t('import.showAllResults')
                         : t('import.showFailedRows')}
-                    </button>
+                    </Button>
                   )}
                 </div>
-                <div className="overflow-x-auto rounded border bg-background">
+                <div className="overflow-x-auto surface-card rounded border-soft bg-background">
                   <table className="w-full text-xs">
                     <thead className="bg-secondary">
                       <tr>
@@ -349,7 +346,7 @@ export default function AdminReviewsPage() {
                         <th className="px-3 py-2 text-left">{t('import.columns.result')}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-soft typo-body-sm">
                       {importRows.map((row) => (
                         <tr key={`${row.rowNumber}-${row.externalReviewId ?? 'empty'}`}>
                           <td className="px-3 py-2">{row.rowNumber}</td>
@@ -382,59 +379,50 @@ export default function AdminReviewsPage() {
         )}
       </section>
 
-      <section className="space-y-3 rounded-lg border bg-card p-4 shadow-sm">
+      <section className="space-y-3 surface-card rounded-lg p-4">
         <form onSubmit={submitSearch} className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <label className="flex-1 space-y-1">
-            <span className="typo-label text-muted-foreground">{t('filters.searchLabel')}</span>
-            <input
+          <div className="flex-1">
+            <FormInput
+              id="review-search"
+              label={t('filters.searchLabel')}
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               placeholder={t('filters.searchPlaceholder')}
-              className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
             />
-          </label>
-          <label className="space-y-1">
-            <span className="typo-label text-muted-foreground">{t('filters.ratingLabel')}</span>
-            <select
+          </div>
+          <div>
+            <FormSelect
+              id="review-rating"
+              label={t('filters.ratingLabel')}
               value={filters.rating}
               onChange={(event) => setFilter('rating', event.target.value)}
-              className="w-full rounded border bg-background px-3 py-2 typo-body-sm lg:w-32"
-            >
-              <option value="">{t('filters.ratingAll')}</option>
-              {[5, 4, 3, 2, 1].map((rating) => (
-                <option key={rating} value={String(rating)}>
-                  {t('filters.ratingOption', { rating })}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="space-y-1">
-            <span className="typo-label text-muted-foreground">{t('filters.mediaLabel')}</span>
-            <select
+              options={[{ value: '', label: t('filters.ratingAll') }, ...[5, 4, 3, 2, 1].map((rating) => ({ value: String(rating), label: t('filters.ratingOption', { rating }) }))]}
+              className="lg:w-32"
+            />
+          </div>
+          <div>
+            <FormSelect
+              id="review-media"
+              label={t('filters.mediaLabel')}
               value={filters.hasMedia}
               onChange={(event) => setFilter('hasMedia', event.target.value)}
-              className="w-full rounded border bg-background px-3 py-2 typo-body-sm lg:w-36"
-            >
-              <option value="">{t('filters.mediaAll')}</option>
-              <option value="true">{t('filters.mediaOnly')}</option>
-              <option value="false">{t('filters.textOnly')}</option>
-            </select>
-          </label>
-          <label className="space-y-1">
-            <span className="typo-label text-muted-foreground">{t('filters.reviewTypeLabel')}</span>
-            <input
+              options={[{ value: '', label: t('filters.mediaAll') }, { value: 'true', label: t('filters.mediaOnly') }, { value: 'false', label: t('filters.textOnly') }]}
+              className="lg:w-36"
+            />
+          </div>
+          <div>
+            <FormInput
+              id="review-type"
+              label={t('filters.reviewTypeLabel')}
               value={filters.reviewType}
               onChange={(event) => setFilter('reviewType', event.target.value)}
               placeholder={t('filters.reviewTypePlaceholder')}
-              className="w-full rounded border bg-background px-3 py-2 typo-body-sm lg:w-40"
+              className="lg:w-40"
             />
-          </label>
-          <button
-            type="submit"
-            className="rounded bg-primary px-4 py-2 typo-body-sm text-primary-foreground hover:bg-primary/90"
-          >
+          </div>
+          <Button type="submit" variant="primary">
             {t('filters.searchButton')}
-          </button>
+          </Button>
         </form>
 
         <AdminFilterChips
@@ -450,39 +438,25 @@ export default function AdminReviewsPage() {
             {t('bulk.selectedCount', { count: selectedKeys.size })}
           </p>
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => void bulkSetVisibility(false)}
-              disabled={selectedKeys.size === 0 || bulkUpdating}
-              className="rounded border px-3 py-1.5 typo-body-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <Button type="button" onClick={() => void bulkSetVisibility(false)} disabled={selectedKeys.size === 0 || bulkUpdating} variant="outline" size="sm">
               {t('bulk.hide')}
-            </button>
-            <button
-              type="button"
-              onClick={() => void bulkSetVisibility(true)}
-              disabled={selectedKeys.size === 0 || bulkUpdating}
-              className="rounded border px-3 py-1.5 typo-body-sm hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            </Button>
+            <Button type="button" onClick={() => void bulkSetVisibility(true)} disabled={selectedKeys.size === 0 || bulkUpdating} variant="outline" size="sm">
               {t('bulk.show')}
-            </button>
+            </Button>
           </div>
         </div>
       </section>
 
       {selectedReview && (
-        <section className="rounded-lg border bg-card p-4 shadow-sm">
+        <section className="surface-card rounded-lg p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="typo-body font-semibold">
               {t('detail.title', { id: selectedReview.externalReviewId })}
             </h2>
-            <button
-              type="button"
-              onClick={() => setSelectedReview(null)}
-              className="rounded border px-3 py-1 typo-body-sm hover:bg-secondary"
-            >
+            <Button type="button" onClick={() => setSelectedReview(null)} variant="outline" size="sm">
               {t('detail.close')}
-            </button>
+            </Button>
           </div>
           <dl className="grid gap-3 typo-body-sm md:grid-cols-2">
             <DetailItem
@@ -512,14 +486,14 @@ export default function AdminReviewsPage() {
           </dl>
           <div className="mt-4 space-y-2">
             <h3 className="typo-label text-muted-foreground">{t('detail.content')}</h3>
-            <p className="whitespace-pre-wrap rounded border bg-background p-3 typo-body-sm">
+            <p className="whitespace-pre-wrap surface-card rounded border-soft bg-background p-3 typo-body-sm">
               {selectedReview.content ?? t('table.noContent')}
             </p>
           </div>
           {selectedReview.relatedReviewContent && (
             <div className="mt-4 space-y-2">
               <h3 className="typo-label text-muted-foreground">{t('detail.relatedContent')}</h3>
-              <p className="whitespace-pre-wrap rounded border bg-background p-3 typo-body-sm">
+              <p className="whitespace-pre-wrap surface-card rounded border-soft bg-background p-3 typo-body-sm">
                 {selectedReview.relatedReviewContent}
               </p>
             </div>
@@ -530,17 +504,12 @@ export default function AdminReviewsPage() {
               value={replyContent}
               onChange={(event) => setReplyContent(event.target.value)}
               rows={4}
-              className="w-full rounded border bg-background p-3 typo-body-sm"
+              className="w-full surface-card rounded border-soft bg-background p-3 typo-body-sm"
               placeholder={t('reply.placeholder')}
             />
-            <button
-              type="button"
-              onClick={() => void saveReply()}
-              disabled={savingReply}
-              className="rounded bg-primary px-4 py-2 typo-body-sm text-primary-foreground disabled:opacity-50"
-            >
+            <Button type="button" onClick={() => void saveReply()} disabled={savingReply} variant="primary" size="sm">
               {t('reply.save')}
-            </button>
+            </Button>
           </div>
           {selectedReview.imageUrls && selectedReview.imageUrls.length > 0 && (
             <div className="mt-4 space-y-2">
@@ -573,7 +542,7 @@ export default function AdminReviewsPage() {
         totalPages={totalPages}
         onPageChange={setPage}
       >
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="surface-card overflow-x-auto rounded-lg">
           <table className="w-full text-sm">
             <thead className="bg-secondary">
               <tr>
@@ -595,7 +564,7 @@ export default function AdminReviewsPage() {
                 <th className="px-4 py-3 text-right">{t('table.actions')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-soft typo-body-sm">
               {reviews.map((review) => (
                 <tr key={reviewKey(review)} className="hover:bg-secondary/30">
                   <td className="px-4 py-3">
@@ -656,29 +625,12 @@ export default function AdminReviewsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedReview(review);
-                          setReplyContent(review.adminReplyContent ?? '');
-                        }}
-                        className="rounded border px-2 py-1 text-xs hover:bg-secondary"
-                      >
+                      <Button type="button" onClick={() => { setSelectedReview(review); setReplyContent(review.adminReplyContent ?? ''); }} variant="outline" size="sm">
                         {t('actions.detail')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void setVisibility({
-                            id: review.id,
-                            isVisible: !review.isVisible,
-                            source: review.source,
-                          })
-                        }
-                        className="rounded border px-2 py-1 text-xs hover:bg-secondary"
-                      >
+                      </Button>
+                      <Button type="button" onClick={() => void setVisibility({ id: review.id, isVisible: !review.isVisible, source: review.source })} variant="outline" size="sm">
                         {review.isVisible ? t('actions.hide') : t('actions.show')}
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -695,7 +647,7 @@ export default function AdminReviewsPage() {
 
 function ImportSummaryItem({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded border bg-background p-3">
+    <div className="surface-card rounded border-soft bg-background p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="typo-h3 font-semibold">{value}</div>
     </div>
@@ -704,7 +656,7 @@ function ImportSummaryItem({ label, value }: { label: string; value: number }) {
 
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border bg-background p-3">
+    <div className="surface-card rounded border-soft bg-background p-3">
       <dt className="typo-label text-muted-foreground">{label}</dt>
       <dd className="mt-1 break-words">{value}</dd>
     </div>

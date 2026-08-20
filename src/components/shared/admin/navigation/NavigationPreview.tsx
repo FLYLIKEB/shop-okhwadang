@@ -58,7 +58,7 @@ export default function NavigationPreview({ group, items }: NavigationPreviewPro
 
   if (group === 'gnb') {
     return (
-      <div className="surface-card bg-background px-4 py-3">
+      <div className="surface-card px-4 py-3">
         <div className="flex items-center gap-1 typo-body-sm text-foreground">
           <span className="mr-4 font-bold text-primary">옥화당</span>
           {activeItems.length === 0 ? (
@@ -107,7 +107,7 @@ export default function NavigationPreview({ group, items }: NavigationPreviewPro
           <span className="text-muted-foreground">(메뉴 없음)</span>
         ) : (
           activeItems.map((item) => (
-            <span key={item.id} className="hover:text-white flex items-center gap-0.5">
+            <span key={item.id} className="flex items-center gap-0.5 transition-colors hover:text-foreground">
               {item.label}
               <ExternalLink className="h-2.5 w-2.5" />
             </span>

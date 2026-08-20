@@ -9,6 +9,7 @@ import { useRecentSearches } from '@/components/shared/hooks/useRecentSearches';
 import { useUrlModal } from '@/hooks/useUrlModal';
 import { searchApi } from '@/lib/api';
 import { localMessage } from '@/utils/localMessages';
+import { Button } from '@/components/ui/button';
 
 interface SearchInputProps {
   className?: string;
@@ -110,14 +111,16 @@ export default function SearchInput({ className, placeholder = '' }: SearchInput
                 <ul role="listbox" aria-label={localMessage('search.autocompleteResults')}>
                   {suggestions.map((item) => (
                     <li key={item.id}>
-                      <button
+                      <Button
                         type="button"
+                        variant="gray"
+                        size="sm"
                         onClick={() => handleSelectItem(item.name)}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-accent"
+                        className="w-full justify-start rounded-none px-4 py-2 text-sm"
                       >
                         <Search className="h-3 w-3 shrink-0 text-muted-foreground" />
                         {item.name}
-                      </button>
+                      </Button>
                     </li>
                   ))}
                 </ul>
@@ -129,33 +132,39 @@ export default function SearchInput({ className, placeholder = '' }: SearchInput
             <div>
               <div className="flex items-center justify-between px-4 py-2">
                 <span className="text-xs font-medium text-muted-foreground">{localMessage('search.recentSearches')}</span>
-                <button
+                <Button
                   type="button"
+                  variant="gray"
+                  size="sm"
                   onClick={clearSearches}
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className="h-auto min-h-0 rounded-none px-1 py-0 text-xs"
                 >
                   {localMessage('search.clearAll')}
-                </button>
+                </Button>
               </div>
               <ul role="listbox" aria-label={localMessage('search.recentSearches')}>
                 {recentSearches.map((term) => (
                   <li key={term} className="flex items-center">
-                    <button
+                    <Button
                       type="button"
+                      variant="gray"
+                      size="sm"
                       onClick={() => handleSelectItem(term)}
-                      className="flex flex-1 items-center gap-2 px-4 py-2 text-sm hover:bg-accent"
+                      className="flex-1 justify-start rounded-none px-4 py-2 text-sm"
                     >
                       <Clock className="h-3 w-3 shrink-0 text-muted-foreground" />
                       {term}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="gray"
+                      size="icon"
                       onClick={() => removeSearch(term)}
                       aria-label={localMessage('search.deleteTerm', { term })}
-                      className="px-3 py-2 text-muted-foreground hover:text-foreground"
+                      className="h-9 min-h-9 w-9 rounded-none px-3 py-2 text-muted-foreground"
                     >
                       <X className="h-3 w-3" />
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -170,15 +179,17 @@ export default function SearchInput({ className, placeholder = '' }: SearchInput
               <ul role="listbox" aria-label={localMessage('search.popularSearches')}>
                 {popularKeywords.map((keyword, index) => (
                   <li key={keyword}>
-                    <button
+                    <Button
                       type="button"
+                      variant="gray"
+                      size="sm"
                       onClick={() => handleSelectItem(keyword)}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-accent"
+                      className="w-full justify-start rounded-none px-4 py-2 text-sm"
                     >
                       <TrendingUp className="h-3 w-3 shrink-0 text-muted-foreground" />
                       <span className="mr-1 text-xs font-medium text-primary">{index + 1}</span>
                       {keyword}
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>

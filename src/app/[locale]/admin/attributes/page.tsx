@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminEmptyState } from '@/components/shared/admin/AdminStates';
 import EntitySelector from '@/components/shared/admin/page-editor/EntitySelector';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { attributesApi } from '@/lib/api';
@@ -251,7 +252,7 @@ export default function AdminAttributesPage() {
 
       <form
         onSubmit={(event) => void handleSubmit(event)}
-        className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-2"
+        className="surface-card grid gap-3 p-4 md:grid-cols-2"
       >
         <label className="space-y-1">
           <span className="typo-label text-muted-foreground">{t('code')}</span>
@@ -259,7 +260,7 @@ export default function AdminAttributesPage() {
             value={form.code}
             onChange={(event) => updateForm('code', event.target.value)}
             required
-            className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
+            className="w-full field-soft px-3 py-2 typo-body-sm"
           />
         </label>
         <label className="space-y-1">
@@ -268,7 +269,7 @@ export default function AdminAttributesPage() {
             value={form.name}
             onChange={(event) => updateForm('name', event.target.value)}
             required
-            className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
+            className="w-full field-soft px-3 py-2 typo-body-sm"
           />
         </label>
         <label className="space-y-1">
@@ -276,7 +277,7 @@ export default function AdminAttributesPage() {
           <input
             value={form.nameEn}
             onChange={(event) => updateForm('nameEn', event.target.value)}
-            className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
+            className="w-full field-soft px-3 py-2 typo-body-sm"
           />
         </label>
         <label className="space-y-1">
@@ -284,7 +285,7 @@ export default function AdminAttributesPage() {
           <select
             value={form.inputType}
             onChange={(event) => updateForm('inputType', event.target.value as InputType)}
-            className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
+            className="w-full field-soft px-3 py-2 typo-body-sm"
           >
             <option value="text">text</option>
             <option value="select">select</option>
@@ -296,7 +297,7 @@ export default function AdminAttributesPage() {
           <select
             value={form.parentId}
             onChange={(event) => updateForm('parentId', event.target.value)}
-            className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
+            className="w-full field-soft px-3 py-2 typo-body-sm"
           >
             <option value="">{t('none')}</option>
             {parentOptions.map((attribute) => (
@@ -311,12 +312,12 @@ export default function AdminAttributesPage() {
           <input
             value={form.relatedTypeIds}
             onChange={(event) => updateForm('relatedTypeIds', event.target.value)}
-            className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
+            className="w-full field-soft px-3 py-2 typo-body-sm"
           />
         </label>
         <div className="space-y-2 md:col-span-2">
           <span className="typo-label text-muted-foreground">{t('validValues')}</span>
-          <div className="flex flex-wrap gap-2 rounded border bg-background p-2">
+          <div className="flex flex-wrap gap-2 field-soft p-2">
             {validValueTags.map((value) => (
               <span
                 key={value}
@@ -351,12 +352,12 @@ export default function AdminAttributesPage() {
                 }
               }}
               placeholder={t('validValuePlaceholder')}
-              className="min-w-0 flex-1 rounded border bg-background px-3 py-2 typo-body-sm"
+              className="min-w-0 flex-1 field-soft px-3 py-2 typo-body-sm"
             />
             <button
               type="button"
               onClick={addValidValueDraft}
-              className="rounded border px-3 py-2 typo-body-sm hover:bg-secondary"
+              className="border-soft rounded-md px-3 py-2 typo-body-sm hover:bg-secondary"
             >
               {t('addValidValue')}
             </button>
@@ -368,7 +369,7 @@ export default function AdminAttributesPage() {
             type="number"
             value={form.sortOrder}
             onChange={(event) => updateForm('sortOrder', event.target.value)}
-            className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
+            className="w-full field-soft px-3 py-2 typo-body-sm"
           />
         </label>
         <div className="flex items-end gap-4">
@@ -407,7 +408,7 @@ export default function AdminAttributesPage() {
         </div>
       </form>
 
-      <section className="space-y-4 rounded-lg border bg-card p-4">
+      <section className="surface-card space-y-4 p-4">
         <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="typo-h3">{t('valueOptionsTitle')}</h2>
@@ -421,14 +422,14 @@ export default function AdminAttributesPage() {
             <button
               type="button"
               onClick={() => void loadValueOptions(selectedAttribute)}
-              className="rounded border px-3 py-2 typo-body-sm hover:bg-secondary"
+              className="border-soft rounded-md px-3 py-2 typo-body-sm hover:bg-secondary"
             >
               {t('refreshValueOptions')}
             </button>
           )}
         </div>
         {!selectedAttribute && (
-          <p className="rounded border border-dashed p-4 text-center typo-body-sm text-muted-foreground">
+          <p className="border-soft border-dashed p-4 text-center typo-body-sm text-muted-foreground">
             {t('selectAttributeForValues')}
           </p>
         )}
@@ -436,21 +437,21 @@ export default function AdminAttributesPage() {
           <p className="p-4 text-center typo-body-sm text-muted-foreground">{t('loadingValueOptions')}</p>
         )}
         {selectedAttribute && !loadingValues && valueOptions.length === 0 && (
-          <p className="rounded border border-dashed p-4 text-center typo-body-sm text-muted-foreground">
+          <p className="border-soft border-dashed p-4 text-center typo-body-sm text-muted-foreground">
             {t('emptyValueOptions')}
           </p>
         )}
         {selectedAttribute && !loadingValues && valueOptions.length > 0 && (
           <div className="space-y-3">
             {valueOptions.map((option) => (
-              <article key={option.value} className="space-y-3 rounded-lg border p-3">
+              <article key={option.value} className="space-y-3 surface-card p-3">
                 <div className="grid gap-3 md:grid-cols-3 md:items-end">
                   <label className="space-y-1">
                     <span className="typo-label text-muted-foreground">{t('valueCode')}</span>
                     <input
                       value={option.value}
                       readOnly
-                      className="w-full rounded border bg-secondary px-3 py-2 typo-body-sm"
+                      className="w-full field-soft px-3 py-2 typo-body-sm"
                     />
                   </label>
                   <label className="space-y-1">
@@ -458,7 +459,7 @@ export default function AdminAttributesPage() {
                     <input
                       value={valueOptionDrafts[option.value] ?? ''}
                       onChange={(event) => handleValueOptionDraftChange(option.value, event.target.value)}
-                      className="w-full rounded border bg-background px-3 py-2 typo-body-sm"
+                      className="w-full field-soft px-3 py-2 typo-body-sm"
                     />
                   </label>
                   <button
@@ -493,9 +494,9 @@ export default function AdminAttributesPage() {
         )}
       </section>
 
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="admin-surface overflow-x-auto">
         <table className="w-full typo-body-sm">
-          <thead className="bg-secondary">
+          <thead className="admin-table-head">
             <tr>
               <th className="px-4 py-3 text-left">{t('code')}</th>
               <th className="px-4 py-3 text-left">{t('name')}</th>
@@ -504,7 +505,7 @@ export default function AdminAttributesPage() {
               <th className="px-4 py-3 text-right">{t('delete')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-border">
             {attributes.map((attribute) => (
               <tr
                 key={attribute.id}
@@ -537,7 +538,7 @@ export default function AdminAttributesPage() {
           </tbody>
         </table>
         {!loading && attributes.length === 0 && (
-          <p className="p-6 text-center typo-body-sm text-muted-foreground">{t('empty')}</p>
+          <AdminEmptyState title={t('empty')} className="rounded-none border-0" />
         )}
       </div>
     </div>

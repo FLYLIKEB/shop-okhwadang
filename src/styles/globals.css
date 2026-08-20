@@ -1786,6 +1786,17 @@ h3 {
   background: var(--checkout-toss-background);
 }
 
+.toss-admin__header,
+.toss-admin__sidebar {
+  background: var(--checkout-toss-surface);
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-admin__header [class*='border-soft'],
+.toss-admin__sidebar [class*='border-soft'] {
+  border-color: var(--checkout-toss-border);
+}
+
 .toss-admin .surface-card,
 .toss-admin .admin-surface {
   border-color: transparent;

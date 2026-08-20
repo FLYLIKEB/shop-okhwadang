@@ -6,6 +6,7 @@ import type { NavigationItem } from '@/lib/api';
 import { GROUP_INFO, type NavGroup } from './navigationGroups';
 import Modal from '@/components/ui/Modal';
 import FormInput from '@/components/ui/FormInput';
+import FormSelect from '@/components/ui/FormSelect';
 import { Button } from '@/components/ui/button';
 
 export interface NavigationFormData {
@@ -100,30 +101,25 @@ export default function NavigationFormModal({
           </p>
 
           <div>
-            <label htmlFor="nav-parent" className="mb-1 block typo-body-sm font-semibold">
-              상위 메뉴
-            </label>
-            <select
+            <FormSelect
               id="nav-parent"
+              label="상위 메뉴"
+              options={[
+                { value: '', label: '없음 (최상위 메뉴)' },
+                ...flatItems
+                  .filter((i) => initial === null || i.id !== initial.id)
+                  .map((i) => ({ value: String(i.id), label: i.label })),
+              ]}
               value={formData.parent_id ?? ''}
               onChange={(e) => setFormData({ ...formData, parent_id: e.target.value ? Number(e.target.value) : null })}
-              className="field-soft w-full rounded-xl border px-3 py-3 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">없음 (최상위 메뉴)</option>
-              {flatItems
-                .filter((i) => initial === null || i.id !== initial.id)
-                .map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.label}
-                  </option>
-                ))}
-            </select>
+              className="border-soft rounded-xl py-3 typo-body-sm"
+            />
             <p className="mt-1 typo-body-sm text-muted-foreground">
               상위 메뉴를 선택하면 해당 메뉴의 <b>하위(드롭다운) 메뉴</b>로 등록됩니다. 최상위 메뉴로 만들려면 &quot;없음&quot;을 선택하세요.
             </p>
           </div>
 
-          <div className="rounded-xl bg-muted/60 px-4 py-3">
+          <div className="surface-card px-4 py-3">
             <div className="flex items-center gap-2">
               <input
                 id="nav-active"

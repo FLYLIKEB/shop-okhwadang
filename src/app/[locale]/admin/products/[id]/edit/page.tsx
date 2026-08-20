@@ -6,6 +6,8 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { adminProductsApi } from '@/lib/api';
 import type { ProductDetail } from '@/lib/api';
 import ProductFormPage from '@/components/shared/admin/ProductFormPage';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminErrorState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
 
 export default function AdminProductEditPage() {
   const params = useParams();
@@ -31,16 +33,18 @@ export default function AdminProductEditPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <p className="text-muted-foreground">불러오는 중...</p>
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
+        <AdminPageHeader title="상품 수정" />
+        <AdminLoadingState title="불러오는 중..." />
       </div>
     );
   }
 
   if (notFound || !product) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8 text-center">
-        <p className="text-muted-foreground">상품을 찾을 수 없습니다.</p>
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
+        <AdminPageHeader title="상품 수정" />
+        <AdminErrorState title="상품을 찾을 수 없습니다." />
       </div>
     );
   }

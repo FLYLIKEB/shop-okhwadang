@@ -23,6 +23,9 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { toastMessage } from '@/utils/toastMessages';
+import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import { AdminEmptyState } from '@/components/shared/admin/AdminStates';
+import { Button } from '@/components/ui/button';
 
 interface FlattenedCategory extends AdminCategory {
   depth: number;
@@ -239,56 +242,53 @@ export default function AdminCategoriesPage() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">카테고리 관리</h1>
-          <button
-            onClick={handleOpenCreate}
-            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
-          >
-            + 카테고리 추가
-          </button>
-        </div>
-
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
+        <AdminPageHeader
+          title="카테고리 관리"
+          actions={<Button onClick={handleOpenCreate}>+ 카테고리 추가</Button>}
+        />
+          {/* Keep category-specific drag/drop table while using the shared admin surface. */}
         {categories.length === 0 ? (
-          <p className="py-8 text-center text-muted-foreground">카테고리가 없습니다.</p>
+          <AdminEmptyState title="카테고리가 없습니다." />
         ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-secondary">
-                <tr>
-                  <th className="px-4 py-3 text-left w-12"></th>
-                  <th className="px-4 py-3 text-left">ID</th>
-                  <th className="px-4 py-3 text-left">카테고리명</th>
-                  <th className="px-4 py-3 text-left">슬러그</th>
-                  <th className="px-4 py-3 text-left">상태</th>
-                  <th className="px-4 py-3 text-center">순서</th>
-                  <th className="px-4 py-3 text-right">액션</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                <SortableContext
-                  items={rootCategoryIds}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {flattenedRootCategories.map((cat) => (
-                    <SortableCategoryRow
-                      key={cat.id}
-                      category={cat}
-                      categories={categories}
-                      expandedIds={expandedIds}
-                      onToggleExpand={toggleExpand}
-                      onEdit={handleOpenEdit}
-                      onDelete={handleDelete}
-                      onMoveUp={moveUp}
-                      onMoveDown={moveDown}
-                      getSiblings={getSiblings}
-                      isDraggable={cat.depth === 0}
-                    />
-                  ))}
-                </SortableContext>
-              </tbody>
-            </table>
+          <div className="admin-surface overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="admin-table-head">
+                  <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="admin-row w-12 border-b border-border px-4 py-3"></th>
+                    <th className="admin-row border-b border-border px-4 py-3">ID</th>
+                    <th className="admin-row border-b border-border px-4 py-3">카테고리명</th>
+                    <th className="admin-row border-b border-border px-4 py-3">슬러그</th>
+                    <th className="admin-row border-b border-border px-4 py-3">상태</th>
+                    <th className="admin-row border-b border-border px-4 py-3 text-center">순서</th>
+                    <th className="admin-row border-b border-border px-4 py-3 text-right">액션</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  <SortableContext
+                    items={rootCategoryIds}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {flattenedRootCategories.map((cat) => (
+                      <SortableCategoryRow
+                        key={cat.id}
+                        category={cat}
+                        categories={categories}
+                        expandedIds={expandedIds}
+                        onToggleExpand={toggleExpand}
+                        onEdit={handleOpenEdit}
+                        onDelete={handleDelete}
+                        onMoveUp={moveUp}
+                        onMoveDown={moveDown}
+                        getSiblings={getSiblings}
+                        isDraggable={cat.depth === 0}
+                      />
+                    ))}
+                  </SortableContext>
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

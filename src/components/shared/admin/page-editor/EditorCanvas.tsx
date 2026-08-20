@@ -52,7 +52,7 @@ export default function EditorCanvas({
   }
 
   return (
-    <div className="cms-editor__canvas flex-1 overflow-y-auto p-5">
+    <div className="cms-editor__canvas flex-1 overflow-y-auto bg-muted/20 p-5">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

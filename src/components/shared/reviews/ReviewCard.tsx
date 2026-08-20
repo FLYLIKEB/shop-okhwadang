@@ -10,6 +10,7 @@ import { getClientLocale } from '@/utils/clientLocale';
 import { localMessage } from '@/utils/localMessages';
 import { handleApiError } from '@/utils/error';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 interface ReviewCardProps {
   review: ReviewItem;
@@ -126,18 +127,20 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
           <div className="flex flex-wrap items-start gap-x-2 gap-y-1">
             <p className="text-sm text-foreground leading-relaxed">{visibleContent}</p>
             {canTranslate && (
-              <button
+              <Button
                 type="button"
+                variant="gray"
+                size="sm"
                 onClick={handleTranslate}
                 disabled={isTranslating}
-                className="text-xs font-medium text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground disabled:cursor-wait disabled:opacity-60"
+                className="h-auto min-h-0 rounded-none px-1 py-0 text-xs font-medium underline underline-offset-2"
               >
                 {isTranslating
                   ? localMessage('review.translating')
                   : showTranslation
                     ? localMessage('review.showOriginal')
                     : localMessage('review.translate')}
-              </button>
+              </Button>
             )}
           </div>
           {showTranslation && translatedContent && (
