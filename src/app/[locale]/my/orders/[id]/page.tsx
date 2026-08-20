@@ -396,7 +396,11 @@ export default function OrderDetailPage() {
                   placeholder={t('serviceRequests.detailPlaceholder')}
                 />
               </label>
-              <Button type="button" onClick={submitServiceRequest}>
+              <Button
+                type="button"
+                onClick={submitServiceRequest}
+                className={requestType === 'cancel' ? 'toss-account__cancel-action' : undefined}
+              >
                 {isImmediatePendingCancel ? t('serviceRequests.immediateCancelSubmit') : t('serviceRequests.submit')}
               </Button>
             </div>

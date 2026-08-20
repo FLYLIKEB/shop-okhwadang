@@ -196,12 +196,12 @@ export default function AddressPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <div className="mb-6 flex items-center gap-2">
-        <Link href="/my" className="text-sm text-muted-foreground hover:underline">
+      <div className="toss-account__subpage-header mb-6 flex items-center gap-2">
+        <Link href="/my" className="text-sm text-muted-foreground transition-colors hover:text-primary">
           {tMy('title')}
         </Link>
         <span className="text-muted-foreground">/</span>
-        <h1 className="typo-h2">{t('title')}</h1>
+        <h1 className="checkout-toss-title typo-h2">{t('title')}</h1>
       </div>
 
       {loading ? (
@@ -211,7 +211,7 @@ export default function AddressPage() {
           ))}
         </div>
       ) : error !== null ? (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-12 text-center">
+        <div className="toss-account__error rounded-2xl bg-destructive/5 p-12 text-center">
           <p className="text-destructive">{error}</p>
           <button
             onClick={() => void fetchAddresses()}
@@ -231,7 +231,7 @@ export default function AddressPage() {
           {addresses.length > 0 && (
             <ul className="mb-4 space-y-3">
               {addresses.map((addr) => (
-                <li key={addr.id} className="rounded-lg border p-4">
+                <li key={addr.id} className="toss-account__address-card surface-card p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 text-sm space-y-0.5">
                       <div className="flex items-center gap-2">
@@ -257,20 +257,20 @@ export default function AddressPage() {
                       {!addr.isDefault && (
                         <button
                           onClick={() => handleSetDefault(addr.id)}
-                          className="rounded border px-2 py-1 text-xs hover:bg-muted transition-colors"
+                          className="toss-account__address-action rounded-xl bg-muted px-3 py-2 text-xs transition-colors hover:bg-primary-soft hover:text-primary"
                         >
                           {t('setDefault')}
                         </button>
                       )}
                       <button
                         onClick={() => openEdit(addr)}
-                        className="rounded border px-2 py-1 text-xs hover:bg-muted transition-colors"
+                        className="toss-account__address-action rounded-xl bg-muted px-3 py-2 text-xs transition-colors hover:bg-primary-soft hover:text-primary"
                       >
                         {t('edit')}
                       </button>
                       <button
                         onClick={() => handleDelete(addr.id)}
-                        className="rounded border px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                        className="toss-account__address-action toss-account__address-action--danger rounded-xl bg-destructive/5 px-3 py-2 text-xs text-destructive transition-colors hover:bg-destructive/10"
                       >
                         {t('delete')}
                       </button>
@@ -284,7 +284,7 @@ export default function AddressPage() {
           {!showForm && addresses.length < 10 && (
             <button
               onClick={openCreate}
-              className="w-full rounded-lg border-2 border-dashed py-3 text-sm text-muted-foreground hover:border-foreground/40 hover:text-foreground transition-colors"
+              className="toss-account__add-address w-full rounded-xl bg-card py-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {t('addAddress')}
             </button>
@@ -293,7 +293,7 @@ export default function AddressPage() {
           {showForm && (
             <form
               onSubmit={handleSubmit}
-              className="rounded-lg border p-6 space-y-4 bg-muted/20"
+              className="toss-account__address-form surface-card space-y-4 p-6"
             >
               <h2 className="text-base font-semibold">
                 {editingId !== null ? t('editAddress') : t('newAddress')}
@@ -348,7 +348,7 @@ export default function AddressPage() {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="flex-1 rounded-md border py-2 text-sm font-medium hover:bg-muted transition-colors"
+                  className="toss-account__address-action flex-1 rounded-xl bg-muted py-2 text-sm font-medium transition-colors hover:bg-secondary"
                 >
                   {t('cancel')}
                 </button>

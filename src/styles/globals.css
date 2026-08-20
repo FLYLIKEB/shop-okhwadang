@@ -1353,6 +1353,218 @@ h3 {
   backdrop-filter: blur(2px);
 }
 
+/* ── Toss-style account page ──────────────────────────────────── */
+.toss-account {
+  background: var(--checkout-toss-background);
+}
+
+.toss-account__title {
+  letter-spacing: -0.035em;
+}
+
+.toss-account__profile,
+.toss-account__orders {
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account__profile .typo-h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.toss-account .toss-account__edit {
+  min-height: 2.75rem;
+  background-color: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.toss-account .toss-account__edit:hover {
+  background-color: var(--checkout-toss-input);
+}
+
+.toss-account__quick-grid {
+  grid-auto-rows: 1fr;
+}
+
+.toss-account .toss-account__quick-link {
+  min-height: 7rem;
+  background-color: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+  letter-spacing: -0.02em;
+}
+
+.toss-account .toss-account__quick-link:hover {
+  background-color: var(--checkout-toss-surface);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account__quick-link svg {
+  color: var(--checkout-toss-muted);
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.toss-account__quick-link:hover svg {
+  color: var(--checkout-toss-primary);
+  transform: translateY(-1px);
+}
+
+.toss-account__orders h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.toss-account__order-link {
+  border-radius: 0.75rem;
+  padding-inline: 0.75rem;
+}
+
+.toss-account__order-link:hover {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account .toss-account__order-card {
+  background-color: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account__order-card:hover {
+  background-color: var(--checkout-toss-surface);
+  box-shadow: 0 6px 20px rgb(25 31 40 / 8%);
+}
+
+.toss-account .toss-account__recent-order {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-account__address-card,
+.toss-account__address-form {
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account__address-action {
+  border: 0;
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-account__address-action--danger {
+  color: var(--color-destructive);
+}
+
+.toss-account__add-address {
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account__recent-item {
+  background: var(--checkout-toss-input);
+}
+
+.toss-account__recent-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toss-account__order-item-summary {
+  letter-spacing: -0.015em;
+}
+
+.toss-account__order-extra {
+  margin-left: 0.25rem;
+}
+
+/* ── Toss-style recently viewed floating widget ───────────────── */
+.toss-recent-widget__panel {
+  min-width: 15rem;
+  border: 0;
+  border-radius: 1.125rem;
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 10px 28px rgb(25 31 40 / 12%);
+}
+
+.toss-recent-widget__item {
+  border-radius: 0.75rem;
+}
+
+.toss-recent-widget__item:hover {
+  background: var(--checkout-toss-input);
+}
+
+.toss-recent-widget__toggle {
+  border: 0;
+  background: var(--checkout-toss-surface);
+  box-shadow: 0 6px 18px rgb(25 31 40 / 12%);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-recent-widget__toggle:hover {
+  background: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary-hover);
+  transform: translateY(-1px);
+}
+
+.toss-recent-widget__toggle:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.toss-recent-widget__close {
+  border: 0;
+  background: var(--checkout-toss-input);
+  color: var(--checkout-toss-muted);
+}
+
+.toss-recent-widget__close:hover {
+  background: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-recent-widget__more {
+  color: var(--checkout-toss-muted);
+}
+
+.toss-recent-widget__more:hover {
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account > * {
+  color: var(--checkout-toss-foreground);
+}
+
+.toss-account [class*='rounded-lg'][class*='border']:not(input):not(select):not(textarea):not(button),
+.toss-account [class*='rounded-md'][class*='border']:not(input):not(select):not(textarea):not(button) {
+  border-color: transparent;
+  background: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account [class*='border-b'],
+.toss-account [class*='border-t'] {
+  border-color: transparent;
+}
+
+.toss-account [class*='bg-foreground'] {
+  background: var(--checkout-toss-primary);
+  color: var(--checkout-toss-surface);
+}
+
+.toss-account [class*='bg-foreground']:hover {
+  background: var(--checkout-toss-primary-hover);
+}
+
+.toss-account [class*='border-dashed'] {
+  border-color: color-mix(in srgb, var(--checkout-toss-primary) 32%, transparent);
+  background: transparent;
+  box-shadow: none;
+}
+
+.toss-account [class*='border-dashed']:hover {
+  border-color: var(--checkout-toss-primary);
+  background: var(--checkout-toss-primary-soft);
+}
+
 @media (max-width: 767px) {
   .toss-footer__inner {
     padding-block: 2.5rem;
@@ -1380,4 +1592,46 @@ h3 {
   .checkout-toss-theme .checkout-toss-section {
     padding: 1.25rem;
   }
+}
+
+/* Account subpages use surface and spacing instead of outlined boxes. */
+.toss-account button[class*='border'],
+.toss-account a[class*='border'] {
+  border: 0;
+  background-color: var(--checkout-toss-surface);
+  box-shadow: var(--checkout-toss-shadow);
+}
+
+.toss-account button[class*='border']:hover,
+.toss-account a[class*='border']:hover {
+  background-color: var(--checkout-toss-input);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account [class~='bg-muted/20'],
+.toss-account [class~='bg-muted/30'],
+.toss-account [class~='bg-muted/40'] {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-account .toss-account__recent-item,
+.toss-account .toss-account__address-action,
+.toss-account .toss-account__add-address {
+  background-color: var(--checkout-toss-surface);
+}
+
+.toss-account .toss-account__add-address:hover,
+.toss-account .toss-account__address-action:hover {
+  background-color: var(--checkout-toss-primary-soft);
+  color: var(--checkout-toss-primary);
+}
+
+.toss-account .toss-account__cancel-action,
+.toss-account .toss-account__cancel-action:hover {
+  background-color: var(--checkout-toss-primary);
+  color: var(--checkout-toss-surface);
+}
+
+.toss-account .toss-account__cancel-action:hover {
+  background-color: var(--checkout-toss-primary-hover);
 }

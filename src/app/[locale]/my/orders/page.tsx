@@ -3,15 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { ordersApi } from '@/lib/api';
-import type { OrderResponse } from '@/lib/api';
-import { formatCurrency, type Locale } from '@/utils/currency';
-import { formatLongDate } from '@/utils/date';
+import { ordersApi, productsApi } from '@/lib/api';
+import type { OrderResponse, Product } from '@/lib/api';
+import { type Locale } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
-import StatusBadge from '@/components/shared/common/StatusBadge';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { OrderSummaryCard } from '@/components/shared/account/OrderSummaryCard';
 
 const PAGE_LIMIT = 10;
 
@@ -22,6 +21,7 @@ export default function OrdersPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [total, setTotal] = useState(0);
+  const [products, setProducts] = useState<Map<number, Product>>(new Map());
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +31,17 @@ export default function OrdersPage() {
       const res = await ordersApi.getList({ page, limit: PAGE_LIMIT, locale });
       setOrders(res.items);
       setTotal(res.total);
+      const productIds = [...new Set(res.items.flatMap((order) => order.items.map((item) => item.productId)))];
+      if (productIds.length === 0) {
+        setProducts(new Map());
+        return;
+      }
+      try {
+        const productItems = await productsApi.getBulk(productIds, locale);
+        setProducts(new Map(productItems.map((product) => [product.id, product])));
+      } catch {
+        setProducts(new Map());
+      }
     },
     {
       errorMessage: tMy('loadOrdersError'),
@@ -56,12 +67,12 @@ export default function OrdersPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-6 flex items-center gap-2">
-        <Link href="/my" className="text-sm text-muted-foreground hover:underline">
+      <div className="toss-account__subpage-header mb-6 flex items-center gap-2">
+        <Link href="/my" className="text-sm text-muted-foreground transition-colors hover:text-primary">
           {tMy('title')}
         </Link>
         <span className="text-muted-foreground">/</span>
-        <h1 className="text-xl font-bold">{t('orderHistory')}</h1>
+        <h1 className="checkout-toss-title typo-h2">{t('orderHistory')}</h1>
       </div>
 
       {loading ? (
@@ -95,30 +106,13 @@ export default function OrdersPage() {
           <ul className="space-y-4">
             {orders.map((order) => (
               <li key={order.id}>
-                <Link
+                <OrderSummaryCard
+                  order={order}
+                  products={products}
+                  locale={locale}
                   href={`/my/orders/${order.id}`}
-                  className="block surface-card p-4 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{order.orderNumber}</span>
-                        <StatusBadge status={order.status} />
-                      </div>
-                      <p className="text-sm truncate">
-                        {order.items[0]?.productName}
-                        {order.items.length > 1 &&
-                          tMy('additionalItems', { count: order.items.length - 1 })}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatLongDate(order.createdAt, locale)}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-semibold">{formatCurrency(order.totalAmount, locale)}</p>
-                    </div>
-                  </div>
-                </Link>
+                  moreLabel={order.items.length > 1 ? tMy('additionalItems', { count: order.items.length - 1 }) : undefined}
+                />
               </li>
             ))}
           </ul>

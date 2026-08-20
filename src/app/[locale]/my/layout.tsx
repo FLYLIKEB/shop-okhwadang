@@ -5,5 +5,5 @@ export const metadata: Metadata = {
 };
 
 export default function MyLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <div className="toss-account checkout-toss-theme min-h-screen">{children}</div>;
 }

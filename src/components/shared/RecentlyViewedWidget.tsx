@@ -26,20 +26,20 @@ export default function RecentlyViewedWidget() {
   return (
     <div
       className={cn(
-        'fixed right-4 z-50 flex flex-col items-end gap-2 md:bottom-20',
+        'toss-recent-widget fixed right-4 z-50 flex flex-col items-end gap-2 md:bottom-20',
         hasMobileBottomCta ? 'bottom-40' : 'bottom-20',
       )}
     >
       {isOpen && (
-        <div className="flex flex-col gap-1 rounded-lg border bg-background shadow-lg p-2">
+        <div className="toss-recent-widget__panel flex flex-col gap-1 rounded-lg border bg-background p-2 shadow-lg">
           {preview.map((item) => (
             <Link
               key={item.id}
               href={`/products/${item.slug}`}
-              className="flex items-center gap-2 rounded-md p-1 hover:bg-muted transition-colors"
+              className="toss-recent-widget__item flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted"
               title={item.name}
             >
-              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded border bg-muted">
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
                 {item.thumbnail ? (
                   <Image
                     src={item.thumbnail}
@@ -65,7 +65,7 @@ export default function RecentlyViewedWidget() {
           {items.length > 3 && (
             <Link
               href="/my/recently-viewed"
-              className="text-center text-xs text-muted-foreground hover:underline py-1"
+              className="toss-recent-widget__more py-1 text-center text-xs text-muted-foreground hover:underline"
             >
               {localMessage('recentlyViewedWidget.more', { count: items.length })}
             </Link>

@@ -541,7 +541,7 @@
       "preparing": "상품준비중",
       "shipped": "배송중",
       "delivered": "배송완료",
-      "cancelled": "주문취소",
+      "cancelled": "취소됨",
       "refunded": "환불완료",
       "refund_requested": "환불요청",
       "completed": "주문완료"
@@ -760,7 +760,7 @@
         "preparing": "상품준비중",
         "shipped": "배송중",
         "delivered": "배송완료",
-        "cancelled": "주문취소",
+        "cancelled": "취소됨",
         "refunded": "환불완료",
         "refund_requested": "환불요청",
         "completed": "구매확정"
@@ -771,7 +771,7 @@
         "preparing": "상품준비중",
         "shipped": "배송중",
         "delivered": "배송완료",
-        "cancelled": "주문취소",
+        "cancelled": "취소됨",
         "refunded": "환불완료",
         "refund_requested": "환불요청",
         "completed": "구매확정"

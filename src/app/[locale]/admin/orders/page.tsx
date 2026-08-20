@@ -23,7 +23,7 @@ const STATUS_FILTERS = [
   { label: '배송중', value: 'shipped' },
   { label: '배송완료', value: 'delivered' },
   { label: '구매확정', value: 'completed' },
-  { label: '주문취소', value: 'cancelled' },
+  { label: '취소됨', value: 'cancelled' },
   { label: '환불요청', value: 'refund_requested' },
   { label: '환불완료', value: 'refunded' },
 ] as const;
