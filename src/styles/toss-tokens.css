@@ -156,7 +156,7 @@ html[data-theme='dark'] {
 
 .toss-product-detail__title {
   font-family: var(--font-body);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.4;
