@@ -238,10 +238,6 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const basePrice = normalizedSalePrice ?? normalizedPrice
   const unitPrice = basePrice + optionPriceAdjustment
   const totalPrice = unitPrice * quantity
-  const discountPercent = useMemo(() => {
-    if (!normalizedSalePrice || normalizedSalePrice >= normalizedPrice || normalizedPrice <= 0) return 0
-    return Math.round(((normalizedPrice - normalizedSalePrice) / normalizedPrice) * 100)
-  }, [normalizedPrice, normalizedSalePrice])
 
 
   const handleIncrease = useCallback(() => {
@@ -424,7 +420,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Name */}
           <div className="flex items-center justify-between gap-3">
-            <h1 className="min-w-0 toss-product-detail__title text-foreground">{product.name}</h1>
+            <h1 className="min-w-0 toss-product-detail__title font-body text-foreground">{product.name}</h1>
             <ProductRatingSummary
               rating={product.rating}
               reviewCount={product.reviewCount}
@@ -442,13 +438,6 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             <div className="flex flex-col gap-1">
               <div className="font-body text-foreground">
                 <PriceDisplay price={normalizedPrice} salePrice={normalizedSalePrice} size="lg" locale={locale} />
-              </div>
-              <div className="flex items-center gap-2">
-                {discountPercent > 0 && (
-                  <span className="tag-clay tag-nokni rounded-full px-2 py-1 typo-label font-semibold">
-                    {t('discountOff', { percent: discountPercent })}
-                  </span>
-                )}
               </div>
             </div>
           </div>

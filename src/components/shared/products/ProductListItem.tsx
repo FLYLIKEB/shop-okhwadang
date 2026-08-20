@@ -82,7 +82,7 @@ function ProductListItem({
 
       <div className="flex flex-1 flex-col justify-center gap-1">
         <div className="flex items-center justify-between gap-2">
-          <p className="min-w-0 typo-title-sm line-clamp-1 text-card-foreground">{name}</p>
+          <p className="product-list-item__title min-w-0 typo-title-sm font-body line-clamp-1 text-card-foreground">{name}</p>
           <ProductRatingSummary rating={rating} reviewCount={reviewCount} />
         </div>
         <div className="flex items-center gap-2">

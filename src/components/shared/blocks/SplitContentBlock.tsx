@@ -37,7 +37,7 @@ export default function SplitContentBlock({ content }: Props) {
         {subtitle && (
           <p
             className={cn(
-              'animate-fade-in-up typo-body-sm font-body font-semibold uppercase tracking-widest text-muted-foreground',
+              'toss-split-content__body animate-fade-in-up typo-body-sm font-body font-semibold uppercase tracking-widest text-muted-foreground',
               isLarge ? 'mb-6' : 'mb-5',
             )}
             style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}
@@ -47,7 +47,7 @@ export default function SplitContentBlock({ content }: Props) {
         )}
         <h2
           className={cn(
-            'animate-fade-in-up font-display text-foreground leading-snug',
+            'toss-split-content__title animate-fade-in-up font-display text-foreground leading-snug',
             isLarge
               ? 'text-3xl lg:text-4xl'
               : isCompact
@@ -62,7 +62,7 @@ export default function SplitContentBlock({ content }: Props) {
           <SafeHtml
             html={description}
             className={cn(
-              'animate-fade-in-up typo-body text-muted-foreground prose max-w-none leading-relaxed',
+              'toss-split-content__body animate-fade-in-up typo-body text-muted-foreground prose max-w-none leading-relaxed',
               isLarge ? 'mt-8' : 'mt-6',
             )}
             style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}

@@ -1,11 +1,12 @@
 'use client';
 
-import Link from 'next/link';
+
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { productsApi } from '@/lib/api';
 import type { Product, ProductGridContent } from '@/lib/api';
 import ProductCard from '@/components/shared/products/ProductCard';
+import ViewAllButton from '@/components/shared/common/ViewAllButton';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
@@ -70,16 +71,14 @@ export default function ProductGridBlock({ content }: Props) {
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
       )}
     >
-      <div className="mb-8">
+      <div className="relative mb-8 flex min-h-10 items-center justify-center">
         {title && <h2 className="font-semibold text-center">{title}</h2>}
         {(more_href || category_id) && (
-          <div className="flex justify-end mt-2">
-            <Link
+          <div className="absolute right-0">
+            <ViewAllButton
               href={more_href || `/${locale}/products?categoryId=${category_id}`}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t('viewAll')}
-            </Link>
+              label={t('viewAll')}
+            />
           </div>
         )}
       </div>

@@ -1751,6 +1751,16 @@ h3 {
   font-family: var(--font-display);
 }
 
+.toss-cms .toss-split-content__title,
+.toss-cms__blocks .toss-split-content__title {
+  font-family: var(--font-display);
+}
+
+.toss-cms .toss-split-content__body,
+.toss-cms__blocks .toss-split-content__body {
+  font-family: var(--font-body);
+}
+
 .toss-cms h1,
 .toss-cms h2,
 .toss-cms h3,

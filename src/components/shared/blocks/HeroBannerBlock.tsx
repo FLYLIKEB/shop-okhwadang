@@ -92,15 +92,15 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />
               <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
 
-              <div className="relative z-10 w-full px-8 md:px-16 max-w-3xl">
+              <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-8 text-center md:px-16">
                 <p className="typo-label uppercase tracking-[0.35em] text-primary mb-4 font-body">
                   {slideIndex === 0 ? t('primaryLabel') : `0${slideIndex + 1}`}
                 </p>
-                <h1 className="typo-h0 font-display text-white leading-tight">
+                <h1 className="font-display typo-h0 leading-tight text-white">
                   {slide.title}
                 </h1>
                 {slide.subtitle && (
-                  <div className="mt-5 typo-body text-white/85 font-display leading-relaxed">
+                  <div className="mt-5 font-display typo-body leading-relaxed text-white/85">
                     <SafeHtml html={slide.subtitle} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-primary hover:[&_a]:underline" />
                   </div>
                 )}
@@ -209,7 +209,7 @@ export default function HeroBannerBlock({ content }: Props) {
             {eyebrow}
           </p>
         )}
-        <h1 className="font-display typo-h1 tracking-tight mb-4">{title}</h1>
+        <h1 className="mb-4 font-display typo-h1 tracking-tight">{title}</h1>
         {description && (
           <SafeHtml
             html={description}
@@ -223,7 +223,7 @@ export default function HeroBannerBlock({ content }: Props) {
   if (template === 'split') {
     return (
       <section className="flex flex-col overflow-hidden md:flex-row bg-card">
-        <div className="flex flex-1 flex-col justify-center p-8 md:p-12">
+        <div className="flex flex-1 flex-col items-center justify-center p-8 text-center md:p-12">
           <h2 className="typo-h2 text-foreground">{title}</h2>
           {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
           {description && (
@@ -267,9 +267,9 @@ export default function HeroBannerBlock({ content }: Props) {
         )}
         {image_url && <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />}
         {image_url && <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />}
-        <div className={`relative z-10 w-full px-8 md:px-16 ${image_url ? 'text-white' : 'text-foreground'}`}>
-          <h1 className={cn('typo-h0 font-display leading-tight', image_url ? 'text-white' : 'text-foreground')}>{title}</h1>
-          {subtitle && <p className={cn('mt-5 typo-body font-display leading-relaxed', image_url ? 'text-white/85' : 'text-muted-foreground')}>{subtitle}</p>}
+        <div className={`relative z-10 w-full px-8 text-center md:px-16 ${image_url ? 'text-white' : 'text-foreground'}`}>
+          <h1 className={cn('font-display typo-h0 leading-tight', image_url ? 'text-white' : 'text-foreground')}>{title}</h1>
+          {subtitle && <p className={cn('mt-5 font-display typo-body leading-relaxed', image_url ? 'text-white/85' : 'text-muted-foreground')}>{subtitle}</p>}
           {description && (
             <SafeHtml
               html={description}

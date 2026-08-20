@@ -22,7 +22,6 @@ interface OrderSummarySectionProps {
   locale: Locale;
   subtotalAmount: number;
   shippingFee: number;
-  freeShippingThreshold: number;
   couponDiscount?: number;
   pointsUsed?: number;
   totalPayable: number;
@@ -33,16 +32,11 @@ export function OrderSummarySection({
   locale,
   subtotalAmount,
   shippingFee,
-  freeShippingThreshold,
   couponDiscount = 0,
   pointsUsed = 0,
   totalPayable,
 }: OrderSummarySectionProps) {
   const t = useTranslations('checkout');
-  const remainingForFreeShipping = Math.max(freeShippingThreshold - subtotalAmount, 0);
-  const freeShippingProgress = freeShippingThreshold > 0
-    ? Math.min((subtotalAmount / freeShippingThreshold) * 100, 100)
-    : 100;
 
   return (
     <section className="surface-card p-6">
@@ -76,21 +70,6 @@ export function OrderSummarySection({
           </li>
         ))}
       </ul>
-
-      <div className="checkout-toss-free-shipping mt-4 rounded-md bg-muted/20 p-3">
-        <p className="text-xs text-muted-foreground">
-          {remainingForFreeShipping === 0
-            ? t('freeShippingUnlocked')
-            : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping, locale) })}
-        </p>
-        <div className="mt-2 h-1.5 w-full rounded-full bg-background">
-          <div
-            className="h-full rounded-full bg-primary transition-[width] duration-300"
-            style={{ width: `${freeShippingProgress}%` }}
-            aria-hidden
-          />
-        </div>
-      </div>
 
       <div className="mt-4 border-t border-soft pt-4 text-sm">
         <div className="flex justify-between">

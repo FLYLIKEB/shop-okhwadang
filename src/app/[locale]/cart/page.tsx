@@ -2,12 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import * as Accordion from '@radix-ui/react-accordion';
-import { ChevronDown } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
-import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import EmptyState from '@/components/shared/EmptyState';
@@ -16,14 +14,12 @@ import { formatCurrency, type Locale } from '@/utils/currency';
 import { SESSION_KEYS } from '@/constants/storage';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { shippingApi, type ShippingQuoteResponse } from '@/lib/api';
-import { cn } from '@/components/ui/utils';
 
 export default function CartPage() {
   const t = useTranslations('cart');
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const locale = (params?.locale ?? 'ko') as Locale;
-  const { isVisible: isNavVisible } = useMobileNav();
   const { items, isLoading, updateQuantity, removeItem } = useCart();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [shippingQuote, setShippingQuote] = useState<ShippingQuoteResponse | null>(null);
@@ -135,7 +131,7 @@ export default function CartPage() {
   if (isLoading) {
     return (
       <div className="checkout-toss-theme min-h-screen">
-        <div className="layout-container layout-page">
+        <div className="layout-container layout-page max-w-3xl">
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             {[1, 2, 3].map((i) => (
@@ -152,7 +148,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="checkout-toss-theme min-h-screen">
-        <div className="layout-container layout-page">
+        <div className="layout-container layout-page max-w-3xl">
         <EmptyState
           title={t('empty')}
           description={t('emptyDescription')}

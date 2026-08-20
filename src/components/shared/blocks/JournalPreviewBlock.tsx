@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { journalsApi, type Journal, JournalCategory } from '@/lib/api';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
@@ -8,6 +7,7 @@ import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import JournalCard from '@/components/shared/journal/JournalCard';
 import { getJournalCategoryMessageKey } from '@/components/shared/journal/journalCategory';
 import { cn } from '@/components/ui/utils';
+import ViewAllButton from '@/components/shared/common/ViewAllButton';
 
 interface JournalPreviewContent {
   title?: string;
@@ -74,15 +74,10 @@ export default function JournalPreviewBlock({ content }: Props) {
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
       )}
     >
-      <div className="mb-8 flex items-end justify-between gap-4">
-        {title && <h2 className="font-display typo-h2 text-foreground">{title}</h2>}
-        <div className="shrink-0">
-          <Link
-            href={more_href ?? '/journal'}
-            className="typo-button text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {tCommon('viewAll')} →
-          </Link>
+      <div className="relative mb-8 flex min-h-10 items-center justify-center">
+        {title && <h2 className="font-display typo-h2 text-center text-foreground">{title}</h2>}
+        <div className="absolute right-0 shrink-0">
+          <ViewAllButton href={more_href ?? '/journal'} label={tCommon('viewAll')} />
         </div>
       </div>
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">

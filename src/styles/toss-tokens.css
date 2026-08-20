@@ -174,8 +174,13 @@ html[data-theme='dark'] {
   box-shadow: none;
 }
 
+.product-card__title,
+.product-list-item__title,
 .toss-product-detail__title {
-  font-family: var(--font-display);
+  font-family: var(--font-body) !important;
+}
+
+.toss-product-detail__title {
   font-size: 1.875rem;
   font-weight: 600;
   letter-spacing: -0.02em;

@@ -138,9 +138,9 @@ function PreviewSplitContent({ content }: { content: Record<string, unknown> }) 
 
   return (
     <div className="rounded-xl bg-background p-6">
-      {subtitle && <p className="typo-label font-semibold uppercase tracking-widest text-muted-foreground">{subtitle}</p>}
-      {title && <h2 className="mt-2 typo-h2">{title}</h2>}
-      {description && <p className="mt-3 whitespace-pre-wrap typo-body text-muted-foreground">{description}</p>}
+      {subtitle && <p className="toss-split-content__body typo-label font-semibold uppercase tracking-widest text-muted-foreground">{subtitle}</p>}
+      {title && <h2 className="toss-split-content__title mt-2 font-display typo-h2">{title}</h2>}
+      {description && <p className="toss-split-content__body mt-3 whitespace-pre-wrap typo-body text-muted-foreground">{description}</p>}
       {ctaText && (
         <div className="mt-5 flex justify-end">
           <span className="rounded-xl bg-primary px-4 py-2 typo-button text-primary-foreground">{ctaText}</span>

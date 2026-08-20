@@ -164,7 +164,7 @@ function ProductCard({
       {/* ── 정보 영역 — 상품명 > 가격 > 메타 위계 ── */}
       <div className="mt-3 flex flex-1 flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
-          <p className="min-w-0 typo-title line-clamp-3 break-words leading-snug text-foreground">{name}</p>
+          <p className="product-card__title min-w-0 typo-title font-body line-clamp-3 break-words leading-snug text-foreground">{name}</p>
           <ProductRatingSummary rating={rating} reviewCount={reviewCount} />
         </div>
 
