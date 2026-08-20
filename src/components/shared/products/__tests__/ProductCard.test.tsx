@@ -121,6 +121,32 @@ describe('ProductCard image presentation', () => {
     expect(screen.getByText('무료배송')).not.toHaveClass('rounded-sm');
   });
 
+  it('uses the shared clay resolver for Korean, Hanja, and English category aliases', () => {
+    const { rerender } = renderCard({ categoryName: 'premium ZHUNI teapot' });
+
+    expect(screen.getByText('premium ZHUNI teapot')).toHaveClass('tag-zuni');
+
+    rerender(
+      <ProductCard
+        id={1}
+        name="자사호"
+        price={50000}
+        salePrice={null}
+        status="active"
+        images={images}
+        categoryName="노段泥"
+      />,
+    );
+
+    expect(screen.getByText('노段泥')).toHaveClass('tag-danni');
+  });
+
+  it('keeps the generic clay tag fallback for unknown categories', () => {
+    renderCard({ categoryName: '자사호' });
+
+    expect(screen.getAllByText('자사호').find((element) => element.classList.contains('tag-clay'))).toHaveClass('tag-generic');
+  });
+
   it('replaces a failed product image with the Okhwadang logo fallback on a neutral gray background', () => {
     renderCard();
 

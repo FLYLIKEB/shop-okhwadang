@@ -154,6 +154,28 @@ describe('CategoryNavBlock', () => {
     });
   });
 
+  it('uses the shared clay resolver for category color fallbacks', async () => {
+    const content = {
+      category_ids: [],
+      template: 'image' as const,
+      prefetched_categories: [
+        { id: 20, name: 'Zhuni', slug: 'premium-ZHUNI-clay', description: null, parentId: null, imageUrl: null },
+        { id: 21, name: 'Unknown', slug: 'teapot', description: null, parentId: null, imageUrl: null },
+      ],
+    };
+
+    render(<CategoryNavBlock content={content} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Zhuni' }).firstElementChild).toHaveStyle({
+        backgroundColor: '#8B4513',
+      });
+      expect(screen.getByRole('link', { name: 'Unknown' }).firstElementChild).toHaveStyle({
+        backgroundColor: '#2A2520',
+      });
+    });
+  });
+
   it('fetches client fallback categories only once when category_ids is omitted', async () => {
     vi.mocked(categoriesApi.getTree).mockResolvedValue(mockCategories);
 
