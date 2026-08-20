@@ -400,6 +400,8 @@
     "manualEntry": "Enter Manually",
     "recipientName": "Recipient Name",
     "phone": "Phone Number",
+    "phonePlaceholder": "010-1234-5678",
+    "phoneHint": "Hyphens are added automatically as you type.",
     "zipcode": "ZIP Code",
     "address": "Address",
     "baseAddress": "Address (Base)",

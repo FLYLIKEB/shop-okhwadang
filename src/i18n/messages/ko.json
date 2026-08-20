@@ -400,6 +400,8 @@
     "manualEntry": "직접 입력",
     "recipientName": "받는 분 이름",
     "phone": "연락처",
+    "phonePlaceholder": "010-1234-5678",
+    "phoneHint": "숫자만 입력해도 자동으로 하이픈이 입력됩니다.",
     "zipcode": "우편번호",
     "address": "주소",
     "baseAddress": "주소 (기본주소)",
