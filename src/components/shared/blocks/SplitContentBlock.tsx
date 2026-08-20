@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import type { SplitContentContent } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
 import { isSafeUrl } from '@/utils/url';
 import SafeHtml from '@/components/shared/common/SafeHtml';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   content: SplitContentContent;
@@ -49,7 +51,7 @@ export default function SplitContentBlock({ content }: Props) {
   const bgClass = use_alternate_bg ? 'bg-muted' : 'bg-background';
 
   return (
-    <div ref={sectionRef} className={cn(bgClass)}>
+    <div ref={sectionRef} className={cn(bgClass, 'border-y border-soft')}>
       <div
         className={cn(
           'mx-auto flex flex-col justify-center w-full',
@@ -59,7 +61,7 @@ export default function SplitContentBlock({ content }: Props) {
         {subtitle && (
           <p
             className={cn(
-              'animate-fade-in-up typo-body-sm font-display uppercase tracking-[0.2em] text-muted-foreground',
+              'animate-fade-in-up typo-body-sm font-body font-semibold uppercase tracking-widest text-muted-foreground',
               isLarge ? 'mb-6' : 'mb-5',
               isVisible ? 'opacity-100' : 'opacity-0'
             )}
@@ -70,12 +72,8 @@ export default function SplitContentBlock({ content }: Props) {
         )}
         <h2
           className={cn(
-            'animate-fade-in-up font-display text-foreground leading-snug',
-            isLarge
-              ? 'text-3xl lg:text-4xl'
-              : isCompact
-                ? 'text-xl lg:text-2xl'
-                : 'text-2xl lg:text-3xl',
+            'animate-fade-in-up typo-h1 font-body text-foreground leading-snug',
+            isCompact && 'typo-h2',
             isVisible ? 'opacity-100' : 'opacity-0'
           )}
           style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
@@ -101,25 +99,17 @@ export default function SplitContentBlock({ content }: Props) {
             )}
             style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}
           >
-            <Link
-              href={isSafeUrl(cta_url) ? cta_url : '#'}
-              className={cn(
-                'group inline-flex items-center gap-2 font-medium text-foreground',
-                isLarge ? 'mt-10 text-sm' : 'mt-8 text-sm'
-              )}
+            <Button
+              asChild
+              variant="black"
+              size={isLarge ? 'lg' : 'default'}
+              className={cn('gap-2', isLarge ? 'mt-10' : 'mt-8')}
             >
-              <span className="relative">
-                <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
-                  {cta_text}
-                </span>
-                <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-foreground transition-transform duration-300 group-hover:scale-x-110" />
-              </span>
-              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </span>
-            </Link>
+              <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>
+                {cta_text}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         )}
       </div>

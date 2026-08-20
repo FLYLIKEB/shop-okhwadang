@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import SafeHtml from '@/components/shared/common/SafeHtml';
+import CarouselArrowButton from '@/components/shared/common/CarouselArrowButton';
 import { cn } from '@/components/ui/utils';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 import { useScrollLogoTransition } from '@/components/shared/hooks/useScrollLogoTransition';
@@ -105,22 +106,12 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                 )}
                 {slide.cta_text && slide.cta_url && (
                   <div className="mt-10">
-                    <Link
-                      href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}
-                      className="group inline-flex items-center gap-2 typo-button text-white tracking-[0.15em] uppercase"
-                    >
-                      <span className="relative">
-                        <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
-                          {slide.cta_text}
-                        </span>
-                        <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-white transition-transform duration-300 group-hover:scale-x-110" />
-                      </span>
-                      <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                          <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </span>
-                    </Link>
+                    <Button asChild variant="gray" size="lg" className="gap-2">
+                      <Link href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}>
+                        {slide.cta_text}
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -132,26 +123,18 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
 
       {slides.length > 1 && (
           <>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
+            <CarouselArrowButton
+              direction="left"
               onClick={scrollPrev}
-              aria-label={t('prevSlide')}
+              ariaLabel={t('prevSlide')}
               className="absolute left-2 bottom-16 z-30 hidden h-10 min-h-10 w-10 rounded-full bg-transparent text-white/75 transition-colors hover:bg-white/15 hover:text-white md:flex md:left-12 md:top-1/2 md:bottom-auto md:-translate-y-1/2"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
+            />
+            <CarouselArrowButton
+              direction="right"
               onClick={scrollNext}
-              aria-label={t('nextSlide')}
+              ariaLabel={t('nextSlide')}
               className="absolute right-2 bottom-16 z-30 hidden h-10 min-h-10 w-10 rounded-full bg-transparent text-white/75 transition-colors hover:bg-white/15 hover:text-white md:flex md:right-12 md:top-1/2 md:bottom-auto md:-translate-y-1/2"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
+            />
 
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
             {slides.map((_, idx) => (
@@ -245,22 +228,12 @@ export default function HeroBannerBlock({ content }: Props) {
             />
           )}
           {cta_text && cta_url && (
-            <Link
-              href={isSafeUrl(cta_url) ? cta_url : '#'}
-              className="group mt-6 inline-flex items-center gap-2 typo-button text-foreground tracking-[0.15em] uppercase"
-            >
-              <span className="relative">
-                <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
-                  {cta_text}
-                </span>
-                <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-foreground transition-transform duration-300 group-hover:scale-x-110" />
-              </span>
-              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </span>
-            </Link>
+            <Button asChild variant="black" size="lg" className="mt-6 gap-2">
+              <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>
+                {cta_text}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           )}
         </div>
         {image_url && (
@@ -300,27 +273,17 @@ export default function HeroBannerBlock({ content }: Props) {
           )}
           {cta_text && cta_url && (
             <div className="mt-10">
-              <Link
-                href={isSafeUrl(cta_url) ? cta_url : '#'}
-                className={cn(
-                  'group inline-flex items-center gap-2 typo-button tracking-[0.15em] uppercase',
-                  image_url
-                    ? 'text-white'
-                    : 'text-foreground',
-                )}
+              <Button
+                asChild
+                variant={image_url ? 'gray' : 'black'}
+                size="lg"
+                className="gap-2"
               >
-                <span className="relative">
-                  <span className="relative inline-block transition-transform duration-300 group-hover:-translate-y-px">
-                    {cta_text}
-                  </span>
-                  <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left bg-current transition-transform duration-300 group-hover:scale-x-110" />
-                </span>
-                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </span>
-              </Link>
+                <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>
+                  {cta_text}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           )}
         </div>
