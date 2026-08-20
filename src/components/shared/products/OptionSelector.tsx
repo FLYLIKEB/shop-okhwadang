@@ -47,6 +47,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                   onClick={() => onSelect(option.id)}
                   className={cn(
                     'min-w-28 flex-col items-start gap-1 rounded-md px-3 py-2 text-sm transition-all',
+                    isSelected && 'ring-2 ring-foreground',
                     isSoldout && 'opacity-55 cursor-not-allowed',
                   )}
                 >
