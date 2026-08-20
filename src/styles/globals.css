@@ -827,13 +827,15 @@ h3 {
 }
 
 .toss-toast__close {
+  position: absolute;
   display: inline-flex;
   width: 1.75rem;
   height: 1.75rem;
   align-items: center;
   justify-content: center;
-  top: 0.75rem;
+  top: 50%;
   right: 0.75rem;
+  transform: translateY(-50%);
   border: 1px solid var(--checkout-toss-border);
   border-radius: 9999px;
   background: var(--checkout-toss-input);
