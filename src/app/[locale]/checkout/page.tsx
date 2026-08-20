@@ -3,13 +3,11 @@
 import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useMobileNav } from '@/contexts/MobileNavContext';
 import { Button } from '@/components/ui/button';
-import Modal from '@/components/ui/Modal';
 import { cn } from '@/components/ui/utils';
 import type {
   CartItem,
@@ -31,6 +29,7 @@ import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMetho
 import { AddressSelectorSection } from '@/components/shared/checkout/AddressSelectorSection';
 import { OrderSummarySection } from '@/components/shared/checkout/OrderSummarySection';
 import { FreeShippingProgress } from '@/components/shared/checkout/FreeShippingProgress';
+import { CheckoutPolicyConsentPanel } from '@/components/shared/checkout/CheckoutPolicyConsentPanel';
 import CouponSelector from '@/components/shared/checkout/CouponSelector';
 import {
   AddressDetailInputSection,
@@ -47,7 +46,6 @@ import {
   checkoutPricingApi,
   type CheckoutPricingPreviewResponse,
 } from '@/lib/api/checkout-pricing';
-import SafeHtml from '@/components/shared/common/SafeHtml';
 
 export interface ShippingForm {
   recipientName: string;
@@ -83,12 +81,6 @@ function formatPhoneInput(value: string): string {
   if (digits.length <= 3) return digits;
   if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
-}
-
-function getPolicyHtml(page: Page | undefined): string | null {
-  const block = page?.blocks.find((candidate) => candidate.type === 'text_content');
-  const html = block?.content.html;
-  return typeof html === 'string' ? html : null;
 }
 
 export default function CheckoutPage({
@@ -155,8 +147,6 @@ export default function CheckoutPage({
   const subtotalAmount = pricingPreview?.subtotalAmount ?? 0;
   const grandTotal = confirmedGrandTotal ?? pricingPreview?.totalPayable ?? 0;
   const isPricingReady = pricingPreview !== null || confirmedGrandTotal !== null;
-  const selectedPolicy = policyConsents.find((policy) => policy.slug === selectedPolicySlug);
-  const selectedPolicyHtml = selectedPolicy ? getPolicyHtml(policyPages[selectedPolicy.slug]) : null;
   const gatewayPaymentLabel = selectedGateway === 'toss'
     ? t('tossPayment')
     : selectedGateway === 'paypal'
@@ -418,7 +408,12 @@ export default function CheckoutPage({
     }
   };
 
-  const handlePolicyOpen = (slug: string) => {
+  const handlePolicyToggle = (slug: string) => {
+    if (selectedPolicySlug === slug) {
+      setSelectedPolicySlug(null);
+      return;
+    }
+
     setSelectedPolicySlug(slug);
     if (policyPages[slug]) return;
 
@@ -597,64 +592,35 @@ export default function CheckoutPage({
               </section>
             )}
 
-            <section className="checkout-toss-section surface-card p-6">
+            <section className="checkout-toss-section surface-card p-4 md:p-6">
               {policyConsentLoading ? (
-                <p className="mt-4 text-sm text-muted-foreground">{t('consent.loading')}</p>
+                <p className="typo-body-sm text-muted-foreground">{t('consent.loading')}</p>
               ) : policyConsentLoadError ? (
-                <p className="mt-4 text-sm text-destructive">{t('consent.loadError')}</p>
+                <p className="typo-body-sm text-destructive">{t('consent.loadError')}</p>
               ) : (
-                <div className="checkout-toss-panel overflow-hidden rounded-md border border-soft bg-muted/20 text-sm text-foreground">
-                  <button
-                    type="button"
-                    onClick={() => setIsPolicyListExpanded((current) => !current)}
-                    aria-expanded={isPolicyListExpanded}
-                    aria-controls="checkout-policy-list"
-                    aria-label={t(isPolicyListExpanded ? 'consent.hidePolicy' : 'consent.showPolicy')}
-                    className="flex min-h-12 w-full items-center justify-between gap-3 p-4 text-left font-medium transition-colors hover:bg-muted/50"
-                  >
-                    <span>{t('consent.title')}</span>
-                    <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${isPolicyListExpanded ? 'rotate-180' : ''}`} />
-                  </button>
-                  {isPolicyListExpanded && (
-                    <div id="checkout-policy-list" className="border-t border-soft p-2">
-                      {policyConsents.map((policy) => (
-                        <button
-                          key={policy.slug}
-                          type="button"
-                          onClick={() => handlePolicyOpen(policy.slug)}
-                          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-background"
-                        >
-                          <span>{policy.title}</span>
-                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <CheckoutPolicyConsentPanel
+                  policies={policyConsents}
+                  isExpanded={isPolicyListExpanded}
+                  selectedPolicySlug={selectedPolicySlug}
+                  policyPages={policyPages}
+                  loadingPolicySlug={policyContentLoadingSlug}
+                  onToggleList={() => setIsPolicyListExpanded((current) => !current)}
+                  onTogglePolicy={handlePolicyToggle}
+                  labels={{
+                    title: t('consent.title'),
+                    showPolicy: t('consent.showPolicy'),
+                    hidePolicy: t('consent.hidePolicy'),
+                    openPolicy: t('consent.openPolicy'),
+                    closePolicy: t('consent.closePolicy'),
+                    required: t('consent.required'),
+                    scrollRegion: t('consent.scrollRegion'),
+                    contentLoading: t('consent.contentLoading'),
+                    contentUnavailable: t('consent.contentUnavailable'),
+                    effectiveDate: t('consent.effectiveDate'),
+                  }}
+                />
               )}
             </section>
-            <Modal
-              isOpen={selectedPolicySlug !== null}
-              onClose={() => setSelectedPolicySlug(null)}
-              maxWidth="lg"
-              className="max-h-screen overflow-y-auto"
-            >
-              {selectedPolicySlug && (
-                <>
-                  <h2 className="mb-4 pr-8 typo-h3">{selectedPolicy?.title}</h2>
-                  {policyContentLoadingSlug === selectedPolicySlug ? (
-                    <p className="text-sm text-muted-foreground">{t('consent.contentLoading')}</p>
-                  ) : selectedPolicyHtml ? (
-                    <SafeHtml
-                      html={selectedPolicyHtml}
-                      className="prose max-w-none text-sm"
-                    />
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{t('consent.contentUnavailable')}</p>
-                  )}
-                </>
-              )}
-            </Modal>
           <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
               {pricingPreview !== null && (
                 <FreeShippingProgress
