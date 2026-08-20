@@ -77,6 +77,13 @@ function normalizeZipcodeInputValue(value: unknown): string {
   return normalizeInputValue(value);
 }
 
+function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 function getPolicyHtml(page: Page | undefined): string | null {
   const block = page?.blocks.find((candidate) => candidate.type === 'text_content');
   const html = block?.content.html;
@@ -339,7 +346,8 @@ export default function CheckoutPage({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const nextValue = name === 'recipientPhone' ? formatPhoneInput(value) : value;
+    setForm((prev) => ({ ...prev, [name]: nextValue }));
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -466,8 +474,10 @@ export default function CheckoutPage({
                   />
                 )}
 
-                <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
-                <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <ShippingFormSection form={form} errors={errors} onChange={handleChange} />
+                  <PhoneInputSection form={form} errors={errors} onChange={handleChange} />
+                </div>
                 <ZipcodeInputSection
                   form={form}
                   errors={errors}

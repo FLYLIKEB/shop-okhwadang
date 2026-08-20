@@ -63,6 +63,15 @@ describe('PhoneInputSection', () => {
     expect(onChange).toHaveBeenCalled();
   });
 
+  it('uses mobile-friendly phone input affordances', () => {
+    render(<PhoneInputSection form={baseForm} errors={{}} onChange={vi.fn()} />);
+    const input = screen.getByLabelText(/연락처/);
+    expect(input).toHaveAttribute('type', 'tel');
+    expect(input).toHaveAttribute('inputmode', 'tel');
+    expect(input).toHaveAttribute('autocomplete', 'tel');
+    expect(input).toHaveAttribute('maxLength', '13');
+  });
+
   it('errors.recipientPhone 표시', () => {
     render(
       <PhoneInputSection

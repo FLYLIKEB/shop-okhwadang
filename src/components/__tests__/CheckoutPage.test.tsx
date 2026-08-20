@@ -448,7 +448,7 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
     await screen.findByLabelText(/받는 분 이름/);
     fireEvent.change(screen.getByLabelText(/받는 분 이름/), { target: { value: '홍길동' } });
-    fireEvent.change(screen.getByLabelText(/연락처/), { target: { value: '01012345678' } });
+    fireEvent.change(screen.getByLabelText(/연락처/), { target: { value: '0101234567' } });
     fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
     await user.click(screen.getByLabelText(/구매조건 및 개인정보 처리/));

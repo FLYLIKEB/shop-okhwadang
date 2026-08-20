@@ -84,12 +84,18 @@ export function PhoneInputSection({ form, errors, onChange }: PhoneInputSectionP
       <input
         id="recipientPhone"
         name="recipientPhone"
-        type="text"
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
         value={form.recipientPhone}
         onChange={onChange}
-        placeholder="010-1234-5678"
+        placeholder={localMessage('checkout.phonePlaceholder')}
+        maxLength={13}
         className="w-full rounded-md border field-soft px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
       />
+      <p id="recipientPhoneHint" className="typo-label text-muted-foreground">
+        {localMessage('checkout.phoneHint')}
+      </p>
       {errors.recipientPhone && (
         <p className="typo-label text-destructive">{errors.recipientPhone}</p>
       )}
