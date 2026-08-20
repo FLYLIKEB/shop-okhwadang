@@ -94,6 +94,22 @@ describe('AppShell', () => {
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
     expect(screen.getByTestId('footer')).toBeInTheDocument();
   });
+
+  it('uses the same light theme boundary for the cart route', () => {
+    mockPathname = '/ko/cart';
+
+    const { container } = render(
+      <AppShell
+        locale="ko"
+        mobileBottomNavVisible
+        announcementBar={<div data-testid="announcement-bar" />}
+      >
+        cart content
+      </AppShell>,
+    );
+
+    expect(container.querySelector('main.checkout-light-theme')).toBeInTheDocument();
+  });
   it('does not import server-only announcement fetching into the client shell', () => {
     const source = readFileSync('src/components/AppShell.tsx', 'utf8');
 

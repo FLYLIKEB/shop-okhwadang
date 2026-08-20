@@ -1,3 +1,3 @@
 export function isCheckoutLightPath(pathname: string): boolean {
-  return /\/checkout(?:\/|$)/.test(pathname) || /\/order\/complete(?:\/|$)/.test(pathname);
+  return /\/(?:cart|checkout)(?:\/|$)/.test(pathname) || /\/order\/complete(?:\/|$)/.test(pathname);
 }
