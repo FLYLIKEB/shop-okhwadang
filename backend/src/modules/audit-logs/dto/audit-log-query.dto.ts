@@ -1,24 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsInt, Min, Max, IsString, IsDateString, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+import { DefaultPaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { AuditAction } from '../entities/audit-log.entity';
 
-export class AuditLogQueryDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit?: number = 20;
-
+export class AuditLogQueryDto extends DefaultPaginationQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)

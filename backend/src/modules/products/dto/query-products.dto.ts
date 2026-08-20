@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, IsEnum, IsBoolean, Min, Max, MaxLength, IsIn } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsEnum, IsIn, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { DefaultPaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export enum ProductSort {
   LATEST = 'latest',
@@ -11,22 +12,7 @@ export enum ProductSort {
   RATING = 'rating',
 }
 
-export class QueryProductsDto {
-  @ApiProperty({ example: 1, description: '페이지 번호', required: false })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiProperty({ example: 20, description: '페이지당 개수', required: false })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  @Max(100)
-  limit?: number = 20;
-
+export class QueryProductsDto extends DefaultPaginationQueryDto {
   @ApiProperty({ example: ProductSort.LATEST, enum: ProductSort, description: '정렬 방식', required: false })
   @IsOptional()
   @IsEnum(ProductSort)

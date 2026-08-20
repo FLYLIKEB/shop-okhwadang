@@ -1,26 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBooleanString, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { DefaultPaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export type AdminReviewVisibilityFilter = 'all' | 'visible' | 'hidden';
 export type AdminReviewSort = 'reviewedAt' | 'rating' | 'helpful' | 'importedAt';
 
-export class AdminReviewQueryDto {
-  @ApiPropertyOptional({ example: 1, description: '페이지 번호' })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @ApiPropertyOptional({ example: 20, description: '페이지당 개수' })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit?: number;
-
+export class AdminReviewQueryDto extends DefaultPaginationQueryDto {
   @ApiPropertyOptional({
     example: '연자호',
     description: '상품명/상품번호/리뷰글번호/등록자/본문 검색어',
