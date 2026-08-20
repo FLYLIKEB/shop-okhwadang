@@ -7,7 +7,7 @@ export interface WishlistProduct {
   price: number;
   salePrice: number | null;
   status: string;
-  images: { url: string; alt: string | null; isThumbnail: boolean }[];
+  images: { url: string; thumbnailUrl?: string | null; alt: string | null; isThumbnail: boolean }[];
 }
 
 export interface WishlistItem {

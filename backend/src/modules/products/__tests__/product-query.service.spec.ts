@@ -444,6 +444,29 @@ describe('ProductQueryService', () => {
       );
     });
 
+    it('bulk 상품 응답에 생성된 thumbnailUrl을 포함한다', async () => {
+      qb.getMany.mockResolvedValue([{
+        id: 1,
+        price: 1000,
+        status: ProductStatus.ACTIVE,
+        images: [{ url: '/products/original.jpg', thumbnailUrl: '/product-thumbnails/thumb.webp' }],
+      } as Product]);
+      reviewQb.getRawMany.mockResolvedValue([]);
+
+      const result = await service.findBulk([1], false);
+
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
+        'product.images',
+        'image',
+        'image.is_thumbnail = :isThumbnail',
+        { isThumbnail: true },
+      );
+      expect(result[0].images).toEqual([{
+        url: '/products/original.jpg',
+        thumbnailUrl: '/product-thumbnails/thumb.webp',
+      }]);
+    });
+
     it('옵션을 같은 bulk 쿼리로 반환하고 decimal 가격을 숫자로 직렬화한다', async () => {
       qb.getMany.mockResolvedValue([
         {

@@ -57,6 +57,7 @@ export class ProductCommandService {
             mapInputToEntity: (image, index) => ({
               productId: saved.id,
               url: image.url,
+              thumbnailUrl: image.thumbnailUrl ?? null,
               alt: image.alt ?? null,
               sortOrder: image.sortOrder ?? index,
               isThumbnail: image.isThumbnail ?? index === 0,
@@ -119,6 +120,7 @@ export class ProductCommandService {
             mapInputToEntity: (image, index) => ({
               productId: id,
               url: image.url,
+              thumbnailUrl: image.thumbnailUrl ?? null,
               alt: image.alt ?? null,
               sortOrder: image.sortOrder ?? index,
               isThumbnail: image.isThumbnail ?? index === 0,

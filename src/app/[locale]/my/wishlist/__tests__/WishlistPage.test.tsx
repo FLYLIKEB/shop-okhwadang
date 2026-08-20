@@ -54,7 +54,7 @@ const wishlistItem = {
     price: 50000,
     salePrice: null,
     status: 'soldout',
-    images: [{ url: 'https://example.com/broken.jpg', alt: null, isThumbnail: true }],
+    images: [{ url: 'https://example.com/broken.jpg', thumbnailUrl: null, alt: null, isThumbnail: true }],
   },
 };
 
@@ -85,5 +85,21 @@ describe('WishlistPage product image presentation', () => {
     expect(fallback).toHaveClass('bg-neutral-200');
     expect(screen.getByAltText('옥화당')).toHaveAttribute('src', '/logo-okhwadang.png');
     expect(screen.queryByAltText('자사호')).not.toBeInTheDocument();
+  });
+
+  it('uses the generated thumbnail URL when it is available', async () => {
+    mockGetList.mockResolvedValueOnce({
+      data: [{
+        ...wishlistItem,
+        product: {
+          ...wishlistItem.product,
+          images: [{ ...wishlistItem.product.images[0], thumbnailUrl: 'https://example.com/thumb.webp' }],
+        },
+      }],
+    });
+
+    render(<WishlistPage />);
+
+    expect(await screen.findByAltText('자사호')).toHaveAttribute('src', 'https://example.com/thumb.webp');
   });
 });

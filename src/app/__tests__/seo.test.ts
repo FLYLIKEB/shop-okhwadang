@@ -164,6 +164,7 @@ describe('SEO', () => {
           {
             id: 1,
             url: '/images/test.jpg',
+            thumbnailUrl: null,
             alt: 'Test',
             sortOrder: 0,
             isThumbnail: true,
@@ -250,6 +251,7 @@ describe('SEO', () => {
           {
             id: 1,
             url: '/images/test.jpg',
+            thumbnailUrl: null,
             alt: 'Test',
             sortOrder: 0,
             isThumbnail: true,

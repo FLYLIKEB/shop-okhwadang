@@ -63,6 +63,14 @@ describe('ProductListItem free-shipping badge', () => {
 });
 
 describe('ProductListItem image presentation', () => {
+  it('prefers the generated thumbnail URL and falls back to the original URL', () => {
+    renderItem({
+      images: [{ ...images[0], thumbnailUrl: 'https://example.com/thumb.webp' }],
+    });
+
+    expect(screen.getByAltText('자사호')).toHaveAttribute('src', 'https://example.com/thumb.webp');
+  });
+
   it('renders the image frame and image badges without rounded corners', () => {
     renderItem({ isFreeShipping: true });
 

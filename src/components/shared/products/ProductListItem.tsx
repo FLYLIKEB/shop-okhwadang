@@ -37,7 +37,8 @@ function ProductListItem({
   locale = 'ko',
 }: ProductListItemProps) {
   const t = useTranslations('product');
-  const thumbnail = images[0]?.url;
+  const thumbnailImage = images.find((image) => image.isThumbnail) ?? images[0];
+  const thumbnail = thumbnailImage?.thumbnailUrl ?? thumbnailImage?.url;
   const isSoldout = status === 'soldout';
   const [hasImageError, setHasImageError] = React.useState(false);
 
