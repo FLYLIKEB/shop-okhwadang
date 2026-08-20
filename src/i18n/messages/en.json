@@ -204,6 +204,7 @@
     "noProductsDescription": "No products are listed yet.",
     "noSearchResults": "No results found for \"{query}\".",
     "tabs": {
+      "navigationLabel": "Product information navigation",
       "details": "Details",
       "reviews": "Reviews",
       "inquiry": "Inquiry",
