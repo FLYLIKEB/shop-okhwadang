@@ -374,6 +374,7 @@
   },
   "cart": {
     "title": "Cart",
+    "backToShopping": "Continue shopping",
     "empty": "Your cart is empty",
     "emptyDescription": "Add items you love to your cart.",
     "requireLogin": "Login required",

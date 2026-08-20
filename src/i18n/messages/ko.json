@@ -374,6 +374,7 @@
   },
   "cart": {
     "title": "장바구니",
+    "backToShopping": "쇼핑 계속하기",
     "empty": "장바구니가 비었습니다",
     "emptyDescription": "마음에 드는 상품을 장바구니에 담아보세요.",
     "requireLogin": "로그인이 필요합니다",

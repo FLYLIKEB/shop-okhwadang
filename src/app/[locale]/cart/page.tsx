@@ -202,11 +202,22 @@ export default function CartPage() {
 
   return (
     <div className="checkout-toss-theme min-h-screen pb-36 lg:pb-8">
-      <div className="layout-container layout-page">
-      <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
+      <div className="layout-container layout-page max-w-3xl">
+      <div className="relative flex items-center justify-center border-b border-soft pb-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push(`/${locale}/products`)}
+          aria-label={t('backToShopping')}
+          className="absolute left-0 h-10 min-h-10 w-10 rounded-full"
+        >
+          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+        </Button>
+        <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
+      </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="mt-8">
           <div className="checkout-toss-select-all mb-3 pb-3">
             <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg bg-muted/30 px-3 py-2 transition-colors hover:bg-muted/50">
               <Checkbox
@@ -230,53 +241,14 @@ export default function CartPage() {
             />
           ))}
 
-          <section className="checkout-toss-mobile-summary mt-6 lg:hidden">
-            <Accordion.Root type="single" collapsible className="surface-card">
-              <Accordion.Item value="summary">
-                <Accordion.Header>
-                  <Accordion.Trigger className="group flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted/30">
-                    <div>
-                      <p className="typo-h3">{t('orderSummary')}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {t('total')} · {formatCurrency(grandTotal, locale)}
-                      </p>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                  </Accordion.Trigger>
-                </Accordion.Header>
-                <Accordion.Content className="overflow-hidden border-t border-soft data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                  <div className="p-4">{orderSummaryContent}</div>
-                </Accordion.Content>
-              </Accordion.Item>
-            </Accordion.Root>
+          <section className="checkout-toss-submit-card mt-8 border-t border-soft pt-8">
+            <h2 className="typo-h3">{t('orderSummary')}</h2>
+            <div className="mt-4">{orderSummaryContent}</div>
+
+            <Button type="button" variant="brown" className="mt-6 w-full" onClick={handleOrder}>
+              {t('orderSelected')}
+            </Button>
           </section>
-        </div>
-
-        <aside className="checkout-toss-submit-card hidden h-fit surface-card p-6 lg:sticky lg:top-24 lg:block">
-          <h2 className="typo-h3">{t('orderSummary')}</h2>
-          <div className="mt-4">{orderSummaryContent}</div>
-
-          <Button type="button" variant="black" className="mt-4 w-full" onClick={handleOrder}>
-            {t('orderSelected')}
-          </Button>
-        </aside>
-      </div>
-
-      <div
-        className={cn(
-          'checkout-toss-mobile-cta mobile-sticky-cta fixed z-40 border-t border-soft bg-background lg:hidden',
-          isNavVisible ? 'mobile-sticky-cta--above-nav' : 'mobile-sticky-cta--bottom',
-        )}
-      >
-        <div className="mobile-sticky-inner">
-          <div className="mb-2 flex items-end justify-between">
-            <p className="text-xs text-muted-foreground">{t('total')}</p>
-            <p className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</p>
-          </div>
-          <Button type="button" variant="black" className="w-full" onClick={handleOrder}>
-            {t('orderSelected')}
-          </Button>
-        </div>
       </div>
       </div>
     </div>
