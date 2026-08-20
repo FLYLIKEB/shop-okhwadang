@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, Max, Min, IsIn } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsIn, IsOptional, IsString } from 'class-validator';
+import { DefaultPaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
-export class AdminOrderQueryDto {
+export class AdminOrderQueryDto extends DefaultPaginationQueryDto {
   @ApiProperty({ example: 'paid', enum: ['pending', 'paid', 'preparing', 'shipped', 'delivered', 'completed', 'cancelled', 'refund_requested', 'refunded'], description: '주문 상태', required: false })
   @IsOptional()
   @IsString()
@@ -23,19 +23,4 @@ export class AdminOrderQueryDto {
   @IsOptional()
   @IsString()
   endDate?: string;
-
-  @ApiProperty({ example: 1, description: '페이지 번호', required: false })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiProperty({ example: 20, description: '페이지당 개수', required: false })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100, { message: 'limit은 100 이하여야 합니다.' })
-  limit?: number = 20;
 }
