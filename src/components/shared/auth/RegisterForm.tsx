@@ -75,7 +75,7 @@ export default function RegisterForm() {
           {errors.passwordConfirm && <p className="text-xs text-destructive">{errors.passwordConfirm}</p>}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" variant="black" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? localMessage('auth.registerSubmitting') : localMessage('auth.registerSubmit')}
         </Button>
       </form>

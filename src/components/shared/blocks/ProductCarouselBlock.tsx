@@ -13,6 +13,7 @@ import CarouselProgressBar from '@/components/shared/common/CarouselProgressBar'
 import { cn } from '@/components/ui/utils';
 import type { Locale } from '@/utils/currency';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   content: ProductCarouselContent;
@@ -117,21 +118,23 @@ export default function ProductCarouselBlock({ content }: Props) {
       </div>
 
       <div className="relative group">
-        <button
+        <Button
           type="button"
+          variant="gray"
+          size="icon"
           onClick={() => handleScroll('left')}
           disabled={!canScrollLeft}
           aria-label={t('prevProduct')}
           className={cn(
             'absolute left-2 top-1/2 -translate-y-1/2 z-10',
             'flex items-center justify-center',
-            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-divider-soft shadow-sm',
+            'h-9 min-h-9 w-9 rounded-full backdrop-blur-sm shadow-sm',
             'transition-opacity duration-200',
             canScrollLeft ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',
           )}
         >
           <ChevronLeft className="w-4 h-4" />
-        </button>
+        </Button>
 
         <div
           ref={scrollRef}
@@ -160,21 +163,23 @@ export default function ProductCarouselBlock({ content }: Props) {
           ))}
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="gray"
+          size="icon"
           onClick={() => handleScroll('right')}
           disabled={!canScrollRight}
           aria-label={t('nextProduct')}
           className={cn(
             'absolute right-2 top-1/2 -translate-y-1/2 z-10',
             'flex items-center justify-center',
-            'w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-divider-soft shadow-sm',
+            'h-9 min-h-9 w-9 rounded-full backdrop-blur-sm shadow-sm',
             'transition-opacity duration-200',
             canScrollRight ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',
           )}
         >
           <ChevronRight className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
 
       <CarouselProgressBar progress={progress} className="mt-4 mx-4 md:mx-4 xl:mx-8" />

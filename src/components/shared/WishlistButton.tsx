@@ -4,6 +4,7 @@ import { Heart } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { useWishlistToggle } from '@/components/shared/hooks/useWishlistToggle';
 import { localMessage } from '@/utils/localMessages';
+import { Button } from '@/components/ui/button';
 
 interface WishlistButtonProps {
   productId: number;
@@ -24,13 +25,14 @@ export default function WishlistButton({
   });
 
   return (
-    <button
+    <Button
       type="button"
+      variant="gray"
+      size="icon"
       onClick={toggle}
       aria-label={isWishlisted ? localMessage('wishlist.remove') : localMessage('wishlist.add')}
       className={cn(
-        'flex items-center justify-center rounded-full p-1.5 transition-colors',
-        'hover:bg-muted',
+        'h-10 min-h-10 w-10 rounded-full',
         loading && 'opacity-60 cursor-not-allowed',
         className,
       )}
@@ -42,6 +44,6 @@ export default function WishlistButton({
           isWishlisted ? 'fill-red-500 stroke-red-500' : 'stroke-muted-foreground',
         )}
       />
-    </button>
+    </Button>
   );
 }

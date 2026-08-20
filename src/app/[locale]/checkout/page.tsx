@@ -609,6 +609,7 @@ export default function CheckoutPage({
               </div>
               <Button
                 type="submit"
+                variant="brown"
                 disabled={step !== 'idle' || !requiredConsent || !isPricingReady || pricingPreviewLoading}
                 className="w-full"
               >
@@ -633,6 +634,7 @@ export default function CheckoutPage({
           <Button
             type="submit"
             form="checkout-form"
+            variant="brown"
             className="w-full"
             disabled={step !== 'idle' || !requiredConsent || !isPricingReady || pricingPreviewLoading}
           >

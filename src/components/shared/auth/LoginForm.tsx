@@ -132,7 +132,7 @@ export default function LoginForm({ redirect }: LoginFormProps) {
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" variant="black" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? localMessage('auth.loginSubmitting') : localMessage('auth.loginSubmit')}
         </Button>
       </form>

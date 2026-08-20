@@ -9,7 +9,7 @@ import type { Faq } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/shared/EmptyState';
-import { cn } from '@/components/ui/utils';
+import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 
 const CATEGORIES = [
@@ -48,30 +48,24 @@ export default function FaqPage() {
 
       <div className="mb-6 flex flex-wrap gap-2">
         {CATEGORIES.map((cat) => (
-          <button
+          <Button
             key={cat.key}
+            variant={activeCategory === cat.key ? 'black' : 'gray'}
+            size="sm"
             onClick={() => setActiveCategory(cat.key)}
-            className={cn(
-              'toss-customer-category rounded-full border px-4 py-1.5 typo-button transition-colors',
-              activeCategory === cat.key
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-border text-muted-foreground hover:border-foreground',
-            )}
+            className="toss-customer-category rounded-full"
           >
             {t(`categories.${cat.key}`)}
-          </button>
+          </Button>
         ))}
       </div>
 
       <section className="toss-customer-lookup mb-6 rounded-2xl border border-border bg-muted/20 p-5">
         <h2 className="typo-h3 text-foreground">{t('orderLookupTitle')}</h2>
         <p className="mt-2 typo-body text-muted-foreground">{t('orderLookupGuestDescription')}</p>
-        <Link
-          href={`/${locale}/order/lookup`}
-          className="mt-3 inline-flex text-sm font-semibold text-foreground underline underline-offset-4"
-        >
-          {t('orderLookupGuestAction')}
-        </Link>
+        <Button asChild variant="black" size="sm" className="mt-3">
+          <Link href={`/${locale}/order/lookup`}>{t('orderLookupGuestAction')}</Link>
+        </Button>
         <p className="mt-4 typo-body text-muted-foreground">{t('orderLookupMemberDescription')}</p>
         <p className="mt-2 typo-body-sm text-muted-foreground">{t('orderLookupMemberAction')}</p>
       </section>

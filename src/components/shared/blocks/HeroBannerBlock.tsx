@@ -12,6 +12,7 @@ import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 import { useScrollLogoTransition } from '@/components/shared/hooks/useScrollLogoTransition';
 import { ScrollLogoProvider } from '@/contexts/ScrollLogoContext';
 import { isSafeUrl } from '@/utils/url';
+import { Button } from '@/components/ui/button';
 
 /**
  * HeroBannerBlock — DB 의 page_blocks.content 로만 렌더된다.
@@ -131,34 +132,37 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
 
       {slides.length > 1 && (
           <>
-            <button
+            <Button
               type="button"
+              variant="gray"
+              size="icon"
               onClick={scrollPrev}
               aria-label={t('prevSlide')}
-              className="absolute left-2 bottom-16 z-30 hidden items-center justify-center p-3 text-white/70 transition-colors hover:text-white md:flex md:left-12 md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:p-2"
+              className="absolute left-2 bottom-16 z-30 hidden md:flex md:left-12 md:top-1/2 md:bottom-auto md:-translate-y-1/2"
             >
               <ChevronLeft className="h-7 w-7" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="gray"
+              size="icon"
               onClick={scrollNext}
               aria-label={t('nextSlide')}
-              className="absolute right-2 bottom-16 z-30 hidden items-center justify-center p-3 text-white/70 transition-colors hover:text-white md:flex md:right-12 md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:p-2"
+              className="absolute right-2 bottom-16 z-30 hidden md:flex md:right-12 md:top-1/2 md:bottom-auto md:-translate-y-1/2"
             >
               <ChevronRight className="h-7 w-7" />
-            </button>
+            </Button>
 
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
             {slides.map((_, idx) => (
-              <button
+              <Button
                 key={idx}
                 type="button"
+                variant={idx === selectedIndex ? 'black' : 'gray'}
+                size="icon"
                 onClick={() => scrollTo(idx)}
                 aria-label={t('goToSlide', { index: idx + 1 })}
-                className={cn(
-                  'h-1.5 rounded-full transition-all duration-300',
-                  idx === selectedIndex ? 'w-6 bg-primary' : 'w-1.5 bg-white/40 hover:bg-white/60',
-                )}
+                className={cn('h-1.5 min-h-1.5 rounded-full transition-all duration-300', idx === selectedIndex ? 'w-6' : 'w-1.5')}
               />
             ))}
           </div>

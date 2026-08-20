@@ -13,6 +13,7 @@ import { type Locale } from '@/utils/currency';
 import { handleApiError } from '@/utils/error';
 import { OrderSummaryCard } from '@/components/shared/account/OrderSummaryCard';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 import {
   Package,
   Heart,
@@ -94,12 +95,9 @@ export default function MyPage() {
               <p className="typo-body-sm text-muted-foreground">{user.phone}</p>
             )}
           </div>
-          <Link
-            href="/my/profile"
-            className="toss-account__edit typo-button rounded-xl bg-muted px-4 py-2 text-foreground transition-colors hover:bg-secondary"
-          >
-            {t('edit')}
-          </Link>
+          <Button asChild variant="gray" className="toss-account__edit">
+            <Link href="/my/profile">{t('edit')}</Link>
+          </Button>
         </div>
       </section>
 

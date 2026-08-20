@@ -6,6 +6,7 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
 import type { ColorCardItem, ColorCardListContent } from '@/lib/api';
 import { getHeadingId, InlineHtmlText } from './genericBlockUtils';
+import { Button } from '@/components/ui/button';
 
 function AlternatingCard({ item, reversed }: { item: ColorCardItem; reversed: boolean }) {
   const displayName = item.name ?? item.nameKo;
@@ -41,9 +42,9 @@ function AlternatingCard({ item, reversed }: { item: ColorCardItem; reversed: bo
           </ul>
         )}
         {item.href && (
-          <Link href={item.href} className="inline-flex items-center gap-1 text-sm font-medium text-foreground border border-foreground rounded px-4 py-2 hover:bg-foreground hover:text-background transition-colors">
-            {item.hrefLabel || displayName}
-          </Link>
+          <Button asChild variant="gray" size="sm">
+            <Link href={item.href}>{item.hrefLabel || displayName}</Link>
+          </Button>
         )}
       </div>
     </article>

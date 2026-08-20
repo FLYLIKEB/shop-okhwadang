@@ -11,6 +11,7 @@ import type { Inquiry, ProductDetailImage, ProductNoticeInfo } from '@/lib/api'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/components/ui/utils'
+import { Button } from '@/components/ui/button'
 import ReviewsTab from '@/components/shared/reviews/ReviewsTab'
 import { hasEmbeddedDetailMedia, sanitizeProductDetailHtml } from '@/lib/product-detail-html'
 
@@ -72,9 +73,10 @@ function ProductGuideDisclosure<Key extends string>({
 
   return (
     <section className="border-t border-border/70 py-4 last:border-b" aria-labelledby={titleId}>
-      <button
+      <Button
         type="button"
-        className="flex w-full items-center justify-between gap-4 py-1 text-left"
+        variant="gray"
+        className="w-full justify-between rounded-none bg-transparent py-1 text-left"
         aria-expanded={isOpen}
         aria-controls={`${titleId}-content`}
         onClick={() => setIsOpen((open) => !open)}
@@ -92,7 +94,7 @@ function ProductGuideDisclosure<Key extends string>({
         >
           +
         </span>
-      </button>
+      </Button>
       {isOpen && (
         <dl id={`${titleId}-content`} className="mt-4 divide-y divide-border/70">
           {rows.map((row) => (
@@ -237,19 +239,16 @@ export default function ProductTabs({ description, descriptionImages, productId,
     <div className="mt-8">
       <div className="flex justify-center md:justify-start border-b border-border sticky sticky-below-header z-30 bg-background">
         {TABS.map((tab) => (
-          <button
+          <Button
             key={tab}
             type="button"
+            variant={activeTab === tab ? 'black' : 'gray'}
+            size="sm"
             onClick={() => setActiveTab(tab)}
-            className={cn(
-              'px-6 py-3 typo-body-sm transition-colors',
-              activeTab === tab
-                ? 'border-b-2 border-foreground font-medium text-foreground'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
+            className="rounded-none px-6 py-3"
           >
             {tabLabels[tab]}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="py-6">
@@ -348,13 +347,13 @@ export default function ProductTabs({ description, descriptionImages, productId,
                     {t('tabs.inquiryPanel.secretLabel')}
                   </label>
                   <div className="flex justify-end">
-                    <button
+                    <Button
                       type="submit"
+                      variant="black"
                       disabled={isSubmitting}
-                      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isSubmitting ? t('tabs.inquiryPanel.submitting') : t('tabs.inquiryPanel.submit')}
-                    </button>
+                    </Button>
                   </div>
                 </form>
 

@@ -9,6 +9,7 @@ import { useUrlQueryState } from '@/hooks/useUrlModal'
 import { handleApiError } from '@/utils/error'
 import { localMessage } from '@/utils/localMessages'
 import type { Locale } from '@/utils/currency'
+import { Button } from '@/components/ui/button'
 import LightboxOverlay from './LightboxOverlay'
 import ThumbnailStrip from './ThumbnailStrip'
 
@@ -49,13 +50,14 @@ function ImageGalleryError({ error, onRetry, locale }: { error: Error; onRetry?:
         <p className="text-xs text-muted-foreground">{handleApiError(error, localMessage('product.unknownImageError', undefined, locale))}</p>
       </div>
       {onRetry && (
-        <button
+        <Button
           type="button"
+          variant="gray"
+          size="sm"
           onClick={onRetry}
-          className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
         >
           {localMessage('product.retry', undefined, locale)}
-        </button>
+        </Button>
       )}
     </div>
   )

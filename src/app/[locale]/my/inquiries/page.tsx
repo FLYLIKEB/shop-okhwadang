@@ -12,6 +12,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import { InquiryStatusBadge } from '@/components/shared/admin/StatusBadge';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 
 export default function InquiriesPage() {
   const t = useTranslations('myInquiries');
@@ -58,12 +59,9 @@ export default function InquiriesPage() {
       <AccountPageHeader
         title={t('title')}
         action={(
-          <Link
-            href="/my/inquiries/new"
-            className="toss-inquiry__new rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/80"
-          >
-            {t('newInquiry')}
-          </Link>
+          <Button asChild variant="black" className="toss-inquiry__new">
+            <Link href="/my/inquiries/new">{t('newInquiry')}</Link>
+          </Button>
         )}
       />
 
@@ -73,9 +71,11 @@ export default function InquiriesPage() {
         <ul className="toss-inquiry__list space-y-4">
           {inquiries.map((inquiry) => (
             <li key={inquiry.id} className="toss-inquiry__card surface-card overflow-hidden bg-card">
-              <button
+              <Button
+                type="button"
+                variant="gray"
                 onClick={() => setOpenId(openId === inquiry.id ? null : inquiry.id)}
-                className="toss-inquiry__summary flex w-full items-center justify-between bg-card px-5 py-4 text-left transition-colors hover:bg-card"
+                className="toss-inquiry__summary min-h-20 w-full justify-between rounded-none bg-card px-5 py-4 text-left"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -93,7 +93,7 @@ export default function InquiriesPage() {
                 <span className="ml-4 shrink-0 text-xs text-muted-foreground">
                   {new Date(inquiry.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'ko-KR')}
                 </span>
-              </button>
+              </Button>
               {openId === inquiry.id && (
                 <div className="toss-inquiry__detail space-y-3 px-5 py-4">
                   <div>

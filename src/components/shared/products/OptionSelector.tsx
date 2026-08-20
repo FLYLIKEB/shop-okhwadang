@@ -5,6 +5,7 @@ import { cn } from '@/components/ui/utils'
 import type { ProductOption } from '@/lib/api'
 import { formatCurrency } from '@/utils/currency'
 import { getClientLocale } from '@/utils/clientLocale'
+import { Button } from '@/components/ui/button'
 
 interface OptionSelectorProps {
   options: ProductOption[]
@@ -34,19 +35,18 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
               const isSelected = option.id === selectedOptionId
               const isLowStock = !isSoldout && option.stock > 0 && option.stock <= 5
               return (
-                <button
+                <Button
                   key={option.id}
                   type="button"
+                  variant={isSelected ? 'black' : 'gray'}
+                  size="sm"
                   disabled={isSoldout}
                   aria-disabled={isSoldout}
                   aria-label={isSoldout ? t('optionSoldoutAria', { option: option.value }) : undefined}
                   title={isSoldout ? t('optionSoldoutReason') : isLowStock ? t('lowStock', { count: option.stock }) : undefined}
                   onClick={() => onSelect(option.id)}
                   className={cn(
-                    'flex min-w-28 flex-col items-start gap-1 rounded-md border px-3 py-2 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                    isSelected
-                      ? 'ring-2 ring-foreground bg-foreground text-background border-foreground'
-                      : 'border-border bg-background hover:border-foreground',
+                    'min-w-28 flex-col items-start gap-1 rounded-md px-3 py-2 text-sm transition-all',
                     isSoldout && 'opacity-55 cursor-not-allowed',
                   )}
                 >
@@ -60,7 +60,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                   <span className={cn('text-xs', isSelected ? 'text-background/80' : 'text-muted-foreground', isSoldout && 'text-destructive')}>
                     {isSoldout ? t('soldout') : isLowStock ? t('lowStock', { count: option.stock }) : t('available')}
                   </span>
-                </button>
+                </Button>
               )
             })}
           </div>

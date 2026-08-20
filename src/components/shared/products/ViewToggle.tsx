@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { LayoutGrid, List } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { cn } from '@/components/ui/utils';
+
 import { LOCAL_KEYS } from '@/constants/storage';
+import { Button } from '@/components/ui/button';
 
 type ViewMode = 'grid' | 'list';
 
@@ -36,32 +37,26 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
 
   return (
     <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
-      <button
+      <Button
         type="button"
+        variant={current === 'grid' ? 'black' : 'gray'}
+        size="icon"
         aria-label={t('grid')}
         onClick={() => handleChange('grid')}
-        className={cn(
-          'rounded p-1.5 transition-colors',
-          current === 'grid'
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
+        className="h-9 min-h-9 w-9 rounded"
       >
         <LayoutGrid className="h-4 w-4" />
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant={current === 'list' ? 'black' : 'gray'}
+        size="icon"
         aria-label={t('list')}
         onClick={() => handleChange('list')}
-        className={cn(
-          'rounded p-1.5 transition-colors',
-          current === 'list'
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
+        className="h-9 min-h-9 w-9 rounded"
       >
         <List className="h-4 w-4" />
-      </button>
+      </Button>
     </div>
   );
 }

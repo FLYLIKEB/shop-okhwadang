@@ -10,6 +10,7 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 
 interface ProfileForm {
   name: string;
@@ -134,13 +135,14 @@ export default function ProfilePage() {
           {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
         </div>
 
-        <button
+        <Button
           type="submit"
+          variant="black"
           disabled={submitting}
-          className="w-full rounded-md bg-foreground py-2.5 text-sm font-semibold text-background hover:opacity-90 transition-opacity disabled:opacity-40"
+          className="w-full"
         >
           {submitting ? t('saving') : t('save')}
-        </button>
+        </Button>
       </form>
     </AccountPageShell>
   );

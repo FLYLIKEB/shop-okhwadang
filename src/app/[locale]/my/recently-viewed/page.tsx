@@ -11,6 +11,7 @@ import { formatCurrency } from '@/utils/currency';
 import { getClientLocale } from '@/utils/clientLocale';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 
 interface RecentlyViewedProductImageProps {
   thumbnail: string | null;
@@ -61,12 +62,12 @@ export default function RecentlyViewedPage() {
       <AccountPageHeader
         title={t('title')}
         action={items.length > 0 ? (
-          <button
+          <Button
+            variant="gray"
             onClick={handleClear}
-            className="rounded-xl bg-card px-4 py-3 text-sm font-semibold text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-destructive"
           >
             {t('clearAll')}
-          </button>
+          </Button>
         ) : undefined}
       />
 

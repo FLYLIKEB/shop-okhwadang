@@ -7,6 +7,7 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
 import type { PersonCardItem, PersonCardListContent } from '@/lib/api';
 import { getHeadingId, InlineHtmlText } from './genericBlockUtils';
+import { Button } from '@/components/ui/button';
 
 function PersonCard({ item, reversed }: { item: PersonCardItem; reversed: boolean }) {
   return (
@@ -25,7 +26,11 @@ function PersonCard({ item, reversed }: { item: PersonCardItem; reversed: boolea
         <blockquote className="border-l-2 border-foreground pl-4 mb-6">
           <InlineHtmlText html={item.story} className="text-sm text-foreground leading-relaxed italic [&_b]:font-semibold [&_strong]:font-semibold" />
         </blockquote>
-        {item.href && <Link href={item.href} className="inline-flex items-center gap-1 text-sm font-medium text-foreground border border-foreground rounded px-4 py-2 hover:bg-foreground hover:text-background transition-colors">{item.hrefLabel || item.name}</Link>}
+        {item.href && (
+          <Button asChild variant="gray" size="sm">
+            <Link href={item.href}>{item.hrefLabel || item.name}</Link>
+          </Button>
+        )}
       </div>
     </article>
   );

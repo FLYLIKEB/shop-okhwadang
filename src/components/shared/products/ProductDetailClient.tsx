@@ -417,21 +417,20 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                 )}
               </div>
             </div>
-            <button
+            <Button
               type="button"
+              variant="gray"
+              size="icon"
               onClick={() => void handleToggleWishlist()}
               disabled={isTogglingWishlist}
               aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
               className={cn(
-                'hidden md:inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-md border transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                isWishlisted
-                  ? 'border-primary/30 bg-primary/10 text-primary'
-                  : 'border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/20',
+                'hidden h-11 min-h-11 w-11 shrink-0 rounded-md md:inline-flex',
+                isWishlisted && 'text-primary',
               )}
             >
               <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
-            </button>
+            </Button>
           </div>
 
           {/* Options */}
@@ -490,7 +489,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {/* Action buttons — desktop only */}
           <div className="hidden md:flex gap-3">
             <Button
-              variant="outline"
+              variant="black"
               className="w-1/3"
               disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleAddToCart()}
@@ -498,6 +497,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
               {t('addToCart')}
             </Button>
             <Button
+              variant="brown"
               className="w-2/3"
               disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleBuyNow()}
@@ -529,22 +529,22 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
       {/* Mobile fixed bottom action bar — sits above MobileBottomNav (z-50, ~56px tall) */}
       <div className={isNavVisible ? 'md:hidden fixed bottom-14 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3' : 'md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background px-4 py-3 flex gap-3'}>
-        <button
+        <Button
           type="button"
+          variant="gray"
+          size="icon"
           onClick={() => void handleToggleWishlist()}
           disabled={isTogglingWishlist}
           aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
           className={cn(
-            'flex items-center justify-center h-11 w-11 shrink-0 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-            isWishlisted
-              ? 'border-primary/30 bg-primary/10 text-primary'
-              : 'border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/20',
+            'h-11 min-h-11 w-11 shrink-0 rounded-md',
+            isWishlisted && 'text-primary',
           )}
         >
           <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
-        </button>
+        </Button>
         <Button
-          variant="outline"
+          variant="black"
           className="w-1/3"
           disabled={isSoldout || isAdding || isBuying}
           onClick={() => void handleAddToCart()}
@@ -552,6 +552,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           {t('addToCart')}
         </Button>
         <Button
+          variant="brown"
           className="w-2/3"
           disabled={isSoldout || isAdding || isBuying}
           onClick={() => void handleBuyNow()}

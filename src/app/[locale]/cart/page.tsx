@@ -260,7 +260,7 @@ export default function CartPage() {
           <h2 className="typo-h3">{t('orderSummary')}</h2>
           <div className="mt-4">{orderSummaryContent}</div>
 
-          <Button type="button" className="mt-4 w-full" onClick={handleOrder}>
+          <Button type="button" variant="black" className="mt-4 w-full" onClick={handleOrder}>
             {t('orderSelected')}
           </Button>
         </aside>
@@ -277,7 +277,7 @@ export default function CartPage() {
             <p className="text-xs text-muted-foreground">{t('total')}</p>
             <p className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</p>
           </div>
-          <Button type="button" className="w-full" onClick={handleOrder}>
+          <Button type="button" variant="black" className="w-full" onClick={handleOrder}>
             {t('orderSelected')}
           </Button>
         </div>

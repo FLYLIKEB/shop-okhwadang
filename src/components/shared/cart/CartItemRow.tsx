@@ -10,6 +10,7 @@ import QuantitySelector from '@/components/shared/products/QuantitySelector';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getClientLocale } from '@/utils/clientLocale';
 import { localMessage } from '@/utils/localMessages';
+import { Button } from '@/components/ui/button';
 
 interface CartItemRowProps {
   item: CartItem;
@@ -79,14 +80,16 @@ const CartItemRowComponent = memo(function CartItemRow({
 
           <p className="typo-price text-foreground">{formatCurrency(item.subtotal, locale)}</p>
 
-          <button
+          <Button
             type="button"
+            variant="gray"
+            size="icon"
             onClick={() => onRemove(item.id)}
             aria-label={localMessage('cart.removeItemAria', { product: item.product.name })}
-            className="ml-auto text-muted-foreground transition-colors hover:text-destructive"
+            className="ml-auto h-9 min-h-9 w-9 text-muted-foreground hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -100,14 +103,16 @@ const CartItemRowComponent = memo(function CartItemRow({
 
         <p className="typo-price mt-0.5 text-foreground">{formatCurrency(item.subtotal, locale)}</p>
 
-        <button
+        <Button
           type="button"
+          variant="gray"
+          size="icon"
           onClick={() => onRemove(item.id)}
           aria-label={localMessage('cart.removeItemAria', { product: item.product.name })}
-          className="text-muted-foreground transition-colors hover:text-destructive"
+          className="h-9 min-h-9 w-9 text-muted-foreground hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );

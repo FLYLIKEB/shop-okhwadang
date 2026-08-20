@@ -269,6 +269,7 @@ export default function OrderDetailPage() {
             )}
             <Button
               type="button"
+              variant="brown"
               disabled={paymentStep !== 'idle'}
               className="mt-4 w-full md:w-auto"
               onClick={handlePendingPayment}
@@ -390,8 +391,8 @@ export default function OrderDetailPage() {
               </label>
               <Button
                 type="button"
+              variant="gray"
                 onClick={submitServiceRequest}
-                className={requestType === 'cancel' ? 'toss-account__cancel-action' : undefined}
               >
                 {isImmediatePendingCancel ? t('serviceRequests.immediateCancelSubmit') : t('serviceRequests.submit')}
               </Button>

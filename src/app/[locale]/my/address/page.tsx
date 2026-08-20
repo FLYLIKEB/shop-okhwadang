@@ -9,6 +9,7 @@ import type { UserAddress, CreateAddressData } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { SkeletonBox } from '@/components/ui/Skeleton';
+import { Button } from '@/components/ui/button';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 
@@ -208,12 +209,13 @@ export default function AddressPage() {
       ) : error !== null ? (
         <div className="toss-account__error rounded-2xl bg-destructive/5 p-12 text-center">
           <p className="text-destructive">{error}</p>
-          <button
+          <Button
+            variant="gray"
             onClick={() => void fetchAddresses()}
-            className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 transition-opacity"
+            className="mt-4"
           >
             {tMy('retry')}
-          </button>
+          </Button>
         </div>
       ) : (
         <>
@@ -250,25 +252,31 @@ export default function AddressPage() {
                     </div>
                     <div className="flex shrink-0 flex-col gap-1.5">
                       {!addr.isDefault && (
-                        <button
+                        <Button
+                          variant="gray"
+                          size="sm"
                           onClick={() => handleSetDefault(addr.id)}
-                          className="toss-account__address-action rounded-xl bg-muted px-3 py-2 text-xs transition-colors hover:bg-primary-soft hover:text-primary"
+                          className="toss-account__address-action"
                         >
                           {t('setDefault')}
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
+                        variant="gray"
+                        size="sm"
                         onClick={() => openEdit(addr)}
-                        className="toss-account__address-action rounded-xl bg-muted px-3 py-2 text-xs transition-colors hover:bg-primary-soft hover:text-primary"
+                        className="toss-account__address-action"
                       >
                         {t('edit')}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="gray"
+                        size="sm"
                         onClick={() => handleDelete(addr.id)}
-                        className="toss-account__address-action toss-account__address-action--danger rounded-xl bg-destructive/5 px-3 py-2 text-xs text-destructive transition-colors hover:bg-destructive/10"
+                        className="toss-account__address-action toss-account__address-action--danger"
                       >
                         {t('delete')}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </li>
@@ -277,12 +285,13 @@ export default function AddressPage() {
           )}
 
           {!showForm && addresses.length < 10 && (
-            <button
+            <Button
+              variant="gray"
               onClick={openCreate}
-              className="toss-account__add-address w-full rounded-xl bg-card py-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="toss-account__add-address w-full"
             >
               {t('addAddress')}
-            </button>
+            </Button>
           )}
 
           {showForm && (
@@ -333,20 +342,22 @@ export default function AddressPage() {
               </label>
 
               <div className="flex gap-2 pt-1">
-                <button
+                <Button
                   type="submit"
+                  variant="black"
                   disabled={submitting}
-                  className="flex-1 rounded-md bg-foreground py-2 text-sm font-semibold text-background hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="flex-1"
                 >
                   {submitting ? t('saving') : t('save')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="gray"
                   onClick={handleCancel}
-                  className="toss-account__address-action flex-1 rounded-xl bg-muted py-2 text-sm font-medium transition-colors hover:bg-secondary"
+                  className="toss-account__address-action flex-1"
                 >
                   {t('cancel')}
-                </button>
+                </Button>
               </div>
             </form>
           )}

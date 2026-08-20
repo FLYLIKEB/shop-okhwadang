@@ -4,6 +4,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/components/ui/utils';
 import { supportsSavedThemePreference, useTheme } from '@/contexts/ThemeContext';
+import { Button } from '@/components/ui/button';
 
 interface ThemeToggleProps {
   className?: string;
@@ -28,21 +29,20 @@ export default function ThemeToggle({ className, iconClassName }: ThemeTogglePro
   const label = theme === 'dark' ? t('themeToggleToLight') : t('themeToggleToDark');
 
   return (
-    <button
+    <Button
       type="button"
+      variant="gray"
+      size="icon"
       onClick={toggleTheme}
       aria-label={label}
       title={label}
-      className={cn(
-        'p-2 text-muted-foreground hover:text-foreground transition-colors',
-        className,
-      )}
+      className={cn('text-muted-foreground hover:text-foreground', className)}
     >
       {theme === 'dark' ? (
         <Sun className={cn('h-5 w-5', iconClassName)} aria-hidden="true" />
       ) : (
         <Moon className={cn('h-5 w-5', iconClassName)} aria-hidden="true" />
       )}
-    </button>
+    </Button>
   );
 }

@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
 import type { PromotionBannerContent } from '@/lib/api';
 import { isSafeUrl } from '@/utils/url';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   content: PromotionBannerContent;
@@ -26,12 +27,9 @@ export default function PromotionBannerBlock({ content }: Props) {
         {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
         {countdownEndDate && <CountdownTimer endDate={countdownEndDate} />}
         {cta_text && cta_url && (
-          <Link
-            href={isSafeUrl(cta_url) ? cta_url : '#'}
-            className="mt-6 inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
-          >
-            {cta_text}
-          </Link>
+          <Button asChild variant="black" size="lg" className="mt-6">
+            <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>{cta_text}</Link>
+          </Button>
         )}
       </section>
     );
@@ -41,9 +39,7 @@ export default function PromotionBannerBlock({ content }: Props) {
     const backgroundClass = bgColor === 'muted' ? 'bg-muted' : bgColor === 'foreground' ? 'bg-foreground text-background' : 'bg-background';
     const eyebrowClass = bgColor === 'foreground' ? 'text-background/70' : 'text-muted-foreground';
     const titleClass = bgColor === 'foreground' ? 'text-background' : 'text-foreground';
-    const ctaClass = bgColor === 'foreground'
-      ? 'bg-background text-foreground'
-      : 'bg-foreground text-background';
+    const ctaVariant = bgColor === 'foreground' ? 'gray' : 'black';
 
     return (
       <section className={`py-16 px-4 text-center ${backgroundClass}`}>
@@ -55,12 +51,9 @@ export default function PromotionBannerBlock({ content }: Props) {
         </h2>
         {subtitle && <p className={`mb-6 text-sm ${eyebrowClass}`}>{subtitle}</p>}
         {cta_text && cta_url && (
-          <Link
-            href={isSafeUrl(cta_url) ? cta_url : '#'}
-            className={`inline-flex items-center gap-2 text-sm font-medium rounded px-6 py-3 hover:opacity-80 transition-opacity ${ctaClass}`}
-          >
-            {cta_text}
-          </Link>
+          <Button asChild variant={ctaVariant} size="lg">
+            <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>{cta_text}</Link>
+          </Button>
         )}
       </section>
     );
@@ -78,12 +71,9 @@ export default function PromotionBannerBlock({ content }: Props) {
           <h2 className="text-lg font-medium">{title}</h2>
           {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           {cta_text && cta_url && (
-            <Link
-              href={isSafeUrl(cta_url) ? cta_url : '#'}
-              className="mt-4 inline-block border border-foreground px-6 py-2 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors"
-            >
-              {cta_text}
-            </Link>
+            <Button asChild variant="gray" size="sm" className="mt-4">
+              <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>{cta_text}</Link>
+            </Button>
           )}
         </div>
       </section>
@@ -122,15 +112,15 @@ export default function PromotionBannerBlock({ content }: Props) {
           </p>
         )}
         {cta_text && cta_url && (
-          <Link
-            href={isSafeUrl(cta_url) ? cta_url : '#'}
-            className={`inline-block border border-foreground px-8 py-3 text-sm font-medium text-foreground hover:bg-foreground hover:text-background transition-colors duration-600 ease-out ${
-              visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
-            }`}
+          <Button
+            asChild
+            variant="black"
+            size="lg"
+            className={`transition-all duration-600 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
             style={{ transitionDelay: visible ? '300ms' : undefined }}
           >
-            {cta_text}
-          </Link>
+            <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>{cta_text}</Link>
+          </Button>
         )}
       </div>
     </section>

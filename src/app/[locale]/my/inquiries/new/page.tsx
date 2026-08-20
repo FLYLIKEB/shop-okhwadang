@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { inquiriesApi } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
+import { Button } from '@/components/ui/button';
 
 const INQUIRY_TYPES = [
   { value: '상품', key: 'product' },
@@ -81,20 +82,22 @@ export default function NewInquiryPage() {
           />
         </div>
         <div className="flex gap-3 pt-2">
-          <button
+          <Button
             type="button"
+            variant="gray"
             onClick={() => router.back()}
-            className="flex-1 py-2.5 border border-input rounded-lg text-sm font-medium text-foreground hover:bg-muted"
+            className="flex-1"
           >
             {t('cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant="black"
             disabled={submitting}
-            className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1"
           >
             {submitting ? t('submitting') : t('submit')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

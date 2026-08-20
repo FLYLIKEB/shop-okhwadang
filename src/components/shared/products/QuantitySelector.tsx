@@ -3,6 +3,7 @@
 import { Minus, Plus } from 'lucide-react'
 import { localMessage } from '@/utils/localMessages'
 import { cn } from '@/components/ui/utils'
+import { Button } from '@/components/ui/button'
 
 interface QuantitySelectorProps {
   quantity: number
@@ -19,8 +20,10 @@ export default function QuantitySelector({
 }: QuantitySelectorProps) {
   return (
     <div className="checkout-toss-quantity inline-flex items-center w-fit border border-border bg-background">
-      <button
+      <Button
         type="button"
+        variant="gray"
+        size="icon"
         onClick={onDecrease}
         disabled={quantity <= 1}
         aria-label={localMessage('product.quantityDecrease')}
@@ -31,14 +34,16 @@ export default function QuantitySelector({
         )}
       >
         <Minus className="size-3.5" strokeWidth={1.5} />
-      </button>
+      </Button>
 
       <span className="w-10 text-sm font-medium text-center text-foreground tabular-nums">
         {quantity}
       </span>
 
-      <button
+      <Button
         type="button"
+        variant="gray"
+        size="icon"
         onClick={onIncrease}
         disabled={quantity >= maxQuantity}
         aria-label={localMessage('product.quantityIncrease')}
@@ -49,7 +54,7 @@ export default function QuantitySelector({
         )}
       >
         <Plus className="size-3.5" strokeWidth={1.5} />
-      </button>
+      </Button>
     </div>
   )
 }

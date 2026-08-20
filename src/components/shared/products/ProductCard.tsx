@@ -13,6 +13,7 @@ import { useWishlistToggle } from '@/components/shared/hooks/useWishlistToggle';
 import { useCart } from '@/contexts/CartContext';
 import { compactProductSummary } from '@/lib/collectionDisplay';
 import type { Locale } from '@/utils/currency';
+import { Button } from '@/components/ui/button';
 
 interface ProductCardProps {
   id: number;
@@ -141,14 +142,15 @@ function ProductCard({
         )}
 
         {/* 찜하기 — 모바일: 항상 노출 / 데스크톱: hover 또는 찜한 상태에서만 */}
-        <button
+        <Button
           type="button"
+          variant="gray"
+          size="icon"
           aria-label={isWishlisted ? tWishlist('toggleOff') : tWishlist('toggleOn')}
           onClick={handleToggleWishlist}
           disabled={isWishlistLoading}
           className={cn(
-            'absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full',
-            'bg-background/70 backdrop-blur-sm transition-opacity hover:bg-background/90',
+            'absolute right-2 top-2 z-10 h-8 min-h-8 w-8 rounded-full backdrop-blur-sm transition-opacity',
             'disabled:cursor-not-allowed',
             'opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100',
             isWishlisted && 'md:opacity-100',
@@ -160,7 +162,7 @@ function ProductCard({
               isWishlisted ? 'fill-foreground text-foreground' : 'text-foreground/70',
             )}
           />
-        </button>
+        </Button>
 
         {isFreeShipping && (
           <span className="tag-clay absolute bottom-2 right-2 z-10 bg-foreground/85 px-2 py-0.5 text-background backdrop-blur-sm pointer-events-none">
@@ -202,19 +204,16 @@ function ProductCard({
         )}
 
         {!isSoldout && (
-          <button
+          <Button
             type="button"
+            variant="black"
             onClick={handleAddToCart}
             disabled={isCartLoading}
-            className={cn(
-              'mt-auto flex w-full items-center justify-center gap-2 border border-divider-soft py-2',
-              'typo-button text-foreground transition-colors',
-              'hover:bg-foreground hover:text-background disabled:cursor-not-allowed',
-            )}
+            className="mt-auto w-full"
           >
             <ShoppingCart className="h-3.5 w-3.5" />
             {isCartLoading ? t('addingToCart') : t('addToCart')}
-          </button>
+          </Button>
         )}
       </div>
     </article>

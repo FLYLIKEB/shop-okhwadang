@@ -13,6 +13,7 @@ import { SkeletonBox } from '@/components/ui/Skeleton';
 import { OrderSummaryCard } from '@/components/shared/account/OrderSummaryCard';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 
 const PAGE_LIMIT = 10;
 
@@ -80,22 +81,20 @@ export default function OrdersPage() {
       ) : error !== null ? (
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-12 text-center">
           <p className="text-destructive">{error}</p>
-          <button
+          <Button
+            variant="gray"
             onClick={() => void fetchOrders()}
-            className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 transition-opacity"
+            className="mt-4"
           >
             {tMy('retry')}
-          </button>
+          </Button>
         </div>
       ) : orders.length === 0 ? (
         <div className="surface-card p-12 text-center">
           <p className="text-muted-foreground">{t('noOrders')}</p>
-          <Link
-            href="/products"
-            className="mt-4 inline-block rounded-md bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 transition-opacity"
-          >
-            {t('noOrdersAction')}
-          </Link>
+          <Button asChild variant="black" className="mt-4">
+            <Link href="/products">{t('noOrdersAction')}</Link>
+          </Button>
         </div>
       ) : (
         <>
@@ -115,23 +114,25 @@ export default function OrdersPage() {
 
           {totalPages > 1 && (
             <div className="mt-6 flex justify-center gap-2">
-              <button
+              <Button
+                variant="gray"
+                size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-md border border-soft px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
               >
                 {tMy('previousPage')}
-              </button>
+              </Button>
               <span className="flex items-center px-3 text-sm">
                 {page} / {totalPages}
               </span>
-              <button
+              <Button
+                variant="gray"
+                size="sm"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-md border border-soft px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-muted transition-colors"
               >
                 {tMy('nextPage')}
-              </button>
+              </Button>
             </div>
           )}
         </>

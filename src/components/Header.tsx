@@ -20,6 +20,7 @@ import { MobileMenu } from '@/components/header/MobileMenu';
 import { MobileSearchOverlay } from '@/components/header/MobileSearchOverlay';
 import { DesktopNav } from '@/components/header/DesktopNav';
 import type { NavigationItem } from '@/lib/api';
+import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   initialNavItems?: NavigationItem[] | null;
@@ -76,16 +77,18 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
         {/* 2줄 헤더 — top: 로고/검색/액션 · bottom: GNB 전폭 균등 */}
         <div className="toss-header__top mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
           {/* 햄버거 (mobile) */}
-          <button
+          <Button
             type="button"
+            variant="gray"
+            size="icon"
             onClick={() => { setIsMenuOpen(!isMenuOpen); setIsSearchOpen(false); }}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? tNav('closeMenu') : tNav('openMenu')}
-            className="p-2 transition-colors shrink-0 text-muted-foreground hover:text-foreground md:hidden"
+            className="shrink-0 md:hidden"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          </Button>
 
           {/* 로고 */}
           <Link href="/" className="shrink-0">
@@ -109,9 +112,9 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
               aria-label={t('searchLabel')}
               className="toss-header__search-input w-full rounded-md bg-muted/40 pl-3 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-muted/60 transition-colors"
             />
-            <button type="submit" aria-label={t('searchButton')} className="toss-header__search-button absolute right-3 transition-colors text-muted-foreground hover:text-foreground">
+            <Button type="submit" variant="gray" size="icon" aria-label={t('searchButton')} className="toss-header__search-button absolute right-1 h-9 min-h-9 w-9 text-muted-foreground hover:text-foreground">
               <Search className="h-4 w-4" />
-            </button>
+            </Button>
           </form>
 
           {/* 데스크탑 액션 */}
@@ -124,9 +127,9 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
                 <Link href="/my" aria-label={t('myPage')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                   <User className="h-5 w-5" />
                 </Link>
-                <button type="button" onClick={() => void logout()} aria-label={t('logout')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <Button type="button" variant="gray" size="icon" onClick={() => void logout()} aria-label={t('logout')} className="text-muted-foreground hover:text-foreground">
                   <LogOut className="h-5 w-5" />
-                </button>
+                </Button>
                 {isAdmin && (
                   <Link href="/admin" aria-label={t('adminPage')} className="ml-2 inline-flex items-center gap-2 rounded-md border border-primary bg-primary px-3 py-2 typo-button text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
                     <Shield className="h-4 w-4" />
@@ -143,15 +146,17 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
 
           {/* 모바일 우측 */}
           <div className="toss-header__mobile-actions md:hidden flex items-center gap-1">
-            <button
+            <Button
               type="button"
+              variant="gray"
+              size="icon"
               onClick={() => { setIsSearchOpen(!isSearchOpen); setIsMenuOpen(false); }}
               aria-label={isSearchOpen ? t('searchClose') : t('searchOpen')}
               aria-expanded={isSearchOpen}
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground"
             >
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-            </button>
+            </Button>
             {isAuthenticated ? (
               <Link href="/my" aria-label={t('myPage')} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                 <User className="h-5 w-5" />

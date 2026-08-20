@@ -78,7 +78,7 @@ export function SecureCardEntryShell({ showSubmitButton = false }: SecureCardEnt
       </div>
 
       {showSubmitButton && (
-        <Button type="submit" form="checkout-form" className="w-full">
+        <Button type="submit" form="checkout-form" variant="brown" className="w-full">
           {t('payNow')}
         </Button>
       )}

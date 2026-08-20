@@ -10,11 +10,12 @@ import type { WishlistItem } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/shared/EmptyState';
-import { cn } from '@/components/ui/utils';
+
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
+import { Button } from '@/components/ui/button';
 
 interface WishlistProductImageProps {
   thumbnail?: string;
@@ -151,26 +152,24 @@ export default function WishlistPage() {
                     </div>
                   )}
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="black"
+                      size="sm"
                       disabled={isSoldout}
                       onClick={() => handleAddToCart(item.productId)}
-                      className={cn(
-                        'flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors',
-                        isSoldout
-                          ? 'cursor-not-allowed opacity-50'
-                          : 'hover:bg-primary hover:text-primary-foreground',
-                      )}
+                      className="flex-1"
                     >
                       {tProduct('addToCart')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="gray"
+                      size="sm"
                       onClick={() => handleRemove(item.id)}
-                      className="rounded-md border px-2 py-1.5 text-xs font-medium text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
                     >
                       {tCommon('delete')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </li>

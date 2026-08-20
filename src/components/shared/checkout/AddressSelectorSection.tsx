@@ -2,6 +2,7 @@
 
 import type { UserAddress } from '@/lib/api';
 import { localMessage } from '@/utils/localMessages';
+import { Button } from '@/components/ui/button';
 
 interface AddressSelectorSectionProps {
   addresses: UserAddress[];
@@ -26,13 +27,14 @@ export function AddressSelectorSection({
     return (
       <div className="flex items-center justify-between rounded-md border border-dashed border-soft p-4">
         <p className="text-sm text-muted-foreground">{localMessage('checkout.noSavedAddress')}</p>
-        <button
+        <Button
           type="button"
+          variant="gray"
+          size="sm"
           onClick={() => { window.location.href = `/${locale}/my/address`; }}
-          className="text-sm font-medium underline underline-offset-2 hover:opacity-70 transition-opacity"
         >
           {localMessage('checkout.addAddress')}
-        </button>
+        </Button>
       </div>
     );
   }
