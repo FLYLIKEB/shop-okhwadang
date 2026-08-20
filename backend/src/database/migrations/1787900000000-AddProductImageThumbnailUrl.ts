@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddProductImageThumbnailUrl1787900000000 implements MigrationInterface {
-  name = 'AddProductImageThumbnailUrl1787900000';
+  name = 'AddProductImageThumbnailUrl1787900000000';
 
   async up(queryRunner: QueryRunner): Promise<void> {
     const rows = (await queryRunner.query(
@@ -9,10 +9,10 @@ export class AddProductImageThumbnailUrl1787900000000 implements MigrationInterf
     )) as Array<{ cnt: string }>;
 
     if (rows[0]?.cnt === '0') {
-    await queryRunner.query(
-      "ALTER TABLE `product_images` ADD `thumbnail_url` varchar(500) NULL AFTER `url`",
-    );
-  }
+      await queryRunner.query(
+        "ALTER TABLE `product_images` ADD `thumbnail_url` varchar(500) NULL AFTER `url`",
+      );
+    }
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
