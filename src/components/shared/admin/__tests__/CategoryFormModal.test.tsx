@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import CategoryFormModal from '@/components/shared/admin/CategoryFormModal';
@@ -21,14 +21,7 @@ const mockCategories: AdminCategory[] = [
 
 describe('CategoryFormModal', () => {
   it('open=false → 렌더링하지 않음', () => {
-    render(
-      <CategoryFormModal
-        open={false}
-        onClose={vi.fn()}
-        onSubmit={vi.fn()}
-        categories={[]}
-      />,
-    );
+    render(<CategoryFormModal open={false} onClose={vi.fn()} onSubmit={vi.fn()} categories={[]} />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -65,40 +58,19 @@ describe('CategoryFormModal', () => {
 
   it('취소 버튼 클릭 → onClose 호출', async () => {
     const onClose = vi.fn();
-    render(
-      <CategoryFormModal
-        open={true}
-        onClose={onClose}
-        onSubmit={vi.fn()}
-        categories={[]}
-      />,
-    );
+    render(<CategoryFormModal open={true} onClose={onClose} onSubmit={vi.fn()} categories={[]} />);
     await userEvent.click(screen.getByRole('button', { name: '취소' }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('빈 폼 제출 → 검증 에러 표시', async () => {
-    render(
-      <CategoryFormModal
-        open={true}
-        onClose={vi.fn()}
-        onSubmit={vi.fn()}
-        categories={[]}
-      />,
-    );
+    render(<CategoryFormModal open={true} onClose={vi.fn()} onSubmit={vi.fn()} categories={[]} />);
     await userEvent.click(screen.getByRole('button', { name: '추가' }));
     expect(screen.getByText('카테고리명을 입력하세요.')).toBeInTheDocument();
   });
 
   it('카테고리명 입력 시 slug 자동 생성', async () => {
-    render(
-      <CategoryFormModal
-        open={true}
-        onClose={vi.fn()}
-        onSubmit={vi.fn()}
-        categories={[]}
-      />,
-    );
+    render(<CategoryFormModal open={true} onClose={vi.fn()} onSubmit={vi.fn()} categories={[]} />);
     const nameInput = screen.getByLabelText(/카테고리명/);
     await userEvent.type(nameInput, 'Test Category');
     expect(screen.getByDisplayValue('test-category')).toBeInTheDocument();
@@ -107,14 +79,7 @@ describe('CategoryFormModal', () => {
   it('유효한 폼 제출 → onSubmit 호출', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     const onClose = vi.fn();
-    render(
-      <CategoryFormModal
-        open={true}
-        onClose={onClose}
-        onSubmit={onSubmit}
-        categories={[]}
-      />,
-    );
+    render(<CategoryFormModal open={true} onClose={onClose} onSubmit={onSubmit} categories={[]} />);
     await userEvent.type(screen.getByLabelText(/카테고리명/), '패션');
     // Korean chars are stripped from auto-slug; manually set slug
     const slugInput = screen.getByLabelText(/slug/i);
@@ -126,19 +91,28 @@ describe('CategoryFormModal', () => {
     );
   });
 
-
   it('이미지 URL 텍스트 입력 대신 직접 업로드 UI를 렌더링한다', () => {
-    render(
-      <CategoryFormModal
-        open={true}
-        onClose={vi.fn()}
-        onSubmit={vi.fn()}
-        categories={[]}
-      />,
-    );
+    render(<CategoryFormModal open={true} onClose={vi.fn()} onSubmit={vi.fn()} categories={[]} />);
 
     expect(screen.queryByLabelText('이미지 URL')).not.toBeInTheDocument();
     expect(screen.getByText('클릭하거나 드래그하여 이미지 업로드')).toBeInTheDocument();
+  });
+
+  it('Escape 키와 body scroll 잠금을 공통 Modal 셸로 처리한다', () => {
+    const onClose = vi.fn();
+    const { unmount } = render(
+      <CategoryFormModal open={true} onClose={onClose} onSubmit={vi.fn()} categories={[]} />,
+    );
+
+    expect(screen.getByRole('dialog', { name: '카테고리 추가' })).toBeInTheDocument();
+    expect(document.body.style.overflow).toBe('hidden');
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(onClose).toHaveBeenCalledOnce();
+
+    unmount();
+    expect(document.body.style.overflow).toBe('');
   });
 
   it('상위 카테고리 목록 렌더링', () => {

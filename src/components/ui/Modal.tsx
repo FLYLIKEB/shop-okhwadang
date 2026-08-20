@@ -11,6 +11,10 @@ interface ModalProps {
   children: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  overlayClassName?: string;
+  ariaLabelledBy?: string;
+  closeOnOverlayClick?: boolean;
+  showCloseButton?: boolean;
 }
 
 const MAX_WIDTH_CLASSES = {
@@ -26,6 +30,10 @@ export default function Modal({
   children,
   maxWidth = 'md',
   className,
+  overlayClassName,
+  ariaLabelledBy,
+  closeOnOverlayClick = true,
+  showCloseButton = true,
 }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
@@ -52,10 +60,14 @@ export default function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={onClose}
+      className={cn(
+        'fixed inset-0 z-50 flex items-center justify-center bg-black/50',
+        overlayClassName,
+      )}
+      onClick={closeOnOverlayClick ? onClose : undefined}
       role="dialog"
       aria-modal="true"
+      aria-labelledby={ariaLabelledBy}
     >
       <div
         className={cn(
@@ -65,14 +77,16 @@ export default function Modal({
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={localMessage('ui.close')}
-          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        {showCloseButton ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={localMessage('ui.close')}
+            className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        ) : null}
         {children}
       </div>
     </div>
