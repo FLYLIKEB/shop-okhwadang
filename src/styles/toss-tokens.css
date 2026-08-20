@@ -26,3 +26,40 @@ html[data-theme='dark'] {
   --checkout-toss-primary-soft: #3a2920;
   --checkout-toss-shadow: 0 2px 12px rgb(0 0 0 / 28%);
 }
+
+/* Payment confirmation is intentionally light so the Toss widget remains a
+   coherent vendor-owned surface even when the storefront is in dark mode. */
+.checkout-light-theme {
+  color-scheme: light;
+  --checkout-toss-background: #f2f4f6;
+  --checkout-toss-surface: #ffffff;
+  --checkout-toss-input: #f2f4f6;
+  --checkout-toss-foreground: #191f28;
+  --checkout-toss-muted: #8b95a1;
+  --checkout-toss-border: #e5e8eb;
+  --checkout-toss-primary: #8b4513;
+  --checkout-toss-primary-hover: #6f350f;
+  --checkout-toss-primary-soft: #f5ede7;
+  --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
+
+  --color-bg: #fafafa;
+  --color-text: #1a1a1a;
+  --color-primary: #353535;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f0f0f0;
+  --color-secondary-foreground: #1a1a1a;
+  --color-destructive: #3d3d3d;
+  --color-destructive-foreground: #ffffff;
+  --color-muted: #f0f0f0;
+  --color-muted-foreground: #525252;
+  --color-accent: #f0f0f0;
+  --color-accent-foreground: #1a1a1a;
+  --color-background: #f9f9f9;
+  --color-foreground: #1a1a1a;
+  --color-card: #f9f9f9;
+  --color-card-foreground: #1a1a1a;
+  --color-border: #e1e1e1;
+  --color-input: #e1e1e1;
+  --color-ring: #353535;
+  --color-surface: #f0f0f0;
+}

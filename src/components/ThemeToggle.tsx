@@ -2,8 +2,10 @@
 
 import { Moon, Sun } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/components/ui/utils';
 import { supportsSavedThemePreference, useTheme } from '@/contexts/ThemeContext';
+import { isCheckoutLightPath } from '@/utils/checkout-theme';
 
 interface ThemeToggleProps {
   className?: string;
@@ -18,10 +20,11 @@ interface ThemeToggleProps {
  */
 export default function ThemeToggle({ className, iconClassName }: ThemeToggleProps) {
   const locale = useLocale();
+  const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const t = useTranslations('header');
 
-  if (!supportsSavedThemePreference(locale)) {
+  if (!supportsSavedThemePreference(locale) || isCheckoutLightPath(pathname)) {
     return null;
   }
 

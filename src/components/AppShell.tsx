@@ -10,6 +10,8 @@ import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 import { MobileNavProvider } from '@/contexts/MobileNavContext';
 import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
 import type { Locale } from '@/i18n/routing';
+import { cn } from '@/components/ui/utils';
+import { isCheckoutLightPath } from '@/utils/checkout-theme';
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -66,7 +68,7 @@ export default function AppShell({
 
   return (
     <MobileNavProvider initialVisible={mobileBottomNavVisible}>
-      <div className="flex min-h-screen flex-col">
+      <div className={cn('flex min-h-screen flex-col', isCheckoutLightPath(pathname) && 'checkout-light-theme')}>
         {announcementBar}
         <Header initialNavItems={navigationData?.gnb} initialSidebarItems={navigationData?.sidebar} />
         <main id="main-content" className="flex-1 pb-16 md:pb-0">

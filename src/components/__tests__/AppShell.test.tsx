@@ -76,6 +76,22 @@ describe('AppShell', () => {
     expect(screen.getByText('admin content')).toBeInTheDocument();
     expect(screen.getByTestId('toaster')).toBeInTheDocument();
   });
+
+  it('uses a light theme boundary for payment confirmation routes', () => {
+    mockPathname = '/ko/checkout';
+
+    const { container } = render(
+      <AppShell
+        locale="ko"
+        mobileBottomNavVisible
+        announcementBar={<div data-testid="announcement-bar" />}
+      >
+        checkout content
+      </AppShell>,
+    );
+
+    expect(container.querySelector('.checkout-light-theme')).toBeInTheDocument();
+  });
   it('does not import server-only announcement fetching into the client shell', () => {
     const source = readFileSync('src/components/AppShell.tsx', 'utf8');
 
