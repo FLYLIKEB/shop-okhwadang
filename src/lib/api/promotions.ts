@@ -18,7 +18,7 @@ export type PromotionListResponse = ListResponse<Promotion>;
 
 export const promotionsApi = {
   getList: (locale?: string) =>
-    apiClient.get<Promotion[]>(locale ? `/promotions?locale=${locale}` : '/promotions'),
+    apiClient.get<Promotion[]>('/promotions', { params: locale ? { locale } : undefined }),
   getOne: (id: number, locale?: string) =>
-    apiClient.get<Promotion>(locale ? `/promotions/${id}?locale=${locale}` : `/promotions/${id}`),
+    apiClient.get<Promotion>(`/promotions/${id}`, { params: locale ? { locale } : undefined }),
 };

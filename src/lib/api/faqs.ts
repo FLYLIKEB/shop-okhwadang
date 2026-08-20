@@ -27,11 +27,8 @@ export interface CreateFaqData {
 }
 
 export const faqsApi = {
-  getList: (category?: string, locale?: string) => {
-    const params = new URLSearchParams();
-    if (category) params.set('category', category);
-    if (locale) params.set('locale', locale);
-    const qs = params.toString();
-    return apiClient.get<FaqListResponse>(`/faqs${qs ? `?${qs}` : ''}`);
-  },
+  getList: (category?: string, locale?: string) =>
+    apiClient.get<FaqListResponse>('/faqs', {
+      params: category || locale ? { category, locale } : undefined,
+    }),
 };

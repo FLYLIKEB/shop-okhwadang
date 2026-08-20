@@ -15,7 +15,7 @@ export interface Notice {
 
 export const noticesApi = {
   getList: (locale?: string) =>
-    apiClient.get<Notice[]>(`/notices${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`),
+    apiClient.get<Notice[]>('/notices', { params: locale ? { locale } : undefined }),
   getOne: (id: number, locale?: string) =>
-    apiClient.get<Notice>(`/notices/${id}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`),
+    apiClient.get<Notice>(`/notices/${id}`, { params: locale ? { locale } : undefined }),
 };

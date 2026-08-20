@@ -14,5 +14,5 @@ export interface Banner {
 
 export const bannersApi = {
   getList: (locale?: string) =>
-    apiClient.get<Banner[]>(locale ? `/banners?locale=${locale}` : '/banners'),
+    apiClient.get<Banner[]>('/banners', { params: locale ? { locale } : undefined }),
 };
