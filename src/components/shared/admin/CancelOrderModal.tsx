@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { adminOrdersApi } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
 import { localMessage } from '@/utils/localMessages';
+import Modal from '@/components/ui/Modal';
 
 interface CancelOrderModalProps {
   orderId: number;
@@ -13,7 +14,12 @@ interface CancelOrderModalProps {
   onSuccess: () => void;
 }
 
-export function CancelOrderModal({ orderId, orderNumber, onClose, onSuccess }: CancelOrderModalProps) {
+export function CancelOrderModal({
+  orderId,
+  orderNumber,
+  onClose,
+  onSuccess,
+}: CancelOrderModalProps) {
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,8 +45,17 @@ export function CancelOrderModal({ orderId, orderNumber, onClose, onSuccess }: C
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="cancel-order-title">
-      <form onSubmit={(event) => void handleSubmit(event)} className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+    <Modal
+      isOpen
+      onClose={onClose}
+      maxWidth="md"
+      overlayClassName="p-4"
+      ariaLabelledBy="cancel-order-title"
+      closeOnOverlayClick={false}
+      showCloseButton={false}
+      className="p-0"
+    >
+      <form onSubmit={(event) => void handleSubmit(event)} className="p-6">
         <div className="space-y-1">
           <h2 id="cancel-order-title" className="text-lg font-semibold">
             {localMessage('admin.orders.cancel.title')}
@@ -79,10 +94,12 @@ export function CancelOrderModal({ orderId, orderNumber, onClose, onSuccess }: C
             disabled={isSubmitting}
             className="rounded bg-destructive px-4 py-2 text-sm text-destructive-foreground hover:opacity-90 disabled:opacity-50"
           >
-            {isSubmitting ? localMessage('admin.orders.cancel.submitting') : localMessage('admin.orders.cancel.submit')}
+            {isSubmitting
+              ? localMessage('admin.orders.cancel.submitting')
+              : localMessage('admin.orders.cancel.submit')}
           </button>
         </div>
       </form>
-    </div>
+    </Modal>
   );
 }
