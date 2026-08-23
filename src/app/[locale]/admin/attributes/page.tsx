@@ -4,12 +4,13 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
-import { AdminEmptyState } from '@/components/shared/admin/AdminStates';
+import { AdminEmptyState, AdminErrorState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
 import EntitySelector from '@/components/shared/admin/page-editor/EntitySelector';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { attributesApi } from '@/lib/api';
 import type { AttributeType, ManagedAttributeValueOption } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { localMessage } from '@/utils/localMessages';
 
 type InputType = AttributeType['inputType'];
 
@@ -85,6 +86,7 @@ export default function AdminAttributesPage() {
   const [loading, setLoading] = useState(false);
   const [loadingValues, setLoadingValues] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const parentOptions = useMemo(
     () => attributes.filter((attribute) => attribute.id !== form.id),
@@ -107,6 +109,7 @@ export default function AdminAttributesPage() {
 
   const loadAttributes = async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const loadedAttributes = await attributesApi.getTypes();
       setAttributes(loadedAttributes);
@@ -115,6 +118,7 @@ export default function AdminAttributesPage() {
         if (refreshed) await loadValueOptions(refreshed);
       }
     } catch (err) {
+      setLoadError(true);
       toast.error(handleApiError(err, t('loadError')));
     } finally {
       setLoading(false);
@@ -495,7 +499,11 @@ export default function AdminAttributesPage() {
       </section>
 
       <div className="admin-surface overflow-x-auto">
-        <table className="w-full typo-body-sm">
+        {loading && <AdminLoadingState title="불러오는 중..." className="rounded-none border-0" />}
+        {!loading && loadError && (
+          <AdminErrorState title={t('loadError')} action={<button type="button" onClick={() => void loadAttributes()} className="rounded border px-3 py-2 typo-body-sm hover:bg-secondary">{localMessage('ui.retry')}</button>} className="rounded-none border-0" />
+        )}
+        <table className={`w-full typo-body-sm${loading || loadError ? ' hidden' : ''}`}>
           <thead className="admin-table-head">
             <tr>
               <th className="px-4 py-3 text-left">{t('code')}</th>
@@ -537,7 +545,7 @@ export default function AdminAttributesPage() {
             ))}
           </tbody>
         </table>
-        {!loading && attributes.length === 0 && (
+        {!loading && !loadError && attributes.length === 0 && (
           <AdminEmptyState title={t('empty')} className="rounded-none border-0" />
         )}
       </div>

@@ -39,6 +39,7 @@ export default function AdminOrdersPage() {
   const [shippingOrder, setShippingOrder] = useState<AdminOrder | null>(null);
   const [cancelOrder, setCancelOrder] = useState<AdminOrder | null>(null);
   const [serviceRequests, setServiceRequests] = useState<OrderServiceRequest[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const {
     page,
     setPage,
@@ -60,6 +61,7 @@ export default function AdminOrdersPage() {
 
   const { execute: fetchOrders, isLoading: loading } = useAsyncAction(
     async () => {
+      setLoadError(false);
       const params: Record<string, string | number | undefined> = {
         page,
         limit: PAGE_SIZE,
@@ -77,7 +79,7 @@ export default function AdminOrdersPage() {
       setTotal(res.total);
       setServiceRequests(requestRes.items);
     },
-    { errorMessage: '주문 목록을 불러오지 못했습니다.' },
+    { errorMessage: '주문 목록을 불러오지 못했습니다.', onError: () => setLoadError(true) },
   );
 
   useEffect(() => {
@@ -198,6 +200,15 @@ export default function AdminOrdersPage() {
 
       <PaginatedAdminTableShell
         loading={loading}
+        error={loadError}
+        errorMessage={loadError ? '주문 목록을 불러오지 못했습니다.' : undefined}
+        errorAction={
+          <Button type="button" onClick={() => void fetchOrders()} variant="outline" size="sm">
+            {localMessage('ui.retry')}
+          </Button>
+        }
+        isEmpty={orders.length === 0}
+        emptyMessage="주문이 없습니다."
         loadingMessage="불러오는 중..."
         currentPage={page}
         totalPages={totalPages}

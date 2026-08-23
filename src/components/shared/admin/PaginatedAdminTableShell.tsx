@@ -8,6 +8,7 @@ interface PaginatedAdminTableShellProps {
   isEmpty?: boolean;
   emptyMessage?: string;
   emptyAction?: ReactNode;
+  error?: boolean;
   errorMessage?: string | null;
   errorAction?: ReactNode;
   currentPage: number;
@@ -22,6 +23,7 @@ export function PaginatedAdminTableShell({
   isEmpty = false,
   emptyMessage = '데이터가 없습니다.',
   emptyAction,
+  error = false,
   errorMessage,
   errorAction,
   currentPage,
@@ -29,19 +31,22 @@ export function PaginatedAdminTableShell({
   onPageChange,
   children,
 }: PaginatedAdminTableShellProps) {
+  const hasError = error || Boolean(errorMessage);
+  const resolvedErrorMessage = errorMessage ?? '데이터를 불러오지 못했습니다.';
+
   return (
     <>
       {loading ? (
         <AdminLoadingState title={loadingMessage} />
-      ) : errorMessage ? (
-        <AdminErrorState title={errorMessage} action={errorAction} />
+      ) : hasError ? (
+        <AdminErrorState title={resolvedErrorMessage} action={errorAction} />
       ) : isEmpty ? (
         <AdminEmptyState title={emptyMessage} action={emptyAction} />
       ) : (
         children
       )}
 
-      {!loading && !errorMessage && (
+      {!loading && !hasError && (
         <AdminPagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
       )}
     </>
