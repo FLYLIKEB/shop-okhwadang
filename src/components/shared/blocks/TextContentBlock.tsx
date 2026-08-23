@@ -15,7 +15,7 @@ export default function TextContentBlock({ content }: Props) {
       className={cn(
         'my-12 md:my-20',
         isHighlight
-          ? 'rounded-lg border border-primary/30 bg-primary/5 px-6 py-8 md:px-10'
+          ? 'rounded-lg bg-primary/5 px-6 py-8 md:px-10'
           : 'border-y border-divider-soft bg-background/80 py-8 md:py-12',
       )}
       data-template={template}

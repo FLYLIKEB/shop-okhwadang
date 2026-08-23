@@ -45,6 +45,31 @@ html[data-theme='dark'] {
   --checkout-toss-header-button-gray-hover: #303740;
 }
 
+/* CMS surfaces share the payment palette, but keep their own semantic names so
+   editor and rendered blocks do not depend on vendor-specific tokens. */
+:root,
+html[data-theme='light'] {
+  --cms-background: var(--checkout-toss-background);
+  --cms-surface: var(--checkout-toss-surface);
+  --cms-input: var(--checkout-toss-input);
+  --cms-foreground: var(--checkout-toss-foreground);
+  --cms-muted: var(--checkout-toss-muted);
+  --cms-divider: var(--checkout-toss-border);
+  --cms-radius: 0.75rem;
+  --cms-shadow: var(--checkout-toss-shadow);
+}
+
+html[data-theme='dark'] {
+  --cms-background: var(--checkout-toss-background);
+  --cms-surface: var(--checkout-toss-surface);
+  --cms-input: var(--checkout-toss-input);
+  --cms-foreground: var(--checkout-toss-foreground);
+  --cms-muted: var(--checkout-toss-muted);
+  --cms-divider: var(--checkout-toss-border);
+  --cms-radius: 0.75rem;
+  --cms-shadow: var(--checkout-toss-shadow);
+}
+
 /* Payment content is intentionally light so the Toss widget remains a
    coherent vendor-owned surface while the global storefront chrome keeps its theme. */
 .checkout-light-theme,

@@ -34,7 +34,7 @@ function AlternatingCard({ item, reversed }: { item: ColorCardItem; reversed: bo
         {item.characteristics && item.characteristics.length > 0 && (
           <ul className="grid grid-cols-2 gap-2 mb-6">
             {item.characteristics.map((characteristic) => (
-              <li key={characteristic} className="text-xs text-muted-foreground border border-border rounded px-3 py-1.5">
+              <li key={characteristic} className="rounded bg-muted px-3 py-1.5 text-xs text-muted-foreground">
                 {characteristic}
               </li>
             ))}

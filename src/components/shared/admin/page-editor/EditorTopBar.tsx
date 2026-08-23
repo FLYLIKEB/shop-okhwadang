@@ -72,7 +72,7 @@ export default function EditorTopBar({
   };
 
   return (
-    <div className="cms-editor__topbar surface-card space-y-3 rounded-none border-0 border-b border-soft px-5 py-4 shadow-none">
+    <div className="cms-editor__topbar surface-card space-y-3 rounded-none border-0 border-b border-soft px-5 py-4">
       {/* 제목 + 액션 버튼 */}
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
