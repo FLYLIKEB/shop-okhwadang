@@ -166,6 +166,17 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: '사업자정보확인' })).toHaveAttribute('href', businessInfo.infoUrl);
   });
 
+  it('places translated contact details with the brand, outside the legal business block', () => {
+    const { container } = render(<Footer />);
+    const brand = container.querySelector('.toss-footer__brand');
+    const business = container.querySelector('.toss-footer__business');
+
+    expect(brand).toContainElement(screen.getByText(/대표전화: 010-2908-0393/));
+    expect(brand).toContainElement(screen.getByText(/이메일: seorointernational@naver.com/));
+    expect(business).not.toContainElement(screen.getByText(/대표전화: 010-2908-0393/));
+    expect(business).not.toContainElement(screen.getByText(/이메일: seorointernational@naver.com/));
+  });
+
   it('falls back to i18n when businessInfo prop is not provided', () => {
     render(<Footer />);
     // i18n fallback values from ko.json

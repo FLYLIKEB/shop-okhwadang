@@ -127,6 +127,11 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
               <p>{t('tagline')}</p>
               <p>{t('specialty')}</p>
             </div>
+            <div className="toss-footer__contact mt-4 flex flex-col gap-1 typo-body-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">{t('businessInfo.contact')}</p>
+              <p>{phone}</p>
+              <p>{email}</p>
+            </div>
             <div role="group" aria-label={t('social.label')} className="mt-4 flex flex-wrap items-center justify-center gap-1 md:justify-start">
               {SOCIAL_LINKS.map((social) => (
                 <Button
@@ -161,9 +166,6 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
               <p>{privacyOfficer}</p>
             </div>
             <div className="space-y-1 text-center md:text-left">
-              <p className="font-semibold text-foreground">{t('businessInfo.contact')}</p>
-              <p>{phone}</p>
-              <p>{email}</p>
               <p>{hours}</p>
               <p>{lunchTime} · {holidays}</p>
             </div>
