@@ -134,6 +134,7 @@
       "holidaysLabel": "Closed: {value}",
       "privacyOfficer": "Privacy Officer: Kwon Junhyun",
       "privacyOfficerLabel": "Privacy Officer: {value}",
+      "contact": "Contact",
       "infoUrlLabel": "Verify Business Information"
     }
   },

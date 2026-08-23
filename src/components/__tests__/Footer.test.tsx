@@ -121,6 +121,12 @@ describe('Footer', () => {
     expect(screen.queryByText('玉華堂')).not.toBeInTheDocument();
   });
 
+  it('renders the translated text brand instead of an image logo', () => {
+    const { container } = render(<Footer />);
+    expect(screen.getByText('옥화당')).toHaveClass('typo-h2', 'font-display');
+    expect(container.querySelector('img')).not.toBeInTheDocument();
+  });
+
   it('renders required business information (상호·대표자·사업자번호·통신판매번호·소재지)', () => {
     render(<Footer />);
     expect(screen.getByText(/서로 인터내셔널/)).toBeInTheDocument();
@@ -170,5 +176,6 @@ describe('Footer', () => {
     expect(screen.getByText(/점심시간: 12:00 - 13:00/)).toBeInTheDocument();
     expect(screen.getByText(/휴무일: 주말·공휴일/)).toBeInTheDocument();
     expect(screen.getByText(/개인정보보호책임자: 권준현/)).toBeInTheDocument();
+    expect(screen.getByText('고객 문의')).toBeInTheDocument();
   });
 });

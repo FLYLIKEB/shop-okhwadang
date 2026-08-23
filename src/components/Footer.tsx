@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useNavigation } from '@/hooks/useNavigation';
@@ -123,7 +122,7 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
           </div>
 
           <div className="toss-footer__brand order-first col-span-2 flex flex-col items-center border-b border-soft pb-8 text-center md:order-none md:col-span-1 md:items-start md:border-b-0 md:pb-0 md:text-left">
-            <Image src="/logo-okhwadang.png" alt={t('okhwadang')} width={120} height={34} className="mb-4 h-auto w-[104px] object-contain md:w-[120px]" />
+            <p className="mb-4 typo-h2 font-display font-semibold tracking-tight text-foreground">{t('okhwadang')}</p>
             <div className="flex flex-col gap-1 typo-body-sm text-muted-foreground">
               <p>{t('tagline')}</p>
               <p>{t('specialty')}</p>
@@ -152,26 +151,33 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
           </div>
         </div>
 
-        {/* 사업자 정보 (전자상거래법 제10조) */}
-        <div className="toss-footer__business mt-10 border-t border-soft pt-6 text-center md:mt-16 md:pt-8">
-          <div className="mx-auto max-w-3xl space-y-1 typo-body-sm leading-relaxed text-muted-foreground/70">
-            <p>{companyName} · {ceo}</p>
-            <p>{address}</p>
-            <p>{bizNo} · {mailOrderNo}</p>
-            <p>{phone} · {email}</p>
-            <p>{hours}</p>
-            <p>{lunchTime} · {holidays}</p>
-            <p>{privacyOfficer}</p>
+        <div className="toss-footer__business mt-10 border-t border-soft pt-6 md:mt-16 md:pt-8">
+          <div className="mx-auto grid max-w-4xl gap-6 typo-body-sm leading-relaxed text-muted-foreground/70 md:grid-cols-2 md:gap-10">
+            <div className="space-y-1 text-center md:text-left">
+              <p>{companyName} · {ceo}</p>
+              <p>{address}</p>
+              <p>{bizNo}</p>
+              <p>{mailOrderNo}</p>
+              <p>{privacyOfficer}</p>
+            </div>
+            <div className="space-y-1 text-center md:text-left">
+              <p className="font-semibold text-foreground">{t('businessInfo.contact')}</p>
+              <p>{phone}</p>
+              <p>{email}</p>
+              <p>{hours}</p>
+              <p>{lunchTime} · {holidays}</p>
+            </div>
+          </div>
+
+          <div className="mt-6 text-center typo-body-sm text-muted-foreground/70">
             {infoUrl ? (
-              <p>
-                <a href={infoUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:underline">
-                  {t('businessInfo.infoUrlLabel')}
-                </a>
-              </p>
+              <a href={infoUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:underline">
+                {t('businessInfo.infoUrlLabel')}
+              </a>
             ) : null}
           </div>
 
-          <p className="mt-6 typo-body-sm font-body text-muted-foreground">
+          <p className="mt-6 text-center typo-body-sm font-body text-muted-foreground">
             {t('copyright', { year: currentYear })}
           </p>
         </div>
