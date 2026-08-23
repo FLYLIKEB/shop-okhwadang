@@ -1,11 +1,11 @@
 'use client'
 
-import { Inbox } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/components/ui/utils';
+import { StateFeedback } from '@/components/shared/StateFeedback';
 
 interface EmptyStateProps {
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   title: string;
   description?: string;
   action?: {
@@ -17,22 +17,20 @@ interface EmptyStateProps {
 
 export default function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div
-      role="status"
-      className={cn('flex flex-col items-center justify-center py-16 text-center', className)}
-    >
-      <div className="w-12 h-12 text-muted-foreground">
-        {icon ?? <Inbox className="w-full h-full" />}
-      </div>
-      <p className="text-lg font-medium text-foreground mt-4">{title}</p>
-      {description && (
-        <p className="text-sm text-muted-foreground mt-2">{description}</p>
-      )}
-      {action && (
-        <Button variant="black" onClick={action.onClick} className="mt-6">
-          {action.label}
-        </Button>
-      )}
-    </div>
+    <StateFeedback
+      variant="storefront"
+      tone="empty"
+      icon={icon}
+      title={title}
+      description={description}
+      action={
+        action ? (
+          <Button variant="black" onClick={action.onClick}>
+            {action.label}
+          </Button>
+        ) : undefined
+      }
+      className={className}
+    />
   );
 }
