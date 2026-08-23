@@ -291,7 +291,8 @@ export async function middleware(request: NextRequest) {
         ...init,
       });
 
-      const data = await response.arrayBuffer();
+      const hasNoBody = response.status === 204 || response.status === 205 || response.status === 304;
+      const data = hasNoBody ? null : await response.arrayBuffer();
 
       const responseHeaders = new Headers();
       response.headers.forEach((value, key) => {

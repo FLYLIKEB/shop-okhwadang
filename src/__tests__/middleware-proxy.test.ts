@@ -13,8 +13,9 @@ import { middleware } from '@/middleware';
 
 const ORIGINAL_BACKEND_URL = process.env.BACKEND_URL;
 
-function makeRequest(pathname: string): NextRequest {
+function makeRequest(pathname: string, method = 'GET'): NextRequest {
   return new NextRequest(`https://ockhwadang.com${pathname}`, {
+    method,
     headers: { cookie: 'accessToken=opaque-token; refreshToken=refresh-token' },
   });
 }
@@ -48,6 +49,24 @@ describe('middleware /api proxy contract', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('x-proxy-by')).toBe('Next.js Middleware');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves a no-content response from mutating API requests', async () => {
+    const fetchMock = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe('https://backend.example/api/admin/announcement-bars/1');
+      expect(init?.method).toBe('DELETE');
+      return new Response(null, { status: 204 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await middleware(
+      makeRequest('/ko/api/admin/announcement-bars/1', 'DELETE'),
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get('x-proxy-by')).toBe('Next.js Middleware');
+    expect(await response.text()).toBe('');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
