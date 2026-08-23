@@ -118,6 +118,12 @@ export default function OrderDetailPage() {
   const isPaymentPending = order.status === 'pending';
   const shouldShowShippingTracking = !['pending', 'cancelled', 'refunded'].includes(order.status);
   const payableAmount = Number(order.totalAmount);
+  const itemSubtotal = order.items.reduce(
+    (subtotal, item) => subtotal + Number(item.price) * item.quantity,
+    0,
+  );
+  const couponDiscount = Number(order.discountAmount);
+  const pointsDiscount = Number(order.pointsUsed ?? 0);
   const isImmediatePendingCancel = order.status === 'pending' && requestType === 'cancel';
   const canCancel = ['pending', 'paid'].includes(order.status);
   const canAfterDeliveryRequest = ['delivered', 'completed'].includes(order.status);
@@ -310,11 +316,15 @@ export default function OrderDetailPage() {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('productAmount')}</dt>
-              <dd>{formatCurrency(order.totalAmount, locale)}</dd>
+              <dd>{formatCurrency(itemSubtotal, locale)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">{t('discountAmount')}</dt>
-              <dd>-{formatCurrency(order.discountAmount, locale)}</dd>
+              <dt className="text-muted-foreground">{t('couponDiscount')}</dt>
+              <dd>-{formatCurrency(couponDiscount, locale)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">{t('pointsUsed')}</dt>
+              <dd>-{formatCurrency(pointsDiscount, locale)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('shippingFee')}</dt>
@@ -327,12 +337,7 @@ export default function OrderDetailPage() {
             <div className="flex justify-between border-t border-soft pt-2 font-bold">
               <dt>{t('total')}</dt>
               <dd>
-                {formatCurrency(
-                  Number(order.totalAmount) -
-                  Number(order.discountAmount) +
-                  Number(order.shippingFee),
-                  locale,
-                )}
+                {formatCurrency(order.totalAmount, locale)}
               </dd>
             </div>
           </dl>

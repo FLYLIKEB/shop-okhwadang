@@ -1995,6 +1995,8 @@
     "paymentSummary": "Payment Summary",
     "productAmount": "Product Amount",
     "discountAmount": "Discount",
+    "couponDiscount": "Coupon Discount",
+    "pointsUsed": "Points Discount",
     "shippingFee": "Shipping Fee",
     "freeShipping": "Free",
     "total": "Total",

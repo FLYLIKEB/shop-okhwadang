@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { forwardRef, useImperativeHandle } from 'react';
@@ -15,6 +15,8 @@ function makeTranslator(namespace?: string) {
     paymentSummary: '결제 금액',
     productAmount: '상품 금액',
     discountAmount: '할인 금액',
+    couponDiscount: '쿠폰 할인',
+    pointsUsed: '적립금 할인',
     shippingFee: '배송비',
     total: '합계',
     shippingAddress: '배송지',
@@ -148,6 +150,7 @@ const pendingOrder: OrderResponse = {
   status: 'pending',
   totalAmount: 30000,
   discountAmount: 0,
+  pointsUsed: 0,
   shippingFee: 0,
   recipientName: '홍길동',
   recipientPhone: '010-1234-5678',
@@ -202,6 +205,37 @@ describe('OrderDetailPage', () => {
     expect(screen.getByText('현금영수증/세금계산서 안내')).toBeInTheDocument();
     expect(screen.getByText(/주문번호를 포함해 고객센터로 요청/)).toBeInTheDocument();
   }, 20000);
+
+  it.each([
+    { name: '쿠폰만', discountAmount: 3000, pointsUsed: 0, shippingFee: 3000, totalAmount: 28000 },
+    { name: '적립금만', discountAmount: 0, pointsUsed: 2000, shippingFee: 3000, totalAmount: 29000 },
+    { name: '쿠폰과 적립금 및 배송비', discountAmount: 3000, pointsUsed: 2000, shippingFee: 3000, totalAmount: 26000 },
+  ])('$name 조합은 서버 금액을 분리해 표시한다', async ({ discountAmount, pointsUsed, shippingFee, totalAmount }) => {
+    const order = {
+      ...pendingOrder,
+      status: 'delivered',
+      totalAmount,
+      discountAmount,
+      pointsUsed,
+      shippingFee,
+      items: [
+        { ...pendingOrder.items[0], price: 12000, quantity: 1 },
+        { ...pendingOrder.items[0], id: 2, price: 8000, quantity: 2 },
+      ],
+    };
+    vi.mocked(ordersApi.getById).mockResolvedValue(order);
+
+    render(<OrderDetailPage />);
+
+    const heading = await screen.findByText('결제 금액');
+    const summary = heading.closest('section');
+    if (!summary) throw new Error('payment summary section not found');
+    expect(within(summary).getAllByText('₩28,000')).toHaveLength(totalAmount === 28000 ? 2 : 1);
+    expect(within(summary).getByText(`-₩${discountAmount.toLocaleString('ko-KR')}`)).toBeInTheDocument();
+    expect(within(summary).getByText(`-₩${pointsUsed.toLocaleString('ko-KR')}`)).toBeInTheDocument();
+    expect(within(summary).getByText(`₩${shippingFee.toLocaleString('ko-KR')}`)).toBeInTheDocument();
+    expect(within(summary).getAllByText(`₩${totalAmount.toLocaleString('ko-KR')}`)).toHaveLength(totalAmount === 28000 ? 2 : 1);
+  });
 
 
   it('결제대기 주문에서 주문 바로 취소 신청을 즉시 완료 API로 접수한다', async () => {

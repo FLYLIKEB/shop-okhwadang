@@ -1995,6 +1995,8 @@
     "paymentSummary": "결제 금액",
     "productAmount": "상품 금액",
     "discountAmount": "할인 금액",
+    "couponDiscount": "쿠폰 할인",
+    "pointsUsed": "적립금 할인",
     "shippingFee": "배송비",
     "freeShipping": "무료",
     "total": "합계",

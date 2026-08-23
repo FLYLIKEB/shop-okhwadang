@@ -16,6 +16,7 @@ export interface OrderResponse {
   status: string;
   totalAmount: number;
   discountAmount: number;
+  pointsUsed?: number;
   shippingFee: number;
   recipientName: string;
   recipientPhone: string;
