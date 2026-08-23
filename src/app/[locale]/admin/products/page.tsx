@@ -16,6 +16,7 @@ import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 import { ConfirmDialog } from '@/components/shared/admin/ConfirmDialog';
+import { localMessage } from '@/utils/localMessages';
 
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
@@ -40,6 +41,7 @@ export default function AdminProductsPage() {
     new Set(),
   );
   const [productPendingDelete, setProductPendingDelete] = useState<Product | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const { page, setPage, filters, setFilter, resetFilters, hasActiveFilters } = useAdminListPage({
     initialFilters: {
       status: '',
@@ -63,6 +65,7 @@ export default function AdminProductsPage() {
 
   const { execute: fetchProducts, isLoading: loading } = useAsyncAction(
     async () => {
+      setLoadError(false);
       const params: { page: number; limit: number; status?: string } = {
         page,
         limit: PAGE_SIZE,
@@ -73,7 +76,7 @@ export default function AdminProductsPage() {
       setProducts(res.items);
       setTotal(res.total);
     },
-    { errorMessage: t('loadError') },
+    { errorMessage: t('loadError'), onError: () => setLoadError(true) },
   );
 
   useEffect(() => {
@@ -597,6 +600,13 @@ export default function AdminProductsPage() {
 
       <PaginatedAdminTableShell
         loading={loading}
+        error={loadError}
+        errorMessage={loadError ? t('loadError') : undefined}
+        errorAction={
+          <Button type="button" onClick={() => void fetchProducts()} variant="outline" size="sm">
+            {localMessage('ui.retry')}
+          </Button>
+        }
         loadingMessage={t('loading')}
         isEmpty={products.length === 0}
         emptyMessage={t('noProducts')}
