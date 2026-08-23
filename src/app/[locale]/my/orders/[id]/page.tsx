@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { ordersApi, paymentsApi } from '@/lib/api';
@@ -75,6 +75,12 @@ export default function OrderDetailPage() {
     void loadOrder();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, locale, params.id]);
+
+  const productSubtotal = useMemo(
+    () => order?.items.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0) ?? 0,
+    [order],
+  );
+  const pointsUsed = Number(order?.pointsUsed ?? 0);
 
   useEffect(() => {
     if (!order) return;
@@ -310,12 +316,18 @@ export default function OrderDetailPage() {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('productAmount')}</dt>
-              <dd>{formatCurrency(order.totalAmount, locale)}</dd>
+              <dd>{formatCurrency(productSubtotal, locale)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('discountAmount')}</dt>
               <dd>-{formatCurrency(order.discountAmount, locale)}</dd>
             </div>
+            {pointsUsed > 0 && (
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">{t('pointsUsed')}</dt>
+                <dd>-{formatCurrency(pointsUsed, locale)}</dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('shippingFee')}</dt>
               <dd>
@@ -326,14 +338,7 @@ export default function OrderDetailPage() {
             </div>
             <div className="flex justify-between border-t border-soft pt-2 font-bold">
               <dt>{t('total')}</dt>
-              <dd>
-                {formatCurrency(
-                  Number(order.totalAmount) -
-                  Number(order.discountAmount) +
-                  Number(order.shippingFee),
-                  locale,
-                )}
-              </dd>
+              <dd>{formatCurrency(order.totalAmount, locale)}</dd>
             </div>
           </dl>
         </section>

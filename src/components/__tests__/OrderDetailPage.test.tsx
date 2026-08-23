@@ -15,6 +15,7 @@ function makeTranslator(namespace?: string) {
     paymentSummary: '결제 금액',
     productAmount: '상품 금액',
     discountAmount: '할인 금액',
+    pointsUsed: '사용 적립금',
     shippingFee: '배송비',
     total: '합계',
     shippingAddress: '배송지',
@@ -201,6 +202,34 @@ describe('OrderDetailPage', () => {
     expect(screen.getByRole('button', { name: '결제하기' })).toBeInTheDocument();
     expect(screen.getByText('현금영수증/세금계산서 안내')).toBeInTheDocument();
     expect(screen.getByText(/주문번호를 포함해 고객센터로 요청/)).toBeInTheDocument();
+  }, 20000);
+
+
+  it('결제 요약은 상품 소계와 쿠폰/적립금/배송비를 분리하고 서버 최종 결제금액을 표시한다', async () => {
+    vi.mocked(ordersApi.getById).mockResolvedValue({
+      ...pendingOrder,
+      status: 'paid',
+      totalAmount: 46000,
+      discountAmount: 5000,
+      pointsUsed: 2000,
+      shippingFee: 3000,
+      items: [
+        { id: 1, productId: 1, productOptionId: null, productName: '찻잔', optionName: null, price: 30000, quantity: 1 },
+        { id: 2, productId: 2, productOptionId: null, productName: '차호', optionName: null, price: 10000, quantity: 2 },
+      ],
+    });
+
+    render(<OrderDetailPage />);
+
+    expect(await screen.findByText('ORD-16')).toBeInTheDocument();
+
+    const rowAmount = (label: string) => screen.getByText(label).closest('div')?.querySelector('dd')?.textContent;
+
+    expect(rowAmount('상품 금액')).toBe('₩50,000');
+    expect(rowAmount('할인 금액')).toBe('-₩5,000');
+    expect(rowAmount('사용 적립금')).toBe('-₩2,000');
+    expect(rowAmount('배송비')).toBe('₩3,000');
+    expect(rowAmount('합계')).toBe('₩46,000');
   }, 20000);
 
 

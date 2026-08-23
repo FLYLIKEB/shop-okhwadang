@@ -1995,6 +1995,7 @@
     "paymentSummary": "Payment Summary",
     "productAmount": "Product Amount",
     "discountAmount": "Discount",
+    "pointsUsed": "Points used",
     "shippingFee": "Shipping Fee",
     "freeShipping": "Free",
     "total": "Total",
