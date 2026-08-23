@@ -2,6 +2,17 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminCouponsPage from '../page';
 
+const navigationMocks = vi.hoisted(() => ({
+  push: vi.fn(),
+  params: new URLSearchParams(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: navigationMocks.push }),
+  usePathname: () => '/ko/admin/coupons',
+  useSearchParams: () => navigationMocks.params,
+}));
+
 const mockUseAdminGuard = vi.fn();
 const mockGetList = vi.fn();
 const mockCreate = vi.fn();
@@ -37,79 +48,66 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+function coupon(id: number, code: string, name: string) {
+  return {
+    id,
+    code,
+    name,
+    type: 'percentage' as const,
+    value: id === 21 ? 20 : 10,
+    minOrderAmount: id === 21 ? 10000 : 30000,
+    maxDiscount: id === 21 ? 8000 : 5000,
+    totalQuantity: id === 21 ? 50 : 100,
+    issuedCount: id === 21 ? 0 : 5,
+    startsAt: '2026-07-25T00:00:00.000Z',
+    expiresAt: '2026-08-25T00:00:00.000Z',
+    isActive: true,
+    createdAt: '2026-07-24T00:00:00.000Z',
+  };
+}
+
 describe('AdminCouponsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    navigationMocks.params = new URLSearchParams();
     mockUseAdminGuard.mockReturnValue({
       user: { id: 1, email: 'admin@test.com', name: 'Admin', role: 'admin' },
       isLoading: false,
       isAdmin: true,
     });
-mockGetList.mockImplementation((params?: { page?: number; limit?: number }) => {
-  const page = params?.page ?? 1;
+    mockGetList.mockImplementation((params?: { page?: number; limit?: number }) => {
+      const page = params?.page ?? 1;
 
-  if (page === 2) {
-    return Promise.resolve({
-      items: [
-        {
-          id: 21,
-          code: 'WELCOME20',
-          name: '재방문 20%',
-          type: 'percentage',
-          value: 20,
-          minOrderAmount: 10000,
-          maxDiscount: 8000,
-          totalQuantity: 50,
-          issuedCount: 0,
-          startsAt: '2026-07-25T00:00:00.000Z',
-          expiresAt: '2026-08-25T00:00:00.000Z',
-          isActive: true,
-          createdAt: '2026-07-24T00:00:00.000Z',
-        },
-      ],
-      total: 21,
-      page: 2,
-      limit: 20,
+      if (page === 2) {
+        return Promise.resolve({
+          items: [coupon(21, 'WELCOME20', '재방문 20%')],
+          total: 21,
+          page: 2,
+          limit: 20,
+        });
+      }
+
+      return Promise.resolve({
+        items: [coupon(7, 'WELCOME10', '신규가입 10%')],
+        total: 21,
+        page: 1,
+        limit: 20,
+      });
     });
-  }
-
-  return Promise.resolve({
-    items: [
-      {
-        id: 7,
-        code: 'WELCOME10',
-        name: '신규가입 10%',
-        type: 'percentage',
-        value: 10,
-        minOrderAmount: 30000,
-        maxDiscount: 5000,
-        totalQuantity: 100,
-        issuedCount: 5,
-        startsAt: '2026-07-25T00:00:00.000Z',
-        expiresAt: '2026-08-25T00:00:00.000Z',
-        isActive: true,
-        createdAt: '2026-07-24T00:00:00.000Z',
-      },
-    ],
-    total: 21,
-    page: 1,
-    limit: 20,
-  });
-});
     mockCreate.mockResolvedValue({ id: 8 });
     mockUpdate.mockResolvedValue({ id: 7 });
     mockRemove.mockResolvedValue({ message: 'deleted' });
     mockIssue.mockResolvedValue({ id: 1 });
   });
 
-  it('paginates coupon management rows', async () => {
+  it('paginates coupon management rows through shared list state', async () => {
     render(<AdminCouponsPage />);
 
     expect(await screen.findByText('WELCOME10')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '다음' }));
 
     await waitFor(() => {
-      expect(mockGetList).toHaveBeenCalledWith({ page: 2, limit: 20 });
+      expect(mockGetList).toHaveBeenCalledWith({ page: 2, limit: 20, q: undefined, status: undefined });
     });
 
     expect(await screen.findByText('WELCOME20')).toBeInTheDocument();
@@ -143,6 +141,38 @@ mockGetList.mockImplementation((params?: { page?: number; limit?: number }) => {
 
     await waitFor(() => {
       expect(mockIssue).toHaveBeenCalledWith({ couponId: 7, userId: 42 });
+    });
+  });
+
+  it('keeps coupon filters and search in the URL-synced shared list contract', async () => {
+    render(<AdminCouponsPage />);
+
+    expect(await screen.findByText('WELCOME10')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'filters.active' }));
+
+    await waitFor(() => {
+      expect(mockGetList).toHaveBeenCalledWith({ page: 1, limit: 20, q: undefined, status: 'active' });
+    });
+    expect(navigationMocks.push).toHaveBeenCalledWith('/ko/admin/coupons?status=active', { scroll: false });
+
+    fireEvent.change(screen.getByPlaceholderText('searchPlaceholder'), { target: { value: ' WELCOME20 ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'search' }));
+
+    await waitFor(() => {
+      expect(mockGetList).toHaveBeenCalledWith({ page: 1, limit: 20, q: 'WELCOME20', status: 'active' });
+    });
+  });
+
+  it('shows the shared retry state when coupon loading fails', async () => {
+    mockGetList.mockRejectedValueOnce(new Error('network'));
+
+    render(<AdminCouponsPage />);
+
+    expect(await screen.findByText('loadError')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'retry' }));
+
+    await waitFor(() => {
+      expect(mockGetList).toHaveBeenCalledTimes(2);
     });
   });
 });

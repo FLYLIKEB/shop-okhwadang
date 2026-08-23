@@ -1,18 +1,16 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
-import AdminPagination from '@/components/shared/admin/AdminPagination';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
-import { AdminEmptyState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
+import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
+import { useAdminListPage } from '@/components/shared/hooks/useAdminListPage';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { adminCouponsApi, type AdminCoupon, type AdminCouponInput } from '@/lib/api';
 import { formatCurrency, type Locale } from '@/utils/currency';
-import { handleApiError } from '@/utils/error';
 import { cn } from '@/components/ui/utils';
 import { formatCount, formatDateTime } from '@/utils/date';
 
@@ -93,50 +91,60 @@ export default function AdminCouponsPage() {
   const locale = useLocale() as Locale;
   const { isAdmin } = useAdminGuard();
   const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalCoupons, setTotalCoupons] = useState(0);
-  const [filter, setFilter] = useState<CouponFilter>('all');
-  const [searchInput, setSearchInput] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const {
+    page,
+    setPage,
+    keyword,
+    searchInput,
+    setSearchInput,
+    filters,
+    setFilter,
+    submitSearch,
+  } = useAdminListPage({
+    initialFilters: {
+      status: 'all' as CouponFilter,
+    },
+  });
   const [editingCouponId, setEditingCouponId] = useState<number | null>(null);
   const [form, setForm] = useState<CouponFormState>(EMPTY_FORM);
   const [issueCouponId, setIssueCouponId] = useState('');
   const [issueUserId, setIssueUserId] = useState('');
 
-  const loadCoupons = useCallback(async (page: number) => {
-    setLoading(true);
-    try {
+  const { execute: loadCoupons, isLoading: loading } = useAsyncAction(
+    async (pageOverride?: number) => {
+      const requestedPage = pageOverride ?? page;
+      setLoadError(null);
       const result = await adminCouponsApi.getList({
-        page,
+        page: requestedPage,
         limit: COUPON_PAGE_SIZE,
-        q: searchKeyword.trim() || undefined,
-        status: filter === 'all' ? undefined : filter,
+        q: keyword.trim() || undefined,
+        status: filters.status === 'all' ? undefined : filters.status,
       });
       setCoupons(result.items);
-      setCurrentPage(result.page);
       setTotalCoupons(result.total);
-    } catch (err) {
-      toast.error(handleApiError(err, t('loadError')));
-    } finally {
-      setLoading(false);
-    }
-  }, [filter, searchKeyword, t]);
+    },
+    {
+      errorMessage: t('loadError'),
+      onError: () => setLoadError(t('loadError')),
+    },
+  );
 
   useEffect(() => {
-    if (isAdmin) void loadCoupons(1);
-  }, [isAdmin, loadCoupons]);
-
+    if (isAdmin) void loadCoupons(undefined);
+  }, [isAdmin, loadCoupons, page, filters.status, keyword]);
 
   const { execute: saveCoupon, isLoading: savingCoupon } = useAsyncAction(
     async () => {
       const payload = toPayload(form);
       if (editingCouponId == null) {
         await adminCouponsApi.create(payload);
+        setPage(1);
         await loadCoupons(1);
       } else {
         await adminCouponsApi.update(editingCouponId, payload);
-        await loadCoupons(currentPage);
+        await loadCoupons(page);
       }
       setEditingCouponId(null);
       setForm(EMPTY_FORM);
@@ -154,7 +162,8 @@ export default function AdminCouponsPage() {
         setEditingCouponId(null);
         setForm(EMPTY_FORM);
       }
-      const fallbackPage = coupons.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+      const fallbackPage = coupons.length === 1 && page > 1 ? page - 1 : page;
+      setPage(fallbackPage);
       await loadCoupons(fallbackPage);
     },
     { successMessage: t('deleteSuccess'), errorMessage: t('deleteError') },
@@ -208,18 +217,15 @@ export default function AdminCouponsPage() {
                   { label: t('filters.active'), value: 'active' },
                   { label: t('filters.inactive'), value: 'inactive' },
                 ]}
-                value={filter}
-                onToggle={(value) => setFilter(value as CouponFilter)}
+                value={filters.status}
+                onToggle={(value) => setFilter('status', value as CouponFilter)}
                 ariaLabel={t('filters.ariaLabel')}
                 size="sm"
               />
               <AdminSearchForm
                 value={searchInput}
                 onChange={setSearchInput}
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  setSearchKeyword(searchInput);
-                }}
+                onSubmit={submitSearch}
                 placeholder={t('searchPlaceholder')}
                 submitLabel={t('search')}
                 className="w-full lg:w-auto"
@@ -228,13 +234,26 @@ export default function AdminCouponsPage() {
             </div>
           </div>
 
-          {loading ? (
-            <AdminLoadingState title={t('loading')} />
-          ) : coupons.length === 0 ? (
-            <AdminEmptyState title={t('empty')} />
-          ) : (
-            <>
-              <div className="surface-card overflow-hidden">
+          <PaginatedAdminTableShell
+            loading={loading}
+            loadingMessage={t('loading')}
+            isEmpty={coupons.length === 0}
+            emptyMessage={t('empty')}
+            errorMessage={loadError}
+            errorAction={
+              <button
+                type="button"
+                onClick={() => void loadCoupons(undefined)}
+                className="rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground hover:bg-primary/90"
+              >
+                {commonT('retry')}
+              </button>
+            }
+            currentPage={page}
+            totalPages={totalCouponPages}
+            onPageChange={setPage}
+          >
+            <div className="surface-card overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead className="bg-muted/40 text-left">
@@ -317,10 +336,8 @@ export default function AdminCouponsPage() {
                     </tbody>
                   </table>
                 </div>
-              </div>
-              <AdminPagination currentPage={currentPage} totalPages={totalCouponPages} onPageChange={(page) => void loadCoupons(page)} />
-            </>
-          )}
+            </div>
+          </PaginatedAdminTableShell>
         </div>
 
         <div className="space-y-4">
