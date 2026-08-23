@@ -81,6 +81,27 @@ describe('CartItemRow', () => {
     expect(screen.getAllByText('₩30,000')).toHaveLength(1);
   });
 
+  it('keeps the cart content in a mobile-safe responsive row', () => {
+    const { container } = render(
+      <CartItemRow
+        item={baseItem}
+        selected={false}
+        onSelect={vi.fn()}
+        onQuantityChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    const row = container.querySelector('.checkout-toss-cart-item');
+    const content = container.querySelector('.checkout-toss-cart-item__content');
+    expect(row).toHaveClass('flex', 'items-start');
+    expect(content).toHaveClass('min-w-0', 'flex-1');
+    expect(content?.querySelector('.checkout-toss-cart-item__info')).toBeInTheDocument();
+    expect(content?.querySelector('.checkout-toss-cart-item__price')).toBeInTheDocument();
+    expect(content?.querySelector('.checkout-toss-cart-item__quantity')).toBeInTheDocument();
+    expect(content?.querySelector('.checkout-toss-cart-item__remove')).toBeInTheDocument();
+  });
+
   it('renders option text when option is provided', () => {
     const itemWithOption: CartItem = {
       ...baseItem,
