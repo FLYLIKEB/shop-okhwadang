@@ -81,7 +81,7 @@ describe('CartItemRow', () => {
     expect(screen.getAllByText('₩30,000')).toHaveLength(1);
   });
 
-  it('keeps the cart content in a mobile-safe responsive row', () => {
+  it('keeps cart metadata in one line and actions in a compact mobile row', () => {
     const { container } = render(
       <CartItemRow
         item={baseItem}
@@ -94,12 +94,40 @@ describe('CartItemRow', () => {
 
     const row = container.querySelector('.checkout-toss-cart-item');
     const content = container.querySelector('.checkout-toss-cart-item__content');
+    const productName = screen.getByRole('link', { name: '테스트 상품' });
     expect(row).toHaveClass('flex', 'items-start');
     expect(content).toHaveClass('min-w-0', 'flex-1');
+    expect(container.querySelector('.checkout-toss-cart-item__select')).toBeInTheDocument();
+    expect(container.querySelector('.checkout-toss-cart-item__image')).toBeInTheDocument();
+    expect(productName).toHaveClass('truncate');
     expect(content?.querySelector('.checkout-toss-cart-item__info')).toBeInTheDocument();
-    expect(content?.querySelector('.checkout-toss-cart-item__price')).toBeInTheDocument();
+    expect(content?.querySelector('.checkout-toss-cart-item__price')).toHaveClass('min-w-0');
     expect(content?.querySelector('.checkout-toss-cart-item__quantity')).toBeInTheDocument();
     expect(content?.querySelector('.checkout-toss-cart-item__remove')).toBeInTheDocument();
+  });
+
+  it('keeps long names and wide subtotals inside the mobile layout hooks', () => {
+    const longName = '아주 긴 상품명으로 모바일 한 줄 레이아웃을 검증합니다';
+    const { container } = render(
+      <CartItemRow
+        item={{
+          ...baseItem,
+          subtotal: 999999999999,
+          product: { ...baseItem.product, name: longName },
+        }}
+        selected={false}
+        onSelect={vi.fn()}
+        onQuantityChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: longName })).toHaveClass('truncate');
+    expect(container.querySelector('.checkout-toss-cart-item__price')).toHaveClass(
+      'min-w-0',
+      'whitespace-nowrap',
+    );
+    expect(container.querySelector('.checkout-toss-cart-item__remove')).toBeInTheDocument();
   });
 
   it('renders option text when option is provided', () => {
