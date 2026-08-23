@@ -12,6 +12,7 @@ import { useCart } from '@/contexts/CartContext';
 import { compactProductSummary } from '@/lib/collectionDisplay';
 import type { Locale } from '@/utils/currency';
 import { Button } from '@/components/ui/button';
+import { normalizeClayKey, type ClayKey } from '@/utils/clayTaxonomy';
 
 interface ProductCardProps {
   id: number;
@@ -29,27 +30,18 @@ interface ProductCardProps {
   isFreeShipping?: boolean;
 }
 
-/** 카테고리명 → 니료 태그 CSS 클래스 매핑 */
-const CLAY_TAG_MAP: Record<string, string> = {
-  '주니': 'tag-zuni',
-  '朱泥': 'tag-zuni',
-  '단니': 'tag-danni',
-  '段泥': 'tag-danni',
-  '자니': 'tag-zini',
-  '紫泥': 'tag-zini',
-  '흑니': 'tag-heukni',
-  '黑泥': 'tag-heukni',
-  '청수니': 'tag-chunsuni',
-  '靑水泥': 'tag-chunsuni',
-  '녹니': 'tag-nokni',
-  '綠泥': 'tag-nokni',
+const CLAY_TAG_CLASS_BY_KEY: Record<ClayKey, string> = {
+  zuni: 'tag-zuni',
+  danni: 'tag-danni',
+  zini: 'tag-zini',
+  heukni: 'tag-heukni',
+  chunsuni: 'tag-chunsuni',
+  nokni: 'tag-nokni',
 };
 
 function getClayTagClass(categoryName: string): string | null {
-  for (const [key, cls] of Object.entries(CLAY_TAG_MAP)) {
-    if (categoryName.includes(key)) return cls;
-  }
-  return null;
+  const clayKey = normalizeClayKey(categoryName);
+  return clayKey ? CLAY_TAG_CLASS_BY_KEY[clayKey] : null;
 }
 
 function ProductCard({

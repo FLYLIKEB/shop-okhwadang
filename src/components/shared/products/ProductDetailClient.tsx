@@ -23,16 +23,20 @@ import QuantitySelector from './QuantitySelector'
 import ProductTabs from './ProductTabs'
 import ProductRatingSummary from './ProductRatingSummary'
 import { formatCurrency, type Locale } from '@/utils/currency'
+import { normalizeClayKey, type ClayKey } from '@/utils/clayTaxonomy'
+
+const CLAY_TAG_CLASS_BY_KEY: Record<ClayKey, string> = {
+  zuni: 'tag-zuni',
+  danni: 'tag-danni',
+  zini: 'tag-zini',
+  heukni: 'tag-heukni',
+  chunsuni: 'tag-chunsuni',
+  nokni: 'tag-nokni',
+}
 
 function getClayTagClass(value: string): string {
-  const key = value.toLowerCase()
-  if (key.includes('주니') || key.includes('zuni')) return 'tag-zuni'
-  if (key.includes('단니') || key.includes('danni')) return 'tag-danni'
-  if (key.includes('자니') || key.includes('zini')) return 'tag-zini'
-  if (key.includes('흑니') || key.includes('heukni')) return 'tag-heukni'
-  if (key.includes('청수니') || key.includes('chunsuni')) return 'tag-chunsuni'
-  if (key.includes('녹니') || key.includes('nokni')) return 'tag-nokni'
-  return 'tag-generic'
+  const clayKey = normalizeClayKey(value)
+  return clayKey ? CLAY_TAG_CLASS_BY_KEY[clayKey] : 'tag-generic'
 }
 
 interface ProductDetailClientProps {

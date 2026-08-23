@@ -526,14 +526,60 @@ describe('ProductDetailClient', () => {
       />,
     );
 
-    expect(screen.getByRole('link', { name: '진흙: 노단니' })).toHaveAttribute(
+    const clayLink = screen.getByRole('link', { name: '진흙: 노단니' });
+    expect(clayLink).toHaveAttribute(
       'href',
       '/ko/products?attrs=clay_type:old_duanni',
     );
+    expect(clayLink).toHaveClass('tag-danni');
     expect(screen.getByRole('link', { name: '모양: 연자호' })).toHaveAttribute(
       'href',
       '/ko/products?attrs=teapot_shape:lianzi',
     );
+  });
+
+  it('uses the shared clay resolver for Hanja and English clay badges while preserving unknown fallback', () => {
+    const clayAttributeType = {
+      id: 1,
+      code: 'clay_type',
+      name: 'Clay Type',
+      nameKo: '니료',
+      inputType: 'select' as const,
+      isFilterable: true,
+      isSearchable: false,
+      validValues: null,
+      sortOrder: 1,
+    };
+
+    render(
+      <ProductDetailClient
+        product={{
+          ...productWithoutOptions,
+          attributes: [
+            {
+              id: 201,
+              attributeTypeId: 1,
+              value: '朱泥',
+              displayValue: '주니',
+              sortOrder: 0,
+              attributeType: clayAttributeType,
+            },
+            {
+              id: 202,
+              attributeTypeId: 1,
+              value: 'mystery-clay',
+              displayValue: '미상',
+              sortOrder: 1,
+              attributeType: clayAttributeType,
+            },
+          ],
+        }}
+        locale="ko"
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: '진흙: 주니' })).toHaveClass('tag-zuni');
+    expect(screen.getByRole('link', { name: '진흙: 미상' })).toHaveClass('tag-generic');
   });
 
   it('찜 추가 → wishlistApi.add 호출 + 성공 토스트', async () => {

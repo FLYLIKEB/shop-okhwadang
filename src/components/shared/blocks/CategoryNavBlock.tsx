@@ -10,22 +10,20 @@ import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation
 import { useBlockData } from '@/components/shared/hooks/useBlockData';
 import type { Category, CategoryNavContent } from '@/lib/api';
 import { selectCategoriesFromTree } from '@/utils/categoryTree';
+import { normalizeClayKey, type ClayKey } from '@/utils/clayTaxonomy';
 
-/* ── 니료(泥料) 컬러 매핑 — 카테고리 slug으로 매칭 ── */
-const CLAY_COLORS: Record<string, string> = {
-  zuni: '#8B4513',    // 주니(朱泥)
-  danni: '#C4A882',   // 단니(段泥)
-  zini: '#6B3A5C',    // 자니(紫泥)
-  heukni: '#2A2520',  // 흑니(黑泥)
-  chunsuni: '#3D6B6B', // 청수니(靑水泥)
-  nokni: '#4A6741',   // 녹니(綠泥)
+const CLAY_COLORS_BY_KEY: Record<ClayKey, string> = {
+  zuni: '#8B4513',
+  danni: '#C4A882',
+  zini: '#6B3A5C',
+  heukni: '#2A2520',
+  chunsuni: '#3D6B6B',
+  nokni: '#4A6741',
 };
 
-function getClayColor(slug: string): string | null {
-  for (const [key, color] of Object.entries(CLAY_COLORS)) {
-    if (slug.includes(key)) return color;
-  }
-  return null;
+function getClayColor(value: string): string | null {
+  const clayKey = normalizeClayKey(value);
+  return clayKey ? CLAY_COLORS_BY_KEY[clayKey] : null;
 }
 
 function CategoryImageCard({ cat, locale }: { cat: Category; locale: string }) {
