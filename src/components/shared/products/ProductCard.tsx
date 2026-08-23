@@ -132,7 +132,7 @@ function ProductCard({
             size="icon"
             onClick={handleAddToCart}
             disabled={isCartLoading}
-            className="absolute right-2 top-2 z-10 hidden h-9 min-h-9 w-9 cursor-pointer rounded-full bg-background/80 opacity-0 shadow-sm backdrop-blur-sm transition-colors transition-opacity hover:bg-background md:inline-flex md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+            className="absolute right-2 top-2 z-10 inline-flex h-9 min-h-9 w-9 cursor-pointer rounded-full bg-background/80 opacity-100 shadow-sm backdrop-blur-sm transition-colors transition-opacity hover:bg-background md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
           >
             <ShoppingCart className="h-4 w-4 text-foreground" />
             <span className="sr-only">

@@ -160,6 +160,14 @@ describe('ProductCard image presentation', () => {
 });
 
 describe('ProductCard summary display', () => {
+  it('keeps the add-to-cart action visible on mobile while reserving hover reveal for desktop', () => {
+    renderCard();
+
+    const cartButton = screen.getByRole('button', { name: '장바구니 담기' });
+
+    expect(cartButton).toHaveClass('inline-flex', 'opacity-100');
+    expect(cartButton).not.toHaveClass('hidden');
+  });
   it('compacts long attribute wording in the card summary', () => {
     renderCard({ shortDescription: 'Fujian Zhuni · Xishi Shape · 120ml · Gongfu Tea' });
 
