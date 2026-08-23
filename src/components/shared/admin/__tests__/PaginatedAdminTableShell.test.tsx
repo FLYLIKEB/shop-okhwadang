@@ -29,6 +29,22 @@ describe('PaginatedAdminTableShell', () => {
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   });
 
+  it('renders error state with retry action and hides table body and pagination', async () => {
+    const user = userEvent.setup();
+    const retry = vi.fn();
+    renderShell({
+      errorMessage: '목록을 불러오지 못했습니다.',
+      isEmpty: true,
+      errorAction: <button type="button" onClick={retry}>다시 시도</button>,
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('목록을 불러오지 못했습니다.');
+    expect(screen.queryByText('table body')).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '다시 시도' }));
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
+
   it('renders empty state with action and hides table body', () => {
     renderShell({ isEmpty: true, emptyMessage: '항목이 없습니다.', emptyAction: <button type="button">생성</button> });
 

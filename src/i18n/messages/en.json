@@ -1399,7 +1399,8 @@
         "previous": "Previous",
         "next": "Next",
         "last": "Last"
-      }
+      },
+      "retry": "Retry"
     },
     "pages": {
       "loading": "Loading page editor...",
