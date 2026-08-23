@@ -61,7 +61,7 @@ export default function PromotionBannerBlock({ content }: Props) {
 
   if (template === 'card') {
     return (
-      <section className="flex overflow-hidden border border-divider-soft">
+      <section className="toss-cms__card flex overflow-hidden">
         {image_url && (
           <div className="relative hidden w-48 md:block bg-muted">
             <Image src={image_derivatives?.card ?? image_url} alt={title} fill className="object-cover" />

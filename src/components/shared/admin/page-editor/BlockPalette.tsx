@@ -149,7 +149,7 @@ export default function BlockPalette({ onAddBlock }: BlockPaletteProps) {
     : BLOCK_TYPES;
 
   return (
-    <div className="cms-editor__palette surface-card w-64 shrink-0 overflow-y-auto rounded-none border-0 border-r border-soft p-4 shadow-none">
+    <div className="cms-editor__palette surface-card w-64 shrink-0 overflow-y-auto rounded-none border-0 border-r border-soft p-4">
       <h3 className="mb-3 typo-label font-semibold uppercase text-muted-foreground">블록 추가</h3>
       <FormInput
         id="block-search"

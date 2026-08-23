@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { SkeletonBox } from '@/components/ui/Skeleton';
 import { cn } from '@/components/ui/utils';
 
-const cardShellClassName = 'group block rounded-lg border border-border bg-background overflow-hidden transition-shadow hover:shadow-lg';
+const cardShellClassName = 'toss-cms__card group block overflow-hidden transition-shadow hover:shadow-md';
 
 interface ContentCardShellProps {
   href?: string | null;
@@ -23,7 +23,7 @@ export function ContentCardShell({ href, className, children }: ContentCardShell
 
 export function ContentCardSkeleton({ variant }: { variant: 'image' | 'color' }) {
   return (
-    <div className="rounded-lg border border-border bg-background overflow-hidden">
+    <div className="toss-cms__card overflow-hidden">
       <SkeletonBox height="h-40" className="!rounded-none" />
       <div className="p-5 space-y-3">
         {variant === 'color' && <SkeletonBox width="w-24 h-3" />}

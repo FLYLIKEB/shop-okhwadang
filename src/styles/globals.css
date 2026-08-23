@@ -1768,13 +1768,6 @@ h3 {
   font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 
-.toss-cms p,
-.toss-cms .typo-body,
-.toss-cms .typo-body-sm,
-.toss-cms .prose {
-  font-family: var(--font-display);
-}
-
 .toss-cms__blocks h1,
 .toss-cms__blocks h2,
 .toss-cms__blocks h3,
@@ -1785,16 +1778,9 @@ h3 {
   font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 
-.toss-cms__blocks p,
-.toss-cms__blocks .typo-body,
-.toss-cms__blocks .typo-body-sm,
-.toss-cms__blocks .prose {
-  font-family: var(--font-display);
-}
-
 .toss-cms .toss-split-content__title,
 .toss-cms__blocks .toss-split-content__title {
-  font-family: var(--font-display);
+  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 
 .toss-cms .toss-split-content__body,
@@ -1845,6 +1831,18 @@ h3 {
 .toss-cms__blocks [class~='bg-muted/20'],
 .toss-cms__blocks [class~='bg-background/80'] {
   background: var(--checkout-toss-surface);
+}
+
+.toss-cms__card {
+  border: 0;
+  border-radius: var(--cms-radius);
+  background: var(--cms-surface);
+  box-shadow: var(--cms-shadow);
+}
+
+.toss-admin,
+.toss-cms {
+  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 
 .toss-cms__blocks a[class*='border'],

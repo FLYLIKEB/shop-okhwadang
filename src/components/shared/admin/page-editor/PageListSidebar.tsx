@@ -52,7 +52,7 @@ export default function PageListSidebar({
   };
 
   return (
-    <aside className="cms-editor__sidebar surface-card flex w-64 shrink-0 flex-col rounded-none border-0 border-r border-soft shadow-none">
+    <aside className="cms-editor__sidebar surface-card flex w-64 shrink-0 flex-col rounded-none border-0 border-r border-soft">
       <div className="flex items-center justify-between border-b border-soft px-4 py-4">
         <h2 className="typo-body font-semibold">페이지 목록</h2>
         <Button
