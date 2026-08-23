@@ -134,6 +134,7 @@
       "holidaysLabel": "휴무일: {value}",
       "privacyOfficer": "개인정보보호책임자: 권준현",
       "privacyOfficerLabel": "개인정보보호책임자: {value}",
+      "contact": "고객 문의",
       "infoUrlLabel": "사업자정보확인"
     }
   },
