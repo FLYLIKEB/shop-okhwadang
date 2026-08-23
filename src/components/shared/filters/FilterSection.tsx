@@ -22,11 +22,11 @@ export default function FilterSection({ title, defaultOpen = false, children }: 
   }, [isOpen, children]);
 
   return (
-    <div className="border-b border-border py-4">
+    <div className="border-b border-soft py-5 last:border-b-0">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between text-sm font-semibold text-foreground"
+        className="flex w-full items-center justify-between typo-body-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span>{title}</span>
         <ChevronDown

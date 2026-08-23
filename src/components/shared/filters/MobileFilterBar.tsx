@@ -66,12 +66,12 @@ export default function MobileFilterBar({ categories, filterGroups }: MobileFilt
 
   return (
     <div className="md:hidden">
-      <div className="flex items-center gap-2 border-b border-border pb-3">
+      <div className="rounded-2xl bg-card p-3 shadow-sm">
         <SegmentedOptionGroup
           items={categoryItems}
           value={activeRootCategory ? Number(activeRootCategory.id) : -1}
           onToggle={(value) => handleCategorySelect(value === -1 ? undefined : value)}
-          ariaLabel="카테고리 필터"
+          ariaLabel={t('categoryFilterLabel')}
           className="flex-1 flex-nowrap gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           itemClassName="shrink-0"
           size="xs"
@@ -81,10 +81,10 @@ export default function MobileFilterBar({ categories, filterGroups }: MobileFilt
       </div>
 
       {filterOpen && (
-        <div className="mt-4 space-y-4 rounded-lg border border-border bg-background p-4">
+        <div className="mt-3 space-y-5 rounded-2xl bg-card p-4 shadow-sm">
           {filterGroups.map((group) => (
-            <div key={group.code} className="space-y-2">
-              <p className="text-sm font-semibold text-foreground">{group.label}</p>
+            <div key={group.code} className="space-y-3">
+              <p className="typo-body-sm font-semibold text-foreground">{group.label}</p>
               <AttributeValueFilter
                 code={group.code}
                 options={group.options}
@@ -104,14 +104,14 @@ export default function MobileFilterBar({ categories, filterGroups }: MobileFilt
             <button
               type="button"
               onClick={handleReset}
-              className="flex-1 rounded-md border border-border py-2 text-sm"
+              className="min-h-11 flex-1 rounded-full bg-muted px-4 py-2 typo-body-sm font-medium text-foreground"
             >
               {tCommon('reset')}
             </button>
             <button
               type="button"
               onClick={() => setFilterOpen(false)}
-              className="flex-1 rounded-md bg-foreground py-2 text-sm text-background"
+              className="min-h-11 flex-1 rounded-full bg-foreground px-4 py-2 typo-body-sm font-medium text-background"
             >
               {t('label')}
             </button>

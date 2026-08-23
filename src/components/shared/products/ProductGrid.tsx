@@ -31,22 +31,22 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
   const [view, setView] = useState<ViewMode>(getInitialViewMode);
 
   return (
-    <div>
-      <div className="mt-8 mb-4 flex items-center justify-between">
+    <div className="rounded-2xl bg-card p-4 shadow-sm md:p-5">
+      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <p className="typo-body-sm text-muted-foreground">
           {t.rich('totalItems', {
             count: total,
             strong: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
           })}
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-stretch md:self-auto">
           <SortDropdown />
           <ViewToggle value={view} onChange={setView} />
         </div>
       </div>
 
       {view === 'grid' ? (
-        <div className={cn('grid gap-10 grid-cols-2 md:grid-cols-3 lg:grid-cols-4')}>
+        <div className={cn('grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 md:gap-x-5 lg:grid-cols-4')}>
           {products.map((product) => (
             <ProductCard
               key={product.id}

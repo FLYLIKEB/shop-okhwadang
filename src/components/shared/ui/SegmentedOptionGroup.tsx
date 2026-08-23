@@ -21,9 +21,9 @@ interface SegmentedOptionGroupProps<T extends string | number> {
 }
 
 const SIZE_CLASS_MAP = {
-  xs: 'px-3 py-1 text-xs',
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
+  xs: 'min-h-9 px-3 py-1 typo-label',
+  sm: 'min-h-10 px-3 py-1.5 typo-body-sm',
+  md: 'min-h-11 px-4 py-2 typo-body-sm',
 } as const;
 
 const RADIUS_CLASS_MAP = {
@@ -33,8 +33,8 @@ const RADIUS_CLASS_MAP = {
 
 const TONE_CLASS_MAP = {
   primary: {
-    active: 'border-primary bg-primary text-primary-foreground',
-    inactive: 'border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground',
+    active: 'border-foreground bg-foreground text-background shadow-sm',
+    inactive: 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
   },
   inverted: {
     active: 'border-foreground bg-foreground text-background',
@@ -68,7 +68,7 @@ export default function SegmentedOptionGroup<T extends string | number>({
             onClick={() => onToggle(item.value)}
             disabled={item.disabled}
             className={cn(
-              'border font-medium transition-colors disabled:pointer-events-none disabled:opacity-50',
+              'border font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
               SIZE_CLASS_MAP[size],
               RADIUS_CLASS_MAP[radius],
               isActive ? TONE_CLASS_MAP[tone].active : TONE_CLASS_MAP[tone].inactive,

@@ -47,7 +47,7 @@ function ProductListItem({
       href={`/products/${id}`}
       locale={locale}
       className={cn(
-        'group flex gap-4 overflow-hidden rounded-lg border border-border bg-card p-3 transition-shadow hover:shadow-md',
+        'group flex gap-4 overflow-hidden rounded-2xl bg-card p-3 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md',
         isSoldout && 'opacity-75',
       )}
     >
@@ -56,7 +56,7 @@ function ProductListItem({
         alt={name}
         frameTestId="product-list-item-image-frame"
         fallbackTestId="product-list-item-image-fallback"
-        frameClassName="h-24 w-24 shrink-0 bg-muted"
+        frameClassName="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted"
         imageClassName="object-cover"
         sizes="96px"
         loading="lazy"
@@ -65,8 +65,8 @@ function ProductListItem({
         fallbackLogoHeight={21}
       >
         {isSoldout && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <span className="text-xs font-semibold text-white">{t('stockStatus.soldout')}</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <span className="typo-label font-semibold text-foreground">{t('stockStatus.soldout')}</span>
           </div>
         )}
       </ProductImageFrame>
