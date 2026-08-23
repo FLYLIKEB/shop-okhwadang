@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAdminListPage } from '@/components/shared/hooks/useAdminListPage';
@@ -33,6 +34,7 @@ const STATUS_FILTERS = [
 const PAGE_SIZE = 20;
 
 export default function AdminOrdersPage() {
+  const t = useTranslations('admin.orders');
   const { isAdmin } = useAdminGuard();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [total, setTotal] = useState(0);
@@ -79,7 +81,7 @@ export default function AdminOrdersPage() {
       setTotal(res.total);
       setServiceRequests(requestRes.items);
     },
-    { errorMessage: '주문 목록을 불러오지 못했습니다.', onError: () => setLoadError(true) },
+    { errorMessage: t('loadError'), onError: () => setLoadError(true) },
   );
 
   useEffect(() => {
@@ -201,15 +203,15 @@ export default function AdminOrdersPage() {
       <PaginatedAdminTableShell
         loading={loading}
         error={loadError}
-        errorMessage={loadError ? '주문 목록을 불러오지 못했습니다.' : undefined}
+        errorMessage={loadError ? t('loadError') : undefined}
         errorAction={
           <Button type="button" onClick={() => void fetchOrders()} variant="outline" size="sm">
-            {localMessage('ui.retry')}
+            {t('retry')}
           </Button>
         }
         isEmpty={orders.length === 0}
-        emptyMessage="주문이 없습니다."
-        loadingMessage="불러오는 중..."
+        emptyMessage={t('noOrders')}
+        loadingMessage={t('loading')}
         currentPage={page}
         totalPages={totalPages}
         onPageChange={setPage}

@@ -10,7 +10,7 @@ import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { attributesApi } from '@/lib/api';
 import type { AttributeType, ManagedAttributeValueOption } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
-import { localMessage } from '@/utils/localMessages';
+
 
 type InputType = AttributeType['inputType'];
 
@@ -499,9 +499,9 @@ export default function AdminAttributesPage() {
       </section>
 
       <div className="admin-surface overflow-x-auto">
-        {loading && <AdminLoadingState title="불러오는 중..." className="rounded-none border-0" />}
+        {loading && <AdminLoadingState title={t('loading')} className="rounded-none border-0" />}
         {!loading && loadError && (
-          <AdminErrorState title={t('loadError')} action={<button type="button" onClick={() => void loadAttributes()} className="rounded border px-3 py-2 typo-body-sm hover:bg-secondary">{localMessage('ui.retry')}</button>} className="rounded-none border-0" />
+          <AdminErrorState title={t('loadError')} action={<button type="button" onClick={() => void loadAttributes()} className="rounded border px-3 py-2 typo-body-sm hover:bg-secondary">{t('retry')}</button>} className="rounded-none border-0" />
         )}
         <table className={`w-full typo-body-sm${loading || loadError ? ' hidden' : ''}`}>
           <thead className="admin-table-head">
