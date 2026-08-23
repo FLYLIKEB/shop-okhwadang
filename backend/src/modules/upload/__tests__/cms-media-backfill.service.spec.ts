@@ -50,6 +50,7 @@ describe('CMS media derivative backfill', () => {
             id: 4,
             image_url: 'https://cdn.example.com/journal.jpg',
             image_derivatives: null,
+            updated_at: '2026-08-23 10:00:00',
           },
         ];
       }
@@ -85,7 +86,47 @@ describe('CMS media derivative backfill', () => {
     expect(journalUpdate?.params).toEqual([
       JSON.stringify({ thumbnail: 'https://cdn.example.com/journal/thumbnail.webp' }),
       4,
+      '2026-08-23 10:00:00',
+      'https://cdn.example.com/journal.jpg',
     ]);
+  });
+
+  it('reports a concurrent simple-row source change without overwriting newer derivatives', async () => {
+    const query = jest.fn(async (sql: string) => {
+      if (sql.includes('FROM `banners`')) {
+        return [{
+          id: 9,
+          image_url: 'https://cdn.example.com/old-banner.jpg',
+          image_derivatives: null,
+          updated_at: '2026-08-23 10:00:00',
+        }];
+      }
+      if (sql.startsWith('UPDATE `banners`')) return { affectedRows: 0 };
+      return [];
+    });
+    const ingestCms = jest.fn(async () => ({
+      original: { url: 'https://cdn.example.com/old-banner.jpg', filename: 'original.jpg' },
+      derivatives: {
+        desktop: { url: 'https://cdn.example.com/banner/desktop.webp', filename: 'desktop.webp' },
+        mobile: { url: 'https://cdn.example.com/banner/mobile.webp', filename: 'mobile.webp' },
+      },
+    }));
+    const service = new CmsMediaBackfillService(
+      { query } as unknown as DataSource,
+      { ingestCms } as unknown as RemoteImageIngestService,
+    );
+
+    const result = await service.backfill();
+
+    expect(result).toMatchObject({ scanned: 1, converted: 1, failed: 1 });
+    expect(result.failures).toEqual([{
+      target: 'banners:9',
+      reason: 'concurrent update detected; derivatives were not written and should be retried',
+    }]);
+    expect(query).toHaveBeenCalledWith(
+      'UPDATE `banners` SET `image_derivatives` = ? WHERE `id` = ? AND `updated_at` = ? AND `image_url` = ?',
+      [expect.any(String), 9, '2026-08-23 10:00:00', 'https://cdn.example.com/old-banner.jpg'],
+    );
   });
 
   it('dry-run reports candidates without downloading or writing derivatives', async () => {

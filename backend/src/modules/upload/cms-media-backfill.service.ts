@@ -56,17 +56,17 @@ export class CmsMediaBackfillService {
 
     for (const row of await this.loadSimpleRows('banners', 'image_url', 'image_derivatives')) {
       if (this.limitReached(result, options.limit)) break;
-      await this.processSimpleRow('banners', row, 'image_derivatives', 'hero', result, options, mediaCache);
+      await this.processSimpleRow('banners', row, 'image_derivatives', 'image_url', 'hero', result, options, mediaCache);
     }
 
     for (const row of await this.loadSimpleRows('promotions', 'image_url', 'image_derivatives')) {
       if (this.limitReached(result, options.limit)) break;
-      await this.processSimpleRow('promotions', row, 'image_derivatives', 'promotion', result, options, mediaCache);
+      await this.processSimpleRow('promotions', row, 'image_derivatives', 'image_url', 'promotion', result, options, mediaCache);
     }
 
     for (const row of await this.loadSimpleRows('journal_entries', 'cover_image_url', 'cover_image_derivatives')) {
       if (this.limitReached(result, options.limit)) break;
-      await this.processSimpleRow('journal_entries', row, 'cover_image_derivatives', 'journal', result, options, mediaCache);
+      await this.processSimpleRow('journal_entries', row, 'cover_image_derivatives', 'cover_image_url', 'journal', result, options, mediaCache);
     }
 
     this.logger.log(
@@ -112,8 +112,9 @@ export class CmsMediaBackfillService {
 
   private async processSimpleRow(
     table: string,
-    row: { id: number; image_url: string | null; image_derivatives: unknown },
+    row: { id: number; image_url: string | null; image_derivatives: unknown; updated_at: unknown },
     derivativesColumn: string,
+    imageColumn: string,
     kind: CmsMediaKind,
     result: CmsMediaBackfillResult,
     options: CmsMediaBackfillOptions,
@@ -131,10 +132,17 @@ export class CmsMediaBackfillService {
 
     const converted = await this.processTarget(target, result, options, mediaCache);
     if (converted && options.dryRun !== true) {
-      await this.dataSource.query(`UPDATE \`${table}\` SET \`${derivativesColumn}\` = ? WHERE \`id\` = ?`, [
-        JSON.stringify(row.image_derivatives),
-        row.id,
-      ]);
+      const updateResult = await this.dataSource.query(
+        `UPDATE \`${table}\` SET \`${derivativesColumn}\` = ? WHERE \`id\` = ? AND \`updated_at\` = ? AND \`${imageColumn}\` = ?`,
+        [JSON.stringify(row.image_derivatives), row.id, row.updated_at, row.image_url],
+      );
+      if (isZeroAffectedUpdate(updateResult)) {
+        result.failed += 1;
+        result.failures.push({
+          target: `${table}:${row.id}`,
+          reason: 'concurrent update detected; derivatives were not written and should be retried',
+        });
+      }
     }
   }
 
@@ -196,10 +204,10 @@ export class CmsMediaBackfillService {
     table: string,
     imageColumn: string,
     derivativesColumn: string,
-  ): Promise<Array<{ id: number; image_url: string | null; image_derivatives: unknown }>> {
+  ): Promise<Array<{ id: number; image_url: string | null; image_derivatives: unknown; updated_at: unknown }>> {
     return this.dataSource.query(
-      `SELECT \`id\`, \`${imageColumn}\` AS image_url, \`${derivativesColumn}\` AS image_derivatives FROM \`${table}\``,
-    ) as Promise<Array<{ id: number; image_url: string | null; image_derivatives: unknown }>>;
+      `SELECT \`id\`, \`${imageColumn}\` AS image_url, \`${derivativesColumn}\` AS image_derivatives, \`updated_at\` FROM \`${table}\``,
+    ) as Promise<Array<{ id: number; image_url: string | null; image_derivatives: unknown; updated_at: unknown }>>;
   }
 
   private limitReached(result: CmsMediaBackfillResult, limit?: number): boolean {
