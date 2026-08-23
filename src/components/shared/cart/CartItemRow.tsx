@@ -68,8 +68,8 @@ const CartItemRowComponent = memo(function CartItemRow({
         )}
       </Link>
 
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="min-w-0 flex-1">
+      <div className="checkout-toss-cart-item__content flex min-w-0 flex-1 items-center gap-3">
+        <div className="checkout-toss-cart-item__info min-w-0 flex-1">
           <Link
             href={productHref}
             locale={locale}
@@ -84,16 +84,18 @@ const CartItemRowComponent = memo(function CartItemRow({
           )}
         </div>
 
-        <p className="typo-price mr-4 shrink-0 whitespace-nowrap text-foreground">
+        <p className="checkout-toss-cart-item__price typo-price mr-0 shrink-0 whitespace-nowrap text-foreground md:mr-4">
           {formatCurrency(item.subtotal, locale)}
         </p>
 
-        <QuantitySelector
-          quantity={item.quantity}
-          maxQuantity={99}
-          onIncrease={() => onQuantityChange(item.id, item.quantity + 1)}
-          onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
-        />
+        <div className="checkout-toss-cart-item__quantity shrink-0">
+          <QuantitySelector
+            quantity={item.quantity}
+            maxQuantity={99}
+            onIncrease={() => onQuantityChange(item.id, item.quantity + 1)}
+            onDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
+          />
+        </div>
 
         <Button
           type="button"
@@ -101,7 +103,7 @@ const CartItemRowComponent = memo(function CartItemRow({
           size="icon"
           onClick={() => onRemove(item.id)}
           aria-label={localMessage('cart.removeItemAria', { product: item.product.name })}
-          className="h-9 min-h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+          className="checkout-toss-cart-item__remove h-9 min-h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
