@@ -789,6 +789,7 @@
       "loading": "불러오는 중...",
       "noOrders": "주문이 없습니다.",
       "loadError": "주문 목록을 불러오지 못했습니다.",
+      "retry": "다시 시도",
       "columns": {
         "orderNumber": "주문번호",
         "orderer": "주문자",
@@ -1321,6 +1322,8 @@
       "save": "저장",
       "delete": "삭제",
       "loadError": "속성 목록을 불러오지 못했습니다.",
+      "loading": "불러오는 중...",
+      "retry": "다시 시도",
       "saveSuccess": "속성을 저장했습니다.",
       "saveError": "속성을 저장하지 못했습니다.",
       "deleteSuccess": "속성을 삭제했습니다.",

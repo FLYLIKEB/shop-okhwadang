@@ -789,6 +789,7 @@
       "loading": "Loading...",
       "noOrders": "No orders found.",
       "loadError": "Failed to load orders.",
+      "retry": "Try again",
       "columns": {
         "orderNumber": "Order #",
         "orderer": "Customer",
@@ -1321,6 +1322,8 @@
       "save": "Save",
       "delete": "Delete",
       "loadError": "Failed to load attributes.",
+      "loading": "Loading...",
+      "retry": "Try again",
       "saveSuccess": "Attribute saved.",
       "saveError": "Failed to save attribute.",
       "deleteSuccess": "Attribute deleted.",
