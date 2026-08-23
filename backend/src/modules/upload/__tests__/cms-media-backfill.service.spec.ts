@@ -107,4 +107,42 @@ describe('CMS media derivative backfill', () => {
     expect(ingestCms).not.toHaveBeenCalled();
     expect(query).not.toHaveBeenCalledWith(expect.stringMatching(/^UPDATE/), expect.anything());
   });
+
+  it('reports a concurrent page-block update without overwriting the newer document', async () => {
+    const query = jest.fn(async (sql: string) => {
+      if (sql.includes('FROM `page_blocks`')) {
+        return [{
+          id: 8,
+          type: 'promotion_banner',
+          updated_at: '2026-08-23 10:00:00',
+          content: { image_url: 'https://cdn.example.com/promo.jpg' },
+        }];
+      }
+      if (sql.startsWith('UPDATE `page_blocks`')) return { affectedRows: 0 };
+      return [];
+    });
+    const ingestCms = jest.fn(async () => ({
+      original: { url: 'https://cdn.example.com/promo.jpg', filename: 'original.jpg' },
+      derivatives: {
+        desktop: { url: 'https://cdn.example.com/promo/desktop.webp', filename: 'desktop.webp' },
+        mobile: { url: 'https://cdn.example.com/promo/mobile.webp', filename: 'mobile.webp' },
+      },
+    }));
+    const service = new CmsMediaBackfillService(
+      { query } as unknown as DataSource,
+      { ingestCms } as unknown as RemoteImageIngestService,
+    );
+
+    const result = await service.backfill();
+
+    expect(result).toMatchObject({ scanned: 1, converted: 1, failed: 1 });
+    expect(result.failures).toEqual([{
+      target: 'page_blocks:8',
+      reason: 'concurrent update detected; derivatives were not written and should be retried',
+    }]);
+    expect(query).toHaveBeenCalledWith(
+      'UPDATE `page_blocks` SET `content` = ? WHERE `id` = ? AND `updated_at` = ?',
+      [expect.any(String), 8, '2026-08-23 10:00:00'],
+    );
+  });
 });

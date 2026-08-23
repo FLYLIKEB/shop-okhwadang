@@ -76,7 +76,7 @@ export class CmsMediaBackfillService {
   }
 
   private async processPageBlock(
-    row: { id: number; type: string; content: unknown },
+    row: { id: number; type: string; content: unknown; updated_at: unknown },
     result: CmsMediaBackfillResult,
     options: CmsMediaBackfillOptions,
     mediaCache: Map<string, Promise<CmsMedia>>,
@@ -92,10 +92,21 @@ export class CmsMediaBackfillService {
     }
 
     if (changed && options.dryRun !== true) {
-      await this.dataSource.query('UPDATE `page_blocks` SET `content` = ? WHERE `id` = ?', [
-        JSON.stringify(content),
-        row.id,
-      ]);
+      const updateResult = await this.dataSource.query(
+        'UPDATE `page_blocks` SET `content` = ? WHERE `id` = ? AND `updated_at` = ?',
+        [
+          JSON.stringify(content),
+          row.id,
+          row.updated_at,
+        ],
+      );
+      if (isZeroAffectedUpdate(updateResult)) {
+        result.failed += 1;
+        result.failures.push({
+          target: `page_blocks:${row.id}`,
+          reason: 'concurrent update detected; derivatives were not written and should be retried',
+        });
+      }
     }
   }
 
@@ -174,11 +185,11 @@ export class CmsMediaBackfillService {
     return promise;
   }
 
-  private async loadPageBlocks(): Promise<Array<{ id: number; type: string; content: unknown }>> {
+  private async loadPageBlocks(): Promise<Array<{ id: number; type: string; content: unknown; updated_at: unknown }>> {
     return this.dataSource.query(
-      'SELECT `id`, `type`, `content` FROM `page_blocks` WHERE `type` IN (?, ?)',
+      'SELECT `id`, `type`, `content`, `updated_at` FROM `page_blocks` WHERE `type` IN (?, ?)',
       ['hero_banner', 'promotion_banner'],
-    ) as Promise<Array<{ id: number; type: string; content: unknown }>>;
+    ) as Promise<Array<{ id: number; type: string; content: unknown; updated_at: unknown }>>;
   }
 
   private async loadSimpleRows(
@@ -276,4 +287,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function errorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
   return String(err);
+}
+
+function isZeroAffectedUpdate(value: unknown): boolean {
+  if (typeof value === 'number') return value === 0;
+  return isRecord(value) && (value.affectedRows === 0 || value.affected === 0);
 }
