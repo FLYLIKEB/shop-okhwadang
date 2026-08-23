@@ -36,11 +36,11 @@ const CartItemRowComponent = memo(function CartItemRow({
   return (
     <div
       className={cn(
-        'checkout-toss-cart-item flex items-start gap-3 py-3 transition-colors first:pt-0 last:pb-0',
+        'checkout-toss-cart-item flex items-start gap-2 py-3 transition-colors first:pt-0 last:pb-0 md:gap-3',
         selected && 'checkout-toss-cart-item--selected',
       )}
     >
-      <label className="-ml-2 flex min-h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center self-center -translate-y-1">
+      <label className="checkout-toss-cart-item__select -ml-1 flex min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center self-center md:-ml-2 md:min-h-12 md:min-w-12 md:-translate-y-1">
         <Checkbox
           checked={selected}
           onChange={(e) => onSelect(item.id, e.target.checked)}
@@ -52,7 +52,7 @@ const CartItemRowComponent = memo(function CartItemRow({
       <Link
         href={productHref}
         locale={locale}
-        className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted"
+        className="checkout-toss-cart-item__image relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted md:h-14 md:w-14"
       >
         {thumbnail ? (
           <Image
@@ -68,12 +68,12 @@ const CartItemRowComponent = memo(function CartItemRow({
         )}
       </Link>
 
-      <div className="checkout-toss-cart-item__content flex min-w-0 flex-1 items-center gap-3">
+      <div className="checkout-toss-cart-item__content flex min-w-0 flex-1 items-center gap-2 md:gap-3">
         <div className="checkout-toss-cart-item__info min-w-0 flex-1">
           <Link
             href={productHref}
             locale={locale}
-            className="checkout-toss-cart-item__name typo-title block line-clamp-2 break-words hover:underline"
+            className="checkout-toss-cart-item__name typo-title block truncate hover:underline"
           >
             {item.product.name}
           </Link>
@@ -84,7 +84,7 @@ const CartItemRowComponent = memo(function CartItemRow({
           )}
         </div>
 
-        <p className="checkout-toss-cart-item__price typo-price mr-0 shrink-0 whitespace-nowrap text-foreground md:mr-4">
+        <p className="checkout-toss-cart-item__price typo-price mr-0 min-w-0 shrink-0 whitespace-nowrap text-foreground md:mr-4">
           {formatCurrency(item.subtotal, locale)}
         </p>
 
