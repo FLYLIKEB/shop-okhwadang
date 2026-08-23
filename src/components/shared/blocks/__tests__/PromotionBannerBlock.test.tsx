@@ -29,7 +29,7 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('next/image', () => ({
-  default: ({ alt }: { alt: string }) => <span aria-label={alt} />,
+  default: ({ alt, src }: { alt: string; src: string }) => <span aria-label={alt} data-src={src} />,
 }));
 
 const timerContent: PromotionBannerContent = {
@@ -50,5 +50,23 @@ describe('PromotionBannerBlock hydration safety', () => {
     vi.useRealTimers();
 
     expect(secondRender).toBe(firstRender);
+  });
+});
+
+
+describe('PromotionBannerBlock image derivatives', () => {
+  it('uses the card derivative for card banners', () => {
+    const html = renderToString(
+      <PromotionBannerBlock
+        content={{
+          title: 'Card promotion',
+          template: 'card',
+          image_url: 'https://cdn.example.com/original.jpg',
+          image_derivatives: { card: 'https://cdn.example.com/card.webp', full: 'https://cdn.example.com/full.webp' },
+        }}
+      />,
+    );
+
+    expect(html).toContain('data-src="https://cdn.example.com/card.webp"');
   });
 });
