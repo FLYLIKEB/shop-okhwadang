@@ -8,6 +8,20 @@
 4. 운영 환경에 `MESSAGE_PROVIDER=solapi`, 등록된 `MESSAGE_SENDER_PHONE`, `MESSAGE_SOLAPI_API_KEY`, `MESSAGE_SOLAPI_API_SECRET`을 설정한다. 알림톡 모드에서는 카카오 채널과 템플릿 ID도 설정한다. 비밀값은 저장소나 Issue에 기록하지 않는다.
 5. `backend/.env.production`을 기준으로 `bash scripts/remote-env-sync.sh set-secret`과 `bash scripts/remote-env-sync.sh push`를 실행한다. 운영 사전 검증은 메시지 공급자가 mock이거나 필수 설정이 없으면 배포를 막는다.
 
+## 알림톡 승인용 문안
+
+아래 다섯 건을 각각 기본형(`BA`), 강조 없음(`NONE`), 버튼 없음으로 등록한다. 카테고리 코드는 SOLAPI의 현재 목록에서 주문·결제에 맞는 값을 확인한다. 변수 이름과 중괄호를 그대로 사용하고, 검수 과정에서 문구가 바뀌면 코드의 변수 사용과 다시 대조한다. [템플릿 등록·검수 안내](https://solapi.com/developers/api/templates-createTemplate).
+
+| 환경변수 | 템플릿 이름 | 본문 |
+| --- | --- | --- |
+| `MESSAGE_TEMPLATE_ORDER_CREATED` | 옥화당 주문 접수 | `[옥화당] 주문이 접수되었습니다.\n#{customerName}님, 주문번호: #{orderNumber}\n주문금액: #{totalAmount}` |
+| `MESSAGE_TEMPLATE_PAYMENT_CONFIRMED` | 옥화당 결제 완료 | `[옥화당] 결제가 완료되었습니다.\n#{customerName}님, 주문번호: #{orderNumber}\n결제금액: #{totalAmount}\n결제수단: #{paymentMethod}` |
+| `MESSAGE_TEMPLATE_SHIPPING_STARTED` | 옥화당 배송 시작 | `[옥화당] 배송이 시작되었습니다.\n#{customerName}님, 주문번호: #{orderNumber}\n택배사: #{carrier}\n운송장번호: #{trackingNumber}` |
+| `MESSAGE_TEMPLATE_SHIPPING_DELIVERED` | 옥화당 배송 완료 | `[옥화당] 배송이 완료되었습니다.\n#{customerName}님, 주문번호: #{orderNumber}\n이용해 주셔서 감사합니다.` |
+| `MESSAGE_TEMPLATE_ORDER_CANCELLED` | 옥화당 주문 취소 | `[옥화당] 주문이 취소되었습니다.\n#{customerName}님, 주문번호: #{orderNumber}\n취소 사유: #{cancelReason}` |
+
+표의 `\n`은 템플릿 입력 시 줄바꿈으로 넣는다. 승인된 템플릿 ID를 해당 환경변수에 각각 저장한다. 알림톡 실패 시 SMS/LMS 대체발송을 사용하려면 승인된 발신번호와 `MESSAGE_ENABLE_SMS_FALLBACK=true`가 필요하다.
+
 ## 실발송 확인
 
 - 승인된 테스트 수신번호로 회원·비회원 주문 접수, 결제 완료, 운송장 등록, 배송 완료와 주문 취소를 각각 확인한다.
