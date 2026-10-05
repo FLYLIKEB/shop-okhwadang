@@ -8,6 +8,7 @@ import { GuestOrderCreationWorkflowService } from './guest-order-creation.workfl
 import { GuestOrderAccessService } from './guest-order-access.service';
 import { OrderPostCommitService } from './order-post-commit.service';
 import { IdempotencyService } from '../../common/services/idempotency.service';
+import { MessageEffectOutboxService } from '../notification/message-effect-outbox.service';
 import {
   applyOrderReadRelationJoins,
   localizeOrderReadProjection,
@@ -28,6 +29,7 @@ export class GuestOrdersService {
     private readonly guestOrderAccessService: GuestOrderAccessService,
     private readonly orderPostCommitService: OrderPostCommitService,
     private readonly idempotencyService: IdempotencyService,
+    private readonly messageEffectOutbox: MessageEffectOutboxService,
   ) {}
 
   async create(dto: CreateGuestOrderDto, idempotencyKey?: string): Promise<{
@@ -43,6 +45,7 @@ export class GuestOrdersService {
         Number(postCommit.savedOrder.id),
         manager,
       );
+      await this.messageEffectOutbox.enqueueWithManager(manager, Number(postCommit.savedOrder.id), 'order.created');
 
       return { postCommit, access };
     });

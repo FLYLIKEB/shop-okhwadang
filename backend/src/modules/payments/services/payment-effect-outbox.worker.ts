@@ -8,7 +8,7 @@ import { AmbiguousMessageDeliveryError, MessageDeliveryInProgressError } from '.
 export interface PaymentEffectCollaborators {
   orderCompleted: { deliver(payload: Record<string, unknown>, idempotencyKey: string): Promise<void> };
   paymentConfirmedNotification: { deliver(payload: Record<string, unknown>, idempotencyKey: string): Promise<void> };
-  memberMessageNotification: { deliver(payload: Record<string, unknown>, idempotencyKey: string): Promise<void> };
+  messageNotification: { deliver(payload: Record<string, unknown>, idempotencyKey: string): Promise<void> };
 }
 
 export interface PaymentEffectWorkerOptions {
@@ -71,7 +71,8 @@ export class PaymentEffectOutboxWorker {
       case PaymentEffectType.PAYMENT_CONFIRMED_NOTIFICATION:
         return this.collaborators.paymentConfirmedNotification.deliver(payload, idempotencyKey);
       case PaymentEffectType.MEMBER_MESSAGE_NOTIFICATION:
-        return this.collaborators.memberMessageNotification.deliver(payload, idempotencyKey);
+      case PaymentEffectType.GUEST_MESSAGE_NOTIFICATION:
+        return this.collaborators.messageNotification.deliver(payload, idempotencyKey);
       default:
         throw new Error(`Unsupported payment effect type: ${effect.effectType}`);
     }

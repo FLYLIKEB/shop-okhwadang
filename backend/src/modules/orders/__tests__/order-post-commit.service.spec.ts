@@ -10,9 +10,6 @@ describe('OrderPostCommitService', () => {
   const notificationService = {
     sendOrderConfirmed: jest.fn().mockResolvedValue(undefined),
   };
-  const messageNotificationService = {
-    sendOrderCreated: jest.fn().mockResolvedValue(undefined),
-  };
   const notificationDispatchHelper = {
     dispatch: jest.fn().mockResolvedValue(undefined),
   };
@@ -26,7 +23,6 @@ describe('OrderPostCommitService', () => {
     service = new OrderPostCommitService(
       orderRepository as never,
       notificationService as never,
-      messageNotificationService as never,
       notificationDispatchHelper as never,
     );
   });
@@ -35,7 +31,7 @@ describe('OrderPostCommitService', () => {
     process.env.FRONTEND_URL = originalFrontendUrl;
   });
 
-  it('dispatches guest order-created notifications to the explicit recipient with locale-aware guest lookup CTA and no member message branch', async () => {
+  it('dispatches guest order-created email to the explicit recipient with locale-aware guest lookup CTA', async () => {
     const payload: OrderPostCommitPayload = {
       savedOrder: {
         id: 41,
@@ -76,7 +72,6 @@ describe('OrderPostCommitService', () => {
         },
       }),
     );
-    expect(messageNotificationService.sendOrderCreated).not.toHaveBeenCalled();
 
     const dispatchArg = notificationDispatchHelper.dispatch.mock.calls[0][0] as {
       send: (recipient: { email: string; name: string }) => Promise<void>;
@@ -95,7 +90,7 @@ describe('OrderPostCommitService', () => {
     );
   });
 
-  it('keeps member order-created notifications on userId dispatch and member message notification branch', async () => {
+  it('keeps member order-created email on userId dispatch', async () => {
     const payload: OrderPostCommitPayload = {
       savedOrder: {
         id: 42,
@@ -133,7 +128,6 @@ describe('OrderPostCommitService', () => {
         userId: 9,
       }),
     );
-    expect(messageNotificationService.sendOrderCreated).toHaveBeenCalledWith(42);
 
     const dispatchArg = notificationDispatchHelper.dispatch.mock.calls[0][0] as {
       send: (recipient: { email: string; name: string }) => Promise<void>;

@@ -17,6 +17,7 @@ import {
 } from './interfaces/message-provider.interface';
 import { buildTransactionalMessage } from './templates/message-templates';
 import { PaymentEffectOutbox, PaymentEffectState } from '../payments/entities/payment-effect-outbox.entity';
+import { MessageEffectEventType, MessageEffectOutbox, MessageEffectState } from './entities/message-effect-outbox.entity';
 
 export const MESSAGE_PROVIDER_TOKEN = 'MessageProvider';
 
@@ -49,15 +50,7 @@ export class MessageNotificationService {
   ) {}
 
   async sendOrderCreated(orderId: number): Promise<void> {
-    const order = await this.findOrder(orderId);
-    if (!order) return;
-    await this.dispatch({
-      eventType: 'order.created',
-      templateKey: 'ORDER_CREATED',
-      resourceType: 'order',
-      resourceId: orderId,
-      order,
-    });
+    await this.deliverEvent(orderId, 'order.created');
   }
 
   async sendPaymentConfirmed(orderId: number, paymentMethod?: string, _idempotencyKey?: string): Promise<void> {
@@ -108,35 +101,39 @@ export class MessageNotificationService {
   }
 
   async sendShippingStarted(orderId: number): Promise<void> {
-    const [order, shipping] = await Promise.all([
-      this.findOrder(orderId),
-      this.dataSource.getRepository(Shipping).findOne({ where: { orderId } }),
-    ]);
-    if (!order) return;
-    await this.dispatch({
-      eventType: 'shipping.started',
-      templateKey: 'SHIPPING_STARTED',
-      resourceType: 'shipping',
-      resourceId: Number(shipping?.id ?? orderId),
-      order,
-      shipping,
-    });
+    await this.deliverEvent(orderId, 'shipping.started');
   }
 
   async sendShippingDelivered(orderId: number): Promise<void> {
+    await this.deliverEvent(orderId, 'shipping.delivered');
+  }
+
+  async deliver(orderId: number, eventType: MessageEffectEventType, effectKey: string): Promise<void> {
+    await this.deliverEvent(orderId, eventType, effectKey);
+  }
+
+  private async deliverEvent(orderId: number, eventType: MessageEffectEventType, effectKey?: string): Promise<void> {
     const [order, shipping] = await Promise.all([
       this.findOrder(orderId),
-      this.dataSource.getRepository(Shipping).findOne({ where: { orderId } }),
+      eventType === 'order.created'
+        ? Promise.resolve(null)
+        : this.dataSource.getRepository(Shipping).findOne({ where: { orderId } }),
     ]);
-    if (!order) return;
+    if (!order) {
+      if (effectKey) throw new Error(`Order ${orderId} is missing for ${eventType}`);
+      return;
+    }
+    const templateKey: MessageTemplateKey = eventType === 'order.created'
+      ? 'ORDER_CREATED'
+      : eventType === 'shipping.started' ? 'SHIPPING_STARTED' : 'SHIPPING_DELIVERED';
     await this.dispatch({
-      eventType: 'shipping.delivered',
-      templateKey: 'SHIPPING_DELIVERED',
-      resourceType: 'shipping',
-      resourceId: Number(shipping?.id ?? orderId),
+      eventType,
+      templateKey,
+      resourceType: eventType === 'order.created' ? 'order' : 'shipping',
+      resourceId: eventType === 'order.created' ? orderId : Number(shipping?.id ?? orderId),
       order,
       shipping,
-    });
+    }, effectKey, Boolean(effectKey));
   }
 
   private async dispatch(context: DispatchContext, effectKey?: string, strict = false): Promise<void> {
@@ -156,7 +153,7 @@ export class MessageNotificationService {
       if (strict) throw new MessageDeliveryInProgressError(effectKey);
       return;
     }
-    if (!recipientPhone || !templateId) {
+    if (!recipientPhone || (this.config.message.channel === 'alimtalk' && !templateId)) {
       await this.transition(effectKey, 'processing', { status: 'skipped', errorMessage: recipientPhone ? `${context.templateKey} 템플릿 ID가 설정되지 않았습니다.` : '수신 가능한 전화번호가 없습니다.' });
       return;
     }
@@ -194,11 +191,20 @@ export class MessageNotificationService {
     const reconcile = async (transactionManager: EntityManager): Promise<boolean> => {
       const now = new Date();
       const log = await transactionManager.getRepository(NotificationLog).update(
-        { effectKey },
+        { effectKey, status: In(['manual_review', 'failed', 'processing', 'sent']) },
         { status: 'sent', providerMessageId: providerMessageId ?? null, sentAt: now, errorMessage: null },
       );
       if (log.affected !== 1) return false;
       const effectId = this.paymentEffectId(effectKey);
+      const messageEffectId = this.messageEffectId(effectKey);
+      if (messageEffectId !== null) {
+        const outbox = await transactionManager.getRepository(MessageEffectOutbox).update(
+          { id: messageEffectId, state: In([MessageEffectState.MANUAL_REVIEW, MessageEffectState.FAILED, MessageEffectState.PROCESSING]) },
+          { state: MessageEffectState.SUCCEEDED, processedAt: now, leaseOwner: null, leaseExpiresAt: null, nextAttemptAt: null, lastError: null },
+        );
+        if (outbox.affected !== 1) throw new Error(`Message effect ${messageEffectId} cannot be reconciled`);
+        return true;
+      }
       if (effectId === null) return true;
       const outbox = await transactionManager.getRepository(PaymentEffectOutbox).update(
         { id: effectId, state: In([PaymentEffectState.MANUAL_REVIEW, PaymentEffectState.FAILED, PaymentEffectState.PROCESSING]) },
@@ -214,7 +220,7 @@ export class MessageNotificationService {
 
   private async reserve(effectKey: string, context: DispatchContext, recipientPhoneHash: string | null, recipientPhoneMasked: string | null): Promise<NotificationLog | null> {
     try {
-      await this.logRepository.insert({ eventType: context.eventType, channel: 'kakao_alimtalk', provider: this.config.message.provider, resourceType: context.resourceType, resourceId: context.resourceId, recipientPhoneHash, recipientPhoneMasked, templateKey: context.templateKey, providerMessageId: null, effectKey, status: 'pending', errorMessage: null, sentAt: null } as never);
+      await this.logRepository.insert({ eventType: context.eventType, channel: this.defaultChannel(), provider: this.config.message.provider, resourceType: context.resourceType, resourceId: context.resourceId, recipientPhoneHash, recipientPhoneMasked, templateKey: context.templateKey, providerMessageId: null, effectKey, status: 'pending', errorMessage: null, sentAt: null } as never);
     } catch (error) {
       if (!this.isDuplicateKey(error)) throw error;
     }
@@ -261,12 +267,12 @@ export class MessageNotificationService {
   private async dispatchLegacy(context: DispatchContext): Promise<void> {
     // Non-outbox notifications retain the historical best-effort behavior.
     const recipientPhone = this.pickRecipientPhone(context.order);
-    if (!recipientPhone) return this.saveLog(context, { status: 'skipped', channel: 'kakao_alimtalk', errorMessage: '수신 가능한 전화번호가 없습니다.' });
+    if (!recipientPhone) return this.saveLog(context, { status: 'skipped', channel: this.defaultChannel(), errorMessage: '수신 가능한 전화번호가 없습니다.' });
     const normalizedPhone = this.normalizePhone(recipientPhone);
     const recipientPhoneHash = this.hashPhone(normalizedPhone);
     const recipientPhoneMasked = this.maskPhone(normalizedPhone);
     const templateId = this.config.message.templates[context.templateKey];
-    if (!templateId) return this.saveLog(context, { status: 'skipped', channel: 'kakao_alimtalk', recipientPhoneHash, recipientPhoneMasked, errorMessage: `${context.templateKey} 템플릿 ID가 설정되지 않았습니다.` });
+    if (this.config.message.channel === 'alimtalk' && !templateId) return this.saveLog(context, { status: 'skipped', channel: this.defaultChannel(), recipientPhoneHash, recipientPhoneMasked, errorMessage: `${context.templateKey} 템플릿 ID가 설정되지 않았습니다.` });
     const duplicate = await this.logRepository.findOne({ where: { eventType: context.eventType, resourceType: context.resourceType, resourceId: context.resourceId, recipientPhoneHash, status: 'sent' } });
     if (duplicate) return;
     try {
@@ -274,7 +280,7 @@ export class MessageNotificationService {
       const result = await this.provider.send({ to: normalizedPhone, ...message, idempotencyKey: `notification:${context.eventType}:${context.resourceType}:${context.resourceId}:${recipientPhoneHash}` });
       await this.saveLog(context, { status: result.status, channel: result.channel, provider: result.provider, providerMessageId: result.providerMessageId, recipientPhoneHash, recipientPhoneMasked, errorMessage: result.errorMessage });
     } catch (error) {
-      await this.saveLog(context, { status: 'failed', channel: 'kakao_alimtalk', recipientPhoneHash, recipientPhoneMasked, errorMessage: this.errorText(error) });
+      await this.saveLog(context, { status: 'failed', channel: this.defaultChannel(), recipientPhoneHash, recipientPhoneMasked, errorMessage: this.errorText(error) });
     }
   }
 
@@ -286,6 +292,13 @@ export class MessageNotificationService {
   private paymentEffectId(effectKey: string): number | null {
     const match = /^payment-effect:(\d+)$/.exec(effectKey);
     return match ? Number(match[1]) : null;
+  }
+  private messageEffectId(effectKey: string): number | null {
+    const match = /^message-effect:(\d+)$/.exec(effectKey);
+    return match ? Number(match[1]) : null;
+  }
+  private defaultChannel(): TransactionalMessageChannel {
+    return this.config.message.channel === 'sms' ? 'sms' : 'kakao_alimtalk';
   }
 
   private async findOrder(orderId: number): Promise<Order | null> {

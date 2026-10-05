@@ -8,6 +8,7 @@ import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { OrderCreationWorkflowService } from './order-creation.workflow.service';
 import { OrderPostCommitService } from './order-post-commit.service';
 import { IdempotencyService } from '../../common/services/idempotency.service';
+import { MessageEffectOutboxService } from '../notification/message-effect-outbox.service';
 import { applyOrderReadRelationJoins, localizeOrderReadProjection } from './order-read-projection.util';
 
 function assertMemberOrderOwnership(order: Order, userId: number): void {
@@ -31,6 +32,7 @@ export class OrdersService {
     private readonly orderCreationWorkflow: OrderCreationWorkflowService,
     private readonly orderPostCommitService: OrderPostCommitService,
     private readonly idempotencyService: IdempotencyService,
+    private readonly messageEffectOutbox: MessageEffectOutboxService,
   ) {}
 
   /**
@@ -51,7 +53,11 @@ export class OrdersService {
     const pointsToUse = dto.pointsUsed ?? 0;
     const operation = await this.idempotencyService.execute(
       `member:${userId}`, 'order.create', idempotencyKey, dto,
-      (manager) => this.orderCreationWorkflow.runCreateOrderTransaction(manager, userId, dto, pointsToUse),
+      async (manager) => {
+        const result = await this.orderCreationWorkflow.runCreateOrderTransaction(manager, userId, dto, pointsToUse);
+        await this.messageEffectOutbox.enqueueWithManager(manager, Number(result.savedOrder.id), 'order.created');
+        return result;
+      },
     );
     const postCommit = operation.result;
 

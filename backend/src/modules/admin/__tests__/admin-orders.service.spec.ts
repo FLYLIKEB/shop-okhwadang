@@ -11,6 +11,7 @@ import { MembershipService } from '../../membership/membership.service';
 import { PointsService } from '../../points/points.service';
 import { NotificationService } from '../../notification/notification.service';
 import { MessageNotificationService } from '../../notification/message-notification.service';
+import { MessageEffectOutboxService } from '../../notification/message-effect-outbox.service';
 
 function createMockRepository() {
   const transactionManager = {
@@ -64,6 +65,7 @@ describe('AdminOrdersService', () => {
   let pointsService: jest.Mocked<PointsService>;
   let notificationService: jest.Mocked<NotificationService>;
   let messageNotificationService: jest.Mocked<MessageNotificationService>;
+  let messageEffectOutbox: { enqueueWithManager: jest.Mock };
 
   beforeEach(async () => {
     orderRepo = createMockRepository();
@@ -88,6 +90,7 @@ describe('AdminOrdersService', () => {
       sendShippingStarted: jest.fn().mockResolvedValue(undefined),
       sendShippingDelivered: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<MessageNotificationService>;
+    messageEffectOutbox = { enqueueWithManager: jest.fn().mockResolvedValue(undefined) };
     const lockQueryRunner = {
       connect: jest.fn().mockResolvedValue(undefined),
       query: jest
@@ -119,6 +122,7 @@ describe('AdminOrdersService', () => {
         { provide: PointsService, useValue: pointsService },
         { provide: NotificationService, useValue: notificationService },
         { provide: MessageNotificationService, useValue: messageNotificationService },
+        { provide: MessageEffectOutboxService, useValue: messageEffectOutbox },
       ],
     }).compile();
 
@@ -224,6 +228,9 @@ describe('AdminOrdersService', () => {
           status: ShippingStatus.DELIVERED,
           deliveredAt: expect.any(Date),
         }),
+      );
+      expect(messageEffectOutbox.enqueueWithManager).toHaveBeenCalledWith(
+        mockManager, 1, 'shipping.delivered',
       );
     });
 
@@ -530,6 +537,19 @@ describe('AdminOrdersService', () => {
       expect(messageNotificationService.sendOrderCancelled).toHaveBeenCalledWith(1, '품절');
     });
 
+    it('비회원 이메일이 없어도 취소 문자를 보낸다', async () => {
+      const notify = service as unknown as {
+        sendCancellationNotifications: (orderId: number, order: Order, reason: string) => Promise<void>;
+      };
+      await notify.sendCancellationNotifications(1, {
+        id: 1, userId: null, user: null, guestEmailNormalized: null,
+        orderNumber: 'ORD-GUEST-1', recipientName: '비회원', items: [],
+      } as unknown as Order, '품절');
+
+      expect(messageNotificationService.sendOrderCancelled).toHaveBeenCalledWith(1, '품절');
+      expect(notificationService.sendOrderCancelled).not.toHaveBeenCalled();
+    });
+
     it('rejects partial-cancelled payments instead of cancelling the order', async () => {
       const order = {
         id: 1,
@@ -820,6 +840,7 @@ describe('AdminOrdersService', () => {
       expect(mockManager.save).not.toHaveBeenCalledWith(Shipping, expect.anything());
       expect(notificationService.sendShippingUpdate).not.toHaveBeenCalled();
       expect(messageNotificationService.sendShippingStarted).not.toHaveBeenCalled();
+      expect(messageEffectOutbox.enqueueWithManager).not.toHaveBeenCalled();
     });
 
     it('should create new shipping record', async () => {
@@ -845,6 +866,9 @@ describe('AdminOrdersService', () => {
           trackingNumber: '123',
           status: ShippingStatus.PREPARING,
         }),
+      );
+      expect(messageEffectOutbox.enqueueWithManager).toHaveBeenCalledWith(
+        mockManager, 1, 'shipping.started',
       );
     });
 

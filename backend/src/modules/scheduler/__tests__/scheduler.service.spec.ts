@@ -12,6 +12,7 @@ import { PointHistory } from '../../coupons/entities/point-history.entity';
 import { User } from '../../users/entities/user.entity';
 import { RecentlyViewedProduct } from '../../products/entities/recently-viewed-product.entity';
 import { NotificationService } from '../../notification/notification.service';
+import { MessageNotificationService } from '../../notification/message-notification.service';
 import { SettingsService } from '../../settings/settings.service';
 import { MembershipService } from '../../membership/membership.service';
 import { SchedulerLockService } from '../../../common/services/scheduler-lock.service';
@@ -87,6 +88,9 @@ const mockNotificationService = {
   sendOrderConfirmed: jest.fn(),
   sendOrderCancelled: jest.fn(),
 };
+const mockMessageNotificationService = {
+  sendOrderCancelled: jest.fn().mockResolvedValue(undefined),
+};
 
 const mockSettingsService = {
   getMap: jest.fn(),
@@ -152,6 +156,7 @@ describe('SchedulerService', () => {
         { provide: getRepositoryToken(RecentlyViewedProduct), useValue: mockRecentlyViewedRepo },
         { provide: DataSource, useValue: mockDataSource },
         { provide: NotificationService, useValue: mockNotificationService },
+        { provide: MessageNotificationService, useValue: mockMessageNotificationService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: MembershipService, useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined), evaluateAllUserTiers: jest.fn().mockResolvedValue(undefined) } },
         { provide: PointsService, useValue: mockPointsService },
@@ -309,6 +314,7 @@ describe('SchedulerService', () => {
         1,
         { status: OrderStatus.CANCELLED },
       );
+      expect(mockMessageNotificationService.sendOrderCancelled).toHaveBeenCalledWith(1, '결제 미완료 자동 취소');
       expect(mockQueryRunner.manager.update).not.toHaveBeenCalledWith(
         Payment,
         expect.anything(),

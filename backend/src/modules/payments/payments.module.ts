@@ -81,9 +81,9 @@ export { isCheckoutGatewayName };
           deliver: (payload, idempotencyKey) =>
             confirmation.deliverPaymentConfirmedNotification(payload as never, idempotencyKey),
         },
-        memberMessageNotification: {
+        messageNotification: {
           deliver: (payload, idempotencyKey) =>
-            confirmation.deliverMemberMessageNotification(payload as never, idempotencyKey),
+            confirmation.deliverMessageNotification(payload as never, idempotencyKey),
         },
       }),
     },

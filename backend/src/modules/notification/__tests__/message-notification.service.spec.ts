@@ -4,6 +4,7 @@ import { NotificationLog } from '../entities/notification-log.entity';
 import { Order } from '../../orders/entities/order.entity';
 import { Payment, PaymentMethod } from '../../payments/entities/payment.entity';
 import { Shipping } from '../../payments/entities/shipping.entity';
+import { MessageEffectOutbox, MessageEffectState } from '../entities/message-effect-outbox.entity';
 import { MessageProvider } from '../interfaces/message-provider.interface';
 import { AmbiguousMessageDeliveryError, MessageDeliveryInProgressError } from '../interfaces/message-provider.interface';
 
@@ -24,6 +25,7 @@ describe('MessageNotificationService', () => {
     resend: { apiKey: '', fromAddress: 'no-reply@okhwadang.com' },
     message: {
       provider: 'mock',
+      channel: 'alimtalk',
       senderPhone: '021234567',
       kakaoChannelId: 'pf-id',
       smsFallbackEnabled: true,
@@ -53,6 +55,7 @@ describe('MessageNotificationService', () => {
   };
 
   let service: MessageNotificationService;
+  let dataSource: { getRepository: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -71,7 +74,7 @@ describe('MessageNotificationService', () => {
       status: 'sent',
     });
 
-    const dataSource = {
+    dataSource = {
       getRepository: jest.fn((entity: unknown) => {
         if (entity === Order) return orderRepository;
         if (entity === Payment) return paymentRepository;
@@ -178,6 +181,47 @@ describe('MessageNotificationService', () => {
       { effectKey: 'message-effect-1', status: 'processing' },
       expect.objectContaining({ status: 'failed' }),
     );
+  });
+
+  it('delivers a queued order event once using its durable effect key', async () => {
+    await service.deliver(10, 'order.created', 'message-effect:9');
+
+    expect(logRepository.insert).toHaveBeenCalledWith(expect.objectContaining({
+      effectKey: 'message-effect:9',
+      eventType: 'order.created',
+    }));
+    expect(provider.send).toHaveBeenCalledWith(expect.objectContaining({
+      idempotencyKey: 'message-effect:9',
+      to: '01012345678',
+    }));
+  });
+
+  it('sends SMS without a Kakao template when SMS mode is selected', async () => {
+    const smsConfig: NotificationConfig = {
+      ...config,
+      message: { ...config.message, channel: 'sms', templates: { ...config.message.templates, ORDER_CREATED: '' } },
+    };
+    service = new MessageNotificationService(logRepository as never, dataSource as never, provider, smsConfig);
+
+    await service.deliver(10, 'order.created', 'message-effect:10');
+
+    expect(provider.send).toHaveBeenCalledWith(expect.objectContaining({ templateId: '' }));
+    expect(logRepository.insert).toHaveBeenCalledWith(expect.objectContaining({ channel: 'sms' }));
+  });
+
+  it('reconciles a message outbox effect with its delivery log', async () => {
+    const effectRepository = { update: jest.fn().mockResolvedValue({ affected: 1 }) };
+    const manager = {
+      getRepository: jest.fn((entity: unknown) => entity === NotificationLog ? logRepository : effectRepository),
+    };
+
+    await expect(service.reconcileDelivered('message-effect:9', 'solapi-9', manager as never))
+      .resolves.toBe(true);
+    expect(effectRepository.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 9 }),
+      expect.objectContaining({ state: MessageEffectState.SUCCEEDED }),
+    );
+    expect(manager.getRepository).toHaveBeenCalledWith(MessageEffectOutbox);
   });
 
   it('does not resend a strict delivery already accepted for its stable key', async () => {

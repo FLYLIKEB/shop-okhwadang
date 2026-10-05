@@ -14,6 +14,7 @@ import { ProductStatus } from '../../products/entities/product.entity';
 import { OrderCreationWorkflowService } from '../order-creation.workflow.service';
 import { OrderPostCommitService } from '../order-post-commit.service';
 import { IdempotencyService } from '../../../common/services/idempotency.service';
+import { MessageEffectOutboxService } from '../../notification/message-effect-outbox.service';
 
 // Manager used inside dataSource.transaction — same shape as the previous queryRunner.manager mock
 const mockManager = {
@@ -32,6 +33,9 @@ const mockDataSource = {
 };
 const mockIdempotencyService = {
   execute: jest.fn(),
+};
+const mockMessageEffectOutbox = {
+  enqueueWithManager: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockOrderRepository = {
@@ -108,6 +112,7 @@ describe('OrdersService', () => {
         { provide: NotificationDispatchHelper, useValue: { dispatch: jest.fn().mockResolvedValue(undefined) } },
         { provide: CouponsService, useValue: mockCouponsService },
         { provide: ShippingFeeCalculatorService, useValue: mockShippingFeeCalculator },
+        { provide: MessageEffectOutboxService, useValue: mockMessageEffectOutbox },
       ],
     }).compile();
 
@@ -177,6 +182,9 @@ describe('OrdersService', () => {
       const result = await service.create(1, dto);
       expect(result).toBeDefined();
       expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(mockMessageEffectOutbox.enqueueWithManager).toHaveBeenCalledWith(
+        mockManager, 1, 'order.created',
+      );
     });
   });
 

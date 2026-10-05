@@ -918,6 +918,22 @@ describe('PaymentConfirmationService', () => {
           userId: 10,
         }),
       );
+      expect(effectOutbox.enqueueWithManager).toHaveBeenCalledWith(
+        expect.anything(), 1, 'MEMBER_MESSAGE_NOTIFICATION', expect.anything(),
+      );
+    });
+
+    it('비회원 결제 완료도 별도 메시지 효과를 대기열에 넣는다', async () => {
+      const { service, effectOutbox } = buildService({});
+      const enqueue = service as unknown as {
+        enqueuePaymentEffects: (manager: unknown, orderId: number, payload: Record<string, unknown>) => Promise<void>;
+      };
+
+      await enqueue.enqueuePaymentEffects({} as never, 19, { customerType: 'guest', orderId: 19 });
+
+      expect(effectOutbox.enqueueWithManager).toHaveBeenCalledWith(
+        expect.anything(), 19, 'GUEST_MESSAGE_NOTIFICATION', expect.objectContaining({ customerType: 'guest' }),
+      );
     });
   });
 
