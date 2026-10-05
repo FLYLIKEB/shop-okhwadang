@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AdminOrdersTable } from '../AdminOrdersTable';
 import type { AdminOrder } from '@/lib/api';
@@ -22,6 +22,7 @@ vi.mock('@/utils/localMessages', () => ({
       'admin.orders.status.preparing': '상품준비중',
       'admin.orders.trackingSlip': '운송장',
       'admin.orders.cancel.action': '주문 취소',
+      'admin.orders.messageDeliveries.action': '발송 이력',
       'admin.orders.productSummary.more': `${values?.productName} 외 ${values?.count}건`,
     };
     return messages[key] ?? key;
@@ -65,17 +66,21 @@ const guestOrder: AdminOrder = {
 
 describe('AdminOrdersTable guest display', () => {
   it('renders member email for member rows and guest email for guest rows', () => {
+    const onMessageDeliveries = vi.fn();
     render(
       <AdminOrdersTable
         orders={[memberOrder, guestOrder]}
         onStatusChange={vi.fn()}
         onShippingRegister={vi.fn()}
         onCancelOrder={vi.fn()}
+        onMessageDeliveries={onMessageDeliveries}
       />,
     );
 
     expect(screen.getAllByText('member@example.com').length).toBeGreaterThan(0);
     expect(screen.getAllByText('guest@example.com').length).toBeGreaterThan(0);
     expect(screen.getAllByText('비회원 상품 외 1건').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByRole('button', { name: '발송 이력' })[0]);
+    expect(onMessageDeliveries).toHaveBeenCalledWith(memberOrder);
   });
 });

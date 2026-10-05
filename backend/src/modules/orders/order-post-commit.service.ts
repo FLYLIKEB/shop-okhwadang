@@ -1,9 +1,8 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { NotificationService } from '../notification/notification.service';
-import { MessageNotificationService } from '../notification/message-notification.service';
 import { NotificationDispatchHelper } from '../notification/notification-dispatch.helper';
 import { buildGuestOrderLookupUrl, buildOrderEmailItems, buildOrderUrl } from '../notification/order-email-context';
 import { OrderPostCommitPayload } from './order-creation.workflow.service';
@@ -16,8 +15,6 @@ export class OrderPostCommitService {
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
     private readonly notificationService: NotificationService,
-    @Optional()
-    private readonly messageNotificationService: MessageNotificationService | undefined,
     private readonly notificationDispatchHelper: NotificationDispatchHelper,
   ) {}
 
@@ -35,9 +32,6 @@ export class OrderPostCommitService {
         recipientName,
       ).catch((err) => this.logger.warn(`Failed to send order created email: ${String(err)}`));
 
-      if (orderUserId !== null) {
-        void this.messageNotificationService?.sendOrderCreated(Number(savedOrder.id));
-      }
     } catch (err) {
       this.logger.error('주문 post-commit 처리 실패 (주문 자체는 이미 커밋됨)', err as Error);
     }

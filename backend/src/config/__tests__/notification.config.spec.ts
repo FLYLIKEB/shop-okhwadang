@@ -17,6 +17,7 @@ describe('createNotificationConfig', () => {
 
     expect(config.provider).toBe('mock');
     expect(config.message.provider).toBe('mock');
+    expect(config.message.channel).toBe('alimtalk');
   });
 
   it('알 수 없는 provider는 에러를 던진다', () => {
@@ -28,18 +29,16 @@ describe('createNotificationConfig', () => {
     ).toThrow('Unknown NOTIFICATION_PROVIDER: legacy');
   });
 
-  it('production에서 거래 메시지 provider가 없고 템플릿도 없으면 배포를 차단하지 않는다', () => {
+  it('production에서 템플릿 미설정 mock은 허용하고 실제 발송을 활성화하지 않는다', () => {
     const config = createNotificationConfig({
       NODE_ENV: 'production',
       NOTIFICATION_PROVIDER: 'resend',
     });
-
-    expect(config.provider).toBe('resend');
     expect(config.message.provider).toBe('mock');
     expect(config.message.templates.ORDER_CREATED).toBe('');
   });
 
-  it('production에서 mock 거래 메시지 provider와 실제 템플릿 조합은 차단한다', () => {
+  it('production에서 mock 공급자와 실제 템플릿 조합은 차단한다', () => {
     expect(() =>
       createNotificationConfig({
         NODE_ENV: 'production',
@@ -95,8 +94,30 @@ describe('createNotificationConfig', () => {
     });
 
     expect(config.message.provider).toBe('solapi');
+    expect(config.message.channel).toBe('alimtalk');
     expect(config.message.senderPhone).toBe('021234567');
     expect(config.message.templates.SHIPPING_DELIVERED).toBe('tpl-shipping-delivered');
     expect(config.message.templates.ORDER_CANCELLED).toBe('tpl-order-cancelled');
+  });
+
+  it('solapi 문자 전용 모드는 카카오 채널과 템플릿 없이 설정된다', () => {
+    const config = createNotificationConfig({
+      NODE_ENV: 'production',
+      NOTIFICATION_PROVIDER: 'resend',
+      MESSAGE_PROVIDER: 'solapi',
+      MESSAGE_CHANNEL: 'sms',
+      MESSAGE_SENDER_PHONE: '021234567',
+      MESSAGE_SOLAPI_API_KEY: 'api-key',
+      MESSAGE_SOLAPI_API_SECRET: 'api-secret',
+    });
+
+    expect(config.message.channel).toBe('sms');
+    expect(config.message.kakaoChannelId).toBe('');
+    expect(config.message.templates.ORDER_CREATED).toBe('');
+  });
+
+  it('알 수 없는 거래 메시지 채널을 거부한다', () => {
+    expect(() => createNotificationConfig({ MESSAGE_CHANNEL: 'unknown' }))
+      .toThrow('Unknown MESSAGE_CHANNEL: unknown');
   });
 });

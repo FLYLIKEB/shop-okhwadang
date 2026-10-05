@@ -15,6 +15,7 @@ const makeFullEnv = (): NodeJS.ProcessEnv => ({
   JWT_PUBLIC_KEY_PATH: '/app/keys/jwt-public.pem',
   FRONTEND_URL: 'https://ockhwadang.com',
   NOTIFICATION_PROVIDER: 'resend',
+  MESSAGE_PROVIDER: 'solapi',
   RESEND_API_KEY: 're_abc123',
   PAYMENT_GATEWAY: 'toss',
   TOSS_CLIENT_KEY: 'test_gck_docs',
@@ -109,7 +110,7 @@ describe('validateEnv', () => {
     expect(errors.map((e) => e.key)).toContain('RESEND_API_KEY');
   });
 
-  it('거래 메시지 provider 미설정은 배포 사전 검증에서 차단하지 않는다', () => {
+  it('거래 메시지 provider 미설정은 배포를 차단하지 않는다', () => {
     const env = makeFullEnv();
     delete env.MESSAGE_PROVIDER;
 

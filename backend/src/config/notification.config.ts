@@ -5,6 +5,7 @@ export const NOTIFICATION_CONFIG = Symbol('NOTIFICATION_CONFIG');
 
 export type NotificationProviderName = 'mock' | 'resend' | 'ses';
 export type MessageProviderName = 'mock' | 'solapi';
+export type MessageChannel = 'alimtalk' | 'sms';
 
 export interface NotificationConfig {
   nodeEnv: string;
@@ -15,6 +16,7 @@ export interface NotificationConfig {
   };
   message: {
     provider: MessageProviderName;
+    channel: MessageChannel;
     senderPhone: string;
     kakaoChannelId: string;
     smsFallbackEnabled: boolean;
@@ -36,6 +38,10 @@ function isMessageProviderName(value: string): value is MessageProviderName {
   return value === 'mock' || value === 'solapi';
 }
 
+function isMessageChannel(value: string): value is MessageChannel {
+  return value === 'alimtalk' || value === 'sms';
+}
+
 function requireMessageEnv(env: NodeJS.ProcessEnv, key: string): string {
   const value = env[key]?.trim();
   if (!value) {
@@ -48,6 +54,7 @@ export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): 
   const nodeEnv = env.NODE_ENV ?? 'development';
   const provider = (env.NOTIFICATION_PROVIDER ?? 'mock').trim().toLowerCase();
   const messageProvider = (env.MESSAGE_PROVIDER ?? 'mock').trim().toLowerCase();
+  const messageChannel = (env.MESSAGE_CHANNEL ?? 'alimtalk').trim().toLowerCase();
 
   if (nodeEnv === 'production' && (provider === 'mock' || !env.NOTIFICATION_PROVIDER)) {
     throw new Error(
@@ -61,6 +68,10 @@ export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): 
 
   if (!isMessageProviderName(messageProvider)) {
     throw new Error(`Unknown MESSAGE_PROVIDER: ${messageProvider}`);
+  }
+
+  if (!isMessageChannel(messageChannel)) {
+    throw new Error(`Unknown MESSAGE_CHANNEL: ${messageChannel}`);
   }
 
   const hasMessageTemplate = [
@@ -80,9 +91,13 @@ export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): 
   if (messageProvider === 'solapi') {
     for (const key of [
       'MESSAGE_SENDER_PHONE',
-      'MESSAGE_KAKAO_CHANNEL_ID',
       'MESSAGE_SOLAPI_API_KEY',
       'MESSAGE_SOLAPI_API_SECRET',
+    ]) {
+      requireMessageEnv(env, key);
+    }
+    if (messageChannel === 'alimtalk') for (const key of [
+      'MESSAGE_KAKAO_CHANNEL_ID',
       'MESSAGE_TEMPLATE_ORDER_CREATED',
       'MESSAGE_TEMPLATE_PAYMENT_CONFIRMED',
       'MESSAGE_TEMPLATE_SHIPPING_STARTED',
@@ -102,6 +117,7 @@ export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): 
     },
     message: {
       provider: messageProvider,
+      channel: messageChannel,
       senderPhone: env.MESSAGE_SENDER_PHONE ?? '',
       kakaoChannelId: env.MESSAGE_KAKAO_CHANNEL_ID ?? '',
       smsFallbackEnabled:

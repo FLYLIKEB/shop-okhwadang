@@ -800,6 +800,45 @@
         "action": "액션"
       },
       "trackingSlip": "운송장",
+      "messageDeliveries": {
+        "action": "메시지 발송 이력",
+        "title": "메시지 발송 현황",
+        "loading": "발송 현황을 불러오는 중...",
+        "loadError": "발송 현황을 불러오지 못했습니다.",
+        "retry": "다시 시도",
+        "deliveries": "발송 이력",
+        "noDeliveries": "발송 이력이 없습니다.",
+        "queue": "대기 작업",
+        "noQueue": "대기 작업이 없습니다.",
+        "providerId": "제공자 메시지 ID",
+        "unknownRecipient": "수신자 정보 없음",
+        "none": "없음",
+        "attempts": "시도 {count}회",
+        "nextAttempt": "다음 시도",
+        "reconcileAction": "발송 확인 처리",
+        "reconcileHint": "제공자에서 발송을 확인한 경우에만 처리하세요.",
+        "reason": "확인 근거",
+        "cancel": "취소",
+        "confirm": "확인 처리",
+        "reconcileSuccess": "발송 확인을 기록했습니다.",
+        "reconcileError": "발송 확인 처리에 실패했습니다.",
+        "events": {
+          "orderCreated": "주문 접수",
+          "paymentConfirmed": "결제 완료",
+          "shippingStarted": "배송 시작",
+          "shippingDelivered": "배송 완료",
+          "orderCancelled": "주문 취소"
+        },
+        "statuses": {
+          "pending": "대기",
+          "processing": "처리 중",
+          "sent": "제공자 접수",
+          "failed": "실패",
+          "skipped": "건너뜀",
+          "manualReview": "수동 확인 필요",
+          "succeeded": "발송 작업 완료"
+        }
+      },
       "statusFilter": {
         "all": "전체",
         "pending": "결제대기",

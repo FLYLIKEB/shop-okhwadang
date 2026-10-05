@@ -15,6 +15,23 @@ interface MessageTemplateInput {
 
 type BuiltMessage = Omit<TransactionalMessage, 'to' | 'idempotencyKey'>;
 
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  card: '카드',
+  bank_transfer: '계좌이체',
+  virtual_account: '가상계좌',
+  phone: '휴대폰',
+  mock: '테스트 결제',
+  paypal: 'PayPal',
+  eximbay: '카드',
+};
+
+const CARRIER_LABELS: Record<string, string> = {
+  cj: 'CJ대한통운',
+  hanjin: '한진택배',
+  lotte: '롯데택배',
+  mock: '택배',
+};
+
 function money(value: number | string | null | undefined): string {
   const amount = Number(value ?? 0);
   return `${amount.toLocaleString('ko-KR')}원`;
@@ -24,7 +41,6 @@ function commonVariables(order: Order): Record<string, string> {
   return {
     customerName: order.recipientName,
     orderNumber: order.orderNumber,
-    totalAmount: money(order.totalAmount),
   };
 }
 
@@ -40,8 +56,8 @@ export function buildTransactionalMessage(
       return {
         templateKey,
         templateId,
-        variables,
-        fallbackText: `[옥화당] ${order.recipientName}님, 주문 ${order.orderNumber} 접수가 완료되었습니다. 결제금액: ${money(order.totalAmount)}`,
+        variables: { ...variables, totalAmount: money(order.totalAmount) },
+        fallbackText: `[옥화당] ${order.recipientName}님, 주문 ${order.orderNumber} 접수가 완료되었습니다. 주문금액: ${money(order.totalAmount)}`,
         smsFallbackEnabled,
       };
     case 'ORDER_CANCELLED': {
@@ -55,17 +71,17 @@ export function buildTransactionalMessage(
       };
     }
     case 'PAYMENT_CONFIRMED': {
-      const method = input.paymentMethod ?? input.payment?.method ?? '결제';
+      const method = PAYMENT_METHOD_LABELS[input.paymentMethod ?? input.payment?.method ?? ''] ?? '결제';
       return {
         templateKey,
         templateId,
-        variables: { ...variables, paymentMethod: method },
+        variables: { ...variables, totalAmount: money(input.payment?.amount ?? order.totalAmount), paymentMethod: method },
         fallbackText: `[옥화당] ${order.recipientName}님, 주문 ${order.orderNumber} 결제가 완료되었습니다. 결제금액: ${money(input.payment?.amount ?? order.totalAmount)}, 결제수단: ${method}`,
         smsFallbackEnabled,
       };
     }
     case 'SHIPPING_STARTED': {
-      const carrier = input.shipping?.carrier ?? '';
+      const carrier = CARRIER_LABELS[input.shipping?.carrier ?? ''] ?? '택배';
       const trackingNumber = input.shipping?.trackingNumber ?? '';
       return {
         templateKey,

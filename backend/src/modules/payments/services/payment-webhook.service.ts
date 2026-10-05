@@ -306,11 +306,14 @@ export class PaymentWebhookService {
         await this.deps.effectOutbox.enqueueWithManager(
           manager, parsedOrderId, PaymentEffectType.PAYMENT_CONFIRMED_NOTIFICATION, payload,
         );
-        if (payload.customerType === 'member') {
-          await this.deps.effectOutbox.enqueueWithManager(
-            manager, parsedOrderId, PaymentEffectType.MEMBER_MESSAGE_NOTIFICATION, payload,
-          );
-        }
+        await this.deps.effectOutbox.enqueueWithManager(
+          manager,
+          parsedOrderId,
+          payload.customerType === 'member'
+            ? PaymentEffectType.MEMBER_MESSAGE_NOTIFICATION
+            : PaymentEffectType.GUEST_MESSAGE_NOTIFICATION,
+          payload,
+        );
       }
 
       didMutate = true;

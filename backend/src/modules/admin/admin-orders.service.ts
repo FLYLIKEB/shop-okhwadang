@@ -14,6 +14,7 @@ import { findOrThrow } from '../../common/utils/repository.util';
 import { paginate, PaginatedResult } from '../../common/utils/pagination.util';
 import { assertOrderStatusTransition } from '../orders/policies/order-status-transition.policy';
 import { MessageNotificationService } from '../notification/message-notification.service';
+import { MessageEffectOutboxService } from '../notification/message-effect-outbox.service';
 import { NotificationService } from '../notification/notification.service';
 import {
   buildGuestOrderLookupUrl,
@@ -38,6 +39,7 @@ export class AdminOrdersService {
     private readonly pointsService: PointsService,
     private readonly notificationService: NotificationService,
     private readonly messageNotificationService: MessageNotificationService,
+    private readonly messageEffectOutbox: MessageEffectOutboxService,
   ) {}
 
   async findAll(query: AdminOrderQueryDto): Promise<PaginatedResult<Order>> {
@@ -179,6 +181,9 @@ export class AdminOrdersService {
 
       await manager.update(Order, orderId, { status: nextStatus });
       await this.syncShippingStatus(manager, orderId, nextStatus);
+      if (nextStatus === OrderStatus.DELIVERED) {
+        await this.messageEffectOutbox.enqueueWithManager(manager, orderId, 'shipping.delivered');
+      }
     };
 
     if (nextStatus === OrderStatus.PAID && this.isGatewayConfirmationReconciliation(payment)) {
@@ -202,8 +207,6 @@ export class AdminOrdersService {
     if (nextStatus === OrderStatus.DELIVERED) {
       if (this.isGuestOrder(order)) {
         void this.sendDeliveredNotification(orderId, order);
-      } else {
-        void this.messageNotificationService?.sendShippingDelivered(orderId);
       }
     }
 
@@ -474,22 +477,20 @@ export class AdminOrdersService {
     const locale = this.getOrderLocale(order);
     const email = order.user?.email ?? this.getGuestEmailNormalized(order);
 
-    if (!email) {
-      return;
-    }
-
-    await Promise.all([
-      this.notificationService.sendOrderCancelled(email, {
+    const emailNotification = email
+      ? [this.notificationService.sendOrderCancelled(email, {
         recipientName: order.recipientName,
         orderNumber: order.orderNumber,
         reason,
         locale,
         orderItems: buildOrderEmailItems(order, locale),
         orderUrl: this.resolveOrderUrl(orderId, order),
-      }),
-      ...(this.isGuestOrder(order)
-        ? []
-        : [this.messageNotificationService.sendOrderCancelled(orderId, reason)]),
+      })]
+      : [];
+
+    await Promise.all([
+      ...emailNotification,
+      this.messageNotificationService.sendOrderCancelled(orderId, reason),
     ]).catch((err) => {
       this.logger.warn(
         `Failed to send cancellation notification for order ${orderId}: ${String(err)}`,
@@ -575,6 +576,7 @@ export class AdminOrdersService {
         trackingNumber: dto.trackingNumber,
         status: ShippingStatus.PREPARING,
       });
+      await this.messageEffectOutbox.enqueueWithManager(manager, orderId, 'shipping.started');
 
       return { order: lockedOrder, shipping };
     });
@@ -641,7 +643,6 @@ export class AdminOrdersService {
       return;
     }
 
-    void this.messageNotificationService?.sendShippingStarted(orderId);
   }
 
   private isGuestOrder(order: Order): boolean {

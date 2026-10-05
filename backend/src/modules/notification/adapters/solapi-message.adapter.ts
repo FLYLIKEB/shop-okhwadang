@@ -9,13 +9,17 @@ import {
 } from '../interfaces/message-provider.interface';
 import { NOTIFICATION_CONFIG, NotificationConfig } from '../../../config/notification.config';
 
-interface SolapiSingleSendResponse {
-  groupId?: string;
+interface SolapiMessageResult {
   messageId?: string;
-  to?: string;
-  from?: string;
   statusCode?: string;
   statusMessage?: string;
+  type?: string;
+  customFields?: { requestId?: string };
+}
+
+interface SolapiSendResponse {
+  messageList?: SolapiMessageResult[];
+  failedMessageList?: SolapiMessageResult[];
 }
 
 @Injectable()
@@ -28,34 +32,62 @@ export class SolapiMessageAdapter implements MessageProvider {
   async send(message: TransactionalMessage): Promise<MessageSendResult> {
     let response;
     try {
-      response = await axios.post<SolapiSingleSendResponse>(
-        `${this.config.message.solapi.apiBaseUrl}/messages/v4/send`,
-        { message: this.buildPayload(message) },
+      response = await axios.post<SolapiSendResponse>(
+        `${this.config.message.solapi.apiBaseUrl}/messages/v4/send-many/detail`,
+        { messages: [this.buildPayload(message)], showMessageList: true },
         { headers: { Authorization: this.buildAuthorizationHeader(), 'Content-Type': 'application/json' } },
       );
     } catch (error) {
       throw new AmbiguousMessageDeliveryError('SOLAPI delivery outcome is unknown', message.idempotencyKey, error);
     }
-    const providerMessageId = response.data.messageId ?? response.data.groupId;
-    if (response.data.statusCode && !response.data.statusCode.startsWith('2')) return { provider: 'solapi', providerMessageId: providerMessageId ?? '', channel: 'kakao_alimtalk', status: 'failed', errorMessage: response.data.statusMessage ?? `SOLAPI rejected message (${response.data.statusCode})` };
-    if (!providerMessageId) throw new AmbiguousMessageDeliveryError('SOLAPI response has no message identifier', message.idempotencyKey);
-    return { provider: 'solapi', providerMessageId, channel: 'kakao_alimtalk', status: 'sent' };
+    const accepted = response.data.messageList ?? [];
+    const failed = response.data.failedMessageList ?? [];
+    if (accepted.length + failed.length !== 1) {
+      throw new AmbiguousMessageDeliveryError('SOLAPI acceptance outcome is unknown', message.idempotencyKey);
+    }
+    const result = accepted[0] ?? failed[0];
+    if (result.customFields?.requestId && result.customFields.requestId !== message.idempotencyKey) {
+      throw new AmbiguousMessageDeliveryError('SOLAPI response request ID mismatch', message.idempotencyKey);
+    }
+    const channel = result.type === 'SMS'
+      ? 'sms'
+      : result.type === 'LMS'
+        ? 'lms'
+        : this.config.message.channel === 'alimtalk'
+          ? 'kakao_alimtalk'
+          : this.smsByteLength(message.fallbackText) > 90 ? 'lms' : 'sms';
+    if (failed.length === 1) {
+      return { provider: 'solapi', providerMessageId: result.messageId ?? '', channel, status: 'failed', errorMessage: result.statusMessage ?? `SOLAPI rejected message (${result.statusCode ?? 'unknown'})` };
+    }
+    if (!result.messageId || result.statusCode !== '2000') {
+      throw new AmbiguousMessageDeliveryError('SOLAPI acceptance outcome is unknown', message.idempotencyKey);
+    }
+    return { provider: 'solapi', providerMessageId: result.messageId, channel, status: 'sent' };
   }
 
   private buildPayload(message: TransactionalMessage): Record<string, unknown> {
-    return {
+    const payload: Record<string, unknown> = {
       to: message.to,
       from: this.config.message.senderPhone,
       text: message.fallbackText,
-      kakaoOptions: {
-        pfId: this.config.message.kakaoChannelId,
-        templateId: message.templateId,
-        variables: message.variables,
-        disableSms: !message.smsFallbackEnabled,
-      },
       autoTypeDetect: true,
       customFields: { requestId: message.idempotencyKey },
     };
+    if (this.config.message.channel === 'alimtalk') {
+      payload.kakaoOptions = {
+        pfId: this.config.message.kakaoChannelId,
+        templateId: message.templateId,
+        variables: Object.fromEntries(Object.entries(message.variables).map(([key, value]) => [
+          key.startsWith('#{') && key.endsWith('}') ? key : `#{${key}}`, value,
+        ])),
+        disableSms: !message.smsFallbackEnabled,
+      };
+    }
+    return payload;
+  }
+
+  private smsByteLength(text: string): number {
+    return [...text].reduce((bytes, char) => bytes + (/^[\x00-\x7f]$/.test(char) ? 1 : 2), 0);
   }
 
   private buildAuthorizationHeader(): string {

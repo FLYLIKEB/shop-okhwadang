@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { User } from '../../users/entities/user.entity';
 import { NotificationService } from '../../notification/notification.service';
+import { MessageNotificationService } from '../../notification/message-notification.service';
 import { SettingsService } from '../../settings/settings.service';
 import { MembershipService } from '../../membership/membership.service';
 import { canOrderStatusTransition } from '../../orders/policies/order-status-transition.policy';
@@ -16,6 +17,7 @@ interface OrderSchedulerJobDependencies {
   userRepo: Repository<User>;
   dataSource: DataSource;
   notificationService: NotificationService;
+  messageNotificationService: MessageNotificationService;
   settingsService: SettingsService;
   membershipService: MembershipService;
   pointsService: Pick<PointsService, 'getRunningBalanceInTx' | 'lockUserForPointChanges' | 'creditFifo'>;
@@ -162,6 +164,8 @@ export class OrderSchedulerJob {
         )
           .catch((err) => this.deps.logger.warn(`Failed to send cancellation email: ${String(err)}`));
       }
+      void this.deps.messageNotificationService.sendOrderCancelled(Number(order.id), '결제 미완료 자동 취소')
+        .catch((err) => this.deps.logger.warn(`Failed to send cancellation message: ${String(err)}`));
 
       this.deps.logger.log(`[cron:pending-order-cancel] Cancelled order ${order.orderNumber}`);
     } catch (err) {

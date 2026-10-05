@@ -8,6 +8,7 @@ import { OrderPostCommitService } from '../order-post-commit.service';
 import { CreateGuestOrderDto } from '../dto/create-guest-order.dto';
 import { IdempotencyService } from '../../../common/services/idempotency.service';
 import { LookupGuestOrderDto } from '../dto/lookup-guest-order.dto';
+import { MessageEffectOutboxService } from '../../notification/message-effect-outbox.service';
 
 function makeOrder(overrides: Partial<Order> = {}): Order {
   return {
@@ -64,6 +65,7 @@ describe('GuestOrdersService', () => {
   let orderPostCommitService: {
     dispatchOrderCreated: jest.Mock;
   };
+  let messageEffectOutbox: { enqueueWithManager: jest.Mock };
 
   beforeEach(() => {
     orderRepository = {
@@ -88,6 +90,7 @@ describe('GuestOrdersService', () => {
     orderPostCommitService = {
       dispatchOrderCreated: jest.fn().mockResolvedValue(undefined),
     };
+    messageEffectOutbox = { enqueueWithManager: jest.fn().mockResolvedValue(undefined) };
     idempotencyService = {
       execute: jest.fn(async (_scope, _operation, _key, _payload, work) => ({
         result: await dataSource.transaction(work),
@@ -102,6 +105,7 @@ describe('GuestOrdersService', () => {
       guestOrderAccessService as unknown as GuestOrderAccessService,
       orderPostCommitService as unknown as OrderPostCommitService,
       idempotencyService as unknown as IdempotencyService,
+      messageEffectOutbox as unknown as MessageEffectOutboxService,
     );
   });
 
@@ -142,6 +146,7 @@ describe('GuestOrdersService', () => {
     expect(guestOrderCreationWorkflow.assertCreatePayload).toHaveBeenCalledWith(dto);
     expect(guestOrderCreationWorkflow.runCreateOrderTransaction).toHaveBeenCalledWith(txManager, dto);
     expect(guestOrderAccessService.issueAccessToken).toHaveBeenCalledWith(19, txManager);
+    expect(messageEffectOutbox.enqueueWithManager).toHaveBeenCalledWith(txManager, 19, 'order.created');
     expect(orderPostCommitService.dispatchOrderCreated).toHaveBeenCalledWith(null, postCommit);
     expect(service.findOne).toHaveBeenCalledWith(19, 'en');
     expect(result).toEqual({

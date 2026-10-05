@@ -9,6 +9,9 @@ import { SesEmailAdapter } from './adapters/ses.adapter';
 import { MockMessageAdapter } from './adapters/mock-message.adapter';
 import { SolapiMessageAdapter } from './adapters/solapi-message.adapter';
 import { NotificationLog } from './entities/notification-log.entity';
+import { MessageEffectOutbox } from './entities/message-effect-outbox.entity';
+import { MessageEffectOutboxService } from './message-effect-outbox.service';
+import { MESSAGE_EFFECT_DELIVERY, MessageEffectOutboxWorker } from './message-effect-outbox.worker';
 import {
   NotificationConfig,
   NOTIFICATION_CONFIG,
@@ -25,7 +28,7 @@ export function resolveMessageProvider(config: NotificationConfig): string {
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([NotificationLog])],
+  imports: [TypeOrmModule.forFeature([NotificationLog, MessageEffectOutbox])],
   providers: [
     notificationConfigProvider,
     MockEmailAdapter,
@@ -76,8 +79,11 @@ export function resolveMessageProvider(config: NotificationConfig): string {
     },
     NotificationService,
     MessageNotificationService,
+    MessageEffectOutboxService,
+    { provide: MESSAGE_EFFECT_DELIVERY, useExisting: MessageNotificationService },
+    MessageEffectOutboxWorker,
     NotificationDispatchHelper,
   ],
-  exports: [NotificationService, MessageNotificationService, NotificationDispatchHelper],
+  exports: [NotificationService, MessageNotificationService, MessageEffectOutboxService, NotificationDispatchHelper],
 })
 export class NotificationModule {}

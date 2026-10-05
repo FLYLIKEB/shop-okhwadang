@@ -11,6 +11,7 @@ import { AdminMembersService } from './admin-members.service';
 import { AdminExportController } from './admin-export.controller';
 import { AdminLocalizationController } from './admin-localization.controller';
 import { AdminLogsController } from './admin-logs.controller';
+import { AdminMessageDeliveriesController } from './admin-message-deliveries.controller';
 import { AdminExportService } from './admin-export.service';
 import { AdminLocalizationService } from './admin-localization.service';
 import { AdminLogsService } from './admin-logs.service';
@@ -31,6 +32,9 @@ import { AuditLogModule } from '../audit-logs/audit-log.module';
 import { MembershipModule } from '../membership/membership.module';
 import { PointsModule } from '../points/points.module';
 import { NotificationModule } from '../notification/notification.module';
+import { NotificationLog } from '../notification/entities/notification-log.entity';
+import { MessageEffectOutbox } from '../notification/entities/message-effect-outbox.entity';
+import { PaymentEffectOutbox } from '../payments/entities/payment-effect-outbox.entity';
 
 @Module({
   imports: [
@@ -47,6 +51,9 @@ import { NotificationModule } from '../notification/notification.module';
       PageBlock,
       NavigationItem,
       ExternalReview,
+      NotificationLog,
+      MessageEffectOutbox,
+      PaymentEffectOutbox,
     ]),
     PaymentsModule,
     AuditLogModule,
@@ -62,6 +69,7 @@ import { NotificationModule } from '../notification/notification.module';
     AdminExportController,
     AdminLocalizationController,
     AdminLogsController,
+    AdminMessageDeliveriesController,
   ],
   providers: [
     AdminService,

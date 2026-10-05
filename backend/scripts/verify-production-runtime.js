@@ -7,6 +7,7 @@ const {
   maskDatabaseUrl,
   verifyDatabaseConnection,
 } = require('../dist/config/production-runtime-preflight');
+const { createNotificationConfig } = require('../dist/config/notification.config');
 
 async function run() {
   const entrypoint = process.env.BACKEND_ENTRYPOINT || DEFAULT_ENTRYPOINT;
@@ -14,6 +15,7 @@ async function run() {
 
   try {
     assertBuildArtifact(entrypoint);
+    createNotificationConfig();
     await verifyDatabaseConnection();
     console.log(`Production preflight passed: entrypoint=${entrypoint} db=${formatDiagnostics(diagnostics)}`);
   } catch (error) {

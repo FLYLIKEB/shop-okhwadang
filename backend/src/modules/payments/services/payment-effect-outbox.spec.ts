@@ -225,7 +225,7 @@ describe('PaymentEffectOutbox core', () => {
     const collaborators = {
       orderCompleted: { deliver: jest.fn().mockRejectedValue(new Error('temporary')) },
       paymentConfirmedNotification: { deliver: jest.fn() },
-      memberMessageNotification: { deliver: jest.fn() },
+      messageNotification: { deliver: jest.fn() },
     };
     const worker = new PaymentEffectOutboxWorker(outbox as never, collaborators);
     await expect(worker.drain({ owner: 'worker-a', batchSize: 10, maxAttempts: 3, leaseMs: 1000 })).resolves.toBe(1);
@@ -236,7 +236,7 @@ describe('PaymentEffectOutbox core', () => {
   it('moves an ambiguous message effect directly to manual review without a retry', async () => {
     const claimed = effect({ effectType: PaymentEffectType.PAYMENT_CONFIRMED_NOTIFICATION });
     const outbox = { claimDue: jest.fn().mockResolvedValue([claimed]), markSucceeded: jest.fn(), markFailed: jest.fn(), markManualReview: jest.fn() };
-    const collaborators = { orderCompleted: { deliver: jest.fn() }, paymentConfirmedNotification: { deliver: jest.fn().mockRejectedValue(new AmbiguousMessageDeliveryError('unknown', 'payment-effect:7')) }, memberMessageNotification: { deliver: jest.fn() } };
+    const collaborators = { orderCompleted: { deliver: jest.fn() }, paymentConfirmedNotification: { deliver: jest.fn().mockRejectedValue(new AmbiguousMessageDeliveryError('unknown', 'payment-effect:7')) }, messageNotification: { deliver: jest.fn() } };
     const worker = new PaymentEffectOutboxWorker(outbox as never, collaborators);
     await worker.drain({ owner: 'worker-a', batchSize: 10, maxAttempts: 3, leaseMs: 1000 });
     expect(outbox.markManualReview).toHaveBeenCalledWith(7, 'worker-a', expect.any(AmbiguousMessageDeliveryError));
@@ -249,7 +249,7 @@ describe('PaymentEffectOutbox core', () => {
     const collaborators = {
       orderCompleted: { deliver: jest.fn() },
       paymentConfirmedNotification: { deliver: jest.fn().mockRejectedValue(new MessageDeliveryInProgressError('payment-effect:7')) },
-      memberMessageNotification: { deliver: jest.fn() },
+      messageNotification: { deliver: jest.fn() },
     };
     const worker = new PaymentEffectOutboxWorker(outbox as never, collaborators);
 
@@ -263,7 +263,7 @@ describe('PaymentEffectOutbox core', () => {
   it('moves an ambiguous message effect directly to manual review without a retry', async () => {
     const claimed = effect({ effectType: PaymentEffectType.PAYMENT_CONFIRMED_NOTIFICATION });
     const outbox = { claimDue: jest.fn().mockResolvedValue([claimed]), markSucceeded: jest.fn(), markFailed: jest.fn(), markManualReview: jest.fn() };
-    const collaborators = { orderCompleted: { deliver: jest.fn() }, paymentConfirmedNotification: { deliver: jest.fn().mockRejectedValue(new AmbiguousMessageDeliveryError('unknown', 'payment-effect:7')) }, memberMessageNotification: { deliver: jest.fn() } };
+    const collaborators = { orderCompleted: { deliver: jest.fn() }, paymentConfirmedNotification: { deliver: jest.fn().mockRejectedValue(new AmbiguousMessageDeliveryError('unknown', 'payment-effect:7')) }, messageNotification: { deliver: jest.fn() } };
     const worker = new PaymentEffectOutboxWorker(outbox as never, collaborators);
     await worker.drain({ owner: 'worker-a', batchSize: 10, maxAttempts: 3, leaseMs: 1000 });
     expect(outbox.markManualReview).toHaveBeenCalledWith(7, 'worker-a', expect.any(AmbiguousMessageDeliveryError));

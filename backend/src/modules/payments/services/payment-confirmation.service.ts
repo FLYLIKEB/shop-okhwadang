@@ -601,11 +601,14 @@ export class PaymentConfirmationService {
     await this.effectOutbox.enqueueWithManager(
       manager, orderId, PaymentEffectType.PAYMENT_CONFIRMED_NOTIFICATION, payload,
     );
-    if (payload.customerType === 'member') {
-      await this.effectOutbox.enqueueWithManager(
-        manager, orderId, PaymentEffectType.MEMBER_MESSAGE_NOTIFICATION, payload,
-      );
-    }
+    await this.effectOutbox.enqueueWithManager(
+      manager,
+      orderId,
+      payload.customerType === 'member'
+        ? PaymentEffectType.MEMBER_MESSAGE_NOTIFICATION
+        : PaymentEffectType.GUEST_MESSAGE_NOTIFICATION,
+      payload,
+    );
   }
 
   async deliverOrderCompleted(
@@ -631,7 +634,7 @@ export class PaymentConfirmationService {
     await this.notifyPaymentConfirmed(payload, idempotencyKey);
   }
 
-  async deliverMemberMessageNotification(
+  async deliverMessageNotification(
     payload: PaymentCompletionEffectPayload,
     idempotencyKey: string,
   ): Promise<void> {

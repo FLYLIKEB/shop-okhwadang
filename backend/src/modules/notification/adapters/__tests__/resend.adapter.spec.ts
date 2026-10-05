@@ -11,6 +11,7 @@ describe('ResendEmailAdapter', () => {
     },
     message: {
       provider: 'mock',
+      channel: 'alimtalk',
       senderPhone: '',
       kakaoChannelId: '',
       smsFallbackEnabled: true,

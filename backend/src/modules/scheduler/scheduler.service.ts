@@ -10,6 +10,7 @@ import { Coupon } from '../coupons/entities/coupon.entity';
 import { User } from '../users/entities/user.entity';
 import { RecentlyViewedProduct } from '../products/entities/recently-viewed-product.entity';
 import { NotificationService } from '../notification/notification.service';
+import { MessageNotificationService } from '../notification/message-notification.service';
 import { SettingsService } from '../settings/settings.service';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { MembershipService } from '../membership/membership.service';
@@ -46,6 +47,7 @@ export class SchedulerService {
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly notificationService: NotificationService,
+    private readonly messageNotificationService: MessageNotificationService,
     private readonly settingsService: SettingsService,
     private readonly membershipService: MembershipService,
     private readonly pointsService: PointsService,
@@ -56,6 +58,7 @@ export class SchedulerService {
       userRepo: this.userRepo,
       dataSource: this.dataSource,
       notificationService: this.notificationService,
+      messageNotificationService: this.messageNotificationService,
       settingsService: this.settingsService,
       membershipService: this.membershipService,
       pointsService: this.pointsService,

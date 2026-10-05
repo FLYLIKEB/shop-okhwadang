@@ -21,6 +21,7 @@ export interface MessageSendResult {
   provider: string;
   providerMessageId: string;
   channel: TransactionalMessageChannel;
+  /** `sent` means the provider accepted the request, not handset delivery. */
   status: 'sent' | 'failed';
   errorMessage?: string;
 }
