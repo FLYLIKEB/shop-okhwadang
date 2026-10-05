@@ -51,6 +51,37 @@ export interface AdminOrderServiceRequestQueryParams {
   limit?: number;
 }
 
+export interface AdminMessageDeliveryLog {
+  id: number;
+  eventType: string;
+  channel: string;
+  provider: string;
+  templateKey: string;
+  providerMessageId: string | null;
+  effectKey: string | null;
+  status: string;
+  errorMessage: string | null;
+  sentAt: string | null;
+  createdAt: string;
+  recipientPhoneMasked: string | null;
+}
+
+export interface AdminMessageEffect {
+  id: number;
+  effectKey: string;
+  eventType: string;
+  state: string;
+  attemptCount: number;
+  nextAttemptAt: string | null;
+  lastError: string | null;
+  createdAt: string;
+}
+
+export interface AdminMessageDeliveriesResponse {
+  logs: AdminMessageDeliveryLog[];
+  effects: AdminMessageEffect[];
+}
+
 export const adminOrdersApi = {
   getList: (params?: AdminOrderQueryParams) =>
     apiClient.get<AdminOrderListResponse>('/admin/orders', {
@@ -68,4 +99,8 @@ export const adminOrdersApi = {
     }),
   updateServiceRequest: (id: number, data: { status: OrderServiceRequestStatus; adminNote?: string }) =>
     apiClient.patch<OrderServiceRequest>(`/admin/order-service-requests/${id}`, data),
+  getMessageDeliveries: (orderId: number) =>
+    apiClient.get<AdminMessageDeliveriesResponse>(`/admin/orders/${orderId}/message-deliveries`),
+  reconcileMessageDelivery: (orderId: number, effectKey: string, data: { reason: string; providerMessageId: string }) =>
+    apiClient.post<{ reconciled: boolean }>(`/admin/orders/${orderId}/message-deliveries/${encodeURIComponent(effectKey)}/reconcile`, data),
 };

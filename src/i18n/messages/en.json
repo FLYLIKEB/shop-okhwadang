@@ -800,6 +800,45 @@
         "action": "Action"
       },
       "trackingSlip": "Tracking",
+      "messageDeliveries": {
+        "action": "Message delivery history",
+        "title": "Message delivery status",
+        "loading": "Loading delivery status...",
+        "loadError": "Could not load delivery status.",
+        "retry": "Try again",
+        "deliveries": "Delivery history",
+        "noDeliveries": "No delivery records.",
+        "queue": "Queued work",
+        "noQueue": "No queued work.",
+        "providerId": "Provider message ID",
+        "unknownRecipient": "Recipient unavailable",
+        "none": "None",
+        "attempts": "{count} attempts",
+        "nextAttempt": "Next attempt",
+        "reconcileAction": "Confirm delivery",
+        "reconcileHint": "Only confirm after verifying delivery with the provider.",
+        "reason": "Verification reason",
+        "cancel": "Cancel",
+        "confirm": "Confirm delivery",
+        "reconcileSuccess": "Delivery confirmation recorded.",
+        "reconcileError": "Could not confirm delivery.",
+        "events": {
+          "orderCreated": "Order placed",
+          "paymentConfirmed": "Payment confirmed",
+          "shippingStarted": "Shipping started",
+          "shippingDelivered": "Delivered",
+          "orderCancelled": "Order cancelled"
+        },
+        "statuses": {
+          "pending": "Pending",
+          "processing": "Processing",
+          "sent": "Accepted by provider",
+          "failed": "Failed",
+          "skipped": "Skipped",
+          "manualReview": "Manual review",
+          "succeeded": "Delivery task complete"
+        }
+      },
       "statusFilter": {
         "all": "All",
         "pending": "Pending",

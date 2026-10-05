@@ -6,12 +6,14 @@ import { OrderStatusSelect } from './OrderStatusSelect';
 import { OrderStatusBadge } from './StatusBadge';
 import { localMessage } from '@/utils/localMessages';
 import { formatDate } from '@/utils/date';
+import { MessageSquareText } from 'lucide-react';
 
 interface AdminOrdersTableProps {
   orders: AdminOrder[];
   onStatusChange: () => void;
   onShippingRegister: (order: AdminOrder) => void;
   onCancelOrder: (order: AdminOrder) => void;
+  onMessageDeliveries: (order: AdminOrder) => void;
 }
 
 const CANCELLABLE_ORDER_STATUSES = new Set(['pending', 'paid', 'preparing']);
@@ -41,6 +43,7 @@ export function AdminOrdersTable({
   onStatusChange,
   onShippingRegister,
   onCancelOrder,
+  onMessageDeliveries,
 }: AdminOrdersTableProps) {
   if (orders.length === 0) {
     return <p className="py-8 text-center text-muted-foreground">{localMessage('admin.orders.noOrders')}</p>;
@@ -85,6 +88,9 @@ export function AdminOrdersTable({
                 </div>
               </dl>
               <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <button type="button" onClick={() => onMessageDeliveries(order)} title={localMessage('admin.orders.messageDeliveries.action')} aria-label={localMessage('admin.orders.messageDeliveries.action')} className="flex min-h-11 min-w-11 items-center justify-center rounded border hover:bg-secondary">
+                  <MessageSquareText className="h-4 w-4" aria-hidden="true" />
+                </button>
                 <OrderStatusSelect
                   orderId={order.id}
                   currentStatus={order.status}
@@ -147,6 +153,9 @@ export function AdminOrdersTable({
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <button type="button" onClick={() => onMessageDeliveries(order)} title={localMessage('admin.orders.messageDeliveries.action')} aria-label={localMessage('admin.orders.messageDeliveries.action')} className="rounded border p-2 hover:bg-secondary">
+                        <MessageSquareText className="h-4 w-4" aria-hidden="true" />
+                      </button>
                       <OrderStatusSelect
                         orderId={order.id}
                         currentStatus={order.status}
