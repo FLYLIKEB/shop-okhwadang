@@ -74,9 +74,17 @@ export function createNotificationConfig(env: NodeJS.ProcessEnv = process.env): 
     throw new Error(`Unknown MESSAGE_CHANNEL: ${messageChannel}`);
   }
 
-  if (nodeEnv === 'production' && messageProvider === 'mock') {
+  const hasMessageTemplate = [
+    env.MESSAGE_TEMPLATE_ORDER_CREATED,
+    env.MESSAGE_TEMPLATE_PAYMENT_CONFIRMED,
+    env.MESSAGE_TEMPLATE_SHIPPING_STARTED,
+    env.MESSAGE_TEMPLATE_SHIPPING_DELIVERED,
+    env.MESSAGE_TEMPLATE_ORDER_CANCELLED,
+  ].some((value) => Boolean(value?.trim()));
+
+  if (nodeEnv === 'production' && messageProvider === 'mock' && hasMessageTemplate) {
     throw new Error(
-      'Mock message provider는 프로덕션에서 사용할 수 없습니다. MESSAGE_PROVIDER=solapi 를 설정하세요.',
+      'Mock message provider는 프로덕션 템플릿이 설정된 상태에서 사용할 수 없습니다. MESSAGE_PROVIDER=solapi 를 설정하거나 메시지 템플릿 값을 비우세요.',
     );
   }
 

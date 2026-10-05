@@ -110,11 +110,11 @@ describe('validateEnv', () => {
     expect(errors.map((e) => e.key)).toContain('RESEND_API_KEY');
   });
 
-  it('거래 메시지 provider 미설정은 배포 전에 차단한다', () => {
+  it('거래 메시지 provider 미설정은 배포를 차단하지 않는다', () => {
     const env = makeFullEnv();
     delete env.MESSAGE_PROVIDER;
 
-    expect(validateEnv(env).map((e) => e.key)).toContain('MESSAGE_PROVIDER');
+    expect(validateEnv(env).map((e) => e.key)).not.toContain('MESSAGE_PROVIDER');
   });
 
   it('STORAGE_PROVIDER=s3 이면 버킷 이름이 필요하다', () => {

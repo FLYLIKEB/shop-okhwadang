@@ -6,7 +6,7 @@
 2. `MESSAGE_CHANNEL=alimtalk`이면 카카오 채널과 `ORDER_CREATED`, `PAYMENT_CONFIRMED`, `SHIPPING_STARTED`, `SHIPPING_DELIVERED`, `ORDER_CANCELLED` 템플릿을 승인받는다. 템플릿 변수명은 `message-templates.ts`의 이름을 `#{customerName}`처럼 감싼 형태와 일치해야 한다.
 3. 문자만 사용하면 `MESSAGE_CHANNEL=sms`로 설정한다. 이 모드에는 카카오 채널·템플릿 ID가 필요하지 않으며 본문 길이에 따라 SOLAPI가 SMS/LMS를 판별한다.
 4. 운영 환경에 `MESSAGE_PROVIDER=solapi`, 등록된 `MESSAGE_SENDER_PHONE`, `MESSAGE_SOLAPI_API_KEY`, `MESSAGE_SOLAPI_API_SECRET`을 설정한다. 알림톡 모드에서는 카카오 채널과 템플릿 ID도 설정한다. 비밀값은 저장소나 Issue에 기록하지 않는다.
-5. `backend/.env.production`을 기준으로 `bash scripts/remote-env-sync.sh set-secret`과 `bash scripts/remote-env-sync.sh push`를 실행한다. 운영 사전 검증은 메시지 공급자가 mock이거나 필수 설정이 없으면 배포를 막는다.
+5. 승인 전에는 운영 `MESSAGE_PROVIDER`와 템플릿 ID를 비워 둔다. 이 상태에서는 주문/배송 메시지가 `skipped`로 기록되고 실제 발송은 없다. 승인 후 `backend/.env.production`을 기준으로 `bash scripts/remote-env-sync.sh set-secret`과 `bash scripts/remote-env-sync.sh push`를 실행한다. `MESSAGE_PROVIDER=solapi`를 켠 뒤에는 필수 채널·템플릿 값이 없으면 기동을 막는다.
 
 ## 알림톡 승인용 문안
 

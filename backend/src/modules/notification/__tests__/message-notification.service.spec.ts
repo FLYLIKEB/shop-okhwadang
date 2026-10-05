@@ -209,6 +209,23 @@ describe('MessageNotificationService', () => {
     expect(logRepository.insert).toHaveBeenCalledWith(expect.objectContaining({ channel: 'sms' }));
   });
 
+  it('records a skipped effect without provider delivery before production templates are configured', async () => {
+    const inactiveConfig: NotificationConfig = {
+      ...config,
+      nodeEnv: 'production',
+      message: { ...config.message, templates: { ...config.message.templates, ORDER_CREATED: '' } },
+    };
+    service = new MessageNotificationService(logRepository as never, dataSource as never, provider, inactiveConfig);
+
+    await service.deliver(10, 'order.created', 'message-effect:11');
+
+    expect(provider.send).not.toHaveBeenCalled();
+    expect(logRepository.update).toHaveBeenCalledWith(
+      { effectKey: 'message-effect:11', status: 'processing' },
+      expect.objectContaining({ status: 'skipped' }),
+    );
+  });
+
   it('reconciles a message outbox effect with its delivery log', async () => {
     const effectRepository = { update: jest.fn().mockResolvedValue({ affected: 1 }) };
     const manager = {

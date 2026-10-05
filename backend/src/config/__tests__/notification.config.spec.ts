@@ -29,14 +29,24 @@ describe('createNotificationConfig', () => {
     ).toThrow('Unknown NOTIFICATION_PROVIDER: legacy');
   });
 
-  it('production에서 mock 거래 메시지 provider는 템플릿 설정과 관계없이 차단한다', () => {
+  it('production에서 템플릿 미설정 mock은 허용하고 실제 발송을 활성화하지 않는다', () => {
+    const config = createNotificationConfig({
+      NODE_ENV: 'production',
+      NOTIFICATION_PROVIDER: 'resend',
+    });
+    expect(config.message.provider).toBe('mock');
+    expect(config.message.templates.ORDER_CREATED).toBe('');
+  });
+
+  it('production에서 mock 공급자와 실제 템플릿 조합은 차단한다', () => {
     expect(() =>
       createNotificationConfig({
         NODE_ENV: 'production',
         NOTIFICATION_PROVIDER: 'resend',
         MESSAGE_PROVIDER: 'mock',
+        MESSAGE_TEMPLATE_ORDER_CREATED: 'tpl-order',
       }),
-    ).toThrow('Mock message provider는 프로덕션에서 사용할 수 없습니다');
+    ).toThrow('Mock message provider는 프로덕션 템플릿이 설정된 상태에서 사용할 수 없습니다');
   });
 
   it('solapi 선택 시 운영 발송 필수 값을 검증한다', () => {
