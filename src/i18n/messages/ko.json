@@ -1101,7 +1101,8 @@
         "email": "이메일",
         "name": "이름",
         "role": "역할",
-      "tier": "등급",
+        "tier": "등급",
+        "tierAccumulatedAmount": "누적 구매액",
         "status": "상태",
         "joinDate": "가입일",
         "changeRole": "역할 변경"
@@ -1603,12 +1604,27 @@
         "name": "쿠폰 이름",
         "type": "할인 타입",
         "value": "할인 값",
-        "minOrderAmount": "최소 주문 금액",
-        "maxDiscount": "최대 할인 금액",
+        "valuePercentage": "할인 값 (%)",
+        "valueFixed": "할인 값 (KRW)",
+        "minOrderAmount": "최소 주문 금액 (KRW)",
+        "maxDiscount": "최대 할인 금액 (KRW)",
         "totalQuantity": "총 발급 한도",
         "startsAt": "시작일",
         "expiresAt": "만료일",
-        "isActive": "활성 템플릿"
+        "isActive": "활성 템플릿",
+        "issuedLockedReason": "발급 이력이 있는 쿠폰은 코드, 이름, 총 발급 한도만 수정할 수 있습니다."
+      },
+      "validation": {
+        "codeRequired": "쿠폰 코드를 입력하세요.",
+        "nameRequired": "쿠폰 이름을 입력하세요.",
+        "valuePositive": "할인 값은 0보다 큰 숫자여야 합니다.",
+        "percentMax": "정률 할인은 100% 이하만 가능합니다.",
+        "minOrderAmount": "최소 주문 금액은 0 이상의 숫자여야 합니다.",
+        "maxDiscount": "최대 할인 금액은 비워두거나 0 이상의 숫자여야 합니다.",
+        "totalQuantity": "총 발급 한도는 비워두거나 1 이상의 정수여야 합니다.",
+        "totalQuantityIssued": "총 발급 한도는 이미 발급된 {count}개보다 작을 수 없습니다.",
+        "datesRequired": "시작일과 만료일을 올바르게 입력하세요.",
+        "dateRange": "만료일은 시작일보다 뒤여야 합니다."
       },
       "types": {
         "percentage": "정률",
@@ -1653,7 +1669,8 @@
         "status": "상태",
         "actions": "작업",
         "couponFallback": "쿠폰 #{id}",
-        "noConditions": "조건 없음"
+        "noConditions": "조건 없음",
+        "unsupportedConditions": "지원되지 않는 기존 조건"
       },
       "triggers": {
         "signup": "회원가입",
@@ -1667,13 +1684,18 @@
       },
       "createTitle": "규칙 등록",
       "editTitle": "규칙 수정",
-      "formDescription": "등급 상승처럼 추가 조건이 필요한 트리거만 JSON 조건을 입력하세요.",
+      "formDescription": "회원가입, 첫 구매, 등급 상승 규칙만 새로 만들 수 있습니다. 생일 규칙은 현재 지원하지 않습니다.",
       "form": {
         "trigger": "트리거",
         "couponTemplate": "쿠폰 템플릿",
         "couponTemplatePlaceholder": "쿠폰 템플릿 선택",
         "conditionsJson": "조건 JSON",
         "conditionsPlaceholder": "'{'\"minTier\":\"Silver\"'}'",
+        "minTier": "최소 등급",
+        "minTierPlaceholder": "등급 선택",
+        "minTierAll": "모든 등급 상승",
+        "minTierOption": "{name} · {amount} 이상",
+        "noConditions": "이 트리거는 추가 조건을 지원하지 않습니다.",
         "active": "규칙 활성화",
         "couponTemplateSearch": "쿠폰 템플릿 찾기",
         "couponTemplateSearchPlaceholder": "코드 또는 이름으로 검색"
@@ -1683,7 +1705,18 @@
       "saving": "저장 중...",
       "cancelEdit": "수정 취소",
       "edit": "수정",
+      "deactivate": "비활성화",
       "delete": "삭제",
+      "legacyBirthday": "생일 규칙은 현재 생년월일 정보가 없어 지원되지 않습니다. 비활성화 또는 삭제만 권장됩니다.",
+      "unsupportedBirthday": "생일 쿠폰은 현재 지원되지 않습니다.",
+      "tierLoadError": "회원 등급 목록을 불러오지 못했습니다.",
+      "deactivateSuccess": "쿠폰 규칙을 비활성화했습니다.",
+      "deactivateError": "쿠폰 규칙 비활성화에 실패했습니다.",
+      "conditions": {
+        "allTierUpgrades": "모든 등급 상승",
+        "minTier": "최소 등급 {tier}",
+        "minTierWithAmount": "최소 등급 {tier} · {amount} 이상"
+      },
       "createSuccess": "쿠폰 규칙을 등록했습니다.",
       "createError": "쿠폰 규칙 등록에 실패했습니다.",
       "updateSuccess": "쿠폰 규칙을 수정했습니다.",
@@ -1822,7 +1855,7 @@
           "title": "회원 관리",
           "summary": "회원 검색, 역할/상태 필터, 역할 변경을 관리합니다.",
           "steps": {
-            "first": "역할, 활성 상태, 이메일/이름 검색으로 회원을 찾습니다. 목록에서는 이메일, 이름, 역할, 상태, 가입일을 확인합니다.",
+            "first": "역할, 활성 상태, 이메일/이름 검색으로 회원을 찾습니다. 목록에서는 이메일, 이름, 역할, 현재 등급, 누적 구매액, 상태, 가입일을 확인합니다.",
             "second": "활성 회원은 역할 선택으로 일반회원, 관리자, 최고관리자 역할을 바꿀 수 있습니다. 비활성 회원은 역할 변경이 제한됩니다.",
             "third": "관리자는 자기 자신의 역할을 바꿀 수 없습니다. 일반 관리자는 최고관리자 부여/해제를 할 수 없고, 마지막 최고관리자는 유지됩니다."
           },
@@ -1833,20 +1866,20 @@
           "summary": "쿠폰 템플릿을 만들고, 검색/상태 필터로 관리하며, 회원에게 수동 발급합니다.",
           "steps": {
             "first": "코드나 이름으로 쿠폰을 검색하고 활성/비활성 상태로 필터링합니다. 목록에서 할인 방식, 수량, 기간, 상태를 확인합니다.",
-            "second": "정률/정액, 할인값, 최소주문금액, 최대할인, 총수량, 시작/만료일, 활성 여부를 입력해 쿠폰을 생성하거나 수정합니다.",
+            "second": "정률 할인값은 %, 정액 할인값과 최소주문금액/최대할인은 KRW 기준으로 입력합니다. 총수량, 시작/만료일, 활성 여부를 설정하며, 발급 이력이 있으면 코드, 이름, 총 발급 한도만 바꿀 수 있습니다.",
             "third": "수동 발급에서는 현재 목록의 쿠폰을 선택하고 회원 ID를 입력해 발급합니다. 발급 후에는 같은 쿠폰의 발급 수량이 소진 조건에 영향을 줄 수 있습니다."
           },
-          "caution": "쿠폰 코드, 기간, 수량은 고객 사용 가능 여부에 직접 영향을 줍니다. 공개 전 만료일과 활성 상태를 확인하세요."
+          "caution": "쿠폰 코드, 기간, 수량은 고객 사용 가능 여부에 직접 영향을 줍니다. 발급된 쿠폰은 할인 조건과 기간을 되돌려 바꿀 수 없으니 공개 전 확인하세요."
         },
         "couponRules": {
           "title": "쿠폰 자동 규칙",
           "summary": "회원가입, 첫 구매, 등급 상승 같은 이벤트에 쿠폰 템플릿을 자동 발급하도록 연결합니다.",
           "steps": {
             "first": "규칙 목록에서 트리거, 연결 쿠폰, 조건, 활성 상태를 확인합니다. 쿠폰 검색으로 템플릿 ID를 쉽게 찾을 수 있습니다.",
-            "second": "트리거는 회원가입, 첫 구매, 등급 상승 중 하나를 선택합니다. 조건을 비워두면 해당 트리거의 모든 대상에게 적용됩니다.",
-            "third": "조건은 JSON 형식으로 입력합니다. 현재 추가 조건은 등급 상승의 minTier만 지원하며, 값에 Gold를 지정하면 Gold 이상으로 승급할 때 적용됩니다."
+            "second": "트리거는 회원가입, 첫 구매, 등급 상승 중 하나를 선택합니다. 생일 쿠폰은 생년월일 정보가 없어 현재 새로 만들 수 없습니다.",
+            "third": "등급 상승 조건은 비워두면 모든 등급 상승에 적용되고, 필요하면 회원 등급 목록에서 minTier를 선택합니다. 자동 발급은 사용자와 쿠폰 템플릿당 평생 1회만 적용됩니다."
           },
-          "caution": "조건 JSON은 문법 오류가 있으면 저장할 수 없습니다. 지원되지 않는 키를 넣어도 현재 판정에는 영향을 주지 않습니다."
+          "caution": "지원되지 않는 기존 조건이나 생일 규칙은 안전하게 실패하도록 두고, 필요하면 비활성화하거나 삭제하세요."
         },
         "points": {
           "title": "적립금 관리",
@@ -2196,8 +2229,10 @@
     "title": "쿠폰함",
     "pointBalance": "보유 적립금",
     "loadError": "쿠폰 목록을 불러오지 못했습니다.",
+    "retry": "다시 시도",
     "tab": {
       "available": "사용 가능",
+      "all": "전체",
       "used": "사용 완료",
       "expired": "만료"
     },
@@ -2206,6 +2241,14 @@
     "discountFixed": "{value} 할인",
     "minOrderAmount": "{amount} 이상 구매 시 사용 가능",
     "expiresAt": "유효기간",
+    "availabilityReason": {
+      "not_started": "{date}부터 사용할 수 있습니다.",
+      "inactive": "현재 사용할 수 없는 쿠폰입니다."
+    },
+    "availabilityBadge": {
+      "not_started": "대기",
+      "inactive": "비활성"
+    },
     "emptyByTab": "{status} 쿠폰이 없습니다."
   },
   "myInquiries": {

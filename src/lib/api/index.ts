@@ -40,6 +40,7 @@ export * from './admin/products';
 export * from './admin/reviews';
 export * from './admin/orders';
 export * from './admin/members';
+export * from './admin/membership';
 export * from './admin/dashboard';
 export * from './admin/pages';
 export * from './admin/navigation';

@@ -147,7 +147,15 @@ export class AdminOrdersService {
         return;
       }
 
-      if ([OrderStatus.PREPARING, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(nextStatus)) {
+      let lockedOrderForStatus: Order | null = null;
+      const requiresOrderLock = [
+        OrderStatus.PREPARING,
+        OrderStatus.SHIPPED,
+        OrderStatus.DELIVERED,
+        OrderStatus.COMPLETED,
+      ].includes(nextStatus);
+
+      if (requiresOrderLock) {
         const lockedOrder = await manager.findOne(Order, {
           where: { id: orderId },
           lock: { mode: 'pessimistic_write' },
@@ -155,6 +163,7 @@ export class AdminOrdersService {
         if (!lockedOrder) {
           throw new BadRequestException('주문을 찾을 수 없습니다.');
         }
+        lockedOrderForStatus = lockedOrder;
 
         assertOrderStatusTransition(lockedOrder.status, nextStatus);
 
@@ -184,6 +193,13 @@ export class AdminOrdersService {
       if (nextStatus === OrderStatus.DELIVERED) {
         await this.messageEffectOutbox.enqueueWithManager(manager, orderId, 'shipping.delivered');
       }
+      if (nextStatus === OrderStatus.COMPLETED && lockedOrderForStatus) {
+        const userId = this.getOrderUserId(lockedOrderForStatus);
+        if (userId !== null) {
+          const completedAmount = this.membershipService.getCompletedOrderAccrualAmount(lockedOrderForStatus);
+          await this.membershipService.incrementAccumulatedAmount(userId, completedAmount, manager);
+        }
+      }
     };
 
     if (nextStatus === OrderStatus.PAID && this.isGatewayConfirmationReconciliation(payment)) {
@@ -210,17 +226,6 @@ export class AdminOrdersService {
       }
     }
 
-    if (nextStatus === OrderStatus.COMPLETED) {
-      const userId = this.getOrderUserId(order);
-      if (userId !== null) {
-        const completedAmount = this.membershipService.getCompletedOrderAccrualAmount(order);
-        void this.membershipService
-          .incrementAccumulatedAmount(userId, completedAmount)
-          .catch((err) =>
-            this.logger.warn(`Failed to increment tier amount for user ${userId}: ${String(err)}`),
-          );
-      }
-    }
     this.logger.log(`Order #${orderId} status changed: ${currentStatus} → ${nextStatus}`);
 
     const updatedOrder = await this.orderRepository.findOne({

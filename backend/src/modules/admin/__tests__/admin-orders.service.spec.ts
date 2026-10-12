@@ -94,8 +94,8 @@ describe('AdminOrdersService', () => {
     messageEffectOutbox = { enqueueWithManager: jest.fn().mockResolvedValue(undefined) };
     membershipService = {
       incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined),
-      getCompletedOrderAccrualAmount: jest.fn((order: { totalAmount: number; shippingFee?: number }) =>
-        Number(order.totalAmount) - Number(order.shippingFee ?? 0),
+      getCompletedOrderAccrualAmount: jest.fn((order: { totalAmount: number }) =>
+        Number(order.totalAmount),
       ),
     };
     const lockQueryRunner = {
@@ -324,23 +324,25 @@ describe('AdminOrdersService', () => {
     });
 
     it('delivered → completed: allowed', async () => {
+      const lockedOrder = {
+        id: 1,
+        status: OrderStatus.DELIVERED,
+        userId: 10,
+        totalAmount: 46000,
+        discountAmount: 5000,
+        shippingFee: 3000,
+      };
       orderRepo.findOne
-        .mockResolvedValueOnce({
-          id: 1,
-          status: OrderStatus.DELIVERED,
-          userId: 10,
-          totalAmount: 46000,
-          discountAmount: 5000,
-          shippingFee: 3000,
-        })
+        .mockResolvedValueOnce(lockedOrder)
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.COMPLETED });
+      mockManager.findOne.mockResolvedValueOnce(lockedOrder);
 
       await service.updateStatus(1, OrderStatus.COMPLETED);
       expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.COMPLETED });
       expect(membershipService.getCompletedOrderAccrualAmount).toHaveBeenCalledWith(
         expect.objectContaining({ totalAmount: 46000, shippingFee: 3000 }),
       );
-      expect(membershipService.incrementAccumulatedAmount).toHaveBeenCalledWith(10, 43000);
+      expect(membershipService.incrementAccumulatedAmount).toHaveBeenCalledWith(10, 46000, mockManager);
     });
 
     it('delivered → refund_requested: allowed', async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { couponsApi } from '@/lib/api';
 import type { CouponItem } from '@/lib/api';
@@ -14,7 +14,8 @@ import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/utils/date';
 
-type TabStatus = 'available' | 'used' | 'expired';
+type TabStatus = 'available' | 'used' | 'expired' | 'all';
+type LoadCouponsRequest = { tab: TabStatus; requestId: number };
 
 function CouponCard({
   coupon,
@@ -27,13 +28,17 @@ function CouponCard({
 }) {
   const discountText =
     coupon.type === 'percentage'
-      ? coupon.maxDiscount
+      ? coupon.maxDiscount != null
         ? t('discountPercentWithMax', {
           value: coupon.value,
           max: formatCurrency(coupon.maxDiscount, locale),
         })
         : t('discountPercent', { value: coupon.value })
       : t('discountFixed', { value: formatCurrency(coupon.value, locale) });
+
+  const badgeKey = coupon.availabilityReason
+    ? `availabilityBadge.${coupon.availabilityReason}`
+    : `tab.${coupon.status}`;
 
   return (
     <div
@@ -48,11 +53,12 @@ function CouponCard({
           className={cn(
             'text-xs px-2 py-0.5 rounded-full font-medium shrink-0',
             coupon.status === 'available' && 'bg-primary/10 text-primary',
+            coupon.availabilityReason && 'bg-amber-100 text-amber-700',
             coupon.status === 'used' && 'bg-muted text-muted-foreground',
             coupon.status === 'expired' && 'bg-destructive/10 text-destructive',
           )}
         >
-          {t(`tab.${coupon.status}`)}
+          {t(badgeKey)}
         </span>
       </div>
       <p className="text-sm font-medium text-primary">{discountText}</p>
@@ -64,6 +70,13 @@ function CouponCard({
       <p className="text-xs text-muted-foreground">
         {t('expiresAt')}: {formatDate(coupon.expiresAt, locale)}
       </p>
+      {coupon.availabilityReason && (
+        <p className="text-xs text-muted-foreground">
+          {t(`availabilityReason.${coupon.availabilityReason}`, {
+            date: formatDate(coupon.startsAt, locale),
+          })}
+        </p>
+      )}
     </div>
   );
 }
@@ -75,20 +88,46 @@ export default function MyCouponsPage() {
   const [tab, setTab] = useState<TabStatus>('available');
   const [coupons, setCoupons] = useState<CouponItem[]>([]);
   const [pointBalance, setPointBalance] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadingRequestId, setLoadingRequestId] = useState<number | null>(null);
+  const requestSeqRef = useRef(0);
 
-  const { execute: loadCoupons, isLoading: dataLoading } = useAsyncAction(
-    async () => {
-      const res = await couponsApi.getList(tab);
-      setCoupons(res.coupons);
-      setPointBalance(res.points.balance);
+  const { execute: loadCoupons } = useAsyncAction(
+    async (request: LoadCouponsRequest) => {
+      setLoadError(null);
+      try {
+        const res = await couponsApi.getList(request.tab === 'all' ? undefined : request.tab);
+        if (request.requestId !== requestSeqRef.current) return;
+        setCoupons(res.coupons);
+        setPointBalance(res.points.balance);
+      } catch (err) {
+        if (request.requestId !== requestSeqRef.current) return;
+        setCoupons([]);
+        setPointBalance(0);
+        setLoadError(t('loadError'));
+        throw err;
+      } finally {
+        if (request.requestId === requestSeqRef.current) {
+          setLoadingRequestId(null);
+        }
+      }
     },
-    { errorMessage: t('loadError') },
+    {
+      errorMessage: t('loadError'),
+    },
   );
+
+  const requestCoupons = useCallback((nextTab: TabStatus) => {
+    const requestId = requestSeqRef.current + 1;
+    requestSeqRef.current = requestId;
+    setLoadingRequestId(requestId);
+    void loadCoupons({ tab: nextTab, requestId });
+  }, [loadCoupons]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    void loadCoupons();
-  }, [isAuthenticated, tab]); // eslint-disable-line react-hooks/exhaustive-deps
+    requestCoupons(tab);
+  }, [isAuthenticated, requestCoupons, tab]);
 
   if (isLoading) {
     return (
@@ -110,7 +149,7 @@ export default function MyCouponsPage() {
 
       {/* 탭 */}
       <div className="mb-4 flex border-b">
-        {(['available', 'used', 'expired'] as TabStatus[]).map((status) => (
+        {(['available', 'all', 'used', 'expired'] as TabStatus[]).map((status) => (
           <Button
             key={status}
             type="button"
@@ -125,8 +164,21 @@ export default function MyCouponsPage() {
       </div>
 
       {/* 쿠폰 목록 */}
-      {dataLoading ? (
-        <div className="space-y-3">
+      {loadError ? (
+        <div className="rounded-lg border border-destructive/30 p-4 text-center">
+          <p className="text-sm text-destructive">{loadError}</p>
+          <Button
+            type="button"
+            variant="gray"
+            size="sm"
+            onClick={() => requestCoupons(tab)}
+            className="mt-3"
+          >
+            {t('retry')}
+          </Button>
+        </div>
+      ) : loadingRequestId != null ? (
+        <div className="space-y-3" aria-busy="true" aria-live="polite">
           {[1, 2, 3].map((i) => (
             <SkeletonBox key={i} height="h-24" />
           ))}

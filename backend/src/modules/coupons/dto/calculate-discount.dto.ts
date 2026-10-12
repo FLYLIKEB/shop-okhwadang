@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsInt, IsNumber, IsOptional, IsString, Matches, Min, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsInt, IsNumber, IsString, Matches, Min, ValidateIf, ValidateNested } from 'class-validator';
 
 export class CouponShippingItemDto {
   @ApiProperty({ example: 10, description: '상품 ID' })
@@ -9,7 +9,7 @@ export class CouponShippingItemDto {
   productId!: number;
 
   @ApiPropertyOptional({ example: 2, description: '상품 옵션 ID' })
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined && value !== null)
   @IsInt()
   @Min(1)
   productOptionId?: number | null;
@@ -39,13 +39,14 @@ export class CalculateDiscountDto {
   items!: CouponShippingItemDto[];
 
   @ApiPropertyOptional({ example: 1, description: '사용자 쿠폰 ID' })
-  @IsNumber()
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
+  @IsInt()
+  @Min(1)
   userCouponId?: number;
 
   @ApiProperty({ example: 1000, description: '사용할 포인트', required: false })
-  @IsNumber()
+  @ValidateIf((_, value) => value !== undefined)
+  @IsInt()
   @Min(0)
-  @IsOptional()
   pointsToUse?: number;
 }

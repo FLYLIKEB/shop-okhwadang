@@ -21,6 +21,7 @@ export default function CouponSelector({ onSelectionChange }: CouponSelectorProp
   const [selectedId, setSelectedId] = useState<number | ''>('');
   const [pointsBalance, setPointsBalance] = useState(0);
   const [pointsInput, setPointsInput] = useState('');
+  const [appliedPoints, setAppliedPoints] = useState(0);
 
   const { execute: loadCoupons, isLoading: loading } = useAsyncAction(
     async () => {
@@ -39,11 +40,16 @@ export default function CouponSelector({ onSelectionChange }: CouponSelectorProp
     const val = e.target.value;
     const userCouponId = val === '' ? undefined : Number(val);
     setSelectedId(val === '' ? '' : Number(val));
-    onSelectionChange(userCouponId, Number(pointsInput) || 0);
+    onSelectionChange(userCouponId, appliedPoints);
   };
 
   const handleApplyPoints = () => {
-    const pointsToUse = Math.min(Math.max(Number(pointsInput) || 0, 0), pointsBalance);
+    const numericInput = Number(pointsInput);
+    const pointsToUse = Math.min(
+      Math.max(Number.isFinite(numericInput) ? Math.trunc(numericInput) : 0, 0),
+      pointsBalance,
+    );
+    setAppliedPoints(pointsToUse);
     setPointsInput(pointsToUse > 0 ? String(pointsToUse) : '');
     onSelectionChange(selectedId === '' ? undefined : Number(selectedId), pointsToUse);
   };
@@ -73,7 +79,7 @@ export default function CouponSelector({ onSelectionChange }: CouponSelectorProp
           <option key={c.id} value={c.id}>
             {c.name} (
             {c.type === 'percentage'
-              ? `${c.value}% ${localMessage('checkout.discount')}${c.maxDiscount ? ` / ${localMessage('checkout.maxDiscount', { amount: formatCurrency(c.maxDiscount, locale) })}` : ''}`
+              ? `${c.value}% ${localMessage('checkout.discount')}${c.maxDiscount != null ? ` / ${localMessage('checkout.maxDiscount', { amount: formatCurrency(c.maxDiscount, locale) })}` : ''}`
               : `${formatCurrency(c.value, locale)} ${localMessage('checkout.discount')}`}
             )
           </option>

@@ -23,7 +23,7 @@
 | 주문 관리 | 주문 검색, 상태 변경, 배송 등록, 취소, 교환/반품/환불 신청, 메시지 발송 이력을 처리합니다. | `orders` |
 | 회원 관리 | 회원 검색, 역할/상태 필터, 역할 변경을 관리합니다. | `members` |
 | 쿠폰 관리 | 쿠폰 템플릿을 만들고, 검색/상태 필터로 관리하며, 회원에게 수동 발급합니다. | `coupons` |
-| 쿠폰 자동 규칙 | 회원가입, 첫 구매, 생일, 등급 상승 같은 이벤트에 쿠폰 템플릿을 자동 발급하도록 연결합니다. | `coupons/rules` |
+| 쿠폰 자동 규칙 | 회원가입, 첫 구매, 등급 상승 이벤트에 쿠폰을 연결합니다. 생일 규칙은 현재 지원하지 않습니다. | `coupons/rules` |
 | 적립금 관리 | 회원별 적립금 잔액과 이력을 보고, 관리자 사유로 수동 적립/차감합니다. | `points` |
 | 리뷰 관리 | 리뷰 조회, SmartStore 리뷰 가져오기, 노출/숨김, 일괄 처리, 관리자 답글을 관리합니다. | `reviews` |
 | 문의 관리 | 고객 문의를 상태별로 확인하고 답변을 등록하거나 수정합니다. | `inquiries` |
@@ -43,7 +43,7 @@
 - 주문 상태 전환과 취소 제한은 `backend/src/modules/admin/admin-orders.service.ts`, 운송장과 취소 사유 입력은 `ShippingModal.tsx`, `CancelOrderModal.tsx`에서 확인했습니다.
 - 메시지 이력의 수동 확인은 `MessageDeliveriesDialog.tsx`에서 발송 업체 메시지 ID와 사유를 받습니다. `backend/src/modules/notification/interfaces/message-provider.interface.ts`는 sent를 고객 단말 수신이 아닌 업체 접수로 명시합니다.
 - 역할 변경은 `backend/src/modules/admin/admin-members.service.ts`에서 자기 자신, 비활성 회원, 일반 관리자의 최고관리자 변경, 마지막 최고관리자 강등을 제한합니다.
-- 쿠폰 규칙의 추가 조건 판정은 `backend/src/modules/coupons/coupon-rules.service.ts`에서 현재 등급 상승의 minTier만 사용합니다. 지원하지 않는 조건을 추가해도 판정에 반영되지 않습니다.
+- 쿠폰 규칙의 추가 조건 판정은 `backend/src/modules/coupons/coupon-rules.service.ts`에서 현재 등급 상승의 minTier만 사용합니다. 지원하지 않는 조건은 저장을 거부하며, 잘못된 기존 조건은 발급 대상에서 제외합니다.
 - 적립금 수동 조정은 `backend/src/modules/points/points.service.ts`와 `dto/manual-point-adjustment.dto.ts`에서 사유·금액·잔액을 검증합니다.
 - 페이지 초안 편집과 저장·공개, slug 변경 경고는 `src/components/shared/admin/page-editor/usePageEditor.ts`와 `EditorTopBar.tsx`에서 확인했습니다. 블록 목록은 `BlockPalette.tsx`를 기준으로 합니다.
 - 메뉴의 영역별 편집, 하위 메뉴, 정렬과 삭제 경고는 `NavigationEditor.tsx` 및 `navigation/NavigationFormModal.tsx`에서 확인했습니다.

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsBoolean, IsObject, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsBoolean, IsObject, Min, ValidateIf } from 'class-validator';
 import { CouponRuleTrigger } from '../entities/coupon-rule.entity';
 
 export class CreateCouponRuleDto {
@@ -12,7 +12,7 @@ export class CreateCouponRuleDto {
   trigger!: CouponRuleTrigger;
 
   @ApiProperty({ example: 1, description: '쿠폰 템플릿 ID (coupons 테이블)' })
-  @IsNumber()
+  @IsInt()
   @Min(1)
   couponTemplateId!: number;
 
@@ -21,6 +21,7 @@ export class CreateCouponRuleDto {
     description: '조건 JSON (tier_up 시 minTier 등)',
     required: false,
   })
+  @ValidateIf((_, value) => value !== undefined && value !== null)
   @IsObject()
   @IsOptional()
   conditionsJson?: Record<string, unknown> | null;

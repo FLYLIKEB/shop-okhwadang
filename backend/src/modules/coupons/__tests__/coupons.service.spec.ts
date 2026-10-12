@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { CouponsService } from '../coupons.service';
 import { Coupon } from '../entities/coupon.entity';
 import { UserCoupon } from '../entities/user-coupon.entity';
@@ -130,10 +130,12 @@ describe('CouponsService', () => {
     mockDataSource.transaction.mockImplementation((cb: (manager: {
       findOne: typeof mockCouponRepo.findOne;
       save: jest.Mock;
+      remove: jest.Mock;
     }) => Promise<unknown>) =>
       cb({
         findOne: mockCouponRepo.findOne,
         save: jest.fn((_entity: unknown, value: unknown) => mockCouponRepo.save(value)),
+        remove: jest.fn((_entity: unknown, value: unknown) => mockCouponRepo.remove(value)),
       }),
     );
   });
@@ -147,6 +149,11 @@ describe('CouponsService', () => {
     it('percentage 쿠폰: max_discount 미만 시 rate 적용', () => {
       const discount = service.computeCouponDiscount(30000, mockPercentageCoupon);
       expect(discount).toBe(3000);
+    });
+
+    it('percentage 쿠폰은 max_discount 0이면 의도적으로 0원을 할인한다', () => {
+      const discount = service.computeCouponDiscount(30000, { ...mockPercentageCoupon, maxDiscount: 0 } as Coupon);
+      expect(discount).toBe(0);
     });
 
     it('percentage 쿠폰은 max_discount가 없어도 주문액을 초과해 할인하지 않는다', () => {
@@ -163,6 +170,11 @@ describe('CouponsService', () => {
     it('fixed 쿠폰: 주문액이 할인액보다 적으면 주문액만큼만', () => {
       const discount = service.computeCouponDiscount(2000, mockFixedCoupon);
       expect(discount).toBe(2000);
+    });
+
+    it('bad persisted coupon data cannot produce a negative discount', () => {
+      const discount = service.computeCouponDiscount(20000, { ...mockFixedCoupon, value: -3000 } as Coupon);
+      expect(discount).toBe(0);
     });
   });
 
@@ -262,6 +274,23 @@ describe('CouponsService', () => {
         lock: { mode: 'pessimistic_write' },
       });
     });
+
+    it('deletes unissued coupons under the same pessimistic lock used by issuance', async () => {
+      const coupon = { ...mockPercentageCoupon, issuedCount: 0 };
+      const manager = {
+        findOne: jest.fn().mockResolvedValue(coupon),
+        remove: jest.fn().mockResolvedValue(coupon),
+      };
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await expect(service.removeCoupon(1)).resolves.toEqual({ message: '쿠폰이 삭제되었습니다.' });
+
+      expect(manager.findOne).toHaveBeenCalledWith(Coupon, {
+        where: { id: 1 },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(manager.remove).toHaveBeenCalledWith(Coupon, coupon);
+    });
   });
 
   describe('calculate', () => {
@@ -299,6 +328,12 @@ describe('CouponsService', () => {
 
       await expect(
         service.calculate(10, { ...shippingInput, orderAmount: 20000, pointsToUse: 5000 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects negative points at the service boundary', async () => {
+      await expect(
+        service.calculate(10, { ...shippingInput, orderAmount: 20000, pointsToUse: -1 }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -417,17 +452,37 @@ describe('CouponsService', () => {
       );
     });
 
-    it('템플릿이 만료되거나 비활성화된 보유 쿠폰은 available 목록에서 제외하고 expired 로 분류한다', async () => {
+    it('available 목록은 실제 사용 가능한 쿠폰만 포함하고 future/inactive 는 expired 로 분류하지 않는다', async () => {
       const expiredAvailable = mockUserCoupon({ ...mockPercentageCoupon, expiresAt: past } as Coupon);
       const inactiveAvailable = mockUserCoupon({ ...mockFixedCoupon, isActive: false } as Coupon);
-      mockUserCouponRepo.find.mockResolvedValue([expiredAvailable, inactiveAvailable]);
+      const futureAvailable = mockUserCoupon({ ...mockFixedCoupon, id: 3, startsAt: future, expiresAt: new Date(future.getTime() + 86400000) } as Coupon);
+      mockUserCouponRepo.find.mockResolvedValue([expiredAvailable, inactiveAvailable, futureAvailable]);
       mockPointsService.getUserPointBalance.mockResolvedValue(0);
 
       await expect(service.findAll(10, 'available')).resolves.toMatchObject({ coupons: [] });
 
       const expiredResult = await service.findAll(10, 'expired');
-      expect(expiredResult.coupons).toHaveLength(2);
+      expect(expiredResult.coupons).toHaveLength(1);
       expect(expiredResult.coupons.every((coupon) => coupon.status === 'expired')).toBe(true);
+
+      const allResult = await service.findAll(10);
+      expect(allResult.coupons).toEqual(expect.arrayContaining([
+        expect.objectContaining({ status: 'available', availabilityReason: 'inactive' }),
+        expect.objectContaining({ status: 'available', availabilityReason: 'not_started' }),
+        expect.objectContaining({ status: 'expired', availabilityReason: null }),
+      ]));
+    });
+
+    it('used status is preserved even when the template later expires', async () => {
+      const usedExpired = mockUserCoupon({ ...mockPercentageCoupon, expiresAt: past } as Coupon, 'used');
+      mockUserCouponRepo.find.mockResolvedValue([usedExpired]);
+      mockPointsService.getUserPointBalance.mockResolvedValue(0);
+
+      const result = await service.findAll(10, 'used');
+
+      expect(result.coupons).toEqual([
+        expect.objectContaining({ status: 'used', availabilityReason: null }),
+      ]);
     });
   });
 
@@ -459,10 +514,11 @@ describe('CouponsService', () => {
     const buildManager = (
       couponRow: Coupon | null,
       existingUserCoupon: UserCoupon | null = null,
+      userRow: Partial<User> | null = { id: 10, isActive: true },
     ) => ({
       findOne: jest.fn().mockImplementation((entity: unknown) => {
         if (entity === Coupon) return Promise.resolve(couponRow);
-        if (entity === User) return Promise.resolve({ id: 10 });
+        if (entity === User) return Promise.resolve(userRow);
         if (entity === UserCoupon) return Promise.resolve(existingUserCoupon);
         return Promise.resolve(null);
       }),
@@ -502,6 +558,16 @@ describe('CouponsService', () => {
       await expect(service.issueCoupon({ userId: 10, couponId: 999 })).rejects.toThrow(NotFoundException);
     });
 
+    it('비활성 회원에게는 쿠폰을 발급하지 않는다', async () => {
+      const coupon = { ...mockPercentageCoupon, issuedCount: 0, totalQuantity: 10 } as Coupon;
+      const manager = buildManager(coupon, null, null);
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await expect(service.issueCoupon({ userId: 10, couponId: 1 })).rejects.toThrow(NotFoundException);
+      expect(manager.save).not.toHaveBeenCalled();
+      expect(manager.increment).not.toHaveBeenCalled();
+    });
+
     it('비활성화된 쿠폰 → BadRequestException', async () => {
       const coupon = { ...mockPercentageCoupon, isActive: false } as Coupon;
       const manager = buildManager(coupon);
@@ -537,6 +603,16 @@ describe('CouponsService', () => {
       expect(manager.increment).not.toHaveBeenCalled();
     });
 
+    it('DB duplicate grants are treated as the same expected duplicate issue failure', async () => {
+      const coupon = { ...mockPercentageCoupon, issuedCount: 1 } as Coupon;
+      const manager = buildManager(coupon);
+      manager.save.mockRejectedValue(Object.assign(new Error('Duplicate entry'), { code: 'ER_DUP_ENTRY' }));
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await expect(service.issueCoupon({ userId: 10, couponId: 1 })).rejects.toThrow(BadRequestException);
+      expect(manager.increment).not.toHaveBeenCalled();
+    });
+
     it('totalQuantity null 쿠폰은 수량 제한 없이 발급 성공', async () => {
       const coupon = { ...mockFixedCoupon, issuedCount: 9999 } as Coupon;
       const manager = buildManager(coupon);
@@ -548,7 +624,91 @@ describe('CouponsService', () => {
     });
   });
 
+  describe('issueCouponsForUser', () => {
+    it('returns per-coupon failures for expected domain errors', async () => {
+      mockDataSource.transaction
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new BadRequestException('이미 발급된 쿠폰입니다.'))
+        .mockRejectedValueOnce(new NotFoundException('쿠폰을 찾을 수 없습니다.'));
+
+      await expect(service.issueCouponsForUser(10, [1, 2, 3])).resolves.toEqual([
+        { couponId: 1, issued: true },
+        { couponId: 2, issued: false, reason: '이미 발급된 쿠폰입니다.' },
+        { couponId: 3, issued: false, reason: '쿠폰을 찾을 수 없습니다.' },
+      ]);
+    });
+
+    it('propagates unexpected infrastructure errors so callers can retry', async () => {
+      const dbError = new Error('database down');
+      mockDataSource.transaction.mockRejectedValue(dbError);
+
+      await expect(service.issueCouponsForUser(10, [1])).rejects.toThrow(dbError);
+    });
+  });
+
   describe('coupon template validation', () => {
+    it('trims code/name and stores nullable limits explicitly on create', async () => {
+      mockCouponRepo.create.mockImplementation((coupon: Coupon) => coupon);
+      mockCouponRepo.save.mockImplementation(async (coupon: Coupon) => ({ ...coupon, id: 10, issuedCount: 0, createdAt: now }));
+
+      const result = await service.createCoupon({
+        code: ' TRIM10 ',
+        name: ' 이름 ',
+        type: 'fixed',
+        value: 1000,
+        maxDiscount: null,
+        totalQuantity: null,
+        startsAt: now.toISOString(),
+        expiresAt: future.toISOString(),
+      });
+
+      expect(result).toEqual(expect.objectContaining({
+        code: 'TRIM10',
+        name: '이름',
+        maxDiscount: null,
+        totalQuantity: null,
+      }));
+    });
+
+    it('turns duplicate coupon codes into ConflictException', async () => {
+      mockCouponRepo.create.mockImplementation((coupon: Coupon) => coupon);
+      mockCouponRepo.save.mockRejectedValue(Object.assign(new Error('Duplicate entry'), { code: 'ER_DUP_ENTRY' }));
+
+      await expect(service.createCoupon({
+        code: 'DUP',
+        name: '중복',
+        type: 'fixed',
+        value: 1000,
+        startsAt: now.toISOString(),
+        expiresAt: future.toISOString(),
+      })).rejects.toThrow(ConflictException);
+    });
+
+    it('rejects direct service calls with null nonnullable fields', async () => {
+      await expect(service.updateCoupon(1, { value: null } as never)).rejects.toThrow(BadRequestException);
+      expect(mockCouponRepo.findOne).not.toHaveBeenCalled();
+    });
+
+    it('rejects non-finite and out-of-range money values at the service boundary', async () => {
+      await expect(service.createCoupon({
+        code: 'NAN',
+        name: '잘못된 금액',
+        type: 'fixed',
+        value: Number.NaN,
+        startsAt: now.toISOString(),
+        expiresAt: future.toISOString(),
+      })).rejects.toThrow(BadRequestException);
+
+      await expect(service.createCoupon({
+        code: 'TOO_BIG',
+        name: '큰 금액',
+        type: 'fixed',
+        value: 10000000000,
+        startsAt: now.toISOString(),
+        expiresAt: future.toISOString(),
+      })).rejects.toThrow(BadRequestException);
+    });
+
     it('rejects coupon periods where expiresAt is not later than startsAt', async () => {
       await expect(service.createCoupon({
         code: 'BADPERIOD',

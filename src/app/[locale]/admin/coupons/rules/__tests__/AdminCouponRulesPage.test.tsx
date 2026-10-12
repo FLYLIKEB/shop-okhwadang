@@ -8,6 +8,7 @@ const mockCreateRule = vi.fn();
 const mockUpdateRule = vi.fn();
 const mockRemoveRule = vi.fn();
 const mockGetCouponsList = vi.fn();
+const mockGetTiers = vi.fn();
 
 const translate = (key: string, values?: Record<string, string | number>) => {
   if (key === 'summary' && values) return `summary:${values.count}`;
@@ -32,6 +33,9 @@ vi.mock('@/lib/api', () => ({
   },
   adminCouponsApi: {
     getList: (...args: unknown[]) => mockGetCouponsList(...args),
+  },
+  adminMembershipApi: {
+    getTiers: (...args: unknown[]) => mockGetTiers(...args),
   },
 }));
 
@@ -122,6 +126,28 @@ describe('AdminCouponRulesPage', () => {
       ].filter((coupon) => `${coupon.code} ${coupon.name}`.includes(keyword));
       return Promise.resolve({ items, total: items.length, page: 1, limit: 20 });
     });
+    mockGetTiers.mockResolvedValue([
+      {
+        id: 1,
+        name: 'Silver',
+        minAmount: 300000,
+        pointRate: 1,
+        sortOrder: 2,
+        isActive: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        id: 2,
+        name: 'Platinum',
+        minAmount: 1000000,
+        pointRate: 3,
+        sortOrder: 3,
+        isActive: true,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ]);
     mockCreateRule.mockResolvedValue({ id: 4 });
     mockUpdateRule.mockResolvedValue({ id: 3 });
     mockRemoveRule.mockResolvedValue({ message: 'deleted' });
@@ -133,6 +159,7 @@ describe('AdminCouponRulesPage', () => {
     await waitFor(() => {
       expect(mockGetRules).toHaveBeenCalledWith({ page: 1, limit: 20 });
       expect(mockGetCouponsList).toHaveBeenCalledWith({ page: 1, limit: 20, q: undefined });
+      expect(mockGetTiers).toHaveBeenCalled();
     });
 
     expect((await screen.findAllByText('WELCOME10 · 신규가입 10% (#7)')).length).toBeGreaterThan(0);
@@ -166,16 +193,66 @@ describe('AdminCouponRulesPage', () => {
     expect(screen.getByLabelText('form.couponTemplate')).toHaveValue(21);
 
     fireEvent.change(screen.getByLabelText('form.trigger'), { target: { value: 'tier_up' } });
-    fireEvent.change(screen.getByLabelText('form.conditionsJson'), {
-      target: { value: '{"minTier":"Silver"}' },
-    });
+    fireEvent.change(screen.getByLabelText('form.minTier'), { target: { value: 'Platinum' } });
     fireEvent.click(screen.getByRole('button', { name: 'create' }));
 
     await waitFor(() => {
       expect(mockCreateRule).toHaveBeenCalledWith({
         trigger: 'tier_up',
         couponTemplateId: 21,
-        conditionsJson: { minTier: 'Silver' },
+        conditionsJson: { minTier: 'Platinum' },
+        active: true,
+      });
+    });
+  });
+
+  it('keeps legacy birthday rules visible and deactivates them directly', async () => {
+    render(<AdminCouponRulesPage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '다음' }));
+    expect(await screen.findByText('triggers.birthday')).toBeInTheDocument();
+    expect(screen.getByText('legacyBirthday')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'deactivate' }));
+
+    await waitFor(() => {
+      expect(mockUpdateRule).toHaveBeenCalledWith(4, { active: false });
+    });
+  });
+
+  it('clears tier conditions when the trigger changes', async () => {
+    render(<AdminCouponRulesPage />);
+
+    expect((await screen.findAllByText('WELCOME10 · 신규가입 10% (#7)')).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /WELCOME20/ }));
+    fireEvent.change(screen.getByLabelText('form.trigger'), { target: { value: 'tier_up' } });
+    fireEvent.change(screen.getByLabelText('form.minTier'), { target: { value: 'Silver' } });
+    fireEvent.change(screen.getByLabelText('form.trigger'), { target: { value: 'signup' } });
+    fireEvent.click(screen.getByRole('button', { name: 'create' }));
+
+    await waitFor(() => {
+      expect(mockCreateRule).toHaveBeenCalledWith({
+        trigger: 'signup',
+        couponTemplateId: 21,
+        conditionsJson: null,
+        active: true,
+      });
+    });
+  });
+
+  it('allows tier-up rules without minTier for all upgrades', async () => {
+    render(<AdminCouponRulesPage />);
+
+    expect((await screen.findAllByText('WELCOME10 · 신규가입 10% (#7)')).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /WELCOME20/ }));
+    fireEvent.change(screen.getByLabelText('form.trigger'), { target: { value: 'tier_up' } });
+    fireEvent.click(screen.getByRole('button', { name: 'create' }));
+
+    await waitFor(() => {
+      expect(mockCreateRule).toHaveBeenCalledWith({
+        trigger: 'tier_up',
+        couponTemplateId: 21,
+        conditionsJson: null,
         active: true,
       });
     });

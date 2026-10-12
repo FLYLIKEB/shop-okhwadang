@@ -9,8 +9,10 @@ export interface CouponItem {
   value: number;
   minOrderAmount: number;
   maxDiscount: number | null;
+  startsAt: string;
   expiresAt: string;
   status: 'available' | 'used' | 'expired';
+  availabilityReason: 'not_started' | 'inactive' | null;
   issuedAt: string;
   usedAt: string | null;
 }

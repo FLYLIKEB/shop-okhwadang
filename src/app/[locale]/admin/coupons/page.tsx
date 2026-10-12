@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
@@ -85,6 +86,48 @@ function toPayload(form: CouponFormState): AdminCouponInput {
   };
 }
 
+function changed<T>(next: T, current: T): boolean {
+  return next !== current;
+}
+
+function toUpdatePayload(form: CouponFormState, coupon: AdminCoupon): Partial<AdminCouponInput> {
+  const payload: Partial<AdminCouponInput> = {};
+  const nextCode = form.code.trim();
+  const nextName = form.name.trim();
+  const nextTotalQuantity = form.totalQuantity === '' ? null : Number(form.totalQuantity);
+
+  if (changed(nextCode, coupon.code)) payload.code = nextCode;
+  if (changed(nextName, coupon.name)) payload.name = nextName;
+  if (changed(nextTotalQuantity, coupon.totalQuantity)) payload.totalQuantity = nextTotalQuantity;
+
+  if (coupon.issuedCount > 0) return payload;
+
+  const originalForm = toFormState(coupon);
+  const nextMinOrderAmount = Number(form.minOrderAmount || 0);
+  const nextMaxDiscount = form.maxDiscount === '' ? null : Number(form.maxDiscount);
+
+  if (changed(form.type, coupon.type)) payload.type = form.type;
+  if (changed(Number(form.value), coupon.value)) payload.value = Number(form.value);
+  if (changed(nextMinOrderAmount, coupon.minOrderAmount)) payload.minOrderAmount = nextMinOrderAmount;
+  if (changed(nextMaxDiscount, coupon.maxDiscount)) payload.maxDiscount = nextMaxDiscount;
+  if (form.startsAt !== originalForm.startsAt) payload.startsAt = fromDateTimeInput(form.startsAt);
+  if (form.expiresAt !== originalForm.expiresAt) payload.expiresAt = fromDateTimeInput(form.expiresAt);
+  if (changed(form.isActive, coupon.isActive)) payload.isActive = form.isActive;
+
+  return payload;
+}
+
+function isFiniteNumber(value: string): boolean {
+  if (value.trim() === '') return false;
+  return Number.isFinite(Number(value));
+}
+
+function dateMsForValidation(value: string, originalIso?: string): number {
+  if (originalIso && value === toDateTimeInput(originalIso)) return Date.parse(originalIso);
+  if (!value) return Number.NaN;
+  return Date.parse(fromDateTimeInput(value));
+}
+
 export default function AdminCouponsPage() {
   const t = useTranslations('admin.coupons');
   const commonT = useTranslations('admin.common');
@@ -108,7 +151,9 @@ export default function AdminCouponsPage() {
     },
   });
   const [editingCouponId, setEditingCouponId] = useState<number | null>(null);
+  const [editingCoupon, setEditingCoupon] = useState<AdminCoupon | null>(null);
   const [form, setForm] = useState<CouponFormState>(EMPTY_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
   const [issueCouponId, setIssueCouponId] = useState('');
   const [issueUserId, setIssueUserId] = useState('');
 
@@ -137,17 +182,20 @@ export default function AdminCouponsPage() {
 
   const { execute: saveCoupon, isLoading: savingCoupon } = useAsyncAction(
     async () => {
-      const payload = toPayload(form);
-      if (editingCouponId == null) {
+      if (editingCoupon == null) {
+        const payload = toPayload(form);
         await adminCouponsApi.create(payload);
         setPage(1);
         await loadCoupons(1);
       } else {
-        await adminCouponsApi.update(editingCouponId, payload);
+        const payload = toUpdatePayload(form, editingCoupon);
+        await adminCouponsApi.update(editingCoupon.id, payload);
         await loadCoupons(page);
       }
       setEditingCouponId(null);
+      setEditingCoupon(null);
       setForm(EMPTY_FORM);
+      setFormError(null);
     },
     {
       successMessage: editingCouponId == null ? t('createSuccess') : t('updateSuccess'),
@@ -160,6 +208,7 @@ export default function AdminCouponsPage() {
       await adminCouponsApi.remove(couponId);
       if (editingCouponId === couponId) {
         setEditingCouponId(null);
+        setEditingCoupon(null);
         setForm(EMPTY_FORM);
       }
       const fallbackPage = coupons.length === 1 && page > 1 ? page - 1 : page;
@@ -186,18 +235,64 @@ export default function AdminCouponsPage() {
 
   const beginEdit = (coupon: AdminCoupon) => {
     setEditingCouponId(coupon.id);
+    setEditingCoupon(coupon);
     setForm(toFormState(coupon));
+    setFormError(null);
   };
 
   const resetForm = () => {
     setEditingCouponId(null);
+    setEditingCoupon(null);
     setForm(EMPTY_FORM);
+    setFormError(null);
+  };
+
+  const validateForm = (): string | null => {
+    if (!form.code.trim()) return t('validation.codeRequired');
+    if (!form.name.trim()) return t('validation.nameRequired');
+
+    if (!isFiniteNumber(form.value) || Number(form.value) <= 0) return t('validation.valuePositive');
+    if (form.type === 'percentage' && Number(form.value) > 100) return t('validation.percentMax');
+    if (!isFiniteNumber(form.minOrderAmount) || Number(form.minOrderAmount) < 0) {
+      return t('validation.minOrderAmount');
+    }
+    if (form.maxDiscount !== '' && (!isFiniteNumber(form.maxDiscount) || Number(form.maxDiscount) < 0)) {
+      return t('validation.maxDiscount');
+    }
+    if (
+      form.totalQuantity !== ''
+      && (!Number.isInteger(Number(form.totalQuantity)) || Number(form.totalQuantity) <= 0)
+    ) {
+      return t('validation.totalQuantity');
+    }
+    if (
+      editingCoupon != null
+      && form.totalQuantity !== ''
+      && Number(form.totalQuantity) < editingCoupon.issuedCount
+    ) {
+      return t('validation.totalQuantityIssued', { count: editingCoupon.issuedCount });
+    }
+
+    const startsAt = dateMsForValidation(form.startsAt, editingCoupon?.startsAt);
+    const expiresAt = dateMsForValidation(form.expiresAt, editingCoupon?.expiresAt);
+    if (!Number.isFinite(startsAt) || !Number.isFinite(expiresAt)) return t('validation.datesRequired');
+    if (expiresAt <= startsAt) return t('validation.dateRange');
+
+    return null;
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const error = validateForm();
+    setFormError(error);
+    if (error) {
+      toast.error(error);
+      return;
+    }
     void saveCoupon();
   };
+
+  const issuedLocked = editingCoupon != null && editingCoupon.issuedCount > 0;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
@@ -275,17 +370,17 @@ export default function AdminCouponsPage() {
                             <div>{coupon.name}</div>
                             <div className="mt-1 text-xs text-muted-foreground">
                               {t('table.minOrderAmount', {
-                                amount: formatCurrency(coupon.minOrderAmount, locale),
+                                amount: formatCurrency(coupon.minOrderAmount, 'ko'),
                               })}
                             </div>
                           </td>
                           <td className="px-4 py-3">
                             {coupon.type === 'percentage'
                               ? t('discount.percentage', { value: coupon.value })
-                              : t('discount.fixed', { value: formatCurrency(coupon.value, locale) })}
+                              : t('discount.fixed', { value: formatCurrency(coupon.value, 'ko') })}
                             {coupon.maxDiscount != null && (
                               <div className="mt-1 text-xs text-muted-foreground">
-                                {t('discount.max', { value: formatCurrency(coupon.maxDiscount, locale) })}
+                                {t('discount.max', { value: formatCurrency(coupon.maxDiscount, 'ko') })}
                               </div>
                             )}
                           </td>
@@ -304,7 +399,7 @@ export default function AdminCouponsPage() {
                           <td className="px-4 py-3">
                             <span
                               className={cn(
-                                'inline-flex rounded-full px-2 py-1 text-xs font-medium',
+                                'inline-flex whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium',
                                 coupon.isActive
                                   ? 'bg-emerald-100 text-emerald-700'
                                   : 'bg-muted text-muted-foreground',
@@ -314,18 +409,18 @@ export default function AdminCouponsPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end gap-2 whitespace-nowrap">
                               <button
                                 type="button"
                                 onClick={() => beginEdit(coupon)}
-                                className="rounded-md border px-3 py-1.5 typo-button text-muted-foreground hover:bg-muted hover:text-foreground"
+                                className="whitespace-nowrap rounded-md border px-3 py-1.5 typo-button text-muted-foreground hover:bg-muted hover:text-foreground"
                               >
                                 {t('edit')}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => void deleteCoupon(coupon.id)}
-                                className="rounded-md border border-destructive/30 px-3 py-1.5 typo-button text-destructive hover:bg-destructive/10"
+                                className="whitespace-nowrap rounded-md border border-destructive/30 px-3 py-1.5 typo-button text-destructive hover:bg-destructive/10"
                               >
                                 {t('delete')}
                               </button>
@@ -360,42 +455,53 @@ export default function AdminCouponsPage() {
               )}
             </div>
             <form className="grid gap-3" onSubmit={handleSubmit}>
+              {formError && (
+                <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                  {formError}
+                </p>
+              )}
+              {issuedLocked && (
+                <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                  {t('form.issuedLockedReason')}
+                </p>
+              )}
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="grid gap-1 typo-body-sm font-medium">
+                <label className="grid min-w-0 gap-1 typo-body-sm font-medium">
                   {t('form.code')}
                   <input
                     value={form.code}
                     onChange={(event) => setForm((prev) => ({ ...prev, code: event.target.value }))}
                     required
-                    className="rounded-md border bg-background px-3 py-2"
+                    className="w-full min-w-0 rounded-md border bg-background px-3 py-2"
                   />
                 </label>
-                <label className="grid gap-1 typo-body-sm font-medium">
+                <label className="grid min-w-0 gap-1 typo-body-sm font-medium">
                   {t('form.name')}
                   <input
                     value={form.name}
                     onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
                     required
-                    className="rounded-md border bg-background px-3 py-2"
+                    className="w-full min-w-0 rounded-md border bg-background px-3 py-2"
                   />
                 </label>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="grid gap-1 typo-body-sm font-medium">
+                <label className="grid min-w-0 gap-1 typo-body-sm font-medium">
                   {t('form.type')}
                   <select
                     value={form.type}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, type: event.target.value as AdminCoupon['type'] }))
                     }
-                    className="rounded-md border bg-background px-3 py-2"
+                    disabled={issuedLocked}
+                    className="w-full min-w-0 rounded-md border bg-background px-3 py-2"
                   >
                     <option value="percentage">{t('types.percentage')}</option>
                     <option value="fixed">{t('types.fixed')}</option>
                   </select>
                 </label>
-                <label className="grid gap-1 typo-body-sm font-medium">
-                  {t('form.value')}
+                <label className="grid min-w-0 gap-1 typo-body-sm font-medium">
+                  {t(form.type === 'percentage' ? 'form.valuePercentage' : 'form.valueFixed')}
                   <input
                     type="number"
                     min="0"
@@ -403,12 +509,13 @@ export default function AdminCouponsPage() {
                     value={form.value}
                     onChange={(event) => setForm((prev) => ({ ...prev, value: event.target.value }))}
                     required
-                    className="rounded-md border bg-background px-3 py-2"
+                    disabled={issuedLocked}
+                    className="w-full min-w-0 rounded-md border bg-background px-3 py-2"
                   />
                 </label>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <label className="grid gap-1 typo-body-sm font-medium">
+              <div className="grid gap-3">
+                <label className="grid min-w-0 gap-1 typo-body-sm font-medium">
                   {t('form.minOrderAmount')}
                   <input
                     type="number"
@@ -416,10 +523,11 @@ export default function AdminCouponsPage() {
                     step="1"
                     value={form.minOrderAmount}
                     onChange={(event) => setForm((prev) => ({ ...prev, minOrderAmount: event.target.value }))}
-                    className="rounded-md border bg-background px-3 py-2"
+                    disabled={issuedLocked}
+                    className="w-full min-w-0 rounded-md border bg-background px-3 py-2"
                   />
                 </label>
-                <label className="grid gap-1 typo-body-sm font-medium">
+                <label className="grid min-w-0 gap-1 typo-body-sm font-medium">
                   {t('form.maxDiscount')}
                   <input
                     type="number"
@@ -427,10 +535,11 @@ export default function AdminCouponsPage() {
                     step="1"
                     value={form.maxDiscount}
                     onChange={(event) => setForm((prev) => ({ ...prev, maxDiscount: event.target.value }))}
-                    className="rounded-md border bg-background px-3 py-2"
+                    disabled={issuedLocked}
+                    className="w-full min-w-0 rounded-md border bg-background px-3 py-2"
                   />
                 </label>
-                <label className="grid gap-1 typo-body-sm font-medium">
+                <label className="grid min-w-0 gap-1 typo-body-sm font-medium">
                   {t('form.totalQuantity')}
                   <input
                     type="number"
@@ -438,29 +547,31 @@ export default function AdminCouponsPage() {
                     step="1"
                     value={form.totalQuantity}
                     onChange={(event) => setForm((prev) => ({ ...prev, totalQuantity: event.target.value }))}
-                    className="rounded-md border bg-background px-3 py-2"
+                    className="w-full min-w-0 rounded-md border bg-background px-3 py-2"
                   />
                 </label>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="grid gap-1 typo-body-sm font-medium">
+                <label className="grid min-w-0 gap-1 typo-body-sm font-medium">
                   {t('form.startsAt')}
                   <input
                     type="datetime-local"
                     value={form.startsAt}
                     onChange={(event) => setForm((prev) => ({ ...prev, startsAt: event.target.value }))}
                     required
-                    className="rounded-md border bg-background px-3 py-2"
+                    disabled={issuedLocked}
+                    className="w-full min-w-0 rounded-md border bg-background px-3 py-2"
                   />
                 </label>
-                <label className="grid gap-1 typo-body-sm font-medium">
+                <label className="grid min-w-0 gap-1 typo-body-sm font-medium">
                   {t('form.expiresAt')}
                   <input
                     type="datetime-local"
                     value={form.expiresAt}
                     onChange={(event) => setForm((prev) => ({ ...prev, expiresAt: event.target.value }))}
                     required
-                    className="rounded-md border bg-background px-3 py-2"
+                    disabled={issuedLocked}
+                    className="w-full min-w-0 rounded-md border bg-background px-3 py-2"
                   />
                 </label>
               </div>
@@ -469,6 +580,7 @@ export default function AdminCouponsPage() {
                   type="checkbox"
                   checked={form.isActive}
                   onChange={(event) => setForm((prev) => ({ ...prev, isActive: event.target.checked }))}
+                  disabled={issuedLocked}
                 />
                 {t('form.isActive')}
               </label>

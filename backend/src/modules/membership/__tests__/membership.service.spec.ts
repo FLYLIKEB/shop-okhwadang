@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import { MembershipService } from '../membership.service';
+import { CreateMembershipTierDto } from '../dto/create-membership-tier.dto';
+import { UpdateMembershipTierDto } from '../dto/update-membership-tier.dto';
 import { MembershipTier } from '../entities/membership-tier.entity';
 import { User } from '../../users/entities/user.entity';
 import { MembershipEventEmitter } from '../membership-event.emitter';
@@ -45,7 +49,7 @@ const mockUserRepo = {
 };
 
 const mockEventEmitter = {
-  emitTierUpgraded: jest.fn(),
+  emitTierUpgraded: jest.fn().mockResolvedValue(undefined),
   onTierUpgraded: jest.fn(),
 };
 
@@ -104,12 +108,25 @@ describe('MembershipService', () => {
         pointRate: 2,
       });
       expect(result).toEqual(tier);
+      expect(mockTierRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Gold' }),
+      );
     });
 
     it('should throw ConflictException if name already exists', async () => {
       mockTierRepo.findOne.mockResolvedValue(makeTier());
       await expect(
         service.createTier({ name: 'Bronze', minAmount: 0, pointRate: 1 }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('maps a database duplicate tier name race to ConflictException', async () => {
+      mockTierRepo.findOne.mockResolvedValue(null);
+      mockTierRepo.create.mockReturnValue(makeTier({ name: 'Gold' }));
+      mockTierRepo.save.mockRejectedValue({ driverError: { code: 'ER_DUP_ENTRY' } });
+
+      await expect(
+        service.createTier({ name: 'Gold', minAmount: 700000, pointRate: 2 }),
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -122,6 +139,21 @@ describe('MembershipService', () => {
 
       const result = await service.updateTier(1, { pointRate: 1.5 });
       expect(result.pointRate).toBe(1.5);
+    });
+
+    it('rejects renaming a tier because names are stable identifiers', async () => {
+      const tier = makeTier({ name: 'Bronze' });
+      mockTierRepo.findOne.mockResolvedValue(tier);
+
+      await expect(service.updateTier(1, { name: 'Silver' })).rejects.toThrow(BadRequestException);
+      expect(mockTierRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects invalid tier names without throwing TypeError', async () => {
+      const tier = makeTier({ name: 'Bronze' });
+      mockTierRepo.findOne.mockResolvedValue(tier);
+
+      await expect(service.updateTier(1, { name: null } as never)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when tier not found', async () => {
@@ -148,6 +180,40 @@ describe('MembershipService', () => {
       expect(result.amountToNextTier).toBe(350000);
     });
 
+    it('shows the next tier after the stored tier when monthly promotion is pending', async () => {
+      const user = makeUser({ tierAccumulatedAmount: 350000, tier: 'Bronze' });
+      const tiers = [
+        makeTier({ name: 'Bronze', minAmount: 0, sortOrder: 1 }),
+        makeTier({ id: 2, name: 'Silver', minAmount: 300000, sortOrder: 2 }),
+        makeTier({ id: 3, name: 'Gold', minAmount: 700000, sortOrder: 3 }),
+      ];
+      mockUserRepo.findOne.mockResolvedValue(user);
+      mockTierRepo.find.mockResolvedValue(tiers);
+
+      const result = await service.getUserTierInfo(1);
+
+      expect(result.tier).toBe('Bronze');
+      expect(result.nextTier?.name).toBe('Silver');
+      expect(result.amountToNextTier).toBe(0);
+    });
+
+    it('skips same-threshold peers when choosing the next tier', async () => {
+      const user = makeUser({ tierAccumulatedAmount: 600000, tier: 'Wholesale' });
+      const tiers = [
+        makeTier({ name: 'Bronze', minAmount: 0, sortOrder: 0 }),
+        makeTier({ id: 2, name: 'Wholesale', minAmount: 500000, sortOrder: 1 }),
+        makeTier({ id: 3, name: 'Collector', minAmount: 500000, sortOrder: 2 }),
+        makeTier({ id: 4, name: 'Gold', minAmount: 900000, sortOrder: 3 }),
+      ];
+      mockUserRepo.findOne.mockResolvedValue(user);
+      mockTierRepo.find.mockResolvedValue(tiers);
+
+      const result = await service.getUserTierInfo(1);
+
+      expect(result.nextTier?.name).toBe('Gold');
+      expect(result.amountToNextTier).toBe(300000);
+    });
+
     it('should throw NotFoundException when user not found', async () => {
       mockUserRepo.findOne.mockResolvedValue(null);
       await expect(service.getUserTierInfo(99)).rejects.toThrow(NotFoundException);
@@ -161,11 +227,19 @@ describe('MembershipService', () => {
       expect(mockUserRepo.increment).toHaveBeenCalledWith({ id: 1 }, 'tierAccumulatedAmount', 50000);
     });
 
-    it('derives tier accrual from already-discounted total excluding shipping only', () => {
+    it('increments through the provided transaction manager when present', async () => {
+      const manager = { increment: jest.fn().mockResolvedValue({ affected: 1 }) };
+
+      await service.incrementAccumulatedAmount(1, 50000, manager as never);
+
+      expect(manager.increment).toHaveBeenCalledWith(User, { id: 1 }, 'tierAccumulatedAmount', 50000);
+      expect(mockUserRepo.increment).not.toHaveBeenCalled();
+    });
+
+    it('derives tier accrual from the already-discounted order total', () => {
       expect(service.getCompletedOrderAccrualAmount({
         totalAmount: 46000,
-        shippingFee: 3000,
-      })).toBe(43000);
+      })).toBe(46000);
     });
   });
 
@@ -192,6 +266,49 @@ describe('MembershipService', () => {
       );
     });
 
+    it('keeps the old tier when tier-up side effects fail so the next evaluation can retry', async () => {
+      const tiers = [
+        makeTier({ id: 2, name: 'Silver', minAmount: 300000, sortOrder: 2 }),
+        makeTier({ id: 1, name: 'Bronze', minAmount: 0, sortOrder: 1 }),
+      ];
+      const users = [makeUser({ id: 1, tier: 'Bronze', tierAccumulatedAmount: 350000 })];
+
+      mockTierRepo.find.mockResolvedValue(tiers);
+      mockUserRepo.find.mockResolvedValue(users);
+      mockEventEmitter.emitTierUpgraded.mockRejectedValueOnce(new Error('coupon db down'));
+
+      await service.evaluateAllUserTiers();
+
+      expect(mockUserRepo.update).not.toHaveBeenCalledWith(
+        { id: expect.any(Object) },
+        expect.objectContaining({ tier: 'Silver' }),
+      );
+    });
+
+    it('preserves the current tier when multiple configured tiers share the same threshold', async () => {
+      const tiers = [
+        makeTier({ id: 2, name: 'Wholesale', minAmount: 500000, sortOrder: 1 }),
+        makeTier({ id: 3, name: 'Collector', minAmount: 500000, sortOrder: 2 }),
+        makeTier({ id: 1, name: 'Bronze', minAmount: 0, sortOrder: 0 }),
+      ];
+      const users = [makeUser({ id: 1, tier: 'Collector', tierAccumulatedAmount: 600000 })];
+
+      mockTierRepo.find.mockResolvedValue(tiers);
+      mockUserRepo.find.mockResolvedValue(users);
+
+      await service.evaluateAllUserTiers();
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith(
+        { id: expect.any(Object) },
+        expect.objectContaining({ tierEvaluatedAt: expect.any(Date) }),
+      );
+      expect(mockUserRepo.update).not.toHaveBeenCalledWith(
+        { id: expect.any(Object) },
+        expect.objectContaining({ tier: 'Wholesale' }),
+      );
+      expect(mockEventEmitter.emitTierUpgraded).not.toHaveBeenCalled();
+    });
+
     it('should not emit event when tier unchanged', async () => {
       const tiers = [makeTier({ name: 'Bronze', minAmount: 0 })];
       const users = [makeUser({ id: 1, tier: 'Bronze', tierAccumulatedAmount: 100 })];
@@ -213,6 +330,38 @@ describe('MembershipService', () => {
       mockTierRepo.find.mockResolvedValue([]);
       await service.evaluateAllUserTiers();
       expect(mockUserRepo.find).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('membership tier DTO validation', () => {
+    it('rejects null sortOrder on create', () => {
+      const dto = plainToInstance(CreateMembershipTierDto, {
+        name: 'Gold',
+        minAmount: 700000,
+        pointRate: 2,
+        sortOrder: null,
+      });
+
+      expect(validateSync(dto).length).toBeGreaterThan(0);
+    });
+
+    it('rejects sortOrder above INT32 on create', () => {
+      const dto = plainToInstance(CreateMembershipTierDto, {
+        name: 'Gold',
+        minAmount: 700000,
+        pointRate: 2,
+        sortOrder: 2147483648,
+      });
+
+      expect(validateSync(dto).length).toBeGreaterThan(0);
+    });
+
+    it('rejects null sortOrder on update', () => {
+      const dto = plainToInstance(UpdateMembershipTierDto, {
+        sortOrder: null,
+      });
+
+      expect(validateSync(dto).length).toBeGreaterThan(0);
     });
   });
 });
