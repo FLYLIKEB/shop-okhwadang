@@ -132,7 +132,10 @@ describe('AdminProductsPage', () => {
     render(<AdminProductsPage />);
 
     expect(await screen.findByText('옥화당 자사호')).toBeInTheDocument();
-    expect(screen.queryByText('naverCommerce.credentialsHint')).not.toBeInTheDocument();
+    expect(screen.getByText('naverCommerce.excelClosed')).toBeInTheDocument();
+    expect(screen.queryByLabelText('import.fileLabel')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'import.previewButton' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'import.commitButton' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.previewButton' }));
 
     await waitFor(() => {
@@ -158,6 +161,7 @@ describe('AdminProductsPage', () => {
       expect(mockCommitNaverCommerceImport).toHaveBeenCalledTimes(1);
     });
     expect(mockCommitNaverCommerceImport).toHaveBeenCalledWith(['SKU-1']);
+    expect(mockPreviewSmartStoreImport).not.toHaveBeenCalled();
     expect(mockCommitSmartStoreImport).not.toHaveBeenCalled();
   });
 });

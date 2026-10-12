@@ -16,24 +16,41 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock('next/image', () => ({
+  default: (props: Record<string, unknown>) => {
+    const { fill, ...rest } = props;
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    return <img data-fill={fill ? 'true' : undefined} {...rest} />;
+  },
+}));
+
+vi.mock('@/lib/api', () => ({
+  adminInquiriesApi: {
+    getAll: vi.fn(() => new Promise(() => undefined)),
+  },
+  adminOrdersApi: {
+    getList: vi.fn(() => new Promise(() => undefined)),
+  },
+}));
+
+function readMessage(source: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((acc, part) => {
+    if (acc && typeof acc === 'object' && part in acc) {
+      return (acc as Record<string, unknown>)[part];
+    }
+    return undefined;
+  }, source);
+}
+
 vi.mock('next-intl', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next-intl')>();
   const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, unknown>;
   return {
     ...actual,
     useTranslations: (namespace: string) => (key: string) => {
-      const value = namespace.split('.').reduce<unknown>((acc, part) => {
-        if (acc && typeof acc === 'object' && part in acc) {
-          return (acc as Record<string, unknown>)[part];
-        }
-        return undefined;
-      }, messages);
-
-      if (value && typeof value === 'object' && key in value) {
-        return String((value as Record<string, unknown>)[key]);
-      }
-
-      return key;
+      const path = `${namespace}.${key}`;
+      const value = readMessage(messages, path);
+      return typeof value === 'string' ? value : key;
     },
   };
 });
@@ -93,7 +110,8 @@ describe('AdminSidebar', () => {
     render(<AdminLayout><span /></AdminLayout>);
     const homeLink = screen.getByRole('link', { name: '쇼핑몰로 돌아가기' });
     expect(homeLink).toHaveAttribute('href', '/');
-    expect(screen.getByText('대시보드')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '대시보드' })).toHaveAttribute('href', '/admin/dashboard');
+    expect(screen.getByRole('link', { name: '어드민 가이드' })).toHaveAttribute('href', '/admin/guide');
 
     // Nav groups are collapsed by default — open each to reveal children
     fireEvent.click(screen.getByText('상품'));
@@ -123,6 +141,45 @@ describe('AdminSidebar', () => {
 
     render(<AdminLayout><span /></AdminLayout>);
 
-    expect(screen.getByText('쿠폰 규칙')).toBeInTheDocument();
+    expect(screen.getAllByText('쿠폰 규칙').some((element) => element.tagName === 'P')).toBe(true);
+  });
+
+  it('shows collapsed contextual help for the current nested admin route', () => {
+    mockPathname = '/admin/products/42/edit';
+    mockUseAuth.mockReturnValue({
+      user: { id: 2, name: '관리자', email: 'a@test.com', role: 'admin' },
+      isLoading: false,
+      logout: vi.fn(),
+    });
+
+    const { rerender } = render(<AdminLayout><input aria-label="상품명" defaultValue="자사호" /></AdminLayout>);
+    fireEvent.change(screen.getByLabelText('상품명'), { target: { value: '작성 중인 상품' } });
+
+    const guide = screen.getByText('이 화면 사용법').closest('details');
+    expect(guide).not.toHaveAttribute('open');
+
+    fireEvent.click(screen.getByText('이 화면 사용법'));
+    expect(screen.getByRole('link', { name: '전체 가이드' })).toHaveAttribute('href', '/admin/guide#products');
+    expect(screen.getByText('상품 등록·수정, 노출, 이미지, 옵션, 속성과 네이버 커머스 API 가져오기를 관리합니다.')).toBeInTheDocument();
+    expect(screen.getByLabelText('상품명')).toHaveValue('작성 중인 상품');
+    mockPathname = '/admin/products/43/edit';
+    rerender(<AdminLayout><input aria-label="상품명" defaultValue="자사호" /></AdminLayout>);
+    expect(screen.getByText('이 화면 사용법').closest('details')).not.toHaveAttribute('open');
+    expect(screen.getByLabelText('상품명')).toHaveValue('작성 중인 상품');
+  });
+
+  it('shows the guide section title in the header', () => {
+    mockPathname = '/ko/admin/guide';
+    mockUseAuth.mockReturnValue({
+      user: { id: 2, name: '관리자', email: 'a@test.com', role: 'admin' },
+      isLoading: false,
+      logout: vi.fn(),
+    });
+
+    render(<AdminLayout><span /></AdminLayout>);
+
+    expect(screen.getAllByText('어드민 가이드').some((element) => element.tagName === 'P')).toBe(true);
+    expect(screen.queryByText('이 화면 사용법')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '어드민 가이드' })).toHaveAttribute('aria-current', 'page');
   });
 });

@@ -2086,3 +2086,16 @@ h3 {
 .toss-admin button.bg-primary:hover {
   background-color: var(--checkout-toss-primary-hover);
 }
+
+/* Guide headings use the admin type scale instead of storefront display headings. */
+.admin-guide h1 {
+  @apply typo-h1 font-body;
+}
+
+.admin-guide h2 {
+  @apply typo-h3 font-body font-semibold;
+}
+
+.admin-guide h3 {
+  @apply typo-body-sm font-semibold;
+}
