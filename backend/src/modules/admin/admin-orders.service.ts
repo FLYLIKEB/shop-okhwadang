@@ -213,7 +213,7 @@ export class AdminOrdersService {
     if (nextStatus === OrderStatus.COMPLETED) {
       const userId = this.getOrderUserId(order);
       if (userId !== null) {
-        const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
+        const completedAmount = this.membershipService.getCompletedOrderAccrualAmount(order);
         void this.membershipService
           .incrementAccumulatedAmount(userId, completedAmount)
           .catch((err) =>

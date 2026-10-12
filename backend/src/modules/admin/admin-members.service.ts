@@ -17,6 +17,9 @@ export interface SafeUser {
   name: string;
   phone: string | null;
   role: UserRole;
+  tier: string;
+  tierAccumulatedAmount: number;
+  tierEvaluatedAt: Date | null;
   isActive: boolean;
   failedLoginAttempts: number;
   lockedUntil: Date | null;
@@ -32,6 +35,9 @@ function toSafeUser(user: User): SafeUser {
     name: user.name,
     phone: user.phone,
     role: user.role,
+    tier: user.tier,
+    tierAccumulatedAmount: Number(user.tierAccumulatedAmount),
+    tierEvaluatedAt: user.tierEvaluatedAt,
     isActive: user.isActive,
     failedLoginAttempts: user.failedLoginAttempts,
     lockedUntil: user.lockedUntil,

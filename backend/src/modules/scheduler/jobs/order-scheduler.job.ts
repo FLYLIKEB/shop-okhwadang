@@ -78,7 +78,7 @@ export class OrderSchedulerJob {
 
       const userId = this.getOrderUserId(order);
       if (userId !== null) {
-        const completedAmount = Number(order.totalAmount) - Number(order.discountAmount ?? 0);
+        const completedAmount = this.deps.membershipService.getCompletedOrderAccrualAmount(order);
         void this.deps.membershipService.incrementAccumulatedAmount(userId, completedAmount)
           .catch((err) => this.deps.logger.warn(`Failed to increment tier amount for user ${userId}: ${String(err)}`));
       }

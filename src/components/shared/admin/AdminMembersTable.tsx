@@ -30,6 +30,7 @@ export function AdminMembersTable({ members, onRoleChange }: AdminMembersTablePr
             <th className="px-4 py-3 text-left font-medium">{t('columns.email')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.name')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.role')}</th>
+            <th className="px-4 py-3 text-left font-medium">{t('columns.tier')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.status')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.joinDate')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.changeRole')}</th>
@@ -44,6 +45,11 @@ export function AdminMembersTable({ members, onRoleChange }: AdminMembersTablePr
               <td className="px-4 py-3">
                 <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
                   {t(`roles.${member.role}`)}
+                </span>
+              </td>
+              <td className="px-4 py-3">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                  {member.tier}
                 </span>
               </td>
               <td className="px-4 py-3">

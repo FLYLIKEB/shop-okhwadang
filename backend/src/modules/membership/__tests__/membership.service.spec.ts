@@ -160,6 +160,13 @@ describe('MembershipService', () => {
       await service.incrementAccumulatedAmount(1, 50000);
       expect(mockUserRepo.increment).toHaveBeenCalledWith({ id: 1 }, 'tierAccumulatedAmount', 50000);
     });
+
+    it('derives tier accrual from already-discounted total excluding shipping only', () => {
+      expect(service.getCompletedOrderAccrualAmount({
+        totalAmount: 46000,
+        shippingFee: 3000,
+      })).toBe(43000);
+    });
   });
 
   describe('evaluateAllUserTiers', () => {

@@ -118,6 +118,13 @@ export class MembershipService {
     this.logger.log(`[membership] Incremented tier_accumulated_amount for user ${userId} by ${amount}`);
   }
 
+  getCompletedOrderAccrualAmount(order: {
+    totalAmount: number | string;
+    shippingFee?: number | string | null;
+  }): number {
+    return Math.max(0, Number(order.totalAmount) - Number(order.shippingFee ?? 0));
+  }
+
   // ─── Tier re-evaluation (called by Cron) ───────────────────────────────────
 
   async evaluateAllUserTiers(): Promise<void> {
