@@ -10,6 +10,7 @@ import { DataSource } from 'typeorm';
 import { PointsService } from '../../points/points.service';
 import { ShippingFeeCalculatorService } from '../../shipping/services/shipping-fee-calculator.service';
 import { Product, ProductStatus } from '../../products/entities/product.entity';
+import { User } from '../../users/entities/user.entity';
 
 describe('CouponsService', () => {
   let service: CouponsService;
@@ -126,6 +127,15 @@ describe('CouponsService', () => {
 
     service = module.get<CouponsService>(CouponsService);
     jest.clearAllMocks();
+    mockDataSource.transaction.mockImplementation((cb: (manager: {
+      findOne: typeof mockCouponRepo.findOne;
+      save: jest.Mock;
+    }) => Promise<unknown>) =>
+      cb({
+        findOne: mockCouponRepo.findOne,
+        save: jest.fn((_entity: unknown, value: unknown) => mockCouponRepo.save(value)),
+      }),
+    );
   });
 
   describe('computeCouponDiscount', () => {
@@ -137,6 +147,12 @@ describe('CouponsService', () => {
     it('percentage 쿠폰: max_discount 미만 시 rate 적용', () => {
       const discount = service.computeCouponDiscount(30000, mockPercentageCoupon);
       expect(discount).toBe(3000);
+    });
+
+    it('percentage 쿠폰은 max_discount가 없어도 주문액을 초과해 할인하지 않는다', () => {
+      const coupon = { ...mockPercentageCoupon, value: 150, maxDiscount: null } as Coupon;
+      const discount = service.computeCouponDiscount(30000, coupon);
+      expect(discount).toBe(30000);
     });
 
     it('fixed 쿠폰: 할인액 = min(value, 주문액)', () => {
@@ -229,6 +245,22 @@ describe('CouponsService', () => {
       await expect(service.updateCoupon(1, { value: 15, isActive: false })).resolves.toEqual(
         expect.objectContaining({ value: 15, isActive: false }),
       );
+    });
+
+    it('updates coupons under a pessimistic lock so issuedCount cannot be overwritten by a concurrent issue', async () => {
+      const coupon = { ...mockPercentageCoupon, issuedCount: 0 };
+      const manager = {
+        findOne: jest.fn().mockResolvedValue(coupon),
+        save: jest.fn(async (_entity: unknown, value: Coupon) => value),
+      };
+      mockDataSource.transaction.mockImplementation((cb: (m: typeof manager) => Promise<unknown>) => cb(manager));
+
+      await service.updateCoupon(1, { name: '잠금 수정' });
+
+      expect(manager.findOne).toHaveBeenCalledWith(Coupon, {
+        where: { id: 1 },
+        lock: { mode: 'pessimistic_write' },
+      });
     });
   });
 
@@ -381,8 +413,21 @@ describe('CouponsService', () => {
       const result = await service.findAll(10, 'used');
       expect(result.coupons).toHaveLength(0);
       expect(mockUserCouponRepo.find).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { userId: 10, status: 'used' } }),
+        expect.objectContaining({ where: { userId: 10 } }),
       );
+    });
+
+    it('템플릿이 만료되거나 비활성화된 보유 쿠폰은 available 목록에서 제외하고 expired 로 분류한다', async () => {
+      const expiredAvailable = mockUserCoupon({ ...mockPercentageCoupon, expiresAt: past } as Coupon);
+      const inactiveAvailable = mockUserCoupon({ ...mockFixedCoupon, isActive: false } as Coupon);
+      mockUserCouponRepo.find.mockResolvedValue([expiredAvailable, inactiveAvailable]);
+      mockPointsService.getUserPointBalance.mockResolvedValue(0);
+
+      await expect(service.findAll(10, 'available')).resolves.toMatchObject({ coupons: [] });
+
+      const expiredResult = await service.findAll(10, 'expired');
+      expect(expiredResult.coupons).toHaveLength(2);
+      expect(expiredResult.coupons.every((coupon) => coupon.status === 'expired')).toBe(true);
     });
   });
 
@@ -417,6 +462,7 @@ describe('CouponsService', () => {
     ) => ({
       findOne: jest.fn().mockImplementation((entity: unknown) => {
         if (entity === Coupon) return Promise.resolve(couponRow);
+        if (entity === User) return Promise.resolve({ id: 10 });
         if (entity === UserCoupon) return Promise.resolve(existingUserCoupon);
         return Promise.resolve(null);
       }),
@@ -499,6 +545,30 @@ describe('CouponsService', () => {
       const result = await service.issueCoupon({ userId: 10, couponId: 2 });
       expect(result).toBeDefined();
       expect(manager.increment).toHaveBeenCalled();
+    });
+  });
+
+  describe('coupon template validation', () => {
+    it('rejects coupon periods where expiresAt is not later than startsAt', async () => {
+      await expect(service.createCoupon({
+        code: 'BADPERIOD',
+        name: '잘못된 기간',
+        type: 'fixed',
+        value: 1000,
+        startsAt: future.toISOString(),
+        expiresAt: now.toISOString(),
+      })).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects percentage coupon rates over 100 percent', async () => {
+      await expect(service.createCoupon({
+        code: 'BADRATE',
+        name: '잘못된 할인율',
+        type: 'percentage',
+        value: 101,
+        startsAt: now.toISOString(),
+        expiresAt: future.toISOString(),
+      })).rejects.toThrow(BadRequestException);
     });
   });
 });

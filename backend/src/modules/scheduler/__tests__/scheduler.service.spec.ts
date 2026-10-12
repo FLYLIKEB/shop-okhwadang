@@ -106,6 +106,14 @@ const mockPointsService = {
   creditFifo: jest.fn(),
 };
 
+const mockMembershipService = {
+  incrementAccumulatedAmount: jest.fn(),
+  evaluateAllUserTiers: jest.fn(),
+  getCompletedOrderAccrualAmount: jest.fn((order: { totalAmount: number; shippingFee?: number }) =>
+    Number(order.totalAmount) - Number(order.shippingFee ?? 0),
+  ),
+};
+
 describe('SchedulerService', () => {
   let service: SchedulerService;
 
@@ -136,6 +144,11 @@ describe('SchedulerService', () => {
     mockPointsService.getRunningBalanceInTx.mockResolvedValue(0);
     mockPointsService.lockUserForPointChanges.mockResolvedValue(undefined);
     mockPointsService.creditFifo.mockResolvedValue(undefined);
+    mockMembershipService.incrementAccumulatedAmount.mockReset();
+    mockMembershipService.evaluateAllUserTiers.mockReset();
+    mockMembershipService.getCompletedOrderAccrualAmount.mockClear();
+    mockMembershipService.incrementAccumulatedAmount.mockResolvedValue(undefined);
+    mockMembershipService.evaluateAllUserTiers.mockResolvedValue(undefined);
     mockSchedulerLockService.runWithLock.mockImplementation(
       async (
         _policy: { lockName: string; ttlMinutes: number },
@@ -158,7 +171,7 @@ describe('SchedulerService', () => {
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: MessageNotificationService, useValue: mockMessageNotificationService },
         { provide: SettingsService, useValue: mockSettingsService },
-        { provide: MembershipService, useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined), evaluateAllUserTiers: jest.fn().mockResolvedValue(undefined) } },
+        { provide: MembershipService, useValue: mockMembershipService },
         { provide: PointsService, useValue: mockPointsService },
         { provide: SchedulerLockService, useValue: mockSchedulerLockService },
       ],
@@ -359,7 +372,9 @@ describe('SchedulerService', () => {
         status: OrderStatus.DELIVERED,
         createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-        totalAmount: 50000,
+        totalAmount: 46000,
+        discountAmount: 5000,
+        shippingFee: 3000,
         recipientName: '홍길동',
         user: { id: 1, email: 'test@example.com' },
         items: [{ productName: '테스트상품', quantity: 1, price: 50000 }],
@@ -372,6 +387,10 @@ describe('SchedulerService', () => {
 
       expect(mockOrderRepo.find).toHaveBeenCalled();
       expect(mockOrderRepo.update).toHaveBeenCalledWith(1, { status: OrderStatus.COMPLETED });
+      expect(mockMembershipService.getCompletedOrderAccrualAmount).toHaveBeenCalledWith(
+        expect.objectContaining({ totalAmount: 46000, shippingFee: 3000 }),
+      );
+      expect(mockMembershipService.incrementAccumulatedAmount).toHaveBeenCalledWith(1, 43000);
     });
 
     it('should do nothing when no delivered orders found', async () => {

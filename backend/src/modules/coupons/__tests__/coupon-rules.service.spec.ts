@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { CouponRulesService } from '../coupon-rules.service';
 import { CouponRule, CouponRuleTrigger } from '../entities/coupon-rule.entity';
 import { CouponsService } from '../coupons.service';
 import { MembershipEventEmitter } from '../../membership/membership-event.emitter';
+import { MembershipService } from '../../membership/membership.service';
 import { AuthEventEmitter } from '../../auth/auth-event.emitter';
 import { OrderEventEmitter } from '../../orders/order-event.emitter';
 import { User } from '../../users/entities/user.entity';
@@ -50,6 +51,10 @@ describe('CouponRulesService', () => {
     onTierUpgraded: jest.fn(),
   };
 
+  const mockMembershipService = {
+    findAllTiers: jest.fn(),
+  };
+
   const mockAuthEvents = {
     onUserRegistered: jest.fn(),
   };
@@ -74,6 +79,12 @@ describe('CouponRulesService', () => {
         task: () => Promise<void>,
       ) => task(),
     );
+    mockMembershipService.findAllTiers.mockResolvedValue([
+      { name: 'Bronze', minAmount: 0 },
+      { name: 'Silver', minAmount: 300000 },
+      { name: 'Gold', minAmount: 700000 },
+      { name: 'VIP', minAmount: 1500000 },
+    ]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -82,6 +93,7 @@ describe('CouponRulesService', () => {
         { provide: getRepositoryToken(User), useValue: mockUserRepo },
         { provide: CouponsService, useValue: mockCouponsService },
         { provide: MembershipEventEmitter, useValue: mockMembershipEvents },
+        { provide: MembershipService, useValue: mockMembershipService },
         { provide: AuthEventEmitter, useValue: mockAuthEvents },
         { provide: OrderEventEmitter, useValue: mockOrderEvents },
         { provide: DataSource, useValue: mockDataSource },
@@ -178,6 +190,14 @@ describe('CouponRulesService', () => {
         expect.objectContaining({ active: true }),
       );
     });
+
+    it('rejects birthday rules until users.birth_date exists', async () => {
+      mockDataSource.query.mockResolvedValue([{ count: 0 }]);
+
+      await expect(
+        service.create({ trigger: CouponRuleTrigger.BIRTHDAY, couponTemplateId: 5 }),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('update', () => {
@@ -269,6 +289,24 @@ describe('CouponRulesService', () => {
       await service.applyRulesForUser(CouponRuleTrigger.TIER_UP, 1, { newTier: 'Silver' });
 
       expect(mockCouponsService.issueCouponsForUser).not.toHaveBeenCalled();
+    });
+
+    it('tier_up minTier compares against configured membership tiers instead of hard-coded names', async () => {
+      mockMembershipService.findAllTiers.mockResolvedValue([
+        { name: 'Leaf', minAmount: 0 },
+        { name: 'Potter', minAmount: 200000 },
+        { name: 'Collector', minAmount: 900000 },
+      ]);
+      const rule = makeCouponRule({
+        trigger: CouponRuleTrigger.TIER_UP,
+        conditionsJson: { minTier: 'Potter' },
+      });
+      mockCouponRuleRepo.find.mockResolvedValue([rule]);
+      mockCouponsService.issueCouponsForUser.mockResolvedValue([{ couponId: 10, issued: true }]);
+
+      await service.applyRulesForUser(CouponRuleTrigger.TIER_UP, 1, { newTier: 'Collector' });
+
+      expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(1, [10]);
     });
 
     it('rule with null conditionsJson always matches', async () => {
@@ -373,7 +411,9 @@ describe('CouponRulesService', () => {
         couponTemplateId: 41,
       });
       mockCouponRuleRepo.find.mockResolvedValue([birthdayRule]);
-      mockDataSource.query.mockResolvedValue([{ id: 1 }, { id: 2 }]);
+      mockDataSource.query
+        .mockResolvedValueOnce([{ count: 1 }])
+        .mockResolvedValueOnce([{ id: 1 }, { id: 2 }]);
       mockCouponsService.issueCouponsForUser.mockResolvedValue([{ couponId: 41, issued: true }]);
 
       await service.handleBirthdayCoupons();
@@ -394,6 +434,18 @@ describe('CouponRulesService', () => {
       expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledTimes(2);
       expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(1, [41]);
       expect(mockCouponsService.issueCouponsForUser).toHaveBeenCalledWith(2, [41]);
+    });
+
+    it('생일 cron 은 users.birth_date 컬럼이 없으면 안전하게 건너뛴다', async () => {
+      mockCouponRuleRepo.find.mockResolvedValue([
+        makeCouponRule({ trigger: CouponRuleTrigger.BIRTHDAY, couponTemplateId: 41 }),
+      ]);
+      mockDataSource.query.mockResolvedValue([{ count: 0 }]);
+
+      await service.handleBirthdayCoupons();
+
+      expect(mockDataSource.query).toHaveBeenCalledTimes(1);
+      expect(mockCouponsService.issueCouponsForUser).not.toHaveBeenCalled();
     });
 
     it('생일 cron 은 활성 BIRTHDAY 규칙이 없으면 사용자 조회를 건너뛴다', async () => {

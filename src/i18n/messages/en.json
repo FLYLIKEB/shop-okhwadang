@@ -1101,6 +1101,7 @@
         "email": "Email",
         "name": "Name",
         "role": "Role",
+      "tier": "Tier",
         "status": "Status",
         "joinDate": "Joined",
         "changeRole": "Change Role"
@@ -1640,7 +1641,7 @@
     },
     "couponRules": {
       "title": "Coupon Rules",
-      "description": "Connect coupon templates to automatic issuance triggers.",
+      "description": "Connect coupon templates to signup, first-purchase, and tier-up triggers.",
       "summary": "{count} rules",
       "loading": "Loading coupon rules.",
       "loadError": "Failed to load coupon rules.",
@@ -1666,7 +1667,7 @@
       },
       "createTitle": "Create rule",
       "editTitle": "Edit rule",
-      "formDescription": "Use JSON conditions only when a trigger requires extra constraints.",
+      "formDescription": "Use JSON conditions only when a trigger, such as tier-up, requires extra constraints.",
       "form": {
         "trigger": "Trigger",
         "couponTemplate": "Coupon template",
@@ -1839,10 +1840,10 @@
         },
         "couponRules": {
           "title": "Coupon Rules",
-          "summary": "Connect coupon templates to automatic triggers such as signup, first purchase, birthday, and tier upgrade.",
+          "summary": "Connect coupon templates to automatic triggers such as signup, first purchase, and tier upgrade.",
           "steps": {
             "first": "Review each rule by trigger, coupon, conditions, and active state. Use coupon search to find the template ID.",
-            "second": "Choose one trigger: signup, first purchase, birthday, or tier upgrade. Leave conditions empty to apply to every target for that trigger.",
+            "second": "Choose one trigger: signup, first purchase, or tier upgrade. Leave conditions empty to apply to every target for that trigger.",
             "third": "Enter conditions as JSON. The only additional condition currently supported is minTier for tier upgrades. A value of Gold matches upgrades to Gold or higher."
           },
           "caution": "Invalid JSON cannot be saved. Unsupported condition keys currently do not change rule matching."

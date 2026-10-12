@@ -20,7 +20,7 @@ import { handleApiError } from '@/utils/error';
 
 
 
-const TRIGGERS: CouponRuleTrigger[] = ['signup', 'first_purchase', 'birthday', 'tier_up'];
+const TRIGGERS: CouponRuleTrigger[] = ['signup', 'first_purchase', 'tier_up'];
 const RULE_PAGE_SIZE = 20;
 const COUPON_OPTION_PAGE_SIZE = 20;
 

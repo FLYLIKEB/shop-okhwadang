@@ -1,5 +1,6 @@
 import {
   Injectable,
+  BadRequestException,
   Logger,
   NotFoundException,
   OnModuleInit,
@@ -13,12 +14,20 @@ import { CreateCouponRuleDto } from './dto/create-coupon-rule.dto';
 import { UpdateCouponRuleDto } from './dto/update-coupon-rule.dto';
 import { AdminCouponRuleListQueryDto } from './dto/admin-coupon-rule-list-query.dto';
 import { MembershipEventEmitter } from '../membership/membership-event.emitter';
+import { MembershipService } from '../membership/membership.service';
 import { AuthEventEmitter } from '../auth/auth-event.emitter';
 import { OrderEventEmitter } from '../orders/order-event.emitter';
 import { User } from '../users/entities/user.entity';
 import { SchedulerLockService } from '../../common/services/scheduler-lock.service';
 
 const BIRTHDAY_COUPON_USER_BATCH_SIZE = 20;
+const BIRTH_DATE_COLUMN_EXISTS_SQL = `
+  SELECT COUNT(*) AS count
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'users'
+    AND COLUMN_NAME = 'birth_date'
+`;
 
 export interface AdminCouponRuleResponse {
   id: number;
@@ -43,6 +52,7 @@ export class CouponRulesService implements OnModuleInit {
     private readonly userRepo: Repository<User>,
     private readonly couponsService: CouponsService,
     private readonly membershipEvents: MembershipEventEmitter,
+    private readonly membershipService: MembershipService,
     private readonly authEvents: AuthEventEmitter,
     private readonly orderEvents: OrderEventEmitter,
     private readonly dataSource: DataSource,
@@ -85,21 +95,81 @@ export class CouponRulesService implements OnModuleInit {
       where: { trigger, active: true },
     });
 
-    const matchingCouponIds = rules
-      .filter((rule) => this.matchesConditions(rule, context))
-      .map((rule) => Number(rule.couponTemplateId));
+    const tierRanks = trigger === CouponRuleTrigger.TIER_UP
+      ? await this.getTierRanks()
+      : null;
+    const matchingCouponIds: number[] = [];
+    for (const rule of rules) {
+      if (this.matchesConditions(rule, context, tierRanks)) {
+        matchingCouponIds.push(Number(rule.couponTemplateId));
+      }
+    }
 
     await this.issueCouponsForUser(trigger, userId, matchingCouponIds, throwOnFailure);
   }
 
-  private matchesConditions(rule: CouponRule, context: Record<string, unknown>): boolean {
+  private async assertTriggerSupported(trigger: CouponRuleTrigger): Promise<void> {
+    if (trigger === CouponRuleTrigger.BIRTHDAY && !(await this.hasBirthDateColumn())) {
+      throw new BadRequestException('생일 쿠폰은 회원 생년월일 컬럼이 준비된 후 사용할 수 있습니다.');
+    }
+  }
+
+  private async hasBirthDateColumn(): Promise<boolean> {
+    const rows = await this.dataSource.query<Array<{ count: string | number }>>(BIRTH_DATE_COLUMN_EXISTS_SQL);
+    return Number(rows[0]?.count ?? 0) > 0;
+  }
+
+  private async getTierRanks(): Promise<Map<string, number>> {
+    const tiers = await this.membershipService.findAllTiers();
+    return new Map(
+      tiers
+        .sort((a, b) => Number(a.minAmount) - Number(b.minAmount))
+        .map((tier, index) => [tier.name, index]),
+    );
+  }
+
+  private async normalizeConditions(
+    trigger: CouponRuleTrigger,
+    conditionsJson?: Record<string, unknown> | null,
+  ): Promise<Record<string, unknown> | null> {
+    if (!conditionsJson || Object.keys(conditionsJson).length === 0) {
+      return null;
+    }
+
+    if (trigger !== CouponRuleTrigger.TIER_UP) {
+      throw new BadRequestException('조건 JSON은 등급 상승 트리거에서만 사용할 수 있습니다.');
+    }
+
+    const keys = Object.keys(conditionsJson);
+    if (keys.some((key) => key !== 'minTier')) {
+      throw new BadRequestException('지원하지 않는 쿠폰 규칙 조건입니다.');
+    }
+
+    const minTier = conditionsJson.minTier;
+    if (typeof minTier !== 'string' || minTier.trim().length === 0) {
+      throw new BadRequestException('minTier 조건에는 등급명을 입력해야 합니다.');
+    }
+    const normalizedMinTier = minTier.trim();
+
+    const tierRanks = await this.getTierRanks();
+    if (!tierRanks.has(normalizedMinTier)) {
+      throw new BadRequestException('존재하지 않는 회원 등급입니다.');
+    }
+
+    return { minTier: normalizedMinTier };
+  }
+
+  private matchesConditions(
+    rule: CouponRule,
+    context: Record<string, unknown>,
+    tierRanks: Map<string, number> | null,
+  ): boolean {
     const cond = rule.conditionsJson;
     if (!cond) return true;
 
     if (rule.trigger === CouponRuleTrigger.TIER_UP && cond['minTier']) {
-      const tierOrder = ['Bronze', 'Silver', 'Gold', 'VIP'];
-      const minIdx = tierOrder.indexOf(String(cond['minTier']));
-      const newIdx = tierOrder.indexOf(String(context['newTier'] ?? ''));
+      const minIdx = tierRanks?.get(String(cond['minTier'])) ?? -1;
+      const newIdx = tierRanks?.get(String(context['newTier'] ?? '')) ?? -1;
       if (minIdx < 0 || newIdx < minIdx) return false;
     }
 
@@ -138,6 +208,11 @@ export class CouponRulesService implements OnModuleInit {
 
       if (rules.length === 0) {
         this.logger.debug('[cron:birthday-coupons] No active birthday rules');
+        return;
+      }
+
+      if (!(await this.hasBirthDateColumn())) {
+        this.logger.warn('[cron:birthday-coupons] users.birth_date column is missing; skipping birthday coupon issuance');
         return;
       }
 
@@ -213,10 +288,12 @@ export class CouponRulesService implements OnModuleInit {
 
 
   async create(dto: CreateCouponRuleDto): Promise<AdminCouponRuleResponse> {
+    await this.assertTriggerSupported(dto.trigger);
+    const conditionsJson = await this.normalizeConditions(dto.trigger, dto.conditionsJson);
     const rule = this.couponRuleRepo.create({
       trigger: dto.trigger,
       couponTemplateId: dto.couponTemplateId,
-      conditionsJson: dto.conditionsJson ?? null,
+      conditionsJson,
       active: dto.active ?? true,
     });
     const saved = await this.couponRuleRepo.save(rule);
@@ -230,9 +307,21 @@ export class CouponRulesService implements OnModuleInit {
       throw new NotFoundException('쿠폰 규칙을 찾을 수 없습니다.');
     }
 
+    await this.assertTriggerSupported(dto.trigger ?? current.trigger);
+    const nextTrigger = dto.trigger ?? current.trigger;
+    const shouldNormalizeConditions = dto.conditionsJson !== undefined || dto.trigger !== undefined;
+    const requestedConditions = dto.conditionsJson !== undefined
+      ? dto.conditionsJson
+      : dto.trigger !== undefined
+        ? null
+        : current.conditionsJson;
+    const nextConditions = shouldNormalizeConditions
+      ? await this.normalizeConditions(nextTrigger, requestedConditions)
+      : current.conditionsJson;
+
     if (dto.trigger !== undefined) current.trigger = dto.trigger;
     if (dto.couponTemplateId !== undefined) current.couponTemplateId = dto.couponTemplateId;
-    if (dto.conditionsJson !== undefined) current.conditionsJson = dto.conditionsJson ?? null;
+    if (dto.conditionsJson !== undefined) current.conditionsJson = nextConditions;
     if (dto.active !== undefined) current.active = dto.active;
 
     const saved = await this.couponRuleRepo.save(current);

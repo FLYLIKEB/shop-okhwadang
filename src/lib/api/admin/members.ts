@@ -6,6 +6,9 @@ export interface AdminMember {
   name: string;
   phone: string | null;
   role: string;
+  tier: string;
+  tierAccumulatedAmount: number;
+  tierEvaluatedAt: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

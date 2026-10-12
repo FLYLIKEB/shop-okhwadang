@@ -66,6 +66,7 @@ describe('AdminOrdersService', () => {
   let notificationService: jest.Mocked<NotificationService>;
   let messageNotificationService: jest.Mocked<MessageNotificationService>;
   let messageEffectOutbox: { enqueueWithManager: jest.Mock };
+  let membershipService: { incrementAccumulatedAmount: jest.Mock; getCompletedOrderAccrualAmount: jest.Mock };
 
   beforeEach(async () => {
     orderRepo = createMockRepository();
@@ -91,6 +92,12 @@ describe('AdminOrdersService', () => {
       sendShippingDelivered: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<MessageNotificationService>;
     messageEffectOutbox = { enqueueWithManager: jest.fn().mockResolvedValue(undefined) };
+    membershipService = {
+      incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined),
+      getCompletedOrderAccrualAmount: jest.fn((order: { totalAmount: number; shippingFee?: number }) =>
+        Number(order.totalAmount) - Number(order.shippingFee ?? 0),
+      ),
+    };
     const lockQueryRunner = {
       connect: jest.fn().mockResolvedValue(undefined),
       query: jest
@@ -115,10 +122,7 @@ describe('AdminOrdersService', () => {
         { provide: getRepositoryToken(Shipping), useValue: shippingRepo },
         { provide: PaymentsService, useValue: paymentsService },
         { provide: DataSource, useValue: dataSource },
-        {
-          provide: MembershipService,
-          useValue: { incrementAccumulatedAmount: jest.fn().mockResolvedValue(undefined) },
-        },
+        { provide: MembershipService, useValue: membershipService },
         { provide: PointsService, useValue: pointsService },
         { provide: NotificationService, useValue: notificationService },
         { provide: MessageNotificationService, useValue: messageNotificationService },
@@ -321,11 +325,22 @@ describe('AdminOrdersService', () => {
 
     it('delivered → completed: allowed', async () => {
       orderRepo.findOne
-        .mockResolvedValueOnce({ id: 1, status: OrderStatus.DELIVERED })
+        .mockResolvedValueOnce({
+          id: 1,
+          status: OrderStatus.DELIVERED,
+          userId: 10,
+          totalAmount: 46000,
+          discountAmount: 5000,
+          shippingFee: 3000,
+        })
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.COMPLETED });
 
       await service.updateStatus(1, OrderStatus.COMPLETED);
       expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.COMPLETED });
+      expect(membershipService.getCompletedOrderAccrualAmount).toHaveBeenCalledWith(
+        expect.objectContaining({ totalAmount: 46000, shippingFee: 3000 }),
+      );
+      expect(membershipService.incrementAccumulatedAmount).toHaveBeenCalledWith(10, 43000);
     });
 
     it('delivered → refund_requested: allowed', async () => {
