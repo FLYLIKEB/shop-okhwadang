@@ -89,9 +89,10 @@ export default function MyCouponsPage() {
   const [coupons, setCoupons] = useState<CouponItem[]>([]);
   const [pointBalance, setPointBalance] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadingRequestId, setLoadingRequestId] = useState<number | null>(null);
   const requestSeqRef = useRef(0);
 
-  const { execute: loadCoupons, isLoading: dataLoading } = useAsyncAction(
+  const { execute: loadCoupons } = useAsyncAction(
     async (request: LoadCouponsRequest) => {
       setLoadError(null);
       try {
@@ -105,6 +106,10 @@ export default function MyCouponsPage() {
         setPointBalance(0);
         setLoadError(t('loadError'));
         throw err;
+      } finally {
+        if (request.requestId === requestSeqRef.current) {
+          setLoadingRequestId(null);
+        }
       }
     },
     {
@@ -115,6 +120,7 @@ export default function MyCouponsPage() {
   const requestCoupons = useCallback((nextTab: TabStatus) => {
     const requestId = requestSeqRef.current + 1;
     requestSeqRef.current = requestId;
+    setLoadingRequestId(requestId);
     void loadCoupons({ tab: nextTab, requestId });
   }, [loadCoupons]);
 
@@ -171,8 +177,8 @@ export default function MyCouponsPage() {
             {t('retry')}
           </Button>
         </div>
-      ) : dataLoading ? (
-        <div className="space-y-3">
+      ) : loadingRequestId != null ? (
+        <div className="space-y-3" aria-busy="true" aria-live="polite">
           {[1, 2, 3].map((i) => (
             <SkeletonBox key={i} height="h-24" />
           ))}

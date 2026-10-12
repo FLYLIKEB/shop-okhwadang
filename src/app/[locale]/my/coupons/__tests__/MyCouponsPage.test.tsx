@@ -133,4 +133,40 @@ describe('MyCouponsPage', () => {
       expect(screen.getByText('비활성 쿠폰')).toBeInTheDocument();
     });
   });
+
+  it('keeps loading visible when an older tab request settles before the latest request', async () => {
+    const initial = deferred<{ coupons: Array<typeof availableCoupon>; points: { balance: number; willExpireSoon: number } }>();
+    const older = deferred<{ coupons: Array<typeof availableCoupon>; points: { balance: number; willExpireSoon: number } }>();
+    const latest = deferred<{ coupons: Array<typeof inactiveCoupon>; points: { balance: number; willExpireSoon: number } }>();
+    mockGetList
+      .mockReturnValueOnce(initial.promise)
+      .mockReturnValueOnce(older.promise)
+      .mockReturnValueOnce(latest.promise);
+
+    const { container } = render(<MyCouponsPage />);
+
+    await act(async () => {
+      initial.resolve({ coupons: [availableCoupon], points: { balance: 1200, willExpireSoon: 0 } });
+    });
+    expect(await screen.findByText('신규가입 할인')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'tab.used' }));
+    fireEvent.click(screen.getByRole('button', { name: 'tab.all' }));
+
+    await act(async () => {
+      older.resolve({ coupons: [], points: { balance: 0, willExpireSoon: 0 } });
+    });
+
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
+    expect(screen.queryByText('empty:tab.all')).not.toBeInTheDocument();
+    expect(screen.queryByText('신규가입 할인')).not.toBeInTheDocument();
+
+    await act(async () => {
+      latest.resolve({ coupons: [inactiveCoupon], points: { balance: 300, willExpireSoon: 0 } });
+    });
+
+    expect(await screen.findByText('비활성 쿠폰')).toBeInTheDocument();
+    expect(container.querySelector('[aria-busy="true"]')).not.toBeInTheDocument();
+  });
+
 });
