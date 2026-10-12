@@ -11,30 +11,34 @@ import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import {
   adminCouponRulesApi,
   adminCouponsApi,
+  adminMembershipApi,
   type AdminCoupon,
   type AdminCouponRule,
   type AdminCouponRuleInput,
+  type AdminMembershipTier,
   type CouponRuleTrigger,
 } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { formatCurrency } from '@/utils/currency';
 
 
 
 const TRIGGERS: CouponRuleTrigger[] = ['signup', 'first_purchase', 'tier_up'];
+const SUPPORTED_CONDITION_KEYS = ['minTier'];
 const RULE_PAGE_SIZE = 20;
 const COUPON_OPTION_PAGE_SIZE = 20;
 
 type RuleFormState = {
   trigger: CouponRuleTrigger;
   couponTemplateId: string;
-  conditionsJson: string;
+  minTier: string;
   active: boolean;
 };
 
 const EMPTY_FORM: RuleFormState = {
   trigger: 'signup',
   couponTemplateId: '',
-  conditionsJson: '',
+  minTier: '',
   active: true,
 };
 
@@ -42,19 +46,48 @@ function toFormState(rule: AdminCouponRule): RuleFormState {
   return {
     trigger: rule.trigger,
     couponTemplateId: String(rule.couponTemplateId),
-    conditionsJson: rule.conditionsJson ? JSON.stringify(rule.conditionsJson, null, 2) : '',
+    minTier: typeof rule.conditionsJson?.minTier === 'string' ? rule.conditionsJson.minTier : '',
     active: rule.active,
   };
 }
 
-function parseConditionsJson(value: string): Record<string, unknown> | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  return JSON.parse(trimmed) as Record<string, unknown>;
-}
-
 function formatCouponLabel(coupon: Pick<AdminCoupon, 'id' | 'code' | 'name'>): string {
   return `${coupon.code} · ${coupon.name} (#${coupon.id})`;
+}
+
+function hasUnsupportedConditions(rule: Pick<AdminCouponRule, 'trigger' | 'conditionsJson'>): boolean {
+  if (rule.conditionsJson == null) return false;
+  if (rule.trigger !== 'tier_up') return true;
+  const keys = Object.keys(rule.conditionsJson);
+  return keys.some((key) => !SUPPORTED_CONDITION_KEYS.includes(key))
+    || (rule.conditionsJson.minTier !== undefined
+      && (typeof rule.conditionsJson.minTier !== 'string' || rule.conditionsJson.minTier.trim() === ''));
+}
+
+function isUnsupportedRule(rule: AdminCouponRule, tiers: AdminMembershipTier[]): boolean {
+  if (rule.trigger === 'birthday') return true;
+  if (hasUnsupportedConditions(rule)) return true;
+  if (rule.trigger !== 'tier_up' || rule.conditionsJson == null || tiers.length === 0) return false;
+  return !tiers.some((tier) => tier.name === rule.conditionsJson?.minTier);
+}
+
+function formatRuleConditions(
+  rule: AdminCouponRule,
+  tiers: AdminMembershipTier[],
+  t: (key: string, values?: Record<string, string | number>) => string,
+): string {
+  if (rule.conditionsJson == null) return t('table.noConditions');
+  if (hasUnsupportedConditions(rule)) return t('table.unsupportedConditions');
+  if (rule.conditionsJson.minTier === undefined) return t('conditions.allTierUpgrades');
+  const tierName = rule.conditionsJson.minTier as string;
+  const tier = tiers.find((item) => item.name === tierName);
+  if (!tier && tiers.length > 0) return t('table.unsupportedConditions');
+  return tier
+    ? t('conditions.minTierWithAmount', {
+      tier: tier.name,
+      amount: formatCurrency(tier.minAmount, 'ko'),
+    })
+    : t('conditions.minTier', { tier: tierName });
 }
 
 export default function AdminCouponRulesPage() {
@@ -65,9 +98,11 @@ export default function AdminCouponRulesPage() {
   const [ruleTotal, setRuleTotal] = useState(0);
   const [couponSearch, setCouponSearch] = useState('');
   const [couponOptions, setCouponOptions] = useState<AdminCoupon[]>([]);
+  const [tiers, setTiers] = useState<AdminMembershipTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
   const [form, setForm] = useState<RuleFormState>(EMPTY_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const loadData = useCallback(async (nextPage: number) => {
     setLoading(true);
@@ -97,10 +132,20 @@ export default function AdminCouponRulesPage() {
     }
   }, [t]);
 
+  const loadTiers = useCallback(async () => {
+    try {
+      setTiers(await adminMembershipApi.getTiers());
+    } catch (err) {
+      setTiers([]);
+      toast.error(handleApiError(err, t('tierLoadError')));
+    }
+  }, [t]);
+
   useEffect(() => {
     if (!isAdmin) return;
     void loadData(1);
-  }, [isAdmin, loadData]);
+    void loadTiers();
+  }, [isAdmin, loadData, loadTiers]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -112,7 +157,7 @@ export default function AdminCouponRulesPage() {
       const payload: AdminCouponRuleInput = {
         trigger: form.trigger,
         couponTemplateId: Number(form.couponTemplateId),
-        conditionsJson: parseConditionsJson(form.conditionsJson),
+        conditionsJson: form.trigger === 'tier_up' && form.minTier !== '' ? { minTier: form.minTier } : null,
         active: form.active,
       };
       if (editingRuleId == null) {
@@ -125,6 +170,7 @@ export default function AdminCouponRulesPage() {
       setEditingRuleId(null);
       setCouponSearch('');
       setForm(EMPTY_FORM);
+      setFormError(null);
     },
     {
       successMessage: editingRuleId == null ? t('createSuccess') : t('updateSuccess'),
@@ -146,14 +192,32 @@ export default function AdminCouponRulesPage() {
     { successMessage: t('deleteSuccess'), errorMessage: t('deleteError') },
   );
 
+  const { execute: deactivateRule } = useAsyncAction(
+    async (ruleId: number) => {
+      await adminCouponRulesApi.update(ruleId, { active: false });
+      if (editingRuleId === ruleId) {
+        setForm((prev) => ({ ...prev, active: false }));
+      }
+      await loadData(rulePage);
+    },
+    { successMessage: t('deactivateSuccess'), errorMessage: t('deactivateError') },
+  );
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const error = form.trigger === 'birthday' ? t('unsupportedBirthday') : null;
+    setFormError(error);
+    if (error) {
+      toast.error(error);
+      return;
+    }
     void saveRule();
   };
 
   const beginEdit = (rule: AdminCouponRule) => {
     setEditingRuleId(rule.id);
     setForm(toFormState(rule));
+    setFormError(null);
     setCouponSearch(rule.couponTemplate ? `${rule.couponTemplate.code} ${rule.couponTemplate.name}` : '');
   };
 
@@ -180,43 +244,53 @@ export default function AdminCouponRulesPage() {
                   <table className="min-w-full text-sm">
                     <thead className="bg-muted/40 text-left">
                       <tr>
-                        <th className="px-4 py-3 font-medium">{t('table.trigger')}</th>
+                        <th className="whitespace-nowrap px-4 py-3 font-medium">{t('table.trigger')}</th>
                         <th className="px-4 py-3 font-medium">{t('table.coupon')}</th>
                         <th className="px-4 py-3 font-medium">{t('table.conditions')}</th>
-                        <th className="px-4 py-3 font-medium">{t('table.status')}</th>
-                        <th className="px-4 py-3 font-medium text-right">{t('table.actions')}</th>
+                        <th className="whitespace-nowrap px-4 py-3 font-medium">{t('table.status')}</th>
+                        <th className="whitespace-nowrap px-4 py-3 text-right font-medium">{t('table.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {rules.map((rule) => (
                         <tr key={rule.id} className="border-t align-top">
-                          <td className="px-4 py-3 font-medium">{t(`triggers.${rule.trigger}`)}</td>
+                          <td className="whitespace-nowrap px-4 py-3 font-medium">{t(`triggers.${rule.trigger}`)}</td>
                           <td className="px-4 py-3">
                             {rule.couponTemplate ? formatCouponLabel(rule.couponTemplate) : t('table.couponFallback', { id: rule.couponTemplateId })}
                           </td>
                           <td className="px-4 py-3 text-xs text-muted-foreground">
-                            <pre className="whitespace-pre-wrap font-mono">
-                              {rule.conditionsJson == null ? t('table.noConditions') : JSON.stringify(rule.conditionsJson, null, 2)}
-                            </pre>
+                            <p>{formatRuleConditions(rule, tiers, t)}</p>
+                            {rule.trigger === 'birthday' && (
+                              <p className="mt-1 text-destructive">{t('legacyBirthday')}</p>
+                            )}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="whitespace-nowrap px-4 py-3">
                             <span className={rule.active ? 'text-emerald-700' : 'text-muted-foreground'}>
                               {rule.active ? t('status.active') : t('status.inactive')}
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end gap-2 whitespace-nowrap">
                               <button
                                 type="button"
                                 onClick={() => beginEdit(rule)}
-                                className="rounded-md border px-3 py-1.5 typo-button text-muted-foreground hover:bg-muted hover:text-foreground"
+                                className="whitespace-nowrap rounded-md border px-3 py-1.5 typo-button text-muted-foreground hover:bg-muted hover:text-foreground"
                               >
                                 {t('edit')}
                               </button>
+                              {isUnsupportedRule(rule, tiers) && rule.active && (
+                                <button
+                                  type="button"
+                                  onClick={() => void deactivateRule(rule.id)}
+                                  className="whitespace-nowrap rounded-md border px-3 py-1.5 typo-button text-muted-foreground hover:bg-muted hover:text-foreground"
+                                >
+                                  {t('deactivate')}
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => void removeRule(rule.id)}
-                                className="rounded-md border border-destructive/30 px-3 py-1.5 typo-button text-destructive hover:bg-destructive/10"
+                                className="whitespace-nowrap rounded-md border border-destructive/30 px-3 py-1.5 typo-button text-destructive hover:bg-destructive/10"
                               >
                                 {t('delete')}
                               </button>
@@ -241,15 +315,34 @@ export default function AdminCouponRulesPage() {
             <p className="mt-1 typo-body-sm text-muted-foreground">{t('formDescription')}</p>
           </div>
           <form className="grid gap-3" onSubmit={handleSubmit}>
+            {formError && (
+              <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                {formError}
+              </p>
+            )}
+            {form.trigger === 'birthday' && (
+              <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                {t('unsupportedBirthday')}
+              </p>
+            )}
             <label className="grid gap-1 typo-body-sm font-medium">
               {t('form.trigger')}
               <select
                 value={form.trigger}
                 onChange={(event) =>
-                  setForm((prev) => ({ ...prev, trigger: event.target.value as CouponRuleTrigger }))
+                  setForm((prev) => ({
+                    ...prev,
+                    trigger: event.target.value as CouponRuleTrigger,
+                    minTier: '',
+                  }))
                 }
                 className="rounded-md border bg-background px-3 py-2"
               >
+                {form.trigger === 'birthday' && (
+                  <option value="birthday" disabled>
+                    {t('triggers.birthday')}
+                  </option>
+                )}
                 {TRIGGERS.map((trigger) => (
                   <option key={trigger} value={trigger}>
                     {t(`triggers.${trigger}`)}
@@ -299,21 +392,36 @@ export default function AdminCouponRulesPage() {
                 </ul>
               </div>
             ) : null}
-            <label className="grid gap-1 typo-body-sm font-medium">
-              {t('form.conditionsJson')}
-              <textarea
-                value={form.conditionsJson}
-                onChange={(event) => setForm((prev) => ({ ...prev, conditionsJson: event.target.value }))}
-                placeholder={t('form.conditionsPlaceholder')}
-                rows={8}
-                className="rounded-md border bg-background px-3 py-2 font-mono text-xs"
-              />
-            </label>
+            {form.trigger === 'tier_up' ? (
+              <label className="grid gap-1 typo-body-sm font-medium">
+                {t('form.minTier')}
+                <select
+                  value={form.minTier}
+                  onChange={(event) => setForm((prev) => ({ ...prev, minTier: event.target.value }))}
+                  className="rounded-md border bg-background px-3 py-2"
+                >
+                  <option value="">{t('form.minTierAll')}</option>
+                  {tiers.map((tier) => (
+                    <option key={tier.id} value={tier.name}>
+                      {t('form.minTierOption', {
+                        name: tier.name,
+                        amount: formatCurrency(tier.minAmount, 'ko'),
+                      })}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <p className="rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                {t('form.noConditions')}
+              </p>
+            )}
             <label className="flex items-center gap-2 typo-body-sm font-medium">
               <input
                 type="checkbox"
                 checked={form.active}
                 onChange={(event) => setForm((prev) => ({ ...prev, active: event.target.checked }))}
+                disabled={form.trigger === 'birthday'}
               />
               {t('form.active')}
             </label>

@@ -59,10 +59,19 @@ function coupon(id: number, code: string, name: string) {
     maxDiscount: id === 21 ? 8000 : 5000,
     totalQuantity: id === 21 ? 50 : 100,
     issuedCount: id === 21 ? 0 : 5,
-    startsAt: '2026-07-25T00:00:00.000Z',
-    expiresAt: '2026-08-25T00:00:00.000Z',
+    startsAt: id === 7 ? '2026-07-25T00:00:45.000Z' : '2026-07-25T00:00:00.000Z',
+    expiresAt: id === 7 ? '2026-08-25T23:59:59.999Z' : '2026-08-25T00:00:00.000Z',
     isActive: true,
     createdAt: '2026-07-24T00:00:00.000Z',
+  };
+}
+
+function subminuteIssuedCoupon() {
+  return {
+    ...coupon(32, 'SUBMINUTE', '초 단위 쿠폰'),
+    issuedCount: 1,
+    startsAt: '2026-07-25T00:00:45.000Z',
+    expiresAt: '2026-07-25T00:00:59.000Z',
   };
 }
 
@@ -120,7 +129,7 @@ describe('AdminCouponsPage', () => {
 
     fireEvent.change(screen.getByLabelText('form.code'), { target: { value: 'SUMMER20' } });
     fireEvent.change(screen.getByLabelText('form.name'), { target: { value: '여름 20%' } });
-    fireEvent.change(screen.getByLabelText('form.value'), { target: { value: '20' } });
+    fireEvent.change(screen.getByLabelText('form.valuePercentage'), { target: { value: '20' } });
     fireEvent.change(screen.getByLabelText('form.startsAt'), { target: { value: '2026-07-25T09:00' } });
     fireEvent.change(screen.getByLabelText('form.expiresAt'), { target: { value: '2026-08-25T09:00' } });
     fireEvent.click(screen.getByRole('button', { name: 'create' }));
@@ -128,6 +137,93 @@ describe('AdminCouponsPage', () => {
     await waitFor(() => {
       expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ code: 'SUMMER20', value: 20 }));
     });
+  });
+
+  it('updates issued coupons with changed editable fields only', async () => {
+    render(<AdminCouponsPage />);
+
+    expect(await screen.findByText('WELCOME10')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+    fireEvent.change(screen.getByLabelText('form.name'), { target: { value: '신규가입 10% 수정' } });
+    fireEvent.click(screen.getByRole('button', { name: 'update' }));
+
+    await waitFor(() => {
+      expect(mockUpdate).toHaveBeenCalledWith(7, { name: '신규가입 10% 수정' });
+    });
+    expect(mockUpdate.mock.calls[0][1]).not.toHaveProperty('startsAt');
+    expect(mockUpdate.mock.calls[0][1]).not.toHaveProperty('expiresAt');
+    expect(mockUpdate.mock.calls[0][1]).not.toHaveProperty('type');
+    expect(mockUpdate.mock.calls[0][1]).not.toHaveProperty('value');
+    expect(mockUpdate.mock.calls[0][1]).not.toHaveProperty('isActive');
+  });
+
+  it('keeps allowed issued metadata edits valid when unchanged datetimes share a displayed minute', async () => {
+    mockGetList.mockResolvedValueOnce({
+      items: [subminuteIssuedCoupon()],
+      total: 1,
+      page: 1,
+      limit: 20,
+    });
+    render(<AdminCouponsPage />);
+
+    expect(await screen.findByText('SUBMINUTE')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+    fireEvent.change(screen.getByLabelText('form.name'), { target: { value: '초 단위 쿠폰 수정' } });
+    fireEvent.click(screen.getByRole('button', { name: 'update' }));
+
+    await waitFor(() => {
+      expect(mockUpdate).toHaveBeenCalledWith(32, { name: '초 단위 쿠폰 수정' });
+    });
+    expect(screen.queryByText('validation.dateRange')).not.toBeInTheDocument();
+  });
+
+  it('sends explicit null when nullable coupon fields are cleared', async () => {
+    mockGetList.mockResolvedValueOnce({
+      items: [coupon(21, 'WELCOME20', '재방문 20%')],
+      total: 1,
+      page: 1,
+      limit: 20,
+    });
+    render(<AdminCouponsPage />);
+
+    expect(await screen.findByText('WELCOME20')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+    fireEvent.change(screen.getByLabelText('form.maxDiscount'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('form.totalQuantity'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'update' }));
+
+    await waitFor(() => {
+      expect(mockUpdate).toHaveBeenCalledWith(21, { maxDiscount: null, totalQuantity: null });
+    });
+  });
+
+  it('blocks invalid coupon values before calling the API', async () => {
+    render(<AdminCouponsPage />);
+
+    expect(await screen.findByText('WELCOME10')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('form.code'), { target: { value: 'BAD150' } });
+    fireEvent.change(screen.getByLabelText('form.name'), { target: { value: '잘못된 정률' } });
+    fireEvent.change(screen.getByLabelText('form.valuePercentage'), { target: { value: '150' } });
+    fireEvent.change(screen.getByLabelText('form.startsAt'), { target: { value: '2026-07-25T09:00' } });
+    fireEvent.change(screen.getByLabelText('form.expiresAt'), { target: { value: '2026-08-25T09:00' } });
+    fireEvent.click(screen.getByRole('button', { name: 'create' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('validation.percentMax')).toBeInTheDocument();
+    });
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('shows percent or KRW units for the discount value label by type', async () => {
+    render(<AdminCouponsPage />);
+
+    expect(await screen.findByText('WELCOME10')).toBeInTheDocument();
+    expect(screen.getByLabelText('form.valuePercentage')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('form.type'), { target: { value: 'fixed' } });
+
+    expect(screen.getByLabelText('form.valueFixed')).toBeInTheDocument();
+    expect(screen.queryByLabelText('form.valuePercentage')).not.toBeInTheDocument();
   });
 
   it('issues a coupon to a member', async () => {

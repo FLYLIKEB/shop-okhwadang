@@ -18,11 +18,14 @@ import { TierUpgradedEvent, TIER_UPGRADED_EVENT } from './events/tier-upgraded.e
 export class MembershipEventEmitter {
   private readonly emitter = new EventEmitter();
 
-  emitTierUpgraded(event: TierUpgradedEvent): void {
-    this.emitter.emit(TIER_UPGRADED_EVENT, event);
+  async emitTierUpgraded(event: TierUpgradedEvent): Promise<void> {
+    const handlers = this.emitter.listeners(TIER_UPGRADED_EVENT) as Array<
+      (event: TierUpgradedEvent) => void | Promise<void>
+    >;
+    await Promise.all(handlers.map((handler) => handler(event)));
   }
 
-  onTierUpgraded(handler: (event: TierUpgradedEvent) => void): void {
+  onTierUpgraded(handler: (event: TierUpgradedEvent) => void | Promise<void>): void {
     this.emitter.on(TIER_UPGRADED_EVENT, handler);
   }
 }

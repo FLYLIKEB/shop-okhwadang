@@ -109,8 +109,8 @@ const mockPointsService = {
 const mockMembershipService = {
   incrementAccumulatedAmount: jest.fn(),
   evaluateAllUserTiers: jest.fn(),
-  getCompletedOrderAccrualAmount: jest.fn((order: { totalAmount: number; shippingFee?: number }) =>
-    Number(order.totalAmount) - Number(order.shippingFee ?? 0),
+  getCompletedOrderAccrualAmount: jest.fn((order: { totalAmount: number }) =>
+    Number(order.totalAmount),
   ),
 };
 
@@ -381,16 +381,52 @@ describe('SchedulerService', () => {
       };
 
       mockOrderRepo.find.mockResolvedValue([oldDeliveredOrder]);
-      mockOrderRepo.update.mockResolvedValue({ affected: 1 });
+      mockQueryRunner.manager.findOne.mockResolvedValue(oldDeliveredOrder);
 
       await service.handleDeliveredOrderAutoConfirm();
 
       expect(mockOrderRepo.find).toHaveBeenCalled();
-      expect(mockOrderRepo.update).toHaveBeenCalledWith(1, { status: OrderStatus.COMPLETED });
+      expect(mockQueryRunner.manager.findOne).toHaveBeenCalledWith(Order, {
+        where: { id: 1 },
+        relations: { user: true, items: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.COMPLETED });
       expect(mockMembershipService.getCompletedOrderAccrualAmount).toHaveBeenCalledWith(
         expect.objectContaining({ totalAmount: 46000, shippingFee: 3000 }),
       );
-      expect(mockMembershipService.incrementAccumulatedAmount).toHaveBeenCalledWith(1, 43000);
+      expect(mockMembershipService.incrementAccumulatedAmount).toHaveBeenCalledWith(
+        1,
+        46000,
+        mockQueryRunner.manager,
+      );
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+    });
+
+    it('skips a delivered order if the locked row has already changed', async () => {
+      mockSettingsService.getMap.mockResolvedValue({ scheduler_delivered_confirm_days: '7' });
+      mockOrderRepo.find.mockResolvedValue([{
+        id: 1,
+        orderNumber: 'ORD-RACE',
+        userId: 1,
+        status: OrderStatus.DELIVERED,
+        updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      }]);
+      mockQueryRunner.manager.findOne.mockResolvedValue({
+        id: 1,
+        orderNumber: 'ORD-RACE',
+        userId: 1,
+        status: OrderStatus.COMPLETED,
+      });
+
+      await service.handleDeliveredOrderAutoConfirm();
+
+      expect(mockQueryRunner.manager.update).not.toHaveBeenCalledWith(Order, 1, {
+        status: OrderStatus.COMPLETED,
+      });
+      expect(mockMembershipService.incrementAccumulatedAmount).not.toHaveBeenCalled();
+      expect(mockNotificationService.sendOrderConfirmed).not.toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
     });
 
     it('should do nothing when no delivered orders found', async () => {

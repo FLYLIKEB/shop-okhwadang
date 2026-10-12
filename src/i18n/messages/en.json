@@ -1101,7 +1101,8 @@
         "email": "Email",
         "name": "Name",
         "role": "Role",
-      "tier": "Tier",
+        "tier": "Tier",
+        "tierAccumulatedAmount": "Accumulated spend",
         "status": "Status",
         "joinDate": "Joined",
         "changeRole": "Change Role"
@@ -1603,12 +1604,27 @@
         "name": "Coupon name",
         "type": "Discount type",
         "value": "Discount value",
-        "minOrderAmount": "Minimum order amount",
-        "maxDiscount": "Max discount amount",
+        "valuePercentage": "Discount value (%)",
+        "valueFixed": "Discount value (KRW)",
+        "minOrderAmount": "Minimum order amount (KRW)",
+        "maxDiscount": "Max discount amount (KRW)",
         "totalQuantity": "Total quantity limit",
         "startsAt": "Starts at",
         "expiresAt": "Expires at",
-        "isActive": "Active template"
+        "isActive": "Active template",
+        "issuedLockedReason": "Issued coupons only allow code, name, and total quantity changes."
+      },
+      "validation": {
+        "codeRequired": "Enter a coupon code.",
+        "nameRequired": "Enter a coupon name.",
+        "valuePositive": "Discount value must be greater than 0.",
+        "percentMax": "Percentage discounts cannot exceed 100%.",
+        "minOrderAmount": "Minimum order amount must be a number of 0 or more.",
+        "maxDiscount": "Max discount must be blank or a number of 0 or more.",
+        "totalQuantity": "Total quantity must be blank or a positive integer.",
+        "totalQuantityIssued": "Total quantity cannot be lower than the {count} already issued.",
+        "datesRequired": "Enter valid start and expiry dates.",
+        "dateRange": "Expiry must be after the start date."
       },
       "types": {
         "percentage": "Percentage",
@@ -1653,7 +1669,8 @@
         "status": "Status",
         "actions": "Actions",
         "couponFallback": "Coupon #{id}",
-        "noConditions": "No conditions"
+        "noConditions": "No conditions",
+        "unsupportedConditions": "Unsupported legacy conditions"
       },
       "triggers": {
         "signup": "Signup",
@@ -1667,13 +1684,18 @@
       },
       "createTitle": "Create rule",
       "editTitle": "Edit rule",
-      "formDescription": "Use JSON conditions only when a trigger, such as tier-up, requires extra constraints.",
+      "formDescription": "Only signup, first-purchase, and tier-up rules can be created. Birthday rules are not currently supported.",
       "form": {
         "trigger": "Trigger",
         "couponTemplate": "Coupon template",
         "couponTemplatePlaceholder": "Select a coupon template",
         "conditionsJson": "Conditions JSON",
         "conditionsPlaceholder": "'{'\"minTier\":\"Silver\"'}'",
+        "minTier": "Minimum tier",
+        "minTierPlaceholder": "Select tier",
+        "minTierAll": "All tier upgrades",
+        "minTierOption": "{name} · {amount}+",
+        "noConditions": "This trigger does not support extra conditions.",
         "active": "Rule active",
         "couponTemplateSearch": "Find coupon template",
         "couponTemplateSearchPlaceholder": "Search by code or name"
@@ -1683,7 +1705,18 @@
       "saving": "Saving...",
       "cancelEdit": "Cancel edit",
       "edit": "Edit",
+      "deactivate": "Deactivate",
       "delete": "Delete",
+      "legacyBirthday": "Birthday rules are not supported because user birth dates are not collected. Deactivate or delete them.",
+      "unsupportedBirthday": "Birthday coupons are not currently supported.",
+      "tierLoadError": "Failed to load membership tiers.",
+      "deactivateSuccess": "Coupon rule deactivated.",
+      "deactivateError": "Failed to deactivate coupon rule.",
+      "conditions": {
+        "allTierUpgrades": "All tier upgrades",
+        "minTier": "Minimum tier {tier}",
+        "minTierWithAmount": "Minimum tier {tier} · {amount}+"
+      },
       "createSuccess": "Coupon rule created.",
       "createError": "Failed to create coupon rule.",
       "updateSuccess": "Coupon rule updated.",
@@ -1822,7 +1855,7 @@
           "title": "Members",
           "summary": "Search members, filter by role/status, and update roles.",
           "steps": {
-            "first": "Find members by role, active status, email, or name. The list shows email, name, role, account status, and signup date.",
+            "first": "Find members by role, active status, email, or name. The list shows email, name, role, current tier, accumulated spend, account status, and signup date.",
             "second": "Active members can have their role changed between user, admin, and super admin. Inactive members cannot have roles changed.",
             "third": "Admins cannot change their own role. Regular admins cannot grant or revoke super admin, and at least one super admin must remain."
           },
@@ -1833,20 +1866,20 @@
           "summary": "Create coupon templates, manage them by search/status, and issue them manually to members.",
           "steps": {
             "first": "Search coupons by code or name and filter by active/inactive status. Review discount type, quantity, period, and status in the list.",
-            "second": "Create or edit coupons with percentage/fixed type, discount value, minimum order amount, max discount, total quantity, period, and active flag.",
+            "second": "Enter percentage discount values as %, and fixed discount values plus minimum order/max discount amounts in KRW. Set total quantity, period, and active flag. Once issued, only code, name, and total quantity can change.",
             "third": "For manual issue, select a coupon from the current list and enter the member user ID. Issued quantity can affect remaining availability."
           },
-          "caution": "Coupon code, period, quantity, and active state directly affect customer usage. Check expiry and active status before publishing."
+          "caution": "Coupon code, period, quantity, and active state directly affect customer usage. Issued coupons cannot have their discount terms or period changed, so check them before publishing."
         },
         "couponRules": {
           "title": "Coupon Rules",
           "summary": "Connect coupon templates to automatic triggers such as signup, first purchase, and tier upgrade.",
           "steps": {
             "first": "Review each rule by trigger, coupon, conditions, and active state. Use coupon search to find the template ID.",
-            "second": "Choose one trigger: signup, first purchase, or tier upgrade. Leave conditions empty to apply to every target for that trigger.",
-            "third": "Enter conditions as JSON. The only additional condition currently supported is minTier for tier upgrades. A value of Gold matches upgrades to Gold or higher."
+            "second": "Choose one trigger: signup, first purchase, or tier upgrade. Birthday coupons cannot be newly created because birth dates are not collected.",
+            "third": "For tier upgrades, leave minTier blank for all upgrades or select minTier from the membership tier list. Automatic issuance is lifetime once per user and coupon template."
           },
-          "caution": "Invalid JSON cannot be saved. Unsupported condition keys currently do not change rule matching."
+          "caution": "Leave unsupported legacy conditions or birthday rules fail-closed, then deactivate or delete them when needed."
         },
         "points": {
           "title": "Points",
@@ -2196,8 +2229,10 @@
     "title": "Coupons",
     "pointBalance": "Point Balance",
     "loadError": "Failed to load coupons.",
+    "retry": "Retry",
     "tab": {
       "available": "Available",
+      "all": "All",
       "used": "Used",
       "expired": "Expired"
     },
@@ -2206,6 +2241,14 @@
     "discountFixed": "{value} off",
     "minOrderAmount": "Valid on orders over {amount}",
     "expiresAt": "Expires",
+    "availabilityReason": {
+      "not_started": "Available from {date}.",
+      "inactive": "This coupon is currently unavailable."
+    },
+    "availabilityBadge": {
+      "not_started": "Pending",
+      "inactive": "Inactive"
+    },
     "emptyByTab": "No {status} coupons."
   },
   "myInquiries": {

@@ -1,6 +1,7 @@
 import {
   Injectable,
   BadRequestException,
+  ConflictException,
   NotFoundException,
   Logger,
 } from '@nestjs/common';
@@ -31,8 +32,10 @@ export interface CouponResponse {
   value: number;
   minOrderAmount: number;
   maxDiscount: number | null;
+  startsAt: Date;
   expiresAt: Date;
   status: 'available' | 'used' | 'expired';
+  availabilityReason: 'not_started' | 'inactive' | null;
   issuedAt: Date;
   usedAt: Date | null;
 }
@@ -90,6 +93,9 @@ export interface PointsResponse {
   history: PointHistoryResponseItem[];
 }
 
+const DECIMAL_12_2_MAX = 9999999999.99;
+const INT32_MAX = 2147483647;
+
 @Injectable()
 export class CouponsService {
   private readonly logger = new Logger(CouponsService.name);
@@ -108,8 +114,8 @@ export class CouponsService {
     private readonly productRepo: Repository<Product>,
   ) {}
 
-  private toResponse(uc: UserCoupon): CouponResponse {
-    const status = this.resolveUserCouponStatus(uc, new Date());
+  private toResponse(uc: UserCoupon, now = new Date()): CouponResponse {
+    const availability = this.resolveUserCouponAvailability(uc, now);
     return {
       id: Number(uc.id),
       couponId: Number(uc.couponId),
@@ -119,8 +125,10 @@ export class CouponsService {
       value: Number(uc.coupon.value),
       minOrderAmount: Number(uc.coupon.minOrderAmount),
       maxDiscount: uc.coupon.maxDiscount != null ? Number(uc.coupon.maxDiscount) : null,
+      startsAt: uc.coupon.startsAt,
       expiresAt: uc.coupon.expiresAt,
-      status,
+      status: availability.status,
+      availabilityReason: availability.reason,
       issuedAt: uc.issuedAt,
       usedAt: uc.usedAt,
     };
@@ -145,7 +153,7 @@ export class CouponsService {
   }
 
   private sameOptionalDate(input: string | undefined, value: Date): boolean {
-    return input !== undefined && new Date(input).getTime() === value.getTime();
+    return input !== undefined && this.parseDate(input).getTime() === value.getTime();
   }
 
   private assertIssuedCouponMutability(coupon: Coupon, dto: UpdateCouponDto): void {
@@ -168,7 +176,7 @@ export class CouponsService {
     if (coupon.startsAt > now) {
       throw new BadRequestException('아직 사용할 수 없는 쿠폰입니다.');
     }
-    if (coupon.expiresAt < now) {
+    if (coupon.expiresAt <= now) {
       throw new BadRequestException('만료된 쿠폰입니다.');
     }
     if (!coupon.isActive) {
@@ -183,48 +191,112 @@ export class CouponsService {
     this.assertCouponTemplateUsable(uc.coupon, now);
   }
 
-  private resolveUserCouponStatus(
+  private resolveUserCouponAvailability(
     uc: UserCoupon,
     now: Date,
-  ): 'available' | 'used' | 'expired' {
+  ): { status: 'available' | 'used' | 'expired'; reason: 'not_started' | 'inactive' | null } {
     if (uc.status !== 'available') {
-      return uc.status;
+      return { status: uc.status, reason: null };
     }
-    if (!uc.coupon.isActive || uc.coupon.startsAt > now || uc.coupon.expiresAt < now) {
-      return 'expired';
+    if (uc.coupon.expiresAt <= now) {
+      return { status: 'expired', reason: null };
     }
-    return 'available';
+    if (uc.coupon.startsAt > now) {
+      return { status: 'available', reason: 'not_started' };
+    }
+    if (!uc.coupon.isActive) {
+      return { status: 'available', reason: 'inactive' };
+    }
+    return { status: 'available', reason: null };
   }
 
   private assertCouponTemplatePayload(input: {
     type: Coupon['type'];
     value: number;
+    minOrderAmount: number;
+    maxDiscount?: number | null;
     startsAt: Date;
     expiresAt: Date;
     totalQuantity?: number | null;
   }): void {
+    if (input.type !== 'percentage' && input.type !== 'fixed') {
+      throw new BadRequestException('지원하지 않는 쿠폰 유형입니다.');
+    }
+    this.assertFiniteDecimal(input.value, '쿠폰 할인 값', 0.01);
+    this.assertFiniteDecimal(input.minOrderAmount, '최소 주문 금액', 0);
+    if (input.maxDiscount != null) {
+      this.assertFiniteDecimal(input.maxDiscount, '최대 할인 금액', 0);
+    }
+    if (!Number.isFinite(input.startsAt.getTime()) || !Number.isFinite(input.expiresAt.getTime())) {
+      throw new BadRequestException('쿠폰 기간이 올바르지 않습니다.');
+    }
     if (input.expiresAt <= input.startsAt) {
       throw new BadRequestException('쿠폰 만료일은 시작일보다 늦어야 합니다.');
-    }
-    if (input.value <= 0) {
-      throw new BadRequestException('쿠폰 할인 값은 0보다 커야 합니다.');
     }
     if (input.type === 'percentage' && input.value > 100) {
       throw new BadRequestException('정률 쿠폰 할인율은 100%를 초과할 수 없습니다.');
     }
-    if (input.totalQuantity != null && !Number.isInteger(input.totalQuantity)) {
-      throw new BadRequestException('총 발급 수량은 정수여야 합니다.');
+    if (input.totalQuantity != null) {
+      this.assertPositiveInt(input.totalQuantity, '총 발급 수량');
     }
   }
 
+  private assertFiniteDecimal(value: unknown, label: string, min: number): asserts value is number {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > DECIMAL_12_2_MAX) {
+      throw new BadRequestException(`${label}이 올바르지 않습니다.`);
+    }
+  }
+
+  private assertPositiveInt(value: unknown, label: string): asserts value is number {
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > INT32_MAX) {
+      throw new BadRequestException(`${label}은 1 이상의 정수여야 합니다.`);
+    }
+  }
+
+  private parseDate(value: string): Date {
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) {
+      throw new BadRequestException('쿠폰 기간이 올바르지 않습니다.');
+    }
+    return date;
+  }
+
+  private normalizeRequiredText(value: unknown, label: string, maxLength: number): string {
+    if (typeof value !== 'string') {
+      throw new BadRequestException(`${label}을 입력해 주세요.`);
+    }
+    const trimmed = value.trim();
+    if (trimmed.length === 0 || trimmed.length > maxLength) {
+      throw new BadRequestException(`${label}이 올바르지 않습니다.`);
+    }
+    return trimmed;
+  }
+
+  private assertNoNulls(dto: Record<string, unknown>, fields: string[]): void {
+    for (const field of fields) {
+      if (dto[field] === null) {
+        throw new BadRequestException(`${field} 값은 null일 수 없습니다.`);
+      }
+    }
+  }
+
+  private isDuplicateKeyError(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) return false;
+    const candidate = error as { code?: string; driverError?: { code?: string } };
+    return candidate.code === 'ER_DUP_ENTRY' || candidate.driverError?.code === 'ER_DUP_ENTRY';
+  }
+
   computeCouponDiscount(orderAmount: number, coupon: Coupon): number {
+    if (!Number.isFinite(orderAmount) || orderAmount <= 0) {
+      return 0;
+    }
     const value = Number(coupon.value);
     const maxDiscount = coupon.maxDiscount != null ? Number(coupon.maxDiscount) : Infinity;
+    const discount = coupon.type === 'percentage'
+      ? Math.min(Math.floor((orderAmount * value) / 100), maxDiscount, orderAmount)
+      : Math.min(value, orderAmount);
 
-    if (coupon.type === 'percentage') {
-      return Math.min(Math.floor((orderAmount * value) / 100), maxDiscount, orderAmount);
-    }
-    return Math.min(value, orderAmount);
+    return Math.max(0, discount);
   }
 
   async findAll(userId: number, status?: string): Promise<CouponListResponse> {
@@ -243,19 +315,18 @@ export class CouponsService {
     const balance = await this.pointsService.getUserPointBalance(userId);
     const now = new Date();
     const coupons = userCoupons
-      .map((uc) => this.toResponseWithStatus(uc, this.resolveUserCouponStatus(uc, now)))
-      .filter((coupon) => statusFilter === undefined || coupon.status === statusFilter);
+      .map((uc) => this.toResponse(uc, now))
+      .filter((coupon) => {
+        if (statusFilter === undefined) return true;
+        if (statusFilter === 'available') {
+          return coupon.status === 'available' && coupon.availabilityReason === null;
+        }
+        return coupon.status === statusFilter;
+      });
 
     return {
       coupons,
       points: { balance, willExpireSoon: 0 },
-    };
-  }
-
-  private toResponseWithStatus(uc: UserCoupon, status: CouponResponse['status']): CouponResponse {
-    return {
-      ...this.toResponse(uc),
-      status,
     };
   }
 
@@ -311,6 +382,10 @@ export class CouponsService {
     trustedShippingPolicies?: { isFreeShipping: boolean }[],
   ): Promise<CalculateDiscountResponse> {
     const { orderAmount, userCouponId, pointsToUse = 0 } = dto;
+    this.assertFiniteDecimal(orderAmount, '주문 금액', 0);
+    if (!Number.isInteger(pointsToUse) || pointsToUse < 0) {
+      throw new BadRequestException('사용할 적립금이 올바르지 않습니다.');
+    }
 
     let couponDiscount = 0;
 
@@ -371,22 +446,28 @@ export class CouponsService {
   }
 
   async createCoupon(dto: CreateCouponDto): Promise<AdminCouponResponse> {
-    const startsAt = new Date(dto.startsAt);
-    const expiresAt = new Date(dto.expiresAt);
+    this.assertNoNulls(dto as unknown as Record<string, unknown>, ['code', 'name', 'type', 'value', 'minOrderAmount', 'startsAt', 'expiresAt', 'isActive']);
+    const code = this.normalizeRequiredText(dto.code, '쿠폰 코드', 50);
+    const name = this.normalizeRequiredText(dto.name, '쿠폰 이름', 255);
+    const minOrderAmount = dto.minOrderAmount ?? 0;
+    const startsAt = this.parseDate(dto.startsAt);
+    const expiresAt = this.parseDate(dto.expiresAt);
     this.assertCouponTemplatePayload({
       type: dto.type,
       value: dto.value,
+      minOrderAmount,
+      maxDiscount: dto.maxDiscount,
       startsAt,
       expiresAt,
       totalQuantity: dto.totalQuantity,
     });
 
     const coupon = this.couponRepo.create({
-      code: dto.code,
-      name: dto.name,
+      code,
+      name,
       type: dto.type,
       value: dto.value,
-      minOrderAmount: dto.minOrderAmount ?? 0,
+      minOrderAmount,
       maxDiscount: dto.maxDiscount ?? null,
       totalQuantity: dto.totalQuantity ?? null,
       startsAt,
@@ -394,12 +475,20 @@ export class CouponsService {
       isActive: dto.isActive ?? true,
     });
 
-    const saved = await this.couponRepo.save(coupon);
-    this.logger.log(`Coupon created: code=${saved.code}`);
-    return this.toAdminCouponResponse(saved);
+    try {
+      const saved = await this.couponRepo.save(coupon);
+      this.logger.log(`Coupon created: code=${saved.code}`);
+      return this.toAdminCouponResponse(saved);
+    } catch (err) {
+      if (this.isDuplicateKeyError(err)) {
+        throw new ConflictException('이미 사용 중인 쿠폰 코드입니다.');
+      }
+      throw err;
+    }
   }
 
   async updateCoupon(id: number, dto: UpdateCouponDto): Promise<AdminCouponResponse> {
+    this.assertNoNulls(dto as unknown as Record<string, unknown>, ['code', 'name', 'type', 'value', 'minOrderAmount', 'startsAt', 'expiresAt', 'isActive']);
     return this.dataSource.transaction(async (manager) => {
       const coupon = await manager.findOne(Coupon, {
         where: { id },
@@ -414,6 +503,9 @@ export class CouponsService {
       }
 
       if (dto.totalQuantity !== undefined) {
+        if (dto.totalQuantity !== null) {
+          this.assertPositiveInt(dto.totalQuantity, '총 발급 수량');
+        }
         if (dto.totalQuantity !== null && dto.totalQuantity < coupon.issuedCount) {
           throw new BadRequestException('총 발급 수량은 이미 발급된 수량보다 작을 수 없습니다.');
         }
@@ -423,35 +515,52 @@ export class CouponsService {
       this.assertCouponTemplatePayload({
         type: dto.type ?? coupon.type,
         value: dto.value ?? Number(coupon.value),
-        startsAt: dto.startsAt !== undefined ? new Date(dto.startsAt) : coupon.startsAt,
-        expiresAt: dto.expiresAt !== undefined ? new Date(dto.expiresAt) : coupon.expiresAt,
+        minOrderAmount: dto.minOrderAmount ?? Number(coupon.minOrderAmount),
+        maxDiscount: dto.maxDiscount !== undefined ? dto.maxDiscount : coupon.maxDiscount != null ? Number(coupon.maxDiscount) : null,
+        startsAt: dto.startsAt !== undefined ? this.parseDate(dto.startsAt) : coupon.startsAt,
+        expiresAt: dto.expiresAt !== undefined ? this.parseDate(dto.expiresAt) : coupon.expiresAt,
         totalQuantity: dto.totalQuantity !== undefined ? dto.totalQuantity : coupon.totalQuantity,
       });
 
-      if (dto.code !== undefined) coupon.code = dto.code;
-      if (dto.name !== undefined) coupon.name = dto.name;
+      if (dto.code !== undefined) coupon.code = this.normalizeRequiredText(dto.code, '쿠폰 코드', 50);
+      if (dto.name !== undefined) coupon.name = this.normalizeRequiredText(dto.name, '쿠폰 이름', 255);
       if (dto.type !== undefined) coupon.type = dto.type;
       if (dto.value !== undefined) coupon.value = dto.value;
       if (dto.minOrderAmount !== undefined) coupon.minOrderAmount = dto.minOrderAmount;
       if (dto.maxDiscount !== undefined) coupon.maxDiscount = dto.maxDiscount ?? null;
-      if (dto.startsAt !== undefined) coupon.startsAt = new Date(dto.startsAt);
-      if (dto.expiresAt !== undefined) coupon.expiresAt = new Date(dto.expiresAt);
+      if (dto.startsAt !== undefined) coupon.startsAt = this.parseDate(dto.startsAt);
+      if (dto.expiresAt !== undefined) coupon.expiresAt = this.parseDate(dto.expiresAt);
       if (dto.isActive !== undefined) coupon.isActive = dto.isActive;
 
-      const saved = await manager.save(Coupon, coupon);
-      this.logger.log(`Coupon updated: id=${saved.id}`);
-      return this.toAdminCouponResponse(saved);
+      try {
+        const saved = await manager.save(Coupon, coupon);
+        this.logger.log(`Coupon updated: id=${saved.id}`);
+        return this.toAdminCouponResponse(saved);
+      } catch (err) {
+        if (this.isDuplicateKeyError(err)) {
+          throw new ConflictException('이미 사용 중인 쿠폰 코드입니다.');
+        }
+        throw err;
+      }
     });
   }
 
   async removeCoupon(id: number): Promise<{ message: string }> {
-    const coupon = await findOrThrow(this.couponRepo, { id }, '쿠폰을 찾을 수 없습니다.');
-    if (coupon.issuedCount > 0) {
-      throw new BadRequestException('이미 발급된 쿠폰은 삭제할 수 없습니다.');
-    }
+    await this.dataSource.transaction(async (manager) => {
+      const coupon = await manager.findOne(Coupon, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!coupon) {
+        throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
+      }
+      if (coupon.issuedCount > 0) {
+        throw new BadRequestException('이미 발급된 쿠폰은 삭제할 수 없습니다.');
+      }
 
-    await this.couponRepo.remove(coupon);
-    this.logger.log(`Coupon removed: id=${coupon.id}`);
+      await manager.remove(Coupon, coupon);
+      this.logger.log(`Coupon removed: id=${coupon.id}`);
+    });
     return { message: '쿠폰이 삭제되었습니다.' };
   }
 
@@ -498,7 +607,7 @@ export class CouponsService {
     if (!coupon) {
       throw new NotFoundException('쿠폰을 찾을 수 없습니다.');
     }
-    const user = await manager.findOne(User, { where: { id: dto.userId } });
+    const user = await manager.findOne(User, { where: { id: dto.userId, isActive: true } });
     if (!user) {
       throw new NotFoundException('회원을 찾을 수 없습니다.');
     }
@@ -519,7 +628,15 @@ export class CouponsService {
       couponId: dto.couponId,
       status: 'available',
     });
-    const saved = await manager.save(UserCoupon, uc);
+    let saved: UserCoupon;
+    try {
+      saved = await manager.save(UserCoupon, uc);
+    } catch (err) {
+      if (this.isDuplicateKeyError(err)) {
+        throw new BadRequestException('이미 발급된 쿠폰입니다.');
+      }
+      throw err;
+    }
     await manager.increment(Coupon, { id: dto.couponId }, 'issuedCount', 1);
     this.logger.log(`Coupon issued: couponId=${dto.couponId}, userId=${dto.userId}`);
     return saved;

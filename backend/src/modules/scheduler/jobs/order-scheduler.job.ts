@@ -67,33 +67,28 @@ export class OrderSchedulerJob {
     this.deps.logger.log(`[cron:delivered-order-confirm] Confirming ${deliveredOrders.length} delivered orders`);
 
     for (const order of deliveredOrders) {
-      if (!canOrderStatusTransition(order.status, OrderStatus.COMPLETED)) {
+      let completedOrder: Order | null;
+      try {
+        completedOrder = await this.confirmDeliveredOrder(order, cutoff);
+      } catch (err) {
         this.deps.logger.warn(
-          `[cron:delivered-order-confirm] transition blocked: ${order.status} → ${OrderStatus.COMPLETED} (order=${order.orderNumber})`,
+          `[cron:delivered-order-confirm] Failed to confirm order=${order.orderNumber}: ${String(err)}`,
         );
         continue;
       }
+      if (!completedOrder) continue;
 
-      await this.deps.orderRepo.update(order.id, { status: OrderStatus.COMPLETED });
-
-      const userId = this.getOrderUserId(order);
-      if (userId !== null) {
-        const completedAmount = this.deps.membershipService.getCompletedOrderAccrualAmount(order);
-        void this.deps.membershipService.incrementAccumulatedAmount(userId, completedAmount)
-          .catch((err) => this.deps.logger.warn(`Failed to increment tier amount for user ${userId}: ${String(err)}`));
-      }
-
-      const email = order.user?.email ?? this.getGuestEmailNormalized(order);
+      const email = completedOrder.user?.email ?? this.getGuestEmailNormalized(completedOrder);
       if (email) {
-        const locale = this.getOrderLocale(order);
+        const locale = this.getOrderLocale(completedOrder);
         void Promise.resolve(
           this.deps.notificationService.sendOrderConfirmed(email, {
-            orderNumber: order.orderNumber,
-            totalAmount: order.totalAmount,
-            recipientName: order.recipientName,
+            orderNumber: completedOrder.orderNumber,
+            totalAmount: completedOrder.totalAmount,
+            recipientName: completedOrder.recipientName,
             locale,
-            orderItems: buildOrderEmailItems(order, locale),
-            orderUrl: this.resolveOrderUrl(Number(order.id), order),
+            orderItems: buildOrderEmailItems(completedOrder, locale),
+            orderUrl: this.resolveOrderUrl(Number(completedOrder.id), completedOrder),
           }),
         )
           .catch((err) => this.deps.logger.warn(`Failed to send confirmation email: ${String(err)}`));
@@ -101,6 +96,53 @@ export class OrderSchedulerJob {
     }
 
     this.deps.logger.log(`[cron:delivered-order-confirm] Completed confirming ${deliveredOrders.length} orders`);
+  }
+
+  private async confirmDeliveredOrder(order: Order, cutoff: Date): Promise<Order | null> {
+    const queryRunner = this.deps.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const lockedOrder = await queryRunner.manager.findOne(Order, {
+        where: { id: Number(order.id) },
+        relations: { user: true, items: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedOrder) {
+        await queryRunner.rollbackTransaction();
+        return null;
+      }
+
+      if (
+        lockedOrder.status !== OrderStatus.DELIVERED ||
+        (lockedOrder.updatedAt !== undefined && lockedOrder.updatedAt > cutoff) ||
+        !canOrderStatusTransition(lockedOrder.status, OrderStatus.COMPLETED)
+      ) {
+        this.deps.logger.warn(
+          `[cron:delivered-order-confirm] transition skipped: ${lockedOrder.status} → ${OrderStatus.COMPLETED} (order=${lockedOrder.orderNumber})`,
+        );
+        await queryRunner.rollbackTransaction();
+        return null;
+      }
+
+      await queryRunner.manager.update(Order, lockedOrder.id, { status: OrderStatus.COMPLETED });
+
+      const userId = this.getOrderUserId(lockedOrder);
+      if (userId !== null) {
+        const completedAmount = this.deps.membershipService.getCompletedOrderAccrualAmount(lockedOrder);
+        await this.deps.membershipService.incrementAccumulatedAmount(userId, completedAmount, queryRunner.manager);
+      }
+
+      await queryRunner.commitTransaction();
+      lockedOrder.status = OrderStatus.COMPLETED;
+      return lockedOrder;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   private async cancelOrderAndRecover(order: Order): Promise<void> {

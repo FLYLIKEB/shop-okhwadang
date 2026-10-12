@@ -5,6 +5,7 @@ import type { AdminMember } from '@/lib/api';
 import { MemberRoleSelect } from './MemberRoleSelect';
 import { StatusBadge } from './StatusBadge';
 import { formatDate } from '@/utils/date';
+import { formatCurrency, type Locale } from '@/utils/currency';
 
 interface AdminMembersTableProps {
   members: AdminMember[];
@@ -13,7 +14,7 @@ interface AdminMembersTableProps {
 
 export function AdminMembersTable({ members, onRoleChange }: AdminMembersTableProps) {
   const t = useTranslations('admin.members');
-  const locale = useLocale();
+  const locale = useLocale() as Locale;
 
   if (members.length === 0) {
     return (
@@ -31,6 +32,7 @@ export function AdminMembersTable({ members, onRoleChange }: AdminMembersTablePr
             <th className="px-4 py-3 text-left font-medium">{t('columns.name')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.role')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.tier')}</th>
+            <th className="px-4 py-3 text-left font-medium">{t('columns.tierAccumulatedAmount')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.status')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.joinDate')}</th>
             <th className="px-4 py-3 text-left font-medium">{t('columns.changeRole')}</th>
@@ -49,8 +51,13 @@ export function AdminMembersTable({ members, onRoleChange }: AdminMembersTablePr
               </td>
               <td className="px-4 py-3">
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                  {member.tier}
+                  {member.tier ?? '-'}
                 </span>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">
+                {Number.isFinite(member.tierAccumulatedAmount)
+                  ? formatCurrency(member.tierAccumulatedAmount as number, 'ko')
+                  : '-'}
               </td>
               <td className="px-4 py-3">
                 <StatusBadge isActive={member.isActive} />

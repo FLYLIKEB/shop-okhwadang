@@ -1,14 +1,36 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsNumber, IsOptional, IsBoolean, IsDateString, Min, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsBoolean,
+  IsDateString,
+  Min,
+  Max,
+  MaxLength,
+  IsNotEmpty,
+  IsInt,
+  ValidateIf,
+} from 'class-validator';
+
+const DECIMAL_12_2_MAX = 9999999999.99;
+const INT32_MAX = 2147483647;
+const trimString = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
 export class CreateCouponDto {
   @ApiProperty({ example: 'SUMMER2024', description: '쿠폰 코드' })
+  @Transform(trimString)
   @IsString()
+  @IsNotEmpty()
   @MaxLength(50)
   code!: string;
 
   @ApiProperty({ example: '여름 축하 할인券', description: '쿠폰 이름' })
+  @Transform(trimString)
   @IsString()
+  @IsNotEmpty()
   @MaxLength(255)
   name!: string;
 
@@ -17,25 +39,29 @@ export class CreateCouponDto {
   type!: 'percentage' | 'fixed';
 
   @ApiProperty({ example: 10, description: '할인 값 (퍼센트 또는 고정 금액)' })
-  @IsNumber()
-  @Min(0)
+  @IsNumber({ allowInfinity: false, allowNaN: false, maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(DECIMAL_12_2_MAX)
   value!: number;
 
   @ApiProperty({ example: 10000, description: '최소 주문 금액', required: false })
-  @IsNumber()
+  @ValidateIf((_, value) => value !== undefined)
+  @IsNumber({ allowInfinity: false, allowNaN: false, maxDecimalPlaces: 2 })
   @Min(0)
-  @IsOptional()
+  @Max(DECIMAL_12_2_MAX)
   minOrderAmount?: number;
 
   @ApiProperty({ example: 5000, description: '최대 할인 금액', required: false })
-  @IsNumber()
+  @IsNumber({ allowInfinity: false, allowNaN: false, maxDecimalPlaces: 2 })
   @Min(0)
+  @Max(DECIMAL_12_2_MAX)
   @IsOptional()
   maxDiscount?: number | null;
 
   @ApiProperty({ example: 100, description: '총 발급 수량', required: false })
-  @IsNumber()
+  @IsInt()
   @Min(1)
+  @Max(INT32_MAX)
   @IsOptional()
   totalQuantity?: number | null;
 
@@ -48,7 +74,7 @@ export class CreateCouponDto {
   expiresAt!: string;
 
   @ApiProperty({ example: true, description: '활성 상태', required: false })
+  @ValidateIf((_, value) => value !== undefined)
   @IsBoolean()
-  @IsOptional()
   isActive?: boolean;
 }
