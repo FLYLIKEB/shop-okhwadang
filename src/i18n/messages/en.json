@@ -1029,7 +1029,8 @@
         "previewSuccess": "Naver Commerce API products validated.",
         "previewError": "Failed to validate Naver Commerce API products.",
         "commitSuccess": "Naver Commerce API products applied to the store.",
-        "commitError": "Failed to apply Naver Commerce API products."
+        "commitError": "Failed to apply Naver Commerce API products.",
+        "excelClosed": "SmartStore product Excel import is no longer available here. Use the Naver Commerce API to preview and sync products."
       },
       "localeKoShort": "KO",
       "localeEnShort": "EN",
@@ -1153,7 +1154,8 @@
       "logs": "Remote Logs",
       "coupons": "Coupons",
       "couponRules": "Coupon Rules",
-      "points": "Points"
+      "points": "Points",
+      "guide": "Admin guide"
     },
     "navigation": {
       "title": "Navigation Management"
@@ -1431,7 +1433,8 @@
         "settings": "Settings",
         "coupons": "Coupons",
         "couponRules": "Coupon Rules",
-        "points": "Points"
+        "points": "Points",
+        "guide": "Admin guide"
       },
       "resetFilters": "Reset filters",
       "pagination": {
@@ -1669,7 +1672,7 @@
         "couponTemplate": "Coupon template",
         "couponTemplatePlaceholder": "Select a coupon template",
         "conditionsJson": "Conditions JSON",
-        "conditionsPlaceholder": "{\"minTier\":\"Silver\"}",
+        "conditionsPlaceholder": "'{'\"minTier\":\"Silver\"'}'",
         "active": "Rule active",
         "couponTemplateSearch": "Find coupon template",
         "couponTemplateSearchPlaceholder": "Search by code or name"
@@ -1743,6 +1746,235 @@
     },
     "pageEditor": {
       "productSelectionMode": "Product selection mode"
+    },
+    "guide": {
+      "title": "Admin guide",
+      "description": "Find a menu or task and follow the steps, whether it is your first time or a quick refresher.",
+      "searchLabel": "What would you like to do?",
+      "searchPlaceholder": "Products, tracking, coupons, publishing…",
+      "noResults": "No matching guides. Try another menu name or task.",
+      "clearSearch": "Clear search",
+      "contextTitle": "How to use this screen",
+      "allGuides": "All guides",
+      "openScreen": "Open management screen",
+      "stepsTitle": "Follow these steps",
+      "cautionTitle": "Before you continue",
+      "groups": {
+        "start": "Getting started",
+        "catalog": "Products and categories",
+        "operations": "Orders and customers",
+        "content": "Content and visibility",
+        "settings": "Site settings"
+      },
+      "topics": {
+        "dashboard": {
+          "title": "Dashboard",
+          "summary": "Review revenue, orders, members, product views, and deletion progress in one place.",
+          "steps": {
+            "first": "Choose a preset period or custom date range. Start with today revenue, order count, new members, and product views.",
+            "second": "Use the order status summary to spot bottlenecks. If paid or preparing orders pile up, handle them in Orders.",
+            "third": "Check recent orders for order number, amount, status, and order date. Use Orders for any operational action."
+          },
+          "caution": "The dashboard is a summary screen. Status changes, shipping, and cancellation are handled in Orders."
+        },
+        "products": {
+          "title": "Products",
+          "summary": "Manage products, visibility, images, options, attributes, and Naver Commerce API imports.",
+          "steps": {
+            "first": "Filter products by status and quickly switch active/hidden or Korean/English visibility. Delete only after confirming the product.",
+            "second": "In create/edit, set core and English details, price, stock, SKU, product notices and visibility. Add up to 10 gallery and 20 detail images, enter option names, values, additional prices and stock, select attributes, then save.",
+            "third": "Preview SmartStore products through the Naver Commerce API, review new, updated and failed items, then select the products to sync. Product Excel import is not available here."
+          },
+          "caution": "Product name, slug and a price of at least KRW 1 are required. Imports can update products matched by SKU; review matching results and failed rows before applying."
+        },
+        "categories": {
+          "title": "Categories",
+          "summary": "Manage category hierarchy, visibility, images, and ordering.",
+          "steps": {
+            "first": "Add a category or edit an existing one for name, slug, parent, image, and active status.",
+            "second": "Reorder categories with the same parent using move controls or drag and drop. Cross-level reordering is not supported.",
+            "third": "Inactive categories are dimmed in the list. Check where a category is used before changing visibility."
+          },
+          "caution": "Deleting a category can affect product paths and display. Consider deactivating live categories first."
+        },
+        "attributes": {
+          "title": "Attributes",
+          "summary": "Manage product filter/search attribute types, allowed values, display labels, and linked products.",
+          "steps": {
+            "first": "Save attribute code, Korean/English names, input type, parent/related attributes, valid values, sort order, and filter/search flags.",
+            "second": "Select an attribute row to load its value options. Keep the value code stable and edit display labels for operators and shoppers.",
+            "third": "Search and add or remove products linked to each value option. Product create/edit can also attach existing values to products."
+          },
+          "caution": "Attribute codes may be used by filters and import mapping. Check existing product display before changing their meaning."
+        },
+        "orders": {
+          "title": "Orders",
+          "summary": "Search orders and handle status changes, shipping, cancellation, service requests, and message delivery history.",
+          "steps": {
+            "first": "Find orders by status, order number/recipient/email, or order date range. Handle pending service requests at the top as approved, rejected, or completed.",
+            "second": "Change order status from the status control. Moving to shipped or delivered requires a tracking number, and shipping flow requires a confirmed payment.",
+            "third": "Register tracking for paid or preparing orders; cancel pending, paid or preparing orders with a reason. Check message history for delivery status. For entries requiring manual review, verify the provider record and enter its message ID and your reason."
+          },
+          "caution": "Use the dedicated cancel action. “Sent” means the provider accepted the message, not that the customer received it. Manual reconciliation does not resend the message."
+        },
+        "members": {
+          "title": "Members",
+          "summary": "Search members, filter by role/status, and update roles.",
+          "steps": {
+            "first": "Find members by role, active status, email, or name. The list shows email, name, role, account status, and signup date.",
+            "second": "Active members can have their role changed between user, admin, and super admin. Inactive members cannot have roles changed.",
+            "third": "Admins cannot change their own role. Regular admins cannot grant or revoke super admin, and at least one super admin must remain."
+          },
+          "caution": "Role changes affect admin access. Recheck the target account and need before changing super admin roles."
+        },
+        "coupons": {
+          "title": "Coupons",
+          "summary": "Create coupon templates, manage them by search/status, and issue them manually to members.",
+          "steps": {
+            "first": "Search coupons by code or name and filter by active/inactive status. Review discount type, quantity, period, and status in the list.",
+            "second": "Create or edit coupons with percentage/fixed type, discount value, minimum order amount, max discount, total quantity, period, and active flag.",
+            "third": "For manual issue, select a coupon from the current list and enter the member user ID. Issued quantity can affect remaining availability."
+          },
+          "caution": "Coupon code, period, quantity, and active state directly affect customer usage. Check expiry and active status before publishing."
+        },
+        "couponRules": {
+          "title": "Coupon Rules",
+          "summary": "Connect coupon templates to automatic triggers such as signup, first purchase, birthday, and tier upgrade.",
+          "steps": {
+            "first": "Review each rule by trigger, coupon, conditions, and active state. Use coupon search to find the template ID.",
+            "second": "Choose one trigger: signup, first purchase, birthday, or tier upgrade. Leave conditions empty to apply to every target for that trigger.",
+            "third": "Enter conditions as JSON. The only additional condition currently supported is minTier for tier upgrades. A value of Gold matches upgrades to Gold or higher."
+          },
+          "caution": "Invalid JSON cannot be saved. Unsupported condition keys currently do not change rule matching."
+        },
+        "points": {
+          "title": "Points",
+          "summary": "View member point balance/history and manually grant or deduct points with an admin reason.",
+          "steps": {
+            "first": "Search by member name or email, or open the page with a userId query. Confirm the selected member balance and history count first.",
+            "second": "Review history by time, type, source, delta, balance, and description. History is sorted newest first and paged in batches of 50.",
+            "third": "Enter a positive amount to grant points or a negative amount to deduct points. A reason is required; zero adjustments and deductions above balance are rejected."
+          },
+          "caution": "Manual adjustments are recorded in point history and audit logs. Recheck member, amount, and reason before submitting."
+        },
+        "reviews": {
+          "title": "Reviews",
+          "summary": "Manage review search, SmartStore review import, visibility, bulk actions, and admin replies.",
+          "steps": {
+            "first": "Filter reviews by search text, visibility, rating, review type, and media presence. Watch for unmatched products and media failures.",
+            "second": "Preview a SmartStore review workbook to confirm create/update/skip/failure and product matching before committing.",
+            "third": "Hide or show reviews individually or in bulk. Use the detail panel to inspect content, order number, source status, media URLs, and save an admin reply."
+          },
+          "caution": "Imported reviews that are not matched to products may not display correctly on product pages. Review unmatched rows before committing."
+        },
+        "inquiries": {
+          "title": "Inquiries",
+          "summary": "Review customer inquiries by status and create or edit admin answers.",
+          "steps": {
+            "first": "Filter inquiries by all, pending, or answered. The header shows the number of pending inquiries.",
+            "second": "Open a row to review the customer, type, title, received date, and inquiry body. Click the row again to collapse it.",
+            "third": "Enter an answer to create or update the response. Empty answers are blocked."
+          },
+          "caution": "Answers are customer-facing operational responses. Check privacy and wording before saving."
+        },
+        "pages": {
+          "title": "Page management",
+          "summary": "Build custom shop pages such as brand, event, and information pages with reusable content blocks, then control whether they are public.",
+          "steps": {
+            "first": "Select a page from the left list or create one. Regular pages use /p/slug; edit the home entry to change the shop homepage.",
+            "second": "Add blocks, reorder them on the canvas, and fill in images, copy, products, categories, or links from the property panel.",
+            "third": "Preview the page, save your changes, then publish it when it is ready. Private pages are hidden from shoppers."
+          },
+          "caution": "Changing the slug of a published page can break existing links. Before deleting a page, switch it to private first and confirm it is no longer needed."
+        },
+        "navigation": {
+          "title": "Navigation management",
+          "summary": "Manage the top menu, sidebar menu, footer links, and whether the mobile bottom navigation is shown.",
+          "steps": {
+            "first": "Select GNB, sidebar, or footer before editing. The description and preview help you confirm where that menu appears.",
+            "second": "Enter the menu label and URL. Use paths such as /products for internal pages and full https:// URLs for external links. Choose a parent menu to make an item a submenu.",
+            "third": "Toggle visibility and drag top-level menus to adjust their order. Use the separate switch to show or hide the mobile bottom navigation."
+          },
+          "caution": "Deleting a parent menu also deletes its child menus. Use preview to check the active menu structure before making a large change."
+        },
+        "announcementBars": {
+          "title": "Announcement bars",
+          "summary": "Create short messages shown at the top of the shop, add optional translations and links, and control their order.",
+          "steps": {
+            "first": "Click New announcement bar and enter the Korean message. Add the English message and link only when they are needed.",
+            "second": "Choose whether the bar is active and save it. Only active announcement bars are shown to shoppers.",
+            "third": "When there are multiple bars, use the up and down controls to set their order. Old messages can be deleted or deactivated."
+          },
+          "caution": "The Korean message is required. If you add a link, open the target page once before activating the bar."
+        },
+        "journal": {
+          "title": "Journal management",
+          "summary": "Write and manage journal posts for brand stories, usage guides, tea table settings, and news.",
+          "steps": {
+            "first": "Click Add journal and enter the title, slug, category, publish date, read time, and summary. New posts suggest a slug from the title.",
+            "second": "Write the body in paragraphs and upload a cover image. You can add or remove paragraphs as needed.",
+            "third": "After saving, toggle the publish status from the list. Use category filters to review culture, usage, table setting, and news posts separately."
+          },
+          "caution": "A post is visible only when it is published. The slug becomes the post URL, so avoid changing it after the link has been shared."
+        },
+        "faqs": {
+          "title": "FAQ management",
+          "summary": "Register frequently asked questions by category and manage their publish status and display order.",
+          "steps": {
+            "first": "Click New FAQ and choose one of the fixed categories: shipping, payment, exchange and returns, member, or other.",
+            "second": "Enter the question and answer, then set the numeric sort order. Only published FAQ items are shown to customers.",
+            "third": "Use the category filters to review FAQ items, then edit or delete items that need maintenance."
+          },
+          "caution": "Both question and answer are required. The current FAQ editor has no English question or answer fields."
+        },
+        "localization": {
+          "title": "Translation check",
+          "summary": "Review missing English content in one place and move to the relevant admin screen when an item can be edited.",
+          "steps": {
+            "first": "Use the summary cards to see how many translations are missing for products, categories, pages, menus, and other resources.",
+            "second": "In the missing list, check which fields are empty. The policy column shows what fallback text will be used when a translation is missing.",
+            "third": "Open the edit link when it is available and fill in the translation on the connected admin screen. Items without an edit link need to be checked from their original management area."
+          },
+          "caution": "This page is for checking coverage only. It does not save translations directly, so finish edits in the linked admin screens."
+        },
+        "theme": {
+          "title": "Theme editor",
+          "summary": "Adjust the shop's light colors, dark colors, typography, spacing, and corner radius values.",
+          "steps": {
+            "first": "Choose the tab you want to edit, then update color or numeric values. Color fields can be changed with either the swatch or the text value.",
+            "second": "Use the live preview to check how buttons, cards, and input fields will look with the current values.",
+            "third": "Save when the changes look right. Use Reset to defaults only when you want to return the full theme to its default values."
+          },
+          "caution": "Saved theme values affect the whole site immediately. Resetting restores many values at once, so record anything you may need before using it."
+        },
+        "business": {
+          "title": "Business information",
+          "summary": "Manage the company, representative, registration numbers, address, contact, and customer service details shown in the footer.",
+          "steps": {
+            "first": "Review each Korean field and update it to match the current business information.",
+            "second": "Fill the English field when an English storefront value is needed. If it is empty, the English storefront may use fallback text.",
+            "third": "The Save button becomes active when there are changes. After saving, check the footer and customer information areas."
+          },
+          "caution": "These fields are used for commerce disclosure. Confirm the business registration number, mail-order sales number, and privacy officer information against the official records."
+        },
+        "logs": {
+          "title": "Operational logs",
+          "summary": "Search normal and error logs from operations and inspect only the lines you need.",
+          "steps": {
+            "first": "Choose normal or error, then select how many lines to load. Click Refresh to load the latest log content.",
+            "second": "Enter a search term and start or end time, or use the 1 hour, 24 hour, and 7 day presets to set the range quickly.",
+            "third": "Review time, level, request, and message columns in the table. Open Details to inspect raw fields, or copy the original content when needed."
+          },
+          "caution": "Operational logs are available only to super admins. Large results can be truncated, so narrow the search term and time range when possible."
+        }
+      },
+      "previousSlide": "Previous slide",
+      "nextSlide": "Next slide",
+      "slideStatus": "Slide {current} of {total}",
+      "viewScreenshot": "View full screenshot",
+      "screenshotAlt": "Example {title} management screen",
+      "sampleScreenshot": "Example data in the Korean admin UI.",
+      "slideLabel": "View slide {current}"
     }
   },
   "search": {

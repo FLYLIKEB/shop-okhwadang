@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ExternalLink, Menu, Search, UserCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/components/ui/utils';
+import { Link } from '@/i18n/navigation';
 
 const ROLE_LABEL_KEYS: Record<string, string> = {
   admin: 'roles.admin',
@@ -13,6 +13,7 @@ const ROLE_LABEL_KEYS: Record<string, string> = {
 };
 
 const SECTION_LABEL_KEYS: Array<{ segment: string; key: string }> = [
+  { segment: '/admin/guide', key: 'sections.guide' },
   { segment: '/admin/dashboard', key: 'sections.dashboard' },
   { segment: '/admin/products', key: 'sections.products' },
   { segment: '/admin/categories', key: 'sections.categories' },

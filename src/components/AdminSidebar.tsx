@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,9 +14,11 @@ import {
   ChevronDown,
   Home,
   X,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import { adminInquiriesApi, adminOrdersApi } from '@/lib/api';
+import { Link } from '@/i18n/navigation';
 
 type NavLeaf = {
   labelKey: string;
@@ -49,6 +50,7 @@ type NavItem = NavLeafItem | NavGroup;
 
 const NAV_ITEMS: NavItem[] = [
   { labelKey: 'dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { labelKey: 'guide', href: '/admin/guide', icon: BookOpen },
   { labelKey: 'localization', href: '/admin/localization', icon: Languages },
   {
     labelKey: 'productsGroup',
@@ -111,7 +113,7 @@ type SidebarContentProps = {
 };
 
 function SidebarContent({ onClose }: SidebarContentProps) {
-  const pathname = usePathname();
+  const pathname = usePathname().replace(/^\/(ko|en)(?=\/|$)/, '');
   const t = useTranslations('admin.sidebar');
   const { user } = useAuth();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
@@ -230,6 +232,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
                   onClick={onClose}
                   className={cn(
                     'flex items-center gap-3 rounded-xl px-3 py-3 typo-body-sm transition-colors',

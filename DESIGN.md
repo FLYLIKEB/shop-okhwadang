@@ -236,3 +236,80 @@ All CMS block `<section>` elements must use `py-16 md:py-24` — never `py-12`.
 ---
 
 **Rule: Do not reimplement existing abstractions. Update this document first if a new global component is needed.**
+
+## Source of truth
+
+Status: Active. Reviewed 2026-10-12 for the admin guide. Evidence: admin routes,
+`AdminHeader`, `AdminSidebar`, `AdminPageHeader`, `FormInput`, `Button`, and the
+existing `.toss-admin` theme in `src/styles/globals.css`. Existing rules above
+remain authoritative for the storefront and other admin features.
+
+## Brand
+
+Admin guidance is calm, concise and task-oriented. Use the existing Toss-inspired
+admin palette, whitespace and soft surfaces; avoid promotional art and heavy cards.
+
+## Product goals
+
+Help operators find what a menu does, complete a task and understand its consequences.
+Success: every admin feature has searchable instructions and help available in context.
+
+## Personas and jobs
+
+Store operators manage catalog, fulfillment, customer support and published content.
+Super administrators additionally inspect operational logs. Help must preserve active form input.
+
+## Information architecture
+
+`/admin/guide` groups all guidance into start, catalog, operations, content and settings.
+Sidebar entry opens the guide. Each working screen has a collapsed contextual disclosure.
+Route metadata in `src/lib/admin-guide.ts` and localized topic copy are shared by both.
+
+## Design principles
+
+Show a short purpose first, then a manually advanced screenshot slide with one task caption.
+Use previous/next controls and progress dots instead of a numbered instruction list.
+Keep the relevant caution visible below the slides. Never auto-advance.
+Prefer a searchable index and native disclosures over onboarding tours or modal interruptions.
+
+## Visual language
+
+Reuse the color, type and spacing rules above and `.toss-admin` tokens. No new theme,
+fonts or decorative imagery. Guide screenshots show actual components with fictional data. The admin guide uses `font-body` for headings as a scoped
+exception to storefront display headings, matching the requested Toss style. Soft dividers and generous spacing establish hierarchy.
+
+## Components
+
+Reuse `AdminPageHeader`, `FormInput` and `Button`. `AdminGuide` owns the guide index
+and the shared screenshot slider; native `details`/`summary` supplies keyboard-operable disclosure.
+Reuse `CarouselArrowButton` for slide navigation; screenshots load only when help is open.
+Each image has translated alt text and a full-size viewing link.
+
+## Responsive behavior
+
+Guide content uses a bounded readable width, stacked rows and wrapping text on mobile.
+Help and guide navigation remain available without hover. Touch targets are at least 44px.
+
+## Interaction states
+
+Search covers purpose, steps and caution as well as menu names. An empty search result
+shows a clear reset action. Hash links open the requested topic. Contextual help resets
+when the route changes. Search opens the matching instruction slide. Screenshot examples
+are captured from the real UI with fictional fixtures; no live customer or credential data.
+Guidance performs no business API requests or mutations.
+
+## Content voice
+
+Use short operator-facing instructions and exact screen concepts. Explain when changes
+are saved or published. Distinguish provider acceptance from customer receipt for messages.
+All new strings live in both Korean and English locale files.
+
+## Implementation constraints
+
+Keep admin authentication and roles intact. Do not expose a log navigation action to
+ordinary administrators. No dependencies, backend endpoints or schema changes are needed.
+Test route coverage, translations, search, disclosure, contextual help and role filtering.
+
+## Open questions
+
+None blocking. Production authentication and real message delivery are outside guide QA.

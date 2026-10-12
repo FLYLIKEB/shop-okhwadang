@@ -1,15 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminHeader } from '@/components/AdminHeader';
+import { AdminContextGuide } from '@/components/shared/admin/AdminGuide';
+import { getAdminGuideTopic } from '@/lib/admin-guide';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const guideTopic = getAdminGuideTopic(pathname);
+  const canSeeGuideTopic = guideTopic && (!guideTopic.superAdminOnly || user?.role === 'super_admin');
 
   // Server-side auth check is handled by middleware.ts
   // This client-side check is defense-in-depth for role verification
@@ -41,7 +46,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-6">
+            {canSeeGuideTopic && <AdminContextGuide key={pathname} topic={guideTopic} />}
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );
