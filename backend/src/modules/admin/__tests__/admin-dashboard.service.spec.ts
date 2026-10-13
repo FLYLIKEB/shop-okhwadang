@@ -31,6 +31,11 @@ function createMockRepository() {
   };
 }
 
+const dateRangeParams = (qb: Record<string, jest.Mock>) =>
+  qb.where.mock.calls.find(([condition]) =>
+    String(condition).includes('createdAt'),
+  )?.[1] as { start: string; end: string } | undefined;
+
 describe('AdminDashboardService', () => {
   let service: AdminDashboardService;
   let orderRepo: ReturnType<typeof createMockRepository>;
@@ -52,6 +57,10 @@ describe('AdminDashboardService', () => {
     }).compile();
 
     service = module.get<AdminDashboardService>(AdminDashboardService);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   describe('getDashboard', () => {
@@ -166,13 +175,63 @@ describe('AdminDashboardService', () => {
       expect(result.recent_orders[0].status).toBe('paid');
     });
 
+    it('should apply the selected UTC date range to KPI, chart, status, and recent orders', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-03-15T12:00:00.000Z'));
+
+      const currentKpiQb = createMockQueryBuilder({
+        getRawOne: jest.fn().mockResolvedValue({ revenue: '70000', count: '3' }),
+      });
+      const previousKpiQb = createMockQueryBuilder({
+        getRawOne: jest.fn().mockResolvedValue({ revenue: '100000', count: '2' }),
+      });
+      const chartQb = createMockQueryBuilder({ getRawMany: jest.fn().mockResolvedValue([]) });
+      const statusQb = createMockQueryBuilder({
+        getRawMany: jest.fn().mockResolvedValue([{ status: 'paid', count: '3' }]),
+      });
+
+      orderRepo.createQueryBuilder
+        .mockReturnValueOnce(currentKpiQb)
+        .mockReturnValueOnce(previousKpiQb)
+        .mockReturnValueOnce(chartQb)
+        .mockReturnValueOnce(statusQb);
+      userRepo.count
+        .mockResolvedValueOnce(4)
+        .mockResolvedValueOnce(2);
+
+      const result = await service.getDashboard({ period: '7d' });
+
+      const currentStart = '2026-03-09 00:00:00.000';
+      const currentEnd = '2026-03-16 00:00:00.000';
+      const previousStart = '2026-03-02 00:00:00.000';
+      const previousEnd = '2026-03-09 00:00:00.000';
+
+      expect(dateRangeParams(currentKpiQb)).toEqual({ start: currentStart, end: currentEnd });
+      expect(dateRangeParams(previousKpiQb)).toEqual({ start: previousStart, end: previousEnd });
+      expect(dateRangeParams(chartQb)).toEqual({ start: currentStart, end: currentEnd });
+      expect(dateRangeParams(statusQb)).toEqual({ start: currentStart, end: currentEnd });
+      expect(orderRepo.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ createdAt: expect.any(Object) }),
+          order: { createdAt: 'DESC' },
+          take: 5,
+        }),
+      );
+      expect(result.kpi.today_revenue).toBe(70000);
+      expect(result.kpi.today_revenue_diff_pct).toBe(-30);
+      expect(result.kpi.today_orders_diff_pct).toBe(50);
+      expect(result.kpi.new_members_today).toBe(4);
+      expect(result.kpi.new_members_diff_pct).toBe(100);
+      expect(result.order_status_summary.paid).toBe(3);
+      expect(result.revenue_chart).toHaveLength(7);
+    });
+
     it('should handle custom date range', async () => {
       const result = await service.getDashboard({
         startDate: '2026-03-01',
         endDate: '2026-03-15',
       });
 
-      expect(result.revenue_chart.length).toBeGreaterThanOrEqual(15);
+      expect(result.revenue_chart).toHaveLength(15);
     });
 
     it('should throw BadRequestException for range > 365 days', async () => {
@@ -196,13 +255,49 @@ describe('AdminDashboardService', () => {
     it('should handle period=7d', async () => {
       const result = await service.getDashboard({ period: '7d' });
 
-      expect(result.revenue_chart.length).toBeGreaterThanOrEqual(7);
+      expect(result.revenue_chart).toHaveLength(7);
     });
 
     it('should handle period=90d', async () => {
       const result = await service.getDashboard({ period: '90d' });
 
-      expect(result.revenue_chart.length).toBeGreaterThanOrEqual(90);
+      expect(result.revenue_chart).toHaveLength(90);
+    });
+
+    it.each([
+      ['today', 1, '2026-03-15'],
+      ['7d', 7, '2026-03-09'],
+      ['30d', 30, '2026-02-14'],
+      ['90d', 90, '2025-12-16'],
+      [undefined, 30, '2026-02-14'],
+    ] as const)('should return exactly %s chart days', async (period, expectedDays, firstDate) => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-03-15T12:00:00.000Z'));
+
+      const result = await service.getDashboard(period ? { period } : {});
+
+      expect(result.revenue_chart).toHaveLength(expectedDays);
+      expect(result.revenue_chart[0]?.date).toBe(firstDate);
+      expect(result.revenue_chart.at(-1)?.date).toBe('2026-03-15');
+    });
+
+    it('should reject partial custom date ranges', async () => {
+      await expect(service.getDashboard({ startDate: '2026-03-01' })).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it.each([
+      { startDate: '2026-02-30', endDate: '2026-03-01' },
+      { startDate: '2026-03-01T00:00:00.000Z', endDate: '2026-03-02' },
+      { startDate: '2026-03-01', endDate: '2026-03-02T00:00:00.000Z' },
+    ])('should reject invalid date-only ranges %#', async (query) => {
+      await expect(service.getDashboard(query)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject unsupported periods', async () => {
+      await expect(service.getDashboard({ period: 'week' as never })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should sum product view counts for total_product_views', async () => {

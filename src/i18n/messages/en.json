@@ -780,7 +780,21 @@
         "delivered": "Delivered",
         "cancelled": "Cancelled",
         "refunded": "Refunded"
-      }
+      },
+      "periodRevenue": "Period revenue",
+      "periodOrders": "Period orders",
+      "comparePreviousPeriod": "vs. previous equal period",
+      "cumulativeProductViews": "All-time product views",
+      "currentDeletionPending": "Pending deletions now",
+      "cumulativeDeletionCompleted": "All-time deletions",
+      "scopeDescription": "Revenue, orders and new members use the selected period (UTC). Views and completed deletions are all-time totals; pending deletions show the current state.",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "selectDates": "Select a start and end date.",
+      "loading": "Loading...",
+      "loadError": "Unable to load dashboard data",
+      "orderUnit": "orders",
+      "memberUnit": "members"
     },
     "orders": {
       "title": "Order Management",
@@ -1805,11 +1819,11 @@
           "title": "Dashboard",
           "summary": "Review revenue, orders, members, product views, and deletion progress in one place.",
           "steps": {
-            "first": "Choose a preset period or custom date range. Start with today revenue, order count, new members, and product views.",
+            "first": "Select a preset or date range. Revenue, orders and new members use that period; changes compare against the preceding equal period.",
             "second": "Use the order status summary to spot bottlenecks. If paid or preparing orders pile up, handle them in Orders.",
             "third": "Check recent orders for order number, amount, status, and order date. Use Orders for any operational action."
           },
-          "caution": "The dashboard is a summary screen. Status changes, shipping, and cancellation are handled in Orders."
+          "caution": "Dates use UTC. Product views and completed deletions are all-time totals; pending deletions show the current state. Change order statuses in Order management."
         },
         "products": {
           "title": "Products",
