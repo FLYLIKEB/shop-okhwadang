@@ -1,5 +1,6 @@
 import { apiClient } from '../core';
 
+// Legacy today_* names represent the selected period; comparison is the preceding equal period.
 export interface DashboardKpi {
   today_revenue: number;
   today_revenue_diff_pct: number;

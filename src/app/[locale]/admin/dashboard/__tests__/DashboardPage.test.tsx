@@ -1,6 +1,13 @@
-import { render, waitFor, act } from '@testing-library/react';
+import { render, waitFor, act, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import DashboardPage from '../page';
+
+vi.mock('next-intl', () => ({
+  useLocale: () => 'ko',
+  useTranslations: () => (key: string) => key,
+}));
+
+vi.mock('next/dynamic', () => ({ default: () => () => null }));
 
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
@@ -78,4 +85,55 @@ describe('DashboardPage', () => {
       });
     });
   });
+  describe('period selection', () => {
+    beforeEach(() => mockUseAdminGuard.mockReturnValue({ isAdmin: true }));
+
+    it('requests the selected period and labels KPI/comparisons by that period', async () => {
+      render(<DashboardPage />);
+      await waitFor(() => expect(mockGet).toHaveBeenLastCalledWith({ period: '30d' }));
+      for (const period of ['today', '7d', '90d', '30d']) {
+        fireEvent.click(screen.getByRole('button', { name: `period.${period}` }));
+        await waitFor(() => expect(mockGet).toHaveBeenLastCalledWith({ period }));
+      }
+      expect(await screen.findByText('periodRevenue')).toBeInTheDocument();
+      expect(screen.getAllByText('comparePreviousPeriod').length).toBeGreaterThan(0);
+      expect(screen.getByText('cumulativeProductViews')).toBeInTheDocument();
+    });
+
+    it('does not fetch an incomplete custom range or keep showing old data', async () => {
+      render(<DashboardPage />);
+      await screen.findByText('₩100,000');
+      fireEvent.click(screen.getByRole('button', { name: 'period.custom' }));
+      expect(screen.queryByText('₩100,000')).not.toBeInTheDocument();
+      expect(screen.getByText('selectDates')).toBeInTheDocument();
+      fireEvent.change(screen.getByLabelText('startDate'), { target: { value: '2026-10-01' } });
+      expect(mockGet).toHaveBeenCalledTimes(1);
+      fireEvent.change(screen.getByLabelText('endDate'), { target: { value: '2026-10-07' } });
+      await waitFor(() => expect(mockGet).toHaveBeenLastCalledWith({ startDate: '2026-10-01', endDate: '2026-10-07' }));
+    });
+
+    it.each(['success', 'failure'])('ignores an older %s while the latest period is still loading', async (outcome) => {
+      render(<DashboardPage />);
+      await screen.findByText('₩100,000');
+      let resolveOld!: (value: unknown) => void;
+      let rejectOld!: (reason: Error) => void;
+      let resolveLatest!: (value: unknown) => void;
+      mockGet.mockImplementationOnce(() => new Promise((resolve, reject) => { resolveOld = resolve; rejectOld = reject; }));
+      mockGet.mockImplementationOnce(() => new Promise(resolve => { resolveLatest = resolve; }));
+      fireEvent.click(screen.getByRole('button', { name: 'period.7d' }));
+      fireEvent.click(screen.getByRole('button', { name: 'period.90d' }));
+      const response = { kpi: { today_revenue: 900000, today_orders: 9, new_members_today: 1, total_product_views: 0 }, revenue_chart: [], order_status_summary: {}, recent_orders: [] };
+      await act(async () => {
+        if (outcome === 'failure') rejectOld(new Error('old request'));
+        else resolveOld({ ...response, kpi: { ...response.kpi, today_revenue: 700000 } });
+      });
+      expect(screen.getByText('loading')).toBeInTheDocument();
+      expect(screen.queryByText('₩100,000')).not.toBeInTheDocument();
+      expect(screen.queryByText('₩700,000')).not.toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      await act(async () => resolveLatest(response));
+      expect(await screen.findByText('₩900,000')).toBeInTheDocument();
+    });
+  });
+
 });

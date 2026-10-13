@@ -1,12 +1,16 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { User } from '../users/entities/user.entity';
 import { Product } from '../products/entities/product.entity';
-import { DashboardQueryDto } from './dto/dashboard-query.dto';
+import { DashboardPeriod, DashboardQueryDto } from './dto/dashboard-query.dto';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DATE_ONLY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 interface KpiData {
+  // Response names stay stable for API compatibility; values use the selected dashboard range.
   today_revenue: number;
   today_revenue_diff_pct: number;
   today_orders: number;
@@ -44,6 +48,15 @@ interface RecentOrder {
   created_at: string;
 }
 
+interface DashboardDateRange {
+  startDate: Date;
+  endExclusiveDate: Date;
+  startSql: string;
+  endExclusiveSql: string;
+  previousStartSql: string;
+  previousEndExclusiveSql: string;
+}
+
 export interface DashboardResponse {
   kpi: KpiData;
   revenue_chart: RevenueChartItem[];
@@ -63,14 +76,14 @@ export class AdminDashboardService {
   ) {}
 
   async getDashboard(query: DashboardQueryDto): Promise<DashboardResponse> {
-    const { startDate, endDate } = this.resolveDateRange(query);
+    const dateRange = this.resolveDateRange(query);
 
     const [kpi, revenueChart, orderStatusSummary, recentOrders] =
       await Promise.all([
-        this.getKpi(),
-        this.getRevenueChart(startDate, endDate),
-        this.getOrderStatusSummary(),
-        this.getRecentOrders(),
+        this.getKpi(dateRange),
+        this.getRevenueChart(dateRange.startDate, dateRange.endExclusiveDate),
+        this.getOrderStatusSummary(dateRange.startDate, dateRange.endExclusiveDate),
+        this.getRecentOrders(dateRange.startDate, dateRange.endExclusiveDate),
       ]);
 
     return {
@@ -81,89 +94,150 @@ export class AdminDashboardService {
     };
   }
 
-  private resolveDateRange(query: DashboardQueryDto): {
-    startDate: Date;
-    endDate: Date;
-  } {
-    const now = new Date();
+  private resolveDateRange(query: DashboardQueryDto): DashboardDateRange {
+    const hasStartDate = query.startDate !== undefined;
+    const hasEndDate = query.endDate !== undefined;
     let startDate: Date;
-    let endDate: Date;
+    let endExclusiveDate: Date;
+    let dayCount: number;
 
-    if (query.startDate && query.endDate) {
-      startDate = new Date(query.startDate);
-      endDate = new Date(query.endDate);
-      endDate.setHours(23, 59, 59, 999);
-
-      const diffMs = endDate.getTime() - startDate.getTime();
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
-      if (diffDays > 365) {
-        throw new BadRequestException('기간은 최대 365일까지 설정 가능합니다');
+    if (hasStartDate || hasEndDate) {
+      if (!query.startDate || !query.endDate) {
+        throw new BadRequestException('시작일과 종료일을 모두 입력해야 합니다');
       }
-      if (diffDays < 0) {
+
+      startDate = this.parseDateOnlyStart(query.startDate, '시작일');
+      const endDateStart = this.parseDateOnlyStart(query.endDate, '종료일');
+      endExclusiveDate = this.addUtcDays(endDateStart, 1);
+
+      dayCount = this.countInclusiveDays(startDate, endDateStart);
+      if (dayCount < 1) {
         throw new BadRequestException(
           '시작일은 종료일보다 이전이어야 합니다',
         );
       }
+      if (dayCount > 365) {
+        throw new BadRequestException('기간은 최대 365일까지 설정 가능합니다');
+      }
     } else {
-      const days = this.parsePeriodDays(query.period);
-      endDate = new Date(now);
-      endDate.setHours(23, 59, 59, 999);
-      startDate = new Date(now);
-      startDate.setDate(startDate.getDate() - days);
-      startDate.setHours(0, 0, 0, 0);
+      dayCount = this.parsePeriodDayCount(query.period);
+      const todayStart = this.toUtcStartOfDay(new Date());
+      startDate = new Date(todayStart.getTime() - (dayCount - 1) * DAY_MS);
+      endExclusiveDate = this.addUtcDays(todayStart, 1);
     }
 
-    return { startDate, endDate };
+    const previousStartDate = new Date(startDate.getTime() - dayCount * DAY_MS);
+
+    return {
+      startDate,
+      endExclusiveDate,
+      startSql: this.formatUtcSqlDateTime(startDate),
+      endExclusiveSql: this.formatUtcSqlDateTime(endExclusiveDate),
+      previousStartSql: this.formatUtcSqlDateTime(previousStartDate),
+      previousEndExclusiveSql: this.formatUtcSqlDateTime(startDate),
+    };
   }
 
-  private parsePeriodDays(period?: string): number {
+  private parsePeriodDayCount(period?: DashboardPeriod | string): number {
     switch (period) {
       case 'today':
-        return 0;
+        return 1;
       case '7d':
         return 7;
       case '90d':
         return 90;
       case '30d':
-      default:
+      case undefined:
         return 30;
+      default:
+        throw new BadRequestException('지원하지 않는 기간입니다');
     }
   }
 
-  private async getKpi(): Promise<KpiData> {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+  private parseDateOnlyStart(value: string, label: string): Date {
+    const match = DATE_ONLY_RE.exec(value);
+    if (!match) {
+      throw new BadRequestException(`${label}은 YYYY-MM-DD 형식이어야 합니다`);
+    }
 
-    const yesterdayStart = new Date(todayStart);
-    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-    const yesterdayEnd = new Date(todayStart);
-    yesterdayEnd.setMilliseconds(-1);
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const date = new Date(Date.UTC(year, month - 1, day));
 
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      throw new BadRequestException(`${label}이 올바른 날짜가 아닙니다`);
+    }
+
+    return date;
+  }
+
+  private toUtcStartOfDay(date: Date): Date {
+    return new Date(Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+    ));
+  }
+
+  private addUtcDays(date: Date, days: number): Date {
+    return new Date(date.getTime() + days * DAY_MS);
+  }
+
+  private formatUtcSqlDateTime(date: Date): string {
+    return [
+      [
+        date.getUTCFullYear(),
+        String(date.getUTCMonth() + 1).padStart(2, '0'),
+        String(date.getUTCDate()).padStart(2, '0'),
+      ].join('-'),
+      [
+        String(date.getUTCHours()).padStart(2, '0'),
+        String(date.getUTCMinutes()).padStart(2, '0'),
+        String(date.getUTCSeconds()).padStart(2, '0'),
+      ].join(':'),
+    ].join(' ') + `.${String(date.getUTCMilliseconds()).padStart(3, '0')}`;
+  }
+
+  private countInclusiveDays(startDate: Date, endDateStart: Date): number {
+    return Math.floor((endDateStart.getTime() - startDate.getTime()) / DAY_MS) + 1;
+  }
+
+  private async getKpi(dateRange: DashboardDateRange): Promise<KpiData> {
     const excludedStatuses = [OrderStatus.CANCELLED, OrderStatus.REFUNDED];
 
-    const [todayAgg, yesterdayAgg, todayMembers, yesterdayMembers, viewCountResult, deletionPendingCount, deletionCompletedCount] =
+    const [currentAgg, previousAgg, currentMembers, previousMembers, viewCountResult, deletionPendingCount, deletionCompletedCount] =
       await Promise.all([
         this.orderRepository
           .createQueryBuilder('o')
           .select('COALESCE(SUM(o.totalAmount), 0)', 'revenue')
           .addSelect('COUNT(*)', 'count')
-          .where('o.createdAt BETWEEN :start AND :end', { start: todayStart, end: todayEnd })
+          .where('o.createdAt >= :start AND o.createdAt < :end', { start: dateRange.startSql, end: dateRange.endExclusiveSql })
           .andWhere('o.status NOT IN (:...statuses)', { statuses: excludedStatuses })
           .getRawOne() as Promise<{ revenue: string; count: string }>,
         this.orderRepository
           .createQueryBuilder('o')
           .select('COALESCE(SUM(o.totalAmount), 0)', 'revenue')
           .addSelect('COUNT(*)', 'count')
-          .where('o.createdAt BETWEEN :start AND :end', { start: yesterdayStart, end: yesterdayEnd })
+          .where('o.createdAt >= :start AND o.createdAt < :end', { start: dateRange.previousStartSql, end: dateRange.previousEndExclusiveSql })
           .andWhere('o.status NOT IN (:...statuses)', { statuses: excludedStatuses })
           .getRawOne() as Promise<{ revenue: string; count: string }>,
         this.userRepository.count({
-          where: { createdAt: Between(todayStart, todayEnd) },
+          where: {
+            createdAt: this.createdAtInRange(dateRange.startSql, dateRange.endExclusiveSql),
+          },
         }),
         this.userRepository.count({
-          where: { createdAt: Between(yesterdayStart, yesterdayEnd) },
+          where: {
+            createdAt: this.createdAtInRange(
+              dateRange.previousStartSql,
+              dateRange.previousEndExclusiveSql,
+            ),
+          },
         }),
         this.productRepository
           .createQueryBuilder('product')
@@ -180,10 +254,10 @@ export class AdminDashboardService {
           .getCount(),
       ]);
 
-    const todayRevenue = Number(todayAgg?.revenue ?? 0);
-    const yesterdayRevenue = Number(yesterdayAgg?.revenue ?? 0);
-    const todayOrderCount = Number(todayAgg?.count ?? 0);
-    const yesterdayOrderCount = Number(yesterdayAgg?.count ?? 0);
+    const todayRevenue = Number(currentAgg?.revenue ?? 0);
+    const yesterdayRevenue = Number(previousAgg?.revenue ?? 0);
+    const todayOrderCount = Number(currentAgg?.count ?? 0);
+    const yesterdayOrderCount = Number(previousAgg?.count ?? 0);
 
     return {
       today_revenue: todayRevenue,
@@ -193,8 +267,8 @@ export class AdminDashboardService {
         todayOrderCount,
         yesterdayOrderCount,
       ),
-      new_members_today: todayMembers,
-      new_members_diff_pct: this.calcDiffPct(todayMembers, yesterdayMembers),
+      new_members_today: currentMembers,
+      new_members_diff_pct: this.calcDiffPct(currentMembers, previousMembers),
       total_product_views: Number(viewCountResult?.total ?? 0),
       deletion_pending_count: deletionPendingCount,
       deletion_completed_count: deletionCompletedCount,
@@ -210,27 +284,30 @@ export class AdminDashboardService {
 
   private async getRevenueChart(
     startDate: Date,
-    endDate: Date,
+    endExclusiveDate: Date,
   ): Promise<RevenueChartItem[]> {
     const excludedStatuses = [OrderStatus.CANCELLED, OrderStatus.REFUNDED];
 
     const rows = await this.orderRepository
       .createQueryBuilder('o')
-      .select('DATE(o.createdAt)', 'date')
+      .select("DATE_FORMAT(o.createdAt, '%Y-%m-%d')", 'date')
       .addSelect('COALESCE(SUM(o.totalAmount), 0)', 'revenue')
       .addSelect('COUNT(*)', 'count')
-      .where('o.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
+      .where('o.createdAt >= :start AND o.createdAt < :end', {
+        start: this.formatUtcSqlDateTime(startDate),
+        end: this.formatUtcSqlDateTime(endExclusiveDate),
+      })
       .andWhere('o.status NOT IN (:...statuses)', { statuses: excludedStatuses })
-      .groupBy('DATE(o.createdAt)')
+      .groupBy("DATE_FORMAT(o.createdAt, '%Y-%m-%d')")
       .getRawMany() as { date: string; revenue: string; count: string }[];
 
     const dailyMap = new Map<string, { revenue: number; count: number }>();
 
     const current = new Date(startDate);
-    while (current <= endDate) {
+    while (current < endExclusiveDate) {
       const dateStr = current.toISOString().split('T')[0];
       dailyMap.set(dateStr, { revenue: 0, count: 0 });
-      current.setDate(current.getDate() + 1);
+      current.setUTCDate(current.getUTCDate() + 1);
     }
 
     for (const row of rows) {
@@ -248,11 +325,18 @@ export class AdminDashboardService {
     }));
   }
 
-  private async getOrderStatusSummary(): Promise<OrderStatusSummary> {
+  private async getOrderStatusSummary(
+    startDate: Date,
+    endExclusiveDate: Date,
+  ): Promise<OrderStatusSummary> {
     const result = await this.orderRepository
       .createQueryBuilder('order')
       .select('order.status', 'status')
       .addSelect('COUNT(*)', 'count')
+      .where('order.createdAt >= :start AND order.createdAt < :end', {
+        start: this.formatUtcSqlDateTime(startDate),
+        end: this.formatUtcSqlDateTime(endExclusiveDate),
+      })
       .groupBy('order.status')
       .getRawMany<{ status: string; count: string }>();
 
@@ -278,8 +362,17 @@ export class AdminDashboardService {
     return summary;
   }
 
-  private async getRecentOrders(): Promise<RecentOrder[]> {
+  private async getRecentOrders(
+    startDate: Date,
+    endExclusiveDate: Date,
+  ): Promise<RecentOrder[]> {
     const orders = await this.orderRepository.find({
+      where: {
+        createdAt: this.createdAtInRange(
+          this.formatUtcSqlDateTime(startDate),
+          this.formatUtcSqlDateTime(endExclusiveDate),
+        ),
+      },
       relations: ['user'],
       order: { createdAt: 'DESC' },
       take: 5,
@@ -292,5 +385,12 @@ export class AdminDashboardService {
       status: order.status,
       created_at: order.createdAt.toISOString(),
     }));
+  }
+
+  private createdAtInRange(start: string, end: string) {
+    return Raw((alias) => `${alias} >= :start AND ${alias} < :end`, {
+      start,
+      end,
+    });
   }
 }
