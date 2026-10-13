@@ -167,7 +167,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
             <KpiCard
               label={t('periodRevenue')}
-              value={formatCurrency(data.kpi.today_revenue, locale)}
+              value={formatCurrency(data.kpi.today_revenue)}
               comparison={t('comparePreviousPeriod')}
               diffPct={data.kpi.today_revenue_diff_pct}
             />
@@ -260,7 +260,7 @@ export default function DashboardPage() {
                         </td>
                         <td className="px-3 py-2">{order.user_name}</td>
                         <td className="px-3 py-2 text-right">
-                          {formatCurrency(order.total_amount, locale)}
+                          {formatCurrency(order.total_amount)}
                         </td>
                         <td className="px-3 py-2">
                           <span className="rounded-full bg-muted px-2 py-0.5 typo-label">

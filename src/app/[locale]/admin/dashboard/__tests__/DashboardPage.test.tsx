@@ -2,8 +2,10 @@ import { render, waitFor, act, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import DashboardPage from '../page';
 
+const mockLocale = vi.hoisted(() => vi.fn(() => 'ko'));
+
 vi.mock('next-intl', () => ({
-  useLocale: () => 'ko',
+  useLocale: mockLocale,
   useTranslations: () => (key: string) => key,
 }));
 
@@ -38,6 +40,7 @@ vi.mock('@/components/shared/hooks/useAdminGuard', () => ({
 describe('DashboardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLocale.mockReturnValue('ko');
     mockGet.mockResolvedValue({
       kpi: {
         today_revenue: 100000,
@@ -98,6 +101,13 @@ describe('DashboardPage', () => {
       expect(await screen.findByText('periodRevenue')).toBeInTheDocument();
       expect(screen.getAllByText('comparePreviousPeriod').length).toBeGreaterThan(0);
       expect(screen.getByText('cumulativeProductViews')).toBeInTheDocument();
+    });
+
+    it('keeps admin revenue in KRW on the English page, matching the charts', async () => {
+      mockLocale.mockReturnValue('en');
+      render(<DashboardPage />);
+      expect(await screen.findByText('₩100,000')).toBeInTheDocument();
+      expect(screen.queryByText('$74.07')).not.toBeInTheDocument();
     });
 
     it('does not fetch an incomplete custom range or keep showing old data', async () => {
