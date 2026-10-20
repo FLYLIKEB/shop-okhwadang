@@ -171,6 +171,16 @@ describe('AdminExportService', () => {
       expect(orderRepo._qb.andWhere).toHaveBeenCalledTimes(2);
     });
 
+    it.each(['csv', 'xlsx'] as const)('uses an exclusive next-day bound for %s', async (format) => {
+      orderRepo._qb.getMany.mockResolvedValue([]);
+      const stream = new PassThrough();
+      stream.resume();
+      await service.exportOrders({ format, from: '2024-12-01', to: '2024-12-31' },
+        Object.assign(stream, { setHeader: jest.fn() }) as unknown as import('express').Response);
+      expect(orderRepo._qb.andWhere).toHaveBeenNthCalledWith(1, 'order.createdAt >= :from', { from: '2024-12-01' });
+      expect(orderRepo._qb.andWhere).toHaveBeenNthCalledWith(2, 'order.createdAt < DATE_ADD(:to, INTERVAL 1 DAY)', { to: '2024-12-31' });
+    });
+
     it('should iterate in batches when first batch is full', async () => {
       const fullBatch = Array.from({ length: 500 }, (_, index) => ({
         id: index + 1,

@@ -14,6 +14,9 @@ import { Shipping } from '../src/modules/payments/entities/shipping.entity';
 import { MockPaymentAdapter } from '../src/modules/payments/adapters/mock.adapter';
 import { AuditLog } from '../src/modules/audit-logs/entities/audit-log.entity';
 import { MessageEffectOutbox } from '../src/modules/notification/entities/message-effect-outbox.entity';
+import { AdminExportService } from '../src/modules/admin/admin-export.service';
+import { PassThrough } from 'stream';
+import * as ExcelJS from 'exceljs';
 
 const RUN = `operations-${Date.now()}`;
 
@@ -77,6 +80,34 @@ describe('admin operations invariants (MySQL and HTTP)', () => {
       }
     }
     await app?.close();
+  });
+
+  it.each(['csv', 'xlsx'] as const)('includes the entire final day and excludes adjacent dates in %s exports', async (format) => {
+    const timestamps = [
+      '2024-12-30 23:59:59.999999', '2024-12-31 00:00:00',
+      '2024-12-31 23:59:59', '2024-12-31 23:59:59.999999', '2025-01-01 00:00:00',
+    ];
+    const numbers: string[] = [];
+    for (const timestamp of timestamps) {
+      const { order } = await fixture();
+      await db.query('UPDATE orders SET created_at = ? WHERE id = ?', [timestamp, order.id]);
+      numbers.push(order.orderNumber);
+    }
+    const stream = new PassThrough();
+    const chunks: Buffer[] = [];
+    stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+    const finished = new Promise<void>((resolve) => stream.on('end', resolve));
+    await app.get(AdminExportService).exportOrders({ format, from: '2024-12-31', to: '2024-12-31' },
+      Object.assign(stream, { setHeader: jest.fn() }) as unknown as import('express').Response);
+    await finished;
+    let output = Buffer.concat(chunks).toString();
+    if (format === 'xlsx') {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(Buffer.concat(chunks));
+      output = JSON.stringify(workbook.worksheets[0].getSheetValues());
+    }
+    for (const index of [1, 2, 3]) expect(output).toContain(numbers[index]);
+    for (const index of [0, 4]) expect(output).not.toContain(numbers[index]);
   });
 
   it('rejects an unconfirmed paid transition and allows confirmed payment through shipping registration', async () => {
