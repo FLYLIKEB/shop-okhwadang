@@ -98,6 +98,16 @@ describe('AdminAttributesPage', () => {
     expect(mockGetTypeValueOptions).toHaveBeenCalledTimes(2);
   });
 
+  it('shows an empty legacy value after its last product is unlinked', async () => {
+    mockUnlinkProductFromTypeValue.mockResolvedValue({ id: null, value: 'nokni', displayValue: null, sortOrder: 999, isActive: true, productCount: 0, products: [] });
+    render(<AdminAttributesPage />);
+    fireEvent.click(await screen.findByText('clay_type'));
+    fireEvent.click(await screen.findByRole('button', { name: '선택 해제 옥화당 녹니호' }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: '선택 해제 옥화당 녹니호' })).not.toBeInTheDocument());
+    expect(screen.getByDisplayValue('nokni')).toBeInTheDocument();
+    expect(mockUnlinkProductFromTypeValue).toHaveBeenCalledWith('clay_type', 'nokni', 10);
+  });
+
   it('sends an explicit empty English name when the existing translation is cleared', async () => {
     render(<AdminAttributesPage />);
     fireEvent.click(await screen.findByText('clay_type'));
