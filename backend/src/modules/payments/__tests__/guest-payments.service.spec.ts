@@ -52,6 +52,7 @@ describe('GuestPaymentsService', () => {
       'guest-access-token',
       'confirm-key',
       expect.any(Function),
+      { id: 1, scope: expect.stringMatching(/^guest-token:[a-f0-9]{64}$/) },
     );
     expect(idempotencyService.reserve).toHaveBeenCalledWith(
       expect.stringMatching(/^guest-token:[a-f0-9]{64}$/), 'guest-payment.confirm', 'confirm-key',

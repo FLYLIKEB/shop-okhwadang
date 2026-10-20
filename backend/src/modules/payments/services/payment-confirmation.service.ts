@@ -50,6 +50,8 @@ import {
   PaymentEffectType,
 } from '../entities/payment-effect-outbox.entity';
 import { PaymentEffectOutboxService } from './payment-effect-outbox.service';
+import { IdempotencyService } from '../../../common/services/idempotency.service';
+import { IdempotencyOperation } from '../../../common/entities/idempotency-operation.entity';
 
 type CustomerType = 'member' | 'guest';
 type ConfirmResponse = {
@@ -98,6 +100,7 @@ export class PaymentConfirmationService {
     private readonly orderEventEmitter: OrderEventEmitter | undefined,
     private readonly guestOrderAccessService: GuestOrderAccessService,
     private readonly effectOutbox: PaymentEffectOutboxService,
+    private readonly idempotencyService: IdempotencyService,
   ) {}
 
   async confirm(
@@ -105,6 +108,7 @@ export class PaymentConfirmationService {
     userId: number,
     idempotencyKey?: string,
     persistResult?: (manager: EntityManager, response: ConfirmResponse) => Promise<void>,
+    idempotencyOperation?: Pick<IdempotencyOperation, 'id' | 'scope'>,
   ): Promise<ConfirmResponse> {
     const payment = await findOrThrow(
       this.paymentRepository,
@@ -224,7 +228,7 @@ export class PaymentConfirmationService {
       this.logger.log(`Payment confirmed: orderId=${dto.orderId} customerType=member`);
       return outcome.response;
     } catch (err) {
-      await this.persistConfirmationReconciliation(reservedPayment, operationKey, result, paidAt, err);
+      await this.persistConfirmationReconciliation(reservedPayment, operationKey, result, paidAt, err, idempotencyOperation);
       if (err instanceof BadRequestException) throw err;
       if (err instanceof ConflictException || err instanceof UnauthorizedException) {
         throw err;
@@ -243,6 +247,7 @@ export class PaymentConfirmationService {
     guestAccessToken: string,
     idempotencyKey?: string,
     persistResult?: (manager: EntityManager, response: GuestConfirmResponse) => Promise<void>,
+    idempotencyOperation?: Pick<IdempotencyOperation, 'id' | 'scope'>,
   ): Promise<GuestConfirmResponse> {
     await this.assertGuestAccessTokenActive(orderId, guestAccessToken);
 
@@ -365,7 +370,7 @@ export class PaymentConfirmationService {
       this.logger.log(`Payment confirmed: orderId=${orderId} customerType=guest`);
       return outcome.response;
     } catch (err) {
-      await this.persistConfirmationReconciliation(reservedPayment, operationKey, result, paidAt, err);
+      await this.persistConfirmationReconciliation(reservedPayment, operationKey, result, paidAt, err, idempotencyOperation);
       if (err instanceof BadRequestException) throw err;
       if (err instanceof ConflictException) {
         throw err;
@@ -393,7 +398,7 @@ export class PaymentConfirmationService {
       throw new BadRequestException('재동기화 가능한 결제 상태가 아닙니다.');
     }
 
-    const outcome = await this.dataSource.transaction(async (manager) => {
+    const reconcile = async (manager: EntityManager) => {
       const lockedPayment = await this.loadLockedPayment(orderId, manager);
       const lockedOrder = lockedPayment.order;
       const reconciliation = this.readConfirmationReconciliation(lockedPayment.rawResponse);
@@ -445,10 +450,50 @@ export class PaymentConfirmationService {
         }
       }
 
-      await manager.update(Order, orderId, { status: OrderStatus.PAID });
-
       let isFirstPurchase = false;
       const customerType: CustomerType = lockedOrder.userId === null ? 'guest' : 'member';
+      const operationReference = reconciliation.idempotencyOperation as Pick<IdempotencyOperation, 'id' | 'scope'> | undefined;
+      if (operationReference) {
+        const operation = await manager.getRepository(IdempotencyOperation).findOne({
+          where: {
+            id: operationReference.id,
+            scope: operationReference.scope,
+            operation: customerType === 'member' ? 'payment.confirm' : 'guest-payment.confirm',
+            key: String(reconciliation.confirmationOperationKey).trim(),
+          },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (
+          !operation || operation.status !== 'pending' || !operation.leaseOwner ||
+          (customerType === 'member'
+            ? operation.scope !== `member:${lockedOrder.userId}`
+            : !/^guest-token:[a-f0-9]{64}$/.test(operation.scope))
+        ) {
+          throw new ConflictException('결제 승인 요청의 작업 소유권을 확인해주세요.');
+        }
+        const response: ConfirmResponse = {
+          paymentId: Number(lockedPayment.id),
+          orderId,
+          orderNumber: lockedOrder.orderNumber,
+          status: PaymentStatus.CONFIRMED,
+          method: result?.method ?? lockedPayment.method,
+          amount: Number(lockedPayment.amount),
+          paidAt: result ? new Date(reconciliation.paidAt as string) : lockedPayment.paidAt!,
+        };
+        let replayResponse: ConfirmResponse | GuestConfirmResponse = response;
+        if (customerType === 'guest') {
+          const rotatedAccess = await this.guestOrderAccessService.rotateAccessTokenForDigest(
+            orderId, operation.scope.slice('guest-token:'.length), manager,
+          );
+          replayResponse = {
+            ...response,
+            guestAccessToken: rotatedAccess.guestAccessToken,
+            guestAccessTokenExpiresAt: rotatedAccess.guestAccessTokenExpiresAt.toISOString(),
+          };
+        }
+        await this.idempotencyService.complete(manager, operation.id, operation.leaseOwner, replayResponse);
+      }
+      await manager.update(Order, orderId, { status: OrderStatus.PAID });
       if (this.orderEventEmitter && customerType === 'member') {
         const paidOrderCount = await manager.count(Order, {
           where: {
@@ -477,11 +522,14 @@ export class PaymentConfirmationService {
         amount: Number(lockedPayment.amount),
         customerType,
         isFirstPurchase,
-        method: lockedPayment.method,
+        method: result?.method ?? lockedPayment.method,
       });
       await this.enqueuePaymentEffects(manager, orderId, payload);
       return payload;
-    });
+    };
+    const outcome = payment.order.userId === null
+      ? await this.guestOrderAccessService.withOrderAccessLock(orderId, reconcile)
+      : await this.dataSource.transaction(reconcile);
 
     this.logger.log(
       `Payment reconciliation replayed: orderId=${orderId} customerType=${outcome.customerType}`,
@@ -756,6 +804,7 @@ export class PaymentConfirmationService {
     result: Awaited<ReturnType<PaymentGateway['confirm']>>,
     paidAt: Date,
     err: unknown,
+    idempotencyOperation?: Pick<IdempotencyOperation, 'id' | 'scope'>,
   ): Promise<void> {
     await this.paymentRepository.update({
       id: payment.id,
@@ -767,6 +816,7 @@ export class PaymentConfirmationService {
         gatewayConfirmationSucceeded: true,
         orderId: payment.orderId,
         confirmationOperationKey: operationKey,
+        idempotencyOperation,
         confirmationResult: result,
         preparedBinding: {
           providerTransactionId: payment.providerTransactionId,

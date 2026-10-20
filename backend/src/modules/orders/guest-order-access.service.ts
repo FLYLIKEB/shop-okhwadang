@@ -169,12 +169,23 @@ export class GuestOrderAccessService {
     currentRawToken: string,
     manager: EntityManager,
   ): Promise<GuestAccessIssueResult> {
+    return this.rotateAccessTokenForDigest(
+      orderId,
+      this.hashToken(this.normalizePresentedToken(currentRawToken)),
+      manager,
+    );
+  }
+
+  async rotateAccessTokenForDigest(
+    orderId: number,
+    currentTokenDigest: string,
+    manager: EntityManager,
+  ): Promise<GuestAccessIssueResult> {
     if (!manager.queryRunner) {
       throw new InternalServerErrorException('게스트 주문 접근 토큰 회전에는 QueryRunner가 필요합니다.');
     }
 
     const repository = this.getGuestOrderAccessRepository(manager);
-    const currentTokenDigest = this.hashToken(this.normalizePresentedToken(currentRawToken));
     const currentAccess = await repository
       .createQueryBuilder('guestOrderAccess')
       .setLock('pessimistic_write')

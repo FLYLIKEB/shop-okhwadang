@@ -47,6 +47,7 @@ export class GuestPaymentsService {
       guestAccessToken,
       idempotencyKey,
       (manager, response) => this.idempotencyService.complete(manager, operation.id, operation.leaseOwner!, response),
+      { id: operation.id, scope: this.guestScope(guestAccessToken) },
     );
   }
 
