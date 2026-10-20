@@ -1209,6 +1209,7 @@
       "business": "Business Info",
       "close": "Close sidebar",
       "cmsGroup": "CMS",
+      "faqs": "FAQs",
       "reviews": "Reviews",
       "localization": "Localization",
       "attributes": "Attributes",
@@ -1480,6 +1481,10 @@
       },
       "sections": {
         "dashboard": "Dashboard",
+        "faqs": "FAQs",
+        "announcementBars": "Announcement Bars",
+        "journal": "Journal",
+        "logs": "Remote Logs",
         "products": "Products",
         "categories": "Categories",
         "orders": "Orders",
