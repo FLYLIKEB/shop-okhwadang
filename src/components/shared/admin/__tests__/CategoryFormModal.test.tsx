@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import CategoryFormModal from '@/components/shared/admin/CategoryFormModal';
@@ -20,6 +20,43 @@ const mockCategories: AdminCategory[] = [
 ];
 
 describe('CategoryFormModal', () => {
+  const leaf: AdminCategory = { ...mockCategories[0], id: 3, name: '셔츠', slug: 'shirt', parentId: 2, children: [] };
+  const middle: AdminCategory = { ...mockCategories[0], id: 2, name: '의류', slug: 'clothes', parentId: 1, children: [leaf] };
+  const tree = [{ ...mockCategories[0], children: [middle] }];
+
+  it('offers second-level parents, excludes third-level parents, and submits a third-level category', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(<CategoryFormModal open onClose={vi.fn()} onSubmit={onSubmit} categories={tree} />);
+    expect(screen.getByRole('option', { name: '패션 / 의류' })).toHaveValue('2');
+    expect(screen.queryByRole('option', { name: /셔츠/ })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/카테고리명/), { target: { value: 'New' } });
+    fireEvent.change(screen.getByLabelText('상위 카테고리'), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: '추가' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ parentId: 2 })));
+  });
+
+  it('shows the current second-level parent while editing a third-level category', () => {
+    render(<CategoryFormModal open onClose={vi.fn()} onSubmit={vi.fn()} categories={tree} initial={leaf} />);
+    expect(screen.getByLabelText('상위 카테고리')).toHaveValue('2');
+    expect(screen.getByRole('option', { name: '패션 / 의류' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /셔츠/ })).not.toBeInTheDocument();
+  });
+
+  it('excludes self and descendants and prevents moves that would push descendants past depth three', () => {
+    const otherLeaf = { ...leaf, id: 6, parentId: 5, name: '다른 말단' };
+    const otherMiddle = { ...middle, id: 5, parentId: 4, name: '다른 중간', children: [otherLeaf] };
+    const otherRoot = { ...tree[0], id: 4, name: '다른 루트', children: [otherMiddle] };
+    render(<CategoryFormModal open onClose={vi.fn()} onSubmit={vi.fn()} categories={[...tree, otherRoot]} initial={middle} />);
+    expect(screen.getByRole('option', { name: '다른 루트' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /의류|셔츠|다른 중간|다른 말단/ })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('상위 카테고리')).toHaveValue('1');
+  });
+
+  it('keeps a three-level subtree at the root', () => {
+    render(<CategoryFormModal open onClose={vi.fn()} onSubmit={vi.fn()} categories={tree} initial={tree[0]} />);
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+  });
+
   it('open=false → 렌더링하지 않음', () => {
     render(<CategoryFormModal open={false} onClose={vi.fn()} onSubmit={vi.fn()} categories={[]} />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
