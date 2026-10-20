@@ -1,4 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
+import { IncomingMessage } from 'node:http';
+import { Readable } from 'node:stream';
 import { RemoteImageIngestService } from '../remote-image-ingest.service';
 import { UploadService } from '../upload.service';
 
@@ -22,21 +24,12 @@ function createFetchResponse(overrides: {
   headers?: Record<string, string>;
   body?: Buffer;
   bodyChunks?: Buffer[];
-} = {}): Response {
+} = {}): IncomingMessage {
   const bodyChunks = overrides.bodyChunks ?? [overrides.body ?? JPEG_BUFFER];
-  return {
-    status: overrides.status ?? 200,
-    ok: (overrides.status ?? 200) >= 200 && (overrides.status ?? 200) < 300,
-    headers: new Headers(overrides.headers ?? {}),
-    body: new ReadableStream<Uint8Array>({
-      start(controller) {
-        for (const chunk of bodyChunks) {
-          controller.enqueue(chunk);
-        }
-        controller.close();
-      },
-    }),
-  } as unknown as Response;
+  return Object.assign(Readable.from(bodyChunks), {
+    statusCode: overrides.status ?? 200,
+    headers: overrides.headers ?? {},
+  }) as IncomingMessage;
 }
 
 describe('RemoteImageIngestService', () => {
@@ -47,14 +40,16 @@ describe('RemoteImageIngestService', () => {
   beforeEach(() => {
     uploadService = createUploadServiceMock();
     service = new RemoteImageIngestService(uploadService as unknown as UploadService);
-    fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue(createFetchResponse());
+    fetchMock = jest.spyOn(service as unknown as {
+      requestPinned(url: URL, addresses: string[]): Promise<IncomingMessage>;
+    }, 'requestPinned').mockResolvedValue(createFetchResponse());
     jest
       .spyOn(service as unknown as { resolveHostAddresses: (hostname: string) => Promise<string[]> }, 'resolveHostAddresses')
       .mockResolvedValue(['93.184.216.34']);
   });
 
   afterEach(() => {
-    fetchMock.mockRestore();
+    jest.restoreAllMocks();
   });
 
   it('downloads a remote image and uploads the original buffer without reprocessing', async () => {
@@ -98,6 +93,34 @@ describe('RemoteImageIngestService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it.each([
+    'http://[::1]/a.jpg',
+    'http://[::]/a.jpg',
+    'http://[fd00::1]/a.jpg',
+    'http://[fe80::1]/a.jpg',
+    'http://[::ffff:127.0.0.1]/a.jpg',
+    'http://2130706433/a.jpg',
+    'http://user:password@cdn.example.com/a.jpg',
+  ])('rejects unsafe URL %s without connecting', async (url) => {
+    await expect(service.ingest(url)).rejects.toThrow(BadRequestException);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { addresses: [] },
+    { addresses: ['93.184.216.34', '10.0.0.8'] },
+    { addresses: ['fe80::1'] },
+    { addresses: ['not-an-ip'] },
+  ])(
+    'rejects unsafe or empty DNS results $addresses', async ({ addresses }) => {
+      jest.spyOn(service as unknown as {
+        resolveHostAddresses(hostname: string): Promise<string[]>;
+      }, 'resolveHostAddresses').mockResolvedValue(addresses);
+      await expect(service.ingest('https://cdn.example.com/a.jpg')).rejects.toThrow(BadRequestException);
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
   it('follows redirects while re-validating each hop', async () => {
     fetchMock
       .mockResolvedValueOnce(createFetchResponse({
@@ -129,6 +152,30 @@ describe('RemoteImageIngestService', () => {
     }));
 
     await expect(service.ingest('https://cdn.example.com/a.jpg')).rejects.toThrow(BadRequestException);
+  });
+
+  it.each<{ status?: number; headers?: Record<string, string> }>([
+    { status: 302, headers: { location: 'http://127.0.0.1/a.jpg' } },
+    { status: 302 },
+    { status: 404 },
+    { headers: { 'content-length': String(50 * 1024 * 1024 + 1) } },
+  ])('destroys unused response streams for %j', async (options) => {
+    const response = createFetchResponse(options);
+    const destroy = jest.spyOn(response, 'destroy');
+    fetchMock.mockResolvedValue(response);
+    await expect(service.ingest('https://cdn.example.com/a.jpg')).rejects.toThrow(BadRequestException);
+    expect(destroy).toHaveBeenCalled();
+  });
+
+  it('destroys each successful redirect response before continuing', async () => {
+    const redirect = createFetchResponse({ status: 302, headers: { location: '/image.jpg' } });
+    const destroy = jest.spyOn(redirect, 'destroy');
+    fetchMock.mockResolvedValueOnce(redirect).mockImplementationOnce(async () => {
+      expect(destroy).toHaveBeenCalled();
+      return createFetchResponse();
+    });
+    await service.ingest('https://cdn.example.com/a.jpg');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('rejects non-success HTTP responses', async () => {
@@ -188,24 +235,14 @@ describe('RemoteImageIngestService', () => {
   });
 
   it('stops reading as soon as streamed response exceeds the absolute input limit', async () => {
-    const cancel = jest.fn().mockResolvedValue(undefined);
-    fetchMock.mockResolvedValue({
-      status: 200,
-      ok: true,
-      headers: new Headers(),
-      body: {
-        getReader: () => ({
-          read: jest.fn()
-            .mockResolvedValueOnce({ done: false, value: Buffer.alloc(50 * 1024 * 1024) })
-            .mockResolvedValueOnce({ done: false, value: Buffer.alloc(1) }),
-          cancel,
-          releaseLock: jest.fn(),
-        }),
-      },
-    } as unknown as Response);
+    const response = createFetchResponse({
+      bodyChunks: [Buffer.alloc(50 * 1024 * 1024), Buffer.alloc(1)],
+    });
+    const destroy = jest.spyOn(response, 'destroy');
+    fetchMock.mockResolvedValue(response);
 
     await expect(service.ingest('https://cdn.example.com/huge.jpg')).rejects.toThrow(BadRequestException);
-    expect(cancel).toHaveBeenCalled();
+    expect(destroy).toHaveBeenCalled();
     expect(uploadService.uploadOriginalImageBuffer).not.toHaveBeenCalled();
   });
 
