@@ -9,6 +9,7 @@ import { Coupon } from '../src/modules/coupons/entities/coupon.entity';
 import { UserCoupon } from '../src/modules/coupons/entities/user-coupon.entity';
 import { CouponRule, CouponRuleTrigger } from '../src/modules/coupons/entities/coupon-rule.entity';
 import { CouponsService } from '../src/modules/coupons/coupons.service';
+import { CouponRulesService } from '../src/modules/coupons/coupon-rules.service';
 import { User, UserRole } from '../src/modules/users/entities/user.entity';
 import { Order, OrderStatus } from '../src/modules/orders/entities/order.entity';
 import { AdminOrdersService } from '../src/modules/admin/admin-orders.service';
@@ -237,6 +238,34 @@ describe('coupon and membership invariants (MySQL)', () => {
     const reused = await db.getRepository(UserCoupon).findOneByOrFail({ id: Number(grant.id) });
     expect(reused.status).toBe('used');
     expect(Number(reused.orderId)).toBe(Number(next.id));
+  });
+
+  it('persists a replacement rule template and grants only the replacement without changing prior grants', async () => {
+    const originalId = await coupon();
+    const replacementId = await coupon();
+    const previousMember = await user();
+    const previousGrant = await coupons.issueCoupon({ couponId: originalId, userId: Number(previousMember.id) });
+    const previousSnapshot = await db.getRepository(UserCoupon).findOneByOrFail({ id: Number(previousGrant.id) });
+    const rules = db.getRepository(CouponRule);
+    const rule = await rules.save(rules.create({
+      trigger: CouponRuleTrigger.SIGNUP, couponTemplateId: originalId, active: true, conditionsJson: null,
+    }));
+
+    const response = await request(app.getHttpServer()).patch(`/api/admin/coupon-rules/${rule.id}`)
+      .set('Cookie', adminCookie).send({ couponTemplateId: replacementId }).expect(200);
+    expect(response.body.couponTemplateId).toBe(replacementId);
+    expect(response.body.couponTemplate.id).toBe(replacementId);
+    const saved = await rules.findOneOrFail({ where: { id: Number(rule.id) }, relations: ['couponTemplate'] });
+    expect(Number(saved.couponTemplateId)).toBe(replacementId);
+    expect(Number(saved.couponTemplate.id)).toBe(replacementId);
+    expect(saved).toMatchObject({ id: rule.id, trigger: rule.trigger, active: rule.active, conditionsJson: null });
+
+    const nextMember = await user();
+    await app.get(CouponRulesService).applyRulesForUser(CouponRuleTrigger.SIGNUP, Number(nextMember.id));
+    const grants = await db.getRepository(UserCoupon).findBy({ userId: Number(nextMember.id) });
+    expect(grants.map((grant) => Number(grant.couponId))).toContain(replacementId);
+    expect(grants.map((grant) => Number(grant.couponId))).not.toContain(originalId);
+    expect(await db.getRepository(UserCoupon).findOneByOrFail({ id: Number(previousGrant.id) })).toEqual(previousSnapshot);
   });
 
   it('deactivates a legacy birthday rule but rejects new or reactivated birthday rules', async () => {

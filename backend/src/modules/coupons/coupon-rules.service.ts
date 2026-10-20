@@ -278,7 +278,7 @@ export class CouponRulesService implements OnModuleInit {
   }
 
   async update(id: number, dto: UpdateCouponRuleDto): Promise<AdminCouponRuleResponse> {
-    const current = await this.couponRuleRepo.findOne({ where: { id }, relations: ['couponTemplate'] });
+    const current = await this.couponRuleRepo.findOne({ where: { id } });
     if (!current) {
       throw new NotFoundException('쿠폰 규칙을 찾을 수 없습니다.');
     }
