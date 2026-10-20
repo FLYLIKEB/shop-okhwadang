@@ -2,6 +2,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import BusinessInfoEditor from '../BusinessInfoEditor';
 import type { SiteSetting } from '@/lib/api';
+import userEvent from '@testing-library/user-event';
+import { adminSettingsApi } from '@/lib/api';
+import { toast } from 'sonner';
 
 vi.mock('../../theme/actions', () => ({ revalidateTheme: vi.fn().mockResolvedValue(undefined) }));
 
@@ -47,6 +50,37 @@ const mockSettings: SiteSetting[] = [
 ];
 
 describe('BusinessInfoEditor', () => {
+  it.each([false, true])('locks both languages and other keys until save settles (failure: %s)', async (fails) => {
+    const user = userEvent.setup();
+    let settle!: () => void;
+    vi.mocked(adminSettingsApi.bulkUpdate).mockImplementationOnce(() => new Promise((resolve, reject) => {
+      settle = () => fails ? reject(new Error('save failed')) : resolve([]);
+    }));
+    render(<BusinessInfoEditor initialSettings={mockSettings} />);
+    const company = screen.getByLabelText('상호명');
+    const companyEn = screen.getByLabelText('상호명 (EN)');
+    const ceo = screen.getByLabelText('대표자명');
+    fireEvent.change(company, { target: { value: 'submitted' } });
+    fireEvent.change(companyEn, { target: { value: 'submitted-en' } });
+    await user.click(screen.getByRole('button', { name: '저장' }));
+    for (const input of [company, companyEn, ceo, screen.getByLabelText('대표자명 (EN)')]) {
+      expect(input).toBeDisabled();
+      await user.type(input, 'newer-unsaved');
+    }
+    expect(company).toHaveValue('submitted');
+    expect(companyEn).toHaveValue('submitted-en');
+    expect(ceo).toHaveValue('권준현');
+    settle();
+    await waitFor(() => expect(company).not.toBeDisabled());
+    expect(company).toHaveValue('submitted');
+    expect(companyEn).toHaveValue('submitted-en');
+    expect(screen.getByRole('button', { name: '저장' }).hasAttribute('disabled')).toBe(!fails);
+    expect(fails ? toast.error : toast.success).toHaveBeenCalled();
+    expect(adminSettingsApi.bulkUpdate).toHaveBeenCalledWith([
+      { key: 'business_company_name', value: 'submitted', valueEn: 'submitted-en' },
+    ]);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

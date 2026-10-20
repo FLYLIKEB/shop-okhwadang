@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ThemeEditor from '../ThemeEditor';
 import type { SiteSetting } from '@/lib/api';
+import userEvent from '@testing-library/user-event';
 
 const { mockRevalidate, mockRefresh } = vi.hoisted(() => ({ mockRevalidate: vi.fn().mockResolvedValue(undefined), mockRefresh: vi.fn() }));
 vi.mock('../actions', () => ({ revalidateTheme: mockRevalidate }));
@@ -65,6 +66,63 @@ const typographySettings: SiteSetting[] = [
 const allSettings = [...colorSettings, ...typographySettings];
 
 describe('ThemeEditor', () => {
+  it.each([false, true])('locks color, Korean and English inputs and reset while saving (failure: %s)', async (fails) => {
+    const user = userEvent.setup();
+    let settle!: () => void;
+    mockBulkUpdate.mockImplementationOnce(() => new Promise((resolve, reject) => {
+      settle = () => fails ? reject(new Error('save failed')) : resolve([]);
+    }));
+    render(<ThemeEditor initialSettings={allSettings} />);
+    fireEvent.change(screen.getByLabelText('Primary Color 값'), { target: { value: '#abcdef' } });
+    fireEvent.click(screen.getByText('타이포그래피'));
+    const font = screen.getByLabelText('Base Font Size');
+    const fontEn = screen.getByLabelText('Base Font Size (EN)');
+    fireEvent.change(font, { target: { value: '18px' } });
+    fireEvent.change(fontEn, { target: { value: '20px' } });
+    await user.click(screen.getByText('저장'));
+    expect(font).toBeDisabled();
+    expect(fontEn).toBeDisabled();
+    await user.type(font, 'newer');
+    await user.type(fontEn, 'newer');
+    expect(font).toHaveValue('18px');
+    expect(fontEn).toHaveValue('20px');
+    expect(screen.getByText('기본값으로 초기화')).toBeDisabled();
+    await user.click(screen.getByText('기본값으로 초기화'));
+    expect(mockReset).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('라이트 색상'));
+    for (const label of ['Primary Color', 'Primary Color 값', 'Secondary Color', 'Secondary Color 값']) {
+      expect(screen.getByLabelText(label)).toBeDisabled();
+    }
+    settle();
+    await waitFor(() => expect(screen.getByLabelText('Primary Color 값')).not.toBeDisabled());
+    expect(screen.getByLabelText('Primary Color 값')).toHaveValue('#abcdef');
+    expect(screen.getByText('저장').hasAttribute('disabled')).toBe(!fails);
+    fireEvent.click(screen.getByText('타이포그래피'));
+    expect(screen.getByLabelText('Base Font Size')).toHaveValue('18px');
+    expect(screen.getByLabelText('Base Font Size (EN)')).toHaveValue('20px');
+    expect(mockBulkUpdate).toHaveBeenCalledWith([
+      { key: 'primary_color', value: '#abcdef' },
+      { key: 'font_size_base', value: '18px', valueEn: '20px' },
+    ]);
+  });
+
+  it('locks editing and saving until reset and reload finish', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    let finishReload!: (settings: SiteSetting[]) => void;
+    mockGetAll.mockImplementationOnce(() => new Promise((resolve) => { finishReload = resolve; }));
+    render(<ThemeEditor initialSettings={allSettings} />);
+    fireEvent.change(screen.getByLabelText('Primary Color 값'), { target: { value: '#abcdef' } });
+    fireEvent.click(screen.getByText('기본값으로 초기화'));
+    await waitFor(() => expect(mockGetAll).toHaveBeenCalled());
+    expect(screen.getByText('저장')).toBeDisabled();
+    expect(screen.getByLabelText('Primary Color 값')).toBeDisabled();
+    finishReload(allSettings);
+    await waitFor(() => expect(screen.getByLabelText('Primary Color 값')).not.toBeDisabled());
+    expect(screen.getByLabelText('Primary Color 값')).toHaveValue('#111111');
+    expect(mockBulkUpdate).not.toHaveBeenCalled();
+    expect(document.documentElement.style.getPropertyValue('--db-primary-color')).toBe('');
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     document.documentElement.style.removeProperty('--db-primary-color');
