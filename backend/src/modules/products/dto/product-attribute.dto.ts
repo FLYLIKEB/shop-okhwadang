@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNumber, IsArray, IsBoolean, Min, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsArray, IsBoolean, IsInt, Min, MaxLength, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export interface AttributeValueOption {
   value: string;
@@ -56,7 +57,8 @@ export class UpdateProductAttributeDto {
 
 export class SetProductAttributeItemDto {
   @ApiProperty({ example: 1, description: 'AttributeType ID' })
-  @IsNumber()
+  @IsInt()
+  @Min(1)
   attributeTypeId!: number;
 
   @ApiProperty({ example: 'zhuni', description: '속성 값' })
@@ -83,6 +85,8 @@ export class SetProductAttributesDto {
     type: [SetProductAttributeItemDto],
   })
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SetProductAttributeItemDto)
   attributes!: SetProductAttributeItemDto[];
 }
 
