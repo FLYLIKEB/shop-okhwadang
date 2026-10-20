@@ -95,12 +95,15 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidation
   if ((env.PAYMENT_GATEWAY ?? '').trim().toLowerCase() === 'stripe') {
     for (const key of [
       'STRIPE_SECRET_KEY',
-      'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+      'STRIPE_PUBLISHABLE_KEY',
       'STRIPE_WEBHOOK_SECRET',
       'STRIPE_KRW_PER_USD',
       'STRIPE_KRW_PER_USD_UPDATED_AT',
     ]) {
-      if (!env[key]?.trim()) {
+      const value = key === 'STRIPE_PUBLISHABLE_KEY'
+        ? env.STRIPE_PUBLISHABLE_KEY?.trim() || env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
+        : env[key]?.trim();
+      if (!value) {
         errors.push({ key, reason: 'Stripe 활성화에 필요합니다' });
       }
     }

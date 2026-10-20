@@ -101,7 +101,7 @@
 | `TOSS_SECRET_KEY` | — | Toss adapter 시크릿 키 (기본 어댑터/레거시 결제 재시도용) |
 | `TOSS_CLIENT_KEY` | — | Toss adapter 클라이언트 키 |
 | `STRIPE_SECRET_KEY` | — | Stripe adapter 시크릿 키 |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | — | Stripe 공개 키 |
+| `STRIPE_PUBLISHABLE_KEY` | — | 백엔드 Stripe 공개 키 권장 이름. 비어 있으면 기존 서버 `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` 별칭을 허용하므로 사전 env 이전은 필수가 아님. 둘 다 있으면 새 이름 우선. 프론트 공개 키 설정은 별도 유지 |
 | `STRIPE_WEBHOOK_SECRET` | — | Stripe 웹훅 서명 키 |
 | `INICIS_MID` | — | KG Inicis MID |
 | `INICIS_SIGN_KEY` | — | KG Inicis sign key |
