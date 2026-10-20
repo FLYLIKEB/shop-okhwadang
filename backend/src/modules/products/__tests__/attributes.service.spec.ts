@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ConflictException, NotFoundException } from '@nestjs/common';
-import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { DataSource, EntityManager, ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
 import { AttributesService } from '../attributes.service';
 import { AttributeInputType, AttributeType } from '../entities/attribute-type.entity';
 import { ProductAttribute } from '../entities/product-attribute.entity';
@@ -53,6 +53,7 @@ describe('AttributesService', () => {
   let optionRepo: RepoMock<AttributeValueOptionEntity>;
   let productRepo: RepoMock<Product>;
   const cache = { delPattern: jest.fn().mockResolvedValue(undefined) };
+  const transaction = jest.fn();
 
   beforeEach(async () => {
     cache.delPattern.mockClear();
@@ -60,6 +61,12 @@ describe('AttributesService', () => {
     attrRepo = createRepoMock<ProductAttribute>();
     optionRepo = createRepoMock<AttributeValueOptionEntity>();
     productRepo = createRepoMock<Product>();
+    transaction.mockReset().mockImplementation(async (callback: (manager: EntityManager) => unknown) => callback({
+      getRepository: (entity: unknown) => entity === Product ? productRepo : entity === AttributeType ? {
+        findBy: jest.fn().mockResolvedValue([{ id: 1 }, { id: 2 }]),
+      } : attrRepo,
+    } as unknown as EntityManager));
+    productRepo.findOne.mockResolvedValue({ id: 10 } as Product);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AttributesService,
@@ -68,6 +75,7 @@ describe('AttributesService', () => {
         { provide: getRepositoryToken(AttributeValueOptionEntity), useValue: optionRepo },
         { provide: getRepositoryToken(Product), useValue: productRepo },
         { provide: CacheService, useValue: cache },
+        { provide: DataSource, useValue: { transaction } },
       ],
     }).compile();
 
@@ -239,6 +247,23 @@ describe('AttributesService', () => {
   });
 
   describe('setProductAttributes', () => {
+    it('rejects duplicate types before deletion', async () => {
+      await expect(service.setProductAttributes(10, [
+        { attributeTypeId: 1, value: 'a' }, { attributeTypeId: 1, value: 'b' },
+      ])).rejects.toThrow(BadRequestException);
+      expect(attrRepo.delete).not.toHaveBeenCalled();
+    });
+
+    it('does not invalidate snapshots when transactional saving fails', async () => {
+      attrRepo.create.mockImplementation((dto: unknown) => dto as ProductAttribute);
+      attrRepo.save.mockRejectedValue(new Error('database failure'));
+      await expect(service.setProductAttributes(10, [
+        { attributeTypeId: 1, value: 'a' }, { attributeTypeId: 2, value: 'b' },
+      ])).rejects.toThrow('database failure');
+      expect(transaction).toHaveBeenCalledTimes(1);
+      expect(cache.delPattern).not.toHaveBeenCalled();
+    });
+
     it('기존 attributes 삭제 후 신규 일괄 저장', async () => {
       attrRepo.delete.mockResolvedValue({ affected: 0 } as unknown as Awaited<
         ReturnType<Repository<ProductAttribute>['delete']>
