@@ -34,9 +34,8 @@ export default function AdminAnnouncementBarsPage() {
     [editingId, items],
   );
 
-  const { formData, setFormData } = useFormModal<CreateAnnouncementBarData>(
-    FORM_DEFAULTS,
-    editingItem
+  const initialFormData = useMemo(
+    () => editingItem
       ? {
           message: editingItem.message,
           message_en: editingItem.message_en ?? '',
@@ -45,6 +44,12 @@ export default function AdminAnnouncementBarsPage() {
           is_active: editingItem.is_active,
         }
       : null,
+    [editingItem],
+  );
+
+  const { formData, setFormData } = useFormModal<CreateAnnouncementBarData>(
+    FORM_DEFAULTS,
+    initialFormData,
     isModalOpen,
   );
 

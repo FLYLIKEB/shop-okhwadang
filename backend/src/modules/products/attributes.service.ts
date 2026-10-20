@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { AttributeType, AttributeInputType } from './entities/attribute-type.entity';
 import { ProductAttribute } from './entities/product-attribute.entity';
 import { Product } from './entities/product.entity';
@@ -83,6 +83,7 @@ export class AttributesService {
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
     private readonly cacheService: CacheService,
+    private readonly dataSource: DataSource,
   ) {}
 
   private async invalidateProductCaches(): Promise<void> {
@@ -344,23 +345,29 @@ export class AttributesService {
       sortOrder?: number;
     }>,
   ): Promise<ProductAttribute[]> {
-    // Delete existing
-    await this.deleteAttributesByProductId(productId);
-
-    if (!attributes.length) return [];
-
-    // Create new
-    const entities = attributes.map((attr) =>
-      this.productAttributeRepository.create({
+    const typeIds = attributes.map((attribute) => attribute.attributeTypeId);
+    if (new Set(typeIds).size !== typeIds.length) {
+      throw new BadRequestException('동일한 속성 유형을 중복 지정할 수 없습니다.');
+    }
+    const saved = await this.dataSource.transaction(async (manager) => {
+      await findOrThrow(manager.getRepository(Product), { id: productId }, '상품을 찾을 수 없습니다.');
+      if (typeIds.length) {
+        const types = await manager.getRepository(AttributeType).findBy({ id: In(typeIds) });
+        if (types.length !== typeIds.length) {
+          throw new BadRequestException('존재하지 않는 속성 유형입니다.');
+        }
+      }
+      const repository = manager.getRepository(ProductAttribute);
+      await repository.delete({ productId });
+      if (!attributes.length) return [];
+      return repository.save(attributes.map((attribute) => repository.create({
         productId,
-        attributeTypeId: attr.attributeTypeId,
-        value: attr.value,
-        displayValue: attr.displayValue ?? attr.value,
-        sortOrder: attr.sortOrder ?? 0,
-      }),
-    );
-
-    const saved = await this.productAttributeRepository.save(entities);
+        attributeTypeId: attribute.attributeTypeId,
+        value: attribute.value,
+        displayValue: attribute.displayValue ?? attribute.value,
+        sortOrder: attribute.sortOrder ?? 0,
+      })));
+    });
     await this.invalidateProductCaches();
     return saved;
   }

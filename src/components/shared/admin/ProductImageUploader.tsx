@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { uploadApi, type CmsMediaKind } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
@@ -9,7 +9,7 @@ import { localMessage } from '@/utils/localMessages';
 
 interface ProductImageUploaderProps {
   imageUrl: string;
-  onChange: (url: string) => void;
+  onChange: (url: string, derivatives?: Record<string, string>) => void;
   altText?: string;
   emptyText?: string;
   helperText?: string;
@@ -29,21 +29,29 @@ export default function ProductImageUploader({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const callbacks = useRef({ onChange, onDerivativesChange });
+  callbacks.current = { onChange, onDerivativesChange };
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
       if (cmsKind) {
         const result = await uploadApi.uploadCmsImage(file, cmsKind);
-        onChange(result.original.url);
-        onDerivativesChange?.(
-          Object.fromEntries(
-            Object.entries(result.derivatives).map(([variant, uploaded]) => [variant, uploaded.url]),
-          ),
+        if (!mounted.current) return;
+        const derivatives = Object.fromEntries(
+          Object.entries(result.derivatives).map(([variant, uploaded]) => [variant, uploaded.url]),
         );
+        callbacks.current.onChange(result.original.url, derivatives);
+        callbacks.current.onDerivativesChange?.(derivatives);
       } else {
         const result = await uploadApi.uploadImage(file);
-        onChange(result.url);
+        if (!mounted.current) return;
+        callbacks.current.onChange(result.url);
       }
       toast.success(toastMessage('imageUploadSuccess'));
     } catch (err) {

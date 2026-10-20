@@ -57,7 +57,7 @@ const contentSecurityPolicyDirectives: Array<[string, string[]]> = [
   [
     "connect-src",
     mergeSources(
-      ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cloudflareinsights.com', 'https://www.google-analytics.com', 'https://analytics.google.com', 'https://www.google.com', 'https://region1.google-analytics.com'],
+      ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cloudflareinsights.com', 'https://www.google-analytics.com', 'https://analytics.google.com', 'https://www.google.com', 'https://region1.google-analytics.com', 'https://stats.g.doubleclick.net'],
       legacyPaymentSdkSources['connect-src'],
       postcodeSearchSources['connect-src'],
       enabledCheckoutGatewaySources['connect-src'],

@@ -70,6 +70,30 @@ describe('admin catalog invariants (MySQL)', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
+  it('atomically replaces attributes and preserves existing rows on invalid input or a database failure', async () => {
+    const productId = await product();
+    const type = await attributes.createAttributeType({ code: `${RUN}-${++serial}`, name: '원자성 검증' });
+    typeIds.push(Number(type.id));
+    await attributes.setProductAttributes(productId, [{ attributeTypeId: type.id, value: 'original' }]);
+    const repository = db.getRepository(ProductAttribute);
+    const original = await repository.findBy({ productId });
+    await expect(attributes.setProductAttributes(productId, [
+      { attributeTypeId: type.id, value: 'one' }, { attributeTypeId: type.id, value: 'two' },
+    ])).rejects.toThrow(BadRequestException);
+    await expect(attributes.setProductAttributes(productId, [
+      { attributeTypeId: 2147483647, value: 'invalid-fk' },
+    ])).rejects.toThrow(BadRequestException);
+    expect(await repository.findBy({ productId })).toEqual(original);
+    await expect(attributes.setProductAttributes(productId, [
+      { attributeTypeId: type.id, value: 'x'.repeat(256) },
+    ])).rejects.toThrow();
+    expect(await repository.findBy({ productId })).toEqual(original);
+    await attributes.setProductAttributes(productId, [{ attributeTypeId: type.id, value: 'replacement' }]);
+    expect(await repository.findBy({ productId })).toEqual([expect.objectContaining({ value: 'replacement' })]);
+    expect(await attributes.setProductAttributes(productId, [])).toEqual([]);
+    expect(await repository.findBy({ productId })).toEqual([]);
+  });
+
   afterAll(async () => {
     if (db) {
       if (productIds.length) {

@@ -54,9 +54,8 @@ export default function HeroBannerFields({ content, onChange }: HeroBannerFields
       <ImageUploadField
         label={localMessage('admin.imageUpload.label')}
         value={(content.image_url as string) ?? ''}
-        onChange={(v) => update('image_url', v)}
+        onChange={(image_url, image_derivatives) => onChange({ ...content, image_url, image_derivatives })}
         cmsKind="hero"
-        onDerivativesChange={(v) => update('image_derivatives', v)}
       />
       <StringField label="CTA 텍스트" value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
       <StringField label="CTA 텍스트 (EN)" value={(content.cta_text_en as string) ?? ''} onChange={(v) => update('cta_text_en', v)} placeholder="영문 CTA" />
@@ -101,9 +100,10 @@ export default function HeroBannerFields({ content, onChange }: HeroBannerFields
               <ImageUploadField
                 label={localMessage('admin.imageUpload.label')}
                 value={slide.image_url ?? ''}
-                onChange={(v) => updateSlide(index, 'image_url', v)}
+                onChange={(image_url, image_derivatives) => update('slides', slides.map((current, slideIndex) => (
+                  slideIndex === index ? { ...current, image_url, image_derivatives } : current
+                )))}
                 cmsKind="hero"
-                onDerivativesChange={(v) => updateSlide(index, 'image_derivatives', v)}
               />
               <StringField label="배경색" value={slide.bg_color ?? '#1B3A4B'} onChange={(v) => updateSlide(index, 'bg_color', v)} />
               <StringField label="CTA 텍스트" value={slide.cta_text ?? ''} onChange={(v) => updateSlide(index, 'cta_text', v)} />

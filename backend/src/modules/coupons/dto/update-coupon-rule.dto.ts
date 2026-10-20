@@ -9,7 +9,7 @@ export class UpdateCouponRuleDto {
     required: false,
   })
   @IsEnum(CouponRuleTrigger)
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   trigger?: CouponRuleTrigger;
 
   @ApiProperty({ example: 1, description: '쿠폰 템플릿 ID', required: false })
@@ -26,6 +26,6 @@ export class UpdateCouponRuleDto {
 
   @ApiProperty({ example: true, required: false })
   @IsBoolean()
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   active?: boolean;
 }

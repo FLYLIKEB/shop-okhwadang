@@ -73,6 +73,19 @@ describe('Next.js CSP headers', () => {
     expect(directives['img-src']).toContain('https://www.google.co.kr');
   });
 
+  it('allows only the exact DoubleClick collection origin for connections', async () => {
+    const { directives } = await loadNextConfigSnapshot();
+    const origin = 'https://stats.g.doubleclick.net';
+
+    expect(directives['connect-src'].split(' ')).toContain(origin);
+    expect(directives['connect-src']).not.toContain('https://*.doubleclick.net');
+    for (const [directive, sources] of Object.entries(directives)) {
+      if (directive !== 'connect-src') expect(sources).not.toContain(origin);
+    }
+    expect(directives['object-src']).toBe("object-src 'none'");
+    expect(directives['base-uri']).toBe("base-uri 'self'");
+  });
+
   it('allows the Kakao postcode script and embedded search frame', async () => {
     const { directives } = await loadNextConfigSnapshot();
 
