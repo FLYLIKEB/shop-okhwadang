@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { lookup } from 'node:dns/promises';
+import { IncomingMessage, request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
 import * as path from 'node:path';
 import { UploadService } from './upload.service';
@@ -43,42 +45,61 @@ export class RemoteImageIngestService {
     let current = this.parseUrl(rawUrl);
 
     for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
-      await this.assertSafeUrl(current);
+      const addresses = await this.assertSafeUrl(current);
 
-      let response: Response;
+      let response: IncomingMessage;
       try {
-        response = await fetch(current, {
-          redirect: 'manual',
-          signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
-        });
+        response = await this.requestPinned(current, addresses);
       } catch {
         throw new BadRequestException(`이미지 URL에 접근할 수 없습니다: ${current.href}`);
       }
 
-      if (response.status >= 300 && response.status < 400) {
-        const location = response.headers.get('location');
-        if (!location) {
-          throw new BadRequestException(`이미지 리다이렉트 응답에 location 헤더가 없습니다: ${current.href}`);
+      try {
+        const status = response.statusCode ?? 0;
+        if (status >= 300 && status < 400) {
+          const location = response.headers.location;
+          if (!location) {
+            throw new BadRequestException(`이미지 리다이렉트 응답에 location 헤더가 없습니다: ${current.href}`);
+          }
+          current = new URL(location, current);
+          continue;
         }
-        current = new URL(location, current);
-        continue;
-      }
 
-      if (!response.ok) {
-        throw new BadRequestException(`이미지 다운로드에 실패했습니다. (HTTP ${response.status}): ${current.href}`);
-      }
+        if (status < 200 || status >= 300) {
+          throw new BadRequestException(`이미지 다운로드에 실패했습니다. (HTTP ${status}): ${current.href}`);
+        }
 
-      const contentLength = Number(response.headers.get('content-length') ?? 0);
-      if (contentLength > MAX_UPLOAD_INPUT_FILE_SIZE_BYTES) {
-        throw new BadRequestException(
-          `이미지 크기가 ${MAX_UPLOAD_INPUT_FILE_SIZE_LABEL}를 초과합니다: ${current.href}`,
-        );
-      }
+        const contentLength = Number(response.headers['content-length'] ?? 0);
+        if (contentLength > MAX_UPLOAD_INPUT_FILE_SIZE_BYTES) {
+          throw new BadRequestException(
+            `이미지 크기가 ${MAX_UPLOAD_INPUT_FILE_SIZE_LABEL}를 초과합니다: ${current.href}`,
+          );
+        }
 
-      return { buffer: await this.readLimitedBody(response, current), finalUrl: current };
+        return { buffer: await this.readLimitedBody(response, current), finalUrl: current };
+      } finally {
+        response.destroy();
+      }
     }
 
     throw new BadRequestException(`이미지 리다이렉트 횟수가 너무 많습니다: ${rawUrl}`);
+  }
+
+  private requestPinned(url: URL, addresses: string[]): Promise<IncomingMessage> {
+    const request = url.protocol === 'https:' ? httpsRequest : httpRequest;
+    const destinations = addresses.map((address) => ({ address, family: isIP(address) }));
+    return new Promise((resolve, reject) => {
+      const outgoing = request(url, {
+        agent: false,
+        signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+        lookup: (_hostname, options, callback) => {
+          if (options.all) callback(null, destinations);
+          else callback(null, destinations[0].address, destinations[0].family);
+        },
+      }, resolve);
+      outgoing.on('error', reject);
+      outgoing.end();
+    });
   }
 
   private parseUrl(rawUrl: string): URL {
@@ -91,9 +112,13 @@ export class RemoteImageIngestService {
     return parsed;
   }
 
-  private async assertSafeUrl(url: URL): Promise<void> {
+  private async assertSafeUrl(url: URL): Promise<string[]> {
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       throw new BadRequestException(`http/https 이미지 URL만 지원합니다: ${url.href}`);
+    }
+
+    if (url.username || url.password) {
+      throw new BadRequestException('이미지 URL에 인증 정보를 포함할 수 없습니다.');
     }
 
     const hostname = url.hostname.replace(/^\[|\]$/g, '');
@@ -102,9 +127,10 @@ export class RemoteImageIngestService {
     }
 
     const addresses = isIP(hostname) ? [hostname] : await this.resolveHostAddresses(hostname);
-    if (addresses.some((address) => isPrivateAddress(address))) {
+    if (addresses.length === 0 || addresses.some((address) => isPrivateAddress(address))) {
       throw new BadRequestException(`허용되지 않는 이미지 호스트입니다: ${url.hostname}`);
     }
+    return addresses;
   }
 
   private async resolveHostAddresses(hostname: string): Promise<string[]> {
@@ -116,33 +142,23 @@ export class RemoteImageIngestService {
     }
   }
 
-  private async readLimitedBody(response: Response, url: URL): Promise<Buffer> {
+  private async readLimitedBody(response: IncomingMessage, url: URL): Promise<Buffer> {
     const chunks: Buffer[] = [];
     let totalBytes = 0;
 
-    if (!response.body) {
-      throw new BadRequestException(`이미지 응답 본문이 없습니다: ${url.href}`);
-    }
-
-    const reader = response.body.getReader();
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (!value) continue;
-
-        const chunk = Buffer.from(value);
+      for await (const chunk of response) {
         totalBytes += chunk.length;
         if (totalBytes > MAX_UPLOAD_INPUT_FILE_SIZE_BYTES) {
-          await reader.cancel();
           throw new BadRequestException(
             `이미지 크기가 ${MAX_UPLOAD_INPUT_FILE_SIZE_LABEL}를 초과합니다: ${url.href}`,
           );
         }
         chunks.push(chunk);
       }
-    } finally {
-      reader.releaseLock();
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException(`이미지 URL에 접근할 수 없습니다: ${url.href}`);
     }
 
     return Buffer.concat(chunks, totalBytes);
