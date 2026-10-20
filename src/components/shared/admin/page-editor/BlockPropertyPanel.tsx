@@ -74,7 +74,7 @@ export default function BlockPropertyPanel({ block, onUpdateContent }: BlockProp
       <div className="mb-4 rounded-xl bg-muted/70 px-3 py-3 typo-body-sm text-muted-foreground">
         수정 내용은 상단 <b className="text-foreground">저장</b> 버튼을 눌러야 반영됩니다.
       </div>
-      <div className="space-y-3">
+      <div key={block.id} className="space-y-3">
         {renderFields()}
       </div>
     </div>
