@@ -27,7 +27,7 @@ const CACHE_POLICIES = {
   catalog: { revalidate: 60, tags: ['catalog'] },
   product: { revalidate: 60, tags: ['catalog', 'product'] },
   categories: { revalidate: 300, tags: ['catalog', 'categories'] },
-  cms: { revalidate: 300, tags: ['cms'] },
+  navigation: { revalidate: 300, tags: ['cms'] },
   settings: { revalidate: 300, tags: ['settings', 'theme'] },
 } as const satisfies Record<string, BackendFetchPolicy>;
 
@@ -125,13 +125,9 @@ export const fetchProduct = cache(
 async function fetchCmsResourceOrNullOn404<T>(
   endpoint: string,
   locale: string | undefined,
-  cacheTag: string,
 ): Promise<T | null> {
   try {
-    return await fetchFromBackend<T>(endpoint, locale ? { locale } : undefined, {
-      ...CACHE_POLICIES.cms,
-      tags: [...CACHE_POLICIES.cms.tags, cacheTag],
-    });
+    return await fetchFromBackend<T>(endpoint, locale ? { locale } : undefined);
   } catch (err) {
     if (err instanceof ApiHttpError && err.status === 404) {
       return null;
@@ -141,15 +137,15 @@ async function fetchCmsResourceOrNullOn404<T>(
 }
 
 export async function fetchPage(slug: string, locale?: string): Promise<Page | null> {
-  return fetchCmsResourceOrNullOn404<Page>(`/pages/${slug}`, locale, `page:${slug}`);
+  return fetchCmsResourceOrNullOn404<Page>(`/pages/${slug}`, locale);
 }
 
 export async function fetchJournal(slug: string, locale?: string): Promise<Journal | null> {
-  return fetchCmsResourceOrNullOn404<Journal>(`/journals/${slug}`, locale, `journal:${slug}`);
+  return fetchCmsResourceOrNullOn404<Journal>(`/journals/${slug}`, locale);
 }
 
 export function fetchNavigationGroup(group: NavigationItem['group'], locale?: string) {
-  return fetchFromBackend<NavigationItem[]>('/navigation', { group, locale }, CACHE_POLICIES.cms);
+  return fetchFromBackend<NavigationItem[]>('/navigation', { group, locale }, CACHE_POLICIES.navigation);
 }
 
 export async function fetchJournals(params?: {
@@ -160,7 +156,6 @@ export async function fetchJournals(params?: {
   const journals = await fetchFromBackend<Journal[]>(
     '/journals',
     params ? { category: params.category, locale: params.locale } : undefined,
-    CACHE_POLICIES.cms,
   );
 
   if (params?.limit === undefined) {
