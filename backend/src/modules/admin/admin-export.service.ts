@@ -60,7 +60,7 @@ export class AdminExportService {
       qb.andWhere('order.createdAt >= :from', { from: query.from });
     }
     if (query.to) {
-      qb.andWhere('order.createdAt <= :to', { to: `${query.to} 23:59:59` });
+      qb.andWhere('order.createdAt < DATE_ADD(:to, INTERVAL 1 DAY)', { to: query.to });
     }
 
     await this.exportWithPipeline(res, {
