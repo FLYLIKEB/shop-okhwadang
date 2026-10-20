@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminAttributesPage from '../page';
 
@@ -14,7 +14,9 @@ const mockUnlinkProductFromTypeValue = vi.fn();
 const mockGetProducts = vi.fn();
 
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string, values?: { label?: string }) => key === 'remove' ? `선택 해제 ${values?.label}` : key,
+  useTranslations: () => (key: string, values?: { label?: string; count?: number }) => key === 'remove'
+    ? `선택 해제 ${values?.label}`
+    : key === 'linkedProducts' ? `${key} ${values?.count}` : key,
 }));
 
 vi.mock('@/components/shared/hooks/useAdminGuard', () => ({
@@ -73,6 +75,29 @@ const attributes = [
 ];
 
 describe('AdminAttributesPage', () => {
+  it('refreshes both source and destination after moving a product to another value', async () => {
+    const linkedProduct = { id: 10, name: '옥화당 녹니호', slug: 'nokni-pot' };
+    const source = { id: 1, value: 'source', displayValue: '이전 값', sortOrder: 1, isActive: true, productCount: 1, products: [linkedProduct] };
+    const destination = { id: 2, value: 'destination', displayValue: '대상 값', sortOrder: 2, isActive: true, productCount: 0, products: [] };
+    mockGetTypeValueOptions.mockResolvedValueOnce([source, destination]).mockResolvedValue([
+      { ...source, productCount: 0, products: [] },
+      { ...destination, productCount: 1, products: [linkedProduct] },
+    ]);
+    render(<AdminAttributesPage />);
+    fireEvent.click(await screen.findByText('clay_type'));
+    const destinationRow = (await screen.findByDisplayValue('대상 값')).closest('article')!;
+    fireEvent.click(await within(destinationRow).findByRole('button', { name: /옥화당 녹니호/ }));
+    await waitFor(() => {
+      expect(mockLinkProductToTypeValue).toHaveBeenCalledWith('clay_type', 'destination', 10);
+      expect(screen.getAllByRole('button', { name: '선택 해제 옥화당 녹니호' })).toHaveLength(1);
+      expect(within(screen.getByDisplayValue('이전 값').closest('article')!).queryByRole('button', { name: '선택 해제 옥화당 녹니호' })).not.toBeInTheDocument();
+      expect(within(screen.getByDisplayValue('대상 값').closest('article')!).getByRole('button', { name: '선택 해제 옥화당 녹니호' })).toBeInTheDocument();
+      expect(within(screen.getByDisplayValue('이전 값').closest('article')!).getByText('linkedProducts 0')).toBeInTheDocument();
+      expect(within(screen.getByDisplayValue('대상 값').closest('article')!).getByText('linkedProducts 1')).toBeInTheDocument();
+    });
+    expect(mockGetTypeValueOptions).toHaveBeenCalledTimes(2);
+  });
+
   it('shows an empty legacy value after its last product is unlinked', async () => {
     mockUnlinkProductFromTypeValue.mockResolvedValue({ id: null, value: 'nokni', displayValue: null, sortOrder: 999, isActive: true, productCount: 0, products: [] });
     render(<AdminAttributesPage />);

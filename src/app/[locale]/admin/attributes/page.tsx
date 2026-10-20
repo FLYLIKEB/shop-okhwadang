@@ -203,8 +203,8 @@ export default function AdminAttributesPage() {
   const linkProduct = async (option: ManagedAttributeValueOption, productId: number) => {
     if (!selectedAttribute) return;
     try {
-      const updated = await attributesApi.linkProductToTypeValue(selectedAttribute.code, option.value, productId);
-      setValueOptions((prev) => prev.map((item) => (item.value === option.value ? updated : item)));
+      await attributesApi.linkProductToTypeValue(selectedAttribute.code, option.value, productId);
+      await loadValueOptions(selectedAttribute);
       toast.success(t('productLinkSuccess'));
     } catch (err) {
       toast.error(handleApiError(err, t('productLinkError')));
