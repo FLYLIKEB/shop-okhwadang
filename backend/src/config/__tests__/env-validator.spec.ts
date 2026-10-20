@@ -110,10 +110,28 @@ describe('validateEnv', () => {
     expect(errors.map((e) => e.key)).toContain('RESEND_API_KEY');
   });
 
-  it('Stripe 서버 키 없이 브라우저 환경변수만 있으면 배포를 차단한다', () => {
+  it.each([undefined, '', '   '])('Stripe 새 서버 키가 %p여도 기존 서버 별칭이 있으면 검증을 통과한다', (serverKey) => {
     const env = makeFullEnv();
-    env.PAYMENT_GATEWAY = 'stripe';
-    env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = 'pk_test_browser';
+    Object.assign(env, {
+      PAYMENT_GATEWAY: 'stripe',
+      STRIPE_SECRET_KEY: 'sk_test',
+      STRIPE_PUBLISHABLE_KEY: serverKey,
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_legacy',
+      STRIPE_WEBHOOK_SECRET: 'whsec_test',
+      STRIPE_KRW_PER_USD: '1350.25',
+      STRIPE_KRW_PER_USD_UPDATED_AT: new Date().toISOString(),
+    });
+
+    expect(validateEnv(env)).toEqual([]);
+  });
+
+  it('Stripe 공개 키의 두 이름 모두 비어 있으면 배포를 차단한다', () => {
+    const env = makeFullEnv();
+    Object.assign(env, {
+      PAYMENT_GATEWAY: 'stripe',
+      STRIPE_PUBLISHABLE_KEY: ' ',
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ' ',
+    });
 
     expect(validateEnv(env).map((error) => error.key)).toContain('STRIPE_PUBLISHABLE_KEY');
   });

@@ -87,7 +87,7 @@ export function createPaymentConfig(env: NodeJS.ProcessEnv = process.env): Payme
     },
     stripe: {
       secretKey: env.STRIPE_SECRET_KEY ?? '',
-      publishableKey: env.STRIPE_PUBLISHABLE_KEY ?? '',
+      publishableKey: env.STRIPE_PUBLISHABLE_KEY?.trim() || env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim() || '',
       webhookSecret: env.STRIPE_WEBHOOK_SECRET ?? '',
       krwPerUsd: env.STRIPE_KRW_PER_USD?.trim() ?? '',
       krwPerUsdUpdatedAt: env.STRIPE_KRW_PER_USD_UPDATED_AT?.trim() ?? '',

@@ -1,13 +1,24 @@
 import { createPaymentConfig } from '../payment.config';
 
 describe('createPaymentConfig', () => {
-  it('서버 Stripe 공개 키는 서버 환경변수에서만 읽는다', () => {
+  it('서버 Stripe 공개 키를 레거시 별칭보다 우선한다', () => {
     expect(createPaymentConfig({
       STRIPE_PUBLISHABLE_KEY: 'pk_test_server',
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_browser',
     }).stripe.publishableKey).toBe('pk_test_server');
+  });
+
+  it.each([undefined, '', '   '])('새 서버 키가 %p이면 기존 서버 공개 키 별칭을 사용한다', (serverKey) => {
     expect(createPaymentConfig({
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_browser',
+      STRIPE_PUBLISHABLE_KEY: serverKey,
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_legacy',
+    }).stripe.publishableKey).toBe('pk_test_legacy');
+  });
+
+  it('두 공개 키 설정이 모두 비어 있으면 빈 값을 반환한다', () => {
+    expect(createPaymentConfig({
+      STRIPE_PUBLISHABLE_KEY: ' ',
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ' ',
     }).stripe.publishableKey).toBe('');
   });
 

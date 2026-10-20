@@ -6,8 +6,9 @@
 
 - `backend/src/config/payment.config.ts:90`을 `STRIPE_PUBLISHABLE_KEY`로 바꿨다. 서버 시작 검증 `env-validator.ts`, backend 예시, config/Stripe adapter fixture와 인프라 문서도 같은 이름으로 맞췄다.
 - `src/components/shared/checkout/PaymentGateway.tsx:728`과 루트 `.env.example`은 브라우저 공개 키인 `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`를 유지한다. publishable key라는 사실만으로 시크릿 노출이라고 판정하지 않는다.
-- `createPaymentConfig` 테스트는 서버 이름 우선 및 브라우저 이름만 있을 때 빈 설정을 확인한다. `validateEnv` 테스트는 Stripe 활성화 시 서버 키 없으면 시작 차단을 확인한다. 레거시 fallback은 두지 않는다.
-- **배포 선행 조건:** 운영 담당자가 Stripe를 사용하는 서버에 기존 공개 키를 `STRIPE_PUBLISHABLE_KEY` 이름으로 설정해야 한다. 프론트 공개 키 설정은 별도로 유지한다. 이 작업에서 운영 env를 읽거나 변경하지 않았다. 미설정 상태에서 Stripe 사용 배포는 시작 검증 실패/결제 준비 실패 위험이 있다.
+- `createPaymentConfig`는 비어 있지 않은 `STRIPE_PUBLISHABLE_KEY`를 우선하고, 없거나 공백이면 서버 환경의 기존 `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` 별칭으로 fallback한다. `validateEnv`도 같은 규칙으로 두 이름 모두 비었을 때만 공개 키 누락으로 차단한다. 공개 키의 서버 내 별칭 호환이며 새 시크릿을 브라우저에 노출하는 변경은 아니다.
+- **호환성과 이전 권고:** 기존 서버 별칭 설정을 유지하므로 이 PR 배포를 위한 env 이전은 필수가 아니다. 추후 승인된 설정 정리 시 새 이름으로 이전할 수 있다. 프론트 공개 키 설정은 별도로 유지한다. 운영 env는 읽거나 변경하지 않았다.
+- `backend/scripts/verify-production-runtime.js` 및 `backend/src/config/production-runtime-preflight.ts`를 확인했다. preflight는 빌드 산출물·알림 설정·DB 연결을 확인하며 Stripe 공개 키 이름을 별도로 강제하지 않는다. 따라서 호환성 수정 대상은 config와 Nest 시작 env 검증이다. 운영 DB에 연결하는 preflight 자체는 실행하지 않았다.
 
 ## 실제 입력/출력 경로
 
@@ -29,10 +30,10 @@
 
 ## 실행 증거
 
-- `cd backend && npm test -- --runInBand config/__tests__/payment.config.spec.ts config/__tests__/env-validator.spec.ts modules/payments/__tests__/stripe.adapter.spec.ts modules/reviews/__tests__/reviews.service.spec.ts` — 4 suites / 62 tests 통과.
+- `cd backend && npm test -- --runInBand config/__tests__/payment.config.spec.ts config/__tests__/env-validator.spec.ts modules/payments/__tests__/stripe.adapter.spec.ts modules/reviews/__tests__/reviews.service.spec.ts` — 호환성 보완 후 4 suites / 69 tests 통과. 보완 전 신규 회귀 7개 실패를 확인했다. 새 이름 우선, 새 이름 미설정/빈값/공백일 때 기존 별칭 사용, 두 이름 모두 빈 경우 거절을 검사했다.
 - `npx vitest run src/components/shared/reviews/__tests__/ReviewList.test.tsx` — 1 file / 10 tests 통과.
 - 백엔드 build 및 변경 백엔드 파일 ESLint 통과.
-- 독립 `npm run typecheck`, 변경 프론트 파일 ESLint, project guard, diff check 통과. 런타임 `backend/src`의 `NEXT_PUBLIC_` 참조 검색 결과는 0건이다(테스트 파일 제외).
+- 독립 `npm run typecheck`, 변경 프론트 파일 ESLint, project guard, diff check 통과. 서버의 `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` 참조는 기존 배포 설정 호환을 위한 공개 키 별칭으로 유지한다.
 - 프론트 build는 컴파일·타입 검사 후 백엔드 `ECONNREFUSED`로 prerender 실패했다. 서비스는 재시작하지 않았다. DB E2E, 실제 Stripe/Google 번역 호출, 빌드 JS의 실제 운영 시크릿 대조/전체 역사 스캔은 수행하지 않았다.
 - `make bootstrap`은 Node 의존성·개발 설정 준비 후 선택 `code-review-graph`의 PyPI 배포본 부재로 최종 실패했다. 지정된 PyPI 환경변수를 적용했으며 새 의존성을 추가하지 않았다.
 
@@ -41,7 +42,7 @@
 | 우선순위 | 담당/필요 증거 |
 | --- | --- |
 | P1 운영 | #1341 수정 검증/배포 및 자유문자열 로그·번역 원문/오류의 개인정보 보관 경로 검토. 로그 보관 정책 문서와 실제 수집/접근/삭제 설정을 대조해야 한다. |
-| P2 운영 | Stripe 서버 변수 이전 확인, 운영 키 90일 교체 정책과 실제 교체 이력, 전체 Git 역사/배포 번들 스캔 근거. 이번 조회의 open alert 0만으로 대체하지 않는다. |
+| P2 운영 | 운영 키 90일 교체 정책과 실제 교체 이력, 전체 Git 역사/배포 번들 스캔 근거. 이번 조회의 open alert 0만으로 대체하지 않는다. Stripe 서버 변수 이전은 권고이며 배포 blocker가 아니다. |
 | P2 개인정보 책임자 | 실제 개인정보 파기 실행, 번역 서비스 외부 전송 고지/처리 근거, 침해 대응 담당자·신고 절차 및 훈련/운영 증거. 이슈의 “72시간”을 모든 상황에 적용되는 법률 요건으로 단정하지 않는다. |
 | 검증 | 백엔드가 있는 격리 환경의 전체 프론트 build 및 통합 확인. |
 
