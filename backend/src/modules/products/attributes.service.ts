@@ -580,11 +580,15 @@ export class AttributesService {
     });
     await this.invalidateProductCaches();
     const options = await this.getManagedAttributeValueOptions(code);
-    const updated = options.find((item) => item.value === value);
-    if (!updated) {
-      throw new NotFoundException(`Attribute value ${value} not found`);
-    }
-    return updated;
+    return options.find((item) => item.value === value) ?? {
+      id: null,
+      value,
+      displayValue: null,
+      sortOrder: 999,
+      isActive: true,
+      productCount: 0,
+      products: [],
+    };
   }
 
   // ─── Filtering ──────────────────────────────────────────────────────

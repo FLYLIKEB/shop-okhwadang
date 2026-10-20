@@ -366,6 +366,22 @@ describe('AttributesService', () => {
   describe('attribute value option management', () => {
     const clayType = { id: 1, code: 'clay_type', validValues: ['nokni'] } as unknown as AttributeType;
 
+    it.each([
+      { id: null, productCount: 1, products: [{ id: 11, name: '남은 상품', slug: 'other' }] },
+      { id: 7, productCount: 0, products: [] },
+      null,
+    ])('returns the remaining option or an empty option after a successful unlink: %j', async (remaining) => {
+      typeRepo.findOne.mockResolvedValue(clayType);
+      const option = remaining ? { value: 'legacy', displayValue: '기존 값', sortOrder: 0, isActive: true, ...remaining } : null;
+      jest.spyOn(service, 'getManagedAttributeValueOptions').mockResolvedValue(option ? [option] : []);
+      const result = await service.unlinkProductFromAttributeValue('clay_type', 'legacy', 10);
+      expect(result).toEqual(option ?? {
+        id: null, value: 'legacy', displayValue: null, sortOrder: 999, isActive: true, productCount: 0, products: [],
+      });
+      expect(attrRepo.delete).toHaveBeenCalledWith({ productId: 10, attributeTypeId: 1, value: 'legacy' });
+      expect(cache.delPattern).toHaveBeenCalledWith('products:detail:*');
+    });
+
     it('속성값 표시 이름 수정 시 옵션을 만들고 연결 상품 표시값도 갱신한다', async () => {
       typeRepo.findOne.mockResolvedValue(clayType);
       optionRepo.findOne.mockResolvedValue(null as unknown as AttributeValueOptionEntity);
