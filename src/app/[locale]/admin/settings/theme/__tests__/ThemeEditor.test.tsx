@@ -3,8 +3,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ThemeEditor from '../ThemeEditor';
 import type { SiteSetting } from '@/lib/api';
 
+const { mockRevalidate, mockRefresh } = vi.hoisted(() => ({ mockRevalidate: vi.fn().mockResolvedValue(undefined), mockRefresh: vi.fn() }));
+vi.mock('../actions', () => ({ revalidateTheme: mockRevalidate }));
+vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }));
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: mockRefresh }),
   usePathname: () => '/admin/settings/theme',
 }));
 
@@ -63,6 +67,7 @@ const allSettings = [...colorSettings, ...typographySettings];
 describe('ThemeEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    document.documentElement.style.removeProperty('--db-primary-color');
     global.fetch = vi.fn().mockResolvedValue({ ok: true });
   });
 
@@ -73,6 +78,35 @@ describe('ThemeEditor', () => {
     expect(screen.getByText('타이포그래피')).toBeInTheDocument();
     expect(screen.getByText('간격')).toBeInTheDocument();
     expect(screen.getByText('모서리')).toBeInTheDocument();
+  });
+
+  it('restores existing inline styles when leaving with unsaved preview edits', () => {
+    document.documentElement.style.setProperty('--db-primary-color', '#123456');
+    const { unmount } = render(<ThemeEditor initialSettings={allSettings} />);
+    fireEvent.change(screen.getAllByPlaceholderText('#000000')[0], { target: { value: '#abcdef' } });
+    expect(document.documentElement.style.getPropertyValue('--db-primary-color')).toBe('#abcdef');
+    unmount();
+    expect(document.documentElement.style.getPropertyValue('--db-primary-color')).toBe('#123456');
+    document.documentElement.style.removeProperty('--db-primary-color');
+  });
+
+  it('cleans preview after successful save and revalidates before refreshing', async () => {
+    render(<ThemeEditor initialSettings={allSettings} />);
+    fireEvent.change(screen.getAllByPlaceholderText('#000000')[0], { target: { value: '#abcdef' } });
+    fireEvent.click(screen.getByText('저장'));
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+    expect(mockRevalidate.mock.invocationCallOrder[0]).toBeLessThan(mockRefresh.mock.invocationCallOrder[0]);
+    expect(document.documentElement.style.getPropertyValue('--db-primary-color')).toBe('');
+  });
+
+  it('cleans preview on exit after a failed save', async () => {
+    mockBulkUpdate.mockRejectedValueOnce(new Error('save failed'));
+    const { unmount } = render(<ThemeEditor initialSettings={allSettings} />);
+    fireEvent.change(screen.getAllByPlaceholderText('#000000')[0], { target: { value: '#abcdef' } });
+    fireEvent.click(screen.getByText('저장'));
+    await waitFor(() => expect(screen.getByText('저장')).not.toBeDisabled());
+    unmount();
+    expect(document.documentElement.style.getPropertyValue('--db-primary-color')).toBe('');
   });
 
   it('shows empty state when no settings match active tab', () => {

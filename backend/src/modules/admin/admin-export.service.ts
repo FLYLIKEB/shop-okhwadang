@@ -138,6 +138,8 @@ export class AdminExportService {
     const stringifier = stringify({
       header: true,
       columns: options.columns,
+      escape_formulas: true,
+      cast: { string: (value) => value.startsWith('\n') ? `'${value}` : value },
     });
     stringifier.pipe(res);
 

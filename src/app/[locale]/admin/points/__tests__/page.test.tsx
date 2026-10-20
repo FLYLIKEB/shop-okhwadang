@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminPointsPage from '../page';
 
@@ -48,6 +48,23 @@ vi.mock('sonner', () => ({
 }));
 
 describe('AdminPointsPage', () => {
+  it('ignores a previous member response after switching or clearing the selection', async () => {
+    mockGetMemberById.mockResolvedValue({ id: 43, name: 'Next member', email: 'next@example.test' });
+    let finishOld!: (value: { userId: number; balance: number }) => void;
+    mockGetUserSummary.mockImplementationOnce(() => new Promise((resolve) => { finishOld = resolve; }))
+      .mockResolvedValue({ userId: 43, balance: 4321 });
+    mockGetUserHistory.mockResolvedValue({ items: [], total: 0, page: 1, limit: 50 });
+    const view = render(<AdminPointsPage />);
+    await waitFor(() => expect(mockGetUserSummary).toHaveBeenCalledWith(42));
+    currentSearchParams = new URLSearchParams('userId=43');
+    view.rerender(<AdminPointsPage />);
+    await waitFor(() => expect(screen.getByText(/4,321/)).toBeInTheDocument());
+    await act(async () => { finishOld({ userId: 42, balance: 999999 }); });
+    expect(screen.queryByText(/999,999/)).not.toBeInTheDocument();
+    currentSearchParams = new URLSearchParams('');
+    view.rerender(<AdminPointsPage />);
+    await waitFor(() => expect(screen.queryByText(/4,321/)).not.toBeInTheDocument());
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     currentSearchParams = new URLSearchParams('userId=42');

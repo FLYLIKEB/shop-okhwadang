@@ -226,6 +226,17 @@ describe('AdminReviewsService', () => {
       reviewRepository.manager,
     );
   });
+  it('includes internal reviews only for the matching reviewType filter', async () => {
+    qb.getManyAndCount.mockResolvedValue([[], 0]);
+    reviewRepository.find.mockResolvedValue([{
+      id: 7, productId: 10, rating: 5, content: 'internal', imageUrls: null,
+      isVisible: true, createdAt: new Date(), updatedAt: new Date(),
+    }]);
+    const matching = await service.findAll({ reviewType: 'internal' });
+    expect(matching.items).toEqual([expect.objectContaining({ reviewType: 'internal', id: 7 })]);
+    expect((await service.findAll({ reviewType: '일반' })).items).toEqual([]);
+    expect((await service.findAll({ reviewType: 'internal', importBatchId: 'batch' })).items).toEqual([]);
+  });
 
   it('syncs each touched product through the shared service after bulk visibility changes', async () => {
     externalReviewRepository.find.mockResolvedValue([{ id: 5, productId: 9 }]);

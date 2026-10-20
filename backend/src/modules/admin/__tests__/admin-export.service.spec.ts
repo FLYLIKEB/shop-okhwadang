@@ -5,6 +5,7 @@ import { Order } from '../../orders/entities/order.entity';
 import { User } from '../../users/entities/user.entity';
 import { Product } from '../../products/entities/product.entity';
 import { PassThrough } from 'stream';
+import * as ExcelJS from 'exceljs';
 
 function makeMockRepo() {
   const qb: Record<string, jest.Mock> = {
@@ -70,6 +71,46 @@ describe('AdminExportService', () => {
   });
 
   describe('exportOrders (CSV)', () => {
+    it('writes formula-looking XLSX content as text and preserves numeric cells', async () => {
+      orderRepo._qb.getMany.mockResolvedValueOnce([{
+        id: 1, orderNumber: 'ORD-1', status: 'paid', recipientName: '=1+1',
+        recipientPhone: '010-0000-0000', zipcode: '00000', address: '@SUM(1+1)',
+        totalAmount: 10000, discountAmount: 0, shippingFee: 0, user: null, createdAt: new Date('2026-01-01'),
+      }]).mockResolvedValue([]);
+      const stream = new PassThrough();
+      const chunks: Buffer[] = [];
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      const finished = new Promise<void>((resolve) => stream.on('end', resolve));
+      await service.exportOrders({ format: 'xlsx' }, Object.assign(stream, { setHeader: jest.fn() }) as unknown as import('express').Response);
+      await finished;
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(Buffer.concat(chunks));
+      const row = workbook.worksheets[0].getRow(2);
+      expect(row.getCell(5).type).toBe(ExcelJS.ValueType.String);
+      expect(row.getCell(5).value).toBe('=1+1');
+      expect(row.getCell(8).value).toBe('@SUM(1+1)');
+      expect(row.getCell(9).value).toBe(10000);
+    });
+
+    it.each(['=1+1', '+1+1', '-1+1', '@SUM(1+1)', '\t=1+1', '\r=1+1', '\n=1+1'])('neutralizes a formula-like string %j in the actual CSV stream', async (payload) => {
+      orderRepo._qb.getMany.mockResolvedValueOnce([{
+        id: 1, orderNumber: 'ORD-1', status: 'paid', recipientName: payload,
+        recipientPhone: '010-0000-0000', zipcode: '00000', address: '서울, 한글',
+        totalAmount: 10000, discountAmount: 0, shippingFee: 0, user: null, createdAt: new Date('2026-01-01'),
+      }]).mockResolvedValue([]);
+      const stream = new PassThrough();
+      const chunks: Buffer[] = [];
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      const finished = new Promise<void>((resolve) => stream.on('end', resolve));
+      const response = Object.assign(stream, { setHeader: jest.fn() });
+      await service.exportOrders({ format: 'csv' }, response as unknown as import('express').Response);
+      await finished;
+      const body = Buffer.concat(chunks).toString();
+      expect(body).toContain(`'${payload}`);
+      expect(body).toContain('10000');
+      expect(body).toContain('서울, 한글');
+    });
+
     it('should stream CSV with header when no data', async () => {
       orderRepo._qb.getMany.mockResolvedValue([]);
       const res = makeRes();

@@ -10,7 +10,19 @@ import {
   IsUrl,
   IsDateString,
   IsObject,
+  ValidateBy,
+  isURL,
 } from 'class-validator';
+
+const BANNER_LINK_VALIDATION = {
+  name: 'safeBannerLink',
+  validator: {
+    validate: (value: unknown) => typeof value === 'string' && (
+      value === '' || /^\/(?![\/\\])[^\\\s\u0000-\u001f\u007f]*$/.test(value) ||
+      (!/[\\\s\u0000-\u001f\u007f]/.test(value) && isURL(value, { protocols: ['https'], require_protocol: true }))
+    ),
+  },
+};
 
 export class CreateBannerDto {
   @ApiProperty({ example: '여름 특별 할인', description: '배너 제목' })
@@ -24,7 +36,8 @@ export class CreateBannerDto {
   imageUrl!: string;
 
   @ApiProperty({ example: '/products?promotion=summer', description: '배너 링크 URL', required: false })
-  @IsUrl()
+  @IsString()
+  @ValidateBy(BANNER_LINK_VALIDATION)
   @IsOptional()
   linkUrl?: string;
 
@@ -69,7 +82,8 @@ export class UpdateBannerDto {
   imageUrl?: string;
 
   @ApiProperty({ example: '/products?promotion=summer2', description: '배너 링크 URL', required: false })
-  @IsUrl()
+  @IsString()
+  @ValidateBy(BANNER_LINK_VALIDATION)
   @IsOptional()
   linkUrl?: string;
 
@@ -87,12 +101,12 @@ export class UpdateBannerDto {
   @ApiProperty({ example: '2024-06-01T00:00:00.000Z', description: '표시 시작 일시', required: false })
   @IsDateString()
   @IsOptional()
-  startsAt?: string;
+  startsAt?: string | null;
 
   @ApiProperty({ example: '2024-09-30T23:59:59.999Z', description: '표시 종료 일시', required: false })
   @IsDateString()
   @IsOptional()
-  endsAt?: string;
+  endsAt?: string | null;
 
   @ApiProperty({ example: { full: 'https://cdn.example.com/banner.webp', card: 'https://cdn.example.com/banner-card.webp' }, required: false })
   @IsObject()

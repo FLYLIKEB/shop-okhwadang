@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { settingsApi, adminSettingsApi } from '@/lib/api';
@@ -13,6 +14,7 @@ import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminEmptyState } from '@/components/shared/admin/AdminStates';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
+import { revalidateTheme } from './actions';
 
 const TABS = [
   { id: 'color',       label: '라이트 색상' },
@@ -36,19 +38,8 @@ function ColorTokenRow({
   currentValue: string;
   onChange: (key: string, value: string) => void;
 }) {
-  const isDark = setting.group === 'color_dark';
-
   const handleChange = (value: string) => {
     onChange(setting.key, value);
-    const cssVarName = isDark
-      ? `--db-${setting.key.replace(/_/g, '-')}`
-      : `--db-${setting.key.replace(/_/g, '-')}`;
-    if (isDark) {
-      // 다크 변수는 html[data-theme="dark"] 스코프에 적용
-      document.documentElement.style.setProperty(cssVarName, value);
-    } else {
-      document.documentElement.style.setProperty(cssVarName, value);
-    }
   };
 
   return (
@@ -93,10 +84,6 @@ function GenericTokenRow({
 }) {
   const handleChange = (value: string) => {
     onChange(setting.key, value);
-    document.documentElement.style.setProperty(
-      `--db-${setting.key.replace(/_/g, '-')}`,
-      value,
-    );
   };
 
   return (
@@ -219,7 +206,17 @@ function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
 }
 
 export default function ThemeEditor({ initialSettings }: Props) {
+  const t = useTranslations('admin.settings');
   const router = useRouter();
+  const previewStyles = useRef(new Map<string, { value: string; priority: string }>());
+  const clearPreview = useCallback(() => {
+    for (const [name, previous] of previewStyles.current) {
+      if (previous.value) document.documentElement.style.setProperty(name, previous.value, previous.priority);
+      else document.documentElement.style.removeProperty(name);
+    }
+    previewStyles.current.clear();
+  }, []);
+  useEffect(() => clearPreview, [clearPreview]);
   const [settings, setSettings] = useState<SiteSetting[]>(initialSettings);
   const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({});
   const [pendingEnChanges, setPendingEnChanges] = useState<Record<string, string>>({});
@@ -242,6 +239,12 @@ export default function ThemeEditor({ initialSettings }: Props) {
 
   const handleChange = useCallback((key: string, value: string) => {
     setPendingChanges((prev) => ({ ...prev, [key]: value }));
+    const name = `--db-${key.replace(/_/g, '-')}`;
+    const style = document.documentElement.style;
+    if (!previewStyles.current.has(name)) {
+      previewStyles.current.set(name, { value: style.getPropertyValue(name), priority: style.getPropertyPriority(name) });
+    }
+    style.setProperty(name, value);
   }, []);
 
   const handleChangeEn = useCallback((key: string, value: string) => {
@@ -260,6 +263,8 @@ export default function ThemeEditor({ initialSettings }: Props) {
         return payload;
       });
       await adminSettingsApi.bulkUpdate(items);
+      await revalidateTheme();
+      clearPreview();
       setSettings((prev) =>
         prev.map((s) => ({
           ...s,
@@ -280,22 +285,18 @@ export default function ThemeEditor({ initialSettings }: Props) {
 
   const handleReset = async () => {
     const confirmed = window.confirm(
-      '모든 설정을 기본값으로 초기화하시겠습니까?',
+      t('themeResetConfirm'),
     );
     if (!confirmed) return;
     setResetting(true);
     try {
       await adminSettingsApi.reset();
+      await revalidateTheme();
       const fresh = await settingsApi.getAll();
       setSettings(fresh);
       setPendingChanges({});
       setPendingEnChanges({});
-      fresh.forEach((s) => {
-        document.documentElement.style.setProperty(
-          `--db-${s.key.replace(/_/g, '-')}`,
-          s.defaultValue,
-        );
-      });
+      clearPreview();
       toast.success(toastMessage('themeReset'));
       router.refresh();
     } catch (err) {

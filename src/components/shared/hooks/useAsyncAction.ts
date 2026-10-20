@@ -18,6 +18,7 @@ export function useAsyncAction<T, A = void>(
   options: UseAsyncActionOptions = {},
 ) {
   const [isLoading, setIsLoading] = useState(false);
+  const pendingCountRef = useRef(0);
   const { startLoading, stopLoading } = useGlobalLoading();
   const fnRef = useRef(fn);
   fnRef.current = fn;
@@ -31,6 +32,7 @@ export function useAsyncAction<T, A = void>(
   stopLoadingRef.current = stopLoading;
 
   const execute = useCallback(async (arg: A) => {
+    pendingCountRef.current += 1;
     setIsLoading(true);
     startLoadingRef.current();
     try {
@@ -49,7 +51,8 @@ export function useAsyncAction<T, A = void>(
       }
       return undefined as T;
     } finally {
-      setIsLoading(false);
+      pendingCountRef.current -= 1;
+      setIsLoading(pendingCountRef.current > 0);
       stopLoadingRef.current();
     }
   }, []);

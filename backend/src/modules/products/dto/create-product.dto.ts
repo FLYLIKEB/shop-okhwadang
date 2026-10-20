@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNumber, IsInt, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
 import { SetProductAttributeItemDto } from './product-attribute.dto';
@@ -146,6 +146,12 @@ export class ProductDetailImageInputDto {
 }
 
 export class ProductOptionInputDto {
+  @ApiPropertyOptional({ example: 1, description: '기존 상품 옵션 ID' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  id?: number;
+
   @ApiProperty({ example: '용량', description: '옵션명' })
   @IsString({ message: '옵션명을 입력해 주세요.' })
   @MaxLength(100, { message: '옵션명은 최대 100자까지 입력 가능합니다.' })

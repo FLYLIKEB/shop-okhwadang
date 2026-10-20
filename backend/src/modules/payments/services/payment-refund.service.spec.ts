@@ -634,6 +634,54 @@ describe('PaymentRefundService', () => {
   });
 
   describe('reconcileRefund()', () => {
+    it.each([PaymentStatus.CANCELLED, PaymentStatus.REFUNDED])(
+      'preserves terminal payment %s when reconciling a failed refund repeatedly', async (status) => {
+        const payment = makeConfirmedPayment({ status });
+        const refund = makePendingRefund({ status: RefundStatus.FAILED });
+        const manager = {
+          ...makePhase1Manager(payment, '0'),
+          findOne: jest.fn().mockImplementation((entity: unknown) =>
+            Promise.resolve(entity === Refund ? refund : payment),
+          ),
+        };
+        const { service, refundRepo, gateway, transaction } = buildService({ phase1Manager: manager });
+        transaction.mockReset().mockImplementation(async (callback: (value: typeof manager) => Promise<unknown>) => callback(manager));
+        refundRepo.findOne.mockResolvedValue(refund);
+        const dto = {
+          outcome: RefundStatus.FAILED as const,
+          gatewayRefundId: 'failed-reference',
+          verificationEvidence: 'Provider verified this refund was rejected',
+        };
+        await service.reconcileRefund(refund.id, dto);
+        expect(manager.update).toHaveBeenCalledTimes(1);
+        expect(manager.update).toHaveBeenCalledWith(Refund, refund.id, expect.objectContaining({ status: RefundStatus.FAILED }));
+        refund.reconciledAt = new Date();
+        refund.gatewayRefundId = dto.gatewayRefundId;
+        await service.reconcileRefund(refund.id, dto);
+        expect(manager.update).toHaveBeenCalledTimes(1);
+        expect(gateway.partialCancel).not.toHaveBeenCalled();
+        expect(gateway.cancel).not.toHaveBeenCalled();
+      },
+    );
+
+    it('reconciles a pending failed refund without changing a confirmed payment', async () => {
+      const payment = makeConfirmedPayment();
+      const refund = makePendingRefund();
+      const manager = {
+        ...makePhase1Manager(payment, '0'),
+        findOne: jest.fn().mockImplementation((entity: unknown) =>
+          Promise.resolve(entity === Refund ? refund : payment),
+        ),
+      };
+      const { service, refundRepo } = buildService({ phase1Manager: manager });
+      refundRepo.findOne.mockResolvedValue(refund);
+      await service.reconcileRefund(refund.id, {
+        outcome: RefundStatus.FAILED,
+        gatewayRefundId: 'failed-reference',
+        verificationEvidence: 'Provider verified this refund was rejected',
+      });
+      expect(manager.update).toHaveBeenCalledWith(Payment, payment.id, { status: PaymentStatus.CONFIRMED });
+    });
     it('검증 증거와 PG 참조를 저장하고 결제 상태를 원자적으로 동기화한다', async () => {
       const payment = makeConfirmedPayment();
       const pendingRefund = makePendingRefund({ gatewayAttemptedAt: new Date() });

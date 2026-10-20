@@ -123,6 +123,12 @@ describe('ProductQueryService', () => {
   });
 
   describe('findAll - 캐시', () => {
+    it('preserves the full result count on a warm paginated public list', async () => {
+      cacheService.get.mockResolvedValue({
+        items: [{ id: 1, status: ProductStatus.ACTIVE }], total: 101, page: 1, limit: 20,
+      });
+      expect((await service.findAll({ limit: 20 })).total).toBe(101);
+    });
     it('cache hit 시 즉시 반환하고 DB 조회를 건너뛴다', async () => {
       const cached = { items: [], total: 0, page: 1, limit: 20 };
       cacheService.get.mockResolvedValue(cached);
@@ -144,12 +150,13 @@ describe('ProductQueryService', () => {
         page: 1,
         limit: 20,
       });
+      qb.getManyAndCount.mockResolvedValue([[{ id: 1, status: ProductStatus.ACTIVE, isVisibleEn: true }], 101]);
 
       const result = await service.findAll({ locale: 'en' }, false);
 
       expect(result.items.map((item) => item.id)).toEqual([1]);
-      expect(result.total).toBe(1);
-      expect(productRepo.createQueryBuilder).not.toHaveBeenCalled();
+      expect(result.total).toBe(101);
+      expect(productRepo.createQueryBuilder).toHaveBeenCalled();
     });
   });
 

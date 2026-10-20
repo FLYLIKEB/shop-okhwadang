@@ -9,7 +9,7 @@ export class UpdateProductDto {
   @ApiProperty({ example: 1, description: '카테고리 ID', required: false })
   @IsOptional()
   @IsNumber()
-  categoryId?: number;
+  categoryId?: number | null;
 
   @ApiProperty({ example: '옥화당 보이차', description: '상품명', required: false })
   @IsOptional()
@@ -26,13 +26,13 @@ export class UpdateProductDto {
   @ApiProperty({ example: '신선한 원두를 사용하여 만든 전통 방식의 보이차...', description: '상품 상세 설명', required: false })
   @IsOptional()
   @IsString()
-  description?: string;
+  description?: string | null;
 
   @ApiProperty({ example: '부드러운 맛과 깊은 향', description: '짧은 설명', required: false })
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  shortDescription?: string;
+  shortDescription?: string | null;
 
   @ApiProperty({ example: 35000, description: '가격 (원)', required: false })
   @IsOptional()
@@ -44,7 +44,7 @@ export class UpdateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  salePrice?: number;
+  salePrice?: number | null;
 
   @ApiProperty({ example: 100, description: '재고 수량', required: false })
   @IsOptional()
@@ -56,7 +56,7 @@ export class UpdateProductDto {
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  sku?: string;
+  sku?: string | null;
 
   @ApiProperty({ example: ProductStatus.ACTIVE, enum: ProductStatus, description: '상품 상태', required: false })
   @IsOptional()
@@ -87,36 +87,36 @@ export class UpdateProductDto {
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  nameEn?: string;
+  nameEn?: string | null;
 
   @ApiPropertyOptional({ example: 'Traditional pu-erh tea...', description: '상품 상세 설명 (영문)' })
   @IsOptional()
   @IsString()
-  descriptionEn?: string;
+  descriptionEn?: string | null;
 
   @ApiPropertyOptional({ example: 'Smooth taste and deep aroma', description: '짧은 설명 (영문, 500자 이내)' })
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  shortDescriptionEn?: string;
+  shortDescriptionEn?: string | null;
 
   @ApiPropertyOptional({ example: '주니', description: '니료 종류' })
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  clayType?: string;
+  clayType?: string | null;
 
   @ApiPropertyOptional({ example: '서시', description: '자사호 모양' })
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  teapotShape?: string;
+  teapotShape?: string | null;
 
   @ApiPropertyOptional({ type: ProductNoticeInfoDto, description: '상품고시정보' })
   @IsOptional()
   @ValidateNested()
   @Type(() => ProductNoticeInfoDto)
-  noticeInfo?: ProductNoticeInfoDto;
+  noticeInfo?: ProductNoticeInfoDto | null;
 
   @ApiPropertyOptional({ type: [ProductImageInputDto], description: '갤러리 이미지 목록' })
   @IsOptional()

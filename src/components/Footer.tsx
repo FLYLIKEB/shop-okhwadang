@@ -48,8 +48,8 @@ function getFooterHref(item: NavigationItem): string {
   return item.url;
 }
 
-function renderNavLinks(items: NavigationItem[]) {
-  return items.map((item) => (
+function renderNavLinks(items: NavigationItem[]): React.ReactElement[] {
+  return items.flatMap((item) => [(
     <Link
       key={item.id}
       href={getFooterHref(item)}
@@ -58,7 +58,7 @@ function renderNavLinks(items: NavigationItem[]) {
     >
       {item.label}
     </Link>
-  ));
+  ), ...renderNavLinks(item.children ?? [])]);
 }
 
 interface FooterProps {
@@ -117,7 +117,7 @@ export default function Footer({ businessInfo, initialFooterItems }: FooterProps
           <div className="toss-footer__group text-center md:text-left">
             <p className="typo-label font-semibold tracking-tight text-foreground">{t('shop')}</p>
             <nav className="mt-3 flex flex-col items-center gap-2 md:items-start">
-              {renderNavLinks(rootItems.slice(6, 10))}
+              {renderNavLinks(rootItems.slice(6))}
             </nav>
           </div>
 

@@ -250,6 +250,9 @@ export class PointsService {
     actor: ManualPointAdjustmentActor,
     dto: ManualPointAdjustmentDto,
   ): Promise<AdminPointAdjustmentResponse> {
+    if (!Number.isInteger(dto.delta) || dto.delta < -2147483648 || dto.delta > 2147483647) {
+      throw new BadRequestException('포인트 조정량이 허용 범위를 벗어났습니다.');
+    }
     if (dto.delta === 0) {
       throw new BadRequestException('0 포인트 조정은 허용되지 않습니다.');
     }
@@ -258,6 +261,9 @@ export class PointsService {
       await this.lockUserForPointChanges(manager, dto.userId);
 
       const beforeBalance = await this.getEffectiveBalanceInTx(manager, dto.userId);
+      if (beforeBalance + dto.delta > 2147483647 || beforeBalance + dto.delta < -2147483648) {
+        throw new BadRequestException('포인트 잔액이 허용 범위를 벗어났습니다.');
+      }
       const description = `${MANUAL_POINT_ADJUSTMENT_PREFIX}${dto.reason}`;
 
       let entry: PointHistory;
@@ -356,6 +362,9 @@ export class PointsService {
     }
 
     const balance = await this.getRunningBalanceInTx(manager, userId);
+    if (balance + amount > 2147483647 || balance + amount < -2147483648) {
+      throw new BadRequestException('포인트 잔액이 허용 범위를 벗어났습니다.');
+    }
     return manager.save(PointHistory, {
       userId,
       type,
@@ -461,6 +470,10 @@ export class PointsService {
       throw new BadRequestException('적립금이 부족합니다.');
     }
 
+    const currentBalance = await this.getRunningBalanceInTx(manager, userId);
+    if (currentBalance - amount > 2147483647 || currentBalance - amount < -2147483648) {
+      throw new BadRequestException('포인트 잔액이 허용 범위를 벗어났습니다.');
+    }
     let outstanding = amount;
     for (const lot of lots) {
       if (outstanding === 0) break;
@@ -470,7 +483,6 @@ export class PointsService {
       await manager.save(PointHistory, lot);
     }
 
-    const currentBalance = await this.getRunningBalanceInTx(manager, userId);
     return manager.save(PointHistory, {
       userId,
       type: 'spend' as const,

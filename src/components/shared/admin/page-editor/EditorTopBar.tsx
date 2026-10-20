@@ -104,6 +104,7 @@ export default function EditorTopBar({
           variant={isPublished ? 'secondary' : 'outline'}
           size="sm"
           onClick={onTogglePublish}
+          disabled={saving}
           title={isPublished ? '클릭하면 비공개로 전환됩니다 — 방문자에게 보이지 않게 됩니다' : '클릭하면 공개됩니다 — 실제 쇼핑몰에 노출됩니다'}
         >
           {isPublished ? '● 공개 중' : '○ 비공개'}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -49,9 +49,7 @@ export default function AdminFaqsPage() {
 
   const editingFaq = editingId != null ? faqs.find((faq) => faq.id === editingId) ?? null : null;
 
-  const { formData, setFormData } = useFormModal<CreateFaqData>(
-    FAQ_DEFAULTS,
-    editingFaq
+  const initialFormData = useMemo(() => editingFaq
       ? {
         category: editingFaq.category,
         question: editingFaq.question,
@@ -59,7 +57,11 @@ export default function AdminFaqsPage() {
         sortOrder: editingFaq.sortOrder,
         isPublished: editingFaq.isPublished,
       }
-      : null,
+      : null, [editingFaq]);
+
+  const { formData, setFormData } = useFormModal<CreateFaqData>(
+    FAQ_DEFAULTS,
+    initialFormData,
     modalOpen,
   );
 

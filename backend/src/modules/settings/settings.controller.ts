@@ -71,7 +71,7 @@ export class AdminSettingsController {
 
   @Post('reset')
   @ApiCookieAuth()
-  @ApiOperation({ summary: '설정 초기화', description: '모든 설정을 기본값으로 초기화합니다.' })
+  @ApiOperation({ summary: '설정 초기화', description: '테마 설정을 기본값으로 초기화합니다.' })
   @ApiResponse({ status: 200, description: '설정 초기화 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })

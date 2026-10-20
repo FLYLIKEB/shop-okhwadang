@@ -2,9 +2,11 @@ import {
   Injectable,
   ConflictException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Page } from './entities/page.entity';
 import { PageBlock } from './entities/page-block.entity';
 import { CreatePageDto } from './dto/create-page.dto';
@@ -15,6 +17,8 @@ import { ReorderBlocksDto } from './dto/reorder-blocks.dto';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { applyLocale, applyLocaleToContent } from '../../common/utils/locale.util';
 import { REQUIRED_CHECKOUT_POLICY_SLUGS } from '../../common/constants/policy.constants';
+import { IdempotencyService } from '../../common/services/idempotency.service';
+import { SavePageDraftDto } from './dto/save-page-draft.dto';
 
 const SUPPORTED_BLOCK_TYPES = [
   'hero_banner',
@@ -70,7 +74,50 @@ export class PagesService {
     private readonly pageRepository: Repository<Page>,
     @InjectRepository(PageBlock)
     private readonly blockRepository: Repository<PageBlock>,
+    private readonly idempotencyService: IdempotencyService,
   ) {}
+
+  async saveDraft(id: number, actorId: number, key: string | undefined, dto: SavePageDraftDto): Promise<Page> {
+    const { result } = await this.idempotencyService.execute(
+      `page:${id}:actor:${actorId}`, 'cms-draft-save', key, dto, async (manager) => {
+        const pages = manager.getRepository(Page);
+        const blocks = manager.getRepository(PageBlock);
+        const page = await pages.findOne({ where: { id }, lock: { mode: 'pessimistic_write' } });
+        if (!page) throw new NotFoundException('존재하지 않는 페이지입니다.');
+        const existing = await blocks.createQueryBuilder('block')
+          .where('block.page_id = :id', { id }).setLock('pessimistic_write').getMany();
+        const existingById = new Map(existing.map((block) => [Number(block.id), block]));
+        const seen = new Set<number>();
+        for (const block of dto.blocks) {
+          if (block.id === 0 || seen.has(block.id)) throw new BadRequestException('블록 ID가 중복되거나 올바르지 않습니다.');
+          seen.add(block.id);
+          if (block.id > 0 && !existingById.has(block.id)) throw new BadRequestException('이 페이지에 속하지 않는 블록입니다.');
+          if (!SUPPORTED_BLOCK_TYPES.includes(block.type)) throw new BadRequestException('지원하지 않는 블록 타입입니다.');
+          validateGenericBlockContent(block.type, block.content);
+        }
+        if (dto.slug !== page.slug) {
+          const duplicate = await pages.findOne({ where: { slug: dto.slug } });
+          if (duplicate) throw new ConflictException('이미 사용 중인 슬러그입니다.');
+        }
+        const removed = existing.filter((block) => !seen.has(Number(block.id)));
+        if (removed.length) await blocks.remove(removed);
+        for (const block of dto.blocks) {
+          const values = { type: block.type, content: block.content, sort_order: block.sort_order, is_visible: block.is_visible };
+          if (block.id > 0) await blocks.update({ id: block.id, page_id: id }, values as QueryDeepPartialEntity<PageBlock>);
+          else await blocks.save(blocks.create({ page_id: id, ...values }));
+        }
+        await pages.update(id, {
+          title: dto.title, slug: dto.slug,
+          ...(dto.is_published === undefined ? {} : { is_published: dto.is_published }),
+        });
+        const savedPage = await pages.findOneOrFail({ where: { id }, lock: { mode: 'pessimistic_write' } });
+        savedPage.blocks = await blocks.createQueryBuilder('block')
+          .where('block.page_id = :id', { id }).setLock('pessimistic_write').getMany();
+        return this.sortBlocks(savedPage);
+      },
+    );
+    return result;
+  }
 
   private applyLocaleToPage(entity: Page, locale?: string): Page {
     const localized = applyLocale(entity, locale, ['title']);

@@ -40,7 +40,7 @@ export class JournalService {
   }
 
   async findBySlug(slug: string, locale?: string): Promise<JournalEntry> {
-    const entry = await findOrThrow(this.journalRepository, { slug }, '저널을 찾을 수 없습니다.');
+    const entry = await findOrThrow(this.journalRepository, { slug, isPublished: true }, '저널을 찾을 수 없습니다.');
     return this.applyLocaleToEntry(entry, locale);
   }
 

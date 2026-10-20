@@ -202,7 +202,10 @@ export class SmartStoreReviewImportService {
           mediaCache,
           rowResult,
         });
-        touchedProductIds.add(Number(matchedProduct.id));
+        if (rowResult.action !== 'skip') {
+          touchedProductIds.add(Number(matchedProduct.id));
+          if (existing?.productId) touchedProductIds.add(Number(existing.productId));
+        }
       }
 
       rows.push(rowResult);

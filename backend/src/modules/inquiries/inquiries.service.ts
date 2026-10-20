@@ -19,7 +19,9 @@ export interface AdminInquiryCounts {
   answered: number;
 }
 
-export interface AdminInquiryListResult extends PaginatedResult<Inquiry> {
+export interface AdminInquiryListResult extends PaginatedResult<Omit<Inquiry, 'user'> & {
+  user: Pick<Inquiry['user'], 'id' | 'name' | 'email'> | null;
+}> {
   counts: AdminInquiryCounts;
 }
 
@@ -93,6 +95,10 @@ export class InquiriesService {
 
     return {
       ...result,
+      items: result.items.map(({ user, ...inquiry }) => ({
+        ...inquiry,
+        user: user ? { id: user.id, name: user.name, email: user.email } : null,
+      })),
       counts: { pending, answered },
     };
   }

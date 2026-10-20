@@ -5,6 +5,7 @@ export interface AdminOrder {
   id: number;
   orderNumber: string;
   status: string;
+  paymentStatus?: string | null;
   totalAmount: number;
   recipientName: string;
   recipientPhone: string;

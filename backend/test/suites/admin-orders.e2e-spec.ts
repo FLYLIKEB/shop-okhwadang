@@ -163,7 +163,19 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
     });
 
     describe('PATCH /api/admin/orders/:id', () => {
-      it('pending → paid 상태 변경', async () => {
+      it('결제 확정 전 pending → paid 거부 및 pending 유지', async () => {
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${orderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'paid' })
+          .expect(400);
+
+        const orders = await dataSource.query('SELECT status FROM orders WHERE id = ?', [orderId]) as Array<{ status: string }>;
+        expect(orders[0].status).toBe('pending');
+      });
+
+      it('결제 확정 후 pending → paid 상태 변경', async () => {
+        await confirmOrderPayment(orderId);
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
           .set('Cookie', cookieHeader(adminCookies))
@@ -175,7 +187,6 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       });
 
       it('paid → preparing 상태 변경', async () => {
-        await confirmOrderPayment(orderId);
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${orderId}`)
           .set('Cookie', cookieHeader(adminCookies))
@@ -343,7 +354,19 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
           .expect(400);
       });
 
-      it('refund order pending → paid', async () => {
+      it('refund order 결제 확정 전 pending → paid 거부', async () => {
+        await request(app.getHttpServer())
+          .patch(`/api/admin/orders/${refundOrderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ status: 'paid' })
+          .expect(400);
+
+        const orders = await dataSource.query('SELECT status FROM orders WHERE id = ?', [refundOrderId]) as Array<{ status: string }>;
+        expect(orders[0].status).toBe('pending');
+      });
+
+      it('refund order 결제 확정 후 pending → paid', async () => {
+        await confirmOrderPayment(refundOrderId);
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
           .set('Cookie', cookieHeader(adminCookies))
@@ -355,7 +378,6 @@ export function registerAdminOrdersSuite(getApp: () => INestApplication) {
       });
 
       it('refund order paid → preparing', async () => {
-        await confirmOrderPayment(refundOrderId);
         const res = await request(app.getHttpServer())
           .patch(`/api/admin/orders/${refundOrderId}`)
           .set('Cookie', cookieHeader(adminCookies))

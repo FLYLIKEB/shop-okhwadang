@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
-import { AdminEmptyState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
+import { AdminEmptyState, AdminErrorState, AdminLoadingState } from '@/components/shared/admin/AdminStates';
+import { Button } from '@/components/ui/button';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { adminLocalizationApi } from '@/lib/api';
@@ -26,15 +27,18 @@ const KIND_ORDER: LocalizationResourceKind[] = [
 
 export default function AdminLocalizationPage() {
   const t = useTranslations('admin.localization');
+  const common = useTranslations('admin.common');
   const { isAdmin } = useAdminGuard();
   const [report, setReport] = useState<LocalizationCoverageReport | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const { execute: loadCoverage, isLoading } = useAsyncAction(
     async () => {
+      setLoadError(false);
       const data = await adminLocalizationApi.getCoverage();
       setReport(data);
     },
-    { errorMessage: t('loadError') },
+    { errorMessage: t('loadError'), onError: () => setLoadError(true) },
   );
 
   useEffect(() => {
@@ -83,7 +87,9 @@ export default function AdminLocalizationPage() {
           <h2 className="typo-h3">{t('missingTitle')}</h2>
           <p className="typo-body-sm mt-1 text-muted-foreground">{t('missingDescription')}</p>
         </div>
-        {isLoading && !report ? (
+        {loadError ? (
+          <AdminErrorState title={t('loadError')} action={<Button onClick={() => void loadCoverage()} disabled={isLoading}>{common('retry')}</Button>} className="border-0" />
+        ) : isLoading && !report ? (
           <AdminLoadingState title={t('loading')} className="border-0" />
         ) : sortedItems.length === 0 ? (
           <AdminEmptyState title={t('empty')} className="border-0" />

@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   ForbiddenException,
+  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -60,15 +61,10 @@ export class AdminMembersService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
 
-    const qb = this.userRepository
-      .createQueryBuilder('user')
-      .orderBy('user.createdAt', 'DESC');
+    const qb = this.userRepository.createQueryBuilder('user').orderBy('user.createdAt', 'DESC');
 
     if (query.q) {
-      qb.andWhere(
-        '(user.email LIKE :q OR user.name LIKE :q)',
-        { q: `%${query.q}%` },
-      );
+      qb.andWhere('(user.email LIKE :q OR user.name LIKE :q)', { q: `%${query.q}%` });
     }
 
     if (query.role) {
@@ -96,46 +92,69 @@ export class AdminMembersService {
     targetId: number,
     newRole: UserRole,
     requesterId: number,
-    requesterRole: UserRole,
+    _requesterRole: UserRole,
   ): Promise<SafeUser> {
     if (targetId === requesterId) {
       throw new BadRequestException('자기 자신의 역할은 변경할 수 없습니다.');
     }
 
-    const target = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
-
-    if (!target.isActive) {
-      throw new BadRequestException('비활성 회원의 역할은 변경할 수 없습니다.');
-    }
-
-    // Permission matrix: admin cannot grant/revoke super_admin
-    if (requesterRole === UserRole.ADMIN) {
-      if (newRole === UserRole.SUPER_ADMIN) {
-        throw new ForbiddenException('super_admin 역할 부여는 super_admin만 가능합니다.');
-      }
-      if (target.role === UserRole.SUPER_ADMIN) {
-        throw new ForbiddenException('super_admin의 역할 변경은 super_admin만 가능합니다.');
-      }
-    }
-
-    // Prevent last super_admin demotion
-    if (target.role === UserRole.SUPER_ADMIN && newRole !== UserRole.SUPER_ADMIN) {
-      const superAdminCount = await this.userRepository.count({
-        where: { role: UserRole.SUPER_ADMIN },
+    return this.userRepository.manager.transaction(async (manager) => {
+      const users = manager.getRepository(User);
+      await users
+        .createQueryBuilder('user')
+        .orderBy('user.id', 'ASC')
+        .take(1)
+        .setLock('pessimistic_write')
+        .getOne();
+      const requester = await users.findOne({
+        where: { id: requesterId },
+        lock: { mode: 'pessimistic_write' },
       });
-      if (superAdminCount <= 1) {
-        throw new BadRequestException('최소 1명의 super_admin이 유지되어야 합니다.');
+      if (
+        !requester?.isActive ||
+        ![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(requester.role)
+      ) {
+        throw new ForbiddenException('회원 역할을 변경할 권한이 없습니다.');
       }
-    }
+      const target = await users.findOne({
+        where: { id: targetId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!target) throw new NotFoundException('회원을 찾을 수 없습니다.');
 
-    await this.userRepository.update(targetId, { role: newRole });
+      if (!target.isActive) {
+        throw new BadRequestException('비활성 회원의 역할은 변경할 수 없습니다.');
+      }
 
-    this.logger.log(
-      `Member #${targetId} role changed: ${target.role} → ${newRole} by #${requesterId}`,
-    );
+      if (requester.role === UserRole.ADMIN) {
+        if (newRole === UserRole.SUPER_ADMIN) {
+          throw new ForbiddenException('super_admin 역할 부여는 super_admin만 가능합니다.');
+        }
+        if (target.role === UserRole.SUPER_ADMIN) {
+          throw new ForbiddenException('super_admin의 역할 변경은 super_admin만 가능합니다.');
+        }
+      }
 
-    const updated = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
-    return toSafeUser(updated);
+      if (target.role === UserRole.SUPER_ADMIN && newRole !== UserRole.SUPER_ADMIN) {
+        const superAdmins = await users
+          .createQueryBuilder('user')
+          .where('user.role = :role', { role: UserRole.SUPER_ADMIN })
+          .setLock('pessimistic_write')
+          .getMany();
+        if (superAdmins.length <= 1) {
+          throw new BadRequestException('최소 1명의 super_admin이 유지되어야 합니다.');
+        }
+      }
+
+      await users.update(targetId, { role: newRole });
+
+      this.logger.log(
+        `Member #${targetId} role changed: ${target.role} → ${newRole} by #${requesterId}`,
+      );
+
+      const updated = await findOrThrow(users, { id: targetId }, '회원을 찾을 수 없습니다.');
+      return toSafeUser(updated);
+    });
   }
 
   async unlockAccount(targetId: number): Promise<SafeUser> {
@@ -149,7 +168,11 @@ export class AdminMembersService {
 
     this.logger.log(`Member #${targetId} login lock reset by admin`);
 
-    const updated = await findOrThrow(this.userRepository, { id: targetId }, '회원을 찾을 수 없습니다.');
+    const updated = await findOrThrow(
+      this.userRepository,
+      { id: targetId },
+      '회원을 찾을 수 없습니다.',
+    );
     return toSafeUser(updated);
   }
 }

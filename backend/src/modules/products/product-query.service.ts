@@ -72,7 +72,9 @@ export class ProductQueryService {
       const items = this.filterVisibleForPublic(cached.items, false, normalizedLocale).map((product) =>
         this.applyLocale(product, normalizedLocale),
       ) as (Product & { rating: number; reviewCount: number })[];
-      return { ...cached, items, total: items.length };
+      if (items.length === cached.items.length) {
+        return { ...cached, items };
+      }
     }
 
     if (

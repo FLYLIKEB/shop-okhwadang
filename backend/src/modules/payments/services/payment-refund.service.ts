@@ -269,6 +269,9 @@ export class PaymentRefundService {
       if (refund.status !== RefundStatus.PENDING && refund.status !== dto.outcome) {
         throw new BadRequestException('이미 다른 결과로 처리된 환불입니다.');
       }
+      if (refund.status === dto.outcome && refund.reconciledAt) {
+        return;
+      }
       await manager.update(Refund, refund.id, {
         status: dto.outcome,
         gatewayRefundId: dto.gatewayRefundId,
@@ -282,6 +285,9 @@ export class PaymentRefundService {
   }
 
   private async syncPaymentStatus(manager: EntityManager, payment: Payment): Promise<void> {
+    if ([PaymentStatus.CANCELLED, PaymentStatus.REFUNDED].includes(payment.status)) {
+      return;
+    }
     const completedRefundsResult = await manager
       .createQueryBuilder(Refund, 'r')
       .select('COALESCE(SUM(r.amount), 0)', 'total')

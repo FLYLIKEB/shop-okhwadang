@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import BusinessInfoEditor from '../BusinessInfoEditor';
 import type { SiteSetting } from '@/lib/api';
 
+vi.mock('../../theme/actions', () => ({ revalidateTheme: vi.fn().mockResolvedValue(undefined) }));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));

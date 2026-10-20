@@ -138,6 +138,20 @@ describe('AdminOrdersService', () => {
       const result = await service.findAll({ page: 1, limit: 20 });
       expect(result).toEqual({ items: [], total: 0, page: 1, limit: 20 });
     });
+
+    it('includes current payment status without returning payment credentials', async () => {
+      const query = orderRepo.createQueryBuilder();
+      query.getManyAndCount.mockResolvedValue([
+        [{ id: 1, status: OrderStatus.PENDING }], 1,
+      ]);
+      orderRepo.createQueryBuilder.mockReturnValue(query);
+      paymentRepo.find.mockResolvedValue([{ orderId: 1, status: PaymentStatus.CONFIRMED }]);
+      const result = await service.findAll({ page: 1, limit: 20 });
+      expect(result.items[0]).toEqual(expect.objectContaining({ paymentStatus: PaymentStatus.CONFIRMED }));
+      expect(paymentRepo.find).toHaveBeenCalledWith(expect.objectContaining({ select: ['orderId', 'status'] }));
+      expect(result.items[0]).not.toHaveProperty('paymentKey');
+      expect(result.items[0]).not.toHaveProperty('rawResponse');
+    });
   });
 
   describe('updateStatus', () => {
@@ -146,13 +160,39 @@ describe('AdminOrdersService', () => {
       await expect(service.updateStatus(999, OrderStatus.PAID)).rejects.toThrow(NotFoundException);
     });
 
-    it('pending → paid: allowed', async () => {
+    it('pending → paid: requires a confirmed payment under lock', async () => {
       orderRepo.findOne
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING })
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID });
+      mockManager.findOne
+        .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING })
+        .mockResolvedValueOnce({ id: 1, status: PaymentStatus.CONFIRMED });
 
       await service.updateStatus(1, OrderStatus.PAID);
       expect(mockManager.update).toHaveBeenCalledWith(Order, 1, { status: OrderStatus.PAID });
+      expect(mockManager.findOne).toHaveBeenCalledWith(Payment, {
+        where: { orderId: 1 }, lock: { mode: 'pessimistic_write' },
+      });
+    });
+
+    it.each([null, PaymentStatus.PENDING, PaymentStatus.CANCELLED, PaymentStatus.REFUNDED])(
+      'rejects paid when the current locked payment is %s despite a stale confirmed read', async (status) => {
+        orderRepo.findOne.mockResolvedValue({ id: 1, status: OrderStatus.PENDING });
+        paymentRepo.findOne.mockResolvedValue({ id: 1, status: PaymentStatus.CONFIRMED });
+        mockManager.findOne
+          .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING })
+          .mockResolvedValueOnce(status ? { id: 1, status } : null);
+
+        await expect(service.updateStatus(1, OrderStatus.PAID)).rejects.toThrow(BadRequestException);
+        expect(mockManager.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('rejects paid when the locked order has already been cancelled', async () => {
+      orderRepo.findOne.mockResolvedValue({ id: 1, status: OrderStatus.PENDING });
+      mockManager.findOne.mockResolvedValue({ id: 1, status: OrderStatus.CANCELLED });
+      await expect(service.updateStatus(1, OrderStatus.PAID)).rejects.toThrow(BadRequestException);
+      expect(mockManager.update).not.toHaveBeenCalled();
     });
 
     it('paid → preparing: allowed', async () => {

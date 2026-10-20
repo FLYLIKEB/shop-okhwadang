@@ -602,6 +602,7 @@ function ProductAttributesSection({
 }
 
 export default function ProductFormPage({ mode, product }: ProductFormPageProps) {
+  const t = useTranslations('admin.productForm');
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
@@ -634,6 +635,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       product?.detailImages?.map((img) => ({ url: img.url, alt: img.alt ?? undefined })) ?? [],
     options:
       product?.options?.map((o) => ({
+        id: o.id,
         name: o.name,
         value: o.value,
         priceAdjustment: o.priceAdjustment,
@@ -672,9 +674,14 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
   }, []);
 
   const categoryOptions = useMemo(() => flattenCategories(categories), [categories]);
+  const uploadsPending = [...form.images, ...form.detailImages].some((image) => image.url.startsWith('uploading-'));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadsPending) {
+      toast.error(t('uploadPending'));
+      return;
+    }
 
     if (!form.name.trim()) {
       toast.error(toastMessage('productNameRequired'));
@@ -695,19 +702,19 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         categoryId: form.categoryId ? Number(form.categoryId) : null,
         name: form.name.trim(),
         slug: form.slug.trim(),
-        description: form.description || undefined,
-        shortDescription: form.shortDescription || undefined,
+        description: form.description,
+        shortDescription: form.shortDescription,
         price: Number(form.price),
-        salePrice: form.salePrice ? Number(form.salePrice) : undefined,
+        salePrice: form.salePrice ? Number(form.salePrice) : mode === 'edit' ? null : undefined,
         stock: Number(form.stock),
-        sku: form.sku || undefined,
+        sku: form.sku.trim() ? form.sku : mode === 'edit' ? null : undefined,
         status: form.status,
         isFeatured: form.isFeatured,
         isFreeShipping: form.isFreeShipping,
         isVisibleKo: form.isVisibleKo,
         isVisibleEn: form.isVisibleEn,
-        nameEn: form.nameEn.trim() || undefined,
-        descriptionEn: form.descriptionEn.trim() || undefined,
+        nameEn: form.nameEn.trim(),
+        descriptionEn: form.descriptionEn.trim(),
         noticeInfo: buildNoticeInfoPayload(form.noticeInfo, hadNoticeInfo),
         images: form.images.map((img, index) => ({
           url: img.url,
@@ -724,6 +731,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         options: form.options
           .filter((option) => option.name.trim() && option.value.trim())
           .map((option, index) => ({
+            id: option.id,
             name: option.name.trim(),
             value: option.value.trim(),
             priceAdjustment: Number(option.priceAdjustment) || 0,
@@ -741,7 +749,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       };
 
       if (mode === 'create') {
-        await adminProductsApi.create(payload);
+        await adminProductsApi.create({ ...payload, salePrice: payload.salePrice ?? undefined, sku: payload.sku ?? undefined });
         toast.success(toastMessage('productCreated'));
       } else if (product) {
         await adminProductsApi.update(product.id, payload);
@@ -787,7 +795,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
           </Button>
           <Button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || uploadsPending}
           >
             {submitting ? '저장 중...' : mode === 'create' ? '등록하기' : '수정하기'}
           </Button>

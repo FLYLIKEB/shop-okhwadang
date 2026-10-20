@@ -97,6 +97,11 @@ describe('JournalService', () => {
   });
 
   describe('findBySlug', () => {
+    it('limits public detail queries to published journals', async () => {
+      repo.findOne.mockResolvedValue(null);
+      await expect(service.findBySlug('draft')).rejects.toThrow(NotFoundException);
+      expect(repo.findOne).toHaveBeenCalledWith({ where: { slug: 'draft', isPublished: true } });
+    });
     it('없는 slug 조회 시 NotFoundException', async () => {
       repo.findOne.mockResolvedValue(null as unknown as JournalEntry);
 

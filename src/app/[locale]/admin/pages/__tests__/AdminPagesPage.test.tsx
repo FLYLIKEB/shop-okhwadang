@@ -1,6 +1,8 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AdminPagesPage from '../page';
+import koMessages from '@/i18n/messages/ko.json';
 
 const mockPush = vi.fn();
 
@@ -29,9 +31,11 @@ const mockUpdateBlock = vi.fn();
 const mockDeleteBlock = vi.fn();
 const mockReorderBlocks = vi.fn();
 const mockGetById = vi.fn();
+const mockSaveDraft = vi.fn();
 
 vi.mock('@/lib/api', () => ({
   adminPagesApi: {
+    saveDraft: (...args: unknown[]) => mockSaveDraft(...args),
     getAll: (...args: unknown[]) => mockGetAll(...args),
     getById: (...args: unknown[]) => mockGetById(...args),
     create: (...args: unknown[]) => mockCreate(...args),
@@ -67,6 +71,7 @@ describe('AdminPagesPage', () => {
     mockGetById.mockResolvedValue(mockPage);
     mockCreate.mockResolvedValue({ id: 2, title: '새 페이지', slug: 'new-page', is_published: false, blocks: [] });
     mockUpdate.mockResolvedValue(mockPage);
+    mockSaveDraft.mockResolvedValue(mockPage);
     mockAddBlock.mockResolvedValue({ id: 20, type: 'text_content', content: { html: '' }, sort_order: 0, is_visible: true });
     mockDeleteBlock.mockResolvedValue(undefined);
     mockReorderBlocks.mockResolvedValue(undefined);
@@ -174,7 +179,7 @@ describe('AdminPagesPage', () => {
     expect(saveBtn).not.toBeDisabled();
 
     // Mock the reload after save
-    mockGetById.mockResolvedValue({
+    mockSaveDraft.mockResolvedValue({
       ...mockPage,
       blocks: [
         ...mockPage.blocks,
@@ -185,9 +190,9 @@ describe('AdminPagesPage', () => {
     fireEvent.click(saveBtn);
 
     await waitFor(() => {
-      expect(mockAddBlock).toHaveBeenCalledWith(1, expect.objectContaining({
-        type: 'text_content',
-      }));
+      expect(mockSaveDraft).toHaveBeenCalledWith(1, expect.objectContaining({
+        blocks: expect.arrayContaining([expect.objectContaining({ type: 'text_content', id: expect.any(Number) })]),
+      }), expect.any(String));
     });
   });
 
@@ -254,7 +259,7 @@ describe('AdminPagesPage', () => {
     expect(screen.getByRole('button', { name: '표시' })).toBeInTheDocument();
   });
 
-  it('숨김 블록 저장 후 관리자 상세 API로 reload하여 dirty state를 초기화한다', async () => {
+  it('숨김 블록 저장 응답으로 추가 GET 없이 dirty state를 초기화한다', async () => {
     const hiddenPage = {
       ...mockPage,
       is_published: false,
@@ -269,7 +274,8 @@ describe('AdminPagesPage', () => {
       ],
     };
     mockGetAll.mockResolvedValue([hiddenPage]);
-    mockGetById.mockResolvedValueOnce(hiddenPage).mockResolvedValueOnce({
+    mockGetById.mockResolvedValue(hiddenPage);
+    mockSaveDraft.mockResolvedValue({
       ...hiddenPage,
       blocks: [{ ...hiddenPage.blocks[0], is_visible: true }],
     });
@@ -291,12 +297,12 @@ describe('AdminPagesPage', () => {
     fireEvent.click(screen.getByLabelText('저장'));
 
     await waitFor(() => {
-      expect(mockUpdateBlock).toHaveBeenCalledWith(1, 30, expect.objectContaining({
-        is_visible: true,
-      }));
+      expect(mockSaveDraft).toHaveBeenCalledWith(1, expect.objectContaining({
+        blocks: [expect.objectContaining({ id: 30, is_visible: true })],
+      }), expect.any(String));
     });
     await waitFor(() => {
-      expect(mockGetById).toHaveBeenLastCalledWith(1);
+      expect(mockGetById).toHaveBeenCalledTimes(1);
     });
     await waitFor(() => {
       expect(screen.getByLabelText('저장')).toBeDisabled();
@@ -321,5 +327,42 @@ describe('AdminPagesPage', () => {
     await waitFor(() => {
       expect(screen.getByText('미리보기', { selector: 'h2' })).toBeInTheDocument();
     });
+  });
+
+  it('dirty 공개 변경은 저장을 안내하며 취소하면 draft와 서버를 유지한다', async () => {
+    render(<AdminPagesPage />);
+    fireEvent.click(await screen.findByText('메인 페이지'));
+    fireEvent.click(await screen.findByTestId('add-block-text_content'));
+    fireEvent.click(screen.getByRole('button', { name: '● 공개 중' }));
+    expect(screen.getByText(koMessages.admin.pages.publishDialog.saveDescription)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: koMessages.admin.pages.publishDialog.cancel }));
+    expect(mockSaveDraft).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('저장')).not.toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: '● 공개 중' }));
+    fireEvent.click(screen.getByRole('button', { name: koMessages.admin.pages.publishDialog.saveConfirm }));
+    await waitFor(() => expect(mockSaveDraft).toHaveBeenCalledWith(1, expect.objectContaining({
+      is_published: false,
+      blocks: expect.arrayContaining([expect.objectContaining({ type: 'text_content' })]),
+    }), expect.any(String)));
+  });
+
+  it('저장 응답을 기다리는 동안 편집과 다른 페이지 선택을 잠근다', async () => {
+    const user = userEvent.setup();
+    mockGetAll.mockResolvedValue([mockPage, { ...mockPage, id: 2, title: '다른 페이지' }]);
+    let resolveSave!: (value: typeof mockPage) => void;
+    mockSaveDraft.mockReturnValue(new Promise<typeof mockPage>((resolve) => { resolveSave = resolve; }));
+    render(<AdminPagesPage />);
+    await user.click(await screen.findByText('메인 페이지'));
+    await user.click(await screen.findByTestId('add-block-text_content'));
+    await user.click(screen.getByLabelText('저장'));
+    expect(screen.getByTestId('add-block-text_content')).toBeDisabled();
+    expect(screen.getByRole('button', { name: '새 페이지' })).toBeDisabled();
+    await user.click(screen.getByText('다른 페이지'));
+    await user.click(screen.getByTestId('add-block-text_content'));
+    expect(mockGetById).toHaveBeenCalledTimes(1);
+    expect(mockSaveDraft.mock.calls[0][1].blocks).toHaveLength(2);
+    await act(async () => resolveSave(mockPage));
+    await waitFor(() => expect(screen.getByTestId('add-block-text_content')).not.toBeDisabled());
+    expect(screen.getAllByText('메인 페이지')).toHaveLength(2);
   });
 });

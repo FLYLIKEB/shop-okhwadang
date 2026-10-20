@@ -7,6 +7,7 @@ import { adminPagesApi } from '@/lib/api';
 import type { Page } from '@/lib/api';
 import { useUnsavedChanges } from '@/components/shared/hooks/useUnsavedChanges';
 import { createDraftBlockId, draftReducer } from '@/components/shared/admin/page-editor/useDraftReducer';
+import type { DraftAction } from '@/components/shared/admin/page-editor/useDraftReducer';
 import { usePageEditor } from '@/components/shared/admin/page-editor/usePageEditor';
 import PageListSidebar from '@/components/shared/admin/page-editor/PageListSidebar';
 import EditorTopBar from '@/components/shared/admin/page-editor/EditorTopBar';
@@ -62,6 +63,9 @@ export default function AdminPagesPage() {
     });
 
   const selectedBlock = draft.blocks.find((b) => b.id === selectedBlockId) ?? null;
+  const editDraft = (action: DraftAction) => {
+    if (!saving) dispatch(action);
+  };
 
   if (authLoading || loading) {
     return (
@@ -72,7 +76,7 @@ export default function AdminPagesPage() {
   }
 
   return (
-    <div className="cms-editor flex h-full -m-6 overflow-hidden bg-background">
+    <fieldset disabled={saving} inert={saving} className="cms-editor flex h-full min-w-0 -m-6 border-0 p-0 overflow-hidden bg-background">
       <PageListSidebar
         pages={pages}
         selectedPageId={selectedPage?.id ?? null}
@@ -88,8 +92,8 @@ export default function AdminPagesPage() {
             isPublished={selectedPage.is_published}
             hasChanges={draft.hasChanges}
             saving={saving}
-            onTitleChange={(title) => dispatch({ type: 'SET_TITLE', title })}
-            onSlugChange={(slug) => dispatch({ type: 'SET_SLUG', slug })}
+            onTitleChange={(title) => editDraft({ type: 'SET_TITLE', title })}
+            onSlugChange={(slug) => editDraft({ type: 'SET_SLUG', slug })}
             onTogglePublish={() => setConfirmPublishOpen(true)}
             onSave={handleSave}
             onDelete={handleDeletePage}
@@ -99,7 +103,7 @@ export default function AdminPagesPage() {
             <BlockPalette
               onAddBlock={(blockType, content) => {
                 const nextId = createDraftBlockId();
-                dispatch({ type: 'ADD_BLOCK', blockType, content, id: nextId });
+                editDraft({ type: 'ADD_BLOCK', blockType, content, id: nextId });
                 setSelectedBlockId(nextId);
               }}
             />
@@ -108,20 +112,20 @@ export default function AdminPagesPage() {
               selectedBlockId={selectedBlockId}
               onSelectBlock={setSelectedBlockId}
               onDeleteBlock={(blockId) => {
-                dispatch({ type: 'DELETE_BLOCK', blockId });
+                editDraft({ type: 'DELETE_BLOCK', blockId });
                 if (selectedBlockId === blockId) setSelectedBlockId(null);
               }}
               onToggleVisibility={(blockId) =>
-                dispatch({ type: 'TOGGLE_VISIBILITY', blockId })
+                editDraft({ type: 'TOGGLE_VISIBILITY', blockId })
               }
               onReorder={(activeId, overId) =>
-                dispatch({ type: 'REORDER', activeId, overId })
+                editDraft({ type: 'REORDER', activeId, overId })
               }
             />
             <BlockPropertyPanel
               block={selectedBlock}
               onUpdateContent={(blockId, content) =>
-                dispatch({ type: 'UPDATE_CONTENT', blockId, content })
+                editDraft({ type: 'UPDATE_CONTENT', blockId, content })
               }
             />
           </div>
@@ -148,10 +152,10 @@ export default function AdminPagesPage() {
       <ConfirmDialog
         open={confirmPublishOpen}
         title={selectedPage?.is_published ? localMessage('admin.pages.publishDialog.unpublishTitle') : localMessage('admin.pages.publishDialog.publishTitle')}
-        description={selectedPage?.is_published
+        description={draft.hasChanges ? localMessage('admin.pages.publishDialog.saveDescription') : selectedPage?.is_published
           ? localMessage('admin.pages.publishDialog.unpublishDescription')
           : localMessage('admin.pages.publishDialog.publishDescription')}
-        confirmLabel={selectedPage?.is_published ? localMessage('admin.pages.publishDialog.unpublishConfirm') : localMessage('admin.pages.publishDialog.publishConfirm')}
+        confirmLabel={draft.hasChanges ? localMessage('admin.pages.publishDialog.saveConfirm') : selectedPage?.is_published ? localMessage('admin.pages.publishDialog.unpublishConfirm') : localMessage('admin.pages.publishDialog.publishConfirm')}
         cancelLabel={localMessage('admin.pages.publishDialog.cancel')}
         destructive={selectedPage?.is_published}
         onCancel={() => setConfirmPublishOpen(false)}
@@ -160,6 +164,6 @@ export default function AdminPagesPage() {
           void handleTogglePublish();
         }}
       />
-    </div>
+    </fieldset>
   );
 }

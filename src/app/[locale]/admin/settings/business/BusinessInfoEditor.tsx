@@ -12,6 +12,7 @@ import { AdminEmptyState } from '@/components/shared/admin/AdminStates';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
 import { toastMessage } from '@/utils/toastMessages';
+import { revalidateTheme } from '../theme/actions';
 
 const FIELD_ORDER = [
   'business_company_name',
@@ -110,6 +111,7 @@ export default function BusinessInfoEditor({ initialSettings }: Props) {
         return payload;
       });
       await adminSettingsApi.bulkUpdate(items);
+      await revalidateTheme();
       setSettings((prev) =>
         prev.map((s) => ({
           ...s,

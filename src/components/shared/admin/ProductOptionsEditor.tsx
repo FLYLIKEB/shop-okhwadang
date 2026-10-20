@@ -1,6 +1,7 @@
 'use client';
 
 export interface ProductOptionDraft {
+  id?: number;
   name: string;
   value: string;
   priceAdjustment: number;

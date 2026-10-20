@@ -14,7 +14,7 @@ const mockUnlinkProductFromTypeValue = vi.fn();
 const mockGetProducts = vi.fn();
 
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: () => (key: string, values?: { label?: string }) => key === 'remove' ? `선택 해제 ${values?.label}` : key,
 }));
 
 vi.mock('@/components/shared/hooks/useAdminGuard', () => ({
@@ -22,8 +22,9 @@ vi.mock('@/components/shared/hooks/useAdminGuard', () => ({
 }));
 
 vi.mock('@/lib/api', () => ({
-  productsApi: {
+  adminProductsApi: {
     getList: (...args: unknown[]) => mockGetProducts(...args),
+    getById: (id: number) => Promise.resolve({ id, name: id === 10 ? '옥화당 녹니호' : '옥화당 추가 상품', status: 'active' }),
   },
   attributesApi: {
     getTypes: (...args: unknown[]) => mockGetTypes(...args),
@@ -59,6 +60,7 @@ const attributes = [
     id: 2,
     code: 'clay_origin',
     name: '산지',
+    nameKo: '한국어 산지',
     nameEn: 'Clay origin',
     inputType: 'text' as const,
     parentId: 1,
@@ -179,13 +181,14 @@ describe('AdminAttributesPage', () => {
     });
 
     fireEvent.click(screen.getByText('clay_origin'));
+    expect(screen.getByLabelText('name')).toHaveValue('한국어 산지');
     fireEvent.change(screen.getByLabelText('name'), { target: { value: '원산지' } });
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
     await waitFor(() => {
       expect(mockUpdateType).toHaveBeenCalledWith(
         2,
-        expect.objectContaining({ name: '원산지', parentId: 1 }),
+        expect.objectContaining({ name: '원산지', nameKo: '원산지', parentId: 1 }),
       );
     });
 

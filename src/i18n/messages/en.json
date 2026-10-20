@@ -747,6 +747,40 @@
     }
   },
   "admin": {
+    "multiImageUploader": {
+      "uploading": "Uploading…",
+      "image": "Image {number}",
+      "add": "Add",
+      "hint": "Click or drag to add images. ({count}/{max})",
+      "remove": "Remove",
+      "moveUp": "Move earlier",
+      "moveDown": "Move later"
+    },
+    "entitySelector": {
+      "category": "Select categories",
+      "product": "Select products",
+      "orderHint": "(Shown in order)",
+      "categorySearch": "Search categories…",
+      "productSearch": "Search products…",
+      "categoryProductSearch": "Search category products…",
+      "loading": "Loading…",
+      "loadError": "Could not load items.",
+      "selectedLoadError": "Could not load selected products.",
+      "retry": "Retry",
+      "emptySearch": "No results",
+      "allSelected": "All items selected",
+      "selected": "Selected ({count})",
+      "addHint": "Click to add",
+      "unavailable": "Product #{id}",
+      "moveUp": "Move up {label}",
+      "moveDown": "Move down {label}",
+      "remove": "Remove {label}",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "settings": {
+      "themeResetConfirm": "Reset theme settings to defaults?"
+    },
     "dashboard": {
       "title": "Dashboard",
       "todayRevenue": "Today's Revenue",
@@ -798,6 +832,16 @@
     },
     "orders": {
       "title": "Order Management",
+      "serviceRequestsTitle": "Order service requests",
+      "requestStatusLabel": "Request status",
+      "requestStatus": { "requested": "Requested", "approved": "Approved" },
+      "requestType": { "cancel": "Cancellation", "return": "Return", "exchange": "Exchange", "refund": "Refund" },
+      "approveRequest": "Approve",
+      "rejectRequest": "Reject",
+      "completeRequest": "Complete request",
+      "requestUpdated": "Request status updated.",
+      "requestUpdateError": "Could not update request status.",
+      "requestPage": "Page {page} of {total}",
       "searchPlaceholder": "Search by order #, recipient, or email",
       "search": "Search",
       "loading": "Loading...",
@@ -1061,6 +1105,7 @@
       }
     },
     "productForm": {
+      "uploadPending": "Wait for image uploads before saving.",
       "createTitle": "Add Product",
       "editTitle": "Edit Product",
       "imageSection": "Product Images",
@@ -1336,7 +1381,7 @@
       "sourceTextFallback": "Show imported source text and manage it as translation-review work.",
       "summaryRatio": "{complete}/{total} complete",
       "missingTitle": "Translation work queue",
-      "missingDescription": "Shows up to 50 items. Add English values from each edit screen.",
+      "missingDescription": "Shows all items needing translation. Add English values from each edit screen.",
       "loading": "Loading localization coverage.",
       "empty": "No missing English translations found.",
       "loadError": "Could not load localization coverage.",
@@ -1469,6 +1514,8 @@
       "emptyDescription": "Choose a page from the list or create a new page, then add blocks.",
       "resetFilters": "Reset filters",
       "publishDialog": {
+        "saveDescription": "Save all current changes and change publication status. Your draft is preserved if saving fails.",
+        "saveConfirm": "Save and change status",
         "publishTitle": "Publish page",
         "unpublishTitle": "Unpublish page",
         "publishDescription": "Publishing this page makes it visible on the storefront immediately.",

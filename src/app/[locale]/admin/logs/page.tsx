@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -64,18 +64,24 @@ export default function AdminLogsPage() {
   });
   const [data, setData] = useState<AdminLogResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const { execute: fetchLogs, isLoading } = useAsyncAction(
     async () => {
+      const requestId = ++requestIdRef.current;
       setError(null);
-      const result = await adminLogsApi.get({
-        type,
-        lines,
-        search: appliedFilters.search.trim() || undefined,
-        startAt: toIsoOrUndefined(appliedFilters.startAt),
-        endAt: toIsoOrUndefined(appliedFilters.endAt),
-      });
-      setData(result);
+      try {
+        const result = await adminLogsApi.get({
+          type,
+          lines,
+          search: appliedFilters.search.trim() || undefined,
+          startAt: toIsoOrUndefined(appliedFilters.startAt),
+          endAt: toIsoOrUndefined(appliedFilters.endAt),
+        });
+        if (requestId === requestIdRef.current) setData(result);
+      } catch (err) {
+        if (requestId === requestIdRef.current) throw err;
+      }
     },
     {
       errorMessage: t('loadError'),
@@ -86,6 +92,7 @@ export default function AdminLogsPage() {
   useEffect(() => {
     if (!isAdmin || user?.role !== 'super_admin') return;
     void fetchLogs();
+    return () => { requestIdRef.current += 1; };
   }, [fetchLogs, isAdmin, type, lines, appliedFilters, user?.role]);
 
   const parsedEntries = useMemo(() => parseAdminLogContent(data?.content ?? ''), [data?.content]);

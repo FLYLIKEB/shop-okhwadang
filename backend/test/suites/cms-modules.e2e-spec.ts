@@ -19,6 +19,7 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
     const adminEmail = `cms-admin-${unique}@test.com`;
     const userEmail = `cms-user-${unique}@test.com`;
     const settingKey = `cms-setting-${unique}`;
+    const themeSettingKey = `cms-theme-setting-${unique}`;
     const journalSlug = `journal-${unique}`;
     const faqCategory = `카테고리-${unique}`;
     const noticeTitle = `공지-${unique}`;
@@ -62,6 +63,13 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
         ) VALUES (?, '기본값', NULL, NULL, NULL, 'test', '테스트 설정', 'text', NULL, '기본값', 999)`,
         [settingKey],
       );
+      await dataSource.query(
+        `INSERT INTO site_settings (
+          setting_key, value, value_en, value_ja, value_zh, \`group\`,
+          label, input_type, options, default_value, sort_order
+        ) VALUES (?, 'initial theme', 'translated theme', NULL, NULL, 'color', 'Theme fixture', 'text', NULL, 'default theme', 999)`,
+        [themeSettingKey],
+      );
     });
 
     afterAll(async () => {
@@ -71,6 +79,7 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
       await dataSource.query('DELETE FROM faqs WHERE category = ?', [faqCategory]);
       await dataSource.query('DELETE FROM journal_entries WHERE slug = ?', [journalSlug]);
       await dataSource.query('DELETE FROM site_settings WHERE setting_key = ?', [settingKey]);
+      await dataSource.query('DELETE FROM site_settings WHERE setting_key = ?', [themeSettingKey]);
       await dataSource.query('DELETE FROM users WHERE id IN (?, ?)', [adminUserId, userUserId]);
     });
 
@@ -141,7 +150,7 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .put('/api/admin/settings')
         .set('Cookie', adminCookies)
-        .send({ settings: [{ key: settingKey, value: '변경값' }] })
+        .send({ settings: [{ key: settingKey, value: '변경값' }, { key: themeSettingKey, value: 'changed theme' }] })
         .expect(200);
 
       await request(app.getHttpServer())
@@ -149,6 +158,7 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
         .expect(200)
         .expect((res) => {
           expect((res.body as Record<string, string>)[settingKey]).toBe('변경값');
+          expect((res.body as Record<string, string>)[themeSettingKey]).toBe('changed theme');
         });
 
       await request(app.getHttpServer())
@@ -160,7 +170,8 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
         .get('/api/settings/map')
         .expect(200)
         .expect((res) => {
-          expect((res.body as Record<string, string>)[settingKey]).toBe('기본값');
+          expect((res.body as Record<string, string>)[settingKey]).toBe('변경값');
+          expect((res.body as Record<string, string>)[themeSettingKey]).toBe('default theme');
         });
 
       const promotionRes = await request(app.getHttpServer())

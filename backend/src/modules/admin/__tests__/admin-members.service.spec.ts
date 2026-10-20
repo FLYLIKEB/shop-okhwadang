@@ -3,9 +3,11 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { AdminMembersService } from '../admin-members.service';
 import { User, UserRole } from '../../users/entities/user.entity';
+import { FindOneOptions } from 'typeorm';
 
 function createMockRepository() {
   return {
+    manager: { transaction: jest.fn() },
     findOne: jest.fn(),
     find: jest.fn(),
     count: jest.fn(),
@@ -50,15 +52,38 @@ function makeUser(overrides: Partial<User> = {}): User {
 describe('AdminMembersService', () => {
   let service: AdminMembersService;
   let userRepo: ReturnType<typeof createMockRepository>;
+  let actorRole: UserRole;
 
   beforeEach(async () => {
     userRepo = createMockRepository();
+    actorRole = UserRole.SUPER_ADMIN;
+    userRepo.manager.transaction.mockImplementation(
+      async (callback: (manager: { getRepository: () => unknown }) => Promise<unknown>) =>
+        callback({
+          getRepository: jest.fn(() => ({
+            ...userRepo,
+            findOne: (options: FindOneOptions<User>) => {
+              if (options.lock && !Array.isArray(options.where) && options.where?.id === 1) {
+                return Promise.resolve(makeUser({ role: actorRole }));
+              }
+              return userRepo.findOne(options);
+            },
+            createQueryBuilder: () => ({
+              orderBy: jest.fn().mockReturnThis(),
+              take: jest.fn().mockReturnThis(),
+              where: jest.fn().mockReturnThis(),
+              setLock: jest.fn().mockReturnThis(),
+              getOne: jest.fn().mockResolvedValue(makeUser()),
+              getMany: jest.fn(async () =>
+                Array.from({ length: await userRepo.count() }, () => makeUser()),
+              ),
+            }),
+          })),
+        }),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AdminMembersService,
-        { provide: getRepositoryToken(User), useValue: userRepo },
-      ],
+      providers: [AdminMembersService, { provide: getRepositoryToken(User), useValue: userRepo }],
     }).compile();
 
     service = module.get<AdminMembersService>(AdminMembersService);
@@ -73,13 +98,17 @@ describe('AdminMembersService', () => {
 
   describe('findOne', () => {
     it('should return a safe user for an existing member', async () => {
-      userRepo.findOne.mockResolvedValue(makeUser({ id: 7, email: 'member@example.com', name: '회원' }));
+      userRepo.findOne.mockResolvedValue(
+        makeUser({ id: 7, email: 'member@example.com', name: '회원' }),
+      );
 
-      await expect(service.findOne(7)).resolves.toEqual(expect.objectContaining({
-        id: 7,
-        email: 'member@example.com',
-        name: '회원',
-      }));
+      await expect(service.findOne(7)).resolves.toEqual(
+        expect.objectContaining({
+          id: 7,
+          email: 'member@example.com',
+          name: '회원',
+        }),
+      );
     });
 
     it('should throw NotFoundException when the member does not exist', async () => {
@@ -97,16 +126,16 @@ describe('AdminMembersService', () => {
     });
 
     it('should throw BadRequestException when changing own role', async () => {
-      await expect(
-        service.updateRole(1, UserRole.ADMIN, 1, UserRole.SUPER_ADMIN),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateRole(1, UserRole.ADMIN, 1, UserRole.SUPER_ADMIN)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException for inactive member', async () => {
       userRepo.findOne.mockResolvedValue(makeUser({ id: 2, isActive: false }));
-      await expect(
-        service.updateRole(2, UserRole.ADMIN, 1, UserRole.SUPER_ADMIN),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateRole(2, UserRole.ADMIN, 1, UserRole.SUPER_ADMIN)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('admin → user→admin: allowed', async () => {
@@ -134,17 +163,19 @@ describe('AdminMembersService', () => {
     });
 
     it('admin cannot grant super_admin', async () => {
+      actorRole = UserRole.ADMIN;
       userRepo.findOne.mockResolvedValue(makeUser({ id: 2 }));
-      await expect(
-        service.updateRole(2, UserRole.SUPER_ADMIN, 1, UserRole.ADMIN),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.updateRole(2, UserRole.SUPER_ADMIN, 1, UserRole.ADMIN)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('admin cannot change super_admin role', async () => {
+      actorRole = UserRole.ADMIN;
       userRepo.findOne.mockResolvedValue(makeUser({ id: 2, role: UserRole.SUPER_ADMIN }));
-      await expect(
-        service.updateRole(2, UserRole.USER, 1, UserRole.ADMIN),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.updateRole(2, UserRole.USER, 1, UserRole.ADMIN)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('super_admin → user→super_admin: allowed', async () => {
@@ -175,21 +206,26 @@ describe('AdminMembersService', () => {
       userRepo.findOne.mockResolvedValue(target);
       userRepo.count.mockResolvedValue(1);
 
-      await expect(
-        service.updateRole(2, UserRole.USER, 1, UserRole.SUPER_ADMIN),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateRole(2, UserRole.USER, 1, UserRole.SUPER_ADMIN)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('response should not contain password or refreshToken', async () => {
       const target = makeUser({ id: 2, password: 'secret', refreshToken: 'token123' });
-      userRepo.findOne
-        .mockResolvedValueOnce(target)
-        .mockResolvedValueOnce(target);
+      userRepo.findOne.mockResolvedValueOnce(target).mockResolvedValueOnce(target);
       userRepo.update.mockResolvedValue({ affected: 1 });
 
       const result = await service.updateRole(2, UserRole.ADMIN, 1, UserRole.SUPER_ADMIN);
       expect(result).not.toHaveProperty('password');
       expect(result).not.toHaveProperty('refreshToken');
+    });
+    it('rejects a stale super_admin token after the actor was demoted', async () => {
+      actorRole = UserRole.USER;
+      await expect(service.updateRole(2, UserRole.ADMIN, 1, UserRole.SUPER_ADMIN)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(userRepo.update).not.toHaveBeenCalled();
     });
   });
 });
