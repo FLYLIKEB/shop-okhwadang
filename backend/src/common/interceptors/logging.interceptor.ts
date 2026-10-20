@@ -148,7 +148,6 @@ export class LoggingInterceptor implements NestInterceptor {
       'orderId',
       'orderNo',
       'paymentId',
-      'paymentKey',
       'transactionId',
       'transaction_id',
       'refundId',

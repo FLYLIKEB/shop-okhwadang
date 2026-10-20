@@ -20,6 +20,7 @@ export const SENSITIVE_FIELDS = [
   'apiKey',
   'rawpayment',
   'paymentraw',
+  'paymentkey',
   'rawresponse',
   'rawRequest',
   'rawResponse',

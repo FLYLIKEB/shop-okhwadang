@@ -1,6 +1,23 @@
 import { redactSensitiveFields } from './redaction.util';
 
 describe('redactSensitiveFields', () => {
+  it.each(['paymentKey', 'payment_key', 'PAYMENT_KEY', 'payment-key'])('masks %s recursively without removing tracing ids', (field) => {
+    const input = {
+      [field]: 'FAKE-PAYMENT-KEY-AUDIT-ONLY',
+      nested: [{ [field]: 'FAKE-NESTED-KEY' }],
+      orderId: 'ORD-1',
+      transactionId: 'TX-1',
+    };
+
+    expect(redactSensitiveFields(input)).toEqual({
+      [field]: '[REDACTED]',
+      nested: [{ [field]: '[REDACTED]' }],
+      orderId: 'ORD-1',
+      transactionId: 'TX-1',
+    });
+    expect(input[field]).toBe('FAKE-PAYMENT-KEY-AUDIT-ONLY');
+  });
+
   it('masks credentials, tokens, API keys, payment raw values, and excessive PII before storage', () => {
     const result = redactSensitiveFields({
       password: 'plain-password',
