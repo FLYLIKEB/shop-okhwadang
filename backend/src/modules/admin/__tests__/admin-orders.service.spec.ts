@@ -292,14 +292,14 @@ describe('AdminOrdersService', () => {
       orderRepo.findOne.mockResolvedValueOnce({ id: 1, status: OrderStatus.REFUNDED });
       await expect(service.updateStatus(1, OrderStatus.PAID)).rejects.toThrow(BadRequestException);
     });
-    it('pending confirmation reconciliation → paid: replays confirmed payment sync instead of plain status mutation', async () => {
+    it.each([PaymentStatus.CONFIRMED, PaymentStatus.CONFIRMING])('pending confirmation reconciliation (%s) → paid: delegates binding validation to payment sync', async (status) => {
       orderRepo.findOne
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PENDING, orderNumber: 'ORD-RECON' })
         .mockResolvedValueOnce({ id: 1, status: OrderStatus.PAID });
       paymentRepo.findOne.mockResolvedValue({
         id: 10,
         orderId: 1,
-        status: PaymentStatus.CONFIRMED,
+        status,
         rawResponse: {
           gatewayConfirmationSucceeded: true,
           reconciliationRequired: true,
@@ -311,6 +311,21 @@ describe('AdminOrdersService', () => {
 
       expect(paymentsService.reconcileConfirmedPayment).toHaveBeenCalledWith(1);
       expect(mockManager.update).not.toHaveBeenCalledWith(Order, 1, { status: OrderStatus.PAID });
+    });
+
+    it('pending mismatched confirmation cannot bypass reconciliation validation', async () => {
+      orderRepo.findOne.mockResolvedValue({ id: 1, status: OrderStatus.PENDING });
+      paymentRepo.findOne.mockResolvedValue({
+        id: 10,
+        status: PaymentStatus.CONFIRMING,
+        rawResponse: { gatewayConfirmationSucceeded: true, reconciliationRequired: true },
+      });
+      paymentsService.reconcileConfirmedPayment.mockRejectedValueOnce(
+        new BadRequestException('결제 거래 바인딩이 일치하지 않습니다.'),
+      );
+
+      await expect(service.updateStatus(1, OrderStatus.PAID)).rejects.toThrow(BadRequestException);
+      expect(mockManager.update).not.toHaveBeenCalled();
     });
 
     it('paid → refunded: should call paymentsService.cancelAdmin (PG cancel)', async () => {

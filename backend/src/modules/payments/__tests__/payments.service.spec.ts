@@ -605,7 +605,11 @@ describe('PaymentsService', () => {
         service.confirm({ orderId: 1, paymentKey: 'pay_abc', amount: 30000 }, 10),
       ).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
 
-      expect(mockPaymentRepo.update).toHaveBeenCalledWith(payment.id, expect.objectContaining({
+      expect(mockPaymentRepo.update).toHaveBeenCalledWith({
+        id: payment.id,
+        status: PaymentStatus.CONFIRMING,
+        confirmationOperationKey: 'pay_abc',
+      }, expect.objectContaining({
         rawResponse: expect.objectContaining({
           reconciliationRequired: true,
           orderId: 1,

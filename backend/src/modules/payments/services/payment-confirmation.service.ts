@@ -66,6 +66,9 @@ type GuestConfirmResponse = ConfirmResponse & {
   guestAccessTokenExpiresAt: string;
 };
 type PostCommitPayload = PaymentCompletionEffectPayload;
+type PreparedBinding = Pick<Payment,
+  'providerTransactionId' | 'providerOrderReference' | 'expectedProviderAmount' |
+  'expectedProviderCurrency' | 'localOrderReference'>;
 
 @Injectable()
 export class PaymentConfirmationService {
@@ -136,11 +139,10 @@ export class PaymentConfirmationService {
       }
       throw new InternalServerErrorException('결제 승인에 실패했습니다.');
     }
-    this.assertProviderBinding(payment, result);
-
     const paidAt = new Date();
 
     try {
+      this.assertProviderBinding(reservedPayment, result);
       const outcome = await this.dataSource.transaction(async (manager) => {
         const lockedPayment = await this.loadLockedPayment(dto.orderId, manager);
         const lockedOrder = lockedPayment.order;
@@ -222,11 +224,10 @@ export class PaymentConfirmationService {
       this.logger.log(`Payment confirmed: orderId=${dto.orderId} customerType=member`);
       return outcome.response;
     } catch (err) {
+      await this.persistConfirmationReconciliation(reservedPayment, operationKey, result, paidAt, err);
+      if (err instanceof BadRequestException) throw err;
       if (err instanceof ConflictException || err instanceof UnauthorizedException) {
         throw err;
-      }
-      if (!idempotencyKey) {
-        await this.persistConfirmationReconciliation(payment.id, dto.orderId, result, paidAt, err);
       }
       throw new InternalServerErrorException('결제 승인 후 동기화에 실패했습니다.');
     }
@@ -282,10 +283,9 @@ export class PaymentConfirmationService {
         throw new InternalServerErrorException('결제 승인에 실패했습니다.');
       });
     }
-    this.assertProviderBinding(payment, result);
-
     const paidAt = new Date();
     try {
+      this.assertProviderBinding(reservedPayment, result);
       const outcome = await this.guestOrderAccessService.withOrderAccessLock(
         orderId,
         async (manager) => {
@@ -365,11 +365,10 @@ export class PaymentConfirmationService {
       this.logger.log(`Payment confirmed: orderId=${orderId} customerType=guest`);
       return outcome.response;
     } catch (err) {
+      await this.persistConfirmationReconciliation(reservedPayment, operationKey, result, paidAt, err);
+      if (err instanceof BadRequestException) throw err;
       if (err instanceof ConflictException) {
         throw err;
-      }
-      if (!idempotencyKey) {
-        await this.persistConfirmationReconciliation(payment.id, orderId, result, paidAt, err);
       }
       if (err instanceof UnauthorizedException) {
         throw err;
@@ -387,7 +386,7 @@ export class PaymentConfirmationService {
     );
 
     if (
-      payment.status !== PaymentStatus.CONFIRMED ||
+      ![PaymentStatus.CONFIRMED, PaymentStatus.CONFIRMING].includes(payment.status) ||
       payment.order.status !== OrderStatus.PENDING ||
       !this.readConfirmationReconciliation(payment.rawResponse)
     ) {
@@ -404,18 +403,46 @@ export class PaymentConfirmationService {
       });
 
       if (
-        lockedPayment.status !== PaymentStatus.CONFIRMED ||
+        ![PaymentStatus.CONFIRMED, PaymentStatus.CONFIRMING].includes(lockedPayment.status) ||
         lockedOrder.status !== OrderStatus.PENDING ||
         !reconciliation
       ) {
         throw new BadRequestException('재동기화 가능한 결제 상태가 아닙니다.');
       }
 
-      const providerRawResponse = this.unwrapConfirmationRawResponse(lockedPayment.rawResponse);
-      if (providerRawResponse) {
+      const result = reconciliation.confirmationResult as Awaited<ReturnType<PaymentGateway['confirm']>> | undefined;
+      if (result) {
+        if (!reconciliation.preparedBinding) {
+          throw new BadRequestException('결제 준비 거래 증거를 확인해주세요.');
+        }
+        this.assertProviderBinding(reconciliation.preparedBinding as PreparedBinding, result);
+        this.assertProviderBinding(lockedPayment, result);
+      }
+      if (lockedPayment.status === PaymentStatus.CONFIRMING) {
+        if (
+          !result ||
+          !lockedPayment.confirmationOperationKey ||
+          reconciliation.confirmationOperationKey !== lockedPayment.confirmationOperationKey ||
+          !reconciliation.preparedBinding
+        ) {
+          throw new BadRequestException('결제 승인 증거와 작업 소유권을 확인해주세요.');
+        }
         await manager.update(Payment, lockedPayment.id, {
-          rawResponse: providerRawResponse,
+          status: PaymentStatus.CONFIRMED,
+          confirmationOperationKey: null,
+          paymentKey: result.paymentKey,
+          providerTransactionId: result.providerTransactionId,
+          method: result.method as PaymentMethod,
+          paidAt: new Date(reconciliation.paidAt as string),
+          rawResponse: lockedPayment.gateway === PaymentGatewayType.STRIPE
+            ? { ...((reconciliation.preparedRawResponse as object) ?? {}), stripePaymentIntent: result.rawResponse }
+            : result.rawResponse,
         });
+      } else {
+        const providerRawResponse = this.unwrapConfirmationRawResponse(lockedPayment.rawResponse);
+        if (providerRawResponse) {
+          await manager.update(Payment, lockedPayment.id, { rawResponse: providerRawResponse });
+        }
       }
 
       await manager.update(Order, orderId, { status: OrderStatus.PAID });
@@ -480,7 +507,7 @@ export class PaymentConfirmationService {
   }
 
   private assertProviderBinding(
-    payment: Payment,
+    payment: PreparedBinding,
     result: Awaited<ReturnType<PaymentGateway['confirm']>>,
   ): void {
     if (
@@ -724,16 +751,32 @@ export class PaymentConfirmationService {
     return providerRawResponse as object;
   }
   private async persistConfirmationReconciliation(
-    paymentId: number,
-    orderId: number,
+    payment: Payment,
+    operationKey: string,
     result: Awaited<ReturnType<PaymentGateway['confirm']>>,
     paidAt: Date,
     err: unknown,
   ): Promise<void> {
-    await this.paymentRepository.update(paymentId, {
+    await this.paymentRepository.update({
+      id: payment.id,
+      status: PaymentStatus.CONFIRMING,
+      confirmationOperationKey: operationKey,
+    }, {
       rawResponse: {
         reconciliationRequired: true,
-        orderId,
+        gatewayConfirmationSucceeded: true,
+        orderId: payment.orderId,
+        confirmationOperationKey: operationKey,
+        confirmationResult: result,
+        preparedBinding: {
+          providerTransactionId: payment.providerTransactionId,
+          providerOrderReference: payment.providerOrderReference,
+          expectedProviderAmount: payment.expectedProviderAmount,
+          expectedProviderCurrency: payment.expectedProviderCurrency,
+          localOrderReference: payment.localOrderReference,
+        },
+        preparedRawResponse: payment.rawResponse,
+        paidAt: paidAt.toISOString(),
         rawResponse: result.rawResponse,
         error: err instanceof Error ? err.message : String(err),
       } as object,
@@ -769,11 +812,14 @@ export class PaymentConfirmationService {
   ): Promise<Payment> {
     return this.dataSource.transaction(async (manager) => {
       const payment = await this.loadLockedPayment(orderId, manager);
+      if ((payment.rawResponse as Record<string, unknown> | null)?.reconciliationRequired === true) {
+        throw new ConflictException('결제 승인 결과의 관리자 재동기화가 필요합니다.');
+      }
       if (
         payment.status === PaymentStatus.CONFIRMING
         && payment.confirmationOperationKey === operationKey
       ) {
-        return payment;
+        return { ...payment };
       }
       if (payment.status === PaymentStatus.CONFIRMING) {
         throw new ConflictException('결제 승인 작업이 이미 진행 중입니다.');
@@ -785,7 +831,7 @@ export class PaymentConfirmationService {
       });
       payment.status = PaymentStatus.CONFIRMING;
       payment.confirmationOperationKey = operationKey;
-      return payment;
+      return { ...payment };
     });
   }
 
