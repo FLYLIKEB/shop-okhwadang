@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchAnnouncementBars, fetchPage, fetchProduct, fetchSettingsMap } from '@/lib/api-server';
+import { fetchAnnouncementBars, fetchJournal, fetchJournals, fetchNavigationGroup, fetchPage, fetchProduct, fetchSettingsMap } from '@/lib/api-server';
 
 const ORIGINAL_BACKEND_URL = process.env.BACKEND_URL;
 const ORIGINAL_CI = process.env.CI;
@@ -54,7 +54,7 @@ describe('api-server backend URL contract', () => {
     await fetchPage('home', 'en');
 
     expect(fetchMock).toHaveBeenCalledWith('https://backend.example/api/pages/home?locale=en', {
-      next: { revalidate: 300, tags: ['cms', 'page:home'] },
+      cache: 'no-store',
     });
   });
 
@@ -71,6 +71,30 @@ describe('api-server backend URL contract', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('https://backend.example/api/products/42?locale=en', {
       next: { revalidate: 60, tags: ['catalog', 'product'] },
+    });
+  });
+
+  it.each(['ko', 'en'])('always checks authoritative CMS content in %s, including journal lists', async (locale) => {
+    const fetchMock = vi.fn().mockImplementation(async () => new Response('[]', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchPage('withdrawn', locale);
+    await fetchJournal('withdrawn', locale);
+    await fetchJournals({ locale });
+
+    for (const endpoint of ['pages/withdrawn', 'journals/withdrawn', 'journals']) {
+      expect(fetchMock).toHaveBeenCalledWith(`https://backend.example/api/${endpoint}?locale=${locale}`, { cache: 'no-store' });
+    }
+  });
+
+  it('preserves navigation caching independently of withdrawable content', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('[]', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchNavigationGroup('gnb', 'ko');
+
+    expect(fetchMock).toHaveBeenCalledWith('https://backend.example/api/navigation?group=gnb&locale=ko', {
+      next: { revalidate: 300, tags: ['cms'] },
     });
   });
 
