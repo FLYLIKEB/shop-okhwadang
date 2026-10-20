@@ -73,6 +73,15 @@ const attributes = [
 ];
 
 describe('AdminAttributesPage', () => {
+  it('sends an explicit empty English name when the existing translation is cleared', async () => {
+    render(<AdminAttributesPage />);
+    fireEvent.click(await screen.findByText('clay_type'));
+    fireEvent.change(screen.getByLabelText('nameEn'), { target: { value: '   ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+    await waitFor(() => expect(mockUpdateType).toHaveBeenCalledWith(1, expect.objectContaining({ nameEn: '' })));
+    expect(JSON.parse(JSON.stringify(mockUpdateType.mock.calls[0][1]))).toHaveProperty('nameEn', '');
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseAdminGuard.mockReturnValue({ isAdmin: true });
