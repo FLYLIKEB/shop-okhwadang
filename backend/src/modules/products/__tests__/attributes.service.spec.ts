@@ -135,6 +135,18 @@ describe('AttributesService', () => {
   });
 
   describe('updateAttributeType', () => {
+    it.each([
+      [{ nameEn: '' }, ''],
+      [{ sortOrder: 2 }, 'Clay'],
+    ])('persists an explicit translation clear while preserving omitted values: %j', async (patch, expectedName) => {
+      const existing = { id: 1, code: 'clay', name: '니료', nameEn: 'Clay' } as AttributeType;
+      typeRepo.findOne.mockResolvedValue(existing);
+      typeRepo.save.mockImplementation(async (entity: unknown) => entity as AttributeType);
+      await service.updateAttributeType(1, patch);
+      expect((await service.findAttributeTypeById(1)).nameEn).toBe(expectedName);
+      expect(typeRepo.save).toHaveBeenCalledWith(expect.objectContaining({ nameEn: expectedName }));
+    });
+
     it('없는 ID 수정 시 NotFoundException', async () => {
       typeRepo.findOne.mockResolvedValue(null as unknown as AttributeType);
 
