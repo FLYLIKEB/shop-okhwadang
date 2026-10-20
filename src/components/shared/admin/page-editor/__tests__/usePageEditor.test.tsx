@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePageEditor } from '../usePageEditor';
 import type { DraftState } from '../useDraftReducer';
 
-const api = vi.hoisted(() => ({ saveDraft: vi.fn(), getById: vi.fn() }));
+const api = vi.hoisted(() => ({ saveDraft: vi.fn(), getById: vi.fn(), create: vi.fn(), remove: vi.fn() }));
 vi.mock('@/lib/api', () => ({ adminPagesApi: api }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -18,6 +18,36 @@ describe('atomic CMS editor save', () => {
     const options = { draft, selectedPage: page, dispatch: vi.fn(), setSelectedPage: vi.fn(), setSelectedBlockId: vi.fn(), setSaving: vi.fn(), loadPages: vi.fn().mockResolvedValue(undefined) };
     return { ...renderHook((currentDraft) => usePageEditor({ ...options, draft: currentDraft }), { initialProps: draft }), options };
   }
+  it('ignores A after B has loaded and editing B has started', async () => {
+    let finishA!: (value: typeof page) => void;
+    api.getById.mockReturnValueOnce(new Promise((resolve) => { finishA = resolve; }));
+    const second = { ...page, id: 2, title: 'B', slug: 'b' };
+    api.getById.mockResolvedValueOnce(second);
+    const { result, options, rerender } = setup();
+    let pendingA!: Promise<void>;
+    act(() => { pendingA = result.current.handleSelectPage(page); });
+    await act(() => result.current.handleSelectPage(second));
+    rerender({ ...draft, title: 'B edited' });
+    await act(async () => { finishA(page); await pendingA; });
+    expect(options.setSelectedPage).toHaveBeenCalledTimes(1);
+    expect(options.setSelectedPage).toHaveBeenLastCalledWith(second);
+    expect(options.dispatch).toHaveBeenCalledTimes(1);
+  });
+  it.each(['save', 'create', 'delete'] as const)('ignores an earlier selection after %s', async (operation) => {
+    let finish!: (value: typeof page) => void;
+    api.getById.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+    api.saveDraft.mockResolvedValue(page);
+    api.create.mockResolvedValue({ ...page, id: 3 });
+    api.remove.mockResolvedValue(undefined);
+    const { result, options } = setup();
+    let pending!: Promise<void>;
+    act(() => { pending = result.current.handleSelectPage({ ...page, id: 2 }); });
+    await act(() => operation === 'save' ? result.current.handleSave() : operation === 'create' ? result.current.handleCreatePage('new', 'new') : result.current.handleDeletePage());
+    const calls = options.dispatch.mock.calls.length;
+    await act(async () => { finish({ ...page, id: 2 }); await pending; });
+    expect(options.dispatch).toHaveBeenCalledTimes(calls);
+    expect(options.setSelectedPage).not.toHaveBeenLastCalledWith(expect.objectContaining({ id: 2 }));
+  });
   it('reuses the key and draft after response loss, initializes from save response without GET', async () => {
     const saved = { ...page, title: 'new', slug: 'new', blocks: [{ ...draft.blocks[0], id: 8 }] };
     api.saveDraft.mockRejectedValueOnce(new Error('response lost')).mockResolvedValueOnce(saved);

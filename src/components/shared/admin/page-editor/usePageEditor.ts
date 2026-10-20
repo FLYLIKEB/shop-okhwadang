@@ -35,6 +35,7 @@ export function usePageEditor({
 }: UsePageEditorOptions): UsePageEditorReturn {
   const pendingSave = useRef<{ payload: string; key: string } | null>(null);
   const saving = useRef(false);
+  const selectionVersion = useRef(0);
   const handleSelectPage = useCallback(
     async (page: Page) => {
       if (saving.current) return;
@@ -42,13 +43,15 @@ export function usePageEditor({
         const confirmed = window.confirm('저장하지 않은 변경사항이 있습니다. 이동하시겠습니까?');
         if (!confirmed) return;
       }
+      const version = ++selectionVersion.current;
       try {
         const fullPage = await adminPagesApi.getById(page.id);
+        if (version !== selectionVersion.current) return;
         setSelectedPage(fullPage);
         setSelectedBlockId(null);
         dispatch({ type: 'INIT', blocks: fullPage.blocks, title: fullPage.title, slug: fullPage.slug });
       } catch {
-        toast.error(toastMessage('pageLoadError'));
+        if (version === selectionVersion.current) toast.error(toastMessage('pageLoadError'));
       }
     },
     [draft.hasChanges, dispatch, setSelectedPage, setSelectedBlockId],
@@ -56,10 +59,12 @@ export function usePageEditor({
 
   const handleCreatePage = async (title: string, slug: string) => {
     if (saving.current) return;
+    ++selectionVersion.current;
     try {
       const newPage = await adminPagesApi.create({ title, slug });
       toast.success(toastMessage('pageCreated'));
       await loadPages();
+      ++selectionVersion.current;
       setSelectedPage(newPage);
       dispatch({ type: 'INIT', blocks: [], title: newPage.title, slug: newPage.slug });
     } catch (err) {
@@ -71,9 +76,11 @@ export function usePageEditor({
     if (!selectedPage || saving.current) return;
     const confirmed = window.confirm(`"${selectedPage.title}" 페이지를 삭제하시겠습니까?`);
     if (!confirmed) return;
+    ++selectionVersion.current;
     try {
       await adminPagesApi.remove(selectedPage.id);
       toast.success(toastMessage('pageDeleted'));
+      ++selectionVersion.current;
       setSelectedPage(null);
       setSelectedBlockId(null);
       dispatch({ type: 'INIT', blocks: [], title: '', slug: '' });
@@ -85,6 +92,7 @@ export function usePageEditor({
 
   const saveDraft = async (isPublished?: boolean) => {
     if (!selectedPage || saving.current) return;
+    ++selectionVersion.current;
     saving.current = true;
     setSaving(true);
     try {

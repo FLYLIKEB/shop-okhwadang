@@ -252,7 +252,7 @@ export default function ThemeEditor({ initialSettings }: Props) {
   }, []);
 
   const handleSave = async () => {
-    if (!hasChanges) return;
+    if (!hasChanges || saving || resetting) return;
     setSaving(true);
     try {
       const allKeys = new Set([...Object.keys(pendingChanges), ...Object.keys(pendingEnChanges)]);
@@ -284,6 +284,7 @@ export default function ThemeEditor({ initialSettings }: Props) {
   };
 
   const handleReset = async () => {
+    if (saving || resetting) return;
     const confirmed = window.confirm(
       t('themeResetConfirm'),
     );
@@ -320,14 +321,14 @@ export default function ThemeEditor({ initialSettings }: Props) {
             variant="outline"
             type="button"
             onClick={handleReset}
-            disabled={resetting}
+            disabled={saving || resetting}
           >
             {resetting ? '초기화 중...' : '기본값으로 초기화'}
           </Button>
           <Button
             type="button"
             onClick={handleSave}
-            disabled={!hasChanges || saving}
+            disabled={!hasChanges || saving || resetting}
           >
             {saving ? '저장 중...' : '저장'}
           </Button>
@@ -354,7 +355,7 @@ export default function ThemeEditor({ initialSettings }: Props) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="surface-card p-4">
+        <fieldset disabled={saving || resetting} className="surface-card min-w-0 p-4">
           {filteredSettings.length === 0 ? (
             <AdminEmptyState title="설정 항목이 없습니다." />
           ) : (
@@ -378,7 +379,7 @@ export default function ThemeEditor({ initialSettings }: Props) {
               ),
             )
           )}
-        </div>
+        </fieldset>
 
         <ThemePreviewPanel isDark={isDarkTab} />
       </div>

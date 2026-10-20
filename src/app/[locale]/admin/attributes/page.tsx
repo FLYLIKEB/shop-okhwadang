@@ -159,7 +159,7 @@ export default function AdminAttributesPage() {
         code: form.code.trim(),
         name: form.name.trim(),
         nameKo: form.name.trim(),
-        nameEn: form.nameEn.trim() || undefined,
+        nameEn: form.nameEn.trim(),
         inputType: form.inputType,
         parentId: form.parentId ? Number(form.parentId) : null,
         relatedTypeIds: parseNumberList(form.relatedTypeIds),

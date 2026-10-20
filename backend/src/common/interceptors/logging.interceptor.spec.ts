@@ -224,7 +224,7 @@ describe('LoggingInterceptor', () => {
   it('should include request ids, member id, status, duration, and IP for easier PM2 tracing', (done) => {
     const logSpy = jest.spyOn(interceptor['logger'], 'log');
     const context = createMockContext(
-      { orderId: 'ORD-1', transactionId: 'TX-1', productName: 'tea' },
+      { orderId: 'ORD-1', transactionId: 'TX-1', productName: 'tea', paymentKey: 'PAY-1' },
       {
         user: { id: 42, role: 'user' },
         query: { paymentKey: 'PAY-1' },
@@ -244,12 +244,14 @@ describe('LoggingInterceptor', () => {
             ids: expect.objectContaining({
               orderId: 'ORD-1',
               transactionId: 'TX-1',
-              paymentKey: 'PAY-1',
             }),
             ip: '203.0.113.10',
             durationMs: expect.any(Number),
           }),
         );
+        expect(lastLogPayload(logSpy)).not.toContain('PAY-1');
+        expect(logSpy.mock.calls.at(-1)?.[0].ids).not.toHaveProperty('paymentKey');
+        expect(logSpy.mock.calls.at(-1)?.[0].body.paymentKey).toBe('[REDACTED]');
         done();
       },
     });

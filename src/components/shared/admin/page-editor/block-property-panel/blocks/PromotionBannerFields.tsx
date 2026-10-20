@@ -27,9 +27,8 @@ export default function PromotionBannerFields({ content, onChange }: PromotionBa
       <ImageUploadField
         label={localMessage('admin.imageUpload.label')}
         value={(content.image_url as string) ?? ''}
-        onChange={(v) => update('image_url', v)}
+        onChange={(image_url, image_derivatives) => onChange({ ...content, image_url, image_derivatives })}
         cmsKind="promotion"
-        onDerivativesChange={(v) => update('image_derivatives', v)}
       />
       <StringField label="CTA 텍스트" value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
       <StringField label="CTA 텍스트 (EN)" value={(content.cta_text_en as string) ?? ''} onChange={(v) => update('cta_text_en', v)} placeholder="영문 CTA" />
