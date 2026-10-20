@@ -33,7 +33,7 @@ export class NoticesService {
   }
 
   async findOne(id: number, locale?: string): Promise<Notice> {
-    const notice = await findOrThrow(this.noticeRepo, { id }, '공지사항을 찾을 수 없습니다.');
+    const notice = await findOrThrow(this.noticeRepo, { id, isPublished: true }, '공지사항을 찾을 수 없습니다.');
     await this.noticeRepo.update(id, { viewCount: () => 'view_count + 1' });
     notice.viewCount += 1;
     return this.applyLocale(notice, locale);

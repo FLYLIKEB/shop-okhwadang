@@ -51,6 +51,12 @@ describe('NoticesService', () => {
   });
 
   describe('findOne', () => {
+    it('does not increment views when a public draft query finds no published notice', async () => {
+      repo.findOne.mockResolvedValue(null);
+      await expect(service.findOne(1)).rejects.toThrow(NotFoundException);
+      expect(repo.findOne).toHaveBeenCalledWith({ where: { id: 1, isPublished: true } });
+      expect(repo.update).not.toHaveBeenCalled();
+    });
     it('상세 조회 성공 - viewCount 증가', async () => {
       const notice = { id: 1, title: '공지1', isPublished: true, viewCount: 5 } as Notice;
       repo.findOne.mockResolvedValue(notice);

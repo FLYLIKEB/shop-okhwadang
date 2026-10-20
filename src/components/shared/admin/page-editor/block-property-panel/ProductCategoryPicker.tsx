@@ -3,6 +3,7 @@
 import EntitySelector from '../EntitySelector';
 import { RadioField } from './FormFields';
 import { PRODUCT_SELECT_MODE_OPTIONS } from './blockConfig';
+import { useTranslations } from 'next-intl';
 
 /**
  * ProductGrid / ProductCarousel 블록에서 공통으로 사용하는
@@ -19,6 +20,7 @@ interface ProductCategoryPickerProps {
 }
 
 export default function ProductCategoryPicker({ content, onChange }: ProductCategoryPickerProps) {
+  const t = useTranslations('admin.entitySelector');
   const productIds = (content.product_ids as number[]) ?? [];
   const selectedCategoryId = content.category_id as number | undefined;
   const isAuto = content.auto === true;
@@ -48,7 +50,7 @@ export default function ProductCategoryPicker({ content, onChange }: ProductCate
         type="category"
         selectedIds={selectedCategoryId ? [selectedCategoryId] : []}
         onChange={handleCategoryChange}
-        placeholder="카테고리 선택..."
+        placeholder={t('categorySearch')}
       />
       {hasCategory && (
         <RadioField
@@ -62,7 +64,7 @@ export default function ProductCategoryPicker({ content, onChange }: ProductCate
           type="product"
           selectedIds={productIds}
           onChange={(ids) => onChange({ ...content, product_ids: ids })}
-          placeholder={hasCategory ? '해당 카테고리 상품 검색...' : '상품 검색...'}
+          placeholder={t(hasCategory ? 'categoryProductSearch' : 'productSearch')}
           categoryId={hasCategory ? selectedCategoryId : undefined}
         />
       )}

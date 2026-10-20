@@ -21,6 +21,9 @@ import {
   UpdateProductAttributeDto,
 } from './dto/product-attribute.dto';
 import { applyLocale } from '../../common/utils/locale.util';
+import { findOrThrow } from '../../common/utils/repository.util';
+import { CacheService } from '../cache/cache.service';
+import { PRODUCT_BULK_CACHE_PATTERN, PRODUCT_DETAIL_CACHE_PATTERN, PRODUCT_LIST_CACHE_PATTERN } from './product-cache.util';
 
 const CANONICAL_ATTRIBUTE_DISPLAY_VALUES: Record<string, Record<string, string>> = {
   clay_type: {
@@ -79,7 +82,16 @@ export class AttributesService {
     private readonly attributeValueOptionRepository: Repository<AttributeValueOptionEntity>,
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    private readonly cacheService: CacheService,
   ) {}
+
+  private async invalidateProductCaches(): Promise<void> {
+    await Promise.all([
+      this.cacheService.delPattern(PRODUCT_DETAIL_CACHE_PATTERN),
+      this.cacheService.delPattern(PRODUCT_LIST_CACHE_PATTERN),
+      this.cacheService.delPattern(PRODUCT_BULK_CACHE_PATTERN),
+    ]);
+  }
 
   private applyLocaleToAttributeType(entity: AttributeType, locale?: string): AttributeType {
     // ko 로케일: name 컬럼이 영문일 수 있으므로 nameKo 우선 적용
@@ -136,11 +148,13 @@ export class AttributesService {
       sortOrder: dto.sortOrder ?? 0,
     });
 
-    return this.attributeTypeRepository.save(type);
+    const saved = await this.attributeTypeRepository.save(type);
+    await this.invalidateProductCaches();
+    return saved;
   }
 
   async updateAttributeType(id: number, dto: UpdateAttributeTypeDto): Promise<AttributeType> {
-    const type = await this.findAttributeTypeById(id);
+    const type = await findOrThrow(this.attributeTypeRepository, { id }, `AttributeType ID ${id} not found`);
 
     if (dto.code !== undefined && dto.code !== type.code) {
       const existing = await this.attributeTypeRepository.findOne({ where: { code: dto.code } });
@@ -165,12 +179,15 @@ export class AttributesService {
       ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
     });
 
-    return this.attributeTypeRepository.save(type);
+    const saved = await this.attributeTypeRepository.save(type);
+    await this.invalidateProductCaches();
+    return saved;
   }
 
   async deleteAttributeType(id: number): Promise<void> {
     const type = await this.findAttributeTypeById(id);
     await this.attributeTypeRepository.remove(type);
+    await this.invalidateProductCaches();
   }
 
   private async validateAttributeTypeLinks(
@@ -256,7 +273,9 @@ export class AttributesService {
       sortOrder: dto.sortOrder ?? 0,
     });
 
-    return this.productAttributeRepository.save(attr);
+    const saved = await this.productAttributeRepository.save(attr);
+    await this.invalidateProductCaches();
+    return saved;
   }
 
   async createOrUpdateProductAttribute(
@@ -274,7 +293,9 @@ export class AttributesService {
         displayValue: dto.displayValue ?? dto.value,
         sortOrder: dto.sortOrder ?? existing.sortOrder,
       });
-      return this.productAttributeRepository.save(existing);
+      const saved = await this.productAttributeRepository.save(existing);
+      await this.invalidateProductCaches();
+      return saved;
     }
 
     return this.createProductAttribute({ ...dto, productId });
@@ -295,7 +316,9 @@ export class AttributesService {
       ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
     });
 
-    return this.productAttributeRepository.save(attr);
+    const saved = await this.productAttributeRepository.save(attr);
+    await this.invalidateProductCaches();
+    return saved;
   }
 
   async deleteProductAttribute(id: number): Promise<void> {
@@ -304,10 +327,12 @@ export class AttributesService {
       throw new NotFoundException(`ProductAttribute ID ${id} not found`);
     }
     await this.productAttributeRepository.remove(attr);
+    await this.invalidateProductCaches();
   }
 
   async deleteAttributesByProductId(productId: number): Promise<void> {
     await this.productAttributeRepository.delete({ productId });
+    await this.invalidateProductCaches();
   }
 
   async setProductAttributes(
@@ -335,7 +360,9 @@ export class AttributesService {
       }),
     );
 
-    return this.productAttributeRepository.save(entities);
+    const saved = await this.productAttributeRepository.save(entities);
+    await this.invalidateProductCaches();
+    return saved;
   }
 
   private async findAttributeTypeByCodeOrThrow(code: string): Promise<AttributeType> {
@@ -486,6 +513,7 @@ export class AttributesService {
       );
     }
 
+    await this.invalidateProductCaches();
     const options = await this.getManagedAttributeValueOptions(code);
     const updated = options.find((item) => item.value === option.value);
     if (!updated) {
@@ -530,6 +558,7 @@ export class AttributesService {
       );
     }
 
+    await this.invalidateProductCaches();
     const options = await this.getManagedAttributeValueOptions(code);
     const updated = options.find((item) => item.value === option.value);
     if (!updated) {
@@ -549,6 +578,7 @@ export class AttributesService {
       attributeTypeId: type.id,
       value,
     });
+    await this.invalidateProductCaches();
     const options = await this.getManagedAttributeValueOptions(code);
     const updated = options.find((item) => item.value === value);
     if (!updated) {

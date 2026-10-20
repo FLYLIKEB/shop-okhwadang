@@ -5,6 +5,8 @@ export interface AdminProductsParams {
   page?: number;
   limit?: number;
   status?: string;
+  q?: string;
+  categoryId?: number;
 }
 
 export interface CreateProductData {
@@ -38,6 +40,7 @@ export interface CreateProductData {
     sortOrder?: number;
   }>;
   options?: Array<{
+    id?: number;
     name: string;
     value: string;
     priceAdjustment?: number;
@@ -52,7 +55,14 @@ export interface CreateProductData {
   }>;
 }
 
-export type UpdateProductData = Partial<CreateProductData>;
+export type UpdateProductData = Omit<Partial<CreateProductData>, 'description' | 'shortDescription' | 'salePrice' | 'sku' | 'nameEn' | 'descriptionEn'> & {
+  description?: string | null;
+  shortDescription?: string | null;
+  salePrice?: number | null;
+  sku?: string | null;
+  nameEn?: string | null;
+  descriptionEn?: string | null;
+};
 
 export type SmartStoreImportAction = 'create' | 'update' | 'skip';
 export type SmartStoreImportStatus = 'valid' | 'failed' | 'success';

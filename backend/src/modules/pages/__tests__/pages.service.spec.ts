@@ -8,6 +8,7 @@ import {
 import { PagesService } from '../pages.service';
 import { Page } from '../entities/page.entity';
 import { PageBlock } from '../entities/page-block.entity';
+import { IdempotencyService } from '../../../common/services/idempotency.service';
 
 const mockPageRepository = {
   find: jest.fn(),
@@ -33,6 +34,7 @@ describe('PagesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PagesService,
+        { provide: IdempotencyService, useValue: { execute: jest.fn() } },
         { provide: getRepositoryToken(Page), useValue: mockPageRepository },
         { provide: getRepositoryToken(PageBlock), useValue: mockBlockRepository },
       ],

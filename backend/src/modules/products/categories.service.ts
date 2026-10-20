@@ -15,6 +15,7 @@ import { CacheService } from '../cache/cache.service';
 import { findOrThrow } from '../../common/utils/repository.util';
 import { buildTree } from '../../common/utils/tree.util';
 import { applyLocale } from '../../common/utils/locale.util';
+import { PRODUCT_BULK_CACHE_PATTERN, PRODUCT_DETAIL_CACHE_PATTERN, PRODUCT_LIST_CACHE_PATTERN } from './product-cache.util';
 
 const LOCALIZED_FIELDS = ['name', 'description'];
 const CACHE_KEY_PUBLIC_TREE = 'categories:public-tree';
@@ -90,13 +91,19 @@ export class CategoriesService {
   private computeDepth(allCategories: Category[], targetId: number): number {
     const map = new Map<number, Category>();
     for (const cat of allCategories) {
-      map.set(cat.id, cat);
+      map.set(Number(cat.id), cat);
     }
 
     let depth = 1;
-    let currentId: number | null | undefined = map.get(targetId)?.parentId;
+    let currentId: number | null | undefined = map.get(Number(targetId))?.parentId;
+    const visited = new Set<number>([Number(targetId)]);
 
     while (currentId !== null && currentId !== undefined) {
+      currentId = Number(currentId);
+      if (visited.has(currentId)) {
+        throw new BadRequestException('카테고리를 자기 자신이나 하위 카테고리로 이동할 수 없습니다.');
+      }
+      visited.add(currentId);
       depth++;
       const parent = map.get(currentId);
       if (!parent) break;
@@ -113,7 +120,7 @@ export class CategoriesService {
       order: { sortOrder: 'ASC', id: 'ASC' },
     });
 
-    return this.computeDepth(all, parentId);
+    return this.computeDepth(all, parentId) + 1;
   }
 
   async create(dto: CreateCategoryDto): Promise<Category> {
@@ -156,8 +163,24 @@ export class CategoriesService {
       if (dto.parentId) {
         await findOrThrow(this.categoryRepository, { id: dto.parentId }, `부모 카테고리(id: ${dto.parentId})를 찾을 수 없습니다.`);
 
-        const depth = await this.getDepth(dto.parentId);
-        if (depth >= 3) {
+      }
+
+      const all = await this.categoryRepository.find();
+      const projected = all.map((item) => Number(item.id) === Number(id)
+        ? { ...item, parentId: dto.parentId ?? null } as Category
+        : item);
+      const descendants = new Set<number>([Number(id)]);
+      let previousSize = 0;
+      while (previousSize !== descendants.size) {
+        previousSize = descendants.size;
+        for (const item of all) {
+          if (item.parentId != null && descendants.has(Number(item.parentId))) {
+            descendants.add(Number(item.id));
+          }
+        }
+      }
+      for (const descendant of descendants) {
+        if (this.computeDepth(projected, descendant) > 3) {
           throw new BadRequestException('카테고리는 최대 3단계까지만 허용됩니다.');
         }
       }
@@ -215,6 +238,9 @@ export class CategoriesService {
     await Promise.all([
       this.cacheService.del(CACHE_KEY_PUBLIC_TREE),
       this.cacheService.del(CACHE_KEY_ADMIN_TREE),
+      this.cacheService.delPattern(PRODUCT_DETAIL_CACHE_PATTERN),
+      this.cacheService.delPattern(PRODUCT_LIST_CACHE_PATTERN),
+      this.cacheService.delPattern(PRODUCT_BULK_CACHE_PATTERN),
     ]);
   }
 }

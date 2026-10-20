@@ -28,12 +28,14 @@ function getOrderStatusLabel(status: string): string {
 interface OrderStatusSelectProps {
   orderId: number;
   currentStatus: string;
+  paymentStatus?: string | null;
   onStatusChange: () => void;
 }
 
-export function OrderStatusSelect({ orderId, currentStatus, onStatusChange }: OrderStatusSelectProps) {
+export function OrderStatusSelect({ orderId, currentStatus, paymentStatus, onStatusChange }: OrderStatusSelectProps) {
   const [updating, setUpdating] = useState(false);
-  const allowedNext = ALLOWED_TRANSITIONS[currentStatus] ?? [];
+  const allowedNext = (ALLOWED_TRANSITIONS[currentStatus] ?? [])
+    .filter((status) => status !== 'paid' || paymentStatus === 'confirmed');
 
   const handleChange = async (nextStatus: string) => {
     if (!nextStatus || nextStatus === currentStatus) return;

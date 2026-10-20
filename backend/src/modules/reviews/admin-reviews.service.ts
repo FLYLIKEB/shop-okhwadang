@@ -285,7 +285,7 @@ export class AdminReviewsService {
   }
 
   private async findInternalReviews(query: AdminReviewQueryDto): Promise<Review[]> {
-    if (query.reviewType?.trim() || query.importBatchId?.trim()) return [];
+    if ((query.reviewType?.trim() && query.reviewType.trim() !== 'internal') || query.importBatchId?.trim()) return [];
 
     const reviews = await this.reviewRepository.find({ relations: ['product', 'user'] });
     return reviews.filter((review) => {

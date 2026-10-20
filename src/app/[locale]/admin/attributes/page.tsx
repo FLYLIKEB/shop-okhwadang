@@ -46,7 +46,7 @@ function toForm(attribute: AttributeType): AttributeFormState {
   return {
     id: attribute.id,
     code: attribute.code,
-    name: attribute.name,
+    name: attribute.nameKo ?? attribute.name,
     nameEn: attribute.nameEn ?? '',
     inputType: attribute.inputType,
     parentId: attribute.parentId == null ? '' : String(attribute.parentId),
@@ -158,6 +158,7 @@ export default function AdminAttributesPage() {
       const payload = {
         code: form.code.trim(),
         name: form.name.trim(),
+        nameKo: form.name.trim(),
         nameEn: form.nameEn.trim() || undefined,
         inputType: form.inputType,
         parentId: form.parentId ? Number(form.parentId) : null,

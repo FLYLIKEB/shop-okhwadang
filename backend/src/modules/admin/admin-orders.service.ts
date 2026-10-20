@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, QueryRunner, Repository } from 'typeorm';
 import { Order, OrderStatus } from '../orders/entities/order.entity';
 import { Payment, PaymentStatus } from '../payments/entities/payment.entity';
 import { Shipping, ShippingStatus } from '../payments/entities/shipping.entity';
@@ -72,9 +72,18 @@ export class AdminOrdersService {
     }
 
     const result = await paginate(qb, { page, limit });
+    const payments = result.items.length > 0
+      ? await this.paymentRepository.find({
+        where: { orderId: In(result.items.map((order) => order.id)) },
+        select: ['orderId', 'status'],
+      })
+      : [];
+    const paymentStatuses = new Map(payments.map((payment) => [Number(payment.orderId), payment.status]));
     return {
       ...result,
-      items: result.items.map((order) => this.decorateOrder(order)),
+      items: result.items.map((order) => Object.assign(this.decorateOrder(order), {
+        paymentStatus: paymentStatuses.get(Number(order.id)) ?? null,
+      })),
     };
   }
 
@@ -149,6 +158,7 @@ export class AdminOrdersService {
 
       let lockedOrderForStatus: Order | null = null;
       const requiresOrderLock = [
+        OrderStatus.PAID,
         OrderStatus.PREPARING,
         OrderStatus.SHIPPED,
         OrderStatus.DELIVERED,
@@ -167,12 +177,15 @@ export class AdminOrdersService {
 
         assertOrderStatusTransition(lockedOrder.status, nextStatus);
 
-        if ([OrderStatus.PREPARING, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(nextStatus)) {
+        if ([OrderStatus.PAID, OrderStatus.PREPARING, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(nextStatus)) {
           const lockedPayment = await manager.findOne(Payment, {
             where: { orderId },
             lock: { mode: 'pessimistic_write' },
           });
           if (!lockedPayment || lockedPayment.status !== PaymentStatus.CONFIRMED) {
+            if (nextStatus === OrderStatus.PAID) {
+              throw new BadRequestException('결제가 확정되지 않은 주문은 결제 완료로 변경할 수 없습니다.');
+            }
             throw new BadRequestException('결제가 확정되지 않은 주문은 배송을 진행할 수 없습니다.');
           }
         }

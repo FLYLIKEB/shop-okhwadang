@@ -6,6 +6,8 @@ import { User } from '../../users/entities/user.entity';
 import { PointsService } from '../points.service';
 import { AuditLogService } from '../../audit-logs/audit-log.service';
 import { AuditAction } from '../../audit-logs/entities/audit-log.entity';
+import { validate } from 'class-validator';
+import { ManualPointAdjustmentDto } from '../dto/manual-point-adjustment.dto';
 
 describe('PointsService admin contract', () => {
   let lots: Array<{
@@ -138,6 +140,31 @@ describe('PointsService admin contract', () => {
       page: 2,
       limit: 10,
     });
+  });
+  it.each([2147483648, -2147483649, 1.5, Number.NaN])('rejects unsupported adjustment %s without writes', async (delta) => {
+    await expect(service.adjustPointsManually({ actorId: 7, actorRole: 'admin' }, { userId: 42, delta, reason: 'bounds' })).rejects.toThrow();
+    expect(manager.save).not.toHaveBeenCalled();
+    expect(auditLogService.logWithManager).not.toHaveBeenCalled();
+  });
+  it.each([2147483648, -2147483649])('rejects out-of-range delta %s at DTO validation', async (delta) => {
+    const errors = await validate(Object.assign(new ManualPointAdjustmentDto(), { userId: 42, delta, reason: 'bounds' }));
+    expect(errors.some((error) => error.property === 'delta')).toBe(true);
+  });
+  it('rejects an overflowing stored running balance before inserting credits', async () => {
+    manager.findOne.mockResolvedValueOnce({ id: 42 }).mockResolvedValueOnce({ balance: 2147483647 });
+    await expect(service.adjustPointsManually({ actorId: 7, actorRole: 'admin' }, { userId: 42, delta: 1, reason: 'bounds' })).rejects.toThrow();
+    expect(manager.save).not.toHaveBeenCalled();
+    expect(auditLogService.logWithManager).not.toHaveBeenCalled();
+  });
+  it('rejects overflow of summed effective credits before writes', async () => {
+    lots = [1000000000, 1200000000].map((amount, index) => ({
+      id: index + 1, userId: 42, type: 'earn', amount, remainingAmount: amount,
+      balance: amount, expiresAt: null, createdAt: new Date(),
+    }));
+    manager.findOne.mockResolvedValue({ id: 42 });
+    await expect(service.adjustPointsManually({ actorId: 7, actorRole: 'admin' }, { userId: 42, delta: 1, reason: 'bounds' })).rejects.toThrow();
+    expect(manager.save).not.toHaveBeenCalled();
+    expect(auditLogService.logWithManager).not.toHaveBeenCalled();
   });
 
   it('returns admin adjustment response with audit metadata and delta fields', async () => {

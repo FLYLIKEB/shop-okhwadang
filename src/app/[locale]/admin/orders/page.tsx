@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
@@ -12,6 +12,7 @@ import { ShippingModal } from '@/components/shared/admin/ShippingModal';
 import { CancelOrderModal } from '@/components/shared/admin/CancelOrderModal';
 import { MessageDeliveriesDialog } from '@/components/shared/admin/MessageDeliveriesDialog';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
+import AdminPagination from '@/components/shared/admin/AdminPagination';
 import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { AdminSearchForm } from '@/components/shared/admin/AdminSearchForm';
 import { PaginatedAdminTableShell } from '@/components/shared/admin/PaginatedAdminTableShell';
@@ -43,6 +44,10 @@ export default function AdminOrdersPage() {
   const [cancelOrder, setCancelOrder] = useState<AdminOrder | null>(null);
   const [messageOrder, setMessageOrder] = useState<AdminOrder | null>(null);
   const [serviceRequests, setServiceRequests] = useState<OrderServiceRequest[]>([]);
+  const [requestStatus, setRequestStatus] = useState<'requested' | 'approved'>('requested');
+  const [requestPage, setRequestPage] = useState(1);
+  const [requestTotal, setRequestTotal] = useState(0);
+  const requestLoadId = useRef(0);
   const [loadError, setLoadError] = useState(false);
   const {
     page,
@@ -75,15 +80,46 @@ export default function AdminOrdersPage() {
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
 
-      const [res, requestRes] = await Promise.all([
-        adminOrdersApi.getList(params),
-        adminOrdersApi.getServiceRequests({ status: 'requested', limit: 10 }),
-      ]);
+      const res = await adminOrdersApi.getList(params);
       setOrders(res.items);
       setTotal(res.total);
-      setServiceRequests(requestRes.items);
     },
     { errorMessage: t('loadError'), onError: () => setLoadError(true) },
+  );
+
+  const { execute: fetchRequests, isLoading: requestsLoading } = useAsyncAction(
+    async () => {
+      const loadId = ++requestLoadId.current;
+      const res = await adminOrdersApi.getServiceRequests({ status: requestStatus, page: requestPage, limit: 10 });
+      if (loadId !== requestLoadId.current) return;
+      if (res.items.length === 0 && requestPage > 1) {
+        setRequestPage(requestPage - 1);
+        return;
+      }
+      setServiceRequests(res.items);
+      setRequestTotal(res.total);
+    },
+    { errorMessage: t('loadError') },
+  );
+
+  useEffect(() => {
+    if (isAdmin) void fetchRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, requestStatus, requestPage]);
+
+  const { execute: handleRequestStatus, isLoading: requestUpdating } = useAsyncAction(
+    async ({ id, status }: { id: number; status: OrderServiceRequestStatus }) => {
+      await adminOrdersApi.updateServiceRequest(id, { status });
+      if (status === 'approved' && requestStatus !== 'approved') {
+        setServiceRequests([]);
+        setRequestPage(1);
+        setRequestStatus('approved');
+      } else {
+        await fetchRequests();
+      }
+      await fetchOrders();
+    },
+    { successMessage: t('requestUpdated'), errorMessage: t('requestUpdateError') },
   );
 
   useEffect(() => {
@@ -102,13 +138,6 @@ export default function AdminOrdersPage() {
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-
-  const handleRequestStatus = async (id: number, status: OrderServiceRequestStatus) => {
-    await adminOrdersApi.updateServiceRequest(id, { status });
-    await fetchOrders();
-  };
-
-  const requestTypeLabels = { cancel: '취소', return: '반품', exchange: '교환', refund: '환불' };
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
@@ -130,52 +159,73 @@ export default function AdminOrdersPage() {
       </div>
 
 
-      {serviceRequests.length > 0 && (
-        <section className="surface-card p-4">
-          <h2 className="mb-3 typo-body font-semibold">처리 대기 신청</h2>
+        <section className="surface-card p-4" aria-busy={requestsLoading || requestUpdating}>
+          <h2 className="mb-3 typo-body font-semibold">{t('serviceRequestsTitle')}</h2>
+          <select
+            aria-label={t('requestStatusLabel')}
+            value={requestStatus}
+            disabled={requestUpdating}
+            onChange={(event) => {
+              requestLoadId.current += 1;
+              setServiceRequests([]);
+              setRequestPage(1);
+              setRequestStatus(event.target.value as 'requested' | 'approved');
+            }}
+            className="field-soft rounded-lg typo-body-sm"
+          >
+            <option value="requested">{t('requestStatus.requested')}</option>
+            <option value="approved">{t('requestStatus.approved')}</option>
+          </select>
           <ul className="divide-soft">
             {serviceRequests.map((request) => (
               <li key={request.id} className="flex flex-wrap items-center justify-between gap-3 py-3 typo-body-sm">
                 <div>
                   <p className="typo-body-sm font-medium">
-                    #{request.orderId} {request.order?.orderNumber} · {requestTypeLabels[request.type]} · {request.reason}
+                    #{request.orderId} {request.order?.orderNumber} · {t(`requestType.${request.type}`)} · {request.reason}
                   </p>
                   <p className="typo-label text-muted-foreground">{request.userId} · {formatDateTime(request.createdAt, 'ko')}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button
+                  {request.status === 'requested' && <Button
                     type="button"
-                    onClick={() => void handleRequestStatus(request.id, 'approved')}
+                    disabled={requestUpdating || requestsLoading}
+                    onClick={() => void handleRequestStatus({ id: request.id, status: 'approved' })}
                     variant="outline"
                     size="sm"
                     className="typo-button"
                   >
-                    승인
-                  </Button>
+                    {t('approveRequest')}
+                  </Button>}
                   <Button
                     type="button"
-                    onClick={() => void handleRequestStatus(request.id, 'rejected')}
+                    disabled={requestUpdating || requestsLoading}
+                    onClick={() => void handleRequestStatus({ id: request.id, status: 'rejected' })}
                     variant="outline"
                     size="sm"
                     className="typo-button"
                   >
-                    반려
+                    {t('rejectRequest')}
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => void handleRequestStatus(request.id, 'completed')}
+                    disabled={requestUpdating || requestsLoading}
+                    onClick={() => void handleRequestStatus({ id: request.id, status: 'completed' })}
                     variant="black"
                     size="sm"
                     className="typo-button"
                   >
-                    처리 완료
+                    {t('completeRequest')}
                   </Button>
                 </div>
               </li>
             ))}
           </ul>
+          <AdminPagination
+            currentPage={requestPage}
+            totalPages={Math.ceil(requestTotal / 10)}
+            onPageChange={setRequestPage}
+          />
         </section>
-      )}
 
       <div className="flex flex-wrap items-end gap-4">
         <AdminSearchForm

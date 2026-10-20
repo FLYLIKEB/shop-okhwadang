@@ -155,7 +155,7 @@ describe('SmartStoreReviewImportService', () => {
         id: 44,
         source: 'smartstore',
         externalReviewId: '5008298806',
-        productId: 7,
+        productId: 8,
         isVisible: false,
       },
     ]);
@@ -220,6 +220,12 @@ describe('SmartStoreReviewImportService', () => {
       7,
       productRepository.manager,
     );
+    expect(mockReviewStatsSyncService.syncProductStats).toHaveBeenCalledWith(8, productRepository.manager);
+    mockReviewStatsSyncService.syncProductStats.mockClear();
+    externalReviewRepository.save.mockRejectedValueOnce(new Error('write failed'));
+    const failed = await service.commit(file);
+    expect(failed.rows[0].status).toBe('failed');
+    expect(mockReviewStatsSyncService.syncProductStats).not.toHaveBeenCalled();
   });
 
   it('deduplicates normalized review media URLs and preserves uploaded media mapping', async () => {

@@ -7,6 +7,7 @@ import { AttributeInputType, AttributeType } from '../entities/attribute-type.en
 import { ProductAttribute } from '../entities/product-attribute.entity';
 import { Product } from '../entities/product.entity';
 import { AttributeValueOptionEntity } from '../entities/attribute-value-option.entity';
+import { CacheService } from '../../cache/cache.service';
 
 type RepoMock<T extends ObjectLiteral> = jest.Mocked<
   Pick<
@@ -51,8 +52,10 @@ describe('AttributesService', () => {
   let attrRepo: RepoMock<ProductAttribute>;
   let optionRepo: RepoMock<AttributeValueOptionEntity>;
   let productRepo: RepoMock<Product>;
+  const cache = { delPattern: jest.fn().mockResolvedValue(undefined) };
 
   beforeEach(async () => {
+    cache.delPattern.mockClear();
     typeRepo = createRepoMock<AttributeType>();
     attrRepo = createRepoMock<ProductAttribute>();
     optionRepo = createRepoMock<AttributeValueOptionEntity>();
@@ -64,11 +67,28 @@ describe('AttributesService', () => {
         { provide: getRepositoryToken(ProductAttribute), useValue: attrRepo },
         { provide: getRepositoryToken(AttributeValueOptionEntity), useValue: optionRepo },
         { provide: getRepositoryToken(Product), useValue: productRepo },
+        { provide: CacheService, useValue: cache },
       ],
     }).compile();
 
     service = module.get(AttributesService);
     optionRepo.find.mockResolvedValue([]);
+  });
+
+  it('does not persist the Korean display projection over the raw name', async () => {
+    const raw = { id: 1, name: 'Clay', nameKo: '니료', nameEn: 'Clay', code: 'clay' } as AttributeType;
+    typeRepo.findOne.mockResolvedValue(raw);
+    typeRepo.save.mockImplementation(async (value) => value as AttributeType);
+    await service.updateAttributeType(1, { sortOrder: 2 });
+    expect(typeRepo.save).toHaveBeenCalledWith(expect.objectContaining({ name: 'Clay', nameKo: '니료' }));
+  });
+
+  it('invalidates product snapshots after changing a type', async () => {
+    typeRepo.findOne.mockResolvedValue({ id: 1, name: 'Clay' } as AttributeType);
+    await service.updateAttributeType(1, { nameKo: '새 니료' });
+    expect(cache.delPattern).toHaveBeenCalledWith('products:detail:*');
+    expect(cache.delPattern).toHaveBeenCalledWith('products:list:*');
+    expect(cache.delPattern).toHaveBeenCalledWith('products:bulk:*');
   });
 
   describe('createAttributeType', () => {

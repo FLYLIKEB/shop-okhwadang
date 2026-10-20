@@ -81,7 +81,7 @@ export class RestockAlertsService {
     });
   }
 
-  async processProductRestock(productId: number, previousStock: number, nextStock: number): Promise<void> {
+  async processProductRestock(productId: number, previousStock: number, nextStock: number, productOptionId?: number): Promise<void> {
     if (!(previousStock <= 0 && nextStock > 0)) {
       return;
     }
@@ -89,7 +89,7 @@ export class RestockAlertsService {
     const alerts = await this.restockAlertRepository.find({
       where: {
         productId,
-        productOptionId: IsNull(),
+        productOptionId: productOptionId ?? IsNull(),
         notifiedAt: IsNull(),
       },
       relations: ['product'],

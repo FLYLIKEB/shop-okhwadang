@@ -30,6 +30,16 @@ vi.mock('@/utils/localMessages', () => ({
 }));
 
 describe('OrderStatusSelect status contract', () => {
+  it.each([undefined, null, 'pending', 'cancelled', 'refunded'])('hides paid for unconfirmed payment %s', (paymentStatus) => {
+    render(<OrderStatusSelect orderId={1} currentStatus="pending" paymentStatus={paymentStatus} onStatusChange={vi.fn()} />);
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: '→ 결제완료' })).not.toBeInTheDocument();
+  });
+
+  it('allows reconciling a pending order with confirmed payment', () => {
+    render(<OrderStatusSelect orderId={1} currentStatus="pending" paymentStatus="confirmed" onStatusChange={vi.fn()} />);
+    expect(screen.getByRole('option', { name: '→ 결제완료' })).toHaveValue('paid');
+  });
   it('exposes completed and refund_requested transitions from delivered orders', () => {
     render(<OrderStatusSelect orderId={1} currentStatus="delivered" onStatusChange={vi.fn()} />);
 

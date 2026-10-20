@@ -166,7 +166,8 @@ describe('SettingsService', () => {
       await service.resetToDefaults();
       expect(mockDataSource.transaction).toHaveBeenCalled();
       expect(mockManager.query).toHaveBeenCalledWith(
-        'UPDATE site_settings SET value = default_value, value_en = NULL, value_ja = NULL, value_zh = NULL',
+        'UPDATE site_settings SET value = default_value, value_en = NULL, value_ja = NULL, value_zh = NULL WHERE `group` IN (?, ?, ?, ?, ?)',
+        ['color', 'color_dark', 'typography', 'spacing', 'radius'],
       );
       expect(mockCache.delPattern).toHaveBeenCalledWith('settings:*');
     });
@@ -181,12 +182,15 @@ describe('SettingsService', () => {
 
       expect(mockManager.query).toHaveBeenCalledWith(
         expect.stringContaining('value_en = NULL'),
+        ['color', 'color_dark', 'typography', 'spacing', 'radius'],
       );
       expect(mockManager.query).toHaveBeenCalledWith(
         expect.stringContaining('value_ja = NULL'),
+        ['color', 'color_dark', 'typography', 'spacing', 'radius'],
       );
       expect(mockManager.query).toHaveBeenCalledWith(
         expect.stringContaining('value_zh = NULL'),
+        ['color', 'color_dark', 'typography', 'spacing', 'radius'],
       );
     });
 

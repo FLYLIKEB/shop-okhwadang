@@ -206,6 +206,15 @@ describe('InquiriesService', () => {
       expect(mockQb.andWhere).toHaveBeenCalledWith('inquiry.answeredAt IS NOT NULL');
       expect(mockQb.andWhere).toHaveBeenCalledWith('inquiry.customerReadAt IS NULL');
     });
+    it('serializes only explicitly allowed user fields', async () => {
+      const qb = buildMockQb();
+      qb.getManyAndCount.mockResolvedValue([[{ id: 1, user: {
+        id: 7, name: 'member', email: 'member@example.test', password: 'hash',
+        refreshToken: 'secret', failedLoginAttempts: 4, deletionRequestedAt: new Date(),
+      } }], 1]);
+      const result = await service.findAllForAdmin();
+      expect(JSON.parse(JSON.stringify(result.items[0])).user).toEqual({ id: 7, name: 'member', email: 'member@example.test' });
+    });
 
     it('unread 미지정 시 필터 없음', async () => {
       const mockQb = buildMockQb();
@@ -233,7 +242,7 @@ describe('InquiriesService', () => {
       expect(mockQb.skip).toHaveBeenCalledWith(10);
       expect(mockQb.take).toHaveBeenCalledWith(10);
       expect(result).toEqual({
-        items,
+        items: [{ ...items[0], user: null }],
         total: 52,
         page: 2,
         limit: 10,

@@ -120,8 +120,8 @@ export class PromotionsService {
     if (dto.linkUrl !== undefined) banner.linkUrl = dto.linkUrl;
     if (dto.sortOrder !== undefined) banner.sortOrder = dto.sortOrder;
     if (dto.isActive !== undefined) banner.isActive = dto.isActive;
-    if (dto.startsAt !== undefined) banner.startsAt = new Date(dto.startsAt);
-    if (dto.endsAt !== undefined) banner.endsAt = new Date(dto.endsAt);
+    if (dto.startsAt !== undefined) banner.startsAt = dto.startsAt === null ? null : new Date(dto.startsAt);
+    if (dto.endsAt !== undefined) banner.endsAt = dto.endsAt === null ? null : new Date(dto.endsAt);
     if (dto.imageDerivatives !== undefined) banner.imageDerivatives = dto.imageDerivatives;
     return this.bannerRepo.save(banner);
   }

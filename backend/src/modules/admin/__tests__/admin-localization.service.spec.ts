@@ -38,6 +38,15 @@ describe('AdminLocalizationService', () => {
     jest.clearAllMocks();
   });
 
+  it('keeps missing categories reachable beyond the first 50 products', async () => {
+    productRepo.find.mockResolvedValue(Array.from({ length: 51 }, (_, index) => ({ id: index + 1, name: '상품', status: 'active' })));
+    categoryRepo.find.mockResolvedValue([{ id: 52, name: '분류', isActive: true }]);
+    for (const repository of [productOptionRepo, pageRepo, pageBlockRepo, navigationRepo, externalReviewRepo]) repository.find.mockResolvedValue([]);
+    const report = await service.getCoverage();
+    expect(report.items).toHaveLength(52);
+    expect(report.items).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'category', id: 52 })]));
+  });
+
   it('영문 번역 누락 리소스와 fallback 정책을 집계한다', async () => {
     productRepo.find.mockResolvedValue([
       {

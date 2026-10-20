@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { ObjectLiteral, Repository } from 'typeorm';
 import { ProductCommandService } from '../product-command.service';
 import { Product } from '../entities/product.entity';
@@ -71,6 +71,12 @@ describe('ProductCommandService', () => {
   });
 
   describe('create', () => {
+    it.each(['', '   '])('normalizes a blank SKU %j to null on create', async (sku) => {
+      manager.create.mockReturnValue({ id: 1 } as Product);
+      manager.save.mockResolvedValue({ id: 1 } as Product);
+      await service.create({ name: 'p', slug: 'empty-sku', price: 100, sku });
+      expect(manager.create).toHaveBeenCalledWith(Product, expect.objectContaining({ sku: null }));
+    });
     it('정상 생성 후 Product 반환', async () => {
       const created = { id: 1, name: '신상품', stock: 5 } as Product;
       manager.create.mockReturnValue(created);
@@ -186,6 +192,75 @@ describe('ProductCommandService', () => {
   });
 
   describe('update', () => {
+    it('normalizes an explicit empty SKU to null without changing nonblank SKUs', async () => {
+      productRepo.findOne.mockResolvedValue({ id: 1, stock: 0, sku: 'old' } as Product);
+      await service.update(1, { sku: '' });
+      expect(manager.save).toHaveBeenCalledWith(expect.objectContaining({ sku: null }));
+      manager.save.mockClear();
+      await service.update(1, { sku: ' keep ' });
+      expect(manager.save).toHaveBeenCalledWith(expect.objectContaining({ sku: ' keep ' }));
+    });
+    it.each([
+      [{ id: 99, name: 'other', value: 'value' }],
+      [{ id: 11, name: 'first', value: 'value' }, { id: 11, name: 'second', value: 'value' }],
+      [{ name: 'same', value: 'value' }, { name: 'same', value: 'value' }],
+    ])('rejects foreign or duplicate option identities: %j', async (...options) => {
+      productRepo.findOne.mockResolvedValue({ id: 1, stock: 0 } as Product);
+      manager.find.mockResolvedValue([{ id: 11, productId: 1, name: 'old', value: 'value', stock: 0 }]);
+      await expect(service.update(1, { options })).rejects.toThrow(BadRequestException);
+      expect(restockAlerts.processProductRestock).not.toHaveBeenCalled();
+    });
+
+    it('dispatches only option zero-to-positive transitions after the transaction commits', async () => {
+      productRepo.findOne.mockResolvedValue({ id: 1, stock: 5 } as Product);
+      manager.find.mockResolvedValue([
+        { id: 11, productId: 1, name: 'size', value: 'small', stock: 0 },
+        { id: 12, productId: 1, name: 'size', value: 'large', stock: 2 },
+      ]);
+      let committed = false;
+      dataSource.transaction.mockImplementation(async (callback: (value: ManagerMock) => Promise<unknown>) => {
+        const saved = await callback(manager);
+        committed = true;
+        return saved;
+      });
+      restockAlerts.processProductRestock.mockImplementation(async () => expect(committed).toBe(true));
+      await service.update(1, { options: [
+        { id: 11, name: 'size', value: 'small', stock: 5 },
+        { id: 12, name: 'size', value: 'large', stock: 5 },
+      ] });
+      expect(restockAlerts.processProductRestock).toHaveBeenCalledTimes(1);
+      expect(restockAlerts.processProductRestock).toHaveBeenCalledWith(1, 0, 5, 11);
+    });
+
+    it('does not dispatch option alerts when the transaction rolls back', async () => {
+      productRepo.findOne.mockResolvedValue({ id: 1, stock: 5 } as Product);
+      manager.find.mockResolvedValue([{ id: 11, productId: 1, name: 'size', value: 'small', stock: 0 }]);
+      manager.save.mockRejectedValueOnce(new Error('rollback'));
+      await expect(service.update(1, { options: [{ id: 11, name: 'size', value: 'small', stock: 5 }] })).rejects.toThrow('rollback');
+      expect(restockAlerts.processProductRestock).not.toHaveBeenCalled();
+    });
+
+    it('returns an actionable error for deleting an option referenced by a cart or order', async () => {
+      productRepo.findOne.mockResolvedValue({ id: 1, stock: 0 } as Product);
+      manager.find.mockResolvedValue([{ id: 11, productId: 1, name: 'size', value: 'small', stock: 0 }]);
+      manager.delete.mockRejectedValueOnce(Object.assign(new Error('FK constraint'), { code: 'ER_ROW_IS_REFERENCED_2' }));
+      await expect(service.update(1, { options: [] })).rejects.toThrow(BadRequestException);
+    });
+
+    it('persists explicit nulls and leaves omitted optional values intact', async () => {
+      productRepo.findOne.mockResolvedValue({ id: 1, stock: 0, description: 'keep', salePrice: 50, sku: 'old' } as Product);
+      await service.update(1, { salePrice: null, sku: null });
+      expect(manager.save).toHaveBeenCalledWith(expect.objectContaining({ description: 'keep', salePrice: null, sku: null }));
+    });
+    it('retains an explicitly identified option when its name and value change', async () => {
+      const existing = { id: 1, stock: 0 } as Product;
+      productRepo.findOne.mockResolvedValue(existing);
+      manager.save.mockResolvedValue(existing);
+      manager.find.mockResolvedValue([{ id: 11, productId: 1, name: 'old', value: 'old', stock: 2 }]);
+      await service.update(1, { options: [{ id: 11, name: 'new', value: 'new', stock: 3 } as ProductOption] });
+      expect(manager.delete).not.toHaveBeenCalled();
+      expect(manager.save).toHaveBeenCalledWith(ProductOption, [expect.objectContaining({ id: 11, name: 'new', value: 'new', stock: 3 })]);
+    });
     it('없는 ID 수정 시 NotFoundException', async () => {
       productRepo.findOne.mockResolvedValue(null as unknown as Product);
 

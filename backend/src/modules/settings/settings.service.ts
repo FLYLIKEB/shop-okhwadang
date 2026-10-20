@@ -76,7 +76,8 @@ export class SettingsService {
   async resetToDefaults(): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       await manager.query(
-        `UPDATE site_settings SET value = default_value, value_en = NULL, value_ja = NULL, value_zh = NULL`,
+        `UPDATE site_settings SET value = default_value, value_en = NULL, value_ja = NULL, value_zh = NULL WHERE \`group\` IN (?, ?, ?, ?, ?)`,
+        ['color', 'color_dark', 'typography', 'spacing', 'radius'],
       );
       this.logger.log('Settings reset to defaults');
     });

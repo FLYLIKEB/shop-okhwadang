@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ProductFormPage from '../ProductFormPage';
+import type { ProductDetail } from '@/lib/api';
+import { act } from '@testing-library/react';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -34,6 +36,61 @@ vi.mock('@/lib/api', () => ({
 describe('ProductFormPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  const existingProduct: ProductDetail = {
+    id: 41, name: 'Existing', slug: 'existing', price: 10000, salePrice: 9000,
+    status: 'draft', isFeatured: false, viewCount: 0, category: null, images: [],
+    description: 'Description', shortDescription: 'Short', rating: 0, reviewCount: 0,
+    stock: 1, sku: 'SKU', nameEn: 'English', descriptionEn: 'English description',
+    options: [{ id: 81, name: 'Size', value: 'Small', priceAdjustment: 0, stock: 1, sortOrder: 0 }],
+    detailImages: [], noticeInfo: null,
+  };
+
+  it('clears optional fields explicitly and retains the existing option id while editing', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    render(<ProductFormPage mode="edit" product={existingProduct} />);
+    for (const value of ['Description', 'Short', 'SKU', 'English', 'English description', '9000']) {
+      fireEvent.change(screen.getByDisplayValue(value), { target: { value: '' } });
+    }
+    fireEvent.change(screen.getByDisplayValue('Small'), { target: { value: 'Large' } });
+    fireEvent.click(screen.getByText('수정하기'));
+    await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalledWith(41, expect.objectContaining({
+      salePrice: null, description: '', shortDescription: '', sku: null, nameEn: '', descriptionEn: '',
+      options: [expect.objectContaining({ id: 81, value: 'Large' })],
+    })));
+  });
+
+  it('omits blank SKU on create and preserves nonblank SKU exactly', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    render(<ProductFormPage mode="create" />);
+    fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), { target: { value: 'test' } });
+    fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
+    const sku = screen.getByPlaceholderText('재고 관리 코드');
+    fireEvent.change(sku, { target: { value: '   ' } });
+    fireEvent.click(screen.getByText('등록하기'));
+    await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalled());
+    expect(vi.mocked(adminProductsApi.create).mock.calls.at(-1)?.[0].sku).toBeUndefined();
+    expect(JSON.stringify(vi.mocked(adminProductsApi.create).mock.calls.at(-1)?.[0])).not.toContain('"sku"');
+    fireEvent.change(sku, { target: { value: ' SKU-41 ' } });
+    fireEvent.click(screen.getByText('등록하기'));
+    await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(adminProductsApi.create).mock.calls.at(-1)?.[0].sku).toBe(' SKU-41 ');
+  });
+
+  it('prevents saving placeholders and saves resolved image URLs after pending uploads settle', async () => {
+    const { adminProductsApi, uploadApi } = await import('@/lib/api');
+    let finish!: (result: Awaited<ReturnType<typeof uploadApi.uploadImage>>) => void;
+    vi.mocked(uploadApi.uploadImage).mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    const { container } = render(<ProductFormPage mode="edit" product={existingProduct} />);
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(['image'], 'new.png', { type: 'image/png' })] } });
+    expect(screen.getByText('수정하기')).toBeDisabled();
+    fireEvent.submit(container.querySelector('form')!);
+    expect(adminProductsApi.update).not.toHaveBeenCalled();
+    await act(async () => finish({ url: 'https://image.example/new.png', filename: 'new.png' }));
+    fireEvent.click(screen.getByText('수정하기'));
+    await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalledWith(41, expect.objectContaining({ images: [expect.objectContaining({ url: 'https://image.example/new.png' })] })));
   });
 
   describe('create 모드', () => {

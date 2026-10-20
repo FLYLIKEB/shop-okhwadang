@@ -133,6 +133,21 @@ describe('NavigationService', () => {
   });
 
   describe('create', () => {
+    it.each(['footer', 'sidebar'] as const)('rejects a fourth level in %s with database bigint strings', async (group) => {
+      mockRepository.find.mockResolvedValue([
+        { id: '1', group, parent_id: null },
+        { id: '2', group, parent_id: '1' },
+        { id: '3', group, parent_id: '2' },
+      ]);
+      await expect(service.create({ group, label: 'deep', url: '/', parent_id: 3 })).rejects.toThrow(BadRequestException);
+      expect(mockRepository.find).toHaveBeenCalledWith({ where: { group } });
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects missing or cross-group parents', async () => {
+      mockRepository.find.mockResolvedValue([]);
+      await expect(service.create({ group: 'footer', label: 'child', url: '/', parent_id: 1 })).rejects.toThrow(BadRequestException);
+    });
     it('네비게이션 항목을 생성한다', async () => {
       const dto = { group: 'gnb' as const, label: '상품', labelEn: 'Products', url: '/products' };
       const created = { id: 1, ...dto, sort_order: 0, is_active: true, parent_id: null };
@@ -175,6 +190,24 @@ describe('NavigationService', () => {
   });
 
   describe('update', () => {
+    it('counts bigint child IDs when moving a subtree', async () => {
+      const items = [
+        { id: '1', group: 'footer', parent_id: null },
+        { id: '2', group: 'footer', parent_id: '1' },
+        { id: '3', group: 'footer', parent_id: null },
+        { id: '4', group: 'footer', parent_id: '3' },
+      ];
+      mockRepository.findOne.mockResolvedValue(items[0]);
+      mockRepository.find.mockResolvedValue(items);
+      await expect(service.update(1, { parent_id: 4 })).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects moving a node with children across groups', async () => {
+      const items = [{ id: '1', group: 'footer', parent_id: null }, { id: '2', group: 'footer', parent_id: '1' }];
+      mockRepository.findOne.mockResolvedValue(items[0]);
+      mockRepository.find.mockResolvedValue(items);
+      await expect(service.update(1, { group: 'gnb' })).rejects.toThrow(BadRequestException);
+    });
     it('네비게이션 항목을 수정한다', async () => {
       const item = { id: 1, group: 'gnb', label: '기존', url: '/old', parent_id: null };
       mockRepository.findOne.mockResolvedValue(item);

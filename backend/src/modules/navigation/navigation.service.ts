@@ -61,7 +61,7 @@ export class NavigationService {
 
   async create(dto: CreateNavigationItemDto): Promise<NavigationItem> {
     if (dto.parent_id !== undefined && dto.parent_id !== null) {
-      await this.validateDepth(dto.parent_id);
+      await this.validateDepth(dto.parent_id, dto.group);
     }
     const item = this.navigationRepository.create(dto);
     const saved = await this.navigationRepository.save(item);
@@ -72,14 +72,16 @@ export class NavigationService {
   async update(id: number, dto: UpdateNavigationItemDto): Promise<NavigationItem> {
     const item = await findOrThrow(this.navigationRepository, { id }, '존재하지 않는 네비게이션 항목입니다.');
 
-    if (dto.parent_id !== undefined) {
-      if (dto.parent_id !== null) {
-        if (dto.parent_id === id) {
-          throw new BadRequestException('순환 참조는 허용되지 않습니다.');
-        }
-        await this.checkCircularReference(id, dto.parent_id);
-        await this.validateDepth(dto.parent_id, id);
+    const group = dto.group ?? item.group;
+    if (group !== item.group) {
+      const items = await this.loadAllItemsForGroup(item.group);
+      if ([...items.values()].some((child) => child.parent_id !== null && Number(child.parent_id) === Number(id))) {
+        throw new BadRequestException('하위 메뉴가 있는 항목의 그룹은 변경할 수 없습니다.');
       }
+    }
+    const parentId = dto.parent_id === undefined ? item.parent_id : dto.parent_id;
+    if (dto.parent_id !== undefined || group !== item.group) {
+      await this.validateDepth(parentId, group, id);
     }
 
     Object.assign(item, dto);
@@ -113,19 +115,24 @@ export class NavigationService {
     return map;
   }
 
-  private async validateDepth(parentId: number, currentItemId?: number): Promise<void> {
-    const allItems = await this.loadAllItemsForGroup('gnb');
+  private async validateDepth(parentId: number | null, group: NavigationItem['group'], currentItemId?: number): Promise<void> {
+    const allItems = await this.loadAllItemsForGroup(group);
     let depth = 1;
-    let currentParentId: number | null = parentId;
+    let currentParentId: number | null = parentId === null ? null : Number(parentId);
+    const visited = new Set<number>();
 
     while (currentParentId !== null) {
+      if (currentParentId === Number(currentItemId) || visited.has(currentParentId)) {
+        throw new BadRequestException('순환 참조는 허용되지 않습니다.');
+      }
+      visited.add(currentParentId);
       depth++;
       if (depth > MAX_DEPTH) {
         throw new BadRequestException('메뉴는 최대 3단계까지 생성할 수 있습니다.');
       }
       const parent = allItems.get(Number(currentParentId));
-      if (!parent) break;
-      currentParentId = parent.parent_id;
+      if (!parent) throw new BadRequestException('같은 그룹의 부모 메뉴를 선택해야 합니다.');
+      currentParentId = parent.parent_id === null ? null : Number(parent.parent_id);
     }
 
     if (currentItemId !== undefined) {
@@ -139,36 +146,21 @@ export class NavigationService {
   private async getMaxChildDepth(
     itemId: number,
     allItems: Map<number, NavigationItem>,
+    visited = new Set<number>(),
   ): Promise<number> {
-    const children = [...allItems.values()].filter((item) => item.parent_id === itemId);
+    if (visited.has(Number(itemId))) throw new BadRequestException('순환 참조는 허용되지 않습니다.');
+    visited.add(Number(itemId));
+    const children = [...allItems.values()].filter((item) => item.parent_id !== null && Number(item.parent_id) === Number(itemId));
     if (children.length === 0) return 0;
 
     let maxDepth = 0;
     for (const child of children) {
-      const childDepth = await this.getMaxChildDepth(Number(child.id), allItems);
+      const childDepth = await this.getMaxChildDepth(Number(child.id), allItems, visited);
       if (childDepth + 1 > maxDepth) {
         maxDepth = childDepth + 1;
       }
     }
     return maxDepth;
-  }
-
-  private async checkCircularReference(itemId: number, newParentId: number): Promise<void> {
-    const allItems = await this.loadAllItemsForGroup('gnb');
-    let currentId: number | null = newParentId;
-    const visited = new Set<number>();
-
-    while (currentId !== null) {
-      if (currentId === itemId) {
-        throw new BadRequestException('순환 참조는 허용되지 않습니다.');
-      }
-      if (visited.has(currentId)) break;
-      visited.add(currentId);
-
-      const parent = allItems.get(Number(currentId));
-      if (!parent) break;
-      currentId = parent.parent_id !== null ? Number(parent.parent_id) : null;
-    }
   }
 
   private async invalidateCache(): Promise<void> {

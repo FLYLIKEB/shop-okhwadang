@@ -44,6 +44,16 @@ describe('PromotionsService', () => {
     expect(service).toBeDefined();
   });
 
+  it('clears banner schedules with null and preserves omitted schedules', async () => {
+    const originalDate = new Date('2026-01-01T00:00:00Z');
+    const banner = { id: 1, startsAt: originalDate, endsAt: originalDate } as Banner;
+    bannerRepo.findOne.mockResolvedValue(banner);
+    bannerRepo.save.mockImplementation(async (value: Banner) => value);
+    expect((await service.updateBanner(1, { startsAt: null })).startsAt).toBeNull();
+    expect(banner.endsAt).toEqual(originalDate);
+    expect((await service.updateBanner(1, { endsAt: null })).endsAt).toBeNull();
+  });
+
   describe('findAllActive', () => {
     it('활성 프로모션만 반환', async () => {
       const now = new Date();

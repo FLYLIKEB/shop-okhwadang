@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -60,8 +60,13 @@ export default function AdminPointsPage() {
   const [reason, setReason] = useState('');
 
   const userId = parseUserId(searchParams.get('userId'));
+  const currentUserId = useRef(userId);
+  currentUserId.current = userId;
+  const pointRequest = useRef(0);
+  const memberRequest = useRef(0);
 
   const loadMembers = useCallback(async (keyword: string) => {
+    const request = ++memberRequest.current;
     try {
       const trimmedKeyword = keyword.trim();
       const firstPage = await adminMembersApi.getList({
@@ -88,39 +93,49 @@ export default function AdminPointsPage() {
         }
       }
 
+      if (request !== memberRequest.current) return;
       if (selectedMember == null && exact) {
         setSelectedMember(exact);
       }
       setMemberOptions(nextOptions);
     } catch (err) {
+      if (request !== memberRequest.current) return;
       toast.error(handleApiError(err, t('memberLookupError')));
     }
   }, [selectedMember, t, userId]);
 
   const loadPointData = useCallback(async (nextUserId: number, nextPage = 1) => {
+    if (currentUserId.current !== nextUserId) return;
+    const request = ++pointRequest.current;
     setLoadingMemberData(true);
+    setSummary(null);
+    setHistory([]);
+    setHistoryTotal(0);
     try {
       const [nextSummary, nextHistory] = await Promise.all([
         adminPointsApi.getUserSummary(nextUserId),
         adminPointsApi.getUserHistory(nextUserId, { page: nextPage, limit: HISTORY_PAGE_SIZE }),
       ]);
+      if (request !== pointRequest.current || currentUserId.current !== nextUserId) return;
       setSummary(nextSummary);
       setHistory(nextHistory.items);
       setHistoryTotal(nextHistory.total);
       setHistoryPage(nextHistory.page);
     } catch (err) {
+      if (request !== pointRequest.current || currentUserId.current !== nextUserId) return;
       toast.error(handleApiError(err, t('loadError')));
       setSummary(null);
       setHistory([]);
       setHistoryTotal(0);
     } finally {
-      setLoadingMemberData(false);
+      if (request === pointRequest.current && currentUserId.current === nextUserId) setLoadingMemberData(false);
     }
   }, [t]);
 
   useEffect(() => {
     if (!isAdmin) return;
     void loadMembers(memberSearch);
+    return () => { memberRequest.current += 1; };
   }, [isAdmin, loadMembers, memberSearch]);
 
 useEffect(() => {
@@ -132,6 +147,7 @@ useEffect(() => {
     return;
   }
   void loadPointData(userId, 1);
+  return () => { pointRequest.current += 1; };
 }, [isAdmin, loadPointData, userId]);
 
   useEffect(() => {
@@ -161,7 +177,7 @@ useEffect(() => {
   );
 
   const selectedMemberLabel = useMemo(() => {
-    if (selectedMember) return `${selectedMember.name} · ${selectedMember.email}`;
+    if (selectedMember?.id === userId) return `${selectedMember.name} · ${selectedMember.email}`;
     if (userId != null) return t('selectedUserFallback', { userId });
     return t('noUserSelected');
   }, [selectedMember, t, userId]);
@@ -237,12 +253,12 @@ const goToHistoryPage = (nextPage: number) => {
               <div className="rounded-md bg-background p-4 shadow-sm">
                 <div className="typo-label text-muted-foreground">{t('balanceLabel')}</div>
                 <div className="mt-2 text-2xl font-semibold">
-                  {summary ? formatCurrency(summary.balance, locale) : '—'}
+                  {summary?.userId === userId ? formatCurrency(summary.balance, locale) : '—'}
                 </div>
               </div>
               <div className="rounded-md bg-background p-4 shadow-sm">
                 <div className="typo-label text-muted-foreground">{t('historyCountLabel')}</div>
-                <div className="mt-2 text-2xl font-semibold">{formatCount(historyTotal, locale)}</div>
+                <div className="mt-2 text-2xl font-semibold">{formatCount(summary?.userId === userId ? historyTotal : 0, locale)}</div>
               </div>
             </div>
           </div>
@@ -253,7 +269,7 @@ const goToHistoryPage = (nextPage: number) => {
         <div>
           {userId == null ? (
             <AdminEmptyState title={t('selectMemberPrompt')} />
-          ) : loadingMemberData ? (
+          ) : loadingMemberData || (summary != null && summary.userId !== userId) ? (
             <AdminLoadingState title={t('loading')} />
           ) : history.length === 0 ? (
             <AdminEmptyState title={t('empty')} />

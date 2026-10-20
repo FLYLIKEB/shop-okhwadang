@@ -94,6 +94,7 @@ export function AdminOrdersTable({
                 <OrderStatusSelect
                   orderId={order.id}
                   currentStatus={order.status}
+                  paymentStatus={order.paymentStatus}
                   onStatusChange={onStatusChange}
                 />
                 {(order.status === 'preparing' || order.status === 'paid') && (
@@ -159,6 +160,7 @@ export function AdminOrdersTable({
                       <OrderStatusSelect
                         orderId={order.id}
                         currentStatus={order.status}
+                        paymentStatus={order.paymentStatus}
                         onStatusChange={onStatusChange}
                       />
                       {(order.status === 'preparing' || order.status === 'paid') && (

@@ -200,6 +200,14 @@ describe('CategoriesService', () => {
   });
 
   describe('create', () => {
+    it('rejects a fourth level below a three-level parent', async () => {
+      mockCategoryRepository.findOne.mockResolvedValue(makeCategory({ id: 3, parentId: 2 }));
+      mockCategoryRepository.find.mockResolvedValue([
+        makeCategory({ id: 1 }), makeCategory({ id: 2, parentId: 1 }),
+        makeCategory({ id: 3, parentId: 2 }),
+      ]);
+      await expect(service.create({ name: 'fourth', slug: 'fourth', parentId: 3 })).rejects.toThrow(BadRequestException);
+    });
     it('루트 카테고리 생성 성공 → 캐시 삭제', async () => {
       const cat = makeCategory();
       mockCategoryRepository.findOne.mockResolvedValue(null);
@@ -247,6 +255,40 @@ describe('CategoriesService', () => {
   });
 
   describe('update', () => {
+    it('terminates and rejects an existing cycle in a parent chain', async () => {
+      const root = makeCategory({ id: 1 });
+      mockCategoryRepository.findOne.mockResolvedValue(root);
+      mockCategoryRepository.find.mockResolvedValue([
+        root, makeCategory({ id: 2, parentId: 3 }), makeCategory({ id: 3, parentId: 2 }),
+      ]);
+      await expect(service.update(1, { parentId: 2 })).rejects.toThrow(BadRequestException);
+    });
+
+    it('invalidates all product readers after changing category visibility', async () => {
+      mockCategoryRepository.findOne.mockResolvedValue(makeCategory());
+      await service.update(1, { isActive: false });
+      expect(mockCacheService.delPattern).toHaveBeenCalledWith('products:detail:*');
+      expect(mockCacheService.delPattern).toHaveBeenCalledWith('products:list:*');
+      expect(mockCacheService.delPattern).toHaveBeenCalledWith('products:bulk:*');
+    });
+    it('rejects moving a root beneath its own descendant', async () => {
+      const root = makeCategory({ id: 1 });
+      const child = makeCategory({ id: 2, parentId: 1 });
+      mockCategoryRepository.findOne.mockImplementation(async ({ where }: { where: { id: number } }) => where.id === 1 ? root : child);
+      mockCategoryRepository.find.mockResolvedValue([root, child]);
+      await expect(service.update(1, { parentId: 2 })).rejects.toThrow(BadRequestException);
+      expect(mockCategoryRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('validates the deepest descendant when moving a subtree', async () => {
+      const root = makeCategory({ id: 1 });
+      const child = makeCategory({ id: 2, parentId: 1 });
+      const target = makeCategory({ id: 3 });
+      const targetChild = makeCategory({ id: 4, parentId: 3 });
+      mockCategoryRepository.findOne.mockImplementation(async ({ where }: { where: { id: number } }) => where.id === 1 ? root : targetChild);
+      mockCategoryRepository.find.mockResolvedValue([root, child, target, targetChild]);
+      await expect(service.update(1, { parentId: 4 })).rejects.toThrow(BadRequestException);
+    });
     it('카테고리 업데이트 성공 → 캐시 삭제', async () => {
       const cat = makeCategory();
       mockCategoryRepository.findOne.mockResolvedValue(cat);

@@ -10,7 +10,6 @@ import { NavigationItem } from '../navigation/entities/navigation-item.entity';
 import { ExternalReview } from '../reviews/entities/external-review.entity';
 
 const REPORT_LOCALE = 'en';
-const SAMPLE_LIMIT = 50;
 const CONTENT_TRANSLATION_KEYS = new Set([
   'title',
   'subtitle',
@@ -325,7 +324,7 @@ export class AdminLocalizationService {
         smartStoreReviews: 'sourceTextFallback',
       },
       summaries,
-      items: items.slice(0, SAMPLE_LIMIT),
+      items,
     };
   }
 }

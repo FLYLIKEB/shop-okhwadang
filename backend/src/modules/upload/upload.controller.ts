@@ -22,9 +22,8 @@ import {
 import { UploadService } from './upload.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UploadedFile as UploadedFileType } from './interfaces/storage.interface';
-import { CmsImageImportDto } from './dto/cms-image.dto';
+import { CmsImageImportDto, CmsImageUploadQueryDto } from './dto/cms-image.dto';
 import { CmsMedia } from './upload.service';
-import { CmsMediaKind } from './cms-media.constants';
 import { RemoteImageIngestService } from './remote-image-ingest.service';
 
 const IMAGE_UPLOAD_BODY_SCHEMA = {
@@ -44,6 +43,13 @@ const FILE_UPLOAD_INTERCEPTOR = FileInterceptor(
     invalidMimeMessage: '허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)',
   }),
 );
+
+const CMS_UPLOAD_INTERCEPTOR = FileInterceptor('file', createSingleFileMemoryUploadOptions({
+  fileSize: MAX_UPLOAD_INPUT_FILE_SIZE_BYTES,
+  allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
+  fields: 1,
+  invalidMimeMessage: '허용되지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)',
+}));
 
 @ApiTags('업로드')
 @Controller('upload')
@@ -110,12 +116,12 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FILE_UPLOAD_INTERCEPTOR)
+  @UseInterceptors(CMS_UPLOAD_INTERCEPTOR)
   uploadCmsImage(
     @UploadedFile() file: Express.Multer.File,
-    @Body('kind') kind: CmsMediaKind,
+    @Body() dto: CmsImageUploadQueryDto,
   ): Promise<CmsMedia> {
-    return this.uploadService.uploadCmsImage(file, kind);
+    return this.uploadService.uploadCmsImage(file, dto.kind);
   }
 
   @Post('cms-image/import')

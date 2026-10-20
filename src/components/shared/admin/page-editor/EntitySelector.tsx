@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { ChevronUp, ChevronDown, X, Search, ChevronRight } from 'lucide-react';
-import { categoriesApi, productsApi } from '@/lib/api';
+import { categoriesApi, adminProductsApi } from '@/lib/api';
 import type { Category, Product } from '@/lib/api';
 import { cn } from '@/components/ui/utils';
+import { useTranslations } from 'next-intl';
+import { handleApiError } from '@/utils/error';
 
 interface EntitySelectorProps {
   type: 'category' | 'product';
@@ -47,22 +49,50 @@ export default function EntitySelector({
   categoryId,
   selectedItems = [],
 }: EntitySelectorProps) {
+  const t = useTranslations('admin.entitySelector');
   const [allItems, setAllItems] = useState<EntityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState('');
+  const [selectedError, setSelectedError] = useState('');
+  const [hydratedItems, setHydratedItems] = useState<EntityItem[]>([]);
+  const [retry, setRetry] = useState(0);
+  const selectedKey = selectedIds.join(',');
+  const loadErrorMessage = t('loadError');
+  const selectedErrorMessage = t('selectedLoadError');
+
+  useEffect(() => { setPage(1); }, [type, categoryId]);
+
+  useEffect(() => {
+    setSelectedError('');
+    if (type !== 'product' || !selectedKey) return;
+    let cancelled = false;
+    Promise.allSettled(selectedKey.split(',').map((id) => adminProductsApi.getById(Number(id))))
+      .then((results) => {
+        if (cancelled) return;
+        setHydratedItems(results.flatMap((result) => result.status === 'fulfilled'
+          ? [{ id: result.value.id, label: result.value.name, sublabel: result.value.status }]
+          : []));
+        if (results.some((result) => result.status === 'rejected')) setSelectedError(selectedErrorMessage);
+      });
+    return () => { cancelled = true; };
+  }, [type, selectedKey, retry, selectedErrorMessage]);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setError('');
     async function fetchItems() {
       try {
         if (type === 'category') {
           const tree = await categoriesApi.getTree();
           if (!cancelled) setAllItems(flattenCategories(tree));
         } else {
-          const params: Record<string, number | string> = { limit: 100 };
-          if (categoryId !== undefined) params.categoryId = categoryId;
-          const res = await productsApi.getList(params);
+          const res = await adminProductsApi.getList({ limit: 20, page, q: search || undefined, categoryId });
           if (!cancelled) {
+            setTotalPages(Math.max(1, Math.ceil(res.total / res.limit)));
             setAllItems(
               res.items.map((p: Product) => ({
                 id: p.id,
@@ -72,29 +102,31 @@ export default function EntitySelector({
             );
           }
         }
-      } catch {
-        // silently fail
+      } catch (err) {
+        if (!cancelled) setError(handleApiError(err, loadErrorMessage));
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
     fetchItems();
     return () => { cancelled = true; };
-  }, [type, categoryId]);
+  }, [type, categoryId, page, search, retry, loadErrorMessage]);
 
   const selectedDisplayItems = useMemo(
     () => selectedIds
-      .map((id) => allItems.find((item) => item.id === id) ?? selectedItems.find((item) => item.id === id))
-      .filter(Boolean) as EntityItem[],
-    [selectedIds, allItems, selectedItems],
+      .map((id) => allItems.find((item) => item.id === id)
+        ?? selectedItems.find((item) => item.id === id)
+        ?? hydratedItems.find((item) => item.id === id)
+        ?? { id, label: t('unavailable', { id }) }),
+    [selectedIds, allItems, selectedItems, hydratedItems, t],
   );
 
   const filteredAvailable = useMemo(() => {
     const q = search.toLowerCase();
     return allItems
       .filter((item) => !selectedIds.includes(item.id))
-      .filter((item) => item.label.toLowerCase().includes(q));
-  }, [allItems, selectedIds, search]);
+      .filter((item) => type === 'product' || item.label.toLowerCase().includes(q));
+  }, [allItems, selectedIds, search, type]);
 
   function addItem(id: number) {
     onChange([...selectedIds, id]);
@@ -121,8 +153,8 @@ export default function EntitySelector({
   return (
     <div>
       <label className="mb-1 block text-xs font-medium text-muted-foreground">
-        {type === 'category' ? '카테고리' : '상품'} 선택
-        <span className="ml-1 text-muted-foreground/60">(순서대로 표시)</span>
+        {t(type)}
+        <span className="ml-1 text-muted-foreground/60">{t('orderHint')}</span>
       </label>
 
       {/* Available items */}
@@ -132,17 +164,22 @@ export default function EntitySelector({
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={placeholder ?? (type === 'category' ? '카테고리 검색...' : '상품 검색...')}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder={placeholder ?? t(type === 'category' ? 'categorySearch' : 'productSearch')}
             className="w-full rounded border border-input py-1 pl-7 pr-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
         <div className="rounded border border-input bg-background max-h-40 overflow-y-auto">
           {loading ? (
-            <div className="px-3 py-2 text-xs text-muted-foreground">로딩 중...</div>
+            <div className="px-3 py-2 text-xs text-muted-foreground">{t('loading')}</div>
+          ) : error ? (
+            <div role="alert" className="px-3 py-2 text-xs text-destructive">
+              {error}
+              <button type="button" onClick={() => setRetry((value) => value + 1)}>{t('retry')}</button>
+            </div>
           ) : filteredAvailable.length === 0 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
-              {search ? '검색 결과 없음' : '모든 항목이 선택됨'}
+              {t(search ? 'emptySearch' : 'allSelected')}
             </div>
           ) : (
             filteredAvailable.map((item) => (
@@ -161,17 +198,25 @@ export default function EntitySelector({
             ))
           )}
         </div>
+        {type === 'product' && totalPages > 1 && (
+          <div className="flex items-center justify-between gap-2 py-1 text-xs">
+            <button type="button" disabled={loading || page <= 1} onClick={() => setPage((value) => value - 1)}>{t('previous')}</button>
+            <span>{page} / {totalPages}</span>
+            <button type="button" disabled={loading || page >= totalPages} onClick={() => setPage((value) => value + 1)}>{t('next')}</button>
+          </div>
+        )}
       </div>
 
       {/* Selected items */}
       <div>
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">선택됨 ({selectedIds.length})</span>
+          <span className="text-xs text-muted-foreground">{t('selected', { count: selectedIds.length })}</span>
         </div>
+        {selectedError && <div role="alert" className="text-xs text-destructive">{selectedError}<button type="button" onClick={() => setRetry((value) => value + 1)}>{t('retry')}</button></div>}
         <div className="rounded border border-input bg-background max-h-48 overflow-y-auto">
           {selectedDisplayItems.length === 0 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
-              클릭으로 추가
+              {t('addHint')}
             </div>
           ) : (
             selectedDisplayItems.map((item, index) => (
@@ -185,7 +230,7 @@ export default function EntitySelector({
                     type="button"
                     onClick={() => moveUp(index)}
                     disabled={index === 0}
-                    aria-label={`위로 이동 ${item.label}`}
+                    aria-label={t('moveUp', { label: item.label })}
                     className={cn('p-0.5 rounded hover:bg-muted', index === 0 && 'opacity-30 cursor-not-allowed')}
                   >
                     <ChevronUp className="h-3 w-3" />
@@ -194,7 +239,7 @@ export default function EntitySelector({
                     type="button"
                     onClick={() => moveDown(index)}
                     disabled={index === selectedDisplayItems.length - 1}
-                    aria-label={`아래로 이동 ${item.label}`}
+                    aria-label={t('moveDown', { label: item.label })}
                     className={cn('p-0.5 rounded hover:bg-muted', index === selectedDisplayItems.length - 1 && 'opacity-30 cursor-not-allowed')}
                   >
                     <ChevronDown className="h-3 w-3" />
@@ -202,7 +247,7 @@ export default function EntitySelector({
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
-                    aria-label={`선택 해제 ${item.label}`}
+                    aria-label={t('remove', { label: item.label })}
                     className="p-0.5 rounded text-destructive hover:bg-destructive/10"
                   >
                     <X className="h-3 w-3" />

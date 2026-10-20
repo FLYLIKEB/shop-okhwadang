@@ -51,10 +51,13 @@ function flattenCategories(
 }
 
 function getSiblings(category: AdminCategory, list: AdminCategory[]): AdminCategory[] {
-  if (category.parentId === null) {
-    return list.filter((c) => c.parentId === null);
+  const siblings = list.filter((item) => item.parentId === category.parentId);
+  if (siblings.length > 0) return siblings;
+  for (const item of list) {
+    const nested = getSiblings(category, item.children ?? []);
+    if (nested.length > 0) return nested;
   }
-  return list.filter((c) => c.parentId === category.parentId);
+  return [];
 }
 
 
@@ -132,11 +135,8 @@ export default function AdminCategoriesPage() {
       const index = siblings.findIndex((s) => s.id === category.id);
       if (index <= 0) return;
 
-      const prev = siblings[index - 1];
-      const newOrders = [
-        { id: category.id, sortOrder: prev.sortOrder },
-        { id: prev.id, sortOrder: category.sortOrder },
-      ];
+      [siblings[index - 1], siblings[index]] = [siblings[index], siblings[index - 1]];
+      const newOrders = siblings.map((item, sortOrder) => ({ id: item.id, sortOrder }));
       await adminCategoriesApi.reorder(newOrders);
       await loadCategories();
     },
@@ -147,13 +147,9 @@ export default function AdminCategoriesPage() {
     async (category: AdminCategory) => {
       const siblings = getSiblings(category, categories);
       const index = siblings.findIndex((s) => s.id === category.id);
-      if (index >= siblings.length - 1) return;
-
-      const next = siblings[index + 1];
-      const newOrders = [
-        { id: category.id, sortOrder: next.sortOrder },
-        { id: next.id, sortOrder: category.sortOrder },
-      ];
+      if (index < 0 || index >= siblings.length - 1) return;
+      [siblings[index], siblings[index + 1]] = [siblings[index + 1], siblings[index]];
+      const newOrders = siblings.map((item, sortOrder) => ({ id: item.id, sortOrder }));
       await adminCategoriesApi.reorder(newOrders);
       await loadCategories();
     },

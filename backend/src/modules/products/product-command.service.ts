@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  BadRequestException,
   Injectable,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
@@ -41,7 +42,7 @@ export class ProductCommandService {
           ...productData,
           categoryId: dto.categoryId ?? null,
           salePrice: dto.salePrice ?? null,
-          sku: dto.sku ?? null,
+          sku: dto.sku?.trim() ? dto.sku : null,
           isVisibleKo: dto.isVisibleKo ?? true,
           isVisibleEn: dto.isVisibleEn ?? false,
         });
@@ -104,7 +105,9 @@ export class ProductCommandService {
     const { images, detailImages, options, attributes, ...productData } = dto;
     const product = await this.findById(id);
     const previousStock = product.stock;
+    if (typeof productData.sku === 'string' && productData.sku.trim() === '') productData.sku = null;
     Object.assign(product, productData);
+    let optionRestocks: { id: number; previousStock: number; nextStock: number }[] = [];
 
     try {
       const saved = await this.dataSource.transaction(async (manager: EntityManager) => {
@@ -146,7 +149,7 @@ export class ProductCommandService {
         }
 
         if (options !== undefined) {
-          await this.syncProductOptions(manager, id, options);
+          optionRestocks = await this.syncProductOptions(manager, id, options);
         }
 
         if (attributes !== undefined) {
@@ -163,6 +166,12 @@ export class ProductCommandService {
           id,
           previousStock,
           saved.stock,
+        );
+      }
+
+      for (const option of optionRestocks) {
+        await this.restockAlertsService.processProductRestock(
+          id, option.previousStock, option.nextStock, option.id,
         );
       }
 
@@ -228,21 +237,43 @@ export class ProductCommandService {
     await manager.save(entityClass, entities);
   }
 
-  // 옵션은 cart_items 가 FK 로 참조하므로 전체 삭제 후 재생성 대신 (name, value) 기준으로 동기화한다.
   private async syncProductOptions(
     manager: EntityManager,
     productId: number,
     options: ProductOptionInputDto[],
-  ): Promise<void> {
+  ): Promise<{ id: number; previousStock: number; nextStock: number }[]> {
     const existing = await manager.find(ProductOption, { where: { productId } });
     const existingByKey = new Map(existing.map((option) => [`${option.name}\u0000${option.value}`, option]));
+    const existingById = new Map(existing.map((option) => [Number(option.id), option]));
     const matchedIds = new Set<number>();
+    const inputKeys = new Set<string>();
     const toSave: ProductOption[] = [];
+    const restocks: { id: number; previousStock: number; nextStock: number }[] = [];
 
     options.forEach((input, index) => {
-      const matched = existingByKey.get(`${input.name}\u0000${input.value}`);
+      const key = `${input.name}\u0000${input.value}`;
+      if (inputKeys.has(key)) {
+        throw new BadRequestException('중복된 상품 옵션입니다.');
+      }
+      inputKeys.add(key);
+      const matched = input.id !== undefined
+        ? existingById.get(Number(input.id))
+        : existingByKey.get(key);
+      if (input.id !== undefined && !matched) {
+        throw new BadRequestException('해당 상품에 속하지 않는 옵션 ID입니다.');
+      }
       if (matched) {
-        matchedIds.add(matched.id);
+        const matchedId = Number(matched.id);
+        if (matchedIds.has(matchedId)) {
+          throw new BadRequestException('중복된 상품 옵션 ID입니다.');
+        }
+        matchedIds.add(matchedId);
+        const nextStock = input.stock ?? 0;
+        if (matched.stock <= 0 && nextStock > 0) {
+          restocks.push({ id: matchedId, previousStock: matched.stock, nextStock });
+        }
+        matched.name = input.name;
+        matched.value = input.value;
         matched.priceAdjustment = input.priceAdjustment ?? 0;
         matched.stock = input.stock ?? 0;
         matched.sortOrder = input.sortOrder ?? index;
@@ -259,13 +290,21 @@ export class ProductCommandService {
       }));
     });
 
-    const removedIds = existing.filter((option) => !matchedIds.has(option.id)).map((option) => option.id);
+    const removedIds = existing.filter((option) => !matchedIds.has(Number(option.id))).map((option) => option.id);
     if (removedIds.length > 0) {
-      await manager.delete(ProductOption, { id: In(removedIds) });
+      try {
+        await manager.delete(ProductOption, { id: In(removedIds) });
+      } catch (error) {
+        if (error instanceof Error && 'code' in error && error.code === 'ER_ROW_IS_REFERENCED_2') {
+          throw new BadRequestException('장바구니 또는 주문에서 사용 중인 옵션은 삭제할 수 없습니다.');
+        }
+        throw error;
+      }
     }
     if (toSave.length > 0) {
       await manager.save(ProductOption, toSave);
     }
+    return restocks;
   }
 
   private async syncProductAttributes(

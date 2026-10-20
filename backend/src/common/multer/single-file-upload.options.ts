@@ -6,12 +6,13 @@ interface SingleFileMemoryUploadOptionsInput {
   fileSize: number;
   allowedMimeTypes?: readonly string[];
   invalidMimeMessage?: string;
+  fields?: number;
 }
 
 interface MulterFileLimits {
   fileSize: number;
   files: 1;
-  fields: 0;
+  fields: number;
 }
 
 type FileFilterCallback = (error: Error | null, acceptFile: boolean) => void;
@@ -36,7 +37,7 @@ export function createSingleFileMemoryUploadOptions(
     limits: {
       fileSize: input.fileSize,
       files: 1,
-      fields: 0,
+      fields: input.fields ?? 0,
     },
     ...(input.allowedMimeTypes
       ? {

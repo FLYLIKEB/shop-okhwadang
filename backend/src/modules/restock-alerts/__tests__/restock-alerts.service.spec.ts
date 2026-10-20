@@ -155,6 +155,17 @@ describe('RestockAlertsService', () => {
   });
 
   describe('processProductRestock', () => {
+    it('targets only the restored option and never product-level subscriptions', async () => {
+      alertRepo.find.mockResolvedValue([]);
+      await service.processProductRestock(1, 0, 5, 11);
+      expect(alertRepo.find).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ productId: 1, productOptionId: 11 }),
+      }));
+      alertRepo.find.mockClear();
+      await service.processProductRestock(1, 0, 0, 11);
+      await service.processProductRestock(1, 2, 5, 11);
+      expect(alertRepo.find).not.toHaveBeenCalled();
+    });
     it('재고가 0->양수 가 아니면 아무 동작 없음', async () => {
       await service.processProductRestock(1, 5, 10); // stock 5 -> 10
       await service.processProductRestock(1, 0, 0); // 0 -> 0

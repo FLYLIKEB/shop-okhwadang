@@ -14,7 +14,16 @@ export interface CreateBlockData {
   is_visible?: boolean;
 }
 
+export interface SavePageDraftData {
+  title: string;
+  slug: string;
+  is_published?: boolean;
+  blocks: (CreateBlockData & { id: number; is_visible: boolean })[];
+}
+
 export const adminPagesApi = {
+  saveDraft: (id: number, data: SavePageDraftData, key: string) =>
+    apiClient.put<Page>(`/admin/pages/${id}/draft`, data, { headers: { 'Idempotency-Key': key } }),
   getAll: () => apiClient.get<Page[]>('/admin/pages'),
   getById: (id: number) => apiClient.get<Page>(`/admin/pages/${id}`),
   create: (data: CreatePageData) => apiClient.post<Page>('/pages', data),

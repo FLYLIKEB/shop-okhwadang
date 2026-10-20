@@ -52,11 +52,19 @@ vi.mock('@/hooks/useNavigation', () => ({
       { id: 27, group: 'footer', label: '컬렉션', url: '/collection', sort_order: 7, is_active: true, parent_id: null },
       { id: 28, group: 'footer', label: 'Archive', url: '/archive', sort_order: 8, is_active: true, parent_id: null },
       { id: 29, group: 'footer', label: '저널', url: '/journal', sort_order: 9, is_active: true, parent_id: null },
+      { id: 30, group: 'footer', label: 'More pages', url: '/more', sort_order: 10, is_active: true, parent_id: null, children: [
+        { id: 31, group: 'footer', label: 'Nested page', url: '/nested', sort_order: 0, is_active: true, parent_id: 30 },
+      ] },
     ],
   }),
 }));
 
 describe('Footer', () => {
+  it('renders roots beyond the tenth item and their descendants as accessible links', () => {
+    render(<Footer />);
+    expect(screen.getByRole('link', { name: 'More pages' })).toHaveAttribute('href', '/more');
+    expect(screen.getByRole('link', { name: 'Nested page' })).toHaveAttribute('href', '/nested');
+  });
   it('renders 이용약관, 개인정보처리방침, 고객센터 links', () => {
     render(<Footer />);
     expect(screen.getByRole('link', { name: '이용약관' })).toBeInTheDocument();

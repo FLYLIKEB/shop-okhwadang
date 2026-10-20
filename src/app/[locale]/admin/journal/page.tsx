@@ -156,7 +156,7 @@ function JournalFormModal({
       } catch {
         setParagraphs(initial.content ? [initial.content] : ['']);
       }
-    } else if (!initial) {
+    } else {
       setParagraphs(['']);
     }
   }, [initial, open]);
@@ -167,10 +167,7 @@ function JournalFormModal({
   };
 
   const handleTitleChange = (value: string) => {
-    setForm({ ...form, title: value });
-    if (!initial && !form.slug) {
-      setForm({ ...form, title: value, slug: slugify(value) });
-    }
+    setForm((previous) => ({ ...previous, title: value, ...(!initial && !previous.slug ? { slug: slugify(value) } : {}) }));
   };
 
   const addParagraph = () => setParagraphs([...paragraphs, '']);
@@ -287,9 +284,9 @@ function JournalFormModal({
           <label className="typo-label block mb-1">커버 이미지</label>
           <ProductImageUploader
             imageUrl={form.coverImageUrl ?? ''}
-            onChange={(url) => setForm({ ...form, coverImageUrl: url })}
+            onChange={(url) => setForm((previous) => ({ ...previous, coverImageUrl: url }))}
             cmsKind="journal"
-            onDerivativesChange={(derivatives) => setForm({ ...form, coverImageDerivatives: derivatives })}
+            onDerivativesChange={(derivatives) => setForm((previous) => ({ ...previous, coverImageDerivatives: derivatives }))}
           />
         </div>
 

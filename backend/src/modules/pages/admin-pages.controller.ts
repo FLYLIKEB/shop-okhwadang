@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, ParseIntPipe, Put } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,12 +8,24 @@ import {
 } from '@nestjs/swagger';
 import { PagesService } from './pages.service';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AuthUser } from '../../common/interfaces/auth-user.interface';
+import { SavePageDraftDto } from './dto/save-page-draft.dto';
 
 @ApiTags('관리자 - 페이지')
 @Controller('admin/pages')
 @Roles('admin', 'super_admin')
 export class AdminPagesController {
   constructor(private readonly pagesService: PagesService) {}
+
+  @Put(':id/draft')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: '페이지 전체 초안을 원자적으로 저장' })
+  @ApiResponse({ status: 200, description: '숨김 블록을 포함한 저장된 페이지' })
+  saveDraft(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser,
+    @Headers('idempotency-key') key: string | undefined, @Body() dto: SavePageDraftDto) {
+    return this.pagesService.saveDraft(id, user.id, key, dto);
+  }
 
   @Get()
   @ApiCookieAuth()

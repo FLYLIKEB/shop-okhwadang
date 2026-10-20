@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { handleApiError } from '@/utils/error';
 import { adminPagesApi } from '@/lib/api';
-import type { Page, PageBlock } from '@/lib/api';
+import type { Page } from '@/lib/api';
 import type { DraftState, DraftAction } from '@/components/shared/admin/page-editor/useDraftReducer';
 import { toastMessage } from '@/utils/toastMessages';
 
@@ -33,8 +33,11 @@ export function usePageEditor({
   setSaving,
   loadPages,
 }: UsePageEditorOptions): UsePageEditorReturn {
+  const pendingSave = useRef<{ payload: string; key: string } | null>(null);
+  const saving = useRef(false);
   const handleSelectPage = useCallback(
     async (page: Page) => {
+      if (saving.current) return;
       if (draft.hasChanges) {
         const confirmed = window.confirm('저장하지 않은 변경사항이 있습니다. 이동하시겠습니까?');
         if (!confirmed) return;
@@ -52,6 +55,7 @@ export function usePageEditor({
   );
 
   const handleCreatePage = async (title: string, slug: string) => {
+    if (saving.current) return;
     try {
       const newPage = await adminPagesApi.create({ title, slug });
       toast.success(toastMessage('pageCreated'));
@@ -64,7 +68,7 @@ export function usePageEditor({
   };
 
   const handleDeletePage = async () => {
-    if (!selectedPage) return;
+    if (!selectedPage || saving.current) return;
     const confirmed = window.confirm(`"${selectedPage.title}" 페이지를 삭제하시겠습니까?`);
     if (!confirmed) return;
     try {
@@ -79,82 +83,43 @@ export function usePageEditor({
     }
   };
 
-  const handleTogglePublish = async () => {
-    if (!selectedPage) return;
-    try {
-      const updated = await adminPagesApi.update(selectedPage.id, {
-        is_published: !selectedPage.is_published,
-      } as Partial<Page>);
-      const fullPage = await adminPagesApi.getById(updated.id);
-      setSelectedPage(fullPage);
-      dispatch({ type: 'INIT', blocks: fullPage.blocks, title: fullPage.title, slug: fullPage.slug });
-      await loadPages();
-      toast.success(toastMessage(fullPage.is_published ? 'pagePublished' : 'pageUnpublished'));
-    } catch (err) {
-      toast.error(handleApiError(err, toastMessage('statusChangeError')));
-    }
-  };
-
-  const handleSave = async () => {
-    if (!selectedPage) return;
+  const saveDraft = async (isPublished?: boolean) => {
+    if (!selectedPage || saving.current) return;
+    saving.current = true;
     setSaving(true);
     try {
-      // 1. Create new blocks
-      const newBlocks = draft.blocks.filter((b) => b._isNew);
-      for (const block of newBlocks) {
-        await adminPagesApi.addBlock(selectedPage.id, {
-          type: block.type,
-          content: block.content,
-          sort_order: block.sort_order,
-          is_visible: block.is_visible,
-        });
+      const data = {
+        title: draft.title, slug: draft.slug,
+        ...(isPublished === undefined ? {} : { is_published: isPublished }),
+        blocks: draft.blocks.map((block, index) => ({
+          id: Number(block.id), type: block.type, content: block.content,
+          sort_order: index, is_visible: block.is_visible,
+        })),
+      };
+      const payload = JSON.stringify({ pageId: selectedPage.id, ...data });
+      if (pendingSave.current?.payload !== payload) {
+        pendingSave.current = { payload, key: crypto.randomUUID() };
       }
-
-      // 2. Update modified blocks
-      const modifiedBlocks = draft.blocks.filter((b) => b._isModified && !b._isNew);
-      for (const block of modifiedBlocks) {
-        await adminPagesApi.updateBlock(selectedPage.id, block.id, {
-          content: block.content,
-          is_visible: block.is_visible,
-        } as Partial<PageBlock>);
-      }
-
-      // 3. Delete removed blocks
-      for (const blockId of draft.deletedBlockIds) {
-        await adminPagesApi.deleteBlock(selectedPage.id, blockId);
-      }
-
-      // 4. Reorder blocks
-      const existingBlocks = draft.blocks.filter((b) => !b._isNew && b.id > 0);
-      if (existingBlocks.length > 0) {
-        await adminPagesApi.reorderBlocks(
-          selectedPage.id,
-          existingBlocks.map((b) => ({ id: b.id, sort_order: b.sort_order })),
-        );
-      }
-
-      // 5. Update page meta (title, slug)
-      const metaChanged =
-        draft.title !== selectedPage.title || draft.slug !== selectedPage.slug;
-      if (metaChanged) {
-        await adminPagesApi.update(selectedPage.id, {
-          title: draft.title,
-          slug: draft.slug,
-        } as Partial<Page>);
-      }
-
-      toast.success(toastMessage('saved'));
-
-      // Reload the page data via admin API so private pages and hidden blocks remain editable.
-      const reloaded = await adminPagesApi.getById(selectedPage.id);
-      setSelectedPage(reloaded);
-      dispatch({ type: 'INIT', blocks: reloaded.blocks, title: reloaded.title, slug: reloaded.slug });
+      const saved = await adminPagesApi.saveDraft(selectedPage.id, data, pendingSave.current.key);
+      setSelectedPage(saved);
+      setSelectedBlockId(null);
+      dispatch({ type: 'INIT', blocks: saved.blocks, title: saved.title, slug: saved.slug });
+      pendingSave.current = null;
+      toast.success(toastMessage(isPublished === undefined ? 'saved' : saved.is_published ? 'pagePublished' : 'pageUnpublished'));
       await loadPages();
     } catch (err) {
       toast.error(handleApiError(err, toastMessage('saveError')));
     } finally {
+      saving.current = false;
       setSaving(false);
     }
+  };
+
+  const handleSave = () => saveDraft();
+
+  const handleTogglePublish = async () => {
+    if (!selectedPage || saving.current) return;
+    await saveDraft(!selectedPage.is_published);
   };
 
   return { handleSelectPage, handleCreatePage, handleDeletePage, handleTogglePublish, handleSave };
