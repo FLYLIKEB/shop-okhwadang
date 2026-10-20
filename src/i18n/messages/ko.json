@@ -1209,6 +1209,7 @@
       "business": "사업자 정보",
       "close": "사이드바 닫기",
       "cmsGroup": "CMS",
+      "faqs": "FAQ 관리",
       "reviews": "리뷰관리",
       "localization": "번역 상태",
       "attributes": "속성",
@@ -1480,6 +1481,10 @@
       },
       "sections": {
         "dashboard": "대시보드",
+        "faqs": "FAQ 관리",
+        "announcementBars": "안내 바 관리",
+        "journal": "저널 관리",
+        "logs": "원격 로그",
         "products": "상품 관리",
         "categories": "카테고리 관리",
         "orders": "주문 관리",
