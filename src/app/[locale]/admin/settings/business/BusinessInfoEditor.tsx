@@ -149,7 +149,7 @@ export default function BusinessInfoEditor({ initialSettings }: Props) {
         }
       />
 
-      <div className="surface-card p-4">
+      <fieldset disabled={saving} className="surface-card min-w-0 p-4">
         {orderedSettings.length === 0 ? (
           <AdminEmptyState title="사업자 정보 설정이 없습니다. DB 마이그레이션을 실행해 주세요." />
         ) : (
@@ -164,7 +164,7 @@ export default function BusinessInfoEditor({ initialSettings }: Props) {
             />
           ))
         )}
-      </div>
+      </fieldset>
     </div>
   );
 }
