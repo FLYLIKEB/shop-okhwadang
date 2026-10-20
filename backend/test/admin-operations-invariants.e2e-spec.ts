@@ -127,6 +127,40 @@ describe('admin operations invariants (MySQL and HTTP)', () => {
     expect((await db.getRepository(Payment).findOneByOrFail({ orderId: completed.orderId })).status).toBe(PaymentStatus.CANCELLED);
   });
 
+  it.each([OrderStatus.PAID, OrderStatus.PREPARING])(
+    'rejects partial/full pre-delivery refunds and leaves %s orders shippable', async (status) => {
+      const { order, payment } = await fixture(status, PaymentStatus.CONFIRMED);
+      const partialCancel = jest.spyOn(app.get(MockPaymentAdapter), 'partialCancel');
+      for (const amount of [5000, 10000]) {
+        await request(app.getHttpServer()).post(`/api/admin/orders/${order.id}/refunds`)
+          .set('Cookie', cookie).send({ amount, reason: 'Before delivery', idempotencyKey: `${RUN}-${order.id}-${amount}` })
+          .expect(400);
+      }
+      expect(partialCancel).not.toHaveBeenCalled();
+      expect(await db.getRepository(Refund).countBy({ paymentId: Number(payment.id) })).toBe(0);
+      expect((await db.getRepository(Payment).findOneByOrFail({ id: payment.id })).status).toBe(PaymentStatus.CONFIRMED);
+      await request(app.getHttpServer()).post(`/api/admin/shipping/${order.id}`)
+        .set('Cookie', cookie).send({ carrier: 'cj', trackingNumber: '123456789012' }).expect(201);
+    },
+  );
+
+  it.each([OrderStatus.DELIVERED, OrderStatus.COMPLETED])(
+    'allows post-delivery refunds on %s and replays the completed full refund once', async (status) => {
+      const { order, payment } = await fixture(status, PaymentStatus.CONFIRMED);
+      const partialCancel = jest.spyOn(app.get(MockPaymentAdapter), 'partialCancel');
+      const first = { amount: 5000, reason: 'Price adjustment', idempotencyKey: `${RUN}-${order.id}-first` };
+      const last = { amount: 5000, reason: 'Remaining adjustment', idempotencyKey: `${RUN}-${order.id}-last` };
+      for (const body of [first, last, last]) {
+        await request(app.getHttpServer()).post(`/api/admin/orders/${order.id}/refunds`)
+          .set('Cookie', cookie).send(body).expect(201);
+      }
+      expect(partialCancel).toHaveBeenCalledTimes(2);
+      expect(await db.getRepository(Refund).countBy({ paymentId: Number(payment.id), status: RefundStatus.COMPLETED })).toBe(2);
+      expect((await db.getRepository(Payment).findOneByOrFail({ id: payment.id })).status).toBe(PaymentStatus.REFUNDED);
+      expect((await db.getRepository(Order).findOneByOrFail({ id: order.id })).status).toBe(OrderStatus.REFUNDED);
+    },
+  );
+
   it.each([PaymentStatus.CANCELLED, PaymentStatus.REFUNDED])('failed reconciliation cannot resurrect %s payment', async (status) => {
     const orderStatus = status === PaymentStatus.CANCELLED ? OrderStatus.CANCELLED : OrderStatus.REFUNDED;
     const { order, payment } = await fixture(orderStatus, status);

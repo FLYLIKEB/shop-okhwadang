@@ -37,6 +37,10 @@ export class PaymentRefundService {
     }
     const idempotencyKey = dto.idempotencyKey;
     const reservation = await this.deps.dataSource.transaction(async (manager) => {
+      const order = await manager.findOne(Order, {
+        where: { id: orderId },
+        lock: { mode: 'pessimistic_write' },
+      });
       const payment = await manager.findOne(Payment, {
         where: { orderId },
         lock: { mode: 'pessimistic_write' },
@@ -53,7 +57,7 @@ export class PaymentRefundService {
       });
       if (existingRefund) {
         if (
-          existingRefund.paymentId !== Number(payment.id)
+          String(existingRefund.paymentId) !== String(payment.id)
           || Number(existingRefund.amount) !== dto.amount
           || existingRefund.reason !== dto.reason
         ) {
@@ -77,6 +81,9 @@ export class PaymentRefundService {
       }
       if (payment.status !== PaymentStatus.CONFIRMED && payment.status !== PaymentStatus.PARTIAL_CANCELLED) {
         throw new BadRequestException('환불 가능한 상태가 아닙니다.');
+      }
+      if (!order || ![OrderStatus.DELIVERED, OrderStatus.COMPLETED].includes(order.status)) {
+        throw new BadRequestException('금액 환불은 배송 완료 후에만 가능합니다. 배송 전에는 주문 취소를 이용해주세요.');
       }
 
       if (payment.gateway === PaymentGatewayType.STRIPE) {

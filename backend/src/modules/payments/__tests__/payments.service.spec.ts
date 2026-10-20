@@ -828,7 +828,9 @@ describe('PaymentsService', () => {
       };
       return makeTransactionManager({
         findOne: jest.fn().mockImplementation((entity: unknown) =>
-          entity === Payment
+          entity === Order
+            ? Promise.resolve(makeOrder({ status: OrderStatus.DELIVERED }))
+            : entity === Payment
             ? Promise.resolve(confirmedPayment)
             : Promise.resolve(null),
         ),
@@ -892,7 +894,8 @@ describe('PaymentsService', () => {
       });
       const stripeManager = makeRefundManager({
         findOne: jest.fn().mockImplementation((entity: unknown) =>
-          entity === Payment ? Promise.resolve(stripePayment) : Promise.resolve(null),
+          entity === Order ? Promise.resolve(makeOrder({ status: OrderStatus.DELIVERED }))
+            : entity === Payment ? Promise.resolve(stripePayment) : Promise.resolve(null),
         ),
       });
       mockDataSource.transaction
@@ -972,7 +975,8 @@ describe('PaymentsService', () => {
       // Phase 1 manager (create pending refund)
       const phase1Manager = makeRefundManager({
         findOne: jest.fn().mockImplementation((entity: unknown) =>
-          entity === Payment ? Promise.resolve(totalPayment) : Promise.resolve(null),
+          entity === Order ? Promise.resolve(makeOrder({ status: OrderStatus.DELIVERED }))
+            : entity === Payment ? Promise.resolve(totalPayment) : Promise.resolve(null),
         ),
         createQueryBuilder: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnThis(),

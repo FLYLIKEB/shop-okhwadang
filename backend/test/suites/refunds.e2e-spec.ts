@@ -126,6 +126,23 @@ export function registerRefundsSuite(getApp: () => INestApplication) {
       });
 
       it('관리자 → 부분 환불 → 201, Refund 반환', async () => {
+        await request(app.getHttpServer())
+          .post(`/api/admin/orders/${orderId}/refunds`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ amount: 10000, reason: '배송 전 환불', idempotencyKey: 'refund-e2e-before-delivery' })
+          .expect(400);
+        await request(app.getHttpServer())
+          .post(`/api/admin/shipping/${orderId}`)
+          .set('Cookie', cookieHeader(adminCookies))
+          .send({ carrier: 'cj', trackingNumber: '123456789012' })
+          .expect(201);
+        for (const status of ['shipped', 'delivered']) {
+          await request(app.getHttpServer())
+            .patch(`/api/admin/orders/${orderId}`)
+            .set('Cookie', cookieHeader(adminCookies))
+            .send({ status })
+            .expect(200);
+        }
         const res = await request(app.getHttpServer())
           .post(`/api/admin/orders/${orderId}/refunds`)
           .set('Cookie', cookieHeader(adminCookies))
