@@ -46,6 +46,28 @@ function toFormData(initial: AdminCategory): CreateCategoryData {
   };
 }
 
+function subtreeHeight(category: AdminCategory): number {
+  return 1 + Math.max(0, ...(category.children ?? []).map(subtreeHeight));
+}
+
+function parentOptions(
+  categories: AdminCategory[],
+  excludedId: number | undefined,
+  maxDepth: number,
+  depth = 1,
+  parentLabel = '',
+): Array<{ id: number; label: string }> {
+  if (depth > maxDepth) return [];
+  return categories.flatMap((category) => {
+    if (category.id === excludedId) return [];
+    const label = parentLabel ? `${parentLabel} / ${category.name}` : category.name;
+    return [
+      { id: category.id, label },
+      ...parentOptions(category.children ?? [], excludedId, maxDepth, depth + 1, label),
+    ];
+  });
+}
+
 export default function CategoryFormModal({
   open,
   onClose,
@@ -101,9 +123,7 @@ export default function CategoryFormModal({
 
   const isEdit = !!initial;
 
-  const rootCategories = categories.filter(
-    (c) => c.parentId === null && (!initial || c.id !== initial.id),
-  );
+  const availableParents = parentOptions(categories, initial?.id, 3 - (initial ? subtreeHeight(initial) : 1));
 
   if (!open) return null;
 
@@ -162,9 +182,9 @@ export default function CategoryFormModal({
             )}
           >
             <option value="">없음 (최상위)</option>
-            {rootCategories.map((cat) => (
+            {availableParents.map((cat) => (
               <option key={cat.id} value={cat.id}>
-                {cat.name}
+                {cat.label}
               </option>
             ))}
           </select>
