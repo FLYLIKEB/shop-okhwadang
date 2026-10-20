@@ -31,7 +31,7 @@ import { AuthLoginPolicyService } from './services/auth-login-policy.service';
 import { AuthAuditService } from './services/auth-audit.service';
 import { AUTH_CONFIG, AuthConfig } from '../../config/auth.config';
 
-const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
+const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
 const EMAIL_VERIFICATION_TTL_MIN = 15;
 const EMAIL_VERIFICATION_TTL_MS = EMAIL_VERIFICATION_TTL_MIN * 60 * 1000;
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;

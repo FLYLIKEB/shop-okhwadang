@@ -77,7 +77,39 @@ describe('OAuthCallbackHandler', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('보안 검증에 실패했습니다. 다시 시도해 주세요.');
       expect(mockReplace).toHaveBeenCalledWith('/login');
+      expect(mockApiMethod).not.toHaveBeenCalled();
     });
+  });
+
+  it.each(['kakao', 'google'] as const)('rejects missing state or browser session for %s before API exchange', async (provider) => {
+    for (const [returnedState, storedState] of [[null, 'saved'], ['returned', null], [null, null]]) {
+      mockApiMethod.mockClear();
+      mockReplace.mockClear();
+      sessionStorage.clear();
+      mockGet.mockImplementation((key: string) => key === 'code' ? 'auth-code' : returnedState);
+      if (storedState) sessionStorage.setItem('oauth_state', storedState);
+      const view = render(<OAuthCallbackHandler provider={provider} apiMethod={mockApiMethod} />);
+
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'));
+      expect(mockApiMethod).not.toHaveBeenCalled();
+      view.unmount();
+    }
+  });
+
+  it('consumes state before exchange and rejects a repeated callback', async () => {
+    mockGet.mockImplementation((key: string) => key === 'code' ? 'auth-code' : 'valid-state');
+    sessionStorage.setItem('oauth_state', 'valid-state');
+    mockApiMethod.mockImplementation(() => {
+      expect(sessionStorage.getItem('oauth_state')).toBeNull();
+      return new Promise<AuthTokenResponse>(() => {});
+    });
+
+    const view = render(<OAuthCallbackHandler provider="google" apiMethod={mockApiMethod} />);
+    await waitFor(() => expect(mockApiMethod).toHaveBeenCalledTimes(1));
+    view.unmount();
+    render(<OAuthCallbackHandler provider="google" apiMethod={mockApiMethod} />);
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'));
+    expect(mockApiMethod).toHaveBeenCalledTimes(1);
   });
 
   it('calls apiMethod and shows success toast on success', async () => {

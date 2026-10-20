@@ -324,7 +324,11 @@ describe('AuthService', () => {
       mockPasswordResetTokenRepository.update.mockResolvedValue({ affected: 1 });
       mockNotificationService.sendPasswordReset.mockResolvedValue(undefined);
 
+      const requestedAt = Date.now();
       await service.forgotPassword({ email: 'test@example.com' });
+      const expiresAt = mockPasswordResetTokenRepository.create.mock.calls[0][0].expiresAt as Date;
+      expect(expiresAt.getTime()).toBeGreaterThanOrEqual(requestedAt + 15 * 60 * 1000);
+      expect(expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + 15 * 60 * 1000);
 
       expect(mockPasswordResetTokenRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -338,13 +342,28 @@ describe('AuthService', () => {
         expect.objectContaining({
           recipientName: '홍길동',
           resetUrl: expect.stringContaining('/reset-password?token='),
-          expiresInMinutes: 60,
+          expiresInMinutes: 15,
         }),
       );
     });
   });
 
   describe('resetPassword', () => {
+    it('만료 시각에 도달한 토큰은 비밀번호를 변경하지 않는다', async () => {
+      mockPasswordResetTokenRepository.findOne.mockResolvedValue({
+        id: 1,
+        userId: 1,
+        usedAt: null,
+        expiresAt: new Date(Date.now()),
+      });
+
+      await expect(
+        service.resetPassword({ token: 'expired-token', newPassword: 'NewPass123!' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockUserRepository.update).not.toHaveBeenCalled();
+      expect(mockPasswordResetTokenRepository.update).not.toHaveBeenCalled();
+    });
+
     it('이미 사용된 토큰 재사용 시 BadRequestException', async () => {
       mockPasswordResetTokenRepository.findOne.mockResolvedValue({
         id: 1,
