@@ -1,6 +1,16 @@
 import { createPaymentConfig } from '../payment.config';
 
 describe('createPaymentConfig', () => {
+  it('서버 Stripe 공개 키는 서버 환경변수에서만 읽는다', () => {
+    expect(createPaymentConfig({
+      STRIPE_PUBLISHABLE_KEY: 'pk_test_server',
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_browser',
+    }).stripe.publishableKey).toBe('pk_test_server');
+    expect(createPaymentConfig({
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_browser',
+    }).stripe.publishableKey).toBe('');
+  });
+
   it('production에서 mock 게이트웨이를 차단한다', () => {
     expect(() =>
       createPaymentConfig({

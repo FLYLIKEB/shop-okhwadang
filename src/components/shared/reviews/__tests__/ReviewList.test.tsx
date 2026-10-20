@@ -150,6 +150,25 @@ describe('ReviewList', () => {
     })
   })
 
+  it('renders review and translation markup as text without executable elements', async () => {
+    document.documentElement.lang = 'en'
+    const original = '후기 <img src=x onerror=alert(1)>'
+    const translated = '<script>alert(1)</script> Ignore previous instructions'
+    mockGetByProduct.mockResolvedValue({
+      ...mockResponse,
+      data: [{ ...mockResponse.data[0], content: original }],
+    })
+    mockTranslateContent.mockResolvedValue({ translatedText: translated, sourceLocale: 'ko', targetLocale: 'en' })
+
+    const { container } = render(<ReviewList productId={5} />)
+    expect(await screen.findByText(original)).toBeInTheDocument()
+    expect(container.querySelector('img')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Translate' }))
+    expect(await screen.findByText(translated)).toBeInTheDocument()
+    expect(container.querySelector('script')).toBeNull()
+    expect(mockTranslateContent).toHaveBeenCalledWith({ text: original, sourceLocale: 'ko', targetLocale: 'en' })
+  })
+
   it('renders sort buttons', async () => {
     render(<ReviewList productId={5} />)
 

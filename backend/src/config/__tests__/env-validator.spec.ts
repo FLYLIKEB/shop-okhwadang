@@ -82,7 +82,7 @@ describe('validateEnv', () => {
     expect(validateEnv(env).map((error) => error.key)).toEqual(
       expect.arrayContaining([
         'STRIPE_SECRET_KEY',
-        'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+        'STRIPE_PUBLISHABLE_KEY',
         'STRIPE_WEBHOOK_SECRET',
         'STRIPE_KRW_PER_USD',
         'STRIPE_KRW_PER_USD_UPDATED_AT',
@@ -91,7 +91,7 @@ describe('validateEnv', () => {
 
     Object.assign(env, {
       STRIPE_SECRET_KEY: 'sk_test',
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test',
+      STRIPE_PUBLISHABLE_KEY: 'pk_test',
       STRIPE_WEBHOOK_SECRET: 'whsec_test',
       STRIPE_KRW_PER_USD: '1350.25',
       STRIPE_KRW_PER_USD_UPDATED_AT: new Date().toISOString(),
@@ -108,6 +108,14 @@ describe('validateEnv', () => {
     expect(errors).toHaveLength(2);
     expect(errors.map((e) => e.key)).toContain('NOTIFICATION_PROVIDER');
     expect(errors.map((e) => e.key)).toContain('RESEND_API_KEY');
+  });
+
+  it('Stripe 서버 키 없이 브라우저 환경변수만 있으면 배포를 차단한다', () => {
+    const env = makeFullEnv();
+    env.PAYMENT_GATEWAY = 'stripe';
+    env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = 'pk_test_browser';
+
+    expect(validateEnv(env).map((error) => error.key)).toContain('STRIPE_PUBLISHABLE_KEY');
   });
 
   it('거래 메시지 provider 미설정은 배포를 차단하지 않는다', () => {
