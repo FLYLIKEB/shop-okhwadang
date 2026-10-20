@@ -130,7 +130,7 @@ export function ImageUploadField({
 }: {
   label: string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, derivatives?: Record<string, string>) => void;
   cmsKind?: CmsMediaKind;
   onDerivativesChange?: (value: Record<string, string>) => void;
 }) {
