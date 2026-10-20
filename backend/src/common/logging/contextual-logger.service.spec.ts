@@ -56,4 +56,19 @@ describe('ContextualLogger', () => {
     expect(parsed.password).toBe('[REDACTED]');
     expect(parsed.visible).toBe('ok');
   });
+
+  it('keeps payment keys out of serialized logs and metadata', () => {
+    logger.log({
+      body: { paymentKey: 'FAKE-PAYMENT-KEY-AUDIT-ONLY' },
+      ids: { payment_key: 'FAKE-PAYMENT-KEY-AUDIT-ONLY', orderId: 'ORD-1', transactionId: 'TX-1' },
+    }, { PAYMENT_KEY: 'FAKE-PAYMENT-KEY-AUDIT-ONLY' }, 'PaymentsController');
+
+    const raw = String(stdoutSpy.mock.calls[0][0]);
+    expect(raw).not.toContain('FAKE-PAYMENT-KEY-AUDIT-ONLY');
+    expect(JSON.parse(raw)).toEqual(expect.objectContaining({
+      body: { paymentKey: '[REDACTED]' },
+      ids: { payment_key: '[REDACTED]', orderId: 'ORD-1', transactionId: 'TX-1' },
+      meta: [{ PAYMENT_KEY: '[REDACTED]' }],
+    }));
+  });
 });
