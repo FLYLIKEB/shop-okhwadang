@@ -56,7 +56,9 @@ const makePhase1Manager = (
     payment,
     queryBuilder,
     findOne: jest.fn().mockImplementation((entity: unknown) =>
-      entity === Payment ? Promise.resolve(payment) : Promise.resolve(null),
+      entity === Order
+        ? Promise.resolve({ id: payment.orderId, status: OrderStatus.DELIVERED })
+        : entity === Payment ? Promise.resolve(payment) : Promise.resolve(null),
     ),
     create: jest
       .fn()
@@ -163,6 +165,30 @@ describe('PaymentRefundService', () => {
   });
 
   describe('partialRefund() — 환불 가능 상태 가드', () => {
+    it.each([OrderStatus.PENDING, OrderStatus.PAID, OrderStatus.PREPARING, OrderStatus.SHIPPED])(
+      'rejects new partial and full refunds before delivery (%s) without touching the gateway or benefits', async (status) => {
+        for (const [amount, refundedTotal] of [[5000, '0'], [30000, '0'], [25000, '5000']] as const) {
+          const payment = makeConfirmedPayment({
+            status: refundedTotal === '0' ? PaymentStatus.CONFIRMED : PaymentStatus.PARTIAL_CANCELLED,
+          });
+          const phase1Manager = makePhase1Manager(payment, refundedTotal);
+          phase1Manager.findOne.mockImplementation((entity: unknown) => Promise.resolve(
+            entity === Order ? { id: 1, status } : entity === Payment ? payment : null,
+          ));
+          const { service, gateway, refundRepo } = buildService({ phase1Manager });
+
+          await expect(service.partialRefund(1, {
+            amount, reason: '배송 전 환불', idempotencyKey: `before-delivery-${amount}`,
+          })).rejects.toThrow('금액 환불은 배송 완료 후에만 가능합니다.');
+
+          expect(gateway.partialCancel).not.toHaveBeenCalled();
+          expect(phase1Manager.save).not.toHaveBeenCalled();
+          expect(phase1Manager.update).not.toHaveBeenCalled();
+          expect(refundRepo.update).not.toHaveBeenCalled();
+        }
+      },
+    );
+
     it.each([
       ['PENDING', PaymentStatus.PENDING],
       ['CANCELLED', PaymentStatus.CANCELLED],
@@ -596,6 +622,7 @@ describe('PaymentRefundService', () => {
       const completedRefund = makePendingRefund({
         status: RefundStatus.COMPLETED,
         gatewayRefundId: 'rid-full-completed',
+        paymentId: '100' as unknown as number,
       });
       const phase1Manager = {
         ...makePhase1Manager(payment),

@@ -18,7 +18,7 @@ export class AdminOrderRefundsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post(':id/refunds')
-  @ApiOperation({ summary: '부분 환불 처리', description: '주문에 대해 부분 환불을 처리합니다.' })
+  @ApiOperation({ summary: '부분 환불 처리', description: '배송 완료 후 물리적 반품 없이 금액을 환불합니다. 배송 전에는 주문 취소를 이용합니다.' })
   @ApiParam({ name: 'id', type: Number, description: '주문 ID' })
   @ApiResponse({ status: 201, description: '환불 처리 성공' })
   @ApiResponse({ status: 400, description: '잘못된 요청 (환불 불가 상태 또는 금액 초과)' })
