@@ -26,6 +26,14 @@ import {
 import { Order, OrderStatus } from '../../orders/entities/order.entity';
 import { Shipping, ShippingStatus } from '../entities/shipping.entity';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
+import { IdempotencyService } from '../../../common/services/idempotency.service';
+import { IdempotencyOperation } from '../../../common/entities/idempotency-operation.entity';
+import { GuestOrderAccess } from '../../orders/entities/guest-order-access.entity';
+import { PaymentsService } from '../payments.service';
+import { GuestPaymentsService } from '../guest-payments.service';
+import { AdminOrdersService } from '../../admin/admin-orders.service';
+import { createHash } from 'crypto';
+import { FindOperator } from 'typeorm';
 
 const makeOrder = (overrides: Partial<Order> = {}): Order =>
   ({
@@ -167,6 +175,7 @@ const buildService = (args: BuildArgs = {}) => {
     getValidAccessOrThrow: jest.fn(),
     withOrderAccessLock: jest.fn(),
     rotateAccessTokenForOrder: jest.fn(),
+    rotateAccessTokenForDigest: jest.fn(),
   };
   const pointsService = {
     getRunningBalanceInTx: jest.fn().mockResolvedValue(2000),
@@ -195,6 +204,7 @@ const buildService = (args: BuildArgs = {}) => {
     { emitOrderCompleted: orderEventEmit } as never,
     guestOrderAccessService as unknown as GuestOrderAccessService,
     effectOutbox as never,
+    new IdempotencyService(dataSource as never),
   );
 
   return {
@@ -220,6 +230,353 @@ const buildService = (args: BuildArgs = {}) => {
 describe('PaymentConfirmationService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe.each(['member', 'guest'] as const)('%s facade recovery and replay', (customerType) => {
+    const setup = () => {
+      const originalToken = 'original-guest-token';
+      let state = {
+        payment: makePayment(),
+        order: makeOrder({ userId: customerType === 'member' ? 10 : null }),
+        operations: [] as IdempotencyOperation[],
+        accesses: [{
+          id: 1, orderId: 1,
+          tokenDigest: createHash('sha256').update(originalToken).digest('hex'),
+          expiresAt: new Date(Date.now() + 86400000), supersededAt: null, supersededById: null,
+        } as GuestOrderAccess],
+      };
+      const matches = (row: object, where: Record<string, unknown>) => Object.entries(where).every(([key, value]) => {
+        const actual = (row as Record<string, unknown>)[key];
+        if (value instanceof FindOperator) {
+          return value.type === 'isNull' ? actual === null : (actual as Date) <= value.value;
+        }
+        return actual === value;
+      });
+      const operationRepo = {
+        findOne: jest.fn(async ({ where }) => structuredClone(state.operations.find((row) => matches(row, where)) ?? null)),
+        create: jest.fn((row) => row),
+        save: jest.fn(async (row) => {
+          const saved = { id: state.operations.length + 1, ...row };
+          state.operations = [...state.operations.filter((record) => record.id !== saved.id), structuredClone(saved)];
+          return structuredClone(saved);
+        }),
+        update: jest.fn(async (where, changes) => {
+          const row = state.operations.find((record) => matches(record, where));
+          if (!row) return { affected: 0 };
+          Object.assign(row, structuredClone(changes));
+          return { affected: 1 };
+        }),
+      };
+      const accessRepo = {
+        findOne: jest.fn(async ({ where }) => structuredClone(state.accesses.find((row) => matches(row, where)) ?? null)),
+        create: jest.fn((row) => ({ id: state.accesses.length + 1, ...row })),
+        save: jest.fn(async (row: GuestOrderAccess) => {
+          state.accesses = [...state.accesses.filter((record) => record.id !== row.id), structuredClone(row)];
+          return structuredClone(row);
+        }),
+        createQueryBuilder: jest.fn(() => {
+          const where: Record<string, unknown> = {};
+          const builder: Record<string, jest.Mock> = {
+            setLock: jest.fn().mockReturnThis(),
+            where: jest.fn((_sql, params) => { Object.assign(where, params); return builder; }),
+            andWhere: jest.fn((_sql, params) => { Object.assign(where, params); return builder; }),
+            getOne: jest.fn(async () => structuredClone(state.accesses.find((row) => matches(row, where)) ?? null)),
+          };
+          return builder;
+        }),
+      };
+      const paymentRepo = {
+        findOne: jest.fn(async () => ({ ...structuredClone(state.payment), order: structuredClone(state.order) })),
+        update: jest.fn(async (where, changes) => {
+          if (!matches(state.payment, where)) return { affected: 0 };
+          Object.assign(state.payment, structuredClone(changes));
+          return { affected: 1 };
+        }),
+      };
+      const orderRepo = { findOne: jest.fn(async () => structuredClone(state.order)) };
+      const manager = makeTransactionManager({
+        findOne: jest.fn(async (entity) => {
+          if (entity === Payment) return structuredClone(state.payment);
+          if (entity === Order) return structuredClone(state.order);
+          return null;
+        }),
+        update: jest.fn(async (entity, _id, changes) => {
+          if (entity === Payment) Object.assign(state.payment, structuredClone(changes));
+          if (entity === Order) Object.assign(state.order, structuredClone(changes));
+          return { affected: 1 };
+        }),
+        getRepository: jest.fn((entity) => {
+          if (entity === IdempotencyOperation) return operationRepo;
+          if (entity === GuestOrderAccess) return accessRepo;
+          throw new Error(`Unexpected repository: ${String(entity)}`);
+        }),
+      });
+      Object.assign(manager, { queryRunner: {} });
+      const dataSource = makeDataSource(manager);
+      dataSource.transaction.mockImplementation(async (operation) => {
+        const snapshot = structuredClone(state);
+        try { return await operation(manager); }
+        catch (error) { state = snapshot; throw error; }
+      });
+      const context = buildService({ paymentRepo, dataSource });
+      const idempotency = new IdempotencyService(dataSource as never);
+      const guestAccess = new GuestOrderAccessService(accessRepo as never, orderRepo as never, dataSource as never);
+      context.guestOrderAccessService.getValidAccessOrThrow.mockImplementation(guestAccess.getValidAccessOrThrow.bind(guestAccess));
+      context.guestOrderAccessService.rotateAccessTokenForOrder.mockImplementation(guestAccess.rotateAccessTokenForOrder.bind(guestAccess));
+      context.guestOrderAccessService.rotateAccessTokenForDigest.mockImplementation(guestAccess.rotateAccessTokenForDigest.bind(guestAccess));
+      context.guestOrderAccessService.withOrderAccessLock.mockImplementation((_orderId, operation) => dataSource.transaction(operation));
+      const facade = new PaymentsService(
+        paymentRepo as never, {} as never, orderRepo as never, {} as never, {} as never,
+        context.defaultGateway, createPaymentConfig({ NODE_ENV: 'development', PAYMENT_GATEWAY: 'mock' }),
+        context.tossGateway as never, context.stripeGateway as never, context.inicisGateway as never,
+        context.paypalGateway as never, context.eximbayGateway as never, context.pointsService as never,
+        context.service, dataSource as never, idempotency, context.effectOutbox as never,
+      );
+      const guestFacade = new GuestPaymentsService(facade, context.service, idempotency);
+      const admin = new AdminOrdersService(
+        orderRepo as never, paymentRepo as never, {} as never, facade, dataSource as never,
+        {} as never, {} as never, {} as never, {} as never, {} as never,
+      );
+      (context.defaultGateway.confirm as jest.Mock).mockResolvedValue({
+        paymentKey: 'provider-key', providerTransactionId: 'provider-key',
+        providerOrderReference: state.payment.providerOrderReference,
+        providerAmount: 30000, providerCurrency: 'KRW', amount: 30000,
+        status: 'confirmed', method: PaymentMethod.CARD, rawResponse: { receipt: true },
+      });
+      manager.save.mockRejectedValueOnce(new Error('shipping write failed'));
+      const confirm = (amount = 30000) => customerType === 'member'
+        ? facade.confirm({ orderId: 1, paymentKey: 'provider-key', amount }, 10, 'same-key')
+        : guestFacade.confirm(1, { paymentKey: 'provider-key', amount }, originalToken, 'same-key');
+      return { ...context, manager, admin, confirm, guestAccess, originalToken, state: () => state, operationRepo };
+    };
+
+    it('replays successful recovery through the original facade with validated methods and rotated guest access', async () => {
+      const context = setup();
+      await expect(context.confirm()).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
+      expect(context.state().operations[0].status).toBe('pending');
+      expect(JSON.stringify(context.state().payment.rawResponse)).not.toContain(context.originalToken);
+      context.state().operations[0].leaseExpiresAt = new Date(0);
+      expect(context.state().payment.method).toBe(PaymentMethod.MOCK);
+
+      await context.admin.updateStatus(1, OrderStatus.PAID);
+      expect(context.state().operations[0]).toMatchObject({ status: 'completed', leaseOwner: null, leaseExpiresAt: null });
+      expect(context.state().payment.method).toBe(PaymentMethod.CARD);
+      expect(context.effectOutbox.enqueueWithManager).toHaveBeenCalledTimes(3);
+      for (const call of context.effectOutbox.enqueueWithManager.mock.calls) {
+        expect(call[3]).toMatchObject({ method: PaymentMethod.CARD });
+      }
+      const response = await context.confirm() as Record<string, unknown>;
+      expect(response).toMatchObject({ status: PaymentStatus.CONFIRMED, method: PaymentMethod.CARD, orderId: 1 });
+      expect(context.defaultGateway.confirm).toHaveBeenCalledTimes(1);
+      await expect(context.confirm(1)).rejects.toThrow(ConflictException);
+      if (customerType === 'guest') {
+        expect(response.guestAccessToken).toEqual(expect.any(String));
+        await expect(context.guestAccess.getValidAccessOrThrow(1, context.originalToken)).rejects.toThrow(UnauthorizedException);
+        await expect(context.guestAccess.getValidAccessOrThrow(1, String(response.guestAccessToken))).resolves.toBeDefined();
+      }
+    });
+
+    it('rolls back payment, operation completion and token rotation when recovery effects fail', async () => {
+      const context = setup();
+      await expect(context.confirm()).rejects.toThrow(InternalServerErrorException);
+      context.effectOutbox.enqueueWithManager.mockRejectedValueOnce(new Error('outbox failed'));
+      await expect(context.admin.updateStatus(1, OrderStatus.PAID)).rejects.toThrow('outbox failed');
+      expect(context.state().operations[0].status).toBe('pending');
+      expect(context.state().payment.status).toBe(PaymentStatus.CONFIRMING);
+      expect(context.state().order.status).toBe(OrderStatus.PENDING);
+      expect(context.state().accesses).toHaveLength(1);
+      await context.admin.updateStatus(1, OrderStatus.PAID);
+      await expect(context.confirm()).resolves.toMatchObject({ method: PaymentMethod.CARD });
+      expect(context.defaultGateway.confirm).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not recover when completion loses the reserved operation ownership', async () => {
+      const context = setup();
+      await expect(context.confirm()).rejects.toThrow(InternalServerErrorException);
+      context.operationRepo.update.mockResolvedValueOnce({ affected: 0 });
+      await expect(context.admin.updateStatus(1, OrderStatus.PAID)).rejects.toThrow(ConflictException);
+      expect(context.state().operations[0].status).toBe('pending');
+      expect(context.state().payment.status).toBe(PaymentStatus.CONFIRMING);
+      expect(context.state().order.status).toBe(OrderStatus.PENDING);
+      expect(context.state().accesses).toHaveLength(1);
+      expect(context.effectOutbox.enqueueWithManager).not.toHaveBeenCalled();
+    });
+
+    it('keeps the reserved operation pending when provider evidence is mismatched', async () => {
+      const context = setup();
+      (context.defaultGateway.confirm as jest.Mock).mockResolvedValue({
+        paymentKey: 'provider-key', providerTransactionId: 'provider-key',
+        providerOrderReference: context.state().payment.providerOrderReference,
+        providerAmount: 1, providerCurrency: 'KRW', amount: 1,
+        status: 'confirmed', method: PaymentMethod.CARD, rawResponse: { receipt: true },
+      });
+      await expect(context.confirm()).rejects.toThrow(BadRequestException);
+      await expect(context.admin.updateStatus(1, OrderStatus.PAID)).rejects.toThrow(BadRequestException);
+      expect(context.state().operations[0].status).toBe('pending');
+      expect(context.state().payment.status).toBe(PaymentStatus.CONFIRMING);
+      expect(context.state().order.status).toBe(OrderStatus.PENDING);
+      expect(context.state().accesses).toHaveLength(1);
+      expect(context.effectOutbox.enqueueWithManager).not.toHaveBeenCalled();
+      expect(context.defaultGateway.confirm).toHaveBeenCalledTimes(1);
+    });
+
+    if (customerType === 'guest') {
+      it.each(['expired', 'superseded'] as const)('does not restore %s guest access during administrator recovery', async (accessState) => {
+        const context = setup();
+        await expect(context.confirm()).rejects.toThrow(InternalServerErrorException);
+        if (accessState === 'expired') context.state().accesses[0].expiresAt = new Date(0);
+        else context.state().accesses[0].supersededAt = new Date();
+        await expect(context.admin.updateStatus(1, OrderStatus.PAID)).rejects.toThrow(UnauthorizedException);
+        expect(context.state().operations[0].status).toBe('pending');
+        expect(context.state().payment.status).toBe(PaymentStatus.CONFIRMING);
+        expect(context.state().order.status).toBe(OrderStatus.PENDING);
+        expect(context.effectOutbox.enqueueWithManager).not.toHaveBeenCalled();
+      });
+    }
+  });
+
+  describe.each(['member', 'guest'] as const)('%s confirmation reconciliation', (customerType) => {
+    const validResult = {
+      paymentKey: 'txn_prepared',
+      providerTransactionId: 'txn_prepared',
+      providerOrderReference: 'ORD-20240101-ABCD1',
+      providerAmount: 30000,
+      providerCurrency: 'KRW',
+      amount: 30000,
+      method: 'mock',
+      status: 'confirmed',
+      rawResponse: { receipt: 'original-evidence' },
+    };
+
+    const setup = (idempotencyKey?: string) => {
+      const preparedRawResponse = { providerPreparation: { original: true } };
+      const payment = makePayment({
+        providerTransactionId: 'txn_prepared',
+        rawResponse: preparedRawResponse,
+        order: makeOrder({ userId: customerType === 'guest' ? null : 10 }),
+      });
+      const context = buildService({ paymentRepo: { findOne: jest.fn().mockResolvedValue(payment) } });
+      context.paymentRepo.update.mockImplementation(async (criteria, changes) => {
+        if (payment.status !== criteria.status || payment.confirmationOperationKey !== criteria.confirmationOperationKey) {
+          return { affected: 0 };
+        }
+        Object.assign(payment, changes);
+        return { affected: 1 };
+      });
+      context.guestOrderAccessService.withOrderAccessLock.mockImplementation(
+        async (_orderId, operation) => operation(context.dataSource._manager),
+      );
+      context.guestOrderAccessService.rotateAccessTokenForOrder.mockResolvedValue({
+        guestAccessToken: 'rotated', guestAccessTokenExpiresAt: new Date(),
+      });
+      const confirm = (key = idempotencyKey) => customerType === 'member'
+        ? context.service.confirm({ orderId: 1, paymentKey: 'txn_prepared', amount: 30000 }, 10, key)
+        : context.service.confirmGuest(1, { paymentKey: 'txn_prepared', amount: 30000 }, 'guest-token', key);
+      return { ...context, payment, confirm, preparedRawResponse };
+    };
+
+    describe.each([undefined, 'confirmation-idempotency-key'])('idempotency key %s', (idempotencyKey) => {
+      it.each([
+        { providerAmount: 30001 },
+        { providerCurrency: 'USD' },
+        { providerOrderReference: 'OTHER-ORDER' },
+        { providerTransactionId: 'OTHER-TXN' },
+      ])('preserves and quarantines mismatched evidence %j', async (mismatch) => {
+        const context = setup(idempotencyKey);
+        const { service, payment, confirm, defaultGateway, effectOutbox, dataSource } = context;
+        const result = { ...validResult, ...mismatch };
+        (defaultGateway.confirm as jest.Mock).mockResolvedValue(result);
+
+        await expect(confirm()).rejects.toThrow(BadRequestException);
+
+        expect(payment).toMatchObject({
+          status: PaymentStatus.CONFIRMING,
+          confirmationOperationKey: idempotencyKey ?? 'txn_prepared',
+          providerTransactionId: 'txn_prepared',
+          providerOrderReference: validResult.providerOrderReference,
+          expectedProviderAmount: 30000,
+          expectedProviderCurrency: 'KRW',
+          rawResponse: {
+            reconciliationRequired: true,
+            gatewayConfirmationSucceeded: true,
+            confirmationResult: result,
+            preparedRawResponse: context.preparedRawResponse,
+            preparedBinding: {
+              providerTransactionId: 'txn_prepared',
+              providerOrderReference: validResult.providerOrderReference,
+              expectedProviderAmount: 30000,
+              expectedProviderCurrency: 'KRW',
+            },
+            rawResponse: result.rawResponse,
+          },
+        });
+        expect(payment.order.status).toBe(OrderStatus.PENDING);
+        await expect(confirm()).rejects.toThrow(ConflictException);
+        await expect(confirm('different-idempotency-key')).rejects.toThrow(ConflictException);
+        await expect(service.reconcileConfirmedPayment(1)).rejects.toThrow(BadRequestException);
+        expect(defaultGateway.confirm).toHaveBeenCalledTimes(1);
+        expect(dataSource._manager.save).not.toHaveBeenCalled();
+        expect(effectOutbox.enqueueWithManager).not.toHaveBeenCalled();
+      });
+
+      it('recovers validated confirmation after local synchronization fails without another provider call', async () => {
+        const { service, payment, confirm, defaultGateway, effectOutbox, dataSource, guestOrderAccessService } = setup(idempotencyKey);
+        (defaultGateway.confirm as jest.Mock).mockResolvedValue(validResult);
+        if (customerType === 'member') {
+          dataSource.transaction.mockImplementationOnce(async (operation) => operation(dataSource._manager))
+            .mockRejectedValueOnce(new Error('local synchronization failed'));
+        } else {
+          guestOrderAccessService.withOrderAccessLock.mockRejectedValueOnce(new Error('local synchronization failed'));
+        }
+
+        await expect(confirm()).rejects.toThrow(InternalServerErrorException);
+        expect(payment.status).toBe(PaymentStatus.CONFIRMING);
+        await service.reconcileConfirmedPayment(1);
+        expect(payment).toMatchObject({ status: PaymentStatus.CONFIRMED, confirmationOperationKey: null, paymentKey: 'txn_prepared' });
+        expect(payment.order.status).toBe(OrderStatus.PAID);
+        expect(dataSource._manager.save).toHaveBeenCalledWith(Shipping, expect.objectContaining({ status: ShippingStatus.PAYMENT_CONFIRMED }));
+        expect(effectOutbox.enqueueWithManager).toHaveBeenCalledTimes(3);
+        expect(defaultGateway.confirm).toHaveBeenCalledTimes(1);
+        await expect(service.reconcileConfirmedPayment(1)).rejects.toThrow(BadRequestException);
+      });
+    });
+
+    it('does not overwrite a concurrent operation owner with stale confirmation evidence', async () => {
+      const { payment, confirm, defaultGateway, paymentRepo } = setup();
+      (defaultGateway.confirm as jest.Mock).mockImplementation(async () => {
+        payment.confirmationOperationKey = 'new-owner';
+        return { ...validResult, providerAmount: 1 };
+      });
+      await expect(confirm()).rejects.toThrow(BadRequestException);
+      expect(payment.confirmationOperationKey).toBe('new-owner');
+      expect(payment.rawResponse).toEqual({ providerPreparation: { original: true } });
+      expect(paymentRepo.update).toHaveBeenCalledWith(
+        { id: payment.id, status: PaymentStatus.CONFIRMING, confirmationOperationKey: 'txn_prepared' },
+        expect.anything(),
+      );
+    });
+
+    it('blocks provider replay for legacy reconciliation markers without approval evidence', async () => {
+      const { payment, confirm, defaultGateway } = setup();
+      payment.status = PaymentStatus.CONFIRMING;
+      payment.confirmationOperationKey = 'txn_prepared';
+      payment.rawResponse = { reconciliationRequired: true, rawResponse: { receipt: 'legacy' } };
+      await expect(confirm()).rejects.toThrow(ConflictException);
+      expect(defaultGateway.confirm).not.toHaveBeenCalled();
+    });
+
+    it.each(['owner', 'binding', 'evidence', 'status'] as const)('blocks reconciliation when locked %s changes', async (change) => {
+      const { service, payment, confirm, defaultGateway, effectOutbox } = setup();
+      (defaultGateway.confirm as jest.Mock).mockResolvedValue({ ...validResult, providerAmount: 1 });
+      await expect(confirm()).rejects.toThrow(BadRequestException);
+      if (change === 'owner') payment.confirmationOperationKey = 'new-owner';
+      if (change === 'binding') payment.expectedProviderAmount = 1;
+      if (change === 'evidence') delete (payment.rawResponse as Record<string, unknown>).confirmationResult;
+      if (change === 'status') payment.status = PaymentStatus.CONFIRMED;
+      await expect(service.reconcileConfirmedPayment(1)).rejects.toThrow(BadRequestException);
+      expect(payment.order.status).toBe(OrderStatus.PENDING);
+      expect(effectOutbox.enqueueWithManager).not.toHaveBeenCalled();
+    });
   });
 
   describe('confirm() — 정상 흐름', () => {
@@ -611,7 +968,7 @@ describe('PaymentConfirmationService', () => {
         service.confirm({ orderId: 1, paymentKey: 'pk', amount: 30000 }, 10),
       ).rejects.toThrow('결제 승인 후 동기화에 실패했습니다.');
       expect(paymentRepo.update).toHaveBeenCalledWith(
-        payment.id,
+        expect.objectContaining({ id: payment.id, status: PaymentStatus.CONFIRMING, confirmationOperationKey: 'pk' }),
         expect.objectContaining({
           rawResponse: expect.objectContaining({
             reconciliationRequired: true,
@@ -725,7 +1082,7 @@ describe('PaymentConfirmationService', () => {
         }),
       );
       expect(paymentRepo.update).toHaveBeenCalledWith(
-        payment.id,
+        expect.objectContaining({ id: payment.id, status: PaymentStatus.CONFIRMING, confirmationOperationKey: 'pk' }),
         expect.objectContaining({
           rawResponse: expect.objectContaining({
             reconciliationRequired: true,
@@ -1061,7 +1418,7 @@ describe('PaymentConfirmationService', () => {
         service.confirmGuest(1, { paymentKey: 'pay_guest_success', amount: 30000 }, 'guest-token'),
       ).rejects.toThrow(UnauthorizedException);
       expect(paymentRepo.update).toHaveBeenCalledWith(
-        payment.id,
+        expect.objectContaining({ id: payment.id, status: PaymentStatus.CONFIRMING, confirmationOperationKey: 'pay_guest_success' }),
         expect.objectContaining({
           rawResponse: expect.objectContaining({
             reconciliationRequired: true,

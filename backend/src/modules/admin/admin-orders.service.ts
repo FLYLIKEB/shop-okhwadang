@@ -103,6 +103,7 @@ export class AdminOrdersService {
     const isCancelledConfirmationRecovery =
       currentStatus === OrderStatus.CANCELLED &&
       nextStatus === OrderStatus.REFUNDED &&
+      payment?.status === PaymentStatus.CONFIRMED &&
       this.isGatewayConfirmationReconciliation(payment);
     if (!isCancelledConfirmationRecovery) {
       assertOrderStatusTransition(currentStatus, nextStatus);
@@ -385,7 +386,8 @@ export class AdminOrdersService {
 
   private isGatewayConfirmationReconciliation(payment: Payment | null): boolean {
     return (
-      payment?.status === PaymentStatus.CONFIRMED &&
+      !!payment &&
+      [PaymentStatus.CONFIRMED, PaymentStatus.CONFIRMING].includes(payment.status) &&
       (this.hasGatewayReconciliationMarker(payment, 'gatewayConfirmationSucceeded') ||
         this.hasGatewayReconciliationMarker(payment, 'gatewayConfirmationDuplicateLike'))
     );
