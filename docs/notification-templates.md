@@ -24,3 +24,5 @@
 ## 배포
 
 백엔드의 `CreateNotificationTemplates` TypeORM 마이그레이션을 적용한 후 새 백엔드를 시작합니다. 기존 템플릿은 기본값으로 유지되며, 관리자 저장 시 전용 테이블에 변경본이 저장됩니다. 실제 공급사 발송·검수 결과는 공급사 설정 및 승인 상태에 따라 달라집니다.
+
+`ResetSavedEmailHtml1788500000002`는 저장된 모든 메일 HTML을 2026-10-22 디자인으로 일괄 교체합니다. 제목·일반 텍스트·알림톡은 유지합니다. 원본 HTML은 `notification_email_html_backup_1788500000002`에 보관하며, 롤백은 교체 후 추가 수정이 없는 HTML만 복구합니다. 배포 로그의 `Email HTML reset verified`에서 전체 저장 건수와 적용 건수를 확인할 수 있습니다.
