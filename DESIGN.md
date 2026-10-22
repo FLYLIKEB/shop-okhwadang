@@ -313,3 +313,21 @@ Test route coverage, translations, search, disclosure, contextual help and role 
 ## Open questions
 
 None blocking. Production authentication and real message delivery are outside guide QA.
+
+## Transactional email design
+
+Status: Active, 2026-10-22. Applies to all eight Korean/English email templates in
+`backend/src/modules/notification/templates/render.ts`. Evidence: live public
+`/api/settings?group=color`, `src/styles/globals.css`, and the existing Toss admin surfaces.
+
+Match the current storefront's monochrome palette: charcoal `#353535`, text `#1a1a1a`,
+background `#F9F9F9`, muted surfaces `#F0F0F0`, secondary text `#525252`, borders `#E1E1E1`.
+Use a white, softly rounded email card with generous spacing and no decorative shadow.
+Keep the wordmark on a light background, use clear sans-serif headings, group order facts
+on a subtle gray surface, and provide a broad charcoal primary action with at least 48px height.
+Retain all transactional copy, links, escaping, subjects and plain-text alternatives.
+
+Use email-compatible tables and inline styles; responsive enhancements must have usable
+inline fallbacks. Do not require external fonts, images, scripts or CSS variables.
+Verify Korean/English and narrow-screen rendering, including long order/product values.
+Custom administrator-saved HTML remains authoritative; inspect saved overrides before rollout.

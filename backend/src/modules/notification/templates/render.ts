@@ -138,41 +138,41 @@ function renderSummaryRows(rows: SummaryRow[] = []): string {
   if (!rows.length) return '';
   const cells = rows.map((row) => `
     <tr>
-      <td style="${style('padding:12px 0;border-bottom:1px solid #eee7dc;color:#7d7263;font-size:13px;')}" valign="top">${escapeHtml(row.label)}</td>
-      <td style="${style('padding:12px 0;border-bottom:1px solid #eee7dc;color:#2f281f;font-size:14px;font-weight:600;text-align:right;')}" valign="top">${escapeHtml(row.value)}</td>
+      <td style="${style('padding:10px 16px 10px 0;color:#525252;font-size:14px;line-height:1.6;width:38%;')}" valign="top">${escapeHtml(row.label)}</td>
+      <td style="${style('padding:10px 0;color:#1a1a1a;font-size:14px;line-height:1.6;font-weight:600;text-align:right;overflow-wrap:anywhere;word-break:break-word;')}" valign="top">${escapeHtml(row.value)}</td>
     </tr>`).join('');
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:22px 0 6px;">${cells}</table>`;
+  return `<div style="margin-top:28px;padding:10px 20px;background:#F0F0F0;border-radius:16px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;table-layout:fixed;">${cells}</table></div>`;
 }
 
 export function renderOrderItemsHtml(items: OrderEmailItem[] | undefined, locale: 'ko' | 'en'): string {
   if (!items?.length) return '';
   const copy = brand[locale];
   const rows = items.map((item) => {
-    const option = item.optionName ? `<div style="${style('margin-top:4px;color:#8a7d6b;font-size:12px;line-height:1.5;')}">${escapeHtml(item.optionName)}</div>` : '';
+    const option = item.optionName ? `<div style="${style('margin-top:4px;color:#525252;font-size:12px;line-height:1.5;')}">${escapeHtml(item.optionName)}</div>` : '';
     const link = item.productUrl
-      ? `<a href="${escapeAttribute(item.productUrl)}" style="${style('display:inline-block;margin-top:8px;color:#6f4e2a;font-size:12px;font-weight:700;text-decoration:none;')}">${escapeHtml(copy.viewProduct)} →</a>`
+      ? `<a href="${escapeAttribute(item.productUrl)}" style="${style('display:inline-block;margin-top:8px;color:#353535;font-size:12px;font-weight:700;text-decoration:none;')}">${escapeHtml(copy.viewProduct)} →</a>`
       : '';
     return `
       <tr>
-        <td style="${style('padding:16px 0;border-bottom:1px solid #eee7dc;')}">
-          <div style="${style('color:#2f281f;font-size:15px;font-weight:700;line-height:1.45;')}">${escapeHtml(item.productName)}</div>
+        <td style="${style('padding:20px 12px 20px 0;border-bottom:1px solid #E1E1E1;')}">
+          <div style="${style('color:#1a1a1a;font-size:15px;font-weight:600;line-height:1.6;overflow-wrap:anywhere;word-break:break-word;')}">${escapeHtml(item.productName)}</div>
           ${option}
           ${link}
         </td>
-        <td style="${style('padding:16px 0;border-bottom:1px solid #eee7dc;color:#5d5245;font-size:13px;text-align:center;white-space:nowrap;')}" valign="top">${escapeHtml(String(item.quantity))}</td>
-        <td style="${style('padding:16px 0;border-bottom:1px solid #eee7dc;color:#2f281f;font-size:13px;text-align:right;white-space:nowrap;')}" valign="top">${escapeHtml(formatKRW(item.unitPrice))}</td>
+        <td style="${style('padding:16px 0;border-bottom:1px solid #E1E1E1;color:#525252;font-size:13px;text-align:center;white-space:nowrap;')}" valign="top">${escapeHtml(String(item.quantity))}</td>
+        <td style="${style('padding:16px 0;border-bottom:1px solid #E1E1E1;color:#1a1a1a;font-size:13px;text-align:right;white-space:nowrap;')}" valign="top">${escapeHtml(formatKRW(item.unitPrice))}</td>
       </tr>`;
   }).join('');
 
   return `
     <div style="${style('margin-top:28px;')}">
-      <h3 style="${style('margin:0 0 12px;color:#2f281f;font-size:16px;line-height:1.35;')}">${escapeHtml(copy.itemsTitle)}</h3>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${style('border-collapse:collapse;')}">
+      <h3 style="${style('margin:0 0 12px;color:#1a1a1a;font-size:16px;line-height:1.35;')}">${escapeHtml(copy.itemsTitle)}</h3>
+      <table width="100%" cellspacing="0" cellpadding="0" style="${style('border-collapse:collapse;table-layout:fixed;')}">
         <thead>
           <tr>
-            <th align="left" style="${style('padding:0 0 8px;color:#9b8c78;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #d9cdbb;')}">${escapeHtml(copy.itemsTitle)}</th>
-            <th align="center" style="${style('padding:0 0 8px;color:#9b8c78;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #d9cdbb;')}">${escapeHtml(copy.quantity)}</th>
-            <th align="right" style="${style('padding:0 0 8px;color:#9b8c78;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #d9cdbb;')}">${escapeHtml(copy.unitPrice)}</th>
+            <th scope="col" align="left" style="${style('padding:0 0 8px;color:#525252;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #E1E1E1;')}">${escapeHtml(copy.itemsTitle)}</th>
+            <th scope="col" width="48" align="center" style="${style('padding:0 0 8px;color:#525252;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #E1E1E1;')}">${escapeHtml(copy.quantity)}</th>
+            <th scope="col" width="90" align="right" style="${style('padding:0 0 8px;color:#525252;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #E1E1E1;')}">${escapeHtml(copy.unitPrice)}</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -198,30 +198,35 @@ function renderEmailLayout(options: EmailLayoutOptions): RenderedEmail {
   const summaryHtml = renderSummaryRows(options.summaryRows);
   const itemsHtml = renderOrderItemsHtml(options.orderItems, options.locale);
   const ctaHtml = options.cta
-    ? `<div style="${style('margin-top:28px;text-align:center;')}"><a href="${escapeAttribute(options.cta.url)}" style="${style('display:inline-block;background:#3a2c1f;color:#fff7ec;text-decoration:none;font-size:14px;font-weight:700;letter-spacing:.01em;padding:13px 22px;border-radius:999px;')}">${escapeHtml(options.cta.label)}</a></div>`
+    ? `<div style="${style('margin-top:32px;text-align:center;')}"><a href="${escapeAttribute(options.cta.url)}" style="${style('display:block;background:#353535;color:#FFFFFF;text-decoration:none;text-align:center;font-size:16px;font-weight:600;line-height:24px;padding:16px 24px;border-radius:12px;')}">${escapeHtml(options.cta.label)}</a></div>`
     : '';
   const footerNote = options.footerNote ?? copy.footer;
   const bodyHtml = options.bodyHtml ?? '';
 
   const html = `<!doctype html>
 <html lang="${options.locale}">
-  <body style="${style('margin:0;padding:0;background:#f6f0e8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#2f281f;')}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>@media screen and (min-width:480px) { .email-inset { padding-left:40px!important; padding-right:40px!important; } }</style>
+  </head>
+  <body style="${style('margin:0;padding:0;background:#F9F9F9;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;overflow-wrap:anywhere;word-break:break-word;')}">
     <div style="${style('display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;')}">${escapeHtml(options.intro)}</div>
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${style('border-collapse:collapse;background:#f6f0e8;padding:0;margin:0;')}">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${style('border-collapse:collapse;background:#F9F9F9;padding:0;margin:0;')}">
       <tr>
-        <td align="center" style="${style('padding:32px 14px;')}">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${style('max-width:640px;border-collapse:collapse;background:#fffaf3;border:1px solid #e7dac8;border-radius:24px;overflow:hidden;box-shadow:0 18px 48px rgba(58,44,31,.08);')}">
+        <td align="center" style="${style('padding:32px 12px;')}">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${style('max-width:600px;border-collapse:separate;border-spacing:0;table-layout:fixed;background:#FFFFFF;border-radius:20px;overflow:hidden;')}">
             <tr>
-              <td style="${style('padding:28px 30px;background:#33271d;color:#fff7ec;')}">
-                <div style="${style('font-size:20px;font-weight:800;letter-spacing:.02em;')}">${escapeHtml(copy.name)}</div>
-                <div style="${style('margin-top:6px;color:#d9cdbb;font-size:12px;letter-spacing:.08em;text-transform:uppercase;')}">${escapeHtml(copy.tagline)}</div>
+              <td class="email-inset" style="${style('padding:36px 24px 0;color:#353535;')}">
+                <div style="${style('font-size:22px;font-weight:700;letter-spacing:-.04em;')}">${escapeHtml(copy.name)}</div>
+                <div style="${style('margin-top:8px;color:#525252;font-size:12px;line-height:1.6;')}">${escapeHtml(copy.tagline)}</div>
               </td>
             </tr>
             <tr>
-              <td style="${style('padding:34px 30px 30px;')}">
-                <div style="${style('color:#9b6f35;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;')}">${escapeHtml(options.eyebrow)}</div>
-                <h1 style="${style('margin:10px 0 12px;color:#2f281f;font-size:28px;line-height:1.22;font-weight:800;')}">${escapeHtml(options.title)}</h1>
-                <p style="${style('margin:0;color:#5f5346;font-size:15px;line-height:1.75;')}">${escapeHtml(options.intro)}</p>
+              <td class="email-inset" style="${style('padding:40px 24px 36px;')}">
+                <div style="${style('display:inline-block;padding:6px 10px;background:#F0F0F0;border-radius:8px;color:#525252;font-size:12px;line-height:1.5;font-weight:600;')}">${escapeHtml(options.eyebrow)}</div>
+                <h1 style="${style('margin:16px 0;color:#1a1a1a;font-size:28px;line-height:1.4;font-weight:700;letter-spacing:-.035em;word-break:keep-all;overflow-wrap:anywhere;')}">${escapeHtml(options.title)}</h1>
+                <p style="${style('margin:0;color:#525252;font-size:15px;line-height:1.8;')}">${escapeHtml(options.intro)}</p>
                 ${summaryHtml}
                 ${bodyHtml}
                 ${itemsHtml}
@@ -229,7 +234,7 @@ function renderEmailLayout(options: EmailLayoutOptions): RenderedEmail {
               </td>
             </tr>
             <tr>
-              <td style="${style('padding:20px 30px;background:#f0e7da;color:#7d7263;font-size:12px;line-height:1.6;')}">
+              <td class="email-inset" style="${style('padding:24px;color:#525252;font-size:12px;line-height:1.7;border-top:1px solid #E1E1E1;')}">
                 ${escapeHtml(footerNote)}
               </td>
             </tr>
@@ -356,7 +361,7 @@ export function renderInquiryAnswered(ctx: InquiryAnsweredContext): RenderedEmai
   const subject = isKo
     ? '[옥화당] 문의에 답변이 등록되었습니다'
     : '[Ockhwadang] Your inquiry has been answered';
-  const answerHtml = `<div style="${style('margin-top:24px;padding:18px 20px;background:#f8f1e8;border:1px solid #eadfce;border-radius:16px;color:#4e4337;font-size:14px;line-height:1.8;')}">${escapeHtml(ctx.answer).replace(/\n/g, '<br>')}</div>`;
+  const answerHtml = `<div style="${style('margin-top:28px;padding:20px;background:#F0F0F0;border-radius:16px;color:#1a1a1a;font-size:15px;line-height:1.8;overflow-wrap:anywhere;word-break:break-word;')}">${escapeHtml(ctx.answer).replace(/\n/g, '<br>')}</div>`;
   return renderEmailLayout({
     locale,
     subject,
