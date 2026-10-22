@@ -1,7 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import JournalPreviewBlock from '@/components/shared/blocks/JournalPreviewBlock';
 import { JournalCategory, type Journal } from '@/lib/api';
+import JournalListClient from '@/components/shared/journal/JournalListClient';
+import en from '@/i18n/messages/en.json';
 
 const mockGetAll = vi.fn();
 const mockUseLocale = vi.fn(() => 'en');
@@ -12,16 +14,19 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-vi.mock('next-intl', () => ({
-  useLocale: () => mockUseLocale(),
-  useTranslations: () => (key: string) => {
-    const map: Record<string, string> = {
-      viewAll: 'View all',
-      culture: 'Culture',
-    };
-    return map[key] ?? key;
-  },
-}));
+vi.mock('next-intl', async () => {
+  const { createTranslator } = await vi.importActual<typeof import('next-intl')>('next-intl');
+  const { useMemo } = await vi.importActual<typeof import('react')>('react');
+  return {
+    useLocale: () => mockUseLocale(),
+    useTranslations: (namespace: keyof typeof en) => useMemo(() => createTranslator({
+      locale: 'en',
+      messages: en,
+      namespace,
+      onError: (error) => { throw error; },
+    }), [namespace]),
+  };
+});
 
 vi.mock('@/lib/api', async () => {
   const actual = await vi.importActual<typeof import('@/lib/api')>('@/lib/api');
@@ -77,5 +82,28 @@ describe('JournalPreviewBlock', () => {
     });
 
     expect(mockGetAll).toHaveBeenCalledWith(JournalCategory.CULTURE, 'en');
+  });
+
+  it.each([
+    ['소식', 'News'],
+    ['unknown', 'Uncategorized'],
+    [undefined, 'Uncategorized'],
+  ])('renders prefetched API category %s without a translation error', (category, label) => {
+    render(<JournalPreviewBlock content={{
+      prefetched_journals: [{ ...journal, category } as Journal],
+    }} />);
+
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(mockGetAll).not.toHaveBeenCalled();
+  });
+
+  it('keeps legacy API categories visible when filtering the journal list', async () => {
+    mockGetAll.mockResolvedValue([{ ...journal, category: '소식' }]);
+    render(<JournalListClient />);
+    await screen.findByText('English Journal');
+
+    fireEvent.click(screen.getByRole('button', { name: 'News' }));
+
+    expect(screen.getByText('English Journal')).toBeInTheDocument();
   });
 });

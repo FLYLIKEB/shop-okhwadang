@@ -5,6 +5,7 @@ import type { SiteSetting } from '@/lib/api';
 import userEvent from '@testing-library/user-event';
 import { adminSettingsApi } from '@/lib/api';
 import { toast } from 'sonner';
+import { revalidateTheme } from '../../theme/actions';
 
 vi.mock('../../theme/actions', () => ({ revalidateTheme: vi.fn().mockResolvedValue(undefined) }));
 
@@ -139,6 +140,37 @@ describe('BusinessInfoEditor', () => {
   it('shows empty state when no settings provided', () => {
     render(<BusinessInfoEditor initialSettings={[]} />);
     expect(screen.getByText(/DB 마이그레이션을 실행해 주세요/)).toBeInTheDocument();
+  });
+
+  it('saves an English-only edit without overwriting Korean and invalidates storefront settings', async () => {
+    render(<BusinessInfoEditor initialSettings={mockSettings} />);
+    fireEvent.change(screen.getByLabelText('상호명 (EN)'), { target: { value: 'Updated company' } });
+    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    expect(adminSettingsApi.bulkUpdate).toHaveBeenCalledWith([
+      { key: 'business_company_name', valueEn: 'Updated company' },
+    ]);
+    expect(revalidateTheme).toHaveBeenCalledOnce();
+    expect(screen.getByLabelText('상호명')).toHaveValue('서로 인터내셔널');
+    expect(screen.getByLabelText('상호명 (EN)')).toHaveValue('Updated company');
+    expect(screen.getByRole('button', { name: '저장' })).toBeDisabled();
+  });
+
+  it('retains edits after a rejected save and allows retry', async () => {
+    vi.mocked(adminSettingsApi.bulkUpdate).mockRejectedValueOnce(new Error('unavailable'));
+    render(<BusinessInfoEditor initialSettings={mockSettings} />);
+    fireEvent.change(screen.getByLabelText('상호명'), { target: { value: '다시 저장할 상호' } });
+    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(revalidateTheme).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('상호명')).toHaveValue('다시 저장할 상호');
+    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    expect(adminSettingsApi.bulkUpdate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('button', { name: '저장' })).toBeDisabled();
   });
 
   it('renders heading and description', () => {

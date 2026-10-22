@@ -69,7 +69,9 @@ export default function JournalListClient() {
   }, [locale, tJournal]);
 
   const filtered = selectedCategory
-    ? journals.filter((journal) => journal.category === selectedCategory)
+    ? journals.filter((journal) =>
+        getJournalCategoryMessageKey(journal.category) === getJournalCategoryMessageKey(selectedCategory),
+      )
     : journals;
 
   if (loading) {
