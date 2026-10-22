@@ -5,7 +5,7 @@
 @font-face{font-family:Pretendard;font-weight:400;font-display:swap;src:url('/fonts/pretendard/Pretendard-Regular.woff2') format('woff2')}
 
 /* ── Google Fonts (local) ──────────────────────────────────────── */
-@import './google-fonts.css';
+@import './roboto-condensed.css';
 
 @import "tailwindcss";
 
@@ -115,11 +115,12 @@
   --admin-row-height-compact: 2.5rem;
   --divider-soft: color-mix(in srgb, var(--color-border) 65%, var(--color-background) 35%);
 
-  /* ── 타이포그래피 — 폰트 패밀리 (3종) ── */
-  --font-display: 'Noto Serif KR', 'Georgia', serif;
-  --font-display-latin: 'Cormorant Garamond', 'Georgia', serif;
-  --font-body: var(--db-font-family-base, 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif);
-  --font-mono: 'DM Mono', 'Courier New', monospace;
+  --font-body: 'Roboto Condensed', var(--db-font-family-base, 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif);
+  --font-display: var(--font-body);
+  --font-display-latin: var(--font-body);
+  --font-mono: var(--font-body);
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-body);
 
   /* ── Height tokens for arbitrary value replacements ── */
   --spacing-88: 5.5rem;     /* 88px - header offset */
@@ -305,7 +306,7 @@ body.overflow-hidden .mobile-sticky-cta {
 
 /* ── Typography utility classes ────────────────────────────────── */
 @utility font-pretendard {
-  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-family: var(--font-body);
 }
 
 @utility typo-h0 {
@@ -1807,7 +1808,7 @@ h3 {
 .toss-cms .typo-h1,
 .toss-cms .typo-h2,
 .toss-cms .typo-h3 {
-  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-family: var(--font-body);
 }
 
 .toss-cms__blocks h1,
@@ -1817,12 +1818,12 @@ h3 {
 .toss-cms__blocks .typo-h1,
 .toss-cms__blocks .typo-h2,
 .toss-cms__blocks .typo-h3 {
-  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-family: var(--font-body);
 }
 
 .toss-cms .toss-split-content__title,
 .toss-cms__blocks .toss-split-content__title {
-  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-family: var(--font-body);
 }
 
 .toss-cms .toss-split-content__body,
@@ -1884,7 +1885,7 @@ h3 {
 
 .toss-admin,
 .toss-cms {
-  font-family: Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-family: var(--font-body);
 }
 
 .toss-cms__blocks a[class*='border'],

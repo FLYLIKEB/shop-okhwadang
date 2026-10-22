@@ -126,7 +126,7 @@ function expectGrayscale(hex: string): void {
 
 describe('runtime theme tokens', () => {
   it('connects admin typography settings to live CSS tokens', () => {
-    expect(globals).toContain('--font-body: var(--db-font-family-base');
+    expect(globals).toContain("--font-body: 'Roboto Condensed', var(--db-font-family-base");
     expect(globals).toContain('--font-size-body: var(--db-font-size-base');
     expect(globals).toContain('--line-height-body: var(--db-line-height-base');
     expect(globals).toContain('--font-weight-normal: var(--db-font-weight-normal');

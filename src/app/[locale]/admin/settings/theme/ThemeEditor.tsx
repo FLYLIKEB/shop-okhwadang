@@ -57,7 +57,7 @@ function ThemePreviewPanel({ settings, isDark, english }: { settings: SiteSettin
       className="surface-card min-w-0 space-y-4 overflow-auto p-4"
       style={{
         background: color('background'), color: color('foreground'),
-        fontFamily: values.font_family_base, fontSize: values.font_size_base,
+        fontFamily: `'Roboto Condensed', ${values.font_family_base}`, fontSize: values.font_size_base,
         fontWeight: values.font_weight_normal, lineHeight: values.line_height_base,
         padding: values.spacing_md, borderRadius: values.radius_lg,
       }}
