@@ -151,7 +151,7 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
         .put('/api/admin/settings')
         .set('Cookie', adminCookies)
         .send({ settings: [{ key: settingKey, value: '변경값' }, { key: themeSettingKey, value: 'changed theme' }] })
-        .expect(200);
+        .expect(204).expect('');
 
       await request(app.getHttpServer())
         .get('/api/settings/map')
@@ -164,7 +164,7 @@ export function registerCmsModulesSuite(getApp: () => INestApplication) {
       await request(app.getHttpServer())
         .post('/api/admin/settings/reset')
         .set('Cookie', adminCookies)
-        .expect(201);
+        .expect(204).expect('');
 
       await request(app.getHttpServer())
         .get('/api/settings/map')

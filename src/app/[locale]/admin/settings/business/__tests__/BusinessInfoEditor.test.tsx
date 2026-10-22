@@ -55,7 +55,7 @@ describe('BusinessInfoEditor', () => {
     const user = userEvent.setup();
     let settle!: () => void;
     vi.mocked(adminSettingsApi.bulkUpdate).mockImplementationOnce(() => new Promise((resolve, reject) => {
-      settle = () => fails ? reject(new Error('save failed')) : resolve([]);
+      settle = () => fails ? reject(new Error('save failed')) : resolve();
     }));
     render(<BusinessInfoEditor initialSettings={mockSettings} />);
     const company = screen.getByLabelText('상호명');

@@ -8,6 +8,28 @@ import { applyLocale } from '../../common/utils/locale.util';
 
 const CACHE_TTL = 3600;
 
+function isValidThemeValue(key: string, value: string): boolean {
+  const trimmed = value.trim();
+  if (key.startsWith('color_')) {
+    if (/^#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i.test(trimmed)) return true;
+    const channels = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/.exec(trimmed);
+    return channels !== null && channels.slice(1).every((channel) => Number(channel) <= 255);
+  }
+  if (/^(font_size|spacing|radius)_/.test(key)) {
+    if (!/^(?:0|\d+(?:\.\d+)?(?:px|rem|em))$/.test(trimmed)) return false;
+    return !key.startsWith('font_size_') || parseFloat(trimmed) > 0;
+  }
+  if (key.startsWith('font_family_')) {
+    return /^(?:[\w -]+|'[\w -]+'|"[\w -]+")(?:\s*,\s*(?:[\w -]+|'[\w -]+'|"[\w -]+"))*$/.test(trimmed);
+  }
+  if (/^(font_weight|line_height)_/.test(key)) {
+    if (!/^\d+(?:\.\d+)?$/.test(trimmed)) return false;
+    const number = Number(trimmed);
+    return key.startsWith('font_weight_') ? number >= 1 && number <= 1000 : number > 0;
+  }
+  return true;
+}
+
 @Injectable()
 export class SettingsService {
   private readonly logger = new Logger(SettingsService.name);
@@ -53,6 +75,14 @@ export class SettingsService {
   }
 
   async bulkUpdate(items: SettingItemDto[]): Promise<void> {
+    for (const item of items) {
+      if (item.value !== undefined && (typeof item.value !== 'string' || !isValidThemeValue(item.key, item.value))) {
+        throw new BadRequestException(`올바르지 않은 설정 값: ${item.key}`);
+      }
+      if (item.valueEn !== undefined && item.valueEn !== null && item.valueEn !== '' && !isValidThemeValue(item.key, item.valueEn)) {
+        throw new BadRequestException(`올바르지 않은 영문 설정 값: ${item.key}`);
+      }
+    }
     await this.dataSource.transaction(async (manager) => {
       const invalidKeys: string[] = [];
       for (const item of items) {

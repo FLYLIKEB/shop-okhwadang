@@ -70,7 +70,7 @@ describe('admin content invariants (MySQL)', () => {
       await request(app.getHttpServer()).get(`/api/settings/map?locale=${locale}`).expect(200);
     }
     await request(app.getHttpServer()).put('/api/admin/settings').set('Cookie', adminCookie)
-      .send({ settings: [{ key, value: '변경 상호', valueEn: 'Updated company' }] }).expect(200);
+      .send({ settings: [{ key, value: '변경 상호', valueEn: 'Updated company' }] }).expect(204).expect('');
     expect(await repo.findOneByOrFail({ key })).toMatchObject({ value: '변경 상호', valueEn: 'Updated company' });
     const adminRead = await request(app.getHttpServer()).get('/api/admin/settings?group=business_info').set('Cookie', adminCookie).expect(200);
     expect(adminRead.body).toEqual(expect.arrayContaining([expect.objectContaining({ key, value: '변경 상호', valueEn: 'Updated company' })]));
@@ -81,7 +81,7 @@ describe('admin content invariants (MySQL)', () => {
       expect(map.body[key]).toBe(value);
     }
     await request(app.getHttpServer()).put('/api/admin/settings').set('Cookie', adminCookie)
-      .send({ settings: [{ key, valueEn: '' }] }).expect(200);
+      .send({ settings: [{ key, valueEn: '' }] }).expect(204).expect('');
     expect(await repo.findOneByOrFail({ key })).toMatchObject({ value: '변경 상호', valueEn: '' });
     const fallback = await request(app.getHttpServer()).get('/api/settings/map?locale=en').expect(200);
     expect(fallback.body[key]).toBe('변경 상호');
@@ -99,12 +99,56 @@ describe('admin content invariants (MySQL)', () => {
     expect((await repo.findOneByOrFail({ key })).value).toBe('Original');
   });
 
+  it('saves theme settings for public locale readers and clears English overrides', async () => {
+    await request(app.getHttpServer()).get('/api/settings/map?locale=ko').expect(200);
+    await request(app.getHttpServer()).get('/api/settings/map?locale=en').expect(200);
+    await request(app.getHttpServer()).put('/api/admin/settings').set('Cookie', adminCookie).send({ settings: [
+      { key: 'color_primary', value: '#123456' },
+      { key: 'color_dark_primary', value: '#abcdef' },
+      { key: 'font_size_base', value: '18px', valueEn: '20px' },
+      { key: 'font_family_base', value: "'Noto Serif KR', 'Georgia', serif" },
+      { key: 'spacing_md', value: '0' },
+      { key: 'radius_md', value: '0.75rem' },
+    ] }).expect(204).expect('');
+    for (const locale of ['ko', 'en']) {
+      const result = await request(app.getHttpServer()).get(`/api/settings/map?locale=${locale}`).expect(200);
+      expect(result.body).toMatchObject({
+        color_primary: '#123456', color_dark_primary: '#abcdef', font_size_base: locale === 'en' ? '20px' : '18px',
+        font_family_base: "'Noto Serif KR', 'Georgia', serif", spacing_md: '0', radius_md: '0.75rem',
+      });
+    }
+    for (const valueEn of ['', null]) {
+      await request(app.getHttpServer()).put('/api/admin/settings').set('Cookie', adminCookie)
+        .send({ settings: [{ key: 'font_size_base', valueEn }] }).expect(204).expect('');
+      const result = await request(app.getHttpServer()).get('/api/settings/map?locale=en').expect(200);
+      expect(result.body.font_size_base).toBe('18px');
+    }
+  });
+
+  it('rejects invalid mixed theme batches without changing stored values or cached public settings', async () => {
+    const repo = db.getRepository(SiteSetting);
+    const before = await repo.find({ order: { key: 'ASC' } });
+    const publicBefore = await request(app.getHttpServer()).get('/api/settings/map?locale=ko').expect(200);
+    for (const invalid of [
+      { key: 'color_dark_primary', value: '#12345' },
+      { key: 'font_size_base', valueEn: '-2rem' },
+      { key: 'font_size_base', value: null },
+      { key: 'font_weight_bold', value: '1001' },
+    ]) {
+      await request(app.getHttpServer()).put('/api/admin/settings').set('Cookie', adminCookie)
+        .send({ settings: [{ key: 'color_primary', value: '#654321' }, invalid] }).expect(400);
+      expect(await repo.find({ order: { key: 'ASC' } })).toEqual(before);
+      const publicAfter = await request(app.getHttpServer()).get('/api/settings/map?locale=ko').expect(200);
+      expect(publicAfter.body).toEqual(publicBefore.body);
+    }
+  });
+
   it('resets theme values and translations while preserving business, brand and operational settings', async () => {
     const repo = db.getRepository(SiteSetting);
     const fixtures = await repo.save(['color', 'business_info', 'brand', 'shipping'].map((group) => repo.create({
       key: `${RUN}-${group}`, group, label: group, value: 'custom', valueEn: 'English custom', valueJa: 'legacy ja', valueZh: 'legacy zh', defaultValue: 'default',
     })));
-    await request(app.getHttpServer()).post('/api/admin/settings/reset').set('Cookie', adminCookie).expect(201);
+    await request(app.getHttpServer()).post('/api/admin/settings/reset').set('Cookie', adminCookie).expect(204).expect('');
     for (const fixture of fixtures) {
       const actual = await repo.findOneByOrFail({ key: fixture.key });
       if (fixture.group === 'color') {
@@ -112,6 +156,10 @@ describe('admin content invariants (MySQL)', () => {
       } else {
         expect(actual).toMatchObject({ value: 'custom', valueEn: 'English custom', valueJa: 'legacy ja', valueZh: 'legacy zh' });
       }
+    }
+    for (const locale of ['ko', 'en']) {
+      const result = await request(app.getHttpServer()).get(`/api/settings/map?locale=${locale}`).expect(200);
+      for (const setting of originalThemeSettings) expect(result.body[setting.key]).toBe(setting.defaultValue);
     }
   });
 
