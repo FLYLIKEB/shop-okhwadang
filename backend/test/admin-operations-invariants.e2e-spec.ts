@@ -15,6 +15,10 @@ import { MockPaymentAdapter } from '../src/modules/payments/adapters/mock.adapte
 import { AuditLog } from '../src/modules/audit-logs/entities/audit-log.entity';
 import { MessageEffectOutbox } from '../src/modules/notification/entities/message-effect-outbox.entity';
 import { AdminExportService } from '../src/modules/admin/admin-export.service';
+import { NotificationTemplate } from '../src/modules/notification/entities/notification-template.entity';
+import { NotificationService } from '../src/modules/notification/notification.service';
+import { MockEmailAdapter } from '../src/modules/notification/adapters/mock.adapter';
+import { SolapiTemplateAdminService } from '../src/modules/notification/solapi-template-admin.service';
 import { PassThrough } from 'stream';
 import * as ExcelJS from 'exceljs';
 
@@ -63,6 +67,65 @@ describe('admin operations invariants (MySQL and HTTP)', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it('keeps Alimtalk revisions durable and inactive until provider approval', async () => {
+    const route = '/api/admin/notification-templates/alimtalk/ORDER_CREATED/ko';
+    const identity = { channel: 'alimtalk' as const, key: 'ORDER_CREATED', locale: 'ko' as const };
+    const templates = db.getRepository(NotificationTemplate);
+    const original = await templates.findOneBy(identity);
+    const solapi = app.get(SolapiTemplateAdminService);
+    jest.spyOn(solapi, 'createRevision').mockResolvedValue({ templateId: 'pending-e2e', content: '변경 #{customerName}', status: 'PENDING' });
+    const read = jest.spyOn(solapi, 'read').mockResolvedValue({ templateId: 'pending-e2e', content: '변경 #{customerName}', status: 'PENDING' });
+    const body = { subject: '', html: '', text: '변경 {{customerName}}', templateId: 'source-e2e' };
+    try {
+      await request(app.getHttpServer()).post(`${route}/revision`).set('Cookie', cookie).send(body).expect(201);
+      const pending = await templates.findOneByOrFail(identity);
+      expect(pending.pendingTemplateId).toBe('pending-e2e');
+      expect(pending.templateId).not.toBe('pending-e2e');
+      expect(pending.text).not.toBe(body.text);
+      await request(app.getHttpServer()).put(route).set('Cookie', cookie).send({ ...body, templateId: 'pending-e2e' }).expect(400);
+      read.mockResolvedValue({ templateId: 'pending-e2e', content: '변경 #{customerName}', status: 'APPROVED' });
+      await request(app.getHttpServer()).put(route).set('Cookie', cookie).send({ ...body, templateId: 'pending-e2e' }).expect(200);
+      expect(await templates.findOneByOrFail(identity)).toMatchObject({ templateId: 'pending-e2e', pendingTemplateId: null, text: body.text });
+    } finally {
+      if (original) await templates.save(original);
+      else await templates.delete(identity);
+    }
+  });
+
+  it('restricts template editing to admins and persists email HTML used by preview and sending', async () => {
+    const route = '/api/admin/notification-templates';
+    await request(app.getHttpServer()).get(route).expect(401);
+    const member = await db.getRepository(User).save(db.getRepository(User).create({
+      email: `${RUN}-template-member@example.test`, name: 'Template member', role: UserRole.USER,
+      isActive: true, isEmailVerified: true, emailVerifiedAt: new Date(), tier: 'Bronze', tierAccumulatedAmount: 0,
+    }));
+    const memberCookie = `accessToken=${app.get(JwtService).sign({ sub: Number(member.id), email: member.email, role: member.role, tokenType: 'access', jti: `${RUN}-member` })}`;
+    const identity = { channel: 'email' as const, key: 'ORDER_CONFIRMED', locale: 'en' as const };
+    const templates = db.getRepository(NotificationTemplate);
+    const original = await templates.findOneBy(identity);
+    const body = { subject: 'Updated {{orderNumber}}', html: '<html><body><h1>{{recipientName}}</h1>{{orderItemsHtml}}</body></html>', text: 'Updated {{orderNumber}} {{orderItemsText}}', templateId: '' };
+    try {
+      await request(app.getHttpServer()).get(route).set('Cookie', memberCookie).expect(403);
+      await request(app.getHttpServer()).put(`${route}/email/ORDER_CONFIRMED/en`).set('Cookie', memberCookie).send(body).expect(403);
+      await request(app.getHttpServer()).put(`${route}/email/ORDER_CONFIRMED/en`).set('Cookie', cookie).send(body).expect(200);
+      const listed = await request(app.getHttpServer()).get(route).set('Cookie', cookie).expect(200);
+      expect(listed.body).toEqual(expect.arrayContaining([expect.objectContaining({ ...identity, html: body.html })]));
+      const preview = await request(app.getHttpServer()).post(`${route}/email/ORDER_CONFIRMED/en/preview`).set('Cookie', cookie).send(body).expect(201);
+      expect(preview.body.html).toContain('<h1>미리보기 고객</h1>');
+      expect(preview.body.html).not.toContain('{{');
+      const adapter = app.get(MockEmailAdapter);
+      adapter.clear();
+      await app.get(NotificationService).sendOrderConfirmed('preview@example.test', { locale: 'en', recipientName: '<script>unsafe</script>', orderNumber: RUN, totalAmount: 1000 });
+      expect(adapter.getSent()[0].html).toContain('&lt;script&gt;unsafe&lt;/script&gt;');
+      expect(adapter.getSent()[0].subject).toBe(`Updated ${RUN}`);
+      await request(app.getHttpServer()).put(`${route}/email/PASSWORD_RESET/en`).set('Cookie', cookie).send(body).expect(400);
+    } finally {
+      if (original) await templates.save(original);
+      else await templates.delete(identity);
+      await db.getRepository(User).delete({ id: Number(member.id) });
+    }
+  });
 
   afterAll(async () => {
     if (db) {

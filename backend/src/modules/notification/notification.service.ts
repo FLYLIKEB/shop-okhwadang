@@ -1,14 +1,8 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { EmailMessage, EmailProvider } from './interfaces/email-provider.interface';
+import { NotificationTemplateService } from './notification-template.service';
+import { EmailContext, EmailTemplateKey } from './templates/editable-templates';
 import {
-  renderEmailVerification,
-  renderInquiryAnswered,
-  renderOrderCancelled,
-  renderOrderConfirmed,
-  renderPaymentConfirmed,
-  renderPasswordReset,
-  renderRestockAlert,
-  renderShippingUpdate,
   type EmailVerificationContext,
   type InquiryAnsweredContext,
   type OrderCancelledContext,
@@ -35,6 +29,7 @@ export class NotificationService {
   constructor(
     @Inject(EMAIL_PROVIDER_TOKEN)
     private readonly provider: EmailProvider,
+    private readonly templates: NotificationTemplateService,
   ) {}
 
   async sendEmail(message: EmailMessage): Promise<void> {
@@ -51,18 +46,15 @@ export class NotificationService {
   }
 
   async sendOrderConfirmed(to: string, context: OrderConfirmedContext): Promise<void> {
-    const rendered = renderOrderConfirmed(context);
-    await this.sendEmail({ to, ...rendered });
+    await this.sendTemplate(to, 'ORDER_CONFIRMED', context);
   }
 
   async sendOrderCancelled(to: string, context: OrderCancelledContext): Promise<void> {
-    const rendered = renderOrderCancelled(context);
-    await this.sendEmail({ to, ...rendered });
+    await this.sendTemplate(to, 'ORDER_CANCELLED', context);
   }
 
   async sendPaymentConfirmed(to: string, context: PaymentConfirmedContext): Promise<void> {
-    const rendered = renderPaymentConfirmed(context);
-    await this.sendEmail({ to, ...rendered });
+    await this.sendTemplate(to, 'PAYMENT_CONFIRMED', context);
   }
 
   async sendPaymentConfirmedOrThrow(
@@ -74,33 +66,37 @@ export class NotificationService {
       throw new Error('sendPaymentConfirmedOrThrow called with empty recipient.');
     }
 
-    const rendered = renderPaymentConfirmed(context);
+    const rendered = await this.templates.renderEmail('PAYMENT_CONFIRMED', context);
     const result = await this.provider.send({ to, ...rendered, idempotencyKey });
     this.logger.log(`Email sent: to=${to} messageId=${result.messageId} provider=${result.provider}`);
   }
 
   async sendShippingUpdate(to: string, context: ShippingUpdateContext): Promise<void> {
-    const rendered = renderShippingUpdate(context);
-    await this.sendEmail({ to, ...rendered });
+    await this.sendTemplate(to, 'SHIPPING_UPDATE', context);
   }
 
   async sendInquiryAnswered(to: string, context: InquiryAnsweredContext): Promise<void> {
-    const rendered = renderInquiryAnswered(context);
-    await this.sendEmail({ to, ...rendered });
+    await this.sendTemplate(to, 'INQUIRY_ANSWERED', context);
   }
 
   async sendPasswordReset(to: string, context: PasswordResetContext): Promise<void> {
-    const rendered = renderPasswordReset(context);
-    await this.sendEmail({ to, ...rendered });
+    await this.sendTemplate(to, 'PASSWORD_RESET', context);
   }
 
   async sendEmailVerification(to: string, context: EmailVerificationContext): Promise<void> {
-    const rendered = renderEmailVerification(context);
-    await this.sendEmail({ to, ...rendered });
+    await this.sendTemplate(to, 'EMAIL_VERIFICATION', context);
   }
 
   async sendRestockAlert(to: string, context: RestockAlertContext): Promise<void> {
-    const rendered = renderRestockAlert(context);
-    await this.sendEmail({ to, ...rendered });
+    await this.sendTemplate(to, 'RESTOCK_ALERT', context);
+  }
+
+  private async sendTemplate(to: string, key: EmailTemplateKey, context: EmailContext): Promise<void> {
+    try {
+      const rendered = await this.templates.renderEmail(key, context);
+      await this.sendEmail({ to, ...rendered });
+    } catch (error) {
+      this.logger.error(`Failed to render email template ${key}: ${String(error)}`);
+    }
   }
 }

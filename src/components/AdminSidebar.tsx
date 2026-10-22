@@ -92,6 +92,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { labelKey: 'theme', href: '/admin/settings/theme' },
       { labelKey: 'business', href: '/admin/settings/business' },
+      { labelKey: 'notifications', href: '/admin/settings/notifications' },
     ],
   },
 ];

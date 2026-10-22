@@ -27,6 +27,7 @@ export const ADMIN_GUIDE_TOPICS: readonly AdminGuideTopic[] = [
   { id: 'localization', group: 'content', href: '/admin/localization' },
   { id: 'theme', group: 'settings', href: '/admin/settings/theme' },
   { id: 'business', group: 'settings', href: '/admin/settings/business' },
+  { id: 'notifications', group: 'settings', href: '/admin/settings/notifications' },
   { id: 'logs', group: 'settings', href: '/admin/logs', superAdminOnly: true },
 ];
 

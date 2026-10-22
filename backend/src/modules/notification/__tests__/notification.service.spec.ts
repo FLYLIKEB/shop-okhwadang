@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationService, EMAIL_PROVIDER_TOKEN } from '../notification.service';
 import { MockEmailAdapter } from '../adapters/mock.adapter';
+import { NotificationTemplateService } from '../notification-template.service';
+import { emailRenderers, EmailContext, EmailTemplateKey } from '../templates/editable-templates';
+
+const templates = { renderEmail: async (key: EmailTemplateKey, context: EmailContext) =>
+  (emailRenderers[key] as (input: EmailContext) => unknown)(context) } as NotificationTemplateService;
 import { sanitizeContext } from '../templates/sanitize';
 import {
   renderInquiryAnswered,
@@ -151,6 +156,7 @@ describe('NotificationService', () => {
           useExisting: MockEmailAdapter,
         },
         NotificationService,
+        { provide: NotificationTemplateService, useValue: templates },
       ],
     }).compile();
 
@@ -176,6 +182,18 @@ describe('NotificationService', () => {
     expect(mockAdapter.getSent()).toHaveLength(0);
   });
 
+  it('keeps best-effort email failures isolated when template storage fails', async () => {
+    jest.spyOn(templates, 'renderEmail').mockRejectedValueOnce(new Error('storage unavailable'));
+    await expect(service.sendOrderConfirmed('user@example.com', { recipientName: '고객', orderNumber: 'ORD-1', totalAmount: 100 })).resolves.toBeUndefined();
+    expect(mockAdapter.getSent()).toHaveLength(0);
+  });
+
+  it('retries strict email template storage failures through its caller', async () => {
+    jest.spyOn(templates, 'renderEmail').mockRejectedValueOnce(new Error('storage unavailable'));
+    await expect(service.sendPaymentConfirmedOrThrow('user@example.com', { recipientName: '고객', orderNumber: 'ORD-1', amount: 100, method: 'card' }, 'effect-1')).rejects.toThrow('storage unavailable');
+    expect(mockAdapter.getSent()).toHaveLength(0);
+  });
+
   it('swallows provider errors (fire-and-forget)', async () => {
     const failing = {
       send: jest.fn().mockRejectedValue(new Error('boom')),
@@ -184,6 +202,7 @@ describe('NotificationService', () => {
       providers: [
         { provide: EMAIL_PROVIDER_TOKEN, useValue: failing },
         NotificationService,
+        { provide: NotificationTemplateService, useValue: templates },
       ],
     }).compile();
     const svc = moduleRef.get(NotificationService);
@@ -195,7 +214,7 @@ describe('NotificationService', () => {
 
   it('propagates strict payment email failures', async () => {
     const failing = { send: jest.fn().mockRejectedValue(new Error('boom')) };
-    const svc = new NotificationService(failing);
+    const svc = new NotificationService(failing, templates);
 
     await expect(svc.sendPaymentConfirmedOrThrow('x@y.z', {
       recipientName: '홍길동',

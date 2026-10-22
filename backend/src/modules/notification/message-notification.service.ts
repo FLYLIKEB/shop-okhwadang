@@ -16,6 +16,8 @@ import {
   MessageSendResult,
 } from './interfaces/message-provider.interface';
 import { buildTransactionalMessage } from './templates/message-templates';
+import { NotificationTemplateService } from './notification-template.service';
+import { substitute } from './templates/editable-templates';
 import { PaymentEffectOutbox, PaymentEffectState } from '../payments/entities/payment-effect-outbox.entity';
 import { MessageEffectEventType, MessageEffectOutbox, MessageEffectState } from './entities/message-effect-outbox.entity';
 
@@ -47,6 +49,7 @@ export class MessageNotificationService {
     private readonly provider: MessageProvider,
     @Inject(NOTIFICATION_CONFIG)
     private readonly config: NotificationConfig,
+    private readonly templates: NotificationTemplateService,
   ) {}
 
   async sendOrderCreated(orderId: number): Promise<void> {
@@ -139,7 +142,8 @@ export class MessageNotificationService {
   private async dispatch(context: DispatchContext, effectKey?: string, strict = false): Promise<void> {
     if (!effectKey) return this.dispatchLegacy(context);
     const recipientPhone = this.pickRecipientPhone(context.order);
-    const templateId = this.config.message.templates[context.templateKey];
+    const override = await this.templates.messageOverride(context.templateKey);
+    const templateId = override?.templateId ?? this.config.message.templates[context.templateKey];
     const normalizedPhone = recipientPhone ? this.normalizePhone(recipientPhone) : '';
     const recipientPhoneHash = normalizedPhone ? this.hashPhone(normalizedPhone) : null;
     const recipientPhoneMasked = normalizedPhone ? this.maskPhone(normalizedPhone) : null;
@@ -158,6 +162,7 @@ export class MessageNotificationService {
       return;
     }
     const message = buildTransactionalMessage(context.templateKey, { order: context.order, payment: context.payment, shipping: context.shipping, paymentMethod: context.paymentMethod, cancelReason: context.cancelReason, templateId, smsFallbackEnabled: this.config.message.smsFallbackEnabled });
+    if (override) message.fallbackText = substitute(override.text, message.variables);
     let result: MessageSendResult;
     try {
       result = await this.provider.send({ to: normalizedPhone, ...message, idempotencyKey: effectKey });
@@ -271,12 +276,19 @@ export class MessageNotificationService {
     const normalizedPhone = this.normalizePhone(recipientPhone);
     const recipientPhoneHash = this.hashPhone(normalizedPhone);
     const recipientPhoneMasked = this.maskPhone(normalizedPhone);
-    const templateId = this.config.message.templates[context.templateKey];
+    let override;
+    try {
+      override = await this.templates.messageOverride(context.templateKey);
+    } catch (error) {
+      return this.saveLog(context, { status: 'failed', channel: this.defaultChannel(), recipientPhoneHash, recipientPhoneMasked, errorMessage: this.errorText(error) });
+    }
+    const templateId = override?.templateId ?? this.config.message.templates[context.templateKey];
     if (this.config.message.channel === 'alimtalk' && !templateId) return this.saveLog(context, { status: 'skipped', channel: this.defaultChannel(), recipientPhoneHash, recipientPhoneMasked, errorMessage: `${context.templateKey} 템플릿 ID가 설정되지 않았습니다.` });
     const duplicate = await this.logRepository.findOne({ where: { eventType: context.eventType, resourceType: context.resourceType, resourceId: context.resourceId, recipientPhoneHash, status: 'sent' } });
     if (duplicate) return;
     try {
       const message = buildTransactionalMessage(context.templateKey, { order: context.order, payment: context.payment, shipping: context.shipping, paymentMethod: context.paymentMethod, cancelReason: context.cancelReason, templateId, smsFallbackEnabled: this.config.message.smsFallbackEnabled });
+      if (override) message.fallbackText = substitute(override.text, message.variables);
       const result = await this.provider.send({ to: normalizedPhone, ...message, idempotencyKey: `notification:${context.eventType}:${context.resourceType}:${context.resourceId}:${recipientPhoneHash}` });
       await this.saveLog(context, { status: result.status, channel: result.channel, provider: result.provider, providerMessageId: result.providerMessageId, recipientPhoneHash, recipientPhoneMasked, errorMessage: result.errorMessage });
     } catch (error) {

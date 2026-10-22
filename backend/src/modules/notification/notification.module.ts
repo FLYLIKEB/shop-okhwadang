@@ -1,4 +1,8 @@
 import { Global, Module } from '@nestjs/common';
+import { NotificationTemplate } from './entities/notification-template.entity';
+import { NotificationTemplateService } from './notification-template.service';
+import { NotificationTemplateController } from './notification-template.controller';
+import { SolapiTemplateAdminService } from './solapi-template-admin.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationService, EMAIL_PROVIDER_TOKEN } from './notification.service';
 import { MessageNotificationService, MESSAGE_PROVIDER_TOKEN } from './message-notification.service';
@@ -28,9 +32,12 @@ export function resolveMessageProvider(config: NotificationConfig): string {
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([NotificationLog, MessageEffectOutbox])],
+  imports: [TypeOrmModule.forFeature([NotificationLog, MessageEffectOutbox, NotificationTemplate])],
+  controllers: [NotificationTemplateController],
   providers: [
     notificationConfigProvider,
+    NotificationTemplateService,
+    SolapiTemplateAdminService,
     MockEmailAdapter,
     ResendEmailAdapter,
     SesEmailAdapter,

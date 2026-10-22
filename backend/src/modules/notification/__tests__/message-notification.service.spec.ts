@@ -1,4 +1,5 @@
 import { MessageNotificationService } from '../message-notification.service';
+import { NotificationTemplateService } from '../notification-template.service';
 import { NotificationConfig } from '../../../config/notification.config';
 import { NotificationLog } from '../entities/notification-log.entity';
 import { Order } from '../../orders/entities/order.entity';
@@ -55,6 +56,7 @@ describe('MessageNotificationService', () => {
   };
 
   let service: MessageNotificationService;
+  const templates = { messageOverride: jest.fn().mockResolvedValue(null) };
   let dataSource: { getRepository: jest.Mock };
 
   beforeEach(() => {
@@ -88,6 +90,7 @@ describe('MessageNotificationService', () => {
       dataSource as never,
       provider,
       config,
+      templates as unknown as NotificationTemplateService,
     );
   });
 
@@ -106,6 +109,35 @@ describe('MessageNotificationService', () => {
       recipientPhoneHash: expect.any(String),
     }));
     expect(JSON.stringify(logRepository.save.mock.calls[0][0])).not.toContain('01012345678');
+  });
+
+  it('uses persisted Alimtalk ID and fallback text in legacy and durable delivery', async () => {
+    templates.messageOverride.mockResolvedValue({ templateId: 'approved-edit', text: '변경 {{customerName}} {{orderNumber}}' });
+    try {
+      await service.sendOrderCreated(10);
+      await service.deliver(10, 'order.created', 'message-effect:44');
+      expect(provider.send).toHaveBeenCalledTimes(2);
+      for (const [message] of (provider.send as jest.Mock).mock.calls) {
+        expect(message.templateId).toBe('approved-edit');
+        expect(message.fallbackText).toBe('변경 홍길동 ORD-1');
+      }
+    } finally {
+      templates.messageOverride.mockResolvedValue(null);
+    }
+  });
+
+  it('fails before reserving durable delivery when template storage is unavailable', async () => {
+    templates.messageOverride.mockRejectedValueOnce(new Error('template storage unavailable'));
+    await expect(service.deliver(10, 'order.created', 'message-effect:44')).rejects.toThrow('template storage unavailable');
+    expect(logRepository.insert).not.toHaveBeenCalled();
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+
+  it('records legacy template lookup failures without attempting delivery', async () => {
+    templates.messageOverride.mockRejectedValueOnce(new Error('template storage unavailable'));
+    await expect(service.sendOrderCreated(10)).resolves.toBeUndefined();
+    expect(logRepository.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'failed' }));
+    expect(provider.send).not.toHaveBeenCalled();
   });
 
   it('수령자 번호가 없으면 사용자 번호로 fallback 한다', async () => {
@@ -201,7 +233,7 @@ describe('MessageNotificationService', () => {
       ...config,
       message: { ...config.message, channel: 'sms', templates: { ...config.message.templates, ORDER_CREATED: '' } },
     };
-    service = new MessageNotificationService(logRepository as never, dataSource as never, provider, smsConfig);
+    service = new MessageNotificationService(logRepository as never, dataSource as never, provider, smsConfig, templates as unknown as NotificationTemplateService);
 
     await service.deliver(10, 'order.created', 'message-effect:10');
 
@@ -215,7 +247,7 @@ describe('MessageNotificationService', () => {
       nodeEnv: 'production',
       message: { ...config.message, templates: { ...config.message.templates, ORDER_CREATED: '' } },
     };
-    service = new MessageNotificationService(logRepository as never, dataSource as never, provider, inactiveConfig);
+    service = new MessageNotificationService(logRepository as never, dataSource as never, provider, inactiveConfig, templates as unknown as NotificationTemplateService);
 
     await service.deliver(10, 'order.created', 'message-effect:11');
 

@@ -144,7 +144,7 @@ function renderSummaryRows(rows: SummaryRow[] = []): string {
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:22px 0 6px;">${cells}</table>`;
 }
 
-function renderOrderItemsHtml(items: OrderEmailItem[] | undefined, locale: 'ko' | 'en'): string {
+export function renderOrderItemsHtml(items: OrderEmailItem[] | undefined, locale: 'ko' | 'en'): string {
   if (!items?.length) return '';
   const copy = brand[locale];
   const rows = items.map((item) => {
@@ -180,7 +180,7 @@ function renderOrderItemsHtml(items: OrderEmailItem[] | undefined, locale: 'ko' 
     </div>`;
 }
 
-function renderOrderItemsText(items: OrderEmailItem[] | undefined, locale: 'ko' | 'en'): string {
+export function renderOrderItemsText(items: OrderEmailItem[] | undefined, locale: 'ko' | 'en'): string {
   if (!items?.length) return '';
   const copy = brand[locale];
   return [
