@@ -205,18 +205,19 @@ async function guestCartToCartResponse(items: GuestCartItem[], locale: string): 
     : [];
   const productMap = new Map(products.map((product) => [product.id, product]));
 
-  const cartItems: CartItem[] = items.map((item) => {
+  const cartItems: CartItem[] = items.flatMap((item): CartItem[] => {
     const product = productMap.get(item.productId);
-    const option = product?.options?.find(
-      (candidate) =>
-        candidate.id === item.productOptionId
-        && typeof candidate.name === 'string'
-        && typeof candidate.value === 'string'
-        && typeof candidate.priceAdjustment === 'number'
-        && Number.isFinite(candidate.priceAdjustment),
-    );
+    const option = product?.options?.find((candidate) => candidate.id === item.productOptionId);
     if (!product || (item.productOptionId !== null && !option)) {
-      throw new Error('guest_cart_product_unavailable');
+      return [];
+    }
+    if (option && (
+      typeof option.name !== 'string'
+      || typeof option.value !== 'string'
+      || typeof option.priceAdjustment !== 'number'
+      || !Number.isFinite(option.priceAdjustment)
+    )) {
+      throw new Error('guest_cart_product_option_invalid');
     }
     const priceAdjustment = option ? Number(option.priceAdjustment) : 0;
     const rawBasePrice = product.salePrice ?? product.price;
@@ -226,7 +227,7 @@ async function guestCartToCartResponse(items: GuestCartItem[], locale: string): 
     const basePrice = rawBasePrice;
     const unitPrice = basePrice + priceAdjustment;
 
-    return {
+    return [{
       id: item.lineId,
       productId: item.productId,
       productOptionId: item.productOptionId,
@@ -251,19 +252,19 @@ async function guestCartToCartResponse(items: GuestCartItem[], locale: string): 
           priceAdjustment,
         }
         : null,
-    };
+    }];
   });
 
   return {
     items: cartItems,
     totalAmount: cartItems.reduce((sum, item) => sum + item.subtotal, 0),
-    itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+    itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
   };
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [cartData, setCartData] = useState<CartResponse>({
     items: [],
     totalAmount: 0,
@@ -394,6 +395,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, locale, projectGuestCart]);
 
   useEffect(() => {
+    if (isAuthLoading) return;
     let mounted = true;
     const wasAuthenticated = prevAuthRef.current;
     prevAuthRef.current = isAuthenticated;
@@ -405,7 +407,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     guestProjectionGenerationRef.current += 1;
     void (async () => {
-      if (wasAuthenticated === false) {
+      if (wasAuthenticated !== true) {
         await mergeGuestCart();
       }
 
@@ -423,7 +425,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [isAuthenticated, locale, mergeGuestCart, projectGuestCart]);
+  }, [isAuthenticated, isAuthLoading, locale, mergeGuestCart, projectGuestCart]);
 
   const addItem = useCallback(
     async (params: AddCartItemParams) => {

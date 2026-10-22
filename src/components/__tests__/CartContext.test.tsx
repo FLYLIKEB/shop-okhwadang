@@ -341,6 +341,76 @@ describe('CartContext', () => {
     expect(screen.getByTestId('total').textContent).toBe('45000');
   });
 
+  it.each([null, 7])('restores available lines when a saved product or option is unavailable (%s)', async (productOptionId) => {
+    const savedItems = [
+      { lineId: -1, productId: 10, productOptionId: null, quantity: 2 },
+      { lineId: -2, productId: productOptionId === null ? 11 : 10, productOptionId, quantity: 3 },
+    ];
+    localStorage.setItem('guest_cart', JSON.stringify(savedItems));
+    vi.mocked(productsApi.getBulk).mockResolvedValue([{ ...mockCartItem.product, options: [] } as Product]);
+
+    renderWithAuth(<CartDisplay />, makeAuthValue());
+
+    await waitFor(() => expect(screen.getByTestId('count')).toHaveTextContent('2'));
+    expect(screen.getByTestId('total')).toHaveTextContent('30000');
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual(savedItems);
+  });
+
+  it('does not repeat load errors on home remounts when all saved products are unavailable', async () => {
+    const savedItems = [{ lineId: -1, productId: 10, productOptionId: null, quantity: 2 }];
+    localStorage.setItem('guest_cart', JSON.stringify(savedItems));
+    vi.mocked(productsApi.getBulk).mockResolvedValue([]);
+
+    const firstVisit = renderWithAuth(<CartDisplay />, makeAuthValue());
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('idle'));
+    firstVisit.unmount();
+    renderWithAuth(<CartDisplay />, makeAuthValue());
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('idle'));
+
+    expect(productsApi.getBulk).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId('count')).toHaveTextContent('0');
+    expect(screen.getByTestId('total')).toHaveTextContent('0');
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual(savedItems);
+  });
+
+  it('retains saved lines and reports actual product lookup failures', async () => {
+    const savedItems = [{ lineId: -1, productId: 10, productOptionId: null, quantity: 2 }];
+    localStorage.setItem('guest_cart', JSON.stringify(savedItems));
+    vi.mocked(productsApi.getBulk).mockRejectedValue(new Error('network unavailable'));
+
+    renderWithAuth(<CartDisplay />, makeAuthValue());
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledOnce());
+    expect(screen.getByTestId('count')).toHaveTextContent('0');
+    expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toEqual(savedItems);
+  });
+
+  it('waits for authentication before restoring a guest cart on home entry', async () => {
+    localStorage.setItem('guest_cart', JSON.stringify([{ lineId: -1, productId: 10, productOptionId: null, quantity: 2 }]));
+    vi.mocked(cartApi.getList).mockResolvedValue(mockCartResponse);
+    vi.mocked(cartApi.add).mockResolvedValue(mockCartResponse);
+    const view = renderWithAuth(<CartDisplay />, makeAuthValue({ isLoading: true }));
+    expect(productsApi.getBulk).not.toHaveBeenCalled();
+    expect(cartApi.getList).not.toHaveBeenCalled();
+
+    view.rerender(
+      <AuthContext.Provider value={makeAuthValue({ isAuthenticated: true })}>
+        <CartProvider><CartDisplay /></CartProvider>
+      </AuthContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('count')).toHaveTextContent('2'));
+    expect(productsApi.getBulk).not.toHaveBeenCalled();
+    expect(cartApi.add).toHaveBeenCalledWith(
+      { productId: 10, productOptionId: null, quantity: 2 },
+      { headers: { 'Idempotency-Key': expect.stringMatching(/^guest-cart:/) } },
+    );
+    expect(localStorage.getItem('guest_cart')).toBeNull();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
   it('guest addItem merges identical product/option and persists localStorage', async () => {
     const user = userEvent.setup();
     localStorage.setItem('guest_cart', JSON.stringify([{ lineId: -1, productId: 10, productOptionId: null, quantity: 1 }]));
