@@ -55,10 +55,11 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 
 **Exception**: Only use `text-*` when the exact size doesn't match any `typo-*` utility, or when you need to override a `typo-*` for a specific reason (with a comment explaining why).
 
-### Font Families (최대 3종)
-- Display: `--font-display` = Noto Serif KR, Georgia, serif (제목/헤드라인)
-- Body: `--font-body` = Pretendard, Apple SD Gothic Neo, sans-serif (본문)
-- Mono: `--font-mono` = DM Mono, Courier New, monospace (코드/숫자)
+### Font Families
+- All storefront and admin text uses self-hosted Roboto Condensed, including headings, body, numbers, and code-style UI.
+- `--font-display`, `--font-display-latin`, `--font-mono`, `--font-sans`, and `--font-serif` share `--font-body`.
+- Roboto Condensed does not include Korean glyphs; the configured base family and existing Korean sans-serif stack provide fallbacks. The theme font-family setting controls this fallback stack.
+- Serve normal and italic variable WOFF2 fonts (100–900) locally with `font-display: swap`.
 
 ### Line Height
 | Context | Value |
@@ -220,8 +221,8 @@ All CMS block `<section>` elements must use `py-16 md:py-24` — never `py-12`.
 
 - [ ] All text uses `typo-*` utilities (no raw `text-*` overrides, except for valid exceptions)
 - [ ] Loading states use `animate-skeleton-shimmer` (no `animate-pulse`)
-- [ ] Headings use `font-display` (Noto Serif KR)
-- [ ] Font families: max 3种 (display, body, mono)
+- [ ] Headings use `font-display` (Roboto Condensed)
+- [ ] All typography roles share Roboto Condensed with Korean fallbacks
 - [ ] Colors use `--color-*` tokens (no hardcoded hex)
 - [ ] Border radius uses `radius-*` tokens
 - [ ] Customer-facing cards/fields/dividers use `surface-card`, `field-soft`, `border-soft`, or `divide-soft` by default

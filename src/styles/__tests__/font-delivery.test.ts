@@ -4,11 +4,17 @@ import { describe, expect, it } from 'vitest';
 
 const root = process.cwd();
 const globals = readFileSync(join(root, 'src/styles/globals.css'), 'utf8');
-const googleFonts = readFileSync(join(root, 'src/styles/google-fonts.css'), 'utf8');
 
 describe('font delivery', () => {
   it('self-hosts only WOFF2 Google font assets with swap and unicode ranges', () => {
+    expect(globals).toContain("@import './roboto-condensed.css'");
+    expect(globals).not.toContain("@import './google-fonts.css'");
+    const googleFonts = readFileSync(join(root, 'src/styles/roboto-condensed.css'), 'utf8');
     expect(googleFonts).not.toContain('.ttf');
+    expect(googleFonts).not.toContain('https://');
+    expect(googleFonts).toContain("font-family: 'Roboto Condensed'");
+    expect(googleFonts).toContain('font-weight: 100 900');
+    expect(googleFonts).toContain('font-style: italic');
     expect(googleFonts).toContain("font-display: swap;");
     expect(googleFonts).toContain('unicode-range:');
 
@@ -20,7 +26,16 @@ describe('font delivery', () => {
     }
   });
 
-  it('keeps only the body weights used by the storefront', () => {
+  it('uses Roboto Condensed for every typography role and legacy CMS override', () => {
+    expect(globals).toContain("--font-body: 'Roboto Condensed', var(--db-font-family-base");
+    for (const role of ['display', 'display-latin', 'mono', 'sans', 'serif']) {
+      expect(globals).toContain(`--font-${role}: var(--font-body);`);
+    }
+    const typography = globals.replace(/@font-face\s*\{[^}]*\}/g, '');
+    expect(typography).not.toMatch(/font-family:\s*(?:Pretendard|'Noto Serif KR'|'Cormorant Garamond'|'DM Mono')/);
+  });
+
+  it('keeps the existing Korean fallback weights', () => {
     const pretendardWeights = Array.from(
       globals.matchAll(/font-family:Pretendard;font-weight:(\d+)/g),
       (match) => Number(match[1]),
