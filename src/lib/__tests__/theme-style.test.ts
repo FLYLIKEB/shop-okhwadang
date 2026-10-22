@@ -2,6 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { getThemeStyle } from '../theme-style';
 
 describe('getThemeStyle', () => {
+  it('accepts multiple quoted font families and unitless zero lengths', () => {
+    expect(getThemeStyle({ font_family_base: "'Noto Serif KR', 'Georgia', serif", radius_md: '0' }))
+      .toContain("--db-font-family-base: 'Noto Serif KR', 'Georgia', serif; --db-radius-md: 0");
+  });
+
+  it.each([
+    ['color_primary', '#12345'], ['color_primary', 'rgb(256, 0, 0)'],
+    ['font_weight_normal', '1001'], ['line_height_base', '0'], ['font_size_base', '0px'],
+  ])('drops invalid CSS %s=%s', (key, value) => {
+    expect(getThemeStyle({ [key]: value })).toBe('');
+  });
   it('emits safe DB CSS variables for typography, spacing, radius, and colors', () => {
     const style = getThemeStyle({
       color_primary: '#123456',

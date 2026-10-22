@@ -1,387 +1,223 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { settingsApi, adminSettingsApi } from '@/lib/api';
-import { handleApiError } from '@/utils/error';
-import type { SiteSetting } from '@/lib/api';
+import { settingsApi, adminSettingsApi, type SiteSetting } from '@/lib/api';
+import { isValidThemeCssValue } from '@/lib/theme-style';
 import { useUnsavedChanges } from '@/components/shared/hooks/useUnsavedChanges';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 import { cn } from '@/components/ui/utils';
 import { toastMessage } from '@/utils/toastMessages';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { AdminEmptyState } from '@/components/shared/admin/AdminStates';
 import { Button } from '@/components/ui/button';
 import FormInput from '@/components/ui/FormInput';
+import FormSelect from '@/components/ui/FormSelect';
 import { revalidateTheme } from './actions';
 
-const TABS = [
-  { id: 'color',       label: '라이트 색상' },
-  { id: 'color_dark',  label: '다크 색상' },
-  { id: 'typography',  label: '타이포그래피' },
-  { id: 'spacing',     label: '간격' },
-  { id: 'radius',      label: '모서리' },
-] as const;
-type TabId = (typeof TABS)[number]['id'];
+const TABS = ['color', 'color_dark', 'typography', 'spacing', 'radius'] as const;
+type TabId = (typeof TABS)[number];
 
 interface Props {
   initialSettings: SiteSetting[];
 }
 
-function ColorTokenRow({
-  setting,
-  currentValue,
-  onChange,
-}: {
-  setting: SiteSetting;
-  currentValue: string;
-  onChange: (key: string, value: string) => void;
-}) {
-  const handleChange = (value: string) => {
-    onChange(setting.key, value);
-  };
-
-  return (
-    <div className="flex items-center gap-4 border-soft border-b py-3 last:border-0">
-      <div className="min-w-0 flex-1">
-        <p className="typo-body-sm font-medium">{setting.label}</p>
-        <p className="typo-label text-muted-foreground">{setting.key}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={currentValue}
-          onChange={(e) => handleChange(e.target.value)}
-          aria-label={setting.label}
-          className="field-soft h-8 w-10 cursor-pointer rounded p-0.5"
-        />
-        <FormInput
-          type="text"
-          value={currentValue}
-          onChange={(e) => handleChange(e.target.value)}
-          aria-label={`${setting.label} 값`}
-          className="w-24 font-mono"
-          placeholder="#000000"
-        />
-      </div>
-    </div>
-  );
+function normalizeSettings(settings: SiteSetting[]): SiteSetting[] {
+  return settings.map((setting) => ({
+    ...setting,
+    value: String(setting.value),
+    valueEn: setting.valueEn == null ? null : String(setting.valueEn),
+    defaultValue: String(setting.defaultValue),
+  }));
 }
 
-function GenericTokenRow({
-  setting,
-  currentValue,
-  currentValueEn,
-  onChange,
-  onChangeEn,
-}: {
-  setting: SiteSetting;
-  currentValue: string;
-  currentValueEn: string;
-  onChange: (key: string, value: string) => void;
-  onChangeEn: (key: string, value: string) => void;
-}) {
-  const handleChange = (value: string) => {
-    onChange(setting.key, value);
-  };
-
-  return (
-    <div className="flex items-center gap-4 border-soft border-b py-3 last:border-0">
-      <div className="min-w-0 flex-1">
-        <p className="typo-body-sm font-medium">{setting.label}</p>
-        <p className="typo-label text-muted-foreground">{setting.key}</p>
-      </div>
-      <div className="flex flex-col gap-1">
-        <FormInput
-          type={setting.inputType === 'number' ? 'number' : 'text'}
-          value={currentValue}
-          onChange={(e) => handleChange(e.target.value)}
-          aria-label={setting.label}
-          className="w-40"
-        />
-        <FormInput
-          value={currentValueEn}
-          onChange={(e) => onChangeEn(setting.key, e.target.value)}
-          aria-label={`${setting.label} (EN)`}
-          className="w-40 text-xs text-muted-foreground placeholder:text-muted-foreground/50"
-          placeholder="EN"
-        />
-      </div>
-    </div>
-  );
+function colorPickerValue(value: string): string {
+  const trimmed = value.trim();
+  if (!isValidThemeCssValue('color_primary', trimmed)) return '#000000';
+  if (trimmed.startsWith('#')) {
+    return trimmed.length <= 5
+      ? `#${trimmed.slice(1, 4).split('').map((channel) => channel.repeat(2)).join('')}`
+      : trimmed.slice(0, 7);
+  }
+  return `#${trimmed.match(/\d+/g)!.map((channel) => Number(channel).toString(16).padStart(2, '0')).join('')}`;
 }
 
-function ThemePreviewPanel({ isDark }: { isDark: boolean }) {
+function ThemePreviewPanel({ settings, isDark, english }: { settings: SiteSetting[]; isDark: boolean; english: boolean }) {
+  const t = useTranslations('admin.settings');
+  const values = Object.fromEntries(settings.map((setting) => {
+    const value = english && setting.valueEn?.trim() ? setting.valueEn : setting.value;
+    return [setting.key, isValidThemeCssValue(setting.key, value) ? value : setting.defaultValue];
+  }));
+  const color = (name: string) => values[`color_${isDark ? 'dark_' : ''}${name}`];
   return (
-    <div
-      className="surface-card space-y-4 p-4"
-      style={{ background: isDark ? 'var(--db-color-dark-background, #121212)' : 'var(--color-background)' }}
+    <section
+      aria-label={t('preview')}
+      className="surface-card min-w-0 space-y-4 overflow-auto p-4"
+      style={{
+        background: color('background'), color: color('foreground'),
+        fontFamily: values.font_family_base, fontSize: values.font_size_base,
+        fontWeight: values.font_weight_normal, lineHeight: values.line_height_base,
+        padding: values.spacing_md, borderRadius: values.radius_lg,
+      }}
     >
-      <h3
-        className="text-sm font-semibold uppercase tracking-wide"
-        style={{ color: isDark ? 'var(--db-color-dark-muted-foreground, #909090)' : 'var(--color-muted-foreground)' }}
-      >
-        라이브 프리뷰 {isDark ? '(다크)' : '(라이트)'}
-      </h3>
+      <h3 className="typo-body-sm font-semibold">{t('preview')} ({t(isDark ? 'color_dark' : 'color')})</h3>
+      <div className="flex flex-wrap gap-2" style={{ gap: values.spacing_sm }}>
+        {(['primary', 'secondary', 'destructive'] as const).map((variant) => (
+          <Button key={variant} type="button" variant={variant} style={{
+            background: color(variant), color: color(`${variant}_foreground`), borderColor: color('border'),
+            borderRadius: values.radius_md,
+          }}>{t(variant)}</Button>
+        ))}
+      </div>
+      <div className="surface-card p-4" style={{
+        background: color('card'), color: color('card_foreground'), borderColor: color('border'),
+        padding: values.spacing_lg, borderRadius: values.radius_lg,
+      }}>
+        <h4 style={{ fontWeight: values.font_weight_bold }}>{t('cardTitle')}</h4>
+        <p>{t('bodySample')}</p>
+        <p style={{ color: color('muted_foreground') }}>{t('mutedSample')}</p>
+      </div>
+      <FormInput readOnly value={t('inputSample')} aria-label={t('inputSample')} style={{
+        background: color('background'), color: color('foreground'), borderColor: color('input'),
+        borderRadius: values.radius_sm,
+      }} />
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="primary"
-          className="rounded-md px-4 py-2 text-sm hover:opacity-90"
-          style={{
-            background: isDark ? 'var(--db-color-dark-primary, #9C9C9C)' : 'var(--color-primary)',
-            color: isDark ? 'var(--db-color-dark-primary-foreground, #121212)' : 'var(--color-primary-foreground)',
-          }}
-        >
-          Primary 버튼
-        </Button>
-        <Button type="button" variant="secondary"
-          className="rounded-md px-4 py-2 text-sm hover:opacity-90"
-          style={{
-            background: isDark ? 'var(--db-color-dark-secondary, #1C1C1C)' : 'var(--color-secondary)',
-            color: isDark ? 'var(--db-color-dark-secondary-foreground, #E1E1E1)' : 'var(--color-secondary-foreground)',
-          }}
-        >
-          Secondary 버튼
-        </Button>
-        <Button type="button" variant="destructive"
-          className="rounded-md px-4 py-2 text-sm text-white hover:opacity-90"
-          style={{ background: isDark ? 'var(--db-color-dark-destructive, #ef4444)' : 'var(--color-destructive)' }}
-        >
-          Destructive 버튼
-        </Button>
+        {settings.filter((setting) => setting.group === (isDark ? 'color_dark' : 'color')).map((setting) => (
+          <span key={setting.key} className="inline-flex items-center gap-1 typo-label">
+            <span className="inline-block h-4 w-4 border" style={{ background: values[setting.key] }} />
+            {setting.label}
+          </span>
+        ))}
       </div>
-      <div
-        className="surface-card p-4"
-        style={{
-          background: isDark ? 'var(--db-color-dark-card, #171717)' : 'var(--color-card)',
-          borderColor: isDark ? 'var(--db-color-dark-border, #292929)' : 'var(--color-border)',
-        }}
-      >
-        <h4
-          className="font-semibold"
-          style={{ color: isDark ? 'var(--db-color-dark-card-foreground, #EDEDED)' : 'var(--color-card-foreground)' }}
-        >
-          카드 제목
-        </h4>
-        <p
-          className="mt-1 text-sm"
-          style={{ color: isDark ? 'var(--db-color-dark-muted-foreground, #909090)' : 'var(--color-muted-foreground)' }}
-        >
-          카드 본문 텍스트 예시입니다.
-        </p>
-      </div>
-      <div className="space-y-1">
-        <p
-          className="text-lg font-bold"
-          style={{ color: isDark ? 'var(--db-color-dark-foreground, #EDEDED)' : 'var(--color-foreground)' }}
-        >
-          Heading 텍스트
-        </p>
-        <p
-          className="text-sm"
-          style={{ color: isDark ? 'var(--db-color-dark-foreground, #EDEDED)' : 'var(--color-foreground)' }}
-        >
-          Body 텍스트 예시입니다.
-        </p>
-        <p
-          className="text-sm"
-          style={{ color: isDark ? 'var(--db-color-dark-muted-foreground, #909090)' : 'var(--color-muted-foreground)' }}
-        >
-          Muted 텍스트 예시입니다.
-        </p>
-      </div>
-      <FormInput
-        readOnly
-        value="Input 필드 예시"
-        aria-label="Input 필드 예시"
-        className="w-full"
-        style={{
-          background: isDark ? 'var(--db-color-dark-background, #121212)' : 'var(--color-background)',
-          borderColor: isDark ? 'var(--db-color-dark-input, #292929)' : 'var(--color-input)',
-          color: isDark ? 'var(--db-color-dark-foreground, #EDEDED)' : 'var(--color-foreground)',
-        }}
-      />
-    </div>
+      {settings.filter((setting) => setting.group === 'spacing' || setting.group === 'radius').map((setting) => (
+        <div key={setting.key} className="flex items-center gap-2 typo-label">
+          <span>{setting.label}</span>
+          <span className="inline-block h-6 w-16" style={{
+            background: color('primary'),
+            ...(setting.group === 'spacing' ? { width: values[setting.key] } : { borderRadius: values[setting.key] }),
+          }} />
+          <span>{values[setting.key]}</span>
+        </div>
+      ))}
+    </section>
   );
 }
 
 export default function ThemeEditor({ initialSettings }: Props) {
   const t = useTranslations('admin.settings');
   const router = useRouter();
-  const previewStyles = useRef(new Map<string, { value: string; priority: string }>());
-  const clearPreview = useCallback(() => {
-    for (const [name, previous] of previewStyles.current) {
-      if (previous.value) document.documentElement.style.setProperty(name, previous.value, previous.priority);
-      else document.documentElement.style.removeProperty(name);
-    }
-    previewStyles.current.clear();
-  }, []);
-  useEffect(() => clearPreview, [clearPreview]);
-  const [settings, setSettings] = useState<SiteSetting[]>(initialSettings);
+  const [settings, setSettings] = useState(() => normalizeSettings(initialSettings));
   const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({});
   const [pendingEnChanges, setPendingEnChanges] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<TabId>('color');
-  const [saving, setSaving] = useState(false);
-  const [resetting, setResetting] = useState(false);
-
+  const [previewLocale, setPreviewLocale] = useState('ko');
   const hasChanges = Object.keys(pendingChanges).length > 0 || Object.keys(pendingEnChanges).length > 0;
   useUnsavedChanges(hasChanges);
 
-  const getCurrentValue = useCallback(
-    (setting: SiteSetting) => pendingChanges[setting.key] ?? setting.value,
-    [pendingChanges],
-  );
+  const currentSettings = settings.map((setting) => ({
+    ...setting,
+    value: pendingChanges[setting.key] ?? setting.value,
+    valueEn: pendingEnChanges[setting.key] ?? setting.valueEn,
+  }));
+  const invalidChanges = Object.entries(pendingChanges).some(([key, value]) => !isValidThemeCssValue(key, value))
+    || Object.entries(pendingEnChanges).some(([key, value]) => value.trim() !== '' && !isValidThemeCssValue(key, value));
 
-  const getCurrentValueEn = useCallback(
-    (setting: SiteSetting) => pendingEnChanges[setting.key] ?? (setting.valueEn ?? ''),
-    [pendingEnChanges],
-  );
+  const { execute: save, isLoading: saving } = useAsyncAction(async () => {
+    const keys = new Set([...Object.keys(pendingChanges), ...Object.keys(pendingEnChanges)]);
+    await adminSettingsApi.bulkUpdate(Array.from(keys, (key) => ({
+      key,
+      ...(pendingChanges[key] !== undefined ? { value: pendingChanges[key].trim() } : {}),
+      ...(pendingEnChanges[key] !== undefined ? { valueEn: pendingEnChanges[key].trim() } : {}),
+    })));
+    await revalidateTheme();
+    setSettings(currentSettings);
+    setPendingChanges({});
+    setPendingEnChanges({});
+    toast.success(toastMessage('themeSaved'));
+    router.refresh();
+  }, { errorMessage: toastMessage('saveError') });
 
-  const handleChange = useCallback((key: string, value: string) => {
-    setPendingChanges((prev) => ({ ...prev, [key]: value }));
-    const name = `--db-${key.replace(/_/g, '-')}`;
-    const style = document.documentElement.style;
-    if (!previewStyles.current.has(name)) {
-      previewStyles.current.set(name, { value: style.getPropertyValue(name), priority: style.getPropertyPriority(name) });
-    }
-    style.setProperty(name, value);
-  }, []);
+  const { execute: reset, isLoading: resetting } = useAsyncAction(async () => {
+    await adminSettingsApi.reset();
+    await revalidateTheme();
+    const fresh = await settingsApi.getAll();
+    setSettings(normalizeSettings(fresh));
+    setPendingChanges({});
+    setPendingEnChanges({});
+    toast.success(toastMessage('themeReset'));
+    router.refresh();
+  }, { errorMessage: toastMessage('resetError') });
 
-  const handleChangeEn = useCallback((key: string, value: string) => {
-    setPendingEnChanges((prev) => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleSave = async () => {
-    if (!hasChanges || saving || resetting) return;
-    setSaving(true);
-    try {
-      const allKeys = new Set([...Object.keys(pendingChanges), ...Object.keys(pendingEnChanges)]);
-      const items = Array.from(allKeys).map((key) => {
-        const payload: { key: string; value?: string; valueEn?: string } = { key };
-        if (pendingChanges[key] !== undefined) payload.value = pendingChanges[key];
-        if (pendingEnChanges[key] !== undefined) payload.valueEn = pendingEnChanges[key];
-        return payload;
-      });
-      await adminSettingsApi.bulkUpdate(items);
-      await revalidateTheme();
-      clearPreview();
-      setSettings((prev) =>
-        prev.map((s) => ({
-          ...s,
-          ...(pendingChanges[s.key] !== undefined ? { value: pendingChanges[s.key] } : {}),
-          ...(pendingEnChanges[s.key] !== undefined ? { valueEn: pendingEnChanges[s.key] } : {}),
-        })),
-      );
-      setPendingChanges({});
-      setPendingEnChanges({});
-      toast.success(toastMessage('themeSaved'));
-      router.refresh();
-    } catch (err) {
-      toast.error(handleApiError(err, toastMessage('saveError')));
-    } finally {
-      setSaving(false);
-    }
+  const change = (setting: SiteSetting, value: string, english = false) => {
+    const setter = english ? setPendingEnChanges : setPendingChanges;
+    const original = english ? setting.valueEn ?? '' : setting.value;
+    setter((previous) => {
+      const next = { ...previous };
+      if (value === original) delete next[setting.key];
+      else next[setting.key] = value;
+      return next;
+    });
   };
 
-  const handleReset = async () => {
-    if (saving || resetting) return;
-    const confirmed = window.confirm(
-      t('themeResetConfirm'),
-    );
-    if (!confirmed) return;
-    setResetting(true);
-    try {
-      await adminSettingsApi.reset();
-      await revalidateTheme();
-      const fresh = await settingsApi.getAll();
-      setSettings(fresh);
-      setPendingChanges({});
-      setPendingEnChanges({});
-      clearPreview();
-      toast.success(toastMessage('themeReset'));
-      router.refresh();
-    } catch (err) {
-      toast.error(handleApiError(err, toastMessage('resetError')));
-    } finally {
-      setResetting(false);
-    }
-  };
-
-  const filteredSettings = settings.filter((s) => s.group === activeTab);
-  const isDarkTab = activeTab === 'color_dark';
+  const filteredSettings = currentSettings.filter((setting) => setting.group === activeTab);
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader
-        title="테마 편집"
-        description="색상·폰트·간격·모서리를 편집하고 저장하면 사이트에 즉시 반영됩니다."
-        actions={
-          <div className="flex gap-2">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={handleReset}
-            disabled={saving || resetting}
-          >
-            {resetting ? '초기화 중...' : '기본값으로 초기화'}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={!hasChanges || saving || resetting}
-          >
-            {saving ? '저장 중...' : '저장'}
-          </Button>
-          </div>
-        }
-      />
-
-      <div className="flex border-b">
+      <AdminPageHeader title={t('title')} description={t('description')} actions={
+        <div className="flex gap-2">
+          <Button variant="outline" type="button" disabled={saving || resetting} onClick={() => {
+            if (!saving && !resetting && window.confirm(t('themeResetConfirm'))) void reset();
+          }}>{t(resetting ? 'resetting' : 'reset')}</Button>
+          <Button type="button" disabled={!hasChanges || invalidChanges || saving || resetting} onClick={() => {
+            if (hasChanges && !invalidChanges && !saving && !resetting) void save();
+          }}>{t(saving ? 'saving' : 'save')}</Button>
+        </div>
+      } />
+      <div className="flex flex-wrap border-b" role="tablist" aria-label={t('title')}>
         {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              '-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors',
-              activeTab === tab.id
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {tab.label}
-          </button>
+          <button key={tab} type="button" role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)} className={cn(
+            '-mb-px min-h-11 border-b-2 px-4 py-2 typo-body-sm font-medium transition-colors',
+            activeTab === tab ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
+          )}>{t(tab)}</button>
         ))}
       </div>
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <fieldset disabled={saving || resetting} className="surface-card min-w-0 p-4">
-          {filteredSettings.length === 0 ? (
-            <AdminEmptyState title="설정 항목이 없습니다." />
-          ) : (
-            filteredSettings.map((setting) =>
-              setting.inputType === 'color' ? (
-                <ColorTokenRow
-                  key={setting.key}
-                  setting={setting}
-                  currentValue={getCurrentValue(setting)}
-                  onChange={handleChange}
-                />
-              ) : (
-                <GenericTokenRow
-                  key={setting.key}
-                  setting={setting}
-                  currentValue={getCurrentValue(setting)}
-                  currentValueEn={getCurrentValueEn(setting)}
-                  onChange={handleChange}
-                  onChangeEn={handleChangeEn}
-                />
-              ),
-            )
-          )}
+          {filteredSettings.length === 0 ? <AdminEmptyState title={t('empty')} /> :
+            filteredSettings.map((setting) => {
+              const original = settings.find((item) => item.key === setting.key)!;
+              return (
+                <div key={setting.key} className="flex flex-wrap items-center justify-between gap-4 border-soft border-b py-3 last:border-0">
+                  <div className="min-w-0 flex-1">
+                    <p className="typo-body-sm font-medium">{setting.label}</p>
+                    <p className="typo-label text-muted-foreground">{setting.key}</p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      {setting.inputType === 'color' && <input type="color" value={colorPickerValue(setting.value)}
+                        onChange={(event) => change(original, event.target.value)} aria-label={setting.label}
+                        className="field-soft h-11 w-11 cursor-pointer rounded p-0.5" />}
+                      <FormInput type={setting.inputType === 'number' ? 'number' : 'text'} step="any" value={setting.value}
+                        onChange={(event) => change(original, event.target.value)}
+                        aria-label={setting.inputType === 'color' ? t('valueLabel', { label: setting.label }) : setting.label}
+                        error={isValidThemeCssValue(setting.key, setting.value) ? undefined : t('invalidValue')}
+                        className="w-40" placeholder={setting.inputType === 'color' ? '#000000' : undefined} />
+                    </div>
+                    <FormInput value={setting.valueEn ?? ''} onChange={(event) => change(original, event.target.value, true)}
+                      aria-label={`${setting.label} (EN)`} className="w-40" placeholder={t('englishFallback')}
+                      error={!setting.valueEn?.trim() || isValidThemeCssValue(setting.key, setting.valueEn) ? undefined : t('invalidValue')} />
+                  </div>
+                </div>
+              );
+            })}
         </fieldset>
-
-        <ThemePreviewPanel isDark={isDarkTab} />
+        <div className="min-w-0 space-y-3">
+          <FormSelect label={t('previewLocale')} value={previewLocale} onChange={(event) => setPreviewLocale(event.target.value)}
+            options={[{ value: 'ko', label: t('korean') }, { value: 'en', label: t('english') }]} />
+          <ThemePreviewPanel settings={currentSettings} isDark={activeTab === 'color_dark'} english={previewLocale === 'en'} />
+        </div>
       </div>
     </div>
   );

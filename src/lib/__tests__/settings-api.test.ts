@@ -1,8 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { apiClient } from '@/lib/api/core';
 import { settingsApi, type SiteSetting } from '@/lib/api/settings';
+import { adminSettingsApi } from '@/lib/api/admin/settings';
 
 describe('settingsApi', () => {
+  it('accepts empty 204 save and reset responses without JSON parsing errors', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(null, { status: 204 }));
+    await expect(adminSettingsApi.bulkUpdate([{ key: 'color_primary', value: '#123456' }])).resolves.toBeUndefined();
+    await expect(adminSettingsApi.reset()).resolves.toBeUndefined();
+    expect(fetchSpy).toHaveBeenNthCalledWith(1, '/api/admin/settings', expect.objectContaining({ method: 'PUT' }));
+    expect(fetchSpy).toHaveBeenNthCalledWith(2, '/api/admin/settings/reset', expect.objectContaining({ method: 'POST' }));
+  });
   beforeEach(() => {
     vi.restoreAllMocks();
   });

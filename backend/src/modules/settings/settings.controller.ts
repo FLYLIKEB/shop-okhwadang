@@ -5,6 +5,8 @@ import {
   Post,
   Body,
   Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { OptionalLocalePipe } from '../../common/pipes/optional-locale.pipe';
 import {
@@ -60,9 +62,10 @@ export class AdminSettingsController {
   }
 
   @Put()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiCookieAuth()
   @ApiOperation({ summary: '설정 일괄 수정', description: '여러 설정을 한 번에 수정합니다.' })
-  @ApiResponse({ status: 200, description: '설정 수정 성공' })
+  @ApiResponse({ status: 204, description: '설정 수정 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   bulkUpdate(@Body() dto: UpdateSettingsDto) {
@@ -70,9 +73,10 @@ export class AdminSettingsController {
   }
 
   @Post('reset')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiCookieAuth()
   @ApiOperation({ summary: '설정 초기화', description: '테마 설정을 기본값으로 초기화합니다.' })
-  @ApiResponse({ status: 200, description: '설정 초기화 성공' })
+  @ApiResponse({ status: 204, description: '설정 초기화 성공' })
   @ApiResponse({ status: 401, description: '인증 필요' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   resetToDefaults() {
