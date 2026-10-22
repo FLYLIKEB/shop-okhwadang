@@ -34,7 +34,7 @@ export class ResetSavedEmailHtml1788500000002 implements MigrationInterface {
 
     await queryRunner.query(`UPDATE notification_templates AS templates
       JOIN notification_email_html_backup_1788500000002 AS backup
-        ON templates.\`key\` = backup.\`key\` AND templates.locale = backup.locale
+        ON BINARY templates.\`key\` = BINARY backup.\`key\` AND BINARY templates.locale = BINARY backup.locale
       SET templates.html = backup.replacement_html
       WHERE templates.channel = 'email'`);
 
@@ -43,7 +43,7 @@ export class ResetSavedEmailHtml1788500000002 implements MigrationInterface {
         COALESCE(SUM(BINARY templates.html = BINARY backup.replacement_html), 0) AS matched
        FROM notification_templates AS templates
        LEFT JOIN notification_email_html_backup_1788500000002 AS backup
-         ON templates.\`key\` = backup.\`key\` AND templates.locale = backup.locale
+         ON BINARY templates.\`key\` = BINARY backup.\`key\` AND BINARY templates.locale = BINARY backup.locale
        WHERE templates.channel = 'email'`,
     );
     if (Number(result.total) !== Number(result.matched)) {
@@ -55,7 +55,7 @@ export class ResetSavedEmailHtml1788500000002 implements MigrationInterface {
   async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`UPDATE notification_templates AS templates
       JOIN notification_email_html_backup_1788500000002 AS backup
-        ON templates.\`key\` = backup.\`key\` AND templates.locale = backup.locale
+        ON BINARY templates.\`key\` = BINARY backup.\`key\` AND BINARY templates.locale = BINARY backup.locale
       SET templates.html = backup.original_html
       WHERE templates.channel = 'email' AND BINARY templates.html = BINARY backup.replacement_html`);
   }
