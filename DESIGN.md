@@ -3,6 +3,8 @@
 ## UI Language
 
 Customer and administrator controls use English copy on both regional routes.
+On `/ko`, policy content, product notices and explanatory body copy remain Korean;
+`/en` retains English content. Do not translate body copy when changing menu labels.
 Keep the route locale for currency, checkout providers, product visibility and stored content.
 Display menu items, buttons and admin section headings in uppercase. Descriptive prose,
 product names, legal text and user content retain their original capitalization.
